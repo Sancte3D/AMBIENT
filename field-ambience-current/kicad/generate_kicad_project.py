@@ -156,6 +156,7 @@ def kicad_pro() -> str:
             [det_uuid("sheet_power_tree"), "PowerTree"],
             [det_uuid("sheet_pico"), "Pico"],
             [det_uuid("sheet_oled"), "OLED"],
+            [det_uuid("sheet_mcp"), "MCP23017"],
         ],
         "text_variables": {},
     }
@@ -575,7 +576,80 @@ def _conn_01xN_lib_symbol(n: int) -> str:
     return "\n".join(out)
 
 
-LIB_SYMBOLS = LIB_SYMBOLS + "\n" + _pico2_lib_symbol() + "\n" + _conn_01xN_lib_symbol(16)
+def _mcp23017_lib_symbol() -> str:
+    """MCP23017 SSOP-28 I/O-Expander. 14 Pins pro Seite. Chip-Pinout-Layout:
+    Left (top→bottom): GPB0-7, VDD, VSS, NC, SCL, SDA, NC = pins 1..14
+    Right (top→bottom): GPA7..GPA0, INTA, INTB, ~RESET, A2, A1, A0 = pins 28..15
+    """
+    pins_left = [
+        (1, "GPB0", "bidirectional"),
+        (2, "GPB1", "bidirectional"),
+        (3, "GPB2", "bidirectional"),
+        (4, "GPB3", "bidirectional"),
+        (5, "GPB4", "bidirectional"),
+        (6, "GPB5", "bidirectional"),
+        (7, "GPB6", "bidirectional"),
+        (8, "GPB7", "bidirectional"),
+        (9, "VDD", "power_in"),
+        (10, "VSS", "power_in"),
+        (11, "NC", "no_connect"),
+        (12, "SCL", "input"),
+        (13, "SDA", "bidirectional"),
+        (14, "NC", "no_connect"),
+    ]
+    pins_right = [
+        (28, "GPA7", "bidirectional"),
+        (27, "GPA6", "bidirectional"),
+        (26, "GPA5", "bidirectional"),
+        (25, "GPA4", "bidirectional"),
+        (24, "GPA3", "bidirectional"),
+        (23, "GPA2", "bidirectional"),
+        (22, "GPA1", "bidirectional"),
+        (21, "GPA0", "bidirectional"),
+        (20, "INTA", "output"),
+        (19, "INTB", "output"),
+        (18, "~RESET", "input"),
+        (17, "A2", "input"),
+        (16, "A1", "input"),
+        (15, "A0", "input"),
+    ]
+    y_top = 16.51  # (14-1)*2.54/2 = 16.51
+    rect_top = y_top + 2.54
+    rect_bot = -y_top - 2.54
+    out = ['    (symbol "MCU:MCP23017" (in_bom yes) (on_board yes)']
+    out.append(f'      (property "Reference" "U" (at 0 {rect_top + 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append(f'      (property "Value" "MCP23017-E_SS" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "https://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "MCU:MCP23017_0_1"')
+    out.append(f'        (rectangle (start -10.16 {rect_top}) (end 10.16 {rect_bot})')
+    out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
+    out.append('      (symbol "MCU:MCP23017_1_1"')
+    for idx, (num, name, ptype) in enumerate(pins_left):
+        ly = y_top - idx * 2.54
+        out.append(
+            f'        (pin {ptype} line (at -12.7 {ly:.3f} 0) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    for idx, (num, name, ptype) in enumerate(pins_right):
+        ly = y_top - idx * 2.54
+        out.append(
+            f'        (pin {ptype} line (at 12.7 {ly:.3f} 180) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    out.append('        )')
+    out.append('      )')
+    return "\n".join(out)
+
+
+LIB_SYMBOLS = (
+    LIB_SYMBOLS
+    + "\n" + _pico2_lib_symbol()
+    + "\n" + _conn_01xN_lib_symbol(16)
+    + "\n" + _mcp23017_lib_symbol()
+)
 
 
 def fmt_property(name: str, value: str, x: float, y: float, hide: bool = False) -> str:
@@ -1737,6 +1811,388 @@ def oled_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
+# Sheet 4 — MCP23017 + 10 Switches + INTA/RESET Pull-Ups per SPEC v0.6 §7
+# Inputs: +3V3, GND, I2C_SDA, I2C_SCL (von Sheet 2 Pico).
+# Outputs: MCP_INT (zu Sheet 2 Pico GP22).
+# Components: U2 MCP23017-E/SS, SW1-SW10, R4/R5 I2C-Pull-Ups, R6 RESET-Pull-Up,
+#             R20 INTA-Pull-Up (v0.6 H3-Fix), C5+C5b Decoupling.
+# ----------------------------------------------------------------------------
+
+
+def mcp_sheet() -> str:
+    sheet_uuid = det_uuid("sheet_mcp")
+    sus = "sheet_mcp"
+    symbols: list[str] = []
+    wires: list[str] = []
+    junctions: list[str] = []
+    labels: list[str] = []
+    hlabels: list[str] = []
+
+    # U2 MCP23017 @ (130, 110). Body x=119.84..140.16, y=93.49..126.51.
+    # Pin local anchor x = ±12.7 (Symbol-Body bei ±10.16, Pin-Länge 2.54).
+    # Abs anchor: links x=130-12.7=117.3, rechts x=130+12.7=142.7.
+    U2_X, U2_Y = 130.0, 110.0
+    PIN_L_X = 117.3
+    PIN_R_X = 142.7
+
+    # Pin-Y-Tabelle (abs):
+    # Links idx 0 (Pin 1 GPB0) abs y = 110 - 16.51 = 93.49. Pin N (idx N-1) abs y = 93.49 + (N-1)*2.54.
+    def mcp_left_pin_y(pin: int) -> float:
+        return 93.49 + (pin - 1) * 2.54
+
+    # Rechts idx 0 (Pin 28 GPA7) abs y = 93.49. pin nummerierung absteigend.
+    # Right pins ordered (28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15).
+    # idx = 28 - pin für pins 15-28.
+    def mcp_right_pin_y(pin: int) -> float:
+        idx = 28 - pin
+        return 93.49 + idx * 2.54
+
+    symbols.append(
+        place_symbol(
+            lib_id="MCU:MCP23017",
+            ref="U2",
+            value="MCP23017-E/SS (I/O-Expander)",
+            x=U2_X,
+            y=U2_Y,
+            footprint="Package_SO:SSOP-28_5.3x10.2mm_P0.65mm",
+            datasheet="https://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf",
+            extra_props={
+                "MPN": "MCP23017-E/SS",
+                "LCSC": "C506653",
+            },
+            seed_suffix="U2",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- Helper für GND-Stubs (Power-Symbol direkt am Pin)
+    def attach_gnd(x: float, y: float, ref: str) -> None:
+        symbols.append(
+            place_symbol(
+                lib_id="Power:GND",
+                ref=f"#PWR_{ref}",
+                value="GND",
+                x=x,
+                y=y,
+                rotation=270,
+                seed_suffix=f"gnd-{ref}",
+                sheet_uuid_seed=sus,
+            )
+        )
+
+    # ---- Address pins A0/A1/A2 → GND (I²C Adresse 0x20)
+    for pin in (15, 16, 17):  # A0, A1, A2
+        py = mcp_right_pin_y(pin)
+        wires.append(wire(PIN_R_X, py, 147, py, seed_suffix=f"u2-a-{pin}"))
+        attach_gnd(147, py, f"U2_A{pin-15}")
+
+    # ---- VSS (Pin 10) → GND
+    p10_y = mcp_left_pin_y(10)
+    wires.append(wire(PIN_L_X, p10_y, 113, p10_y, seed_suffix="u2-vss"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_U2_VSS",
+            value="GND",
+            x=113,
+            y=p10_y,
+            rotation=90,
+            seed_suffix="u2-vss-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- NC pins 11, 14: NC labels gegen Dangling-Wire-Warnings
+    for pin in (11, 14):
+        py = mcp_left_pin_y(pin)
+        wires.append(wire(PIN_L_X, py, 113, py, seed_suffix=f"u2-nc-{pin}"))
+        labels.append(label(113, py, f"NC_U2_{pin}"))
+
+    # ---- VDD (Pin 9) → +3V3 + C5 100nF + C5b 10nF lokal decoupling
+    p9_y = mcp_left_pin_y(9)
+    wires.append(wire(PIN_L_X, p9_y, 113, p9_y, seed_suffix="u2-vdd-stub"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+3V3",
+            ref="#PWR_U2_VDD",
+            value="+3V3",
+            x=113,
+            y=p9_y,
+            rotation=90,
+            seed_suffix="u2-vdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # C5 = 100nF lokal
+    # Device:C pin1 (top, +3V3) at sy-3.81. → sy = p9_y + 3.81.
+    # Wir wollen C5 darunter (sy = p9_y + 3.81 in Y-DOWN heißt visuell unter dem Pin)... aber das überlappt
+    # mit dem VDD Power-Flag bei (113, p9_y). Besser: C5 weiter links bei x=108, sy=p9_y+3.81.
+    # Actually: VDD-Flag liegt bei x=113 rotation=90, sein Pin endet bei (113, p9_y). Es zeigt nach LINKS visuell.
+    # C5 setze ich bei (108, p9_y+3.81). Pin1 abs (108, p9_y), pin2 abs (108, p9_y + 7.62).
+    c5_x, c5_y = 108, p9_y + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C5",
+            value="100nF X7R 0603 (VDD HF)",
+            x=c5_x,
+            y=c5_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            seed_suffix="C5",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # C5 pin1 (108, p9_y) connects to VDD stub. Need to extend stub from x=113 to x=108.
+    wires.append(wire(108, p9_y, 113, p9_y, seed_suffix="vdd-to-c5"))
+    junctions.append(junction(113, p9_y))
+    wires.append(wire(108, p9_y + 7.62, 108, p9_y + 10, seed_suffix="c5-to-gnd"))
+    attach_gnd(108, p9_y + 10, "C5")
+
+    # C5b = 10nF lokal
+    c5b_x, c5b_y = 103, c5_y
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C5b",
+            value="10nF X7R 0603 (VDD HF²)",
+            x=c5b_x,
+            y=c5b_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB103", "LCSC": "C57112"},
+            seed_suffix="C5b",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(103, p9_y, 108, p9_y, seed_suffix="c5-to-c5b"))
+    junctions.append(junction(108, p9_y))
+    wires.append(wire(103, c5b_y + 3.81, 103, c5b_y + 6.19, seed_suffix="c5b-to-gnd"))
+    attach_gnd(103, c5b_y + 6.19, "C5b")
+
+    # ---- SCL (Pin 12) → I2C_SCL + R5 4.7k pull-up
+    p12_y = mcp_left_pin_y(12)
+    wires.append(wire(PIN_L_X, p12_y, 113, p12_y, seed_suffix="u2-scl-stub"))
+    hlabels.append(hier_label(113, p12_y, "I2C_SCL", shape="input", rotation=0))
+
+    # ---- SDA (Pin 13) → I2C_SDA + R4 4.7k pull-up
+    p13_y = mcp_left_pin_y(13)
+    wires.append(wire(PIN_L_X, p13_y, 113, p13_y, seed_suffix="u2-sda-stub"))
+    hlabels.append(hier_label(113, p13_y, "I2C_SDA", shape="input", rotation=0))
+
+    # I²C Pull-Ups R4, R5 zwischen I2C-Linien und +3V3.
+    # Verticale Pull-Ups bei x=109 für SDA (y=p13_y) und x=105 für SCL (y=p12_y).
+    # R rot=0: pin1 abs (sx, sy-3.81), pin2 abs (sx, sy+3.81). pin1 oben→+3V3, pin2 unten→I2C-Linie.
+    # Hmm. Bei Pull-Up von Linie auf +3V3 in Y-DOWN visuell:
+    #   +3V3 oberhalb der Linie (kleinere y). R zwischen.
+    # R bei (sx, sy) gibt pin1 (oben, -3.81y) → +3V3 label, pin2 (unten, +3.81y) → Linie.
+    # I2C-Linien bei y=p12_y, p13_y. Pull-Ups WEITER oben (kleinere y).
+    # R sym y = p12_y - 3.81 → pin2 abs (sx, p12_y) ✓ (auf SCL), pin1 abs (sx, p12_y - 7.62) → +3V3 label
+    r5_y = p12_y - 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R5",
+            value="4.7k 0603 (SCL pull-up)",
+            x=104,
+            y=r5_y,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-074K7L", "LCSC": "C23162"},
+            seed_suffix="R5",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # pin2 abs (104, p12_y) connects to SCL line via short wire
+    wires.append(wire(104, p12_y, 113, p12_y, seed_suffix="r5-to-scl"))
+    junctions.append(junction(113, p12_y))
+    wires.append(wire(104, r5_y - 3.81, 104, r5_y - 6.19, seed_suffix="r5-to-3v3"))
+    labels.append(label(104, r5_y - 6.19, "+3V3"))
+
+    r4_y = p13_y - 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R4",
+            value="4.7k 0603 (SDA pull-up)",
+            x=99,
+            y=r4_y,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-074K7L", "LCSC": "C23162"},
+            seed_suffix="R4",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(99, p13_y, 113, p13_y, seed_suffix="r4-to-sda"))
+    junctions.append(junction(113, p13_y))
+    wires.append(wire(99, r4_y - 3.81, 99, r4_y - 6.19, seed_suffix="r4-to-3v3"))
+    labels.append(label(99, r4_y - 6.19, "+3V3"))
+
+    # ---- ~RESET (Pin 18) → R6 10k Pull-Up zu +3V3
+    p18_y = mcp_right_pin_y(18)
+    wires.append(wire(PIN_R_X, p18_y, 152, p18_y, seed_suffix="u2-reset-stub"))
+    r6_y = p18_y + 3.81  # below the line in Y-DOWN visually means r6 sym between line and bottom
+    # Actually we want R6 below the line (larger y) so it doesn't conflict with other components.
+    # R rotation=0: pin1 (top, -3.81y) → ~RESET line, pin2 (bottom, +3.81y) → +3V3
+    # Hmm but +3V3 should be VISUALLY ABOVE in conventional schematic (smaller y).
+    # Let me flip: R6 rotation=180 — pin 1 becomes bottom, pin 2 becomes top.
+    # Or simpler: put pull-up R6 to the side (right) of MCP, rotated 90:
+    #   sym (153, p18_y), rotation=90. pin1 abs (153-3.81, p18_y) = (149.19, p18_y) — left, on reset line.
+    #   pin2 abs (153+3.81, p18_y) = (156.81, p18_y) → +3V3
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R6",
+            value="10k 0603 (RESET pull-up)",
+            x=156,
+            y=p18_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="R6",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # R6 rotation=90: pin1 abs (sx-3.81, sy) = (152.19, p18_y). pin2 abs (sx+3.81, sy) = (159.81, p18_y).
+    wires.append(wire(152, p18_y, 152.19, p18_y, seed_suffix="reset-to-r6-stub"))
+    junctions.append(junction(152, p18_y))
+    wires.append(wire(159.81, p18_y, 162, p18_y, seed_suffix="r6-to-3v3"))
+    labels.append(label(162, p18_y, "+3V3"))
+
+    # ---- INTA (Pin 20) → R20 10k Pull-Up zu +3V3 (v0.6 H3-Fix) + Hier-Output MCP_INT
+    p20_y = mcp_right_pin_y(20)
+    wires.append(wire(PIN_R_X, p20_y, 152, p20_y, seed_suffix="u2-inta-stub"))
+    # R20 rotation=90 (horizontal): pin1 (sx-3.81, sy) auf INTA line, pin2 (sx+3.81, sy) auf +3V3
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R20",
+            value="10k 0603 (INTA pull-up, v0.6 H3)",
+            x=156,
+            y=p20_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="R20",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(152, p20_y, 152.19, p20_y, seed_suffix="inta-to-r20-stub"))
+    junctions.append(junction(152, p20_y))
+    wires.append(wire(159.81, p20_y, 162, p20_y, seed_suffix="r20-to-3v3"))
+    labels.append(label(162, p20_y, "+3V3"))
+    # MCP_INT hier_label nach unten (via wire extension)
+    wires.append(wire(152, p20_y, 152, p20_y + 5, seed_suffix="inta-down"))
+    junctions.append(junction(152, p20_y))
+    hlabels.append(hier_label(152, p20_y + 5, "MCP_INT", shape="output", rotation=270))
+
+    # ---- INTB (Pin 19) → NC label
+    p19_y = mcp_right_pin_y(19)
+    wires.append(wire(PIN_R_X, p19_y, 147, p19_y, seed_suffix="u2-intb-nc"))
+    labels.append(label(147, p19_y, "NC_INTB"))
+
+    # ---- Switches SW1-SW5 (Cells) auf GPA0-GPA4 (pins 21-25). Rechts vom MCP.
+    # Each switch: pin1 → MCP-GPIO, pin2 → GND. SW_Push pin1 (-5.08, 0), pin2 (+5.08, 0).
+    # Wir wollen SW horizontal: pin1 (left) connects to MCP, pin2 (right) to GND.
+    # SW center @ (sx, sy), sym placed so pin1 abs at x=PIN_R_X + 30 (right of MCP signal labels).
+    # For pin1 abs x = 165: sx = 165 + 5.08 = 170.08. pin2 abs x = 175.16.
+    cell_pins = [(21, "CELL1", 1), (22, "CELL2", 2), (23, "CELL3", 3), (24, "CELL4", 4), (25, "CELL5", 5)]
+    for mcp_pin, netname, sw_num in cell_pins:
+        py = mcp_right_pin_y(mcp_pin)
+        # Pin-Wire vom MCP nach rechts mit Net-Label
+        wires.append(wire(PIN_R_X, py, 168, py, seed_suffix=f"u2-cell-stub-{mcp_pin}"))
+        labels.append(label(145, py, netname))
+        # SW Symbol
+        symbols.append(
+            place_symbol(
+                lib_id="Switch:SW_Push",
+                ref=f"SW{sw_num}",
+                value=f"Cell {sw_num} (2u Choc V2 Hot-Swap)",
+                x=173.08,
+                y=py,
+                footprint="Button_Switch_Keyboard:SW_Hotswap_Kailh_MX_2.00u",
+                extra_props={
+                    "MPN": "Kailh Choc V2 hot-swap socket",
+                    "LCSC": "TBD (separat bestellen, JLC stockt keine Hot-Swap-Sockets)",
+                },
+                seed_suffix=f"SW{sw_num}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        # SW pin1 abs (168, py), pin2 abs (178.16, py)
+        # Tiny touch wire pin1 (already part of u2-cell-stub).
+        # GND via pin2
+        wires.append(wire(178.16, py, 181, py, seed_suffix=f"sw{sw_num}-to-gnd"))
+        attach_gnd(181, py, f"SW{sw_num}")
+
+    # ---- Switches SW6-SW10 (Modifier) auf GPB0-GPB4 (pins 1-5). Links vom MCP.
+    # SW_Push reversed: pin2 (right) connects to MCP via pin1 to GND.
+    # Or: simpler: place SW left of MCP, SW pin2 → MCP-pin, SW pin1 → GND.
+    # SW at (sx, sy) — pin1 abs (sx-5.08, sy), pin2 abs (sx+5.08, sy).
+    # We want pin2 at x=PIN_L_X - 5 (left of left-stub). For pin2 abs x = 90: sx = 84.92. pin1 abs x = 79.84.
+    mod_pins = [(1, "MOD_SHIFT", 6), (2, "MOD_HOLD", 7), (3, "MOD_DRONE", 8), (4, "MOD_GENERATE", 9), (5, "MOD_CLEAR", 10)]
+    for mcp_pin, netname, sw_num in mod_pins:
+        py = mcp_left_pin_y(mcp_pin)
+        wires.append(wire(PIN_L_X, py, 90, py, seed_suffix=f"u2-mod-stub-{mcp_pin}"))
+        labels.append(label(115, py, netname))
+        symbols.append(
+            place_symbol(
+                lib_id="Switch:SW_Push",
+                ref=f"SW{sw_num}",
+                value=f"Modifier {netname.replace('MOD_','')} (1u Choc V2 Hot-Swap)",
+                x=84.92,
+                y=py,
+                footprint="Button_Switch_Keyboard:SW_Hotswap_Kailh_MX_1.00u",
+                extra_props={
+                    "MPN": "Kailh Choc V2 hot-swap socket",
+                    "LCSC": "TBD (separat bestellen)",
+                },
+                seed_suffix=f"SW{sw_num}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        # SW pin1 abs (79.84, py) → GND
+        wires.append(wire(79.84, py, 77, py, seed_suffix=f"sw{sw_num}-to-gnd"))
+        attach_gnd(77, py, f"SW{sw_num}")
+
+    # ---- Reserve-Pins (NC labels gegen Dangling-Warnings):
+    # GPB5-7 (pins 6-8): NC
+    # GPA5-7 (pins 26-28): NC
+    for pin in (6, 7, 8):
+        py = mcp_left_pin_y(pin)
+        wires.append(wire(PIN_L_X, py, 115, py, seed_suffix=f"u2-gpb-nc-{pin}"))
+        labels.append(label(115, py, f"NC_GPB{pin-1}"))
+    for pin in (26, 27, 28):
+        py = mcp_right_pin_y(pin)
+        wires.append(wire(PIN_R_X, py, 145, py, seed_suffix=f"u2-gpa-nc-{pin}"))
+        labels.append(label(145, py, f"NC_GPA{pin-21}"))
+
+    body = (
+        f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
+        f'  (uuid "{sheet_uuid}")\n'
+        f'  (paper "A3")\n'
+        f'  (title_block\n'
+        f'    (title "Field Ambience PCB — Sheet 4: MCP23017 + 10 Switches")\n'
+        f'    (date "2026-05-12")\n'
+        f'    (rev "0.6")\n'
+        f'    (company "Field Ambience Project")\n'
+        f'    (comment 1 "Per SPEC v0.6 §7")\n'
+        f'    (comment 2 "I2C Adresse 0x20 (A0=A1=A2=GND)")\n'
+        f'    (comment 3 "INTA Pull-Up R20 10k zu +3V3 (v0.6 H3-Fix)")\n'
+        f'    (comment 4 "10 Switches Kailh Choc V2 Hot-Swap, MIRROR=1 in IOCON"))\n'
+        "  (lib_symbols\n"
+        + LIB_SYMBOLS
+        + "\n  )\n"
+        + "".join(symbols)
+        + "".join(wires)
+        + "".join(junctions)
+        + "".join(labels)
+        + "".join(hlabels)
+        + f'  (sheet_instances\n    (path "/" (page "4")))\n'
+        ")\n"
+    )
+    return body
+
+
+# ----------------------------------------------------------------------------
 # Root schematic
 # ----------------------------------------------------------------------------
 
@@ -1746,6 +2202,7 @@ def root_sheet() -> str:
     power_uuid = det_uuid("sheet_power_tree")
     pico_uuid = det_uuid("sheet_pico")
     oled_uuid = det_uuid("sheet_oled")
+    mcp_uuid = det_uuid("sheet_mcp")
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{root_uuid}")\n'
@@ -1812,7 +2269,16 @@ def root_sheet() -> str:
         f'      (uuid "{det_uuid("picopin_odc")}"))\n'
         f'    (pin "OLED_RES" output (at 190 80 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
-        f'      (uuid "{det_uuid("picopin_ores")}")))\n'
+        f'      (uuid "{det_uuid("picopin_ores")}"))\n'
+        f'    (pin "I2C_SDA" bidirectional (at 190 85 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_sda")}"))\n'
+        f'    (pin "I2C_SCL" bidirectional (at 190 90 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_scl")}"))\n'
+        f'    (pin "MCP_INT" input (at 190 95 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_mcpint")}")))\n'
         # ---- Sheet 3: OLED ----
         f'  (sheet (at 230 40) (size 60 60) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -1837,6 +2303,24 @@ def root_sheet() -> str:
         f'    (pin "OLED_RES" input (at 230 80 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("oledpin_res")}")))\n'
+        # ---- Sheet 4: MCP23017 ----
+        f'  (sheet (at 130 110) (size 60 30) (fields_autoplaced)\n'
+        f'    (stroke (width 0.1524) (type solid))\n'
+        f'    (fill (color 0 0 0 0.0000))\n'
+        f'    (uuid "{mcp_uuid}")\n'
+        f'    (property "Sheetname" "MCP23017" (at 130 109 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
+        f'    (property "Sheetfile" "mcp.kicad_sch" (at 130 140.5 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
+        f'    (pin "I2C_SDA" bidirectional (at 130 120 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("mcppin_sda")}"))\n'
+        f'    (pin "I2C_SCL" bidirectional (at 130 125 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("mcppin_scl")}"))\n'
+        f'    (pin "MCP_INT" output (at 130 130 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("mcppin_int")}")))\n'
         # ---- Inter-sheet wires Sheet 1 → Sheet 2 ----
         f'  (wire (pts (xy 90 50) (xy 130 50)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_5v")}"))\n'
         f'  (wire (pts (xy 90 75) (xy 130 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dp")}"))\n'
@@ -1847,6 +2331,21 @@ def root_sheet() -> str:
         f'  (wire (pts (xy 190 70) (xy 230 70)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ocs")}"))\n'
         f'  (wire (pts (xy 190 75) (xy 230 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_odc")}"))\n'
         f'  (wire (pts (xy 190 80) (xy 230 80)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ores")}"))\n'
+        # ---- Inter-sheet wiring Pico (Sheet 2 right edge x=190) → MCP (Sheet 4 left edge x=130)
+        # via labels (Sheet 4 ist räumlich unter Sheet 2). Pico-Pins für I2C+INT enden bei (190, 85..95).
+        # MCP-Pins liegen bei (130, 120..130). Labels schließen die Netze über Sheet-Grenzen.
+        f'  (wire (pts (xy 190 85) (xy 195 85)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_sda_pico")}"))\n'
+        f'  (label "I2C_SDA" (at 195 85 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_sda_pico")}"))\n'
+        f'  (wire (pts (xy 190 90) (xy 195 90)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_scl_pico")}"))\n'
+        f'  (label "I2C_SCL" (at 195 90 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_scl_pico")}"))\n'
+        f'  (wire (pts (xy 190 95) (xy 195 95)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_mcpint_pico")}"))\n'
+        f'  (label "MCP_INT" (at 195 95 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_mcpint_pico")}"))\n'
+        f'  (wire (pts (xy 125 120) (xy 130 120)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_sda_mcp")}"))\n'
+        f'  (label "I2C_SDA" (at 125 120 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_sda_mcp")}"))\n'
+        f'  (wire (pts (xy 125 125) (xy 130 125)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_scl_mcp")}"))\n'
+        f'  (label "I2C_SCL" (at 125 125 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_scl_mcp")}"))\n'
+        f'  (wire (pts (xy 125 130) (xy 130 130)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_mcpint_mcp")}"))\n'
+        f'  (label "MCP_INT" (at 125 130 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_mcpint_mcp")}"))\n'
         f'  (sheet_instances\n    (path "/" (page "1")))\n'
         ")\n"
     )
@@ -1864,7 +2363,8 @@ def main() -> None:
     (OUT_DIR / "power_tree.kicad_sch").write_text(power_tree_sheet())
     (OUT_DIR / "pico.kicad_sch").write_text(pico_sheet())
     (OUT_DIR / "oled.kicad_sch").write_text(oled_sheet())
-    print(f"Wrote KiCad project + Sheets 1+2+3 to {OUT_DIR}")
+    (OUT_DIR / "mcp.kicad_sch").write_text(mcp_sheet())
+    print(f"Wrote KiCad project + Sheets 1+2+3+4 to {OUT_DIR}")
 
 
 if __name__ == "__main__":

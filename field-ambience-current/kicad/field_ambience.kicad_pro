@@ -149,6 +149,10 @@
     [
       "17bd270c-7309-4c60-a88c-f7727be8d5a6",
       "OLED"
+    ],
+    [
+      "ae4d8abd-ab57-48bd-a18a-f37b38917ad2",
+      "MCP23017"
     ]
   ],
   "text_variables": {}
