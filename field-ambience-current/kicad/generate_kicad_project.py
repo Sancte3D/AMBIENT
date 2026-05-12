@@ -154,6 +154,7 @@ def kicad_pro() -> str:
         "sheets": [
             [det_uuid("root_sheet"), "Root"],
             [det_uuid("sheet_power_tree"), "PowerTree"],
+            [det_uuid("sheet_pico"), "Pico"],
         ],
         "text_variables": {},
     }
@@ -386,7 +387,163 @@ LIB_SYMBOLS = r"""
         (pin bidirectional line (at 7.62 2.54 180) (length 2.54)
           (name "I/O1" (effects (font (size 1.27 1.27))))
           (number "6" (effects (font (size 1.27 1.27)))))))
+    (symbol "Power:+3V3" (power) (pin_names (offset 0)) (in_bom yes) (on_board yes)
+      (property "Reference" "#PWR" (at 0 -3.81 0)
+        (effects (font (size 1.27 1.27)) hide))
+      (property "Value" "+3V3" (at 0 3.556 0)
+        (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (symbol "Power:+3V3_0_1"
+        (polyline (pts (xy -0.762 1.27) (xy 0 2.54)) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline (pts (xy 0 0) (xy 0 2.54)) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline (pts (xy 0 2.54) (xy 0.762 1.27)) (stroke (width 0) (type default)) (fill (type none))))
+      (symbol "Power:+3V3_1_1"
+        (pin power_in line (at 0 0 90) (length 0) hide
+          (name "+3V3" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))))
+    (symbol "Device:LED" (pin_numbers hide) (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
+      (property "Reference" "D" (at 0 2.54 0) (effects (font (size 1.27 1.27))))
+      (property "Value" "LED" (at 0 -2.54 0) (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (symbol "Device:LED_0_1"
+        (polyline (pts (xy -1.27 -1.27) (xy -1.27 1.27))
+          (stroke (width 0.254) (type default)) (fill (type none)))
+        (polyline (pts (xy -1.27 0) (xy 1.27 1.27) (xy 1.27 -1.27) (xy -1.27 0))
+          (stroke (width 0.254) (type default)) (fill (type none))))
+      (symbol "Device:LED_1_1"
+        (pin passive line (at -3.81 0 0) (length 2.54)
+          (name "K" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 3.81 0 180) (length 2.54)
+          (name "A" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27)))))))
+    (symbol "Switch:SW_Push" (pin_numbers hide) (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
+      (property "Reference" "SW" (at 1.27 2.54 0) (effects (font (size 1.27 1.27))))
+      (property "Value" "SW_Push" (at 0 -1.524 0) (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (symbol "Switch:SW_Push_0_1"
+        (circle (center -2.032 0) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline (pts (xy 0 1.27) (xy 0 2.032)) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline (pts (xy -2.032 1.27) (xy 2.032 3.302)) (stroke (width 0) (type default)) (fill (type none)))
+        (circle (center 2.032 0) (radius 0.508) (stroke (width 0) (type default)) (fill (type none))))
+      (symbol "Switch:SW_Push_1_1"
+        (pin passive line (at -5.08 0 0) (length 2.54)
+          (name "1" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 5.08 0 180) (length 2.54)
+          (name "2" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27)))))))
+    (symbol "Connector:Conn_01x03" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
+      (property "Reference" "J" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+      (property "Value" "Conn_01x03" (at 0 -5.08 0) (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (symbol "Connector:Conn_01x03_0_1"
+        (rectangle (start -1.27 3.81) (end 1.27 -3.81)
+          (stroke (width 0.254) (type default)) (fill (type none))))
+      (symbol "Connector:Conn_01x03_1_1"
+        (pin passive line (at 3.81 2.54 180) (length 2.54)
+          (name "Pin_1" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 3.81 0 180) (length 2.54)
+          (name "Pin_2" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 3.81 -2.54 180) (length 2.54)
+          (name "Pin_3" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))))
 """.strip()
+
+
+def _pico2_lib_symbol() -> str:
+    """Build the MCU:Pico2 40-pin module symbol inline.
+
+    Pin layout matches RP2350 / Pico 2 module 2.54mm header:
+      Left  pins 1..20  (top→bottom)
+      Right pins 40..21 (top→bottom)
+    """
+    pins_left = [
+        (1, "GP0", "bidirectional"),
+        (2, "GP1", "bidirectional"),
+        (3, "GND", "power_in"),
+        (4, "GP2", "bidirectional"),
+        (5, "GP3", "bidirectional"),
+        (6, "GP4", "bidirectional"),
+        (7, "GP5", "bidirectional"),
+        (8, "GND", "power_in"),
+        (9, "GP6", "bidirectional"),
+        (10, "GP7", "bidirectional"),
+        (11, "GP8", "bidirectional"),
+        (12, "GP9", "bidirectional"),
+        (13, "GND", "power_in"),
+        (14, "GP10", "bidirectional"),
+        (15, "GP11", "bidirectional"),
+        (16, "GP12", "bidirectional"),
+        (17, "GP13", "bidirectional"),
+        (18, "GND", "power_in"),
+        (19, "GP14", "bidirectional"),
+        (20, "GP15", "bidirectional"),
+    ]
+    # Right side numbered top-down 40..21:
+    pins_right = [
+        (40, "VBUS", "power_in"),
+        (39, "VSYS", "power_in"),
+        (38, "GND", "power_in"),
+        (37, "3V3_EN", "input"),
+        (36, "3V3_OUT", "power_out"),
+        (35, "ADC_VREF", "input"),
+        (34, "GP28", "bidirectional"),
+        (33, "AGND", "power_in"),
+        (32, "GP27", "bidirectional"),
+        (31, "GP26", "bidirectional"),
+        (30, "RUN", "input"),
+        (29, "GP22", "bidirectional"),
+        (28, "GND", "power_in"),
+        (27, "GP21", "bidirectional"),
+        (26, "GP20", "bidirectional"),
+        (25, "GP19", "bidirectional"),
+        (24, "GP18", "bidirectional"),
+        (23, "GND", "power_in"),
+        (22, "GP17", "bidirectional"),
+        (21, "GP16", "bidirectional"),
+    ]
+    # 20 pins per side × 2.54mm spacing centered on y=0
+    y_top = 24.13  # = (20-1)*2.54/2
+    rect_top = y_top + 2.54
+    rect_bot = -y_top - 2.54
+    out = ['    (symbol "MCU:Pico2" (in_bom yes) (on_board yes)']
+    out.append('      (property "Reference" "U" (at 0 31.75 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "Raspberry_Pi_Pico2" (at 0 29.21 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "https://datasheets.raspberrypi.com/picow/pico-2-datasheet.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "MCU:Pico2_0_1"')
+    out.append(f'        (rectangle (start -15 {rect_top}) (end 15 {rect_bot})')
+    out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
+    out.append('      (symbol "MCU:Pico2_1_1"')
+    # left-side pins
+    for idx, (num, name, ptype) in enumerate(pins_left):
+        y = y_top - idx * 2.54
+        out.append(
+            f'        (pin {ptype} line (at -17.54 {y:.3f} 0) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    # right-side pins
+    for idx, (num, name, ptype) in enumerate(pins_right):
+        y = y_top - idx * 2.54
+        out.append(
+            f'        (pin {ptype} line (at 17.54 {y:.3f} 180) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    out.append('        )')
+    out.append('      )')
+    return "\n".join(out)
+
+
+LIB_SYMBOLS = LIB_SYMBOLS + "\n" + _pico2_lib_symbol()
 
 
 def fmt_property(name: str, value: str, x: float, y: float, hide: bool = False) -> str:
@@ -409,6 +566,7 @@ def place_symbol(
     rotation: int = 0,
     seed_suffix: str = "",
     extra_props: dict[str, str] | None = None,
+    sheet_uuid_seed: str = "sheet_power_tree",
 ) -> str:
     """Render a placed instance of a symbol on the sheet."""
     sym_uuid = det_uuid(f"sym/{ref}/{seed_suffix}")
@@ -429,7 +587,7 @@ def place_symbol(
         f"    (uuid \"{sym_uuid}\")\n"
         + "\n".join(props)
         + f"\n    (instances\n      (project \"{PROJECT_NAME}\"\n"
-        f"        (path \"/{det_uuid('sheet_power_tree')}\" (reference \"{ref}\") (unit 1)))))\n"
+        f"        (path \"/{det_uuid(sheet_uuid_seed)}\" (reference \"{ref}\") (unit 1)))))\n"
     )
 
 
@@ -465,6 +623,26 @@ def hier_label(x: float, y: float, name: str, shape: str = "passive", rotation: 
 
 
 # ----------------------------------------------------------------------------
+# KiCad-Achsen-Konvention Helper:
+# lib_symbol-Pins nutzen Y-UP (math), Schematic-Placement nutzt Y-DOWN (screen).
+# Beim Platzieren: abs_pin_y = sym_y - local_pin_y (bei rotation=0).
+# Beim Rotation: erst Local-Pin rotieren, dann (Y-Komponente negieren, dann sym addieren).
+# Wir kapseln die Konversion in pin_abs() um Bug-Quellen zu eliminieren.
+# ----------------------------------------------------------------------------
+
+
+def pin_abs(sym_x: float, sym_y: float, local_x: float, local_y: float, rotation: int = 0) -> tuple[float, float]:
+    """Berechne absolute Pin-Position für einen Pin mit local (lx, ly) am Symbol (sx, sy, rot)."""
+    import math
+    rad = math.radians(rotation)
+    cos_r, sin_r = math.cos(rad), math.sin(rad)
+    # KiCad symbol rotation is CCW in lib-coord (Y-up). Rotated local:
+    rx = local_x * cos_r - local_y * sin_r
+    ry = local_x * sin_r + local_y * cos_r
+    return (sym_x + rx, sym_y - ry)
+
+
+# ----------------------------------------------------------------------------
 # Sheet 1 — Power Tree
 # Komponenten + Verdrahtung lt. SPEC v0.6 §1, §3:
 #   USB-C(VBUS) -> F1 (polyfuse 2A/4A) -> C_BULK (1000µF) -> +5V Rail
@@ -476,6 +654,13 @@ def hier_label(x: float, y: float, name: str, shape: str = "passive", rotation: 
 
 
 def power_tree_sheet() -> str:
+    """Sheet 1: Power Tree per SPEC v0.6 §3.
+
+    Y-DOWN convention: kleinere y = oben auf Schirm. lib_symbol-Pins werden
+    via abs_y = sym_y - local_y konvertiert. USB-C-Pin-Positionen sind als
+    explizite Konstanten dokumentiert um die Y-Achsen-Flip nie wieder zu
+    verlieren.
+    """
     sheet_uuid = det_uuid("sheet_power_tree")
     symbols: list[str] = []
     wires: list[str] = []
@@ -483,262 +668,256 @@ def power_tree_sheet() -> str:
     labels: list[str] = []
     hlabels: list[str] = []
 
-    # J1 USB-C connector @ (50, 80)
+    # USB-C J1 platziert @ (50, 80). Body-rect spannt y=67.30..102.86 absolut.
+    # Pin-Tabelle (alle absolut, berechnet via pin_abs(50, 80, local_x, local_y)):
+    #   left-VBUS:  A1 y=69.84 | A4 y=72.38 | B4 y=74.92 | B1 y=77.46
+    #   left-GND:   A12 y=82.54 | A9 y=85.08 | B9 y=87.62 | B12 y=90.16
+    #   right CC:   A5 (CC1) y=72.38 | B5 (CC2) y=74.92
+    #   right D±:   A6 (D+) y=77.46 | A7 (D-) y=80.0 | B6 (D+) y=82.54 | B7 (D-) y=85.08
+    #   right SBU:  A8 y=87.62 | B8 y=90.16
+    #   shield S1:  abs (50, 105.4)
+    J1_X, J1_Y = 50.0, 80.0
+    VBUS_PINS_Y = [69.84, 72.38, 74.92, 77.46]  # A1, A4, B4, B1
+    GND_PINS_Y = [82.54, 85.08, 87.62, 90.16]   # A12, A9, B9, B12
+    A5_CC1_Y, B5_CC2_Y = 72.38, 74.92
+    A6_DP_Y, A7_DN_Y, B6_DP_Y, B7_DN_Y = 77.46, 80.0, 82.54, 85.08
+    A8_SBU1_Y, B8_SBU2_Y = 87.62, 90.16
+    S1_SHIELD_X, S1_SHIELD_Y = 50.0, 105.4
+    # Rail position (+5V_USB) oberhalb des USB-C-Body, also kleinere y
+    RAIL_Y = 60.0
+    GND_LABEL_Y = 96.0  # GND-Bus unterhalb des USB-C-Body
+
     symbols.append(
         place_symbol(
             lib_id="Connector:USB_C_Receptacle",
             ref="J1",
             value="USB_C_Receptacle (TYPE-C-31-M-12, C165948)",
-            x=50,
-            y=80,
+            x=J1_X,
+            y=J1_Y,
             footprint="Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
             datasheet="https://datasheet.lcsc.com/lcsc/2004081102_Korean-Hroparts-Elec-TYPE-C-31-M-12_C165948.pdf",
             extra_props={"MPN": "TYPE-C-31-M-12", "LCSC": "C165948"},
             seed_suffix="J1",
         )
     )
-    # USB-C VBUS pins (A1,A4,B1,B4) -> common +5V node @ (35, 70..77.62)
-    # Pin A1 @ (50-15.24, 80+10.16) = (34.76, 90.16)
-    # → we treat USB-C pin positions relative to (50,80):
-    #   A1=VBUS @ (50-15.24, 80+10.16)=(34.76, 90.16)
-    #   A4=VBUS @ (34.76, 87.62)
-    #   B4=VBUS @ (34.76, 85.08)
-    #   B1=VBUS @ (34.76, 82.56)
-    # Verbindung der 4 VBUS-Pins durch Vertikalstrang bei x=30.48
-    for y in (90.16, 87.62, 85.08, 82.56):
-        wires.append(wire(34.76, y, 30.48, y, seed_suffix=f"vbus-stub-{y}"))
-    # Trunk segmentiert: jeder Segment-Endpunkt fällt mit einem Stub-Endpunkt zusammen.
-    # Analyzer folgt Connectivity nur über Wire-Endpoints, nicht über durchlaufende Mid-Points.
-    wires.append(wire(30.48, 82.56, 30.48, 85.08, seed_suffix="vbus-trunk-1"))
-    wires.append(wire(30.48, 85.08, 30.48, 87.62, seed_suffix="vbus-trunk-2"))
-    wires.append(wire(30.48, 87.62, 30.48, 90.16, seed_suffix="vbus-trunk-3"))
-    # 3-Wege bei (30.48, 87.62) und (30.48, 85.08): zwei Trunk-Segmente + Stub → Junction.
-    # 3-Wege bei (30.48, 90.16): trunk-top + stub_A1 + vbus-up → Junction.
-    junctions.extend(junction(30.48, y) for y in (90.16, 87.62, 85.08))
+    # ---- VBUS-Trunk: 4 Stubs (A1, A4, B4, B1) → Trunk x=30.48 → F1 → Rail
+    for py in VBUS_PINS_Y:
+        wires.append(wire(34.76, py, 30.48, py, seed_suffix=f"vbus-stub-{py}"))
+    # Trunk segmentiert (Analyzer folgt Wire-Endpoints, nicht Mid-Points)
+    for ya, yb in zip(VBUS_PINS_Y, VBUS_PINS_Y[1:]):
+        wires.append(wire(30.48, ya, 30.48, yb, seed_suffix=f"vbus-trunk-{ya}-{yb}"))
+    # Junctions an allen Trunk-Stub-Schnittpunkten (außer den zwei End-Pins die nur 2 Wires haben)
+    for py in VBUS_PINS_Y[1:-1]:
+        junctions.append(junction(30.48, py))
+    # Trunk-Top (kleinste y) → vertikal hoch zur Rail-Höhe
+    vbus_top = VBUS_PINS_Y[0]  # 69.84
+    wires.append(wire(30.48, vbus_top, 30.48, RAIL_Y, seed_suffix="vbus-up"))
+    # Junction am Trunk-Top (3-Wege: stub A1 + trunk-end + vbus-up)
+    junctions.append(junction(30.48, vbus_top))
 
-    # USB-C GND pins (A9,A12,B9,B12) -> Vertikalstrang bei x=30.48 nach unten
-    # A12=GND @ (34.76, 77.46)
-    # A9 =GND @ (34.76, 74.92)
-    # B9 =GND @ (34.76, 72.38)
-    # B12=GND @ (34.76, 69.84)
-    for y in (77.46, 74.92, 72.38, 69.84):
-        wires.append(wire(34.76, y, 30.48, y, seed_suffix=f"gnd-stub-{y}"))
-    # GND-Trunk segmentiert pro Junction-Punkt — siehe VBUS-Trunk-Kommentar.
-    wires.append(wire(30.48, 69.84, 30.48, 72.38, seed_suffix="gnd-trunk-1"))
-    wires.append(wire(30.48, 72.38, 30.48, 74.92, seed_suffix="gnd-trunk-2"))
-    wires.append(wire(30.48, 74.92, 30.48, 77.46, seed_suffix="gnd-trunk-3"))
-    junctions.extend(junction(30.48, y) for y in (77.46, 74.92, 72.38, 69.84))
+    # ---- GND-Trunk: 4 Stubs (A12, A9, B9, B12) → Trunk x=30.48 → unten zu GND-Bus
+    for py in GND_PINS_Y:
+        wires.append(wire(34.76, py, 30.48, py, seed_suffix=f"gnd-stub-{py}"))
+    for ya, yb in zip(GND_PINS_Y, GND_PINS_Y[1:]):
+        wires.append(wire(30.48, ya, 30.48, yb, seed_suffix=f"gnd-trunk-{ya}-{yb}"))
+    for py in GND_PINS_Y[1:-1]:
+        junctions.append(junction(30.48, py))
+    gnd_bottom = GND_PINS_Y[-1]  # 90.16
+    wires.append(wire(30.48, gnd_bottom, 30.48, GND_LABEL_Y, seed_suffix="gnd-down"))
+    junctions.append(junction(30.48, gnd_bottom))
+    # GND Power-Symbol unten am Trunk
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_USBCGND",
+            value="GND",
+            x=30.48,
+            y=GND_LABEL_Y,
+            seed_suffix="usbc-gnd",
+        )
+    )
 
-    # VBUS-trunk → F1 (polyfuse) @ (45, 95)
-    # F1 horizontal: pin1 at (45-3.81,95)=(41.19,95), pin2 at (45+3.81,95)=(48.81,95)
+    # ---- F1 Polyfuse auf der Rail @ (45, 60) horizontal.
+    # Polyfuse pin1 (local -3.81, 0) → abs (41.19, 60). pin2 (local +3.81, 0) → abs (48.81, 60).
     symbols.append(
         place_symbol(
             lib_id="Device:Polyfuse",
             ref="F1",
             value="2A/4A 1812 (MF-MSMF200, C210837)",
             x=45,
-            y=95,
+            y=RAIL_Y,
             footprint="Fuse:Fuse_1812_4532Metric",
             datasheet="https://www.bourns.com/docs/Product-Datasheets/mfmsmf.pdf",
             extra_props={"MPN": "MF-MSMF200", "LCSC": "C210837"},
             seed_suffix="F1",
         )
     )
-    # Trunk top → F1 left pin: from (30.48, 90.16) up to (30.48, 95).
-    # Die horizontale Verbindung zu F1 wird in Segmenten nach Power-Flag aufgebaut.
-    wires.append(wire(30.48, 90.16, 30.48, 95, seed_suffix="vbus-up"))
+    # VBUS-up endpoint (30.48, RAIL_Y) → F1 pin1 (41.19, RAIL_Y) als horizontaler Rail-Anfang
+    wires.append(wire(30.48, RAIL_Y, 41.19, RAIL_Y, seed_suffix="rail-pre-f1"))
 
-    # F1 right pin (48.81, 95) → +5V rail node (60, 95)
-    wires.append(wire(48.81, 95, 60, 95, seed_suffix="f1-to-rail"))
-
-    # +5V power flag on the rail
-    symbols.append(
-        place_symbol(
-            lib_id="Power:+5V",
-            ref="#PWR05",
-            value="+5V",
-            x=60,
-            y=92.46,  # symbol pin at y_pin = symbol_y + 2.54 (going up)
-            footprint="",
-            seed_suffix="pwr5v",
-        )
-    )
-    # power symbol pin is at the symbol's (at) y minus 2.54 (since pin offset 0)... actually
-    # the Power:+5V symbol has its pin at (0,0) and the arrow extends to +2.54y.
-    # We place the symbol at (60, 92.46), its pin is at (60, 92.46). Wire from (60,95) to (60,92.46).
-    wires.append(wire(60, 92.46, 60, 95, seed_suffix="rail-to-flag"))
-
-    # +5V_USB Power-Symbol auf die Rail (vor F1) — als definierte Net-Quelle
+    # ---- +5V_USB Power-Flag links von F1 auf der Rail (Y-DOWN: Pin oberhalb Symbol-Origin)
+    # Power:VBUS hat pin at (0, 0) local, mit Arrow-Vertices bei local +2.54y.
+    # Bei Y-DOWN: pin-anchor abs = (sx, sy - 0) = sy. Arrow zeigt nach oben (kleinere y).
+    # Wir platzieren das Symbol ON THE RAIL (sym_y=RAIL_Y). Pin sitzt direkt auf Rail.
     symbols.append(
         place_symbol(
             lib_id="Power:VBUS",
-            ref="#PWR02",
+            ref="#PWR_VBUS_FLAG",
             value="+5V_USB",
-            x=37,
-            y=92.46,  # pin am Trunk-Up-Wire bei y=95
+            x=35,
+            y=RAIL_Y,
             seed_suffix="vbus-flag",
         )
     )
-    wires.append(wire(37, 95, 37, 92.46, seed_suffix="vbus-flag-to-rail"))
-    junctions.append(junction(37, 95))
-    wires.append(wire(30.48, 95, 37, 95, seed_suffix="rail-vbus-flag-fill"))
-    wires.append(wire(37, 95, 41.19, 95, seed_suffix="rail-fill-after-flag"))
+    # Rail-Segment durch die Flag-Position: F1 erweitert über (35, RAIL_Y)
+    junctions.append(junction(35, RAIL_Y))
+    # (no separate stub: Rail-pre-f1 wire from 30.48 to 41.19 passes through x=35)
+    # But analyzer requires segmented wires! Replace single rail-pre-f1 wire with two segments.
+    wires.pop()  # remove rail-pre-f1
+    wires.append(wire(30.48, RAIL_Y, 35, RAIL_Y, seed_suffix="rail-30-35"))
+    wires.append(wire(35, RAIL_Y, 41.19, RAIL_Y, seed_suffix="rail-35-f1"))
 
-    # C_BULK (1000µF polarized) @ (65, 100): +pin@(65,103.81)=top, -pin@(65,96.19)=bottom
-    symbols.append(
-        place_symbol(
-            lib_id="Device:CP",
-            ref="C_BULK",
-            value="1000uF 10V SMD Elko",
-            x=65,
-            y=100,
-            footprint="Capacitor_SMD:CP_Elec_8x6.7",
-            seed_suffix="CBULK",
-        )
-    )
-    # Top pin (+5V): (65, 103.81) -> wire up to rail. Actually rail is at y=95, so
-    # CP placed at (65,100) gives pin1 at y=103.81 (top) and pin2 at y=96.19 (bottom).
-    # We want +5V at top: tie pin1 to rail.
-    wires.append(wire(65, 96.19, 65, 95, seed_suffix="cbulk-pin2-to-rail"))
-    junctions.append(junction(65, 95))
-    # Bottom pin -> GND label
-    wires.append(wire(65, 103.81, 65, 105, seed_suffix="cbulk-pin1-down"))
-    # Hmm wait - that's backwards. Let me fix: polarized cap, + on top. Pin 1 (top, +) goes to +5V, Pin 2 (bottom, -) goes to GND.
-    # KiCad Device:CP has pin 1 at y+3.81 (top), pin 2 at y-3.81 (bottom). So pin1=top, pin2=bottom.
-    # Placed at (65,100): pin1 at (65, 103.81), pin2 at (65, 96.19).
-    # We want pin1(+) to go to +5V rail at y=95 — but pin1 is at y=103.81 which is ABOVE 95.
-    # Solution: flip the cap. Place at (65, 90), so pin1 at (65, 93.81) — close to rail at y=95.
-    # Let me redo:
-    symbols.pop()  # remove the misplaced CP
-    wires.pop()
-    junctions.pop()
-    wires.pop()
-    symbols.append(
-        place_symbol(
-            lib_id="Device:CP",
-            ref="C_BULK",
-            value="1000uF 10V SMD Elko",
-            x=65,
-            y=99,  # pin1 (+) at y=102.81, pin2 (-) at y=95.19
-            footprint="Capacitor_SMD:CP_Elec_8x6.7",
-            seed_suffix="CBULK",
-        )
-    )
-    # pin2 (bottom, -) at y=95.19 → rail at y=95: wire (65,95.19) → (65,95)
-    wires.append(wire(65, 95.19, 65, 95, seed_suffix="cbulk-neg-to-rail-fix"))
-    # Hmm pin polarity: KiCad Device:CP convention — pin 1 is + (top, marked by rectangle fill).
-    # We want + on top connected to +5V. Rail is at y=95 below the cap top pin. So flip: place cap with pin1 toward rail.
-    # Actually let me just rotate the cap 180° so pin 1 (positive marker) is at bottom and connect to rail (which is below the cap body).
-    # Skip rotation complexity — instead place the cap *below* the rail with pin1 (top, +) connecting up to rail.
-    symbols.pop()
-    wires.pop()
-    symbols.append(
-        place_symbol(
-            lib_id="Device:CP",
-            ref="C_BULK",
-            value="1000uF 10V SMD Elko",
-            x=65,
-            y=98.81,  # pin1 (+) at y=102.62 — no good
-            footprint="Capacitor_SMD:CP_Elec_8x6.7",
-            seed_suffix="CBULK",
-        )
-    )
-    # Ugh. Just put cap with center at y=98.81, pin1 (top, +) at y=102.62, pin2 (bottom, -) at y=95.0.
-    # Then pin2 (which is -) is at y=95 which IS the rail. That's wrong polarity!
-    # OK: simpler. Rotate the cap to 180° so pin1 ends up at bottom.
-    symbols.pop()
-    symbols.append(
-        place_symbol(
-            lib_id="Device:CP",
-            ref="C_BULK",
-            value="1000uF 10V SMD Elko",
-            x=65,
-            y=98.81,
-            footprint="Capacitor_SMD:CP_Elec_8x6.7",
-            rotation=180,  # flip so pin1 (+) becomes bottom
-            extra_props={"MPN": "EEE-FK1A102P (Panasonic) o.ä.", "LCSC": "TBD"},
-            seed_suffix="CBULK",
-        )
-    )
-    # With rotation 180, pin1 originally at (0,3.81) becomes (0,-3.81). So at center (65, 98.81):
-    # pin1 (+) at (65, 95.0)  → connects to rail at y=95 ✓
-    # pin2 (-) at (65, 102.62) → connects down to GND
-    wires.append(wire(65, 95, 65, 96, seed_suffix="cbulk-pin1-to-rail"))  # tiny stub
-    junctions.append(junction(65, 95))
-    wires.append(wire(65, 102.62, 65, 105, seed_suffix="cbulk-pin2-down"))
-    labels.append(label(65, 106, "GND", rotation=0))
+    # ---- F1 pin2 → Rail nach rechts (48.81 → 110)
+    # CBULK an der Rail @ (65, sy), D2 TVS @ (55, sy)
+    # Rail-x-Positionen mit Junctions: 48.81, 55, 65, 80, 110
+    rail_xs = [48.81, 55, 65, 80, 110]
+    for xa, xb in zip(rail_xs, rail_xs[1:]):
+        wires.append(wire(xa, RAIL_Y, xb, RAIL_Y, seed_suffix=f"rail-{xa}-{xb}"))
+    # Junctions an allen Stützen außer Endpunkten
+    for x in rail_xs[1:-1]:
+        junctions.append(junction(x, RAIL_Y))
 
-    # CC1 pull-down: R2 = 5.1k from USB-C pin A5 (CC1) to GND
-    # USB-C CC1 pin @ (50+15.24, 80+7.62) = (65.24, 87.62)
+    # ---- C_BULK 1000µF polarized: pin1 (+) muss zur +5V_USB Rail
+    # Device:CP lib: pin 1 at local (0, +3.81), pin 2 at local (0, -3.81).
+    # Y-DOWN: pin1 abs = (sx, sy - 3.81). Wir wollen pin1 (+) auf Rail (y=RAIL_Y=60).
+    # → sy - 3.81 = 60 → sy = 63.81. C_BULK center @ (65, 63.81).
+    # pin1 (+) abs (65, 60), pin2 (-) abs (65, 67.62).
+    symbols.append(
+        place_symbol(
+            lib_id="Device:CP",
+            ref="C_BULK",
+            value="1000uF 10V SMD Elko",
+            x=65,
+            y=63.81,
+            footprint="Capacitor_SMD:CP_Elec_8x6.7",
+            extra_props={"MPN": "EEE-FK1A102P (Panasonic)", "LCSC": "TBD"},
+            seed_suffix="CBULK",
+        )
+    )
+    # pin1 (+) (65, 60) sits exactly on rail → connection via rail-segment
+    # pin2 (-) (65, 67.62) → GND via wire down
+    wires.append(wire(65, 67.62, 65, GND_LABEL_Y, seed_suffix="cbulk-neg-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_CBULK",
+            value="GND",
+            x=65,
+            y=GND_LABEL_Y,
+            seed_suffix="cbulk-gnd",
+        )
+    )
+
+    # ---- D2 TVS auf Rail. Device:D_TVS pin 1 (K) at local (-3.81, 0), pin 2 (A) at local (+3.81, 0).
+    # Bei rotation=270 (= -90 CCW = 90 CW): (lx, ly) → (ly, -lx). Pin 1 (-3.81, 0) → (0, 3.81).
+    # Abs pin 1 = (sx + 0, sy - 3.81). Wir wollen K auf Rail (y=60) → sy = 63.81.
+    # pin 2 (A) abs = (sx, sy + 3.81) = (55, 67.62). → GND.
+    symbols.append(
+        place_symbol(
+            lib_id="Device:D_TVS",
+            ref="D2",
+            value="SMAJ5.0A TVS (C113952)",
+            x=55,
+            y=63.81,
+            rotation=270,
+            footprint="Diode_SMD:D_SMA",
+            extra_props={"MPN": "SMAJ5.0A", "LCSC": "C113952"},
+            seed_suffix="D2",
+        )
+    )
+    wires.append(wire(55, 67.62, 55, GND_LABEL_Y, seed_suffix="d2-a-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_D2",
+            value="GND",
+            x=55,
+            y=GND_LABEL_Y,
+            seed_suffix="d2-gnd",
+        )
+    )
+
+    # ---- R2 CC1-Pulldown: A5 (CC1) abs (65.24, 72.38) → R2 → GND
+    # Device:R rotation=90: pin1 (0, 3.81) → (-3.81, 0). Abs pin1 = (sx - 3.81, sy).
+    # Wir wollen pin1 auf x=65.24 (A5-Stub-Ende), y=72.38 → sx = 69.05, sy = 72.38. Hmm
+    # Aber pin2 (0, -3.81) rotated → (3.81, 0). pin2 abs = (sx + 3.81, sy).
+    # Wir wollen pin2 nach rechts ins GND-Label. → R2 center @ (75, 72.38) gibt pin1 (71.19, 72.38), pin2 (78.81, 72.38).
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R2",
             value="5.1k 0603 (CC1 pull-down)",
             x=75,
-            y=87.62,
+            y=A5_CC1_Y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "RC0603FR-075K1L", "LCSC": "C23186"},
             seed_suffix="R2",
         )
     )
-    # R rotated 90° at (75,87.62): pin1 originally at (0,3.81)→(−3.81,0)→absolute (71.19, 87.62)
-    # pin2 originally at (0,−3.81) → (3.81,0) → absolute (78.81, 87.62)
-    wires.append(wire(65.24, 87.62, 71.19, 87.62, seed_suffix="cc1-to-r2"))
-    wires.append(wire(78.81, 87.62, 80, 87.62, seed_suffix="r2-to-gnd-stub"))
-    labels.append(label(80, 87.62, "GND"))
+    wires.append(wire(65.24, A5_CC1_Y, 71.19, A5_CC1_Y, seed_suffix="a5-to-r2"))
+    wires.append(wire(78.81, A5_CC1_Y, 82, A5_CC1_Y, seed_suffix="r2-to-gnd-stub"))
+    labels.append(label(82, A5_CC1_Y, "GND"))
 
-    # CC2 pull-down: R3 = 5.1k from USB-C pin B5 (CC2)
-    # USB-C CC2 pin @ (65.24, 85.08)
+    # ---- R3 CC2-Pulldown
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R3",
             value="5.1k 0603 (CC2 pull-down)",
             x=75,
-            y=85.08,
+            y=B5_CC2_Y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "RC0603FR-075K1L", "LCSC": "C23186"},
             seed_suffix="R3",
         )
     )
-    wires.append(wire(65.24, 85.08, 71.19, 85.08, seed_suffix="cc2-to-r3"))
-    wires.append(wire(78.81, 85.08, 80, 85.08, seed_suffix="r3-to-gnd-stub"))
-    labels.append(label(80, 85.08, "GND"))
+    wires.append(wire(65.24, B5_CC2_Y, 71.19, B5_CC2_Y, seed_suffix="b5-to-r3"))
+    wires.append(wire(78.81, B5_CC2_Y, 82, B5_CC2_Y, seed_suffix="r3-to-gnd-stub"))
+    labels.append(label(82, B5_CC2_Y, "GND"))
 
-    # ESD: D1 = USBLC6-2SC6 placed @ (95, 82.5)
-    # D± pins from USB-C: D+ @ A6 (65.24, 82.54), D- @ A7 (65.24, 80.0), D+ @ B6 (65.24, 77.46), D- @ B7 (65.24, 74.92)
-    # We connect A6+B6 (both D+) together at one line, A7+B7 (both D-) together — TYPE-C dual-orientation.
-    wires.append(wire(65.24, 82.54, 65.24, 77.46, seed_suffix="dp-strap"))
-    junctions.append(junction(65.24, 80.0))
-    wires.append(wire(65.24, 80.0, 88, 80.0, seed_suffix="dp-to-usblc6"))
-    labels.append(label(88, 80, "USB_DP"))
-    wires.append(wire(65.24, 80.0, 65.24, 74.92, seed_suffix="dn-strap"))  # extended
-    # Actually we want D+ separate from D-, so re-route D-:
-    # Wait: I just connected D+ (A6) to D- (A7) via that wire — wrong! Let me redo.
-    wires.pop()  # remove last "dn-strap"
-    wires.pop()  # remove "dp-to-usblc6"
-    wires.pop()  # remove "dp-strap"
-    junctions.pop()
-    # D+ (A6 and B6) bridged at x=65.24 between y=82.54 and y=77.46
-    # D- (A7 and B7) bridged at x=65.24 between y=80.0 and y=74.92
-    # Crossing problem — solve with separate horizontal exits.
-    # D+ A6 (65.24, 82.54) — direct out
-    wires.append(wire(65.24, 82.54, 88, 82.54, seed_suffix="dp-a6-out"))
-    # D+ B6 (65.24, 77.46) — out at different vertical, then bridge with D+ A6 via label
-    wires.append(wire(65.24, 77.46, 88, 77.46, seed_suffix="dp-b6-out"))
-    labels.append(label(88, 82.54, "USB_DP"))
-    labels.append(label(88, 77.46, "USB_DP"))  # same net via label
-    # D- A7 (65.24, 80.0) out
-    wires.append(wire(65.24, 80.0, 88, 80.0, seed_suffix="dn-a7-out"))
-    labels.append(label(88, 80.0, "USB_DN"))
-    # D- B7 (65.24, 74.92) out
-    wires.append(wire(65.24, 74.92, 88, 74.92, seed_suffix="dn-b7-out"))
-    labels.append(label(88, 74.92, "USB_DN"))
+    # ---- D+ / D- Bridging via Labels (USB-C dual-orientation hat doppelte D+/D-)
+    # D+ A6 @ y=77.46 und D+ B6 @ y=82.54 sollen identisches USB_DP-Netz haben.
+    # D- A7 @ y=80.0 und D- B7 @ y=85.08 sollen identisches USB_DN-Netz haben.
+    wires.append(wire(65.24, A6_DP_Y, 70, A6_DP_Y, seed_suffix="a6-out"))
+    labels.append(label(70, A6_DP_Y, "USB_DP"))
+    wires.append(wire(65.24, B6_DP_Y, 70, B6_DP_Y, seed_suffix="b6-out"))
+    labels.append(label(70, B6_DP_Y, "USB_DP"))
+    wires.append(wire(65.24, A7_DN_Y, 70, A7_DN_Y, seed_suffix="a7-out"))
+    labels.append(label(70, A7_DN_Y, "USB_DN"))
+    wires.append(wire(65.24, B7_DN_Y, 70, B7_DN_Y, seed_suffix="b7-out"))
+    labels.append(label(70, B7_DN_Y, "USB_DN"))
 
-    # D1: USBLC6-2SC6 placed @ (100, 80)
+    # ---- SBU1/SBU2 als NC mit Labels (verhindert ERC-dangling-wire-Warning)
+    wires.append(wire(65.24, A8_SBU1_Y, 70, A8_SBU1_Y, seed_suffix="a8-nc"))
+    labels.append(label(70, A8_SBU1_Y, "NC_SBU1"))
+    wires.append(wire(65.24, B8_SBU2_Y, 70, B8_SBU2_Y, seed_suffix="b8-nc"))
+    labels.append(label(70, B8_SBU2_Y, "NC_SBU2"))
+
+    # ---- USBLC6-2SC6 D1 @ (100, 80) — ESD-Schutz auf D+/D-
+    # Pin-Positionen abs (sym 100,80):
+    #   pin 1 I/O1 local (-7.62, +2.54) → abs (92.38, 77.46)  [identisch zu A6 D+!]
+    #   pin 2 GND  local (-7.62, 0)    → abs (92.38, 80.0)
+    #   pin 3 I/O2 local (-7.62, -2.54) → abs (92.38, 82.54)
+    #   pin 4 I/O2 local (+7.62, -2.54) → abs (107.62, 82.54)  [downstream]
+    #   pin 5 VBUS local (+7.62, 0)    → abs (107.62, 80.0)
+    #   pin 6 I/O1 local (+7.62, +2.54) → abs (107.62, 77.46)  [downstream]
+    #
+    # Topologie: I/O1 = D+ (USB upstream → downstream). I/O2 = D-.
+    # Pin 1 (upstream D+) ← Label USB_DP. Pin 6 (downstream D+) → PICO_USB_DP hier_label.
+    # Pin 3 (upstream D-) ← Label USB_DN. Pin 4 (downstream D-) → PICO_USB_DN hier_label.
+    # Pin 2 GND. Pin 5 → +5V_USB Rail-Anschluss.
     symbols.append(
         place_symbol(
             lib_id="Power_Protection:USBLC6-2SC6",
@@ -751,96 +930,57 @@ def power_tree_sheet() -> str:
             seed_suffix="D1",
         )
     )
-    # USBLC6 pins (placed at center 100,80):
-    # 1 I/O1 (left top)   @ (100-7.62, 80+2.54) = (92.38, 82.54)
-    # 2 GND  (left mid)   @ (92.38, 80.0)
-    # 3 I/O2 (left bot)   @ (92.38, 77.46)
-    # 4 I/O2 (right bot)  @ (107.62, 77.46)
-    # 5 VBUS (right mid)  @ (107.62, 80.0)
-    # 6 I/O1 (right top)  @ (107.62, 82.54)
-    # Wire pin1 (I/O1) ← USB_DP → label-bridge already done (USB_DP label at x=88)
-    # We need a wire from somewhere with USB_DP label to pin1.
-    # Easiest: drop another USB_DP label at (92.38, 82.54) and tie it directly.
-    wires.append(wire(92.38, 82.54, 90, 82.54, seed_suffix="usblc6-pin1-stub"))
-    labels.append(label(90, 82.54, "USB_DP"))
-    # Pin 3 (I/O2) = USB_DN
-    wires.append(wire(92.38, 77.46, 90, 77.46, seed_suffix="usblc6-pin3-stub"))
-    labels.append(label(90, 77.46, "USB_DN"))
-    # Pin 2 GND → GND label
-    wires.append(wire(92.38, 80, 90, 80, seed_suffix="usblc6-gnd-stub"))
-    labels.append(label(90, 80, "GND"))
-    # Pin 5 VBUS → +5V rail (place +5V label)
-    wires.append(wire(107.62, 80, 110, 80, seed_suffix="usblc6-vbus-stub"))
-    labels.append(label(110, 80, "+5V_USB"))
-    # Pins 4 and 6 are the "downstream" I/O (after ESD protection)
-    # → these are what actually go to the Pico USB peripheral
-    wires.append(wire(107.62, 82.54, 110, 82.54, seed_suffix="usblc6-pin6"))
-    hlabels.append(hier_label(110, 82.54, "PICO_USB_DP", shape="output", rotation=0))
-    wires.append(wire(107.62, 77.46, 110, 77.46, seed_suffix="usblc6-pin4"))
-    hlabels.append(hier_label(110, 77.46, "PICO_USB_DN", shape="output", rotation=0))
-
-    # USB-C Shield S1 → GND
-    # S1 pin @ (50, 80-25.4) = (50, 54.6)
-    wires.append(wire(50, 54.6, 50, 52, seed_suffix="shield-stub"))
-    labels.append(label(50, 52, "GND"))
-
-    # USB-C SBU1/2 (A8, B8) → NC for now; just labeled as NC
-    # A8 @ (65.24, 80-7.62) = (65.24, 72.38); B8 @ (65.24, 80-10.16) = (65.24, 69.84)
-    wires.append(wire(65.24, 72.38, 68, 72.38, seed_suffix="sbu1-nc"))
-    labels.append(label(68, 72.38, "NC_SBU1"))
-    wires.append(wire(65.24, 69.84, 68, 69.84, seed_suffix="sbu2-nc"))
-    labels.append(label(68, 69.84, "NC_SBU2"))
-
-    # GND consolidation — Power-Symbol auf den Trunk (statt nur Label-Bridge)
-    wires.append(wire(30.48, 69.84, 30.48, 67, seed_suffix="gnd-trunk-down"))
+    # Pin 1 (I/O1 upstream D+) @ y=77.46 — label-bridge zu USB_DP
+    wires.append(wire(92.38, 77.46, 88, 77.46, seed_suffix="d1-p1-stub"))
+    labels.append(label(88, 77.46, "USB_DP"))
+    # Pin 3 (I/O2 upstream D-) @ y=82.54 — label-bridge zu USB_DN
+    wires.append(wire(92.38, 82.54, 88, 82.54, seed_suffix="d1-p3-stub"))
+    labels.append(label(88, 82.54, "USB_DN"))
+    # Pin 2 (GND) @ y=80 — Power-Symbol direkt
+    wires.append(wire(92.38, 80, 88, 80, seed_suffix="d1-gnd-stub"))
     symbols.append(
         place_symbol(
             lib_id="Power:GND",
-            ref="#PWR01",
+            ref="#PWR_D1",
             value="GND",
-            x=30.48,
-            y=67,
-            seed_suffix="gnd-usbc",
+            x=88,
+            y=80,
+            rotation=90,  # Rotate so symbol body extends to the left of pin
+            seed_suffix="d1-gnd",
         )
     )
+    # Pin 5 (VBUS, +5V Reference für ESD) @ y=80 — Connect to +5V_USB rail at top
+    wires.append(wire(107.62, 80, 110, 80, seed_suffix="d1-vbus-stub"))
+    wires.append(wire(110, 80, 110, RAIL_Y, seed_suffix="d1-vbus-up"))
+    junctions.append(junction(110, RAIL_Y))
+    # Pin 6 (I/O1 downstream D+) @ y=77.46 → PICO_USB_DP hier_label
+    wires.append(wire(107.62, 77.46, 115, 77.46, seed_suffix="d1-p6-stub"))
+    hlabels.append(hier_label(115, 77.46, "PICO_USB_DP", shape="output", rotation=0))
+    # Pin 4 (I/O2 downstream D-) @ y=82.54 → PICO_USB_DN hier_label
+    wires.append(wire(107.62, 82.54, 115, 82.54, seed_suffix="d1-p4-stub"))
+    hlabels.append(hier_label(115, 82.54, "PICO_USB_DN", shape="output", rotation=0))
 
-    # D2: SMAJ5.0A TVS on +5V to GND, placed @ (55, 105)
-    # Vertikal: pin1 (K, cathode) at top -> +5V; pin2 (A, anode) at bottom -> GND
-    # D_TVS pin layout: pin1 K at x=-3.81 (left), pin2 A at x=+3.81 (right). Default horizontal.
-    # Rotate 90° so pin1 K goes up (to +5V). Originally (-3.81,0)→(0,-3.81) with rotation 90 (clockwise)
-    # Actually KiCad rotation is CCW. Let me just use rotation=270 (or equivalently -90):
-    # pin1 (-3.81,0) with rotation 270: (x,y)→(-y, x) so (-3.81,0)→(0,-3.81). Pin moves to (0,-3.81) from symbol origin.
-    # That means below center. We want K on top (going to +5V at y=95 which is above us at 105 — wait, larger y is "up" or "down" in KiCad?).
-    # KiCad: y=0 at top, y grows downward. So y=95 is ABOVE y=105 on screen. Rail is "above" D2 visually.
-    # D2 at center (55,105): rotation=270 puts pin1 at (55, 105-3.81)=(55, 101.19) [up-on-screen]. Good.
+    # ---- USB-C Shield S1 (local 0, -25.4 angle 90) → abs (50, 105.4)
+    # Y-DOWN: S1 sits below USB-C body. Connect to GND-Bus.
+    wires.append(wire(50, 105.4, 50, GND_LABEL_Y + 5, seed_suffix="shield-stub"))
     symbols.append(
         place_symbol(
-            lib_id="Device:D_TVS",
-            ref="D2",
-            value="SMAJ5.0A TVS (C113952)",
-            x=55,
-            y=105,
-            rotation=270,
-            footprint="Diode_SMD:D_SMA",
-            extra_props={"MPN": "SMAJ5.0A", "LCSC": "C113952"},
-            seed_suffix="D2",
+            lib_id="Power:GND",
+            ref="#PWR_SHIELD",
+            value="GND",
+            x=50,
+            y=GND_LABEL_Y + 5,
+            seed_suffix="shield-gnd",
         )
     )
-    # D2 K pin (top): (55, 101.19) → wire up to rail at y=95: vertical wire
-    wires.append(wire(55, 101.19, 55, 95, seed_suffix="d2-k-to-rail"))
-    junctions.append(junction(55, 95))
-    # D2 A pin (bottom): (55, 108.81) → GND label
-    wires.append(wire(55, 108.81, 55, 112, seed_suffix="d2-a-down"))
-    labels.append(label(55, 112, "GND"))
-    # Connect rail at y=95 across all the parts that tie to it (F1, +5V flag, C_BULK, D2 — already wired in piecemeal)
-    # The +5V rail spans x=48.81 (F1 right) to x=80 (right edge). Make sure it's one continuous net.
-    wires.append(wire(55, 95, 65, 95, seed_suffix="rail-d2-cbulk"))
 
-    # Hierarchical outputs to other sheets
-    hlabels.append(hier_label(110, 95, "+5V_OUT", shape="output", rotation=0))
-    wires.append(wire(60, 95, 110, 95, seed_suffix="rail-extend"))
-    hlabels.append(hier_label(110, 67, "GND_OUT", shape="passive", rotation=0))
-    wires.append(wire(30.48, 67, 110, 67, seed_suffix="gnd-rail"))
+    # ---- Hierarchical outputs nach rechts
+    # +5V_OUT auf der Rail (y=RAIL_Y, x=110)
+    hlabels.append(hier_label(115, RAIL_Y, "+5V_OUT", shape="output", rotation=0))
+    wires.append(wire(110, RAIL_Y, 115, RAIL_Y, seed_suffix="rail-to-hlbl"))
+    # GND_OUT — vom GND-Bus
+    wires.append(wire(30.48, GND_LABEL_Y, 115, GND_LABEL_Y, seed_suffix="gnd-bus"))
+    hlabels.append(hier_label(115, GND_LABEL_Y, "GND_OUT", shape="passive", rotation=0))
 
     # Sheet title block & paper size
     body = (
@@ -871,6 +1011,439 @@ def power_tree_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
+# Sheet 2 — Pico 2 (RP2350) + SWD + Reset + BOOTSEL + Status-LED
+# Pin-Allocation per SPEC v0.6 §5. Inputs: +5V_IN, GND, PICO_USB_DP/DN.
+# Outputs: +3V3_OUT (Pico SMPS) + alle GP-Funktionsleitungen zu Sheets 3-6.
+# ----------------------------------------------------------------------------
+
+
+def pico_sheet() -> str:
+    """Sheet 2: Pico 2 (RP2350) per SPEC v0.6 §5.
+
+    Y-DOWN convention durchgängig. Pin 1 oben (abs y=75.87), Pin 20 unten
+    (abs y=124.13). Symbol bei (100, 100), Pin-Anchors links bei x=82.46,
+    rechts bei x=117.54.
+    """
+    sheet_uuid = det_uuid("sheet_pico")
+    sus = "sheet_pico"
+    symbols: list[str] = []
+    wires: list[str] = []
+    junctions: list[str] = []
+    labels: list[str] = []
+    hlabels: list[str] = []
+
+    SYM_X, SYM_Y = 100.0, 100.0
+    PIN_L_X = 82.46  # Pin-Anchor x links
+    PIN_R_X = 117.54  # Pin-Anchor x rechts
+
+    def pico_left_pin_y(pin: int) -> float:
+        """Pin 1 oben (abs y=75.87), Pin 20 unten (abs y=124.13)."""
+        return 75.87 + (pin - 1) * 2.54
+
+    def pico_right_pin_y(pin: int) -> float:
+        """Pin 40 oben (abs y=75.87), Pin 21 unten (abs y=124.13)."""
+        return 75.87 + (40 - pin) * 2.54
+
+    # ---- U1 Pico 2 platzieren
+    symbols.append(
+        place_symbol(
+            lib_id="MCU:Pico2",
+            ref="U1",
+            value="Raspberry_Pi_Pico2 (RP2350)",
+            x=SYM_X,
+            y=SYM_Y,
+            footprint="MCU_Module:RPi_Pico_SMD_TH",
+            datasheet="https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf",
+            extra_props={
+                "MPN": "SC1631 (Pico 2 module)",
+                "LCSC": "TBD (separat bestellen, JLC stockt Pico-Module nicht)",
+            },
+            seed_suffix="U1",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- GND-Stub + Power-Symbol für einen Pico-GND-Pin
+    def attach_gnd(pin: int, side: str, ref_seed: str) -> None:
+        if side == "left":
+            py = pico_left_pin_y(pin)
+            sym_x = PIN_L_X - 5.0
+            wires.append(wire(PIN_L_X, py, sym_x, py, seed_suffix=f"u1-gnd-l-{pin}"))
+        else:
+            py = pico_right_pin_y(pin)
+            sym_x = PIN_R_X + 5.0
+            wires.append(wire(PIN_R_X, py, sym_x, py, seed_suffix=f"u1-gnd-r-{pin}"))
+        symbols.append(
+            place_symbol(
+                lib_id="Power:GND",
+                ref=f"#PWR_U1_GND_{ref_seed}",
+                value="GND",
+                x=sym_x,
+                y=py,
+                rotation=90 if side == "left" else 270,
+                seed_suffix=f"u1-gnd-{ref_seed}",
+                sheet_uuid_seed=sus,
+            )
+        )
+
+    for pin in (3, 8, 13, 18):
+        attach_gnd(pin, "left", f"L{pin}")
+    for pin in (23, 28, 33, 38):
+        attach_gnd(pin, "right", f"R{pin}")
+
+    # ---- VBUS (Pin 40, y=75.87) ← +5V_IN hierarchical input
+    p40_y = pico_right_pin_y(40)
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_PICO_VBUS",
+            value="+5V",
+            x=125,
+            y=p40_y,
+            rotation=270,
+            seed_suffix="pico-vbus-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    junctions.append(junction(125, p40_y))
+    junctions.append(junction(126, p40_y))
+    # Segmentiertes VBUS-Wire mit Junctions an x=125 (Flag) und x=126 (3V3_EN-Trunk)
+    wires.append(wire(PIN_R_X, p40_y, 125, p40_y, seed_suffix="u1-vbus-seg-1"))
+    wires.append(wire(125, p40_y, 126, p40_y, seed_suffix="u1-vbus-seg-2"))
+    wires.append(wire(126, p40_y, 130, p40_y, seed_suffix="u1-vbus-seg-3"))
+    hlabels.append(hier_label(130, p40_y, "+5V_IN", shape="input", rotation=180))
+
+    # ---- VSYS (Pin 39, y=78.41) — label PICO_VSYS für optional J5 0Ω-Bridge zu +5V
+    p39_y = pico_right_pin_y(39)
+    wires.append(wire(PIN_R_X, p39_y, 122, p39_y, seed_suffix="u1-vsys-stub"))
+    labels.append(label(122, p39_y, "PICO_VSYS"))
+
+    # ---- 3V3_EN (Pin 37, y=83.49) → tied to VBUS via Trunk bei x=126
+    p37_y = pico_right_pin_y(37)
+    wires.append(wire(PIN_R_X, p37_y, 126, p37_y, seed_suffix="u1-3v3en-stub"))
+    wires.append(wire(126, p37_y, 126, p40_y, seed_suffix="u1-3v3en-trunk"))
+
+    # ---- 3V3_OUT (Pin 36, y=86.03) — Pico SMPS → +3V3 power flag + hier_label
+    p36_y = pico_right_pin_y(36)
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+3V3",
+            ref="#PWR_PICO_3V3",
+            value="+3V3",
+            x=124,
+            y=p36_y,
+            rotation=270,
+            seed_suffix="pico-3v3-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    junctions.append(junction(124, p36_y))
+    wires.append(wire(PIN_R_X, p36_y, 124, p36_y, seed_suffix="u1-3v3out-seg-1"))
+    wires.append(wire(124, p36_y, 130, p36_y, seed_suffix="u1-3v3out-seg-2"))
+    hlabels.append(hier_label(130, p36_y, "+3V3_OUT", shape="output", rotation=180))
+
+    # ---- Decoupling C3 (10µF) + C4 (100nF) auf +3V3 (unter dem 3V3-Pin in Y-DOWN, also größere y)
+    # Device:C lib: pin1 (0, +3.81) abs (sx, sy-3.81). pin2 (0, -3.81) abs (sx, sy+3.81).
+    # Wir wollen pin1 auf +3V3 rail (y=p36_y=86.03) → sy = 89.84. pin2 abs (sx, 93.65).
+    c_y = 89.84
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C3",
+            value="10uF X5R 0805 (3V3 decoupling)",
+            x=135,
+            y=c_y,
+            footprint="Capacitor_SMD:C_0805_2012Metric",
+            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            seed_suffix="C3",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(130, p36_y, 135, p36_y, seed_suffix="c3-to-rail"))
+    junctions.append(junction(130, p36_y))
+    wires.append(wire(135, 93.65, 135, 96, seed_suffix="c3-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_C3",
+            value="GND",
+            x=135,
+            y=96,
+            seed_suffix="c3-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C4",
+            value="100nF X7R 0603 (3V3 decoupling)",
+            x=140,
+            y=c_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            seed_suffix="C4",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(135, p36_y, 140, p36_y, seed_suffix="c4-to-rail"))
+    junctions.append(junction(135, p36_y))
+    wires.append(wire(140, 93.65, 140, 96, seed_suffix="c4-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_C4",
+            value="GND",
+            x=140,
+            y=96,
+            seed_suffix="c4-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- RUN (Pin 30, y=101.27) — Reset via SW11 + Pull-up R_RUN auf +3V3
+    p30_y = pico_right_pin_y(30)
+    labels.append(label(125, p30_y, "RUN"))
+    # R_RUN rotation=0 vertikal: pin1 (top) abs (sx, sy-3.81), pin2 (bottom) abs (sx, sy+3.81).
+    # pin2 (bottom) auf RUN-Linie (y=p30_y=101.27) → sy = 97.46. pin1 (top) abs (130, 93.65) → +3V3 label.
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_RUN",
+            value="10k 0603 (RUN pull-up)",
+            x=130,
+            y=97.46,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="RRUN",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(130, 93.65, 130, 91, seed_suffix="rrun-up"))
+    labels.append(label(130, 91, "+3V3"))
+    junctions.append(junction(130, p30_y))
+    # SW11 (Reset) at (137, p30_y). pin1 abs (131.92, p30_y), pin2 abs (142.08, p30_y).
+    symbols.append(
+        place_symbol(
+            lib_id="Switch:SW_Push",
+            ref="SW11",
+            value="Reset 6mm SMD",
+            x=137,
+            y=p30_y,
+            footprint="Button_Switch_SMD:SW_SPST_TL3342",
+            extra_props={"MPN": "TL3342F160QG", "LCSC": "C720477"},
+            seed_suffix="SW11",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # RUN-Wire segmentiert: PIN_R_X → 125 (label) → 130 (junction R_RUN) → 131.92 (SW11 pin1)
+    wires.append(wire(PIN_R_X, p30_y, 125, p30_y, seed_suffix="run-seg-1"))
+    wires.append(wire(125, p30_y, 130, p30_y, seed_suffix="run-seg-2"))
+    wires.append(wire(130, p30_y, 131.92, p30_y, seed_suffix="run-seg-3"))
+    wires.append(wire(142.08, p30_y, 145, p30_y, seed_suffix="sw11-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_SW11",
+            value="GND",
+            x=145,
+            y=p30_y,
+            rotation=270,
+            seed_suffix="sw11-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- GP26 (Pin 31, y=98.73) → STATUS_LED via R19 (820Ω) + LED1 → GND
+    p31_y = pico_right_pin_y(31)
+    labels.append(label(120, p31_y, "STATUS_LED"))
+    # R19 rotation=90 horizontal: pin1 abs (sx-3.81, sy), pin2 abs (sx+3.81, sy).
+    # Wir wollen pin1 nahe Pico-pin31 (PIN_R_X=117.54). sx = 121.35 → pin1 (117.54, p31_y), pin2 (125.16, p31_y).
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R19",
+            value="820R 0603 (LED limit)",
+            x=121.35,
+            y=p31_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-07820RL", "LCSC": "C23253"},
+            seed_suffix="R19",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # LED rotation=180: pin1 (K) abs (sx+3.81, sy), pin2 (A) abs (sx-3.81, sy).
+    # Anode (pin2) faces left (von R19), Cathode (pin1) faces right (zu GND).
+    # R19 pin2 at (125.16, p31_y). LED pin2 at sx-3.81. → sx = 128.97. pin1 abs (132.78, p31_y).
+    symbols.append(
+        place_symbol(
+            lib_id="Device:LED",
+            ref="LED1",
+            value="warm white 0805 STATUS",
+            x=128.97,
+            y=p31_y,
+            rotation=180,
+            footprint="LED_SMD:LED_0805_2012Metric",
+            extra_props={"MPN": "Generic warm-white 2700K", "LCSC": "TBD"},
+            seed_suffix="LED1",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(125.16, p31_y, 125.16, p31_y, seed_suffix="r19-led-stub"))  # touching wire
+    wires.append(wire(132.78, p31_y, 135, p31_y, seed_suffix="led-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_LED1",
+            value="GND",
+            x=135,
+            y=p31_y,
+            rotation=270,
+            seed_suffix="led1-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- SWD-Header J4 (3-pin)
+    symbols.append(
+        place_symbol(
+            lib_id="Connector:Conn_01x03",
+            ref="J4",
+            value="SWD 1.27mm (SWCLK/GND/SWDIO)",
+            x=145,
+            y=115,
+            footprint="Connector_PinHeader_1.27mm:PinHeader_1x03_P1.27mm_Vertical",
+            extra_props={"MPN": "TC2030-IDC", "LCSC": "TBD"},
+            seed_suffix="J4",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # Conn_01x03 pin local (3.81, +2.54), (3.81, 0), (3.81, -2.54) at angle 180.
+    # Y-DOWN abs: pin1 (sx+3.81, sy-2.54), pin2 (sx+3.81, sy), pin3 (sx+3.81, sy+2.54).
+    # sym (145, 115): pin1 (148.81, 112.46), pin2 (148.81, 115), pin3 (148.81, 117.54).
+    wires.append(wire(148.81, 112.46, 152, 112.46, seed_suffix="j4-p1-swclk"))
+    labels.append(label(152, 112.46, "SWCLK"))
+    wires.append(wire(148.81, 115, 152, 115, seed_suffix="j4-p2-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_J4",
+            value="GND",
+            x=152,
+            y=115,
+            rotation=270,
+            seed_suffix="j4-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(148.81, 117.54, 152, 117.54, seed_suffix="j4-p3-swdio"))
+    labels.append(label(152, 117.54, "SWDIO"))
+
+    # ---- SW12 BOOTSEL (DNP für THT-Pico-Variante)
+    symbols.append(
+        place_symbol(
+            lib_id="Switch:SW_Push",
+            ref="SW12",
+            value="BOOTSEL 6mm SMD (DNP for THT-Pico)",
+            x=137,
+            y=70,
+            footprint="Button_Switch_SMD:SW_SPST_TL3342",
+            extra_props={"MPN": "TL3342F160QG", "LCSC": "C720477", "DNP": "true (THT-Pico)"},
+            seed_suffix="SW12",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(131.92, 70, 128, 70, seed_suffix="sw12-to-label"))
+    labels.append(label(128, 70, "PICO_BOOTSEL"))
+    wires.append(wire(142.08, 70, 145, 70, seed_suffix="sw12-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_SW12",
+            value="GND",
+            x=145,
+            y=70,
+            rotation=270,
+            seed_suffix="sw12-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- USB-Daten von Sheet 1 → Hier-Labels (Pico USB-Pads via TP2/TP3 verbunden in PCB-Layout)
+    hlabels.append(hier_label(75, 65, "PICO_USB_DP", shape="input", rotation=0))
+    hlabels.append(hier_label(75, 68, "PICO_USB_DN", shape="input", rotation=0))
+
+    # ---- Funktionale GP-Pins → Hierarchical Outputs per SPEC v0.6 §5
+    left_signals = {
+        1: "UART0_TX",     # GP0
+        2: "UART0_RX",     # GP1 (downstream R1 1k series in Sheet 7)
+        4: "I2C_SDA",      # GP2
+        5: "I2C_SCL",      # GP3
+        6: "OLED_MISO_NC", # GP4 (unused)
+        7: "OLED_CS",      # GP5
+        9: "OLED_SCK",     # GP6
+        10: "OLED_MOSI",   # GP7
+        11: "OLED_DC",     # GP8
+        12: "OLED_RES",    # GP9
+        14: "DRIVE_A",     # GP10
+        15: "DRIVE_B",     # GP11
+        16: "DRIVE_SW",    # GP12
+        17: "BRIGHT_A",    # GP13
+        19: "BRIGHT_B",    # GP14
+        20: "BRIGHT_SW",   # GP15
+    }
+    for pnum, netname in left_signals.items():
+        py = pico_left_pin_y(pnum)
+        wires.append(wire(PIN_L_X, py, 70, py, seed_suffix=f"u1-left-{pnum}"))
+        hlabels.append(hier_label(70, py, netname, shape="output", rotation=0))
+
+    right_signals = {
+        21: "DISPLAY_A",   # GP16
+        22: "DISPLAY_B",   # GP17
+        24: "DISPLAY_SW",  # GP18
+        25: "VOL_A",       # GP19
+        26: "VOL_B",       # GP20
+        27: "VOL_SW",      # GP21
+        29: "MCP_INT",     # GP22
+        32: "AMP_SHUTDOWN",# GP27
+        34: "AMP_MUTE",    # GP28
+        35: "ADC_VREF_NC", # ADC_VREF — DNP / tie via 47Ω ferrite externally if used
+    }
+    for pnum, netname in right_signals.items():
+        py = pico_right_pin_y(pnum)
+        wires.append(wire(PIN_R_X, py, 162, py, seed_suffix=f"u1-right-{pnum}"))
+        hlabels.append(hier_label(162, py, netname, shape="output", rotation=180))
+
+    body = (
+        f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
+        f'  (uuid "{sheet_uuid}")\n'
+        f'  (paper "A3")\n'
+        f'  (title_block\n'
+        f'    (title "Field Ambience PCB — Sheet 2: Pico 2 (RP2350)")\n'
+        f'    (date "2026-05-11")\n'
+        f'    (rev "0.6")\n'
+        f'    (company "Field Ambience Project")\n'
+        f'    (comment 1 "Per SPEC v0.6 §5")\n'
+        f'    (comment 2 "USB-C D+/- via TP2/TP3 (BOOTSEL drag-drop)")\n'
+        f'    (comment 3 "+3V3_OUT (Pico SMPS Pin 36) speist OLED VDDIO + MCP23017 + Pull-Ups")\n'
+        f'    (comment 4 "SW12 BOOTSEL DNP für THT-Pico-Variante"))\n'
+        "  (lib_symbols\n"
+        + LIB_SYMBOLS
+        + "\n  )\n"
+        + "".join(symbols)
+        + "".join(wires)
+        + "".join(junctions)
+        + "".join(labels)
+        + "".join(hlabels)
+        + f'  (sheet_instances\n    (path "/" (page "2")))\n'
+        ")\n"
+    )
+    return body
+
+
+# ----------------------------------------------------------------------------
 # Root schematic
 # ----------------------------------------------------------------------------
 
@@ -878,6 +1451,7 @@ def power_tree_sheet() -> str:
 def root_sheet() -> str:
     root_uuid = det_uuid("root_sheet")
     power_uuid = det_uuid("sheet_power_tree")
+    pico_uuid = det_uuid("sheet_pico")
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{root_uuid}")\n'
@@ -888,26 +1462,52 @@ def root_sheet() -> str:
         f'    (rev "0.6")\n'
         f'    (company "Field Ambience Project"))\n'
         f'  (lib_symbols)\n'
-        f'  (sheet (at 50 50) (size 60 30) (fields_autoplaced)\n'
+        # ---- Sheet 1: Power Tree ----
+        f'  (sheet (at 30 40) (size 60 50) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
         f'    (fill (color 0 0 0 0.0000))\n'
         f'    (uuid "{power_uuid}")\n'
-        f'    (property "Sheetname" "PowerTree" (at 50 49 0)\n'
+        f'    (property "Sheetname" "PowerTree" (at 30 39 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
-        f'    (property "Sheetfile" "power_tree.kicad_sch" (at 50 80.5 0)\n'
+        f'    (property "Sheetfile" "power_tree.kicad_sch" (at 30 90.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
-        f'    (pin "+5V_OUT" output (at 110 60 0)\n'
+        f'    (pin "+5V_OUT" output (at 90 50 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_5v")}"))\n'
-        f'    (pin "GND_OUT" passive (at 110 65 0)\n'
+        f'    (pin "GND_OUT" passive (at 90 55 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_gnd")}"))\n'
-        f'    (pin "PICO_USB_DP" output (at 110 70 0)\n'
+        f'    (pin "PICO_USB_DP" output (at 90 65 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_dp")}"))\n'
-        f'    (pin "PICO_USB_DN" output (at 110 75 0)\n'
+        f'    (pin "PICO_USB_DN" output (at 90 70 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_dn")}")))\n'
+        # ---- Sheet 2: Pico ----
+        f'  (sheet (at 130 40) (size 60 50) (fields_autoplaced)\n'
+        f'    (stroke (width 0.1524) (type solid))\n'
+        f'    (fill (color 0 0 0 0.0000))\n'
+        f'    (uuid "{pico_uuid}")\n'
+        f'    (property "Sheetname" "Pico" (at 130 39 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
+        f'    (property "Sheetfile" "pico.kicad_sch" (at 130 90.5 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
+        f'    (pin "+5V_IN" input (at 130 50 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("picopin_5v")}"))\n'
+        f'    (pin "PICO_USB_DP" input (at 130 65 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("picopin_dp")}"))\n'
+        f'    (pin "PICO_USB_DN" input (at 130 70 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("picopin_dn")}"))\n'
+        f'    (pin "+3V3_OUT" output (at 190 50 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_3v3")}")))\n'
+        # ---- Inter-sheet wires (Sheet 1 outputs → Sheet 2 inputs) ----
+        f'  (wire (pts (xy 90 50) (xy 130 50)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_5v")}"))\n'
+        f'  (wire (pts (xy 90 65) (xy 130 65)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dp")}"))\n'
+        f'  (wire (pts (xy 90 70) (xy 130 70)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dn")}"))\n'
         f'  (sheet_instances\n    (path "/" (page "1")))\n'
         ")\n"
     )
@@ -923,7 +1523,8 @@ def main() -> None:
     (OUT_DIR / f"{PROJECT_NAME}.kicad_pro").write_text(kicad_pro())
     (OUT_DIR / f"{PROJECT_NAME}.kicad_sch").write_text(root_sheet())
     (OUT_DIR / "power_tree.kicad_sch").write_text(power_tree_sheet())
-    print(f"Wrote KiCad project + Sheet 1 to {OUT_DIR}")
+    (OUT_DIR / "pico.kicad_sch").write_text(pico_sheet())
+    print(f"Wrote KiCad project + Sheets 1+2 to {OUT_DIR}")
 
 
 if __name__ == "__main__":
