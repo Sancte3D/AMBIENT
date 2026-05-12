@@ -155,6 +155,7 @@ def kicad_pro() -> str:
             [det_uuid("root_sheet"), "Root"],
             [det_uuid("sheet_power_tree"), "PowerTree"],
             [det_uuid("sheet_pico"), "Pico"],
+            [det_uuid("sheet_oled"), "OLED"],
         ],
         "text_variables": {},
     }
@@ -543,7 +544,38 @@ def _pico2_lib_symbol() -> str:
     return "\n".join(out)
 
 
-LIB_SYMBOLS = LIB_SYMBOLS + "\n" + _pico2_lib_symbol()
+def _conn_01xN_lib_symbol(n: int) -> str:
+    """Generic N-pin 1-row header symbol (pin 1 at top in lib Y-UP).
+
+    Pin local positions: x=+3.81, y=+top..-bottom (KiCad Y-UP). Pin angle 180.
+    Pins display from top (pin 1) to bottom (pin N) with 2.54mm spacing.
+    """
+    y_top = (n - 1) * 1.27  # half of (n-1)*2.54
+    rect_top = y_top + 2.54
+    rect_bot = -y_top - 2.54
+    out = [f'    (symbol "Connector:Conn_01x{n:02d}" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)']
+    out.append(f'      (property "Reference" "J" (at 0 {rect_top + 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append(f'      (property "Value" "Conn_01x{n:02d}" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append(f'      (symbol "Connector:Conn_01x{n:02d}_0_1"')
+    out.append(f'        (rectangle (start -1.27 {rect_top}) (end 1.27 {rect_bot})')
+    out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
+    out.append(f'      (symbol "Connector:Conn_01x{n:02d}_1_1"')
+    for idx in range(n):
+        ly = y_top - idx * 2.54
+        pin_num = idx + 1
+        out.append(
+            f'        (pin passive line (at 3.81 {ly:.3f} 180) (length 2.54)\n'
+            f'          (name "Pin_{pin_num}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{pin_num}" (effects (font (size 1.27 1.27)))))'
+        )
+    out.append('        )')
+    out.append('      )')
+    return "\n".join(out)
+
+
+LIB_SYMBOLS = LIB_SYMBOLS + "\n" + _pico2_lib_symbol() + "\n" + _conn_01xN_lib_symbol(16)
 
 
 def fmt_property(name: str, value: str, x: float, y: float, hide: bool = False) -> str:
@@ -1444,6 +1476,267 @@ def pico_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
+# Sheet 3 — OLED Header (ER-OLEDM032-1W 256×64 SSD1322) per SPEC v0.6 §6
+# 16-pin Header J3 + VDD/VBAT Decoupling. BS0=BS1=GND für 4-wire SPI mode.
+# Inputs: GND, +5V, +3V3, OLED_SCK/MOSI/CS/DC/RES (von Sheet 2 Pico).
+# ----------------------------------------------------------------------------
+
+
+def oled_sheet() -> str:
+    sheet_uuid = det_uuid("sheet_oled")
+    sus = "sheet_oled"
+    symbols: list[str] = []
+    wires: list[str] = []
+    junctions: list[str] = []
+    labels: list[str] = []
+    hlabels: list[str] = []
+
+    # J3 16-pin header @ (100, 100). Pin local x=+3.81 angle 180 → abs x=103.81.
+    # Pin 1 (top, local y=+19.05) abs y = 100 - 19.05 = 80.95.
+    # Pin 16 (bottom, local y=-19.05) abs y = 119.05.
+    # Pin spacing 2.54mm: pin N abs y = 80.95 + (N-1)*2.54.
+    J3_X, J3_Y = 100.0, 100.0
+    PIN_X = 103.81
+
+    def oled_pin_y(pin: int) -> float:
+        return 80.95 + (pin - 1) * 2.54
+
+    symbols.append(
+        place_symbol(
+            lib_id="Connector:Conn_01x16",
+            ref="J3",
+            value="OLED-Header 2.54mm (ER-OLEDM032-1W 256x64 SSD1322)",
+            x=J3_X,
+            y=J3_Y,
+            footprint="Connector_PinHeader_2.54mm:PinHeader_1x16_P2.54mm_Vertical",
+            datasheet="https://www.buydisplay.com/download/manual/ER-OLEDM032-1_Series_Datasheet.pdf",
+            extra_props={
+                "MPN": "ER-OLEDM032-1W (Buydisplay)",
+                "LCSC": "TBD (Modul, separat bestellen)",
+            },
+            seed_suffix="J3",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- Helper: attach a GND power-symbol direkt rechts vom Pin
+    def pin_to_gnd(pin: int, label_suffix: str) -> None:
+        py = oled_pin_y(pin)
+        wires.append(wire(PIN_X, py, 108, py, seed_suffix=f"j3-p{pin}-gnd"))
+        symbols.append(
+            place_symbol(
+                lib_id="Power:GND",
+                ref=f"#PWR_J3_GND_{label_suffix}",
+                value="GND",
+                x=108,
+                y=py,
+                rotation=270,
+                seed_suffix=f"j3-gnd-{label_suffix}",
+                sheet_uuid_seed=sus,
+            )
+        )
+
+    # ---- Helper: attach a hier_label rechts vom Pin
+    def pin_to_hier(pin: int, netname: str, shape: str = "input") -> None:
+        py = oled_pin_y(pin)
+        wires.append(wire(PIN_X, py, 112, py, seed_suffix=f"j3-p{pin}-hier"))
+        hlabels.append(hier_label(112, py, netname, shape=shape, rotation=180))
+
+    # ---- Helper: attach a plain label (für intra-Sheet-Bridging)
+    def pin_to_label(pin: int, name: str) -> None:
+        py = oled_pin_y(pin)
+        wires.append(wire(PIN_X, py, 108, py, seed_suffix=f"j3-p{pin}-lbl"))
+        labels.append(label(108, py, name))
+
+    # ---- Pin 1: VSS → GND
+    pin_to_gnd(1, "VSS")
+
+    # ---- Pin 2: VBAT → +5V (mit lokalem 10µF + 100nF Decoupling, neu in v0.6)
+    p2_y = oled_pin_y(2)
+    wires.append(wire(PIN_X, p2_y, 115, p2_y, seed_suffix="j3-p2-vbat-stub"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_OLED_VBAT",
+            value="+5V",
+            x=115,
+            y=p2_y,
+            rotation=270,
+            seed_suffix="oled-vbat-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    junctions.append(junction(115, p2_y))
+    # C6b = 10µF X5R 0805 lokal an VBAT pin
+    # Device:C lib: pin1 (0, +3.81) abs (sx, sy-3.81). pin2 (0, -3.81) abs (sx, sy+3.81).
+    # Wir wollen pin1 auf VBAT-Linie (y=p2_y) → sy = p2_y + 3.81.
+    c6b_x = 120
+    c6b_y = p2_y + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C6b",
+            value="10uF X5R 0805 (VBAT bulk)",
+            x=c6b_x,
+            y=c6b_y,
+            footprint="Capacitor_SMD:C_0805_2012Metric",
+            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            seed_suffix="C6b",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(115, p2_y, 120, p2_y, seed_suffix="j3-p2-to-c6b"))
+    wires.append(wire(120, c6b_y + 3.81, 120, c6b_y + 6.0, seed_suffix="c6b-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_C6b",
+            value="GND",
+            x=120,
+            y=c6b_y + 6.0,
+            seed_suffix="c6b-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # C6c = 100nF X7R 0603 lokal an VBAT pin
+    c6c_x = 125
+    c6c_y = c6b_y
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C6c",
+            value="100nF X7R 0603 (VBAT HF)",
+            x=c6c_x,
+            y=c6c_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            seed_suffix="C6c",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(120, p2_y, 125, p2_y, seed_suffix="j3-p2-to-c6c"))
+    junctions.append(junction(120, p2_y))
+    wires.append(wire(125, c6c_y + 3.81, 125, c6c_y + 6.0, seed_suffix="c6c-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_C6c",
+            value="GND",
+            x=125,
+            y=c6c_y + 6.0,
+            seed_suffix="c6c-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- Pin 3: VDD → +3V3 (mit lokalem 100nF Decoupling C6)
+    p3_y = oled_pin_y(3)
+    wires.append(wire(PIN_X, p3_y, 115, p3_y, seed_suffix="j3-p3-vdd-stub"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+3V3",
+            ref="#PWR_OLED_VDD",
+            value="+3V3",
+            x=115,
+            y=p3_y,
+            rotation=270,
+            seed_suffix="oled-vdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    junctions.append(junction(115, p3_y))
+    c6_x = 120
+    c6_y = p3_y + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C6",
+            value="100nF X7R 0603 (VDD logic)",
+            x=c6_x,
+            y=c6_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            seed_suffix="C6",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(115, p3_y, 120, p3_y, seed_suffix="j3-p3-to-c6"))
+    wires.append(wire(120, c6_y + 3.81, 120, c6_y + 6.0, seed_suffix="c6-to-gnd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:GND",
+            ref="#PWR_C6",
+            value="GND",
+            x=120,
+            y=c6_y + 6.0,
+            seed_suffix="c6-gnd",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- Pin 4: NC (no connection) — separate Label um Dangling-Wire-Warning zu vermeiden
+    pin_to_label(4, "NC_J3_4")
+
+    # ---- Pin 5: BS1 → GND (4-wire SPI mode)
+    pin_to_gnd(5, "BS1")
+
+    # ---- Pin 6: BS0 → GND (4-wire SPI mode)
+    pin_to_gnd(6, "BS0")
+
+    # ---- Pin 7: RES# → OLED_RES (Pico GP9 input)
+    pin_to_hier(7, "OLED_RES")
+
+    # ---- Pin 8: CS# → OLED_CS (Pico GP5 input)
+    pin_to_hier(8, "OLED_CS")
+
+    # ---- Pin 9: D/C# → OLED_DC (Pico GP8 input)
+    pin_to_hier(9, "OLED_DC")
+
+    # ---- Pin 10: E or R/W# → GND (4-wire SPI)
+    pin_to_gnd(10, "E")
+
+    # ---- Pin 11: R/W# or E → GND (4-wire SPI)
+    pin_to_gnd(11, "RW")
+
+    # ---- Pin 12: SCLK → OLED_SCK (Pico GP6 input)
+    pin_to_hier(12, "OLED_SCK")
+
+    # ---- Pin 13: SDIN → OLED_MOSI (Pico GP7 input)
+    pin_to_hier(13, "OLED_MOSI")
+
+    # ---- Pin 14-16: NC — separate Labels
+    pin_to_label(14, "NC_J3_14")
+    pin_to_label(15, "NC_J3_15")
+    pin_to_label(16, "NC_J3_16")
+
+    body = (
+        f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
+        f'  (uuid "{sheet_uuid}")\n'
+        f'  (paper "A3")\n'
+        f'  (title_block\n'
+        f'    (title "Field Ambience PCB — Sheet 3: OLED (ER-OLEDM032-1W)")\n'
+        f'    (date "2026-05-12")\n'
+        f'    (rev "0.6")\n'
+        f'    (company "Field Ambience Project")\n'
+        f'    (comment 1 "Per SPEC v0.6 §6")\n'
+        f'    (comment 2 "256x64 SSD1322 OLED, 4-wire SPI mode (BS0=BS1=GND)")\n'
+        f'    (comment 3 "VBAT auf +5V (250mA peak), VDDIO auf +3V3 (Logic)")\n'
+        f'    (comment 4 "Modul-Loetbruecken pruefen bei Empfang"))\n'
+        "  (lib_symbols\n"
+        + LIB_SYMBOLS
+        + "\n  )\n"
+        + "".join(symbols)
+        + "".join(wires)
+        + "".join(junctions)
+        + "".join(labels)
+        + "".join(hlabels)
+        + f'  (sheet_instances\n    (path "/" (page "3")))\n'
+        ")\n"
+    )
+    return body
+
+
+# ----------------------------------------------------------------------------
 # Root schematic
 # ----------------------------------------------------------------------------
 
@@ -1452,24 +1745,25 @@ def root_sheet() -> str:
     root_uuid = det_uuid("root_sheet")
     power_uuid = det_uuid("sheet_power_tree")
     pico_uuid = det_uuid("sheet_pico")
+    oled_uuid = det_uuid("sheet_oled")
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{root_uuid}")\n'
         f'  (paper "A4")\n'
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Root")\n'
-        f'    (date "2026-05-11")\n'
+        f'    (date "2026-05-12")\n'
         f'    (rev "0.6")\n'
         f'    (company "Field Ambience Project"))\n'
         f'  (lib_symbols)\n'
         # ---- Sheet 1: Power Tree ----
-        f'  (sheet (at 30 40) (size 60 50) (fields_autoplaced)\n'
+        f'  (sheet (at 30 40) (size 60 60) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
         f'    (fill (color 0 0 0 0.0000))\n'
         f'    (uuid "{power_uuid}")\n'
         f'    (property "Sheetname" "PowerTree" (at 30 39 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
-        f'    (property "Sheetfile" "power_tree.kicad_sch" (at 30 90.5 0)\n'
+        f'    (property "Sheetfile" "power_tree.kicad_sch" (at 30 100.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
         f'    (pin "+5V_OUT" output (at 90 50 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
@@ -1477,37 +1771,82 @@ def root_sheet() -> str:
         f'    (pin "GND_OUT" passive (at 90 55 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_gnd")}"))\n'
-        f'    (pin "PICO_USB_DP" output (at 90 65 0)\n'
+        f'    (pin "PICO_USB_DP" output (at 90 75 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_dp")}"))\n'
-        f'    (pin "PICO_USB_DN" output (at 90 70 0)\n'
+        f'    (pin "PICO_USB_DN" output (at 90 80 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_dn")}")))\n'
         # ---- Sheet 2: Pico ----
-        f'  (sheet (at 130 40) (size 60 50) (fields_autoplaced)\n'
+        f'  (sheet (at 130 40) (size 60 60) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
         f'    (fill (color 0 0 0 0.0000))\n'
         f'    (uuid "{pico_uuid}")\n'
         f'    (property "Sheetname" "Pico" (at 130 39 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
-        f'    (property "Sheetfile" "pico.kicad_sch" (at 130 90.5 0)\n'
+        f'    (property "Sheetfile" "pico.kicad_sch" (at 130 100.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
         f'    (pin "+5V_IN" input (at 130 50 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_5v")}"))\n'
-        f'    (pin "PICO_USB_DP" input (at 130 65 180)\n'
+        f'    (pin "PICO_USB_DP" input (at 130 75 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_dp")}"))\n'
-        f'    (pin "PICO_USB_DN" input (at 130 70 180)\n'
+        f'    (pin "PICO_USB_DN" input (at 130 80 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_dn")}"))\n'
         f'    (pin "+3V3_OUT" output (at 190 50 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
-        f'      (uuid "{det_uuid("picopin_3v3")}")))\n'
-        # ---- Inter-sheet wires (Sheet 1 outputs → Sheet 2 inputs) ----
+        f'      (uuid "{det_uuid("picopin_3v3")}"))\n'
+        f'    (pin "OLED_SCK" output (at 190 60 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_osck")}"))\n'
+        f'    (pin "OLED_MOSI" output (at 190 65 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_omosi")}"))\n'
+        f'    (pin "OLED_CS" output (at 190 70 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_ocs")}"))\n'
+        f'    (pin "OLED_DC" output (at 190 75 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_odc")}"))\n'
+        f'    (pin "OLED_RES" output (at 190 80 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_ores")}")))\n'
+        # ---- Sheet 3: OLED ----
+        f'  (sheet (at 230 40) (size 60 60) (fields_autoplaced)\n'
+        f'    (stroke (width 0.1524) (type solid))\n'
+        f'    (fill (color 0 0 0 0.0000))\n'
+        f'    (uuid "{oled_uuid}")\n'
+        f'    (property "Sheetname" "OLED" (at 230 39 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
+        f'    (property "Sheetfile" "oled.kicad_sch" (at 230 100.5 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
+        f'    (pin "OLED_SCK" input (at 230 60 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("oledpin_sck")}"))\n'
+        f'    (pin "OLED_MOSI" input (at 230 65 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("oledpin_mosi")}"))\n'
+        f'    (pin "OLED_CS" input (at 230 70 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("oledpin_cs")}"))\n'
+        f'    (pin "OLED_DC" input (at 230 75 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("oledpin_dc")}"))\n'
+        f'    (pin "OLED_RES" input (at 230 80 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("oledpin_res")}")))\n'
+        # ---- Inter-sheet wires Sheet 1 → Sheet 2 ----
         f'  (wire (pts (xy 90 50) (xy 130 50)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_5v")}"))\n'
-        f'  (wire (pts (xy 90 65) (xy 130 65)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dp")}"))\n'
-        f'  (wire (pts (xy 90 70) (xy 130 70)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dn")}"))\n'
+        f'  (wire (pts (xy 90 75) (xy 130 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dp")}"))\n'
+        f'  (wire (pts (xy 90 80) (xy 130 80)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dn")}"))\n'
+        # ---- Inter-sheet wires Sheet 2 → Sheet 3 (OLED SPI bus) ----
+        f'  (wire (pts (xy 190 60) (xy 230 60)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_osck")}"))\n'
+        f'  (wire (pts (xy 190 65) (xy 230 65)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_omosi")}"))\n'
+        f'  (wire (pts (xy 190 70) (xy 230 70)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ocs")}"))\n'
+        f'  (wire (pts (xy 190 75) (xy 230 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_odc")}"))\n'
+        f'  (wire (pts (xy 190 80) (xy 230 80)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ores")}"))\n'
         f'  (sheet_instances\n    (path "/" (page "1")))\n'
         ")\n"
     )
@@ -1524,7 +1863,8 @@ def main() -> None:
     (OUT_DIR / f"{PROJECT_NAME}.kicad_sch").write_text(root_sheet())
     (OUT_DIR / "power_tree.kicad_sch").write_text(power_tree_sheet())
     (OUT_DIR / "pico.kicad_sch").write_text(pico_sheet())
-    print(f"Wrote KiCad project + Sheets 1+2 to {OUT_DIR}")
+    (OUT_DIR / "oled.kicad_sch").write_text(oled_sheet())
+    print(f"Wrote KiCad project + Sheets 1+2+3 to {OUT_DIR}")
 
 
 if __name__ == "__main__":
