@@ -157,6 +157,7 @@ def kicad_pro() -> str:
             [det_uuid("sheet_pico"), "Pico"],
             [det_uuid("sheet_oled"), "OLED"],
             [det_uuid("sheet_mcp"), "MCP23017"],
+            [det_uuid("sheet_encoder"), "Encoders"],
         ],
         "text_variables": {},
     }
@@ -644,11 +645,50 @@ def _mcp23017_lib_symbol() -> str:
     return "\n".join(out)
 
 
+def _rotary_encoder_switch_lib_symbol() -> str:
+    """EC11 Rotary Encoder mit integriertem Push-Switch (5-Pin).
+
+    Pin-Layout:
+        Pin 1 (A)   links oben    local (-5.08, +5.08)
+        Pin 2 (B)   links mitte   local (-5.08, 0)
+        Pin 3 (C)   links unten   local (-5.08, -5.08) — Common, to GND
+        Pin 4 (SW1) rechts oben   local (+5.08, +2.54)
+        Pin 5 (SW2) rechts unten  local (+5.08, -2.54) — to GND
+    """
+    return r"""
+    (symbol "Encoder:Rotary_Encoder_Switch" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)
+      (property "Reference" "EN" (at 0 9.144 0) (effects (font (size 1.27 1.27))))
+      (property "Value" "Rotary_Encoder_Switch" (at 0 -9.144 0) (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "https://www.bourns.com/docs/Product-Datasheets/PEC11R.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (symbol "Encoder:Rotary_Encoder_Switch_0_1"
+        (rectangle (start -2.54 7.62) (end 2.54 -7.62)
+          (stroke (width 0.254) (type default)) (fill (type none))))
+      (symbol "Encoder:Rotary_Encoder_Switch_1_1"
+        (pin passive line (at -5.08 5.08 0) (length 2.54)
+          (name "A" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at -5.08 0 0) (length 2.54)
+          (name "B" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at -5.08 -5.08 0) (length 2.54)
+          (name "C" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 5.08 2.54 180) (length 2.54)
+          (name "SW1" (effects (font (size 1.27 1.27))))
+          (number "4" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 5.08 -2.54 180) (length 2.54)
+          (name "SW2" (effects (font (size 1.27 1.27))))
+          (number "5" (effects (font (size 1.27 1.27)))))))
+""".strip()
+
+
 LIB_SYMBOLS = (
     LIB_SYMBOLS
     + "\n" + _pico2_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(16)
     + "\n" + _mcp23017_lib_symbol()
+    + "\n" + _rotary_encoder_switch_lib_symbol()
 )
 
 
@@ -2193,6 +2233,234 @@ def mcp_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
+# Sheet 5 — 4× EC11 Encoder + RC-Debounce per SPEC v0.6 §5/§M4
+# 4 Encoder (Drive, Brightness, Display, Volume) à 3 Signale (A, B, SW).
+# Pull-Ups: 10k auf jeden Signal-Pin zu +3V3.
+# Debounce: 100nF auf A/B-Linien zu GND (v0.6 M4-Fix von 10nF auf 100nF).
+# Inputs: +3V3, GND. Outputs: DRIVE_A/B/SW, BRIGHT_A/B/SW, DISPLAY_A/B/SW, VOL_A/B/SW.
+# ----------------------------------------------------------------------------
+
+
+def encoder_sheet() -> str:
+    sheet_uuid = det_uuid("sheet_encoder")
+    sus = "sheet_encoder"
+    symbols: list[str] = []
+    wires: list[str] = []
+    junctions: list[str] = []
+    labels: list[str] = []
+    hlabels: list[str] = []
+
+    def attach_gnd(x: float, y: float, ref: str) -> None:
+        symbols.append(
+            place_symbol(
+                lib_id="Power:GND",
+                ref=f"#PWR_{ref}",
+                value="GND",
+                x=x,
+                y=y,
+                rotation=270,
+                seed_suffix=f"gnd-{ref}",
+                sheet_uuid_seed=sus,
+            )
+        )
+
+    def place_one_encoder(en_num: int, sy: float, net_prefix: str,
+                          r_a: int, r_b: int, r_sw: int,
+                          c_a: int, c_b: int) -> None:
+        """Platziere einen EC11 + Pull-Ups + Debounce-Caps + Hier-Labels."""
+        sx = 140.0
+        # Pin Absolutpositionen (sym (sx, sy), KiCad Y-DOWN abs = sym - local_y):
+        a_x, a_y = sx - 5.08, sy - 5.08     # Pin 1 A
+        b_x, b_y = sx - 5.08, sy            # Pin 2 B
+        c_x, c_y = sx - 5.08, sy + 5.08     # Pin 3 C → GND
+        sw1_x, sw1_y = sx + 5.08, sy - 2.54  # Pin 4 SW1 → Signal
+        sw2_x, sw2_y = sx + 5.08, sy + 2.54  # Pin 5 SW2 → GND
+
+        # ---- EC11 Symbol
+        symbols.append(
+            place_symbol(
+                lib_id="Encoder:Rotary_Encoder_Switch",
+                ref=f"EN{en_num}",
+                value=f"EC11 + push ({net_prefix})",
+                x=sx,
+                y=sy,
+                footprint="Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm",
+                datasheet="https://www.bourns.com/docs/Product-Datasheets/PEC11R.pdf",
+                extra_props={
+                    "MPN": "PEC11R-4215F-S0024",
+                    "LCSC": "TBD (mehrere EC11-Varianten verfügbar)",
+                },
+                seed_suffix=f"EN{en_num}",
+                sheet_uuid_seed=sus,
+            )
+        )
+
+        # ---- A-Line: Pull-Up R + Debounce-Cap C + Hier-Label
+        # R rot=0 vertikal: pin1 abs (sym_x, sym_y-3.81) (oben, +3V3), pin2 abs (sym_x, sym_y+3.81) (unten, Signal)
+        # → für pin2 auf A-Line (y=a_y): sym_y = a_y - 3.81. pin1 abs = a_y - 7.62 → +3V3.
+        r_a_sym_y = a_y - 3.81
+        symbols.append(
+            place_symbol(
+                lib_id="Device:R",
+                ref=f"R{r_a}",
+                value="10k 0603 (A pull-up)",
+                x=128,
+                y=r_a_sym_y,
+                footprint="Resistor_SMD:R_0603_1608Metric",
+                extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+                seed_suffix=f"R{r_a}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        # R pin2 abs (128, a_y) connect to A-line
+        wires.append(wire(128, a_y, a_x, a_y, seed_suffix=f"en{en_num}-a-to-r"))
+        # R pin1 abs (128, a_y - 7.62) → +3V3 label
+        wires.append(wire(128, a_y - 7.62, 128, a_y - 10, seed_suffix=f"en{en_num}-r{r_a}-to-3v3"))
+        labels.append(label(128, a_y - 10, "+3V3"))
+
+        # C debounce — vertikal. C pin1 abs (sym_x, sym_y-3.81) (oben), pin2 abs (sym_x, sym_y+3.81) (unten, GND).
+        # Für pin1 auf A-Line: sym_y = a_y + 3.81. pin2 abs = a_y + 7.62.
+        c_a_sym_y = a_y + 3.81
+        symbols.append(
+            place_symbol(
+                lib_id="Device:C",
+                ref=f"C{c_a}",
+                value="100nF X7R 0603 (A debounce, v0.6 M4)",
+                x=122,
+                y=c_a_sym_y,
+                footprint="Capacitor_SMD:C_0603_1608Metric",
+                extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+                seed_suffix=f"C{c_a}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        # C pin1 (122, a_y) on A-line, pin2 (122, a_y+7.62) to GND
+        wires.append(wire(122, a_y, 128, a_y, seed_suffix=f"en{en_num}-c-to-r-a"))
+        junctions.append(junction(128, a_y))
+        wires.append(wire(122, a_y + 7.62, 122, a_y + 10, seed_suffix=f"en{en_num}-c{c_a}-to-gnd"))
+        attach_gnd(122, a_y + 10, f"C{c_a}")
+
+        # A-Line bis hier-Label nach links
+        wires.append(wire(122, a_y, 110, a_y, seed_suffix=f"en{en_num}-a-to-hlbl"))
+        junctions.append(junction(122, a_y))
+        hlabels.append(hier_label(110, a_y, f"{net_prefix}_A", shape="output", rotation=0))
+
+        # ---- B-Line: Pull-Up R + Debounce-Cap C + Hier-Label
+        r_b_sym_y = b_y - 3.81
+        symbols.append(
+            place_symbol(
+                lib_id="Device:R",
+                ref=f"R{r_b}",
+                value="10k 0603 (B pull-up)",
+                x=132,
+                y=r_b_sym_y,
+                footprint="Resistor_SMD:R_0603_1608Metric",
+                extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+                seed_suffix=f"R{r_b}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        # R pin2 abs (132, b_y) — but B-line is at b_y = sy. We need wire from R pin2 to B pin.
+        # B pin at (a_x, b_y) = (134.92, sy). R pin2 at (132, sy). Wire (132, sy) → (134.92, sy).
+        wires.append(wire(132, b_y, b_x, b_y, seed_suffix=f"en{en_num}-b-to-r"))
+        wires.append(wire(132, b_y - 7.62, 132, b_y - 10, seed_suffix=f"en{en_num}-r{r_b}-to-3v3"))
+        labels.append(label(132, b_y - 10, "+3V3"))
+
+        c_b_sym_y = b_y + 3.81
+        symbols.append(
+            place_symbol(
+                lib_id="Device:C",
+                ref=f"C{c_b}",
+                value="100nF X7R 0603 (B debounce, v0.6 M4)",
+                x=118,
+                y=c_b_sym_y,
+                footprint="Capacitor_SMD:C_0603_1608Metric",
+                extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+                seed_suffix=f"C{c_b}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        wires.append(wire(118, b_y, 132, b_y, seed_suffix=f"en{en_num}-c-to-r-b"))
+        junctions.append(junction(132, b_y))
+        wires.append(wire(118, b_y + 7.62, 118, b_y + 10, seed_suffix=f"en{en_num}-c{c_b}-to-gnd"))
+        attach_gnd(118, b_y + 10, f"C{c_b}")
+
+        wires.append(wire(118, b_y, 110, b_y, seed_suffix=f"en{en_num}-b-to-hlbl"))
+        junctions.append(junction(118, b_y))
+        hlabels.append(hier_label(110, b_y, f"{net_prefix}_B", shape="output", rotation=0))
+
+        # ---- C-Pin (Common) → GND direkt
+        wires.append(wire(c_x, c_y, c_x - 3, c_y, seed_suffix=f"en{en_num}-c-to-gnd"))
+        attach_gnd(c_x - 3, c_y, f"EN{en_num}_C")
+
+        # ---- SW1: Pull-Up R + Hier-Label
+        # SW1 pin abs (sw1_x, sw1_y) = (145.08, sy-2.54)
+        # R rot=0 vertikal pull-up. pin2 (bottom, on SW1 line): sym_y = sw1_y - 3.81. pin1 abs = sw1_y - 7.62.
+        r_sw_sym_y = sw1_y - 3.81
+        symbols.append(
+            place_symbol(
+                lib_id="Device:R",
+                ref=f"R{r_sw}",
+                value="10k 0603 (SW pull-up)",
+                x=152,
+                y=r_sw_sym_y,
+                footprint="Resistor_SMD:R_0603_1608Metric",
+                extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+                seed_suffix=f"R{r_sw}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        wires.append(wire(sw1_x, sw1_y, 152, sw1_y, seed_suffix=f"en{en_num}-sw-to-r"))
+        wires.append(wire(152, sw1_y - 7.62, 152, sw1_y - 10, seed_suffix=f"en{en_num}-r{r_sw}-to-3v3"))
+        labels.append(label(152, sw1_y - 10, "+3V3"))
+
+        # SW1-Line bis hier-Label
+        wires.append(wire(152, sw1_y, 162, sw1_y, seed_suffix=f"en{en_num}-sw-to-hlbl"))
+        junctions.append(junction(152, sw1_y))
+        hlabels.append(hier_label(162, sw1_y, f"{net_prefix}_SW", shape="output", rotation=180))
+
+        # ---- SW2 → GND
+        wires.append(wire(sw2_x, sw2_y, sw2_x + 3, sw2_y, seed_suffix=f"en{en_num}-sw2-to-gnd"))
+        attach_gnd(sw2_x + 3, sw2_y, f"EN{en_num}_SW2")
+
+    # Vier Encoder vertikal stacken (35mm Spacing für genug Platz)
+    place_one_encoder(en_num=1, sy=70, net_prefix="DRIVE",
+                      r_a=7, r_b=8, r_sw=15, c_a=10, c_b=11)
+    place_one_encoder(en_num=2, sy=105, net_prefix="BRIGHT",
+                      r_a=9, r_b=10, r_sw=16, c_a=12, c_b=13)
+    place_one_encoder(en_num=3, sy=140, net_prefix="DISPLAY",
+                      r_a=11, r_b=12, r_sw=17, c_a=14, c_b=15)
+    place_one_encoder(en_num=4, sy=175, net_prefix="VOL",
+                      r_a=13, r_b=14, r_sw=18, c_a=16, c_b=17)
+
+    body = (
+        f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
+        f'  (uuid "{sheet_uuid}")\n'
+        f'  (paper "A3")\n'
+        f'  (title_block\n'
+        f'    (title "Field Ambience PCB — Sheet 5: 4x EC11 Encoder")\n'
+        f'    (date "2026-05-12")\n'
+        f'    (rev "0.6")\n'
+        f'    (company "Field Ambience Project")\n'
+        f'    (comment 1 "Per SPEC v0.6 §5 + §M4")\n'
+        f'    (comment 2 "EN1=Drive (GP10-12), EN2=Brightness (GP13-15)")\n'
+        f'    (comment 3 "EN3=Display (GP16-18), EN4=Volume (GP19-21)")\n'
+        f'    (comment 4 "Debounce 100nF (v0.6 M4 Fix von 10nF), 10k pull-ups"))\n'
+        "  (lib_symbols\n"
+        + LIB_SYMBOLS
+        + "\n  )\n"
+        + "".join(symbols)
+        + "".join(wires)
+        + "".join(junctions)
+        + "".join(labels)
+        + "".join(hlabels)
+        + f'  (sheet_instances\n    (path "/" (page "5")))\n'
+        ")\n"
+    )
+    return body
+
+
+# ----------------------------------------------------------------------------
 # Root schematic
 # ----------------------------------------------------------------------------
 
@@ -2203,6 +2471,7 @@ def root_sheet() -> str:
     pico_uuid = det_uuid("sheet_pico")
     oled_uuid = det_uuid("sheet_oled")
     mcp_uuid = det_uuid("sheet_mcp")
+    enc_uuid = det_uuid("sheet_encoder")
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{root_uuid}")\n'
@@ -2234,14 +2503,14 @@ def root_sheet() -> str:
         f'    (pin "PICO_USB_DN" output (at 90 80 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_dn")}")))\n'
-        # ---- Sheet 2: Pico ----
-        f'  (sheet (at 130 40) (size 60 60) (fields_autoplaced)\n'
+        # ---- Sheet 2: Pico (extended height für Encoder-Pins) ----
+        f'  (sheet (at 130 40) (size 60 130) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
         f'    (fill (color 0 0 0 0.0000))\n'
         f'    (uuid "{pico_uuid}")\n'
         f'    (property "Sheetname" "Pico" (at 130 39 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
-        f'    (property "Sheetfile" "pico.kicad_sch" (at 130 100.5 0)\n'
+        f'    (property "Sheetfile" "pico.kicad_sch" (at 130 170.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
         f'    (pin "+5V_IN" input (at 130 50 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
@@ -2278,7 +2547,44 @@ def root_sheet() -> str:
         f'      (uuid "{det_uuid("picopin_scl")}"))\n'
         f'    (pin "MCP_INT" input (at 190 95 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
-        f'      (uuid "{det_uuid("picopin_mcpint")}")))\n'
+        f'      (uuid "{det_uuid("picopin_mcpint")}"))\n'
+        # ---- Encoder-Pins (12) ----
+        f'    (pin "DRIVE_A" output (at 190 110 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_drv_a")}"))\n'
+        f'    (pin "DRIVE_B" output (at 190 115 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_drv_b")}"))\n'
+        f'    (pin "DRIVE_SW" output (at 190 120 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_drv_sw")}"))\n'
+        f'    (pin "BRIGHT_A" output (at 190 125 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_brt_a")}"))\n'
+        f'    (pin "BRIGHT_B" output (at 190 130 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_brt_b")}"))\n'
+        f'    (pin "BRIGHT_SW" output (at 190 135 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_brt_sw")}"))\n'
+        f'    (pin "DISPLAY_A" output (at 190 140 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_dsp_a")}"))\n'
+        f'    (pin "DISPLAY_B" output (at 190 145 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_dsp_b")}"))\n'
+        f'    (pin "DISPLAY_SW" output (at 190 150 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_dsp_sw")}"))\n'
+        f'    (pin "VOL_A" output (at 190 155 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_vol_a")}"))\n'
+        f'    (pin "VOL_B" output (at 190 160 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_vol_b")}"))\n'
+        f'    (pin "VOL_SW" output (at 190 165 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("picopin_vol_sw")}")))\n'
         # ---- Sheet 3: OLED ----
         f'  (sheet (at 230 40) (size 60 60) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -2303,24 +2609,69 @@ def root_sheet() -> str:
         f'    (pin "OLED_RES" input (at 230 80 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("oledpin_res")}")))\n'
-        # ---- Sheet 4: MCP23017 ----
-        f'  (sheet (at 130 110) (size 60 30) (fields_autoplaced)\n'
+        # ---- Sheet 4: MCP23017 (verschoben nach (130, 200) wegen Pico-Expansion) ----
+        f'  (sheet (at 130 200) (size 60 30) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
         f'    (fill (color 0 0 0 0.0000))\n'
         f'    (uuid "{mcp_uuid}")\n'
-        f'    (property "Sheetname" "MCP23017" (at 130 109 0)\n'
+        f'    (property "Sheetname" "MCP23017" (at 130 199 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
-        f'    (property "Sheetfile" "mcp.kicad_sch" (at 130 140.5 0)\n'
+        f'    (property "Sheetfile" "mcp.kicad_sch" (at 130 230.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
-        f'    (pin "I2C_SDA" bidirectional (at 130 120 180)\n'
+        f'    (pin "I2C_SDA" bidirectional (at 130 210 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("mcppin_sda")}"))\n'
-        f'    (pin "I2C_SCL" bidirectional (at 130 125 180)\n'
+        f'    (pin "I2C_SCL" bidirectional (at 130 215 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("mcppin_scl")}"))\n'
-        f'    (pin "MCP_INT" output (at 130 130 180)\n'
+        f'    (pin "MCP_INT" output (at 130 220 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("mcppin_int")}")))\n'
+        # ---- Sheet 5: Encoders ----
+        f'  (sheet (at 230 105) (size 60 70) (fields_autoplaced)\n'
+        f'    (stroke (width 0.1524) (type solid))\n'
+        f'    (fill (color 0 0 0 0.0000))\n'
+        f'    (uuid "{enc_uuid}")\n'
+        f'    (property "Sheetname" "Encoders" (at 230 104 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
+        f'    (property "Sheetfile" "encoder.kicad_sch" (at 230 175.5 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
+        f'    (pin "DRIVE_A" input (at 230 110 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_drv_a")}"))\n'
+        f'    (pin "DRIVE_B" input (at 230 115 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_drv_b")}"))\n'
+        f'    (pin "DRIVE_SW" input (at 230 120 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_drv_sw")}"))\n'
+        f'    (pin "BRIGHT_A" input (at 230 125 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_brt_a")}"))\n'
+        f'    (pin "BRIGHT_B" input (at 230 130 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_brt_b")}"))\n'
+        f'    (pin "BRIGHT_SW" input (at 230 135 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_brt_sw")}"))\n'
+        f'    (pin "DISPLAY_A" input (at 230 140 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_dsp_a")}"))\n'
+        f'    (pin "DISPLAY_B" input (at 230 145 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_dsp_b")}"))\n'
+        f'    (pin "DISPLAY_SW" input (at 230 150 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_dsp_sw")}"))\n'
+        f'    (pin "VOL_A" input (at 230 155 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_vol_a")}"))\n'
+        f'    (pin "VOL_B" input (at 230 160 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_vol_b")}"))\n'
+        f'    (pin "VOL_SW" input (at 230 165 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("encpin_vol_sw")}")))\n'
         # ---- Inter-sheet wires Sheet 1 → Sheet 2 ----
         f'  (wire (pts (xy 90 50) (xy 130 50)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_5v")}"))\n'
         f'  (wire (pts (xy 90 75) (xy 130 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dp")}"))\n'
@@ -2340,12 +2691,25 @@ def root_sheet() -> str:
         f'  (label "I2C_SCL" (at 195 90 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_scl_pico")}"))\n'
         f'  (wire (pts (xy 190 95) (xy 195 95)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_mcpint_pico")}"))\n'
         f'  (label "MCP_INT" (at 195 95 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_mcpint_pico")}"))\n'
-        f'  (wire (pts (xy 125 120) (xy 130 120)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_sda_mcp")}"))\n'
-        f'  (label "I2C_SDA" (at 125 120 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_sda_mcp")}"))\n'
-        f'  (wire (pts (xy 125 125) (xy 130 125)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_scl_mcp")}"))\n'
-        f'  (label "I2C_SCL" (at 125 125 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_scl_mcp")}"))\n'
-        f'  (wire (pts (xy 125 130) (xy 130 130)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_mcpint_mcp")}"))\n'
-        f'  (label "MCP_INT" (at 125 130 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_mcpint_mcp")}"))\n'
+        f'  (wire (pts (xy 125 210) (xy 130 210)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_sda_mcp")}"))\n'
+        f'  (label "I2C_SDA" (at 125 210 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_sda_mcp")}"))\n'
+        f'  (wire (pts (xy 125 215) (xy 130 215)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_scl_mcp")}"))\n'
+        f'  (label "I2C_SCL" (at 125 215 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_scl_mcp")}"))\n'
+        f'  (wire (pts (xy 125 220) (xy 130 220)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_mcpint_mcp")}"))\n'
+        f'  (label "MCP_INT" (at 125 220 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_mcpint_mcp")}"))\n'
+        # ---- Inter-sheet wires Sheet 2 → Sheet 5 (Pico Encoder Bus → Encoder Sheet) ----
+        f'  (wire (pts (xy 190 110) (xy 230 110)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_drv_a")}"))\n'
+        f'  (wire (pts (xy 190 115) (xy 230 115)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_drv_b")}"))\n'
+        f'  (wire (pts (xy 190 120) (xy 230 120)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_drv_sw")}"))\n'
+        f'  (wire (pts (xy 190 125) (xy 230 125)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_brt_a")}"))\n'
+        f'  (wire (pts (xy 190 130) (xy 230 130)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_brt_b")}"))\n'
+        f'  (wire (pts (xy 190 135) (xy 230 135)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_brt_sw")}"))\n'
+        f'  (wire (pts (xy 190 140) (xy 230 140)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dsp_a")}"))\n'
+        f'  (wire (pts (xy 190 145) (xy 230 145)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dsp_b")}"))\n'
+        f'  (wire (pts (xy 190 150) (xy 230 150)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_dsp_sw")}"))\n'
+        f'  (wire (pts (xy 190 155) (xy 230 155)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vol_a")}"))\n'
+        f'  (wire (pts (xy 190 160) (xy 230 160)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vol_b")}"))\n'
+        f'  (wire (pts (xy 190 165) (xy 230 165)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vol_sw")}"))\n'
         f'  (sheet_instances\n    (path "/" (page "1")))\n'
         ")\n"
     )
@@ -2364,7 +2728,8 @@ def main() -> None:
     (OUT_DIR / "pico.kicad_sch").write_text(pico_sheet())
     (OUT_DIR / "oled.kicad_sch").write_text(oled_sheet())
     (OUT_DIR / "mcp.kicad_sch").write_text(mcp_sheet())
-    print(f"Wrote KiCad project + Sheets 1+2+3+4 to {OUT_DIR}")
+    (OUT_DIR / "encoder.kicad_sch").write_text(encoder_sheet())
+    print(f"Wrote KiCad project + Sheets 1+2+3+4+5 to {OUT_DIR}")
 
 
 if __name__ == "__main__":

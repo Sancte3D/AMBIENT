@@ -153,6 +153,10 @@
     [
       "ae4d8abd-ab57-48bd-a18a-f37b38917ad2",
       "MCP23017"
+    ],
+    [
+      "2b40dc1d-b2ad-4de7-a72a-6f6dc7cda64f",
+      "Encoders"
     ]
   ],
   "text_variables": {}
