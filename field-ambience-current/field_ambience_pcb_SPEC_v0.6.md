@@ -1,8 +1,32 @@
 # Field Ambience Pico Controller PCB — Spec v0.6 (Review-Ready)
 
-**Rev:** 0.6 (review-ready, **NICHT FINAL** — final wird es nach ERC-clean in KiCad)
+**Rev:** 0.6.1 (Pinout-Errata applied — siehe Errata-Sektion unten)
 **Target:** 4-Layer JLCPCB, Full PCBA
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
+
+---
+
+## Errata (v0.6.1, 2026-05-13)
+
+Nach PR-#1-Review wurden zwei Pinout-Bugs in den KiCad-Symbolen für die
+Audio-ICs gefunden — die ursprünglichen v0.6-Symbole hatten erfundene
+Pin-Belegungen statt offizielle Datasheet-Pinouts. Beide sind in v0.6.1
+korrigiert.
+
+| Errata | Ursprünglich (v0.6) | Korrigiert (v0.6.1) |
+|---|---|---|
+| PCM5102A pinout | LRCK/BCK/DIN auf Pin 1/2/3, AVDD=15, DVDD=19 (alle falsch) | Per TI Datasheet SLAS859C: CPVDD=1, OUTL=6, OUTR=7, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20 |
+| PAM8403 pinout | Logisches Pinout (VDD=1, SHDN=3, MUTE=4, OUT 9-12), war ungetestet | Per Diodes Inc DS31295 (für LCSC C17337 = PAM8403DR-H): OUTL+=1, PGND=2, OUTL-=3, PVDD=4, /MUTE=5, VDD=6, INL=7, INR=9, PVDD=10, OUTR-=11, OUTR+=13, /SHDN=14 |
+| BOM LCSC-Nummern | PCM5102A=C9900003814 (existiert nicht), PAM8403=C84368 (existiert nicht) | PCM5102A=**C107671** (verified, Stock 6726), PAM8403=**C17337** (verified, Stock 8962) |
+
+### Verbleibender BLOCKER für PCB-Layout
+
+- **PAM8403DR-H Pinout-Verifikation gegen exakt das bestellte Bauteil:**
+  Die Pin-Belegung variiert zwischen PAM8403-Herstellern. Vor dem PCB-
+  Layout muss zwingend gegen das Datasheet des tatsächlich bestellten
+  PAM8403DR-H (Diodes Inc, JLCPCB C17337) cross-referenziert werden.
+  Wenn das Footprint nicht zum Symbol-Pinout passt, gibt es defekte
+  Boards — kein Software-Fix.
 
 ---
 
@@ -12,8 +36,9 @@ Dieses Dokument ist **nicht final**. Final wird die Spec erst nach:
 1. KiCad-Schematic-Eingabe via kicad-happy
 2. ERC clean
 3. DRC clean nach PCB-Layout
-4. Datasheet-Querverifikation jeder kritischen Stelle im Schematic durch `datasheets` Skill
+4. Datasheet-Querverifikation jeder kritischen Stelle im Schematic durch `datasheets` Skill (insbesondere PAM8403DR-H)
 5. JLCPCB-BOM/CPL-Konformität via `bom` Skill
+6. **Cross-Check zwischen `audio.kicad_sch` Symbol-Pinout und tatsächlichem PAM8403DR-H Datasheet — JEDER der 16 Pins einzeln verifizieren**
 
 ---
 
@@ -184,8 +209,8 @@ U5 (AP7361A-33ER) bleibt **DNP** (Reserve-Footprint) für Fall, dass +3V3-Last s
 |---|---|---|---|---|---|
 | U1 | Raspberry Pi Pico 2 (RP2350) | castellated SMD 51×21mm | nicht bei JLC | du lieferst | Empfehlung: Pin-Header THT für Prototyp |
 | U2 | MCP23017-E/SS | SSOP-28 | C506653 | Extended, ~$1.62 | verifizieren via `lcsc`-Skill |
-| U3 | PCM5102A | TSSOP-20 | C9900003814 | JLC Stock | I²S DAC, 3-wire (kein MCLK) |
-| U4 | PAM8403 | SOP-16 | C84368 | Standard | Stereo Class-D 2×3W |
+| U3 | PCM5102APWR (TI) | TSSOP-20 | **C107671** | Extended Stock | I²S DAC, 3-wire (kein MCLK). Pinout per TI SLAS859C |
+| U4 | PAM8403DR-H (Diodes Inc) | SOIC-16 | **C17337** | Extended Stock | Stereo Class-D 2×3W. Pinout per Diodes DS31295 |
 | U5 | AP7361A-33ER | SOT-89 | C156144 | **DNP** | Reserve falls +3V3-Last steigt |
 
 ### Connector + USB

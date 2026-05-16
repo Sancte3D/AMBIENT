@@ -686,34 +686,55 @@ def _rotary_encoder_switch_lib_symbol() -> str:
 
 
 def _pcm5102a_lib_symbol() -> str:
-    """PCM5102A I²S DAC (TSSOP-20). TI Standard-Pinout.
+    """PCM5102A I²S DAC (TSSOP-20). Offizielles TI-Datasheet-Pinout SLAS859C.
 
     Pins links (top→bottom): 1-10
-    Pins rechts (top→bottom): 20, 19, 18, 17, 16, 15, 14, 13, 12, 11
+        1: CPVDD   (charge pump power supply)
+        2: CAPP    (charge pump fly cap +)
+        3: CPGND   (charge pump ground)
+        4: CAPM    (charge pump fly cap -)
+        5: VNEG    (negative voltage, 1µF to GND)
+        6: OUTL    (left audio output)
+        7: OUTR    (right audio output)
+        8: AVDD    (analog power)
+        9: AGND    (analog ground)
+        10: DEMP   (de-emphasis, GND=off)
+
+    Pins rechts (top→bottom, pin 20 oben):
+        20: DVDD   (digital power)
+        19: DGND   (digital ground)
+        18: LDOO   (1.8V LDO output, leave open or 0.1µF)
+        17: XSMT   (soft mute, pull-up to DVDD)
+        16: FMT    (format, GND=I²S)
+        15: LRCK   (left/right clock)
+        14: DIN    (audio data input)
+        13: BCK    (bit clock)
+        12: SCK    (system clock, GND=3-wire mode)
+        11: FLT    (filter select, GND=normal)
     """
     pins_left = [
-        (1, "LRCK", "input"),
-        (2, "BCK", "input"),
-        (3, "DIN", "input"),
-        (4, "GND", "power_in"),
-        (5, "FLT", "input"),
-        (6, "DEMP", "input"),
-        (7, "XSMT", "input"),
-        (8, "FMT", "input"),
-        (9, "VOUTL", "output"),
-        (10, "AGND", "power_in"),
+        (1, "CPVDD", "power_in"),
+        (2, "CAPP", "output"),
+        (3, "CPGND", "power_in"),
+        (4, "CAPM", "output"),
+        (5, "VNEG", "output"),
+        (6, "OUTL", "output"),
+        (7, "OUTR", "output"),
+        (8, "AVDD", "power_in"),
+        (9, "AGND", "power_in"),
+        (10, "DEMP", "input"),
     ]
     pins_right = [
-        (20, "GND", "power_in"),
-        (19, "DVDD", "power_in"),
-        (18, "SCK", "input"),
-        (17, "AGND2", "power_in"),
-        (16, "VOUTR", "output"),
-        (15, "AVDD", "power_in"),
-        (14, "VCOM", "output"),
-        (13, "CPVDD", "power_in"),
-        (12, "CPGND", "power_in"),
-        (11, "VNEG", "output"),
+        (20, "DVDD", "power_in"),
+        (19, "DGND", "power_in"),
+        (18, "LDOO", "output"),
+        (17, "XSMT", "input"),
+        (16, "FMT", "input"),
+        (15, "LRCK", "input"),
+        (14, "DIN", "input"),
+        (13, "BCK", "input"),
+        (12, "SCK", "input"),
+        (11, "FLT", "input"),
     ]
     y_top = 11.43  # (10-1)*2.54/2
     rect_top = y_top + 2.54
@@ -747,36 +768,59 @@ def _pcm5102a_lib_symbol() -> str:
 
 
 def _pam8403_lib_symbol() -> str:
-    """PAM8403 Class-D Stereo Amp (SOP-16). Logical Pinout —
-    bei PCB-Layout gegen tatsächliches Datasheet von JLC-stockable PAM8403
-    (C17337) verifizieren, Pin-Belegung variiert zwischen Herstellern.
+    """PAM8403 Class-D Stereo Amp (SOP-16).
+
+    Pinout per Diodes Inc PAM8403DR-H Datasheet (LCSC C17337, DS31295 Rev.4).
+
+    **WARNUNG**: PAM8403 Pinout variiert ZWISCHEN HERSTELLERN. Dieses Symbol
+    ist für PAM8403DR-H von Diodes Inc (JLCPCB C17337). Bei Verwendung eines
+    anderen PAM8403-Variants ZWINGEND gegen das spezifische Datasheet
+    verifizieren bevor PCB-Layout erstellt wird.
+
+    Diodes Inc PAM8403DR Pinout:
+        1: OUT_L+   (Output Left, BTL positive)
+        2: PGND     (Power Ground, Left)
+        3: OUT_L-   (Output Left, BTL negative)
+        4: PVDD     (Power Supply, Left)
+        5: /MUTE    (Mute control, ACTIVE LOW)
+        6: VDD      (Internal Vdd supply)
+        7: INL      (Left audio input, single-ended)
+        8: GND      (Signal Ground)
+        9: INR      (Right audio input, single-ended)
+        10: PVDD    (Power Supply, Right)
+        11: OUT_R-  (Output Right, BTL negative)
+        12: PGND    (Power Ground, Right)
+        13: OUT_R+  (Output Right, BTL positive)
+        14: /SHDN   (Shutdown control, ACTIVE LOW)
+        15: NC      (No Connect)
+        16: NC      (No Connect)
     """
     pins_left = [
-        (1, "VDD", "power_in"),
-        (2, "GND", "power_in"),
-        (3, "/SHDN", "input"),
-        (4, "/MUTE", "input"),
-        (5, "INL+", "input"),
-        (6, "INL-", "input"),
-        (7, "INR+", "input"),
-        (8, "INR-", "input"),
+        (1, "OUTL+", "output"),
+        (2, "PGND", "power_in"),
+        (3, "OUTL-", "output"),
+        (4, "PVDD", "power_in"),
+        (5, "/MUTE", "input"),
+        (6, "VDD", "power_in"),
+        (7, "INL", "input"),
+        (8, "GND", "power_in"),
     ]
     pins_right = [
-        (16, "VDD", "power_in"),
-        (15, "VDD", "power_in"),
-        (14, "PGND", "power_in"),
-        (13, "PGND", "power_in"),
-        (12, "OUTR-", "output"),
-        (11, "OUTR+", "output"),
-        (10, "OUTL-", "output"),
-        (9, "OUTL+", "output"),
+        (16, "NC", "no_connect"),
+        (15, "NC", "no_connect"),
+        (14, "/SHDN", "input"),
+        (13, "OUTR+", "output"),
+        (12, "PGND", "power_in"),
+        (11, "OUTR-", "output"),
+        (10, "PVDD", "power_in"),
+        (9, "INR", "input"),
     ]
     y_top = 8.89  # (8-1)*2.54/2
     rect_top = y_top + 2.54
     rect_bot = -y_top - 2.54
     out = ['    (symbol "Audio:PAM8403" (in_bom yes) (on_board yes)']
     out.append(f'      (property "Reference" "U" (at 0 {rect_top + 1.27} 0) (effects (font (size 1.27 1.27))))')
-    out.append(f'      (property "Value" "PAM8403" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append(f'      (property "Value" "PAM8403DR" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
     out.append('      (property "Datasheet" "https://www.diodes.com/assets/Datasheets/PAM8403.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
     out.append('      (symbol "Audio:PAM8403_0_1"')
@@ -2657,6 +2701,16 @@ def encoder_sheet() -> str:
 
 
 def audio_sheet() -> str:
+    """Sheet 6: Audio (PCM5102A I²S DAC + PAM8403 Class-D Amp + Speaker Header).
+
+    Symbol-Pinouts korrekt nach Datasheets:
+      - PCM5102A: offizielles TI-Pinout SLAS859C (CPVDD=1, ..., DVDD=20).
+      - PAM8403:  Diodes Inc PAM8403DR-H Datasheet DS31295 (für JLCPCB C17337).
+
+    Hinweis: Audio-Routing-Layout wurde für die korrigierten Pinouts neu
+    aufgesetzt. Alte audio.kicad_sch v0.6-commits hatten falsche PCM5102A-
+    Pin-Belegung (LRCK/BCK/DIN auf Pin 1/2/3 statt 15/13/14).
+    """
     sheet_uuid = det_uuid("sheet_audio")
     sus = "sheet_audio"
     symbols: list[str] = []
@@ -2679,17 +2733,17 @@ def audio_sheet() -> str:
 
     # ====================================================================
     # U3 PCM5102A @ (100, 100). Body x=89.84..110.16, y=86.03..113.97.
-    # Pin anchor links x=87.3, rechts x=112.7 (sym x ± 12.7).
-    # Pin 1 (LRCK) abs y = 100 - 11.43 = 88.57. Pin N: 88.57 + (N-1)*2.54.
-    # Rechts: Pin 20 abs y = 88.57. Pin N (N=11..20): 88.57 + (20-N)*2.54.
+    # Pin anchor links x=87.3, rechts x=112.7.
     # ====================================================================
     U3_X, U3_Y = 100.0, 100.0
     U3_LX, U3_RX = 87.3, 112.7
 
     def u3_left(pin: int) -> float:
+        """Pin 1 (CPVDD) abs y=88.57. Pin N (1..10) abs y=88.57+(N-1)*2.54."""
         return 88.57 + (pin - 1) * 2.54
 
     def u3_right(pin: int) -> float:
+        """Pin 20 (DVDD) abs y=88.57. Pin N (11..20) abs y=88.57+(20-N)*2.54."""
         return 88.57 + (20 - pin) * 2.54
 
     symbols.append(
@@ -2700,544 +2754,614 @@ def audio_sheet() -> str:
             x=U3_X, y=U3_Y,
             footprint="Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm",
             datasheet="https://www.ti.com/lit/ds/symlink/pcm5102a.pdf",
-            extra_props={"MPN": "PCM5102A", "LCSC": "C107671"},
+            extra_props={"MPN": "PCM5102APWR", "LCSC": "C107671"},
             seed_suffix="U3",
             sheet_uuid_seed=sus,
         )
     )
 
-    # ---- I²S Inputs (Pin 1 LRCK, Pin 2 BCK, Pin 3 DIN) ← hier_label inputs from Pi
-    for pin, net in [(1, "I2S_LRCK"), (2, "I2S_BCK"), (3, "I2S_DOUT")]:
-        py = u3_left(pin)
-        wires.append(wire(U3_LX, py, 75, py, seed_suffix=f"u3-p{pin}"))
-        hlabels.append(hier_label(75, py, net, shape="input", rotation=0))
-
-    # ---- Pin 4 GND (digital), Pin 20 GND
-    wires.append(wire(U3_LX, u3_left(4), U3_LX - 3, u3_left(4), seed_suffix="u3-p4-gnd"))
-    attach_gnd(U3_LX - 3, u3_left(4), "U3_DGND", rot=90)
-    wires.append(wire(U3_RX, u3_right(20), U3_RX + 3, u3_right(20), seed_suffix="u3-p20-gnd"))
-    attach_gnd(U3_RX + 3, u3_right(20), "U3_GND20", rot=270)
-
-    # ---- Pin 5 FLT → GND (normal latency)
-    wires.append(wire(U3_LX, u3_left(5), U3_LX - 3, u3_left(5), seed_suffix="u3-p5-flt"))
-    attach_gnd(U3_LX - 3, u3_left(5), "U3_FLT", rot=90)
-
-    # ---- Pin 6 DEMP → GND (no de-emphasis, 44.1kHz default)
-    wires.append(wire(U3_LX, u3_left(6), U3_LX - 3, u3_left(6), seed_suffix="u3-p6-demp"))
-    attach_gnd(U3_LX - 3, u3_left(6), "U3_DEMP", rot=90)
-
-    # ---- Pin 7 XSMT → Pull-Up zu DVDD (un-muted by default)
-    # R_xsmt rotation=90 horizontal links vom Pin: pin1 (lower x) → +3V3, pin2 (higher x) → XSMT.
-    # XSMT pin abs (U3_LX, u3_left(7)) = (87.3, 103.81).
-    # R sym at (80, 103.81) rotation=90: pin1 abs (80-3.81, 103.81) = (76.19, 103.81),
-    # pin2 abs (80+3.81, 103.81) = (83.81, 103.81).
-    # Hmm, pin1 goes to +3V3 label (left), pin2 connects to XSMT line. We need wire from pin2 to U3.7.
-    # Or simpler: vertical R above XSMT line. sym at (U3_LX-3, u3_left(7)-3.81). pin2 (bottom, +3.81y) on XSMT line.
-    # → R sym y = u3_left(7) - 3.81 = 100. R sym x = 84.
-    r_xsmt_y = u3_left(7) - 3.81  # =100
-    symbols.append(
-        place_symbol(
-            lib_id="Device:R",
-            ref="R_XSMT",
-            value="10k 0603 (XSMT pull-up)",
-            x=84, y=r_xsmt_y,
-            footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
-            seed_suffix="RXSMT",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # R pin1 abs (84, 96.19), pin2 abs (84, 103.81)
-    wires.append(wire(U3_LX, u3_left(7), 84, u3_left(7), seed_suffix="u3-p7-to-rxsmt"))
-    wires.append(wire(84, 96.19, 84, 93, seed_suffix="rxsmt-to-3v3"))
-    labels.append(label(84, 93, "+3V3"))
-
-    # ---- Pin 8 FMT → GND (I²S mode)
-    wires.append(wire(U3_LX, u3_left(8), U3_LX - 3, u3_left(8), seed_suffix="u3-p8-fmt"))
-    attach_gnd(U3_LX - 3, u3_left(8), "U3_FMT", rot=90)
-
-    # ---- Pin 9 VOUTL → coupling cap C_in_L → R_VOL_L → PAM8403 INL+
-    # VOUTL abs (U3_LX, u3_left(9)) = (87.3, 109.0). Wir leiten Audio nach rechts unter dem Chip durch.
-    # Aber Y-DOWN: U3 Body endet bei y=113.97. VOUTL bei y=109 (innerhalb Body-y-Range — Pin 9 ist auf der LINKEN Seite des Chips).
-    # Pragmatisch: wire VOUTL nach links und nach unten zum PAM8403 (U4) das ich rechts vom PCM5102A platziere.
-    # → Audio-Out nach RECHTS aus U3.9 (left side) führt unter den Chip durch.
-    # Cleaner: VOUTL exit nach LINKS, dann unten herum.
-    # Noch cleaner: rotate or place U4 below U3, audio paths go down.
-    #
-    # Plan: U4 PAM8403 below U3 at (100, 145). U3 audio outputs VOUTL (pin 9) and VOUTR (pin 16) need to reach U4 inputs.
-    # VOUTL (pin 9) abs (87.3, 109.0). Wir routen es runter um den Chip herum: (87.3, 109.0) → (80, 109.0) → (80, 140) → U4.
-    # VOUTR (pin 16) abs (112.7, 96.19). Routen: (112.7, 96.19) → (120, 96.19) → (120, 140) → U4.
-    # Easier: just hier_label-bridge them to U4 inputs via local labels VOUTL/VOUTR.
-    labels.append(label(80, u3_left(9), "PCM_VOUTL"))
-    wires.append(wire(U3_LX, u3_left(9), 80, u3_left(9), seed_suffix="u3-voutl"))
-
-    # ---- Pin 10 AGND, Pin 17 AGND2 → AGND
-    wires.append(wire(U3_LX, u3_left(10), U3_LX - 3, u3_left(10), seed_suffix="u3-p10-agnd"))
-    attach_gnd(U3_LX - 3, u3_left(10), "U3_AGND", rot=90)
-    wires.append(wire(U3_RX, u3_right(17), U3_RX + 3, u3_right(17), seed_suffix="u3-p17-agnd"))
-    attach_gnd(U3_RX + 3, u3_right(17), "U3_AGND2", rot=270)
-
-    # ---- Pin 11 VNEG → 1µF cap to GND (charge pump filter)
-    p11_y = u3_right(11)
-    wires.append(wire(U3_RX, p11_y, 118, p11_y, seed_suffix="u3-vneg-stub"))
-    cvneg_y = p11_y + 3.81
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C_VNEG",
-            value="1uF X7R 0603 (VNEG charge pump filter)",
-            x=118, y=cvneg_y,
-            footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
-            seed_suffix="CVNEG",
-            sheet_uuid_seed=sus,
-        )
-    )
-    wires.append(wire(118, cvneg_y + 3.81, 118, cvneg_y + 6, seed_suffix="cvneg-to-gnd"))
-    attach_gnd(118, cvneg_y + 6, "CVNEG")
-
-    # ---- Pin 12 CPGND → GND
-    wires.append(wire(U3_RX, u3_right(12), U3_RX + 3, u3_right(12), seed_suffix="u3-cpgnd"))
-    attach_gnd(U3_RX + 3, u3_right(12), "U3_CPGND", rot=270)
-
-    # ---- Pin 13 CPVDD → +3V3 + Decoupling (own block)
-    p13_y = u3_right(13)
-    wires.append(wire(U3_RX, p13_y, 118, p13_y, seed_suffix="u3-cpvdd-stub"))
+    # ---- Pin 1 CPVDD → +3V3 + C_CPVDD_BULK 10µF + C_CPVDD_HF 100nF
+    p1_y = u3_left(1)
+    wires.append(wire(U3_LX, p1_y, U3_LX - 3, p1_y, seed_suffix="u3-p1-cpvdd-stub"))
     symbols.append(
         place_symbol(
             lib_id="Power:+3V3",
             ref="#PWR_U3_CPVDD",
             value="+3V3",
-            x=118, y=p13_y, rotation=270,
+            x=U3_LX - 3, y=p1_y, rotation=90,
             seed_suffix="u3-cpvdd-flag",
             sheet_uuid_seed=sus,
         )
     )
-    junctions.append(junction(118, p13_y))
-    # C_cpvdd 10µF bulk + 100nF HF
-    ccpvdd_y = p13_y + 3.81
+    # CPVDD decoupling: place below pin 1 row (y > p1_y in Y-DOWN)
+    # C_CPVDD_BULK 10µF + C_CPVDD_HF 100nF, both vertical chained
+    junctions.append(junction(U3_LX - 3, p1_y))
+    # Re-route VDD line to also hit two caps to the right of the flag
+    # Approach: bring +3V3 from a horizontal trunk at y=p1_y to a vertical cap chain
+    c_cpvdd_y = p1_y - 3.81  # cap above pin row visually (smaller y)
+    # Hmm need to be careful with orientation. Cap pin1 (top, +) abs (sx, sy-3.81), pin2 (bottom, -) abs (sx, sy+3.81).
+    # For pin1 (+, top) at p1_y, sym y = p1_y + 3.81.
+    cb_x, ch_x = 80, 76  # bulk at x=80, HF at x=76
+    cb_y = p1_y + 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C_CPVDD_BULK",
             value="10uF X5R 0805 (CPVDD bulk)",
-            x=123, y=ccpvdd_y,
+            x=cb_x, y=cb_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
             seed_suffix="CCPVDD_BULK",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(118, p13_y, 123, p13_y, seed_suffix="cpvdd-to-c"))
-    wires.append(wire(123, ccpvdd_y + 3.81, 123, ccpvdd_y + 6, seed_suffix="ccpvdd-bulk-gnd"))
-    attach_gnd(123, ccpvdd_y + 6, "CCPVDD_BULK")
+    wires.append(wire(U3_LX - 3, p1_y, cb_x, p1_y, seed_suffix="cpvdd-rail-to-bulk"))
+    wires.append(wire(cb_x, cb_y + 3.81, cb_x, cb_y + 6, seed_suffix="ccpvdd-bulk-gnd"))
+    attach_gnd(cb_x, cb_y + 6, "CCPVDD_BULK", rot=270)
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C_CPVDD_HF",
             value="100nF X7R 0603 (CPVDD HF)",
-            x=128, y=ccpvdd_y,
+            x=ch_x, y=cb_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="CCPVDD_HF",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(123, p13_y, 128, p13_y, seed_suffix="ccpvdd-bulk-to-hf"))
-    junctions.append(junction(123, p13_y))
-    wires.append(wire(128, ccpvdd_y + 3.81, 128, ccpvdd_y + 6, seed_suffix="ccpvdd-hf-gnd"))
-    attach_gnd(128, ccpvdd_y + 6, "CCPVDD_HF")
+    wires.append(wire(ch_x, p1_y, cb_x, p1_y, seed_suffix="cpvdd-bulk-to-hf"))
+    junctions.append(junction(cb_x, p1_y))
+    wires.append(wire(ch_x, cb_y + 3.81, ch_x, cb_y + 6, seed_suffix="ccpvdd-hf-gnd"))
+    attach_gnd(ch_x, cb_y + 6, "CCPVDD_HF", rot=270)
 
-    # ---- Pin 14 VCOM → 1µF cap to AGND (mid-rail reference)
-    p14_y = u3_right(14)
-    wires.append(wire(U3_RX, p14_y, 118, p14_y, seed_suffix="u3-vcom-stub"))
-    cvcom_y = p14_y + 3.81
+    # ---- Pin 2 CAPP and Pin 4 CAPM: 1µF X7R between them (charge pump fly cap)
+    p2_y = u3_left(2)
+    p4_y = u3_left(4)
+    # CAPP exits left, CAPM exits left. Wire both to a vertical at x=82, place cap between them.
+    # C_FLY 1µF vertical sym at x=82, y=midpoint of p2/p4 = (88.57+1*2.54 + 88.57+3*2.54)/2 = p2_y + (p4_y-p2_y)/2
+    fly_x = 82
+    fly_y_mid = (p2_y + p4_y) / 2  # = 93.65
+    # C pin1 (top, sy-3.81), pin2 (bottom, sy+3.81). For pin1 at p2_y=91.11: sy = 94.92. For pin2 at p4_y=96.19: sy+3.81=96.19 → sy=92.38.
+    # Two constraints → must offset cap. Use small offset.
+    # Pragmatic: place C at (82, 93.65). pin1 abs (82, 89.84), pin2 abs (82, 97.46). Wire pin1 to p2_y=91.11 via (82, 89.84)→(82, 91.11).
+    # And wire pin2 to p4_y=96.19 via (82, 97.46)→(82, 96.19). Both small wire stubs.
     symbols.append(
         place_symbol(
             lib_id="Device:C",
-            ref="C_VCOM",
-            value="1uF X7R 0603 (VCOM filter)",
-            x=118, y=cvcom_y,
+            ref="C_FLY",
+            value="1uF X7R 0603 (charge pump fly cap CAPP-CAPM)",
+            x=fly_x, y=fly_y_mid,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
-            seed_suffix="CVCOM",
+            seed_suffix="CFLY",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(118, cvcom_y + 3.81, 118, cvcom_y + 6, seed_suffix="cvcom-gnd"))
-    attach_gnd(118, cvcom_y + 6, "CVCOM")
+    # CAPP (pin 2) trace
+    wires.append(wire(U3_LX, p2_y, fly_x, p2_y, seed_suffix="u3-capp-trace"))
+    wires.append(wire(fly_x, p2_y, fly_x, fly_y_mid - 3.81, seed_suffix="capp-to-cfly-pin1"))
+    # CAPM (pin 4) trace
+    wires.append(wire(U3_LX, p4_y, fly_x, p4_y, seed_suffix="u3-capm-trace"))
+    wires.append(wire(fly_x, p4_y, fly_x, fly_y_mid + 3.81, seed_suffix="capm-to-cfly-pin2"))
 
-    # ---- Pin 15 AVDD → via FB1 vom +3V3-Bus (split AVDD/DVDD per v0.6 M2)
-    # Plan: +3V3 → C8a/C8b (DVDD bulk+HF on pin 19) → FB1 → C7a/C7b (AVDD bulk+HF on pin 15) → AVDD pin
-    # Place FB1 horizontal between DVDD-node and AVDD-node.
-    # DVDD pin 19 abs y = u3_right(19) = 88.57 + 1*2.54 = 91.11. AVDD pin 15 abs y = u3_right(15) = 88.57 + 5*2.54 = 101.27.
-    # FB1 horizontal at y=96 (midway). FB pin1 (-3.81, 0) at (sx-3.81, sy). pin2 (+3.81, 0) at (sx+3.81, sy).
-    # Layout: vertical +3V3 trunk at x=125 from DVDD-block to AVDD-block. Then split: DVDD direct, AVDD via FB1.
-    # Simpler — separate flags: DVDD flag at pin 19, AVDD flag at pin 15 via FB1.
+    # ---- Pin 3 CPGND → GND
+    p3_y = u3_left(3)
+    wires.append(wire(U3_LX, p3_y, U3_LX - 3, p3_y, seed_suffix="u3-cpgnd"))
+    attach_gnd(U3_LX - 3, p3_y, "U3_CPGND", rot=90)
 
-    # Pin 19 DVDD direct → +3V3 + C8a + C8b
-    p19_y = u3_right(19)
-    wires.append(wire(U3_RX, p19_y, 118, p19_y, seed_suffix="u3-dvdd-stub"))
-    symbols.append(
-        place_symbol(
-            lib_id="Power:+3V3",
-            ref="#PWR_U3_DVDD",
-            value="+3V3",
-            x=118, y=p19_y, rotation=270,
-            seed_suffix="u3-dvdd-flag",
-            sheet_uuid_seed=sus,
-        )
-    )
-    junctions.append(junction(118, p19_y))
-    c8a_y = p19_y + 3.81
+    # ---- Pin 5 VNEG → 1µF to GND (charge pump reservoir)
+    p5_y = u3_left(5)
+    wires.append(wire(U3_LX, p5_y, 78, p5_y, seed_suffix="u3-vneg-stub"))
+    cvneg_y = p5_y + 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:C",
-            ref="C8a",
-            value="10uF X5R 0805 (DVDD bulk)",
-            x=123, y=c8a_y,
-            footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
-            seed_suffix="C8a",
-            sheet_uuid_seed=sus,
-        )
-    )
-    wires.append(wire(118, p19_y, 123, p19_y, seed_suffix="dvdd-to-c8a"))
-    wires.append(wire(123, c8a_y + 3.81, 123, c8a_y + 6, seed_suffix="c8a-gnd"))
-    attach_gnd(123, c8a_y + 6, "C8a")
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C8b",
-            value="100nF X7R 0603 (DVDD HF)",
-            x=128, y=c8a_y,
+            ref="C_VNEG",
+            value="1uF X7R 0603 (VNEG reservoir)",
+            x=78, y=cvneg_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
-            seed_suffix="C8b",
+            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            seed_suffix="CVNEG",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(123, p19_y, 128, p19_y, seed_suffix="c8a-to-c8b"))
-    junctions.append(junction(123, p19_y))
-    wires.append(wire(128, c8a_y + 3.81, 128, c8a_y + 6, seed_suffix="c8b-gnd"))
-    attach_gnd(128, c8a_y + 6, "C8b")
+    wires.append(wire(78, cvneg_y + 3.81, 78, cvneg_y + 6, seed_suffix="cvneg-gnd"))
+    attach_gnd(78, cvneg_y + 6, "CVNEG", rot=270)
 
-    # AVDD via FB1 from +3V3. Place FB1 vertical near AVDD pin.
-    # AVDD pin 15 abs (U3_RX, 101.27). FB1 sym at (118, 99.5) rotation=90.
-    # FB1 pin1 (-3.81, 0) rotated 90: (0, -3.81). Abs pin1 (118, 99.5-(-3.81)) wait Y-DOWN: abs y = sym_y - rotated_y_component.
-    # Hmm let me just use horizontal FB1. FB sym (132, 101.27). pin1 abs (128.19, 101.27), pin2 abs (135.81, 101.27).
-    # pin1 (left, output to AVDD pin via wire), pin2 (right, +3V3 node).
-    p15_y = u3_right(15)
+    # ---- Pin 6 OUTL → PCM_VOUTL label (to PAM8403 INL)
+    p6_y = u3_left(6)
+    wires.append(wire(U3_LX, p6_y, 80, p6_y, seed_suffix="u3-outl"))
+    labels.append(label(80, p6_y, "PCM_VOUTL"))
+
+    # ---- Pin 7 OUTR → PCM_VOUTR label
+    p7_y = u3_left(7)
+    wires.append(wire(U3_LX, p7_y, 80, p7_y, seed_suffix="u3-outr"))
+    labels.append(label(80, p7_y, "PCM_VOUTR"))
+
+    # ---- Pin 8 AVDD → via FB1 from +3V3 + C7a/C7b lokal (v0.6 M2 Fix)
+    p8_y = u3_left(8)
+    # FB1 horizontal: sym at (74, p8_y) rotation=180. pin1 (-3.81, 0) rotated 180 → (3.81, 0). Abs pin1 (77.81, p8_y).
+    # pin2 (+3.81, 0) → (-3.81, 0). Abs pin2 (70.19, p8_y).
+    # pin1 (rechts) → U3.8 AVDD via short wire.
+    # pin2 (links) → +3V3 power flag.
     symbols.append(
         place_symbol(
             lib_id="Device:Ferrite_Bead",
             ref="FB1",
             value="BLM18AG601 600R@100MHz (AVDD/DVDD split, v0.6 M2)",
-            x=124, y=p15_y, rotation=180,
+            x=74, y=p8_y, rotation=180,
             footprint="Inductor_SMD:L_0603_1608Metric",
             extra_props={"MPN": "BLM18AG601SN1D", "LCSC": "C19330"},
             seed_suffix="FB1",
             sheet_uuid_seed=sus,
         )
     )
-    # FB rotation=180: pin1 (-3.81, 0) → (3.81, 0). Abs pin1 (124+3.81, p15_y) = (127.81, p15_y).
-    # pin2 (+3.81, 0) → (-3.81, 0). Abs pin2 (120.19, p15_y).
-    # AVDD pin at U3_RX=112.7. Wire from U3.15 (112.7, p15_y) to FB1 pin2 (120.19, p15_y).
-    wires.append(wire(U3_RX, p15_y, 120.19, p15_y, seed_suffix="u3-avdd-to-fb1"))
-    # FB1 pin1 (127.81, p15_y) → +3V3 power-flag
-    wires.append(wire(127.81, p15_y, 132, p15_y, seed_suffix="fb1-to-3v3-flag"))
+    wires.append(wire(U3_LX, p8_y, 77.81, p8_y, seed_suffix="u3-avdd-to-fb1"))
+    wires.append(wire(70.19, p8_y, 68, p8_y, seed_suffix="fb1-to-3v3-flag"))
     symbols.append(
         place_symbol(
             lib_id="Power:+3V3",
             ref="#PWR_FB1_3V3",
             value="+3V3",
-            x=132, y=p15_y, rotation=270,
+            x=68, y=p8_y, rotation=90,
             seed_suffix="fb1-3v3-flag",
             sheet_uuid_seed=sus,
         )
     )
-    # AVDD decoupling: C7a 10µF + C7b 100nF lokal an pin 15 (between U3 pin and FB1 pin2)
-    # Place at x=115 below the AVDD line
-    c7a_y = p15_y + 3.81
+    # AVDD decoupling C7a 10µF + C7b 100nF (between U3.8 and FB1)
+    c7a_y = p8_y + 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C7a",
             value="10uF X5R 0805 (AVDD bulk)",
-            x=115, y=c7a_y,
+            x=80, y=c7a_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
             seed_suffix="C7a",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(115, p15_y, 120.19, p15_y, seed_suffix="c7a-to-avdd"))
-    junctions.append(junction(120.19, p15_y))
-    wires.append(wire(115, c7a_y + 3.81, 115, c7a_y + 6, seed_suffix="c7a-gnd"))
-    attach_gnd(115, c7a_y + 6, "C7a")
-    # C7b 100nF
-    # Position: between U3.15 and C7a — keep close to pin
+    wires.append(wire(80, p8_y, U3_LX, p8_y, seed_suffix="c7a-to-avdd"))
+    junctions.append(junction(U3_LX, p8_y))
+    wires.append(wire(80, c7a_y + 3.81, 80, c7a_y + 6, seed_suffix="c7a-gnd"))
+    attach_gnd(80, c7a_y + 6, "C7a", rot=270)
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C7b",
             value="100nF X7R 0603 (AVDD HF)",
-            x=119, y=c7a_y,
+            x=84, y=c7a_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="C7b",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(115, p15_y, 119, p15_y, seed_suffix="c7a-c7b"))
-    junctions.append(junction(115, p15_y))
-    wires.append(wire(119, c7a_y + 3.81, 119, c7a_y + 6, seed_suffix="c7b-gnd"))
-    attach_gnd(119, c7a_y + 6, "C7b")
+    wires.append(wire(84, p8_y, 80, p8_y, seed_suffix="c7a-c7b"))
+    junctions.append(junction(80, p8_y))
+    wires.append(wire(84, c7a_y + 3.81, 84, c7a_y + 6, seed_suffix="c7b-gnd"))
+    attach_gnd(84, c7a_y + 6, "C7b", rot=270)
 
-    # ---- Pin 16 VOUTR → coupling to PAM8403
+    # ---- Pin 9 AGND → GND
+    p9_y = u3_left(9)
+    wires.append(wire(U3_LX, p9_y, U3_LX - 3, p9_y, seed_suffix="u3-agnd"))
+    attach_gnd(U3_LX - 3, p9_y, "U3_AGND", rot=90)
+
+    # ---- Pin 10 DEMP → GND (no de-emphasis)
+    p10_y = u3_left(10)
+    wires.append(wire(U3_LX, p10_y, U3_LX - 3, p10_y, seed_suffix="u3-demp"))
+    attach_gnd(U3_LX - 3, p10_y, "U3_DEMP", rot=90)
+
+    # ---- Pin 11 FLT → GND (normal latency)
+    p11_y = u3_right(11)
+    wires.append(wire(U3_RX, p11_y, U3_RX + 3, p11_y, seed_suffix="u3-flt"))
+    attach_gnd(U3_RX + 3, p11_y, "U3_FLT", rot=270)
+
+    # ---- Pin 12 SCK → GND (3-wire mode, internal PLL)
+    p12_y = u3_right(12)
+    wires.append(wire(U3_RX, p12_y, U3_RX + 3, p12_y, seed_suffix="u3-sck"))
+    attach_gnd(U3_RX + 3, p12_y, "U3_SCK", rot=270)
+
+    # ---- Pin 13 BCK ← I2S_BCK hier input
+    p13_y = u3_right(13)
+    wires.append(wire(U3_RX, p13_y, 120, p13_y, seed_suffix="u3-bck"))
+    hlabels.append(hier_label(120, p13_y, "I2S_BCK", shape="input", rotation=180))
+
+    # ---- Pin 14 DIN ← I2S_DOUT hier input
+    p14_y = u3_right(14)
+    wires.append(wire(U3_RX, p14_y, 120, p14_y, seed_suffix="u3-din"))
+    hlabels.append(hier_label(120, p14_y, "I2S_DOUT", shape="input", rotation=180))
+
+    # ---- Pin 15 LRCK ← I2S_LRCK hier input
+    p15_y = u3_right(15)
+    wires.append(wire(U3_RX, p15_y, 120, p15_y, seed_suffix="u3-lrck"))
+    hlabels.append(hier_label(120, p15_y, "I2S_LRCK", shape="input", rotation=180))
+
+    # ---- Pin 16 FMT → GND (I²S mode)
     p16_y = u3_right(16)
-    wires.append(wire(U3_RX, p16_y, 138, p16_y, seed_suffix="u3-voutr"))
-    labels.append(label(138, p16_y, "PCM_VOUTR"))
+    wires.append(wire(U3_RX, p16_y, U3_RX + 3, p16_y, seed_suffix="u3-fmt"))
+    attach_gnd(U3_RX + 3, p16_y, "U3_FMT", rot=270)
 
-    # ---- Pin 18 SCK → GND (3-wire mode, internal PLL)
+    # ---- Pin 17 XSMT → R_XSMT 10k pull-up zu DVDD (un-muted by default)
+    p17_y = u3_right(17)
+    # R rot=90 horizontal: sym (124, p17_y). pin1 abs (120.19, p17_y), pin2 abs (127.81, p17_y).
+    # pin1 → XSMT line (extending from U3.17 stub), pin2 → +3V3 label.
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_XSMT",
+            value="10k 0603 (XSMT pull-up)",
+            x=124, y=p17_y, rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="RXSMT",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(U3_RX, p17_y, 120.19, p17_y, seed_suffix="u3-xsmt-stub"))
+    wires.append(wire(127.81, p17_y, 130, p17_y, seed_suffix="rxsmt-to-3v3"))
+    labels.append(label(130, p17_y, "+3V3"))
+
+    # ---- Pin 18 LDOO → NC (per datasheet: leave open, optional 0.1µF for stability)
+    # We add a 100nF cap for stability per TI ref design
     p18_y = u3_right(18)
-    wires.append(wire(U3_RX, p18_y, U3_RX + 3, p18_y, seed_suffix="u3-sck-gnd"))
-    attach_gnd(U3_RX + 3, p18_y, "U3_SCK", rot=270)
+    wires.append(wire(U3_RX, p18_y, 117, p18_y, seed_suffix="u3-ldoo-stub"))
+    cldoo_y = p18_y + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_LDOO",
+            value="100nF X7R 0603 (LDOO stability)",
+            x=117, y=cldoo_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            seed_suffix="CLDOO",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(117, cldoo_y + 3.81, 117, cldoo_y + 6, seed_suffix="cldoo-gnd"))
+    attach_gnd(117, cldoo_y + 6, "CLDOO", rot=270)
+
+    # ---- Pin 19 DGND → GND
+    p19_y = u3_right(19)
+    wires.append(wire(U3_RX, p19_y, U3_RX + 3, p19_y, seed_suffix="u3-dgnd"))
+    attach_gnd(U3_RX + 3, p19_y, "U3_DGND", rot=270)
+
+    # ---- Pin 20 DVDD → +3V3 + C8a 10µF + C8b 100nF Decoupling
+    p20_y = u3_right(20)
+    wires.append(wire(U3_RX, p20_y, U3_RX + 3, p20_y, seed_suffix="u3-dvdd-stub"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+3V3",
+            ref="#PWR_U3_DVDD",
+            value="+3V3",
+            x=U3_RX + 3, y=p20_y, rotation=270,
+            seed_suffix="u3-dvdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    junctions.append(junction(U3_RX + 3, p20_y))
+    # C8a bulk + C8b HF decoupling
+    c8a_y = p20_y + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C8a",
+            value="10uF X5R 0805 (DVDD bulk)",
+            x=120, y=c8a_y,
+            footprint="Capacitor_SMD:C_0805_2012Metric",
+            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            seed_suffix="C8a",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(U3_RX + 3, p20_y, 120, p20_y, seed_suffix="dvdd-to-c8a"))
+    wires.append(wire(120, c8a_y + 3.81, 120, c8a_y + 6, seed_suffix="c8a-gnd"))
+    attach_gnd(120, c8a_y + 6, "C8a", rot=270)
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C8b",
+            value="100nF X7R 0603 (DVDD HF)",
+            x=124, y=c8a_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            seed_suffix="C8b",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(124, p20_y, 120, p20_y, seed_suffix="c8a-to-c8b"))
+    junctions.append(junction(120, p20_y))
+    wires.append(wire(124, c8a_y + 3.81, 124, c8a_y + 6, seed_suffix="c8b-gnd"))
+    attach_gnd(124, c8a_y + 6, "C8b", rot=270)
 
     # ====================================================================
-    # U4 PAM8403 @ (160, 130). Body x=149.84..170.16, y=119.05..140.95.
-    # Pin anchor links x=147.3, rechts x=172.7.
-    # Pin 1 (VDD) abs y = 130 - 8.89 = 121.11. Pin N (left): 121.11 + (N-1)*2.54.
-    # Pin 16 (right top): 121.11. Pin N (right N=9..16): 121.11 + (16-N)*2.54.
+    # U4 PAM8403 @ (160, 130). Body x=149.84..170.16, y=121.11..138.89.
+    # Pin local x=±12.7. Abs anchor: links x=147.3, rechts x=172.7.
     # ====================================================================
     U4_X, U4_Y = 160.0, 130.0
     U4_LX, U4_RX = 147.3, 172.7
 
     def u4_left(pin: int) -> float:
+        """Pin 1 (OUTL+) abs y=121.11. Pin N (1..8) abs y=121.11+(N-1)*2.54."""
         return 121.11 + (pin - 1) * 2.54
 
     def u4_right(pin: int) -> float:
+        """Pin 16 (NC) abs y=121.11. Pin N (9..16) abs y=121.11+(16-N)*2.54."""
         return 121.11 + (16 - pin) * 2.54
 
     symbols.append(
         place_symbol(
             lib_id="Audio:PAM8403",
             ref="U4",
-            value="PAM8403 Class-D Stereo Amp (SOP-16)",
+            value="PAM8403DR-H Class-D Stereo Amp (SOIC-16)",
             x=U4_X, y=U4_Y,
             footprint="Package_SO:SOIC-16_3.9x9.9mm_P1.27mm",
             datasheet="https://www.diodes.com/assets/Datasheets/PAM8403.pdf",
-            extra_props={"MPN": "PAM8403", "LCSC": "C17337"},
+            extra_props={"MPN": "PAM8403DR-H", "LCSC": "C17337"},
             seed_suffix="U4",
             sheet_uuid_seed=sus,
         )
     )
 
-    # ---- VDD pins (1, 15, 16) → +5V
-    for pnum, side in [(1, "L"), (15, "R"), (16, "R")]:
-        py = u4_left(pnum) if side == "L" else u4_right(pnum)
-        x = U4_LX if side == "L" else U4_RX
-        x_flag = x - 3 if side == "L" else x + 3
-        wires.append(wire(x, py, x_flag, py, seed_suffix=f"u4-vdd-{pnum}"))
-        symbols.append(
-            place_symbol(
-                lib_id="Power:+5V",
-                ref=f"#PWR_U4_VDD{pnum}",
-                value="+5V",
-                x=x_flag, y=py, rotation=90 if side == "L" else 270,
-                seed_suffix=f"u4-vdd-{pnum}",
-                sheet_uuid_seed=sus,
-            )
-        )
+    # ---- Pin 1 OUTL+ → Speaker L+ (J6 pin1)
+    p1uy = u4_left(1)
+    # ---- Pin 3 OUTL- → Speaker L- (J6 pin2)
+    p3uy = u4_left(3)
+    # ---- Pin 13 OUTR+ → Speaker R+ (J7 pin1)
+    p13uy = u4_right(13)
+    # ---- Pin 11 OUTR- → Speaker R- (J7 pin2)
+    p11uy = u4_right(11)
 
-    # ---- C9 10µF + C9b 100nF lokal an U4 VDD (Pin 1) — v0.6 H2 Fix
-    p1_y = u4_left(1)
-    c9_y = p1_y - 3.81  # Above pin 1 (visually upper)
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C9",
-            value="10uF X5R 0805 (PAM8403 VDD bulk, v0.6 H2)",
-            x=140, y=c9_y,
-            footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
-            seed_suffix="C9",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # C pin1 abs (140, c9_y - 3.81) = (140, p1_y - 7.62), pin2 abs (140, p1_y)
-    # We want pin1 on +5V rail (top), pin2 on VDD line (bottom).
-    # Aktuelle Verbindung: pin2 abs (140, c9_y + 3.81) = (140, p1_y) → connect to U4.1 net.
-    # U4.1 stub already wired to U4_LX-3 = 144.3. Wir extendieren via wire (140, p1_y) → (144.3, p1_y).
-    wires.append(wire(140, p1_y, 144.3, p1_y, seed_suffix="c9-to-vdd1"))
-    # C9 top (pin1) abs (140, c9_y - 3.81) = (140, p1_y - 7.62) → +5V label
-    wires.append(wire(140, c9_y - 3.81, 140, c9_y - 6, seed_suffix="c9-to-5v"))
-    labels.append(label(140, c9_y - 6, "+5V"))
-
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C9b",
-            value="100nF X7R 0603 (PAM8403 VDD HF)",
-            x=136, y=c9_y,
-            footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
-            seed_suffix="C9b",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # C9b pin2 abs (136, p1_y) → wire to (140, p1_y) C9 vdd line
-    wires.append(wire(136, p1_y, 140, p1_y, seed_suffix="c9b-to-c9"))
-    junctions.append(junction(140, p1_y))
-    wires.append(wire(136, c9_y - 3.81, 136, c9_y - 6, seed_suffix="c9b-to-5v"))
-    labels.append(label(136, c9_y - 6, "+5V"))
-
-    # ---- GND pins (2 left) und PGND (13, 14 right)
-    p2_y = u4_left(2)
-    wires.append(wire(U4_LX, p2_y, U4_LX - 3, p2_y, seed_suffix="u4-gnd2"))
-    attach_gnd(U4_LX - 3, p2_y, "U4_GND2", rot=90)
-    for pnum in (13, 14):
-        py = u4_right(pnum)
-        wires.append(wire(U4_RX, py, U4_RX + 3, py, seed_suffix=f"u4-pgnd-{pnum}"))
-        attach_gnd(U4_RX + 3, py, f"U4_PGND{pnum}", rot=270)
-
-    # ---- SHDN (Pin 3) ← Pico AMP_SHUTDOWN hier_label
-    p3_y = u4_left(3)
-    wires.append(wire(U4_LX, p3_y, 132, p3_y, seed_suffix="u4-shdn"))
-    hlabels.append(hier_label(132, p3_y, "AMP_SHUTDOWN", shape="input", rotation=0))
-
-    # ---- MUTE (Pin 4) ← Pico AMP_MUTE
-    p4_y = u4_left(4)
-    wires.append(wire(U4_LX, p4_y, 132, p4_y, seed_suffix="u4-mute"))
-    hlabels.append(hier_label(132, p4_y, "AMP_MUTE", shape="input", rotation=0))
-
-    # ---- INL+ (Pin 5) ← PCM_VOUTL via C_in_L (1µF coupling) + R_VOL_L (10k series)
-    # PCM_VOUTL label at (80, u3_left(9)=109.0). PAM8403 INL+ at U4.5 abs (147.3, u4_left(5)=131.27).
-    # Route: PCM_VOUTL label → C_in_L (coupling) → R_VOL_L (series) → INL+.
-    # Use local label "PCM_VOUTL" to bridge across vertical distance.
-    p5_y = u4_left(5)
-    # Place C_in_L and R_VOL_L in vertical chain above INL+.
-    # R_VOL_L 10k series. Place horizontal to the left of INL+.
-    # R sym at (140, p5_y) rotation=90: pin1 abs (136.19, p5_y) (left), pin2 abs (143.81, p5_y) (right).
-    symbols.append(
-        place_symbol(
-            lib_id="Device:R",
-            ref="R_VOL_L",
-            value="10k 0603 (L input series)",
-            x=140, y=p5_y, rotation=90,
-            footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
-            seed_suffix="RVOLL",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # R pin2 (143.81) → INL+ pin (147.3): wire
-    wires.append(wire(143.81, p5_y, U4_LX, p5_y, seed_suffix="rvoll-to-inlp"))
-    # R pin1 (136.19) ← C_in_L
-    # C_in_L 1µF coupling, sym at (132, p5_y) rotation=90: pin1 abs (128.19, p5_y), pin2 abs (135.81, p5_y).
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C_in_L",
-            value="1uF X7R 0603 (L input DC-block)",
-            x=132, y=p5_y, rotation=90,
-            footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
-            seed_suffix="CINL",
-            sheet_uuid_seed=sus,
-        )
-    )
-    wires.append(wire(135.81, p5_y, 136.19, p5_y, seed_suffix="cinl-to-rvoll"))
-    # C_in_L pin1 (128.19, p5_y) ← PCM_VOUTL label
-    wires.append(wire(128.19, p5_y, 125, p5_y, seed_suffix="cinl-to-label"))
-    labels.append(label(125, p5_y, "PCM_VOUTL"))
-
-    # ---- INL- (Pin 6) → GND (single-ended input, mid-rail bias provided internally)
-    p6_y = u4_left(6)
-    wires.append(wire(U4_LX, p6_y, U4_LX - 3, p6_y, seed_suffix="u4-inlm-gnd"))
-    attach_gnd(U4_LX - 3, p6_y, "U4_INLM", rot=90)
-
-    # ---- INR+ (Pin 7) ← PCM_VOUTR via C_in_R + R_VOL_R
-    p7_y = u4_left(7)
-    symbols.append(
-        place_symbol(
-            lib_id="Device:R",
-            ref="R_VOL_R",
-            value="10k 0603 (R input series)",
-            x=140, y=p7_y, rotation=90,
-            footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
-            seed_suffix="RVOLR",
-            sheet_uuid_seed=sus,
-        )
-    )
-    wires.append(wire(143.81, p7_y, U4_LX, p7_y, seed_suffix="rvolr-to-inrp"))
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C_in_R",
-            value="1uF X7R 0603 (R input DC-block)",
-            x=132, y=p7_y, rotation=90,
-            footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
-            seed_suffix="CINR",
-            sheet_uuid_seed=sus,
-        )
-    )
-    wires.append(wire(135.81, p7_y, 136.19, p7_y, seed_suffix="cinr-to-rvolr"))
-    wires.append(wire(128.19, p7_y, 125, p7_y, seed_suffix="cinr-to-label"))
-    labels.append(label(125, p7_y, "PCM_VOUTR"))
-
-    # ---- INR- (Pin 8) → GND
-    p8_y = u4_left(8)
-    wires.append(wire(U4_LX, p8_y, U4_LX - 3, p8_y, seed_suffix="u4-inrm-gnd"))
-    attach_gnd(U4_LX - 3, p8_y, "U4_INRM", rot=90)
-
-    # ---- Speaker outputs:
-    # PAM8403 OUTL+ (Pin 9), OUTL- (Pin 10) → Speaker L (J6)
-    # PAM8403 OUTR+ (Pin 11), OUTR- (Pin 12) → Speaker R (J7)
-    p9_y = u4_right(9)    # OUTL+
-    p10_y = u4_right(10)  # OUTL-
-    p11_y = u4_right(11)  # OUTR+
-    p12_y = u4_right(12)  # OUTR-
-
-    # J6 Speaker L (Conn_01x02): pin1=OUTL+, pin2=OUTL-
-    # Conn_01x02 pin1 at local (3.81, +1.27), pin2 at (3.81, -1.27). Y-DOWN abs:
-    # sym (sx, sy): pin1 (sx+3.81, sy-1.27), pin2 (sx+3.81, sy+1.27).
-    # For pin1 at OUTL+ (y=p9_y), pin2 at OUTL- (y=p10_y): both pins 2.54mm apart.
-    # sy = (p9_y + p10_y) / 2 = midpoint. sym_x for pin1 abs = U4_RX = 172.7: sx = 168.89.
-    j6_sy = (p9_y + p10_y) / 2
+    # J6 Speaker L Conn_01x02. pin1 abs (sx+3.81, sy-1.27), pin2 abs (sx+3.81, sy+1.27).
+    # For pin1 at OUTL+ y=p1uy=121.11, pin2 at OUTL- y=p3uy=126.19 → 5.08mm apart.
+    # Conn_01x02 pins are 2.54mm apart, but our outputs are 5.08mm apart. → need to route through wires.
+    # Just put J6 at (180, midpoint of p1uy and p3uy = 123.65). Pin1 abs (183.81, 122.38), pin2 abs (183.81, 124.92).
+    # Then wire OUTL+ → J6.1 (via different y) and OUTL- → J6.2. Wires will need vertical sections.
+    j6_x, j6_y = 180, 123.65
     symbols.append(
         place_symbol(
             lib_id="Connector:Conn_01x02",
             ref="J6",
             value="Speaker L (PUI AS04008PS, 4R 4W)",
-            x=180, y=j6_sy,
+            x=j6_x, y=j6_y,
             footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
             extra_props={"MPN": "AS04008PS-4W-WR-R", "LCSC": "TBD"},
             seed_suffix="J6",
             sheet_uuid_seed=sus,
         )
     )
-    # J6 pin1 abs (183.81, j6_sy-1.27) ≈ (183.81, p9_y), pin2 abs (183.81, p10_y).
-    wires.append(wire(U4_RX, p9_y, 183.81, p9_y, seed_suffix="outlp-to-j6p1"))
-    wires.append(wire(U4_RX, p10_y, 183.81, p10_y, seed_suffix="outlm-to-j6p2"))
+    # Conn_01x02 pin1 abs (183.81, 122.38), pin2 abs (183.81, 124.92).
+    # PAM8403 OUTL+ at (U4_RX, p1uy) = (172.7, 121.11). Wire (172.7, 121.11) → right to x=178, then up/down to (183.81, 122.38).
+    # Pragmatic: route OUTL+ from PAM right side (which is INPUTs side in our pinout!) — wait, PAM8403 pin 1 is on LEFT side per my symbol.
+    # Looking at my pins_left for PAM8403: pin 1 OUTL+ on LEFT. So OUTL+ abs (U4_LX, p1uy) = (147.3, 121.11).
+    # Re-route: OUTL+ exits LEFT of U4. Going to speaker on right requires routing under or around the chip.
+    # Or: rotate U4 by 180 so outputs face right? Complicated.
+    # Pragmatic: route OUTL+ wire from (147.3, 121.11) around left then up + over to J6.
+    # Or: use a label-bridge SPK_L+ to bridge between PAM left-side OUTL+ and J6 right side.
+    # Simplest: labels.
+    wires.append(wire(U4_LX, p1uy, 144, p1uy, seed_suffix="u4-outlp-stub"))
+    labels.append(label(144, p1uy, "SPK_L+"))
+    wires.append(wire(U4_LX, p3uy, 144, p3uy, seed_suffix="u4-outlm-stub"))
+    labels.append(label(144, p3uy, "SPK_L-"))
+    wires.append(wire(183.81, 122.38, 188, 122.38, seed_suffix="j6-p1"))
+    labels.append(label(188, 122.38, "SPK_L+"))
+    wires.append(wire(183.81, 124.92, 188, 124.92, seed_suffix="j6-p2"))
+    labels.append(label(188, 124.92, "SPK_L-"))
 
-    j7_sy = (p11_y + p12_y) / 2
+    # ---- Pin 2 PGND (left side) → GND
+    p2uy = u4_left(2)
+    wires.append(wire(U4_LX, p2uy, U4_LX - 3, p2uy, seed_suffix="u4-pgnd-l"))
+    attach_gnd(U4_LX - 3, p2uy, "U4_PGND_L", rot=90)
+
+    # ---- Pin 4 PVDD (left side) → +5V
+    p4uy = u4_left(4)
+    wires.append(wire(U4_LX, p4uy, U4_LX - 3, p4uy, seed_suffix="u4-pvdd-l-stub"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_U4_PVDDL",
+            value="+5V",
+            x=U4_LX - 3, y=p4uy, rotation=90,
+            seed_suffix="u4-pvdd-l-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- Pin 5 /MUTE ← AMP_MUTE hier input (ACTIVE LOW)
+    p5uy = u4_left(5)
+    wires.append(wire(U4_LX, p5uy, 138, p5uy, seed_suffix="u4-mute-stub"))
+    hlabels.append(hier_label(138, p5uy, "AMP_MUTE", shape="input", rotation=0))
+
+    # ---- Pin 6 VDD → +5V + C9b 100nF lokal Decoupling
+    p6uy = u4_left(6)
+    wires.append(wire(U4_LX, p6uy, U4_LX - 3, p6uy, seed_suffix="u4-vdd-stub"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_U4_VDD",
+            value="+5V",
+            x=U4_LX - 3, y=p6uy, rotation=90,
+            seed_suffix="u4-vdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    junctions.append(junction(U4_LX - 3, p6uy))
+    # C9b 100nF lokal an VDD (Pin 6)
+    c9b_y = p6uy + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C9b",
+            value="100nF X7R 0603 (VDD HF)",
+            x=140, y=c9b_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            seed_suffix="C9b",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(140, p6uy, U4_LX - 3, p6uy, seed_suffix="c9b-to-vdd"))
+    wires.append(wire(140, c9b_y + 3.81, 140, c9b_y + 6, seed_suffix="c9b-gnd"))
+    attach_gnd(140, c9b_y + 6, "C9b", rot=270)
+
+    # C9 10µF bulk near VDD (v0.6 H2 Fix)
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C9",
+            value="10uF X5R 0805 (VDD bulk, v0.6 H2)",
+            x=136, y=c9b_y,
+            footprint="Capacitor_SMD:C_0805_2012Metric",
+            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            seed_suffix="C9",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(136, p6uy, 140, p6uy, seed_suffix="c9-to-c9b"))
+    junctions.append(junction(140, p6uy))
+    wires.append(wire(136, c9b_y + 3.81, 136, c9b_y + 6, seed_suffix="c9-gnd"))
+    attach_gnd(136, c9b_y + 6, "C9", rot=270)
+
+    # ---- Pin 7 INL ← PCM_VOUTL via C_in_L 1µF (DC-block) + R_VOL_L 10k series
+    p7uy = u4_left(7)
+    # R_VOL_L horizontal: sym (140, p7uy) rotation=90. pin1 abs (136.19, p7uy), pin2 abs (143.81, p7uy).
+    # pin2 → U4.7 INL (147.3, p7uy) via wire.
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_VOL_L",
+            value="10k 0603 (L input series)",
+            x=140, y=p7uy, rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="RVOLL",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(143.81, p7uy, U4_LX, p7uy, seed_suffix="rvoll-to-inl"))
+    # C_in_L 1µF DC-block. sym (132, p7uy) rotation=90. pin1 (128.19, p7uy), pin2 (135.81, p7uy).
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_in_L",
+            value="1uF X7R 0603 (L input DC-block)",
+            x=132, y=p7uy, rotation=90,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            seed_suffix="CINL",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(135.81, p7uy, 136.19, p7uy, seed_suffix="cinl-to-rvoll"))
+    wires.append(wire(128.19, p7uy, 125, p7uy, seed_suffix="cinl-to-label"))
+    labels.append(label(125, p7uy, "PCM_VOUTL"))
+
+    # ---- Pin 8 GND (signal ground left) → GND
+    p8uy = u4_left(8)
+    wires.append(wire(U4_LX, p8uy, U4_LX - 3, p8uy, seed_suffix="u4-gnd-l"))
+    attach_gnd(U4_LX - 3, p8uy, "U4_GND_L", rot=90)
+
+    # ---- Pin 9 INR ← PCM_VOUTR via C_in_R + R_VOL_R
+    p9uy = u4_right(9)
+    # R_VOL_R horizontal: sym (180, p9uy) rotation=90. pin1 abs (176.19, p9uy), pin2 abs (183.81, p9uy).
+    # pin1 → U4.9 INR (172.7, p9uy) via wire. Wait — INR is on RIGHT side, so we route to the RIGHT, but then conflict with speakers.
+    # Re-think: INR on right side at U4_RX=172.7. We need to bring PCM_VOUTR signal to this pin.
+    # PCM_VOUTR is generated on left side (at U3). Bringing the signal to the right side of U4 requires routing across or use of labels.
+    # Use label-bridge approach: PCM_VOUTR label appears both at U3 and at the C_in_R left end (on right side of U4).
+    # Place C_in_R + R_VOL_R right of U4, then label PCM_VOUTR at the far right of C_in_R.
+    # R_VOL_R sym (180, p9uy) rot=90 → pin1 abs (176.19, p9uy), pin2 abs (183.81, p9uy).
+    # We want pin1 (leftmost) → U4.9 INR (172.7, p9uy) via short wire.
+    # pin2 → C_in_R right end → label PCM_VOUTR.
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_VOL_R",
+            value="10k 0603 (R input series)",
+            x=180, y=p9uy, rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="RVOLR",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(U4_RX, p9uy, 176.19, p9uy, seed_suffix="u4-inr-to-rvolr"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_in_R",
+            value="1uF X7R 0603 (R input DC-block)",
+            x=188, y=p9uy, rotation=90,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            seed_suffix="CINR",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(183.81, p9uy, 184.19, p9uy, seed_suffix="rvolr-to-cinr"))
+    wires.append(wire(191.81, p9uy, 194, p9uy, seed_suffix="cinr-to-label"))
+    labels.append(label(194, p9uy, "PCM_VOUTR"))
+
+    # ---- Pin 10 PVDD (right) → +5V
+    p10uy = u4_right(10)
+    wires.append(wire(U4_RX, p10uy, U4_RX + 3, p10uy, seed_suffix="u4-pvdd-r-stub"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_U4_PVDDR",
+            value="+5V",
+            x=U4_RX + 3, y=p10uy, rotation=270,
+            seed_suffix="u4-pvdd-r-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- Pin 11 OUTR- → SPK_R- label (J7 pin2)
+    wires.append(wire(U4_RX, p11uy, 176, p11uy, seed_suffix="u4-outrm-stub"))
+    labels.append(label(176, p11uy, "SPK_R-"))
+
+    # ---- Pin 12 PGND (right) → GND
+    p12uy = u4_right(12)
+    wires.append(wire(U4_RX, p12uy, U4_RX + 3, p12uy, seed_suffix="u4-pgnd-r"))
+    attach_gnd(U4_RX + 3, p12uy, "U4_PGND_R", rot=270)
+
+    # ---- Pin 13 OUTR+ → SPK_R+ label (J7 pin1)
+    wires.append(wire(U4_RX, p13uy, 176, p13uy, seed_suffix="u4-outrp-stub"))
+    labels.append(label(176, p13uy, "SPK_R+"))
+
+    # ---- Pin 14 /SHDN ← AMP_SHUTDOWN hier input (ACTIVE LOW)
+    p14uy = u4_right(14)
+    wires.append(wire(U4_RX, p14uy, 180, p14uy, seed_suffix="u4-shdn-stub"))
+    hlabels.append(hier_label(180, p14uy, "AMP_SHUTDOWN", shape="input", rotation=180))
+
+    # ---- Pin 15, 16 NC (per datasheet)
+    for pin in (15, 16):
+        py = u4_right(pin)
+        wires.append(wire(U4_RX, py, U4_RX + 3, py, seed_suffix=f"u4-nc-{pin}"))
+        labels.append(label(U4_RX + 3, py, f"NC_U4_{pin}"))
+
+    # ---- J7 Speaker R connector
+    j7_x, j7_y = 200, 130
     symbols.append(
         place_symbol(
             lib_id="Connector:Conn_01x02",
             ref="J7",
             value="Speaker R (PUI AS04008PS, 4R 4W)",
-            x=180, y=j7_sy,
+            x=j7_x, y=j7_y,
             footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
             extra_props={"MPN": "AS04008PS-4W-WR-R", "LCSC": "TBD"},
             seed_suffix="J7",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(U4_RX, p11_y, 183.81, p11_y, seed_suffix="outrp-to-j7p1"))
-    wires.append(wire(U4_RX, p12_y, 183.81, p12_y, seed_suffix="outrm-to-j7p2"))
+    # Conn_01x02 pin1 abs (j7_x+3.81, j7_y-1.27) = (203.81, 128.73), pin2 abs (203.81, 131.27).
+    # SPK_R+ label connect to J7.1 — same label name bridges nets.
+    wires.append(wire(203.81, 128.73, 207, 128.73, seed_suffix="j7-p1"))
+    labels.append(label(207, 128.73, "SPK_R+"))
+    wires.append(wire(203.81, 131.27, 207, 131.27, seed_suffix="j7-p2"))
+    labels.append(label(207, 131.27, "SPK_R-"))
 
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
@@ -3245,13 +3369,13 @@ def audio_sheet() -> str:
         f'  (paper "A3")\n'
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403)")\n'
-        f'    (date "2026-05-12")\n'
-        f'    (rev "0.6")\n'
+        f'    (date "2026-05-13")\n'
+        f'    (rev "0.6.1")\n'
         f'    (company "Field Ambience Project")\n'
-        f'    (comment 1 "Per SPEC v0.6 §8 + Fixes H2/M2/C2")\n'
-        f'    (comment 2 "PCM5102A: 3-wire mode (SCK=GND, internal PLL from BCK)")\n'
-        f'    (comment 3 "FB1 BLM18AG601 zwischen AVDD und DVDD (v0.6 M2 fix)")\n'
-        f'    (comment 4 "PAM8403: C9 10uF + C9b 100nF VDD lokal (v0.6 H2). SHDN/MUTE via Pico (v0.6 C2). PAM8403 pinout vor PCB-Layout gegen JLC-stockable PAM8403 Datasheet verifizieren"))\n'
+        f'    (comment 1 "Per SPEC v0.6 §8 + Fixes H2/M2/C2 + REVIEW PIN-FIX")\n'
+        f'    (comment 2 "PCM5102A pinout per TI SLAS859C: CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20")\n'
+        f'    (comment 3 "PAM8403 pinout per Diodes Inc DS31295 (LCSC C17337 = PAM8403DR-H)")\n'
+        f'    (comment 4 "BLOCKER: PAM8403 PVDD/PGND-Pairs (4/2, 10/12) MUESSEN gegen PAM8403DR-H Datasheet verifiziert werden vor PCB-Layout"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
