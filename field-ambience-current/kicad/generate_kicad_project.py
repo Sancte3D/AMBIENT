@@ -159,6 +159,7 @@ def kicad_pro() -> str:
             [det_uuid("sheet_mcp"), "MCP23017"],
             [det_uuid("sheet_encoder"), "Encoders"],
             [det_uuid("sheet_audio"), "Audio"],
+            [det_uuid("sheet_pi"), "PiHeader"],
         ],
         "text_variables": {},
     }
@@ -824,6 +825,45 @@ def _ferrite_bead_lib_symbol() -> str:
 """.strip()
 
 
+def _conn_02xN_lib_symbol(n: int) -> str:
+    """Generic 2×N-row dual-column header symbol (Pi GPIO style).
+
+    Pin local positions: left column (odd numbers) at x=-5.08, right column
+    (even numbers) at x=+5.08. Row R (1..n) at local y = +(n-1)*1.27 - (R-1)*2.54
+    in KiCad Y-UP lib coords. Pin 1 is top-left.
+    """
+    y_top = (n - 1) * 1.27
+    rect_top = y_top + 2.54
+    rect_bot = -y_top - 2.54
+    out = [f'    (symbol "Connector:Conn_02x{n:02d}" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)']
+    out.append(f'      (property "Reference" "J" (at 0 {rect_top + 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append(f'      (property "Value" "Conn_02x{n:02d}" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append(f'      (symbol "Connector:Conn_02x{n:02d}_0_1"')
+    out.append(f'        (rectangle (start -2.54 {rect_top}) (end 2.54 {rect_bot})')
+    out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
+    out.append(f'      (symbol "Connector:Conn_02x{n:02d}_1_1"')
+    for row in range(n):
+        ly = y_top - row * 2.54
+        # Left pin = odd number 2*row+1, right pin = even number 2*row+2
+        pl_num = 2 * row + 1
+        pr_num = 2 * row + 2
+        out.append(
+            f'        (pin passive line (at -5.08 {ly:.3f} 0) (length 2.54)\n'
+            f'          (name "Pin_{pl_num}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{pl_num}" (effects (font (size 1.27 1.27)))))'
+        )
+        out.append(
+            f'        (pin passive line (at 5.08 {ly:.3f} 180) (length 2.54)\n'
+            f'          (name "Pin_{pr_num}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{pr_num}" (effects (font (size 1.27 1.27)))))'
+        )
+    out.append('        )')
+    out.append('      )')
+    return "\n".join(out)
+
+
 LIB_SYMBOLS = (
     LIB_SYMBOLS
     + "\n" + _pico2_lib_symbol()
@@ -834,6 +874,7 @@ LIB_SYMBOLS = (
     + "\n" + _pam8403_lib_symbol()
     + "\n" + _ferrite_bead_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(2)
+    + "\n" + _conn_02xN_lib_symbol(20)
 )
 
 
@@ -3226,6 +3267,219 @@ def audio_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
+# Sheet 7 — Pi Zero 2 W GPIO-Header (J2) + UART-R1 + Power-Injection
+# per SPEC v0.6 §1/§8 + BOM R1.
+# Inputs: +5V (zu Pi pin 2/4), GND, UART0_TX (von Pico GP0 zu Pi pin 10 RX).
+# Outputs: UART0_RX (von Pi pin 8 TX zu Pico GP1 via R1 1k), I2S_BCK/LRCK/DOUT.
+# ----------------------------------------------------------------------------
+
+
+def pi_sheet() -> str:
+    sheet_uuid = det_uuid("sheet_pi")
+    sus = "sheet_pi"
+    symbols: list[str] = []
+    wires: list[str] = []
+    junctions: list[str] = []
+    labels: list[str] = []
+    hlabels: list[str] = []
+
+    def attach_gnd(x: float, y: float, ref: str, rot: int = 270) -> None:
+        symbols.append(
+            place_symbol(
+                lib_id="Power:GND",
+                ref=f"#PWR_{ref}",
+                value="GND",
+                x=x, y=y, rotation=rot,
+                seed_suffix=f"gnd-{ref}",
+                sheet_uuid_seed=sus,
+            )
+        )
+
+    # J2 Conn_02x20 @ (130, 130). Pin local: links x=-5.08, rechts x=+5.08.
+    # Pin 1 (top-left) abs (124.92, 105.87). Row R abs y = 105.87 + (R-1)*2.54.
+    J2_X, J2_Y = 130.0, 130.0
+    J2_LX = J2_X - 5.08   # 124.92 (odd pins, left side)
+    J2_RX = J2_X + 5.08   # 135.08 (even pins, right side)
+
+    def j2_y(pin_num: int) -> float:
+        """Pi-Pin-Position. Pin 1/2 row 1 = oben (y=105.87). Pin 39/40 row 20 = unten."""
+        row = (pin_num - 1) // 2  # 0..19
+        return 105.87 + row * 2.54
+
+    def j2_x(pin_num: int) -> float:
+        return J2_LX if pin_num % 2 == 1 else J2_RX
+
+    symbols.append(
+        place_symbol(
+            lib_id="Connector:Conn_02x20",
+            ref="J2",
+            value="Pi Zero 2 W GPIO Header 2x20 (2.54mm)",
+            x=J2_X, y=J2_Y,
+            footprint="Connector_PinHeader_2.54mm:PinHeader_2x20_P2.54mm_Vertical",
+            datasheet="https://datasheets.raspberrypi.com/pizero/pi-zero-2-w-product-brief.pdf",
+            extra_props={
+                "MPN": "Standard 2x20 2.54mm Header",
+                "LCSC": "TBD",
+            },
+            seed_suffix="J2",
+            sheet_uuid_seed=sus,
+        )
+    )
+
+    # ---- Helper: Pin → Power-Symbol via Stub-Wire
+    def pin_to_power(pin: int, lib_id: str, ref: str, value: str) -> None:
+        py = j2_y(pin)
+        px = j2_x(pin)
+        if pin % 2 == 1:  # left side, extend left
+            flag_x = px - 3
+            rot = 90
+        else:
+            flag_x = px + 3
+            rot = 270
+        wires.append(wire(px, py, flag_x, py, seed_suffix=f"j2-p{pin}-power"))
+        symbols.append(
+            place_symbol(
+                lib_id=lib_id,
+                ref=ref,
+                value=value,
+                x=flag_x, y=py, rotation=rot,
+                seed_suffix=f"j2-pwr-{pin}",
+                sheet_uuid_seed=sus,
+            )
+        )
+
+    # ---- Helper: Pin → NC-Label (gegen Dangling-Warnings)
+    def pin_to_nc(pin: int, name: str = "") -> None:
+        py = j2_y(pin)
+        px = j2_x(pin)
+        if pin % 2 == 1:  # left
+            label_x = px - 5
+        else:
+            label_x = px + 5
+        wires.append(wire(px, py, label_x, py, seed_suffix=f"j2-p{pin}-nc"))
+        labels.append(label(label_x, py, name or f"NC_PI_{pin}"))
+
+    # ---- Helper: Pin → Hier-Label
+    def pin_to_hier(pin: int, net: str, shape: str = "output") -> None:
+        py = j2_y(pin)
+        px = j2_x(pin)
+        if pin % 2 == 1:
+            hier_x = px - 5
+            rot = 0
+        else:
+            hier_x = px + 5
+            rot = 180
+        wires.append(wire(px, py, hier_x, py, seed_suffix=f"j2-p{pin}-hier"))
+        hlabels.append(hier_label(hier_x, py, net, shape=shape, rotation=rot))
+
+    # ---- Power Pins:
+    # Pin 2, 4 = 5V Input (von unserer PCB-Rail)
+    pin_to_power(2, "Power:+5V", "#PWR_PI_5V2", "+5V")
+    pin_to_power(4, "Power:+5V", "#PWR_PI_5V4", "+5V")
+    # Pin 1, 17 = Pi's 3V3 output (NICHT verwenden, da unsere 3V3 vom Pico kommt)
+    pin_to_nc(1, "NC_PI_3V3_OUT")
+    pin_to_nc(17, "NC_PI_3V3_OUT2")
+    # Pin 6, 9, 14, 20, 25, 30, 34, 39 = GND
+    for gnd_pin in (6, 9, 14, 20, 25, 30, 34, 39):
+        py = j2_y(gnd_pin)
+        px = j2_x(gnd_pin)
+        if gnd_pin % 2 == 1:
+            flag_x = px - 3
+            rot = 90
+        else:
+            flag_x = px + 3
+            rot = 270
+        wires.append(wire(px, py, flag_x, py, seed_suffix=f"j2-p{gnd_pin}-gnd"))
+        attach_gnd(flag_x, py, f"J2_GND{gnd_pin}", rot=rot)
+
+    # ---- Audio I²S Outputs zum PCM5102A (Sheet 6):
+    pin_to_hier(12, "I2S_BCK", shape="output")     # Pi GPIO18 = PCM_CLK
+    pin_to_hier(35, "I2S_LRCK", shape="output")    # Pi GPIO19 = PCM_FS
+    pin_to_hier(40, "I2S_DOUT", shape="output")    # Pi GPIO21 = PCM_DOUT
+
+    # ---- UART (115200) zwischen Pi und Pico:
+    # Pi GPIO14 (pin 8) = Pi TX → Pico GP1 RX (via R1 1k series, per SPEC v0.6 §5+BOM)
+    # Place R1 horizontal, sym at (115, j2_y(8)) rotation=90: pin1 abs (111.19, py), pin2 abs (118.81, py)
+    p8_y = j2_y(8)
+    p8_x = j2_x(8)  # = J2_LX = 124.92
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R1",
+            value="1k 0603 (UART RX series)",
+            x=119, y=p8_y, rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-071KL", "LCSC": "C22548"},
+            seed_suffix="R1",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # R1 pin2 (right side) at (122.81, p8_y) → connect to Pi pin 8 at (124.92, p8_y)
+    wires.append(wire(122.81, p8_y, p8_x, p8_y, seed_suffix="r1-to-pi-p8"))
+    # R1 pin1 (left side) at (115.19, p8_y) → hier-label UART0_RX
+    wires.append(wire(115.19, p8_y, 112, p8_y, seed_suffix="r1-to-uart-rx"))
+    hlabels.append(hier_label(112, p8_y, "UART0_RX", shape="output", rotation=0))
+
+    # Pi GPIO15 (pin 10) = Pi RX ← Pico GP0 TX (direkter Anschluss, kein R)
+    pin_to_hier(10, "UART0_TX", shape="input")
+
+    # ---- Alle übrigen GPIOs → NC labels (Pi-Funktionen die wir nicht nutzen)
+    unused = [
+        (3, "NC_GPIO2_SDA1"),
+        (5, "NC_GPIO3_SCL1"),
+        (7, "NC_GPIO4"),
+        (11, "NC_GPIO17"),
+        (13, "NC_GPIO27"),
+        (15, "NC_GPIO22"),
+        (16, "NC_GPIO23"),
+        (18, "NC_GPIO24"),
+        (19, "NC_GPIO10_MOSI"),
+        (21, "NC_GPIO9_MISO"),
+        (22, "NC_GPIO25"),
+        (23, "NC_GPIO11_SCLK"),
+        (24, "NC_GPIO8_CE0"),
+        (26, "NC_GPIO7_CE1"),
+        (27, "NC_GPIO0_ID_SD"),
+        (28, "NC_GPIO1_ID_SC"),
+        (29, "NC_GPIO5"),
+        (31, "NC_GPIO6"),
+        (32, "NC_GPIO12"),
+        (33, "NC_GPIO13"),
+        (36, "NC_GPIO16"),
+        (37, "NC_GPIO26"),
+        (38, "NC_GPIO20_PCM_DIN"),
+    ]
+    for pin, name in unused:
+        pin_to_nc(pin, name)
+
+    body = (
+        f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
+        f'  (uuid "{sheet_uuid}")\n'
+        f'  (paper "A3")\n'
+        f'  (title_block\n'
+        f'    (title "Field Ambience PCB — Sheet 7: Pi Zero 2 W GPIO Header")\n'
+        f'    (date "2026-05-12")\n'
+        f'    (rev "0.6")\n'
+        f'    (company "Field Ambience Project")\n'
+        f'    (comment 1 "Per SPEC v0.6 §1 + §8 + BOM R1")\n'
+        f'    (comment 2 "+5V Power-Injection via Pin 2+4. 8x GND auf Pi-GND-Pins")\n'
+        f'    (comment 3 "I2S Audio: Pi GPIO18/19/21 → PCM5102A BCK/LRCK/DOUT")\n'
+        f'    (comment 4 "UART: Pi TX (GPIO14) → Pico GP1 via R1 1k series. Pi RX (GPIO15) ← Pico GP0 direkt"))\n'
+        "  (lib_symbols\n"
+        + LIB_SYMBOLS
+        + "\n  )\n"
+        + "".join(symbols)
+        + "".join(wires)
+        + "".join(junctions)
+        + "".join(labels)
+        + "".join(hlabels)
+        + f'  (sheet_instances\n    (path "/" (page "7")))\n'
+        ")\n"
+    )
+    return body
+
+
+# ----------------------------------------------------------------------------
 # Root schematic
 # ----------------------------------------------------------------------------
 
@@ -3238,6 +3492,7 @@ def root_sheet() -> str:
     mcp_uuid = det_uuid("sheet_mcp")
     enc_uuid = det_uuid("sheet_encoder")
     audio_uuid = det_uuid("sheet_audio")
+    pi_uuid = det_uuid("sheet_pi")
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{root_uuid}")\n'
@@ -3357,7 +3612,14 @@ def root_sheet() -> str:
         f'      (uuid "{det_uuid("picopin_amp_shdn")}"))\n'
         f'    (pin "AMP_MUTE" output (at 130 100 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("picopin_amp_mute")}")))\n'
+        f'      (uuid "{det_uuid("picopin_amp_mute")}"))\n'
+        # ---- UART to/from Pi ----
+        f'    (pin "UART0_TX" output (at 130 105 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("picopin_uart_tx")}"))\n'
+        f'    (pin "UART0_RX" input (at 130 110 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("picopin_uart_rx")}")))\n'
         # ---- Sheet 3: OLED ----
         f'  (sheet (at 230 40) (size 60 60) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -3470,6 +3732,46 @@ def root_sheet() -> str:
         f'  (label "I2C_SCL" (at 125 215 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_scl_mcp")}"))\n'
         f'  (wire (pts (xy 125 220) (xy 130 220)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_mcpint_mcp")}"))\n'
         f'  (label "MCP_INT" (at 125 220 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_mcpint_mcp")}"))\n'
+        # ---- Sheet 7: Pi Header (rechts unten) ----
+        f'  (sheet (at 330 40) (size 60 130) (fields_autoplaced)\n'
+        f'    (stroke (width 0.1524) (type solid))\n'
+        f'    (fill (color 0 0 0 0.0000))\n'
+        f'    (uuid "{pi_uuid}")\n'
+        f'    (property "Sheetname" "PiHeader" (at 330 39 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
+        f'    (property "Sheetfile" "pi.kicad_sch" (at 330 170.5 0)\n'
+        f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
+        f'    (pin "UART0_TX" input (at 330 50 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("pipin_uart_tx")}"))\n'
+        f'    (pin "UART0_RX" output (at 330 55 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("pipin_uart_rx")}"))\n'
+        f'    (pin "I2S_BCK" output (at 330 65 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("pipin_i2sbck")}"))\n'
+        f'    (pin "I2S_LRCK" output (at 330 70 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("pipin_i2slrck")}"))\n'
+        f'    (pin "I2S_DOUT" output (at 330 75 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("pipin_i2sdout")}")))\n'
+        # ---- Inter-sheet labels: Pico UART → Pi UART
+        f'  (wire (pts (xy 125 105) (xy 130 105)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_tx_pico")}"))\n'
+        f'  (label "UART0_TX" (at 125 105 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pico")}"))\n'
+        f'  (wire (pts (xy 125 110) (xy 130 110)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_rx_pico")}"))\n'
+        f'  (label "UART0_RX" (at 125 110 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pico")}"))\n'
+        f'  (wire (pts (xy 325 50) (xy 330 50)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_tx_pi")}"))\n'
+        f'  (label "UART0_TX" (at 325 50 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pi")}"))\n'
+        f'  (wire (pts (xy 325 55) (xy 330 55)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_rx_pi")}"))\n'
+        f'  (label "UART0_RX" (at 325 55 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pi")}"))\n'
+        # ---- Inter-sheet labels: Pi I2S → Audio Sheet (matching labels already on Audio side)
+        f'  (wire (pts (xy 325 65) (xy 330 65)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sbck_pi")}"))\n'
+        f'  (label "I2S_BCK" (at 325 65 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sbck_pi")}"))\n'
+        f'  (wire (pts (xy 325 70) (xy 330 70)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2slrck_pi")}"))\n'
+        f'  (label "I2S_LRCK" (at 325 70 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2slrck_pi")}"))\n'
+        f'  (wire (pts (xy 325 75) (xy 330 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sdout_pi")}"))\n'
+        f'  (label "I2S_DOUT" (at 325 75 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sdout_pi")}"))\n'
         # ---- Sheet 6: Audio (rechts neben MCP, unter Encoder-Sheet) ----
         f'  (sheet (at 230 200) (size 60 50) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -3544,7 +3846,8 @@ def main() -> None:
     (OUT_DIR / "mcp.kicad_sch").write_text(mcp_sheet())
     (OUT_DIR / "encoder.kicad_sch").write_text(encoder_sheet())
     (OUT_DIR / "audio.kicad_sch").write_text(audio_sheet())
-    print(f"Wrote KiCad project + Sheets 1+2+3+4+5+6 to {OUT_DIR}")
+    (OUT_DIR / "pi.kicad_sch").write_text(pi_sheet())
+    print(f"Wrote KiCad project + Sheets 1+2+3+4+5+6+7 to {OUT_DIR}")
 
 
 if __name__ == "__main__":
