@@ -1,32 +1,54 @@
 # Field Ambience Pico Controller PCB — Spec v0.6 (Review-Ready)
 
-**Rev:** 0.6.1 (Pinout-Errata applied — siehe Errata-Sektion unten)
+**Rev:** 0.6.2 (Audio-IC-Pinouts vollständig gegen Datasheets verifiziert)
 **Target:** 4-Layer JLCPCB, Full PCBA
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
 
 ---
 
-## Errata (v0.6.1, 2026-05-13)
+## Errata-Historie
 
-Nach PR-#1-Review wurden zwei Pinout-Bugs in den KiCad-Symbolen für die
-Audio-ICs gefunden — die ursprünglichen v0.6-Symbole hatten erfundene
-Pin-Belegungen statt offizielle Datasheet-Pinouts. Beide sind in v0.6.1
-korrigiert.
+### v0.6.2 (2026-05-13) — PAM8403H-Pinout per PDF im Repo verifiziert
+
+Der PAM8403H.PDF im Repo-Root ist das offizielle Diodes-Inc-Datasheet
+für LCSC C17337. Damit ist die Pin-Belegung jetzt zu 100% gesichert.
+
+Bug in v0.6.1 (zwischenzeitlicher Fix-Versuch ohne PDF): basierte auf
+falscher DS31295-Vermutung. Pin 8 (VREF), 9 (NC), 10 (INR), 11 (GND),
+12 (SHDN), 13 (PVDD), 14 (+OUT_R), 15 (PGND), 16 (-OUT_R) waren alle
+um eine Position verschoben. **+OUT_L/−OUT_L Polarität war auch
+vertauscht** (Pin 1 ist −OUT_L, nicht +OUT_L wie in v0.6.1 angenommen).
+
+Verifizierte PAM8403H-Pin-Belegung (Diodes Inc, Nov 2012):
+
+| Pin | Name | Funktion |
+|---|---|---|
+| 1 | **-OUT_L** | Left negative output (BTL) |
+| 2 | PGND | Power Ground |
+| 3 | **+OUT_L** | Left positive output (BTL) |
+| 4 | PVDD | Power VDD |
+| 5 | MUTE | Mute Control (ACTIVE LOW) |
+| 6 | VDD | Analog VDD |
+| 7 | INL | Left Channel Input |
+| 8 | **VREF** | Internal analog ref — Bypass-Cap zu GND **REQUIRED** |
+| 9 | NC | No connected |
+| 10 | INR | Right Channel Input |
+| 11 | GND | Analog GND |
+| 12 | **SHDN** | Shutdown Control (ACTIVE LOW) |
+| 13 | PVDD | Power VDD |
+| 14 | **+OUT_R** | Right positive output (BTL) |
+| 15 | PGND | Power Ground |
+| 16 | **-OUT_R** | Right negative output (BTL) |
+
+NEUER Component in v0.6.2: **C_VREF 1µF X7R 0603** an PAM8403 Pin 8
+(VREF Bypass-Cap, per Datasheet zwingend). War in v0.6.1 vergessen.
+
+### v0.6.1 (2026-05-13) — Erster Pinout-Fix-Versuch (PCM5102A korrekt, PAM8403 noch falsch)
 
 | Errata | Ursprünglich (v0.6) | Korrigiert (v0.6.1) |
 |---|---|---|
-| PCM5102A pinout | LRCK/BCK/DIN auf Pin 1/2/3, AVDD=15, DVDD=19 (alle falsch) | Per TI Datasheet SLAS859C: CPVDD=1, OUTL=6, OUTR=7, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20 |
-| PAM8403 pinout | Logisches Pinout (VDD=1, SHDN=3, MUTE=4, OUT 9-12), war ungetestet | Per Diodes Inc DS31295 (für LCSC C17337 = PAM8403DR-H): OUTL+=1, PGND=2, OUTL-=3, PVDD=4, /MUTE=5, VDD=6, INL=7, INR=9, PVDD=10, OUTR-=11, OUTR+=13, /SHDN=14 |
+| PCM5102A pinout | LRCK/BCK/DIN auf Pin 1/2/3 (alle falsch) | Per TI Datasheet SLAS859C: CPVDD=1, OUTL=6, OUTR=7, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20 |
 | BOM LCSC-Nummern | PCM5102A=C9900003814 (existiert nicht), PAM8403=C84368 (existiert nicht) | PCM5102A=**C107671** (verified, Stock 6726), PAM8403=**C17337** (verified, Stock 8962) |
-
-### Verbleibender BLOCKER für PCB-Layout
-
-- **PAM8403DR-H Pinout-Verifikation gegen exakt das bestellte Bauteil:**
-  Die Pin-Belegung variiert zwischen PAM8403-Herstellern. Vor dem PCB-
-  Layout muss zwingend gegen das Datasheet des tatsächlich bestellten
-  PAM8403DR-H (Diodes Inc, JLCPCB C17337) cross-referenziert werden.
-  Wenn das Footprint nicht zum Symbol-Pinout passt, gibt es defekte
-  Boards — kein Software-Fix.
 
 ---
 
