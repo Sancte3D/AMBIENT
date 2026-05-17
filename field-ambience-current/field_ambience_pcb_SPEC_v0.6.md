@@ -1,12 +1,56 @@
 # Field Ambience Pico Controller PCB — Spec v0.6 (Review-Ready)
 
-**Rev:** 0.6.2 (Audio-IC-Pinouts vollständig gegen Datasheets verifiziert)
+**Rev:** 0.6.3 (USB-C-Pinout per USB Type-C Spec Rev 2.1 korrigiert)
 **Target:** 4-Layer JLCPCB, Full PCBA
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
 
 ---
 
 ## Errata-Historie
+
+### v0.6.3 (2026-05-14) — CRITICAL: USB-C VBUS/GND-Pinout korrigiert
+
+Externer Review fand: USB-C-Symbol hatte VBUS auf Pin-Numbers A1/A4/B1/B4
+und GND auf A12/A9/B9/B12. Das ist **falsch gegen USB Type-C Spec
+Rev 2.1 Table 3-1**. Die korrekte Pin-Belegung ist:
+
+```
+GND  = A1, A12, B1, B12  (NICHT was im v0.6 Symbol stand)
+VBUS = A4, A9, B4, B9
+CC1  = A5
+CC2  = B5
+D+   = A6 (+ B6 für reversed orientation)
+D-   = A7 (+ B7 für reversed orientation)
+SBU1 = A8
+SBU2 = B8
+```
+
+**Kritische Konsequenz** ohne Fix: Beim PCB-Layout hätte das Pad A1
+des USB-C-Footprints +5V bekommen — Standard-Pad A1 ist aber GND.
+Beim Einstecken eines USB-C-Kabels wäre **VBUS direkt auf GND
+kurzgeschlossen** worden (Pad A1 vom Kabel = GND, hier am PCB = +5V).
+
+Fix in `generate_kicad_project.py`: Symbol pin numbers für die 8
+Power-Pins korrigiert (Positionen bleiben, nur Numbers geswappt):
+- local +10.16: number A1 → **A4** (name VBUS)
+- local +7.62:  number A4 → **B4** (name VBUS)
+- local +5.08:  number B4 → **A9** (name VBUS)
+- local +2.54:  number B1 → **B9** (name VBUS)
+- local -2.54:  number A12 → **A1** (name GND)
+- local -5.08:  number A9 → **B1** (name GND)
+- local -7.62:  number B9 → **A12** (name GND)
+- local -10.16: number B12 → **B12** (name GND, unchanged)
+
+Power-Tree-Sheet-Wiring bleibt unverändert da Y-Positionen identisch.
+Analyzer `pin_nets`-Dump verifiziert nun alle 17 Pins (16 + Shield S1)
+korrekt gegen USB Type-C Spec.
+
+**Verbleibender PCB-Layout-Check**: Footprint des USB-C-Receptacle
+(JLCPCB C165948 = TYPE-C-31-M-12) muss in KiCad gegen das Symbol
+gegengecheckt werden — Pad-Number-Zuordnung muss zur Pin-Number im
+Symbol passen. Standard-KiCad-Footprints `USB_C_Receptacle_HRO_TYPE-
+C-31-M-12` haben die korrekte Spec-Belegung; trotzdem zwingend
+verifizieren bevor Bestellung.
 
 ### v0.6.2 (2026-05-13) — PAM8403H-Pinout per PDF im Repo verifiziert
 

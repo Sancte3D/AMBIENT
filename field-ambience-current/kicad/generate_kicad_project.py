@@ -316,16 +316,16 @@ LIB_SYMBOLS = r"""
       (symbol "Connector:USB_C_Receptacle_1_1"
         (pin power_in line (at -15.24 10.16 0) (length 2.54)
           (name "VBUS" (effects (font (size 1.27 1.27))))
-          (number "A1" (effects (font (size 1.27 1.27)))))
+          (number "A4" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at -15.24 7.62 0) (length 2.54)
           (name "VBUS" (effects (font (size 1.27 1.27))))
-          (number "A4" (effects (font (size 1.27 1.27)))))
+          (number "B4" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at -15.24 5.08 0) (length 2.54)
           (name "VBUS" (effects (font (size 1.27 1.27))))
-          (number "B4" (effects (font (size 1.27 1.27)))))
+          (number "A9" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at -15.24 2.54 0) (length 2.54)
           (name "VBUS" (effects (font (size 1.27 1.27))))
-          (number "B1" (effects (font (size 1.27 1.27)))))
+          (number "B9" (effects (font (size 1.27 1.27)))))
         (pin bidirectional line (at 15.24 7.62 180) (length 2.54)
           (name "CC1" (effects (font (size 1.27 1.27))))
           (number "A5" (effects (font (size 1.27 1.27)))))
@@ -352,13 +352,13 @@ LIB_SYMBOLS = r"""
           (number "B8" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at -15.24 -2.54 0) (length 2.54)
           (name "GND" (effects (font (size 1.27 1.27))))
-          (number "A12" (effects (font (size 1.27 1.27)))))
+          (number "A1" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at -15.24 -5.08 0) (length 2.54)
           (name "GND" (effects (font (size 1.27 1.27))))
-          (number "A9" (effects (font (size 1.27 1.27)))))
+          (number "B1" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at -15.24 -7.62 0) (length 2.54)
           (name "GND" (effects (font (size 1.27 1.27))))
-          (number "B9" (effects (font (size 1.27 1.27)))))
+          (number "A12" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at -15.24 -10.16 0) (length 2.54)
           (name "GND" (effects (font (size 1.27 1.27))))
           (number "B12" (effects (font (size 1.27 1.27)))))
@@ -1043,16 +1043,20 @@ def power_tree_sheet() -> str:
     hlabels: list[str] = []
 
     # USB-C J1 platziert @ (50, 80). Body-rect spannt y=67.30..102.86 absolut.
-    # Pin-Tabelle (alle absolut, berechnet via pin_abs(50, 80, local_x, local_y)):
-    #   left-VBUS:  A1 y=69.84 | A4 y=72.38 | B4 y=74.92 | B1 y=77.46
-    #   left-GND:   A12 y=82.54 | A9 y=85.08 | B9 y=87.62 | B12 y=90.16
+    # Pin-Belegung VERIFIED gegen USB Type-C Spec Rev 2.1 Table 3-1.
+    # WICHTIG: GND ist A1/A12/B1/B12, VBUS ist A4/A9/B4/B9 (NICHT umgekehrt!)
+    # Symbol-Layout: VBUS-Group oben (Pin-Numbers A4/B4/A9/B9), GND-Group unten
+    # (A1/B1/A12/B12), Signal-Pins (CC/D±/SBU) rechts.
+    # Pin-Tabelle absolut (sym (50,80), abs_y = sym_y - local_y):
+    #   left-VBUS:  A4 y=69.84 | B4 y=72.38 | A9 y=74.92 | B9 y=77.46
+    #   left-GND:   A1 y=82.54 | B1 y=85.08 | A12 y=87.62 | B12 y=90.16
     #   right CC:   A5 (CC1) y=72.38 | B5 (CC2) y=74.92
     #   right D±:   A6 (D+) y=77.46 | A7 (D-) y=80.0 | B6 (D+) y=82.54 | B7 (D-) y=85.08
     #   right SBU:  A8 y=87.62 | B8 y=90.16
     #   shield S1:  abs (50, 105.4)
     J1_X, J1_Y = 50.0, 80.0
-    VBUS_PINS_Y = [69.84, 72.38, 74.92, 77.46]  # A1, A4, B4, B1
-    GND_PINS_Y = [82.54, 85.08, 87.62, 90.16]   # A12, A9, B9, B12
+    VBUS_PINS_Y = [69.84, 72.38, 74.92, 77.46]  # USB-C spec: A4, B4, A9, B9
+    GND_PINS_Y = [82.54, 85.08, 87.62, 90.16]   # USB-C spec: A1, B1, A12, B12
     A5_CC1_Y, B5_CC2_Y = 72.38, 74.92
     A6_DP_Y, A7_DN_Y, B6_DP_Y, B7_DN_Y = 77.46, 80.0, 82.54, 85.08
     A8_SBU1_Y, B8_SBU2_Y = 87.62, 90.16
@@ -1074,7 +1078,7 @@ def power_tree_sheet() -> str:
             seed_suffix="J1",
         )
     )
-    # ---- VBUS-Trunk: 4 Stubs (A1, A4, B4, B1) → Trunk x=30.48 → F1 → Rail
+    # ---- VBUS-Trunk: 4 Stubs (A4, B4, A9, B9 per USB-C spec) → Trunk x=30.48 → F1 → Rail
     for py in VBUS_PINS_Y:
         wires.append(wire(34.76, py, 30.48, py, seed_suffix=f"vbus-stub-{py}"))
     # Trunk segmentiert (Analyzer folgt Wire-Endpoints, nicht Mid-Points)
@@ -1089,7 +1093,7 @@ def power_tree_sheet() -> str:
     # Junction am Trunk-Top (3-Wege: stub A1 + trunk-end + vbus-up)
     junctions.append(junction(30.48, vbus_top))
 
-    # ---- GND-Trunk: 4 Stubs (A12, A9, B9, B12) → Trunk x=30.48 → unten zu GND-Bus
+    # ---- GND-Trunk: 4 Stubs (A1, B1, A12, B12 per USB-C spec) → Trunk x=30.48 → unten zu GND-Bus
     for py in GND_PINS_Y:
         wires.append(wire(34.76, py, 30.48, py, seed_suffix=f"gnd-stub-{py}"))
     for ya, yb in zip(GND_PINS_Y, GND_PINS_Y[1:]):
