@@ -8,6 +8,34 @@
 
 ## Errata-Historie
 
+### v0.6.3-r2 (2026-05-14, gleicher Tag) — Hardware-Pull-Downs + UART-Naming
+
+Nach zweiter Review-Iteration ergänzt:
+
+**B4-Fix: PAM8403 /SHDN und /MUTE Hardware-Defaults**
+
+PAM8403H /SHDN (Pin 12) und /MUTE (Pin 5) sind ACTIVE LOW. Während
+Pico-Reset/Boot floaten GPIOs unbestimmt — Amp könnte un-defined oder
+voll-on starten → Pop/Klick. Fix:
+
+- **R_MUTE_PD = 10 kΩ 0603** Pull-Down von Pin 5 (MUTE) zu GND
+- **R_SHDN_PD = 10 kΩ 0603** Pull-Down von Pin 12 (SHDN) zu GND
+
+Default-State (während Boot, Reset, Pico-down): beide LOW → Amp ist
+GESHUTDOWN und GEMUTED. Pico-Firmware zieht beide aktiv HIGH erst
+NACH Power-Sequencing (per Spec v0.6 §5 GP27/GP28 Pop-Suppression).
+
+**I7-Fix: UART-Net-Naming disambiguiert**
+
+Alt: UART0_TX / UART0_RX — perspektivisch mehrdeutig (TX/RX hängt
+ab welches Bauteil schaut).
+
+Neu (eindeutige Direction):
+- `PICO_TX_PI_RX` — Pico GP0 (UART0 TX) → Pi GPIO15 (RX) auf pin 10
+- `PI_TX_PICO_RX` — Pi GPIO14 (TX) auf pin 8 → R1 1k → Pico GP1 (UART0 RX)
+
+Geändert in: pico_sheet, pi_sheet, root_sheet (sheet-pins + cross-sheet labels).
+
 ### v0.6.3 (2026-05-14) — CRITICAL: USB-C VBUS/GND-Pinout korrigiert
 
 Externer Review fand: USB-C-Symbol hatte VBUS auf Pin-Numbers A1/A4/B1/B4

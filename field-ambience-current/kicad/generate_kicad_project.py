@@ -1367,13 +1367,13 @@ def power_tree_sheet() -> str:
         f'  (paper "A3")\n'
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 1: Power Tree")\n'
-        f'    (date "2026-05-11")\n'
-        f'    (rev "0.6")\n'
+        f'    (date "2026-05-14")\n'
+        f'    (rev "0.6.3")\n'
         f'    (company "Field Ambience Project")\n'
-        f'    (comment 1 "Per SPEC v0.6 §1 + §3")\n'
+        f'    (comment 1 "Per SPEC v0.6.3 §1 + §3")\n'
         f'    (comment 2 "USB-C → F1(2A) → C_BULK(1000µF) → +5V rail")\n'
-        f'    (comment 3 "ESD: USBLC6-2SC6 on D+/D-; TVS: SMAJ5.0A on +5V")\n'
-        f'    (comment 4 "CC1/CC2 5.1kΩ to GND (Sink, 3A capable)"))\n'
+        f'    (comment 3 "USB-C VBUS/GND-Pin-Belegung per USB Type-C Spec Rev 2.1 (v0.6.3 fix)")\n'
+        f'    (comment 4 "ESD: USBLC6-2SC6 on D+/D-; TVS: SMAJ5.0A on +5V"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
@@ -1755,8 +1755,8 @@ def pico_sheet() -> str:
 
     # ---- Funktionale GP-Pins → Hierarchical Outputs per SPEC v0.6 §5
     left_signals = {
-        1: "UART0_TX",     # GP0
-        2: "UART0_RX",     # GP1 (downstream R1 1k series in Sheet 7)
+        1: "PICO_TX_PI_RX",  # GP0 — Pico transmits to Pi RX (GPIO15, pin 10)
+        2: "PI_TX_PICO_RX",  # GP1 — Pi TX (GPIO14, pin 8) via R1 1k series to Pico RX
         4: "I2C_SDA",      # GP2
         5: "I2C_SCL",      # GP3
         6: "OLED_MISO_NC", # GP4 (unused)
@@ -3144,6 +3144,25 @@ def audio_sheet() -> str:
     p5uy = u4_left(5)
     wires.append(wire(U4_LX, p5uy, 138, p5uy, seed_suffix="u4-mute-stub"))
     hlabels.append(hier_label(138, p5uy, "AMP_MUTE", shape="input", rotation=0))
+    # R_MUTE_PD 10k pull-down auf MUTE — Default LOW = gemuted während Pico-Boot.
+    # Pico zieht HIGH erst nach Power-Sequencing. Verhindert Pop beim Boot.
+    rmute_y = p5uy + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_MUTE_PD",
+            value="10k 0603 (MUTE pull-down, boot-safe default LOW)",
+            x=142, y=rmute_y,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="RMUTE_PD",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(138, p5uy, 142, p5uy, seed_suffix="rmute-to-mute-line"))
+    junctions.append(junction(138, p5uy))
+    wires.append(wire(142, rmute_y + 3.81, 142, rmute_y + 6, seed_suffix="rmute-to-gnd"))
+    attach_gnd(142, rmute_y + 6, "RMUTE_PD", rot=270)
 
     # ---- Pin 6 VDD → +5V + C9 10µF + C9b 100nF Decoupling (v0.6 H2 Fix)
     p6uy = u4_left(6)
@@ -3287,6 +3306,25 @@ def audio_sheet() -> str:
     p12uy = u4_right(12)
     wires.append(wire(U4_RX, p12uy, 180, p12uy, seed_suffix="u4-shdn-stub"))
     hlabels.append(hier_label(180, p12uy, "AMP_SHUTDOWN", shape="input", rotation=180))
+    # R_SHDN_PD 10k pull-down auf SHDN — Default LOW = Amp aus während Pico-Boot.
+    # Pico zieht HIGH erst nach Power-Sequencing. Verhindert un-defined Amp-State.
+    rshdn_y = p12uy + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_SHDN_PD",
+            value="10k 0603 (SHDN pull-down, boot-safe default LOW)",
+            x=176, y=rshdn_y,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            seed_suffix="RSHDN_PD",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(180, p12uy, 176, p12uy, seed_suffix="rshdn-to-shdn-line"))
+    junctions.append(junction(180, p12uy))
+    wires.append(wire(176, rshdn_y + 3.81, 176, rshdn_y + 6, seed_suffix="rshdn-to-gnd"))
+    attach_gnd(176, rshdn_y + 6, "RSHDN_PD", rot=270)
 
     # ---- Pin 13 PVDD (right) → +5V
     p13uy = u4_right(13)
@@ -3359,14 +3397,14 @@ def audio_sheet() -> str:
         f'  (uuid "{sheet_uuid}")\n'
         f'  (paper "A3")\n'
         f'  (title_block\n'
-        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403)")\n'
-        f'    (date "2026-05-13")\n'
-        f'    (rev "0.6.1")\n'
+        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403H)")\n'
+        f'    (date "2026-05-14")\n'
+        f'    (rev "0.6.3")\n'
         f'    (company "Field Ambience Project")\n'
-        f'    (comment 1 "Per SPEC v0.6 §8 + Fixes H2/M2/C2 + REVIEW PIN-FIX")\n'
+        f'    (comment 1 "Per SPEC v0.6.3 §8 + Errata-Fixes (PCM5102A TI, PAM8403H PDF verifiziert)")\n'
         f'    (comment 2 "PCM5102A pinout per TI SLAS859C: CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20")\n'
-        f'    (comment 3 "PAM8403 pinout per Diodes Inc DS31295 (LCSC C17337 = PAM8403DR-H)")\n'
-        f'    (comment 4 "BLOCKER: PAM8403 PVDD/PGND-Pairs (4/2, 10/12) MUESSEN gegen PAM8403DR-H Datasheet verifiziert werden vor PCB-Layout"))\n'
+        f'    (comment 3 "PAM8403H pinout per Diodes Inc PAM8403H.PDF Rev 1-0 (LCSC C17337)")\n'
+        f'    (comment 4 "v0.6.3 adds R_MUTE_PD + R_SHDN_PD 10k pull-downs - Amp default-OFF/muted during Pico boot"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
@@ -3384,8 +3422,8 @@ def audio_sheet() -> str:
 # ----------------------------------------------------------------------------
 # Sheet 7 — Pi Zero 2 W GPIO-Header (J2) + UART-R1 + Power-Injection
 # per SPEC v0.6 §1/§8 + BOM R1.
-# Inputs: +5V (zu Pi pin 2/4), GND, UART0_TX (von Pico GP0 zu Pi pin 10 RX).
-# Outputs: UART0_RX (von Pi pin 8 TX zu Pico GP1 via R1 1k), I2S_BCK/LRCK/DOUT.
+# Inputs: +5V (zu Pi pin 2/4), GND, PICO_TX_PI_RX (von Pico GP0 zu Pi pin 10 RX).
+# Outputs: PI_TX_PICO_RX (von Pi pin 8 TX zu Pico GP1 via R1 1k), I2S_BCK/LRCK/DOUT.
 # ----------------------------------------------------------------------------
 
 
@@ -3531,12 +3569,12 @@ def pi_sheet() -> str:
     )
     # R1 pin2 (right side) at (122.81, p8_y) → connect to Pi pin 8 at (124.92, p8_y)
     wires.append(wire(122.81, p8_y, p8_x, p8_y, seed_suffix="r1-to-pi-p8"))
-    # R1 pin1 (left side) at (115.19, p8_y) → hier-label UART0_RX
-    wires.append(wire(115.19, p8_y, 112, p8_y, seed_suffix="r1-to-uart-rx"))
-    hlabels.append(hier_label(112, p8_y, "UART0_RX", shape="output", rotation=0))
+    # R1 pin1 (left side) at (115.19, p8_y) → hier-label PI_TX_PICO_RX
+    wires.append(wire(115.19, p8_y, 112, p8_y, seed_suffix="r1-to-pi-tx-pico-rx"))
+    hlabels.append(hier_label(112, p8_y, "PI_TX_PICO_RX", shape="output", rotation=0))
 
     # Pi GPIO15 (pin 10) = Pi RX ← Pico GP0 TX (direkter Anschluss, kein R)
-    pin_to_hier(10, "UART0_TX", shape="input")
+    pin_to_hier(10, "PICO_TX_PI_RX", shape="input")
 
     # ---- Alle übrigen GPIOs → NC labels (Pi-Funktionen die wir nicht nutzen)
     unused = [
@@ -3729,10 +3767,10 @@ def root_sheet() -> str:
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_amp_mute")}"))\n'
         # ---- UART to/from Pi ----
-        f'    (pin "UART0_TX" output (at 130 105 180)\n'
+        f'    (pin "PICO_TX_PI_RX" output (at 130 105 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_uart_tx")}"))\n'
-        f'    (pin "UART0_RX" input (at 130 110 180)\n'
+        f'    (pin "PI_TX_PICO_RX" input (at 130 110 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_uart_rx")}")))\n'
         # ---- Sheet 3: OLED ----
@@ -3856,10 +3894,10 @@ def root_sheet() -> str:
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
         f'    (property "Sheetfile" "pi.kicad_sch" (at 330 170.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
-        f'    (pin "UART0_TX" input (at 330 50 180)\n'
+        f'    (pin "PICO_TX_PI_RX" input (at 330 50 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("pipin_uart_tx")}"))\n'
-        f'    (pin "UART0_RX" output (at 330 55 180)\n'
+        f'    (pin "PI_TX_PICO_RX" output (at 330 55 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("pipin_uart_rx")}"))\n'
         f'    (pin "I2S_BCK" output (at 330 65 180)\n'
@@ -3873,13 +3911,13 @@ def root_sheet() -> str:
         f'      (uuid "{det_uuid("pipin_i2sdout")}")))\n'
         # ---- Inter-sheet labels: Pico UART → Pi UART
         f'  (wire (pts (xy 125 105) (xy 130 105)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_tx_pico")}"))\n'
-        f'  (label "UART0_TX" (at 125 105 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pico")}"))\n'
+        f'  (label "PICO_TX_PI_RX" (at 125 105 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pico")}"))\n'
         f'  (wire (pts (xy 125 110) (xy 130 110)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_rx_pico")}"))\n'
-        f'  (label "UART0_RX" (at 125 110 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pico")}"))\n'
+        f'  (label "PI_TX_PICO_RX" (at 125 110 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pico")}"))\n'
         f'  (wire (pts (xy 325 50) (xy 330 50)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_tx_pi")}"))\n'
-        f'  (label "UART0_TX" (at 325 50 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pi")}"))\n'
+        f'  (label "PICO_TX_PI_RX" (at 325 50 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pi")}"))\n'
         f'  (wire (pts (xy 325 55) (xy 330 55)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_rx_pi")}"))\n'
-        f'  (label "UART0_RX" (at 325 55 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pi")}"))\n'
+        f'  (label "PI_TX_PICO_RX" (at 325 55 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pi")}"))\n'
         # ---- Inter-sheet labels: Pi I2S → Audio Sheet (matching labels already on Audio side)
         f'  (wire (pts (xy 325 65) (xy 330 65)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sbck_pi")}"))\n'
         f'  (label "I2S_BCK" (at 325 65 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sbck_pi")}"))\n'
