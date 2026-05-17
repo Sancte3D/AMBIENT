@@ -3211,16 +3211,18 @@ def audio_sheet() -> str:
     wires.append(wire(136, c9b_y + 3.81, 136, c9b_y + 6, seed_suffix="c9-gnd"))
     attach_gnd(136, c9b_y + 6, "C9", rot=270)
 
-    # ---- Pin 7 INL ← PCM_VOUTL via C_in_L 1µF (DC-block) + R_VOL_L 10k series
+    # ---- Pin 7 INL ← PCM_VOUTL via C_in_L 1µF (DC-block) + R_VOL_L 20k series (RI)
+    # PAM8403H gain = 2*RF/RI (RF=142k internal). RI=20k → AVD=14.2 = 23 dB (Datasheet-spec).
+    # Mit RI<18k wird die max-Gain-Spec überschritten und Clipping wahrscheinlicher.
     p7uy = u4_left(7)
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_VOL_L",
-            value="10k 0603 (L input series)",
+            value="20k 0603 (L input series, RI per PAM8403H datasheet, gain 23 dB)",
             x=140, y=p7uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "RC0603FR-0720KL", "LCSC": "C25092"},
             seed_suffix="RVOLL",
             sheet_uuid_seed=sus,
         )
@@ -3266,16 +3268,16 @@ def audio_sheet() -> str:
     wires.append(wire(U4_RX, p9uy, U4_RX + 3, p9uy, seed_suffix="u4-nc-9"))
     labels.append(label(U4_RX + 3, p9uy, "NC_U4_9"))
 
-    # ---- Pin 10 INR ← PCM_VOUTR via C_in_R 1µF + R_VOL_R 10k series
+    # ---- Pin 10 INR ← PCM_VOUTR via C_in_R 1µF + R_VOL_R 20k series (RI per datasheet)
     p10uy = u4_right(10)
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_VOL_R",
-            value="10k 0603 (R input series)",
+            value="20k 0603 (R input series, RI per PAM8403H datasheet, gain 23 dB)",
             x=180, y=p10uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "RC0603FR-0720KL", "LCSC": "C25092"},
             seed_suffix="RVOLR",
             sheet_uuid_seed=sus,
         )

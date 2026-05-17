@@ -412,36 +412,53 @@ Stack-Up und Layout-Skizze siehe v0.5 §2 — keine Änderungen.
 
 ---
 
-## 3. Power Tree v0.6 (verifiziert + corrected)
+## 3. Power Tree v0.6.3-r3 (REVIDIERT — siehe Errata-Historie)
 
-### Power Budget
+### Power Budget (v0.6.3-r3 realistic)
 
-Unverändert (Peak 1.405 A bei 5V = 7.0W).
+**⚠️ Update v0.6.3-r3**: alte v0.6-Tabelle hatte PAM8403 mit 350 mA peak —
+zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 
-| Verbraucher | Typical | Peak |
-|---|---|---|
-| Pi Zero 2 W (SuperCollider) | 450 mA | 700 mA |
-| Pico 2 (RP2350) | 30 mA | 50 mA |
-| OLED SSD1322 weiß | 120 mA | 250 mA |
-| MCP23017 + Pull-Ups + LED | 20 mA | 25 mA |
-| PCM5102A DAC | 25 mA | 30 mA |
-| PAM8403 Amp typical | 80 mA | 350 mA |
-| **TOTAL** | **745 mA** | **1.405 A** |
+| Verbraucher | Idle | Typical Audio | Worst Case (loud, 4Ω) |
+|---|---|---|---|
+| Pi Zero 2 W (SuperCollider) | 250 mA | 500 mA | 700 mA |
+| Pico 2 (RP2350) | 30 mA | 50 mA | 50 mA |
+| OLED SSD1322 256×64 | 50 mA | 150 mA | 250 mA |
+| MCP23017 + Pull-Ups | 5 mA | 20 mA | 25 mA |
+| PCM5102A DAC | 20 mA | 30 mA | 30 mA |
+| **PAM8403H @ 4Ω, 6W Out** | 80 mA | 600 mA | **1400 mA** |
+| Encoder/LED/Modifier | 5 mA | 15 mA | 25 mA |
+| **TOTAL** | **440 mA** | **1365 mA** | **2480 mA** |
 
-### USB-C Power Delivery
+### USB-C Power Delivery (Variante A: Firmware Volume-Clamp)
 
-USB-C @ 5V/3A (15W) Netzteil minimum. R_CC1 = R_CC2 = 5.1kΩ zu GND (Sink, 3A capable).
+USB-C @ 5V/3A (15W) Netzteil minimum. R_CC1 = R_CC2 = 5.1kΩ zu GND
+signalisieren "Sink" — garantieren aber NICHT 3A-Verfügbarkeit. Source
+kontrolliert via Rp (Pull-Up an CC) ob Default (~500 mA), 1.5A oder 3A.
+
+**Decision v0.6.3-r3**: Variante A für Prototyp:
+- Pi-Firmware muss SuperCollider-Master-Volume auf ~50% clampen
+  → Worst-Case-Peak < 1.7 A passt unter 2A-Polyfuse + USB-C 3A-Source
+- Mit Standard 5V/3A USB-C-Adapter (Apple 20W o.ä.) garantiert OK
+- Mit schwachem 5V/0.5A-Hub-Port: Risiko Brown-out → Adapter-Spec im
+  Benutzer-Manual klar dokumentieren
+
+**Variante B (Future-Hardware)**: USB-PD-Sink-Controller TPS25750 oder
+CYPD3177 für echte 3A-Negotiation. Kosten ~$2 + ein paar Passives.
 
 ### Polyfuse [Fix H1]
 
 **F1 = 2.0 A hold / 4.0 A trip, 1812 SMD** (Bourns MF-MSMF200 o.ä.).
-Rationale: 1.405 A peak + Inrush von 1000 µF Bulk + Pi-Boot-Strom-Spike (1 A peak laut CNX Software Messung) ergibt kumuliert > 1.5A für mehrere ms. 2A hold gibt ~600 mA Headroom.
+Rationale v0.6.3-r3: typical audio peak ~1.4 A + Inrush von 1000 µF Bulk +
+Pi-Boot-Strom-Spike (1 A peak laut CNX Software Messung) ergibt kumuliert
+> 1.5A für mehrere ms. 2A-hold passt — **vorausgesetzt Firmware-Volume-Clamp**
+verhindert dass PAM8403 dauerhaft im 1.4-A-Worst-Case läuft.
 
 ### Decoupling [Fix H2, M1, M2]
 
 | Cap | Wert | Position | Zweck |
 |---|---|---|---|
-| C_BULK | 1000 µF Alu-Elko SMD | nahe USB-C | Pi-Boot-Brownout |
+| C_BULK | 1000 µF Polymer 6.3V SMD (Nichicon PCV1A102MCL1GS, low-ESR) | nahe USB-C | Pi-Boot-Brownout. **v0.6.3-r3: Polymer statt Alu-Elko für definierten ESR/Inrush** |
 | C1 | 10 µF X5R 0805 | +5V Hauptrail | HF-Bulk |
 | C2 | 100 nF X7R 0603 | +5V Hauptrail | HF-Decoupling |
 | C3 | 10 µF X5R 0805 | +3V3 nahe Pico Pin 36 | HF-Bulk |
@@ -472,7 +489,16 @@ U5 (AP7361A-33ER) bleibt **DNP** (Reserve-Footprint) für Fall, dass +3V3-Last s
 
 ---
 
-## 4. BOM v0.6 — alle SMT, JLCPCB Full-PCBA
+## 4. BOM v0.6.3-r3 — gesplittet JLC-SMT + manuelle Assembly
+
+**⚠️ Update v0.6.3-r3**: BOM ist NICHT "alle SMT/Full-PCBA". Korrekte
+Trennung in Section A (JLC-SMT, ~70 SKUs), B (manuelle Assembly, ~15
+Items), C (TBD). Siehe Errata-Sektion v0.6.3-r3 oben für vollständige
+Aufteilung.
+
+LCSC-Nummern in dieser Sektion wurden v0.6.1/v0.6.2 normalisiert:
+PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
+**C17337** (war C84368, existiert nicht).
 
 ### Controller + MCU
 
@@ -646,35 +672,67 @@ Alle 10 Switches: ein Pin → MCP-GPIO, anderer → GND. Interne Pull-Ups via GP
 
 | Pi Zero 2 W GPIO | Pi Header Pin | PCM5102A Pin | Funktion |
 |---|---|---|---|
-| GPIO18 (PCM_CLK) | 12 | BCK (pin 13) | Bit clock |
-| GPIO19 (PCM_FS)  | 35 | LRCK (pin 15) | Left/Right select |
-| GPIO21 (PCM_DOUT)| 40 | DIN (pin 14) | Data in |
+| GPIO18 (PCM_CLK) | 12 | BCK (pin 13) | Bit clock — v0.6.3-r3 mit R_BCK 33Ω series |
+| GPIO19 (PCM_FS)  | 35 | LRCK (pin 15) | Left/Right select — mit R_LRCK 33Ω series |
+| GPIO21 (PCM_DOUT)| 40 | DIN (pin 14) | Data in — mit R_DOUT 33Ω series |
 
 PCM5102A im **3-wire mode**: SCK pin → GND. FMT pin → GND (I²S Format).
 
-**Power-Routing PCM5102A:**
-- DVDD (Pin 4) ← +3V3 → 10 µF + 100 nF lokal (C8a, C8b)
-- **FB1** zwischen DVDD-Plane und AVDD-Plane
-- AVDD (Pin 1) ← +3V3 via FB1 → 10 µF + 100 nF lokal (C7a, C7b)
+**Power-Routing PCM5102A** (Pin-Nummern per TI Datasheet SLAS859C):
+- DVDD (Pin 20) ← +3V3 → C8a 10 µF + C8b 100 nF lokal
+- **FB1** zwischen DVDD-Plane und AVDD-Plane (v0.6 M2 split)
+- AVDD (Pin 8) ← +3V3 via FB1 → C7a 10 µF + C7b 100 nF lokal
+- CPVDD (Pin 1) ← +3V3 → C_CPVDD_BULK + _HF
+- CAPP/CAPM (Pin 2/4) charge-pump fly cap 1µF
+- VNEG (Pin 5) 1µF reservoir
+- VCOM ist KEIN Pin auf PCM5102A (alte v0.6-Anmerkung war falsch)
+- LDOO (Pin 18) optional 100nF Stability-Cap
 
-Output: VOUTL/VOUTR ground-centered, ~1.65V DC-Bias, 2.1Vrms.
+Output: VOUTL (Pin 6) / VOUTR (Pin 7) ground-centered, ~1.65V DC-Bias, **2.1 Vrms full-scale**.
 
-### PAM8403 Connection
+### Audio-Gain-Strategy (NEU in v0.6.3-r3)
 
-PAM8403 Stereo Class-D, 2×3W @ 4Ω.
+**Problem**: PCM5102A 2.1 Vrms full-scale × PAM8403H 24 dB gain (15.85x) →
+33 Vrms gewollt, Amp clipt heftig bei 5V Supply (max ~1.77 Vrms BTL out).
 
-| Pin | Verbindung |
-|---|---|
-| VDD | +5V (mit **C9 = 10 µF + C9b = 100 nF lokal, NEU**) |
-| GND | GND |
-| LIN+ | PCM5102A VOUTL via C_in_L (1 µF) + R_VOL_L (10 kΩ series) |
-| LIN− | virtueller Mittelpunkt 2.5V via C-coupling |
-| RIN+ | PCM5102A VOUTR via C_in_R (1 µF) + R_VOL_R (10 kΩ series) |
-| RIN− | virtueller Mittelpunkt |
-| LOUT+ / LOUT− | Speaker L (BTL) |
-| ROUT+ / ROUT− | Speaker R (BTL) |
-| **SHUTDOWN** | **Pico GP27 (AMP_SHUTDOWN)** |
-| **MUTE** | **Pico GP28 (AMP_MUTE)** |
+PAM8403H Datasheet (Diodes Inc DS31295) warnt explizit: "Large signal can
+cause the clipping of output signal when increasing the volume. This will
+damage the device because of the big gain of the PAM8403H."
+
+**v0.6.3-r3 Lösung**: Kombination Hardware + Firmware:
+1. **Hardware**: R_VOL_L/R = 20 kΩ (NICHT 10k wie alte v0.6) — das ist RI
+   per PAM8403H-Datasheet (RImin=18kΩ). AVD = 2·142k/20k = **23 dB** = 14x
+2. **Firmware muss garantieren**: PCM5102A Output ≤ **126 mV Vrms** =
+   1.77V/14 (= -24 dB / 6% von full-scale digital)
+3. SuperCollider-Master-Volume auf ≤ 0.06 clampen, ALSA mixer-volume
+   entsprechend setzen
+
+**Future-Hardware-Option**: External Voltage-Divider zwischen PCM und
+PAM-IN: z.B. R_a 18kΩ series + R_b 1kΩ shunt to GND → 18.9x Attenuation.
+Erlaubt firmware-side dB-Range +24 dB.
+
+### PAM8403H Connection (per Datasheet DS31295, korrigiert v0.6.2)
+
+PAM8403H Stereo Class-D, 2×3W @ 4Ω.
+
+| Pin | Funktion | Verbindung |
+|---|---|---|
+| 1 | -OUT_L | Speaker L negative |
+| 2 | PGND | GND |
+| 3 | +OUT_L | Speaker L positive |
+| 4 | PVDD | +5V |
+| 5 | /MUTE | Pico GP28 (AMP_MUTE) **+ R_MUTE_PD 10k pull-down** (v0.6.3-r2 B4-Fix) |
+| 6 | VDD | +5V (mit C9 10µF + C9b 100nF lokal) |
+| 7 | INL | PCM5102A OUTL via C_in_L 1µF + R_VOL_L **20kΩ** |
+| 8 | VREF | **C_VREF 1µF X7R zu GND (v0.6.2 NEW — Datasheet REQUIRED)** |
+| 9 | NC | NC label |
+| 10 | INR | PCM5102A OUTR via C_in_R 1µF + R_VOL_R **20kΩ** |
+| 11 | GND | Analog GND |
+| 12 | /SHDN | Pico GP27 (AMP_SHUTDOWN) **+ R_SHDN_PD 10k pull-down** (v0.6.3-r2 B4-Fix) |
+| 13 | PVDD | +5V |
+| 14 | +OUT_R | Speaker R positive |
+| 15 | PGND | GND |
+| 16 | -OUT_R | Speaker R negative |
 
 **Power-Sequencing (Firmware bei Pico-Boot):**
 1. SHUTDOWN=LOW, MUTE=LOW (default-state bei Pico-Reset)
@@ -742,37 +800,55 @@ Bass-Reflex: 2× Port 8mm × 25mm hinten im Bottom-Case (~80 Hz Tuning für AS04
 - **Choc V2 Stabilizer Mounting**: Plate-Mount Standard, Top-Plate-Cutouts entsprechend designen
 - **Pi Zero 2 W Connection**: 40-pin GPIO Header durchgesteckt → Pi liegt auf der Unterseite unseres PCB
 
-### Was NICHT verifiziert ist
+### Was v0.6.3-r3 ZUSÄTZLICH adressiert hat (siehe Errata-Historie oben)
 
-- KiCad-Schematic-Eingabe — nächster Schritt
-- ERC clean
-- Footprint-Korrektheit
-- Trace-Routing (USB-C 5A braucht ≥1.5mm breite Traces, Audio-Routing AGND/DGND-Trennung)
-- EMC-Analyse via `emc`-Skill nach PCB-Layout
+- **CRITICAL** USB-C-Symbol-Pinout (war A1=VBUS, sollte GND sein) → v0.6.3
+- **PCM5102A**-Symbol-Pinout (war erfunden) → per TI Datasheet → v0.6.1
+- **PAM8403H**-Symbol-Pinout (war Vermutung) → per PDF im Repo → v0.6.2
+- **B4**: PAM8403 /SHDN /MUTE Hardware-Pull-Downs (Boot-safe Default) → v0.6.3-r2
+- **I7**: UART rename (PICO_TX_PI_RX, PI_TX_PICO_RX) → v0.6.3-r2
+- **I1-I6, N2, N3**: Power-Budget, USB-C-Decision, Inrush-Strategy, Stack-Up,
+  Mech-Coords, BOM-Split, I²S-R-Series, ERC-Workflow → v0.6.3-r3
 
----
+### Was IMMER NOCH NICHT verifiziert ist (BLOCKER für PCB-Layout)
 
-## 11. Nächste Schritte
+Siehe `PCB_TODO.md` für vollständige Liste. Drei harte Blocker brauchen
+KiCad GUI lokal:
 
-1. **User-Review v0.6** — letzte Bugs/Lücken finden
-2. **`datasheets`-Skill** für jedes IC: Pin-Bestätigung, Application Circuit
-3. **`lcsc`/`jlcpcb`-Skill** für Stock-Verifikation Stand 2026-05
-4. **KiCad-Projekt anlegen** + Schematic-Eingabe Sheet-by-Sheet:
-   - Sheet 1: Power Tree (USB-C, F1, C_BULK, +5V rail, +3V3 via Pico SMPS, D2 TVS)
-   - Sheet 2: Pico 2 + SWD + BOOTSEL + Status-LED
-   - Sheet 3: OLED-Header + Pull-Up + Decoupling
-   - Sheet 4: MCP23017 + 10 Switches + INTA Pull-Up
-   - Sheet 5: Encoder × 4 (EN1-EN4) mit RC-Debounce
-   - Sheet 6: Audio (PCM5102A + FB1 + PAM8403 + Speaker-Header)
-   - Sheet 7: Pi-Header + TVS + Power-Routing
-5. **ERC clean** via `kicad`-Skill
-6. **PCB-Layout** mit Industrial-Design-Floorplan
-7. **DRC + EMC** via `emc`-Skill
-8. **BOM/CPL** via `bom`-Skill für JLCPCB
-9. **Order**
-
-Erst **nach Schritt 5** wird die Spec v0.6 → v1.0 FINAL.
+- **B1**: PAM8403H SOIC-16-Footprint-Pad-Mapping gegen Symbol
+- **B2**: USB-C TYPE-C-31-M-12-Footprint-Pad-Mapping gegen Symbol
+- **B3**: Echter KiCad GUI ERC-Lauf + Report in `reports/`-Verzeichnis
 
 ---
 
-**Ende v0.6 Review-Ready.**
+## 11. Nächste Schritte (revidiert v0.6.3-r3)
+
+### Stand: Schematic-Eingabe komplett ✅
+
+Alle 7 Sheets implementiert via `kicad/generate_kicad_project.py`. PR #1.
+Pinouts gegen Datasheets verifiziert (PCM5102A, PAM8403H, USB-C).
+0 funktionale Analyzer-Errors, 19 Warnings (alle non-blocking), 3 VM-001
+false-positives (Pico-5V/3V3-Domain Heuristik-Bug).
+
+### Vor PCB-Layout (lokal in KiCad GUI):
+
+1. **Footprint-Verification** (Blocker B1, B2)
+2. **KiCad GUI ERC** + Report ins Repo (Blocker B3)
+3. **Mechanische Koordinaten** finalisieren — siehe `mechanical_coordinates.md`
+4. **Footprint-Library-Sync** sicherstellen (alle benutzten Library-Refs vorhanden)
+
+### Vor JLCPCB-Order:
+
+5. **PCB-Layout** mit Industrial-Design-Floorplan (333×143.3mm)
+6. **DRC clean** + EMC-Analyse via `emc`-Skill
+7. **Netclasses** definieren: +5V main rail (3-4 mm wide), USB VBUS, PAM PVDD,
+   Speaker-Outputs, USB D+/D-, I²S signals
+8. **BOM/CPL** Section-A export für JLCPCB via `bom`-Skill
+9. **Manual-Assembly-Liste** (Section B) für eigene Bestellung erstellen
+10. **Order**
+
+Erst nach Schritt 6 (DRC clean + EMC OK) wird Spec → v1.0 FINAL.
+
+---
+
+**Ende v0.6.3-r3 Errata-Stand.** Siehe `PCB_TODO.md` für Item-Tracking.
