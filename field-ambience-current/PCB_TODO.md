@@ -13,8 +13,35 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ---
 
-## ✅ Behoben (auf PR #1 HEAD = Commit 5ca0bcb)
+## ✅ Behoben (auf PR #1 HEAD)
 
+### v0.6.3-r3 (Commit folgt nach diesem Push)
+- **N2 I²S Series-Resistoren** im pi_sheet: R_BCK, R_LRCK, R_DOUT 33Ω 0603 direkt am Pi-Header
+- **I1 Power-Budget** realistisch neu kalkuliert in SPEC v0.6.3-r3 (PAM8403 @ 4Ω = 1.4A)
+- **I2 USB-C Power-Negotiation** Decision dokumentiert: Variante A (Firmware-Volume-Clamp) für Prototyp
+- **I3 Inrush-Strategie** dokumentiert: Low-ESR Polymer-Cap (PCV1A102MCL1GS) + DNP-NTC-Inrush für Production
+- **I4 4-Layer-Stack-Up** überdacht: Signal/GND/**+5V**/Signal (statt +3V3) — +5V ist die Hochstrom-Schiene
+- **I5 Mechanical Coordinates** Template-Datei `mechanical_coordinates.md` erstellt mit allen X/Y für Layout
+- **I6 BOM-Split** in SPEC v0.6.3-r3: Section A (JLC SMT, ~70 SKUs), B (manuell, ~15 Items), C (TBD)
+- **N3 ERC-Report-Workflow** in SPEC dokumentiert
+
+### v0.6.3-r2 (Commit eed6d6b)
+- **B4** PAM8403 /SHDN /MUTE Hardware Pull-Downs (R_MUTE_PD, R_SHDN_PD 10k)
+- **I7** UART rename: PICO_TX_PI_RX, PI_TX_PICO_RX
+- **N4** Titleblock-Rev-Sync v0.6.3
+- **N5** Stale comments cleanup
+
+### v0.6.3 (Commit 5ca0bcb)
+- **C1 CRITICAL USB-C VBUS/GND** Pin-Numbers per USB Type-C Spec Rev 2.1 korrigiert
+
+### v0.6.2 (Commit d30ab77)
+- **B0 BLOCKER PAM8403H** Pinout per PDF im Repo verifiziert + C_VREF Bypass-Cap
+
+### v0.6.1 (Commit cc57af5)
+- **A0 PCM5102A** Pinout nach TI Datasheet SLAS859C korrigiert
+- **BOM** LCSC-Numbers normalisiert (C107671, C17337)
+
+### v0.6 (urspr. PR)
 ### v0.6 → v0.6.1: PCM5102A-Symbol nach TI-Datasheet korrigiert
 - War: LRCK/BCK/DIN auf Pin 1/2/3 (erfunden)
 - Jetzt: TI SLAS859C — CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20
@@ -64,7 +91,13 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ## 🟠 IMPORTANT — Vor JLCPCB-Order erledigen
 
-### I1. Power-Budget realistisch neu rechnen
+### ✅ I1-I6 + N3 — In v0.6.3-r3 als Doc-Updates adressiert (siehe SPEC)
+
+Details siehe Errata-Sektion v0.6.3-r3 in `field_ambience_pcb_SPEC_v0.6.md`.
+
+### Reste/Refinements (low priority, vor PCB-Layout aber doch erledigen):
+
+### I1-orig. Power-Budget realistisch neu rechnen
 - PAM8403 @ 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp (statt 350 mA in v0.6)
 - Pi Zero 2 W peak: ~700 mA (CNX-Messung, korrekt in v0.6)
 - Pico, OLED, MCP, PCM, Encoder: ~250 mA gesamt

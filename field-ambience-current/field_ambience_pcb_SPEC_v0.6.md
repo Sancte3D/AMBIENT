@@ -8,6 +8,183 @@
 
 ## Errata-Historie
 
+### v0.6.3-r3 (2026-05-14) — Important-Items aus 2nd-Review adressiert
+
+Doc-side updates (kein KiCad-GUI nötig). Hardware-Schema unverändert
+außer N2 (I²S Series-Resistoren am Pi-Header).
+
+#### I1 — Power-Budget realistisch rekalkuliert
+
+Der v0.6-PAM8403-Wert (350 mA peak) war zu optimistisch. Für 2× 4Ω
+Speaker bei 3W BTL: ~6W Audio out, ~85% Class-D-Effizienz → ~7W Eingang
+→ ~1.4 A nur für Amp.
+
+| Last | Idle | Typical Audio | Worst Case (loud, 4Ω) |
+|---|---|---|---|
+| Pi Zero 2 W (SuperCollider) | 250 mA | 500 mA | 700 mA |
+| Pico 2 (RP2350) | 30 mA | 50 mA | 50 mA |
+| OLED SSD1322 256×64 | 50 mA | 150 mA | 250 mA |
+| MCP23017 + Pull-Ups | 5 mA | 20 mA | 25 mA |
+| PCM5102A DAC | 20 mA | 30 mA | 30 mA |
+| **PAM8403H @ 4Ω, 6W Out** | 80 mA | 600 mA | **1400 mA** |
+| EC11-Encoder + LED + Modifier | 5 mA | 15 mA | 25 mA |
+| **TOTAL** | **440 mA** | **1365 mA** | **2480 mA** |
+
+**Konsequenz:** 2A-Hold-Polyfuse (F1) trippt im Worst-Case.
+Optionen:
+- (a) **Firmware Volume-Clamp** auf ~50% max → Worst Case ~1.7 A,
+  passt unter 2A-Hold knapp. SAFE für USB-C 5V/3A-Source.
+- (b) Polyfuse höher dimensionieren auf 3A-Hold (z.B. MF-MSMF300),
+  aber dann USB-C-Spec-Verletzung wenn Source nur Default-Current liefert.
+- (c) **USB-PD-Sink-Controller** (siehe I2) + 3A-Polyfuse.
+
+**Aktuelle Empfehlung für Prototyp**: (a) Firmware Volume-Clamp,
+2A-Polyfuse beibehalten. Final-Produkt-Entscheidung mit (c).
+
+#### I2 — USB-C Power-Negotiation
+
+5.1kΩ CC-Pulldowns signalisieren "Sink", aber NICHT "berechtigt 3A".
+USB-C Source-Port kontrolliert via Rp (Pull-Up an CC) ob Default
+(~500 mA), 1.5 A oder 3 A erlaubt.
+
+**Decision für v0.6.3**: Variante A (Konservativ) für Prototyp.
+- Pi: Firmware-side Volume-Clamp damit Worst-Case Peak < 1.5 A
+- BOM-Note: Mit Standard 5V/3A-Netzteil (z.B. Apple 20W) garantiert OK
+- Mit altem 5V/0.5A-Hub-Port: Risiko Brown-out bei lauten Passagen
+
+**Future Hardware-Option**: TPS25750 oder CYPD3177 als USB-PD-Sink-Controller.
+Kosten: ~$2 IC + ein paar passives. Rechtfertigt sich für Produkt-Stage.
+
+#### I3 — Inrush-Strategie für 1000µF Bulk-Cap
+
+Roher Elko hinter USB-C ohne Strombegrenzung kann USB-C-Source
+unhappy machen (Spike beim Hot-Plug). Polyfuse limitiert NICHT
+elegant — sie wird träge warm, lässt den Spike aber durch.
+
+**Mitigation v0.6.3**:
+- C_BULK MPN-Spec auf **Low-ESR Polymer** geändert: nicht generischer Elko,
+  sondern z.B. Nichicon **PCV1A102MCL1GS** (1000µF / 6.3V / Polymer / ESR < 20mΩ).
+  Höhere Lebensdauer, definierter ESR begrenzt Charge-Strom selbst etwas.
+- ADD-ON für Final-Build (DNP für Prototyp): **NTC-Inrush-Limiter** (CL-130
+  Ametherm, 5Ω cold / 0.5Ω hot, in Serie zwischen Polyfuse und +5V-Rail).
+
+#### I4 — 4-Layer Stack-Up überdacht
+
+Alt: Signal / GND / **+3V3** / Signal
+Neu: Signal / GND / **+5V** / Signal
+
+**Begründung:** Auf diesem Board ist +5V die Hochstrom-Schiene:
+- Pi Zero 2 W (700 mA peak)
+- PAM8403H (1.4 A peak)
+- OLED VBAT (250 mA peak)
+- Summe: bis 2.4 A auf +5V-Plane
+
++3V3 trägt nur ~80 mA (OLED VDDIO + MCP + Pull-Ups + EC11). Kann lokal
+gepoured werden.
+
+**GND-Plane-Regel**: Layer 2 muss **eine ungeteilte Fläche** sein, KEINE
+Splits unter USB-C-Bereich, I²S-Strecke (Pi→PCM5102A), oder Audio-Out
+(PAM8403→Speakers). Trace-Loops über GND-Splits sind die Hauptquelle
+für EMC-Probleme und Audio-Brumm.
+
+#### I5 — Mechanische Koordinaten
+
+Siehe neue Datei `mechanical_coordinates.md` für die vollständige
+Tabelle. Hier nur Außen-Maße:
+
+| Element | Dim |
+|---|---|
+| Gehäuse | 333 × 143.3 × 40 mm |
+| PCB-Outline | 320 × 130 mm |
+| Edge-Rails | 5 mm rundherum (entfernen nach Bestückung) |
+| Component-to-Edge | min 2.5 mm |
+
+#### I6 — BOM-Split JLC-fitted vs Manual
+
+**SECTION A: JLCPCB SMT-bestückt (Full-PCBA)** — ~70 SKUs:
+
+Discrete passives + Power-ICs + Connectors:
+- C_BULK (Polymer 1000µF), C1-C9b, C10-C17, C_VREF, C_VCOM, C_VNEG, C_LDOO, C_FLY,
+  C_CPVDD_*, C_in_L/R, C6/C6b/C6c — ALLE 0603/0805 SMD-Caps
+- R1-R20, R_VOL_L/R, R_RUN, R_XSMT, R_MUTE_PD, R_SHDN_PD, R_BCK, R_LRCK, R_DOUT — ALLE 0603 SMD
+- F1 Polyfuse 1812 (MF-MSMF200)
+- FB1 Ferrite-Bead 0603 (BLM18AG601)
+- D1 USBLC6-2SC6 ESD (SOT-23-6)
+- D2 SMAJ5.0A TVS (SMA)
+- LED1 0805 warm white
+
+ICs (alle JLC Extended Stock):
+- U2 MCP23017-E/SS (SSOP-28, C506653)
+- U3 PCM5102APWR (TSSOP-20, C107671)
+- U4 PAM8403H (SOIC-16, C17337)
+
+Connectors (SMD):
+- J1 USB-C TYPE-C-31-M-12 (C165948)
+- J3 OLED-Header 2.54mm 16-pin
+- J4 SWD-Header 1.27mm 3-pin
+- J5 VSYS-Bridge 2-pin (DNP default)
+- J6, J7 Speaker-Headers 2.54mm 2-pin
+
+Switches:
+- SW11 Reset 6mm SMD (TL3342)
+- SW12 BOOTSEL 6mm SMD (TL3342) — DNP für THT-Pico-Variante
+
+**SECTION B: Manuell zu bestücken (du lieferst)** — ~15 Items:
+
+Mikrocontroller/Compute-Module:
+- U1 Pico 2 (RP2350) als 40-pin THT Pin-Header (Empfehlung Prototyp)
+- Pi Zero 2 W mit GPIO-Header J2 2×20 durchgesteckt
+
+Switches (Hot-Swap-Sockets nicht im JLC-Stock):
+- SW1-SW5 Kailh Choc V2 Hot-Swap-Socket 2u (Cells) — 5×
+- SW6-SW10 Kailh Choc V2 Hot-Swap-Socket 1u (Modifier) — 5×
+- 5× Kailh 2u Choc V2 Stabilizer (CPG1353G24D01)
+
+Module:
+- OLED ER-OLEDM032-1W 3.2" 256×64 SSD1322 mit 16-pin Header
+- 4× EC11-Encoder (wenn nicht SMD-Variante gewählt)
+
+Speaker:
+- 2× PUI AS04008PS-4W-WR-R Lautsprecher (mit Drähten an J6/J7)
+
+**SECTION C: TBD (noch zu sourcen oder mechanisch)**:
+- Custom MX-Stem Silikon-Cell-Caps (5×, DIY/print)
+- BOOTSEL- und Reset-Caps (klein)
+- Gehäuse-Schraubdome + M3-Schrauben (4×)
+- Bass-Reflex-Ports (Bottom-Case 2× Port 8×25 mm)
+- USB-C-Source-Netzteil (5V/3A) — User liefert separat
+
+#### N2 — I²S Series-Resistoren am Pi-Header (DONE)
+
+3× 33Ω 0603 Series-Resistoren am Pi-GPIO-Header in Sheet 7 hinzugefügt:
+- **R_BCK** an Pi pin 12 (GPIO18 PCM_CLK)
+- **R_LRCK** an Pi pin 35 (GPIO19 PCM_FS)
+- **R_DOUT** an Pi pin 40 (GPIO21 PCM_DOUT)
+
+Dämpft Overshoot/Reflexionen auf I²S-Strecke (~100mm über Layer 1/4).
+LCSC C23138 (RC0603FR-0733RL).
+
+#### N3 — ERC/DRC Report-Workflow
+
+Convention für die nächsten Iterationen:
+
+1. Nach jedem Major-Pinout-Fix oder Architektur-Änderung:
+   ```
+   cd kicad/
+   kicad-cli sch erc --severity-all --output ../reports/ERC_$(date +%Y-%m-%d).txt field_ambience.kicad_sch
+   ```
+2. Datei format `reports/ERC_YYYY-MM-DD.md`:
+   ```
+   KiCad Version: X.Y.Z
+   Date: YYYY-MM-DD
+   Schematic Commit: <git-sha>
+   Errors: N
+   Warnings: M
+   Accepted warnings (with reason): list
+   ```
+3. Committen ins Repo. Vor jedem Merge in `main`: aktueller ERC-Report
+   muss vorhanden sein und 0 unaccepted Errors zeigen.
+
 ### v0.6.3-r2 (2026-05-14, gleicher Tag) — Hardware-Pull-Downs + UART-Naming
 
 Nach zweiter Review-Iteration ergänzt:

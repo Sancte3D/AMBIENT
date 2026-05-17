@@ -3545,10 +3545,50 @@ def pi_sheet() -> str:
         wires.append(wire(px, py, flag_x, py, seed_suffix=f"j2-p{gnd_pin}-gnd"))
         attach_gnd(flag_x, py, f"J2_GND{gnd_pin}", rot=rot)
 
-    # ---- Audio I²S Outputs zum PCM5102A (Sheet 6):
-    pin_to_hier(12, "I2S_BCK", shape="output")     # Pi GPIO18 = PCM_CLK
-    pin_to_hier(35, "I2S_LRCK", shape="output")    # Pi GPIO19 = PCM_FS
-    pin_to_hier(40, "I2S_DOUT", shape="output")    # Pi GPIO21 = PCM_DOUT
+    # ---- Audio I²S Outputs zum PCM5102A (Sheet 6) mit Series-Resistoren
+    # für Signal-Integrity über lange Traces (320mm Board) — v0.6.3-r3 N2-Fix.
+    # 33Ω 0603 Series direkt am Pi-Pin, dämpft Overshoot/Reflexionen.
+    def pin_to_hier_via_r(pin: int, net: str, rref: str, rval: str = "33R 0603 (I2S series term)") -> None:
+        """Pi-Pin → R series → hier-output. R rotation=90 horizontal: pin1 (left)
+        connects to Pi pin via short stub, pin2 (right) goes to hier label."""
+        py = j2_y(pin)
+        px = j2_x(pin)
+        # Pin 12 ist auf der LEFT (odd=1)... wait, pin 12 is even → right side.
+        # j2_x(12) = J2_RX = 135.08. So Pi-pin is on right side.
+        # Wire goes right from Pi pin to R, then continues right to hier label.
+        if pin % 2 == 0:  # right side (even pin numbers)
+            # R sym at px+5, rotation=90. pin1 abs (px+1.19, py) (close to Pi pin), pin2 abs (px+8.81, py).
+            r_sx = px + 5
+            wires.append(wire(px, py, r_sx - 3.81, py, seed_suffix=f"j2-p{pin}-to-r-{rref}"))
+            symbols.append(
+                place_symbol(
+                    lib_id="Device:R", ref=rref, value=rval,
+                    x=r_sx, y=py, rotation=90,
+                    footprint="Resistor_SMD:R_0603_1608Metric",
+                    extra_props={"MPN": "RC0603FR-0733RL", "LCSC": "C23138"},
+                    seed_suffix=rref, sheet_uuid_seed=sus,
+                )
+            )
+            wires.append(wire(r_sx + 3.81, py, r_sx + 8, py, seed_suffix=f"r-{rref}-to-hier"))
+            hlabels.append(hier_label(r_sx + 8, py, net, shape="output", rotation=180))
+        else:
+            r_sx = px - 5
+            wires.append(wire(px, py, r_sx + 3.81, py, seed_suffix=f"j2-p{pin}-to-r-{rref}"))
+            symbols.append(
+                place_symbol(
+                    lib_id="Device:R", ref=rref, value=rval,
+                    x=r_sx, y=py, rotation=90,
+                    footprint="Resistor_SMD:R_0603_1608Metric",
+                    extra_props={"MPN": "RC0603FR-0733RL", "LCSC": "C23138"},
+                    seed_suffix=rref, sheet_uuid_seed=sus,
+                )
+            )
+            wires.append(wire(r_sx - 3.81, py, r_sx - 8, py, seed_suffix=f"r-{rref}-to-hier"))
+            hlabels.append(hier_label(r_sx - 8, py, net, shape="output", rotation=0))
+
+    pin_to_hier_via_r(12, "I2S_BCK", "R_BCK")     # Pi GPIO18 = PCM_CLK
+    pin_to_hier_via_r(35, "I2S_LRCK", "R_LRCK")   # Pi GPIO19 = PCM_FS
+    pin_to_hier_via_r(40, "I2S_DOUT", "R_DOUT")   # Pi GPIO21 = PCM_DOUT
 
     # ---- UART (115200) zwischen Pi und Pico:
     # Pi GPIO14 (pin 8) = Pi TX → Pico GP1 RX (via R1 1k series, per SPEC v0.6 §5+BOM)
