@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Field Ambience Bridge v29-h
+Field Ambience Bridge v29-p (= v29-h + sync mit SC v29-o/p)
 ============================
 
 Bridges three components:
@@ -151,17 +151,24 @@ class PicoBridge:
 
     MENU_ITEMS = ["KEY", "MODE", "VOICE", "PAD", "OCT", "PROG", "TEMPO", "VIBE", "VOL", "MIDI"]
 
-    MOD_AUTO   = 1
-    MOD_SHIFT  = 2
-    MOD_HOLD   = 3
-    MOD_FREEZE = 4
-    MOD_CLEAR  = 5
+    # v29-p: Modifier-IDs aligned mit SPEC v0.6 §7 / Sheet 4 BOM:
+    # SW6=SHIFT, SW7=HOLD, SW8=DRONE, SW9=GENERATE, SW10=CLEAR
+    MOD_SHIFT    = 1
+    MOD_HOLD     = 2
+    MOD_DRONE    = 3
+    MOD_GENERATE = 4
+    MOD_CLEAR    = 5
+    # Legacy aliases for old Pico-firmware that still uses these names
+    MOD_AUTO     = MOD_GENERATE   # AUTO-Button → triggers generative mode
+    MOD_FREEZE   = MOD_DRONE      # FREEZE-Button → toggles drone
 
     KEYS_NAMES   = ["C", "D", "Eb", "F", "G", "A", "Bb"]
     KEY_MIDI     = [60, 62, 63, 65, 67, 69, 70]
-    MODE_NAMES   = ["Ion", "Dor", "Phr", "Lyd", "Mix", "Aeo", "Loc"]
-    PROG_NAMES   = ["I-V-vi-IV", "I-IV-V-I", "i-VI-III-VII", "i-iv-VI-V"]
-    VIBE_NAMES   = ["Warm", "Bright", "Deep", "Float", "Sharp"]
+    # v29-p: Synced mit SC v29-o — 6 modes (Locrian removed), 5 progs
+    # (Slow added as default index 0), 4 vibes (Sharp removed)
+    MODE_NAMES   = ["Ion", "Dor", "Phr", "Lyd", "Mix", "Aeo"]
+    PROG_NAMES   = ["Slow", "I-V-vi-IV", "I-IV-V-I", "i-VI-III-VII", "i-iv-VI-V"]
+    VIBE_NAMES   = ["Warm", "Bright", "Deep", "Float"]
     VOICE_NAMES  = ["FM", "Saw", "Square"]
     PAD_VOICE_NAMES   = ["Warm", "Strings", "Brass"]
     PAD_OCTAVE_NAMES  = ["LOW", "MID", "HIGH"]
@@ -270,23 +277,29 @@ class PicoBridge:
             mid = ev["id"]
             down = ev["down"]
             if down:
-                if mid == self.MOD_AUTO:
-                    self.osc.send_message("/fam/auto", [1])
+                if mid == self.MOD_GENERATE:
+                    # v29-p Fix: v29-o trennt /fam/auto (motif-glitter) von
+                    # /fam/generative (pad-bed mit Akkord-Progression).
+                    # Hardware-GENERATE-Button toggelt das generative Pad-Bed.
+                    self.generative = not getattr(self, "generative", False)
+                    self.osc.send_message("/fam/generative",
+                                          [1 if self.generative else 0])
                 elif mid == self.MOD_SHIFT:
                     self.shifted = True
                 elif mid == self.MOD_HOLD:
                     self.hold_mode = not self.hold_mode
                     if not self.hold_mode:
                         self.osc.send_message("/fam/holdclear", [])
-                elif mid == self.MOD_FREEZE:
-                    self.osc.send_message("/fam/holdflag", [1])
+                elif mid == self.MOD_DRONE:
+                    # v29-p NEW: SW8 DRONE-Button toggelt Tonika-Drone-Voice.
+                    self.drone = not getattr(self, "drone", False)
+                    self.osc.send_message("/fam/drone",
+                                          [1 if self.drone else 0])
                 elif mid == self.MOD_CLEAR:
                     self.osc.send_message("/fam/holdclear", [])
             else:
                 if mid == self.MOD_SHIFT:
                     self.shifted = False
-                elif mid == self.MOD_FREEZE:
-                    self.osc.send_message("/fam/holdflag", [0])
 
         elif e_type == "enc":
             self.handle_encoder(ev["delta"])
@@ -322,7 +335,8 @@ class PicoBridge:
             s["key"] = self.KEY_MIDI[new_idx]
             self.osc.send_message("/fam/key", [s["key"]])
         elif item == "MODE":
-            s["mode"] = max(0, min(6, s["mode"] + delta))
+            # v29-p: SC clamps 0..5 (Locrian removed). Bridge matches.
+            s["mode"] = max(0, min(5, s["mode"] + delta))
             self.osc.send_message("/fam/mode", [s["mode"]])
         elif item == "VOICE":
             s["voice"] = max(0, min(2, s["voice"] + delta))
@@ -334,13 +348,16 @@ class PicoBridge:
             s["padOctave"] = max(0, min(2, s["padOctave"] + delta))
             self.osc.send_message("/fam/padoctave", [s["padOctave"]])
         elif item == "PROG":
-            s["prog"] = max(-1, min(3, s["prog"] + delta))
+            # v29-p: SC clamps -1..4 (5 progs, slow_bed at index 0).
+            s["prog"] = max(-1, min(4, s["prog"] + delta))
             self.osc.send_message("/fam/prog", [s["prog"]])
         elif item == "TEMPO":
-            s["bpm"] = max(40, min(140, s["bpm"] + delta))
+            # v29-p: SC clamps 40..90 per Sound Constitution (never fast).
+            s["bpm"] = max(40, min(90, s["bpm"] + delta))
             self.osc.send_message("/fam/tempo", [s["bpm"]])
         elif item == "VIBE":
-            s["vibe"] = max(0, min(4, s["vibe"] + delta))
+            # v29-p: SC clamps 0..3 (Sharp removed). Bridge matches.
+            s["vibe"] = max(0, min(3, s["vibe"] + delta))
             self.osc.send_message("/fam/vibe", [s["vibe"]])
         elif item == "VOL":
             new_vol = max(0.0, min(1.0, s["vol"] + delta * 0.05))
@@ -368,16 +385,17 @@ class PicoBridge:
         except ValueError:
             key_str = "?"
 
-        mode_str = self.MODE_NAMES[s["mode"]] if 0 <= s["mode"] < 7 else "?"
+        # v29-p: bounds updated to match SC v29-o ranges
+        mode_str = self.MODE_NAMES[s["mode"]] if 0 <= s["mode"] < 6 else "?"
         prog_str = "AUTO" if s["prog"] < 0 else self.PROG_NAMES[s["prog"]][:4]
-        vibe_str = self.VIBE_NAMES[s["vibe"]] if 0 <= s["vibe"] < 5 else "?"
+        vibe_str = self.VIBE_NAMES[s["vibe"]] if 0 <= s["vibe"] < 4 else "?"
 
         chord_str = " ".join(self.midi_to_name(m) for m in s["chord"][:5] if m > 0)
 
         if item == "KEY":
             param, value, bar = "KEY", key_str, int((s["key"] - 48) / 24 * 100)
         elif item == "MODE":
-            param, value, bar = "MODE", mode_str, int(s["mode"] / 6 * 100)
+            param, value, bar = "MODE", mode_str, int(s["mode"] / 5 * 100)
         elif item == "VOICE":
             param, value, bar = "VOICE", self.VOICE_NAMES[s["voice"]], int(s["voice"] / 2 * 100)
         elif item == "PAD":
@@ -385,11 +403,12 @@ class PicoBridge:
         elif item == "OCT":
             param, value, bar = "OCT", self.PAD_OCTAVE_NAMES[s["padOctave"]], int(s["padOctave"] / 2 * 100)
         elif item == "PROG":
-            param, value, bar = "PROG", prog_str, int((s["prog"] + 1) / 4 * 100)
+            param, value, bar = "PROG", prog_str, int((s["prog"] + 1) / 5 * 100)
         elif item == "TEMPO":
-            param, value, bar = "TEMPO", f"{int(s['bpm'])}", int((s["bpm"] - 40) / 100 * 100)
+            # v29-p: SC range 40..90 BPM (was 40..140)
+            param, value, bar = "TEMPO", f"{int(s['bpm'])}", int((s["bpm"] - 40) / 50 * 100)
         elif item == "VIBE":
-            param, value, bar = "VIBE", vibe_str, int(s["vibe"] / 4 * 100)
+            param, value, bar = "VIBE", vibe_str, int(s["vibe"] / 3 * 100)
         elif item == "VOL":
             param, value, bar = "VOL", f"{int(s['vol'] * 100)}%", int(s["vol"] * 100)
         elif item == "MIDI":
@@ -447,7 +466,7 @@ async def main():
     except Exception:
         pass
 
-    print(f"[bridge] Field Ambience v29-h bridge running")
+    print(f"[bridge] Field Ambience v29-p bridge running (synced to SC v29-o/p)")
     print(f"[bridge] OSC → SC: {SC_HOST}:{SC_PORT}")
     print(f"[bridge] OSC ← SC: {REPLY_PORT}")
     print(f"[bridge] WebSocket: {WS_HOST}:{WS_PORT}")
