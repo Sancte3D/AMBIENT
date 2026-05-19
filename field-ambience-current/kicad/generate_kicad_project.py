@@ -1785,8 +1785,8 @@ def pico_sheet() -> str:
         26: "VOL_B",       # GP20
         27: "VOL_SW",      # GP21
         29: "MCP_INT",     # GP22
-        32: "AMP_SHUTDOWN",# GP27
-        34: "AMP_MUTE",    # GP28
+        32: "AMP_nSHDN",# GP27
+        34: "AMP_nMUTE",    # GP28
         35: "ADC_VREF_NC", # ADC_VREF — DNP / tie via 47Ω ferrite externally if used
     }
     for pnum, netname in right_signals.items():
@@ -2701,9 +2701,9 @@ def encoder_sheet() -> str:
 # ----------------------------------------------------------------------------
 # Sheet 6 — Audio: PCM5102A I²S DAC + FB1 + PAM8403 Class-D + 2× Speaker
 # per SPEC v0.6 §8 (+ H2/M2/C2 Fixes: PAM8403 10µF Bulk, AVDD/DVDD split via
-# Ferrite Bead, AMP_SHUTDOWN+AMP_MUTE GPIOs).
+# Ferrite Bead, AMP_nSHDN+AMP_nMUTE GPIOs).
 # Inputs: +5V, +3V3, GND, I2S_BCK, I2S_LRCK, I2S_DOUT (von Pi/Sheet 7),
-#         AMP_SHUTDOWN, AMP_MUTE (von Pico/Sheet 2).
+#         AMP_nSHDN, AMP_nMUTE (von Pico/Sheet 2).
 # Outputs: J6 Speaker-Left BTL, J7 Speaker-Right BTL.
 # ----------------------------------------------------------------------------
 
@@ -3156,10 +3156,10 @@ def audio_sheet() -> str:
         )
     )
 
-    # ---- Pin 5 MUTE ← AMP_MUTE hier input (ACTIVE LOW per datasheet)
+    # ---- Pin 5 MUTE ← AMP_nMUTE hier input (ACTIVE LOW per datasheet)
     p5uy = u4_left(5)
     wires.append(wire(U4_LX, p5uy, 138, p5uy, seed_suffix="u4-mute-stub"))
-    hlabels.append(hier_label(138, p5uy, "AMP_MUTE", shape="input", rotation=0))
+    hlabels.append(hier_label(138, p5uy, "AMP_nMUTE", shape="input", rotation=0))
     # R_MUTE_PD 10k pull-down auf MUTE — Default LOW = gemuted während Pico-Boot.
     # Pico zieht HIGH erst nach Power-Sequencing. Verhindert Pop beim Boot.
     rmute_y = p5uy + 3.81
@@ -3194,15 +3194,18 @@ def audio_sheet() -> str:
         )
     )
     junctions.append(junction(U4_LX - 3, p6uy))
+    # PAM8403H Datasheet decoupling: "1.0µF ceramic close to VDD" (HF) +
+    # "20µF or greater" (bulk). v0.6.3-r6: upgraded from 100nF/10µF.
+    # This left-side set serves VDD (pin 6) + PVDD-L (pin 4, adjacent).
     c9b_y = p6uy + 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C9b",
-            value="100nF X7R 0603 (VDD HF)",
+            value="1uF X7R 0603 (VDD/PVDD-L HF, PAM8403H datasheet)",
             x=140, y=c9b_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
+            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
             seed_suffix="C9b",
             sheet_uuid_seed=sus,
         )
@@ -3214,10 +3217,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C9",
-            value="10uF X5R 0805 (VDD bulk, v0.6 H2)",
+            value="22uF X5R 0805 (VDD/PVDD-L bulk, PAM8403H datasheet >=20uF)",
             x=136, y=c9b_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
             seed_suffix="C9",
             sheet_uuid_seed=sus,
         )
@@ -3320,10 +3323,10 @@ def audio_sheet() -> str:
     wires.append(wire(U4_RX, p11uy, U4_RX + 3, p11uy, seed_suffix="u4-gnd-r"))
     attach_gnd(U4_RX + 3, p11uy, "U4_AGND_R", rot=270)
 
-    # ---- Pin 12 SHDN ← AMP_SHUTDOWN hier input (ACTIVE LOW per datasheet)
+    # ---- Pin 12 SHDN ← AMP_nSHDN hier input (ACTIVE LOW per datasheet)
     p12uy = u4_right(12)
     wires.append(wire(U4_RX, p12uy, 180, p12uy, seed_suffix="u4-shdn-stub"))
-    hlabels.append(hier_label(180, p12uy, "AMP_SHUTDOWN", shape="input", rotation=180))
+    hlabels.append(hier_label(180, p12uy, "AMP_nSHDN", shape="input", rotation=180))
     # R_SHDN_PD 10k pull-down auf SHDN — Default LOW = Amp aus während Pico-Boot.
     # Pico zieht HIGH erst nach Power-Sequencing. Verhindert un-defined Amp-State.
     rshdn_y = p12uy + 3.81
@@ -3344,7 +3347,10 @@ def audio_sheet() -> str:
     wires.append(wire(176, rshdn_y + 3.81, 176, rshdn_y + 6, seed_suffix="rshdn-to-gnd"))
     attach_gnd(176, rshdn_y + 6, "RSHDN_PD", rot=270)
 
-    # ---- Pin 13 PVDD (right) → +5V
+    # ---- Pin 13 PVDD (right) → +5V + lokales Decoupling (v0.6.3-r6)
+    # PVDD-R ist auf der rechten Chip-Seite, weit weg vom VDD/PVDD-L
+    # Decoupling-Set links. Class-D-Switching (~250kHz) braucht eigenes
+    # low-impedance Decoupling nah am Pin 13. Datasheet: 1µF HF + >=20µF bulk.
     p13uy = u4_right(13)
     wires.append(wire(U4_RX, p13uy, U4_RX + 3, p13uy, seed_suffix="u4-pvdd-r-stub"))
     symbols.append(
@@ -3357,6 +3363,40 @@ def audio_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
+    junctions.append(junction(U4_RX + 3, p13uy))
+    # C_PVDDR_BULK 22µF + C_PVDDR_HF 1µF, vertikal unterhalb des PVDD-R-Pins
+    cpvddr_y = p13uy + 3.81
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_PVDDR",
+            value="22uF X5R 0805 (PVDD-R bulk, PAM8403H datasheet >=20uF)",
+            x=181, y=cpvddr_y,
+            footprint="Capacitor_SMD:C_0805_2012Metric",
+            extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
+            seed_suffix="CPVDDR",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(181, p13uy, U4_RX + 3, p13uy, seed_suffix="cpvddr-to-pvdd"))
+    wires.append(wire(181, cpvddr_y + 3.81, 181, cpvddr_y + 6, seed_suffix="cpvddr-gnd"))
+    attach_gnd(181, cpvddr_y + 6, "CPVDDR", rot=270)
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_PVDDR_HF",
+            value="1uF X7R 0603 (PVDD-R HF, PAM8403H datasheet)",
+            x=185, y=cpvddr_y,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            seed_suffix="CPVDDR_HF",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(185, p13uy, 181, p13uy, seed_suffix="cpvddr-hf-to-bulk"))
+    junctions.append(junction(181, p13uy))
+    wires.append(wire(185, cpvddr_y + 3.81, 185, cpvddr_y + 6, seed_suffix="cpvddr-hf-gnd"))
+    attach_gnd(185, cpvddr_y + 6, "CPVDDR_HF", rot=270)
 
     # ---- Pin 14 +OUT_R → SPK_R+ (Speaker R positive)
     p14uy = u4_right(14)
@@ -3818,10 +3858,10 @@ def root_sheet() -> str:
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("picopin_vol_sw")}"))\n'
         # ---- Audio control outputs ----
-        f'    (pin "AMP_SHUTDOWN" output (at 130 95 180)\n'
+        f'    (pin "AMP_nSHDN" output (at 130 95 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_amp_shdn")}"))\n'
-        f'    (pin "AMP_MUTE" output (at 130 100 180)\n'
+        f'    (pin "AMP_nMUTE" output (at 130 100 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_amp_mute")}"))\n'
         # ---- UART to/from Pi ----
@@ -4005,25 +4045,25 @@ def root_sheet() -> str:
         f'    (pin "I2S_DOUT" input (at 230 220 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("audiopin_dout")}"))\n'
-        f'    (pin "AMP_SHUTDOWN" input (at 230 230 180)\n'
+        f'    (pin "AMP_nSHDN" input (at 230 230 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("audiopin_shdn")}"))\n'
-        f'    (pin "AMP_MUTE" input (at 230 235 180)\n'
+        f'    (pin "AMP_nMUTE" input (at 230 235 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("audiopin_mute")}"))\n'
         # v0.6.3-r5 N1-Fix: PCM_XSMT input (from MCP GPA5)
         f'    (pin "PCM_XSMT" input (at 230 240 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("audiopin_xsmt")}")))\n'
-        # ---- Labels für Audio: Pico AMP_SHUTDOWN/MUTE → Audio Sheet inputs
+        # ---- Labels für Audio: Pico AMP_nSHDN/MUTE → Audio Sheet inputs
         f'  (wire (pts (xy 125 95) (xy 130 95)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampshdn_pico")}"))\n'
-        f'  (label "AMP_SHUTDOWN" (at 125 95 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_pico")}"))\n'
+        f'  (label "AMP_nSHDN" (at 125 95 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_pico")}"))\n'
         f'  (wire (pts (xy 125 100) (xy 130 100)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampmute_pico")}"))\n'
-        f'  (label "AMP_MUTE" (at 125 100 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampmute_pico")}"))\n'
+        f'  (label "AMP_nMUTE" (at 125 100 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampmute_pico")}"))\n'
         f'  (wire (pts (xy 225 230) (xy 230 230)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampshdn_audio")}"))\n'
-        f'  (label "AMP_SHUTDOWN" (at 225 230 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_audio")}"))\n'
+        f'  (label "AMP_nSHDN" (at 225 230 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_audio")}"))\n'
         f'  (wire (pts (xy 225 235) (xy 230 235)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampmute_audio")}"))\n'
-        f'  (label "AMP_MUTE" (at 225 235 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampmute_audio")}"))\n'
+        f'  (label "AMP_nMUTE" (at 225 235 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampmute_audio")}"))\n'
         # v0.6.3-r5 N1-Fix: PCM_XSMT label-bridge zwischen MCP-Sheet (rechte Seite, y=215) und Audio-Sheet (linke Seite, y=240)
         f'  (wire (pts (xy 190 215) (xy 195 215)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_xsmt_mcp")}"))\n'
         f'  (label "PCM_XSMT" (at 195 215 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_xsmt_mcp")}"))\n'
