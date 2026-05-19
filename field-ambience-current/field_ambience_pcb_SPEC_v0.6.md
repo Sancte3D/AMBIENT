@@ -8,6 +8,38 @@
 
 ## Errata-Historie
 
+### v0.6.3-r5 (2026-05-15) — N1: XSMT via MCP23017 GPA5 (statt statischem Pull-Up)
+
+Aus User-Wunsch "lieber direkt haben als nicht haben" — Pop-Suppression
+für PCM5102A jetzt explizit per GPIO statt nur durch PAM8403-Pull-Downs.
+
+**Hardware-Änderung in audio.kicad_sch (U3 PCM5102A Pin 17 XSMT):**
+
+| Alt (v0.6.3-r4) | Neu (v0.6.3-r5) |
+|---|---|
+| R_XSMT 10k pull-up zu +3V3 (statisch un-muted) | R_XSMT_PD 10k pull-down zu GND (default LOW = muted) |
+| — | Hier-Input `PCM_XSMT` von MCP23017 |
+
+**Hardware-Änderung in mcp.kicad_sch (U2 MCP23017 GPA5 = Pin 26):**
+
+| Alt | Neu |
+|---|---|
+| GPA5 als NC_GPA5 Reserve-Label | GPA5 → Hier-Output `PCM_XSMT` zu Audio-Sheet |
+
+**Cross-Sheet im Root**: Label-Bridge zwischen MCP-Sheet-Box rechts und
+Audio-Sheet-Box links für PCM_XSMT-Net.
+
+**Firmware-Konsequenz** (Pico-Init Reihenfolge):
+
+1. Boot: Alle MCP23017-Pins default Input → R_XSMT_PD zieht XSMT LOW → PCM5102A stumm
+2. I²C-Init: MCP23017 GPA5 als Output, default 0 (LOW = stumm bleibt)
+3. Power-Sequence: +5V/+3V3-Rails stabilisieren (~50 ms)
+4. PAM8403 enable: Pico setzt GP28 (MUTE) HIGH, 100 ms später GP27 (SHDN) HIGH
+5. PCM5102A un-mute: MCP23017 GPA5 auf HIGH (PCM_XSMT = +3V3) → DAC liefert Audio
+6. → kein Pop am Speaker, kein DAC-Hochfahr-Knack
+
+**Bei Shutdown** umgekehrt: MCP GPA5 LOW → PCM stumm, dann PAM8403 muten/shutdown.
+
 ### v0.6.3-r3 (2026-05-14) — Important-Items aus 2nd-Review adressiert
 
 Doc-side updates (kein KiCad-GUI nötig). Hardware-Schema unverändert
@@ -649,12 +681,14 @@ Adresse: A0=A1=A2=GND → **0x20**
 - INTB ist NC
 - **R20 = 10 kΩ Pull-Up auf INTA zu +3V3** (sonst floatet open-drain-Output beim Reset)
 
-Pin-Verteilung unverändert (siehe v0.5 §7):
+Pin-Verteilung (Update v0.6.3-r5: GPA5 für XSMT-Control):
 
-| MCP Pin | Net | Switch |
+| MCP Pin | Net | Funktion |
 |---|---|---|
-| GPA0-4 | CELL1-5 | SW1-5 |
-| GPB0 | MOD_SHIFT | SW6 |
+| GPA0-4 | CELL1-5 | Cell-Switches SW1-5 |
+| **GPA5** | **PCM_XSMT** | **PCM5102A Soft-Mute Control (v0.6.3-r5 N1)** |
+| GPA6-7 | Reserve (NC) | — |
+| GPB0 | MOD_SHIFT | Modifier-Switch SW6 |
 | GPB1 | MOD_HOLD | SW7 |
 | GPB2 | MOD_DRONE | SW8 |
 | GPB3 | MOD_GENERATE | SW9 |

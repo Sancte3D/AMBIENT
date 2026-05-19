@@ -2432,7 +2432,13 @@ def mcp_sheet() -> str:
         py = mcp_left_pin_y(pin)
         wires.append(wire(PIN_L_X, py, 115, py, seed_suffix=f"u2-gpb-nc-{pin}"))
         labels.append(label(115, py, f"NC_GPB{pin-1}"))
-    for pin in (26, 27, 28):
+    # GPA5 (Pin 26): v0.6.3-r5 N1-Fix — drives PCM5102A XSMT via hier-output
+    py = mcp_right_pin_y(26)
+    wires.append(wire(PIN_R_X, py, 152, py, seed_suffix="u2-gpa5-xsmt"))
+    labels.append(label(145, py, "GPA5/XSMT"))
+    hlabels.append(hier_label(152, py, "PCM_XSMT", shape="output", rotation=180))
+    # GPA6, GPA7 (Pins 27, 28) — bleiben Reserve mit NC-Labels
+    for pin in (27, 28):
         py = mcp_right_pin_y(pin)
         wires.append(wire(PIN_R_X, py, 145, py, seed_suffix=f"u2-gpa-nc-{pin}"))
         labels.append(label(145, py, f"NC_GPA{pin-21}"))
@@ -2986,25 +2992,35 @@ def audio_sheet() -> str:
     wires.append(wire(U3_RX, p16_y, U3_RX + 3, p16_y, seed_suffix="u3-fmt"))
     attach_gnd(U3_RX + 3, p16_y, "U3_FMT", rot=270)
 
-    # ---- Pin 17 XSMT → R_XSMT 10k pull-up zu DVDD (un-muted by default)
+    # ---- Pin 17 XSMT ← PCM_XSMT (von MCP23017 GPA5 via I²C-Steuerung)
+    # v0.6.3-r5 N1-Fix: GPIO-controlled XSMT statt statischem Pull-Up.
+    # Default LOW via R_XSMT_PD Pull-Down = PCM5102A startet stumm.
+    # Pico schaltet via MCP23017 nach Power-Sequencing HIGH = un-muted.
     p17_y = u3_right(17)
-    # R rot=90 horizontal: sym (124, p17_y). pin1 abs (120.19, p17_y), pin2 abs (127.81, p17_y).
-    # pin1 → XSMT line (extending from U3.17 stub), pin2 → +3V3 label.
+    # R_XSMT_PD vertikal: sym (132, p17_y+3.81) — pin1 (top, sym-3.81) auf XSMT,
+    # pin2 (bottom, sym+3.81) auf GND.
+    rxsmt_pd_y = p17_y + 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:R",
-            ref="R_XSMT",
-            value="10k 0603 (XSMT pull-up)",
-            x=124, y=p17_y, rotation=90,
+            ref="R_XSMT_PD",
+            value="10k 0603 (XSMT pull-down, boot-safe default LOW = muted)",
+            x=132, y=rxsmt_pd_y,
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
-            seed_suffix="RXSMT",
+            seed_suffix="RXSMT_PD",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(U3_RX, p17_y, 120.19, p17_y, seed_suffix="u3-xsmt-stub"))
-    wires.append(wire(127.81, p17_y, 130, p17_y, seed_suffix="rxsmt-to-3v3"))
-    labels.append(label(130, p17_y, "+3V3"))
+    # Wire vom U3.17 nach rechts zu pin1 von R_XSMT_PD (132, p17_y) und weiter
+    # zum hier_label PCM_XSMT (input von MCP23017).
+    wires.append(wire(U3_RX, p17_y, 132, p17_y, seed_suffix="u3-xsmt-to-rpd"))
+    wires.append(wire(132, p17_y, 138, p17_y, seed_suffix="u3-xsmt-to-hier"))
+    junctions.append(junction(132, p17_y))
+    hlabels.append(hier_label(138, p17_y, "PCM_XSMT", shape="input", rotation=180))
+    # R_XSMT_PD pin2 (bottom) abs (132, rxsmt_pd_y+3.81 = p17_y+7.62) → GND
+    wires.append(wire(132, rxsmt_pd_y + 3.81, 132, rxsmt_pd_y + 6, seed_suffix="rxsmt-pd-gnd"))
+    attach_gnd(132, rxsmt_pd_y + 6, "RXSMT_PD", rot=270)
 
     # ---- Pin 18 LDOO → NC (per datasheet: leave open, optional 0.1µF for stability)
     # We add a 100nF cap for stability per TI ref design
@@ -3856,7 +3872,11 @@ def root_sheet() -> str:
         f'      (uuid "{det_uuid("mcppin_scl")}"))\n'
         f'    (pin "MCP_INT" output (at 130 220 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("mcppin_int")}")))\n'
+        f'      (uuid "{det_uuid("mcppin_int")}"))\n'
+        # v0.6.3-r5 N1-Fix: PCM_XSMT output (MCP GPA5 drives PCM5102A XSMT)
+        f'    (pin "PCM_XSMT" output (at 190 215 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("mcppin_xsmt")}")))\n'
         # ---- Sheet 5: Encoders ----
         f'  (sheet (at 230 105) (size 60 70) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -3968,7 +3988,7 @@ def root_sheet() -> str:
         f'  (wire (pts (xy 325 75) (xy 330 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sdout_pi")}"))\n'
         f'  (label "I2S_DOUT" (at 325 75 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sdout_pi")}"))\n'
         # ---- Sheet 6: Audio (rechts neben MCP, unter Encoder-Sheet) ----
-        f'  (sheet (at 230 200) (size 60 50) (fields_autoplaced)\n'
+        f'  (sheet (at 230 200) (size 60 55) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
         f'    (fill (color 0 0 0 0.0000))\n'
         f'    (uuid "{audio_uuid}")\n'
@@ -3990,7 +4010,11 @@ def root_sheet() -> str:
         f'      (uuid "{det_uuid("audiopin_shdn")}"))\n'
         f'    (pin "AMP_MUTE" input (at 230 235 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("audiopin_mute")}")))\n'
+        f'      (uuid "{det_uuid("audiopin_mute")}"))\n'
+        # v0.6.3-r5 N1-Fix: PCM_XSMT input (from MCP GPA5)
+        f'    (pin "PCM_XSMT" input (at 230 240 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("audiopin_xsmt")}")))\n'
         # ---- Labels für Audio: Pico AMP_SHUTDOWN/MUTE → Audio Sheet inputs
         f'  (wire (pts (xy 125 95) (xy 130 95)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampshdn_pico")}"))\n'
         f'  (label "AMP_SHUTDOWN" (at 125 95 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_pico")}"))\n'
@@ -4000,6 +4024,11 @@ def root_sheet() -> str:
         f'  (label "AMP_SHUTDOWN" (at 225 230 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_audio")}"))\n'
         f'  (wire (pts (xy 225 235) (xy 230 235)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampmute_audio")}"))\n'
         f'  (label "AMP_MUTE" (at 225 235 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampmute_audio")}"))\n'
+        # v0.6.3-r5 N1-Fix: PCM_XSMT label-bridge zwischen MCP-Sheet (rechte Seite, y=215) und Audio-Sheet (linke Seite, y=240)
+        f'  (wire (pts (xy 190 215) (xy 195 215)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_xsmt_mcp")}"))\n'
+        f'  (label "PCM_XSMT" (at 195 215 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_xsmt_mcp")}"))\n'
+        f'  (wire (pts (xy 225 240) (xy 230 240)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_xsmt_audio")}"))\n'
+        f'  (label "PCM_XSMT" (at 225 240 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_xsmt_audio")}"))\n'
         # ---- I2S labels (von Sheet 7 Pi-Header — Sheet 7 noch nicht implementiert,
         # I2S-Labels bleiben momentan dangling auf Audio-Sheet-Input-Seite)
         f'  (wire (pts (xy 225 210) (xy 230 210)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sbck_audio")}"))\n'
