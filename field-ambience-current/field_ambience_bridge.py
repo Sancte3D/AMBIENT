@@ -180,6 +180,9 @@ class PicoBridge:
         self.running = True
         self.shifted = False
         self.hold_mode = False
+        # v29-p: explicit init prevents AttributeError on first toggle / state read
+        self.generative = False
+        self.drone = False
         self.cursor_idx = 0
         self.mode_ui = "nav"
         self.sc_state = {
@@ -435,6 +438,12 @@ class PicoBridge:
                   "padVoice", "padOctave"):
             if k in state:
                 self.sc_state[k] = state[k]
+        # v29-p: mirror generative/drone from SC so the hardware toggle stays
+        # in sync if the HTML panel changed these (prevents toggle de-sync).
+        if "generative" in state:
+            self.generative = bool(state["generative"])
+        if "drone" in state:
+            self.drone = bool(state["drone"])
         self.update_display()
 
 
