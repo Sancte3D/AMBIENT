@@ -183,6 +183,10 @@ class PicoBridge:
         # v29-p: explicit init prevents AttributeError on first toggle / state read
         self.generative = False
         self.drone = False
+        # v29-p: Drive/Brightness macro state for the 4-encoder routing.
+        # Defaults match the Sound Constitution (drive 0.18, brightness -0.2).
+        self.drive = 0.18
+        self.brightness = -0.2
         self.cursor_idx = 0
         self.mode_ui = "nav"
         self.sc_state = {
@@ -305,11 +309,39 @@ class PicoBridge:
                     self.shifted = False
 
         elif e_type == "enc":
-            self.handle_encoder(ev["delta"])
+            # v29-p: 4 physical encoders, routed by id.
+            #   1=Drive  2=Brightness  3=Display(menu)  4=Volume
+            enc_id = ev.get("id", 3)
+            delta = ev.get("delta", 0)
+            if enc_id == 1:      # Drive macro 0..1
+                self.drive = max(0.0, min(1.0, self.drive + delta * 0.05))
+                self.osc.send_message("/fam/drive", [self.drive])
+            elif enc_id == 2:    # Brightness macro -1..1
+                self.brightness = max(-1.0, min(1.0, self.brightness + delta * 0.05))
+                self.osc.send_message("/fam/brightness", [self.brightness])
+            elif enc_id == 4:    # Volume 0..1
+                new_vol = max(0.0, min(1.0, self.sc_state["vol"] + delta * 0.05))
+                self.sc_state["vol"] = new_vol
+                self.osc.send_message("/fam/vol", [new_vol])
+            else:                # id 3 (or unknown) = Display/menu controller
+                self.handle_encoder(delta)
 
         elif e_type == "push":
-            if ev["down"]:
-                self.toggle_mode_ui()
+            # Only the Display encoder (id 3) toggles nav/edit. The other
+            # encoders' push acts as a "reset to default" for their macro.
+            enc_id = ev.get("id", 3)
+            if ev.get("down"):
+                if enc_id == 3:
+                    self.toggle_mode_ui()
+                elif enc_id == 1:
+                    self.drive = 0.18  # Sound-Constitution default
+                    self.osc.send_message("/fam/drive", [self.drive])
+                elif enc_id == 2:
+                    self.brightness = -0.2
+                    self.osc.send_message("/fam/brightness", [self.brightness])
+                elif enc_id == 4:
+                    self.sc_state["vol"] = 0.85
+                    self.osc.send_message("/fam/vol", [0.85])
 
         elif e_type == "jack":
             inserted = ev["inserted"]
@@ -444,6 +476,10 @@ class PicoBridge:
             self.generative = bool(state["generative"])
         if "drone" in state:
             self.drone = bool(state["drone"])
+        if "drive" in state:
+            self.drive = float(state["drive"])
+        if "brightness" in state:
+            self.brightness = float(state["brightness"])
         self.update_display()
 
 
