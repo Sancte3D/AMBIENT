@@ -245,7 +245,9 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 KiCad-Standard-Library. Benötigt die **kiswitch keyswitch-kicad-library**
 (KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library").
 Footprint-Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_1.00u`
-(1u) / `_2.00u` (2u Cells + Stabilizer). Exakten Namen nach Install verifizieren.
+(1u Modifier) / `_2.00u` (2u Cells + Stabilizer). **Namen verifiziert gegen
+kiswitch v2.4** — beide existieren. V1V2 (statt V2-spezifisch) gewählt, weil
+es V1+V2 Alignment-Löcher bohrt → Hot-Swap nimmt jede Choc-Generation.
 
 ### Line-Out / Kopfhörer (v0.7)
 

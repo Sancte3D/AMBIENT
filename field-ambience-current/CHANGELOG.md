@@ -23,9 +23,14 @@ Erste echte Funktionserweiterung seit v0.6. Zwei Themen.
   die **kiswitch keyswitch-kicad-library**:
   - KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library" → Install
   - GitHub: https://github.com/kiswitch/keyswitch-kicad-library
-  - Nach Install: exakten Choc-V1V2-Hotswap-Namen verifizieren (kann je
-    Library-Version leicht abweichen). Bei abweichendem Namen den
-    footprint-String im Generator anpassen.
+  - **Footprint-Namen verifiziert gegen kiswitch v2.4** (jsDelivr-Tree-API):
+    `SW_Hotswap_Kailh_Choc_V1V2_1.00u` und `_2.00u` existieren beide im
+    Ordner `Switch_Keyboard_Hotswap_Kailh.pretty`. Bei abweichender
+    Library-Version Namen erneut prüfen.
+- **Warum V1V2 statt V2-spezifisch**: Die Lib hat auch `SW_Hotswap_Kailh_Choc_V2_*`.
+  V1V2 bohrt die Alignment-Löcher für V1 UND V2 → die Hot-Swap-Buchse nimmt
+  jede Choc-Generation auf. Genau das ist der Sinn eines Hot-Swap-Boards
+  (End-User kann V1 oder V2 stecken). V2 wird voll unterstützt.
 - **2u Cells**: Choc-Stabilizer (CPG1353G24D01) als separate mechanische
   Footprint-Platzierung im Layout — der Switch selbst ist 1u, der 2u-Keycap
   braucht den Stabilizer.
