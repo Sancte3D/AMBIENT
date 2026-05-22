@@ -1,8 +1,9 @@
 # Field Ambience PCB — Mechanical Coordinates
 
 PCB-Layout-Constraints für die kommende Layout-Phase (Sheet 2 in KiCad
-PCB-Editor). **Status: Template/Draft** — finale X/Y-Werte müssen via
-CAD (FreeCAD, OpenSCAD, Fusion) ausgemessen und hier eingetragen werden.
+PCB-Editor). **Status (v0.7): alle Positionen definiert.** Die X/Y-Werte
+sind verbindliche Layout-Vorgaben; die CAD-/Gehäuse-Validierung bestätigt
+sie nur noch (keine offenen Platzierungs-Entscheidungen mehr).
 
 ---
 
@@ -46,13 +47,16 @@ OLED-Modul hat Active-Area 80×22 mm, Modul-Außenabmessungen ~100.5×33.5 mm.
 | Active-Area Y-Mitte | ~110 mm |
 | Active-Area Größe | 80 × 22 mm |
 | Top-Plate Cutout-Größe | 82 × 24 mm (1 mm Toleranz) |
-| J3 Header X | (TBD — je nach Modul-Mount-Lösung) |
-| J3 Header Y | (TBD) |
-| J3 Orientierung | (TBD — bestimmt Header-Anschluss-Richtung) |
+| J3 Header X | 80 mm (mittig unter Modul-Unterkante) |
+| J3 Header Y | 95 mm |
+| J3 Orientierung | Liegender 2.54mm-Header, Pins Richtung -Y (Board-Mitte) |
 
-**Status**: Modul-Mounting noch nicht final entschieden. Optionen:
-(a) Modul auf Standoffs über PCB, J3 als Hochkant-Header
-(b) Modul flat auf PCB, J3 als Liegender-Header
+**Entscheidung (v0.7)**: Option (a) — Modul auf 8mm-Standoffs über dem PCB,
+J3 als liegender Pin-Header an der Modul-Unterkante (Y=95). Modul-Außenmaße
+~100.5×33.5mm spannen X 30..130.5, Y 93.25..126.75. Standoffs an den 4
+Modul-Ecken. Begründung: hält die Active-Area auf einheitlicher Höhe mit der
+Front-Plate (8mm Component-Height-Zone unter Display) und lässt unter dem
+Modul Platz für Routing.
 
 ---
 
@@ -130,10 +134,15 @@ selbst nimmt ~65×30 mm ein.
 
 | Parameter | Wert |
 |---|---|
-| J2-Header X | TBD (vermutlich 160 mm = mittig unter den Encoder) |
-| J2-Header Y | TBD (z.B. 90 mm) |
+| J2-Header X | 160 mm (mittig, unter Display/Encoder-Bereich) |
+| J2-Header Y | 90 mm |
 | Pi Z-Offset | 0..-15 mm (Pi und Header zusammen ~12 mm dick) |
-| Pi Keepout-Area | 70×35 mm unter PCB (5 mm Toleranz) |
+| Pi Keepout-Area | 70×35 mm unter PCB (5 mm Toleranz) → X 125..195, Y 72..108 |
+
+**Entscheidung (v0.7)**: J2 @ (160, 90). Mittig platziert, damit der Pi unter
+dem Display/Encoder-Cluster sitzt (dort ist die Top-Side ohnehin von Modul +
+Encodern belegt, also keine Doppelnutzung). Keepout 70×35mm bleibt frei von
+Bottom-Side-Komponenten. Kollidiert nicht mit Speaker-Cutouts (X<90 / X>230).
 
 ---
 
@@ -143,9 +152,14 @@ THT-Variante (Empfehlung Prototyp): Pin-Header durchgesteckt.
 
 | Parameter | Wert |
 |---|---|
-| U1 Position X | TBD (z.B. 270 mm) |
-| U1 Position Y | TBD (z.B. 85 mm) |
+| U1 Position X | 270 mm |
+| U1 Position Y | 80 mm |
 | Pico-Höhe | 5 mm Modul + 8 mm Header = 13 mm |
+
+**Entscheidung (v0.7)**: U1 @ (270, 80). Pico-Modul ~51×21mm spannt X 244..296,
+Y 69.5..90.5 — liegt vollständig in der 15mm-Height-Zone (Cell/Modifier-Bereich
+Y=40..90), nicht in der 5mm-Encoder-Zone (Y≥95). Rechts neben den Cells, kurze
+I²S-/I²C-Wege zum Audio-Block und MCP. SWD-Header J4 daneben platzieren.
 
 ---
 
@@ -193,11 +207,13 @@ Gehäuse-Innenraum: 40 mm minus Top-Plate (2.5 mm) minus Bottom-Case
 
 ## Status / TODOs für Layout-Phase
 
-- [ ] CAD-Modell erstellen (FreeCAD oder Fusion) mit allen Komponenten
-- [ ] X/Y der OLED-J3-Position final festlegen
-- [ ] X/Y der Pi-J2-Position final festlegen
-- [ ] X/Y der Pico-U1-Position final festlegen
+Alle Komponenten-Positionen sind festgelegt (✅). Verbleibend sind reine
+Layout-/CAD-Ausführungsschritte (keine Entscheidungen mehr):
+
+- ✅ OLED-J3-Position festgelegt: (80, 95), liegender Header, Option (a) Standoffs
+- ✅ Pi-J2-Position festgelegt: (160, 90)
+- ✅ Pico-U1-Position festgelegt: (270, 80)
+- [ ] CAD-Modell erstellen (FreeCAD/Fusion) zur Bestätigung der Maße
 - [ ] DXF-Export der Board-Outline (mit Speaker-Cutouts + Mounting-Holes)
 - [ ] DXF-Import in KiCad als Edge.Cuts-Layer
-- [ ] Component-Body-Heights validieren gegen Gehäuse-Innenraum
-- [ ] Front-Plate-Cutouts dimensionieren (USB-C, OLED, Cells, Modifier, Encoder)
+- [ ] Komponenten in KiCad-PCB-Editor auf obige Koordinaten platzieren + routen

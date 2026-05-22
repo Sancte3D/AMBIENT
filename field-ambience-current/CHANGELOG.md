@@ -8,6 +8,46 @@ Aktuelle Rev: **v0.7-pre** (Choc-V2-Footprint-Fix + Line-Out/Kopfhörer-Block).
 
 ---
 
+## v0.7 (2026-05-22) — Alle offenen Engineering-Entscheidungen geschlossen
+
+Durchgang zum Schließen sämtlicher offener Auslegungs-Fragen, damit kein
+"TBD" / keine Entscheidung mehr im Weg steht. Design und Doku reconciled.
+
+**Power (I1/I2) — final entschieden:**
+- 5V/3A-USB-C-Netzteil als **harte Anforderung** (kein PD-Controller im
+  Prototyp). Worst-Case 2.45A < 3A → Board darf voll aussteuern, Volume-Clamp
+  ist keine Power-Schutz-Pflicht mehr (nur optionale Akustik-Maßnahme).
+- **F1 Polyfuse 2A/4A → 3A/6A** (Littelfuse 1812L300, LCSC C18198349). Das alte
+  2A-hold derated bei ~50°C Innentemp auf ~1.5A → trug 1.4A-Typical-Audio nicht
+  zuverlässig. 3A-hold derated ~2.3A deckt Typical; Bass-Peaks reiten den Bulk.
+
+**Inrush (I3) — final entschieden:**
+- Erkenntnis: Inrush-**Peak** ist widerstandsbegrenzt, nicht kapazitätsbegrenzt
+  — ein kleinerer Cap senkt nur Dauer/Energie, nicht den Spitzenstrom. Da tiefer
+  Bass das Produktziel ist und der Bulk genau die Bass-Transienten puffert,
+  **bleibt C_BULK bei 1000µF**. Polyfuse ist thermisch → trippt nicht auf den
+  <1ms-Inrush-Spike. Produktion bekommt einen Soft-Start-Load-Switch.
+- **Footprint-Bug gefixt**: EEE-FK1A102P ist ein D10×10.2mm-Becher, der Generator
+  hatte `CP_Elec_8x6.7` (zu klein) → korrigiert auf `CP_Elec_10x10.5`.
+- **Doku/Design-Konflikt aufgelöst**: SPEC nannte fälschlich eine Polymer-Cap
+  6.3V (PCV1A102), die nie ins Design kam. SPEC zeigt jetzt die reale Alu-10V.
+
+**Stack-Up (I4):** final Signal/GND/+5V/Signal (SPEC §9).
+
+**Mechanik (I5):** alle TBD-Positionen festgelegt — OLED-J3 @ (80,95) auf
+Standoffs, Pi-J2 @ (160,90), Pico-U1 @ (270,80). `mechanical_coordinates.md`
+von "Template/Draft" auf "alle Positionen definiert" hochgestuft.
+
+**Bereits erledigt, nur noch als ✅ markiert:** I7 (UART-Naming eindeutig),
+N1 (XSMT via MCP GPA5), N2 (I²S 33Ω Serien-R), N4 (Titleblocks → rev 0.7),
+B4 (SHDN/MUTE Pull-Downs vorhanden).
+
+**Verbleibend offen (nur noch GUI/physisch, nicht headless lösbar):**
+B0-B2 (Footprint-Pad-Mapping im KiCad-Footprint-Editor gegen Datenblatt),
+B3 (GUI-ERC-Lauf), sowie der eigentliche PCB-Layout-Schritt.
+
+---
+
 ## v0.7-pre (2026-05-16) — Choc-V2-Footprint-Fix + Line-Out/Kopfhörer
 
 Erste echte Funktionserweiterung seit v0.6. Zwei Themen.

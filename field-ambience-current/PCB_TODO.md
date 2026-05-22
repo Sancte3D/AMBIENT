@@ -15,6 +15,20 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ## ✅ Behoben (auf PR #1 HEAD)
 
+### v0.7 — Engineering-Entscheidungen final getroffen + Design/Doc reconciled
+- **Choc-V2-Footprint-Fix**: MX→Choc V1V2 Hotswap (gegen kiswitch v2.4 verifiziert)
+- **Line-Out/Kopfhörer J8** + Jack-Detect (MCP GPA6) + Firmware `speakers()`
+- **I1/I2 final**: 5V/3A-Netzteil als harte Anforderung; **F1 auf 3A/6A** (Littelfuse
+  1812L300, C18198349) hochgesetzt — 2A war zu klein für 2.45A Worst-Case
+- **I3 final**: Inrush-Peak ist R-limitiert (nicht Cap-limitiert) → Bulk bleibt
+  1000µF Alu Low-ESR (EEE-FK1A102P), Polyfuse trippt nicht auf <1ms-Spike.
+  Die in r3 notierte Polymer-Cap-Idee (PCV1A102) wurde nie ins Design übernommen
+  und ist hiermit verworfen. **Footprint-Bug gefixt** (D10 → CP_Elec_10x10.5).
+- **I5 final**: alle TBD-Positionen (OLED-J3, Pi-J2, Pico-U1) in
+  `mechanical_coordinates.md` festgelegt
+- **N4**: alle Titleblocks auf rev 0.7 vereinheitlicht
+- Verbleibend offen: nur noch GUI-Schritte (B0-B3) + der PCB-Layout-Schritt selbst
+
 ### v0.6.3-r3 (Commit folgt nach diesem Push)
 - **N2 I²S Series-Resistoren** im pi_sheet: R_BCK, R_LRCK, R_DOUT 33Ω 0603 direkt am Pi-Header
 - **I1 Power-Budget** realistisch neu kalkuliert in SPEC v0.6.3-r3 (PAM8403 @ 4Ω = 1.4A)
@@ -94,23 +108,32 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 - Alle Errors fixen, Warnings dokumentieren oder als acceptable markieren
 - ERC-Settings sind in `.kicad_pro` schon streng eingestellt
 
-### B4. PAM8403 /SHDN und /MUTE Hardware-Defaults
-- Beide Pins sind ACTIVE LOW (Datasheet bestätigt)
-- Während Pico-Reset/Boot floaten GPIOs — Amp könnte un-defined hochfahren
-- **Fix:** Pull-Down 10k auf jedem Pin (R_SHDN_PD, R_MUTE_PD) zu GND
-  → Default-State = LOW = Amp aus + muted
-  → Pico-Firmware zieht aktiv HIGH wenn power-sequencing es zulässt
-- BOM-Update: 2× R 10k
+### ✅ B4. PAM8403 /SHDN und /MUTE Hardware-Defaults — ERLEDIGT (v0.6.3)
+- R_SHDN_PD + R_MUTE_PD (10k Pull-Downs) sind im Schaltplan vorhanden
+  → Default LOW = Amp aus + gemuted während Pico-Boot. Firmware zieht in
+  korrekter Anti-Pop-Sequenz aktiv HIGH. Nichts mehr offen.
 
 ---
 
 ## 🟠 IMPORTANT — Vor JLCPCB-Order erledigen
 
-### ✅ I1-I6 + N3 — In v0.6.3-r3 als Doc-Updates adressiert (siehe SPEC)
+### ✅ Status v0.7 — alle Engineering-Entscheidungen getroffen
 
-Details siehe Errata-Sektion v0.6.3-r3 in `field_ambience_pcb_SPEC_v0.6.md`.
+Die folgenden Punkte sind jetzt **entschieden und im Design/Doc umgesetzt**
+(keine offenen Fragen mehr). Details unten + in SPEC §3 und CHANGELOG v0.7.
 
-### Reste/Refinements (low priority, vor PCB-Layout aber doch erledigen):
+| # | Thema | Entscheidung |
+|---|---|---|
+| I1/I2 | Power-Budget + USB-Versorgung | **5V/3A-Netzteil als harte Anforderung** (Standard-USB-C-Charger). Kein USB-PD-Controller im Prototyp. Worst-Case 2.45A liegt unter 3A. |
+| I1 | Polyfuse | **F1 auf 3A-hold / 6A-trip** hochgesetzt (Littelfuse 1812L300, C18198349). War 2A/4A = zu klein. |
+| I3 | Inrush 1000µF | **Akzeptiert für Prototyp** — Inrush-Peak ist R-limitiert (Cap-Größe ändert nur Dauer), Polyfuse ist thermisch → trippt nicht auf <1ms-Spike. Bulk bleibt 1000µF (puffert Bass-Transienten = Produktziel). Produktion: Soft-Start-Load-Switch (TPS22810-Klasse). |
+| I3 | Bulk-Cap Footprint | **Bug gefixt**: EEE-FK1A102P ist D10×10.2mm → Footprint von CP_Elec_8x6.7 auf CP_Elec_10x10.5 korrigiert. |
+| I4 | 4-Layer Stack-Up | **Signal / GND / +5V / Signal** (SPEC §9 aktualisiert). +5V ist die Hochstrom-Schiene. |
+| I5 | Mechanische Koordinaten | **Alle Positionen festgelegt** in `mechanical_coordinates.md` (OLED-J3, Pi-J2, Pico-U1 waren TBD → jetzt definiert). |
+| I6 | BOM-Split | Vollständig dokumentiert (siehe unten). |
+| I7 | UART Net-Naming | **Erledigt** — Nets heißen `PICO_TX_PI_RX` / `PI_TX_PICO_RX` (eindeutig). |
+
+### Detail-Begründungen (Referenz):
 
 ### I1-orig. Power-Budget realistisch neu rechnen
 - PAM8403 @ 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp (statt 350 mA in v0.6)
@@ -192,29 +215,23 @@ Aktuelle Mischung in v0.6 BOM ist nicht "Full PCBA". Tatsächlich:
 - Custom MX-Stem-Cell-Caps (Silikon)
 - Gehäuse-Schrauben/Schraubdome
 
-### I7. UART Net-Naming disambiguieren
-- Aktuell: `UART0_TX` / `UART0_RX` auf beiden Sheets (Pico und Pi)
-- Mehrdeutig: TX/RX ist perspektivisch
-- Besser:
-  - `PICO_TX_PI_RX` (Pico GP0 → Pi GPIO15)
-  - `PI_TX_PICO_RX` (Pi GPIO14 → Pico GP1 via R1 1k)
-- Trivial-Rename im Generator + Re-Generate
+### ✅ I7. UART Net-Naming disambiguiert — ERLEDIGT
+- Nets heißen eindeutig `PICO_TX_PI_RX` (Pico GP0 → Pi GPIO15) und
+  `PI_TX_PICO_RX` (Pi GPIO14 → Pico GP1 via R1 1k). Kein perspektivisches
+  TX/RX mehr.
 
 ---
 
 ## 🟢 NICE-TO-HAVE — Quality-Improvements
 
-### N1. XSMT per Pico-GPIO statt nur Pull-Up
-- Aktuell: PCM5102A XSMT ist statisch via R_XSMT pull-up
-- Besser: Pico GPIO steuert XSMT (z.B. GP25 oder ein freier ADC-Pin)
-- Erlaubt explizite Pop-Suppression beim PCM5102A
-- Reserve-Pin in SPEC v0.6 §5: GP26 ist STATUS_LED, GP27/28 sind Amp.
-  Kein freier digital-GPIO mehr — nutze MCP23017 reserve-Pin GPA5/GPB5
+### ✅ N1. XSMT per MCP-GPIO — ERLEDIGT
+- PCM5102A XSMT wird von MCP23017 GPA5 gesteuert (PCM_XSMT-Netz), mit
+  R_XSMT_PD Pull-Down (Default stumm). Explizite Pop-Suppression möglich.
 
-### N2. I²S Series-Resistoren am Pi
-- 22-47Ω series an BCK, LRCK, DOUT direkt am Pi-Header
-- Verbessert Signal-Integrity über lange Traces (320mm Board)
-- 3× R 33Ω 0603 in Sheet 7
+### ✅ N2. I²S Series-Resistoren — ERLEDIGT
+- R_BCK / R_LRCK / R_DOUT (je 33Ω 0603) sind in Sheet 7 am Pi-Header in
+  Serie zu BCK/LRCK/DOUT eingefügt (pin_to_hier_via_r). Signal-Integrity
+  über die 320mm-Traces verbessert.
 
 ### N3. ERC + DRC Report ins Repo committen
 - Nach jedem Major-Fix: `reports/ERC_YYYY-MM-DD.md`
@@ -227,9 +244,9 @@ Aktuelle Mischung in v0.6 BOM ist nicht "Full PCBA". Tatsächlich:
   Warnings: M (akzeptiert: list)
   ```
 
-### N4. Audio-Sheet Titleblock auf v0.6.3 syncen
-- Aktuell zeigt audio.kicad_sch noch v0.6.1 im Titleblock
-- Generator-Side fix: rev in `body = ...` updaten
+### ✅ N4. Titleblock-Rev sync — ERLEDIGT
+- Alle 8 Sheet-Titleblocks auf `(rev "0.7")` vereinheitlicht (waren gemischt
+  0.6 / 0.6.3).
 
 ### N5. Stale Comments im Generator aufräumen
 - Comments in `power_tree_sheet()` und `audio_sheet()` referenzieren teilweise

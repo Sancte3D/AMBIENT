@@ -4,7 +4,7 @@
   (title_block
     (title "Field Ambience PCB — Sheet 4: MCP23017 + 10 Switches")
     (date "2026-05-12")
-    (rev "0.6")
+    (rev "0.7")
     (company "Field Ambience Project")
     (comment 1 "Per SPEC v0.6 §7")
     (comment 2 "I2C Adresse 0x20 (A0=A1=A2=GND)")

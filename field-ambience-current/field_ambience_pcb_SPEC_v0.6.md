@@ -28,7 +28,7 @@ v0.6 behebt vier CRITICAL/HIGH-Findings aus dem v0.5-Review, plus vier MEDIUM-Ko
 |---|---|---|
 | CRITICAL | C1: USB-C-D±-Routing zu Pico **und** Pi gleichzeitig — physikalisch unmöglich ohne USB-Switch-IC | **USB-C-D± nur an Pico**. Pi bekommt nur +5V via 40-pin-Header. Pi-Updates via WLAN/SSH (Pi Zero 2 W onboard). Einziger sichtbarer Stecker = USB-C |
 | CRITICAL | C2: PAM8403 Pop-Suppression in §10 gefordert, aber keine Pico-GPIOs alloziert | **GP27 = AMP_SHUTDOWN, GP28 = AMP_MUTE** — beide GPIOs aus den v0.5-„reserve"-Pins genommen |
-| HIGH | H1: Polyfuse F1 1.5A hold zu eng bei 1.4A peak Last + Inrush | **F1 = 2.0A hold / 4.0A trip** (1812 SMD, z.B. Bourns MF-MSMF200) |
+| HIGH | H1: Polyfuse F1 zu eng bei realer Last (Worst-Case 2.45A) | **v0.7: F1 = 3.0A hold / 6.0A trip** (1812 SMD, Littelfuse 1812L300, C18198349) — siehe §3 |
 | HIGH | H2: PAM8403 nur 100nF an VDD — bei 350mA peak unterdimensioniert | **C9 = 10µF X5R 0805 + C9b = 100nF X7R 0603** direkt an PAM8403 VDD |
 | HIGH | H3: MCP23017 INTA-Leitung ohne Pull-Up — floatet beim Reset | **R20 = 10kΩ 0603 Pull-Up** auf INTA zu +3V3 |
 | HIGH | H4: OLED-Größen-Konflikt 256×64 (SPEC) vs 128×64 (ROADMAP/engine) | **256×64 ER-OLEDM032-1W bestätigt**. Firmware-Menü-Layout muss angepasst werden (separater Task in ROADMAP) |
@@ -46,7 +46,7 @@ v0.6 behebt vier CRITICAL/HIGH-Findings aus dem v0.5-Review, plus vier MEDIUM-Ko
                      │           Field Ambience Device              │
                      │  333 × 143.3 × 40mm                          │
                      │                                              │
-USB-C 5V/3A ────► USB-C  ──┬──► F1 (2A/4A) ──► 1000µF Bulk ──► +5V │
+USB-C 5V/3A ────► USB-C  ──┬──► F1 (3A/6A) ──► 1000µF Bulk ──► +5V │
 (Power + Pico              │                                       │
  BOOTSEL/Flash)            ├──► D+/D− ──► Pico USB                 │
                            │              (BOOTSEL drag-drop UF2)   │
@@ -137,35 +137,38 @@ zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 | Encoder/LED/Modifier | 5 mA | 15 mA | 25 mA |
 | **TOTAL** | **440 mA** | **1365 mA** | **2480 mA** |
 
-### USB-C Power Delivery (Variante A: Firmware Volume-Clamp)
+### USB-C Power Delivery (Entscheidung v0.7 — final)
 
-USB-C @ 5V/3A (15W) Netzteil minimum. R_CC1 = R_CC2 = 5.1kΩ zu GND
-signalisieren "Sink" — garantieren aber NICHT 3A-Verfügbarkeit. Source
-kontrolliert via Rp (Pull-Up an CC) ob Default (~500 mA), 1.5A oder 3A.
+**Harte Anforderung: dediziertes 5V/3A-USB-C-Netzteil (15W).** R_CC1 = R_CC2 =
+5.1kΩ zu GND signalisieren "Sink". Wir betreiben das Board als reines 5V-Gerät
+ohne PD-Negotiation — ein 5V/3A-Wandnetzteil liefert die nötigen 2.45A
+Worst-Case problemlos.
 
-**Decision v0.6.3-r3**: Variante A für Prototyp:
-- Pi-Firmware muss SuperCollider-Master-Volume auf ~50% clampen
-  → Worst-Case-Peak < 1.7 A passt unter 2A-Polyfuse + USB-C 3A-Source
-- Mit Standard 5V/3A USB-C-Adapter (Apple 20W o.ä.) garantiert OK
-- Mit schwachem 5V/0.5A-Hub-Port: Risiko Brown-out → Adapter-Spec im
-  Benutzer-Manual klar dokumentieren
+**Entscheidung**: Variante A (USB-PD-Controller) wird NICHT verbaut. Begründung:
+- Worst-Case 2.45A < 3A Netzteil-Limit → kein Volume-Clamp für das Power-Budget
+  nötig. Das Board darf voll aussteuern.
+- Ein Firmware-Volume-Clamp ist daher KEINE Power-Schutz-Pflicht mehr; er bleibt
+  optional als Akustik-Maßnahme (40mm-Treiber verzerren oberhalb ~1.5W).
+- **Benutzer-Manual**: "Nur mit 5V/3A-USB-C-Netzteil betreiben, NICHT an einem
+  PC-USB-Port (500mA → Brown-out)."
 
-**Variante B (Future-Hardware)**: USB-PD-Sink-Controller TPS25750 oder
-CYPD3177 für echte 3A-Negotiation. Kosten ~$2 + ein paar Passives.
+**Future (Produkt, nicht Prototyp)**: USB-PD-Sink-Controller (TPS25750/CYPD3177)
+für echte 3A-Negotiation an beliebigen Quellen. Kosten ~$2 + Passives.
 
-### Polyfuse [Fix H1]
+### Polyfuse [Fix H1, revidiert v0.7]
 
-**F1 = 2.0 A hold / 4.0 A trip, 1812 SMD** (Bourns MF-MSMF200 o.ä.).
-Rationale v0.6.3-r3: typical audio peak ~1.4 A + Inrush von 1000 µF Bulk +
-Pi-Boot-Strom-Spike (1 A peak laut CNX Software Messung) ergibt kumuliert
-> 1.5A für mehrere ms. 2A-hold passt — **vorausgesetzt Firmware-Volume-Clamp**
-verhindert dass PAM8403 dauerhaft im 1.4-A-Worst-Case läuft.
+**F1 = 3.0 A hold / 6.0 A trip, 1812 SMD** (Littelfuse 1812L300, LCSC C18198349,
+16V). Rationale v0.7: das alte 2A-hold war zu eng — bei Gehäuse-Innentemp ~50°C
+derated jeder PPTC (~0.76×), 2A-hold→~1.5A, was den 1.4A-Typical-Audio + Boot-
+Spikes nicht zuverlässig trägt. 3A-hold derated ~2.3A deckt Typical sicher;
+Worst-Case-Bass-Peaks (2.45A, sub-ms) reiten den Bulk-Cap. Itrip 6A schützt
+weiterhin bei Hard-Short, liegt aber unter der Belastbarkeit der 5V/3A-Quelle.
 
 ### Decoupling [Fix H2, M1, M2]
 
 | Cap | Wert | Position | Zweck |
 |---|---|---|---|
-| C_BULK | 1000 µF Polymer 6.3V SMD (Nichicon PCV1A102MCL1GS, low-ESR) | nahe USB-C | Pi-Boot-Brownout. **v0.6.3-r3: Polymer statt Alu-Elko für definierten ESR/Inrush** |
+| C_BULK | 1000 µF Alu 10V Low-ESR SMD (Panasonic EEE-FK1A102P, D10, Footprint CP_Elec_10x10.5) | nahe USB-C | Pi-Boot-Brownout + Bass-Transienten. **v0.7: Alu 10V (nicht Polymer 6.3V — 6.3V zu knapp am 5V-Rail); Inrush-Peak ist R-limitiert, Polyfuse trippt nicht auf <1ms-Spike. Produktion: Soft-Start-Load-Switch.** |
 | C1 | 10 µF X5R 0805 | +5V Hauptrail | HF-Bulk |
 | C2 | 100 nF X7R 0603 | +5V Hauptrail | HF-Decoupling |
 | C3 | 10 µF X5R 0805 | +3V3 nahe Pico Pin 36 | HF-Bulk |
@@ -557,7 +560,7 @@ dedizierter Kopfhörer-Amp (TPA6132 o.ä.) besser — v0.8-Option.
 |---|---|
 | USB-C-Routing (war C1) | Variante A: USB-C nur an Pico, Pi via WLAN/SSH |
 | Pop-Suppression-GPIOs (war C2) | GP27/GP28 belegt, Firmware-Sequenz dokumentiert |
-| Polyfuse-Dimensionierung (war H1) | 2A/4A statt 1.5A/3A |
+| Polyfuse-Dimensionierung (war H1) | v0.7: 3A/6A (Littelfuse 1812L300) — 2A war zu klein für 2.45A Worst-Case |
 | PAM8403 Bulk-Cap (war H2) | 10 µF + 100 nF lokal an VDD |
 | MCP23017 INTA Pull-Up (war H3) | R20 = 10 kΩ |
 | OLED 256×64 vs 128×64 (war H4) | 256×64 bestätigt (separater Firmware-Task) |

@@ -4,7 +4,7 @@
   (title_block
     (title "Field Ambience PCB — Sheet 5: 4x EC11 Encoder")
     (date "2026-05-12")
-    (rev "0.6")
+    (rev "0.7")
     (company "Field Ambience Project")
     (comment 1 "Per SPEC v0.6 §5 + §M4")
     (comment 2 "EN1=Drive (GP10-12), EN2=Brightness (GP13-15)")

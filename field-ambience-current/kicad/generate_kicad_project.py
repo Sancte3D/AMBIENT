@@ -1057,7 +1057,7 @@ def pin_abs(sym_x: float, sym_y: float, local_x: float, local_y: float, rotation
 # ----------------------------------------------------------------------------
 # Sheet 1 — Power Tree
 # Komponenten + Verdrahtung lt. SPEC v0.6 §1, §3:
-#   USB-C(VBUS) -> F1 (polyfuse 2A/4A) -> C_BULK (1000µF) -> +5V Rail
+#   USB-C(VBUS) -> F1 (polyfuse 3A/6A) -> C_BULK (1000µF) -> +5V Rail
 #   USB-C(D±)   -> D1 (USBLC6-2SC6 ESD)   -> Pico USB (hier-label to other sheet)
 #   USB-C(CC1)  -> R2 (5.1k)              -> GND
 #   USB-C(CC2)  -> R3 (5.1k)              -> GND
@@ -1154,17 +1154,21 @@ def power_tree_sheet() -> str:
     )
 
     # ---- F1 Polyfuse auf der Rail @ (45, 60) horizontal.
+    # v0.7: 3A-hold / 6A-trip (war 2A/4A — zu klein für 2.45A Worst-Case-Last).
+    # Bei Gehäuse-Innentemp ~50°C derated 3A→~2.3A hold → deckt Typical-Audio
+    # (1.35A) sicher, Worst-Case-Bass-Peaks (2.45A, <ms) reiten den Bulk-Cap.
+    # Setzt 5V/3A-Netzteil voraus (siehe SPEC §3). Itrip 6A schützt bei Hard-Short.
     # Polyfuse pin1 (local -3.81, 0) → abs (41.19, 60). pin2 (local +3.81, 0) → abs (48.81, 60).
     symbols.append(
         place_symbol(
             lib_id="Device:Polyfuse",
             ref="F1",
-            value="2A/4A 1812 (MF-MSMF200, C210837)",
+            value="3A/6A 1812 (Littelfuse 1812L300, 16V)",
             x=45,
             y=RAIL_Y,
             footprint="Fuse:Fuse_1812_4532Metric",
-            datasheet="https://www.bourns.com/docs/Product-Datasheets/mfmsmf.pdf",
-            extra_props={"MPN": "MF-MSMF200", "LCSC": "C210837"},
+            datasheet="https://www.littelfuse.com/media?resourcetype=datasheets&itemid=ce0d2bf7-3eb1-4cf6-9c8c-8d3d3a8b1f9a&filename=littelfuse-pptc-1812l-datasheet",
+            extra_props={"MPN": "1812L300/16MR", "LCSC": "C18198349"},
             seed_suffix="F1",
         )
     )
@@ -1212,11 +1216,13 @@ def power_tree_sheet() -> str:
         place_symbol(
             lib_id="Device:CP",
             ref="C_BULK",
-            value="1000uF 10V SMD Elko",
+            value="1000uF 10V Low-ESR Elko (D10)",
             x=65,
             y=63.81,
-            footprint="Capacitor_SMD:CP_Elec_8x6.7",
-            extra_props={"MPN": "EEE-FK1A102P (Panasonic)", "LCSC": "TBD"},
+            # v0.7: Footprint-Fix — EEE-FK1A102P ist ein D10x10.2mm Becher,
+            # nicht D8. CP_Elec_10x10.5 ist das passende Land-Pattern.
+            footprint="Capacitor_SMD:CP_Elec_10x10.5",
+            extra_props={"MPN": "EEE-FK1A102P (Panasonic FK, Low-ESR)", "LCSC": "C-Nr. bei Bestellung (extended part)"},
             seed_suffix="CBULK",
         )
     )
@@ -1406,10 +1412,10 @@ def power_tree_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 1: Power Tree")\n'
         f'    (date "2026-05-14")\n'
-        f'    (rev "0.6.3")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6.3 §1 + §3")\n'
-        f'    (comment 2 "USB-C → F1(2A) → C_BULK(1000µF) → +5V rail")\n'
+        f'    (comment 2 "USB-C → F1(3A/6A) → C_BULK(1000µF) → +5V rail")\n'
         f'    (comment 3 "USB-C VBUS/GND-Pin-Belegung per USB Type-C Spec Rev 2.1 (v0.6.3 fix)")\n'
         f'    (comment 4 "ESD: USBLC6-2SC6 on D+/D-; TVS: SMAJ5.0A on +5V"))\n'
         "  (lib_symbols\n"
@@ -1839,7 +1845,7 @@ def pico_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 2: Pico 2 (RP2350)")\n'
         f'    (date "2026-05-11")\n'
-        f'    (rev "0.6")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §5")\n'
         f'    (comment 2 "USB-C D+/- via TP2/TP3 (BOOTSEL drag-drop)")\n'
@@ -2100,7 +2106,7 @@ def oled_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 3: OLED (ER-OLEDM032-1W)")\n'
         f'    (date "2026-05-12")\n'
-        f'    (rev "0.6")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §6")\n'
         f'    (comment 2 "256x64 SSD1322 OLED, 4-wire SPI mode (BS0=BS1=GND)")\n'
@@ -2494,7 +2500,7 @@ def mcp_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 4: MCP23017 + 10 Switches")\n'
         f'    (date "2026-05-12")\n'
-        f'    (rev "0.6")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §7")\n'
         f'    (comment 2 "I2C Adresse 0x20 (A0=A1=A2=GND)")\n'
@@ -2722,7 +2728,7 @@ def encoder_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 5: 4x EC11 Encoder")\n'
         f'    (date "2026-05-12")\n'
-        f'    (rev "0.6")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §5 + §M4")\n'
         f'    (comment 2 "EN1=Drive (GP10-12), EN2=Brightness (GP13-15)")\n'
@@ -3574,7 +3580,7 @@ def audio_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403H)")\n'
         f'    (date "2026-05-14")\n'
-        f'    (rev "0.6.3")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6.3 §8 + Errata-Fixes (PCM5102A TI, PAM8403H PDF verifiziert)")\n'
         f'    (comment 2 "PCM5102A pinout per TI SLAS859C: CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20")\n'
@@ -3827,7 +3833,7 @@ def pi_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Sheet 7: Pi Zero 2 W GPIO Header")\n'
         f'    (date "2026-05-12")\n'
-        f'    (rev "0.6")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §1 + §8 + BOM R1")\n'
         f'    (comment 2 "+5V Power-Injection via Pin 2+4. 8x GND auf Pi-GND-Pins")\n'
@@ -3868,7 +3874,7 @@ def root_sheet() -> str:
         f'  (title_block\n'
         f'    (title "Field Ambience PCB — Root")\n'
         f'    (date "2026-05-12")\n'
-        f'    (rev "0.6")\n'
+        f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project"))\n'
         f'  (lib_symbols)\n'
         # ---- Sheet 1: Power Tree ----

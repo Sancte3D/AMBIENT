@@ -4,7 +4,7 @@
   (title_block
     (title "Field Ambience PCB — Sheet 3: OLED (ER-OLEDM032-1W)")
     (date "2026-05-12")
-    (rev "0.6")
+    (rev "0.7")
     (company "Field Ambience Project")
     (comment 1 "Per SPEC v0.6 §6")
     (comment 2 "256x64 SSD1322 OLED, 4-wire SPI mode (BS0=BS1=GND)")

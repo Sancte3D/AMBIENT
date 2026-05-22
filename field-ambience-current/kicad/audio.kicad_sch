@@ -4,7 +4,7 @@
   (title_block
     (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403H)")
     (date "2026-05-14")
-    (rev "0.6.3")
+    (rev "0.7")
     (company "Field Ambience Project")
     (comment 1 "Per SPEC v0.6.3 §8 + Errata-Fixes (PCM5102A TI, PAM8403H PDF verifiziert)")
     (comment 2 "PCM5102A pinout per TI SLAS859C: CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20")

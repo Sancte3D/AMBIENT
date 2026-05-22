@@ -4,7 +4,7 @@
   (title_block
     (title "Field Ambience PCB — Sheet 2: Pico 2 (RP2350)")
     (date "2026-05-11")
-    (rev "0.6")
+    (rev "0.7")
     (company "Field Ambience Project")
     (comment 1 "Per SPEC v0.6 §5")
     (comment 2 "USB-C D+/- via TP2/TP3 (BOOTSEL drag-drop)")
