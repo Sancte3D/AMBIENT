@@ -54,15 +54,17 @@ class MCP23017:
         #   Port B: GPB0-4 input, rest input → all input
         self._w(_IODIRB, 0xFF)
 
-        # Pull-ups on the switch inputs (GPA0-4, GPB0-4)
-        self._w(_GPPUA, 0b00011111)
+        # Pull-ups on the switch inputs (GPA0-4) + jack-detect (GPA6) + GPB0-4.
+        # GPA6 (bit 6) = line-out jack-detect: idle (no plug, switch closed)
+        # pulls to GND via the jack switch; plug inserted (switch open) → pull-up.
+        self._w(_GPPUA, 0b01011111)   # GPA0-4 + GPA6
         self._w(_GPPUB, 0b00011111)
 
         # Input polarity normal (we treat pressed = logic 0 in software)
         self._w(_IPOLA, 0x00)
 
-        # Interrupt-on-change for the switch bits
-        self._w(_GPINTENA, 0b00011111)
+        # Interrupt-on-change for switches + jack-detect
+        self._w(_GPINTENA, 0b01011111)   # GPA0-4 + GPA6
         self._w(_GPINTENB, 0b00011111)
         # INTCON 0 = compare against previous value (interrupt-on-change mode)
         self._w(_INTCONA, 0x00)

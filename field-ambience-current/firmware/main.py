@@ -42,10 +42,11 @@ class AudioPower:
         self.n_shdn = Pin(cfg.PIN_AMP_nSHDN, Pin.OUT, value=0)  # 0 = shutdown
         self.n_mute = Pin(cfg.PIN_AMP_nMUTE, Pin.OUT, value=0)  # 0 = muted
         self.enabled = False
+        self.speakers_on = False
         # XSMT held LOW by the MCP latch (set in mcp.init) + R_XSMT_PD.
 
     def enable(self):
-        """Wake the amp, then un-mute. Correct anti-pop order."""
+        """Full enable: wake amp, un-mute Class-D + DAC. Correct anti-pop order."""
         if self.enabled:
             return
         self.n_shdn.value(1)             # 1: wake PAM8403, references settle
@@ -53,20 +54,32 @@ class AudioPower:
         self.n_mute.value(1)             # 2: un-mute Class-D output
         self.mcp.set_xsmt(True)          # 3: un-mute PCM5102A DAC
         self.enabled = True
+        self.speakers_on = True
 
     def disable(self):
-        """Mute, then shut down. Reverse anti-pop order."""
-        if not self.enabled:
-            # still force-safe even if we think we're already off
-            self.mcp.set_xsmt(False)
-            self.n_mute.value(0)
-            self.n_shdn.value(0)
-            return
+        """Full shutdown: mute DAC + Class-D, shut down chip. (watchdog/power-off)"""
         self.mcp.set_xsmt(False)         # 1: mute DAC first
         self.n_mute.value(0)             # 2: mute Class-D
         sleep_ms(cfg.PWR_SHDN_TO_MUTE_MS)
         self.n_shdn.value(0)             # 3: shut down chip
         self.enabled = False
+        self.speakers_on = False
+
+    def speakers(self, on):
+        """Toggle ONLY the PAM8403 speaker amp. The PCM5102A DAC (and thus the
+        line-out tap) stays live. Used for jack-detect: plug headphones in →
+        speakers off, line-out keeps playing."""
+        if on == getattr(self, "speakers_on", False):
+            return
+        if on:
+            self.n_shdn.value(1)
+            sleep_ms(cfg.PWR_SHDN_TO_MUTE_MS)
+            self.n_mute.value(1)
+        else:
+            self.n_mute.value(0)         # mute Class-D
+            sleep_ms(cfg.PWR_SHDN_TO_MUTE_MS)
+            self.n_shdn.value(0)         # shut down speaker amp (DAC stays on)
+        self.speakers_on = on
 
 
 # ---------------------------------------------------------------------------
@@ -202,6 +215,12 @@ def main():
     # --- button state mirror (active-low; True = pressed) ---
     cell_state = [False] * 5
     mod_state = [False] * 5
+    jack_state = [False]  # mutable holder so the nested fn can update it
+
+    def _jack_inserted(val):
+        bit = (val >> cfg.MCP_JACKDET_BIT) & 1
+        # HIGH (bit=1) = plug inserted when JACK_DETECT_ACTIVE_HIGH
+        return (bit == 1) if cfg.JACK_DETECT_ACTIVE_HIGH else (bit == 0)
 
     def read_buttons():
         if not mcp_ok:
@@ -219,6 +238,12 @@ def main():
             if pressed != mod_state[i]:
                 mod_state[i] = pressed
                 link.send({"event": "mod", "id": i + 1, "down": pressed})
+        # Jack-detect: GPA6. Plug in → mute speakers locally + notify Pi.
+        inserted = _jack_inserted(val)
+        if inserted != jack_state[0]:
+            jack_state[0] = inserted
+            amp.speakers(not inserted)   # plug in → speakers OFF (line-out stays)
+            link.send({"event": "jack", "inserted": inserted})
 
     # Send hello so the bridge logs our firmware version.
     link.send({"event": "hello", "version": cfg.FW_VERSION})
@@ -235,6 +260,7 @@ def main():
             cell_state[i] = ((val >> bit) & 1) == 0
         for i, bit in enumerate(cfg.MCP_MOD_BITS):
             mod_state[i] = ((val >> bit) & 1) == 0
+        jack_state[0] = _jack_inserted(val)
 
     while True:
         now = ticks_ms()
@@ -264,11 +290,10 @@ def main():
                 except Exception:
                     pass
             elif kind == "amp":
-                if msg.get("enabled"):
-                    amp.enable()
-                else:
-                    amp.disable()
-                    led.value(1 if pi_alive else 0)
+                # The bridge's amp command controls ONLY the speaker amp
+                # (e.g. jack-detect echo). The PCM5102A DAC + line-out stay
+                # live. Full mute is reserved for the watchdog / power-off.
+                amp.speakers(bool(msg.get("enabled")))
 
         # --- watchdog: Pi silent too long → mute for safety ---
         if pi_alive and ticks_diff(now, last_rx_ms) > cfg.PI_WATCHDOG_MS:

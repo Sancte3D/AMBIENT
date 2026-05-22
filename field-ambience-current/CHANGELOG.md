@@ -4,8 +4,56 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r6** (PVDD-Decoupling + Startup-Sequenz-Fix +
-SPEC-Konsolidierung).
+Aktuelle Rev: **v0.7-pre** (Choc-V2-Footprint-Fix + Line-Out/Kopfhörer-Block).
+
+---
+
+## v0.7-pre (2026-05-16) — Choc-V2-Footprint-Fix + Line-Out/Kopfhörer
+
+Erste echte Funktionserweiterung seit v0.6. Zwei Themen.
+
+### 1. Switch-Footprint-Mismatch behoben (Choc V2)
+
+- **Bug**: Generator referenzierte `Button_Switch_Keyboard:SW_Hotswap_Kailh_MX_*`
+  (MX-Hotswap) während BOM/SPEC durchgehend **Kailh Choc V2** sagen. MX und
+  Choc V2 sind physikalisch inkompatibel (Pin-Spacing, Höhe, Keycap-Stem).
+- **Fix**: Footprints auf `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_*`
+  geändert (1.00u Modifier, 2.00u Cells).
+- **Library**: Diese Footprints sind NICHT in der KiCad-Standard-Lib. Benötigt
+  die **kiswitch keyswitch-kicad-library**:
+  - KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library" → Install
+  - GitHub: https://github.com/kiswitch/keyswitch-kicad-library
+  - Nach Install: exakten Choc-V1V2-Hotswap-Namen verifizieren (kann je
+    Library-Version leicht abweichen). Bei abweichendem Namen den
+    footprint-String im Generator anpassen.
+- **2u Cells**: Choc-Stabilizer (CPG1353G24D01) als separate mechanische
+  Footprint-Platzierung im Layout — der Switch selbst ist 1u, der 2u-Keycap
+  braucht den Stabilizer.
+
+### 2. Line-Out / Kopfhörer-Buchse (J8) — löst das Tiefen-Problem
+
+**Warum**: Die 40mm-Onboard-Speaker können den 30-60Hz-SubBass des
+Sound-Constitution-Konzepts physikalisch nicht abstrahlen. Ohne externen
+Ausgang verhungert der tiefe Charakter im Gehäuse.
+
+**Hardware (Sheet 6 Audio erweitert)**:
+- J8: 3.5mm TRS-Buchse mit Insertion-Detect-Switch (PJ-320-Klasse, LCSC C2884109)
+- Passiver Tap an PCM5102A VOUTL/VOUTR (vor dem PAM8403). PCM5102A-Output ist
+  ground-centered (interne Charge-Pump) → keine Koppel-Caps nötig.
+- R_LO_L / R_LO_R: 22Ω Serien-Widerstände (Schutz / Kurzschluss-Limit)
+- Jack-Detect: J8 DET-Switch → MCP23017 GPA6 (Pull-Up + IRQ). Idle=LOW
+  (kein Plug), eingesteckt=HIGH.
+
+**Firmware-Verhalten**:
+- Plug eingesteckt → Pico mutet NUR den PAM8403 (Speaker), PCM5102A-DAC +
+  Line-Out bleiben live. Neue `AudioPower.speakers(on)`-Methode trennt
+  Speaker-Mute von vollem System-Mute.
+- Pico sendet `{"event":"jack","inserted":true}` an die Bridge; die Bridge
+  echo't `{"set":"amp","enabled":0}` (war im Protokoll schon vorgesehen).
+
+**Empfehlung**: Für Line-Out an Aktivboxen/Interface reicht der direkte
+PCM5102A-Tap. Für niederohmige Kopfhörer (<32Ω) wäre ein dedizierter
+Kopfhörer-Amp (TPA6132 o.ä.) besser — kann in v0.8 nachgerüstet werden.
 
 ---
 

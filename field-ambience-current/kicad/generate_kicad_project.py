@@ -906,6 +906,43 @@ def _conn_02xN_lib_symbol(n: int) -> str:
     return "\n".join(out)
 
 
+def _audiojack_lib_symbol() -> str:
+    """3.5mm TRS stereo jack with insertion-detect switch (PJ-320 class).
+
+    Pins:
+      T   (1) Tip    = Left audio out
+      R   (2) Ring   = Right audio out
+      S   (3) Sleeve = GND
+      DET (4) detect switch contact — shorts to S(GND) when NO plug,
+              opens on insertion. With an MCP23017 pull-up: idle=LOW,
+              inserted=HIGH. (Firmware can invert if the chosen jack's
+              switch polarity differs.)
+    """
+    return r"""
+    (symbol "Connector:AudioJack3_Switch" (in_bom yes) (on_board yes)
+      (property "Reference" "J" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
+      (property "Value" "AudioJack3_Switch" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (symbol "Connector:AudioJack3_Switch_0_1"
+        (rectangle (start -5.08 3.81) (end 5.08 -5.08)
+          (stroke (width 0.254) (type default)) (fill (type none))))
+      (symbol "Connector:AudioJack3_Switch_1_1"
+        (pin passive line (at 7.62 2.54 180) (length 2.54)
+          (name "T" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 7.62 0 180) (length 2.54)
+          (name "R" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at 7.62 -2.54 180) (length 2.54)
+          (name "S" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
+        (pin passive line (at -7.62 0 0) (length 2.54)
+          (name "DET" (effects (font (size 1.27 1.27))))
+          (number "4" (effects (font (size 1.27 1.27)))))))
+""".strip()
+
+
 LIB_SYMBOLS = (
     LIB_SYMBOLS
     + "\n" + _pico2_lib_symbol()
@@ -917,6 +954,7 @@ LIB_SYMBOLS = (
     + "\n" + _ferrite_bead_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(2)
     + "\n" + _conn_02xN_lib_symbol(20)
+    + "\n" + _audiojack_lib_symbol()
 )
 
 
@@ -2380,7 +2418,7 @@ def mcp_sheet() -> str:
                 value=f"Cell {sw_num} (2u Choc V2 Hot-Swap)",
                 x=173.08,
                 y=py,
-                footprint="Button_Switch_Keyboard:SW_Hotswap_Kailh_MX_2.00u",
+                footprint="Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_2.00u",
                 extra_props={
                     "MPN": "Kailh Choc V2 hot-swap socket",
                     "LCSC": "TBD (separat bestellen, JLC stockt keine Hot-Swap-Sockets)",
@@ -2412,7 +2450,7 @@ def mcp_sheet() -> str:
                 value=f"Modifier {netname.replace('MOD_','')} (1u Choc V2 Hot-Swap)",
                 x=84.92,
                 y=py,
-                footprint="Button_Switch_Keyboard:SW_Hotswap_Kailh_MX_1.00u",
+                footprint="Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_1.00u",
                 extra_props={
                     "MPN": "Kailh Choc V2 hot-swap socket",
                     "LCSC": "TBD (separat bestellen)",
@@ -2437,11 +2475,17 @@ def mcp_sheet() -> str:
     wires.append(wire(PIN_R_X, py, 152, py, seed_suffix="u2-gpa5-xsmt"))
     labels.append(label(145, py, "GPA5/XSMT"))
     hlabels.append(hier_label(152, py, "PCM_XSMT", shape="output", rotation=180))
-    # GPA6, GPA7 (Pins 27, 28) — bleiben Reserve mit NC-Labels
-    for pin in (27, 28):
-        py = mcp_right_pin_y(pin)
-        wires.append(wire(PIN_R_X, py, 145, py, seed_suffix=f"u2-gpa-nc-{pin}"))
-        labels.append(label(145, py, f"NC_GPA{pin-21}"))
+    # GPA6 (Pin 27): v0.7 — jack-detect input vom Line-Out (J8 DET switch).
+    # MCP-interner Pull-Up + IRQ-on-change (Firmware-config). Idle (kein Plug,
+    # Switch closed) = LOW; Plug eingesteckt (Switch open) = HIGH.
+    py = mcp_right_pin_y(27)
+    wires.append(wire(PIN_R_X, py, 152, py, seed_suffix="u2-gpa6-jackdet"))
+    labels.append(label(145, py, "GPA6/JACKDET"))
+    hlabels.append(hier_label(152, py, "JACK_DETECT", shape="input", rotation=180))
+    # GPA7 (Pin 28) — bleibt Reserve mit NC-Label
+    py = mcp_right_pin_y(28)
+    wires.append(wire(PIN_R_X, py, 145, py, seed_suffix="u2-gpa-nc-28"))
+    labels.append(label(145, py, "NC_GPA7"))
 
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
@@ -3450,6 +3494,79 @@ def audio_sheet() -> str:
     labels.append(label(207, 128.73, "SPK_R+"))
     wires.append(wire(203.81, 131.27, 207, 131.27, seed_suffix="j7-p2"))
     labels.append(label(207, 131.27, "SPK_R-"))
+
+    # ====================================================================
+    # LINE-OUT / KOPFHÖRER (v0.7) — passiver Tap an PCM5102A VOUTL/R, VOR
+    # dem PAM8403. PCM5102A-Output ist ground-centered (kein DC-Offset durch
+    # interne Charge-Pump) → keine Koppel-Caps nötig, nur Serien-R zum Schutz.
+    # J8 TRS-Buchse mit Detect-Switch: Einstecken → JACK_DETECT → MCP GPA6
+    # → Firmware mutet NUR den PAM8403 (Speaker), Line-Out bleibt live.
+    # Damit wird der tiefe Charakter über externe Boxen/Kopfhörer hörbar
+    # (40mm-Onboard-Speaker können den 30-60Hz SubBass nicht).
+    # ====================================================================
+    # R_LO_L 22Ω series an VOUTL (Tap vom PCM_VOUTL-Netz)
+    lo_y = 150.0
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_LO_L",
+            value="22R 0603 (line-out L series/protect)",
+            x=160, y=lo_y, rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0722RL", "LCSC": "C22962"},
+            seed_suffix="RLOL",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # R rot=90: pin1 abs (156.19, lo_y) ← PCM_VOUTL label, pin2 abs (163.81, lo_y) → jack T
+    wires.append(wire(156.19, lo_y, 152, lo_y, seed_suffix="rlol-to-voutl"))
+    labels.append(label(152, lo_y, "PCM_VOUTL"))
+
+    lo_y2 = lo_y + 6
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_LO_R",
+            value="22R 0603 (line-out R series/protect)",
+            x=160, y=lo_y2, rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "RC0603FR-0722RL", "LCSC": "C22962"},
+            seed_suffix="RLOR",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(156.19, lo_y2, 152, lo_y2, seed_suffix="rlor-to-voutr"))
+    labels.append(label(152, lo_y2, "PCM_VOUTR"))
+
+    # J8 TRS jack @ (175, 152). Pins: T(1) @ (182.62,149.46), R(2) @ (182.62,152),
+    # S(3) @ (182.62,154.54), DET(4) @ (167.38,152).
+    j8_x, j8_y = 175.0, 152.0
+    symbols.append(
+        place_symbol(
+            lib_id="Connector:AudioJack3_Switch",
+            ref="J8",
+            value="3.5mm TRS Line/Headphone Out (PJ-320 class, w/ detect)",
+            x=j8_x, y=j8_y,
+            footprint="Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal",
+            extra_props={"MPN": "PJ-320D o.ä. (TRS w/ switch)", "LCSC": "C2884109"},
+            seed_suffix="J8",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # T (tip, left) @ (j8_x+7.62, j8_y-2.54) = (182.62, 149.46) ← R_LO_L pin2 (163.81, lo_y=150)
+    wires.append(wire(163.81, lo_y, 182.62, lo_y, seed_suffix="rlol-to-j8t"))
+    wires.append(wire(182.62, lo_y, 182.62, 149.46, seed_suffix="j8t-up"))
+    # R (ring, right) @ (182.62, 152) ← R_LO_R pin2 (163.81, lo_y2=156)
+    wires.append(wire(163.81, lo_y2, 178, lo_y2, seed_suffix="rlor-to-j8r"))
+    wires.append(wire(178, lo_y2, 178, 152, seed_suffix="j8r-corner"))
+    wires.append(wire(178, 152, 182.62, 152, seed_suffix="j8r-in"))
+    # S (sleeve) @ (182.62, 154.54) → GND
+    wires.append(wire(182.62, 154.54, 186, 154.54, seed_suffix="j8s-gnd"))
+    attach_gnd(186, 154.54, "J8_S", rot=270)
+    # DET (4) @ (j8_x-7.62, j8_y) = (167.38, 152) → JACK_DETECT hier-output to MCP GPA6
+    wires.append(wire(167.38, 152, 162, 152, seed_suffix="j8-det"))
+    hlabels.append(hier_label(162, 152, "JACK_DETECT", shape="output", rotation=0))
+
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{sheet_uuid}")\n'
@@ -3916,7 +4033,11 @@ def root_sheet() -> str:
         # v0.6.3-r5 N1-Fix: PCM_XSMT output (MCP GPA5 drives PCM5102A XSMT)
         f'    (pin "PCM_XSMT" output (at 190 215 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
-        f'      (uuid "{det_uuid("mcppin_xsmt")}")))\n'
+        f'      (uuid "{det_uuid("mcppin_xsmt")}"))\n'
+        # v0.7: JACK_DETECT input (MCP GPA6 reads line-out jack switch)
+        f'    (pin "JACK_DETECT" input (at 190 210 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("mcppin_jackdet")}")))\n'
         # ---- Sheet 5: Encoders ----
         f'  (sheet (at 230 105) (size 60 70) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -4028,7 +4149,7 @@ def root_sheet() -> str:
         f'  (wire (pts (xy 325 75) (xy 330 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sdout_pi")}"))\n'
         f'  (label "I2S_DOUT" (at 325 75 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sdout_pi")}"))\n'
         # ---- Sheet 6: Audio (rechts neben MCP, unter Encoder-Sheet) ----
-        f'  (sheet (at 230 200) (size 60 55) (fields_autoplaced)\n'
+        f'  (sheet (at 230 200) (size 60 52) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
         f'    (fill (color 0 0 0 0.0000))\n'
         f'    (uuid "{audio_uuid}")\n'
@@ -4054,7 +4175,11 @@ def root_sheet() -> str:
         # v0.6.3-r5 N1-Fix: PCM_XSMT input (from MCP GPA5)
         f'    (pin "PCM_XSMT" input (at 230 240 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("audiopin_xsmt")}")))\n'
+        f'      (uuid "{det_uuid("audiopin_xsmt")}"))\n'
+        # v0.7: JACK_DETECT output (J8 line-out jack switch → MCP GPA6)
+        f'    (pin "JACK_DETECT" output (at 230 245 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("audiopin_jackdet")}")))\n'
         # ---- Labels für Audio: Pico AMP_nSHDN/MUTE → Audio Sheet inputs
         f'  (wire (pts (xy 125 95) (xy 130 95)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampshdn_pico")}"))\n'
         f'  (label "AMP_nSHDN" (at 125 95 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_pico")}"))\n'
@@ -4069,6 +4194,11 @@ def root_sheet() -> str:
         f'  (label "PCM_XSMT" (at 195 215 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_xsmt_mcp")}"))\n'
         f'  (wire (pts (xy 225 240) (xy 230 240)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_xsmt_audio")}"))\n'
         f'  (label "PCM_XSMT" (at 225 240 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_xsmt_audio")}"))\n'
+        # v0.7: JACK_DETECT label-bridge zwischen Audio-Sheet (y=245) und MCP-Sheet (y=210)
+        f'  (wire (pts (xy 190 210) (xy 195 210)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_jackdet_mcp")}"))\n'
+        f'  (label "JACK_DETECT" (at 195 210 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_jackdet_mcp")}"))\n'
+        f'  (wire (pts (xy 225 245) (xy 230 245)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_jackdet_audio")}"))\n'
+        f'  (label "JACK_DETECT" (at 225 245 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_jackdet_audio")}"))\n'
         # ---- I2S labels (von Sheet 7 Pi-Header — Sheet 7 noch nicht implementiert,
         # I2S-Labels bleiben momentan dangling auf Audio-Sheet-Input-Seite)
         f'  (wire (pts (xy 225 210) (xy 230 210)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sbck_audio")}"))\n'

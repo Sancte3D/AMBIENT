@@ -79,6 +79,10 @@ PIN_AMP_nMUTE = 28           # → PAM8403 /MUTE  (HIGH = un-muted)
 MCP_CELL_BITS = (0, 1, 2, 3, 4)      # bit index → cell id 1..5
 # GPA5 = PCM_XSMT (output; HIGH = PCM5102A un-muted)
 MCP_XSMT_BIT = 5
+# GPA6 = JACK_DETECT (input; HIGH = headphone/line plug inserted)
+# Set JACK_DETECT_ACTIVE_HIGH=False if your jack's switch polarity is inverted.
+MCP_JACKDET_BIT = 6
+JACK_DETECT_ACTIVE_HIGH = True
 # GPB0-4 = modifier switches (inputs, pull-up, active low)
 #   GPB0=SHIFT(id1) GPB1=HOLD(id2) GPB2=DRONE(id3) GPB3=GENERATE(id4) GPB4=CLEAR(id5)
 MCP_MOD_BITS = (8, 9, 10, 11, 12)    # bit index → mod id 1..5

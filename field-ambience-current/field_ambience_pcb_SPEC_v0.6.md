@@ -241,6 +241,19 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | **SW12** | **BOOTSEL Tactile 6mm SMD** | Generic SMD | **NEU: dedizierter BOOTSEL-Button für Pico-Flash** |
 | EN1-EN4 | EC11 Encoder mit Push (RVE/PEC11R) | Verschiedene bei JLC | SMD-Variante bevorzugt |
 
+**Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints sind NICHT in der
+KiCad-Standard-Library. Benötigt die **kiswitch keyswitch-kicad-library**
+(KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library").
+Footprint-Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_1.00u`
+(1u) / `_2.00u` (2u Cells + Stabilizer). Exakten Namen nach Install verifizieren.
+
+### Line-Out / Kopfhörer (v0.7)
+
+| Ref | Part | JLCPCB # | Bemerkung |
+|---|---|---|---|
+| J8 | 3.5mm TRS-Buchse mit Switch (PJ-320) | C2884109 | Insertion-Detect → MCP GPA6 |
+| R_LO_L/R | 22Ω 0603 | C22962 | Line-Out Serien/Schutz |
+
 ### Resistors + Capacitors + Misc [v0.6 Änderungen markiert]
 
 | Ref | Part | Quantity |
@@ -383,7 +396,8 @@ Pin-Verteilung (Update v0.6.3-r5: GPA5 für XSMT-Control):
 |---|---|---|
 | GPA0-4 | CELL1-5 | Cell-Switches SW1-5 |
 | **GPA5** | **PCM_XSMT** | **PCM5102A Soft-Mute Control (v0.6.3-r5 N1)** |
-| GPA6-7 | Reserve (NC) | — |
+| **GPA6** | **JACK_DETECT** | **Line-Out-Buchse J8 Insertion-Detect (v0.7)** |
+| GPA7 | Reserve (NC) | — |
 | GPB0 | MOD_SHIFT | Modifier-Switch SW6 |
 | GPB1 | MOD_HOLD | SW7 |
 | GPB2 | MOD_DRONE | SW8 |
@@ -488,6 +502,31 @@ Verhindert „Klick"-Geräusch beim An- und Ausschalten.
 Mount: PCB-Cutout 41mm dia, Speaker via 4× M2-Schrauben am Bottom-Case.
 Bass-Reflex: 2× Port 8mm × 25mm hinten im Bottom-Case (~80 Hz Tuning für AS04008).
 
+**Limitierung**: 40mm-Treiber können den 30-60Hz-SubBass-Layer nicht
+abstrahlen (realistisch erst ab ~150-250Hz, Port-Bump ~80Hz). Der tiefe
+Charakter ist über die Onboard-Speaker nur angedeutet — für vollen SubBass
+ist der Line-Out (J8) gedacht.
+
+### Line-Out / Kopfhörer (J8, v0.7)
+
+Passiver Tap an PCM5102A VOUTL/VOUTR (vor dem PAM8403) → 3.5mm TRS-Buchse,
+damit der tiefe Charakter über externe Boxen/Kopfhörer hörbar wird.
+
+| Element | Wert |
+|---|---|
+| J8 | 3.5mm TRS-Buchse mit Insertion-Detect-Switch (PJ-320-Klasse, LCSC C2884109) |
+| R_LO_L / R_LO_R | 22Ω 0603 Serien (Schutz / Kurzschluss-Limit) |
+| Tap | PCM5102A VOUTL (pin 6) / VOUTR (pin 7) — ground-centered, keine Koppel-Caps nötig |
+| Jack-Detect | J8 DET-Switch → MCP23017 GPA6 (Pull-Up + IRQ). Idle=LOW, Plug=HIGH |
+
+**Jack-Detect-Verhalten**: Plug einstecken → Firmware mutet NUR den PAM8403
+(Speaker), PCM5102A-DAC + Line-Out bleiben live. Speaker und Line-Out sind
+also gegenseitig ausschließend (Plug = Speaker aus).
+
+**Kopfhörer-Hinweis**: Direkter PCM5102A-Tap treibt Line-In (hochohmig) und
+hochohmige Kopfhörer (>32Ω) sauber. Für niederohmige Kopfhörer wäre ein
+dedizierter Kopfhörer-Amp (TPA6132 o.ä.) besser — v0.8-Option.
+
 ---
 
 ## 9. JLCPCB DFM-Konformität (unverändert v0.5)
@@ -501,7 +540,7 @@ Bass-Reflex: 2× Port 8mm × 25mm hinten im Bottom-Case (~80 Hz Tuning für AS04
 | Min Trace Spacing | 0.15mm |
 | Min Via Drill | 0.3mm |
 | Min Annular Ring | 0.075mm |
-| Layer count | 4 (Signal / GND / 3V3 / Signal) |
+| Layer count | 4 (Signal / GND / **+5V** / Signal) — +5V ist Hochstrom-Schiene, siehe §3 |
 | Board thickness | 1.6mm |
 | Surface finish | ENIG |
 | Color | Schwarz Solder-Mask + weiße Silkscreen |

@@ -62,6 +62,19 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ## 🔴 BLOCKER — Muss vor PCB-Layout in KiCad GUI erledigt werden
 
+### B0. kiswitch-Library installieren (v0.7 — Choc-V2-Switches)
+- Choc-V2-Hotswap-Footprints sind NICHT KiCad-Standard.
+- KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library" → Install
+- Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_1.00u/_2.00u`
+- Exakten Footprint-Namen nach Install verifizieren (kann je Lib-Version abweichen).
+- 2u Cells: Choc-Stabilizer (CPG1353) als separate Mechanik-Platzierung.
+
+### B0b. J8 Line-Out-Jack-Footprint verifizieren (v0.7)
+- `Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal` ist ein KiCad-Standard-
+  Platzhalter. Gegen die tatsächlich bestellte PJ-320-Buchse (C2884109) Pad-Mapping
+  + Switch-Kontakt-Polarität verifizieren. Bei abweichender Detect-Polarität:
+  `JACK_DETECT_ACTIVE_HIGH` in firmware/config.py umstellen.
+
 ### B1. PAM8403H SOIC-16 Footprint vs. Symbol verifizieren
 - KiCad-Footprint `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` öffnen
 - Pad-Nummerierung 1..16 gegen Datasheet-Pinout vergleichen
