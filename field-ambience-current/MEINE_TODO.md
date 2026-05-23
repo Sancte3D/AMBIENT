@@ -9,11 +9,11 @@ Reihenfolge von oben nach unten abarbeiten.
 
 ---
 
-## 1. KiCad vorbereiten (einmalig, ~15 Min)
+## 1. KiCad vorbereiten (einmalig, ~5 Min)
 
-- [ ] **kiswitch-Library installieren**
-  KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library" → Install
-  (liefert die Choc-V2-Hotswap-Footprints; Namen sind gegen v2.4 verifiziert)
+- [x] ~~kiswitch-Library installieren~~ — **erledigt**: die Choc-V2-Footprints
+  sind ins Repo eingebunden (`kicad/libraries/`) + in `kicad/fp-lib-table`
+  registriert. Sie lösen beim Öffnen automatisch auf, kein PCM-Schritt nötig.
 - [ ] Projekt öffnen: `kicad/field_ambience.kicad_pro`
 - [ ] Prüfen dass alle Sheets ohne Fehler laden (7 Sheets)
 

@@ -1,0 +1,5 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "Switch_Keyboard_Hotswap_Kailh")(type "KiCad")(uri "${KIPRJMOD}/libraries/keyswitch-kicad-library/Switch_Keyboard_Hotswap_Kailh.pretty")(options "")(descr "kiswitch v2.4 - Kailh hotswap sockets incl. Choc V1V2"))
+  (lib (name "Mounting_Keyboard_Stabilizer")(type "KiCad")(uri "${KIPRJMOD}/libraries/keyswitch-kicad-library/Mounting_Keyboard_Stabilizer.pretty")(options "")(descr "kiswitch v2.4 - Choc/MX PCB stabilizers"))
+)

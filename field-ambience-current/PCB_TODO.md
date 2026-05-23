@@ -76,14 +76,17 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ## 🔴 BLOCKER — Muss vor PCB-Layout in KiCad GUI erledigt werden
 
-### B0. kiswitch-Library installieren (v0.7 — Choc-V2-Switches)
-- Choc-V2-Hotswap-Footprints sind NICHT KiCad-Standard.
-- KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library" → Install
+### ✅ B0. kiswitch-Library — ERLEDIGT (ins Repo eingebunden)
+- Choc-V2-Hotswap-Footprints sind NICHT KiCad-Standard → daher vendored:
+  `kicad/libraries/keyswitch-kicad-library/` (kiswitch v2.4, nur die nötigen
+  `.pretty`-Ordner) + registriert in `kicad/fp-lib-table`. Lösen beim Öffnen
+  automatisch auf, kein PCM-Install nötig.
 - Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_1.00u/_2.00u`
-- ✅ Namen verifiziert gegen kiswitch v2.4 (beide Files existieren). Nur bei
-  abweichender Lib-Version erneut prüfen. Pad-Mapping (Hot-Swap-Socket) im
-  Footprint-Editor gegen Symbol-Pins sanity-checken.
-- 2u Cells: Choc-Stabilizer (CPG1353) als separate Mechanik-Platzierung.
+  (beide Dateien vorhanden + verifiziert).
+- Verbleibend (→ B0c): Pad-Mapping der Hot-Swap-Buchse im Footprint-Editor
+  gegen die Symbol-Pins sanity-checken.
+- 2u Cells: Choc-Stabilizer (CPG1353, `Mounting_Keyboard_Stabilizer`) als
+  separate Mechanik-Platzierung im Layout.
 
 ### B0b. J8 Line-Out-Jack-Footprint verifizieren (v0.7)
 - `Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal` ist ein KiCad-Standard-
