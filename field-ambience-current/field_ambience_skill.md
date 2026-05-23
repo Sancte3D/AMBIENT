@@ -35,13 +35,14 @@ Active in `/home/claude/field-ambience/v29a/`:
 
 The user uploads these in chats; you should view them when needed but don't read them all up-front.
 
-## Engine layers (v29-o)
+## Engine layers (v29-o / v29-p)
 
 - 5-voice detuned saw pad with tape-wow pitch drift (±2.5 cent, 0.18 Hz) + Haas stereo (8/14 ms L/R). Spawned only on cell-hold or in generative mode.
 - Two-layer bass: SubBass (sine, 30-60 Hz, gentle 0.04 Hz breath at 8% depth) + DeepBass (sine + tri, 80-160 Hz, drive-controlled — Saw 3rd was removed because it sounded nasal/horn-like).
 - Two-layer texture: rumble (low brown noise + LPF 220 Hz) + breath (filtered pink noise BPF sweep). Sparkle layer was removed for being too restless.
 - JPverb premium reverb (FreeVerb2 fallback when JPverb unavailable).
 - Drone helper: single quiet pad voice on tonic for tanpura-like reference.
+- **v29-p**: Voices route dry → `~famDryBus`, wet → `~famVerbBus`. `famReverbMaster` mixes both, applies `masterVol` to the COMBINED signal, then LeakDC + Limiter (0.85 / 10ms) before Out 0. Pre-v29-p, dry bypassed masterVol → jack-detect/amp-shutdown couldn't fully silence the engine.
 
 ## Macro encoders (display-menu entries)
 

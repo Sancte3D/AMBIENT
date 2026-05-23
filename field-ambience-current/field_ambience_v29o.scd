@@ -1,6 +1,10 @@
 // =====================================================================
-// FIELD AMBIENCE v29-o
+// FIELD AMBIENCE v29-p (= v29-o + DryBus + Limiter)
 // Sound Constitution: deep, dark, slow, harmonically stable, never ugly
+// ---------------------------------------------------------------------
+// v29-p Fix (2026-05): Voices route dry through ~famDryBus into
+// famReverbMaster. masterVol/JackDetect/ampShutdown now fully silence
+// the engine (including the dry pfad). LeakDC + Limiter final stage.
 // ---------------------------------------------------------------------
 // Reference: State Azure performance style.
 // Two-chord slow bed (e.g. E7 → A), 8-bar holds, large reverb,
@@ -529,7 +533,7 @@ s.waitForBoot({
 
 	if(~famHasJPverb) {
 		"JPverb available -- using premium reverb path.".postln;
-		SynthDef(\famReverbMaster, { |in = 0, out = 0,
+		SynthDef(\famReverbMaster, { |verbIn = 0, dryIn = 0, out = 0,
 		                              t60 = 4.5, damp = 0.45, size = 0.85,
 		                              earlyDiff = 0.7, modDepth = 0.1, modFreq = 2.0,
 		                              low = 1.0, mid = 1.0, high = 0.7,
@@ -537,24 +541,21 @@ s.waitForBoot({
 		                              wetAmp = 0.0, masterVol = 0.0,
 		                              // v29-n: live performance drive (0 = bypass)
 		                              drive = 0.0|
-			var dry = In.ar(in, 2);
+			var verbFeed = In.ar(verbIn, 2);
+			var dryFeed  = In.ar(dryIn, 2);  // v29-p: dry signal from voices
 			// v29-h: Lag-smoothed wetAmp and masterVol prevent click/pop on .set
 			var wetAmpLag    = Lag.kr(wetAmp, 0.4);
 			var masterVolLag = Lag.kr(masterVol, 0.25);
 			var driveLag     = Lag.kr(drive, 0.3);
-			var driven, wet;
+			var driven, wet, mixed, finalOut;
 
 			// v29-n: tanh soft saturation, pre-reverb. At drive=0 the signal is
 			// untouched (tanh of small input = small input, near linear). As drive
 			// rises, the pre-gain pushes the input into the tanh curve, adding
 			// upper harmonics for an analogue / Solar-style edge.
-			//   drive 0.0 -> preGain 1.0 (clean, ~bypass)
-			//   drive 0.5 -> preGain 2.5 (warm tube glow)
-			//   drive 1.0 -> preGain 5.0 (analogue edge)
-			// Output is normalized so adding drive doesn't blow up the level.
 			driven = [
-				tanh(dry[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
-				tanh(dry[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
+				tanh(verbFeed[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
+				tanh(verbFeed[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
 			];
 
 			wet = JPverb.ar(
@@ -563,28 +564,38 @@ s.waitForBoot({
 				earlyDiff, modDepth, modFreq,
 				low, mid, high, lowcut, highcut
 			);
-			Out.ar(out, wet * wetAmpLag * masterVolLag);
+
+			// v29-p: mix dry + wet, master-vol the combined, DC-block + Limit
+			mixed    = dryFeed + (wet * wetAmpLag);
+			finalOut = LeakDC.ar(mixed * masterVolLag);
+			finalOut = Limiter.ar(finalOut, 0.85, 0.01);
+			Out.ar(out, finalOut);
 		}).add;
 	} {
 		"JPverb NOT available -- falling back to FreeVerb2. Install sc3-plugins for premium reverb.".postln;
-		SynthDef(\famReverbMaster, { |in = 0, out = 0,
+		SynthDef(\famReverbMaster, { |verbIn = 0, dryIn = 0, out = 0,
 		                              t60 = 4.5, damp = 0.45, size = 0.85,
 		                              earlyDiff = 0.7, modDepth = 0.1, modFreq = 2.0,
 		                              low = 1.0, mid = 1.0, high = 0.7,
 		                              lowcut = 100, highcut = 8000,
 		                              wetAmp = 0.0, masterVol = 0.0,
 		                              drive = 0.0|
-			var dry = In.ar(in, 2);
+			var verbFeed = In.ar(verbIn, 2);
+			var dryFeed  = In.ar(dryIn, 2);  // v29-p: dry signal from voices
 			var wetAmpLag    = Lag.kr(wetAmp, 0.4);
 			var masterVolLag = Lag.kr(masterVol, 0.25);
 			var driveLag     = Lag.kr(drive, 0.3);
 			var room = (size * 0.6 + (t60 / 8.0)).clip(0.1, 0.95);
 			var driven = [
-				tanh(dry[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
-				tanh(dry[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
+				tanh(verbFeed[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
+				tanh(verbFeed[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
 			];
 			var wet  = FreeVerb2.ar(driven[0], driven[1], 1.0, room, damp);
-			Out.ar(out, wet * wetAmpLag * masterVolLag * 0.7);
+			// v29-p: mix dry + wet, master-vol the combined, DC-block + Limit
+			var mixed    = dryFeed + (wet * wetAmpLag * 0.7);
+			var finalOut = LeakDC.ar(mixed * masterVolLag);
+			finalOut = Limiter.ar(finalOut, 0.85, 0.01);
+			Out.ar(out, finalOut);
 		}).add;
 	};
 
@@ -596,6 +607,11 @@ s.waitForBoot({
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	~famVerbBus = Bus.audio(s, 2);
+	// v29-p: dedicated Dry-Bus so dry signal also passes through master volume
+	// + Limiter. Before v29-p, voices wrote dry directly to out=0 bypassing
+	// masterVol, which meant Jack-Detect / Amp-Shutdown / masterVol(0) could
+	// not fully silence the engine.
+	~famDryBus  = Bus.audio(s, 2);
 	~famVerbSynth = nil;   // will be spawned in ~famStart
 
 	// v29-k: dedicated Group for short-lived motif/glitter synths so we can
@@ -949,20 +965,20 @@ s.waitForBoot({
 		var target = ~famMotifGroup ? s;
 		case
 		{ voice == \saw } {
-			Synth(\famSaw, [
+			Synth(\famSaw, [ \out, ~famDryBus.index,
 				\freq, freq, \amp, vel * 0.10, \decay, motifDecay,
 				\pan, pan, \verbOut, ~famVerbBus.index, \verbSend, 0.40
 			], target);
 		}
 		{ voice == \square } {
-			Synth(\famSquare, [
+			Synth(\famSquare, [ \out, ~famDryBus.index,
 				\freq, freq, \amp, vel * 0.08, \decay, motifDecay,
 				\pan, pan, \verbOut, ~famVerbBus.index, \verbSend, 0.45
 			], target);
 		}
 		{
 			// default \fm
-			Synth(\famCore, [
+			Synth(\famCore, [ \out, ~famDryBus.index,
 				\freq, freq, \amp, vel * 0.14, \decay, motifDecay,
 				\modIndex, modIdx, \pan, pan,
 				\verbOut, ~famVerbBus.index, \verbSend, 0.40,
@@ -1254,7 +1270,8 @@ s.waitForBoot({
 			{
 				var rp = ~famComputeReverb.();
 				~famVerbSynth = Synth.tail(s, \famReverbMaster, [
-					\in,        ~famVerbBus.index,
+					\verbIn,    ~famVerbBus.index,
+					\dryIn,     ~famDryBus.index,   // v29-p: dry-bus feed
 					\out,       0,
 					\t60,       rp[\t60],
 					\damp,      rp[\damp],
@@ -1355,7 +1372,7 @@ s.waitForBoot({
 						if(~famRunning) {
 							var scaleNotes = ~famScaleNotes.(~famKey, ~famMode, 1);
 							var noteMidi = scaleNotes.choose + 24;
-							Synth(\famAir, [
+							Synth(\famAir, [ \out, ~famDryBus.index,
 								\freq, noteMidi.midicps,
 								\verbOut, ~famVerbBus.index,
 								\amp, rrand(0.025, 0.05) * (0.5 + (~famMood * 0.5)),
@@ -1382,7 +1399,7 @@ s.waitForBoot({
 			// in ~famSetTexture too, but we spawn here on start to ensure
 			// the bed is alive from the moment the engine starts).
 			if(~famTexture > 0.001) {
-				~famTextureSynth = Synth(\famTexture, [
+				~famTextureSynth = Synth(\famTexture, [ \out, ~famDryBus.index,
 					\amp,      ~famTexture * 0.12,
 					\gate,     1,
 					\verbOut,  ~famVerbBus.index,
@@ -1584,7 +1601,7 @@ s.waitForBoot({
 		if(oldSynth.notNil) { oldSynth.release };
 
 		// Spawn ONE sustained pad voice for this cell tap
-		newSynth = Synth(\famPadCore, [
+		newSynth = Synth(\famPadCore, [ \out, ~famDryBus.index,
 			\freq,         midi.midicps,
 			\amp,          0.10 * amp,
 			\gate,         1,
@@ -1669,7 +1686,7 @@ s.waitForBoot({
 		// v29-l: now famPadCore (warm saw) instead of famPad (FM bell)
 		chord.do { |midi, i|
 			var pan = (i - (chord.size / 2)) / (chord.size * 1.5);
-			var synth = Synth(\famPadCore, [
+			var synth = Synth(\famPadCore, [ \out, ~famDryBus.index,
 				\freq,         midi.midicps,
 				\amp,          0.06,
 				\gate,         1,
@@ -1893,7 +1910,7 @@ s.waitForBoot({
 		targetAmp = ~famTexture * 0.12;
 		if(~famRunning and: { ~famTextureSynth.isNil and: { ~famTexture > 0.001 } }) {
 			// Spawn texture synth lazily if not yet alive
-			~famTextureSynth = Synth(\famTexture, [
+			~famTextureSynth = Synth(\famTexture, [ \out, ~famDryBus.index,
 				\amp,      targetAmp,
 				\gate,     1,
 				\verbOut,  ~famVerbBus.index,
@@ -2011,7 +2028,7 @@ s.waitForBoot({
 			~famDroneVoice.release;
 			~famDroneVoice = nil;
 		};
-		~famDroneVoice = Synth(\famPadCore, [
+		~famDroneVoice = Synth(\famPadCore, [ \out, ~famDryBus.index,
 			\freq,         freq,
 			\amp,          0.05,
 			\gate,         1,
@@ -2077,7 +2094,7 @@ s.waitForBoot({
 		// Spawn pad voices for each chord tone
 		~famPadVoices = voiced.collect { |midi, i|
 			var pan = (i - (voiced.size / 2 - 0.5)) * 0.4;
-			Synth(\famPadCore, [
+			Synth(\famPadCore, [ \out, ~famDryBus.index,
 				\freq,         midi.midicps,
 				\amp,          0.10,
 				\gate,         1,
@@ -2107,7 +2124,7 @@ s.waitForBoot({
 		// Pure sine, very low (30-60 Hz). The "feel" — fundamental body.
 		// Long attack (3s) so the bass blooms in, never plops.
 		// Amp now driven by ~famDepth macro (default 0.5 → amp=0.22).
-		~famSubBassVoice = Synth(\famSubBass, [
+		~famSubBassVoice = Synth(\famSubBass, [ \out, ~famDryBus.index,
 			\freq,     (voiced.minItem - 24).midicps,
 			\amp,      ((~famDepth ? 0.5).linlin(0.0, 1.0, 0.06, 0.20)),
 			\gate,     1,
@@ -2121,7 +2138,7 @@ s.waitForBoot({
 		// v29-o: DeepBass on chord root, ONE octave below lowest voiced note.
 		// Sine + subtle saw harmonics, gentle saturation. The "warmth/body".
 		// Sits between SubBass (sub region) and Pad (mid region) in the spectrum.
-		~famDeepBassVoice = Synth(\famDeepBass, [
+		~famDeepBassVoice = Synth(\famDeepBass, [ \out, ~famDryBus.index,
 			\freq,     (voiced.minItem - 12).midicps,    // octave below pad
 			\amp,      ((~famDepth ? 0.5).linlin(0.0, 1.0, 0.04, 0.16)),
 			\gate,     1,
