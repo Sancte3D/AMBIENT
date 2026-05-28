@@ -204,7 +204,7 @@ class PicoBridge:
             "chord": [60, 64, 67, 71, 74],
             "padVoice": 0, "padOctave": 1,
             # Performance-Macros (Defaults = SC-Reply-Defaults). 0..1, clamped.
-            "space": 0.5, "depth": 0.5, "texture": 0.0, "bloom": 0.0,
+            "space": 0.5, "depth": 0.5, "texture": 0.0, "bloom": 0.5,
         }
 
     def find_port(self):
