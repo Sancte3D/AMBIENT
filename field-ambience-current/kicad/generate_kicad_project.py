@@ -1199,8 +1199,9 @@ def power_tree_sheet() -> str:
 
     # ---- F1 pin2 → Rail nach rechts (48.81 → 110)
     # CBULK an der Rail @ (65, sy), D2 TVS @ (55, sy)
-    # Rail-x-Positionen mit Junctions: 48.81, 55, 65, 80, 110
-    rail_xs = [48.81, 55, 65, 80, 110]
+    # C1 (10µF) @ x=80, C2 (100nF) @ x=86 = +5V-Rail HF-Bypass (SPEC §3).
+    # Rail-x-Positionen mit Junctions: 48.81, 55, 65, 80, 86, 110
+    rail_xs = [48.81, 55, 65, 80, 86, 110]
     for xa, xb in zip(rail_xs, rail_xs[1:]):
         wires.append(wire(xa, RAIL_Y, xb, RAIL_Y, seed_suffix=f"rail-{xa}-{xb}"))
     # Junctions an allen Stützen außer Endpunkten
@@ -1239,6 +1240,43 @@ def power_tree_sheet() -> str:
             seed_suffix="cbulk-gnd",
         )
     )
+
+    # ---- C1/C2: +5V-Rail HF-Decoupling (SPEC §3 — im BOM gelistet & gezählt,
+    # war aber nie im Schaltplan platziert; v0.8-Fix). C_BULK (1000µF Elko)
+    # puffert Bass-/Boot-Transienten, hat aber hohe ESR/ESL → schlechte HF-
+    # Antwort. C1 (10µF Keramik) + C2 (100nF Keramik) liefern den HF-Bypass am
+    # Rail-Eintritt. Device:C: pin1 local (0,+3.81), pin2 (0,-3.81); Y-DOWN →
+    # pin1 abs (x, sy-3.81). Center sy=63.81 → pin1 (x,60) sitzt auf der Rail,
+    # pin2 (x,67.62) → GND. Taps x=80/86 sind rail_xs-Waypoints (Auto-Junction),
+    # rechts von R2/R3 (≤78.81) und links von D1 (≥88) → kollisionsfrei.
+    for cref, cx, cval, cfp in (
+        ("C1", 80, "10uF X5R 0805 (+5V rail HF-bulk)",
+         "Capacitor_SMD:C_0805_2012Metric"),
+        ("C2", 86, "100nF X7R 0603 (+5V rail HF-decoupling)",
+         "Capacitor_SMD:C_0603_1608Metric"),
+    ):
+        symbols.append(
+            place_symbol(
+                lib_id="Device:C",
+                ref=cref,
+                value=cval,
+                x=cx,
+                y=63.81,
+                footprint=cfp,
+                seed_suffix=cref,
+            )
+        )
+        wires.append(wire(cx, 67.62, cx, GND_LABEL_Y, seed_suffix=f"{cref.lower()}-neg-to-gnd"))
+        symbols.append(
+            place_symbol(
+                lib_id="Power:GND",
+                ref=f"#PWR_{cref}",
+                value="GND",
+                x=cx,
+                y=GND_LABEL_Y,
+                seed_suffix=f"{cref.lower()}-gnd",
+            )
+        )
 
     # ---- D2 TVS auf Rail. Device:D_TVS pin 1 (K) at local (-3.81, 0), pin 2 (A) at local (+3.81, 0).
     # Bei rotation=270 (= -90 CCW = 90 CW): (lx, ly) → (ly, -lx). Pin 1 (-3.81, 0) → (0, 3.81).
