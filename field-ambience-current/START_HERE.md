@@ -17,6 +17,9 @@
 - `field_ambience_v29o.scd` — SuperCollider Engine
 - `field_ambience_bridge.py` — WS↔OSC Bridge zur UI
 - `field_ambience_panel.html` — UI-Mockup
+- `field_ambience_webapp.html` — **standalone Browser-App**: SC-Engine als Web-Audio-Port
+  in einer einzigen HTML-Datei. Kein SuperCollider, keine Python-Bridge nötig — einfach im
+  Browser öffnen und spielen. Gleiche OSC-Endpunkte (`/fam/*`) intern nachgebaut.
 
 ## Firmware (Pico)
 - `firmware/` — MicroPython für den RP2350 (Buttons, Encoder, OLED, Amp-Power)
