@@ -149,7 +149,15 @@ class PicoBridge:
     Maintains an internal mirror of menu state for OLED rendering.
     """
 
-    MENU_ITEMS = ["KEY", "MODE", "VOICE", "PAD", "OCT", "PROG", "TEMPO", "VIBE", "VOL", "MIDI"]
+    # v30: zweigeteiltes Menü — "easy bedienbar" zuerst.
+    # PLAY-Page = die Regler, die man WÄHREND des Spielens will (Performance-
+    # Macros). SETUP-Page = Set-Once-Konfiguration, weg aus dem Spielfluss.
+    # VOL ist bewusst NICHT im Menü — dafür gibt es den dedizierten Volume-
+    # Encoder (enc 4). PROG/TEMPO sind nur in GENERATE relevant und tauchen
+    # nur auf, wenn GENERATE an ist (siehe menu()).
+    PLAY_ITEMS  = ["SPACE", "DEPTH", "TEXTURE", "BLOOM", "VIBE", "VOICE"]
+    GEN_ITEMS   = ["PROG", "TEMPO"]              # nur wenn generative an
+    SETUP_ITEMS = ["KEY", "MODE", "PAD", "OCT", "MIDI"]
 
     # v29-p: Modifier-IDs aligned mit SPEC v0.6 §7 / Sheet 4 BOM:
     # SW6=SHIFT, SW7=HOLD, SW8=DRONE, SW9=GENERATE, SW10=CLEAR
@@ -189,11 +197,14 @@ class PicoBridge:
         self.brightness = -0.2
         self.cursor_idx = 0
         self.mode_ui = "nav"
+        self.page = "play"          # "play" | "setup"
         self.sc_state = {
             "key": 60, "mode": 0, "voice": 0, "prog": -1,
             "bpm": 72, "vibe": 0, "vol": 0.85, "midi": 0,
             "chord": [60, 64, 67, 71, 74],
             "padVoice": 0, "padOctave": 1,
+            # Performance-Macros (Defaults = SC-Reply-Defaults). 0..1, clamped.
+            "space": 0.5, "depth": 0.5, "texture": 0.0, "bloom": 0.5,
         }
 
     def find_port(self):
@@ -348,9 +359,20 @@ class PicoBridge:
             self.osc.send_message("/fam/jackdetect", [inserted])
             self.send_to_pico({"set": "amp", "enabled": 0 if inserted else 1})
 
+    def menu(self):
+        """Aktive Menü-Liste für die aktuelle Page.
+        PLAY: Performance-Macros, dann GEN_ITEMS nur wenn generative an,
+        dann ein "SETUP"-Eintrag zum Wechseln. SETUP: Config + "BACK"."""
+        if self.page == "setup":
+            return self.SETUP_ITEMS + ["BACK"]
+        items = list(self.PLAY_ITEMS)
+        if self.generative:
+            items += self.GEN_ITEMS
+        return items + ["SETUP"]
+
     def handle_encoder(self, delta):
         if self.mode_ui == "nav":
-            new_idx = max(0, min(len(self.MENU_ITEMS) - 1, self.cursor_idx + delta))
+            new_idx = max(0, min(len(self.menu()) - 1, self.cursor_idx + delta))
             if new_idx != self.cursor_idx:
                 self.cursor_idx = new_idx
                 self.update_display()
@@ -358,9 +380,16 @@ class PicoBridge:
             self.apply_value_delta(delta)
 
     def apply_value_delta(self, delta):
-        item = self.MENU_ITEMS[self.cursor_idx]
+        item = self.menu()[self.cursor_idx]
         s = self.sc_state
 
+        if item in ("SPACE", "DEPTH", "TEXTURE", "BLOOM"):
+            key = item.lower()
+            nv = max(0.0, min(1.0, s[key] + delta * 0.05))
+            s[key] = nv
+            self.osc.send_message("/fam/" + key, [nv])
+            self.update_display()
+            return
         if item == "KEY":
             try:
                 cur_idx = self.KEY_MIDI.index(s["key"])
@@ -394,16 +423,21 @@ class PicoBridge:
             # v29-p: SC clamps 0..3 (Sharp removed). Bridge matches.
             s["vibe"] = max(0, min(3, s["vibe"] + delta))
             self.osc.send_message("/fam/vibe", [s["vibe"]])
-        elif item == "VOL":
-            new_vol = max(0.0, min(1.0, s["vol"] + delta * 0.05))
-            s["vol"] = new_vol
-            self.osc.send_message("/fam/vol", [new_vol])
         elif item == "MIDI":
             s["midi"] = 1 if (s["midi"] == 0) else 0
             self.osc.send_message("/fam/midi", [s["midi"], 0])
         self.update_display()
 
     def toggle_mode_ui(self):
+        # SETUP/BACK sind Navigations-Einträge: Klick wechselt die Page,
+        # statt in den Wert-Edit-Modus zu gehen.
+        item = self.menu()[self.cursor_idx] if self.cursor_idx < len(self.menu()) else None
+        if item == "SETUP":
+            self.page = "setup"; self.cursor_idx = 0; self.mode_ui = "nav"
+            self.update_display(); return
+        if item == "BACK":
+            self.page = "play"; self.cursor_idx = 0; self.mode_ui = "nav"
+            self.update_display(); return
         self.mode_ui = "edit" if self.mode_ui == "nav" else "nav"
         self.update_display()
 
@@ -412,7 +446,12 @@ class PicoBridge:
 
     def update_display(self):
         s = self.sc_state
-        item = self.MENU_ITEMS[self.cursor_idx]
+        # Cursor gegen das aktuell aktive Menü clampen (Page-Wechsel oder
+        # GENERATE-Toggle kann die Liste verkürzt haben).
+        active = self.menu()
+        if self.cursor_idx >= len(active):
+            self.cursor_idx = len(active) - 1
+        item = active[self.cursor_idx]
 
         try:
             key_idx = self.KEY_MIDI.index(s["key"])
@@ -427,7 +466,11 @@ class PicoBridge:
 
         chord_str = " ".join(self.midi_to_name(m) for m in s["chord"][:5] if m > 0)
 
-        if item == "KEY":
+        if item in ("SPACE", "DEPTH", "TEXTURE", "BLOOM"):
+            # Performance-Macros: 0..1 als Prozent.
+            v = s[item.lower()]
+            param, value, bar = item, f"{int(v * 100)}%", int(v * 100)
+        elif item == "KEY":
             param, value, bar = "KEY", key_str, int((s["key"] - 48) / 24 * 100)
         elif item == "MODE":
             param, value, bar = "MODE", mode_str, int(s["mode"] / 5 * 100)
@@ -444,10 +487,12 @@ class PicoBridge:
             param, value, bar = "TEMPO", f"{int(s['bpm'])}", int((s["bpm"] - 40) / 50 * 100)
         elif item == "VIBE":
             param, value, bar = "VIBE", vibe_str, int(s["vibe"] / 3 * 100)
-        elif item == "VOL":
-            param, value, bar = "VOL", f"{int(s['vol'] * 100)}%", int(s["vol"] * 100)
         elif item == "MIDI":
             param, value, bar = "MIDI", "ON" if s["midi"] else "OFF", 100 if s["midi"] else 0
+        elif item == "SETUP":
+            param, value, bar = "SETUP", ">", 0
+        elif item == "BACK":
+            param, value, bar = "< BACK", "", 0
         else:
             param, value, bar = "?", "?", 0
 
@@ -463,11 +508,12 @@ class PicoBridge:
             "bar_pct": max(0, min(100, bar)),
             "mode_ui": self.mode_ui,
             "cursor": self.cursor_idx,
+            "page": self.page,
         })
 
     def on_sc_state(self, state):
         for k in ("key", "mode", "voice", "prog", "bpm", "vibe", "vol", "midi", "chord",
-                  "padVoice", "padOctave"):
+                  "padVoice", "padOctave", "space", "depth", "texture", "bloom"):
             if k in state:
                 self.sc_state[k] = state[k]
         # v29-p: mirror generative/drone from SC so the hardware toggle stays

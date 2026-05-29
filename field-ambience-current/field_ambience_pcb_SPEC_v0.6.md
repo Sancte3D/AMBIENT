@@ -271,15 +271,15 @@ es V1+V2 Alignment-Löcher bohrt → Hot-Swap nimmt jede Choc-Generation.
 | R15-R18 | 10 kΩ 0603 (Encoder SW pull-up) | 4 |
 | R19 | 820 Ω 0603 (Status LED limit) | 1 |
 | **R20** | **10 kΩ 0603 (MCP23017 INTA pull-up zu +3V3)** | **1 NEU** |
+| **R_RUN** | **10 kΩ 0603 (Pico RUN pull-up zu +3V3, Reset-Stabilität)** | **1** |
 | R_VOL_L/R | 10 kΩ 0603 (PAM8403 input series) | 2 |
 | C_BULK | 1000 µF Alu-Elko SMD | 1 |
 | C1, C3, C7a, C8a, **C6b**, **C9** | 10 µF X5R 0805 | **6 (war 3)** |
 | C2, C4, C5, C6, C7b, C8b, **C6c**, C9b | 100 nF X7R 0603 | **8 (war 6)** |
 | C5b | 10 nF X7R 0603 (MCP23017 HF) | 1 |
-| C_audio_filt | 220 nF 0603 (PCM5102A output filter) | 2 |
 | **C10-C17** | **100 nF X7R 0603 (Encoder A/B debounce)** | **8 (Wert 10nF → 100nF)** |
 | C_in_L/R | 1 µF X7R 0603 (PAM8403 input DC-block) | 2 |
-| F1 | **Polyfuse 2.0A hold / 4.0A trip 1812** | 1 |
+| F1 | **Polyfuse 3.0A hold / 6.0A trip 1812 (Littelfuse 1812L300, C18198349)** | 1 |
 | **FB1** | **Ferrit-Bead BLM18AG601 0603 (600Ω@100MHz)** | **1 NEU** |
 | D1 | USBLC6-2SC6 ESD (USB-C D+/D−) | 1 |
 | **D2** | **SMAJ5.0A TVS auf +5V am Pi-Header** | **1 NEU** |
@@ -438,6 +438,12 @@ PCM5102A im **3-wire mode**: SCK pin → GND. FMT pin → GND (I²S Format).
 - LDOO (Pin 18) optional 100nF Stability-Cap
 
 Output: VOUTL (Pin 6) / VOUTR (Pin 7) ground-centered, ~1.65V DC-Bias, **2.1 Vrms full-scale**.
+
+**Kein externer Output-Filter-Cap**: Der PCM5102A hat einen internen Interpolations-
+/Rekonstruktions-Filter; TI-Referenz nutzt keinen Cap-to-GND am Output. Der frühere
+BOM-Eintrag `C_audio_filt` (2× 220nF) wurde daher gestrichen (war nie im Schaltplan
+platziert). Outputs gehen direkt an PAM8403-IN (via C_in DC-Block) und an den
+Line-Out (R_LO Serien-R) — beides ohne Shunt-Filter-Cap.
 
 ### Audio-Gain-Strategy (NEU in v0.6.3-r3)
 

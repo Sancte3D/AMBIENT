@@ -4,7 +4,33 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-pre** (Choc-V2-Footprint-Fix + Line-Out/Kopfhörer-Block).
+Aktuelle Rev: **v0.8** (BOM↔Schematic-Reconcile: +5V-Rail-HF-Decoupling C1/C2).
+
+---
+
+## v0.8 (2026-05-28) — Komponenten-Audit: BOM ↔ Schematic abgeglichen
+
+Vollständiger Cross-Check der Stückliste (SPEC §3 Decoupling-Tabelle + §4 BOM)
+gegen jede tatsächlich im Generator/Schaltplan platzierte Komponente. Drei
+Diskrepanzen gefunden und korrigiert:
+
+- **🔴 C1 + C2 fehlten im Schaltplan** (Fix): SPEC §3 listet C1 (10µF X5R 0805)
+  und C2 (100nF X7R 0603) als +5V-Hauptrail-HF-Decoupling, und §4 zählt sie mit
+  (6× 10µF / 8× 100nF) — aber `power_tree_sheet()` platzierte sie nie (nur 5×/7×
+  real). Die Rail hatte nur C_BULK (1000µF Elko, hohe ESR/ESL → schlechte HF-
+  Antwort) + D2 TVS, aber keinen Keramik-HF-Bypass. **C1/C2 jetzt platziert**
+  (Rail-Taps x=80/83, GND-Drop, Auto-Junction). 10µF-Count jetzt = 6 (BOM-konform).
+- **🟠 C_audio_filt aus BOM gestrichen**: Der §4-Eintrag (2× 220nF "PCM5102A output
+  filter") war nie im Schaltplan. PCM5102A hat internen Rekonstruktions-Filter,
+  TI-Referenz nutzt keinen Output-Cap, und §8 Line-Out sagt "keine Koppel-Caps
+  nötig". Doku an Realität angeglichen (§4 + §8 Notiz).
+- **🟡 R_RUN in BOM ergänzt**: Pico RUN-Pull-up (10k 0603) war im Schaltplan,
+  fehlte aber in §4. Jetzt gelistet.
+- **Stale F1-BOM-Wert gefixt**: §4-Misc-Tabelle zeigte noch "2.0A/4.0A" — auf
+  v0.7-Stand 3.0A/6.0A (Littelfuse 1812L300) gebracht (war in §3 schon korrekt).
+
+Methodik-Hinweis: Reiner Audit-/Reconcile-Pass, keine neue Funktion. ERC im
+KiCad-GUI (Blocker B3) bleibt offen — headless nicht durchführbar.
 
 ---
 

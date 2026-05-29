@@ -761,19 +761,6 @@ s.waitForBoot({
 		notes
 	};
 
-	// Triad-only version (for when we need just root/3rd/5th, e.g. bass picking)
-	~famTriadAtDegree = { |rootMidi, modeKey, degree|
-		var intervals = ~famScales[modeKey];
-		var d = degree - 1;
-		var pick = { |stepOffset|
-			var idx = d + stepOffset;
-			var wrap = idx.mod(7);
-			var oct = (idx / 7).floor * 12;
-			rootMidi + intervals[wrap] + oct
-		};
-		[pick.(0), pick.(2), pick.(4)]
-	};
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// v29-b: VOICE LEADING
 	// Inspired by HiChord's automatic voice leading.
@@ -845,11 +832,6 @@ s.waitForBoot({
 		(~famVibes[~famVibe] ? ~famVibes[\warm])[\family]
 	};
 
-	// Convenience: chord at degree using current vibe's family
-	~famActiveChordAt = { |degree|
-		~famChordAtDegree.(~famKey, ~famMode, degree, ~famActiveFamily.())
-	};
-
 	// Compute current chord based on brain state.
 	// v29-b: voice-led -- returns the chord in the inversion closest to last play.
 	// Also updates ~famLastVoicing so subsequent notes/motifs use this as reference.
@@ -866,12 +848,6 @@ s.waitForBoot({
 		~famChordAtDegree.(~famKey, ~famMode, deg, ~famActiveFamily.())
 	};
 
-	// Compute allowed notes for phrases (chord tones + passing tones from scale)
-	~famAllowedNotes = {
-		var chord = ~famCurrentChord.();
-		var scale = ~famScaleNotes.(~famKey, ~famMode, 2);
-		chord ++ scale   // duplicates OK, chord tones will be preferred
-	};
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// LAYER B -- Phrase Engine: Motifs + Mutations
@@ -941,17 +917,6 @@ s.waitForBoot({
 	);
 	~famMutationKeys = [\identity, \octave_up, \octave_down, \retrograde,
 	                    \drop_first, \softer, \stretch];
-
-	// Pick a note value from chord tones using motif note index
-	// v29-a+: Chord now has 5 tones (root, 3rd, 5th, 7th, 9th)
-	// idx 0..4 picks chord tones, idx 5..9 same but one octave up, etc.
-	~famPickNote = { |noteIdx, octaveShift = 0|
-		var chord = ~famCurrentChord.();
-		var chordSize = chord.size;   // 5 with extensions
-		var base = noteIdx.mod(chordSize);
-		var oct = (noteIdx / chordSize).floor;
-		chord[base] + (oct * 12) + (octaveShift * 12)
-	};
 
 	// v29-f: Spawn a single note with active voice character + optional MIDI emit.
 	// v29-k: motif amps reduced by ~40%, reverb sends raised so glitter
@@ -1153,33 +1118,62 @@ s.waitForBoot({
 		locrian:    (t60: 1.5, damp: 0.7, size: 0.45, high: 0.5)
 	);
 
-	// Compute current reverb parameters: mode preset × vibe bias.
-	// Live-tunable -- call this whenever mode or vibe changes.
+	// Compute current reverb parameters.
+	// v0.8: SINGLE reconciliation point for ALL reverb control. mode/vibe set
+	// the base character; SPACE scales tail+size around it; MOOD adds a gentle
+	// size nudge. Before v0.8 these three wrote t60/size directly to the synth
+	// and silently overwrote each other (changing mode collapsed a big SPACE
+	// setting, etc.). Now everything funnels through here → one write path.
+	// SPACE and MOOD are multipliers centred at 1.0 for their defaults (0.5),
+	// so the out-of-the-box sound is unchanged.
+	// Live-tunable -- call ~famUpdateReverb whenever mode/vibe/space/mood change.
 	~famComputeReverb = {
 		var modePreset = ~famReverbModePresets[~famMode] ? ~famReverbModePresets[\ionian];
 		var vibe = ~famVibes[~famVibe] ? ~famVibes[\warm];
 		var bias = vibe[\reverbBias];
+		var space = ~famSpace ? 0.5;
+		var mood  = ~famMood  ? 0.5;
+		// SPACE → tail/size multipliers, piecewise so space=0.5 maps to exactly 1.0
+		var spaceTailMul = if(space <= 0.5) {
+			space.linlin(0.0, 0.5, 0.45, 1.0)
+		} {
+			space.linlin(0.5, 1.0, 1.0, 1.9)
+		};
+		var spaceSizeMul = if(space <= 0.5) {
+			space.linlin(0.0, 0.5, 0.7, 1.0)
+		} {
+			space.linlin(0.5, 1.0, 1.0, 1.25)
+		};
+		// MOOD → gentle size nudge, exactly 1.0 at mood=0.5
+		var moodSizeMul = mood.linlin(0.0, 1.0, 0.90, 1.10);
 		(
-			t60:  modePreset[\t60]  * bias[\t60],
-			damp: (modePreset[\damp] * bias[\damp]).clip(0.0, 1.0),
-			size: (modePreset[\size] * bias[\size]).clip(0.5, 5.0),
-			high: (modePreset[\high] * bias[\high]).clip(0.0, 1.0)
+			t60:    modePreset[\t60]  * bias[\t60] * spaceTailMul,
+			damp:   (modePreset[\damp] * bias[\damp]).clip(0.0, 1.0),
+			size:   (modePreset[\size] * bias[\size] * spaceSizeMul * moodSizeMul).clip(0.5, 5.0),
+			high:   (modePreset[\high] * bias[\high]).clip(0.0, 1.0),
+			// SPACE owns absolute wet (modal presets don't set wet). 0.5 → 0.55.
+			wetAmp: space.linlin(0.0, 1.0, 0.40, 0.70)
 		)
 	};
 
-	// Update reverb master synth with computed params (call after mode/vibe change)
+	// v0.8: THE single reverb applier. Every reverb-affecting control
+	// (mode, vibe, space, mood) updates its state var then calls this, so the
+	// verb synth only ever gets written from one place. wetAmp is included
+	// (Lag-smoothed in the SynthDef) so SPACE's wet always lands too.
 	~famUpdateReverb = {
 		var p = ~famComputeReverb.();
 		if(~famVerbSynth.notNil) {
 			~famVerbSynth.set(
-				\t60,  p[\t60],
-				\damp, p[\damp],
-				\size, p[\size],
-				\high, p[\high]
+				\t60,    p[\t60],
+				\damp,   p[\damp],
+				\size,   p[\size],
+				\high,   p[\high],
+				\wetAmp, p[\wetAmp]
 			);
 			("FAM reverb updated: t60=" ++ p[\t60].round(0.01)
 			 ++ " damp=" ++ p[\damp].round(0.01)
-			 ++ " size=" ++ p[\size].round(0.01)).postln;
+			 ++ " size=" ++ p[\size].round(0.01)
+			 ++ " wet=" ++ p[\wetAmp].round(0.01)).postln;
 		};
 	};
 
@@ -1289,9 +1283,11 @@ s.waitForBoot({
 					\drive,     ~famDrive       // v29-n: carry over current drive setting
 				]);
 				// v29-h: schedule fade-in 200ms after spawn so DAC has stabilized
+				// v0.8: fade to the SPACE-derived wet (rp[\wetAmp]) not a hardcoded
+				// 0.55, so a non-default SPACE setting is honoured from the first note.
 				AppClock.sched(0.2, {
 					if(~famVerbSynth.notNil) {
-						~famVerbSynth.set(\wetAmp, 0.55, \masterVol, ~famMasterVol);
+						~famVerbSynth.set(\wetAmp, rp[\wetAmp], \masterVol, ~famMasterVol);
 					};
 					nil
 				});
@@ -1927,30 +1923,21 @@ s.waitForBoot({
 		("FAM texture: " ++ (~famTexture * 100).round(1) ++ "%").postln;
 	};
 
-	// v29-o: SPACE — macro control combining reverb tail length + size + wet
-	// 0.0 = small intimate space (t60 1.5s, size 0.5, wet 0.35)
-	// 0.5 = current default cinematic (t60 4.5s, size 0.85, wet 0.55)
-	// 1.0 = vast cathedral (t60 8.0s, size 1.0, wet 0.7)
+	// v29-o: SPACE — macro control for reverb tail length + size + wet.
+	// v0.8: no longer writes the synth directly. It stores ~famSpace and calls
+	// the unified ~famUpdateReverb, where SPACE acts as a tail/size multiplier
+	// on top of the mode/vibe base (centred at 1.0 for space=0.5) and owns the
+	// absolute wet. This stops SPACE and mode/vibe/mood from clobbering each
+	// other on the verb synth.
+	//   0.0 = intimate (≈0.45× tail, 0.7× size, wet 0.40)
+	//   0.5 = neutral default (= mode/vibe base, wet 0.55)
+	//   1.0 = vast (≈1.9× tail, 1.25× size, wet 0.70)
 	// Constitutional safety: even at 1.0, no resonance peaks, no harsh tail.
 	~famSpace = 0.5;   // default = current v29-o character
 	~famSetSpace = { |val|
-		var safeVal, t60val, sizeval, wetval;
 		~famSpace = val.clip(0.0, 1.0);
-		// Map 0..1 to safe parameter ranges
-		t60val  = ~famSpace.linlin(0.0, 1.0, 1.5, 8.0);
-		sizeval = ~famSpace.linlin(0.0, 1.0, 0.5, 1.0);
-		wetval  = ~famSpace.linlin(0.0, 1.0, 0.35, 0.70);
-		if(~famVerbSynth.notNil) {
-			~famVerbSynth.set(
-				\t60,    t60val,
-				\size,   sizeval,
-				\wetAmp, wetval
-			);
-		};
-		("FAM space: " ++ (~famSpace * 100).round(1) ++ "%"
-		 ++ "  t60=" ++ t60val.round(0.1)
-		 ++ "s  size=" ++ sizeval.round(0.01)
-		 ++ "  wet=" ++ wetval.round(0.01)).postln;
+		~famUpdateReverb.();
+		("FAM space: " ++ (~famSpace * 100).round(1) ++ "%").postln;
 	};
 
 	// v29-o: DEPTH — macro control for low-end weight & sustain.
@@ -2295,11 +2282,10 @@ s.waitForBoot({
 			};
 		};
 
-		// 2) Reverb size: subtle nudge on master reverb
-		if(~famVerbSynth.notNil) {
-			var moodSize = 0.55 + (~famMood * 0.30);   // 0.55..0.85
-			~famVerbSynth.set(\size, moodSize);
-		};
+		// 2) Reverb: mood folds into the unified recompute as a gentle size
+		// nudge (v0.8) instead of writing \size directly, so it no longer
+		// fights SPACE / mode / vibe over the same parameter.
+		~famUpdateReverb.();
 
 		~famPushState.();
 	}, "/fam/mood");
