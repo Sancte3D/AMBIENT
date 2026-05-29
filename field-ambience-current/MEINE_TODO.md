@@ -17,10 +17,10 @@ Stand des Audits (diese Session, headless geprüft):
 - [x] **Schaltplan-BOM = SPEC §3/§4 abgeglichen** — C1/C2 (+5V-Rail-HF) ergänzt,
   C_audio_filt (nie verbaut) gestrichen, R_RUN dokumentiert, F1 auf 3A/6A korrigiert.
 - [x] **Alle 97 Bauteile haben einen Footprint zugewiesen** (Namen verifiziert).
-- [ ] **C1 + C2 brauchen noch eine LCSC-Nummer.** Sie haben Footprints
-  (`C_0805_2012Metric` / `C_0603_1608Metric`), aber kein Part-Number-Fed.
-  → Standard-JLC-Basic-Parts: 10 µF X5R 0805 + 100 nF X7R 0603. **Claude kann
-  diese zwei Nummern raussuchen + verifizieren — einfach Bescheid sagen.**
+- [x] **C1 + C2 LCSC-Nummern ergänzt** (JLCPCB-Basic, in den Generator eingetragen):
+  - C1 = **C15850** — Samsung `CL21A106KAYNNNE`, 10 µF 25V X5R 0805
+  - C2 = **C14663** — Yageo `CC0603KRX7R9BB104`, 100 nF 50V X7R 0603
+  - → **Jedes der 97 Bauteile hat jetzt Footprint + LCSC/MPN. Keine Lücke mehr.**
 - [ ] **Bestehende LCSC-Nummern auf Stock + Preis prüfen** (noch nicht geschehen).
   Kritisch: U2 MCP23017 `C506653`, U3 PCM5102A `C107671`, U4 PAM8403H `C17337`,
   J1 USB-C `C165948`, F1 `C18198349`, D1 USBLC6 `C2687116`, D2 SMAJ5.0A `C113952`,

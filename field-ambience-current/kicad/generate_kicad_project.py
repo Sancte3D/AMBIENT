@@ -1249,11 +1249,15 @@ def power_tree_sheet() -> str:
     # pin1 abs (x, sy-3.81). Center sy=63.81 → pin1 (x,60) sitzt auf der Rail,
     # pin2 (x,67.62) → GND. Taps x=80/86 sind rail_xs-Waypoints (Auto-Junction),
     # rechts von R2/R3 (≤78.81) und links von D1 (≥88) → kollisionsfrei.
-    for cref, cx, cval, cfp in (
+    # LCSC: beide sind JLCPCB-Basic-Parts (kein Extended-Bestückungsaufschlag),
+    # massiv auf Lager, Spannung weit über 16V (5V-Rail → top DC-Bias-Derating).
+    for cref, cx, cval, cfp, cmpn, clcsc in (
         ("C1", 80, "10uF X5R 0805 (+5V rail HF-bulk)",
-         "Capacitor_SMD:C_0805_2012Metric"),
+         "Capacitor_SMD:C_0805_2012Metric",
+         "CL21A106KAYNNNE (Samsung, 25V X5R)", "C15850"),
         ("C2", 86, "100nF X7R 0603 (+5V rail HF-decoupling)",
-         "Capacitor_SMD:C_0603_1608Metric"),
+         "Capacitor_SMD:C_0603_1608Metric",
+         "CC0603KRX7R9BB104 (Yageo, 50V X7R)", "C14663"),
     ):
         symbols.append(
             place_symbol(
@@ -1263,6 +1267,7 @@ def power_tree_sheet() -> str:
                 x=cx,
                 y=63.81,
                 footprint=cfp,
+                extra_props={"MPN": cmpn, "LCSC": clcsc},
                 seed_suffix=cref,
             )
         )
