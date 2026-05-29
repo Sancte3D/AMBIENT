@@ -3826,7 +3826,10 @@ def pi_sheet() -> str:
             value="1k 0603 (UART RX series)",
             x=119, y=p8_y, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-071KL", "LCSC": "C22548"},
+            # v0.8: was Yageo RC0603FR-071KL (C22548, Extended). Swapped to the
+            # Uni Royal 0603WAF Basic family used by every other R in this design
+            # → no JLC extended-part setup fee, 15.8M stock, identical 1k 0603.
+            extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
             seed_suffix="R1",
             sheet_uuid_seed=sus,
         )

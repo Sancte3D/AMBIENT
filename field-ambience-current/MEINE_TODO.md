@@ -21,10 +21,21 @@ Stand des Audits (diese Session, headless geprüft):
   - C1 = **C15850** — Samsung `CL21A106KAYNNNE`, 10 µF 25V X5R 0805
   - C2 = **C14663** — Yageo `CC0603KRX7R9BB104`, 100 nF 50V X7R 0603
   - → **Jedes der 97 Bauteile hat jetzt Footprint + LCSC/MPN. Keine Lücke mehr.**
-- [ ] **Bestehende LCSC-Nummern auf Stock + Preis prüfen** (noch nicht geschehen).
-  Kritisch: U2 MCP23017 `C506653`, U3 PCM5102A `C107671`, U4 PAM8403H `C17337`,
-  J1 USB-C `C165948`, F1 `C18198349`, D1 USBLC6 `C2687116`, D2 SMAJ5.0A `C113952`,
-  J8 PJ-320 `C2884109`. → **Claude kann das per `bom`/`lcsc`-Skill heute machen.**
+- [x] **Bestehende LCSC-Nummern auf Stock + Preis geprüft** (jlcsearch, 2026-05-29).
+  Ergebnis: 22 von 23 Nummern lösen sauber auf, ~$3,62 SMT-Bauteilkosten/Board.
+  **Punkte, die DU vor der Bestellung beachten musst:**
+  - 🔴 **J8 Line-Out-Jack `C2884109` nicht in der Teile-DB gefunden** (evtl. veraltet).
+    Vor Bestellung gegen die echte gekaufte Buchse fixieren. SMD-Kandidat:
+    `C431535` (PJ-320D SMD). Hängt eh an der Footprint-Verifikation (Abschnitt 2, B0b).
+  - 🟠 **U2 MCP23017 `C506653`: nur 357 Stück Lager** (Extended). Für 1 Prototyp ok,
+    aber knapp — vor Bestellung Verfügbarkeit prüfen, ggf. alternativen Lieferanten.
+  - 🟡 U3 PCM5102A `C107671` (6,7k) und U4 PAM8403H `C17337` (9k): niedrig-ish,
+    für Prototyp ausreichend; für Serie im Auge behalten.
+  - ✅ **R1 von Extended → Basic getauscht**: war Yageo `C22548`, jetzt Uni Royal
+    `C21190` (0603WAF1001T5E) — gleiche Familie wie alle anderen Rs, spart eine
+    Extended-Setup-Gebühr, 15,8M Lager. (im Generator erledigt)
+  - Verbleibende Extended-Parts (unvermeidbar, weil ICs/Spezialteile): U2, U3, U4,
+    J1 USB-C, D1 USBLC6, D2 TVS, FB1 Ferrit, F1 Sicherung.
 - [ ] **C_BULK** exakte LCSC-Nr. (EEE-FK1A102P, extended part) beim Bestellen fixieren.
 - [ ] **TBD-Teile sourcen** (rein Beschaffung): BOOTSEL-Switch-Caps (5×),
   Custom-Cell-Caps (Silikon, MX-Stem), Gehäuse-Schrauben/Schraubdome.
