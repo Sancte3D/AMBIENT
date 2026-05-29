@@ -168,7 +168,7 @@ weiterhin bei Hard-Short, liegt aber unter der Belastbarkeit der 5V/3A-Quelle.
 
 | Cap | Wert | Position | Zweck |
 |---|---|---|---|
-| C_BULK | 1000 µF Alu 10V Low-ESR SMD (Panasonic EEE-FK1A102P, D10, Footprint CP_Elec_10x10.5) | nahe USB-C | Pi-Boot-Brownout + Bass-Transienten. **v0.7: Alu 10V (nicht Polymer 6.3V — 6.3V zu knapp am 5V-Rail); Inrush-Peak ist R-limitiert, Polyfuse trippt nicht auf <1ms-Spike. Produktion: Soft-Start-Load-Switch.** |
+| C_BULK | 1000 µF Alu 16V SMD (JVJ16V1000M10x10, LCSC **C46550395**, D10, Footprint CP_Elec_10x10.5) | nahe USB-C | Pi-Boot-Brownout + Bass-Transienten. **v0.8: realer lagernder JLC-Teil statt Platzhalter; 16V (war 10V) = mehr Reserve am 5V-Rail. Inrush-Peak ist R-limitiert, Polyfuse trippt nicht auf <1ms-Spike. Produktion: Soft-Start-Load-Switch.** |
 | C1 | 10 µF X5R 0805 | +5V Hauptrail | HF-Bulk |
 | C2 | 100 nF X7R 0603 | +5V Hauptrail | HF-Decoupling |
 | C3 | 10 µF X5R 0805 | +3V3 nahe Pico Pin 36 | HF-Bulk |
@@ -256,8 +256,8 @@ es V1+V2 Alignment-Löcher bohrt → Hot-Swap nimmt jede Choc-Generation.
 
 | Ref | Part | JLCPCB # | Bemerkung |
 |---|---|---|---|
-| J8 | 3.5mm TRS-Buchse mit Switch (PJ-320) | C2884109 | Insertion-Detect → MCP GPA6 |
-| R_LO_L/R | 22Ω 0603 | C22962 | Line-Out Serien/Schutz |
+| J8 | 3.5mm TRS-Buchse mit Switch (PJ-320D) | C431535 | Insertion-Detect → MCP GPA6. **v0.8: C2884109 existierte nicht mehr → PJ-320D (lagernd); Footprint im GUI verifizieren** |
+| R_LO_L/R | 22Ω 0603 | C23345 | Line-Out Serien/Schutz. **v0.8: war C22962 (= 220Ω, falsch) → C23345 (echte 22Ω, Basic)** |
 
 ### Resistors + Capacitors + Misc [v0.6 Änderungen markiert]
 
@@ -525,7 +525,7 @@ damit der tiefe Charakter über externe Boxen/Kopfhörer hörbar wird.
 
 | Element | Wert |
 |---|---|
-| J8 | 3.5mm TRS-Buchse mit Insertion-Detect-Switch (PJ-320-Klasse, LCSC C2884109) |
+| J8 | 3.5mm TRS-Buchse mit Insertion-Detect-Switch (PJ-320D, LCSC C431535) |
 | R_LO_L / R_LO_R | 22Ω 0603 Serien (Schutz / Kurzschluss-Limit) |
 | Tap | PCM5102A VOUTL (pin 6) / VOUTR (pin 7) — ground-centered, keine Koppel-Caps nötig |
 | Jack-Detect | J8 DET-Switch → MCP23017 GPA6 (Pull-Up + IRQ). Idle=LOW, Plug=HIGH |

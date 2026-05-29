@@ -21,10 +21,34 @@ Stand des Audits (diese Session, headless geprüft):
   - C1 = **C15850** — Samsung `CL21A106KAYNNNE`, 10 µF 25V X5R 0805
   - C2 = **C14663** — Yageo `CC0603KRX7R9BB104`, 100 nF 50V X7R 0603
   - → **Jedes der 97 Bauteile hat jetzt Footprint + LCSC/MPN. Keine Lücke mehr.**
-- [ ] **Bestehende LCSC-Nummern auf Stock + Preis prüfen** (noch nicht geschehen).
-  Kritisch: U2 MCP23017 `C506653`, U3 PCM5102A `C107671`, U4 PAM8403H `C17337`,
-  J1 USB-C `C165948`, F1 `C18198349`, D1 USBLC6 `C2687116`, D2 SMAJ5.0A `C113952`,
-  J8 PJ-320 `C2884109`. → **Claude kann das per `bom`/`lcsc`-Skill heute machen.**
+- [x] **JLC-Bestellbarkeit jedes Teils verifiziert** (jlcsearch, 2026-05-29): für
+  jede LCSC-Nummer geprüft, ob sie real existiert, lagernd ist UND zum gewollten
+  Wert/Package passt. Dabei **7 echte Fehler gefunden und korrigiert** — die
+  hätten ein falsch bestücktes Board produziert:
+  - 🔴 **R_VOL_L/R**: LCSC zeigte auf **22 Ω 0402** statt 20 kΩ 0603 (falscher Wert
+    *und* Package — hätte die Amp-Verstärkung zerstört). → **C4184** (echte 20 kΩ 0603, Basic).
+  - 🔴 **R_LO_L/R**: zeigte auf **220 Ω** statt 22 Ω (10×). → **C23345** (echte 22 Ω, Basic).
+  - 🔴 **R_BCK/R_LRCK/R_DOUT**: zeigte auf **330 Ω** statt 33 Ω (10×, I²S-Serien-R).
+    → **C23140** (echte 33 Ω, Basic).
+  - 🔴 **J8-Jack `C2884109` existierte nicht** → **C431535** (PJ-320D SMD, lagernd).
+  - 🔴 **C_BULK** hatte nur Platzhalter-LCSC → **C46550395** (1000 µF 16V SMD, D10×10.5).
+  - 🔴 **LED1** hatte keine LCSC → **C965818** (weiß 0805, lagernd).
+  - 🟡 R1 Extended→Basic getauscht (C22548 → **C21190**), spart eine Setup-Gebühr.
+  - ✅ Außerdem alle MPN-Texte an die echten LCSC-Teile angeglichen (waren Yageo-
+    Nummern, JLC liefert Uni-Royal/Samsung — gleicher Wert; jetzt konsistent).
+  - **Ergebnis: 25 distinkte LCSC-Teile, alle lagernd, 0 Wert-/Package-Fehler,
+    14 Basic / 11 Extended.** SMT-Bauteilkosten ~$3,7/Board.
+  **Verbleibende Punkte VOR Bestellung (kein Blocker, nur beobachten):**
+  - 🟠 **U2 MCP23017 `C506653`: nur 357 Stück Lager**. Für 1 Prototyp ok, vor
+    Bestellung Verfügbarkeit prüfen.
+  - 🟡 U3 PCM5102A (6,7k) / U4 PAM8403H (9k): niedrig-ish, für Proto ausreichend.
+  - 🟠 **J8 PJ-320D**: LCSC jetzt korrekt, aber Footprint im GUI gegen PJ-320D-Pads
+    verifizieren (Abschnitt 2, B0b) — das war eh schon offen.
+  - Unvermeidbare Extended-Parts (ICs/Spezialteile): U2, U3, U4, J1 USB-C, D1, D2,
+    FB1, F1, C_BULK, J8, LED1.
+  - **Echte Selbstbeschaffung** (JLC kann/stockt das nicht — by design): Pico-Modul,
+    OLED-Modul, 2× Speaker, 10× Choc-Hotswap-Sockets, 4× EC11-Encoder, Pi-/SWD-/
+    Speaker-Header. Die haben absichtlich keine LCSC-Nummer.
 - [ ] **C_BULK** exakte LCSC-Nr. (EEE-FK1A102P, extended part) beim Bestellen fixieren.
 - [ ] **TBD-Teile sourcen** (rein Beschaffung): BOOTSEL-Switch-Caps (5×),
   Custom-Cell-Caps (Silikon, MX-Stem), Gehäuse-Schrauben/Schraubdome.

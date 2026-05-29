@@ -1168,7 +1168,7 @@ def power_tree_sheet() -> str:
             y=RAIL_Y,
             footprint="Fuse:Fuse_1812_4532Metric",
             datasheet="https://www.littelfuse.com/media?resourcetype=datasheets&itemid=ce0d2bf7-3eb1-4cf6-9c8c-8d3d3a8b1f9a&filename=littelfuse-pptc-1812l-datasheet",
-            extra_props={"MPN": "1812L300/16MR", "LCSC": "C18198349"},
+            extra_props={"MPN": "1812L300/16GR", "LCSC": "C18198349"},
             seed_suffix="F1",
         )
     )
@@ -1223,7 +1223,10 @@ def power_tree_sheet() -> str:
             # v0.7: Footprint-Fix — EEE-FK1A102P ist ein D10x10.2mm Becher,
             # nicht D8. CP_Elec_10x10.5 ist das passende Land-Pattern.
             footprint="Capacitor_SMD:CP_Elec_10x10.5",
-            extra_props={"MPN": "EEE-FK1A102P (Panasonic FK, Low-ESR)", "LCSC": "C-Nr. bei Bestellung (extended part)"},
+            # v0.8: realer bestellbarer Teil statt Platzhalter. JVJ16V1000M10x10
+            # = SMD-Alu 1000µF 16V, D10×10.5mm → passt exakt zum CP_Elec_10x10.5-
+            # Footprint, 16V gibt mehr Reserve am 5V-Rail als das alte 10V-Teil.
+            extra_props={"MPN": "JVJ16V1000M10x10 (1000uF 16V SMD, D10x10.5)", "LCSC": "C46550395"},
             seed_suffix="CBULK",
         )
     )
@@ -1326,7 +1329,7 @@ def power_tree_sheet() -> str:
             y=A5_CC1_Y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-075K1L", "LCSC": "C23186"},
+            extra_props={"MPN": "0603WAF5101T5E", "LCSC": "C23186"},
             seed_suffix="R2",
         )
     )
@@ -1344,7 +1347,7 @@ def power_tree_sheet() -> str:
             y=B5_CC2_Y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-075K1L", "LCSC": "C23186"},
+            extra_props={"MPN": "0603WAF5101T5E", "LCSC": "C23186"},
             seed_suffix="R3",
         )
     )
@@ -1680,7 +1683,7 @@ def pico_sheet() -> str:
             x=130,
             y=97.46,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
             seed_suffix="RRUN",
             sheet_uuid_seed=sus,
         )
@@ -1697,7 +1700,7 @@ def pico_sheet() -> str:
             x=137,
             y=p30_y,
             footprint="Button_Switch_SMD:SW_SPST_TL3342",
-            extra_props={"MPN": "TL3342F160QG", "LCSC": "C720477"},
+            extra_props={"MPN": "TS-1088-AR02016", "LCSC": "C720477"},
             seed_suffix="SW11",
             sheet_uuid_seed=sus,
         )
@@ -1734,7 +1737,7 @@ def pico_sheet() -> str:
             y=p31_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-07820RL", "LCSC": "C23253"},
+            extra_props={"MPN": "0603WAF8200T5E", "LCSC": "C23253"},
             seed_suffix="R19",
             sheet_uuid_seed=sus,
         )
@@ -1751,7 +1754,10 @@ def pico_sheet() -> str:
             y=p31_y,
             rotation=180,
             footprint="LED_SMD:LED_0805_2012Metric",
-            extra_props={"MPN": "Generic warm-white 2700K", "LCSC": "TBD"},
+            # v0.8: realer bestellbarer 0805-LED (war "TBD"). XL-2012UWC, weiß,
+            # lagernd. JLC-Extended — wer die Setup-Gebühr sparen will, nimmt eine
+            # Basic-Farb-LED (rot/grün); für eine Status-LED ist die Farbe kosmetisch.
+            extra_props={"MPN": "XL-2012UWC (white 0805)", "LCSC": "C965818"},
             seed_suffix="LED1",
             sheet_uuid_seed=sus,
         )
@@ -1815,7 +1821,7 @@ def pico_sheet() -> str:
             x=137,
             y=70,
             footprint="Button_Switch_SMD:SW_SPST_TL3342",
-            extra_props={"MPN": "TL3342F160QG", "LCSC": "C720477", "DNP": "true (THT-Pico)"},
+            extra_props={"MPN": "TS-1088-AR02016", "LCSC": "C720477", "DNP": "true (THT-Pico)"},
             seed_suffix="SW12",
             sheet_uuid_seed=sus,
         )
@@ -2318,7 +2324,7 @@ def mcp_sheet() -> str:
             x=c5b_x,
             y=c5b_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R9BB103", "LCSC": "C57112"},
+            extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
             seed_suffix="C5b",
             sheet_uuid_seed=sus,
         )
@@ -2355,7 +2361,7 @@ def mcp_sheet() -> str:
             x=104,
             y=r5_y,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-074K7L", "LCSC": "C23162"},
+            extra_props={"MPN": "0603WAF4701T5E", "LCSC": "C23162"},
             seed_suffix="R5",
             sheet_uuid_seed=sus,
         )
@@ -2375,7 +2381,7 @@ def mcp_sheet() -> str:
             x=99,
             y=r4_y,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-074K7L", "LCSC": "C23162"},
+            extra_props={"MPN": "0603WAF4701T5E", "LCSC": "C23162"},
             seed_suffix="R4",
             sheet_uuid_seed=sus,
         )
@@ -2405,7 +2411,7 @@ def mcp_sheet() -> str:
             y=p18_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
             seed_suffix="R6",
             sheet_uuid_seed=sus,
         )
@@ -2429,7 +2435,7 @@ def mcp_sheet() -> str:
             y=p20_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
             seed_suffix="R20",
             sheet_uuid_seed=sus,
         )
@@ -2638,7 +2644,7 @@ def encoder_sheet() -> str:
                 x=128,
                 y=r_a_sym_y,
                 footprint="Resistor_SMD:R_0603_1608Metric",
-                extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+                extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
                 seed_suffix=f"R{r_a}",
                 sheet_uuid_seed=sus,
             )
@@ -2686,7 +2692,7 @@ def encoder_sheet() -> str:
                 x=132,
                 y=r_b_sym_y,
                 footprint="Resistor_SMD:R_0603_1608Metric",
-                extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+                extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
                 seed_suffix=f"R{r_b}",
                 sheet_uuid_seed=sus,
             )
@@ -2736,7 +2742,7 @@ def encoder_sheet() -> str:
                 x=152,
                 y=r_sw_sym_y,
                 footprint="Resistor_SMD:R_0603_1608Metric",
-                extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+                extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
                 seed_suffix=f"R{r_sw}",
                 sheet_uuid_seed=sus,
             )
@@ -2934,7 +2940,7 @@ def audio_sheet() -> str:
             value="1uF X7R 0603 (charge pump fly cap CAPP-CAPM)",
             x=fly_x, y=fly_y_mid,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
             seed_suffix="CFLY",
             sheet_uuid_seed=sus,
         )
@@ -2962,7 +2968,7 @@ def audio_sheet() -> str:
             value="1uF X7R 0603 (VNEG reservoir)",
             x=78, y=cvneg_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
             seed_suffix="CVNEG",
             sheet_uuid_seed=sus,
         )
@@ -3100,7 +3106,7 @@ def audio_sheet() -> str:
             value="10k 0603 (XSMT pull-down, boot-safe default LOW = muted)",
             x=132, y=rxsmt_pd_y,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
             seed_suffix="RXSMT_PD",
             sheet_uuid_seed=sus,
         )
@@ -3214,7 +3220,7 @@ def audio_sheet() -> str:
             x=U4_X, y=U4_Y,
             footprint="Package_SO:SOIC-16_3.9x9.9mm_P1.27mm",
             datasheet="PAM8403H.PDF (Diodes Inc Rev 1-0, Nov 2012)",
-            extra_props={"MPN": "PAM8403H", "LCSC": "C17337"},
+            extra_props={"MPN": "PAM8403DR-H", "LCSC": "C17337"},
             seed_suffix="U4",
             sheet_uuid_seed=sus,
         )
@@ -3263,7 +3269,7 @@ def audio_sheet() -> str:
             value="10k 0603 (MUTE pull-down, boot-safe default LOW)",
             x=142, y=rmute_y,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
             seed_suffix="RMUTE_PD",
             sheet_uuid_seed=sus,
         )
@@ -3298,7 +3304,7 @@ def audio_sheet() -> str:
             value="1uF X7R 0603 (VDD/PVDD-L HF, PAM8403H datasheet)",
             x=140, y=c9b_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
             seed_suffix="C9b",
             sheet_uuid_seed=sus,
         )
@@ -3334,7 +3340,7 @@ def audio_sheet() -> str:
             value="20k 0603 (L input series, RI per PAM8403H datasheet, gain 23 dB)",
             x=140, y=p7uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0720KL", "LCSC": "C25092"},
+            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
             seed_suffix="RVOLL",
             sheet_uuid_seed=sus,
         )
@@ -3347,7 +3353,7 @@ def audio_sheet() -> str:
             value="1uF X7R 0603 (L input DC-block)",
             x=132, y=p7uy, rotation=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
             seed_suffix="CINL",
             sheet_uuid_seed=sus,
         )
@@ -3367,7 +3373,7 @@ def audio_sheet() -> str:
             value="1uF X7R 0603 (VREF bypass - PAM8403H datasheet REQUIRED)",
             x=144, y=cvref_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
             seed_suffix="CVREF",
             sheet_uuid_seed=sus,
         )
@@ -3389,7 +3395,7 @@ def audio_sheet() -> str:
             value="20k 0603 (R input series, RI per PAM8403H datasheet, gain 23 dB)",
             x=180, y=p10uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0720KL", "LCSC": "C25092"},
+            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
             seed_suffix="RVOLR",
             sheet_uuid_seed=sus,
         )
@@ -3402,7 +3408,7 @@ def audio_sheet() -> str:
             value="1uF X7R 0603 (R input DC-block)",
             x=188, y=p10uy, rotation=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
             seed_suffix="CINR",
             sheet_uuid_seed=sus,
         )
@@ -3430,7 +3436,7 @@ def audio_sheet() -> str:
             value="10k 0603 (SHDN pull-down, boot-safe default LOW)",
             x=176, y=rshdn_y,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0710KL", "LCSC": "C25804"},
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
             seed_suffix="RSHDN_PD",
             sheet_uuid_seed=sus,
         )
@@ -3481,7 +3487,7 @@ def audio_sheet() -> str:
             value="1uF X7R 0603 (PVDD-R HF, PAM8403H datasheet)",
             x=185, y=cpvddr_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R7BB105", "LCSC": "C15849"},
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
             seed_suffix="CPVDDR_HF",
             sheet_uuid_seed=sus,
         )
@@ -3562,7 +3568,7 @@ def audio_sheet() -> str:
             value="22R 0603 (line-out L series/protect)",
             x=160, y=lo_y, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0722RL", "LCSC": "C22962"},
+            extra_props={"MPN": "0603WAF220JT5E", "LCSC": "C23345"},
             seed_suffix="RLOL",
             sheet_uuid_seed=sus,
         )
@@ -3579,7 +3585,7 @@ def audio_sheet() -> str:
             value="22R 0603 (line-out R series/protect)",
             x=160, y=lo_y2, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-0722RL", "LCSC": "C22962"},
+            extra_props={"MPN": "0603WAF220JT5E", "LCSC": "C23345"},
             seed_suffix="RLOR",
             sheet_uuid_seed=sus,
         )
@@ -3597,7 +3603,10 @@ def audio_sheet() -> str:
             value="3.5mm TRS Line/Headphone Out (PJ-320 class, w/ detect)",
             x=j8_x, y=j8_y,
             footprint="Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal",
-            extra_props={"MPN": "PJ-320D o.ä. (TRS w/ switch)", "LCSC": "C2884109"},
+            # v0.8: C2884109 existierte nicht in der JLC-Teile-DB → ersetzt durch
+            # PJ-320D (C431535, SMD 3.5mm TRS mit Schaltkontakt, lagernd). Footprint
+            # gegen PJ-320D-Pads im GUI verifizieren (TODO B0b) + Detect-Polarität.
+            extra_props={"MPN": "PJ-320D (3.5mm TRS w/ switch)", "LCSC": "C431535"},
             seed_suffix="J8",
             sheet_uuid_seed=sus,
         )
@@ -3789,7 +3798,7 @@ def pi_sheet() -> str:
                     lib_id="Device:R", ref=rref, value=rval,
                     x=r_sx, y=py, rotation=90,
                     footprint="Resistor_SMD:R_0603_1608Metric",
-                    extra_props={"MPN": "RC0603FR-0733RL", "LCSC": "C23138"},
+                    extra_props={"MPN": "0603WAF330JT5E", "LCSC": "C23140"},
                     seed_suffix=rref, sheet_uuid_seed=sus,
                 )
             )
@@ -3803,7 +3812,7 @@ def pi_sheet() -> str:
                     lib_id="Device:R", ref=rref, value=rval,
                     x=r_sx, y=py, rotation=90,
                     footprint="Resistor_SMD:R_0603_1608Metric",
-                    extra_props={"MPN": "RC0603FR-0733RL", "LCSC": "C23138"},
+                    extra_props={"MPN": "0603WAF330JT5E", "LCSC": "C23140"},
                     seed_suffix=rref, sheet_uuid_seed=sus,
                 )
             )
@@ -3826,7 +3835,10 @@ def pi_sheet() -> str:
             value="1k 0603 (UART RX series)",
             x=119, y=p8_y, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "RC0603FR-071KL", "LCSC": "C22548"},
+            # v0.8: was Yageo RC0603FR-071KL (C22548, Extended). Swapped to the
+            # Uni Royal 0603WAF Basic family used by every other R in this design
+            # → no JLC extended-part setup fee, 15.8M stock, identical 1k 0603.
+            extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
             seed_suffix="R1",
             sheet_uuid_seed=sus,
         )
