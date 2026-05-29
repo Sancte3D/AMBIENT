@@ -1029,6 +1029,10 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 80 63.81 0)
         (effects (font (size 1.27 1.27)) hide))
+      (property "MPN" "CL21A106KAYNNNE (Samsung, 25V X5R)" (at 82.54 67.62 0)
+        (effects (font (size 1.27 1.27)) hide))
+      (property "LCSC" "C15850" (at 82.54 68.89 0)
+        (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
         (path "/8f124281-8f89-47ab-aa39-bcbf8f1e5e4d" (reference "C1") (unit 1)))))
@@ -1056,6 +1060,10 @@
       (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 86 63.81 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 86 63.81 0)
+        (effects (font (size 1.27 1.27)) hide))
+      (property "MPN" "CC0603KRX7R9BB104 (Yageo, 50V X7R)" (at 88.54 67.62 0)
+        (effects (font (size 1.27 1.27)) hide))
+      (property "LCSC" "C14663" (at 88.54 68.89 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
