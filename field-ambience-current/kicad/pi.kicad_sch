@@ -1091,9 +1091,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 140.08 118.57000000000001 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "RC0603FR-0733RL" (at 142.62 122.38000000000001 0)
+      (property "MPN" "0603WAF330JT5E" (at 142.62 122.38000000000001 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23138" (at 142.62 123.65 0)
+      (property "LCSC" "C23140" (at 142.62 123.65 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1109,9 +1109,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 119.92 149.05 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "RC0603FR-0733RL" (at 122.46000000000001 152.86 0)
+      (property "MPN" "0603WAF330JT5E" (at 122.46000000000001 152.86 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23138" (at 122.46000000000001 154.13000000000002 0)
+      (property "LCSC" "C23140" (at 122.46000000000001 154.13000000000002 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1127,9 +1127,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 140.08 154.13 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "RC0603FR-0733RL" (at 142.62 157.94 0)
+      (property "MPN" "0603WAF330JT5E" (at 142.62 157.94 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23138" (at 142.62 159.21 0)
+      (property "LCSC" "C23140" (at 142.62 159.21 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
