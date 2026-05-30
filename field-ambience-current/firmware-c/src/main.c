@@ -22,12 +22,15 @@
 #include "oled.h"
 #include "mcp23017.h"
 #include "encoders.h"
+#include "audio.h"
 
 #define PIN_STATUS_LED  26
 
 static void draw_banner_static(void) {
     oled_text( 72,  0, "FIELD AMBIENCE", 0x0F);
-    oled_text( 88,  8, "V0.9 STEP 4",    0x0A);
+    oled_text( 88,  8, "V0.9 STEP 5",    0x0A);
+    /* Audio status line — Step 5 always plays a 440 Hz sine. */
+    oled_text(  0, 16, "AUDIO 440HZ TEST", 0x07);
 }
 
 /* --- Step 3 button display (preserved, compact form on bottom rows) --- */
@@ -112,6 +115,17 @@ int main(void) {
     enc_init();
     draw_encoders_state();
     oled_show();
+
+    /* Step 5: I²S audio up. The init function runs the SPEC §8 power
+     * sequence silently and then starts the 440 Hz test sine. If the MCP
+     * didn't come up, XSMT can't be controlled — print a warning but
+     * still try (PCM may still play; speakers will be silent because the
+     * amp /SHDN is also held LOW by pull-down). */
+    if (!mcp_ok) {
+        printf("WARN: audio start without MCP — PCM XSMT cannot be released\n");
+    }
+    audio_init();
+    printf("audio: I2S pump live, 440 Hz sine at -20 dBFS\n");
 
     uint32_t hb_count = 0;
     absolute_time_t next_blink_at = make_timeout_time_ms(500);

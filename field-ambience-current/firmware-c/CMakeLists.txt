@@ -34,10 +34,17 @@ add_executable(field_ambience_native
     src/font_8x8.c
     src/mcp23017.c
     src/encoders.c
+    src/audio.c
 )
 
 target_include_directories(field_ambience_native PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}        # generated audio_i2s.pio.h lives here
+)
+
+# Step 5: assemble the I²S PIO program at build time.
+pico_generate_pio_header(field_ambience_native
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/audio_i2s.pio
 )
 
 target_link_libraries(field_ambience_native
@@ -46,6 +53,10 @@ target_link_libraries(field_ambience_native
     hardware_spi    # Step 2: SSD1322 over SPI0
     hardware_i2c    # Step 3: MCP23017 over I2C1
     hardware_gpio   # Step 3: GP22 IRQ for MCP INTA
+    hardware_pio    # Step 5: I²S TX state machine
+    hardware_dma    # Step 5: ping-pong DMA into PIO FIFO
+    hardware_clocks # Step 5: PIO clk divider sizing
+    hardware_irq    # Step 5: DMA completion IRQ
 )
 
 # USB CDC for the v0.9-dev heartbeat — easier to inspect than UART on a
