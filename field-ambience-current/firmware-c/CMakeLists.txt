@@ -30,6 +30,8 @@ pico_sdk_init()
 
 add_executable(field_ambience_native
     src/main.c
+    src/oled.c
+    src/font_8x8.c
 )
 
 target_include_directories(field_ambience_native PRIVATE
@@ -38,6 +40,7 @@ target_include_directories(field_ambience_native PRIVATE
 
 target_link_libraries(field_ambience_native
     pico_stdlib
+    hardware_spi    # Step 2: SSD1322 over SPI0
 )
 
 # USB CDC for the v0.9-dev heartbeat — easier to inspect than UART on a
