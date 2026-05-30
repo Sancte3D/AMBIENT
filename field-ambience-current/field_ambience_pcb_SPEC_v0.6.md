@@ -1,5 +1,15 @@
 # Field Ambience Pico Controller PCB — Spec
 
+> ⚠️ **v0.9 Pi-frei-Transition aktiv.** Die Audio-Engine läuft jetzt nativ
+> auf dem RP2350 (Pico 2), der Raspberry Pi Zero 2 W ist **entfernt**. Dadurch
+> sind im Schaltplan **J2, R1, R_BCK, R_LRCK, R_DOUT** raus (Pi-Sheet gelöscht),
+> und GP0/GP1/GP4 sind jetzt der I²S-Master zum PCM5102A (siehe §5).
+> Dieses Dokument ist noch in weiten Teilen Pi-zentrisch formuliert
+> (§1 Architektur-Diagramm, §3 Power-Budget mit Pi-Zeile); diese Abschnitte
+> werden in einer SPEC-v0.9-Überarbeitung nachgezogen. Maßgeblich für den
+> Pi-frei-Stand ist `NATIVE_PORT_PLAN.md`. D2 (TVS) **bleibt** als allgemeiner
+> +5V-Rail-Surge-Schutz (saß nie am Pi-Header, sondern auf der Hauptschiene).
+
 **Rev:** 0.6.3-r6 (Stabilization-Pass — PVDD-Decoupling + Startup-Sequenz)
 **Target:** 4-Layer JLCPCB, partial-PCBA (siehe §4 BOM-Split A/B/C)
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
@@ -295,11 +305,11 @@ es V1+V2 Alignment-Löcher bohrt → Hot-Swap nimmt jede Choc-Generation.
 
 | Pico Pin | GPIO | Funktion | Net |
 |---|---|---|---|
-| 1 | GP0 | UART0 TX | UART_TX_TO_PI |
-| 2 | GP1 | UART0 RX (via R1 1kΩ series) | UART_RX_FROM_PI |
+| 1 | GP0 | **v0.9: PIO I²S BCK → PCM5102A pin 13** (war UART0 TX) | I2S_BCK |
+| 2 | GP1 | **v0.9: PIO I²S LRCK → PCM5102A pin 15** (war UART0 RX) | I2S_LRCK |
 | 4 | GP2 | I²C1 SDA | I2C_SDA |
 | 5 | GP3 | I²C1 SCL | I2C_SCL |
-| 6 | GP4 | SPI0 RX (MISO, ungenutzt) | OLED_MISO_NC |
+| 6 | GP4 | **v0.9: PIO I²S DIN → PCM5102A pin 14** (war SPI0 MISO, ungenutzt) | I2S_DOUT |
 | 7 | GP5 | SPI0 CSn | OLED_CS |
 | 9 | GP6 | SPI0 SCK | OLED_SCK |
 | 10 | GP7 | SPI0 TX (MOSI) | OLED_MOSI |

@@ -159,7 +159,6 @@ def kicad_pro() -> str:
             [det_uuid("sheet_mcp"), "MCP23017"],
             [det_uuid("sheet_encoder"), "Encoders"],
             [det_uuid("sheet_audio"), "Audio"],
-            [det_uuid("sheet_pi"), "PiHeader"],
         ],
         "text_variables": {},
     }
@@ -1847,12 +1846,15 @@ def pico_sheet() -> str:
     hlabels.append(hier_label(75, 68, "PICO_USB_DN", shape="input", rotation=0))
 
     # ---- Funktionale GP-Pins → Hierarchical Outputs per SPEC v0.6 §5
+    # v0.9 (Pi-frei): GP0/GP1/GP4 sind jetzt der I²S-Master zum PCM5102A
+    # (BCK/LRCK/DIN) statt UART-zu-Pi + ungenutzter OLED-MISO. Der RP2350
+    # erzeugt die I²S-Clocks per PIO — kein Raspberry Pi mehr im Audio-Pfad.
     left_signals = {
-        1: "PICO_TX_PI_RX",  # GP0 — Pico transmits to Pi RX (GPIO15, pin 10)
-        2: "PI_TX_PICO_RX",  # GP1 — Pi TX (GPIO14, pin 8) via R1 1k series to Pico RX
-        4: "I2C_SDA",      # GP2
-        5: "I2C_SCL",      # GP3
-        6: "OLED_MISO_NC", # GP4 (unused)
+        1: "I2S_BCK",      # pin1=GP0 — PIO I²S bit clock → PCM5102A pin 13
+        2: "I2S_LRCK",     # pin2=GP1 — PIO I²S word clock → PCM5102A pin 15
+        4: "I2C_SDA",      # pin4=GP2
+        5: "I2C_SCL",      # pin5=GP3
+        6: "I2S_DOUT",     # pin6=GP4 — PIO I²S data → PCM5102A pin 14 (war OLED_MISO_NC)
         7: "OLED_CS",      # GP5
         9: "OLED_SCK",     # GP6
         10: "OLED_MOSI",   # GP7
@@ -3921,7 +3923,6 @@ def root_sheet() -> str:
     mcp_uuid = det_uuid("sheet_mcp")
     enc_uuid = det_uuid("sheet_encoder")
     audio_uuid = det_uuid("sheet_audio")
-    pi_uuid = det_uuid("sheet_pi")
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{root_uuid}")\n'
@@ -4042,13 +4043,16 @@ def root_sheet() -> str:
         f'    (pin "AMP_nMUTE" output (at 130 100 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
         f'      (uuid "{det_uuid("picopin_amp_mute")}"))\n'
-        # ---- UART to/from Pi ----
-        f'    (pin "PICO_TX_PI_RX" output (at 130 105 180)\n'
+        # ---- v0.9: I²S master out → PCM5102A (was UART to Pi) ----
+        f'    (pin "I2S_BCK" output (at 130 105 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("picopin_uart_tx")}"))\n'
-        f'    (pin "PI_TX_PICO_RX" input (at 130 110 180)\n'
+        f'      (uuid "{det_uuid("picopin_i2sbck")}"))\n'
+        f'    (pin "I2S_LRCK" output (at 130 110 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("picopin_uart_rx")}")))\n'
+        f'      (uuid "{det_uuid("picopin_i2slrck")}"))\n'
+        f'    (pin "I2S_DOUT" output (at 130 115 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("picopin_i2sdout")}")))\n'
         # ---- Sheet 3: OLED ----
         f'  (sheet (at 230 40) (size 60 60) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -4169,46 +4173,17 @@ def root_sheet() -> str:
         f'  (label "I2C_SCL" (at 125 215 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_scl_mcp")}"))\n'
         f'  (wire (pts (xy 125 220) (xy 130 220)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_mcpint_mcp")}"))\n'
         f'  (label "MCP_INT" (at 125 220 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_mcpint_mcp")}"))\n'
-        # ---- Sheet 7: Pi Header (rechts unten) ----
-        f'  (sheet (at 330 40) (size 60 130) (fields_autoplaced)\n'
-        f'    (stroke (width 0.1524) (type solid))\n'
-        f'    (fill (color 0 0 0 0.0000))\n'
-        f'    (uuid "{pi_uuid}")\n'
-        f'    (property "Sheetname" "PiHeader" (at 330 39 0)\n'
-        f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
-        f'    (property "Sheetfile" "pi.kicad_sch" (at 330 170.5 0)\n'
-        f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
-        f'    (pin "PICO_TX_PI_RX" input (at 330 50 180)\n'
-        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("pipin_uart_tx")}"))\n'
-        f'    (pin "PI_TX_PICO_RX" output (at 330 55 180)\n'
-        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("pipin_uart_rx")}"))\n'
-        f'    (pin "I2S_BCK" output (at 330 65 180)\n'
-        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("pipin_i2sbck")}"))\n'
-        f'    (pin "I2S_LRCK" output (at 330 70 180)\n'
-        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("pipin_i2slrck")}"))\n'
-        f'    (pin "I2S_DOUT" output (at 330 75 180)\n'
-        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("pipin_i2sdout")}")))\n'
-        # ---- Inter-sheet labels: Pico UART → Pi UART
-        f'  (wire (pts (xy 125 105) (xy 130 105)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_tx_pico")}"))\n'
-        f'  (label "PICO_TX_PI_RX" (at 125 105 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pico")}"))\n'
-        f'  (wire (pts (xy 125 110) (xy 130 110)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_rx_pico")}"))\n'
-        f'  (label "PI_TX_PICO_RX" (at 125 110 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pico")}"))\n'
-        f'  (wire (pts (xy 325 50) (xy 330 50)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_tx_pi")}"))\n'
-        f'  (label "PICO_TX_PI_RX" (at 325 50 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_tx_pi")}"))\n'
-        f'  (wire (pts (xy 325 55) (xy 330 55)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_uart_rx_pi")}"))\n'
-        f'  (label "PI_TX_PICO_RX" (at 325 55 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_uart_rx_pi")}"))\n'
-        # ---- Inter-sheet labels: Pi I2S → Audio Sheet (matching labels already on Audio side)
-        f'  (wire (pts (xy 325 65) (xy 330 65)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sbck_pi")}"))\n'
-        f'  (label "I2S_BCK" (at 325 65 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sbck_pi")}"))\n'
-        f'  (wire (pts (xy 325 70) (xy 330 70)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2slrck_pi")}"))\n'
-        f'  (label "I2S_LRCK" (at 325 70 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2slrck_pi")}"))\n'
-        f'  (wire (pts (xy 325 75) (xy 330 75)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sdout_pi")}"))\n'
-        f'  (label "I2S_DOUT" (at 325 75 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sdout_pi")}"))\n'
+        # ---- v0.9: Pi-Header-Sheet (Sheet 7) entfernt. Der RP2350 erzeugt I²S
+        # selbst (GP0/GP1/GP4), kein Raspberry Pi mehr. Pico-I²S-Outputs werden
+        # weiter unten per Label an das Audio-Sheet gebrückt.
+        # ---- Inter-sheet labels: Pico I²S out → Audio Sheet (gleiche Labels
+        # liegen schon auf der Audio-Eingangsseite, s.u.) ----
+        f'  (wire (pts (xy 125 105) (xy 130 105)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sbck_pico")}"))\n'
+        f'  (label "I2S_BCK" (at 125 105 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sbck_pico")}"))\n'
+        f'  (wire (pts (xy 125 110) (xy 130 110)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2slrck_pico")}"))\n'
+        f'  (label "I2S_LRCK" (at 125 110 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2slrck_pico")}"))\n'
+        f'  (wire (pts (xy 125 115) (xy 130 115)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sdout_pico")}"))\n'
+        f'  (label "I2S_DOUT" (at 125 115 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sdout_pico")}"))\n'
         # ---- Sheet 6: Audio (rechts neben MCP, unter Encoder-Sheet) ----
         f'  (sheet (at 230 200) (size 60 52) (fields_autoplaced)\n'
         f'    (stroke (width 0.1524) (type solid))\n'
@@ -4260,8 +4235,8 @@ def root_sheet() -> str:
         f'  (label "JACK_DETECT" (at 195 210 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_jackdet_mcp")}"))\n'
         f'  (wire (pts (xy 225 245) (xy 230 245)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_jackdet_audio")}"))\n'
         f'  (label "JACK_DETECT" (at 225 245 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_jackdet_audio")}"))\n'
-        # ---- I2S labels (von Sheet 7 Pi-Header — Sheet 7 noch nicht implementiert,
-        # I2S-Labels bleiben momentan dangling auf Audio-Sheet-Input-Seite)
+        # ---- I2S labels: jetzt vom Pico (GP0/GP1/GP4 I²S-Master) getrieben,
+        # via die gleichnamigen Labels an der Pico-Brücke oben (v0.9, Pi entfernt)
         f'  (wire (pts (xy 225 210) (xy 230 210)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2sbck_audio")}"))\n'
         f'  (label "I2S_BCK" (at 225 210 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_i2sbck_audio")}"))\n'
         f'  (wire (pts (xy 225 215) (xy 230 215)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_i2slrck_audio")}"))\n'
@@ -4301,8 +4276,8 @@ def main() -> None:
     (OUT_DIR / "mcp.kicad_sch").write_text(mcp_sheet())
     (OUT_DIR / "encoder.kicad_sch").write_text(encoder_sheet())
     (OUT_DIR / "audio.kicad_sch").write_text(audio_sheet())
-    (OUT_DIR / "pi.kicad_sch").write_text(pi_sheet())
-    print(f"Wrote KiCad project + Sheets 1+2+3+4+5+6+7 to {OUT_DIR}")
+    # v0.9: Pi-Header-Sheet (pi.kicad_sch) entfernt — RP2350 ist Pi-frei.
+    print(f"Wrote KiCad project + Sheets 1+2+3+4+5+6 (Pi removed) to {OUT_DIR}")
 
 
 if __name__ == "__main__":
