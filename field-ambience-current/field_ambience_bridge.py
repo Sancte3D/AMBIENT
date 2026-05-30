@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Field Ambience Bridge v29-p (= v29-h + sync mit SC v29-o/p)
+Field Ambience Bridge v29-h
 ============================
 
 Bridges three components:
@@ -149,34 +149,19 @@ class PicoBridge:
     Maintains an internal mirror of menu state for OLED rendering.
     """
 
-    # v30: zweigeteiltes Menü — "easy bedienbar" zuerst.
-    # PLAY-Page = die Regler, die man WÄHREND des Spielens will (Performance-
-    # Macros). SETUP-Page = Set-Once-Konfiguration, weg aus dem Spielfluss.
-    # VOL ist bewusst NICHT im Menü — dafür gibt es den dedizierten Volume-
-    # Encoder (enc 4). PROG/TEMPO sind nur in GENERATE relevant und tauchen
-    # nur auf, wenn GENERATE an ist (siehe menu()).
-    PLAY_ITEMS  = ["SPACE", "DEPTH", "TEXTURE", "BLOOM", "VIBE", "VOICE"]
-    GEN_ITEMS   = ["PROG", "TEMPO"]              # nur wenn generative an
-    SETUP_ITEMS = ["KEY", "MODE", "PAD", "OCT", "MIDI"]
+    MENU_ITEMS = ["KEY", "MODE", "VOICE", "PAD", "OCT", "PROG", "TEMPO", "VIBE", "VOL", "MIDI"]
 
-    # v29-p: Modifier-IDs aligned mit SPEC v0.6 §7 / Sheet 4 BOM:
-    # SW6=SHIFT, SW7=HOLD, SW8=DRONE, SW9=GENERATE, SW10=CLEAR
-    MOD_SHIFT    = 1
-    MOD_HOLD     = 2
-    MOD_DRONE    = 3
-    MOD_GENERATE = 4
-    MOD_CLEAR    = 5
-    # Legacy aliases for old Pico-firmware that still uses these names
-    MOD_AUTO     = MOD_GENERATE   # AUTO-Button → triggers generative mode
-    MOD_FREEZE   = MOD_DRONE      # FREEZE-Button → toggles drone
+    MOD_AUTO   = 1
+    MOD_SHIFT  = 2
+    MOD_HOLD   = 3
+    MOD_FREEZE = 4
+    MOD_CLEAR  = 5
 
     KEYS_NAMES   = ["C", "D", "Eb", "F", "G", "A", "Bb"]
     KEY_MIDI     = [60, 62, 63, 65, 67, 69, 70]
-    # v29-p: Synced mit SC v29-o — 6 modes (Locrian removed), 5 progs
-    # (Slow added as default index 0), 4 vibes (Sharp removed)
-    MODE_NAMES   = ["Ion", "Dor", "Phr", "Lyd", "Mix", "Aeo"]
-    PROG_NAMES   = ["Slow", "I-V-vi-IV", "I-IV-V-I", "i-VI-III-VII", "i-iv-VI-V"]
-    VIBE_NAMES   = ["Warm", "Bright", "Deep", "Float"]
+    MODE_NAMES   = ["Ion", "Dor", "Phr", "Lyd", "Mix", "Aeo", "Loc"]
+    PROG_NAMES   = ["I-V-vi-IV", "I-IV-V-I", "i-VI-III-VII", "i-iv-VI-V"]
+    VIBE_NAMES   = ["Warm", "Bright", "Deep", "Float", "Sharp"]
     VOICE_NAMES  = ["FM", "Saw", "Square"]
     PAD_VOICE_NAMES   = ["Warm", "Strings", "Brass"]
     PAD_OCTAVE_NAMES  = ["LOW", "MID", "HIGH"]
@@ -188,23 +173,13 @@ class PicoBridge:
         self.running = True
         self.shifted = False
         self.hold_mode = False
-        # v29-p: explicit init prevents AttributeError on first toggle / state read
-        self.generative = False
-        self.drone = False
-        # v29-p: Drive/Brightness macro state for the 4-encoder routing.
-        # Defaults match the Sound Constitution (drive 0.18, brightness -0.2).
-        self.drive = 0.18
-        self.brightness = -0.2
         self.cursor_idx = 0
         self.mode_ui = "nav"
-        self.page = "play"          # "play" | "setup"
         self.sc_state = {
             "key": 60, "mode": 0, "voice": 0, "prog": -1,
             "bpm": 72, "vibe": 0, "vol": 0.85, "midi": 0,
             "chord": [60, 64, 67, 71, 74],
             "padVoice": 0, "padOctave": 1,
-            # Performance-Macros (Defaults = SC-Reply-Defaults). 0..1, clamped.
-            "space": 0.5, "depth": 0.5, "texture": 0.0, "bloom": 0.5,
         }
 
     def find_port(self):
@@ -295,84 +270,39 @@ class PicoBridge:
             mid = ev["id"]
             down = ev["down"]
             if down:
-                if mid == self.MOD_GENERATE:
-                    # v29-p Fix: v29-o trennt /fam/auto (motif-glitter) von
-                    # /fam/generative (pad-bed mit Akkord-Progression).
-                    # Hardware-GENERATE-Button toggelt das generative Pad-Bed.
-                    self.generative = not getattr(self, "generative", False)
-                    self.osc.send_message("/fam/generative",
-                                          [1 if self.generative else 0])
+                if mid == self.MOD_AUTO:
+                    self.osc.send_message("/fam/auto", [1])
                 elif mid == self.MOD_SHIFT:
                     self.shifted = True
                 elif mid == self.MOD_HOLD:
                     self.hold_mode = not self.hold_mode
                     if not self.hold_mode:
                         self.osc.send_message("/fam/holdclear", [])
-                elif mid == self.MOD_DRONE:
-                    # v29-p NEW: SW8 DRONE-Button toggelt Tonika-Drone-Voice.
-                    self.drone = not getattr(self, "drone", False)
-                    self.osc.send_message("/fam/drone",
-                                          [1 if self.drone else 0])
+                elif mid == self.MOD_FREEZE:
+                    self.osc.send_message("/fam/holdflag", [1])
                 elif mid == self.MOD_CLEAR:
                     self.osc.send_message("/fam/holdclear", [])
             else:
                 if mid == self.MOD_SHIFT:
                     self.shifted = False
+                elif mid == self.MOD_FREEZE:
+                    self.osc.send_message("/fam/holdflag", [0])
 
         elif e_type == "enc":
-            # v29-p: 4 physical encoders, routed by id.
-            #   1=Drive  2=Brightness  3=Display(menu)  4=Volume
-            enc_id = ev.get("id", 3)
-            delta = ev.get("delta", 0)
-            if enc_id == 1:      # Drive macro 0..1
-                self.drive = max(0.0, min(1.0, self.drive + delta * 0.05))
-                self.osc.send_message("/fam/drive", [self.drive])
-            elif enc_id == 2:    # Brightness macro -1..1
-                self.brightness = max(-1.0, min(1.0, self.brightness + delta * 0.05))
-                self.osc.send_message("/fam/brightness", [self.brightness])
-            elif enc_id == 4:    # Volume 0..1
-                new_vol = max(0.0, min(1.0, self.sc_state["vol"] + delta * 0.05))
-                self.sc_state["vol"] = new_vol
-                self.osc.send_message("/fam/vol", [new_vol])
-            else:                # id 3 (or unknown) = Display/menu controller
-                self.handle_encoder(delta)
+            self.handle_encoder(ev["delta"])
 
         elif e_type == "push":
-            # Only the Display encoder (id 3) toggles nav/edit. The other
-            # encoders' push acts as a "reset to default" for their macro.
-            enc_id = ev.get("id", 3)
-            if ev.get("down"):
-                if enc_id == 3:
-                    self.toggle_mode_ui()
-                elif enc_id == 1:
-                    self.drive = 0.18  # Sound-Constitution default
-                    self.osc.send_message("/fam/drive", [self.drive])
-                elif enc_id == 2:
-                    self.brightness = -0.2
-                    self.osc.send_message("/fam/brightness", [self.brightness])
-                elif enc_id == 4:
-                    self.sc_state["vol"] = 0.85
-                    self.osc.send_message("/fam/vol", [0.85])
+            if ev["down"]:
+                self.toggle_mode_ui()
 
         elif e_type == "jack":
             inserted = ev["inserted"]
             self.osc.send_message("/fam/jackdetect", [inserted])
             self.send_to_pico({"set": "amp", "enabled": 0 if inserted else 1})
 
-    def menu(self):
-        """Aktive Menü-Liste für die aktuelle Page.
-        PLAY: Performance-Macros, dann GEN_ITEMS nur wenn generative an,
-        dann ein "SETUP"-Eintrag zum Wechseln. SETUP: Config + "BACK"."""
-        if self.page == "setup":
-            return self.SETUP_ITEMS + ["BACK"]
-        items = list(self.PLAY_ITEMS)
-        if self.generative:
-            items += self.GEN_ITEMS
-        return items + ["SETUP"]
-
     def handle_encoder(self, delta):
         if self.mode_ui == "nav":
-            new_idx = max(0, min(len(self.menu()) - 1, self.cursor_idx + delta))
+            new_idx = max(0, min(len(self.MENU_ITEMS) - 1, self.cursor_idx + delta))
             if new_idx != self.cursor_idx:
                 self.cursor_idx = new_idx
                 self.update_display()
@@ -380,16 +310,9 @@ class PicoBridge:
             self.apply_value_delta(delta)
 
     def apply_value_delta(self, delta):
-        item = self.menu()[self.cursor_idx]
+        item = self.MENU_ITEMS[self.cursor_idx]
         s = self.sc_state
 
-        if item in ("SPACE", "DEPTH", "TEXTURE", "BLOOM"):
-            key = item.lower()
-            nv = max(0.0, min(1.0, s[key] + delta * 0.05))
-            s[key] = nv
-            self.osc.send_message("/fam/" + key, [nv])
-            self.update_display()
-            return
         if item == "KEY":
             try:
                 cur_idx = self.KEY_MIDI.index(s["key"])
@@ -399,8 +322,7 @@ class PicoBridge:
             s["key"] = self.KEY_MIDI[new_idx]
             self.osc.send_message("/fam/key", [s["key"]])
         elif item == "MODE":
-            # v29-p: SC clamps 0..5 (Locrian removed). Bridge matches.
-            s["mode"] = max(0, min(5, s["mode"] + delta))
+            s["mode"] = max(0, min(6, s["mode"] + delta))
             self.osc.send_message("/fam/mode", [s["mode"]])
         elif item == "VOICE":
             s["voice"] = max(0, min(2, s["voice"] + delta))
@@ -412,32 +334,24 @@ class PicoBridge:
             s["padOctave"] = max(0, min(2, s["padOctave"] + delta))
             self.osc.send_message("/fam/padoctave", [s["padOctave"]])
         elif item == "PROG":
-            # v29-p: SC clamps -1..4 (5 progs, slow_bed at index 0).
-            s["prog"] = max(-1, min(4, s["prog"] + delta))
+            s["prog"] = max(-1, min(3, s["prog"] + delta))
             self.osc.send_message("/fam/prog", [s["prog"]])
         elif item == "TEMPO":
-            # v29-p: SC clamps 40..90 per Sound Constitution (never fast).
-            s["bpm"] = max(40, min(90, s["bpm"] + delta))
+            s["bpm"] = max(40, min(140, s["bpm"] + delta))
             self.osc.send_message("/fam/tempo", [s["bpm"]])
         elif item == "VIBE":
-            # v29-p: SC clamps 0..3 (Sharp removed). Bridge matches.
-            s["vibe"] = max(0, min(3, s["vibe"] + delta))
+            s["vibe"] = max(0, min(4, s["vibe"] + delta))
             self.osc.send_message("/fam/vibe", [s["vibe"]])
+        elif item == "VOL":
+            new_vol = max(0.0, min(1.0, s["vol"] + delta * 0.05))
+            s["vol"] = new_vol
+            self.osc.send_message("/fam/vol", [new_vol])
         elif item == "MIDI":
             s["midi"] = 1 if (s["midi"] == 0) else 0
             self.osc.send_message("/fam/midi", [s["midi"], 0])
         self.update_display()
 
     def toggle_mode_ui(self):
-        # SETUP/BACK sind Navigations-Einträge: Klick wechselt die Page,
-        # statt in den Wert-Edit-Modus zu gehen.
-        item = self.menu()[self.cursor_idx] if self.cursor_idx < len(self.menu()) else None
-        if item == "SETUP":
-            self.page = "setup"; self.cursor_idx = 0; self.mode_ui = "nav"
-            self.update_display(); return
-        if item == "BACK":
-            self.page = "play"; self.cursor_idx = 0; self.mode_ui = "nav"
-            self.update_display(); return
         self.mode_ui = "edit" if self.mode_ui == "nav" else "nav"
         self.update_display()
 
@@ -446,12 +360,7 @@ class PicoBridge:
 
     def update_display(self):
         s = self.sc_state
-        # Cursor gegen das aktuell aktive Menü clampen (Page-Wechsel oder
-        # GENERATE-Toggle kann die Liste verkürzt haben).
-        active = self.menu()
-        if self.cursor_idx >= len(active):
-            self.cursor_idx = len(active) - 1
-        item = active[self.cursor_idx]
+        item = self.MENU_ITEMS[self.cursor_idx]
 
         try:
             key_idx = self.KEY_MIDI.index(s["key"])
@@ -459,21 +368,16 @@ class PicoBridge:
         except ValueError:
             key_str = "?"
 
-        # v29-p: bounds updated to match SC v29-o ranges
-        mode_str = self.MODE_NAMES[s["mode"]] if 0 <= s["mode"] < 6 else "?"
+        mode_str = self.MODE_NAMES[s["mode"]] if 0 <= s["mode"] < 7 else "?"
         prog_str = "AUTO" if s["prog"] < 0 else self.PROG_NAMES[s["prog"]][:4]
-        vibe_str = self.VIBE_NAMES[s["vibe"]] if 0 <= s["vibe"] < 4 else "?"
+        vibe_str = self.VIBE_NAMES[s["vibe"]] if 0 <= s["vibe"] < 5 else "?"
 
         chord_str = " ".join(self.midi_to_name(m) for m in s["chord"][:5] if m > 0)
 
-        if item in ("SPACE", "DEPTH", "TEXTURE", "BLOOM"):
-            # Performance-Macros: 0..1 als Prozent.
-            v = s[item.lower()]
-            param, value, bar = item, f"{int(v * 100)}%", int(v * 100)
-        elif item == "KEY":
+        if item == "KEY":
             param, value, bar = "KEY", key_str, int((s["key"] - 48) / 24 * 100)
         elif item == "MODE":
-            param, value, bar = "MODE", mode_str, int(s["mode"] / 5 * 100)
+            param, value, bar = "MODE", mode_str, int(s["mode"] / 6 * 100)
         elif item == "VOICE":
             param, value, bar = "VOICE", self.VOICE_NAMES[s["voice"]], int(s["voice"] / 2 * 100)
         elif item == "PAD":
@@ -481,18 +385,15 @@ class PicoBridge:
         elif item == "OCT":
             param, value, bar = "OCT", self.PAD_OCTAVE_NAMES[s["padOctave"]], int(s["padOctave"] / 2 * 100)
         elif item == "PROG":
-            param, value, bar = "PROG", prog_str, int((s["prog"] + 1) / 5 * 100)
+            param, value, bar = "PROG", prog_str, int((s["prog"] + 1) / 4 * 100)
         elif item == "TEMPO":
-            # v29-p: SC range 40..90 BPM (was 40..140)
-            param, value, bar = "TEMPO", f"{int(s['bpm'])}", int((s["bpm"] - 40) / 50 * 100)
+            param, value, bar = "TEMPO", f"{int(s['bpm'])}", int((s["bpm"] - 40) / 100 * 100)
         elif item == "VIBE":
-            param, value, bar = "VIBE", vibe_str, int(s["vibe"] / 3 * 100)
+            param, value, bar = "VIBE", vibe_str, int(s["vibe"] / 4 * 100)
+        elif item == "VOL":
+            param, value, bar = "VOL", f"{int(s['vol'] * 100)}%", int(s["vol"] * 100)
         elif item == "MIDI":
             param, value, bar = "MIDI", "ON" if s["midi"] else "OFF", 100 if s["midi"] else 0
-        elif item == "SETUP":
-            param, value, bar = "SETUP", ">", 0
-        elif item == "BACK":
-            param, value, bar = "< BACK", "", 0
         else:
             param, value, bar = "?", "?", 0
 
@@ -508,24 +409,13 @@ class PicoBridge:
             "bar_pct": max(0, min(100, bar)),
             "mode_ui": self.mode_ui,
             "cursor": self.cursor_idx,
-            "page": self.page,
         })
 
     def on_sc_state(self, state):
         for k in ("key", "mode", "voice", "prog", "bpm", "vibe", "vol", "midi", "chord",
-                  "padVoice", "padOctave", "space", "depth", "texture", "bloom"):
+                  "padVoice", "padOctave"):
             if k in state:
                 self.sc_state[k] = state[k]
-        # v29-p: mirror generative/drone from SC so the hardware toggle stays
-        # in sync if the HTML panel changed these (prevents toggle de-sync).
-        if "generative" in state:
-            self.generative = bool(state["generative"])
-        if "drone" in state:
-            self.drone = bool(state["drone"])
-        if "drive" in state:
-            self.drive = float(state["drive"])
-        if "brightness" in state:
-            self.brightness = float(state["brightness"])
         self.update_display()
 
 
@@ -557,7 +447,7 @@ async def main():
     except Exception:
         pass
 
-    print(f"[bridge] Field Ambience v29-p bridge running (synced to SC v29-o/p)")
+    print(f"[bridge] Field Ambience v29-h bridge running")
     print(f"[bridge] OSC → SC: {SC_HOST}:{SC_PORT}")
     print(f"[bridge] OSC ← SC: {REPLY_PORT}")
     print(f"[bridge] WebSocket: {WS_HOST}:{WS_PORT}")

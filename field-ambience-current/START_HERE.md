@@ -1,29 +1,22 @@
-# Field Ambience — Start Here
+# Field Ambience — Aktueller Stand
 
-Übersicht über das Projekt und wo was liegt.
+## SuperCollider Audio Engine
+- `field_ambience_v29o.scd` — neueste Version (instrument-mode)
+- `field_ambience_bridge.py` — WS↔OSC bridge zur HTML UI
+- `field_ambience_panel.html` — HTML mockup / UI reference
 
-## Mein nächster Schritt
-→ **`MEINE_TODO.md`** — konkrete Checkliste (Footprints prüfen, ERC, Layout, Bestellung)
+## PCB Design (review-ready, NICHT final)
+- `field_ambience_pcb_SPEC_v0.5.md` — komplette Spec
+- `field_ambience_layout_kick75.png` — finales Layout 333×143.3×40mm
 
-## PCB
-- `field_ambience_pcb_SPEC_v0.6.md` — komplette, aktuelle Spec
-- `kicad/` — KiCad-Projekt (Schaltplan fertig + validiert, generiert aus `generate_kicad_project.py`)
-- `kicad/libraries/` — eingebundene kiswitch-Footprints (Choc V2)
-- `mechanical_coordinates.md` — Platzierungs-Koordinaten fürs Layout
-- `CHANGELOG.md` — Entscheidungs- und Änderungshistorie
-- `PCB_TODO.md` — detaillierter Engineering-Status
+## Projekt-Skill
+- `field_ambience_skill.md` — Sound Constitution, Architekturprinzipien
 
-## Audio Engine
-- `field_ambience_v29o.scd` — SuperCollider Engine
-- `field_ambience_bridge.py` — WS↔OSC Bridge zur UI
-- `field_ambience_panel.html` — UI-Mockup
-- `field_ambience_webapp.html` — **standalone Browser-App**: SC-Engine als Web-Audio-Port
-  in einer einzigen HTML-Datei. Kein SuperCollider, keine Python-Bridge nötig — einfach im
-  Browser öffnen und spielen. Gleiche OSC-Endpunkte (`/fam/*`) intern nachgebaut.
+## Tools für nächsten Schritt (in Claude Code)
+- `kicad-happy-install.md` — Installation des KiCad-Review-Tools
 
-## Firmware (Pico)
-- `firmware/` — MicroPython für den RP2350 (Buttons, Encoder, OLED, Amp-Power)
-
-## Design-Philosophie & Roadmap
-- `field_ambience_skill.md` — Sound Constitution / Architekturprinzipien
+## Roadmap
 - `ROADMAP.md` — was als nächstes ansteht
+
+## Nächster Schritt
+In Claude Code mit kicad-happy KiCad-Schematic bauen nach SPEC v0.5.

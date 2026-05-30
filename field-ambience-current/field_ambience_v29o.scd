@@ -1,10 +1,6 @@
 // =====================================================================
-// FIELD AMBIENCE v29-p (= v29-o + DryBus + Limiter)
+// FIELD AMBIENCE v29-o
 // Sound Constitution: deep, dark, slow, harmonically stable, never ugly
-// ---------------------------------------------------------------------
-// v29-p Fix (2026-05): Voices route dry through ~famDryBus into
-// famReverbMaster. masterVol/JackDetect/ampShutdown now fully silence
-// the engine (including the dry pfad). LeakDC + Limiter final stage.
 // ---------------------------------------------------------------------
 // Reference: State Azure performance style.
 // Two-chord slow bed (e.g. E7 → A), 8-bar holds, large reverb,
@@ -533,7 +529,7 @@ s.waitForBoot({
 
 	if(~famHasJPverb) {
 		"JPverb available -- using premium reverb path.".postln;
-		SynthDef(\famReverbMaster, { |verbIn = 0, dryIn = 0, out = 0,
+		SynthDef(\famReverbMaster, { |in = 0, out = 0,
 		                              t60 = 4.5, damp = 0.45, size = 0.85,
 		                              earlyDiff = 0.7, modDepth = 0.1, modFreq = 2.0,
 		                              low = 1.0, mid = 1.0, high = 0.7,
@@ -541,21 +537,24 @@ s.waitForBoot({
 		                              wetAmp = 0.0, masterVol = 0.0,
 		                              // v29-n: live performance drive (0 = bypass)
 		                              drive = 0.0|
-			var verbFeed = In.ar(verbIn, 2);
-			var dryFeed  = In.ar(dryIn, 2);  // v29-p: dry signal from voices
+			var dry = In.ar(in, 2);
 			// v29-h: Lag-smoothed wetAmp and masterVol prevent click/pop on .set
 			var wetAmpLag    = Lag.kr(wetAmp, 0.4);
 			var masterVolLag = Lag.kr(masterVol, 0.25);
 			var driveLag     = Lag.kr(drive, 0.3);
-			var driven, wet, mixed, finalOut;
+			var driven, wet;
 
 			// v29-n: tanh soft saturation, pre-reverb. At drive=0 the signal is
 			// untouched (tanh of small input = small input, near linear). As drive
 			// rises, the pre-gain pushes the input into the tanh curve, adding
 			// upper harmonics for an analogue / Solar-style edge.
+			//   drive 0.0 -> preGain 1.0 (clean, ~bypass)
+			//   drive 0.5 -> preGain 2.5 (warm tube glow)
+			//   drive 1.0 -> preGain 5.0 (analogue edge)
+			// Output is normalized so adding drive doesn't blow up the level.
 			driven = [
-				tanh(verbFeed[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
-				tanh(verbFeed[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
+				tanh(dry[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
+				tanh(dry[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
 			];
 
 			wet = JPverb.ar(
@@ -564,38 +563,28 @@ s.waitForBoot({
 				earlyDiff, modDepth, modFreq,
 				low, mid, high, lowcut, highcut
 			);
-
-			// v29-p: mix dry + wet, master-vol the combined, DC-block + Limit
-			mixed    = dryFeed + (wet * wetAmpLag);
-			finalOut = LeakDC.ar(mixed * masterVolLag);
-			finalOut = Limiter.ar(finalOut, 0.85, 0.01);
-			Out.ar(out, finalOut);
+			Out.ar(out, wet * wetAmpLag * masterVolLag);
 		}).add;
 	} {
 		"JPverb NOT available -- falling back to FreeVerb2. Install sc3-plugins for premium reverb.".postln;
-		SynthDef(\famReverbMaster, { |verbIn = 0, dryIn = 0, out = 0,
+		SynthDef(\famReverbMaster, { |in = 0, out = 0,
 		                              t60 = 4.5, damp = 0.45, size = 0.85,
 		                              earlyDiff = 0.7, modDepth = 0.1, modFreq = 2.0,
 		                              low = 1.0, mid = 1.0, high = 0.7,
 		                              lowcut = 100, highcut = 8000,
 		                              wetAmp = 0.0, masterVol = 0.0,
 		                              drive = 0.0|
-			var verbFeed = In.ar(verbIn, 2);
-			var dryFeed  = In.ar(dryIn, 2);  // v29-p: dry signal from voices
+			var dry = In.ar(in, 2);
 			var wetAmpLag    = Lag.kr(wetAmp, 0.4);
 			var masterVolLag = Lag.kr(masterVol, 0.25);
 			var driveLag     = Lag.kr(drive, 0.3);
 			var room = (size * 0.6 + (t60 / 8.0)).clip(0.1, 0.95);
 			var driven = [
-				tanh(verbFeed[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
-				tanh(verbFeed[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
+				tanh(dry[0] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6)),
+				tanh(dry[1] * (1 + (driveLag * 4))) / (1 + (driveLag * 0.6))
 			];
 			var wet  = FreeVerb2.ar(driven[0], driven[1], 1.0, room, damp);
-			// v29-p: mix dry + wet, master-vol the combined, DC-block + Limit
-			var mixed    = dryFeed + (wet * wetAmpLag * 0.7);
-			var finalOut = LeakDC.ar(mixed * masterVolLag);
-			finalOut = Limiter.ar(finalOut, 0.85, 0.01);
-			Out.ar(out, finalOut);
+			Out.ar(out, wet * wetAmpLag * masterVolLag * 0.7);
 		}).add;
 	};
 
@@ -607,11 +596,6 @@ s.waitForBoot({
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	~famVerbBus = Bus.audio(s, 2);
-	// v29-p: dedicated Dry-Bus so dry signal also passes through master volume
-	// + Limiter. Before v29-p, voices wrote dry directly to out=0 bypassing
-	// masterVol, which meant Jack-Detect / Amp-Shutdown / masterVol(0) could
-	// not fully silence the engine.
-	~famDryBus  = Bus.audio(s, 2);
 	~famVerbSynth = nil;   // will be spawned in ~famStart
 
 	// v29-k: dedicated Group for short-lived motif/glitter synths so we can
@@ -761,6 +745,19 @@ s.waitForBoot({
 		notes
 	};
 
+	// Triad-only version (for when we need just root/3rd/5th, e.g. bass picking)
+	~famTriadAtDegree = { |rootMidi, modeKey, degree|
+		var intervals = ~famScales[modeKey];
+		var d = degree - 1;
+		var pick = { |stepOffset|
+			var idx = d + stepOffset;
+			var wrap = idx.mod(7);
+			var oct = (idx / 7).floor * 12;
+			rootMidi + intervals[wrap] + oct
+		};
+		[pick.(0), pick.(2), pick.(4)]
+	};
+
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// v29-b: VOICE LEADING
 	// Inspired by HiChord's automatic voice leading.
@@ -832,6 +829,11 @@ s.waitForBoot({
 		(~famVibes[~famVibe] ? ~famVibes[\warm])[\family]
 	};
 
+	// Convenience: chord at degree using current vibe's family
+	~famActiveChordAt = { |degree|
+		~famChordAtDegree.(~famKey, ~famMode, degree, ~famActiveFamily.())
+	};
+
 	// Compute current chord based on brain state.
 	// v29-b: voice-led -- returns the chord in the inversion closest to last play.
 	// Also updates ~famLastVoicing so subsequent notes/motifs use this as reference.
@@ -848,6 +850,12 @@ s.waitForBoot({
 		~famChordAtDegree.(~famKey, ~famMode, deg, ~famActiveFamily.())
 	};
 
+	// Compute allowed notes for phrases (chord tones + passing tones from scale)
+	~famAllowedNotes = {
+		var chord = ~famCurrentChord.();
+		var scale = ~famScaleNotes.(~famKey, ~famMode, 2);
+		chord ++ scale   // duplicates OK, chord tones will be preferred
+	};
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// LAYER B -- Phrase Engine: Motifs + Mutations
@@ -918,6 +926,17 @@ s.waitForBoot({
 	~famMutationKeys = [\identity, \octave_up, \octave_down, \retrograde,
 	                    \drop_first, \softer, \stretch];
 
+	// Pick a note value from chord tones using motif note index
+	// v29-a+: Chord now has 5 tones (root, 3rd, 5th, 7th, 9th)
+	// idx 0..4 picks chord tones, idx 5..9 same but one octave up, etc.
+	~famPickNote = { |noteIdx, octaveShift = 0|
+		var chord = ~famCurrentChord.();
+		var chordSize = chord.size;   // 5 with extensions
+		var base = noteIdx.mod(chordSize);
+		var oct = (noteIdx / chordSize).floor;
+		chord[base] + (oct * 12) + (octaveShift * 12)
+	};
+
 	// v29-f: Spawn a single note with active voice character + optional MIDI emit.
 	// v29-k: motif amps reduced by ~40%, reverb sends raised so glitter
 	// floats above the pad instead of competing with it. Decays shortened
@@ -930,20 +949,20 @@ s.waitForBoot({
 		var target = ~famMotifGroup ? s;
 		case
 		{ voice == \saw } {
-			Synth(\famSaw, [ \out, ~famDryBus.index,
+			Synth(\famSaw, [
 				\freq, freq, \amp, vel * 0.10, \decay, motifDecay,
 				\pan, pan, \verbOut, ~famVerbBus.index, \verbSend, 0.40
 			], target);
 		}
 		{ voice == \square } {
-			Synth(\famSquare, [ \out, ~famDryBus.index,
+			Synth(\famSquare, [
 				\freq, freq, \amp, vel * 0.08, \decay, motifDecay,
 				\pan, pan, \verbOut, ~famVerbBus.index, \verbSend, 0.45
 			], target);
 		}
 		{
 			// default \fm
-			Synth(\famCore, [ \out, ~famDryBus.index,
+			Synth(\famCore, [
 				\freq, freq, \amp, vel * 0.14, \decay, motifDecay,
 				\modIndex, modIdx, \pan, pan,
 				\verbOut, ~famVerbBus.index, \verbSend, 0.40,
@@ -1118,62 +1137,33 @@ s.waitForBoot({
 		locrian:    (t60: 1.5, damp: 0.7, size: 0.45, high: 0.5)
 	);
 
-	// Compute current reverb parameters.
-	// v0.8: SINGLE reconciliation point for ALL reverb control. mode/vibe set
-	// the base character; SPACE scales tail+size around it; MOOD adds a gentle
-	// size nudge. Before v0.8 these three wrote t60/size directly to the synth
-	// and silently overwrote each other (changing mode collapsed a big SPACE
-	// setting, etc.). Now everything funnels through here → one write path.
-	// SPACE and MOOD are multipliers centred at 1.0 for their defaults (0.5),
-	// so the out-of-the-box sound is unchanged.
-	// Live-tunable -- call ~famUpdateReverb whenever mode/vibe/space/mood change.
+	// Compute current reverb parameters: mode preset × vibe bias.
+	// Live-tunable -- call this whenever mode or vibe changes.
 	~famComputeReverb = {
 		var modePreset = ~famReverbModePresets[~famMode] ? ~famReverbModePresets[\ionian];
 		var vibe = ~famVibes[~famVibe] ? ~famVibes[\warm];
 		var bias = vibe[\reverbBias];
-		var space = ~famSpace ? 0.5;
-		var mood  = ~famMood  ? 0.5;
-		// SPACE → tail/size multipliers, piecewise so space=0.5 maps to exactly 1.0
-		var spaceTailMul = if(space <= 0.5) {
-			space.linlin(0.0, 0.5, 0.45, 1.0)
-		} {
-			space.linlin(0.5, 1.0, 1.0, 1.9)
-		};
-		var spaceSizeMul = if(space <= 0.5) {
-			space.linlin(0.0, 0.5, 0.7, 1.0)
-		} {
-			space.linlin(0.5, 1.0, 1.0, 1.25)
-		};
-		// MOOD → gentle size nudge, exactly 1.0 at mood=0.5
-		var moodSizeMul = mood.linlin(0.0, 1.0, 0.90, 1.10);
 		(
-			t60:    modePreset[\t60]  * bias[\t60] * spaceTailMul,
-			damp:   (modePreset[\damp] * bias[\damp]).clip(0.0, 1.0),
-			size:   (modePreset[\size] * bias[\size] * spaceSizeMul * moodSizeMul).clip(0.5, 5.0),
-			high:   (modePreset[\high] * bias[\high]).clip(0.0, 1.0),
-			// SPACE owns absolute wet (modal presets don't set wet). 0.5 → 0.55.
-			wetAmp: space.linlin(0.0, 1.0, 0.40, 0.70)
+			t60:  modePreset[\t60]  * bias[\t60],
+			damp: (modePreset[\damp] * bias[\damp]).clip(0.0, 1.0),
+			size: (modePreset[\size] * bias[\size]).clip(0.5, 5.0),
+			high: (modePreset[\high] * bias[\high]).clip(0.0, 1.0)
 		)
 	};
 
-	// v0.8: THE single reverb applier. Every reverb-affecting control
-	// (mode, vibe, space, mood) updates its state var then calls this, so the
-	// verb synth only ever gets written from one place. wetAmp is included
-	// (Lag-smoothed in the SynthDef) so SPACE's wet always lands too.
+	// Update reverb master synth with computed params (call after mode/vibe change)
 	~famUpdateReverb = {
 		var p = ~famComputeReverb.();
 		if(~famVerbSynth.notNil) {
 			~famVerbSynth.set(
-				\t60,    p[\t60],
-				\damp,   p[\damp],
-				\size,   p[\size],
-				\high,   p[\high],
-				\wetAmp, p[\wetAmp]
+				\t60,  p[\t60],
+				\damp, p[\damp],
+				\size, p[\size],
+				\high, p[\high]
 			);
 			("FAM reverb updated: t60=" ++ p[\t60].round(0.01)
 			 ++ " damp=" ++ p[\damp].round(0.01)
-			 ++ " size=" ++ p[\size].round(0.01)
-			 ++ " wet=" ++ p[\wetAmp].round(0.01)).postln;
+			 ++ " size=" ++ p[\size].round(0.01)).postln;
 		};
 	};
 
@@ -1264,8 +1254,7 @@ s.waitForBoot({
 			{
 				var rp = ~famComputeReverb.();
 				~famVerbSynth = Synth.tail(s, \famReverbMaster, [
-					\verbIn,    ~famVerbBus.index,
-					\dryIn,     ~famDryBus.index,   // v29-p: dry-bus feed
+					\in,        ~famVerbBus.index,
 					\out,       0,
 					\t60,       rp[\t60],
 					\damp,      rp[\damp],
@@ -1283,11 +1272,9 @@ s.waitForBoot({
 					\drive,     ~famDrive       // v29-n: carry over current drive setting
 				]);
 				// v29-h: schedule fade-in 200ms after spawn so DAC has stabilized
-				// v0.8: fade to the SPACE-derived wet (rp[\wetAmp]) not a hardcoded
-				// 0.55, so a non-default SPACE setting is honoured from the first note.
 				AppClock.sched(0.2, {
 					if(~famVerbSynth.notNil) {
-						~famVerbSynth.set(\wetAmp, rp[\wetAmp], \masterVol, ~famMasterVol);
+						~famVerbSynth.set(\wetAmp, 0.55, \masterVol, ~famMasterVol);
 					};
 					nil
 				});
@@ -1368,7 +1355,7 @@ s.waitForBoot({
 						if(~famRunning) {
 							var scaleNotes = ~famScaleNotes.(~famKey, ~famMode, 1);
 							var noteMidi = scaleNotes.choose + 24;
-							Synth(\famAir, [ \out, ~famDryBus.index,
+							Synth(\famAir, [
 								\freq, noteMidi.midicps,
 								\verbOut, ~famVerbBus.index,
 								\amp, rrand(0.025, 0.05) * (0.5 + (~famMood * 0.5)),
@@ -1395,7 +1382,7 @@ s.waitForBoot({
 			// in ~famSetTexture too, but we spawn here on start to ensure
 			// the bed is alive from the moment the engine starts).
 			if(~famTexture > 0.001) {
-				~famTextureSynth = Synth(\famTexture, [ \out, ~famDryBus.index,
+				~famTextureSynth = Synth(\famTexture, [
 					\amp,      ~famTexture * 0.12,
 					\gate,     1,
 					\verbOut,  ~famVerbBus.index,
@@ -1597,7 +1584,7 @@ s.waitForBoot({
 		if(oldSynth.notNil) { oldSynth.release };
 
 		// Spawn ONE sustained pad voice for this cell tap
-		newSynth = Synth(\famPadCore, [ \out, ~famDryBus.index,
+		newSynth = Synth(\famPadCore, [
 			\freq,         midi.midicps,
 			\amp,          0.10 * amp,
 			\gate,         1,
@@ -1682,7 +1669,7 @@ s.waitForBoot({
 		// v29-l: now famPadCore (warm saw) instead of famPad (FM bell)
 		chord.do { |midi, i|
 			var pan = (i - (chord.size / 2)) / (chord.size * 1.5);
-			var synth = Synth(\famPadCore, [ \out, ~famDryBus.index,
+			var synth = Synth(\famPadCore, [
 				\freq,         midi.midicps,
 				\amp,          0.06,
 				\gate,         1,
@@ -1906,7 +1893,7 @@ s.waitForBoot({
 		targetAmp = ~famTexture * 0.12;
 		if(~famRunning and: { ~famTextureSynth.isNil and: { ~famTexture > 0.001 } }) {
 			// Spawn texture synth lazily if not yet alive
-			~famTextureSynth = Synth(\famTexture, [ \out, ~famDryBus.index,
+			~famTextureSynth = Synth(\famTexture, [
 				\amp,      targetAmp,
 				\gate,     1,
 				\verbOut,  ~famVerbBus.index,
@@ -1923,21 +1910,30 @@ s.waitForBoot({
 		("FAM texture: " ++ (~famTexture * 100).round(1) ++ "%").postln;
 	};
 
-	// v29-o: SPACE — macro control for reverb tail length + size + wet.
-	// v0.8: no longer writes the synth directly. It stores ~famSpace and calls
-	// the unified ~famUpdateReverb, where SPACE acts as a tail/size multiplier
-	// on top of the mode/vibe base (centred at 1.0 for space=0.5) and owns the
-	// absolute wet. This stops SPACE and mode/vibe/mood from clobbering each
-	// other on the verb synth.
-	//   0.0 = intimate (≈0.45× tail, 0.7× size, wet 0.40)
-	//   0.5 = neutral default (= mode/vibe base, wet 0.55)
-	//   1.0 = vast (≈1.9× tail, 1.25× size, wet 0.70)
+	// v29-o: SPACE — macro control combining reverb tail length + size + wet
+	// 0.0 = small intimate space (t60 1.5s, size 0.5, wet 0.35)
+	// 0.5 = current default cinematic (t60 4.5s, size 0.85, wet 0.55)
+	// 1.0 = vast cathedral (t60 8.0s, size 1.0, wet 0.7)
 	// Constitutional safety: even at 1.0, no resonance peaks, no harsh tail.
 	~famSpace = 0.5;   // default = current v29-o character
 	~famSetSpace = { |val|
+		var safeVal, t60val, sizeval, wetval;
 		~famSpace = val.clip(0.0, 1.0);
-		~famUpdateReverb.();
-		("FAM space: " ++ (~famSpace * 100).round(1) ++ "%").postln;
+		// Map 0..1 to safe parameter ranges
+		t60val  = ~famSpace.linlin(0.0, 1.0, 1.5, 8.0);
+		sizeval = ~famSpace.linlin(0.0, 1.0, 0.5, 1.0);
+		wetval  = ~famSpace.linlin(0.0, 1.0, 0.35, 0.70);
+		if(~famVerbSynth.notNil) {
+			~famVerbSynth.set(
+				\t60,    t60val,
+				\size,   sizeval,
+				\wetAmp, wetval
+			);
+		};
+		("FAM space: " ++ (~famSpace * 100).round(1) ++ "%"
+		 ++ "  t60=" ++ t60val.round(0.1)
+		 ++ "s  size=" ++ sizeval.round(0.01)
+		 ++ "  wet=" ++ wetval.round(0.01)).postln;
 	};
 
 	// v29-o: DEPTH — macro control for low-end weight & sustain.
@@ -2015,7 +2011,7 @@ s.waitForBoot({
 			~famDroneVoice.release;
 			~famDroneVoice = nil;
 		};
-		~famDroneVoice = Synth(\famPadCore, [ \out, ~famDryBus.index,
+		~famDroneVoice = Synth(\famPadCore, [
 			\freq,         freq,
 			\amp,          0.05,
 			\gate,         1,
@@ -2081,7 +2077,7 @@ s.waitForBoot({
 		// Spawn pad voices for each chord tone
 		~famPadVoices = voiced.collect { |midi, i|
 			var pan = (i - (voiced.size / 2 - 0.5)) * 0.4;
-			Synth(\famPadCore, [ \out, ~famDryBus.index,
+			Synth(\famPadCore, [
 				\freq,         midi.midicps,
 				\amp,          0.10,
 				\gate,         1,
@@ -2111,7 +2107,7 @@ s.waitForBoot({
 		// Pure sine, very low (30-60 Hz). The "feel" — fundamental body.
 		// Long attack (3s) so the bass blooms in, never plops.
 		// Amp now driven by ~famDepth macro (default 0.5 → amp=0.22).
-		~famSubBassVoice = Synth(\famSubBass, [ \out, ~famDryBus.index,
+		~famSubBassVoice = Synth(\famSubBass, [
 			\freq,     (voiced.minItem - 24).midicps,
 			\amp,      ((~famDepth ? 0.5).linlin(0.0, 1.0, 0.06, 0.20)),
 			\gate,     1,
@@ -2125,7 +2121,7 @@ s.waitForBoot({
 		// v29-o: DeepBass on chord root, ONE octave below lowest voiced note.
 		// Sine + subtle saw harmonics, gentle saturation. The "warmth/body".
 		// Sits between SubBass (sub region) and Pad (mid region) in the spectrum.
-		~famDeepBassVoice = Synth(\famDeepBass, [ \out, ~famDryBus.index,
+		~famDeepBassVoice = Synth(\famDeepBass, [
 			\freq,     (voiced.minItem - 12).midicps,    // octave below pad
 			\amp,      ((~famDepth ? 0.5).linlin(0.0, 1.0, 0.04, 0.16)),
 			\gate,     1,
@@ -2282,10 +2278,11 @@ s.waitForBoot({
 			};
 		};
 
-		// 2) Reverb: mood folds into the unified recompute as a gentle size
-		// nudge (v0.8) instead of writing \size directly, so it no longer
-		// fights SPACE / mode / vibe over the same parameter.
-		~famUpdateReverb.();
+		// 2) Reverb size: subtle nudge on master reverb
+		if(~famVerbSynth.notNil) {
+			var moodSize = 0.55 + (~famMood * 0.30);   // 0.55..0.85
+			~famVerbSynth.set(\size, moodSize);
+		};
 
 		~famPushState.();
 	}, "/fam/mood");

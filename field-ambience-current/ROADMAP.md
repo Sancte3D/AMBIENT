@@ -145,13 +145,9 @@ Alles was der User über das Menü erreichen kann ist **garantiert nicht hässli
 - [ ] **Auto-Recovery** falls SC abstürzt
 
 ### Bridge + Pico
-- [x] **Pico-Firmware geschrieben** (`firmware/`, MicroPython) — Buttons, Encoder, OLED, UART-Protokoll, Power-Sequencing
-- [x] **Encoder-Quadratur-Decoding** (`firmware/encoders.py`, getestet via CPython-Sim)
-- [x] **OLED-Layout** (`firmware/ssd1322.py` + Display-Renderer in main.py)
-- [x] **Bridge 4-Encoder-Routing** (Drive/Bright/Display/Volume)
-- [ ] **Pico-Firmware auf echter Hardware testen** (braucht erste PCB)
-- [ ] OLED `_COL_START`-Offset am echten Modul verifizieren
-- [ ] Encoder-Richtung (`dir`-Flag) pro Knopf am echten Board kalibrieren
+- [ ] **Pico-Firmware testen** mit echter Hardware
+- [ ] Encoder-Quadratur-Decoding
+- [ ] OLED-Layout finalisieren
 
 ---
 
