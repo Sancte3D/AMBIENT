@@ -73,13 +73,13 @@ umsteuern kannst. Keine Mega-Dumps.
 
 - **Step 1** ✅ — Plan-Doku + nackte C-Firmware-Hülle (CMake +
   blinkende LED). Baut zu einer UF2. Keine Audio, kein UI, nur Lebenszeichen.
-- **Step 2** ✅ — **Du bist hier.** OLED-Treiber portiert (SSD1322 256×64 via
-  SPI0, identische Init-Sequenz wie die MicroPython-Variante). Statischer
-  Banner-Text *„FIELD AMBIENCE / V0.9 STEP 2"*. Starter-Font (~24 Glyphen,
-  nur was der Banner braucht — wächst mit jedem nächsten Step).
-- **Step 3** — I²C-Bus + MCP23017-Init + Switch-Scan + Interrupt auf GP22.
-  Zellen 1–5, Modifier SW6–10, XSMT-Pin, Jack-Detect. Console-Output bei
-  jedem Tap.
+- **Step 2** ✅ — OLED-Treiber portiert (SSD1322 256×64 via SPI0, identische
+  Init-Sequenz wie die MicroPython-Variante). Statischer Banner-Text
+  *„FIELD AMBIENCE / V0.9 STEP 2"*. Starter-Font wächst mit jedem nächsten Step.
+- **Step 3** ✅ — **Du bist hier.** I²C1 @ 400 kHz, MCP23017 @ 0x20, byte-für-byte
+  identische Init zur MicroPython-Variante. GP22 falling-edge IRQ für INTA.
+  Live-State-Render auf OLED (5 Zellen + 5 Modifier + Jack-Detect), USB-CDC-
+  Trace bei jedem Tap. XSMT-Pin als Output verfügbar für Step 5.
 - **Step 4** — Encoder-Quadratur-Dekoder (4× EC11 via PIO oder GPIO-IRQ).
   Push-Switch-Detection. Velocity-Skalierung wie in der MicroPython-Version.
 - **Step 5** — **Erster Audio-Pfad**: I²S-Output via PIO + DMA, doppelt

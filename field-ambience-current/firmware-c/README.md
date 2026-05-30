@@ -6,10 +6,11 @@ the Pico 2 (RP2350) directly. The plan is documented in
 Zero 2 W will no longer be part of the device — the RP2350 will host both
 the audio engine and the UI.
 
-**Status:** Step 2 of 12 — OLED alive. The build produces a UF2 that
-initialises the SSD1322, draws a static banner ("FIELD AMBIENCE / V0.9
-STEP 2"), keeps the STATUS-LED heartbeat, and continues to print a USB
-CDC line every 2 seconds. No audio, no menu logic yet.
+**Status:** Step 3 of 12 — I²C + MCP23017 + 10 switches + jack-detect alive.
+Build produces a UF2 that initialises SPI0 (OLED), I²C1 (MCP23017), and
+GP22 (INTA falling-edge IRQ). The OLED now renders live state for the 5
+cells, 5 modifiers, and the jack-detect line; the USB CDC logs every
+button-change event. STATUS-LED heartbeat preserved. No audio yet.
 
 The MicroPython firmware in `../firmware/` remains the working firmware
 on the device during the transition. Nothing is being removed yet.
@@ -42,25 +43,34 @@ Output (in `build/`):
 1. Hold BOOTSEL on the Pico 2, plug in USB → `RPI-RP2` mass-storage appears
 2. Drag `field_ambience_native.uf2` onto it
 3. Pico reboots; the STATUS LED (GP26) starts blinking at 1 Hz
-4. The 256×64 SSD1322 OLED shows two lines:
+4. The 256×64 SSD1322 OLED shows the banner + live state rows:
 
    ```
                   FIELD AMBIENCE
-                  V0.9 STEP 2
+                  V0.9 STEP 3
+
+   CELL  1  2  3  4  5    JACK
+         .  .  .  .  .       J
+   MOD   S  H  D  G  C
+         .  .  .  .  .
    ```
+
+   Press a cell or modifier → the matching `.` becomes a bright `O`. Plug
+   into J8 → the `J` brightens. Release → back to dim.
 
 5. Open a serial monitor on the Pico's USB CDC (e.g. `picocom /dev/ttyACM0
-   115200`). Every 2 s you should see:
+   115200`). On every button change you see one `MCP state ...` line, and
+   every 2 s the heartbeat:
 
    ```
-   field-ambience native v0.9-dev step2 — pico2 (RP2350) — heartbeat N
+   field-ambience native v0.9-dev step3 — pico2 (RP2350) — heartbeat N
    ```
 
-That's the success signal for Step 2. Step 3 will bring the I²C bus + the
-MCP23017 + the 10 switches up.
+That's the success signal for Step 3. Step 4 brings the 4× EC11 encoders
+up; Step 5 will bring I²S DMA + the first audible sine.
 
 ## What's next
 
-See `../NATIVE_PORT_PLAN.md`. Step 3 adds the I²C bus + MCP23017 + the 10
-switches; subsequent steps add encoders, I²S DMA, and the engine — one PR
-per step so the user can review and redirect at any time.
+See `../NATIVE_PORT_PLAN.md`. Step 4 adds the 4× EC11 encoder quadrature
+decoder; Step 5 brings I²S DMA + first sine tone — then the schematic
+update (Step 6) lets the Pi come out of the BOM.
