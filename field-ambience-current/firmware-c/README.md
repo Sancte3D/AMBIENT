@@ -6,11 +6,11 @@ the Pico 2 (RP2350) directly. The plan is documented in
 Zero 2 W will no longer be part of the device — the RP2350 will host both
 the audio engine and the UI.
 
-**Status:** Step 3 of 12 — I²C + MCP23017 + 10 switches + jack-detect alive.
-Build produces a UF2 that initialises SPI0 (OLED), I²C1 (MCP23017), and
-GP22 (INTA falling-edge IRQ). The OLED now renders live state for the 5
-cells, 5 modifiers, and the jack-detect line; the USB CDC logs every
-button-change event. STATUS-LED heartbeat preserved. No audio yet.
+**Status:** Step 4 of 12 — 4× EC11 encoders alive. Build produces a UF2
+that runs Step 1–3 plus a 1 kHz hardware timer that quadrature-decodes the
+4 EC11s on GP10–GP21 and debounces their push switches. The OLED shows
+each encoder's accumulated position + push-state alongside the cells +
+modifiers from Step 3; USB CDC logs each rotate / push event. No audio yet.
 
 The MicroPython firmware in `../firmware/` remains the working firmware
 on the device during the transition. Nothing is being removed yet.
@@ -43,34 +43,43 @@ Output (in `build/`):
 1. Hold BOOTSEL on the Pico 2, plug in USB → `RPI-RP2` mass-storage appears
 2. Drag `field_ambience_native.uf2` onto it
 3. Pico reboots; the STATUS LED (GP26) starts blinking at 1 Hz
-4. The 256×64 SSD1322 OLED shows the banner + live state rows:
+4. The 256×64 SSD1322 OLED shows banner + encoder state + button state:
 
    ```
-                  FIELD AMBIENCE
-                  V0.9 STEP 3
+               FIELD AMBIENCE
+               V0.9 STEP 4
 
-   CELL  1  2  3  4  5    JACK
-         .  .  .  .  .       J
-   MOD   S  H  D  G  C
-         .  .  .  .  .
+   DRIV  .   BRIT  .   DISP  .   VOL   .
+   +0000     +0000     +0000     +0000
+
+   C . . . . .   M . . . . .         J
    ```
 
-   Press a cell or modifier → the matching `.` becomes a bright `O`. Plug
-   into J8 → the `J` brightens. Release → back to dim.
+   - Twist any encoder → the matching position updates in real time.
+   - Press an encoder shaft → its dot brightens.
+   - Cells / modifiers / jack from Step 3 still respond.
 
-5. Open a serial monitor on the Pico's USB CDC (e.g. `picocom /dev/ttyACM0
-   115200`). On every button change you see one `MCP state ...` line, and
-   every 2 s the heartbeat:
+5. USB CDC traces every event:
 
    ```
-   field-ambience native v0.9-dev step3 — pico2 (RP2350) — heartbeat N
+   ENC 3 rotate +1  pos=4
+   ENC 1 push   DOWN
+   MCP state 0xDFFE   (CELL1 pressed)
    ```
 
-That's the success signal for Step 3. Step 4 brings the 4× EC11 encoders
-up; Step 5 will bring I²S DMA + the first audible sine.
+   Heartbeat every 2 s:
+
+   ```
+   field-ambience native v0.9-dev step4 — pico2 (RP2350) — heartbeat N
+   ```
+
+That's the success signal for Step 4. **If a knob feels backwards on real
+hardware**, flip its `dir` field in `src/encoders.c` (defs table) from `+1`
+to `-1` — that one-bit knob-by-knob fix is the only quirk EC11s ever throw.
+
+Step 5 brings I²S DMA + the first audible sine through PCM5102A → PAM8403.
 
 ## What's next
 
-See `../NATIVE_PORT_PLAN.md`. Step 4 adds the 4× EC11 encoder quadrature
-decoder; Step 5 brings I²S DMA + first sine tone — then the schematic
-update (Step 6) lets the Pi come out of the BOM.
+See `../NATIVE_PORT_PLAN.md`. Step 5 = I²S DMA + first audible sine tone.
+Step 6 = the schematic update that lets the Pi come out of the BOM.

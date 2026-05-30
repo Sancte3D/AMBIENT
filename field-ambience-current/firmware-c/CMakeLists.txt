@@ -33,6 +33,7 @@ add_executable(field_ambience_native
     src/oled.c
     src/font_8x8.c
     src/mcp23017.c
+    src/encoders.c
 )
 
 target_include_directories(field_ambience_native PRIVATE
@@ -41,6 +42,7 @@ target_include_directories(field_ambience_native PRIVATE
 
 target_link_libraries(field_ambience_native
     pico_stdlib
+    pico_time       # Step 4: repeating_timer for 1 kHz encoder sampling
     hardware_spi    # Step 2: SSD1322 over SPI0
     hardware_i2c    # Step 3: MCP23017 over I2C1
     hardware_gpio   # Step 3: GP22 IRQ for MCP INTA
