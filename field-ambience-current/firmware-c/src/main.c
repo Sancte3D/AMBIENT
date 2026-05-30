@@ -1,17 +1,17 @@
 /*
  * Field Ambience — native C firmware.
  *
- * Step 4: 4× EC11 encoders alive (rotation + push).
- *
  *   - Step 1: USB CDC heartbeat + STATUS LED on GP26 @ 1 Hz
  *   - Step 2: SSD1322 OLED, banner
  *   - Step 3: I²C + MCP23017 + 10 switches + jack-detect
- *   - Step 4 (here): 4× EC11 (DRIVE, BRIGHT, DISPLAY, VOLUME) on GP10-21,
- *     quadrature-decoded at 1 kHz from a hardware repeating timer, with
- *     debounced push switches. Live values render to the OLED; USB CDC
- *     logs each event.
+ *   - Step 4: 4× EC11 encoders (quadrature + push)
+ *   - Step 5: I²S DMA + 440 Hz test sine, SPEC §8 pop-suppression
+ *   - Step 7 (here): polyphonic voice pool. Each cell tap triggers a
+ *     sustained sine voice with click-free ASR envelope; release fades it.
+ *     The Step-5 test sine is replaced by voices_render(). Cell→pitch is a
+ *     placeholder C-minor-pentatonic until the harmonic brain lands (Step 12).
  *
- * No audio yet. Step 5 = I²S DMA + first sine.
+ * (Step 6 was the schematic update that removed the Pi — no firmware change.)
  */
 
 #include <stdio.h>
@@ -23,14 +23,21 @@
 #include "mcp23017.h"
 #include "encoders.h"
 #include "audio.h"
+#include "dsp.h"
+#include "voices.h"
 
 #define PIN_STATUS_LED  26
 
+/* Placeholder cell→MIDI mapping: C minor pentatonic (C3 Eb3 F3 G3 Bb3).
+ * Deep + consonant, fits the Sound Constitution. Real scale/chord mapping
+ * arrives with the harmonic brain in Step 12. */
+static const uint8_t CELL_MIDI[5] = { 48, 51, 53, 55, 58 };
+#define CELL_VOICE_AMP 0.12f
+
 static void draw_banner_static(void) {
     oled_text( 72,  0, "FIELD AMBIENCE", 0x0F);
-    oled_text( 88,  8, "V0.9 STEP 5",    0x0A);
-    /* Audio status line — Step 5 always plays a 440 Hz sine. */
-    oled_text(  0, 16, "AUDIO 440HZ TEST", 0x07);
+    oled_text( 88,  8, "V0.9 STEP 7",    0x0A);
+    oled_text(  0, 16, "TAP A CELL",     0x07);
 }
 
 /* --- Step 3 button display (preserved, compact form on bottom rows) --- */
@@ -116,28 +123,47 @@ int main(void) {
     draw_encoders_state();
     oled_show();
 
-    /* Step 5: I²S audio up. The init function runs the SPEC §8 power
-     * sequence silently and then starts the 440 Hz test sine. If the MCP
-     * didn't come up, XSMT can't be controlled — print a warning but
-     * still try (PCM may still play; speakers will be silent because the
-     * amp /SHDN is also held LOW by pull-down). */
+    /* Step 7: bring up the DSP + voice pool and register voices_render as
+     * the audio block renderer BEFORE audio_init(), so the power-up sequence
+     * streams silence (no voices active yet) and stays pop-free. */
+    dsp_init();
+    voices_init();
+    audio_set_renderer(voices_render);
+
     if (!mcp_ok) {
         printf("WARN: audio start without MCP — PCM XSMT cannot be released\n");
     }
     audio_init();
-    printf("audio: I2S pump live, 440 Hz sine at -20 dBFS\n");
+    printf("audio: I2S pump live, voice pool ready — tap a cell\n");
 
     uint32_t hb_count = 0;
     absolute_time_t next_blink_at = make_timeout_time_ms(500);
     absolute_time_t next_hb_at    = make_timeout_time_ms(2000);
     bool led_on = false;
+    uint16_t prev_mcp = mcp_ok ? mcp_state() : 0xFFFF;
 
     while (true) {
         bool dirty = false;
 
         if (mcp_ok && mcp_irq_pending()) {
             uint16_t v = mcp_service();
-            printf("MCP state 0x%04X\n", v);
+
+            /* Cell press/release edges → voice note on/off. Bit low = pressed
+             * (active-low). Compare against the previous state to find edges. */
+            for (int c = 0; c < 5; ++c) {
+                uint16_t mask = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
+                bool now_pressed  = !(v & mask);
+                bool was_pressed  = !(prev_mcp & mask);
+                if (now_pressed && !was_pressed) {
+                    voices_note_on((uint8_t)c, dsp_midi_to_hz(CELL_MIDI[c]), CELL_VOICE_AMP);
+                    printf("cell %d ON  (midi %u)\n", c + 1, CELL_MIDI[c]);
+                } else if (!now_pressed && was_pressed) {
+                    voices_note_off((uint8_t)c);
+                    printf("cell %d OFF\n", c + 1);
+                }
+            }
+            prev_mcp = v;
+
             draw_buttons_state(v);
             dirty = true;
         }
@@ -156,6 +182,10 @@ int main(void) {
         }
 
         if (dirty) {
+            /* Live voice count next to the 'TAP A CELL' banner line. */
+            char vc[2] = { (char)('0' + (voices_active_count() & 7)), 0 };
+            oled_text(176, 16, "VOX ", 0x07);
+            oled_text(208, 16, vc, 0x0F);
             draw_encoders_state();
             oled_show();
         }

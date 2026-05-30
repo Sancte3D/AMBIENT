@@ -42,8 +42,17 @@ void audio_init(void);
 void audio_mute(void);
 
 /* Step-5 sandbox controls: change the test sine frequency and amplitude
- * (0.0..1.0 of full scale, clamped). Hooks for the encoders in later steps. */
+ * (0.0..1.0 of full scale, clamped). Only used while the built-in test-sine
+ * renderer is active (i.e. no external renderer registered). */
 void audio_set_test_freq(float hz);
 void audio_set_test_amp(float amp_0_1);
+
+/* Step 7: pluggable block renderer. The DMA refill calls this to fill one
+ * buffer of `frames` interleaved stereo int16 samples. Register the engine's
+ * renderer (e.g. voices_render) here; pass NULL to fall back to the built-in
+ * 440 Hz test sine. The callback runs in the DMA-IRQ fill context, so keep
+ * it allocation-free and bounded. */
+typedef void (*audio_render_fn)(int16_t *buf, int frames);
+void audio_set_renderer(audio_render_fn fn);
 
 #endif

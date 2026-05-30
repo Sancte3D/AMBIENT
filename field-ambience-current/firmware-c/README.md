@@ -6,13 +6,13 @@ the Pico 2 (RP2350) directly. The plan is documented in
 Zero 2 W will no longer be part of the device — the RP2350 will host both
 the audio engine and the UI.
 
-**Status:** Step 5 of 12 — **first sound on the speakers.** Build produces
-a UF2 that runs Step 1–4 plus a PIO-driven 16-bit/44.1-kHz I²S stream into
-the PCM5102A, double-buffered via DMA. The SPEC v0.6 §8 pop-suppression
-power sequence is enforced: rails settle → /SHDN HIGH → 50 ms → /MUTE HIGH
-+ PCM XSMT HIGH, all while the I²S already pumps silence so the DAC never
-sees garbage. After unmute the engine produces a continuous 440 Hz sine at
--20 dBFS for "yes, the audio path works" verification.
+**Status:** Step 7 of 12 — **polyphonic voice pool.** Build runs Steps 1–6
+plus an 8-voice pool (sine + click-free ASR envelope) fed by the cell
+buttons: tap a cell → a sustained tone blooms in over ~0.8 s; release →
+it fades over ~2.5 s. The Step-5 test sine is replaced by `voices_render()`
+via the new pluggable `audio_set_renderer()`. Cell→pitch is a placeholder
+C-minor-pentatonic until the harmonic brain (Step 12). (Step 6 was the
+schematic-only Pi removal — no firmware change.)
 
 The MicroPython firmware in `../firmware/` remains the working firmware
 on the device during the transition. Nothing is being removed yet.
@@ -45,13 +45,12 @@ Output (in `build/`):
 1. Hold BOOTSEL on the Pico 2, plug in USB → `RPI-RP2` mass-storage appears
 2. Drag `field_ambience_native.uf2` onto it
 3. Pico reboots; the STATUS LED (GP26) starts blinking at 1 Hz
-4. The 256×64 SSD1322 OLED shows banner + audio status + Step 4 encoder /
-   button state:
+4. The 256×64 SSD1322 OLED shows banner + a live voice count:
 
    ```
                FIELD AMBIENCE
-               V0.9 STEP 5
-   AUDIO 440HZ TEST
+               V0.9 STEP 7
+   TAP A CELL              VOX 0
 
    DRIV  .   BRIT  .   DISP  .   VOL   .
    +0000     +0000     +0000     +0000
@@ -59,26 +58,25 @@ Output (in `build/`):
    C . . . . .   M . . . . .         J
    ```
 
-5. **Listen.** A clean 440 Hz sine is on the speakers and the line-out.
-   Volume is fixed at -20 dBFS into the PCM5102A → 23 dB into the PAM8403 →
-   ~1.5 Vrms BTL → reasonable on the 40 mm down-firing drivers without
-   driving them into excursion. Plugging into J8 should mute the speakers
-   (jack-detect via MCP) and leave the sine on the line-out only.
+5. **Play.** Tap a cell button → a tone blooms in (~0.8 s attack) and holds;
+   the `VOX` count rises. Release → it fades out (~2.5 s). Up to 8 voices
+   ring at once; a 9th steals the quietest. Cell pitches are a placeholder
+   C-minor pentatonic (C3 Eb3 F3 G3 Bb3). Plugging into J8 mutes the
+   speakers and leaves the audio on the line-out.
 
-6. USB CDC traces continue from Step 3/4 plus a one-time `audio:` line:
+6. USB CDC traces:
 
    ```
-   audio: I2S pump live, 440 Hz sine at -20 dBFS
-   field-ambience native v0.9-dev step5 — pico2 (RP2350) — heartbeat N
+   cell 1 ON  (midi 48)
+   cell 1 OFF
+   field-ambience native v0.9-dev step7 — pico2 (RP2350) — heartbeat N
    ```
 
-That's the success signal for Step 5. **The Pi is functionally redundant
-from this point on**: the audio path is Pico → DAC → Amp → Speaker, no
-Linux involved. Step 6 cleans up the schematic to reflect that (J2 / D2 /
-R_BCK/LRCK/DOUT / the Pi module itself all come out of the BOM).
+That's the success signal for Step 7. Step 8 adds the two-layer bass
+(famSubBass + famDeepBass) under the voices.
 
 ## What's next
 
-See `../NATIVE_PORT_PLAN.md`. Step 6 = the schematic update that lets the
-Pi come out of the BOM (now that audio is proven to flow Pico → DAC → Amp
-without any Linux in the path).
+See `../NATIVE_PORT_PLAN.md`. Steps 8–12 replace the sine voices with the
+real engine timbre: two-layer bass, famPadCore, texture bed, algorithmic
+reverb, and finally the harmonic brain + v30 menu + USB-MIDI.

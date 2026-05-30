@@ -107,9 +107,13 @@ umsteuern kannst. Keine Mega-Dumps.
   wegen VBUS-Pin als 5V-Domain; real sind GP0/1/4 @ 3V3 → PCM5102A @ 3V3,
   kein Level-Shifter nötig). Warnings sogar von 19 → 16 gesunken (Pi-Nets weg).
   GUI-ERC (B3) bleibt die maßgebliche Instanz. **Erstes BOM-Schrumpfen.**
-- **Step 7** — Voice-Infrastruktur: ringbasierter Voice-Pool, MIDI-Note-zu-Hz,
-  einfache ADSR, klick-freier gate-on/off. Noch kein konkretes Pad — nur
-  „Render eine Sinus-Voice pro Cell-Tap".
+- **Step 7** ✅ — **Du bist hier.** `dsp.{h,c}` (1024-Punkt-Sinus-LUT mit
+  Interpolation + midi→Hz) als Basis für alle folgenden Steps. `voices.{h,c}`:
+  8-stimmiger Voice-Pool, Sinus + klick-freie ASR-Hüllkurve (per-Sample-Rampen),
+  Voice-Stealing nach leisester Stimme. `audio.c` bekommt einen pluggable
+  Renderer (`audio_set_renderer`) statt hartem Test-Sinus. Cell-Tap → note_on,
+  Release → note_off; Cell→Pitch vorerst C-Moll-Pentatonik (Platzhalter bis
+  Harmonic Brain in Step 12). OLED zeigt aktive Stimmenzahl.
 - **Step 8** — `famSubBass` + `famDeepBass` (zwei Sinus-/Tri-Stimmen, LPF,
   Lag). Eine pro Akkord-Wurzel.
 - **Step 9** — `famPadCore` (5-fach polyphon: 3 detuned Saws + Pulse-Crossfade
