@@ -4,7 +4,43 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r7** (Modifier-Switches als momentary tactile + PCA9685-LED-Statusanzeige). Pi-frei (v0.9) bleibt weiterhin der maßgebliche Audio-Stand — die r7-Änderung ist orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r7.1** (Industrial-Design-Spec ergänzt — Knob-Style, Cap-Strategie, USB-C-Upgrade-Intent). Pi-frei (v0.9) bleibt weiterhin der maßgebliche Audio-Stand — r7/r7.1 sind orthogonal zur Audio-Architektur.
+
+---
+
+## v0.6.3-r7.1 (2026-05-31) — Industrial-Design-Spec (Knobs / Caps / USB-C)
+
+**Was**: Premium-Feel-Decisions für die user-touchable Komponenten, basierend
+auf einem Aesthetik-Audit (Studio-Instrument als Design-Sprache, nicht Kirmes).
+Keine elektrische SPEC-Änderung — die Decisions sind Industrial-Design
++ Procurement-Spec für user-supplied Teile.
+
+**SPEC §2.1 NEU**:
+1. **Knobs für EN1-EN4** (4×): brushed Aluminium 20 mm Ø, 6 mm flatted bore,
+   matt-schwarz / gun-metal eloxiert, warm-weißer Top-Linie-Indikator
+   (matched LED-Farbschema r7). 30 mm Encoder-Pitch lässt 10 mm Gap →
+   ergonomisch greifbar. Mass gibt EC11-Detent das „teure" Gefühl unabhängig
+   vom Encoder-Hersteller.
+2. **Caps für SW1-10** (10×): uniform warm-gray / charcoal (RAL 7016 oder
+   ähnlich), KEINE Farbcodierung pro Funktion — die LEDs (PCA9685) sind die
+   semantische Schicht. Cells = MBK Bigseat 2u Choc V2; Modifier = 3D-Print
+   Custom für 12×12-Plunger. Labels SHIFT/HOLD/DRONE/GEN/CLR lasergraviert.
+3. **USB-C-Premium-Upgrade-Intent**: für die Produktions-Charge JAE
+   DX07S016JJ1 / Amphenol-Equivalent (≥10000 Cycles vs. ~5000 Generic).
+   Sourcing-Pass + JLC-Stock-Verify als r7.1-B4 dokumentiert. Prototyp läuft
+   weiter mit C165948.
+
+**Begründung als Block** (Aesthetik-Konsistenz):
+- Existierende Choices definieren bereits einen Studio-Look: 256×64 mono-white
+  OLED + warm/amber LEDs + schwarzer Soldermask + weiße Silkscreen.
+- Wood-Knobs oder bunte Caps würden diesen Look brechen.
+- Premium-USB-C ist der höchste UX-Hebel pro $-Aufpreis (täglich gesteckt,
+  $1.20 mehr, 2× Lebensdauer).
+- Cap-Farbcodierung wäre redundant mit den LED-States → uniform-Caps =
+  visuelle Ruhe.
+
+**Files**: SPEC §2.1 (~80 Zeilen NEU), mechanical_coordinates.md §6 (Knob-
+Stack-Höhe), MEINE_TODO (r7.1-Block: 3 Procurement-Decisions).
 
 ---
 

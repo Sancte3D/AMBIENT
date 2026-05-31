@@ -10,7 +10,7 @@
 > Pi-frei-Stand ist `NATIVE_PORT_PLAN.md`. D2 (TVS) **bleibt** als allgemeiner
 > +5V-Rail-Surge-Schutz (saß nie am Pi-Header, sondern auf der Hauptschiene).
 
-**Rev:** 0.6.3-r7 (Modifier-Switches als momentary + LED-Statusanzeige via PCA9685)
+**Rev:** 0.6.3-r7.1 (Modifier-Switches als momentary + LED-Statusanzeige via PCA9685; Industrial-Design-Spec für Knobs/Caps/USB-C ergänzt)
 **Target:** 4-Layer JLCPCB, partial-PCBA (siehe §4 BOM-Split A/B/C)
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
 **Status:** SCHEMATIC IN REVIEW — noch nicht production-ready. Offene Blocker
@@ -127,6 +127,55 @@ Unverändert gegenüber v0.5.
 | Bottom-Case Material | PC oder Aluminium gegossen | mit Speaker-Grille-Pattern |
 
 Stack-Up und Layout-Skizze siehe v0.5 §2 — keine Änderungen.
+
+---
+
+## 2.1. Industrial-Design-Spec (NEU r7.1, 2026-05-31)
+
+Design-Sprache: **Studio-Instrument** — ruhig, präzise, warm-funktional.
+Keine Kirmes-Optik, kein DIY-Look. Referenzpunkte: Critter & Guitari,
+OP-1, Empress Effects, Eurorack-Industriegrade.
+
+### Knob-Spec (4× für EN1-EN4)
+
+| Parameter | Wert | Begründung |
+|---|---|---|
+| Material | **Brushed Aluminium**, eloxiert matt-schwarz oder gun-metal | Mass = Detent-„Premium-Feel" unabhängig vom Encoder. Wood würde mit OLED+LED-Studio-Look clashen, Plastik bricht Premium-Erwartung |
+| Außen-Ø | **20 mm** | Passt zu 30 mm Encoder-Pitch (10 mm Lücke = ergonomisch) |
+| Höhe | 14-17 mm ab Plate | Standard EC11-Knob-Range |
+| Bore | **6 mm flatted** (D-shaft) | EC11-Standard |
+| Grip | Geriffelt / knurled | Tactile-Cue auch ohne Sicht |
+| Top-Indikator | **Warm-weiße Linie** (lasergraviert, evtl. mit Wasserfarbe) | Matches LED-Farbschema (siehe §7.2) |
+| Sourcing | Off-the-shelf (Davies 1900H-Klone / Sifam Selco S100 / AliExpress „6mm D shaft brushed aluminum knob 20mm") oder CNC-custom | User-procured, NICHT auf JLC-BOM |
+
+### Cap-Spec (5× Cells SW1-5 + 5× Modifier SW6-10)
+
+| Parameter | Wert | Begründung |
+|---|---|---|
+| Farb-Strategie | **Uniform — alle 10 Caps in derselben Farbe** | Semantische Info kommt von den 5 LEDs (siehe §7.2), nicht von Cap-Farbcodierung. Uniform = visuelle Ruhe |
+| Material | 3D-Print PETG / Resin ODER MBK-Bigseat-Variante | PETG matt für anti-fingerprint; Resin für customer-Optik |
+| Farbe | **Warm-gray / Charcoal** (RAL 7016 oder ähnlich) | Schwarz-auf-schwarz wäre Loch; warm-gray gibt subtle Definition auf schwarzem PCB/Plate |
+| Cells (SW1-5) | 2u Choc V2 Bigseat-Compatible | Lebenslauf-Standard für die Choc V2 Hot-Swap-Sockets |
+| Modifier (SW6-10) | Custom für 12×12 Plunger des AliExpress-Tactile | 3D-Print mit ~5×5 mm Negativ für den Plunger-Pin |
+| Labels | Lasergraviert ODER Pad-Print: SHIFT / HOLD / DRONE / GEN / CLR | Funktional, nicht dekorativ |
+| Sourcing | User-procured, NICHT auf JLC-BOM | Wie SW1-10 selbst |
+
+### USB-C-Connector Upgrade-Intent
+
+**Status quo**: TYPE-C-31-M-12 (C165948, Generic-China) — ~5000 Insertion-Cycles
+laut China-Generic-Datasheet, OK für Prototyp.
+
+**Design-Intent r7.1**: Upgrade auf Premium-Connector mit ≥10000 Cycles für
+Produktions-Build. Daily-Touched-Connector = höchste UX-Priorität für Reliability.
+
+**Kandidaten zum Verifizieren** (r7.1-B4 Blocker, Sourcing-Pass nötig):
+- JAE **DX07S016JJ1** (16-pin SMD, Power+USB2, 10000 Cycles)
+- Amphenol **12401610E412A** oder Amphenol GCT **USB4055** (gleiche Klasse)
+- Acceptance-Kriterium: JLC SMT-Assembly-tauglich, in Stock ≥100 pcs, KiCad-
+  Footprint-Standard ODER Drop-in zum C165948-Footprint
+
+Falls in Sourcing-Pass kein Premium-Equivalent JLC-stockable: bleibt C165948
++ user-replaceable Soft-Mount-Reinforcement-Plan (Epoxy am Connector-Body).
 
 ---
 

@@ -28,6 +28,15 @@ NXP-Datasheet (PCA9685 Rev. 4, S.6) prüfen — 28 Pins, alle 16 LED-Outputs +
 SDA/SCL + /OE + EXTCLK + VDD/GND + A0..A5. Beim KiCad-Schematic-Add (lokal in
 GUI) sofort cross-checken.
 
+### r7.1-B4: USB-C Premium-Upgrade verifizieren
+**Status**: 🟠 IMPORTANT (kein PCB-Layout-Blocker, aber vor Produktions-Charge
+zu klären). Aktuell: TYPE-C-31-M-12 C165948 Generic, ~5000 Cycles. Ziel:
+Premium-Equivalent ≥10000 Cycles, JLC SMT-Assembly-tauglich, in Stock.
+**Action**: Sourcing-Pass für JAE DX07S016JJ1, Amphenol 12401x, GCT USB4055
+via LCSC-API + JLC-Stock-Check. Wenn Premium-Equivalent gefunden + Footprint-
+kompatibel (Drop-in oder kleine Footprint-Anpassung): SPEC §4 update, sonst
+C165948 + Soft-Mount-Reinforcement-Plan (Epoxy am Connector-Body).
+
 ### r7-B3: KiCad-Schematic + Generator-Update für r7
 **Status**: 🔴 BLOCKER. `generate_kicad_project.py` muss nachgezogen werden:
 - U6 PCA9685 als neues Subsheet oder im mcp.kicad_sch
