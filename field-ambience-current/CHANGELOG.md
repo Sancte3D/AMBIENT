@@ -4,7 +4,55 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r9** (Battery-Add: 5000 mAh LiPo + Charger + Boost + Power-Path). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9 sind orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r11** (UX-Firmware-Contract + Soft-Shutdown). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r11 sind orthogonal zur Audio-Architektur.
+
+---
+
+## v0.6.3-r10+r11 (2026-05-31) — UX-Firmware-Contract + Soft-Shutdown-Sequenz
+
+**Was**: Reine Doc-Edit — bindet die Firmware an die Hardware-Affordances aus
+r7 (Modifier-Switches), r9 (Battery), und sperrt die UX-Defaults bevor wir sie
+vergessen oder im Firmware-Build neu erfinden müssten. Keine Hardware-Änderung,
+keine BOM-Änderung, keine Pin-Re-Allocation. **GPIO-Pfade alle wie r9.**
+
+**SPEC §12 NEU (UX-Specification — Firmware-Contract)**:
+- **§12.1 CLEAR-Semantik**: Short-Press = Strong Panic (50 ms ramp-down + alle
+  Modi off + alle Voices kill + 100 ms silence). Long-Press 3 s = Soft Shutdown
+  (siehe §13). Race-Free dadurch dass Short erst beim Release ausgewertet wird.
+- **§12.2 State-Persistence**: Volume Boot-Default 30 % (Clamp, schützt vor
+  versehentlichem Loud-Boot mit Kopfhörern). HOLD/DRONE/GENERATE boot immer OFF
+  (Sicherheit). Drive/Brightness/Preset persistent. Flash-Write nur bei
+  Save-Snapshot oder Soft-Shutdown (Wear-Schutz).
+- **§12.3 Mode-Interaktionen**: HOLD ignoriert GENERATE-Trigger (verhindert
+  Drone-Overwrite). SHIFT+HOLD = Degree-Freeze. SHIFT+CLEAR = Soft-Panic
+  (Voices only, Modi bleiben). Komplette Matrix tabelliert.
+- **§12.4 Save-Snapshot**: Long-press EN3 (Display-Encoder) ≥1.5 s →
+  überschreibt geladenen Preset-Slot. Ring-Buffer mit 32 Slots im Pico-Flash
+  XIP → ~175 Jahre bei 5 Saves/Tag.
+- **§12.5 Initial Boot State**: Definierte 0..750 ms Sequenz von Pico-Reset bis
+  Audio-Ready, inklusive 500 ms Volume-Fade-in nach AMP-Wakeup (vermeidet
+  Engine-Init-DC-Drift-Pop).
+- **§12.6**: USB-Config-Mode (MIDI/WebUSB/Serial-CLI) explizit aus dem
+  Hardware-Vertrag ausgeklammert (rein Firmware-Sache).
+
+**SPEC §13 NEU (Soft-Shutdown-Sequenz)**:
+- Sub-Sekunden-Sequenz: Voice-Fade 500 ms → PCM XSMT → Amp /MUTE → /SHDN →
+  Flash-Save → OLED-Sleep → PCA9685 /OE HIGH → Pico WFE.
+- Wake-Up via CLEAR-Re-Press → MCP-INTA → Pico-IRQ → `watchdog_reboot()` → full
+  Re-Boot (sicherer als Resume, weil Audio-Stack-State degradieren kann).
+- **Keine Hardware-Änderung** — alle GPIO-Pfade existieren bereits.
+  Sleep-Drain ~5-8 mA (Pico WFE + TPS61089 Quiescent) → 25-40 Tage @ 5000 mAh.
+- **Optional r13 future**: TPS61089-EN auf MCU → echter Zero-Drain-Sleep, wäre
+  Battery-Sheet-Re-Spin → out-of-scope.
+
+**Warum jetzt**: Diese UX-Defaults sind Firmware-Contract. Wenn wir sie nicht
+fixieren bevor der nächste Firmware-Build startet, erfindet jeder
+Implementations-Pass sie neu → Inkonsistenz zwischen Doc/Hardware/Firmware.
+Reines Sperren-Bevor-Vergessen-Doc.
+
+**Files**: SPEC §12 + §13 (~150 Zeilen NEU am Ende), CHANGELOG (dieser Eintrag).
+Keine `mechanical_coordinates.md`-Änderung, keine BOM-Änderung, keine
+KiCad-Generator-Änderung.
 
 ---
 

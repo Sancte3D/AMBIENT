@@ -824,4 +824,167 @@ Erst nach Schritt 6 (DRC clean + EMC OK) wird Spec → v1.0 FINAL.
 
 ---
 
+## 12. UX-Specification — Firmware-Contract (NEU r10, 2026-05-31)
+
+Diese Sektion bindet die Firmware an die Hardware-Affordances aus §7 (MCP23017
+Switches), §7.2 (PCA9685 LEDs) und §5 (Pico-Pins). Sie ist **kein** PCB-
+Layout-Blocker, **ist** aber Vertrag für die Firmware vor erstem Audio-Build.
+
+### 12.1 CLEAR-Switch-Semantik (SW10, MCP-GPB4)
+
+Zwei Druckdauern, zwei Semantiken:
+
+| Dauer | Aktion | Audio | LED10 |
+|---|---|---|---|
+| **Short-Press** (<700 ms) | **Strong Panic** | 50 ms ramp-down → alle Voices killen + alle Modi (HOLD/DRONE/GENERATE) OFF + alle Cells release → 100 ms silence → Engine bleibt aktiv | 200 ms voller Flash, dann aus |
+| **Long-Press** (≥3000 ms) | **Soft Shutdown** (siehe §13) | Save-State → 500 ms fade-out → AMP /MUTE LOW → /SHDN LOW → MCU-WFE-Stop | Während Hold pulsiert 0.5 Hz, dann aus |
+
+**Warum „Strong Panic" statt nur „Mode-Reset"**: bei generativen Modi kann eine
+fehlerhaft hängende Voice einen Dauerton produzieren. CLEAR muss garantiert
+audio-stille Sicherheit liefern, sonst ist Live-Use riskant. Mode-Reset alleine
+würde z.B. eine via HOLD getriggerte Cell nicht freigeben.
+
+**Race-Condition-Garantie**: Short-Press wird **erst beim Release** ausgewertet
+(nicht beim Press), damit Long-Press eindeutig erkennbar ist. Während des 3 s
+Hold-Fensters läuft Audio normal weiter, LED10 pulsiert sichtbar als
+Confirm-Indikator. Bei Release vor 3 s → Short-Press-Aktion. Bei Erreichen
+3 s → sofortige Soft-Shutdown-Sequenz, weiteres Halten ignoriert.
+
+### 12.2 State-Persistence über Power-Cycle
+
+Persistiert wird via Pico-2 Internal Flash (XIP, eigener Slot am Ende des
+2 MB-Flash, ~4 kB reserviert). Schreib-Trigger:
+- Save-Snapshot (Long-press EN3, siehe §12.4)
+- Soft-Shutdown (§13)
+- **Nicht** bei jedem Encoder-Tick (Flash-Wear-Schutz)
+
+| Field | Boot-Default | Persistiert? | Rationale |
+|---|---|---|---|
+| Volume (EN4) | **30 %** (clamped) | Last-Saved-Snapshot zurückgesetzt auf 30 % wenn höher | Schutz vor versehentlichem Loud-Boot bei Headphones |
+| Drive (EN1) | Last-Saved | ✓ | Klang-Charakter ist gewollt persistent |
+| Brightness (EN2) | Last-Saved | ✓ | Display-Helligkeit ist Raum-spezifisch |
+| Display-Page (EN3) | Page 0 (Home) | ✗ | Boot-State soll vorhersehbar sein |
+| **HOLD** (Mode) | **OFF** | ✗ | Sicherheit: kein Dauerton beim Einschalten |
+| **DRONE** (Mode) | **OFF** | ✗ | Sicherheit: kein Audio bevor User bewusst startet |
+| **GENERATE** (Mode) | **OFF** | ✗ | Wie oben |
+| Preset-Slot | Last-Loaded | ✓ | User erwartet seinen letzten Patch |
+| Cell-Toggle-State | alle OFF | ✗ | Cells sind transient, nicht persistent |
+
+**Volume-Clamp-Rationale**: bei Battery-Mode (r9) ist Volume sowieso auf 70 %
+gecappt. Der 30 %-Boot-Default ist orthogonal zum Battery-Cap und greift
+**immer** (auch bei USB-C-Mode), um „Boot mit Kopfhörer auf 100 %"-Unfälle zu
+vermeiden. EN4-Drehung erhöht sofort hörbar — der User weiß instant, dass
+das Gerät an ist.
+
+### 12.3 Mode-Interaktionen (HOLD × GENERATE × SHIFT)
+
+Modi sind nicht-exklusiv, aber haben definierte Vorrangsregeln:
+
+| Kombination | Verhalten |
+|---|---|
+| HOLD aktiv + Cell-Press | Cell wird zur sustained Drone (Voice ohne Release) — Standard |
+| HOLD aktiv + GENERATE-Trigger | GENERATE-Trigger wird **ignoriert** (verhindert dass Generator HOLD-Drones überschreibt) |
+| GENERATE aktiv + Cell-Press | Cell wird zum Generator-Seed (Tonhöhe/Timbre-Quelle für nächsten Generator-Voice) |
+| SHIFT (gehalten) + EN1-Drehung | EN1 wird zu Secondary-Funktion (z.B. Filter-Cutoff statt Drive) — Per-Encoder-Mapping in Firmware |
+| SHIFT (gehalten) + HOLD-Press | **Degree-Freeze**: aktuelle Skalenstufe wird gelocked, weitere Cell-Presses bleiben in derselben Tonart |
+| SHIFT (gehalten) + DRONE-Press | DRONE-Engine-Variant-Cycle (z.B. Sub-Drone vs. Pad-Drone) |
+| SHIFT (gehalten) + GENERATE-Press | GENERATE-Algorithm-Cycle |
+| SHIFT (gehalten) + CLEAR-Short-Press | **Soft-Panic**: nur Voices killen, Modi bleiben (nicht-destruktive Variante des Strong-Panic) |
+| CLEAR (Short-Press, kein SHIFT) | Strong-Panic (siehe §12.1) — überschreibt alles |
+
+**LED-Sichtbarkeit der Modi**: LED7/8/9 (HOLD/DRONE/GENERATE) zeigen die
+Firmware-State binär. LED6 (SHIFT) ist nur an solange Switch gedrückt
+(reine Modifier-Indikator-Affordance). LED10 (CLEAR) flasht / pulsiert
+contextuell (§12.1).
+
+### 12.4 Save-Snapshot via EN3 (Display-Encoder)
+
+EN3 hat dreifache Funktion abhängig von Press-Pattern:
+
+| Aktion | Effekt |
+|---|---|
+| Drehen | Display-Page wechseln (Home / Engine-Detail / FX / Preset-Browser / Diagnostics) |
+| Short-Press (<400 ms) | Page-Confirm / Sub-Menü-Enter |
+| Long-Press (≥1500 ms) | **Save Current State as Preset** — überschreibt aktuell geladenen Preset-Slot. Display-Confirmation: 1 s Toast „SAVED → Slot N" |
+
+**Save schreibt**: Drive/Brightness/Volume/Preset-Engine-Parameter (alle
+Per-Engine-State), aber **nicht** transiente Modi (HOLD/DRONE/GENERATE).
+Snapshot ist Klang-Snapshot, kein Performance-State-Snapshot.
+
+**Wear-Schutz**: Flash-Slot ist Ring-Buffer mit 32 Save-Slots; jeder Save
+schreibt in den nächsten Slot, Header markiert „Current". Worst-Case 32k
+Save-Operationen vor Wear-Limit (Pico-2 XIP Flash spec ≥10k cycles/sector,
+also ~320k Saves total). Bei typ. 5 Saves/Tag → 175 Jahre Lifetime.
+
+### 12.5 Initial Boot State (T+0 bis T+1 s)
+
+Definierte Power-On-Sequenz, von Pico-Reset bis Audio-Ready:
+
+| t (ms) | Aktion |
+|---|---|
+| 0 | Pico-Boot, Pull-Downs halten AMP /SHDN + /MUTE LOW (silent) |
+| 0..50 | Firmware-Init: GPIO-Direction, I²C-Bus, MCP23017 + PCA9685 + OLED Init |
+| 50 | PCA9685 /OE bleibt HIGH (LEDs aus), OLED zeigt „Field Ambience v…" Splash |
+| 50..200 | Flash-Read: last Preset + last Drive/Brightness laden, Volume clamp auf 30 % |
+| 200 | Pop-Suppression-Sequenz §5 starten: /SHDN HIGH (Amp wakeup) |
+| 250 | /MUTE HIGH + PCM XSMT HIGH (Audio frei) — **aber Engine produziert noch silence** |
+| 250..750 | Engine startet mit Volume=0, fade-in auf User-Volume (30 %) über 500 ms linear |
+| 750 | OLED wechselt zu Home-Page, LED-Indikatoren spiegeln Mode-State (alle OFF) |
+| 750+ | Bereit für User-Interaktion |
+
+**Warum 500 ms Fade-in statt sofort hörbar**: vermeidet hörbaren Boot-Click
+auch wenn Hardware-Pop-Suppression perfekt ist (Engine-Initialisierung kann
+DC-Bias-Drift erzeugen während Voices allokiert werden).
+
+### 12.6 USB-Configuration-Mode (Optional, später)
+
+Aus §12 herausgehalten: USB-MIDI / WebUSB-Config / Serial-CLI sind Firmware-
+Aufgaben die nicht im Hardware-Vertrag stehen. Vermerk hier nur damit klar
+ist: alle USB-Funktionen laufen über den Pico-USB-Port (J7); kein zweiter
+USB-Connector geplant.
+
+---
+
+## 13. Soft-Shutdown-Sequenz (NEU r11, 2026-05-31)
+
+Trigger: Long-Press CLEAR (SW10) ≥3 s (siehe §12.1). Im Battery-Mode wichtig
+damit die Engine nicht durch Battery-Cutoff abrupt sterben muss
+(Audio-Click + Risk-of-Data-Loss).
+
+### 13.1 Sequenz (Pico-Firmware)
+
+| t (ms ab Trigger) | Aktion |
+|---|---|
+| 0 | LED10 startet 2 Hz Fast-Pulse (visuelle Shutdown-Confirmation) |
+| 0..500 | Engine: Voice-Fade-Out (linear gain → 0) über 500 ms |
+| 500 | PCM5102A XSMT (MCP-GPA5) LOW — DAC stumm |
+| 550 | PAM8403 /MUTE (GP28) LOW — Amp-Output muted |
+| 600 | PAM8403 /SHDN (GP27) LOW — Amp aus |
+| 650 | Flash-Save: aktueller Volume/Drive/Brightness/Preset-Slot-State |
+| 750 | OLED zeigt „SHUTDOWN" → Display-Power-Down-Command (SSD1322 Sleep) |
+| 800 | PCA9685 /OE HIGH (LEDs aus), aber LED10 noch 1 letzten Flash |
+| 900 | Pico geht in `__wfe()` Deep-Sleep — nur Wake via CLEAR-Re-Press-IRQ |
+
+### 13.2 Wake-Up-Pfad
+
+CLEAR-Re-Press triggert MCP23017-INTA → Pico-IRQ auf GP22 → Wake aus WFE.
+Firmware re-bootet komplett über `watchdog_reboot(0,0,0)` → §12.5 Initial-
+Boot-Sequenz greift. Begründung: vollständiger Re-Boot ist sicherer als
+inkrementelles Resume (Audio-Stack-State kann während Sleep degradiert sein).
+
+### 13.3 Hardware-Implikation
+
+**Keine Hardware-Änderung** zu r9. Soft-Shutdown nutzt ausschließlich
+existierende GPIO-Pfade (AMP /SHDN, /MUTE, PCM XSMT, PCA9685 /OE). Boost-
+Converter TPS61089 (r9) bleibt aktiv — wir schalten den nicht ab, weil
+sein EN-Pin nicht mit dem Pico verdrahtet ist (r9-Schaltung). Resultierender
+Sleep-Drain: ~5-8 mA (Pico WFE + TPS61089 quiescent + MCP23017 input-mode).
+Bei 5000 mAh ≈ 25-40 Tage Sleep-Lifetime — akzeptabel für Performance-Gerät.
+
+**Optional r13 (Future)**: TPS61089-EN-Pin auf Pico-GPIO oder MCP-GPIO legen
+für echten Zero-Drain-Sleep (<100 µA). Erfordert Re-Spin des Battery-Sheets,
+deshalb hier nicht im Scope.
+
+---
+
 **Ende v0.6.3-r3 Errata-Stand.** Siehe `PCB_TODO.md` für Item-Tracking.
