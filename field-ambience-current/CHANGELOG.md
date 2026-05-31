@@ -4,7 +4,79 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r11** (UX-Firmware-Contract + Soft-Shutdown). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r11 sind orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r10-LED** (Switch-MPN-Migration + Cell-HOLD-Status-LEDs + JLC-assembled). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r10-LED/r11 sind orthogonal zur Audio-Architektur.
+
+---
+
+## v0.6.3-r10-LED (2026-05-31) — Switch-MPN-Migration + 5× Cell-HOLD-LEDs (LED-Redesign)
+
+**Was**: Drei verbundene Änderungen, mit (1) als Treiber:
+
+1. **SW6-SW10 Switch-MPN-Migration**: weg von AliExpress-Generic-mit-LED
+   (r7) → hin zu **HX 12x12x7.3TPFT-B** (LCSC C36498966, JLC Extended,
+   29.840 pcs Stock, $0.029-0.048 je nach Qty). Plain 4-Pin SMD-Tactile,
+   **KEINE integrierte LED**. Custom-Footprint-Blocker r7-B1 fällt weg —
+   Industrie-Standard 12×12 SMD-4P Footprint.
+2. **LED-Bauform-Redesign**: LED6-LED10 (Modifier-Status) wandern von
+   THT-3mm-integriert → **SMD 0603 separat** über jedem Switch (Y=60).
+3. **5× neue Cell-HOLD-Status-LEDs LED11-LED15**: SMD 0603 über jeder Cell
+   (Y=88), zeigen Firmware-HOLD-State pro Cell. Geleitet via PCA9685 LED5-LED9
+   (waren reserve).
+
+**MPN-Verifikation (Fakten-basiert)**: User-MPN „TC-1212-7.3-260G" wurde
+gegen LCSC/JLC geprüft — **existiert nicht im jlcsearch-Stock**. Top-Kandidat
+aus aktuellem Stock-Such-Lauf: HX 12x12x7.3TPFT-B (C36498966, 29.840 pcs).
+Manufacturer „HX" = Chinese Generic ohne LCSC-Datasheet — Pad-Geometrie
+folgt Industrie-Standard für 12×12-SMD-4P (Package-Label „SMD-4P,11.8×11.8mm"
+bestätigt das). **r10-B8** als IMPORTANT (kein BLOCKER): entweder Standard-
+KiCad-Footprint `Button_Switch_SMD:SW_SPST_TL3342` direkt nutzen ODER
+1 Sample @ $0.05 vermessen.
+
+**SPEC-Änderungen**:
+- **§4 BOM SW6-SW10**: r7-Beschreibung → r10 (HX 12x12x7.3TPFT-B,
+  C36498966, JLC-assembled). User-Supplied-Item entfällt.
+- **§4 BOM NEU**: LED6-LED10 SMD 0603 (Modifier, ersetzt THT-3mm), LED11-LED15
+  SMD 0603 (Cell-HOLD, NEU), R_LED11-R_LED15 (390 Ω 0603, NEU).
+- **§4 BOM Total**: ~80 → ~90 SMT-Komponenten.
+- **§3 Power-Budget**: PCA9685+LEDs von „5×8 mA Worst = 45 mA" auf
+  „10×8 mA = 85 mA" hochgesetzt. Total Worst-Case 2.525 A → 2.565 A.
+  Polyfuse F1 3 A bleibt OK; Battery-Mode TPS61089-2 A-Cap unverändert relevant.
+- **§7 Footer MCP23017**: r10-Update vermerkt — SW6-10 jetzt plain 4-pin.
+- **§7.2 PCA9685 Kanal-Tabelle**: LED0-LED4 = Modifier (war r7), LED5-LED9 =
+  Cell-HOLD (NEU r10), LED10-LED15 = reserve (war LED5-LED15 reserve).
+- **§7.2 LED-Bauform-Note**: SMD 0603 separat oberhalb Switches statt
+  THT-integriert.
+- **§10 Risiken**: r7-B1 als RESOLVED markiert; neuer r10-B8 IMPORTANT
+  (downgrade), keine BLOCKER.
+
+**mechanical_coordinates.md**:
+- **§4a NEU**: 5× Cell-HOLD-Status-LEDs bei (X=Cell-X, Y=88) — in der 9-mm-
+  Lücke zwischen Cell-Cap-Top (Y=84) und OLED-Modul-Bottom (Y=93).
+- **§5 rewritten**: SW6-10 mit JLC-Standard-Footprint (`SW_SPST_TL3342`),
+  Custom-Footprint-Code-Block ersetzt durch Industrie-Standard-Beschreibung.
+  Separate Modifier-LEDs LED6-LED10 bei (X=SW-X, Y=60) ergänzt.
+
+**PCB_TODO.md**:
+- r7-B1 ✅ RESOLVED via r10.
+- NEU r10-B8 IMPORTANT (Pad-Geometrie-Verify) — kein BLOCKER.
+- NEU r10-B9 IMPORTANT (10× LED + 5× R_LED11-15 im KiCad-GUI ergänzen,
+  Generator-Script entsprechend updaten — schließt an r7-B3 an).
+
+**MEINE_TODO.md**: r7-Block revidiert (verweist auf r10), neuer r10-Block
+mit konkretem Sourcing + GUI-Schritten, r11-Hinweis ergänzt.
+
+**Begründung**: User-Decision in vorheriger Conversation-Iteration —
+„Momentary+LED ist UX-technisch sinnvoller, aber LEDs müssen nicht
+integriert sein, ganz kleine einzelne". Diese Architektur löst gleichzeitig
+das r7-B1 Custom-Footprint-Problem (Industrie-Standard-Footprint statt
+Custom + Sample-Mess-Pflicht) und ermöglicht Cell-HOLD-Visual-Feedback
+ohne extra IC (PCA9685 hatte 11 Kanäle reserve).
+
+**Files**: SPEC §3, §4, §7, §7.2, §10 (Edits, ~40 Zeilen netto +),
+mechanical_coordinates.md §4a (~25 Zeilen NEU) + §5 (rewrite, ~30 Zeilen Δ),
+PCB_TODO.md (r7-B1 RESOLVED, r10-B8 + r10-B9 NEU), MEINE_TODO.md (Block-Update),
+CHANGELOG (dieser Eintrag). Keine KiCad-Generator-Änderung in diesem Commit
+(separater Task r10-B9 / r7-B3).
 
 ---
 

@@ -241,14 +241,15 @@ zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 | PCM5102A DAC | 20 mA | 30 mA | 30 mA |
 | **PAM8403H @ 4Ω, 6W Out** | 80 mA | 600 mA | **1400 mA** |
 | Encoder + Status-LED | 5 mA | 15 mA | 25 mA |
-| **PCA9685 + 5× Modifier-LEDs** (5×8 mA peak @ 100% PWM) | 5 mA | 25 mA | **45 mA** |
-| **TOTAL** | **445 mA** | **1390 mA** | **2525 mA** |
+| **PCA9685 + 10× LEDs** (5× Modifier + 5× Cell-HOLD, je 8 mA peak @ 100% PWM) | 5 mA | 35 mA | **85 mA** |
+| **TOTAL** | **455 mA** | **1400 mA** | **2565 mA** |
 
-**Anmerkung r7**: 45 mA Worst-Case-Aufschlag fürs PCA9685 + 5 Modifier-LEDs
+**Anmerkung r10**: Aus r7 (5 Modifier-LEDs, +45 mA Worst-Case) wurde mit r10
+(5 Modifier + 5 Cell-HOLD = 10 LEDs) +85 mA Worst-Case. Differenz +40 mA. Das
 ändert die Polyfuse-Dimensionierung NICHT (F1 = 3 A hold, ~2.3 A derated bei
-50 °C; 2.525 A Worst-Case bleibt unter der Auslöseschwelle). Die LEDs werden
-typisch bei <40 % PWM-Duty betrieben (ambient look) → Typical ≈ +10 mA, nicht
-+25 mA.
+50 °C; 2.565 A Worst-Case bleibt unter Auslöseschwelle). LEDs werden typisch
+bei <40 % PWM-Duty betrieben → Typical ≈ +20 mA, nicht +40 mA. Battery-Mode
+TPS61089-2 A-Limit bleibt der relevantere Cap (siehe nächste Anmerkung).
 
 **Anmerkung r9 (Battery-Mode)**: TPS61089-Boost (siehe §2.2) liefert max 2 A
 @ 5 V. Worst-Case 2.525 A überschreitet das → **Volume-Begrenzung im Battery-
@@ -358,7 +359,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
 | SW1-SW5 | Kailh Choc V2 Hot-Swap Socket (5×, 2u Cells) | Nicht im JLC-Stock | Ja, von Keebio/Kailh |
-| **SW6-SW10** | **12×12×7.3 mm momentary tactile MIT integrierter LED, THT (Generic China, AliExpress „Momentary Touch LED 12*12*7.3mm")** | **Nicht im JLC-Stock — Variante γ: User-supplied** | **Ja, 5× in einheitlicher Farbe (warm-weiß / amber empfohlen, Vf typ. 2.0-2.2 V @ 5 mA). r7: Umstellung von latching Choc-Hotswap → momentary tactile + Firmware-State + LED-Statusanzeige (siehe §7.2). Custom-Footprint nötig, siehe `mechanical_coordinates.md` §5** |
+| **SW6-SW10** (r10) | **12×12×7.3 mm momentary tactile, plain (KEINE integrierte LED), SMD-4P. Top-Kandidat: HX 12x12x7.3TPFT-B (Mfr: HX). Pad-Pattern: 11.8×11.8 mm Body, 4 Pins gulwing.** | **C36498966 (LCSC) — JLC Extended, 29.840 pcs Stock, $0.029-0.048 je nach Qty** | **Nein (JLC-assembled). r10-B8 SOURCING-PASS noch offen: HX-Datasheet nicht bei LCSC verfügbar → entweder Sample-Vermessung oder Cross-Verify gegen Standard-12×12-SMD-4P-Footprint. Industrie-Standard für 12×12 SMD-Tactile ist 6.5 × 4.5 mm Pad-Raster mit 1.0×1.5 mm Pads. WICHTIG r10: LEDs sind separat (LED6-LED10, SMD 0603, siehe unten + §7.2).** |
 | STAB1-5 | Kailh 2u Choc V2 Stabilizer (CPG1353G24D01) | Nicht im JLC-Stock | 5× von Keebio |
 | SW11 | Reset Tactile 6mm SMD | Generic SMD | JLC Standard |
 | **SW12** | **BOOTSEL Tactile 6mm SMD** | Generic SMD | **NEU: dedizierter BOOTSEL-Button für Pico-Flash** |
@@ -372,14 +373,24 @@ Footprint-Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_2.
 V1V2 (statt V2-spezifisch) gewählt, weil es V1+V2 Alignment-Löcher bohrt →
 Hot-Swap nimmt jede Choc-Generation.
 
-**Footprint-Hinweis r7 (SW6-10)**: Die 12×12×7.3 Generic-China-Tactile-mit-LED
-hat **keinen Standard-Footprint** in KiCad. Custom-Footprint im Projekt-PCB-Lib
-nötig: 6 Pin-Pads (4× Switch in 6.5×4.5 mm Raster + 2× LED-Anode/Kathode), siehe
-`mechanical_coordinates.md` §5 für exakte Pad-Geometrie. Vor PCB-Fertigung
-**zwingend gegen den real bestellten AliExpress-Part vermessen** — Pin-Pitches
-variieren zwischen China-Herstellern. Symbol: `Switch:SW_Push` für Switch-Teil
-+ `Device:LED` für LED-Teil (als zwei Symbole im Schematic, Refs `SW6/LED6`,
-`SW7/LED7`, ... `SW10/LED10`).
+**Footprint-Hinweis r10 (SW6-10)**: SW6-10 sind ab r10 **plain 4-pin
+SMD-Tactile** (HX 12x12x7.3TPFT-B, C36498966). Footprint:
+`Button_Switch_SMD:SW_SPST_TL3342` (KiCad-Standard für 12×12 SMD-4P-Familie)
+oder Custom-Footprint mit 6.5×4.5 mm Pad-Raster, 1.0×1.5 mm Pads — beides ist
+JLC-Standard und KEIN Custom-Footprint-Blocker mehr (r7-B1 → downgraded zu
+r10-B8 Sourcing-/Pad-Verify ohne Schalter-Spezial-Mess-Pflicht).
+
+LEDs SW6-10 sind ab r10 SEPARATE SMD-0603-LEDs **über** jedem Switch
+(LED6-LED10 bei Y=60, X = SW-X). Cell-HOLD-Status nutzt **5 weitere
+SMD-0603-LEDs** über jeder Cell (LED11-LED15 bei Y=88, X = Cell-X). Alle
+10 LEDs hängen an PCA9685 LED0-LED9 (siehe §7.2 Kanal-Tabelle).
+
+Symbol: `Switch:SW_Push` für SW6-10 (Switch-Teil) + 10× `Device:LED` (für
+LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
+- JLC-Standard-Footprint statt Custom → r7-B1 Custom-Footprint-Blocker fällt weg
+- Full-JLC-Assembly für SW + LEDs möglich → kein User-Supplied-Item mehr für Switches
+- LED-Helligkeit/Farbe pro Kanal in BOM frei wählbar (SMD-0603 in beliebigen Farben verfügbar)
+- Bessere visuelle Hierarchie: LED neben Switch ist klarer ablesbar als „LED-im-Switch-Body"
 
 ### Line-Out / Kopfhörer (v0.7)
 
@@ -402,6 +413,7 @@ variieren zwischen China-Herstellern. Symbol: `Switch:SW_Push` für Switch-Teil
 | **R20** | **10 kΩ 0603 (MCP23017 INTA pull-up zu +3V3)** | **1 NEU** |
 | **R_RUN** | **10 kΩ 0603 (Pico RUN pull-up zu +3V3, Reset-Stabilität)** | **1** |
 | **R_LED6-R_LED10** | **390 Ω 0603 (Modifier-LED-Series, je 1× pro LED, dimensioniert für Vf≈2.1 V @ 5 mA @ +5 V Rail: (5-2.1)/5mA = 580 Ω, aber PCA9685-Output sinkt nach +5V → wir nutzen den IC als open-drain Sink mit 5 V Pull-Up am LED-Anoden-Bein; 390 Ω für ~7.5 mA Peak)** | **5 NEU r7** |
+| **R_LED11-R_LED15** | **390 Ω 0603 (Cell-HOLD-LED-Series, je 1× pro Cell-LED, identische Dimensionierung wie R_LED6-10)** | **5 NEU r10** |
 | **R_OE** | **10 kΩ 0603 (PCA9685 /OE pull-up zu +3V3, default-disabled bis Firmware enabled)** | **1 NEU r7** |
 | R_VOL_L/R | 10 kΩ 0603 (PAM8403 input series) | 2 |
 | C_BULK | 1000 µF Alu-Elko SMD | 1 |
@@ -417,8 +429,10 @@ variieren zwischen China-Herstellern. Symbol: `Switch:SW_Push` für Switch-Teil
 | D1 | USBLC6-2SC6 ESD (USB-C D+/D−) | 1 |
 | **D2** | **SMAJ5.0A TVS auf +5V am Pi-Header** | **1 NEU** |
 | LED1 | Status LED 0805 warm white | 1 |
+| **LED6-LED10** (r10) | **SMD 0603 Modifier-Status-LEDs, warm-weiß / amber Vf≈2.0-2.2 V (Generic JLC, z.B. C2286 Yellow oder C72043 Warm-White). Position: über jedem Modifier-Switch (Y=60). PCA9685 LED0-LED4** | **5 NEU r10** |
+| **LED11-LED15** (r10) | **SMD 0603 Cell-HOLD-Status-LEDs, identisch zu LED6-LED10 (gleiche Farbe für visuelle Konsistenz). Position: über jeder Cell (Y=88) zwischen Cell-Cap-Top und OLED-Bottom. PCA9685 LED5-LED9** | **5 NEU r10** |
 
-**Total: ~80 SMT-Komponenten** (r7: +9, r9-Battery: +14 = U7+U8+Q1+L1+D3+J9+R21-24+4 Caps+LED_CHRG+R_CHRG) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 momentary tactile mit LED (User-supplied, hand-soldered), **+ BAT1 LiPo 5000 mAh user-supplied**.
+**Total: ~90 SMT-Komponenten** (r7: +9, r9-Battery: +14, r10: +10 LEDs + 5 R_LED11-15) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 plain SMD-Tactile (HX 12x12x7.3TPFT-B, JLC-assembled), **+ BAT1 LiPo 5000 mAh user-supplied**. **r10: 5× Modifier-Switches gehen von „User-supplied hand-soldered" zu „JLC-assembled" — Custom-Footprint-Blocker r7-B1 ist weg.**
 
 ---
 
@@ -551,6 +565,12 @@ der Firmware**, sichtbar via die zugehörigen LEDs (PCA9685, siehe §7.2). Das
 ermöglicht Preset-State-Recall (Snapshot setzt Firmware-Var → PCA9685-Kanal
 geht passend an/aus) ohne physisch widersprechenden Switch.
 
+**Update r10**: SW6-SW10 sind ab r10 **plain 4-pin SMD-Tactile** (KEINE
+integrierte LED mehr). Status-Anzeige läuft über separate SMD-0603-LEDs
+über jedem Switch (siehe §7.2 + `mechanical_coordinates.md` §5). Vorteile:
+JLC-Standard-Footprint statt Custom (r7-B1 BLOCKER → downgraded zu r10-B8
+Sourcing-Pass), full-JLC-Assembly möglich, kleinere/cleanere LED-Optik.
+
 ---
 
 ## 7.2. PCA9685 LED-Driver Konfiguration (NEU r7)
@@ -567,16 +587,27 @@ PWM-Register initialisiert sind (kein Aufblitzen beim Boot).
 
 **EXTCLK (Pin 25)**: NC. Interner 25 MHz Oscillator wird genutzt.
 
-**LED-Kanal-Belegung:**
+**LED-Kanal-Belegung (erweitert r10 — 5 Cell-HOLD-Status-LEDs hinzu):**
 
 | PCA9685 LEDn | Funktion | LED-Ref | Switch-Ref | LED-Anzeige-Logik |
 |---|---|---|---|---|
-| LED0 | LED6 SHIFT | LED6 | SW6 | An solange Taster gedrückt (Modifier-Anzeige) |
-| LED1 | LED7 HOLD | LED7 | SW7 | An = HOLD-Mode aktiv (Firmware-Toggle) |
-| LED2 | LED8 DRONE | LED8 | SW8 | An = Drone spielt (Firmware-Toggle), sanfter Fade |
-| LED3 | LED9 GENERATE | LED9 | SW9 | An = Generative-Mode aktiv (Firmware-Toggle) |
-| LED4 | LED10 CLEAR | LED10 | SW10 | Flash ~200 ms beim Press als Confirmation |
-| LED5-LED15 | Reserve | — | — | 11 Kanäle frei für Future (Cell-Backlight etc.) |
+| LED0 | Modifier SHIFT | LED6 | SW6 | An solange Taster gedrückt (Modifier-Anzeige) |
+| LED1 | Modifier HOLD | LED7 | SW7 | An = HOLD-Mode aktiv (Firmware-Toggle) |
+| LED2 | Modifier DRONE | LED8 | SW8 | An = Drone spielt (Firmware-Toggle), sanfter Fade |
+| LED3 | Modifier GENERATE | LED9 | SW9 | An = Generative-Mode aktiv (Firmware-Toggle) |
+| LED4 | Modifier CLEAR | LED10 | SW10 | Short-Press: 200 ms Flash. Long-Press-Hold: 0.5 Hz Pulse (§12.1) |
+| **LED5** | **Cell-HOLD CELL1** | **LED11** | **SW1** | **An = Cell1 ist HOLD-aktiv (Drone sustaining)** |
+| **LED6** | **Cell-HOLD CELL2** | **LED12** | **SW2** | **An = Cell2 HOLD-aktiv** |
+| **LED7** | **Cell-HOLD CELL3** | **LED13** | **SW3** | **An = Cell3 HOLD-aktiv** |
+| **LED8** | **Cell-HOLD CELL4** | **LED14** | **SW4** | **An = Cell4 HOLD-aktiv** |
+| **LED9** | **Cell-HOLD CELL5** | **LED15** | **SW5** | **An = Cell5 HOLD-aktiv** |
+| LED10-LED15 | Reserve | — | — | 6 Kanäle frei für Future |
+
+**LED-Bauform-Änderung (r10)**: alle 10 Anzeige-LEDs sind **SMD 0603**, NICHT
+mehr THT 3 mm und NICHT mehr im Switch-Body integriert. Position: über jedem
+Switch-Body. Modifier-LEDs (LED6-LED10) bei Y=60 (über jedem Modifier bei Y=50),
+Cell-HOLD-LEDs (LED11-LED15) bei Y=88 (in der 9 mm-Lücke zwischen Cell-Cap-Top
+Y=84 und OLED-Modul-Bottom Y=93). Siehe `mechanical_coordinates.md` §4a + §5.
 
 **Schaltung pro LED-Kanal** (open-drain Sink-Konfiguration):
 - LED-Anode → R_LEDn (390 Ω 0603) → **+5 V**
@@ -770,7 +801,8 @@ dedizierter Kopfhörer-Amp (TPA6132 o.ä.) besser — v0.8-Option.
 - **Pico 2 Mounting**: (a) SMD-castellated reflow, (b) Pin-Header THT (Recommended für Prototyp), (c) reflow mit Hand-Heißluft
 - **Choc V2 Stabilizer Mounting**: Plate-Mount Standard, Top-Plate-Cutouts entsprechend designen
 - **Pi Zero 2 W Connection**: 40-pin GPIO Header durchgesteckt → Pi liegt auf der Unterseite unseres PCB
-- **r7 BLOCKER: 12×12×7.3 Modifier-Switch Pin-Pitch** — AliExpress-Generic-Part hat keinen einheitlichen Datasheet-Standard. Vor Custom-Footprint-Finalize: 1 Stück bestellen, Pins auf Millimeter-Papier vermessen, dann Footprint im PCB-Layout fixieren. Pin-Pitch-Annahme im SPEC: 6.5 × 4.5 mm (Standard für die Generic-12×12-Familie) — verifizieren!
+- **r7-B1 BLOCKER → r10 RESOLVED**: r7 forderte Vermessung des AliExpress-Generic-Custom-Footprints. Mit r10 (plain 4-pin SMD-Tactile, HX 12x12x7.3TPFT-B / C36498966 als Top-Kandidat aus JLC Extended) ist der Custom-Footprint weg → r10-B8 ist nur noch Sourcing-Pad-Standard-Verify, kein BLOCKER mehr.
+- **r10-B8 IMPORTANT**: HX 12x12x7.3TPFT-B Pad-Geometrie gegen Industrie-Standard-12×12-SMD-4P (6.5×4.5 mm Raster, 1.0×1.5 mm Pads) cross-checken. Datasheet bei LCSC nicht verfügbar → entweder Sample-Vermessung (1 Stk @ $0.05) oder Pad-Pattern aus jlcsearch-Footprint-Library ziehen wenn dort hinterlegt. KEIN Custom-Footprint-Erstellungsaufwand mehr nötig.
 - **r7 OFFEN: PCA9685 Symbol-Pin-Map** — `Driver_LED:PCA9685PW` aus KiCad-Standard-Lib gegen NXP-Datasheet (PCA9685 Rev. 4, S.6) verifizieren (28 Pins, alle 16 LED-Outputs + I²C + /OE + EXTCLK + VDD/GND + A0..A5)
 
 ### Was v0.6.3-r3 ZUSÄTZLICH adressiert hat (siehe Errata-Historie oben)

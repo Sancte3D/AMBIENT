@@ -13,14 +13,35 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ---
 
-## 🔴 BLOCKER für PCB-Layout (r7-spezifisch, 2026-05-31)
+## 🔴 BLOCKER für PCB-Layout (r7/r10-spezifisch, 2026-05-31)
 
-### r7-B1: 12×12×7.3 Modifier-Switch Pin-Pitch verifizieren
-**Status**: 🔴 BLOCKER. AliExpress-Generic-Parts haben keinen herstellergemein-
-samen Pin-Pitch-Standard. SPEC nimmt 6.5×4.5 mm Switch-Raster + ~8 mm zum
-LED-Pin-Paar an — muss vor PCB-Layout am real bestellten Part vermessen werden.
-**Action**: 1 Stück bestellen (Lieferzeit ~3-4 Wochen), Messschieber, dann
-Custom-Footprint in `kicad/libraries/field_ambience.pretty/` final fixieren.
+### r7-B1: 12×12×7.3 Modifier-Switch Pin-Pitch verifizieren — RESOLVED durch r10
+**Status**: ✅ RESOLVED via r10. r7 forderte Vermessung eines AliExpress-
+Generic-Custom-Footprints. Mit r10 wechseln SW6-SW10 auf **HX 12x12x7.3TPFT-B**
+(C36498966, JLC Extended, 29.840 pcs Stock) — plain 4-pin SMD-Tactile mit
+Industrie-Standard-12×12-Footprint. Kein Custom-Footprint, kein Sample-
+Vermessen mehr nötig. **Verbleibende Verifikation jetzt unter r10-B8**.
+
+### r10-B8: HX-Switch Pad-Geometrie verifizieren (downgraded von r7-B1)
+**Status**: 🟠 IMPORTANT (kein PCB-Layout-Blocker mehr). HX 12x12x7.3TPFT-B
+Datasheet ist bei LCSC nicht hinterlegt. Industrie-Standard für 12×12 SMD-4P
+ist seit 2010er Jahren stabil (6.5×4.5 mm Pad-Raster, 1.0×1.5 mm Pads), und
+das Package-Label „SMD-4P,11.8×11.8mm" matcht den Standard. Optionen:
+(1) Standard-KiCad-Footprint `Button_Switch_SMD:SW_SPST_TL3342` 1:1 nehmen — **empfohlen**,
+(2) 1 Sample @ $0.05 bestellen + Caliper-Vermessung als Sicherheits-Pass,
+(3) Alternative mit verfügbarem Datasheet wählen (z.B. KH-12X12X7H-SMT
+C18186471, 328 pcs Stock — weniger, aber Datasheet wahrscheinlicher).
+
+### r10-B9: 10× SMD-0603-LEDs + 5× R_LED11-15 ins Schematic + PCB
+**Status**: 🟠 IMPORTANT (vor PCB-Layout zu erledigen). Mit r10 sind 5
+zusätzliche Cell-HOLD-Status-LEDs (LED11-LED15) hinzugekommen, plus die 5
+Modifier-LEDs (LED6-LED10) wandern von THT-integriert auf SMD-0603-separate.
+**Action im KiCad-GUI**:
+- 10× `Device:LED` Symbole hinzufügen (LED6-LED15), Footprint `LED_SMD:LED_0603_1608Metric`
+- 5× R_LED11-15 (390 Ω 0603) hinzufügen, identisch zu R_LED6-10
+- PCA9685-Verbindungen: LED0-LED4 → LED6-LED10 (Modifier, schon im Schematic seit r7), LED5-LED9 → LED11-LED15 (Cell-HOLD, NEU r10)
+- Positionen aus `mechanical_coordinates.md` §4a + §5 ins PCB-Layout übernehmen
+- Generator-Script `kicad/generate_kicad_project.py` entsprechend updaten (siehe r7-B3 unten)
 
 ### r7-B2: PCA9685 Symbol-Pin-Map verifizieren
 **Status**: 🟠 IMPORTANT. `Driver_LED:PCA9685PW` aus KiCad-Standard-Lib gegen

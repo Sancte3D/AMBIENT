@@ -5,20 +5,32 @@ Schaltplan ist fertig + validiert, Stückliste mit der SPEC abgeglichen.
 Was hier steht, muss **ich selbst** in der KiCad-GUI / am CAD / beim Bestellen
 machen — das kann Claude headless nicht erledigen.
 
-> 🆕 **r7 (2026-05-31)**: Modifier-Switches SW6-10 umgestellt auf
-> **12×12×7.3 mm momentary tactile mit integrierter LED** (AliExpress) +
-> **PCA9685 PWM-LED-Driver** (LCSC C2678753, JLC Extended) für LED-Status-
-> anzeige. Custom-Footprint nötig — vor PCB-Layout:
-> 1. 5× Switches bei AliExpress bestellen („Momentary Touch LED 12×12×7.3 mm")
-> 2. Pin-Pitch mit Messschieber auf 0.1 mm vermessen (SPEC nimmt 6.5×4.5 mm an)
-> 3. Custom-Footprint in `kicad/libraries/field_ambience.pretty/` finalisieren
-> 4. Im KiCad-GUI: U6 PCA9685 hinzu (`Driver_LED:PCA9685PW` + TSSOP-28-Footprint),
->    LED6-10 (`Device:LED` THT 3 mm), R_LED6-10 (390 Ω), R_OE (10 kΩ),
->    C_PCA_VDD (10 µF), C_PCA_VDD_HF (100 nF).
-> 5. I²C1 SDA/SCL Net zum PCA9685 routen (Adresse 0x40).
->
-> Siehe `field_ambience_pcb_SPEC_v0.6.md` §7.2 und §4 für Details,
-> `mechanical_coordinates.md` §5 für Pad-Geometrie.
+> 🆕 **r7 (2026-05-31, REVISED durch r10)**: Modifier-Switches SW6-10 als
+> momentary tactile mit Firmware-State + PCA9685 LED-Status. **r10 änderte
+> Switch-Sourcing**: weg von AliExpress mit integrierter LED → hin zu
+> **HX 12x12x7.3TPFT-B** (LCSC C36498966, JLC Extended, plain 4-pin SMD,
+> 29.840 pcs Stock). Separate SMD-0603-LEDs über jedem Button. Custom-Footprint
+> entfällt — Industrie-Standard-Footprint. Siehe r10-Block weiter unten.
+
+> 🆕 **r10 (2026-05-31) — LED-Redesign + Cell-HOLD-Status-LEDs**:
+> 1. **SW6-10 sourcing**: HX 12x12x7.3TPFT-B (C36498966, JLC Extended,
+>    $0.029-0.048 je nach Qty). Full-JLC-assembled, kein User-Supplied mehr.
+> 2. **5× neue SMD-0603-LEDs** (LED11-LED15) über jeder Cell für HOLD-Status —
+>    bei (X=Cell-X, Y=88). Plus 5× LED6-LED10 als separate SMD-0603 über jedem
+>    Modifier-Switch (X=SW-X, Y=60). Alle 10 LEDs an PCA9685 LED0-LED9.
+> 3. **5× neue R_LED11-15** (390 Ω 0603) identisch zu R_LED6-10.
+> 4. **Im KiCad-GUI**: 10× `Device:LED` Symbole + 5 neue R_LED11-15 ergänzen
+>    (Generator-Update in `kicad/generate_kicad_project.py`). PCA9685-Routing:
+>    LED0-LED4 → LED6-LED10, LED5-LED9 → LED11-LED15.
+> 5. **Optional Mechanik**: 10× 3×3 mm Front-Plate-Cutouts ODER 2-mm-Light-Pipes
+>    pro LED — siehe `mechanical_coordinates.md` §4a + §5.
+> 6. **r10-B8 SOURCING-PASS**: HX-Datasheet nicht bei LCSC; entweder
+>    Standard-Footprint `Button_Switch_SMD:SW_SPST_TL3342` (empfohlen, 12×12-
+>    Industrie-Standard) oder 1 Sample-Vermessung @ $0.05.
+
+> 🆕 **r11 (2026-05-31) — Soft-Shutdown (reines Firmware-Contract)**:
+> Long-Press CLEAR (≥3 s) triggert Save-State + Audio-Fade + AMP/MUTE/SHDN-
+> Sequenz + Pico-WFE. Keine Hardware-Änderung. Siehe SPEC §13.
 
 > 🆕 **r7.1 (2026-05-31)** — USB-C-Premium-Upgrade (PCB-Mechanik):
 > Für die Produktions-Charge JAE DX07S016JJ1 oder Amphenol-Equivalent prüfen

@@ -80,67 +80,105 @@ zusätzlich zur Switch-Position: je 5.95 mm links und rechts vom Switch-Center
 
 ---
 
-## 5. Modifier-Switches SW6-SW10 (12×12×7.3 mm momentary tactile MIT LED, r7)
+## 4a. Cell-HOLD-Status-LEDs LED11-LED15 (NEU r10)
 
-5 Switches in horizontaler Reihe. **r7-Wechsel**: weg von Kailh Choc V2
-Hot-Swap (1u, latching-Caps) → hin zu 12×12×7.3 mm momentary tactile mit
-integrierter LED (Generic China / AliExpress „Momentary Touch LED"). State
-lebt in Firmware, LED zeigt Zustand (siehe SPEC §7.2).
+5 SMD-0603-LEDs, je eine über jeder Cell. Sichtbarer Indikator dass Cell N im
+HOLD-Modus sustained spielt (Firmware-State, gespeist via PCA9685 LED5-LED9).
 
-| Switch | X (Mitte) | Y (Mitte) | Label | LED-Ref |
+| LED | X (Mitte) | Y (Mitte) | Funktion | PCA9685-Kanal |
 |---|---|---|---|---|
-| SW6 (SHIFT) | 95 mm | 50 mm | | LED6 (Anode unter Switch) |
-| SW7 (HOLD) | 120 mm | 50 mm | | LED7 |
-| SW8 (DRONE) | 145 mm | 50 mm | | LED8 |
-| SW9 (GENERATE) | 170 mm | 50 mm | | LED9 |
-| SW10 (CLEAR) | 195 mm | 50 mm | | LED10 |
+| LED11 (CELL1 HOLD) | 67.5 mm | 88 mm | über SW1 | LED5 |
+| LED12 (CELL2 HOLD) | 105 mm | 88 mm | über SW2 | LED6 |
+| LED13 (CELL3 HOLD) | 142.5 mm | 88 mm | über SW3 | LED7 |
+| LED14 (CELL4 HOLD) | 180 mm | 88 mm | über SW4 | LED8 |
+| LED15 (CELL5 HOLD) | 217.5 mm | 88 mm | über SW5 | LED9 |
+
+**Y=88 Begründung**: Cells bei Y=75 mit 2u-Cap-Profil (Höhe ~18 mm) belegen
+Y=66..84. OLED-Modul-Bottom bei Y=93. Die 9 mm-Lücke Y=84..93 ist freie
+Front-Plate-Zone — LED bei Y=88 ist mittig in dieser Lücke, ungeniert sichtbar
+beim Cell-Spielen ohne dass die Hand sie verdeckt.
+
+**Top-Plate-Cutout pro LED**: 3 × 3 mm transparentes Fenster ODER 2-mm-Bohrung
+mit Light-Pipe (1.5 mm Acrylstab). Erste Iteration: Bohrung-Variante (einfacher
+Fabrikations-Schritt).
+
+**Pad-Geometrie**: SMD-0603-Standard, 0.95×1.0 mm Pads, 0.8 mm Spacing.
+Footprint: `LED_SMD:LED_0603_1608Metric`. R_LED11-15 (390 Ω 0603) sitzt
+direkt neben jeder LED auf der PCB (≤2 mm Distanz für saubere LED-Anode-
+Routing).
+
+---
+
+## 5. Modifier-Switches SW6-SW10 (12×12×7.3 mm plain SMD-Tactile, r10)
+
+5 Switches in horizontaler Reihe. **r10-Wechsel**: weg vom AliExpress-Generic
+mit integrierter LED (r7) → hin zu **HX 12x12x7.3TPFT-B** (LCSC C36498966)
+JLC Extended SMD-Tactile mit **4 Pins, KEINE integrierte LED**. State lebt
+in Firmware, LED zeigt Zustand über **separate SMD-0603-LEDs** direkt über
+jedem Switch (siehe LED-Tabelle unten + SPEC §7.2).
+
+| Switch | X (Mitte) | Y (Mitte) | Label | LED-Ref (r10) | LED X/Y |
+|---|---|---|---|---|---|
+| SW6 (SHIFT) | 95 mm | 50 mm | | LED6 (SMD 0603) | 95 / 60 |
+| SW7 (HOLD) | 120 mm | 50 mm | | LED7 | 120 / 60 |
+| SW8 (DRONE) | 145 mm | 50 mm | | LED8 | 145 / 60 |
+| SW9 (GENERATE) | 170 mm | 50 mm | | LED9 | 170 / 60 |
+| SW10 (CLEAR) | 195 mm | 50 mm | | LED10 | 195 / 60 |
 
 Spacing: 25 mm Mitte-zu-Mitte (bleibt) → 13 mm Lücke zwischen 12 mm
 Switch-Bodies (ergonomisch erreichbar mit Daumen während Cell-Spiel).
 
-**Top-Plate-Cutout**: **12.5 × 12.5 mm** pro Switch (war 14×14 für Choc-Caps).
-Das Cap des Tactile-Switches sitzt direkt im Cutout; Plate-Dicke bestimmt
-Cap-Travel-Höhe.
+**LED-Y=60 Begründung**: Modifier-Switch-Body bei Y=50 erstreckt sich Y=44..56
+(12 mm Body). LED bei Y=60 sitzt 4 mm über der Body-Oberkante — direkt
+sichtbar, kein Konflikt mit Switch-Mechanik. Y=60 liegt unter Cell-Cap-Bottom
+(Y=66) → kein Cell-Konflikt.
+
+**Top-Plate-Cutout pro Switch**: **12.5 × 12.5 mm** für Cap. Plus pro LED:
+3×3 mm transparentes Fenster oder 2-mm-Light-Pipe-Bohrung (gleiche Bauweise
+wie Cell-LEDs §4a).
 
 **Switch-Höhe ab PCB**: 7.3 mm Body + ~3-5 mm Cap = 10.3-12.3 mm. Liegt im
-bestehenden 15 mm-Component-Height-Budget (Y=40..90, siehe §9).
+bestehenden 15 mm-Component-Height-Budget.
 
-**Custom-Footprint** (im Projekt-PCB-Lib, NICHT in KiCad-Standard):
+**Footprint** (JLC-Standard, KEIN Custom mehr — r7-B1 RESOLVED):
 
 ```
         Top View (Switch, viewed from above PCB)
         
-        ┌─────────────────────────┐  ← 12.0 mm × 12.0 mm Body
+        ┌─────────────────────────┐  ← 11.8 × 11.8 mm Body
         │  ●1              ●4     │
         │                         │
         │       (plunger)         │  ← Square plunger, ~5×5 mm,
         │                         │      nimmt custom caps auf
         │  ●2              ●3     │
         │                         │
-        │   ✦LED+        ✦LED-    │  ← LED-Anode/Kathode (Pin 5/6)
         └─────────────────────────┘
+
+        Pad-Raster (Industrie-Standard 12×12 SMD-4P):
+        - Pins 1↔2 vertikal: 4.5 mm
+        - Pins 1↔4 / 2↔3 horizontal: 6.5 mm
+        - Pad-Größe SMD: 1.0 × 1.5 mm (Gull-Wing-Lötfläche)
 ```
 
-Pin-Pitch-**Annahme** (verifizieren mit realem AliExpress-Part vor Footprint-
-Finalize!):
-- Switch-Pins (1↔2, 3↔4 sind je intern verbunden, 1+2 ↔ 3+4 ist das Switch-
-  Element): **Raster 6.5 mm horizontal × 4.5 mm vertikal**
-- LED-Pins (5 = Anode, 6 = Kathode): **Raster ~5 mm horizontal**, ca. 8 mm
-  vertikal unterhalb der Switch-Pins
-- Pad-Größe: 1.4 mm Bohrung, 2.4 mm Ring (THT Standard für 1.0 mm Pin-Dicke)
+**Pin-Verdrahtung**: Pin 1+2 sind intern eine Seite, Pin 3+4 die andere.
+Schalt-Element ist 1+2 ↔ 3+4. Im Schematic: Pin 1 → MCP23017 GPB(n-6),
+Pin 3 → GND. Pin 2, Pin 4 = NC (oder parallel zum Schalt-Partner für
+Redundanz).
 
-**r7 BLOCKER**: AliExpress-Generic-Parts haben KEINEN herstellergemeinsamen
-Pin-Pitch-Standard. Vor PCB-Layout-Freigabe:
-1. 1 Stück bestellen (Lieferzeit ~3-4 Wochen)
-2. Pins mit Messschieber vermessen (0.1 mm Genauigkeit)
-3. Custom-Footprint in `kicad/libraries/field_ambience.pretty/` final fixieren
-4. ERST DANN PCB-Routing finalisieren
+**LED-Schaltung pro Switch (separat, NICHT mehr integriert)**:
+- LED6-LED10 SMD-0603 (Anode → R_LEDn 390 Ω → +5 V; Kathode → PCA9685 LED0-LED4)
+- R_LED6-10 (390 Ω 0603) direkt neben jeder LED platziert, ≤2 mm Distanz
 
-Verkabelung pro Switch im Schematic:
-- Switch-Pin 1+2 → MCP23017 GPB(n-6) (mit internem Pull-Up)
-- Switch-Pin 3+4 → GND
-- LED-Anode (Pin 5) → R_LEDn (390 Ω) → +5 V
-- LED-Kathode (Pin 6) → PCA9685 LEDn-Output (open-drain Sink)
+**r10-B8 SOURCING-PASS noch offen**: HX 12x12x7.3TPFT-B Datasheet nicht bei
+LCSC verfügbar. Standard-12×12-SMD-4P-Footprint sollte stimmen, aber vor
+PCB-Layout-Freigabe entweder:
+1. 1 Sample bestellen ($0.05) und Pin-Pitch mit Caliper auf 0.1 mm verifizieren, ODER
+2. JLC LCSC-API einen alternativen MPN mit verfügbarem Datasheet finden (z.B. KH-12X12X7H-SMT C18186471, $0.055, 328 pcs Stock — weniger Stock aber Datasheet potentiell vorhanden), ODER
+3. Standard-KiCad-Footprint `Button_Switch_SMD:SW_SPST_TL3342` 1:1 nehmen (12×12-Industrie-Standard).
+
+Empfehlung: (3) — Industrie-Standard ist seit 2010er-Jahren stabil, und HX
+übernimmt nachweislich diesen Footprint (Package-Bezeichnung jlcsearch:
+„SMD-4P,11.8×11.8mm" matcht Standard).
 
 ---
 
