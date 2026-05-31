@@ -4,7 +4,35 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.8** (BOM↔Schematic-Reconcile: +5V-Rail-HF-Decoupling C1/C2).
+Aktuelle Rev: **v0.9** (Pi-frei: Audio-Engine nativ auf RP2350, Pi entfernt).
+
+---
+
+## v0.9 (2026-05-30) — Pi-frei-Transition (Schaltplan, Step 6 von 12)
+
+Teil der nativen Portierung (`NATIVE_PORT_PLAN.md`). Nachdem die C-Firmware
+auf dem RP2350 Display, Buttons, Encoder und **I²S-Audio** (Step 1–5) selbst
+beherrscht, fällt der Raspberry Pi Zero 2 W aus dem Gerät.
+
+**Schaltplan-Änderungen (`generate_kicad_project.py`):**
+- `pi.kicad_sch` (Sheet 7, Pi-Header) **gelöscht**; aus kicad_pro-Sheetliste + Root entfernt.
+- **5 Bauteile raus**: J2 (40-pin Pi-Header), R1 (UART-RX-Serie), R_BCK/R_LRCK/R_DOUT
+  (Pi-seitige I²S-Serien-R). Reale Bauteilzahl **97 → 92**.
+- GP0/GP1/GP4 im Pico-Sheet von UART/MISO → **I²S_BCK/LRCK/DOUT** umgewidmet
+  (RP2350 PIO-I²S-Master). Root-Sheet brückt Pico-I²S-Outputs → Audio-Sheet-Inputs.
+- D2 (SMAJ5.0A TVS) **bleibt** — sitzt auf der +5V-Hauptschiene (nicht am Pi),
+  dient weiter als allgemeiner Rail-Surge-Schutz.
+
+**Verifikation:** Generator regeneriert sauber, alle Sheets paren-balanced,
+entfernte Nets (PICO_TX_PI_RX/PI_TX_PICO_RX/OLED_MISO_NC) verschwunden,
+I²S-Nets durchgehend Pico→Root→Audio. kicad-happy-Analyzer: 6 VM-001-Blocker,
+**alle die bekannte False-Positive-Klasse** (Pico-VBUS-Pin → Heuristik tagged
+GPIOs als 5V; real GP0/1/4 @ 3V3 → PCM5102A @ 3V3, kein Level-Shifter nötig).
+Warnings 19 → 16. GUI-ERC (B3) bleibt maßgeblich.
+
+**Folge-Arbeit (offen):** SPEC §1/§3 (Architektur-Diagramm, Power-Budget mit
+Pi-Zeile) sind noch Pi-zentrisch → SPEC-v0.9-Überarbeitung; Power-Budget sinkt
+~700 mA, F1 darf optional kleiner werden.
 
 ---
 

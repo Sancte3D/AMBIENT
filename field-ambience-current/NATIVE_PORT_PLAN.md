@@ -17,8 +17,14 @@ Das sind die Teile, die aus der Stückliste verschwinden:
 |---|---|---|
 | **Pi Zero 2 W** | Linux-Audio-Host | Nicht mehr nötig — RP2350 macht alles |
 | **J2** | 40-pin 2×20 GPIO-Header | War nur dafür da, den Pi aufzustecken |
-| **D2** | SMAJ5.0A TVS auf +5V am Pi-Header | Schutz gegen Pi-WLAN-Spikes — fällt mit dem Pi weg |
+| **R1** | 1 kΩ UART-RX-Serien-R | UART zum Pi entfällt |
 | **R_BCK · R_LRCK · R_DOUT** | 3× 33 Ω I²S-Serien-R auf Pi-Side | Neue I²S kommt vom Pico, andere Trace-Längen |
+
+> **Korrektur (Step 6):** D2 (SMAJ5.0A TVS) bleibt drin. Sie sitzt im
+> Power-Tree auf der **+5V-Hauptschiene**, nicht am Pi-Header — ihre
+> ursprüngliche „Pi-WLAN-Spike"-Begründung entfällt zwar, aber als
+> allgemeiner Rail-Surge-Schutz bleibt sie sinnvoll. Real entfernt werden
+> **5 Bauteile**: J2, R1, R_BCK, R_LRCK, R_DOUT (+ das Pi-Modul, das auf J2 saß).
 
 Plus **bedeutsame Sekundär-Effekte**:
 
@@ -93,9 +99,14 @@ umsteuern kannst. Keine Mega-Dumps.
   /MUTE+XSMT, alles während die I²S schon Stille pumpt). Continuous
   440-Hz-Sinus @ -20 dBFS als „it works". **Ab hier ist der Pi funktional
   redundant** — der Audio-Pfad geht Pico → DAC → Amp ohne Linux.
-- **Step 6** — **Schaltplan-Update**: Pi-Sheet löschen, J2/D2/R_BCK/LRCK/DOUT
-  raus, I²S-Linien Pico → PCM5102A neu verdrahten, Pin-Belegung in SPEC §5
-  fixieren. Regenerieren, ERC-Check. **Erstes greifbares BOM-Schrumpfen**.
+- **Step 6** ✅ — **Du bist hier.** Schaltplan Pi-frei: `pi.kicad_sch` gelöscht,
+  J2/R1/R_BCK/R_LRCK/R_DOUT raus (5 Bauteile, real 97→92), GP0/GP1/GP4 im
+  Pico-Sheet auf I²S_BCK/LRCK/DOUT umverdrahtet, Root-Sheet brückt Pico-I²S →
+  Audio-Sheet, kicad_pro-Sheetliste bereinigt. Analyzer: 6 VM-001-Blocker —
+  **alle die dokumentierte False-Positive-Klasse** (Heuristik taggt den Pico
+  wegen VBUS-Pin als 5V-Domain; real sind GP0/1/4 @ 3V3 → PCM5102A @ 3V3,
+  kein Level-Shifter nötig). Warnings sogar von 19 → 16 gesunken (Pi-Nets weg).
+  GUI-ERC (B3) bleibt die maßgebliche Instanz. **Erstes BOM-Schrumpfen.**
 - **Step 7** — Voice-Infrastruktur: ringbasierter Voice-Pool, MIDI-Note-zu-Hz,
   einfache ADSR, klick-freier gate-on/off. Noch kein konkretes Pad — nur
   „Render eine Sinus-Voice pro Cell-Tap".

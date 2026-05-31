@@ -12,11 +12,18 @@ Vollständigkeit (Abschnitt 0) zuerst.**
 
 ## 0. Komponenten-Vollständigkeit — der wichtigste Check
 
+> 🆕 **v0.9 (Pi-frei):** Der Raspberry Pi ist aus dem Schaltplan raus — die
+> Audio-Engine läuft jetzt nativ auf dem RP2350 (siehe `NATIVE_PORT_PLAN.md`).
+> Damit sind **J2, R1, R_BCK, R_LRCK, R_DOUT entfernt** → reale Bauteilzahl
+> **97 → 92**. GP0/GP1/GP4 sind jetzt I²S zum PCM5102A. D2 (TVS) bleibt.
+> Die Punkte unten beziehen sich auf den v0.8-Stand; sie gelten weiter,
+> nur ohne die 5 Pi-Teile.
+
 Stand des Audits (diese Session, headless geprüft):
 
 - [x] **Schaltplan-BOM = SPEC §3/§4 abgeglichen** — C1/C2 (+5V-Rail-HF) ergänzt,
   C_audio_filt (nie verbaut) gestrichen, R_RUN dokumentiert, F1 auf 3A/6A korrigiert.
-- [x] **Alle 97 Bauteile haben einen Footprint zugewiesen** (Namen verifiziert).
+- [x] **Alle Bauteile haben einen Footprint zugewiesen** (Namen verifiziert; v0.9: 92 real).
 - [x] **C1 + C2 LCSC-Nummern ergänzt** (JLCPCB-Basic, in den Generator eingetragen):
   - C1 = **C15850** — Samsung `CL21A106KAYNNNE`, 10 µF 25V X5R 0805
   - C2 = **C14663** — Yageo `CC0603KRX7R9BB104`, 100 nF 50V X7R 0603
