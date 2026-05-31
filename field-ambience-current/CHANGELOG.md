@@ -4,7 +4,34 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r7.1** (USB-C-Premium-Upgrade-Intent für PCB-Mechanik dokumentiert). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1 sind orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r8** (Encoder-MPN konkretisiert, J8-Jack als premium-tauglich verifiziert). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8 sind orthogonal zur Audio-Architektur.
+
+---
+
+## v0.6.3-r8 (2026-05-31) — PCB-Mechanik-Komponenten-Sourcing abgeschlossen
+
+**Was**: Zwei offene Sourcing-Decisions endgültig festgemacht — Encoder-MPN
+und J8-Jack-Verifikation. Keine elektrische SPEC-Änderung.
+
+**SPEC §4 Updates:**
+- **EN1-EN4**: von generisch „EC11 mit Push (RVE/PEC11R)" → **ALPSALPINE
+  EC11J1525402** (C209762, JLC Extended). 16 Detents, push-switch, SMT-
+  assembly-tauglich, premium-Detent-Feel, Lifecycle 30k Cycles. Begründung:
+  ALPS = Industrie-Standard für Audio-Equipment-Encoder; generic „PEC11R"
+  ohne konkreten MPN war Spec-Risiko.
+- **J8 Jack**: PJ-320D (C431535) **bleibt** — Sourcing-Recherche hat
+  bestätigt dass das aktuelle Teil bereits premium-tauglich ist
+  (gold-plated Phosphor-Bronze, 5000 Cycles, SPST-NC-Detect-Switch,
+  3-20 N Insertion-Force, 21k+ pcs JLC Extended Stock, $0.047/100).
+  Westliche Alternativen (CUI / Kycon / Switchcraft) wären Silver-Plating
+  oder THT-only ⇒ Verschlechterung. **AltMPN für 2nd-Source**:
+  **PJ-320D-B-SMT** (C2884940, XKB Connectivity, drop-in, 706 pcs).
+
+**Begründung**: PCB-Mechanik-Komponenten-Audit abgeschlossen — alle daily-
+touched User-Interface-Parts haben jetzt konkrete premium-tauglich MPNs
+mit JLC-Stock-Verifikation. Verbleibende offene Items: r7-B1 (Modifier-
+Switch Pin-Pitch real vermessen), r7-B3 (Schematic-Generator-Update für
+r7), r7.1-B4 (USB-C-Premium-Upgrade-Pass für Produktion).
 
 ---
 

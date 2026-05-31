@@ -10,7 +10,7 @@
 > Pi-frei-Stand ist `NATIVE_PORT_PLAN.md`. D2 (TVS) **bleibt** als allgemeiner
 > +5V-Rail-Surge-Schutz (saß nie am Pi-Header, sondern auf der Hauptschiene).
 
-**Rev:** 0.6.3-r7.1 (Modifier-Switches als momentary + LED-Statusanzeige via PCA9685; USB-C-Premium-Upgrade-Intent für Produktion)
+**Rev:** 0.6.3-r8 (Encoder-MPN konkretisiert auf ALPS EC11J1525402; J8-Jack als premium-tauglich verifiziert + 2nd-Source dokumentiert)
 **Target:** 4-Layer JLCPCB, partial-PCBA (siehe §4 BOM-Split A/B/C)
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
 **Status:** SCHEMATIC IN REVIEW — noch nicht production-ready. Offene Blocker
@@ -280,7 +280,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | STAB1-5 | Kailh 2u Choc V2 Stabilizer (CPG1353G24D01) | Nicht im JLC-Stock | 5× von Keebio |
 | SW11 | Reset Tactile 6mm SMD | Generic SMD | JLC Standard |
 | **SW12** | **BOOTSEL Tactile 6mm SMD** | Generic SMD | **NEU: dedizierter BOOTSEL-Button für Pico-Flash** |
-| EN1-EN4 | EC11 Encoder mit Push (RVE/PEC11R) | Verschiedene bei JLC | SMD-Variante bevorzugt |
+| **EN1-EN4** | **ALPSALPINE EC11J1525402** (16-detent, push-switch, SMD) | **C209762** | **JLC Extended, premium-Detent-Feel. r8: MPN konkretisiert (war: generisch „EC11"). Lifecycle 30k Cycles, Detent-Force ~6 mNm typisch.** |
 
 **Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints (SW1-5 Cells) sind
 NICHT in der KiCad-Standard-Library. Benötigt die **kiswitch keyswitch-kicad-library**
@@ -303,7 +303,7 @@ variieren zwischen China-Herstellern. Symbol: `Switch:SW_Push` für Switch-Teil
 
 | Ref | Part | JLCPCB # | Bemerkung |
 |---|---|---|---|
-| J8 | 3.5mm TRS-Buchse mit Switch (PJ-320D) | C431535 | Insertion-Detect → MCP GPA6. **v0.8: C2884109 existierte nicht mehr → PJ-320D (lagernd); Footprint im GUI verifizieren** |
+| J8 | 3.5mm TRS-Buchse mit Switch (PJ-320D, SHOU HAN) | C431535 | Insertion-Detect → MCP GPA6. **v0.8: war C2884109 → PJ-320D (lagernd, 21k+ pcs); r8: verifiziert gold-plated + 5000 cycles + SPST-NC-Detect = bereits premium-tauglich. AltMPN für 2nd-Source: PJ-320D-B-SMT (C2884940, XKB Connectivity, drop-in)** |
 | R_LO_L/R | 22Ω 0603 | C23345 | Line-Out Serien/Schutz. **v0.8: war C22962 (= 220Ω, falsch) → C23345 (echte 22Ω, Basic)** |
 
 ### Resistors + Capacitors + Misc [v0.6 Änderungen markiert]
