@@ -37,7 +37,7 @@ machen — das kann Claude headless nicht erledigen.
 > (≥10000 Cycles vs. ~5000 beim Generic). Sourcing-Pass + JLC-Stock-Verify
 > nötig. Prototyp läuft mit dem aktuellen C165948.
 
-> 🆕 **r9 (2026-05-31)** — Battery-Add (5000 mAh LiPo):
+> 🆕 **r9 (2026-05-31, REVISED durch r12)** — Battery-Add (5000 mAh LiPo):
 > 1. **BAT1 LiPo bestellen**: 3.7V 5000 mAh Pouch, Format 9050060 empfohlen
 >    (50×60×14 mm — passt neben Speaker-Cutout) ODER 9050120 falls Speaker-
 >    Cutouts anders gelöst werden. Mit JST PH 2.0 2-pin Stecker.
@@ -47,10 +47,27 @@ machen — das kann Claude headless nicht erledigen.
 > 3. **Im KiCad-GUI ein neues Sheet `battery.kicad_sch`** anlegen mit U7
 >    MCP73831, U8 TPS61089, Q1 DMG2305UX, L1 2.2µH, D3 SS34, J9 JST-PH,
 >    plus R21-R24 + 4× Caps + LED_CHRG. Alle MPNs/LCSC siehe SPEC §2.2 BOM-Tabelle.
-> 4. **MCP23017 GPA7** für USB-C-VBUS-Sense routen (r9-B6) — als Eingang mit
->    Pull-Up; USB-C-VBUS via 100kΩ-Spannungsteiler runter auf 3V3-tolerable Level.
-> 5. **Firmware-Task r9-B7** (eigener Commit später): Volume-Clamp bei
->    Battery-Mode-Detect (TPS61089-2A-Limit).
+> 4. **r9-B6 RESOLVED durch r12**: USB-C-VBUS-Sense final auf MCP-GPA7 mit
+>    10kΩ Series + 100kΩ Pull-Down. Siehe r12-Block unten.
+> 5. **r9-B7 HW-PFAD RESOLVED durch r12**: Volume-Clamp-Algorithmus jetzt voll
+>    spec'd in SPEC §2.2 (Battery-Detection-Sub-Section). Firmware-Commit
+>    nach erstem Audio-Build.
+
+> 🆕 **r12 (2026-05-31) — Battery-Sense-Hardware lock-in (GPIO-Rebalance)**:
+> 1. **GP26 frei** für Battery-Voltage-Sense (ADC0). STATUS_LED1 wandert
+>    weg von GP26 → an PCA9685 LED10 (war reserve). R19 (820Ω) wird entfernt,
+>    neu R_LED_STATUS (390Ω 0603) als Series am LED1.
+> 2. **5 neue passive Bauteile** im KiCad-GUI ergänzen:
+>    - R_BAT_DIV_TOP, R_BAT_DIV_BOT (je 100kΩ 0603) — 2:1 Spannungsteiler VBAT → GP26
+>    - C_BAT_FILT (10nF 0603) — ADC-Glättung am GP26
+>    - R_VBUS_SENSE (10kΩ 0603) — Series VBUS → MCP-GPA7
+>    - R_VBUS_PD (100kΩ 0603) — Pull-Down GPA7 → GND
+> 3. **3 neue Nets** routen: BAT_SENSE (GP26), USB_VBUS_SENSE (GPA7),
+>    STATUS_LED (PCA9685 LED10 → LED1).
+> 4. **MCP-GPA7-Konfig**: Input mit DISABLED internal Pull-Up (sonst wird
+>    der Battery-Mode-Detect verfälscht durch interne 100kΩ-Pull-Up des MCP).
+> 5. **Firmware-Vertrag** (in SPEC §2.2 r12-Sub-Section): Battery-Low-Warning
+>    <3.4V (~10% SoC), Auto-Soft-Shutdown <3.0V (LiPo-Schutz).
 
 Reihenfolge von oben nach unten abarbeiten. **Priorität: Komponenten-
 Vollständigkeit (Abschnitt 0) zuerst.**

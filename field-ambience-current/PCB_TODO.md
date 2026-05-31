@@ -66,15 +66,32 @@ mit linkem Speaker-Cutout (X=10..90, Y=10..50). Drei Lösungswege:
 links/rechts), (c) PCB-Größe vergrößern.
 **Empfehlung**: (a) — 14 mm Dicke passt noch in 40-mm-Gehäuse.
 
-### r9-B6: USB-C-VBUS-Sense GPIO für Battery-Mode-Detect
-**Status**: 🟠 IMPORTANT. Firmware muss Battery-vs-USB-C unterscheiden um
-Volume-Clamp zu aktivieren (TPS61089-2A-Limit). Pin-Allokation: MCP23017 GPA7
-ist reserve → direkt nutzen, kein Pico-Pin nötig.
+### r9-B6: USB-C-VBUS-Sense GPIO — RESOLVED durch r12
+**Status**: ✅ RESOLVED via r12. GPA7 fix verdrahtet als USB_VBUS_SENSE
+(10kΩ Series von VBUS + 100kΩ Pull-Down zu GND, MCP-Pin 5.5V-tolerant).
+Siehe SPEC §2.2 + §7.
 
-### r9-B7: Firmware Volume-Clamp bei Battery-Mode
-**Status**: 🟢 NICE-TO-HAVE (Firmware-Task, nicht PCB-Blocker). Bei
-Battery-Mode-Detect PAM8403-Volume auf ~70 % begrenzen damit Boost-2A-Limit
-nicht überschritten wird.
+### r9-B7: Firmware Volume-Clamp bei Battery-Mode — HW-Pfad RESOLVED durch r12
+**Status**: 🟢 Firmware-Task (kein PCB-Blocker). Hardware-Detect-Pfad ist
+ab r12 spec'd: `if read_MCP_GPA7() == HIGH: vol_max=100; else: vol_max=70`.
+Plus Battery-Low-Cutoff via GP26/ADC0 (<3.4V Warning, <3.0V Soft-Shutdown).
+Volle Algorithmus-Spec in SPEC §2.2 (r12-Sub-Section). Firmware-Implementation
+in eigenem Commit nach erstem Audio-Build.
+
+### r12-B10: 5 neue passive Bauteile + STATUS_LED-Rewire im KiCad-GUI
+**Status**: 🟠 IMPORTANT (vor PCB-Layout zu erledigen). Mit r12 sind 5
+Bauteile hinzu und 1 weg:
+- NEU: R_BAT_DIV_TOP, R_BAT_DIV_BOT (je 100kΩ 0603), C_BAT_FILT (10nF 0603),
+  R_VBUS_SENSE (10kΩ 0603), R_VBUS_PD (100kΩ 0603), R_LED_STATUS (390Ω 0603)
+- WEG: R19 (820Ω, war STATUS_LED-Series am GP26 — STATUS_LED1 wandert auf
+  PCA9685 LED10)
+- REWIRE: LED1 Anode bekommt R_LED_STATUS → +5V; Kathode an PCA9685 LED10
+  statt direkt an GP26
+- NEU NET: BAT_SENSE (VBAT → R_BAT_DIV_TOP → GP26 → R_BAT_DIV_BOT → GND, plus
+  C_BAT_FILT zw. GP26 und GND); USB_VBUS_SENSE (VBUS → R_VBUS_SENSE → GPA7 →
+  R_VBUS_PD → GND)
+**Action im KiCad-GUI**: 5 neue Symbole + Routing, R19 löschen, LED1 rewire.
+Generator-Script-Update parallel mit r7-B3/r10-B9 (gleiche Modifikation).
 
 ### r7-B3: KiCad-Schematic + Generator-Update für r7+r9
 **Status**: 🔴 BLOCKER. `generate_kicad_project.py` muss nachgezogen werden:

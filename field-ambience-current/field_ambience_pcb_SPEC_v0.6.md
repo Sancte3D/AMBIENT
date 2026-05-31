@@ -223,6 +223,52 @@ Split-Lösung. Aber:
 $2 Aufpreis = Versicherung dass alles vorherige Audio-Design auch im
 Battery-Betrieb funktioniert.
 
+### Battery-Mode-Detection & Voltage-Sense (NEU r12, 2026-05-31)
+
+Zwei orthogonale Sensoren liefern der Firmware die State-Information für
+Battery-Mode-Volume-Clamp (r9-B7) und Battery-Low-Warning:
+
+**1. USB-C-VBUS-Detection (Battery-Mode-Detect, digital)** — MCP23017 GPA7:
+```
+USB-C VBUS ──[R_VBUS_SENSE 10kΩ]──┬── MCP GPA7 (Input, internal Pull-Up DISABLED)
+                                   │
+                                   └──[R_VBUS_PD 100kΩ]── GND
+```
+- VBUS=5V (USB-C verbunden): V_GPA7 = 5 × 100/(10+100) = 4.55 V → MCP liest HIGH
+- VBUS=0V (Battery-only): V_GPA7 = 0 V (durch Pull-Down) → MCP liest LOW
+- MCP I/O 5.5 V-tolerant per Datasheet (MCP23017 Rev I, S.4) → 4.55 V safe
+- Drain: ~45 µA wenn USB-C verbunden (irrelevant, lädt parallel)
+- Firmware-Polling: 100 ms-Intervall reicht (Mode-Switch ist nicht time-critical)
+
+**2. Battery-Voltage-Sense (State-of-Charge, analog)** — Pico GP26/ADC0:
+```
+VBAT ──[R_BAT_DIV_TOP 100kΩ]──┬── Pico GP26/ADC0 ──[C_BAT_FILT 10nF]── GND
+                               │
+                               └──[R_BAT_DIV_BOT 100kΩ]── GND
+```
+- VBAT 0..4.2 V → V_ADC 0..2.1 V (2:1 Divider, gut innerhalb 3.3 V ADC-Range)
+- ADC-Auflösung 12 bit → 0..4095 counts → Vbat-Resolution ~1.0 mV pro count
+- Source-Impedance 50 kΩ ist über RP2350-Empfehlung (≤10 kΩ für volle
+  Genauigkeit), aber für State-of-Charge-Sensing irrelevant: ±50 mV Noise =
+  ±1.2 % SoC-Error → akzeptabel
+- C_BAT_FILT 10 nF glättet S/H-Spike + tiefpasst Switching-Noise vom Boost
+- Drain: ~21 µA continuous (4.2 V / 200 kΩ) — 0.4 % der WFE-Quiescent von
+  5-8 mA, irrelevant
+- Firmware: Battery-Low-Warning bei <3.4 V (≈10 % SoC), Battery-Cutoff bei
+  <3.0 V (Auto-Soft-Shutdown via §13 zum LiPo-Schutz)
+
+**r9-B7 Volume-Clamp-Algorithmus** (jetzt fully spec'd):
+```
+if (read_MCP_GPA7() == HIGH):  # USB-C verbunden
+    volume_max = 100  # voller Headroom (3 A via Q1-Path)
+else:                            # Battery-Mode
+    volume_max = 70   # TPS61089-2A-Limit Schutz
+    if (read_ADC0_voltage() < 3.4):
+        warn_low_battery()  # OLED-Notify + LED10 1Hz-Pulse
+    if (read_ADC0_voltage() < 3.0):
+        trigger_soft_shutdown()  # §13 Sequenz
+```
+
 ---
 
 ## 3. Power Tree v0.6.3-r3 (REVIDIERT — siehe Errata-Historie)
@@ -252,10 +298,13 @@ bei <40 % PWM-Duty betrieben → Typical ≈ +20 mA, nicht +40 mA. Battery-Mode
 TPS61089-2 A-Limit bleibt der relevantere Cap (siehe nächste Anmerkung).
 
 **Anmerkung r9 (Battery-Mode)**: TPS61089-Boost (siehe §2.2) liefert max 2 A
-@ 5 V. Worst-Case 2.525 A überschreitet das → **Volume-Begrenzung im Battery-
-Mode implizit notwendig** (Firmware-clamp PAM8403-Volume auf ~70 % bei
-Battery-Betrieb-Detect). Detect via Pico-GPIO (USB-C-VBUS-Sense an einem
-freien GPIO, oder MCP23017 GPA7 die noch reserve ist).
+@ 5 V. Worst-Case 2.565 A (r10-updated) überschreitet das → **Volume-
+Begrenzung im Battery-Mode notwendig** (Firmware-clamp PAM8403-Volume auf
+~70 % bei Battery-Betrieb-Detect). Detect-Pfad **ab r12 fix verdrahtet**:
+USB-C-VBUS via 10k+100k-Spannungsteiler → MCP23017 GPA7 (digital HIGH = USB-C
+verbunden, LOW = Battery-Mode). Plus VBAT-Voltage via 100k+100k-Teiler → Pico
+GP26/ADC0 für State-of-Charge + Low-Battery-Cutoff. Siehe §2.2 Sub-Section
+„Battery-Mode-Detection & Voltage-Sense" für volle Schaltung + Algorithmus.
 
 ### USB-C Power Delivery (Entscheidung v0.7 — final)
 
@@ -409,12 +458,17 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 | R6 | 10 kΩ 0603 (MCP23017 RESET pull-up) | 1 |
 | R7-R14 | 10 kΩ 0603 (Encoder A/B pull-up) | 8 |
 | R15-R18 | 10 kΩ 0603 (Encoder SW pull-up) | 4 |
-| R19 | 820 Ω 0603 (Status LED limit) | 1 |
+| ~~R19~~ (r12 entfällt) | ~~820 Ω 0603 (Status LED limit)~~ ersetzt durch R_LED_STATUS (PCA9685-getrieben) | ~~1~~ → 0 |
+| **R_LED_STATUS** (r12) | **390 Ω 0603 (STATUS_LED1 Series zu PCA9685 LED10, dimensioniert wie R_LED6-15)** | **1 NEU r12** |
 | **R20** | **10 kΩ 0603 (MCP23017 INTA pull-up zu +3V3)** | **1 NEU** |
 | **R_RUN** | **10 kΩ 0603 (Pico RUN pull-up zu +3V3, Reset-Stabilität)** | **1** |
 | **R_LED6-R_LED10** | **390 Ω 0603 (Modifier-LED-Series, je 1× pro LED, dimensioniert für Vf≈2.1 V @ 5 mA @ +5 V Rail: (5-2.1)/5mA = 580 Ω, aber PCA9685-Output sinkt nach +5V → wir nutzen den IC als open-drain Sink mit 5 V Pull-Up am LED-Anoden-Bein; 390 Ω für ~7.5 mA Peak)** | **5 NEU r7** |
 | **R_LED11-R_LED15** | **390 Ω 0603 (Cell-HOLD-LED-Series, je 1× pro Cell-LED, identische Dimensionierung wie R_LED6-10)** | **5 NEU r10** |
 | **R_OE** | **10 kΩ 0603 (PCA9685 /OE pull-up zu +3V3, default-disabled bis Firmware enabled)** | **1 NEU r7** |
+| **R_BAT_DIV_TOP, R_BAT_DIV_BOT** (r12) | **2× 100 kΩ 0603 (Battery-Voltage-Spannungsteiler 2:1 für GP26/ADC0). VBAT 0..4.2 V → 0..2.1 V am ADC. Drain ~21 µA continuous — irrelevant vs. 5000 mAh.** | **2 NEU r12** |
+| **C_BAT_FILT** (r12) | **10 nF X7R 0603 (ADC-Filter am GP26, S/H-Spike-Glättung)** | **1 NEU r12** |
+| **R_VBUS_SENSE** (r12) | **10 kΩ 0603 (Series VBUS → MCP-GPA7, ESD-Limit)** | **1 NEU r12** |
+| **R_VBUS_PD** (r12) | **100 kΩ 0603 (Pull-Down GPA7 → GND, sichert LOW bei Battery-Mode)** | **1 NEU r12** |
 | R_VOL_L/R | 10 kΩ 0603 (PAM8403 input series) | 2 |
 | C_BULK | 1000 µF Alu-Elko SMD | 1 |
 | C1, C3, C7a, C8a, **C6b**, **C9** | 10 µF X5R 0805 | **6 (war 3)** |
@@ -432,7 +486,7 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 | **LED6-LED10** (r10) | **SMD 0603 Modifier-Status-LEDs, warm-weiß / amber Vf≈2.0-2.2 V (Generic JLC, z.B. C2286 Yellow oder C72043 Warm-White). Position: über jedem Modifier-Switch (Y=60). PCA9685 LED0-LED4** | **5 NEU r10** |
 | **LED11-LED15** (r10) | **SMD 0603 Cell-HOLD-Status-LEDs, identisch zu LED6-LED10 (gleiche Farbe für visuelle Konsistenz). Position: über jeder Cell (Y=88) zwischen Cell-Cap-Top und OLED-Bottom. PCA9685 LED5-LED9** | **5 NEU r10** |
 
-**Total: ~90 SMT-Komponenten** (r7: +9, r9-Battery: +14, r10: +10 LEDs + 5 R_LED11-15) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 plain SMD-Tactile (HX 12x12x7.3TPFT-B, JLC-assembled), **+ BAT1 LiPo 5000 mAh user-supplied**. **r10: 5× Modifier-Switches gehen von „User-supplied hand-soldered" zu „JLC-assembled" — Custom-Footprint-Blocker r7-B1 ist weg.**
+**Total: ~95 SMT-Komponenten** (r7: +9, r9-Battery: +14, r10: +15 (10 LEDs + 5 R), r12: +5 (1 R_LED_STATUS + 2 R_BAT_DIV + 1 C_BAT_FILT + 1 R_VBUS_SENSE + 1 R_VBUS_PD − 1 R19) net +5) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 plain SMD-Tactile (HX 12x12x7.3TPFT-B, JLC-assembled), **+ BAT1 LiPo 5000 mAh user-supplied**. **r12: GP26 ADC0 frei für BAT_SENSE, STATUS_LED auf PCA9685 LED10, USB-VBUS-Detect via MCP GPA7 — Battery-Mode-Logik vollständig hardware-instrumentiert.**
 
 ---
 
@@ -465,11 +519,11 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 | 26 | GP20 | EN4 B | VOL_B |
 | 27 | GP21 | EN4 SW | VOL_SW |
 | 29 | GP22 | MCP23017 INTA | MCP_INT |
-| 31 | GP26 | STATUS LED (ADC0 free) | STATUS_LED |
+| 31 | GP26 | **BAT_SENSE (ADC0) — Battery-Voltage via 100k/100k Spannungsteiler (NEU r12)** | **BAT_SENSE** |
 | **32** | **GP27** | **PAM8403 /SHDN (Pin 12, active LOW; GPIO HIGH = enabled)** | **AMP_nSHDN** |
 | **34** | **GP28** | **PAM8403 /MUTE (Pin 5, active LOW; GPIO HIGH = un-muted)** | **AMP_nMUTE** |
 
-**Alle 24 funktionalen Pins jetzt belegt.** ADC0 (GP26) bleibt frei als Status-LED-Pin (ADC-Mux möglich falls später Sensor).
+**Alle 24 funktionalen Pins jetzt belegt.** ADC0 (GP26) ab r12 für BAT_SENSE (war STATUS_LED in r3-r11; STATUS_LED1 wandert auf PCA9685 LED10, siehe §7.2). ADC1/2/3 nicht verfügbar (GP27/28 = Amp-Control, GP29 = interner Vsys/3).
 
 **WICHTIG — Active-Low-Konvention**: PAM8403H /SHDN (Pin 12) und /MUTE (Pin 5)
 sind beide ACTIVE LOW. Pico-GPIO HIGH = Funktion AUS (= enabled/un-muted),
@@ -549,7 +603,7 @@ Pin-Verteilung (Update v0.6.3-r5: GPA5 für XSMT-Control):
 | GPA0-4 | CELL1-5 | Cell-Switches SW1-5 |
 | **GPA5** | **PCM_XSMT** | **PCM5102A Soft-Mute Control (v0.6.3-r5 N1)** |
 | **GPA6** | **JACK_DETECT** | **Line-Out-Buchse J8 Insertion-Detect (v0.7)** |
-| GPA7 | Reserve (NC) | — |
+| **GPA7** | **USB_VBUS_SENSE** | **USB-C VBUS-Detect (NEU r12, war Reserve). HIGH wenn USB-C verbunden, LOW wenn battery-only. Firmware nutzt für Battery-Mode-Volume-Clamp (r9-B7). Schaltung: 10 kΩ Series von VBUS → GPA7 + 100 kΩ Pull-Down → GND. MCP-I/O 5.5 V-tolerant per Datasheet → V_GPA7 ≈ 4.55 V bei VBUS=5V, 0 V bei Battery-Mode. ~45 µA Drain wenn USB-C verbunden (irrelevant, lädt parallel).** |
 | GPB0 | MOD_SHIFT | Modifier-Switch SW6 (momentary, Press-Event) |
 | GPB1 | MOD_HOLD | SW7 (momentary, Press = Toggle-Event) |
 | GPB2 | MOD_DRONE | SW8 (momentary, Press = Toggle-Event) |
@@ -601,7 +655,8 @@ PWM-Register initialisiert sind (kein Aufblitzen beim Boot).
 | **LED7** | **Cell-HOLD CELL3** | **LED13** | **SW3** | **An = Cell3 HOLD-aktiv** |
 | **LED8** | **Cell-HOLD CELL4** | **LED14** | **SW4** | **An = Cell4 HOLD-aktiv** |
 | **LED9** | **Cell-HOLD CELL5** | **LED15** | **SW5** | **An = Cell5 HOLD-aktiv** |
-| LED10-LED15 | Reserve | — | — | 6 Kanäle frei für Future |
+| **LED10** (r12) | **System-Status (heartbeat / battery-low / error)** | **LED1** | — | **Übernimmt die Rolle der bisherigen GP26-STATUS_LED. GP26 wird in r12 frei für BAT_SENSE (ADC0). PWM-Heartbeat-Pattern, Battery-Low-Pulse, Error-Code-Flashes.** |
+| LED11-LED15 | Reserve | — | — | 5 Kanäle frei für Future |
 
 **LED-Bauform-Änderung (r10)**: alle 10 Anzeige-LEDs sind **SMD 0603**, NICHT
 mehr THT 3 mm und NICHT mehr im Switch-Body integriert. Position: über jedem

@@ -4,7 +4,74 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r10-LED** (Switch-MPN-Migration + Cell-HOLD-Status-LEDs + JLC-assembled). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r10-LED/r11 sind orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r12** (Battery-Sense-Hardware lock-in: GP26 ADC-frei, STATUS_LED auf PCA9685, MCP-GPA7 für VBUS-Detect, 100k/100k VBAT-Divider). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r10-LED/r11/r12 sind orthogonal zur Audio-Architektur.
+
+---
+
+## v0.6.3-r12 (2026-05-31) — Battery-Sense-Hardware lock-in (GPIO-Rebalance)
+
+**Was**: Schließt die r9-Battery-Add-Lücken r9-B6 (USB-C-VBUS-Detect-Pin) und
+r9-B7 (HW-Pfad für Volume-Clamp) mit konkreten Bauteilen + Pin-Allocation +
+Algorithmus. Ermöglicht Battery-Low-Cutoff + Battery-Mode-Volume-Clamp ohne
+weitere Hardware-Iteration.
+
+**Drei verbundene Änderungen**:
+
+1. **GP26 (Pico ADC0) frei für BAT_SENSE**: GP26 war seit r3 STATUS_LED-
+   Pin (LED1 direkt vom Pico angesteuert mit R19=820Ω Series). r12 zieht
+   STATUS_LED auf **PCA9685 LED10** (war reserve) — gewinnt damit den einzigen
+   verfügbaren Pico-ADC-Pin für Battery-Voltage-Messung.
+
+2. **VBAT-Spannungsteiler 100k/100k → GP26**: 2:1 Divider hält VBAT 0..4.2 V
+   auf 0..2.1 V am ADC, weit innerhalb der 3.3 V-Range. C_BAT_FILT (10 nF)
+   glättet S/H-Spikes und tiefpasst TPS61089-Switching-Noise. Drain 21 µA
+   continuous (0.4 % der WFE-Quiescent).
+
+3. **USB-C-VBUS-Detect via MCP23017 GPA7**: 10 kΩ Series + 100 kΩ Pull-Down
+   liefert digital HIGH (4.55 V) bei USB-C verbunden, LOW bei Battery-only.
+   MCP-I/O ist 5.5 V-tolerant (Datasheet bestätigt). 45 µA Drain wenn
+   USB-C verbunden — irrelevant da parallel geladen wird.
+
+**Firmware-Algorithmus jetzt voll spec'd** (SPEC §2.2 Sub-Section):
+```
+if read_MCP_GPA7() == HIGH: volume_max = 100   # USB-C, voller Headroom
+else: volume_max = 70                          # Battery, TPS61089-2A-Schutz
+if read_ADC0() < 3.4V: warn_low_battery()      # OLED + LED10 1Hz-Puls
+if read_ADC0() < 3.0V: trigger_soft_shutdown() # §13 Sequenz (LiPo-Schutz)
+```
+
+**SPEC-Änderungen**:
+- **§2.2 NEU Sub-Section** „Battery-Mode-Detection & Voltage-Sense": volle
+  Schaltung + Algorithmus + Drain-Analyse + Source-Impedanz-Begründung.
+- **§4 BOM Pico-Pin-Table**: GP26 STATUS_LED → BAT_SENSE.
+- **§4 BOM MCP-Table**: GPA7 Reserve → USB_VBUS_SENSE.
+- **§4 BOM Resistor-Section**: R19 entfällt; R_LED_STATUS, R_BAT_DIV_TOP/BOT,
+  C_BAT_FILT, R_VBUS_SENSE, R_VBUS_PD NEU r12. Total ~95 SMT-Bauteile.
+- **§7.2 PCA9685 Kanal-Tabelle**: LED10 erhält neue Funktion „System-Status
+  (heartbeat/battery-low/error)" — übernimmt Rolle vom GP26-STATUS_LED.
+- **§3 Power-Budget-Anmerkung**: r9-Volume-Clamp-Verweis aktualisiert auf
+  r12-Lock-In statt „freier GPIO oder GPA7 die noch reserve ist".
+
+**PCB_TODO**:
+- r9-B6 ✅ RESOLVED (GPA7 final, Bauteile spec'd).
+- r9-B7 🟢 HW-Pfad RESOLVED — verbleibender Firmware-Task in eigenem Commit.
+- NEU r12-B10 🟠 IMPORTANT: 5 neue Bauteile + STATUS_LED-Rewire im KiCad-GUI.
+
+**MEINE_TODO**: r9-Block revidiert (zeigt RESOLVED-Status), neuer r12-Block
+mit konkretem 5-Bauteil-Auftrag.
+
+**Begründung**: ohne r12 wäre die Battery-Mode-Volume-Clamp nicht
+implementierbar (Firmware kann nicht zwischen USB-C und Battery unterscheiden)
+und Battery-Low-Cutoff fehlt komplett — TPS61089-Boost würde bei LiPo unter
+3.0 V hart abschalten, was die LiPo-Lifetime massiv reduziert (deep-discharge-
+damage). r12 schließt diese Lücke mit minimaler Bauteil-Anzahl (5 SMT-passives)
+ohne neue ICs.
+
+**Files**: SPEC §2.2 (+r12-Sub-Section, ~50 Zeilen NEU), §3 (Update),
+§4 BOM-Tabellen, §5 Pico-Pin-Table, §7 MCP-Table, §7.2 PCA9685-Table,
+PCB_TODO (r9-B6/B7 status + r12-B10 NEU), MEINE_TODO (Block-Updates),
+CHANGELOG (dieser Eintrag). Keine `mechanical_coordinates.md`-Änderung
+(LED1 bleibt physisch an der gleichen Position, nur Routing ändert sich).
 
 ---
 
