@@ -76,12 +76,15 @@ umsteuern kannst. Keine Mega-Dumps.
 - **Step 2** ✅ — OLED-Treiber portiert (SSD1322 256×64 via SPI0, identische
   Init-Sequenz wie die MicroPython-Variante). Statischer Banner-Text
   *„FIELD AMBIENCE / V0.9 STEP 2"*. Starter-Font wächst mit jedem nächsten Step.
-- **Step 3** ✅ — **Du bist hier.** I²C1 @ 400 kHz, MCP23017 @ 0x20, byte-für-byte
+- **Step 3** ✅ — I²C1 @ 400 kHz, MCP23017 @ 0x20, byte-für-byte
   identische Init zur MicroPython-Variante. GP22 falling-edge IRQ für INTA.
   Live-State-Render auf OLED (5 Zellen + 5 Modifier + Jack-Detect), USB-CDC-
   Trace bei jedem Tap. XSMT-Pin als Output verfügbar für Step 5.
-- **Step 4** — Encoder-Quadratur-Dekoder (4× EC11 via PIO oder GPIO-IRQ).
-  Push-Switch-Detection. Velocity-Skalierung wie in der MicroPython-Version.
+- **Step 4** ✅ — **Du bist hier.** 4× EC11 (DRIVE/BRIGHT/DISPLAY/VOLUME) auf
+  GP10–GP21 quadrature-dekodiert per 1 kHz Repeating-Timer + 4-State-Tabelle
+  + 4 Sub-Steps pro Detent (identisch zur Python-Logik). Push-Switches
+  per 3-of-N-Bounce-Filter. Lock-free Ring-Buffer für Events → kein I/O im
+  Timer-Callback. OLED zeigt Position + Push-State pro Encoder.
 - **Step 5** — **Erster Audio-Pfad**: I²S-Output via PIO + DMA, doppelt
   gepufferte 256-Sample-Blöcke @ 44,1 kHz, 16-bit-Stereo. Sinus-Test-Ton
   als „it works". Amp-Power-Sequencing (GP27/GP28) korrekt timed.
