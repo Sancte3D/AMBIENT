@@ -20,19 +20,10 @@ machen — das kann Claude headless nicht erledigen.
 > Siehe `field_ambience_pcb_SPEC_v0.6.md` §7.2 und §4 für Details,
 > `mechanical_coordinates.md` §5 für Pad-Geometrie.
 
-> 🆕 **r7.1 (2026-05-31)** — Industrial-Design-Entscheidungen, User-procured:
-> 1. **Knobs für EN1-EN4**: 4× brushed Aluminium 20 mm Ø, 6 mm flatted bore,
->    matt-schwarz / gun-metal eloxiert, warm-weißer Top-Linie-Indikator.
->    AliExpress „6mm D shaft brushed aluminum knob 20mm" oder Davies-1900H-Klone.
-> 2. **Caps**: alle 10 (5× Cells + 5× Modifier) in **warm-gray / charcoal**
->    (RAL 7016 oder ähnlich), uniform — die LEDs sind die semantische Schicht.
->    Cells = MBK Bigseat 2u Choc V2-compatible. Modifier = 3D-Print Custom
->    auf den 12×12-Plunger des AliExpress-Tactile.
->    Labels SHIFT/HOLD/DRONE/GEN/CLR lasergraviert.
-> 3. **USB-C-Premium-Upgrade**: für die Produktions-Charge JAE DX07S016JJ1
->    oder Amphenol-Equivalent prüfen (≥10000 Cycles vs. ~5000 beim Generic).
->    Sourcing-Pass + JLC-Stock-Verify nötig. Prototyp läuft mit dem aktuellen
->    C165948.
+> 🆕 **r7.1 (2026-05-31)** — USB-C-Premium-Upgrade (PCB-Mechanik):
+> Für die Produktions-Charge JAE DX07S016JJ1 oder Amphenol-Equivalent prüfen
+> (≥10000 Cycles vs. ~5000 beim Generic). Sourcing-Pass + JLC-Stock-Verify
+> nötig. Prototyp läuft mit dem aktuellen C165948.
 
 Reihenfolge von oben nach unten abarbeiten. **Priorität: Komponenten-
 Vollständigkeit (Abschnitt 0) zuerst.**

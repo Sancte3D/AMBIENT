@@ -158,13 +158,6 @@ Verkabelung pro Switch im Schematic:
 Encoder-Shaft-Höhe: 20 mm ab PCB (EC11 H20mm). Top-Plate-Bohrung: 7 mm
 Durchmesser (EC11 6.4mm Standard-Bushing).
 
-**Knob-Spec (r7.1, siehe SPEC §2.1)**: brushed Aluminium 20 mm Ø, 6 mm
-flatted bore, eloxiert matt-schwarz / gun-metal, mit warm-weißer Top-
-Linie (Indikator). 30 mm Encoder-Pitch lässt 10 mm Knob-zu-Knob-Gap →
-ergonomisch greifbar mit Daumen+Zeigefinger. Knob-Höhe 14-17 mm ab
-Top-Plate → Total-Stack-Höhe ab PCB ≈ 22-25 mm (Encoder-Body 6 mm +
-Plate ~2.5 mm + Knob 14-17 mm).
-
 ---
 
 ## 7. Lautsprecher (J6, J7 + PUI AS04008PS Treiber)
