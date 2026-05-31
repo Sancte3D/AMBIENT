@@ -4,7 +4,55 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.9** (Pi-frei: Audio-Engine nativ auf RP2350, Pi entfernt).
+Aktuelle Rev: **v0.6.3-r7** (Modifier-Switches als momentary tactile + PCA9685-LED-Statusanzeige). Pi-frei (v0.9) bleibt weiterhin der maßgebliche Audio-Stand — die r7-Änderung ist orthogonal zur Audio-Architektur.
+
+---
+
+## v0.6.3-r7 (2026-05-31) — Modifier-Switches: momentary tactile + LED-Statusanzeige
+
+**Was sich ändert (UX-Treiber)**: SW6-SW10 waren in v0.6 als 1u Choc V2 Hot-Swap
+geplant — also latching-Caps mit physisch sichtbarem ON/OFF-Zustand. Problem
+beim Preset-Recall: ein latching-Switch in „falscher" Position widerspräche dem
+geladenen Snapshot. Lösung: **alle 5 Modifier sind jetzt momentary tactile
+(12×12×7.3 mm) mit integrierter LED**. State lebt in Firmware, LED zeigt den
+Zustand an, Snapshot-Recall setzt Firmware-Var + PCA9685-Kanal kongruent.
+
+**Hardware-Änderungen:**
+- **+ U6 PCA9685PW,118** (NXP, TSSOP-28, LCSC C2678753, JLC Extended, ~1605 pcs)
+  als 16-Kanal-PWM-LED-Driver. I²C-Adresse 0x40, gleicher Bus wie MCP23017.
+  Symbol `Driver_LED:PCA9685PW`, Footprint `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm`.
+- **+ R_LED6 .. R_LED10**: 5× 390 Ω 0603 LED-Series (open-drain Sink-Config: LED-Anode
+  → R → +5 V → LED → PCA9685-Kanal → GND).
+- **+ R_OE**: 10 kΩ 0603 Pull-Up an /OE zu +3V3 (Default-disabled bis Firmware enabled).
+- **+ C_PCA_VDD / C_PCA_VDD_HF**: 10 µF X5R 0805 + 100 nF X7R 0603 Decoupling an Pin 28.
+- **SW6-SW10 umdefiniert**: weg von Kailh Choc V2 1u Hot-Swap → **12×12×7.3 mm
+  momentary tactile MIT integrierter LED**, Generic China / AliExpress
+  („Momentary Touch LED 12*12*7.3 mm"). User-supplied + hand-soldered
+  (analog zu SW1-5 Cells). **Custom-Footprint** in Projekt-PCB-Lib nötig
+  (siehe `mechanical_coordinates.md` §5).
+
+**Firmware-Verträge (nicht implementiert, dokumentiert):**
+- SW6 SHIFT: momentary Modifier während gedrückt → Cells liefern Degrees 6-10
+  statt 1-5. LED6 leuchtet solange Switch gedrückt.
+- SW7 HOLD: Press toggelt HOLD-Mode. LED7 = HOLD aktiv.
+- SW8 DRONE: Press toggelt Drone. LED8 = Drone spielt, optionaler Fade-In/Out.
+- SW9 GENERATE: Press toggelt Generative-Mode. LED9 = generative aktiv.
+- SW10 CLEAR: Press = one-shot „release all holds + reset patterns". LED10
+  flasht ~200 ms als Visual-Confirmation.
+
+**Power-Budget**: +5 mA Idle / +25 mA Worst-Case (PCA9685 + 5 LEDs @ 100 %
+PWM). Worst-Case-Summe steigt 2480 mA → 2525 mA — Polyfuse F1 (3 A) bleibt
+ausreichend dimensioniert.
+
+**Verifikations-Blocker für r7 (vor PCB-Layout)**:
+- Pin-Pitch der AliExpress-12×12-Switches real vermessen (Generic-Parts haben
+  keinen herstellergemeinsamen Standard — Annahme im SPEC: 6.5×4.5 mm
+  Switch-Raster + ~8 mm zum LED-Pin-Paar).
+- `Driver_LED:PCA9685PW` Symbol-Pin-Map gegen NXP-Datasheet Rev. 4 S.6 prüfen.
+
+**Aktive Aufgabe**: Schematic-Generator + KiCad-Sheets müssen die r7-
+Änderungen abbilden (U6 hinzufügen, SW6-10 Symbol-Form umstellen, LED6-10
+hinzu). Wird in eigenem Commit nachgezogen.
 
 ---
 

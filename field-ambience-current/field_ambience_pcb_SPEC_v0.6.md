@@ -10,7 +10,7 @@
 > Pi-frei-Stand ist `NATIVE_PORT_PLAN.md`. D2 (TVS) **bleibt** als allgemeiner
 > +5V-Rail-Surge-Schutz (saß nie am Pi-Header, sondern auf der Hauptschiene).
 
-**Rev:** 0.6.3-r6 (Stabilization-Pass — PVDD-Decoupling + Startup-Sequenz)
+**Rev:** 0.6.3-r7 (Modifier-Switches als momentary + LED-Statusanzeige via PCA9685)
 **Target:** 4-Layer JLCPCB, partial-PCBA (siehe §4 BOM-Split A/B/C)
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
 **Status:** SCHEMATIC IN REVIEW — noch nicht production-ready. Offene Blocker
@@ -85,8 +85,9 @@ USB-C 5V/3A ────► USB-C  ──┬──► F1 (3A/6A) ──► 1000�
               │               │                        │              │
         UART (115200)     SPI0 (8MHz)              I²C (400kHz)        │
               ▼               ▼                        ▼              │
-         Pi Zero 2 W      OLED SSD1322           MCP23017             │
-         GPIO 14/15      (256×64 weiß)         (10 Buttons)            │
+         Pi Zero 2 W      OLED SSD1322       MCP23017 (0x20) +          │
+         GPIO 14/15      (256×64 weiß)     PCA9685 (0x40, r7)           │
+                                           (10 Buttons + 5 LEDs)        │
               │                                                       │
          I²S Audio Out                                                 │
               ▼                                                       │
@@ -144,8 +145,15 @@ zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 | MCP23017 + Pull-Ups | 5 mA | 20 mA | 25 mA |
 | PCM5102A DAC | 20 mA | 30 mA | 30 mA |
 | **PAM8403H @ 4Ω, 6W Out** | 80 mA | 600 mA | **1400 mA** |
-| Encoder/LED/Modifier | 5 mA | 15 mA | 25 mA |
-| **TOTAL** | **440 mA** | **1365 mA** | **2480 mA** |
+| Encoder + Status-LED | 5 mA | 15 mA | 25 mA |
+| **PCA9685 + 5× Modifier-LEDs** (5×8 mA peak @ 100% PWM) | 5 mA | 25 mA | **45 mA** |
+| **TOTAL** | **445 mA** | **1390 mA** | **2525 mA** |
+
+**Anmerkung r7**: 45 mA Worst-Case-Aufschlag fürs PCA9685 + 5 Modifier-LEDs
+ändert die Polyfuse-Dimensionierung NICHT (F1 = 3 A hold, ~2.3 A derated bei
+50 °C; 2.525 A Worst-Case bleibt unter der Auslöseschwelle). Die LEDs werden
+typisch bei <40 % PWM-Duty betrieben (ambient look) → Typical ≈ +10 mA, nicht
++25 mA.
 
 ### USB-C Power Delivery (Entscheidung v0.7 — final)
 
@@ -232,6 +240,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | U3 | PCM5102APWR (TI) | TSSOP-20 | **C107671** | Extended Stock | I²S DAC, 3-wire (kein MCLK). Pinout per TI SLAS859C |
 | U4 | PAM8403DR-H (Diodes Inc) | SOIC-16 | **C17337** | Extended Stock | Stereo Class-D 2×3W. Pinout per Diodes DS31295 |
 | U5 | AP7361A-33ER | SOT-89 | C156144 | **DNP** | Reserve falls +3V3-Last steigt |
+| **U6** | **PCA9685PW,118 (NXP)** | **TSSOP-28** | **C2678753** | **Extended, ~$1.96 @100, ~1605 pcs Stock** | **NEU r7: 16-Kanal PWM-LED-Driver für 5 Modifier-Button-LEDs (11 Kanäle Reserve). I²C-Adresse 0x40. Symbol `Driver_LED:PCA9685PW`, Footprint `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm`. Datasheet: nxp.com/docs/en/data-sheet/PCA9685.pdf** |
 
 ### Connector + USB
 
@@ -248,19 +257,28 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
 | SW1-SW5 | Kailh Choc V2 Hot-Swap Socket (5×, 2u Cells) | Nicht im JLC-Stock | Ja, von Keebio/Kailh |
-| SW6-SW10 | Kailh Choc V2 Hot-Swap Socket (5×, 1u Modifier) | Nicht im JLC-Stock | Ja |
+| **SW6-SW10** | **12×12×7.3 mm momentary tactile MIT integrierter LED, THT (Generic China, AliExpress „Momentary Touch LED 12*12*7.3mm")** | **Nicht im JLC-Stock — Variante γ: User-supplied** | **Ja, 5× in einheitlicher Farbe (warm-weiß / amber empfohlen, Vf typ. 2.0-2.2 V @ 5 mA). r7: Umstellung von latching Choc-Hotswap → momentary tactile + Firmware-State + LED-Statusanzeige (siehe §7.2). Custom-Footprint nötig, siehe `mechanical_coordinates.md` §5** |
 | STAB1-5 | Kailh 2u Choc V2 Stabilizer (CPG1353G24D01) | Nicht im JLC-Stock | 5× von Keebio |
 | SW11 | Reset Tactile 6mm SMD | Generic SMD | JLC Standard |
 | **SW12** | **BOOTSEL Tactile 6mm SMD** | Generic SMD | **NEU: dedizierter BOOTSEL-Button für Pico-Flash** |
 | EN1-EN4 | EC11 Encoder mit Push (RVE/PEC11R) | Verschiedene bei JLC | SMD-Variante bevorzugt |
 
-**Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints sind NICHT in der
-KiCad-Standard-Library. Benötigt die **kiswitch keyswitch-kicad-library**
+**Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints (SW1-5 Cells) sind
+NICHT in der KiCad-Standard-Library. Benötigt die **kiswitch keyswitch-kicad-library**
 (KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library").
-Footprint-Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_1.00u`
-(1u Modifier) / `_2.00u` (2u Cells + Stabilizer). **Namen verifiziert gegen
-kiswitch v2.4** — beide existieren. V1V2 (statt V2-spezifisch) gewählt, weil
-es V1+V2 Alignment-Löcher bohrt → Hot-Swap nimmt jede Choc-Generation.
+Footprint-Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_2.00u`
+(2u Cells + Stabilizer). **Name verifiziert gegen kiswitch v2.4** — existiert.
+V1V2 (statt V2-spezifisch) gewählt, weil es V1+V2 Alignment-Löcher bohrt →
+Hot-Swap nimmt jede Choc-Generation.
+
+**Footprint-Hinweis r7 (SW6-10)**: Die 12×12×7.3 Generic-China-Tactile-mit-LED
+hat **keinen Standard-Footprint** in KiCad. Custom-Footprint im Projekt-PCB-Lib
+nötig: 6 Pin-Pads (4× Switch in 6.5×4.5 mm Raster + 2× LED-Anode/Kathode), siehe
+`mechanical_coordinates.md` §5 für exakte Pad-Geometrie. Vor PCB-Fertigung
+**zwingend gegen den real bestellten AliExpress-Part vermessen** — Pin-Pitches
+variieren zwischen China-Herstellern. Symbol: `Switch:SW_Push` für Switch-Teil
++ `Device:LED` für LED-Teil (als zwei Symbole im Schematic, Refs `SW6/LED6`,
+`SW7/LED7`, ... `SW10/LED10`).
 
 ### Line-Out / Kopfhörer (v0.7)
 
@@ -282,11 +300,15 @@ es V1+V2 Alignment-Löcher bohrt → Hot-Swap nimmt jede Choc-Generation.
 | R19 | 820 Ω 0603 (Status LED limit) | 1 |
 | **R20** | **10 kΩ 0603 (MCP23017 INTA pull-up zu +3V3)** | **1 NEU** |
 | **R_RUN** | **10 kΩ 0603 (Pico RUN pull-up zu +3V3, Reset-Stabilität)** | **1** |
+| **R_LED6-R_LED10** | **390 Ω 0603 (Modifier-LED-Series, je 1× pro LED, dimensioniert für Vf≈2.1 V @ 5 mA @ +5 V Rail: (5-2.1)/5mA = 580 Ω, aber PCA9685-Output sinkt nach +5V → wir nutzen den IC als open-drain Sink mit 5 V Pull-Up am LED-Anoden-Bein; 390 Ω für ~7.5 mA Peak)** | **5 NEU r7** |
+| **R_OE** | **10 kΩ 0603 (PCA9685 /OE pull-up zu +3V3, default-disabled bis Firmware enabled)** | **1 NEU r7** |
 | R_VOL_L/R | 10 kΩ 0603 (PAM8403 input series) | 2 |
 | C_BULK | 1000 µF Alu-Elko SMD | 1 |
 | C1, C3, C7a, C8a, **C6b**, **C9** | 10 µF X5R 0805 | **6 (war 3)** |
 | C2, C4, C5, C6, C7b, C8b, **C6c**, C9b | 100 nF X7R 0603 | **8 (war 6)** |
 | C5b | 10 nF X7R 0603 (MCP23017 HF) | 1 |
+| **C_PCA_VDD** | **10 µF X5R 0805 (PCA9685 VDD, Pin 28, +3V3)** | **1 NEU r7** |
+| **C_PCA_VDD_HF** | **100 nF X7R 0603 (PCA9685 VDD HF)** | **1 NEU r7** |
 | **C10-C17** | **100 nF X7R 0603 (Encoder A/B debounce)** | **8 (Wert 10nF → 100nF)** |
 | C_in_L/R | 1 µF X7R 0603 (PAM8403 input DC-block) | 2 |
 | F1 | **Polyfuse 3.0A hold / 6.0A trip 1812 (Littelfuse 1812L300, C18198349)** | 1 |
@@ -295,7 +317,7 @@ es V1+V2 Alignment-Löcher bohrt → Hot-Swap nimmt jede Choc-Generation.
 | **D2** | **SMAJ5.0A TVS auf +5V am Pi-Header** | **1 NEU** |
 | LED1 | Status LED 0805 warm white | 1 |
 
-**Total: ~58 SMT-Komponenten** (v0.5 war ~50) + Pi Zero 2 W, OLED, 10× Hot-Swap-Sockets, 5× Stabilizer.
+**Total: ~66 SMT-Komponenten** (r7: +U6 PCA9685, +R_LED6-10 + R_OE + C_PCA × 2 = +9) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 momentary tactile mit LED (User-supplied, hand-soldered).
 
 ---
 
@@ -413,13 +435,61 @@ Pin-Verteilung (Update v0.6.3-r5: GPA5 für XSMT-Control):
 | **GPA5** | **PCM_XSMT** | **PCM5102A Soft-Mute Control (v0.6.3-r5 N1)** |
 | **GPA6** | **JACK_DETECT** | **Line-Out-Buchse J8 Insertion-Detect (v0.7)** |
 | GPA7 | Reserve (NC) | — |
-| GPB0 | MOD_SHIFT | Modifier-Switch SW6 |
-| GPB1 | MOD_HOLD | SW7 |
-| GPB2 | MOD_DRONE | SW8 |
-| GPB3 | MOD_GENERATE | SW9 |
-| GPB4 | MOD_CLEAR | SW10 |
+| GPB0 | MOD_SHIFT | Modifier-Switch SW6 (momentary, Press-Event) |
+| GPB1 | MOD_HOLD | SW7 (momentary, Press = Toggle-Event) |
+| GPB2 | MOD_DRONE | SW8 (momentary, Press = Toggle-Event) |
+| GPB3 | MOD_GENERATE | SW9 (momentary, Press = Toggle-Event) |
+| GPB4 | MOD_CLEAR | SW10 (momentary, One-Shot-Event) |
 
-Alle 10 Switches: ein Pin → MCP-GPIO, anderer → GND. Interne Pull-Ups via GPPU-Register aktiviert (Firmware).
+Alle 10 Switches: ein Pin → MCP-GPIO, anderer → GND. Interne Pull-Ups via
+GPPU-Register aktiviert (Firmware).
+
+**WICHTIG r7**: SW6-SW10 sind **momentary** (federn zurück), nicht latching.
+Der UI-Zustand HOLD/DRONE/GENERATE/SHIFT-aktiv/CLEAR-confirmation lebt **in
+der Firmware**, sichtbar via die zugehörigen LEDs (PCA9685, siehe §7.2). Das
+ermöglicht Preset-State-Recall (Snapshot setzt Firmware-Var → PCA9685-Kanal
+geht passend an/aus) ohne physisch widersprechenden Switch.
+
+---
+
+## 7.2. PCA9685 LED-Driver Konfiguration (NEU r7)
+
+I²C-Adresse: A0..A5 = GND → **0x40** (Default). Liegt am selben I²C1-Bus wie
+MCP23017 (0x20) und OLED — Konflikt-frei.
+
+**Decoupling**: C_PCA_VDD (10 µF) + C_PCA_VDD_HF (100 nF) lokal an Pin 28
+(VDD, +3V3).
+
+**/OE (Output Enable, Pin 23, active LOW)**: über R_OE = 10 kΩ Pull-Up an
++3V3. Default = HIGH = LEDs disabled. Firmware zieht /OE LOW erst nachdem
+PWM-Register initialisiert sind (kein Aufblitzen beim Boot).
+
+**EXTCLK (Pin 25)**: NC. Interner 25 MHz Oscillator wird genutzt.
+
+**LED-Kanal-Belegung:**
+
+| PCA9685 LEDn | Funktion | LED-Ref | Switch-Ref | LED-Anzeige-Logik |
+|---|---|---|---|---|
+| LED0 | LED6 SHIFT | LED6 | SW6 | An solange Taster gedrückt (Modifier-Anzeige) |
+| LED1 | LED7 HOLD | LED7 | SW7 | An = HOLD-Mode aktiv (Firmware-Toggle) |
+| LED2 | LED8 DRONE | LED8 | SW8 | An = Drone spielt (Firmware-Toggle), sanfter Fade |
+| LED3 | LED9 GENERATE | LED9 | SW9 | An = Generative-Mode aktiv (Firmware-Toggle) |
+| LED4 | LED10 CLEAR | LED10 | SW10 | Flash ~200 ms beim Press als Confirmation |
+| LED5-LED15 | Reserve | — | — | 11 Kanäle frei für Future (Cell-Backlight etc.) |
+
+**Schaltung pro LED-Kanal** (open-drain Sink-Konfiguration):
+- LED-Anode → R_LEDn (390 Ω 0603) → **+5 V**
+- LED-Kathode → PCA9685 LEDn-Pin
+- PCA9685 zieht Kathode LOW (~0.5 V) → I_LED = (5 - 2.1 - 0.5) / 390 = ~6.2 mA
+- Max-Rating PCA9685: 25 mA pro Pin sink → großzügige Reserve
+
+**Begründung +5V statt +3V3 als LED-Versorgung**: bei Vf ≈ 2.1 V (warm-weiß /
+amber) würde +3V3 nur ~1.2 V Headroom lassen → Helligkeit empfindlich
+gegenüber Rail-Sag. +5 V gibt ~2.4 V Headroom, viel stabiler. PCA9685-Outputs
+sind 5.5 V-tolerant (Datasheet S. 8, V_OL bei externer Pull-Up-Last).
+
+**PWM-Frequenz**: 1.0 kHz (Firmware) — flackerfrei für Auge, kein hörbares
+Coil-Whistle bei den 0603-Widerständen.
 
 ---
 
@@ -599,6 +669,8 @@ dedizierter Kopfhörer-Amp (TPA6132 o.ä.) besser — v0.8-Option.
 - **Pico 2 Mounting**: (a) SMD-castellated reflow, (b) Pin-Header THT (Recommended für Prototyp), (c) reflow mit Hand-Heißluft
 - **Choc V2 Stabilizer Mounting**: Plate-Mount Standard, Top-Plate-Cutouts entsprechend designen
 - **Pi Zero 2 W Connection**: 40-pin GPIO Header durchgesteckt → Pi liegt auf der Unterseite unseres PCB
+- **r7 BLOCKER: 12×12×7.3 Modifier-Switch Pin-Pitch** — AliExpress-Generic-Part hat keinen einheitlichen Datasheet-Standard. Vor Custom-Footprint-Finalize: 1 Stück bestellen, Pins auf Millimeter-Papier vermessen, dann Footprint im PCB-Layout fixieren. Pin-Pitch-Annahme im SPEC: 6.5 × 4.5 mm (Standard für die Generic-12×12-Familie) — verifizieren!
+- **r7 OFFEN: PCA9685 Symbol-Pin-Map** — `Driver_LED:PCA9685PW` aus KiCad-Standard-Lib gegen NXP-Datasheet (PCA9685 Rev. 4, S.6) verifizieren (28 Pins, alle 16 LED-Outputs + I²C + /OE + EXTCLK + VDD/GND + A0..A5)
 
 ### Was v0.6.3-r3 ZUSÄTZLICH adressiert hat (siehe Errata-Historie oben)
 

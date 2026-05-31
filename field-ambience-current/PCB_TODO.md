@@ -13,6 +13,32 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ---
 
+## 🔴 BLOCKER für PCB-Layout (r7-spezifisch, 2026-05-31)
+
+### r7-B1: 12×12×7.3 Modifier-Switch Pin-Pitch verifizieren
+**Status**: 🔴 BLOCKER. AliExpress-Generic-Parts haben keinen herstellergemein-
+samen Pin-Pitch-Standard. SPEC nimmt 6.5×4.5 mm Switch-Raster + ~8 mm zum
+LED-Pin-Paar an — muss vor PCB-Layout am real bestellten Part vermessen werden.
+**Action**: 1 Stück bestellen (Lieferzeit ~3-4 Wochen), Messschieber, dann
+Custom-Footprint in `kicad/libraries/field_ambience.pretty/` final fixieren.
+
+### r7-B2: PCA9685 Symbol-Pin-Map verifizieren
+**Status**: 🟠 IMPORTANT. `Driver_LED:PCA9685PW` aus KiCad-Standard-Lib gegen
+NXP-Datasheet (PCA9685 Rev. 4, S.6) prüfen — 28 Pins, alle 16 LED-Outputs +
+SDA/SCL + /OE + EXTCLK + VDD/GND + A0..A5. Beim KiCad-Schematic-Add (lokal in
+GUI) sofort cross-checken.
+
+### r7-B3: KiCad-Schematic + Generator-Update für r7
+**Status**: 🔴 BLOCKER. `generate_kicad_project.py` muss nachgezogen werden:
+- U6 PCA9685 als neues Subsheet oder im mcp.kicad_sch
+- SW6-10 vom Choc-Hotswap-Symbol auf `Switch:SW_Push` + zusätzliche `Device:LED`-
+  Symbole (LED6-10) umstellen
+- R_LED6-10 (390 Ω), R_OE (10 kΩ), C_PCA_VDD (10 µF), C_PCA_VDD_HF (100 nF)
+  in die Resistor/Cap-Tabellen aufnehmen
+- I²C1 SDA/SCL Net vom MCP23017-Block auch zu U6 routen
+
+---
+
 ## ✅ Behoben (auf PR #1 HEAD)
 
 ### v0.7 — Engineering-Entscheidungen final getroffen + Design/Doc reconciled

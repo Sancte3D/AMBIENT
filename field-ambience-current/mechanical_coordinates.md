@@ -80,19 +80,67 @@ zusätzlich zur Switch-Position: je 5.95 mm links und rechts vom Switch-Center
 
 ---
 
-## 5. Modifier-Switches SW6-SW10 (1u Hot-Swap, Kailh Choc V2)
+## 5. Modifier-Switches SW6-SW10 (12×12×7.3 mm momentary tactile MIT LED, r7)
 
-5 Switches in horizontaler Reihe, kleiner als Cells.
+5 Switches in horizontaler Reihe. **r7-Wechsel**: weg von Kailh Choc V2
+Hot-Swap (1u, latching-Caps) → hin zu 12×12×7.3 mm momentary tactile mit
+integrierter LED (Generic China / AliExpress „Momentary Touch LED"). State
+lebt in Firmware, LED zeigt Zustand (siehe SPEC §7.2).
 
-| Switch | X (Mitte) | Y (Mitte) | Label |
-|---|---|---|---|
-| SW6 (SHIFT) | 95 mm | 50 mm | |
-| SW7 (HOLD) | 120 mm | 50 mm | |
-| SW8 (DRONE) | 145 mm | 50 mm | |
-| SW9 (GENERATE) | 170 mm | 50 mm | |
-| SW10 (CLEAR) | 195 mm | 50 mm | |
+| Switch | X (Mitte) | Y (Mitte) | Label | LED-Ref |
+|---|---|---|---|---|
+| SW6 (SHIFT) | 95 mm | 50 mm | | LED6 (Anode unter Switch) |
+| SW7 (HOLD) | 120 mm | 50 mm | | LED7 |
+| SW8 (DRONE) | 145 mm | 50 mm | | LED8 |
+| SW9 (GENERATE) | 170 mm | 50 mm | | LED9 |
+| SW10 (CLEAR) | 195 mm | 50 mm | | LED10 |
 
-Spacing: 25 mm (1u). **Cutout 14×14 mm**, keine Stabilizer nötig.
+Spacing: 25 mm Mitte-zu-Mitte (bleibt) → 13 mm Lücke zwischen 12 mm
+Switch-Bodies (ergonomisch erreichbar mit Daumen während Cell-Spiel).
+
+**Top-Plate-Cutout**: **12.5 × 12.5 mm** pro Switch (war 14×14 für Choc-Caps).
+Das Cap des Tactile-Switches sitzt direkt im Cutout; Plate-Dicke bestimmt
+Cap-Travel-Höhe.
+
+**Switch-Höhe ab PCB**: 7.3 mm Body + ~3-5 mm Cap = 10.3-12.3 mm. Liegt im
+bestehenden 15 mm-Component-Height-Budget (Y=40..90, siehe §9).
+
+**Custom-Footprint** (im Projekt-PCB-Lib, NICHT in KiCad-Standard):
+
+```
+        Top View (Switch, viewed from above PCB)
+        
+        ┌─────────────────────────┐  ← 12.0 mm × 12.0 mm Body
+        │  ●1              ●4     │
+        │                         │
+        │       (plunger)         │  ← Square plunger, ~5×5 mm,
+        │                         │      nimmt custom caps auf
+        │  ●2              ●3     │
+        │                         │
+        │   ✦LED+        ✦LED-    │  ← LED-Anode/Kathode (Pin 5/6)
+        └─────────────────────────┘
+```
+
+Pin-Pitch-**Annahme** (verifizieren mit realem AliExpress-Part vor Footprint-
+Finalize!):
+- Switch-Pins (1↔2, 3↔4 sind je intern verbunden, 1+2 ↔ 3+4 ist das Switch-
+  Element): **Raster 6.5 mm horizontal × 4.5 mm vertikal**
+- LED-Pins (5 = Anode, 6 = Kathode): **Raster ~5 mm horizontal**, ca. 8 mm
+  vertikal unterhalb der Switch-Pins
+- Pad-Größe: 1.4 mm Bohrung, 2.4 mm Ring (THT Standard für 1.0 mm Pin-Dicke)
+
+**r7 BLOCKER**: AliExpress-Generic-Parts haben KEINEN herstellergemeinsamen
+Pin-Pitch-Standard. Vor PCB-Layout-Freigabe:
+1. 1 Stück bestellen (Lieferzeit ~3-4 Wochen)
+2. Pins mit Messschieber vermessen (0.1 mm Genauigkeit)
+3. Custom-Footprint in `kicad/libraries/field_ambience.pretty/` final fixieren
+4. ERST DANN PCB-Routing finalisieren
+
+Verkabelung pro Switch im Schematic:
+- Switch-Pin 1+2 → MCP23017 GPB(n-6) (mit internem Pull-Up)
+- Switch-Pin 3+4 → GND
+- LED-Anode (Pin 5) → R_LEDn (390 Ω) → +5 V
+- LED-Kathode (Pin 6) → PCA9685 LEDn-Output (open-drain Sink)
 
 ---
 

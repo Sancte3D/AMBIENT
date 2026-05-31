@@ -5,6 +5,21 @@ Schaltplan ist fertig + validiert, Stückliste mit der SPEC abgeglichen.
 Was hier steht, muss **ich selbst** in der KiCad-GUI / am CAD / beim Bestellen
 machen — das kann Claude headless nicht erledigen.
 
+> 🆕 **r7 (2026-05-31)**: Modifier-Switches SW6-10 umgestellt auf
+> **12×12×7.3 mm momentary tactile mit integrierter LED** (AliExpress) +
+> **PCA9685 PWM-LED-Driver** (LCSC C2678753, JLC Extended) für LED-Status-
+> anzeige. Custom-Footprint nötig — vor PCB-Layout:
+> 1. 5× Switches bei AliExpress bestellen („Momentary Touch LED 12×12×7.3 mm")
+> 2. Pin-Pitch mit Messschieber auf 0.1 mm vermessen (SPEC nimmt 6.5×4.5 mm an)
+> 3. Custom-Footprint in `kicad/libraries/field_ambience.pretty/` finalisieren
+> 4. Im KiCad-GUI: U6 PCA9685 hinzu (`Driver_LED:PCA9685PW` + TSSOP-28-Footprint),
+>    LED6-10 (`Device:LED` THT 3 mm), R_LED6-10 (390 Ω), R_OE (10 kΩ),
+>    C_PCA_VDD (10 µF), C_PCA_VDD_HF (100 nF).
+> 5. I²C1 SDA/SCL Net zum PCA9685 routen (Adresse 0x40).
+>
+> Siehe `field_ambience_pcb_SPEC_v0.6.md` §7.2 und §4 für Details,
+> `mechanical_coordinates.md` §5 für Pad-Geometrie.
+
 Reihenfolge von oben nach unten abarbeiten. **Priorität: Komponenten-
 Vollständigkeit (Abschnitt 0) zuerst.**
 
