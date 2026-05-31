@@ -32,6 +32,7 @@ add_executable(field_ambience_native
     src/main.c
     src/oled.c
     src/font_8x8.c
+    src/mcp23017.c
 )
 
 target_include_directories(field_ambience_native PRIVATE
@@ -41,6 +42,8 @@ target_include_directories(field_ambience_native PRIVATE
 target_link_libraries(field_ambience_native
     pico_stdlib
     hardware_spi    # Step 2: SSD1322 over SPI0
+    hardware_i2c    # Step 3: MCP23017 over I2C1
+    hardware_gpio   # Step 3: GP22 IRQ for MCP INTA
 )
 
 # USB CDC for the v0.9-dev heartbeat — easier to inspect than UART on a
