@@ -71,10 +71,12 @@ schon so in SPEC §8 → keine Änderung nötig.
 Jeder Step ist ein eigener kleiner PR, damit du jederzeit abbrechen oder
 umsteuern kannst. Keine Mega-Dumps.
 
-- **Step 1** ✅ — **Du bist hier.** Plan-Doku + nackte C-Firmware-Hülle (CMake +
+- **Step 1** ✅ — Plan-Doku + nackte C-Firmware-Hülle (CMake +
   blinkende LED). Baut zu einer UF2. Keine Audio, kein UI, nur Lebenszeichen.
-- **Step 2** — OLED-Treiber portieren (SSD1322 256×64 via SPI0). Static text:
-  „FIELD AMBIENCE v0.9-dev". Keine Menülogik noch.
+- **Step 2** ✅ — **Du bist hier.** OLED-Treiber portiert (SSD1322 256×64 via
+  SPI0, identische Init-Sequenz wie die MicroPython-Variante). Statischer
+  Banner-Text *„FIELD AMBIENCE / V0.9 STEP 2"*. Starter-Font (~24 Glyphen,
+  nur was der Banner braucht — wächst mit jedem nächsten Step).
 - **Step 3** — I²C-Bus + MCP23017-Init + Switch-Scan + Interrupt auf GP22.
   Zellen 1–5, Modifier SW6–10, XSMT-Pin, Jack-Detect. Console-Output bei
   jedem Tap.
