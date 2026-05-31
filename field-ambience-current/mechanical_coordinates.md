@@ -175,7 +175,40 @@ Mount: 4× M2-Schrauben pro Speaker am Bottom-Case. Bass-Reflex-Ports:
 
 ---
 
-## 8. Pi Zero 2 W (auf Unterseite, durchgesteckter Header)
+## 7a. Battery BAT1 (NEU r9, LiPo 5000 mAh)
+
+LiPo-Pouch 8050120 oder 9050120 (8-9 mm × 50 mm × 120 mm), liegt **unter
+dem PCB**, längs zur PCB-Längsachse (X) ausgerichtet. JST PH 2.0 2-pin
+Connector J9 auf PCB-Unterseite, Plus-Pin polarisiert.
+
+| Parameter | Wert |
+|---|---|
+| BAT1 Center X | 80 mm (linker Bereich, neben Speaker-Cutout-Bereich) |
+| BAT1 Center Y | 65 mm (unter den Cells, unter dem Modifier-Bereich) |
+| BAT1 Außenmaße | 8-9 × 50 × 120 mm (Z-Tiefe nach unten) |
+| BAT1 Keepout (Unterseite) | 60 × 130 mm @ X=20..140, Y=0..130 |
+| J9 (Battery-Connector) X | 25 mm |
+| J9 (Battery-Connector) Y | 65 mm |
+| J9 Z-Offset | Bottom-Side, vertical SMD |
+| Z-Tiefe zusätzlich für Gehäuse | +9 mm Unterseite (geht in 40-mm-Gesamthöhe rein) |
+
+**Vereinbarkeit mit Pi-frei-Stand (v0.9)**: Pi ist raus → Bottom-Side-Keepout
+für Pi (X 125..195, Y 72..108) **frei**. Battery passt in den freigewordenen
+Bereich rechts (X=20..140, Y=0..130) — Pi-Zone (X=125..195) bleibt für
+zukünftige Erweiterung oder leer.
+
+**Speaker-Cutout-Kompatibilität**: Speaker-Cutouts liegen X=10..90, Y=10..50
+(links) und X=230..310, Y=10..50 (rechts). Battery-Zone Y=0..130 würde mit
+linker Speaker-Cutout überlappen — Battery-Pouch **muss in Y-Position auf
+Y=60..120 begrenzt** werden (also weiter oben) um Speaker freizuhalten.
+Revidierte Battery-Center: **X=80, Y=80, Pouch-Footprint 50×60 mm**.
+Bei 9050120-Pouch (50×120) passt das NICHT — dann Wahl: **kleinerer Pouch
+9050060 = 5000 mAh in 50×60 mm² × 14 mm** (etwas dicker), ODER **Speaker-Cutouts
+in eine andere Anordnung bringen**. **OFFENER PUNKT r9-B5 (Mechanik)**.
+
+---
+
+## 8. Pi Zero 2 W (auf Unterseite, durchgesteckter Header) — OBSOLET v0.9 (Pi-frei)
 
 Pi liegt unter dem PCB, GPIO-Header J2 durch das PCB gesteckt. Pi-Modul
 selbst nimmt ~65×30 mm ein.

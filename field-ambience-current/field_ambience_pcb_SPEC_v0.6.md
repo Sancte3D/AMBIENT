@@ -10,7 +10,7 @@
 > Pi-frei-Stand ist `NATIVE_PORT_PLAN.md`. D2 (TVS) **bleibt** als allgemeiner
 > +5V-Rail-Surge-Schutz (saß nie am Pi-Header, sondern auf der Hauptschiene).
 
-**Rev:** 0.6.3-r8 (Encoder-MPN konkretisiert auf ALPS EC11J1525402; J8-Jack als premium-tauglich verifiziert + 2nd-Source dokumentiert)
+**Rev:** 0.6.3-r9 (Battery-Add: 5000mAh LiPo + MCP73831-Charger + TPS61089-Boost + P-MOSFET Power-Path. Tragbarer Betrieb)
 **Target:** 4-Layer JLCPCB, partial-PCBA (siehe §4 BOM-Split A/B/C)
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
 **Status:** SCHEMATIC IN REVIEW — noch nicht production-ready. Offene Blocker
@@ -149,6 +149,82 @@ Falls in Sourcing-Pass kein Premium-Equivalent JLC-stockable: bleibt C165948
 
 ---
 
+## 2.2. Battery & Power-Path (NEU r9, 2026-05-31)
+
+**Was**: Tragbarer Betrieb — 5000 mAh LiPo + Charger + Boost + Power-Path-Selector.
+USB-C lädt; ohne USB-C läuft das Gerät aus dem Akku. Worst-Case-Runtime
+~1.5 h bei voller Lautstärke, ~10 h typical (ambient Hörlautstärke).
+
+### Architektur
+
+```
+USB-C (5V/3A) ──► F1 (3A/6A) ──┬──► Q1 (P-MOSFET) ──► +5V-Rail ──► alle Verbraucher
+                               │                          ▲
+                               └──► U7 MCP73831 ──► BAT1  │
+                                    (Charger 500mA)   │   │
+                                                       ▼  │
+                                                   U8 TPS61089
+                                                   (Boost 5V/2A)
+                                                       │
+                                                       └──► +5V-Rail (wenn USB-C abwesend)
+
+Q1-Logik: USB-C-VBUS HIGH = Q1 leitet (Bypass-Boost), Battery lädt parallel
+          USB-C-VBUS LOW  = Q1 sperrt, Boost-Output speist +5V-Rail
+```
+
+### Bauteile (Battery-Block)
+
+| Ref | Part | LCSC | JLC | Funktion |
+|---|---|---|---|---|
+| BAT1 | LiPo 3.7V 5000mAh Pouch 8050120 oder 9050120 (8-9mm × 50mm × 120mm) | nicht JLC | du lieferst | Energiespeicher, JST PH 2.0 2-pin |
+| J9 | JST PH 2.0 2-pin Battery-Connector vertical SMD | C2845240-Klasse | JLC Basic | Battery-Anschluss, polarisiert |
+| U7 | **MCP73831T-2ACI/OT** (Microchip, SOT-23-5) | C14879 | Basic | LiPo Single-Cell Charger, Ladestrom programmierbar via R_PROG (R21 = 2 kΩ → 500 mA charge) |
+| U8 | **TPS61089RNSR** (TI, QFN-12 3×3mm) | C2671 | Extended | Boost-Converter LiPo→5V, bis 2A @ 5V Out, switching 1.2 MHz (über audio band) |
+| Q1 | **DMG2305UX** (Diodes, SOT-23, P-MOSFET, -20V, -4.2A, Rds 31mΩ) | C147074 | Basic | Power-Path-Selector USB-C vs Boost-Output |
+| L1 | **2.2 µH 5A Shielded Inductor 0630** (Sumida CDR63B-2R2) | C32330 | Extended | TPS61089 Boost-Inductor |
+| D3 | **SS34 Schottky 40V 3A** (DO-214AC/SMA) | C8678 | Basic | Boost-Output-Diode-Reverse-Schutz (optional bei TPS61089-Synchronous, aber sicherheitshalber) |
+| R21 | 2 kΩ 0603 (MCP73831 R_PROG → 500 mA Ladestrom) | Generic | Basic | I_CHARGE = 1000 / R_PROG |
+| R22 | 10 kΩ 0603 (Q1 Gate Pull-Down) | Generic | Basic | Default-OFF wenn USB-C-VBUS unbestimmt |
+| R23, R24 | TPS61089 Feedback-Divider (R23=200kΩ, R24=39kΩ → Vout=5.0V) | Generic | Basic | Vout-Set für TPS61089 |
+| C_BAT_IN | 22 µF X5R 0805 (Battery-Input bulk) | Generic | Basic | LiPo-Cap-Reservoir für Boost-Inrush |
+| C_BAT_HF | 100 nF X7R 0603 (Battery HF) | Generic | Basic | HF-Decoupling am Charger |
+| C_BOOST_OUT | 22 µF X5R 0805 (Boost-Output) | Generic | Basic | Output-Filter für TPS61089 |
+| C_BOOST_HF | 100 nF X7R 0603 (Boost HF) | Generic | Basic | HF an Boost-Output |
+| LED_CHRG | 0603 Amber (Charging-Indikator) | Generic | Basic | direkt vom MCP73831 STAT-Pin (Open-Drain LOW=charging) via 1kΩ |
+| LED_FULL | 0603 Green (Charge-Complete-Indikator) | optional | — | gleicher STAT-Pin alternativ überwacht via Pico-GPIO |
+| R_CHRG | 1 kΩ 0603 (LED_CHRG Series) | Generic | Basic | — |
+
+### Power-Budget revidiert für Battery-Betrieb
+
+| Szenario | I @ 5V | I @ 3.7V (von Akku, ÷ 0.85 Boost-Effizienz) | Runtime aus 5000 mAh @ 3.7V |
+|---|---|---|---|
+| Idle (Display an, kein Audio) | 250 mA | ~395 mA | ~12.5 h |
+| Typical Ambient | 500 mA | ~795 mA | ~6.3 h |
+| Loud (worst-case, 4Ω BTL voll) | 2.5 A | ~3.97 A | ~1.25 h |
+
+**Hinweis**: TPS61089 max Output ist 2A @ 5V — bei Worst-Case (2.5 A) reicht das
+NICHT. Im Battery-Betrieb klemmt der Boost-Output bei 2 A → das ist eine
+**implizite Volume-Begrenzung im Battery-Mode** (~1.4 A für PAM8403 deckt ~2W
+out per Channel = laut genug für Indoor-Hörsession, nicht für PA-Lautstärke).
+Über USB-C (3A-Path via Q1) bleibt voller Headroom verfügbar.
+
+### Audio-Cleanliness (warum TI/Microchip statt IP5306)
+
+IP5306 ist Standard für China-Power-Banks, kostet $1.50 statt $3.50 für unsere
+Split-Lösung. Aber:
+- IP5306-Boost schaltet bei 150-300 kHz mit hörbarem coil-whine
+- Switching-Ripple injiziert in +5V-Rail → durch PAM8403 verstärkt = audible
+  hum/whine über Lautsprecher
+- TPS61089 schaltet bei **1.2 MHz** (weit über Audio-Band) + integrierter
+  Synchronous-Rectifier minimiert Ripple → Audio-Rail bleibt sauber
+- Unsere AVDD/DVDD-FB1-Trennung + 22µF Decoupling wäre durch laute Rail
+  unterminiert
+
+$2 Aufpreis = Versicherung dass alles vorherige Audio-Design auch im
+Battery-Betrieb funktioniert.
+
+---
+
 ## 3. Power Tree v0.6.3-r3 (REVIDIERT — siehe Errata-Historie)
 
 ### Power Budget (v0.6.3-r3 realistic)
@@ -173,6 +249,12 @@ zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 50 °C; 2.525 A Worst-Case bleibt unter der Auslöseschwelle). Die LEDs werden
 typisch bei <40 % PWM-Duty betrieben (ambient look) → Typical ≈ +10 mA, nicht
 +25 mA.
+
+**Anmerkung r9 (Battery-Mode)**: TPS61089-Boost (siehe §2.2) liefert max 2 A
+@ 5 V. Worst-Case 2.525 A überschreitet das → **Volume-Begrenzung im Battery-
+Mode implizit notwendig** (Firmware-clamp PAM8403-Volume auf ~70 % bei
+Battery-Betrieb-Detect). Detect via Pico-GPIO (USB-C-VBUS-Sense an einem
+freien GPIO, oder MCP23017 GPA7 die noch reserve ist).
 
 ### USB-C Power Delivery (Entscheidung v0.7 — final)
 
@@ -336,7 +418,7 @@ variieren zwischen China-Herstellern. Symbol: `Switch:SW_Push` für Switch-Teil
 | **D2** | **SMAJ5.0A TVS auf +5V am Pi-Header** | **1 NEU** |
 | LED1 | Status LED 0805 warm white | 1 |
 
-**Total: ~66 SMT-Komponenten** (r7: +U6 PCA9685, +R_LED6-10 + R_OE + C_PCA × 2 = +9) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 momentary tactile mit LED (User-supplied, hand-soldered).
+**Total: ~80 SMT-Komponenten** (r7: +9, r9-Battery: +14 = U7+U8+Q1+L1+D3+J9+R21-24+4 Caps+LED_CHRG+R_CHRG) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 momentary tactile mit LED (User-supplied, hand-soldered), **+ BAT1 LiPo 5000 mAh user-supplied**.
 
 ---
 

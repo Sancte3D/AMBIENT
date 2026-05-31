@@ -25,6 +25,21 @@ machen — das kann Claude headless nicht erledigen.
 > (≥10000 Cycles vs. ~5000 beim Generic). Sourcing-Pass + JLC-Stock-Verify
 > nötig. Prototyp läuft mit dem aktuellen C165948.
 
+> 🆕 **r9 (2026-05-31)** — Battery-Add (5000 mAh LiPo):
+> 1. **BAT1 LiPo bestellen**: 3.7V 5000 mAh Pouch, Format 9050060 empfohlen
+>    (50×60×14 mm — passt neben Speaker-Cutout) ODER 9050120 falls Speaker-
+>    Cutouts anders gelöst werden. Mit JST PH 2.0 2-pin Stecker.
+> 2. **Mechanik-Entscheidung r9-B5** treffen vor PCB-Layout: kollidiert
+>    9050120 mit linkem Speaker-Cutout — entweder kleinerer Pouch oder
+>    Speaker-Position ändern. Siehe `mechanical_coordinates.md` §7a.
+> 3. **Im KiCad-GUI ein neues Sheet `battery.kicad_sch`** anlegen mit U7
+>    MCP73831, U8 TPS61089, Q1 DMG2305UX, L1 2.2µH, D3 SS34, J9 JST-PH,
+>    plus R21-R24 + 4× Caps + LED_CHRG. Alle MPNs/LCSC siehe SPEC §2.2 BOM-Tabelle.
+> 4. **MCP23017 GPA7** für USB-C-VBUS-Sense routen (r9-B6) — als Eingang mit
+>    Pull-Up; USB-C-VBUS via 100kΩ-Spannungsteiler runter auf 3V3-tolerable Level.
+> 5. **Firmware-Task r9-B7** (eigener Commit später): Volume-Clamp bei
+>    Battery-Mode-Detect (TPS61089-2A-Limit).
+
 Reihenfolge von oben nach unten abarbeiten. **Priorität: Komponenten-
 Vollständigkeit (Abschnitt 0) zuerst.**
 

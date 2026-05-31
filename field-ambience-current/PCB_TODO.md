@@ -37,7 +37,25 @@ via LCSC-API + JLC-Stock-Check. Wenn Premium-Equivalent gefunden + Footprint-
 kompatibel (Drop-in oder kleine Footprint-Anpassung): SPEC §4 update, sonst
 C165948 + Soft-Mount-Reinforcement-Plan (Epoxy am Connector-Body).
 
-### r7-B3: KiCad-Schematic + Generator-Update für r7
+### r9-B5: Battery-Pouch-vs-Speaker-Cutout-Konflikt
+**Status**: 🔴 BLOCKER für PCB-Layout. 9050120-Pouch (50×120 mm) kollidiert
+mit linkem Speaker-Cutout (X=10..90, Y=10..50). Drei Lösungswege:
+(a) kleinerer Pouch 9050060 (50×60 mm × 14 mm dicker, immer noch 5000 mAh),
+(b) Speaker-Cutouts auf andere Achse verlegen (z.B. obere/untere Kante statt
+links/rechts), (c) PCB-Größe vergrößern.
+**Empfehlung**: (a) — 14 mm Dicke passt noch in 40-mm-Gehäuse.
+
+### r9-B6: USB-C-VBUS-Sense GPIO für Battery-Mode-Detect
+**Status**: 🟠 IMPORTANT. Firmware muss Battery-vs-USB-C unterscheiden um
+Volume-Clamp zu aktivieren (TPS61089-2A-Limit). Pin-Allokation: MCP23017 GPA7
+ist reserve → direkt nutzen, kein Pico-Pin nötig.
+
+### r9-B7: Firmware Volume-Clamp bei Battery-Mode
+**Status**: 🟢 NICE-TO-HAVE (Firmware-Task, nicht PCB-Blocker). Bei
+Battery-Mode-Detect PAM8403-Volume auf ~70 % begrenzen damit Boost-2A-Limit
+nicht überschritten wird.
+
+### r7-B3: KiCad-Schematic + Generator-Update für r7+r9
 **Status**: 🔴 BLOCKER. `generate_kicad_project.py` muss nachgezogen werden:
 - U6 PCA9685 als neues Subsheet oder im mcp.kicad_sch
 - SW6-10 vom Choc-Hotswap-Symbol auf `Switch:SW_Push` + zusätzliche `Device:LED`-

@@ -4,7 +4,61 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r8** (Encoder-MPN konkretisiert, J8-Jack als premium-tauglich verifiziert). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8 sind orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r9** (Battery-Add: 5000 mAh LiPo + Charger + Boost + Power-Path). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9 sind orthogonal zur Audio-Architektur.
+
+---
+
+## v0.6.3-r9 (2026-05-31) — Battery-Add (tragbarer Betrieb, 5000 mAh LiPo)
+
+**Was**: Tragbarer Betrieb für das Gerät — Akku im Gehäuse, lädt über
+USB-C, läuft ohne USB-C aus dem Akku. Substantielle Power-Architektur-
+Erweiterung; +14 SMT-Komponenten + Battery-Pouch user-supplied.
+
+**Neue Bauteile (Battery-Block, SPEC §2.2 NEU)**:
+- **U7 MCP73831T-2ACI/OT** (C14879, JLC Basic) — LiPo Single-Cell Charger,
+  500 mA Ladestrom (R21=2kΩ R_PROG)
+- **U8 TPS61089RNSR** (C2671, JLC Extended) — Boost LiPo→5V, 2A out,
+  1.2 MHz switching (über Audio-Band)
+- **Q1 DMG2305UX** (C147074, JLC Basic) — P-MOSFET Power-Path-Selector
+  (USB-C vs Boost-Output)
+- **L1 2.2µH 5A Shielded** (C32330) für TPS61089
+- **D3 SS34 Schottky** (C8678) Reverse-Schutz
+- **J9 JST PH 2.0 2-pin SMD** für BAT1-Anschluss
+- **BAT1 LiPo 3.7V 5000 mAh** Pouch 8050120/9050120 (user-supplied)
+- 4× R (R21-R24), 4× C (BAT-In/HF + Boost-Out/HF), 1× LED_CHRG (Amber) + R_CHRG
+
+**Audio-Cleanliness-Begründung (warum TI/Microchip statt IP5306)**:
+IP5306-Single-Chip wäre $2 günstiger, aber dessen 150-300 kHz Switching-
+Ripple kriecht in den +5V-Rail → PAM8403 verstärkt das → audible Hum/Whine.
+TPS61089 schaltet bei 1.2 MHz (weit über Audio-Band) + synchronous-Rectifier
+hält Ripple minimal. $2-Aufpreis = Versicherung dass unser ganzes AVDD/DVDD-
+Trennungs-Decoupling-Konzept auch im Battery-Mode trägt.
+
+**Runtime-Estimate** (5000 mAh @ 3.7V = 18.5 Wh, Boost-Effizienz 85%):
+- Idle: ~12.5 h
+- Typical Ambient: ~6.3 h
+- Loud worst-case: ~1.25 h (mit implizitem Volume-Clamp wegen TPS61089-2A-Max)
+
+**Implizite Battery-Mode-Volume-Begrenzung**: TPS61089-Boost gibt max 2 A @
+5V. Worst-Case-Load 2.525 A überschreitet das → Firmware muss bei
+Battery-Betrieb-Detect (USB-C-VBUS LOW) die PAM8403-Volume auf ~70 % clampen.
+Über USB-C-Path (3A via Q1) bleibt voller Headroom.
+
+**Mechanik (mechanical_coordinates.md §7a NEU)**: Battery liegt unter PCB
+(Bottom-Side), in dem durch Pi-frei (v0.9) freigewordenen Bereich. **Offener
+Punkt r9-B5**: 9050120-Pouch (50×120 mm) kollidiert mit linkem Speaker-Cutout
+(X=10..90, Y=10..50). Alternative: 9050060-Pouch (50×60 mm × 14 mm dicker)
+ODER Speaker-Cutout-Position überdenken. Vor PCB-Layout zu klären.
+
+**SPEC §4 BOM**: Section Battery & Power-Path NEU eingefügt; SMT-Komponenten-
+Total ~66 → ~80. Footprint-Hinweise für TPS61089-QFN-12 + MCP73831-SOT-23-5
+zwingen sauberes Hand-Soldering wenn nicht via JLC-Assembly.
+
+**Verbleibend offen**:
+- r9-B5: Battery-Pouch-vs-Speaker-Cutout-Konflikt mechanisch lösen
+- r9-B6: USB-C-VBUS-Sense-GPIO für Battery-Mode-Detect zuweisen (MCP23017 GPA7 ist reserve, oder freier Pico-Pin)
+- r9-B7: Firmware-Volume-Clamp-Logik bei Battery-Mode (Pico-side)
+- r7-B3 bleibt: Schematic-Generator für r7+r9 nachziehen
 
 ---
 
