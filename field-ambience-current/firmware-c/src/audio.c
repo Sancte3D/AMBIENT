@@ -50,7 +50,14 @@ static volatile uint8_t playing_idx = 0;   /* which buffer DMA is reading */
 
 static int dma_chan = -1;
 
-/* ---- Test sine state (Step 5 placeholder for the real engine) ---- */
+/* ---- Step 7: pluggable renderer. NULL → built-in test sine. ---- */
+static audio_render_fn s_render = NULL;
+
+void audio_set_renderer(audio_render_fn fn) {
+    s_render = fn;
+}
+
+/* ---- Test sine state (Step 5 fallback renderer) ---- */
 static volatile float test_freq_hz = 440.0f;
 static volatile float test_amp_0_1 = 0.10f;   /* -20 dB FS — safe for the 23 dB PAM8403 gain */
 static float phase = 0.0f;
@@ -73,6 +80,12 @@ static void fill_test_sine(int16_t *buf, int frames) {
     phase = p;
 }
 
+/* Dispatch: registered engine renderer, else the built-in test sine. */
+static void fill_block(int16_t *buf, int frames) {
+    if (s_render) s_render(buf, frames);
+    else          fill_test_sine(buf, frames);
+}
+
 /* ---- DMA completion IRQ ---- */
 static void __isr __not_in_flash_func(audio_dma_irq)(void) {
     if (dma_irqn_get_channel_status(0, dma_chan)) {
@@ -85,7 +98,7 @@ static void __isr __not_in_flash_func(audio_dma_irq)(void) {
         uint8_t next     = (uint8_t)(playing_idx ^ 1);
         playing_idx = next;
         dma_channel_set_read_addr(dma_chan, audio_bufs[next], true);
-        fill_test_sine(audio_bufs[finished], AUDIO_BUFFER_FRAMES);
+        fill_block(audio_bufs[finished], AUDIO_BUFFER_FRAMES);
     }
 }
 
@@ -164,8 +177,8 @@ void audio_init(void) {
 
     /* 4) Hand the buffers over to the test-sine fill. Until the IRQ first
      *    refills one, we pre-fill both so the second flip already has data. */
-    fill_test_sine(audio_bufs[0], AUDIO_BUFFER_FRAMES);
-    fill_test_sine(audio_bufs[1], AUDIO_BUFFER_FRAMES);
+    fill_block(audio_bufs[0], AUDIO_BUFFER_FRAMES);
+    fill_block(audio_bufs[1], AUDIO_BUFFER_FRAMES);
 }
 
 void audio_mute(void) {

@@ -35,6 +35,8 @@ add_executable(field_ambience_native
     src/mcp23017.c
     src/encoders.c
     src/audio.c
+    src/dsp.c       # Step 7: sine LUT + math helpers
+    src/voices.c    # Step 7: polyphonic voice pool
 )
 
 target_include_directories(field_ambience_native PRIVATE
