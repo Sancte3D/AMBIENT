@@ -1,0 +1,77 @@
+name: firmware-c
+
+# Validate the native RP2350 firmware on every push/PR that touches it:
+#   1. host-tests  — compile + run the hardware-independent DSP/voice tests
+#                     (pure C, no SDK). Fast, deterministic correctness signal.
+#   2. firmware-build — full Pico SDK cross-build for the RP2350 (pico2),
+#                     proving the codebase still links into a valid UF2.
+
+on:
+  push:
+    paths:
+      - "field-ambience-current/firmware-c/**"
+      - ".github/workflows/firmware-c.yml"
+  pull_request:
+    paths:
+      - "field-ambience-current/firmware-c/**"
+      - ".github/workflows/firmware-c.yml"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  host-tests:
+    name: host unit tests (dsp + voices)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run host tests
+        working-directory: field-ambience-current/firmware-c/test
+        run: ./run_tests.sh
+
+  firmware-build:
+    name: RP2350 build (pico2)
+    runs-on: ubuntu-latest
+    env:
+      PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi cmake build-essential
+
+      - name: Checkout Pico SDK 2.1.0
+        uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-sdk
+          ref: "2.1.0"
+          path: pico-sdk
+          submodules: false
+
+      - name: Init TinyUSB submodule (needed for USB CDC stdio)
+        working-directory: pico-sdk
+        run: git submodule update --init --depth 1 lib/tinyusb
+
+      - name: Build (pico2)
+        working-directory: field-ambience-current/firmware-c
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DPICO_BOARD=pico2
+          make -j"$(nproc)"
+
+      - name: Report size + verify UF2 exists
+        working-directory: field-ambience-current/firmware-c/build
+        run: |
+          arm-none-eabi-size field_ambience_native.elf
+          test -f field_ambience_native.uf2
+          ls -la field_ambience_native.uf2
+
+      - name: Upload UF2 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: field_ambience_native-pico2-uf2
+          path: field-ambience-current/firmware-c/build/field_ambience_native.uf2
+          if-no-files-found: error
