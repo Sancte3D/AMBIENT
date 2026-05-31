@@ -80,14 +80,19 @@ umsteuern kannst. Keine Mega-Dumps.
   identische Init zur MicroPython-Variante. GP22 falling-edge IRQ für INTA.
   Live-State-Render auf OLED (5 Zellen + 5 Modifier + Jack-Detect), USB-CDC-
   Trace bei jedem Tap. XSMT-Pin als Output verfügbar für Step 5.
-- **Step 4** ✅ — **Du bist hier.** 4× EC11 (DRIVE/BRIGHT/DISPLAY/VOLUME) auf
+- **Step 4** ✅ — 4× EC11 (DRIVE/BRIGHT/DISPLAY/VOLUME) auf
   GP10–GP21 quadrature-dekodiert per 1 kHz Repeating-Timer + 4-State-Tabelle
   + 4 Sub-Steps pro Detent (identisch zur Python-Logik). Push-Switches
   per 3-of-N-Bounce-Filter. Lock-free Ring-Buffer für Events → kein I/O im
   Timer-Callback. OLED zeigt Position + Push-State pro Encoder.
-- **Step 5** — **Erster Audio-Pfad**: I²S-Output via PIO + DMA, doppelt
-  gepufferte 256-Sample-Blöcke @ 44,1 kHz, 16-bit-Stereo. Sinus-Test-Ton
-  als „it works". Amp-Power-Sequencing (GP27/GP28) korrekt timed.
+- **Step 5** ✅ — **Du bist hier. Erster Sound.** PIO0-SM0 mit dem
+  pico-extras-`audio_i2s`-Programm (copy mit BSD-Attribution), DMA-
+  Ping-Pong (2 × 256 Frames) in den PIO-TX-FIFO bei 44,1 kHz / 16-Bit-Stereo.
+  Pins: BCK=GP0, LRCK=GP1, DIN=GP4 (die freigewordenen UART-/MISO-Pins).
+  Pop-suppressed Power-Sequenz nach SPEC §8 (Rails → /SHDN → 50 ms →
+  /MUTE+XSMT, alles während die I²S schon Stille pumpt). Continuous
+  440-Hz-Sinus @ -20 dBFS als „it works". **Ab hier ist der Pi funktional
+  redundant** — der Audio-Pfad geht Pico → DAC → Amp ohne Linux.
 - **Step 6** — **Schaltplan-Update**: Pi-Sheet löschen, J2/D2/R_BCK/LRCK/DOUT
   raus, I²S-Linien Pico → PCM5102A neu verdrahten, Pin-Belegung in SPEC §5
   fixieren. Regenerieren, ERC-Check. **Erstes greifbares BOM-Schrumpfen**.

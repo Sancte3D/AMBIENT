@@ -6,11 +6,13 @@ the Pico 2 (RP2350) directly. The plan is documented in
 Zero 2 W will no longer be part of the device — the RP2350 will host both
 the audio engine and the UI.
 
-**Status:** Step 4 of 12 — 4× EC11 encoders alive. Build produces a UF2
-that runs Step 1–3 plus a 1 kHz hardware timer that quadrature-decodes the
-4 EC11s on GP10–GP21 and debounces their push switches. The OLED shows
-each encoder's accumulated position + push-state alongside the cells +
-modifiers from Step 3; USB CDC logs each rotate / push event. No audio yet.
+**Status:** Step 5 of 12 — **first sound on the speakers.** Build produces
+a UF2 that runs Step 1–4 plus a PIO-driven 16-bit/44.1-kHz I²S stream into
+the PCM5102A, double-buffered via DMA. The SPEC v0.6 §8 pop-suppression
+power sequence is enforced: rails settle → /SHDN HIGH → 50 ms → /MUTE HIGH
++ PCM XSMT HIGH, all while the I²S already pumps silence so the DAC never
+sees garbage. After unmute the engine produces a continuous 440 Hz sine at
+-20 dBFS for "yes, the audio path works" verification.
 
 The MicroPython firmware in `../firmware/` remains the working firmware
 on the device during the transition. Nothing is being removed yet.
@@ -43,11 +45,13 @@ Output (in `build/`):
 1. Hold BOOTSEL on the Pico 2, plug in USB → `RPI-RP2` mass-storage appears
 2. Drag `field_ambience_native.uf2` onto it
 3. Pico reboots; the STATUS LED (GP26) starts blinking at 1 Hz
-4. The 256×64 SSD1322 OLED shows banner + encoder state + button state:
+4. The 256×64 SSD1322 OLED shows banner + audio status + Step 4 encoder /
+   button state:
 
    ```
                FIELD AMBIENCE
-               V0.9 STEP 4
+               V0.9 STEP 5
+   AUDIO 440HZ TEST
 
    DRIV  .   BRIT  .   DISP  .   VOL   .
    +0000     +0000     +0000     +0000
@@ -55,31 +59,26 @@ Output (in `build/`):
    C . . . . .   M . . . . .         J
    ```
 
-   - Twist any encoder → the matching position updates in real time.
-   - Press an encoder shaft → its dot brightens.
-   - Cells / modifiers / jack from Step 3 still respond.
+5. **Listen.** A clean 440 Hz sine is on the speakers and the line-out.
+   Volume is fixed at -20 dBFS into the PCM5102A → 23 dB into the PAM8403 →
+   ~1.5 Vrms BTL → reasonable on the 40 mm down-firing drivers without
+   driving them into excursion. Plugging into J8 should mute the speakers
+   (jack-detect via MCP) and leave the sine on the line-out only.
 
-5. USB CDC traces every event:
-
-   ```
-   ENC 3 rotate +1  pos=4
-   ENC 1 push   DOWN
-   MCP state 0xDFFE   (CELL1 pressed)
-   ```
-
-   Heartbeat every 2 s:
+6. USB CDC traces continue from Step 3/4 plus a one-time `audio:` line:
 
    ```
-   field-ambience native v0.9-dev step4 — pico2 (RP2350) — heartbeat N
+   audio: I2S pump live, 440 Hz sine at -20 dBFS
+   field-ambience native v0.9-dev step5 — pico2 (RP2350) — heartbeat N
    ```
 
-That's the success signal for Step 4. **If a knob feels backwards on real
-hardware**, flip its `dir` field in `src/encoders.c` (defs table) from `+1`
-to `-1` — that one-bit knob-by-knob fix is the only quirk EC11s ever throw.
-
-Step 5 brings I²S DMA + the first audible sine through PCM5102A → PAM8403.
+That's the success signal for Step 5. **The Pi is functionally redundant
+from this point on**: the audio path is Pico → DAC → Amp → Speaker, no
+Linux involved. Step 6 cleans up the schematic to reflect that (J2 / D2 /
+R_BCK/LRCK/DOUT / the Pi module itself all come out of the BOM).
 
 ## What's next
 
-See `../NATIVE_PORT_PLAN.md`. Step 5 = I²S DMA + first audible sine tone.
-Step 6 = the schematic update that lets the Pi come out of the BOM.
+See `../NATIVE_PORT_PLAN.md`. Step 6 = the schematic update that lets the
+Pi come out of the BOM (now that audio is proven to flow Pico → DAC → Amp
+without any Linux in the path).
