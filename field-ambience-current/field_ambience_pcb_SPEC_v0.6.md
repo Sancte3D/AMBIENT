@@ -639,7 +639,12 @@ MCP23017 (0x20) und OLED — Konflikt-frei.
 +3V3. Default = HIGH = LEDs disabled. Firmware zieht /OE LOW erst nachdem
 PWM-Register initialisiert sind (kein Aufblitzen beim Boot).
 
-**EXTCLK (Pin 25)**: NC. Interner 25 MHz Oscillator wird genutzt.
+**EXTCLK (Pin 25)**: **MUSS auf GND gezogen werden** (NXP Datasheet Rev 4 S.7
+Footnote [2]: „This pin must be grounded when this feature is not used"). Wir
+nutzen den internen 25 MHz Oszillator → Pin 25 fix an GND. **Korrektur 2026-05-31**:
+frühere Spec-Fassungen sagten irrtümlich „NC" — wäre ein latenter Bug
+(undefined HF-Pickup, kann Oszillator destabilisieren). Im KiCad-Schematic
+muss Pin 25 explizit eine GND-Verbindung haben, nicht nur ein NC-Label.
 
 **LED-Kanal-Belegung (erweitert r10 — 5 Cell-HOLD-Status-LEDs hinzu):**
 
