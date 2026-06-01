@@ -4,7 +4,117 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r12** (Battery-Sense-Hardware lock-in: GP26 ADC-frei, STATUS_LED auf PCA9685, MCP-GPA7 für VBUS-Detect, 100k/100k VBAT-Divider). Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r10-LED/r11/r12 sind orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r12** + Generator-Catchup-Commits **50b5e02 (r10-LED-Gen)** und **0a3a740 (r12-Sense+r9-Battery-Gen)** — KiCad-Schematic-Generator und SPEC sind 1:1 im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r10-LED/r11/r12 sind orthogonal zur Audio-Architektur.
+
+---
+
+## Generator-Catchup 0a3a740 (2026-06-01) — r12-Sense + r9-Battery KiCad-Generator vervollständigt
+
+**Was**: Zweite + dritte Hälfte von r10-B9/r7-B3. Bringt `generate_kicad_project.py`
+in vollen Sync mit allen SPEC-Revisionen r9, r12, r10-LED (was Sub-Commit 1
+50b5e02 nicht abgedeckt hatte).
+
+**5 neue Library-Symbole** zwischen `_pca9685pw_lib_symbol()` und
+`_rotary_encoder_switch_lib_symbol()`:
+- `_mcp73831_lib_symbol()` SOT-23-5, 5-pin Microchip-Charger
+- `_tps61089_lib_symbol()` QFN-12+ePAD, 13-pin TI-Boost
+- `_dmg2305ux_lib_symbol()` SOT-23 3-pin P-MOSFET
+- `_inductor_lib_symbol()` Device:L 2-pin
+- `_schottky_diode_lib_symbol()` Device:D_Schottky 2-pin
+
+**Neuer Sheet 7 `battery.kicad_sch`** (106 KB, 1848 Zeilen, paren-balanced):
+- U7 MCP73831 LiPo-Charger 500 mA (R21=2 kΩ R_PROG), STAT→R_CHRG→LED_CHRG-Pfad
+- U8 TPS61089 Boost LiPo→5 V mit L1 2.2 µH + R23/R24 FB-Divider (200 k/39 k → 4.92 V)
+- Q1 DMG2305UX P-MOS Power-Path (S=VBUS_USBC, D=+5V_OUT, G→R22 10 kΩ Pull-Down)
+- D3 SS34 Schottky zwischen BOOST_OUT und +5V_OUT (Reverse-Protect)
+- J9 JST-PH-2P, C_BAT_IN/HF (22 µF+100 nF), C_BOOST_OUT/HF (22 µF+100 nF)
+- Hier-I/O: VBUS_USBC ← Power-Tree, BAT_PLUS → Pico, +5V_OUT → System-Rail
+
+**r12-Sense in `pico_sheet`**:
+- GP26 STATUS_LED-Block entfernt (R19 + LED1 + GND-Flag weg)
+- BAT_SENSE-Divider rein: R_BAT_DIV_TOP/BOT (100 kΩ je), C_BAT_FILT (10 nF)
+- Hier-Input BAT_PLUS am Divider-Top
+
+**r12-Sense in `mcp_sheet`**:
+- GPA7 NC_GPA7 → USB_VBUS_SENSE mit R_VBUS_SENSE (10 kΩ Series) + R_VBUS_PD
+  (100 kΩ Pull-Down) + Hier-Input VBUS_USBC
+- LED1 + R_LED_STATUS (390 Ω 0603) auf PCA-Ch 10 (Pin 17, rechts) bei (130, 230)
+- STATUS_LED_K Net-Label matcht LED1-Kathode mit PCA-LED10-Pin
+- NC-Loop reduziert auf LED11-LED15
+
+**`power_tree_sheet`**: VBUS_USBC Hier-Output (90° nach oben) am pre-fuse
+Rail-Tap bei (30.48, RAIL_Y-6).
+
+**`root_sheet`**:
+- Sheet 7 Battery-Block bei (30, 180) Size 60×40 mit Pins VBUS_USBC/BAT_PLUS/+5V_OUT
+- Existing Sheet-Blöcke erweitert: power_tree +VBUS_USBC out (90,95),
+  pico +BAT_PLUS in (130,165), mcp +VBUS_USBC in (130,225)
+- Inter-Sheet Label-Bridges für VBUS_USBC (3× an Power-Tree+Battery+MCP),
+  BAT_PLUS (Battery↔Pico), +5V_OUT (Battery merges via Same-Name)
+
+**`main()`**: emittiert `battery.kicad_sch` + Print auf „Sheets 1+2+3+4+5+6+7".
+
+**Smoke-Tests bestanden**:
+- Generator läuft fehlerfrei
+- Alle Sheets paren-balanced (battery 5992/5992, mcp 9001/9001, pico 6122/6122,
+  power_tree 5490/5490, field_ambience 1148/1148)
+- pico.kicad_sch: R19=0 hits, STATUS_LED=0 hits, BAT_SENSE+R_BAT_DIV_*+C_BAT_FILT vorhanden
+- mcp.kicad_sch: NC_GPA7=0 hits, USB_VBUS_SENSE+R_VBUS_*+R_LED_STATUS+STATUS_LED_K vorhanden, LED1 exakt 1 component-ref
+- root: Sheet Battery + 6× VBUS_USBC + 4× BAT_PLUS Label-Bridges
+
+**KiCad-GUI-ERC** bleibt User-Schritt (kein `kicad-cli` lokal verfügbar).
+
+**`PCB_TODO.md`**:
+- r7-B3 ✅ RESOLVED (Generator vollständig im Sync)
+- r10-B9 ✅ RESOLVED (Schon in 50b5e02 erledigt — Status aktualisiert)
+- r12-B10 ✅ RESOLVED (5 Bauteile + LED1-Rewire generiert)
+- r9-B7 ✅ HW + Generator RESOLVED (verbleibend nur Firmware-Volume-Clamp)
+
+**Diff-Stat**: 10 Files, +3918 Zeilen / -131 Zeilen. Neuer Datei
+`battery.kicad_sch`. Alle 6 anderen Sheets erhalten je +130 Zeilen wegen der
+5 neuen Library-Symbole die in jedes Sheet-LIB_SYMBOLS inlined werden
+(KiCad-Standard-Pattern für eigenständige Sheet-Files).
+
+---
+
+## Generator-Catchup 50b5e02 (2026-05-31) — r10-LED KiCad-Generator nachgezogen
+
+**Was**: Erste Hälfte von r10-B9/r7-B3 (Generator-Update). Schließt die r10-LED-
+Lücke zwischen SPEC (committed in 3a10761) und KiCad-Schematic-Output.
+
+**SPEC-Fix (parallel)**: PCA9685 EXTCLK Pin 25 von „NC" auf „GND". NXP-Datasheet
+Rev 4 S.7 Footnote [2] schreibt explizit Ground vor wenn unused — wäre latenter
+Bug (undefined HF-Pickup, Oscillator-Destabilisierung). Datasheet via WebFetch
++ PDF-Read verifiziert während dieser Iteration.
+
+**Generator-Änderungen in `generate_kicad_project.py`**:
+- NEU `_pca9685pw_lib_symbol()` (TSSOP-28, alle 28 Pins per NXP-Datasheet)
+  + LIB_SYMBOLS-Composition-Append
+- SW6-SW10 Footprint/MPN-Swap: Kailh Choc V2 Hot-Swap →
+  `Button_Switch_SMD:SW_SPST_TL3342`, MPN HX 12x12x7.3TPFT-B, LCSC C36498966
+- `mcp_sheet()` erweitert mit komplettem PCA9685-Block:
+  - U6 PCA9685PW @ (130, 165), Body y=148..182 (~40 mm unter U2)
+  - A0-A5 → GND (Adresse 0x40), VSS/VDD → GND/+3V3, SDA/SCL → I2C-Bus
+  - C_PCA_VDD 10 µF + C_PCA_VDD_HF 100 nF Decoupling am VDD
+  - R_OE 10 kΩ Pull-Up zu +3V3 (default disabled)
+  - EXTCLK → GND (per Datasheet)
+  - 10× LED+R Pairs in 5×2 Grid (y=200/215):
+    * LED6-LED10 (Modifier) auf PCA-Ch 0-4
+    * LED11-LED15 (Cell-HOLD) auf PCA-Ch 5-9
+    * Net-Label-Matching von PCA-LED-pin zu LED-Kathode (LED6_K..LED15_K)
+  - LED10-LED15 (PCA-Ch 10-15) als NC_PCA_LEDn (LED10 wird im 0a3a740 = STATUS)
+
+**LIB_SYMBOLS-Block** wird in jedes Sheet inlined → audio/encoder/oled/pico/
+power_tree erhalten je +95 Zeilen PCA9685-Symbol-Definition (KiCad-Standard,
+kein Duplikat-Konflikt da nur ein Sheet U6 platziert).
+
+`mcp.kicad_sch` wuchs 800 → 2810 Zeilen (+1142 für U6-Cluster).
+
+**Smoke-Tests bestanden**: 8192 öffnende = 8192 schließende Parens, alle erwarteten
+lib_ids vorhanden (Device:C/R/LED, Driver_LED:PCA9685PW, …), LED6-LED15 +
+R_LED6-R_LED15 alle generiert.
+
+**Diff-Stat**: 8 Files, +2012 Zeilen / -40 Zeilen.
 
 ---
 
