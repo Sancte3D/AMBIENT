@@ -40,6 +40,23 @@ Output (in `build/`):
 - `field_ambience_native.elf` — for `picotool` / OpenOCD debugging
 - `field_ambience_native.bin`, `.hex`, `.map` — for diagnostics
 
+## Host tests (no device, no SDK)
+
+The hardware-independent audio math (`src/dsp.c`, `src/voices.c`) compiles and
+runs natively, so its correctness can be checked without a Pico or the ARM
+toolchain — a clean UF2 link proves the build wires up, not that the sine is a
+sine or the envelope is click-free.
+
+```bash
+cd field-ambience-current/firmware-c/test
+./run_tests.sh          # builds with host cc, runs assertions, prints PASS/FAIL
+```
+
+Covers: sine-LUT accuracy vs `sinf` (< 1e-3), phase wrap, MIDI→Hz (A4=440,
+octave doubling), voice-pool alloc/re-trigger/count, 9th-note voice stealing,
+click-free attack/release ramps, attack→sustain peak, and int16 soft-clip
+bounds under 8-voice full load.
+
 ## Flash + verify
 
 1. Hold BOOTSEL on the Pico 2, plug in USB → `RPI-RP2` mass-storage appears
