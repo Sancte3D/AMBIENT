@@ -760,39 +760,47 @@ def _mcp73831_lib_symbol() -> str:
 
 
 def _tps61089_lib_symbol() -> str:
-    """TPS61089RNSR — Boost Converter LiPo→5V, QFN-12 1EP. 13 Pin-Nummern (12 + ePAD).
-    Per TI Datasheet SLVSCT0A Table 6-1:
-    Pin 1, 2, 3: SW (switch node, to inductor)
-    Pin 4, 5: VIN
-    Pin 6: EN (Enable, active HIGH)
-    Pin 7: FB (Feedback)
-    Pin 8: GND
-    Pin 9, 10, 11: VOUT
-    Pin 12: SS (Soft-Start cap)
-    Pin 13: ePAD (GND, exposed thermal pad)
+    """TPS61089RNR — Boost Converter LiPo→5V, VQFN-11 HotRod 2×2.5mm + Thermal Pad.
+    Per TI Datasheet SLVSD38C Table 6-1 (LCSC C165129):
+    Pin 1: FSW    — switching-frequency programming resistor (to SW pin)
+    Pin 2: VCC    — internal LDO output, requires ≥1µF cap to GND
+    Pin 3: FB     — output voltage feedback
+    Pin 4: COMP   — error amplifier output, compensation network to GND
+    Pin 5: GND    — power-in / quiet ground
+    Pin 6: VOUT   — boost converter output
+    Pin 7: EN     — enable input (HIGH = on)
+    Pin 8: ILIM   — current-limit programming resistor (to GND)
+    Pin 9: VIN    — IC power supply input
+    Pin 10: BOOT  — high-side gate driver bootstrap (cap to SW)
+    Pin 11: SW    — switch node (to inductor)
+    Plus thermal pad (treated as pin 12 = GND).
+
+    HINWEIS r12-B11: SPEC-Wechsel von TPS61089RNSR (QFN-12 3×3) auf
+    TPS61089RNR (VQFN-11 HotRod 2×2.5) wegen JLC-Stock-Verfügbarkeit
+    (RNSR nicht bei LCSC). RNR-Variante braucht 5 zusätzliche externe
+    Bauteile (C_VCC, R_FSW, R_ILIM, C_BOOT, R_COMP+C_COMP).
     """
     pins_left = [
-        (1, "SW1", "passive"),
-        (2, "SW2", "passive"),
-        (3, "SW3", "passive"),
-        (4, "VIN1", "power_in"),
-        (5, "VIN2", "power_in"),
-        (6, "EN", "input"),
+        (1, "FSW", "input"),
+        (2, "VCC", "power_out"),
+        (3, "FB", "input"),
+        (4, "COMP", "output"),
+        (5, "GND", "power_in"),
+        (6, "VOUT", "power_out"),
     ]
     pins_right = [
-        (12, "SS", "input"),
-        (11, "VOUT3", "power_out"),
-        (10, "VOUT2", "power_out"),
-        (9, "VOUT1", "power_out"),
-        (8, "GND", "power_in"),
-        (7, "FB", "input"),
+        (11, "SW", "passive"),
+        (10, "BOOT", "output"),
+        (9, "VIN", "power_in"),
+        (8, "ILIM", "output"),
+        (7, "EN", "input"),
     ]
-    y_top = 6.35  # 6 pins per side
+    y_top = 6.35  # 6 pins per side max
     rect_top = y_top + 2.54
     rect_bot = -y_top - 2.54
     out = ['    (symbol "Regulator_Switching:TPS61089" (in_bom yes) (on_board yes)']
     out.append(f'      (property "Reference" "U" (at 0 {rect_top + 1.27} 0) (effects (font (size 1.27 1.27))))')
-    out.append(f'      (property "Value" "TPS61089RNSR" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append(f'      (property "Value" "TPS61089RNR" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
     out.append('      (property "Datasheet" "https://www.ti.com/lit/ds/symlink/tps61089.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
     out.append('      (symbol "Regulator_Switching:TPS61089_0_1"')
@@ -813,11 +821,11 @@ def _tps61089_lib_symbol() -> str:
             f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
             f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
         )
-    # ePAD = Pin 13, treated as second GND. Place below body.
+    # Thermal pad = pin 12 below body, GND.
     out.append(
         f'        (pin power_in line (at 0 {rect_bot - 2.54} 90) (length 2.54)\n'
         f'          (name "ePAD" (effects (font (size 1.27 1.27))))\n'
-        f'          (number "13" (effects (font (size 1.27 1.27)))))'
+        f'          (number "12" (effects (font (size 1.27 1.27)))))'
     )
     out.append('        )')
     out.append('      )')
@@ -4865,10 +4873,13 @@ def battery_sheet() -> str:
     attach_gnd(82, 96, "C_BAT_HF", rotation=0)
 
     # ====================================================================
-    # U8 TPS61089 Boost @ (140, 90). QFN-12+ePAD, 12 pins + ePAD.
-    # Left pins (1..6, top→bottom): 1=SW1, 2=SW2, 3=SW3, 4=VIN1, 5=VIN2, 6=EN
-    # Right pins (12..7, top→bottom): 12=SS, 11=VOUT3, 10=VOUT2, 9=VOUT1, 8=GND, 7=FB
-    # Pin coords per lib symbol: y_top=6.35. Left x=-10.16, Right x=+10.16. ePAD at (0, rect_bot-2.54).
+    # U8 TPS61089RNR Boost @ (140, 90). VQFN-11 HotRod 2x2.5mm + Thermal Pad.
+    # Decision r12-B11: Wechsel auf RNR-Variante (C165129) statt RNSR, weil RNSR
+    # nicht bei LCSC verfügbar — JLC-soviel-wie-möglich-Strategie. Komplett anderer
+    # Pinout + benötigt 6 zusätzliche externe Bauteile (C_VCC, R_FSW, R_ILIM,
+    # C_BOOT, R_COMP+C_COMP).
+    # Left pins (1..6, top→bottom): 1=FSW, 2=VCC, 3=FB, 4=COMP, 5=GND, 6=VOUT
+    # Right pins (11..7, top→bottom): 11=SW, 10=BOOT, 9=VIN, 8=ILIM, 7=EN
     # ====================================================================
     U8_X, U8_Y = 140.0, 90.0
     U8_LX = U8_X - 10.16  # 129.84
@@ -4877,47 +4888,48 @@ def battery_sheet() -> str:
         place_symbol(
             lib_id="Regulator_Switching:TPS61089",
             ref="U8",
-            value="TPS61089RNSR (Boost LiPo→5V, 2A, 1.2MHz)",
+            value="TPS61089RNR (Boost LiPo→5V, 2A, programmable Fsw)",
             x=U8_X, y=U8_Y,
-            footprint="Package_DFN_QFN:VQFN-12-1EP_3x3mm_P0.5mm_EP1.5x1.5mm",
+            footprint="Package_DFN_QFN:VQFN-11-1EP_2.6x2.6mm_P0.5mm_EP0.85x1.5mm_HotRod",
             datasheet="https://www.ti.com/lit/ds/symlink/tps61089.pdf",
-            extra_props={"MPN": "TPS61089RNSR", "LCSC": "TBD-USER-SUPPLY-or-RNRR-refactor"},
+            extra_props={"MPN": "TPS61089RNR", "LCSC": "C165129"},
             seed_suffix="U8",
             sheet_uuid_seed=sus,
         )
     )
 
-    # U8 left-pin Y positions: pin N at U8_Y - 6.35 + (N-1)*2.54 (per _tps61089_lib_symbol).
+    # U8 pin Y positions per RNR lib_symbol (left pins 1..6, right pins 11..7).
     def u8_left_py(n: int) -> float:
         return U8_Y - 6.35 + (n - 1) * 2.54
-
-    # U8 right-pin Y positions: idx = 6 - (pin_idx_in_list). Pin 12 at top, Pin 7 at bottom.
-    pins_right_order = [12, 11, 10, 9, 8, 7]
+    pins_right_order = [11, 10, 9, 8, 7]
     def u8_right_py(n: int) -> float:
         idx = pins_right_order.index(n)
         return U8_Y - 6.35 + idx * 2.54
 
-    # ---- U8 SW1/2/3 (Pins 1-3, left) → L1 pin2 via shared SW-net
-    sw1_y = u8_left_py(1)
-    sw2_y = u8_left_py(2)
-    sw3_y = u8_left_py(3)
-    # Connect SW pins together with a vertical wire on left side at x=125
-    wires.append(wire(U8_LX, sw1_y, 125, sw1_y, seed_suffix="u8-sw1-stub"))
-    wires.append(wire(U8_LX, sw2_y, 125, sw2_y, seed_suffix="u8-sw2-stub"))
-    wires.append(wire(U8_LX, sw3_y, 125, sw3_y, seed_suffix="u8-sw3-stub"))
-    wires.append(wire(125, sw1_y, 125, sw3_y, seed_suffix="u8-sw-vbus"))
-    junctions.append(junction(125, sw1_y))
-    junctions.append(junction(125, sw2_y))
-    junctions.append(junction(125, sw3_y))
-    # SW-net → L1 pin2. L1 above U8 at (125, 75). L1 pin1 (top, sy-3.81), pin2 (bottom, sy+3.81).
-    # rotation=0 vertical L. pin1 (125, 71.19), pin2 (125, 78.81)
-    wires.append(wire(125, sw1_y, 125, 78.81, seed_suffix="u8-sw-up-to-l1"))
+    fsw_y  = u8_left_py(1)   # 83.65
+    vcc_y  = u8_left_py(2)   # 86.19
+    fb_y   = u8_left_py(3)   # 88.73
+    comp_y = u8_left_py(4)   # 91.27
+    gnd_y  = u8_left_py(5)   # 93.81
+    vout_y = u8_left_py(6)   # 96.35
+    sw_y   = u8_right_py(11) # 83.65
+    boot_y = u8_right_py(10) # 86.19
+    vin_y  = u8_right_py(9)  # 88.73
+    ilim_y = u8_right_py(8)  # 91.27
+    en_y   = u8_right_py(7)  # 93.81
+
+    # ---- U8 SW (Pin 11, right) → L1 + R_FSW + C_BOOT shared switch-node
+    # Label "U8_SW_NODE" auf SW-Pin, gleicher Label-Name an L1-Bottom, R_FSW-pin2, C_BOOT-pin2.
+    wires.append(wire(U8_RX, sw_y, 156, sw_y, seed_suffix="u8-sw-stub"))
+    labels.append(label(154, sw_y, "U8_SW_NODE"))
+
+    # L1 above U8 at (140, 75) vertical. pin1 top (140, 71.19) → BAT_PLUS, pin2 bottom (140, 78.81) → U8_SW_NODE.
     symbols.append(
         place_symbol(
             lib_id="Device:L",
             ref="L1",
             value="2.2uH 5A Shielded 0630 (TPS61089 Boost Inductor)",
-            x=125, y=75,
+            x=140, y=75,
             rotation=0,
             footprint="Inductor_SMD:L_0630_6.0x6.0mm",
             extra_props={"MPN": "SWPA6045S2R2MT", "LCSC": "C83455"},
@@ -4925,83 +4937,141 @@ def battery_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # L1 pin1 (top, 71.19) → BAT_PLUS hier-output
-    wires.append(wire(125, 71.19, 125, 68, seed_suffix="l1-top-stub"))
-    hlabels.append(hier_label(125, 68, "BAT_PLUS", shape="output", rotation=90))
+    wires.append(wire(140, 71.19, 140, 68, seed_suffix="l1-top-stub"))
+    hlabels.append(hier_label(140, 68, "BAT_PLUS", shape="output", rotation=90))
+    wires.append(wire(140, 78.81, 140, sw_y, seed_suffix="l1-bottom-to-sw"))
+    wires.append(wire(140, sw_y, 156, sw_y, seed_suffix="l1-to-sw-h"))
+    junctions.append(junction(140, sw_y))
+    # Place a second "U8_SW_NODE" label at L1-Bottom-Wire-Path to confirm net
+    labels.append(label(141, sw_y, "U8_SW_NODE"))
 
-    # ---- U8 VIN1/VIN2 (Pins 4, 5, left) → BAT_PLUS hier-output (Battery feeds Boost)
-    vin1_y = u8_left_py(4)
-    vin2_y = u8_left_py(5)
-    wires.append(wire(U8_LX, vin1_y, 122, vin1_y, seed_suffix="u8-vin1-stub"))
-    wires.append(wire(U8_LX, vin2_y, 122, vin2_y, seed_suffix="u8-vin2-stub"))
-    wires.append(wire(122, vin1_y, 122, vin2_y, seed_suffix="u8-vin-bus"))
-    hlabels.append(hier_label(122, (vin1_y + vin2_y) / 2, "BAT_PLUS", shape="output", rotation=180))
-    junctions.append(junction(122, vin1_y))
-    junctions.append(junction(122, vin2_y))
+    # ---- U8 VIN (Pin 9, right) → BAT_PLUS hier-output
+    wires.append(wire(U8_RX, vin_y, 156, vin_y, seed_suffix="u8-vin-stub"))
+    hlabels.append(hier_label(156, vin_y, "BAT_PLUS", shape="output", rotation=0))
 
-    # ---- U8 EN (Pin 6, left) → BAT_PLUS (always-on when battery present)
-    en_y = u8_left_py(6)
-    wires.append(wire(U8_LX, en_y, 122, en_y, seed_suffix="u8-en-stub"))
-    junctions.append(junction(122, en_y))
-    # Extend EN-wire vertically to join VIN-bus
-    wires.append(wire(122, vin2_y, 122, en_y, seed_suffix="u8-vin-en-extend"))
+    # ---- U8 EN (Pin 7, right) → BAT_PLUS (always-on when battery present)
+    wires.append(wire(U8_RX, en_y, 156, en_y, seed_suffix="u8-en-stub"))
+    hlabels.append(hier_label(156, en_y, "BAT_PLUS", shape="output", rotation=0))
 
-    # ---- U8 VOUT1/2/3 (Pins 9, 10, 11, right) → BOOST_OUT net
-    vout1_y = u8_right_py(9)
-    vout2_y = u8_right_py(10)
-    vout3_y = u8_right_py(11)
-    wires.append(wire(U8_RX, vout1_y, 158, vout1_y, seed_suffix="u8-vout1-stub"))
-    wires.append(wire(U8_RX, vout2_y, 158, vout2_y, seed_suffix="u8-vout2-stub"))
-    wires.append(wire(U8_RX, vout3_y, 158, vout3_y, seed_suffix="u8-vout3-stub"))
-    wires.append(wire(158, vout1_y, 158, vout3_y, seed_suffix="u8-vout-bus"))
-    junctions.append(junction(158, vout1_y))
-    junctions.append(junction(158, vout2_y))
-    junctions.append(junction(158, vout3_y))
-    labels.append(label(160, vout2_y, "BOOST_OUT"))
+    # ---- U8 BOOT (Pin 10, right) → C_BOOT 100nF → U8_SW_NODE
+    wires.append(wire(U8_RX, boot_y, 154, boot_y, seed_suffix="u8-boot-stub"))
+    # C_BOOT placed vertically at (158, boot_y+3) so pin1 top connects to BOOT-line, pin2 bottom to SW-line
+    # Device:C pin1 (top) at (sx, sy-3.81), pin2 (bottom) at (sx, sy+3.81)
+    # We want pin1 at y=boot_y → sy=boot_y+3.81. Pin2 at sy+3.81 = boot_y+7.62.
+    # Hmm — pin2 needs to land at sw_y for natural routing. boot_y=86.19, sw_y=83.65 (UP from boot). Not natural vertical.
+    # Use horizontal C_BOOT instead: rotation=90 horizontal. pin1 left (sx-3.81, sy), pin2 right (sx+3.81, sy).
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_BOOT",
+            value="100nF X7R 0603 (TPS61089 BOOT-SW cap)",
+            x=158, y=(boot_y + sw_y) / 2,  # midpoint between BOOT and SW
+            rotation=0,  # vertical
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10B104KO8NNNC", "LCSC": "C14663"},
+            seed_suffix="C_BOOT",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # C_BOOT vertical at (158, (boot_y+sw_y)/2=84.92). pin1 top (158, 81.11), pin2 bottom (158, 88.73)
+    # That's not at sw_y or boot_y exactly. Need slight adjustment.
+    # Simpler: place C_BOOT vertically with explicit endpoints aligned.
+    # Replace last symbol with explicit positioning:
+    symbols.pop()  # remove
+    c_boot_sy = (boot_y + sw_y) / 2 + 0.585  # tune so pin1 at sw_y exactly
+    # Actually pin1 = sy - 3.81. Want pin1 = sw_y = 83.65 → sy = 87.46
+    # Then pin2 = 87.46 + 3.81 = 91.27. Hmm that's at COMP-pin-y.
+    # Switch to clean horizontal layout. C_BOOT-position at (158, 76) horizontal between BOOT-up-wire and SW-up-wire.
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_BOOT",
+            value="100nF X7R 0603 (TPS61089 BOOT-SW cap)",
+            x=158, y=80,
+            rotation=90,  # horizontal: pin1 left (154.19, 80), pin2 right (161.81, 80)
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10B104KO8NNNC", "LCSC": "C14663"},
+            seed_suffix="C_BOOT",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # Wire BOOT-pin via 154-stub up to (154, 80) → right to C_BOOT pin1 (154.19, 80). Then bridge.
+    wires.append(wire(154, boot_y, 154, 80, seed_suffix="boot-up"))
+    wires.append(wire(154, 80, 154.19, 80, seed_suffix="boot-to-cboot"))
+    # C_BOOT pin2 (161.81, 80) → up to (161.81, 76) → left to SW-node label at (162, sw_y)
+    # Cleaner: just label both ends to share net.
+    labels.append(label(154, 80, "U8_BOOT_NODE"))
+    wires.append(wire(161.81, 80, 165, 80, seed_suffix="cboot-to-swlabel"))
+    labels.append(label(165, 80, "U8_SW_NODE"))
 
-    # ---- U8 GND (Pin 8, right) → GND
-    gnd_y = u8_right_py(8)
-    wires.append(wire(U8_RX, gnd_y, 154, gnd_y, seed_suffix="u8-gnd-stub"))
-    attach_gnd(154, gnd_y, "U8_GND", rotation=270)
+    # ---- U8 FSW (Pin 1, left) → R_FSW 360k → U8_SW_NODE
+    wires.append(wire(U8_LX, fsw_y, 124, fsw_y, seed_suffix="u8-fsw-stub"))
+    # R_FSW at (118, fsw_y) rotation=90 horizontal. pin1 (114.19, fsw_y), pin2 (121.81, fsw_y)
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_FSW",
+            value="360k 0603 1% (TPS61089 Fsw-Set ~1.21MHz, r12-B11)",
+            x=118, y=fsw_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "0603WAF3603T5E", "LCSC": "C23146"},
+            seed_suffix="R_FSW",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(121.81, fsw_y, 124, fsw_y, seed_suffix="rfsw-to-u8"))
+    # R_FSW pin1 (114.19, fsw_y) → wire left, label "U8_SW_NODE"
+    wires.append(wire(114.19, fsw_y, 112, fsw_y, seed_suffix="rfsw-to-sw-label"))
+    labels.append(label(112, fsw_y, "U8_SW_NODE"))
 
-    # ---- U8 ePAD (Pin 13, below body, y=U8_Y+6.35+2.54+2.54=11.43 below = 101.43) → GND
-    epad_y = U8_Y + 6.35 + 2.54 + 2.54  # 101.43
-    wires.append(wire(U8_X, U8_Y + 6.35 + 2.54, U8_X, epad_y, seed_suffix="u8-epad-stub"))
-    attach_gnd(U8_X, epad_y, "U8_EPAD", rotation=0)
+    # ---- U8 VCC (Pin 2, left) → C_VCC 1µF → GND
+    wires.append(wire(U8_LX, vcc_y, 124, vcc_y, seed_suffix="u8-vcc-stub"))
+    # C_VCC vertical at (124, vcc_y+5). pin1 top (124, vcc_y+1.19), pin2 bottom (124, vcc_y+8.81)
+    # Want pin1 at vcc_y → sy = vcc_y + 3.81 = 90.0. pin2 at 93.81.
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_VCC",
+            value="1uF X7R 0603 (TPS61089 internal LDO decoupling, datasheet>=1uF)",
+            x=124, y=vcc_y + 3.81,
+            rotation=0,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            seed_suffix="C_VCC",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # pin1 (124, vcc_y), pin2 (124, vcc_y+7.62)
+    wires.append(wire(124, vcc_y + 7.62, 124, vcc_y + 10, seed_suffix="cvcc-to-gnd"))
+    attach_gnd(124, vcc_y + 10, "C_VCC", rotation=0)
 
-    # ---- U8 SS (Pin 12, right, topmost) → leave with NC label (soft-start cap optional, omit for now)
-    ss_y = u8_right_py(12)
-    wires.append(wire(U8_RX, ss_y, 154, ss_y, seed_suffix="u8-ss-stub"))
-    labels.append(label(154, ss_y, "NC_U8_SS"))
-
-    # ---- U8 FB (Pin 7, right, bottommost) → divider R23/R24
-    fb_y = u8_right_py(7)
-    wires.append(wire(U8_RX, fb_y, 154, fb_y, seed_suffix="u8-fb-stub"))
-    labels.append(label(154, fb_y, "BOOST_FB"))
-
-    # R23 (200k) — BOOST_OUT → BOOST_FB. Place at (170, fb_y-7), vertical rotation=0.
-    # pin1 top (170, fb_y-7-3.81), pin2 bottom (170, fb_y-7+3.81)
-    r23_sy = fb_y - 7
+    # ---- U8 FB (Pin 3, left) → divider R23/R24 (BOOST_OUT → FB → GND)
+    wires.append(wire(U8_LX, fb_y, 124, fb_y, seed_suffix="u8-fb-stub"))
+    labels.append(label(124, fb_y, "BOOST_FB"))
+    # R23 (200k) FB-Divider top, vertical at (170, 75).
+    # pin1 top (170, 71.19) → label BOOST_OUT (Same-Name-Match mit U8-VOUT-Label).
+    # pin2 bottom (170, 78.81) → R24 pin1 top + FB-tap label BOOST_FB
+    # WICHTIG: KEINE durchgehende Wire vertikal über R23+R24 — würde Divider kurzschließen!
+    r23_sy = 75
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R23",
-            value="200k 0603 (TPS61089 FB-Divider Top, Vout=5V)",
+            value="200k 0603 (TPS61089 FB-Divider Top, Vout=5V target)",
             x=170, y=r23_sy,
-            rotation=0,
+            rotation=0,  # vertical
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "0603WAF2003T5E", "LCSC": "C25811"},
             seed_suffix="R23",
             sheet_uuid_seed=sus,
         )
     )
-    # R23 pin1 (top, r23_sy-3.81) → BOOST_OUT-bus at y=vout2_y. Run wire up.
-    wires.append(wire(170, r23_sy - 3.81, 170, vout2_y, seed_suffix="r23-top-up"))
-    wires.append(wire(158, vout2_y, 170, vout2_y, seed_suffix="r23-to-bus"))
-    junctions.append(junction(158, vout2_y))
-    # R23 pin2 (bottom, r23_sy+3.81) → R24 pin1 top
-    # R24 at (170, r23_sy+11), rotation=0 vertical
-    r24_sy = r23_sy + 11
+    # R23 pin1 (top) — short stub + Label
+    wires.append(wire(170, r23_sy - 3.81, 170, r23_sy - 6, seed_suffix="r23-top-stub"))
+    labels.append(label(170, r23_sy - 6, "BOOST_OUT"))
+    # R23 pin2 (bottom) → R24 pin1 (top) — kurze Brücke + FB-tap
+    r24_sy = r23_sy + 7.62  # 82.62. R24 pin1 top at r24_sy-3.81=78.81 → exakt R23 pin2.
     symbols.append(
         place_symbol(
             lib_id="Device:R",
@@ -5015,100 +5085,147 @@ def battery_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # R24 pin1 (top, r24_sy-3.81) ↔ R23 pin2 (bottom, r23_sy+3.81)
-    wires.append(wire(170, r23_sy + 3.81, 170, r24_sy - 3.81, seed_suffix="r23-r24-mid"))
-    # FB tap at the midpoint (R23-pin2/R24-pin1 junction)
-    fb_tap_y = (r23_sy + 3.81 + r24_sy - 3.81) / 2  # midpoint
-    wires.append(wire(170, fb_tap_y, 175, fb_tap_y, seed_suffix="fb-tap-right"))
-    junctions.append(junction(170, fb_tap_y))
+    # FB-tap exactly at R23-pin2 / R24-pin1 (both at y=78.81 → already touching).
+    # Add a small horizontal stub + Label "BOOST_FB" at the junction.
+    fb_tap_y = r23_sy + 3.81  # = 78.81 = R24-pin1-top abs
+    wires.append(wire(170, fb_tap_y, 175, fb_tap_y, seed_suffix="fb-tap-stub"))
     labels.append(label(175, fb_tap_y, "BOOST_FB"))
-    # R24 pin2 (bottom, r24_sy+3.81) → GND
+    # R24 pin2 (bottom) → GND
     wires.append(wire(170, r24_sy + 3.81, 170, r24_sy + 6, seed_suffix="r24-gnd"))
     attach_gnd(170, r24_sy + 6, "R24", rotation=0)
+
+    # ---- U8 COMP (Pin 4, left) → R_COMP + C_COMP series → GND (Type-II compensation)
+    wires.append(wire(U8_LX, comp_y, 124, comp_y, seed_suffix="u8-comp-stub"))
+    # R_COMP at (118, comp_y) horizontal rotation=90. pin1 (114.19, comp_y), pin2 (121.81, comp_y)
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_COMP",
+            value="22k 0603 (TPS61089 loop-compensation)",
+            x=118, y=comp_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "0603WAF2202T5E", "LCSC": "C31850"},
+            seed_suffix="R_COMP",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(121.81, comp_y, 124, comp_y, seed_suffix="rcomp-to-u8"))
+    # R_COMP pin1 (114.19) → C_COMP at (108, comp_y) horizontal. pin1 (104.19, comp_y), pin2 (111.81, comp_y)
+    wires.append(wire(114.19, comp_y, 111.81, comp_y, seed_suffix="rcomp-to-ccomp"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_COMP",
+            value="1nF X7R 0603 (TPS61089 loop-compensation series)",
+            x=108, y=comp_y,
+            rotation=90,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10B102KB8NNNC", "LCSC": "C1588"},
+            seed_suffix="C_COMP",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # C_COMP pin1 (104.19) → GND
+    wires.append(wire(104.19, comp_y, 102, comp_y, seed_suffix="ccomp-to-gnd"))
+    attach_gnd(102, comp_y, "C_COMP", rotation=90)
+
+    # ---- U8 GND (Pin 5, left) → GND
+    wires.append(wire(U8_LX, gnd_y, 124, gnd_y, seed_suffix="u8-gnd-stub"))
+    attach_gnd(124, gnd_y, "U8_GND", rotation=90)
+
+    # ---- U8 VOUT (Pin 6, left) → BOOST_OUT
+    wires.append(wire(U8_LX, vout_y, 124, vout_y, seed_suffix="u8-vout-stub"))
+    labels.append(label(124, vout_y, "BOOST_OUT"))
+
+    # ---- U8 ILIM (Pin 8, right) → R_ILIM 20k → GND (sets ~4A peak inductor current)
+    wires.append(wire(U8_RX, ilim_y, 156, ilim_y, seed_suffix="u8-ilim-stub"))
+    # R_ILIM at (160, ilim_y+4) vertical rotation=0. pin1 (160, ilim_y+0.19), pin2 (160, ilim_y+7.81)
+    # Cleaner: horizontal at (160, ilim_y)
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_ILIM",
+            value="20k 0603 1% (TPS61089 current-limit ~4A peak)",
+            x=160, y=ilim_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
+            seed_suffix="R_ILIM",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # R_ILIM pin1 (156.19, ilim_y), pin2 (163.81, ilim_y)
+    wires.append(wire(156, ilim_y, 156.19, ilim_y, seed_suffix="rilim-to-u8"))
+    wires.append(wire(163.81, ilim_y, 166, ilim_y, seed_suffix="rilim-to-gnd"))
+    attach_gnd(166, ilim_y, "R_ILIM", rotation=270)
+
+    # ---- U8 ePAD (Pin 12, below body) → GND
+    epad_y = U8_Y + 6.35 + 2.54 + 2.54  # 101.43
+    wires.append(wire(U8_X, U8_Y + 6.35 + 2.54, U8_X, epad_y, seed_suffix="u8-epad-stub"))
+    attach_gnd(U8_X, epad_y, "U8_EPAD", rotation=0)
 
     # ====================================================================
     # BOOST_OUT bus → C_BOOST_OUT (22µF) + C_BOOST_HF (100nF) + D3 → +5V_OUT
     # ====================================================================
-    # C_BOOST_OUT at (165, 100) vertical. pin1 top (165, 96.19), pin2 bottom (165, 103.81)
+    # C_BOOST_OUT 22µF vertical at (180, 105). Connected via BOOST_OUT label-match.
+    # pin1 top (180, 101.19), pin2 bottom (180, 108.81). Top → BOOST_OUT, bottom → GND.
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C_BOOST_OUT",
             value="22uF X5R 0805 (Boost-Output Bulk)",
-            x=165, y=100,
+            x=180, y=105,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "GRM21BR61E226ME44", "LCSC": "C45783"},
             seed_suffix="C_BOOST_OUT",
             sheet_uuid_seed=sus,
         )
     )
-    # C top to BOOST_OUT-bus
-    wires.append(wire(165, 96.19, 165, vout1_y, seed_suffix="c-boost-out-top-up"))
-    wires.append(wire(158, vout1_y, 165, vout1_y, seed_suffix="c-boost-out-to-bus"))
-    junctions.append(junction(158, vout1_y))
-    # C bottom to GND
-    wires.append(wire(165, 103.81, 165, 106, seed_suffix="c-boost-out-gnd"))
-    attach_gnd(165, 106, "C_BOOST_OUT", rotation=0)
+    wires.append(wire(180, 101.19, 180, 98, seed_suffix="c-boost-out-top"))
+    labels.append(label(180, 98, "BOOST_OUT"))
+    wires.append(wire(180, 108.81, 180, 111, seed_suffix="c-boost-out-gnd"))
+    attach_gnd(180, 111, "C_BOOST_OUT", rotation=0)
 
-    # C_BOOST_HF at (160, 100)
+    # C_BOOST_HF 100nF vertical at (188, 105). Same topology.
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C_BOOST_HF",
             value="100nF X7R 0603 (Boost-Output HF)",
-            x=160, y=100,
+            x=188, y=105,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CL10B104KO8NNNC", "LCSC": "C14663"},
             seed_suffix="C_BOOST_HF",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(160, 96.19, 160, vout3_y, seed_suffix="c-boost-hf-top-up"))
-    wires.append(wire(158, vout3_y, 160, vout3_y, seed_suffix="c-boost-hf-to-bus"))
-    junctions.append(junction(158, vout3_y))
-    wires.append(wire(160, 103.81, 160, 106, seed_suffix="c-boost-hf-gnd"))
-    attach_gnd(160, 106, "C_BOOST_HF", rotation=0)
+    wires.append(wire(188, 101.19, 188, 98, seed_suffix="c-boost-hf-top"))
+    labels.append(label(188, 98, "BOOST_OUT"))
+    wires.append(wire(188, 108.81, 188, 111, seed_suffix="c-boost-hf-gnd"))
+    attach_gnd(188, 111, "C_BOOST_HF", rotation=0)
 
-    # D3 Schottky between BOOST_OUT (anode) and +5V_OUT (cathode). Place at (185, vout2_y).
-    # Device:D_Schottky pin1=K, pin2=A. pin1 at sx-3.81 abs (rotation=0), pin2 at sx+3.81.
-    # rotation=180: pin1 K abs (sx+3.81), pin2 A abs (sx-3.81). We want A facing left (BOOST_OUT side), K right (+5V_OUT side).
+    # D3 Schottky from BOOST_OUT (Anode) to +5V_OUT (Kathode). Horizontal at (200, 96).
+    # rotation=180: pin1 K abs (sx+3.81=203.81), pin2 A abs (sx-3.81=196.19). A links, K rechts.
     symbols.append(
         place_symbol(
             lib_id="Device:D_Schottky",
             ref="D3",
             value="SS34 40V 3A Schottky (Boost-Out Reverse-Protect)",
-            x=185, y=vout2_y,
-            rotation=0,  # rotation=0: K at sx-3.81=181.19, A at sx+3.81=188.81
+            x=200, y=96,
+            rotation=180,
             footprint="Diode_SMD:D_SMA",
             extra_props={"MPN": "SS34", "LCSC": "C8678"},
             seed_suffix="D3",
             sheet_uuid_seed=sus,
         )
     )
-    # We want A=anode connected to BOOST_OUT (LEFT side), K=kathode connected to +5V_OUT (RIGHT side).
-    # With rotation=0: pin1 K at sx-3.81 (LEFT), pin2 A at sx+3.81 (RIGHT). Backwards from what we want.
-    # Use rotation=180 instead.
-    # Remove and re-place with rotation=180
-    symbols.pop()
-    symbols.append(
-        place_symbol(
-            lib_id="Device:D_Schottky",
-            ref="D3",
-            value="SS34 40V 3A Schottky (Boost-Out Reverse-Protect)",
-            x=185, y=vout2_y,
-            rotation=180,  # pin1 K abs (sx+3.81=188.81), pin2 A abs (sx-3.81=181.19)
-            footprint="Diode_SMD:D_SMA",
-            extra_props={"MPN": "SS34", "LCSC": "C8678"},
-            seed_suffix="D3",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # D3 Anode (left, 181.19) → BOOST_OUT
-    wires.append(wire(181.19, vout2_y, 170, vout2_y, seed_suffix="d3-anode-to-boost"))
-    junctions.append(junction(170, vout2_y))  # if needed
-    # D3 Kathode (right, 188.81) → +5V_OUT hier-output (Boost-Pfad to system rail)
-    wires.append(wire(188.81, vout2_y, 195, vout2_y, seed_suffix="d3-k-to-5vout"))
-    hlabels.append(hier_label(195, vout2_y, "+5V_OUT", shape="output", rotation=0))
+    # D3 Anode (left, 196.19) → BOOST_OUT label
+    wires.append(wire(196.19, 96, 193, 96, seed_suffix="d3-anode-stub"))
+    labels.append(label(193, 96, "BOOST_OUT"))
+    # D3 Kathode (right, 203.81) → +5V_OUT hier-output (Boost-Pfad to system rail)
+    wires.append(wire(203.81, 96, 210, 96, seed_suffix="d3-k-to-5vout"))
+    hlabels.append(hier_label(210, 96, "+5V_OUT", shape="output", rotation=0))
 
     # ====================================================================
     # Q1 DMG2305UX P-MOS Power-Path @ (210, 70). 3-Pin SOT-23.

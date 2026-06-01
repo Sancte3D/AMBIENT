@@ -90,31 +90,37 @@ Commit nach erstem Audio-Build (kein PCB-Blocker mehr).
 - NEUE NETS: BAT_SENSE (im pico_sheet), USB_VBUS_SENSE (im mcp_sheet),
   BAT_PLUS (Battery → Pico hier-Bridge), VBUS_USBC (Power-Tree → Battery + MCP)
 
-### r12-B11: TPS61089-Package-Decision — BLOCKER vor PCB-Layout
-**Status**: 🔴 BLOCKER. JLC-Pricing-Audit (2026-06-01) hat aufgedeckt: die
-SPEC-spezifizierte Variante **TPS61089RNSR (QFN-12 3×3mm, 12 Pins + ePAD)** ist
-**nicht bei LCSC** im Stock. LCSC hat nur die **TPS61089RNRR (VQFN-11 2×2.5mm,
-11 Pins HotRod-EP)** Variante als C165129 ($0.41, Extended, 2.775 pcs Stock).
-Die beiden Varianten haben **unterschiedliche Footprints + unterschiedliche
-Pin-Zuordnungen** — RNRR ist nicht drop-in zu RNSR.
+### r12-B11: TPS61089-Package-Decision — RESOLVED via RNR-Refactor
+**Status**: ✅ RESOLVED. Option 1 (RNR-Refactor) gewählt für JLC-soviel-wie-
+möglich-Strategie. Umfasste:
+- `_tps61089_lib_symbol()` komplett neu — 11 Pins (FSW, VCC, FB, COMP, GND, VOUT,
+  EN, ILIM, VIN, BOOT, SW) per TI Datasheet SLVSD38C Table 6-1 + Fig. 6-1
+- battery_sheet U8-Block komplett rewritten — alle Pin-Connections updated für
+  neuen Pinout (VIN+EN auf RIGHT statt LEFT, FB auf LEFT, neue Pins FSW/COMP/VCC/
+  BOOT/ILIM verkabelt)
+- 6 zusätzliche externe Bauteile im battery_sheet:
+  - **C_VCC** 1µF X7R 0603 (C15849 Basic) — interne LDO-Decoupling
+  - **R_FSW** 360k 0603 1% (C23146 Preferred) — Fsw ~1.21 MHz (über Audio-Band)
+  - **R_ILIM** 20k 0603 1% (C4184 Basic) — Stromlimit ~4A peak Inductor
+  - **C_BOOT** 100nF X7R 0603 (C14663 Basic) — high-side gate driver bootstrap
+  - **R_COMP** 22k 0603 1% (C31850 Basic) — Type-II loop-comp Series
+  - **C_COMP** 1nF X7R 0603 (C1588 Basic) — Type-II loop-comp Series-Cap
+- MPN von TPS61089RNSR auf **TPS61089RNR**, LCSC auf **C165129** (Extended,
+  ~2.775 pcs Stock, $0.41), Footprint auf
+  `Package_DFN_QFN:VQFN-11-1EP_2.6x2.6mm_P0.5mm_EP0.85x1.5mm_HotRod`
 
-**Drei Lösungswege** (User-Decision nötig):
-1. **JLC-bestücken mit RNRR-Refactor**: SPEC §2.2 ändern auf RNRR, Generator
-   `_tps61089_lib_symbol()` umbauen auf 11 Pins, Footprint auf
-   `Package_DFN_QFN:VQFN-11-1EP_2x2.5mm_…`, Pinout per TI-Datasheet SLVSCT0A
-   prüfen. ~50-100 LOC Generator-Change + Footprint-Sourcing.
-2. **RNSR-Konsignierung an JLC**: SPEC bleibt, MPN bleibt, U8 wird als
-   user-supplied flagged (LCSC = TBD-USER-SUPPLY, im Generator schon so
-   markiert). User bestellt RNSR bei DigiKey/Mouser/TI ($1.50-2.00), schickt
-   an JLC für Consignment-Assembly (+~$5 setup-fee pro consigned-Teil).
-3. **Hand-Solder U8**: SPEC bleibt, U8 wird beim Empfang von JLC nach-bestückt.
-   QFN-12 3×3 mit Heißluftpistole + Solder-Paste machbar aber Risk-Faktor.
+**Analyzer-Verify nach Refactor**: 6 Errors (unchanged VM-001 false-positives),
+Warnings 22 → 21, Trust 79.8% → 81.4%. Critical-nets sind korrekt verbunden:
+- BAT_PLUS: 8 pins inkl. U8.9 (VIN), U8.7 (EN), L1.1
+- BOOST_OUT: 5 pins (U8.6 VOUT, R23.1, C_BOOST_OUT, C_BOOST_HF, D3.2 Anode)
+- BOOST_FB: 3 pins (U8.3 FB + R23.2 + R24.1 — Divider korrekt verdrahtet)
+- U8_SW_NODE: 4 pins (U8.11 SW + L1.2 + C_BOOT.2 + R_FSW.1)
+- U8_BOOT_NODE: 2 pins (U8.10 BOOT + C_BOOT.1)
 
-**Empfehlung**: (2) für Prototyp (Konsignierung, minimaler Aufwand), (1) für
-Produktion (höhere Stückzahl rechtfertigt einmaligen Refactor-Aufwand).
-
-**Aktueller Generator-Zustand**: `extra_props={"MPN": "TPS61089RNSR", "LCSC":
-"TBD-USER-SUPPLY-or-RNRR-refactor"}` macht den Konflikt im BOM-Export sichtbar.
+**Side-Bug aufgefangen**: Im ersten Refactor-Pass ging eine R23-Wire vertikal
+durch R23+R24-Body und shortete den FB-Divider. Analyzer fing das (BOOST_FB
+hatte 6 statt 3 pins inkl. U8.6 VOUT). Fix: Label-only-Connect statt
+durchgehende vertikale Wire.
 
 ### r12-B12: Wrong-LCSC-Codes Audit — RESOLVED 2026-06-01
 **Status**: ✅ RESOLVED. JLC-Pricing-Audit hat 9 weitere falsche LCSC-Codes
