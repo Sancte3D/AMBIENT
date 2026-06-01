@@ -40,11 +40,14 @@ LED6-LED15 verdrahtet via Net-Label-Matching (LED6_K..LED15_K).
 PCB-Layout-Positionen bleiben User-Schritt (siehe mechanical_coordinates.md
 §4a + §5).
 
-### r7-B2: PCA9685 Symbol-Pin-Map verifizieren
-**Status**: 🟠 IMPORTANT. `Driver_LED:PCA9685PW` aus KiCad-Standard-Lib gegen
-NXP-Datasheet (PCA9685 Rev. 4, S.6) prüfen — 28 Pins, alle 16 LED-Outputs +
-SDA/SCL + /OE + EXTCLK + VDD/GND + A0..A5. Beim KiCad-Schematic-Add (lokal in
-GUI) sofort cross-checken.
+### r7-B2: PCA9685 Symbol-Pin-Map verifizieren — RESOLVED
+**Status**: ✅ RESOLVED während r10-LED-Gen-Commit (50b5e02). NXP-Datasheet
+Rev 4 (16-April-2015) als PDF gefetcht via WebFetch + Read; Pin-Map auf S.6
+Table 3 + Fig. 2 verifiziert. Pin-Belegung im generierten
+`_pca9685pw_lib_symbol()` matcht 1:1 dem Datasheet (Pins 1-14 links A0-A4 +
+LED0-LED7 + VSS; Pins 15-28 rechts LED8-LED15 + ~OE + A5 + EXTCLK + SCL + SDA
++ VDD). Zusätzlich SPEC-Fix in derselben Iteration: EXTCLK (Pin 25) von „NC"
+auf „GND" korrigiert (Datasheet S.7 Footnote [2] verlangt GND wenn unused).
 
 ### r7.1-B4: USB-C Premium-Upgrade verifizieren
 **Status**: 🟠 IMPORTANT (kein PCB-Layout-Blocker, aber vor Produktions-Charge
