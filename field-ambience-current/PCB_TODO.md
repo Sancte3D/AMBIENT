@@ -90,6 +90,60 @@ Commit nach erstem Audio-Build (kein PCB-Blocker mehr).
 - NEUE NETS: BAT_SENSE (im pico_sheet), USB_VBUS_SENSE (im mcp_sheet),
   BAT_PLUS (Battery → Pico hier-Bridge), VBUS_USBC (Power-Tree → Battery + MCP)
 
+### r12-B11: TPS61089-Package-Decision — BLOCKER vor PCB-Layout
+**Status**: 🔴 BLOCKER. JLC-Pricing-Audit (2026-06-01) hat aufgedeckt: die
+SPEC-spezifizierte Variante **TPS61089RNSR (QFN-12 3×3mm, 12 Pins + ePAD)** ist
+**nicht bei LCSC** im Stock. LCSC hat nur die **TPS61089RNRR (VQFN-11 2×2.5mm,
+11 Pins HotRod-EP)** Variante als C165129 ($0.41, Extended, 2.775 pcs Stock).
+Die beiden Varianten haben **unterschiedliche Footprints + unterschiedliche
+Pin-Zuordnungen** — RNRR ist nicht drop-in zu RNSR.
+
+**Drei Lösungswege** (User-Decision nötig):
+1. **JLC-bestücken mit RNRR-Refactor**: SPEC §2.2 ändern auf RNRR, Generator
+   `_tps61089_lib_symbol()` umbauen auf 11 Pins, Footprint auf
+   `Package_DFN_QFN:VQFN-11-1EP_2x2.5mm_…`, Pinout per TI-Datasheet SLVSCT0A
+   prüfen. ~50-100 LOC Generator-Change + Footprint-Sourcing.
+2. **RNSR-Konsignierung an JLC**: SPEC bleibt, MPN bleibt, U8 wird als
+   user-supplied flagged (LCSC = TBD-USER-SUPPLY, im Generator schon so
+   markiert). User bestellt RNSR bei DigiKey/Mouser/TI ($1.50-2.00), schickt
+   an JLC für Consignment-Assembly (+~$5 setup-fee pro consigned-Teil).
+3. **Hand-Solder U8**: SPEC bleibt, U8 wird beim Empfang von JLC nach-bestückt.
+   QFN-12 3×3 mit Heißluftpistole + Solder-Paste machbar aber Risk-Faktor.
+
+**Empfehlung**: (2) für Prototyp (Konsignierung, minimaler Aufwand), (1) für
+Produktion (höhere Stückzahl rechtfertigt einmaligen Refactor-Aufwand).
+
+**Aktueller Generator-Zustand**: `extra_props={"MPN": "TPS61089RNSR", "LCSC":
+"TBD-USER-SUPPLY-or-RNRR-refactor"}` macht den Konflikt im BOM-Export sichtbar.
+
+### r12-B12: Wrong-LCSC-Codes Audit — RESOLVED 2026-06-01
+**Status**: ✅ RESOLVED. JLC-Pricing-Audit hat 9 weitere falsche LCSC-Codes
+aufgedeckt — Generator-LCSCs matchten nicht mit ihren MPNs (würde bei
+JLC-SMT-Assembly **falsche Teile** bestücken). Fixes alle via Generator-sed-Pass:
+
+| Ref | MPN | War (falsch) | Korrigiert |
+|---|---|---|---|
+| R_BAT_DIV_TOP/BOT, R_VBUS_PD | 100kΩ 0603 1% | C22796 (=130Ω) | **C25803** Basic |
+| R23 Boost-FB-Top | 200kΩ 0603 1% | C22810 (=15Ω 5%) | **C25811** Basic |
+| R24 Boost-FB-Bot | 39kΩ 0603 1% | C25090 (=0402 210Ω) | **C23153** Basic |
+| R_LED6-15, R_LED_STATUS | 390Ω 0603 1% | C23289 (=22µF Elko) | **C23151** Basic |
+| U7 MCP73831 | MCP73831T-2ACI/OT | C14879 (=nicht-existent) | **C424093** Ext |
+| Q1 DMG2305UX-7 | DMG2305UX-7 | C147074 (=2512-R) | **C150470** Ext |
+| L1 SWPA6045S2R2MT | 2.2µH 6×6 | C32330 (=nicht-existent) | **C83455** Ext |
+| J9 JST PH-2 SMD | S2B-PH-SM4-TB | C146061 (=nicht-existent) | **C295747** Ext |
+| LED6-15, LED1 | warm-white 0603 | C72043 (=nicht-existent) | **C965808** XL-1608UWC Ext |
+
+**Begründung der Bug-Klasse**: Mein ursprünglicher Generator hatte LCSCs
+"aus dem Kopf" gewählt unter der Annahme dass UNI-ROYAL "0603WAFnnnn"-MPNs
+sequentiell mappen zu LCSC-Codes — das stimmt **nicht**. Korrekturen via
+jlcsearch-API-Lookup pro MPN-String. Effekt: **3 von 4 Battery-Block-
+Spannungsteiler-Widerständen waren völlig falsch** (130Ω statt 100kΩ etc.) —
+wäre bei sofortigem JLC-Order zum DOA-Prototyp geworden.
+
+**Side-Effekt**: 4 Resistor-SKUs sind eigentlich Basic-Parts (kein $3 Setup-
+Fee) statt Extended → spart $12 bei 5-Boards-Order. Aktualisierter
+Extended-SKU-Count: 19 statt 23.
+
 ### r7-B3: KiCad-Schematic + Generator-Update für r7+r9 — RESOLVED
 **Status**: ✅ RESOLVED via r10-LED-Gen (50b5e02) + r12-Sense+r9-Battery-Gen
 (siehe folgender Commit). `generate_kicad_project.py` ist vollständig im Sync

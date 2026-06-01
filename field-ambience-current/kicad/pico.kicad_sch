@@ -1432,7 +1432,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF1003T5E" (at 137.54 102.54 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C22796" (at 137.54 103.81 0)
+      (property "LCSC" "C25803" (at 137.54 103.81 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1450,7 +1450,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF1003T5E" (at 132.54 112.54 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C22796" (at 132.54 113.81 0)
+      (property "LCSC" "C25803" (at 132.54 113.81 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

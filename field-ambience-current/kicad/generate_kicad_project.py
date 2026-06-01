@@ -2006,7 +2006,7 @@ def pico_sheet() -> str:
             y=p31_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF1003T5E", "LCSC": "C22796"},
+            extra_props={"MPN": "0603WAF1003T5E", "LCSC": "C25803"},
             seed_suffix="R_BAT_DIV_TOP",
             sheet_uuid_seed=sus,
         )
@@ -2029,7 +2029,7 @@ def pico_sheet() -> str:
             y=r_bat_bot_sy,
             rotation=0,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF1003T5E", "LCSC": "C22796"},
+            extra_props={"MPN": "0603WAF1003T5E", "LCSC": "C25803"},
             seed_suffix="R_BAT_DIV_BOT",
             sheet_uuid_seed=sus,
         )
@@ -2883,7 +2883,7 @@ def mcp_sheet() -> str:
             y=r_vbus_pd_sy,
             rotation=0,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF1003T5E", "LCSC": "C22796"},
+            extra_props={"MPN": "0603WAF1003T5E", "LCSC": "C25803"},
             seed_suffix="R_VBUS_PD",
             sheet_uuid_seed=sus,
         )
@@ -3163,7 +3163,7 @@ def mcp_sheet() -> str:
                 y=sy,
                 rotation=90,
                 footprint="Resistor_SMD:R_0603_1608Metric",
-                extra_props={"MPN": "0603WAF3900T5E", "LCSC": "C23289"},
+                extra_props={"MPN": "0603WAF3900T5E", "LCSC": "C23151"},
                 seed_suffix=f"R_LED{led_ref}",
                 sheet_uuid_seed=sus,
             )
@@ -3192,7 +3192,7 @@ def mcp_sheet() -> str:
                 y=sy,
                 rotation=180,
                 footprint="LED_SMD:LED_0603_1608Metric",
-                extra_props={"MPN": "Generic warm-white/amber 0603", "LCSC": "C72043"},
+                extra_props={"MPN": "XL-1608UWC-04 (warm-white 0603, Extended)", "LCSC": "C965808"},
                 seed_suffix=f"LED{led_ref}",
                 sheet_uuid_seed=sus,
             )
@@ -3246,7 +3246,7 @@ def mcp_sheet() -> str:
             y=led1_sy,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF3900T5E", "LCSC": "C23289"},
+            extra_props={"MPN": "0603WAF3900T5E", "LCSC": "C23151"},
             seed_suffix="R_LED_STATUS",
             sheet_uuid_seed=sus,
         )
@@ -3275,7 +3275,7 @@ def mcp_sheet() -> str:
             y=led1_sy,
             rotation=180,
             footprint="LED_SMD:LED_0603_1608Metric",
-            extra_props={"MPN": "Generic warm-white 0603", "LCSC": "C72043"},
+            extra_props={"MPN": "XL-1608UWC-04 (warm-white 0603, Extended)", "LCSC": "C965808"},
             seed_suffix="LED1",
             sheet_uuid_seed=sus,
         )
@@ -4698,7 +4698,7 @@ def battery_sheet() -> str:
             value="JST PH 2.0 2-pin (LiPo Battery, r9)",
             x=50, y=80,
             footprint="Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal",
-            extra_props={"MPN": "S2B-PH-SM4-TB", "LCSC": "C146061"},
+            extra_props={"MPN": "S2B-PH-SM4-TB(LF)(SN)", "LCSC": "C295747"},
             seed_suffix="J9",
             sheet_uuid_seed=sus,
         )
@@ -4725,7 +4725,7 @@ def battery_sheet() -> str:
             x=U7_X, y=U7_Y,
             footprint="Package_TO_SOT_SMD:SOT-23-5",
             datasheet="https://ww1.microchip.com/downloads/en/DeviceDoc/MCP73831-Family-Data-Sheet-DS20001984H.pdf",
-            extra_props={"MPN": "MCP73831T-2ACI/OT", "LCSC": "C14879"},
+            extra_props={"MPN": "MCP73831T-2ACI/OT", "LCSC": "C424093"},
             seed_suffix="U7",
             sheet_uuid_seed=sus,
         )
@@ -4881,7 +4881,7 @@ def battery_sheet() -> str:
             x=U8_X, y=U8_Y,
             footprint="Package_DFN_QFN:VQFN-12-1EP_3x3mm_P0.5mm_EP1.5x1.5mm",
             datasheet="https://www.ti.com/lit/ds/symlink/tps61089.pdf",
-            extra_props={"MPN": "TPS61089RNSR", "LCSC": "C2671"},
+            extra_props={"MPN": "TPS61089RNSR", "LCSC": "TBD-USER-SUPPLY-or-RNRR-refactor"},
             seed_suffix="U8",
             sheet_uuid_seed=sus,
         )
@@ -4920,7 +4920,7 @@ def battery_sheet() -> str:
             x=125, y=75,
             rotation=0,
             footprint="Inductor_SMD:L_0630_6.0x6.0mm",
-            extra_props={"MPN": "SWPA6045S2R2MT", "LCSC": "C32330"},
+            extra_props={"MPN": "SWPA6045S2R2MT", "LCSC": "C83455"},
             seed_suffix="L1",
             sheet_uuid_seed=sus,
         )
@@ -4990,7 +4990,7 @@ def battery_sheet() -> str:
             x=170, y=r23_sy,
             rotation=0,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2003T5E", "LCSC": "C22810"},
+            extra_props={"MPN": "0603WAF2003T5E", "LCSC": "C25811"},
             seed_suffix="R23",
             sheet_uuid_seed=sus,
         )
@@ -5010,7 +5010,7 @@ def battery_sheet() -> str:
             x=170, y=r24_sy,
             rotation=0,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF3902T5E", "LCSC": "C25090"},
+            extra_props={"MPN": "0603WAF3902T5E", "LCSC": "C23153"},
             seed_suffix="R24",
             sheet_uuid_seed=sus,
         )
@@ -5124,7 +5124,7 @@ def battery_sheet() -> str:
             x=Q1_X, y=Q1_Y,
             footprint="Package_TO_SOT_SMD:SOT-23",
             datasheet="https://www.diodes.com/assets/Datasheets/DMG2305UX.pdf",
-            extra_props={"MPN": "DMG2305UX-7", "LCSC": "C147074"},
+            extra_props={"MPN": "DMG2305UX-7", "LCSC": "C150470"},
             seed_suffix="Q1",
             sheet_uuid_seed=sus,
         )

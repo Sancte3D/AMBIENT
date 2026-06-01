@@ -1722,7 +1722,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF1003T5E" (at 151.54 107.3 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C22796" (at 151.54 108.57 0)
+      (property "LCSC" "C25803" (at 151.54 108.57 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1994,7 +1994,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 82.54 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 82.54 205.08 0)
+      (property "LCSC" "C23151" (at 82.54 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2024,9 +2024,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 87.62 200 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 90.16000000000001 203.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 90.16000000000001 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 90.16000000000001 205.08 0)
+      (property "LCSC" "C965808" (at 90.16000000000001 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2044,7 +2044,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 107.54 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 107.54 205.08 0)
+      (property "LCSC" "C23151" (at 107.54 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2074,9 +2074,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 112.62 200 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 115.16000000000001 203.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 115.16000000000001 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 115.16000000000001 205.08 0)
+      (property "LCSC" "C965808" (at 115.16000000000001 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2094,7 +2094,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 132.54 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 132.54 205.08 0)
+      (property "LCSC" "C23151" (at 132.54 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2124,9 +2124,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 137.62 200 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 140.16 203.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 140.16 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 140.16 205.08 0)
+      (property "LCSC" "C965808" (at 140.16 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2144,7 +2144,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 157.54 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 157.54 205.08 0)
+      (property "LCSC" "C23151" (at 157.54 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2174,9 +2174,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 162.62 200 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 165.16 203.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 165.16 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 165.16 205.08 0)
+      (property "LCSC" "C965808" (at 165.16 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2194,7 +2194,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 182.54 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 182.54 205.08 0)
+      (property "LCSC" "C23151" (at 182.54 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2224,9 +2224,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 187.62 200 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 190.16 203.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 190.16 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 190.16 205.08 0)
+      (property "LCSC" "C965808" (at 190.16 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2244,7 +2244,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 82.54 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 82.54 220.08 0)
+      (property "LCSC" "C23151" (at 82.54 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2274,9 +2274,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 87.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 90.16000000000001 218.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 90.16000000000001 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 90.16000000000001 220.08 0)
+      (property "LCSC" "C965808" (at 90.16000000000001 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2294,7 +2294,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 107.54 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 107.54 220.08 0)
+      (property "LCSC" "C23151" (at 107.54 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2324,9 +2324,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 112.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 115.16000000000001 218.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 115.16000000000001 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 115.16000000000001 220.08 0)
+      (property "LCSC" "C965808" (at 115.16000000000001 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2344,7 +2344,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 132.54 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 132.54 220.08 0)
+      (property "LCSC" "C23151" (at 132.54 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2374,9 +2374,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 137.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 140.16 218.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 140.16 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 140.16 220.08 0)
+      (property "LCSC" "C965808" (at 140.16 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2394,7 +2394,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 157.54 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 157.54 220.08 0)
+      (property "LCSC" "C23151" (at 157.54 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2424,9 +2424,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 162.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 165.16 218.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 165.16 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 165.16 220.08 0)
+      (property "LCSC" "C965808" (at 165.16 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2444,7 +2444,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 182.54 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 182.54 220.08 0)
+      (property "LCSC" "C23151" (at 182.54 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2474,9 +2474,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 187.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white/amber 0603" (at 190.16 218.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 190.16 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 190.16 220.08 0)
+      (property "LCSC" "C965808" (at 190.16 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2494,7 +2494,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3900T5E" (at 132.54 233.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C23289" (at 132.54 235.08 0)
+      (property "LCSC" "C23151" (at 132.54 235.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2524,9 +2524,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 137.62 230.0 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic warm-white 0603" (at 140.16 233.81 0)
+      (property "MPN" "XL-1608UWC-04 (warm-white 0603, Extended)" (at 140.16 233.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72043" (at 140.16 235.08 0)
+      (property "LCSC" "C965808" (at 140.16 235.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

@@ -178,10 +178,10 @@ Q1-Logik: USB-C-VBUS HIGH = Q1 leitet (Bypass-Boost), Battery lädt parallel
 |---|---|---|---|---|
 | BAT1 | LiPo 3.7V 5000mAh Pouch 8050120 oder 9050120 (8-9mm × 50mm × 120mm) | nicht JLC | du lieferst | Energiespeicher, JST PH 2.0 2-pin |
 | J9 | JST PH 2.0 2-pin Battery-Connector vertical SMD | C2845240-Klasse | JLC Basic | Battery-Anschluss, polarisiert |
-| U7 | **MCP73831T-2ACI/OT** (Microchip, SOT-23-5) | C14879 | Basic | LiPo Single-Cell Charger, Ladestrom programmierbar via R_PROG (R21 = 2 kΩ → 500 mA charge) |
-| U8 | **TPS61089RNSR** (TI, QFN-12 3×3mm) | C2671 | Extended | Boost-Converter LiPo→5V, bis 2A @ 5V Out, switching 1.2 MHz (über audio band) |
-| Q1 | **DMG2305UX** (Diodes, SOT-23, P-MOSFET, -20V, -4.2A, Rds 31mΩ) | C147074 | Basic | Power-Path-Selector USB-C vs Boost-Output |
-| L1 | **2.2 µH 5A Shielded Inductor 0630** (Sumida CDR63B-2R2) | C32330 | Extended | TPS61089 Boost-Inductor |
+| U7 | **MCP73831T-2ACI/OT** (Microchip, SOT-23-5) | C424093 | Basic | LiPo Single-Cell Charger, Ladestrom programmierbar via R_PROG (R21 = 2 kΩ → 500 mA charge) |
+| U8 | **TPS61089RNSR** (TI, QFN-12 3×3mm) | TBD-USER-SUPPLY | Extended | Boost-Converter LiPo→5V, bis 2A @ 5V Out, switching 1.2 MHz (über audio band) |
+| Q1 | **DMG2305UX** (Diodes, SOT-23, P-MOSFET, -20V, -4.2A, Rds 31mΩ) | C150470 | Basic | Power-Path-Selector USB-C vs Boost-Output |
+| L1 | **2.2 µH 5A Shielded Inductor 0630** (Sumida CDR63B-2R2) | C83455 | Extended | TPS61089 Boost-Inductor |
 | D3 | **SS34 Schottky 40V 3A** (DO-214AC/SMA) | C8678 | Basic | Boost-Output-Diode-Reverse-Schutz (optional bei TPS61089-Synchronous, aber sicherheitshalber) |
 | R21 | 2 kΩ 0603 (MCP73831 R_PROG → 500 mA Ladestrom) | Generic | Basic | I_CHARGE = 1000 / R_PROG |
 | R22 | 10 kΩ 0603 (Q1 Gate Pull-Down) | Generic | Basic | Default-OFF wenn USB-C-VBUS unbestimmt |
@@ -483,8 +483,8 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 | D1 | USBLC6-2SC6 ESD (USB-C D+/D−) | 1 |
 | **D2** | **SMAJ5.0A TVS auf +5V am Pi-Header** | **1 NEU** |
 | LED1 | Status LED 0805 warm white | 1 |
-| **LED6-LED10** (r10) | **SMD 0603 Modifier-Status-LEDs, warm-weiß / amber Vf≈2.0-2.2 V (Generic JLC, z.B. C2286 Yellow oder C72043 Warm-White). Position: über jedem Modifier-Switch (Y=60). PCA9685 LED0-LED4** | **5 NEU r10** |
-| **LED11-LED15** (r10) | **SMD 0603 Cell-HOLD-Status-LEDs, identisch zu LED6-LED10 (gleiche Farbe für visuelle Konsistenz). Position: über jeder Cell (Y=88) zwischen Cell-Cap-Top und OLED-Bottom. PCA9685 LED5-LED9** | **5 NEU r10** |
+| **LED6-LED10** (r10) | **SMD 0603 Modifier-Status-LEDs, warm-weiß XL-1608UWC-04 (C965808 Extended). Vf≈3.0 V @ 5 mA. Position: über jedem Modifier-Switch (Y=60). PCA9685 LED0-LED4** | **5 NEU r10** |
+| **LED11-LED15** (r10) | **SMD 0603 Cell-HOLD-Status-LEDs, identisch zu LED6-LED10 (XL-1608UWC-04 C965808). Position: über jeder Cell (Y=88) zwischen Cell-Cap-Top und OLED-Bottom. PCA9685 LED5-LED9** | **5 NEU r10** |
 
 **Total: ~95 SMT-Komponenten** (r7: +9, r9-Battery: +14, r10: +15 (10 LEDs + 5 R), r12: +5 (1 R_LED_STATUS + 2 R_BAT_DIV + 1 C_BAT_FILT + 1 R_VBUS_SENSE + 1 R_VBUS_PD − 1 R19) net +5) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 plain SMD-Tactile (HX 12x12x7.3TPFT-B, JLC-assembled), **+ BAT1 LiPo 5000 mAh user-supplied**. **r12: GP26 ADC0 frei für BAT_SENSE, STATUS_LED auf PCA9685 LED10, USB-VBUS-Detect via MCP GPA7 — Battery-Mode-Logik vollständig hardware-instrumentiert.**
 

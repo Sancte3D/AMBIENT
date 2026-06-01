@@ -1158,9 +1158,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 50 80 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "S2B-PH-SM4-TB" (at 52.54 83.81 0)
+      (property "MPN" "S2B-PH-SM4-TB(LF)(SN)" (at 52.54 83.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C146061" (at 52.54 85.08 0)
+      (property "LCSC" "C295747" (at 52.54 85.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1192,7 +1192,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "MCP73831T-2ACI/OT" (at 92.54 83.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C14879" (at 92.54 85.08 0)
+      (property "LCSC" "C424093" (at 92.54 85.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1370,7 +1370,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "TPS61089RNSR" (at 142.54 93.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C2671" (at 142.54 95.08 0)
+      (property "LCSC" "TBD-USER-SUPPLY-or-RNRR-refactor" (at 142.54 95.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1388,7 +1388,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "SWPA6045S2R2MT" (at 127.54 78.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C32330" (at 127.54 80.08 0)
+      (property "LCSC" "C83455" (at 127.54 80.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1434,7 +1434,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF2003T5E" (at 172.54 93.16000000000001 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C22810" (at 172.54 94.43 0)
+      (property "LCSC" "C25811" (at 172.54 94.43 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1452,7 +1452,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF3902T5E" (at 172.54 104.16000000000001 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C25090" (at 172.54 105.43 0)
+      (property "LCSC" "C23153" (at 172.54 105.43 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1566,7 +1566,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "DMG2305UX-7" (at 212.54 73.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C147074" (at 212.54 75.08 0)
+      (property "LCSC" "C150470" (at 212.54 75.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

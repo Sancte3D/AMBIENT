@@ -4,7 +4,62 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r12** + Generator-Catchup-Commits **50b5e02 (r10-LED-Gen)** und **0a3a740 (r12-Sense+r9-Battery-Gen)** — KiCad-Schematic-Generator und SPEC sind 1:1 im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand — r7/r7.1/r8/r9/r10/r10-LED/r11/r12 sind orthogonal zur Audio-Architektur.
+Aktuelle Rev: **v0.6.3-r12** + r12-B12 LCSC-Code-Audit-Fix (9 BOM-Bugs gefixt + 1 neuer Blocker r12-B11 TPS-Package). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand.
+
+---
+
+## LCSC-Code-Audit (2026-06-01) — r12-B12 RESOLVED + neuer r12-B11 Blocker
+
+**Trigger**: JLC-Cost-Estimate via jlcsearch-API hat 9 falsche LCSC-Codes im
+Generator aufgedeckt — alle MPN-Strings korrekt, aber die zugeordneten LCSC-
+Codes pointed auf völlig andere Teile. Wäre bei sofortigem JLC-Order ein
+DOA-Prototyp geworden (z.B. BAT_SENSE-Divider mit 130Ω statt 100kΩ).
+
+**Korrigierte LCSCs (Generator + SPEC §2.2)**:
+- 100kΩ 0603 1% (R_BAT_DIV_TOP/BOT, R_VBUS_PD): C22796 (=130Ω ❌) → **C25803** Basic ✓
+- 200kΩ 0603 (R23): C22810 (=15Ω 5% ❌) → **C25811** Basic ✓
+- 39kΩ 0603 (R24): C25090 (=0402 210Ω ❌) → **C23153** Basic ✓
+- 390Ω 0603 (R_LED6-15 + R_LED_STATUS): C23289 (=22µF Elko ❌) → **C23151** Basic ✓
+- MCP73831T-2ACI/OT (U7): C14879 (nicht-existent) → **C424093** Extended ✓
+- DMG2305UX-7 (Q1): C147074 (=2512-R ❌) → **C150470** Extended ✓
+- SWPA6045S2R2MT (L1): C32330 (nicht-existent) → **C83455** Extended ✓
+- S2B-PH-SM4-TB SMD (J9): C146061 (nicht-existent) → **C295747** Extended ✓
+- 0603 warm-white LED (LED1, LED6-15): C72043 (nicht-existent) → **C965808** (XL-1608UWC-04) Extended ✓
+
+**Bug-Klasse**: Im ursprünglichen Generator hatte ich LCSCs „aus dem Kopf"
+gewählt unter der Annahme dass UNI-ROYAL „0603WAFnnnn"-MPNs sequentiell auf
+LCSC-Codes mappen — falsch. Korrekturen via jlcsearch-API-Lookup pro MPN.
+
+**Neuer BLOCKER r12-B11**: TPS61089-Package-Mismatch entdeckt — SPEC spezifiziert
+**TPS61089RNSR** (QFN-12 3×3mm, 12 Pins + ePAD), aber LCSC hat nur
+**TPS61089RNRR** (VQFN-11 2×2.5mm HotRod, 11 Pins) als C165129. Beide Varianten
+haben unterschiedliche Footprints + unterschiedliche Pin-Mappings — nicht
+drop-in. **Drei Lösungswege** in PCB_TODO r12-B11 dokumentiert:
+1. RNRR-Refactor (~50-100 LOC Generator-Change + Footprint-Update)
+2. RNSR-Konsignierung an JLC (User bestellt RNSR bei DigiKey/Mouser)
+3. Hand-Solder U8 nach JLC-Empfang
+Generator markiert LCSC vorerst als `TBD-USER-SUPPLY-or-RNRR-refactor` bis
+Entscheidung getroffen ist.
+
+**Side-Effekt der Korrektur**: 4 Resistor-SKUs sind eigentlich Basic-Parts (kein
+$3 Setup-Fee) statt Extended → spart $12 bei 5-Boards-Order. Aktualisierter
+Extended-SKU-Count: **19 statt 23**.
+
+**Updated Cost-Estimate (5 Prototyp-Boards via JLC, korrekte BOM)**:
+- PCB-Fab (4-Layer 320×130mm): ~$160
+- Components (LCSC): ~$42
+- SMT-Assembly + 19× Ext-Setup: ~$67
+- DHL Shipping: ~$25
+- **JLC-Subtotal**: ~$294 = **$58.83 pro Board**
+- User-supplied (Battery, OLED, Encoders, Choc-Switches, Caps, Pico-Modul, Speaker): +$272
+- **Grand-Total 5 Boards**: ~$567 = **$113.33 pro Board**
+- **Bei 100 Stück**: ~$6884 = **$68.85 pro Board**
+
+**Files**: `generate_kicad_project.py` (10 sed-replacements), SPEC §2.2 +
+LED-Tabelle, PCB_TODO.md (r12-B11 NEU BLOCKER + r12-B12 RESOLVED), CHANGELOG
+(dieser Eintrag). Alle 7 Sheets regeneriert + paren-balanced. ERC-Status
+unverändert (6 Errors VM-001 false-positives, 22 Warnings — alle pre-existing
+oder intentional NC).
 
 ---
 
