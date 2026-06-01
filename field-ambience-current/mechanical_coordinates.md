@@ -198,18 +198,68 @@ Durchmesser (EC11 6.4mm Standard-Bushing).
 
 ---
 
-## 7. Lautsprecher (J6, J7 + PUI AS04008PS Treiber)
+## 7. Lautsprecher (J6, J7 + PUI AS04008PS Treiber) — r13 Acoustic-Refactor
 
 Down-firing, Bottom-Case-Mount. Speaker-Mitte muss mit PCB-Cutout
-übereinstimmen.
+übereinstimmen. **r13: Bass-Reflex-Ports entfernt → Sealed-Chamber + Top-Plate-
+Passivradiator (siehe §7b).**
 
 | Lautsprecher | X (Mitte) | Y (Mitte) | PCB-Cutout |
 |---|---|---|---|
 | Links (J6 = SPK_L) | 50 mm | 30 mm | 41 mm Durchmesser |
 | Rechts (J7 = SPK_R) | 270 mm | 30 mm | 41 mm Durchmesser |
 
-Mount: 4× M2-Schrauben pro Speaker am Bottom-Case. Bass-Reflex-Ports:
-2× 8×25 mm hinten im Bottom-Case (Tuning ~80Hz).
+Mount: 4× M2-Schrauben pro Speaker am Bottom-Case. **Akustik-Kammer geschlossen
+pro Kanal**, abgedichtet via Dichtung zwischen Treiber-Rahmen und Bottom-Case-
+Cutout. Innen-Volumen pro Kammer ~80-120 cm³ (abhängig von Battery-Position +
+PCB-Cutout-Geometrie, siehe §7a).
+
+**Bass-Reflex-Ports ENTFERNT in r13** (waren früher: 2× 8mm × 25mm hinten,
+~80Hz Tuning). Verworfen wegen Port-Chuffing bei Drone-Audio im flachen
+Gehäuse. Akustik-Erweiterung via Passivradiator §7b.
+
+---
+
+## 7b. Passivradiator PR_L + PR_R (NEU r13, Top-Plate-Mount)
+
+Ersetzt die in r13 verworfenen Bass-Reflex-Ports. Top-mounted, atmet sichtbar
+(ästhetisches Bonus), wird durch Auflage-Fläche nicht blockiert. Tuning via
+Mass-Loading der Membran (Klebegewichte auf Kunststoff-Membran nach erstem Build).
+
+| Element | Wert |
+|---|---|
+| Anzahl | 2× (1 pro Kanal in geschlossener Akustik-Kammer) |
+| Membran-Außendurchmesser | 45-55 mm (Kandidaten Dayton DMA45-PR oder Generic 50mm BT-Speaker-PR) |
+| Sd (Membranfläche) | ≥ 13 cm² (1.5× über AS04008-Sd) |
+| Xmax | ≥ 4 mm (höher als Treiber-Xmax) |
+| Tuning Fb | ~85-100 Hz (via Mass-Loading getrimmt nach erstem Build) |
+
+| PR | X (Mitte) | Y (Mitte) | Top-Plate-Cutout | Bottom-Case |
+|---|---|---|---|---|
+| PR_L (über Speaker L) | 50 mm | 30 mm | 51 mm Durchmesser | unverändert (Treiber unten) |
+| PR_R (über Speaker R) | 270 mm | 30 mm | 51 mm Durchmesser | unverändert (Treiber unten) |
+
+**X/Y matched mit Treiber-Position**: PR sitzt direkt über dem zugehörigen
+Speaker → kürzester Akustik-Pfad zur geschlossenen Kammer → bestes Coupling.
+
+**Top-Plate-Geometrie**: Cutout 51 mm Durchmesser. PR-Rand klebt/schraubt von
+unten an die Top-Plate (durch Cutout sichtbar als „Atmen"-Membran). Optional
+mit Schutzgitter / Stoff-Bespannung außen für Optik.
+
+**Akustik-Kammer**: Innen geschlossen mittels Trennsteg zwischen L- und R-Kammer
+(im Bottom-Case-Inlay). Kammer-Größe pro Kanal abhängig von Battery-Position
+(siehe §7a Revision r13) — Ziel ~80-120 cm³.
+
+**OFFENE PUNKTE r13**:
+- **r13-B1 (Sourcing)**: konkreter PR-MPN finalisieren mit T/S-Parametern
+  (Mms, Cms, Sd, Re) für Sealed-Box-Simulation in WinISD oder Hornresp.
+  Kandidaten: Dayton DMA45-PR, Tang Band W2-1625S-P, oder Generic 50mm
+  AliExpress „BT-Speaker Passive Radiator".
+- **r13-B2 (Mechanik)**: 51 mm-Cutout-Position auf Top-Plate gegen
+  Front-Plate-Bezel + OLED + Encoder-Cluster verifizieren. Y=30 mm bedeutet
+  PR sitzt im Bottom-Bereich der Top-Plate, unterhalb Modifier-Switches (Y=50).
+  Konflikt-Check: Cell-Switches bei Y=75 mit 2u-Cap-Body bis Y=84 → PR-Y=30
+  ist 45 mm vom Cell-Bottom entfernt, kein Konflikt.
 
 ---
 

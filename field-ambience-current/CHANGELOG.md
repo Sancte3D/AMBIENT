@@ -4,7 +4,62 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r12** + r12-B12 LCSC-Code-Audit-Fix (9 BOM-Bugs gefixt + 1 neuer Blocker r12-B11 TPS-Package). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand.
+Aktuelle Rev: **v0.6.3-r13** (Acoustic-Refactor: Bass-Reflex-Ports → Sealed-Chamber + Top-Plate-Passivradiator). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand.
+
+---
+
+## v0.6.3-r13 (2026-06-01) — Acoustic-Refactor: Sealed-Box + Passivradiator
+
+**User-Frage**: „wir brauchen ja bass reflex. aber fuer aktiv haben wir zu wenig
+platz. sollten wir vielleicht passive membrane an der oberseite befestigen?"
+
+**Antwort**: Ja — Passivradiator-Top-Mount ist akustisch deutlich besser in
+40mm-flachem Gehäuse als Bass-Reflex-Ports. Begründung in SPEC §8 (Speakers
+r13-Refactor): Port-Länge passt nicht ins Innenvolumen für 80 Hz; bei
+Drone/Sustain-Audio chuffen dünne Ports hörbar (Worst-Case für Field-Ambience-
+Klangcharakter); PR-Top-Mount ist Industrie-Standard für flache BT-Speaker
+(JBL Flip, Bose SoundLink, Sonos Roam) genau aus diesem Grund.
+
+**Was sich ändert**:
+
+1. **SPEC §8 Speakers**: Bass-Reflex-Ports entfernt. Stattdessen geschlossene
+   Akustik-Kammer pro Kanal + 1× Passivradiator pro Kanal an der Oberseite.
+   Tuning via Mass-Loading (Klebegewichte auf Membran) statt Portlänge.
+   Faustregeln dokumentiert: PR-Sd ≥ 1.5× Treiber-Sd, Xmax_PR > Xmax_Treiber.
+2. **`mechanical_coordinates.md` §7 rewritten**: Speaker-Positions unverändert
+   (Bottom-Case-Mount, X=50/270, Y=30). Bass-Reflex-Port-Spec entfernt.
+   Kammer ist innen geschlossen (Trennsteg L/R).
+3. **`mechanical_coordinates.md` §7b NEU**: PR_L + PR_R Position spec'd.
+   X/Y matched mit Treiber-Position (kürzester Akustik-Pfad). Top-Plate-
+   Cutout 51mm Durchmesser pro PR. Membran 45-55mm Außendurchmesser. PR-Sd
+   ≥ 13 cm² (1.5× über AS04008-Sd), Xmax ≥ 4mm. Tuning-Ziel Fb 85-100 Hz.
+4. **PCB_TODO**: NEU **r13-B1** (Passivradiator-MPN-Sourcing inkl. T/S-Parameter
+   für Sealed-Box-Sim) + **r13-B2** (Top-Plate-Cutout-Position-Verify im CAD-
+   Modell).
+
+**DSP-Bass-Erweiterung (Firmware, optional)**: Linkwitz-Transform-Filter im
+Audio-Path kann Sealed+PR-Antwort um eine halbe Oktave nach unten dehnen
+— wird in Engine-Step 8 (famSubBass) bzw. Step 11 (famReverbMaster) integriert.
+Combined Sealed+PR+DSP-Shelf reicht ehrlich runter auf ~75-85 Hz onboard.
+Alles darunter (famDeepBass) bleibt Line-Out-only.
+
+**Begründung gegen Sealed+DSP-only (Alternative ohne PR)**: hätte den
+mechanischen Aufwand minimiert, aber 40 mm-Treiber im Sealed-Box rollen
+bereits bei ~150 Hz ab — DSP-Boost in der Zone würde Xmax sofort fressen.
+PR senkt die akustische Roll-off-Frequenz auf ~100 Hz (mechanisch, ohne
+DSP-Hubforderung) → DSP kommt nur noch die letzte halbe Oktave drauf.
+
+**Begründung gegen PR + DSP zusammen**: Overkill — PR allein reicht für den
+Hint-of-Bass-Anspruch onboard. DSP-Shelf später optional einbauen falls bei
+ersten Hörtests vermisst.
+
+**Keine Schematic-/Generator-/BOM-Änderung** in diesem Commit. PR ist ein
+**mechanisches Bauteil** (kein elektrischer Anschluss, kein Pin auf PCB). BOM-
+Update folgt bei r13-B1-Resolution (konkreter MPN ausgewählt).
+
+**Files**: SPEC §8 Speakers + Line-Out, mechanical_coordinates.md §7 + §7b
+NEU, PCB_TODO (r13-B1 + r13-B2 NEU), CHANGELOG (dieser Eintrag). Pure Doc/
+Design-Decision Commit.
 
 ---
 

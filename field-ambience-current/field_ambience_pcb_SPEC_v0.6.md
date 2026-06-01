@@ -779,16 +779,49 @@ sofort Audio durchlassen → Pop.
 
 Verhindert „Klick"-Geräusch beim An- und Ausschalten.
 
-### Speakers
+### Speakers (r13 Acoustic-Refactor, 2026-06-01)
 
-2× **PUI AS04008PS-4W-WR-R**, 40×40×9mm, 4Ω, 4W RMS, down-firing.
+2× **PUI AS04008PS-4W-WR-R**, 40×40×9mm, 4Ω, 4W RMS, down-firing am Bottom-Case.
 Mount: PCB-Cutout 41mm dia, Speaker via 4× M2-Schrauben am Bottom-Case.
-Bass-Reflex: 2× Port 8mm × 25mm hinten im Bottom-Case (~80 Hz Tuning für AS04008).
 
-**Limitierung**: 40mm-Treiber können den 30-60Hz-SubBass-Layer nicht
-abstrahlen (realistisch erst ab ~150-250Hz, Port-Bump ~80Hz). Der tiefe
-Charakter ist über die Onboard-Speaker nur angedeutet — für vollen SubBass
-ist der Line-Out (J8) gedacht.
+**Akustik-Konzept: Sealed Box + Passivradiator (statt Bass-Reflex-Port)**
+
+| Element | Wert | Begründung |
+|---|---|---|
+| Kammer | **Geschlossen pro Kanal** (oder mono-Bass-Kammer mit größerem PR) | Bass-Reflex-Ports in 40mm-Innenraum sind akustisch nicht sauber tunebar — entweder zu lang (passt nicht) oder zu dünn (Chuffing bei Drone/Sustain). |
+| Passivradiator | **1× pro Speaker an OBERSEITE, ~45-55mm Membran-Durchmesser** | Ersetzt die Port-Luftsäule durch ein massebewertetes Bauteil. Top-Mount: PR atmet sichtbar, wird nicht durch Auflage-Flächen blockiert (down-firing Treiber unten, PR oben). Standard-Strategie für flache Geräte (JBL Flip, Bose SoundLink, Sonos Roam). |
+| Tuning Fb | **~85-100 Hz** (via PR-Masse, nicht Portlänge) | Über Mass-Loading der PR-Membran trimmen — empirisch nach erstem Build (T/S-Parameter PUI AS04008PS abrufen). |
+| Sd-Verhältnis | **PR Sd ≥ 1.5× Treiber-Sd**, Xmax_PR > Xmax_Treiber | Faustregel — sonst klackt der PR bei mittlerer Lautstärke. |
+
+**Kandidaten-PR** (LCSC/AliExpress, Sourcing offen r13-B1):
+- Dayton Audio DMA45-PR (45mm Sd ~13.5cm², Xmax 4.5mm) — typisch ~$3-5
+- Tang Band W2-1625S-Passive (50mm) — etwas größer/teurer
+- Generic „BT-Speaker Passive Radiator 50mm" auf AliExpress ~$1-2 (Qualität variiert, OK für Prototyp)
+
+**Mechanik-Implikation**: Bottom-Case bleibt down-firing-Treiber-Mount. **Top-Plate
+bekommt 2× Cutout** für PR (mittig pro Kanal, hinter/über Speaker-Position).
+Cutout-Größe = PR-Außendurchmesser + 1 mm Toleranz. Siehe `mechanical_coordinates.md`
+§7 NEU + §7b NEU.
+
+**DSP-Bass-Ergänzung (Firmware, optional)**: Linkwitz-Transform-Filter im
+Audio-Path kann die Sealed+PR-Antwort um eine halbe Oktave nach unten dehnen
+(siehe §12.5 Initial Boot State — wird in den Engine-Steps 8/11 integriert).
+Combined Sealed+PR+DSP-Shelf reicht ehrlich runter auf ~75-85 Hz — alles
+darunter (famDeepBass) klingt nur über Line-Out (J8) → externe Boxen wirklich tief.
+
+**Limitierung bleibt**: 40 mm-Treiber haben ~3 cm³ Membranhub × 4 mm Xmax ≈ 12 cm³
+verschiebbares Volumen — fundamental zu wenig für 30 Hz @ 80 dB. Onboard ist
+gedacht für **„hint of bass + clear midrange"**, der echte SubBass-Layer
+(famDeepBass des SuperCollider-Patches) lebt über J8. Sealed+PR macht diesen
+Hint **deutlich sauberer** als der ursprüngliche Port-Plan (kein Chuffing bei
+Drones, keine Port-Resonanz-Spitze) — der akustische Hauptgewinn.
+
+### Bass-Reflex-Ports — ENTFERNT in r13
+Frühere Spec-Fassung (Sektionsname unverändert) plante: „Bass-Reflex: 2× Port
+8mm × 25mm hinten im Bottom-Case (~80 Hz Tuning)". Verworfen weil:
+- Port-Länge passt nicht in 40-mm-Gehäuse für 80 Hz bei realem Kammer-Volumen
+- Bei Drone/Sustain (genau dieser Sound-Charakter) chuffen dünne Ports hörbar
+- Passivradiator löst beides + ist Industrie-Standard für Speaker dieser Klasse
 
 ### Line-Out / Kopfhörer (J8, v0.7)
 

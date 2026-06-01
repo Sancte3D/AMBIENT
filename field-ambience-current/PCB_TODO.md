@@ -150,6 +150,24 @@ wäre bei sofortigem JLC-Order zum DOA-Prototyp geworden.
 Fee) statt Extended → spart $12 bei 5-Boards-Order. Aktualisierter
 Extended-SKU-Count: 19 statt 23.
 
+### r13-B1: Passivradiator MPN + T/S-Parameter — IMPORTANT (vor Top-Plate-Fab)
+**Status**: 🟠 IMPORTANT. r13-Akustik-Refactor (2026-06-01) ersetzt Bass-Reflex-
+Ports durch Top-Plate-Passivradiator. Konkreter PR-MPN noch offen — Kandidaten:
+- **Dayton Audio DMA45-PR** (45mm Sd~13.5cm², Xmax 4.5mm, T/S verfügbar), ~$3-5
+- **Tang Band W2-1625S-Passive** (50mm, premium), ~$8-12
+- **Generic „BT-Speaker 50mm Passive Radiator" AliExpress**, ~$1-2 (Prototyp-tauglich, Tuning empirisch)
+
+**Action**: Sealed-Box-Simulation in WinISD oder Hornresp mit PUI-AS04008PS-T/S
++ Kammer-Volumen (~80-120 cm³) + PR-T/S → optimiert Fb (Ziel ~85-100 Hz) +
+Mass-Loading bestimmen. Vor erstem Build: 2-3 PR-Kandidaten bestellen für
+Mass-Loading-Trial-Series.
+
+### r13-B2: Top-Plate Cutout-Position PR — IMPORTANT (Mechanik)
+**Status**: 🟠 IMPORTANT. PR-Cutout-Position (51mm Durchmesser) bei (50, 30)
+und (270, 30) auf Top-Plate gegen Front-Plate-Bezel + OLED + Encoder-Cluster
+verifizieren. Y=30 → 45mm Abstand zu Cell-Bottom (Y=66). Quick-Check OK,
+aber im finalen CAD-Modell mit Rendering bestätigen vor Top-Plate-Fab-Order.
+
 ### r7-B3: KiCad-Schematic + Generator-Update für r7+r9 — RESOLVED
 **Status**: ✅ RESOLVED via r10-LED-Gen (50b5e02) + r12-Sense+r9-Battery-Gen
 (siehe folgender Commit). `generate_kicad_project.py` ist vollständig im Sync
