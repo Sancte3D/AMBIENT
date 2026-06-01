@@ -32,16 +32,13 @@ das Package-Label „SMD-4P,11.8×11.8mm" matcht den Standard. Optionen:
 (3) Alternative mit verfügbarem Datasheet wählen (z.B. KH-12X12X7H-SMT
 C18186471, 328 pcs Stock — weniger, aber Datasheet wahrscheinlicher).
 
-### r10-B9: 10× SMD-0603-LEDs + 5× R_LED11-15 ins Schematic + PCB
-**Status**: 🟠 IMPORTANT (vor PCB-Layout zu erledigen). Mit r10 sind 5
-zusätzliche Cell-HOLD-Status-LEDs (LED11-LED15) hinzugekommen, plus die 5
-Modifier-LEDs (LED6-LED10) wandern von THT-integriert auf SMD-0603-separate.
-**Action im KiCad-GUI**:
-- 10× `Device:LED` Symbole hinzufügen (LED6-LED15), Footprint `LED_SMD:LED_0603_1608Metric`
-- 5× R_LED11-15 (390 Ω 0603) hinzufügen, identisch zu R_LED6-10
-- PCA9685-Verbindungen: LED0-LED4 → LED6-LED10 (Modifier, schon im Schematic seit r7), LED5-LED9 → LED11-LED15 (Cell-HOLD, NEU r10)
-- Positionen aus `mechanical_coordinates.md` §4a + §5 ins PCB-Layout übernehmen
-- Generator-Script `kicad/generate_kicad_project.py` entsprechend updaten (siehe r7-B3 unten)
+### r10-B9: 10× SMD-0603-LEDs + 5× R_LED11-15 ins Schematic — RESOLVED
+**Status**: ✅ RESOLVED via r10-LED-Gen Commit (50b5e02). Alle 10 LEDs
+(LED6-LED15) + 10 R_LED6-R_LED15 + PCA9685 (U6) + Decoupling + /OE-Pull-Up
+sind im mcp_sheet generiert. PCA-Kanal-Mapping LED0-LED9 → schematic-Refs
+LED6-LED15 verdrahtet via Net-Label-Matching (LED6_K..LED15_K).
+PCB-Layout-Positionen bleiben User-Schritt (siehe mechanical_coordinates.md
+§4a + §5).
 
 ### r7-B2: PCA9685 Symbol-Pin-Map verifizieren
 **Status**: 🟠 IMPORTANT. `Driver_LED:PCA9685PW` aus KiCad-Standard-Lib gegen
@@ -71,36 +68,40 @@ links/rechts), (c) PCB-Größe vergrößern.
 (10kΩ Series von VBUS + 100kΩ Pull-Down zu GND, MCP-Pin 5.5V-tolerant).
 Siehe SPEC §2.2 + §7.
 
-### r9-B7: Firmware Volume-Clamp bei Battery-Mode — HW-Pfad RESOLVED durch r12
-**Status**: 🟢 Firmware-Task (kein PCB-Blocker). Hardware-Detect-Pfad ist
-ab r12 spec'd: `if read_MCP_GPA7() == HIGH: vol_max=100; else: vol_max=70`.
-Plus Battery-Low-Cutoff via GP26/ADC0 (<3.4V Warning, <3.0V Soft-Shutdown).
-Volle Algorithmus-Spec in SPEC §2.2 (r12-Sub-Section). Firmware-Implementation
-in eigenem Commit nach erstem Audio-Build.
+### r9-B7: Firmware Volume-Clamp bei Battery-Mode — RESOLVED (HW + Generator)
+**Status**: ✅ RESOLVED (HW-Pfad + Schematic-Generator). Hardware-Detect-Pfad
+ab r12 spec'd UND im KiCad-Schematic verdrahtet (Commit r12-Sense-Gen):
+`if read_MCP_GPA7() == HIGH: vol_max=100; else: vol_max=70`. Battery-Low-
+Cutoff via GP26/ADC0 (<3.4V Warning, <3.0V Soft-Shutdown). Volle Algorithmus-
+Spec in SPEC §2.2 (r12-Sub-Section). Firmware-Implementation als eigener
+Commit nach erstem Audio-Build (kein PCB-Blocker mehr).
 
-### r12-B10: 5 neue passive Bauteile + STATUS_LED-Rewire im KiCad-GUI
-**Status**: 🟠 IMPORTANT (vor PCB-Layout zu erledigen). Mit r12 sind 5
-Bauteile hinzu und 1 weg:
-- NEU: R_BAT_DIV_TOP, R_BAT_DIV_BOT (je 100kΩ 0603), C_BAT_FILT (10nF 0603),
-  R_VBUS_SENSE (10kΩ 0603), R_VBUS_PD (100kΩ 0603), R_LED_STATUS (390Ω 0603)
-- WEG: R19 (820Ω, war STATUS_LED-Series am GP26 — STATUS_LED1 wandert auf
-  PCA9685 LED10)
-- REWIRE: LED1 Anode bekommt R_LED_STATUS → +5V; Kathode an PCA9685 LED10
-  statt direkt an GP26
-- NEU NET: BAT_SENSE (VBAT → R_BAT_DIV_TOP → GP26 → R_BAT_DIV_BOT → GND, plus
-  C_BAT_FILT zw. GP26 und GND); USB_VBUS_SENSE (VBUS → R_VBUS_SENSE → GPA7 →
-  R_VBUS_PD → GND)
-**Action im KiCad-GUI**: 5 neue Symbole + Routing, R19 löschen, LED1 rewire.
-Generator-Script-Update parallel mit r7-B3/r10-B9 (gleiche Modifikation).
+### r12-B10: 5 neue passive Bauteile + STATUS_LED-Rewire — RESOLVED
+**Status**: ✅ RESOLVED. Im Generator vollständig umgesetzt (r12-Sense-Gen Commit):
+- NEU: R_BAT_DIV_TOP/BOT (je 100kΩ 0603), C_BAT_FILT (10nF), R_VBUS_SENSE (10kΩ),
+  R_VBUS_PD (100kΩ), R_LED_STATUS (390Ω) — alle im pico.kicad_sch + mcp.kicad_sch
+- WEG: R19 (820Ω), STATUS_LED-Label am GP26 — bestätigt durch grep-Check 0 hits
+- REWIRE: LED1 hängt jetzt an PCA9685 LED10 (Pin 17, rechts) mit
+  R_LED_STATUS-Series — STATUS_LED_K Net-Label matched zwischen LED1-Kathode
+  und PCA-LED10-Pin
+- NEUE NETS: BAT_SENSE (im pico_sheet), USB_VBUS_SENSE (im mcp_sheet),
+  BAT_PLUS (Battery → Pico hier-Bridge), VBUS_USBC (Power-Tree → Battery + MCP)
 
-### r7-B3: KiCad-Schematic + Generator-Update für r7+r9
-**Status**: 🔴 BLOCKER. `generate_kicad_project.py` muss nachgezogen werden:
-- U6 PCA9685 als neues Subsheet oder im mcp.kicad_sch
-- SW6-10 vom Choc-Hotswap-Symbol auf `Switch:SW_Push` + zusätzliche `Device:LED`-
-  Symbole (LED6-10) umstellen
-- R_LED6-10 (390 Ω), R_OE (10 kΩ), C_PCA_VDD (10 µF), C_PCA_VDD_HF (100 nF)
-  in die Resistor/Cap-Tabellen aufnehmen
-- I²C1 SDA/SCL Net vom MCP23017-Block auch zu U6 routen
+### r7-B3: KiCad-Schematic + Generator-Update für r7+r9 — RESOLVED
+**Status**: ✅ RESOLVED via r10-LED-Gen (50b5e02) + r12-Sense+r9-Battery-Gen
+(siehe folgender Commit). `generate_kicad_project.py` ist vollständig im Sync
+mit allen SPEC-Revisionen r9/r10/r10-LED/r11/r12:
+- U6 PCA9685 + 10 SMD-0603 LEDs + Decoupling + /OE-Pull-Up im mcp.kicad_sch
+- SW6-10 mit JLC-Standard-Footprint (HX 12x12x7.3TPFT-B, C36498966)
+- I²C-Bus geteilt zwischen MCP23017 (0x20) und PCA9685 (0x40) via
+  Same-Name-Label-Matching
+- NEU r12-Sense: pico_sheet GP26→BAT_SENSE, mcp_sheet GPA7→USB_VBUS_SENSE,
+  LED1 auf PCA-Ch 10
+- NEU r9-Battery: battery.kicad_sch mit U7 MCP73831 + U8 TPS61089 + Q1
+  DMG2305UX + L1 + D3 + J9 + R21-R24 + Caps + LED_CHRG
+- 5 neue Library-Symbole (MCP73831, TPS61089, DMG2305UX, Inductor, Schottky)
+- root_sheet erweitert um Sheet 7 Battery + Inter-Sheet-Labels für
+  VBUS_USBC / BAT_PLUS / +5V_OUT
 
 ---
 
