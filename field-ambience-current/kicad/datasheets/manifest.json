@@ -1,0 +1,595 @@
+{
+  "schematic": "field_ambience.kicad_sch",
+  "last_sync": "2026-06-01T08:57:00.204557+00:00",
+  "parts": {
+    "CC0603KRX7R9BB104": {
+      "manufacturer": "",
+      "description": "",
+      "value": "100nF X7R 0603 (LDOO stability)",
+      "references": [
+        "C_LDOO"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:28.209432+00:00"
+    },
+    "CC0603KRX7R9BB104 (Yageo, 50V X7R)": {
+      "manufacturer": "",
+      "description": "",
+      "value": "100nF X7R 0603 (+5V rail HF-decoupling)",
+      "references": [
+        "C2"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:22.613718+00:00"
+    },
+    "CL21A106KOQNNNE": {
+      "manufacturer": "",
+      "description": "",
+      "value": "10uF X5R 0805 (CPVDD bulk)",
+      "references": [
+        "C_CPVDD_BULK"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:27.593417+00:00"
+    },
+    "0603B103K500NT": {
+      "manufacturer": "",
+      "description": "",
+      "value": "10nF X7R 0603 (VDD HF\u00b2)",
+      "references": [
+        "C5b"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:23.781686+00:00"
+    },
+    "CL21A106KAYNNNE (Samsung, 25V X5R)": {
+      "manufacturer": "",
+      "description": "",
+      "value": "10uF X5R 0805 (+5V rail HF-bulk)",
+      "references": [
+        "C1"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:21.325471+00:00"
+    },
+    "CL21A226MAQNNNE": {
+      "manufacturer": "",
+      "description": "",
+      "value": "22uF X5R 0805 (PVDD-R bulk, PAM8403H datasheet >=20uF)",
+      "references": [
+        "C_PVDDR"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:28.810214+00:00"
+    },
+    "CL10A105KB8NNNC": {
+      "manufacturer": "",
+      "description": "",
+      "value": "1uF X7R 0603 (R input DC-block)",
+      "references": [
+        "C_in_R"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:30.036028+00:00"
+    },
+    "CL10B104KO8NNNC": {
+      "manufacturer": "",
+      "description": "",
+      "value": "100nF X7R 0603 (Boost-Output HF)",
+      "references": [
+        "C_BOOST_HF"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:26.993215+00:00"
+    },
+    "CC0603KRX7R9BB103": {
+      "manufacturer": "",
+      "description": "",
+      "value": "10nF X7R 0603 (ADC S/H filter, r12)",
+      "references": [
+        "C_BAT_FILT"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:26.321971+00:00"
+    },
+    "GRM21BR61E226ME44": {
+      "manufacturer": "",
+      "description": "",
+      "value": "22uF X5R 0805 (Boost-Output Bulk)",
+      "references": [
+        "C_BOOST_OUT"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:26.993704+00:00"
+    },
+    "JVJ16V1000M10x10 (1000uF 16V SMD, D10x10.5)": {
+      "manufacturer": "",
+      "description": "",
+      "value": "1000uF 10V Low-ESR Elko (D10)",
+      "references": [
+        "C_BULK"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:27.537815+00:00"
+    },
+    "CL21A106KOQNNNG-class": {
+      "manufacturer": "",
+      "description": "",
+      "value": "10uF X5R 0805 (PCA VDD bulk, r7)",
+      "references": [
+        "C_PCA_VDD"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:28.455221+00:00"
+    },
+    "CL10B104KO8NNNC-class": {
+      "manufacturer": "",
+      "description": "",
+      "value": "100nF X7R 0603 (PCA VDD HF, r7)",
+      "references": [
+        "C_PCA_VDD_HF"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:28.802255+00:00"
+    },
+    "USBLC6-2SC6": {
+      "manufacturer": "",
+      "description": "",
+      "value": "USBLC6-2SC6 (ESD, C2687116)",
+      "references": [
+        "D1"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:30.035935+00:00"
+    },
+    "SMAJ5.0A": {
+      "manufacturer": "",
+      "description": "",
+      "value": "SMAJ5.0A TVS (C113952)",
+      "references": [
+        "D2"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:30.169406+00:00"
+    },
+    "SS34": {
+      "manufacturer": "",
+      "description": "",
+      "value": "SS34 40V 3A Schottky (Boost-Out Reverse-Protect)",
+      "references": [
+        "D3"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:30.647783+00:00"
+    },
+    "PEC11R-4215F-S0024": {
+      "file": "PEC11R-4215F-S0024.pdf",
+      "manufacturer": "",
+      "description": "",
+      "value": "EC11 + push (VOL)",
+      "datasheet_url": "https://www.bourns.com/docs/Product-Datasheets/PEC11R.pdf",
+      "downloaded_date": "2026-06-01T08:56:32.913670+00:00",
+      "source": "schematic",
+      "status": "ok",
+      "references": [
+        "EN4"
+      ],
+      "size_bytes": 834940,
+      "verification": "unverified"
+    },
+    "BLM18AG601SN1D": {
+      "manufacturer": "",
+      "description": "",
+      "value": "BLM18AG601 600R@100MHz (AVDD/DVDD split, v0.6 M2)",
+      "references": [
+        "FB1"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:32.944216+00:00"
+    },
+    "1812L300/16GR": {
+      "manufacturer": "",
+      "description": "",
+      "value": "3A/6A 1812 (Littelfuse 1812L300, 16V)",
+      "references": [
+        "F1"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:32.911960+00:00"
+    },
+    "TC2030-IDC": {
+      "manufacturer": "",
+      "description": "",
+      "value": "SWD 1.27mm (SWCLK/GND/SWDIO)",
+      "references": [
+        "J4"
+      ],
+      "status": "not_found",
+      "error": "No LCSC results for 'TBD' or 'TC2030-IDC'",
+      "last_attempt": "2026-06-01T08:56:34.812982+00:00"
+    },
+    "ER-OLEDM032-1W (Buydisplay)": {
+      "manufacturer": "",
+      "description": "",
+      "value": "OLED-Header 2.54mm (ER-OLEDM032-1W 256x64 SSD1322)",
+      "references": [
+        "J3"
+      ],
+      "status": "not_found",
+      "error": "No LCSC results for 'TBD (Modul, separat bestellen)' or 'ER-OLEDM032-1W (Buydisplay)'",
+      "last_attempt": "2026-06-01T08:56:33.883710+00:00"
+    },
+    "AS04008PS-4W-WR-R": {
+      "manufacturer": "",
+      "description": "",
+      "value": "Speaker R (PUI AS04008PS, 4R 4W)",
+      "references": [
+        "J7"
+      ],
+      "status": "not_found",
+      "error": "No LCSC results for 'TBD' or 'AS04008PS-4W-WR-R'",
+      "last_attempt": "2026-06-01T08:56:36.753524+00:00"
+    },
+    "TYPE-C-31-M-12": {
+      "manufacturer": "",
+      "description": "",
+      "value": "USB_C_Receptacle (TYPE-C-31-M-12, C165948)",
+      "references": [
+        "J1"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:33.615201+00:00"
+    },
+    "PJ-320D (3.5mm TRS w/ switch)": {
+      "manufacturer": "",
+      "description": "",
+      "value": "3.5mm TRS Line/Headphone Out (PJ-320 class, w/ detect)",
+      "references": [
+        "J8"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:37.930841+00:00"
+    },
+    "S2B-PH-SM4-TB": {
+      "manufacturer": "",
+      "description": "",
+      "value": "JST PH 2.0 2-pin (LiPo Battery, r9)",
+      "references": [
+        "J9"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:37.964245+00:00"
+    },
+    "SWPA6045S2R2MT": {
+      "manufacturer": "",
+      "description": "",
+      "value": "2.2uH 5A Shielded 0630 (TPS61089 Boost Inductor)",
+      "references": [
+        "L1"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:38.216665+00:00"
+    },
+    "Generic warm-white 0603": {
+      "manufacturer": "",
+      "description": "",
+      "value": "SMD 0603 System-Status (warm-white, r12)",
+      "references": [
+        "LED1"
+      ],
+      "status": "not_found",
+      "error": "No LCSC results for 'C72043' or 'Generic warm-white 0603'",
+      "last_attempt": "2026-06-01T08:56:38.579265+00:00"
+    },
+    "Generic warm-white/amber 0603": {
+      "manufacturer": "",
+      "description": "",
+      "value": "SMD 0603 indicator (GENERATE-Mode)",
+      "references": [
+        "LED9"
+      ],
+      "status": "not_found",
+      "error": "No LCSC results for 'C72043' or 'Generic warm-white/amber 0603'",
+      "last_attempt": "2026-06-01T08:56:42.610264+00:00"
+    },
+    "Generic amber 0603": {
+      "manufacturer": "",
+      "description": "",
+      "value": "0603 amber (LiPo Charging indicator)",
+      "references": [
+        "LED_CHRG"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:43.537347+00:00"
+    },
+    "0603WAF1002T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "10k 0603 (XSMT pull-down, boot-safe default LOW = muted)",
+      "references": [
+        "R_XSMT_PD"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:52.148272+00:00"
+    },
+    "DMG2305UX-7": {
+      "file": "DMG2305UX-7.pdf",
+      "manufacturer": "",
+      "description": "",
+      "value": "DMG2305UX P-MOS SOT-23 (USB-C Power-Path-Switch)",
+      "datasheet_url": "https://www.diodes.com/assets/Datasheets/DMG2305UX.pdf",
+      "downloaded_date": "2026-06-01T08:56:43.684954+00:00",
+      "source": "schematic",
+      "status": "ok",
+      "references": [
+        "Q1"
+      ],
+      "size_bytes": 420887,
+      "verification": "verified"
+    },
+    "0603WAF5101T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "5.1k 0603 (CC2 pull-down)",
+      "references": [
+        "R3"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:45.516619+00:00"
+    },
+    "0603WAF2001T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "2k 0603 (MCP73831 R_PROG \u2192 500mA Icharge)",
+      "references": [
+        "R21"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:44.831358+00:00"
+    },
+    "0603WAF2003T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "200k 0603 (TPS61089 FB-Divider Top, Vout=5V)",
+      "references": [
+        "R23"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:45.091424+00:00"
+    },
+    "0603WAF3902T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "39k 0603 (TPS61089 FB-Divider Bottom)",
+      "references": [
+        "R24"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:45.505966+00:00"
+    },
+    "0603WAF4701T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "4.7k 0603 (SCL pull-up)",
+      "references": [
+        "R5"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:46.120070+00:00"
+    },
+    "0603WAF1003T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "100k 0603 (USB-VBUS Pull-Down, r12)",
+      "references": [
+        "R_VBUS_PD"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:51.205705+00:00"
+    },
+    "0603WAF1001T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "1k 0603 (LED_CHRG series)",
+      "references": [
+        "R_CHRG"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:47.269863+00:00"
+    },
+    "0603WAF3900T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "390R 0603 (LED1 System-Status Series, r12)",
+      "references": [
+        "R_LED_STATUS"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:49.919072+00:00"
+    },
+    "0603WAF220JT5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "22R 0603 (line-out R series/protect)",
+      "references": [
+        "R_LO_R"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:50.415452+00:00"
+    },
+    "0603WAF2002T5E": {
+      "manufacturer": "",
+      "description": "",
+      "value": "20k 0603 (R input series, RI per PAM8403H datasheet, gain 23 dB)",
+      "references": [
+        "R_VOL_R"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:51.782292+00:00"
+    },
+    "HX 12x12x7.3TPFT-B": {
+      "manufacturer": "",
+      "description": "",
+      "value": "Modifier GENERATE (12x12x7.3 SMD-Tactile, r10)",
+      "references": [
+        "SW9"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:55.814726+00:00"
+    },
+    "TS-1088-AR02016": {
+      "manufacturer": "",
+      "description": "",
+      "value": "BOOTSEL 6mm SMD (DNP for THT-Pico)",
+      "references": [
+        "SW12"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:53.256954+00:00"
+    },
+    "Kailh Choc V2 hot-swap socket": {
+      "manufacturer": "",
+      "description": "",
+      "value": "Cell 5 (2u Choc V2 Hot-Swap)",
+      "references": [
+        "SW5"
+      ],
+      "status": "not_found",
+      "error": "No LCSC results for 'TBD (separat bestellen, JLC stockt keine Hot-Swap-Sockets)' or 'Kailh Choc V2 hot-swap socket'",
+      "last_attempt": "2026-06-01T08:56:54.664235+00:00"
+    },
+    "MCP23017-E/SS": {
+      "file": "MCP23017-E_SS.pdf",
+      "manufacturer": "",
+      "description": "",
+      "value": "MCP23017-E/SS (I/O-Expander)",
+      "datasheet_url": "https://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf",
+      "downloaded_date": "2026-06-01T08:56:56.204392+00:00",
+      "source": "schematic",
+      "status": "ok",
+      "references": [
+        "U2"
+      ],
+      "size_bytes": 865289,
+      "verification": "unverified"
+    },
+    "PAM8403DR-H": {
+      "manufacturer": "",
+      "description": "",
+      "value": "PAM8403H Class-D Stereo Amp (SOIC-16)",
+      "references": [
+        "U4"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:56.627151+00:00"
+    },
+    "PCM5102APWR": {
+      "file": "PCM5102APWR.pdf",
+      "manufacturer": "",
+      "description": "",
+      "value": "PCM5102A I\u00b2S DAC (TSSOP-20)",
+      "datasheet_url": "https://www.ti.com/lit/ds/symlink/pcm5102a.pdf",
+      "downloaded_date": "2026-06-01T08:56:56.390874+00:00",
+      "source": "schematic",
+      "status": "ok",
+      "references": [
+        "U3"
+      ],
+      "size_bytes": 1161370,
+      "verification": "unverified"
+    },
+    "MCP73831T-2ACI/OT": {
+      "file": "MCP73831T-2ACI_OT.pdf",
+      "manufacturer": "",
+      "description": "",
+      "value": "MCP73831T-2ACI/OT (LiPo Charger, 500mA via R21=2k)",
+      "datasheet_url": "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP73831-Family-Data-Sheet-DS20001984H.pdf",
+      "downloaded_date": "2026-06-01T08:56:57.349627+00:00",
+      "source": "schematic",
+      "status": "ok",
+      "references": [
+        "U7"
+      ],
+      "size_bytes": 889186,
+      "verification": "unverified"
+    },
+    "TPS61089RNSR": {
+      "file": "TPS61089RNSR.pdf",
+      "manufacturer": "",
+      "description": "",
+      "value": "TPS61089RNSR (Boost LiPo\u21925V, 2A, 1.2MHz)",
+      "datasheet_url": "https://www.ti.com/lit/ds/symlink/tps61089.pdf",
+      "downloaded_date": "2026-06-01T08:56:57.509191+00:00",
+      "source": "schematic",
+      "status": "ok",
+      "references": [
+        "U8"
+      ],
+      "size_bytes": 1733517,
+      "verification": "unverified"
+    },
+    "PCA9685PW,118": {
+      "manufacturer": "",
+      "description": "",
+      "value": "PCA9685PW (16-Ch I\u00b2C PWM LED-Driver)",
+      "references": [
+        "U6"
+      ],
+      "status": "failed",
+      "error": "No datasheet URL or all download methods failed",
+      "last_attempt": "2026-06-01T08:56:57.310389+00:00"
+    },
+    "SC1631 (Pico 2 module)": {
+      "file": "SC1631_(Pico_2_module).pdf",
+      "manufacturer": "",
+      "description": "",
+      "value": "Raspberry_Pi_Pico2 (RP2350)",
+      "datasheet_url": "https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf",
+      "downloaded_date": "2026-06-01T08:56:56.010821+00:00",
+      "source": "schematic",
+      "status": "ok",
+      "references": [
+        "U1"
+      ],
+      "size_bytes": 3466706,
+      "verification": "unverified"
+    }
+  }
+}
