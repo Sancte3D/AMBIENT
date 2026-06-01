@@ -305,6 +305,7 @@
   (label "BAT_PLUS" (at 125 165 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "c2f71900-f230-4f46-ade9-803addc59809"))
   (wire (pts (xy 90 200) (xy 95 200)) (stroke (width 0) (type default)) (uuid "f52fe1a8-7168-4a1f-a441-40e722ccb4e8"))
   (label "+5V_OUT" (at 95 200 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "d0194d7d-59a6-4fdf-ac72-e2f5ccb658ab"))
+  (label "+5V_OUT" (at 110 50 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "38e9d738-890a-4c18-acbd-e5db77b74c44"))
   (wire (pts (xy 125 95) (xy 130 95)) (stroke (width 0) (type default)) (uuid "9bf96290-ebf7-4c10-a9a6-40fe4d3e2ede"))
   (label "AMP_nSHDN" (at 125 95 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "fd7d4be8-a954-4a94-ab40-9b0153c3df94"))
   (wire (pts (xy 125 100) (xy 130 100)) (stroke (width 0) (type default)) (uuid "d5fd970e-97bb-4677-a192-c7205154a3e5"))

@@ -2851,8 +2851,8 @@ def mcp_sheet() -> str:
     # VBUS=5V (USB-C verbunden) → MCP liest HIGH; VBUS=0V → LOW (Battery-Mode).
     # MCP I/O 5.5V-tolerant per Datasheet → 4.55V am Pin safe.
     py = mcp_right_pin_y(28)
-    # MCP-Pin → R_VBUS_SENSE pin1
-    wires.append(wire(PIN_R_X, py, 152, py, seed_suffix="u2-gpa7-stub"))
+    # MCP-Pin → R_VBUS_SENSE pin1 (Wire endet exakt am Pin, sonst 0.19mm-Gap = dangling)
+    wires.append(wire(PIN_R_X, py, 152.19, py, seed_suffix="u2-gpa7-stub"))
     labels.append(label(149, py, "USB_VBUS_SENSE"))
     # R_VBUS_SENSE 10k rotation=90 horizontal at (156, py): pin1 (152.19), pin2 (159.81)
     symbols.append(
@@ -3072,15 +3072,15 @@ def mcp_sheet() -> str:
     )
     wires.append(wire(164, p28_y + 5 + 3.81, 164, p28_y + 5 + 5, seed_suffix="c-pca-vddhf-bot"))
 
-    # ---- SDA (Pin 27, right) → I2C_SDA label (matches existing hier-label)
+    # ---- SDA (Pin 27, right) → I2C_SDA hier-label (gemeinsamer Bus mit MCP23017-Pin)
     p27_y = pca_right_pin_y(27)
     wires.append(wire(PCA_PIN_R_X, p27_y, 152, p27_y, seed_suffix="u6-sda"))
-    labels.append(label(149, p27_y, "I2C_SDA"))
+    hlabels.append(hier_label(152, p27_y, "I2C_SDA", shape="input", rotation=0))
 
-    # ---- SCL (Pin 26, right) → I2C_SCL label
+    # ---- SCL (Pin 26, right) → I2C_SCL hier-label
     p26_y = pca_right_pin_y(26)
     wires.append(wire(PCA_PIN_R_X, p26_y, 152, p26_y, seed_suffix="u6-scl"))
-    labels.append(label(149, p26_y, "I2C_SCL"))
+    hlabels.append(hier_label(152, p26_y, "I2C_SCL", shape="input", rotation=0))
 
     # ---- EXTCLK (Pin 25, right) → GND. WICHTIG: per NXP-Datasheet Rev 4 S.7
     # Footnote [2] MUSS dieser Pin auf GND wenn EXTCLK ungenutzt — sonst undefined.
@@ -3101,8 +3101,10 @@ def mcp_sheet() -> str:
 
     # ---- ~OE (Pin 23, right, active LOW) → R_OE 10kΩ pull-up zu +3V3.
     # Default disabled (HIGH = LEDs off). Firmware zieht /OE LOW erst nach PWM-Init.
+    # R_OE rotation=90 horizontal: pin1 abs (sx-3.81), pin2 abs (sx+3.81).
+    # Wire MUSS exakt am Pin enden, sonst dangling.
     p23_y = pca_right_pin_y(23)
-    wires.append(wire(PCA_PIN_R_X, p23_y, 152, p23_y, seed_suffix="u6-oe-stub"))
+    wires.append(wire(PCA_PIN_R_X, p23_y, 152.19, p23_y, seed_suffix="u6-oe-stub"))
     symbols.append(
         place_symbol(
             lib_id="Device:R",
@@ -3117,7 +3119,7 @@ def mcp_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # R_OE rotation=90: pin1 (156-3.81, p23_y)=(152.19, p23_y), pin2 (156+3.81, p23_y)
+    # R_OE pin2 (159.81, p23_y) → +3V3
     wires.append(wire(159.81, p23_y, 163, p23_y, seed_suffix="r-oe-to-3v3"))
     symbols.append(
         place_symbol(
@@ -3203,31 +3205,32 @@ def mcp_sheet() -> str:
         labels.append(label(sx + 13.43, sy, lname))
 
         # Corresponding PCA-LED-pin label (same net name = automatic connection)
+        # Label MUSS auf dem Wire-Endpunkt sitzen (sonst hängt es in der Luft → ERC single-pin-net).
         if pca_ch < 8:
             # PCA-LED0..7 on LEFT side, pins 6..13
             pca_pin = 6 + pca_ch
             ppy = pca_left_pin_y(pca_pin)
             wires.append(wire(PCA_PIN_L_X, ppy, PCA_PIN_L_X - 5, ppy, seed_suffix=f"u6-led{pca_ch}-stub"))
-            labels.append(label(PCA_PIN_L_X - 8, ppy, lname))
+            labels.append(label(PCA_PIN_L_X - 5, ppy, lname))
         else:
             # PCA-LED8..9 on RIGHT side, pins 15..16
             pca_pin = 15 + (pca_ch - 8)
             ppy = pca_right_pin_y(pca_pin)
             wires.append(wire(PCA_PIN_R_X, ppy, PCA_PIN_R_X + 5, ppy, seed_suffix=f"u6-led{pca_ch}-stub"))
-            labels.append(label(PCA_PIN_R_X + 8, ppy, lname))
+            labels.append(label(PCA_PIN_R_X + 5, ppy, lname))
 
     # ---- PCA9685 LED10 (Pin 17) → STATUS_LED1 (r12). LED11-LED15 bleiben Reserve.
     # LED10-Pin ist rechts (channel 10 → Pin 15 + (10-8) = 17). pca_right_pin_y(17).
     p_led10_y = pca_right_pin_y(17)
     wires.append(wire(PCA_PIN_R_X, p_led10_y, PCA_PIN_R_X + 5, p_led10_y, seed_suffix="u6-led10-stub"))
-    labels.append(label(PCA_PIN_R_X + 8, p_led10_y, "STATUS_LED_K"))
+    labels.append(label(PCA_PIN_R_X + 5, p_led10_y, "STATUS_LED_K"))
 
-    # LED11-LED15 (Pins 18-22) Reserve — NC labels
+    # LED11-LED15 (Pins 18-22) Reserve — NC labels (Label muss auf Wire-Endpunkt sitzen)
     for pca_ch in range(11, 16):
         pca_pin = 15 + (pca_ch - 8)
         ppy = pca_right_pin_y(pca_pin)
         wires.append(wire(PCA_PIN_R_X, ppy, PCA_PIN_R_X + 5, ppy, seed_suffix=f"u6-nc-led{pca_ch}"))
-        labels.append(label(PCA_PIN_R_X + 8, ppy, f"NC_PCA_LED{pca_ch}"))
+        labels.append(label(PCA_PIN_R_X + 5, ppy, f"NC_PCA_LED{pca_ch}"))
 
     # ---- LED1 + R_LED_STATUS (r12) — System-Heartbeat/Battery-Low/Error-Indikator
     # Wandert von Pico-GP26 (r3) hierher auf PCA-Channel 10. Position: zentriert unter
@@ -4704,7 +4707,7 @@ def battery_sheet() -> str:
     # Abs: pin1 (sx+3.81, sy-1.27), pin2 (sx+3.81, sy+1.27).
     # sy=80: pin1 (53.81, 78.73), pin2 (53.81, 81.27)
     wires.append(wire(53.81, 78.73, 60, 78.73, seed_suffix="j9-bat-plus"))
-    labels.append(label(60, 78.73, "BAT_PLUS"))
+    hlabels.append(hier_label(60, 78.73, "BAT_PLUS", shape="output", rotation=0))
     wires.append(wire(53.81, 81.27, 60, 81.27, seed_suffix="j9-gnd"))
     attach_gnd(60, 81.27, "J9", rotation=270)
 
@@ -4731,12 +4734,13 @@ def battery_sheet() -> str:
     wires.append(wire(U7_X - 7.62, U7_Y, U7_X - 12, U7_Y, seed_suffix="u7-vss"))
     attach_gnd(U7_X - 12, U7_Y, "U7_VSS", rotation=90)
 
-    # ---- U7 STAT (Pin 1, left, y=75) → R_CHRG (1kΩ) → LED_CHRG anode; LED_CHRG kathode → STAT-pin
-    # Actually correct topology: STAT is open-drain LOW=charging. So:
-    # +5V → LED_CHRG anode → LED kathode → R_CHRG → STAT pin. When STAT pulls LOW, current flows, LED lights.
+    # ---- U7 STAT (Pin 1, left, y=75) → R_CHRG (1kΩ) → LED_CHRG kathode; LED_CHRG anode → +5V
+    # Topology: STAT ist open-drain LOW=charging. Strom-Pfad +5V → LED_A → LED_K → R_CHRG → STAT-pin
+    # (LOW). Wire-Endpunkte alle exakt an Pin-Positionen (sonst dangling).
     p_stat_y = U7_Y - 5.08  # = 74.92
-    wires.append(wire(U7_X - 7.62, p_stat_y, U7_X - 12, p_stat_y, seed_suffix="u7-stat-stub"))
-    # R_CHRG at (U7_X-16, p_stat_y) rotation=90 horizontal: pin1 (U7_X-19.81, p_stat_y), pin2 (U7_X-12.19, p_stat_y)
+    # R_CHRG rotation=90 horizontal at (U7_X-16, p_stat_y): pin1 (U7_X-19.81), pin2 (U7_X-12.19)
+    # U7-STAT-pin abs = (U7_X-7.62, p_stat_y). Wire muss U7-STAT → R_CHRG-pin2 exakt verbinden.
+    wires.append(wire(U7_X - 7.62, p_stat_y, U7_X - 12.19, p_stat_y, seed_suffix="u7-stat-to-rchrg"))
     symbols.append(
         place_symbol(
             lib_id="Device:R",
@@ -4750,25 +4754,24 @@ def battery_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # LED_CHRG at (U7_X-23, p_stat_y), rotation=180. Anode (pin2) abs (sx-3.81), Kathode (pin1) abs (sx+3.81)
-    # Kathode should face R_CHRG (right side); Anode faces +5V (left side).
+    # LED_CHRG at (U7_X-23, p_stat_y), rotation=180: pin1 K abs (sx+3.81)=U7_X-19.19 RIGHT (zu R_CHRG),
+    # pin2 A abs (sx-3.81)=U7_X-26.81 LEFT (zu +5V). Forward-biased: +5V → A → K → R_CHRG → STAT-LOW.
     symbols.append(
         place_symbol(
             lib_id="Device:LED",
             ref="LED_CHRG",
             value="0603 amber (LiPo Charging indicator)",
             x=U7_X - 23, y=p_stat_y,
-            rotation=0,  # rotation=0: pin1 K abs (sx-3.81), pin2 A abs (sx+3.81). So A right, K left.
+            rotation=180,
             footprint="LED_SMD:LED_0603_1608Metric",
             extra_props={"MPN": "Generic amber 0603", "LCSC": "C72041"},
             seed_suffix="LED_CHRG",
             sheet_uuid_seed=sus,
         )
     )
-    # Wire: R_CHRG pin1 (U7_X-19.81) ↔ LED_CHRG Anode (U7_X-23+3.81 = U7_X-19.19)
-    # These don't touch exactly. Add small wire to bridge.
+    # R_CHRG pin1 (U7_X-19.81) → LED_CHRG kathode pin1 (U7_X-19.19): wire bridge 0.62mm
     wires.append(wire(U7_X - 19.81, p_stat_y, U7_X - 19.19, p_stat_y, seed_suffix="r-chrg-to-led"))
-    # LED_CHRG Kathode (U7_X-26.81, p_stat_y) → +5V
+    # LED_CHRG Anode pin2 (U7_X-26.81) → +5V flag at (U7_X-30)
     wires.append(wire(U7_X - 26.81, p_stat_y, U7_X - 30, p_stat_y, seed_suffix="led-chrg-to-5v"))
     symbols.append(
         place_symbol(
@@ -4782,20 +4785,21 @@ def battery_sheet() -> str:
         )
     )
 
-    # ---- U7 VDD (Pin 4, right, y=80) → VBUS_USBC (hier-input)
+    # ---- U7 VDD (Pin 4, right, y=80) → VBUS_USBC hier-input (matches Q1-S + sheet-edge)
     p_vdd_y = U7_Y  # 80
     wires.append(wire(U7_X + 7.62, p_vdd_y, U7_X + 14, p_vdd_y, seed_suffix="u7-vdd"))
-    labels.append(label(U7_X + 14, p_vdd_y, "VBUS_USBC"))
+    hlabels.append(hier_label(U7_X + 14, p_vdd_y, "VBUS_USBC", shape="input", rotation=0))
 
-    # ---- U7 VBAT (Pin 3, right, y=75) → BAT_PLUS net
+    # ---- U7 VBAT (Pin 3, right, y=75) → BAT_PLUS hier-output (zur Pico via root_sheet)
     p_vbat_y = U7_Y - 5.08  # 74.92
     wires.append(wire(U7_X + 7.62, p_vbat_y, U7_X + 14, p_vbat_y, seed_suffix="u7-vbat"))
-    labels.append(label(U7_X + 14, p_vbat_y, "BAT_PLUS"))
+    hlabels.append(hier_label(U7_X + 14, p_vbat_y, "BAT_PLUS", shape="output", rotation=0))
 
     # ---- U7 PROG (Pin 5, right, y=85) → R21 (2k) → GND. Sets Icharge=1000/Rprog=500mA.
+    # Wire-Endpunkte exakt an Pin-Positionen (R rotation=90: pin1 sx-3.81, pin2 sx+3.81).
     p_prog_y = U7_Y + 5.08  # 85.08
-    wires.append(wire(U7_X + 7.62, p_prog_y, U7_X + 14, p_prog_y, seed_suffix="u7-prog-stub"))
-    # R21 at (U7_X+18, p_prog_y) rotation=90 horizontal
+    # R21 at (U7_X+18, p_prog_y): pin1=U7_X+14.19, pin2=U7_X+21.81
+    wires.append(wire(U7_X + 7.62, p_prog_y, U7_X + 14.19, p_prog_y, seed_suffix="u7-prog-to-r21"))
     symbols.append(
         place_symbol(
             lib_id="Device:R",
@@ -4809,7 +4813,7 @@ def battery_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # R21 pin1 (U7_X+14.19, p_prog_y), pin2 (U7_X+21.81, p_prog_y)
+    # R21 pin2 (U7_X+21.81, p_prog_y) → GND
     wires.append(wire(U7_X + 21.81, p_prog_y, U7_X + 25, p_prog_y, seed_suffix="r21-to-gnd"))
     attach_gnd(U7_X + 25, p_prog_y, "R21", rotation=270)
 
@@ -4837,7 +4841,7 @@ def battery_sheet() -> str:
     # Remove the misplaced wire
     wires.pop()  # remove "bat-bus-from-j9"
     wires.append(wire(75, 86.19, 79, 86.19, seed_suffix="c-bat-in-top-stub"))
-    labels.append(label(79, 86.19, "BAT_PLUS"))
+    hlabels.append(hier_label(79, 86.19, "BAT_PLUS", shape="output", rotation=0))
     # C_BAT_IN bottom → GND
     wires.append(wire(75, 93.81, 75, 96, seed_suffix="c-bat-in-gnd"))
     attach_gnd(75, 96, "C_BAT_IN", rotation=0)
@@ -4921,17 +4925,17 @@ def battery_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # L1 pin1 (top, 71.19) → BAT_PLUS net via label
+    # L1 pin1 (top, 71.19) → BAT_PLUS hier-output
     wires.append(wire(125, 71.19, 125, 68, seed_suffix="l1-top-stub"))
-    labels.append(label(125, 68, "BAT_PLUS"))
+    hlabels.append(hier_label(125, 68, "BAT_PLUS", shape="output", rotation=90))
 
-    # ---- U8 VIN1/VIN2 (Pins 4, 5, left) → BAT_PLUS net
+    # ---- U8 VIN1/VIN2 (Pins 4, 5, left) → BAT_PLUS hier-output (Battery feeds Boost)
     vin1_y = u8_left_py(4)
     vin2_y = u8_left_py(5)
     wires.append(wire(U8_LX, vin1_y, 122, vin1_y, seed_suffix="u8-vin1-stub"))
     wires.append(wire(U8_LX, vin2_y, 122, vin2_y, seed_suffix="u8-vin2-stub"))
     wires.append(wire(122, vin1_y, 122, vin2_y, seed_suffix="u8-vin-bus"))
-    labels.append(label(122, (vin1_y + vin2_y) / 2, "BAT_PLUS"))
+    hlabels.append(hier_label(122, (vin1_y + vin2_y) / 2, "BAT_PLUS", shape="output", rotation=180))
     junctions.append(junction(122, vin1_y))
     junctions.append(junction(122, vin2_y))
 
@@ -5102,9 +5106,9 @@ def battery_sheet() -> str:
     # D3 Anode (left, 181.19) → BOOST_OUT
     wires.append(wire(181.19, vout2_y, 170, vout2_y, seed_suffix="d3-anode-to-boost"))
     junctions.append(junction(170, vout2_y))  # if needed
-    # D3 Kathode (right, 188.81) → +5V_OUT
+    # D3 Kathode (right, 188.81) → +5V_OUT hier-output (Boost-Pfad to system rail)
     wires.append(wire(188.81, vout2_y, 195, vout2_y, seed_suffix="d3-k-to-5vout"))
-    labels.append(label(195, vout2_y, "+5V_OUT"))
+    hlabels.append(hier_label(195, vout2_y, "+5V_OUT", shape="output", rotation=0))
 
     # ====================================================================
     # Q1 DMG2305UX P-MOS Power-Path @ (210, 70). 3-Pin SOT-23.
@@ -5148,28 +5152,21 @@ def battery_sheet() -> str:
     # R22 pin2 (q1_g_x-5.19, Q1_Y) connects to G-stub at (q1_g_x-5, Q1_Y) — close enough but add bridging wire
     wires.append(wire(q1_g_x - 5.19, Q1_Y, q1_g_x - 5, Q1_Y, seed_suffix="r22-to-g"))
 
-    # Q1 S (Pin 2, right, abs (Q1_X+7.62, Q1_Y+2.54)) → VBUS_USBC
-    q1_s_y = Q1_Y + 2.54
+    # Q1 S (Pin 2, abs Y inverted vs Symbol-local: local +2.54 → abs Q1_Y - 2.54) → VBUS_USBC
+    q1_s_y = Q1_Y - 2.54  # 67.46
     wires.append(wire(Q1_X + 7.62, q1_s_y, Q1_X + 14, q1_s_y, seed_suffix="q1-s-stub"))
     hlabels.append(hier_label(Q1_X + 14, q1_s_y, "VBUS_USBC", shape="input", rotation=180))
 
-    # Q1 D (Pin 3, right, abs (Q1_X+7.62, Q1_Y-2.54)) → +5V_OUT
-    q1_d_y = Q1_Y - 2.54
+    # Q1 D (Pin 3, local -2.54 → abs Q1_Y + 2.54) → +5V_OUT hier-output (USB-Pfad to system rail)
+    q1_d_y = Q1_Y + 2.54  # 72.54
     wires.append(wire(Q1_X + 7.62, q1_d_y, Q1_X + 14, q1_d_y, seed_suffix="q1-d-stub"))
-    labels.append(label(Q1_X + 14, q1_d_y, "+5V_OUT"))
+    hlabels.append(hier_label(Q1_X + 14, q1_d_y, "+5V_OUT", shape="output", rotation=0))
 
     # ====================================================================
-    # Hier-output labels at right edge for cross-sheet wiring
+    # Hier-Labels für externe Nets sind inline an U7/U8/Q1/J9/C_BAT_IN platziert
+    # (Same-Name-Match mit root_sheet's Sheet-Pins). Keine separaten Edge-Labels
+    # nötig — KiCad merged alle gleichnamigen hier-labels innerhalb des Sheets.
     # ====================================================================
-    # +5V_OUT hier-output at (235, 70) — main system rail
-    hlabels.append(hier_label(235, 70, "+5V_OUT", shape="output", rotation=0))
-    # Connect to local +5V_OUT label via wire
-    wires.append(wire(Q1_X + 14, q1_d_y, 235, q1_d_y, seed_suffix="plus5v-to-hier"))
-
-    # BAT_PLUS hier-output at (235, 80) — for BAT_SENSE in pico_sheet
-    hlabels.append(hier_label(235, 80, "BAT_PLUS", shape="output", rotation=0))
-    wires.append(wire(225, 80, 235, 80, seed_suffix="bat-plus-to-hier"))
-    labels.append(label(225, 80, "BAT_PLUS"))
 
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
@@ -5548,9 +5545,11 @@ def root_sheet() -> str:
         f'  (label "BAT_PLUS" (at 95 195 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_batplus_bat")}"))\n'
         f'  (wire (pts (xy 125 165) (xy 130 165)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_batplus_pico")}"))\n'
         f'  (label "BAT_PLUS" (at 125 165 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_batplus_pico")}"))\n'
-        # +5V_OUT: Battery merges into Power-Tree +5V rail (same-name with existing +5V_OUT pin)
+        # +5V_OUT: Battery merges into Power-Tree → Pico +5V rail. Beide Labels matchen am
+        # gleichen Net-Name. Existing direct-wire (90,50)→(130,50) bekommt eine Label-Bridge.
         f'  (wire (pts (xy 90 200) (xy 95 200)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_5vout_bat")}"))\n'
         f'  (label "+5V_OUT" (at 95 200 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_5vout_bat")}"))\n'
+        f'  (label "+5V_OUT" (at 110 50 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_5vout_pt")}"))\n'
         # ---- Labels für Audio: Pico AMP_nSHDN/MUTE → Audio Sheet inputs
         f'  (wire (pts (xy 125 95) (xy 130 95)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_ampshdn_pico")}"))\n'
         f'  (label "AMP_nSHDN" (at 125 95 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_ampshdn_pico")}"))\n'
