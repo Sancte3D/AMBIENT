@@ -4,11 +4,103 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r13** (Acoustic-Refactor: Bass-Reflex-Ports → Sealed-Chamber + Top-Plate-Passivradiator). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand.
+Aktuelle Rev: **v0.6.3-r14** (Acoustic-v2: Sealed + Top-Firing, Passivradiator-Plan
+verworfen, 4Ω→8Ω Impedanz-Fix). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt
+der maßgebliche Audio-Stand.
 
 ---
 
-## v0.6.3-r13 (2026-06-01) — Acoustic-Refactor: Sealed-Box + Passivradiator
+## v0.6.3-r14 (2026-06-02) — Acoustic-v2: Sealed + Top-Firing, Impedanz-Fix
+
+**Auslöser**: User-Frage „brauchen wir wirklich Bass-Reflex, oder eher passiv?" →
+ehrliche Datenblatt-Recherche statt eigene r13-Entscheidung verteidigen.
+
+**Befund (das, was alles umstößt)**: PUI-AS04008PS-Datenblatt sagt
+**F0 = 380 Hz** (Resonanzfrequenz), Frequenzbereich 200 Hz – 20 kHz. Das ist
+ein **Mitten-/Sprach-Treiber**, kein Bass-Treiber. Datenblatt-URL als Beleg in
+SPEC §8. Konsequenzen:
+
+1. **Reflex-Systeme physikalisch unmöglich.** Ein Reflex-System (Port oder
+   Passivradiator — beides funktioniert über dasselbe Helmholtz-Prinzip) kann
+   nicht weit unter F0 abgestimmt werden. Sowohl der originale Port-Plan
+   („~80 Hz Tuning") als auch der r13-Passivradiator („Fb 85-100 Hz") sind
+   physikalisch unmöglich. Mit F0=380 Hz wäre das tiefste sinnvolle Tuning
+   ~330 Hz → eine Resonanzspitze in den unteren Mitten → schlimmster Fehlerfall
+   für Drone/Sustain-Audio (One-Note-Boom). Der Grundirrtum (man könne diesen
+   Treiber zum Bass-Treiber machen) war beim r13-Wechsel Port → PR mit
+   übergegangen statt bemerkt zu werden.
+
+2. **Down-firing ohne Bass nutzlos.** Der einzige Vorteil von Down-firing ist
+   Boundary-Coupled-Bass (+3-6 dB durch Tisch-Reflexion im Tieftonbereich) —
+   der bei diesem Treiber nicht existiert. Was Down-firing aktiv ruiniert sind
+   die Höhen (Tisch-Reflexion + Kammfilter). **Top-Firing maximiert die einzige
+   echte Stärke** dieses Treibers (Mitten-/Höhen-Klarheit, direkter Schallweg
+   zum Ohr).
+
+3. **Impedanz-Korrektur**: Spec sagte fälschlich 4 Ω. Datenblatt sagt **8 Ω**.
+
+**Was sich ändert**:
+
+1. **SPEC §8 Speakers**: Komplett auf r14 umgestellt. Sealed-Chamber pro
+   Kanal + Top-Firing in der Top-Plate. PR-Sektion mit Begründung gestrichen.
+   Akustische Erwartung explizit (onboard 200 Hz – 20 kHz, alles darunter
+   Line-Out-only). DSP-Low-Shelf als optionale Wärme-Ergänzung. Datenblatt-URL
+   als Beleg + Verlauf (v0.6 Port → r13 PR → r14 Sealed-Top) dokumentiert.
+2. **SPEC §10 Power-Budget**: r14-Anmerkung — bei 8 Ω halbiert sich der
+   PAM8403-Worst-Case-Strom (1400→700 mA), F1 + TPS61089 bekommen mehr Margin,
+   Battery-Mode-Volume-Clamp wird physikalisch unnötig (bleibt als Akustik-
+   Schutz). Tabelle selbst unverändert (Pi-Reihe von vor Step 6 — separate
+   Reconciliation).
+3. **SPEC §9 USB-C-Power**: r14-Hinweis dass Volume-Clamp jetzt noch
+   unkritischer ist. Trotzdem aus akustischen Gründen (Treiber-Verzerrung
+   > 1.5 W Eingangs-Leistung) optional erhalten.
+4. **§2 Mechanik-Tabelle**: PCB-Speaker-Cutouts und Bottom-Case-Grille-Pattern
+   beide entfallen.
+5. **`mechanical_coordinates.md` §7**: Top-Firing-Mount in der Top-Plate
+   spezifiziert. Top-Plate-Cutout 38 mm Durchmesser pro Speaker bei
+   (50, 30) / (270, 30) — identische X/Y wie alte Speaker-Position, daher
+   keine UI-Kollisions-Re-Verifikation nötig (in r13 schon erledigt). PCB-
+   Speaker-Cutouts entfallen → PCB-Streifen Y=10..50 frei für Routing/Battery.
+6. **`mechanical_coordinates.md` §7b**: Komplett gestrichen (PR-Spec aus r13).
+7. **PCB_TODO**: **r13-B1** (PR-MPN-Sourcing) und **r13-B2** (PR-Cutout-Verify)
+   beide als RESOLVED-via-r14 geschlossen. **NEU r14-B-impedance** als
+   RESOLVED in diesem Commit erfasst (Datenblatt-Audit-Eintrag).
+8. **CHANGELOG**: Dieser Eintrag.
+
+**Begründung gegen „auf Prototyp-Hörtest warten"**: Die F0=380-Hz-Analyse ist
+physikalisch konklusiv. Ein Hörtest würde nur das Offensichtliche bestätigen
+(Top-firing klingt klarer in den Mitten), aber die Reflex-Entscheidung nicht
+ändern können. Sealed-Top zu fab'en und ggf. später ein Cell-Backlight-Tweak
+zu machen ist günstiger als zwei Top-Plates fab'en (mit + ohne PR-Cutout).
+
+**Begründung gegen Down-firing als Fallback**: Spart Top-Plate-Cutouts, kostet
+aber genau die Klangqualität für die der Treiber existiert. Ästhetisches Argument
+(versteckte Speaker = cleane Oberseite) wiegt nicht den klanglichen Verlust auf
+— die Top-Plate-Cutouts können mit dezentem Lochmuster oder Stoff-Bespannung
+optisch eingebunden werden.
+
+**Was offen bleibt**: Reine Hardware-Designentscheidung — kein Firmware-Impact
+über die optionale DSP-Low-Shelf-Erweiterung hinaus (kommt mit Engine-Step 11
+oder später). Keine Schematic-/Generator-/BOM-Änderung in diesem Commit:
+Speaker-Bauteile bleiben dieselben, nur Mount-Position + Kammer-Form sind
+mechanisch anders. BOM ändert sich nicht (Mechanik-Mount-Schrauben sind nicht
+auf BOM). Power-Budget-Konsequenz der Impedanz-Korrektur dokumentiert, aber
+Schaltungs-Auslegung war eh schon konservativ → keine Schaltplan-Änderung
+nötig.
+
+**Files**: SPEC §2 Mechanik-Tabelle, §8 Speakers (rewritten), §9 USB-C-Power-
+Anmerkung, §10 Power-Budget-Anmerkung; `mechanical_coordinates.md` §7
+(rewritten) + §7b (gestrichen); `PCB_TODO.md` (r13-B1/B2 RESOLVED + r14-B
+RESOLVED neu); `CHANGELOG.md` (dieser Eintrag). Pure Doc/Design-Decision Commit.
+
+---
+
+## v0.6.3-r13 (2026-06-01) — Acoustic-Refactor: Sealed-Box + Passivradiator (VERWORFEN in r14)
+
+> **Hinweis r14**: Dieser Refactor ist in r14 (2026-06-02) komplett verworfen
+> worden — der PR-Plan war auf einer falschen Annahme (Treiber sei bass-
+> tauglich) aufgebaut, dieselbe Annahme die schon den originalen Port-Plan
+> trug. Eintrag bleibt zur Nachvollziehbarkeit erhalten.
 
 **User-Frage**: „wir brauchen ja bass reflex. aber fuer aktiv haben wir zu wenig
 platz. sollten wir vielleicht passive membrane an der oberseite befestigen?"

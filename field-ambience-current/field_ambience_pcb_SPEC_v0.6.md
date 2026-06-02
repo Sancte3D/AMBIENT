@@ -119,12 +119,12 @@ Unverändert gegenüber v0.5.
 |---|---|---|
 | Outer device | 333 × 143.3 × 40mm | Kick75-Referenz (high-profile-Variante) |
 | PCB outline | 320 × 130mm, 4-Layer, 1.6mm thick | 6.5mm Bezel rundherum für Gehäuse |
-| PCB Cutouts | 2× Speaker openings (40mm dia each, links/rechts unten) | Down-firing speakers im Bottom-Case |
+| PCB Cutouts | (entfällt in r14 — siehe §8 Speakers) | Top-firing macht die unteren PCB-Speaker-Cutouts unnötig |
 | OLED window | 80×22mm im Top-Case | Active area ER-OLEDM032-1W |
 | USB-C position | Top-Edge zentriert | x=160mm von links |
 | Tilt | 0° | — |
 | Top-Plate Material | PC (Polycarbonat) oder ABS, 2.5mm thick | Industrial-Design-Standard |
-| Bottom-Case Material | PC oder Aluminium gegossen | mit Speaker-Grille-Pattern |
+| Bottom-Case Material | PC oder Aluminium gegossen | (Speaker-Grille-Pattern entfällt — siehe §8 r14) |
 
 Stack-Up und Layout-Skizze siehe v0.5 §2 — keine Änderungen.
 
@@ -290,6 +290,22 @@ zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 | **PCA9685 + 10× LEDs** (5× Modifier + 5× Cell-HOLD, je 8 mA peak @ 100% PWM) | 5 mA | 35 mA | **85 mA** |
 | **TOTAL** | **455 mA** | **1400 mA** | **2565 mA** |
 
+**Anmerkung r14 (Akustik-v2, Impedanz-Korrektur 2026-06-02)**: Die obige Tabelle
+geht von 4 Ω-Lautsprechern aus. PUI AS04008PS-Datenblatt sagt **8 Ω** — der
+PAM8403-Worst-Case-Verbrauch halbiert sich entsprechend (~700 mA statt 1400 mA
+bei beidseitig Volllast, da P = V²/R den Strom für gegebene Spannung halbiert).
+Resultierende Effekte:
+- F1 (3 A hold): noch mehr Margin, bleibt unverändert
+- TPS61089-Boost (2 A @ 5 V im Battery-Mode): Worst-Case nun ~1.9 A (statt
+  2.6 A), Battery-Mode-Volume-Clamp wird damit *physikalisch* unnötig — bleibt
+  trotzdem in Firmware aktiv als Akustik-Schutz (Treiber-Verzerrung > 1.5 W)
+- Max akustische Lautstärke onboard niedriger (8Ω = ~1.5 W RMS/Kanal statt
+  3 W) — für das „clear midrange"-Profil nach r14 nicht relevant, da der
+  Treiber eh schon vor seiner thermischen Grenze verzerrt
+
+Die Tabelle bleibt vorerst unverändert (Pi-Reihe wurde in NATIVE_PORT_PLAN
+Step 6 entfernt — separate Reconciliation TODO, nicht Teil von r14).
+
 **Anmerkung r10**: Aus r7 (5 Modifier-LEDs, +45 mA Worst-Case) wurde mit r10
 (5 Modifier + 5 Cell-HOLD = 10 LEDs) +85 mA Worst-Case. Differenz +40 mA. Das
 ändert die Polyfuse-Dimensionierung NICHT (F1 = 3 A hold, ~2.3 A derated bei
@@ -315,9 +331,11 @@ Worst-Case problemlos.
 
 **Entscheidung**: Variante A (USB-PD-Controller) wird NICHT verbaut. Begründung:
 - Worst-Case 2.45A < 3A Netzteil-Limit → kein Volume-Clamp für das Power-Budget
-  nötig. Das Board darf voll aussteuern.
+  nötig. Das Board darf voll aussteuern. (r14: Mit 8Ω-Treibern ist Worst-Case
+  noch deutlich kleiner — siehe Anmerkung r14 oben.)
 - Ein Firmware-Volume-Clamp ist daher KEINE Power-Schutz-Pflicht mehr; er bleibt
-  optional als Akustik-Maßnahme (40mm-Treiber verzerren oberhalb ~1.5W).
+  optional als Akustik-Maßnahme (40mm-Treiber verzerren oberhalb ~1.5W
+  Eingangs-Leistung, unabhängig von Impedanz — Datenblatt: 2 W rated, 4 W max).
 - **Benutzer-Manual**: "Nur mit 5V/3A-USB-C-Netzteil betreiben, NICHT an einem
   PC-USB-Port (500mA → Brown-out)."
 
@@ -779,49 +797,62 @@ sofort Audio durchlassen → Pop.
 
 Verhindert „Klick"-Geräusch beim An- und Ausschalten.
 
-### Speakers (r13 Acoustic-Refactor, 2026-06-01)
+### Speakers (r14 Acoustic-v2 — Sealed + Top-Firing, 2026-06-02)
 
-2× **PUI AS04008PS-4W-WR-R**, 40×40×9mm, 4Ω, 4W RMS, down-firing am Bottom-Case.
-Mount: PCB-Cutout 41mm dia, Speaker via 4× M2-Schrauben am Bottom-Case.
+2× **PUI AS04008PS-4W-WR-R**, 40×40×9mm, **8 Ω** (Datenblatt — korrigiert
+gegenüber früheren Spec-Fassungen die fälschlich 4 Ω angaben), 2 W RMS / 4 W max,
+**F0 = 380 Hz ± 20 %**, Frequenzbereich 200 Hz – 20 kHz, 84 dB @ 1 W/50 cm.
+Quelle: [PUI Audio Datenblatt](https://puiaudio.com/file/specs-AS04008PS-4W-WR-R.pdf).
 
-**Akustik-Konzept: Sealed Box + Passivradiator (statt Bass-Reflex-Port)**
+**Akustik-Konzept: Sealed Box + Top-Firing (kein Bass-Reflex, kein Passivradiator)**
 
 | Element | Wert | Begründung |
 |---|---|---|
-| Kammer | **Geschlossen pro Kanal** (oder mono-Bass-Kammer mit größerem PR) | Bass-Reflex-Ports in 40mm-Innenraum sind akustisch nicht sauber tunebar — entweder zu lang (passt nicht) oder zu dünn (Chuffing bei Drone/Sustain). |
-| Passivradiator | **1× pro Speaker an OBERSEITE, ~45-55mm Membran-Durchmesser** | Ersetzt die Port-Luftsäule durch ein massebewertetes Bauteil. Top-Mount: PR atmet sichtbar, wird nicht durch Auflage-Flächen blockiert (down-firing Treiber unten, PR oben). Standard-Strategie für flache Geräte (JBL Flip, Bose SoundLink, Sonos Roam). |
-| Tuning Fb | **~85-100 Hz** (via PR-Masse, nicht Portlänge) | Über Mass-Loading der PR-Membran trimmen — empirisch nach erstem Build (T/S-Parameter PUI AS04008PS abrufen). |
-| Sd-Verhältnis | **PR Sd ≥ 1.5× Treiber-Sd**, Xmax_PR > Xmax_Treiber | Faustregel — sonst klackt der PR bei mittlerer Lautstärke. |
+| Kammer | **Geschlossen pro Kanal**, Trennsteg L/R im Bottom-Case-Inlay | Einzige sinnvolle Kammerform für einen Treiber mit F0=380 Hz. Reflex-Systeme (Port oder PR) lassen sich physikalisch nicht unter F0 abstimmen — ein PR mit Fb≈330 Hz würde nur eine Resonanzspitze in den unteren Mitten machen, schlimmster Fehlerfall für Drone/Sustain-Audio (One-Note-Boom). Sealed = saubere monotonische Roll-Off, kein Dröhnen. |
+| Treiber-Ausrichtung | **Top-Firing in der Top-Plate**, nicht down-firing | Down-firing nutzt nur Boundary-Coupled-Bass — den dieser Treiber nicht erzeugt (F0=380 Hz). Top-firing maximiert die *einzige* echte Stärke (Mitten/Höhen-Klarheit) durch direkten Schallweg zum Ohr, ohne Tisch-Reflexion und Kammfilter. |
+| Mount | Speaker-Rahmen von unten gegen die Top-Plate, 4× M2 | PCB-Speaker-Cutouts (alt: 41 mm dia bei Y=30) **entfallen** — Treiber sitzen nicht mehr im PCB. Akustik-Kammer wird durch Top-Plate + Bottom-Case + Trennsteg gebildet. |
+| Top-Plate-Grille | 2× Cutout 38 mm dia bei (50, 30) und (270, 30), mit Schutzgitter oder Lochmuster | Schallaustritt direkt nach oben. Cutout < Treiber-Außenmaß (40×40 mm) damit die Membran abgedeckt bleibt. |
 
-**Kandidaten-PR** (LCSC/AliExpress, Sourcing offen r13-B1):
-- Dayton Audio DMA45-PR (45mm Sd ~13.5cm², Xmax 4.5mm) — typisch ~$3-5
-- Tang Band W2-1625S-Passive (50mm) — etwas größer/teurer
-- Generic „BT-Speaker Passive Radiator 50mm" auf AliExpress ~$1-2 (Qualität variiert, OK für Prototyp)
+**Realistische akustische Erwartung**: 
 
-**Mechanik-Implikation**: Bottom-Case bleibt down-firing-Treiber-Mount. **Top-Plate
-bekommt 2× Cutout** für PR (mittig pro Kanal, hinter/über Speaker-Position).
-Cutout-Größe = PR-Außendurchmesser + 1 mm Toleranz. Siehe `mechanical_coordinates.md`
-§7 NEU + §7b NEU.
+- Onboard ehrlich nutzbar etwa **200 Hz – 20 kHz** (vom Datenblatt).
+- Was klingt: klare Mitten, präsente Höhen, Pad-Saws fett und transparent,
+  Reverb-Fahnen sauber.
+- Was *nicht* klingt: alles unter ~200 Hz. famSubBass (LP90) und der untere
+  Teil von famDeepBass (HP50/LP350) sind **onboard schlicht nicht hörbar** —
+  sie sind direkter Beitrag null. Indirekt sind sie über den Reverb-Send
+  (`verbSend 0.03` bzw. `0.08`) als Wärme der Fahne präsent, aber das ist
+  alles. Voller Tiefgang ausschließlich über **Line-Out J8** → externe Boxen.
 
-**DSP-Bass-Ergänzung (Firmware, optional)**: Linkwitz-Transform-Filter im
-Audio-Path kann die Sealed+PR-Antwort um eine halbe Oktave nach unten dehnen
-(siehe §12.5 Initial Boot State — wird in den Engine-Steps 8/11 integriert).
-Combined Sealed+PR+DSP-Shelf reicht ehrlich runter auf ~75-85 Hz — alles
-darunter (famDeepBass) klingt nur über Line-Out (J8) → externe Boxen wirklich tief.
+Ein sanfter DSP-Low-Shelf bei ~400 Hz kann später optional die wahrgenommene
+Wärme im Treiber-Eigenbereich anheben (Firmware-seitig, Engine-Step 11/Master
+oder Engine-Step 8/Bass). Echten Bass *erzeugt* DSP nicht — der Treiber hat
+schlicht keinen Hub unter 200 Hz.
 
-**Limitierung bleibt**: 40 mm-Treiber haben ~3 cm³ Membranhub × 4 mm Xmax ≈ 12 cm³
-verschiebbares Volumen — fundamental zu wenig für 30 Hz @ 80 dB. Onboard ist
-gedacht für **„hint of bass + clear midrange"**, der echte SubBass-Layer
-(famDeepBass des SuperCollider-Patches) lebt über J8. Sealed+PR macht diesen
-Hint **deutlich sauberer** als der ursprüngliche Port-Plan (kein Chuffing bei
-Drones, keine Port-Resonanz-Spitze) — der akustische Hauptgewinn.
+**Mechanik-Konsequenzen** (siehe `mechanical_coordinates.md` §7 r14):
+- PCB-Speaker-Cutouts entfallen (mehr nutzbare PCB-Fläche im unteren Streifen)
+- Top-Plate bekommt 2× 38 mm Grille-Cutout bei (50, 30) / (270, 30) —
+  identische X/Y wie die alten Speaker-Positionen, daher keine Re-Verifikation
+  gegen Front-Plate-Bezel/OLED/Encoder-Cluster nötig (in r13 schon gemacht)
+- Bottom-Case wird zur reinen Kammer-Rückwand, kein Speaker-Mount mehr,
+  keine Port-Ausschnitte, kein Grille-Pattern
 
-### Bass-Reflex-Ports — ENTFERNT in r13
-Frühere Spec-Fassung (Sektionsname unverändert) plante: „Bass-Reflex: 2× Port
-8mm × 25mm hinten im Bottom-Case (~80 Hz Tuning)". Verworfen weil:
-- Port-Länge passt nicht in 40-mm-Gehäuse für 80 Hz bei realem Kammer-Volumen
-- Bei Drone/Sustain (genau dieser Sound-Charakter) chuffen dünne Ports hörbar
-- Passivradiator löst beides + ist Industrie-Standard für Speaker dieser Klasse
+**Verlauf der akustischen Entscheidungen**:
+- *v0.6 (initial)*: 2× Bass-Reflex-Port 8×25 mm hinten, ~80 Hz Tuning,
+  down-firing. Falsch weil Port-Länge nicht ins Gehäuse passt UND Port-
+  Chuffing bei Drone/Sustain.
+- *r13 (2026-06-01)*: Sealed-Box + Top-Plate-Passivradiator als Verbesserung.
+  Falsch weil PR ein Reflex-System ist, das genauso wenig unter F0=380 Hz
+  abgestimmt werden kann wie ein Port — der Grundirrtum (man könne diesen
+  Treiber zum Bass-Treiber machen) war beim Wechsel von Port → PR mit
+  übergegangen.
+- *r14 (2026-06-02)*: Sealed + Top-Firing. Ehrliche Akustik: der Treiber
+  spielt das, was sein Datenblatt erlaubt (Mitten + Höhen), und maximiert
+  diesen Bereich. Bass-Layer ist offiziell Line-Out-Zone.
+
+### Bass-Reflex/Passivradiator — beide ENTFERNT
+F0=380 Hz schließt jede Reflex-Lösung (Port oder PR) aus. Geschlossene Kammer
+ist die einzige korrekte Lösung für diesen Treiber.
 
 ### Line-Out / Kopfhörer (J8, v0.7)
 
