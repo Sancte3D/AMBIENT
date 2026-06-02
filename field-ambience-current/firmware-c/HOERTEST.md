@@ -175,3 +175,99 @@ als kleinen, leicht wieder entfernbaren Schalter (`#define DEMO_AUTOPLAY`).
   nicht diesen DAC-Line-Out-Test — über Kopfhörer hörst du den **vollen**
   Frequenzumfang inkl. des Bass-Layers, der onboard über die 380-Hz-Speaker
   bewusst wegfällt.
+
+---
+
+# Anhang A — konkret für die bestellten Teile
+
+Bezug: Pico 2 (Waveshare, pre-soldered), GY-PCM5102 DAC (3er), MCP23017
+CJMCU-2317 (3er), 120er-Jumper-Set (M-F / M-M / F-F). Damit ist alles
+Elektrische abgedeckt; ein Breadboard ist **nicht** nötig (Pin-zu-Pin mit
+F-F-Jumpern).
+
+## Was gelötet werden muss
+
+Nur **Stiftleisten anbringen** — keine Kabel löten.
+
+| Board | Löten | Was |
+|---|---|---|
+| Pico 2 (Waveshare) | ❌ | Header bereits verlötet |
+| GY-PCM5102 (DAC) | ✅ | mitgelieferte Stiftleisten in die Pin-Löcher am Rand. 3.5-mm-Klinke ist schon dran. |
+| MCP23017 (nur Tier 2) | ✅ | mitgelieferte Stiftleisten in die zwei Pin-Reihen |
+
+Technik: Leiste durchstecken (Pins zeigen weg von der Bauteilseite), einen
+Eck-Pin zuerst löten, Ausrichtung prüfen, Rest löten. Pro Pin Kolben an Pad +
+Pin (~1 s), Zinn zuführen bis es fließt, Zinn weg, Kolben weg → kleiner
+glänzender Kegel. Werkzeug: Lötkolben ~320–350 °C, Lötzinn 0.8 mm mit
+Flussmittelseele, etwas zum Fixieren.
+
+## Pico-2-Pinbelegung (physische Pinnummern)
+
+USB oben → Pin 1 oben links, linke Seite abwärts.
+
+| Signal | GPIO | phys. Pin |
+|---|---|---|
+| I²S BCK | GP0 | **1** |
+| I²S LRCK | GP1 | **2** |
+| GND | – | **3** |
+| I²C SDA *(Tier 2)* | GP2 | **4** |
+| I²C SCL *(Tier 2)* | GP3 | **5** |
+| I²S DIN | GP4 | **6** |
+| MCP INT *(Tier 2)* | GP22 | **29** |
+| 3V3 OUT | – | **36** |
+| GND | – | **38** |
+
+## Tier 1 — Pico → GY-PCM5102
+
+| Pico phys. Pin | → | DAC-Label |
+|---|---|---|
+| 1 (GP0) | → | **BCK** |
+| 2 (GP1) | → | **LCK** (ggf. „LRCK") |
+| 6 (GP4) | → | **DIN** |
+| 36 (3V3) | → | **VIN** (ggf. „3.3V"/„VCC") |
+| 38 (GND) | → | **GND** |
+
+Konfig-Brücken **auf dem DAC selbst** (F-F-Jumper zwischen zwei Pins desselben
+Boards), Labels stehen aufgedruckt:
+
+| DAC-Label | auf | Hinweis |
+|---|---|---|
+| **SCK** | **GND** | 3-Wire-Mode. Kein SCK-Pin rausgeführt? → ignorieren (intern gebrückt). |
+| **XMT** (XSMT/Mute) | **3V3** | **Pflicht** — ohne High bleibt der DAC stumm. |
+| **FMT** | **GND** | I²S-Format. |
+
+FLT/DEMP: offen lassen oder GND. Sind die vier nur als Lötbrücken auf der
+Rückseite (L/H): **XSMT auf „H"** sicherstellen.
+
+Hören: Kopfhörer/Aktivboxen in die 3.5-mm-Klinke des DAC.
+
+## Tier 2 — zusätzlich Pico → MCP23017
+
+| Pico phys. Pin | → | MCP-Label |
+|---|---|---|
+| 4 (GP2) | → | **SDA** |
+| 5 (GP3) | → | **SCL** |
+| 29 (GP22) | → | **INTA** (ggf. „INT") |
+| 36 (3V3) | → | **VCC** |
+| 38 (GND) | → | **GND** |
+
+Brücken **auf dem MCP-Modul selbst**:
+
+| MCP-Label | auf | warum |
+|---|---|---|
+| **RST** | **VCC/3V3** | sonst bleibt der Chip im Reset |
+| **A0, A1, A2** | **GND** | → I²C-Adresse 0x20 (von der Firmware erwartet) |
+
+Cell auslösen: **GPA0…GPA4** = Cell 1…5 (aktiv-low, interner Pull-Up). Draht an
+GPA0, freies Ende kurz an **GND** antippen → Cell 1 spielt. Für alle fünf je
+GPA0–GPA4 gegen GND.
+
+## 3V3 zu mehreren Stellen
+
+3V3 wird gebraucht an: DAC VIN, DAC XMT, (Tier 2:) MCP VCC, MCP RST. Mit nur
+einem 3V3-Pin am Pico per Ketten-Brücke lösen:
+`Pico 3V3 → DAC VIN`, `DAC VIN → DAC XMT`, `Pico 3V3 → MCP VCC`,
+`MCP VCC → MCP RST`. Mehrere GND-Stellen: der Pico hat viele GND-Pins
+(3, 8, 13, 18, 23, 28, 33, 38) — einfach verschiedene nutzen. Ein
+Mini-Breadboard mit Plus-Schiene würde das bequemer machen, ist aber optional.
+
