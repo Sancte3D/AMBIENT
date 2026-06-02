@@ -4,9 +4,10 @@
 > lassen, sodass der Raspberry Pi Zero 2 W komplett aus dem Gerät rausfällt.
 > Eine UF2-Datei per BOOTSEL flashen, fertig.
 >
-> Status: **Steps 1–7 + 9 done** (Engine-Steps werden hörbarkeits-first
-> gebaut: 9 → 11 → 10 → 8 → 12, siehe unten). Du bist nach **Step 9** —
-> famPadCore ist die Live-Stimme.
+> Status: **Steps 1–7 + 9 + 11 done** (Engine-Steps werden hörbarkeits-first
+> gebaut: 9 → 11 → 10 → 8 → 12, siehe unten). Du bist nach **Step 11** —
+> famPadCore + famReverbMaster + Engine-Mix-Bus laufen. Cell-Tap blooms zu
+> einem Pad-Voice mit langer Reverb-Fahne.
 
 ---
 
@@ -142,11 +143,36 @@ umsteuern kannst. Keine Mega-Dumps.
   `voices.c` bleibt kompiliert + getestet (Step-7-Artefakt), aber nicht mehr
   live. Cell→Pitch weiter Platzhalter-Pentatonik bis Step 12.
   *Hinweis: host-getestet; UF2-Build/On-Device-Audio braucht Pico-SDK-Hardware.*
-- **Step 11** — `famReverbMaster` (algorithmischer Reverb statt Convolution —
-  8 Feedback-Combs + 4 Allpass à la Freeverb/Schroeder, pre-Reverb tanh-Drive,
-  LeakDC + Limiter). Führt den **engine_render Mix-Bus** ein (Pad → Dry +
-  Reverb-Send → Master); Pad wird dann auf Float-Out refactored. v0.8-Reverb-
-  Reconciliation (computeReverb mit spaceTailMul/moodSizeMul) übernehmen.
+- **Step 11** ✅ — `famReverbMaster` + Engine-Mix-Bus. Ported aus der
+  Web-Audio-`createConvolver`-Variante zu einem **Freeverb-Stil-Algorithmic**
+  (8 parallele Feedback-Combs + 4 serielle Allpässe pro Kanal, klassische
+  Freeverb-Tunings 1116/1188/.../1617 @ 44.1 kHz, +23-Sample-Stereo-Spread,
+  pre-Reverb tanh-Drive nach `driven = tanh(in·(1+d·4)) / (1+d·0.6)`).
+  Convolution scheidet auf RP2350 aus (RAM + Cycles).
+  Neues Modul `reverb.{h,c}` — block-orientiertes `reverb_render(in_L,
+  in_R, out_L, out_R, n)`, smooth-coefficient-updates pro Block (~120 ms
+  Time-Constant, kein Zipper). Neues Modul `engine.{h,c}` als Mix-Bus-Owner
+  und neuer Live-Renderer: pro Block werden Dry-/Send-Float-Akkumulatoren
+  geleert, `pad_render_mix` schreibt Dry + Send (skaliert mit `send_amount`),
+  `reverb_render` rechnet Send→Wet, dann Sum + Master-tanh-Soft-Clip → int16.
+  `pad.{h,c}` refactored: inner Per-Sample-Loop in `render_block_float`
+  extrahiert; alte `pad_render(int16_t*)` bleibt als Standalone-Wrapper
+  erhalten (Tests grün), neue `pad_render_mix(float*, …)` für den Engine-
+  Bus. `main.c` registriert jetzt `engine_render` und ruft `engine_note_on/
+  off`. Defaults am Boot: size=0.7, damp=0.3, drive=0.15, wet=0.40, send=0.45
+  (entspricht dem Webapp-Mid-Mode bei space≈0.5/mood≈0.5).
+  Host-Tests `test/test_reverb_engine.c`: Impuls dekayt sauber (Peak 0.037,
+  Tail nach 4 s = 0.0), Silent-In→exakt-Silent-Out (kein DC, keine Selbst-
+  oszillation), 5 s Noise@1.0 bleibt unter Peak 2.0, Engine-Boot silent,
+  Pad-Note hörbar mit Stereo (L≠R), Reverb-Tail überlebt das Dry-Release
+  (3.5-4.5 s nach release noch ~880-1130 LSB), unter 15 s Stille schließlich
+  Decay auf <200 LSB, 8-Voice-Volllast bleibt int16-bounded (Peak ~32740).
+  RAM-Budget: 8×2 Combs × 1640 + 4×2 Allpässe × 580 + Engine-Scratch ≈ 65 KB.
+  v0.8-Reverb-Reconciliation (`computeReverb` mit space/mood-Multipliern)
+  ist als API-Surface vorbereitet (Engine-Setter), aber das Mapping space→
+  size+wet kommt zusammen mit Encoder-Bindings/Brain in Step 12.
+  *Hinweis: host-getestet; UF2-Build + On-Device-Hörtest brauchen Pico-SDK-
+  Hardware.*
 - **Step 10** — `famTexture` (Brown + Pink Noise, BPF mit LFO-modulierter
   Mitte, Lag-Smooth-Amp für Ducking). Nutzt SVF-BPF + Noise-Gen.
 - **Step 8** — `famSubBass` + `famDeepBass` (zwei Sinus-/Tri-Stimmen, LPF,

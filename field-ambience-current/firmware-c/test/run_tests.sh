@@ -28,3 +28,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/pad.c" \
     -lm -o "$tmp/pad_test"
 "$tmp/pad_test"
+
+# Step 11: famReverbMaster + engine mix-bus
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_reverb_engine.c" \
+    "$src/src/dsp.c" \
+    "$src/src/pad.c" \
+    "$src/src/reverb.c" \
+    "$src/src/engine.c" \
+    -lm -o "$tmp/reverb_test"
+"$tmp/reverb_test"

@@ -37,8 +37,10 @@ add_executable(field_ambience_native
     src/audio.c
     src/dsp.c       # Step 7/9: sine LUT, midi→Hz, polyBLEP osc, SVF, smoothing
     src/voices.c    # Step 7: sine voice pool (superseded as the live renderer
-                    #         by pad.c in Step 9; kept + unit-tested for now)
-    src/pad.c       # Step 9: famPadCore — the live cell-tap renderer
+                    #         in Step 9; kept + unit-tested for now)
+    src/pad.c       # Step 9: famPadCore voice pool
+    src/reverb.c    # Step 11: famReverbMaster (Freeverb-style algorithmic)
+    src/engine.c    # Step 11: mix-bus (pad → dry+send, reverb, master clip)
 )
 
 target_include_directories(field_ambience_native PRIVATE

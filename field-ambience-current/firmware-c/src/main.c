@@ -7,12 +7,15 @@
  *   - Step 4: 4× EC11 encoders (quadrature + push)
  *   - Step 5: I²S DMA + 440 Hz test sine, SPEC §8 pop-suppression
  *   - Step 7: polyphonic voice pool (sine + ASR per cell tap).
- *   - Step 9 (here): famPadCore replaces the placeholder sine. Each cell tap
- *     blooms a warm detuned-saw pad voice (resonant LFO-swept lowpass, Haas
- *     stereo width, long release) via pad_render(). Cell→pitch is still the
- *     placeholder C-minor-pentatonic until the harmonic brain lands (Step 12);
- *     Step 9 is purely the timbre.
+ *   - Step 9: famPadCore (detuned-saw pad) replaces the placeholder sine.
+ *   - Step 11 (here): famReverbMaster + engine mix-bus. The pad now feeds a
+ *     dry bus AND a reverb send; the engine's Freeverb-style algorithmic
+ *     reverb adds the long, dark tail that the Sound Constitution requires.
+ *     Cell→pitch is still the placeholder C-minor-pentatonic until the
+ *     harmonic brain lands (Step 12).
  *
+ * Engine-Port order is 9→11→10→8→12 (hörbarkeits-first, see
+ * NATIVE_PORT_PLAN.md); Steps 8 and 10 are still pending.
  * (Step 6 was the schematic update that removed the Pi — no firmware change.)
  */
 
@@ -26,7 +29,7 @@
 #include "encoders.h"
 #include "audio.h"
 #include "dsp.h"
-#include "pad.h"
+#include "engine.h"
 
 #define PIN_STATUS_LED  26
 
@@ -38,7 +41,7 @@ static const uint8_t CELL_MIDI[5] = { 48, 51, 53, 55, 58 };
 
 static void draw_banner_static(void) {
     oled_text( 72,  0, "FIELD AMBIENCE", 0x0F);
-    oled_text( 88,  8, "V0.9 STEP 9",    0x0A);
+    oled_text( 88,  8, "V0.9 STEP 11",   0x0A);
     oled_text(  0, 16, "TAP A CELL",     0x07);
 }
 
@@ -125,18 +128,19 @@ int main(void) {
     draw_encoders_state();
     oled_show();
 
-    /* Step 9: bring up the DSP + famPadCore pool and register pad_render as
-     * the audio block renderer BEFORE audio_init(), so the power-up sequence
-     * streams silence (no voices active yet) and stays pop-free. */
+    /* Step 11: bring up DSP + engine (pad pool + Freeverb-style reverb) and
+     * register engine_render as the audio block renderer BEFORE audio_init(),
+     * so the power-up sequence streams silence (no voices active yet) and
+     * stays pop-free. */
     dsp_init();
-    pad_init();
-    audio_set_renderer(pad_render);
+    engine_init();
+    audio_set_renderer(engine_render);
 
     if (!mcp_ok) {
         printf("WARN: audio start without MCP — PCM XSMT cannot be released\n");
     }
     audio_init();
-    printf("audio: I2S pump live, pad pool ready — tap a cell\n");
+    printf("audio: I2S pump live, engine ready (pad + reverb) — tap a cell\n");
 
     uint32_t hb_count = 0;
     absolute_time_t next_blink_at = make_timeout_time_ms(500);
@@ -157,10 +161,10 @@ int main(void) {
                 bool now_pressed  = !(v & mask);
                 bool was_pressed  = !(prev_mcp & mask);
                 if (now_pressed && !was_pressed) {
-                    pad_note_on((uint8_t)c, dsp_midi_to_hz(CELL_MIDI[c]), CELL_VOICE_AMP);
+                    engine_note_on((uint8_t)c, dsp_midi_to_hz(CELL_MIDI[c]), CELL_VOICE_AMP);
                     printf("cell %d ON  (midi %u)\n", c + 1, CELL_MIDI[c]);
                 } else if (!now_pressed && was_pressed) {
-                    pad_note_off((uint8_t)c);
+                    engine_note_off((uint8_t)c);
                     printf("cell %d OFF\n", c + 1);
                 }
             }
@@ -185,7 +189,7 @@ int main(void) {
 
         if (dirty) {
             /* Live voice count next to the 'TAP A CELL' banner line. */
-            char vc[2] = { (char)('0' + (pad_active_count() & 7)), 0 };
+            char vc[2] = { (char)('0' + (engine_active_voices() & 7)), 0 };
             oled_text(176, 16, "VOX ", 0x07);
             oled_text(208, 16, vc, 0x0F);
             draw_encoders_state();

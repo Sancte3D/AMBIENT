@@ -213,7 +213,11 @@ static void side_control(pad_side_t *s) {
     dsp_svf_set(&s->svf, dsp_clampf(cutoff, 80.0f, 8000.0f), 0.18f * 12.0f);
 }
 
-void pad_render(int16_t *buf, int frames) {
+/* Raw stereo float render — no master soft-clip, no int16 conversion. The
+ * two public render APIs (pad_render and pad_render_mix) both delegate
+ * here; the master tanh moved out to the engine in Step 11 so the dry pad
+ * can be mixed cleanly with the reverb wet bus. Overwrites outL/outR. */
+static void render_block_float(float *outL, float *outR, int frames) {
     for (int n = 0; n < frames; ++n) {
         bool ctl = (ctl_phase == 0);
         if (ctl) bright_cur += bright_coef * (bright_target - bright_cur);
@@ -276,11 +280,48 @@ void pad_render(int16_t *buf, int frames) {
 
         if (++ctl_phase >= CTL_DECIMATE) ctl_phase = 0;
 
-        /* Soft-clipped master so a fistful of voices can't wrap the int16. */
-        L = tanhf(L * 0.9f);
-        R = tanhf(R * 0.9f);
-        buf[n * 2 + 0] = (int16_t)(L * 32767.0f);
-        buf[n * 2 + 1] = (int16_t)(R * 32767.0f);
+        outL[n] = L;
+        outR[n] = R;
+    }
+}
+
+/* Backward-compatible standalone path: render → tanh master → int16. Used
+ * by the Step-9 host tests (`test_pad.c`) and as a fallback renderer. */
+void pad_render(int16_t *buf, int frames) {
+    enum { CH = 64 };
+    float L[CH], R[CH];
+    int left = frames, out_idx = 0;
+    while (left > 0) {
+        int n = left < CH ? left : CH;
+        render_block_float(L, R, n);
+        for (int i = 0; i < n; ++i) {
+            float l = tanhf(L[i] * 0.9f);
+            float r = tanhf(R[i] * 0.9f);
+            buf[(out_idx + i) * 2 + 0] = (int16_t)(l * 32767.0f);
+            buf[(out_idx + i) * 2 + 1] = (int16_t)(r * 32767.0f);
+        }
+        out_idx += n; left -= n;
+    }
+}
+
+/* Step 11 mix-bus path: ADDS into dry + scaled into reverb-send buffers.
+ * No master clip here — that's the engine's job after dry+wet are summed. */
+void pad_render_mix(float *dry_L, float *dry_R,
+                    float *send_L, float *send_R,
+                    int frames, float send_amount) {
+    enum { CH = 64 };
+    float L[CH], R[CH];
+    int left = frames, out_idx = 0;
+    while (left > 0) {
+        int n = left < CH ? left : CH;
+        render_block_float(L, R, n);
+        for (int i = 0; i < n; ++i) {
+            dry_L[out_idx + i]  += L[i];
+            dry_R[out_idx + i]  += R[i];
+            send_L[out_idx + i] += L[i] * send_amount;
+            send_R[out_idx + i] += R[i] * send_amount;
+        }
+        out_idx += n; left -= n;
     }
 }
 

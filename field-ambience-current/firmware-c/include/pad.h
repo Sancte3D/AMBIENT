@@ -51,8 +51,18 @@ void pad_set_brightness(float hz);
 
 /* Render `frames` interleaved stereo int16 samples (L,R,L,R,…), summing all
  * active pad voices through a soft-clipped master. Audio-context safe:
- * allocation-free and bounded. */
+ * allocation-free and bounded. Standalone form: no reverb, no engine bus.
+ * Step 11 replaced this as the live renderer with engine_render(); kept here
+ * for fall-back use and existing unit tests. */
 void pad_render(int16_t *buf, int frames);
+
+/* Step 11 mix-bus form: ADDS the pad's stereo output into the dry buffer and
+ * a `send_amount`-scaled copy into the reverb-send buffer. All four buffers
+ * are float, separate-channel, length `frames`. Caller must clear the
+ * buffers before the first add of a block. */
+void pad_render_mix(float *dry_L, float *dry_R,
+                    float *send_L, float *send_R,
+                    int frames, float send_amount);
 
 /* Voices not idle — for the OLED / debug. */
 int pad_active_count(void);
