@@ -181,9 +181,10 @@ als kleinen, leicht wieder entfernbaren Schalter (`#define DEMO_AUTOPLAY`).
 # Anhang A — konkret für die bestellten Teile
 
 Bezug: Pico 2 (Waveshare, pre-soldered), GY-PCM5102 DAC (3er), MCP23017
-CJMCU-2317 (3er), 120er-Jumper-Set (M-F / M-M / F-F). Damit ist alles
-Elektrische abgedeckt; ein Breadboard ist **nicht** nötig (Pin-zu-Pin mit
-F-F-Jumpern).
+CJMCU-2317 (3er), 120er-Jumper-Set (M-F / M-M / F-F). Mit einem zusätzlichen
+**830er Full-Size-Breadboard** (~3–5 €, „830 Tie-Points" / „MB-102") und
+**5× Tactile-Push-Buttons** (6×6 mm oder 12×12 mm DIP, ~2 € im Pack) wird
+Tier 2 deutlich sauberer als Pin-zu-Pin-Jumper.
 
 ## Was gelötet werden muss
 
@@ -258,16 +259,61 @@ Brücken **auf dem MCP-Modul selbst**:
 | **RST** | **VCC/3V3** | sonst bleibt der Chip im Reset |
 | **A0, A1, A2** | **GND** | → I²C-Adresse 0x20 (von der Firmware erwartet) |
 
-Cell auslösen: **GPA0…GPA4** = Cell 1…5 (aktiv-low, interner Pull-Up). Draht an
-GPA0, freies Ende kurz an **GND** antippen → Cell 1 spielt. Für alle fünf je
-GPA0–GPA4 gegen GND.
+Cell auslösen: **GPA0…GPA4** = Cell 1…5 (aktiv-low, interner Pull-Up).
+Quick-and-dirty: Draht an GPA0, freies Ende kurz an **GND** antippen → Cell 1
+spielt. Sauber mit Tasten siehe nächster Abschnitt.
 
-## 3V3 zu mehreren Stellen
+## Tactile-Buttons als Cells
 
-3V3 wird gebraucht an: DAC VIN, DAC XMT, (Tier 2:) MCP VCC, MCP RST. Mit nur
-einem 3V3-Pin am Pico per Ketten-Brücke lösen:
-`Pico 3V3 → DAC VIN`, `DAC VIN → DAC XMT`, `Pico 3V3 → MCP VCC`,
-`MCP VCC → MCP RST`. Mehrere GND-Stellen: der Pico hat viele GND-Pins
-(3, 8, 13, 18, 23, 28, 33, 38) — einfach verschiedene nutzen. Ein
-Mini-Breadboard mit Plus-Schiene würde das bequemer machen, ist aber optional.
+Tactile-Push-Buttons (4-Bein-DIP, 6×6 mm oder 12×12 mm) sind elektrisch
+korrekt — die finalen Kailh-Choc-Cells sind ebenfalls nur SPST-Momentary-
+Schalter. Pro Cell:
+
+```
+   GPA-Pin  ──┐                ┌── GND
+              │                │
+              └─── [Button] ───┘
+```
+
+**4-Bein-Pinout-Falle**: Die zwei Beine **derselben Seite** sind intern
+dauerhaft kurzgeschlossen; gedrückt wird Seite A mit Seite B verbunden. Nimm
+also **ein Bein von einer Seite und eines von der anderen** (über die *lange*
+Achse hinweg, nicht die kurze). Auf dem Breadboard wird der Button so
+eingesteckt, dass die **lange Achse die Mittelfuge überquert** — dann sitzen
+die zwei elektrischen Seiten automatisch in getrennten Reihen, richtig herum.
+
+5 Buttons in einer Reihe nebeneinander: je eine Seite an die GND-Schiene, die
+andere Seite per Jumper an GPA0/1/2/3/4 → fertige Tier-2-Tastatur.
+
+Modifier-Buttons (SHIFT/HOLD/DRONE/GENERATE/CLEAR auf GPB0–4) sind in der
+aktuellen Firmware **noch ohne Funktion** (kommt erst mit Step 12b) — also
+jetzt keine kaufen.
+
+## Breadboard-Layout (830 Tie-Points)
+
+Mit dem 830er-Breadboard wird die Stromverteilung trivial — die zwei roten
+und zwei blauen Power-Schienen am Rand übernehmen 3V3 und GND, und alle drei
+Module passen mit Platz für die 5 Buttons nebeneinander.
+
+```
++rail (rot)   ←── Pico Pin 36 (3V3)
+−rail (blau)  ←── Pico Pin 38 (GND)
+
+   [Pico 2, USB links, über die Mittelfuge]    Spalten ~1–20
+   [GY-PCM5102, über die Mittelfuge]           Spalten ~22–32
+   [MCP23017,    über die Mittelfuge]          Spalten ~35–48
+   [5 Tactile-Buttons in Reihe, über die Fuge] Spalten ~50–60
+       eine Seite → blaue (GND) Schiene
+       andere     → GPA0..GPA4 am MCP
+```
+
+Module ziehen ihre Versorgung dann direkt aus den Schienen:
+- DAC VIN → +rail, DAC GND → −rail, DAC XMT → +rail (Brücke am DAC)
+- MCP VCC → +rail, MCP GND → −rail, MCP RST → +rail (Brücke am MCP),
+  MCP A0/A1/A2 → −rail
+
+Kein Ketten-Brücken-Salat, alle Signal-Jumper sind kurz und gerichtet.
+
+Falls du nur ein **400er Half-Size-Breadboard** hast: passt auch noch, aber
+sehr eng. Dann eher zwei nebeneinander.
 
