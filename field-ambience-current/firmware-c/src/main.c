@@ -10,11 +10,12 @@
  *   - Step 9: famPadCore (detuned-saw pad) replaces the placeholder sine.
  *   - Step 11: famReverbMaster + engine mix-bus (pad → dry + reverb send).
  *   - Step 10: famTexture noise bed under everything (quiet idle ambience).
- *   - Step 8 (here): famSubBass + famDeepBass. The engine tracks the lowest
- *     held cell and drives a two-layer bass under it (sub 2 octaves down,
- *     deep 1 octave down, legato portamento). All four audio layers are now
- *     live. Cell→pitch is still the placeholder C-minor-pentatonic until the
- *     harmonic brain lands (Step 12).
+ *   - Step 8: famSubBass + famDeepBass under the lowest held cell.
+ *   - Step 12a (here): harmonic brain. Cell→pitch is now real scale/mode/
+ *     family harmony — each cell sounds the chord root of its scale degree
+ *     (default C4 ionian, warm/add9), replacing the placeholder pentatonic.
+ *     The menu, USB-MIDI and encoder→param bindings (Step 12b) are still to
+ *     come; key/mode/vibe currently sit at their defaults.
  *
  * Engine-Port order is 9→11→10→8→12 (hörbarkeits-first, see
  * NATIVE_PORT_PLAN.md); Steps 8 and 10 are still pending.
@@ -32,18 +33,18 @@
 #include "audio.h"
 #include "dsp.h"
 #include "engine.h"
+#include "brain.h"
 
 #define PIN_STATUS_LED  26
 
-/* Placeholder cell→MIDI mapping: C minor pentatonic (C3 Eb3 F3 G3 Bb3).
- * Deep + consonant, fits the Sound Constitution. Real scale/chord mapping
- * arrives with the harmonic brain in Step 12. */
-static const uint8_t CELL_MIDI[5] = { 48, 51, 53, 55, 58 };
+/* Cell→pitch now comes from the harmonic brain (Step 12a): each cell plays a
+ * single pad voice on the chord ROOT of its scale degree, for the current
+ * key/mode/vibe. Defaults: C4 ionian, warm/add9. */
 #define CELL_VOICE_AMP 0.12f
 
 static void draw_banner_static(void) {
     oled_text( 72,  0, "FIELD AMBIENCE", 0x0F);
-    oled_text( 88,  8, "V0.9 STEP 8",    0x0A);
+    oled_text( 88,  8, "V0.9 STEP 12A",  0x0A);
     oled_text(  0, 16, "TAP A CELL",     0x07);
 }
 
@@ -135,6 +136,7 @@ int main(void) {
      * so the power-up sequence streams silence (no voices active yet) and
      * stays pop-free. */
     dsp_init();
+    brain_init();
     engine_init();
     audio_set_renderer(engine_render);
 
@@ -167,8 +169,9 @@ int main(void) {
                 bool now_pressed  = !(v & mask);
                 bool was_pressed  = !(prev_mcp & mask);
                 if (now_pressed && !was_pressed) {
-                    engine_note_on((uint8_t)c, dsp_midi_to_hz(CELL_MIDI[c]), CELL_VOICE_AMP);
-                    printf("cell %d ON  (midi %u)\n", c + 1, CELL_MIDI[c]);
+                    int midi = brain_cell_root(c);
+                    engine_note_on((uint8_t)c, dsp_midi_to_hz((float)midi), CELL_VOICE_AMP);
+                    printf("cell %d ON  (degree %d, midi %d)\n", c + 1, c + 1, midi);
                 } else if (!now_pressed && was_pressed) {
                     engine_note_off((uint8_t)c);
                     printf("cell %d OFF\n", c + 1);

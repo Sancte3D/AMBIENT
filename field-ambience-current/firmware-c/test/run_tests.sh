@@ -37,6 +37,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/tex_test"
 "$tmp/tex_test"
 
+# Step 12a: harmonic brain (pure integer theory)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_brain.c" \
+    "$src/src/brain.c" \
+    -lm -o "$tmp/brain_test"
+"$tmp/brain_test"
+
 # Step 8: famSubBass + famDeepBass + dsp_svf highpass / dsp_tri
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bass.c" \

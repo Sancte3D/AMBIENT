@@ -4,12 +4,14 @@
 > lassen, sodass der Raspberry Pi Zero 2 W komplett aus dem Gerät rausfällt.
 > Eine UF2-Datei per BOOTSEL flashen, fertig.
 >
-> Status: **Steps 1–11 done** (Engine-Steps hörbarkeits-first gebaut:
-> 9 → 11 → 10 → 8 → 12). Du bist nach **Step 8** — alle vier Audio-Schichten
-> (famPadCore + famReverbMaster + famTexture + famSubBass/famDeepBass) laufen
-> im Engine-Mix-Bus. Cell-Tap blooms zu Pad + Reverb-Fahne über Noise-Bed,
-> mit zwei-Schicht-Bass an der tiefsten gehaltenen Note. **Nur noch Step 12
-> offen** (Harmonic Brain + v30-Menü + USB-MIDI).
+> Status: **Steps 1–11 + 12a done** (Engine-Steps hörbarkeits-first gebaut:
+> 9 → 11 → 10 → 8 → 12). Alle vier Audio-Schichten (famPadCore + famReverbMaster
+> + famTexture + famSubBass/famDeepBass) laufen im Engine-Mix-Bus; der
+> **Harmonic Brain (12a)** mappt Cells auf echte Skalen/Modi/Familien-Harmonie.
+> Cell-Tap blooms zu Pad + Reverb-Fahne über Noise-Bed, mit zwei-Schicht-Bass.
+> **Offen: Step 12b** — v30-Menü (PLAY/SETUP), USB-MIDI-Out (TinyUSB),
+> Encoder→Engine-Param-Bindings. Diese Teile sind hardware-nah / UX-behaftet
+> und brauchen Hörtests + Design-Entscheidungen.
 
 ---
 
@@ -219,9 +221,26 @@ umsteuern kannst. Keine Mega-Dumps.
   trägt trotzdem zum Gesamtmix + externem Monitoring bei.
   *Hinweis: host-getestet; UF2-Build + On-Device-Hörtest brauchen Pico-SDK-
   Hardware.*
-- **Step 12** — Harmonic-Brain-Port: Skalen, Akkord-Familien, Voice-Leading,
-  Markov-Übergänge, opt-in Generative-Bed + Drone. v30-Menü (PLAY/SETUP).
-  USB-MIDI-Out via TinyUSB. Doku finalisieren.
+- **Step 12a** ✅ — Harmonic-Brain (Cell→Pitch). Ported aus den Webapp-
+  Harmonie-Funktionen: `SCALES` (6 Modi), `CHORD_FAMILIES` (über VIBE_FAMILY
+  erreichbar: add9/maj7/min11/sus2), `chordAtDegree` + `voiceCentered`
+  (Oktav-Shift sodass der Akkord-Mittelwert nahe MIDI 64 liegt). Neues Modul
+  `brain.{h,c}`: reine Integer-Theorie, kein Audio. `brain_cell_root(cell)`
+  liefert die Tonhöhe für einen Cell-Tap = tiefste Note des center-voiced
+  Akkords der Skalenstufe (exakt wie Webapp-`cellOn`). State `brain_set_key/
+  mode/vibe` (default C4 ionian warm/add9) für die 12b-Encoder-Bindings.
+  `main.c` ersetzt die Platzhalter-Pentatonik durch `brain_cell_root`.
+  Host-Tests `test/test_brain.c`: gegen handberechnete Referenzwerte (ionian I
+  add9 = [60 64 67 74], V = [55 59 62 69], aeolian-Moll-Terz, min11/sus2-
+  Familien), Pitch-Class-vs-Oktave-Verhalten von voiceCentered, alle 6 Modi ×
+  4 Vibes × 7 Stufen zentriert (Mean 58–70) + in MIDI-Range.
+- **Step 12b** — *offen, hardware-nah*: v30-Menü (PLAY/SETUP), USB-MIDI-Out
+  via TinyUSB, Encoder→Engine-Param-Bindings (DRIVE→reverb-drive, BRIGHT→
+  brightness, VOLUME→master, DISPLAY→Menü/Key/Mode), opt-in Generative-Bed
+  (PROGRESSIONS + DEGREE_TRANSITIONS-Markov) + Drone. Doku finalisieren. Diese
+  Teile brauchen On-Device-Hörtests + UX-Entscheidungen (Menü-Struktur, MIDI-
+  Mapping) und sind in der host-only-Umgebung weder voll testbar noch sinnvoll
+  ohne User-Input festlegbar.
 
 Nach Step 12 ist die alte MicroPython-Firmware obsolet — wird nach
 Sign-off entweder gelöscht oder als `firmware-mpy-legacy/` archiviert.

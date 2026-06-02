@@ -43,6 +43,7 @@ add_executable(field_ambience_native
     src/bass.c      # Step 8: famSubBass + famDeepBass (two-layer bass)
     src/reverb.c    # Step 11: famReverbMaster (Freeverb-style algorithmic)
     src/engine.c    # Step 11: mix-bus (pad+texture+bass → dry+send, reverb, clip)
+    src/brain.c     # Step 12a: harmonic brain (cell → scale/mode/family pitch)
 )
 
 target_include_directories(field_ambience_native PRIVATE
