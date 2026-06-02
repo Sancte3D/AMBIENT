@@ -4,7 +4,9 @@
 > lassen, sodass der Raspberry Pi Zero 2 W komplett aus dem Gerät rausfällt.
 > Eine UF2-Datei per BOOTSEL flashen, fertig.
 >
-> Status: **Step 1 done** (dieses Dokument + nackte C-Firmware-Hülle).
+> Status: **Steps 1–7 + 9 done** (Engine-Steps werden hörbarkeits-first
+> gebaut: 9 → 11 → 10 → 8 → 12, siehe unten). Du bist nach **Step 9** —
+> famPadCore ist die Live-Stimme.
 
 ---
 
@@ -91,7 +93,7 @@ umsteuern kannst. Keine Mega-Dumps.
   + 4 Sub-Steps pro Detent (identisch zur Python-Logik). Push-Switches
   per 3-of-N-Bounce-Filter. Lock-free Ring-Buffer für Events → kein I/O im
   Timer-Callback. OLED zeigt Position + Push-State pro Encoder.
-- **Step 5** ✅ — **Du bist hier. Erster Sound.** PIO0-SM0 mit dem
+- **Step 5** ✅ — **Erster Sound.** PIO0-SM0 mit dem
   pico-extras-`audio_i2s`-Programm (copy mit BSD-Attribution), DMA-
   Ping-Pong (2 × 256 Frames) in den PIO-TX-FIFO bei 44,1 kHz / 16-Bit-Stereo.
   Pins: BCK=GP0, LRCK=GP1, DIN=GP4 (die freigewordenen UART-/MISO-Pins).
@@ -99,7 +101,7 @@ umsteuern kannst. Keine Mega-Dumps.
   /MUTE+XSMT, alles während die I²S schon Stille pumpt). Continuous
   440-Hz-Sinus @ -20 dBFS als „it works". **Ab hier ist der Pi funktional
   redundant** — der Audio-Pfad geht Pico → DAC → Amp ohne Linux.
-- **Step 6** ✅ — **Du bist hier.** Schaltplan Pi-frei: `pi.kicad_sch` gelöscht,
+- **Step 6** ✅ — Schaltplan Pi-frei: `pi.kicad_sch` gelöscht,
   J2/R1/R_BCK/R_LRCK/R_DOUT raus (5 Bauteile, real 97→92), GP0/GP1/GP4 im
   Pico-Sheet auf I²S_BCK/LRCK/DOUT umverdrahtet, Root-Sheet brückt Pico-I²S →
   Audio-Sheet, kicad_pro-Sheetliste bereinigt. Analyzer: 6 VM-001-Blocker —
@@ -107,23 +109,49 @@ umsteuern kannst. Keine Mega-Dumps.
   wegen VBUS-Pin als 5V-Domain; real sind GP0/1/4 @ 3V3 → PCM5102A @ 3V3,
   kein Level-Shifter nötig). Warnings sogar von 19 → 16 gesunken (Pi-Nets weg).
   GUI-ERC (B3) bleibt die maßgebliche Instanz. **Erstes BOM-Schrumpfen.**
-- **Step 7** ✅ — **Du bist hier.** `dsp.{h,c}` (1024-Punkt-Sinus-LUT mit
+- **Step 7** ✅ — `dsp.{h,c}` (1024-Punkt-Sinus-LUT mit
   Interpolation + midi→Hz) als Basis für alle folgenden Steps. `voices.{h,c}`:
   8-stimmiger Voice-Pool, Sinus + klick-freie ASR-Hüllkurve (per-Sample-Rampen),
   Voice-Stealing nach leisester Stimme. `audio.c` bekommt einen pluggable
   Renderer (`audio_set_renderer`) statt hartem Test-Sinus. Cell-Tap → note_on,
   Release → note_off; Cell→Pitch vorerst C-Moll-Pentatonik (Platzhalter bis
   Harmonic Brain in Step 12). OLED zeigt aktive Stimmenzahl.
-- **Step 8** — `famSubBass` + `famDeepBass` (zwei Sinus-/Tri-Stimmen, LPF,
-  Lag). Eine pro Akkord-Wurzel.
-- **Step 9** — `famPadCore` (5-fach polyphon: 3 detuned Saws + Pulse-Crossfade
-  pro Stimme, Stereo-LPF mit ADSR + LFO + Brightness-Offset).
-- **Step 10** — `famTexture` (Brown + Pink Noise, BPF mit LFO-modulierter
-  Mitte, Lag-Smooth-Amp für Ducking).
+
+> **Reihenfolge-Entscheidung (2026-06-02):** Die Engine-Steps 8–12 werden
+> **nicht** in numerischer Reihenfolge gebaut, sondern **hörbarkeits-first**:
+> **9 → 11 → 10 → 8 → 12**. Grund: der Pad (Step 9) ersetzt den Platzhalter-
+> Sinus → größter hörbarer Sprung; Reverb (Step 11) gibt ihm den Raum. Der
+> Bass (Step 8) kommt zuletzt, weil der 380-Hz-Onboard-Treiber (siehe SPEC §8
+> Acoustic-Refactor) famSubBass/famDeepBass ohnehin kaum abstrahlt — das ist
+> primär ein Line-Out-Layer und onboard nur über den Reverb-Send hörbar, der
+> erst ab Step 11 existiert. Port-Vorlage: `field_ambience_webapp.html`
+> (imperativer Web-Audio-DSP, konkrete Hz/Q/Gain-Werte), `.scd` als Cross-Check.
+
+- **Step 9** ✅ — `famPadCore`. Ported aus `_makePadVoice` der Webapp.
+  Neue DSP-Primitive in `dsp.{h,c}`: polyBLEP-Saw/Square (`dsp_poly_saw/square`,
+  anti-aliased), TPT-State-Variable-Filter (`dsp_svf_*`, Cytomic-Form — stabil
+  unter laufender Cutoff-Modulation, kein Zipper) und ein One-Pole-Smoother
+  (`dsp_smooth_coef`). Neues Modul `pad.{h,c}`: pro Stimme 2 verstimmte Seiten
+  × (3 Saw + 2 Square), je eigener resonanter LP, Cutoff von LFO + Filter-ADSR
+  + Brightness-Offset geschwenkt (Coeff-Update auf Control-Rate SR/16), Haas-
+  Mikrodelay (8/14 ms) + Gegen-Pan → echtes Stereo, eine Bloom/Decay-Amp-
+  Hülle. Drop-in zum Step-7-Voice-API: `main.c` registriert `pad_render` statt
+  `voices_render`, Cell-Tap → `pad_note_on/off`. Host-Tests (`test/test_pad.c`):
+  polyBLEP bounded, SVF Pass/Stop (−41 dB @ 8×Cutoff), Bloom click-frei, echte
+  L≠R-Dekorrelation, Drain auf Stille, Pool-Bounded + Soft-Clip unter Volllast.
+  `voices.c` bleibt kompiliert + getestet (Step-7-Artefakt), aber nicht mehr
+  live. Cell→Pitch weiter Platzhalter-Pentatonik bis Step 12.
+  *Hinweis: host-getestet; UF2-Build/On-Device-Audio braucht Pico-SDK-Hardware.*
 - **Step 11** — `famReverbMaster` (algorithmischer Reverb statt Convolution —
   8 Feedback-Combs + 4 Allpass à la Freeverb/Schroeder, pre-Reverb tanh-Drive,
-  LeakDC + Limiter). v0.8-Reverb-Reconciliation (computeReverb mit
-  spaceTailMul/moodSizeMul) übernehmen.
+  LeakDC + Limiter). Führt den **engine_render Mix-Bus** ein (Pad → Dry +
+  Reverb-Send → Master); Pad wird dann auf Float-Out refactored. v0.8-Reverb-
+  Reconciliation (computeReverb mit spaceTailMul/moodSizeMul) übernehmen.
+- **Step 10** — `famTexture` (Brown + Pink Noise, BPF mit LFO-modulierter
+  Mitte, Lag-Smooth-Amp für Ducking). Nutzt SVF-BPF + Noise-Gen.
+- **Step 8** — `famSubBass` + `famDeepBass` (zwei Sinus-/Tri-Stimmen, LPF,
+  tanh-Saturation, Lag). Eine pro Akkord-Wurzel. Onboard primär via Reverb-Send
+  hörbar (380-Hz-Treiber), voll erst über Line-Out.
 - **Step 12** — Harmonic-Brain-Port: Skalen, Akkord-Familien, Voice-Leading,
   Markov-Übergänge, opt-in Generative-Bed + Drone. v30-Menü (PLAY/SETUP).
   USB-MIDI-Out via TinyUSB. Doku finalisieren.

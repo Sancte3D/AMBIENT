@@ -35,8 +35,10 @@ add_executable(field_ambience_native
     src/mcp23017.c
     src/encoders.c
     src/audio.c
-    src/dsp.c       # Step 7: sine LUT + math helpers
-    src/voices.c    # Step 7: polyphonic voice pool
+    src/dsp.c       # Step 7/9: sine LUT, midi→Hz, polyBLEP osc, SVF, smoothing
+    src/voices.c    # Step 7: sine voice pool (superseded as the live renderer
+                    #         by pad.c in Step 9; kept + unit-tested for now)
+    src/pad.c       # Step 9: famPadCore — the live cell-tap renderer
 )
 
 target_include_directories(field_ambience_native PRIVATE
