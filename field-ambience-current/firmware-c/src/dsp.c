@@ -113,3 +113,12 @@ float dsp_svf_bp(dsp_svf_t *s, float x) {
     /* v1 is the bandpass with peak gain Q; ·k (=1/Q) normalises to ≈unity. */
     return s->k * v1;
 }
+
+float dsp_svf_hp(dsp_svf_t *s, float x) {
+    float v3 = x - s->ic2eq;
+    float v1 = s->a1 * s->ic1eq + s->a2 * v3;
+    float v2 = s->ic2eq + s->a2 * s->ic1eq + s->a3 * v3;
+    s->ic1eq = 2.0f * v1 - s->ic1eq;
+    s->ic2eq = 2.0f * v2 - s->ic2eq;
+    return x - s->k * v1 - v2;   /* highpass = in − k·band − low */
+}

@@ -84,4 +84,17 @@ float dsp_svf_lp(dsp_svf_t *s, float x);
  * its own state, so one instance produces one output type. */
 float dsp_svf_bp(dsp_svf_t *s, float x);
 
+/* Process one sample, returning the highpass output. As with bp, use a
+ * dedicated instance (one output type per instance). */
+float dsp_svf_hp(dsp_svf_t *s, float x);
+
+/* Naive triangle from a phase in turns [0,1): +1 at 0, −1 at 0.5. Harmonics
+ * fall off as 1/n² so aliasing is negligible at the low frequencies the bass
+ * uses — no band-limiting needed. */
+static inline float dsp_tri(float phase_turns) {
+    float p = phase_turns - (float)(int)phase_turns;
+    if (p < 0.0f) p += 1.0f;
+    return 4.0f * (p < 0.5f ? (0.25f - p) : (p - 0.75f)) ;  /* +1→−1→+1 */
+}
+
 #endif

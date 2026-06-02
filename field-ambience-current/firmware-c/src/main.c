@@ -9,10 +9,11 @@
  *   - Step 7: polyphonic voice pool (sine + ASR per cell tap).
  *   - Step 9: famPadCore (detuned-saw pad) replaces the placeholder sine.
  *   - Step 11: famReverbMaster + engine mix-bus (pad → dry + reverb send).
- *   - Step 10 (here): famTexture noise bed under everything. The engine now
- *     mixes pad + texture into dry + reverb-send. A quiet bed (0.20) blooms
- *     in after the un-mute sequence so the device idles as ambience.
- *     Cell→pitch is still the placeholder C-minor-pentatonic until the
+ *   - Step 10: famTexture noise bed under everything (quiet idle ambience).
+ *   - Step 8 (here): famSubBass + famDeepBass. The engine tracks the lowest
+ *     held cell and drives a two-layer bass under it (sub 2 octaves down,
+ *     deep 1 octave down, legato portamento). All four audio layers are now
+ *     live. Cell→pitch is still the placeholder C-minor-pentatonic until the
  *     harmonic brain lands (Step 12).
  *
  * Engine-Port order is 9→11→10→8→12 (hörbarkeits-first, see
@@ -42,7 +43,7 @@ static const uint8_t CELL_MIDI[5] = { 48, 51, 53, 55, 58 };
 
 static void draw_banner_static(void) {
     oled_text( 72,  0, "FIELD AMBIENCE", 0x0F);
-    oled_text( 88,  8, "V0.9 STEP 10",   0x0A);
+    oled_text( 88,  8, "V0.9 STEP 8",    0x0A);
     oled_text(  0, 16, "TAP A CELL",     0x07);
 }
 
@@ -145,7 +146,7 @@ int main(void) {
      * finished. It starts at 0 and glides up over ~2 s, so the power-up stays
      * pop-free while the device settles into a quiet ambient bed at idle. */
     engine_set_texture(0.20f);
-    printf("audio: I2S pump live, engine ready (pad + reverb + texture) — tap a cell\n");
+    printf("audio: I2S pump live, engine ready (pad+reverb+texture+bass) — tap a cell\n");
 
     uint32_t hb_count = 0;
     absolute_time_t next_blink_at = make_timeout_time_ms(500);

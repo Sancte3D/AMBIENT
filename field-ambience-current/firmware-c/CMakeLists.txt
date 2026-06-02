@@ -40,8 +40,9 @@ add_executable(field_ambience_native
                     #         in Step 9; kept + unit-tested for now)
     src/pad.c       # Step 9: famPadCore voice pool
     src/texture.c   # Step 10: famTexture noise bed
+    src/bass.c      # Step 8: famSubBass + famDeepBass (two-layer bass)
     src/reverb.c    # Step 11: famReverbMaster (Freeverb-style algorithmic)
-    src/engine.c    # Step 11: mix-bus (pad + texture → dry+send, reverb, clip)
+    src/engine.c    # Step 11: mix-bus (pad+texture+bass → dry+send, reverb, clip)
 )
 
 target_include_directories(field_ambience_native PRIVATE

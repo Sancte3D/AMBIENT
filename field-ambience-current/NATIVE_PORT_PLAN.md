@@ -4,11 +4,12 @@
 > lassen, sodass der Raspberry Pi Zero 2 W komplett aus dem Gerät rausfällt.
 > Eine UF2-Datei per BOOTSEL flashen, fertig.
 >
-> Status: **Steps 1–7 + 9 + 11 + 10 done** (Engine-Steps werden hörbarkeits-
-> first gebaut: 9 → 11 → 10 → 8 → 12, siehe unten). Du bist nach **Step 10** —
-> famPadCore + famReverbMaster + famTexture laufen im Engine-Mix-Bus. Cell-Tap
-> blooms zu einem Pad-Voice mit langer Reverb-Fahne über einem Noise-Bed.
-> Offen: Step 8 (Bass) und Step 12 (Brain + MIDI).
+> Status: **Steps 1–11 done** (Engine-Steps hörbarkeits-first gebaut:
+> 9 → 11 → 10 → 8 → 12). Du bist nach **Step 8** — alle vier Audio-Schichten
+> (famPadCore + famReverbMaster + famTexture + famSubBass/famDeepBass) laufen
+> im Engine-Mix-Bus. Cell-Tap blooms zu Pad + Reverb-Fahne über Noise-Bed,
+> mit zwei-Schicht-Bass an der tiefsten gehaltenen Note. **Nur noch Step 12
+> offen** (Harmonic Brain + v30-Menü + USB-MIDI).
 
 ---
 
@@ -193,9 +194,31 @@ umsteuern kannst. Keine Mega-Dumps.
   Dekorrelation (avg|L-R|≈0.006), über 30 s bounded (kein DC-Runaway).
   *Hinweis: host-getestet; UF2-Build + On-Device-Hörtest brauchen Pico-SDK-
   Hardware.*
-- **Step 8** — `famSubBass` + `famDeepBass` (zwei Sinus-/Tri-Stimmen, LPF,
-  tanh-Saturation, Lag). Eine pro Akkord-Wurzel. Onboard primär via Reverb-Send
-  hörbar (380-Hz-Treiber), voll erst über Line-Out.
+- **Step 8** ✅ — `famSubBass` + `famDeepBass`. Ported aus `_makeSubBass` /
+  `_makeDeepBass`. Zwei mono Bass-Voices an der Akkord-Wurzel:
+  **Sub** = Sinus + Tri\@2× (0.08) → LP 90 Hz, 3-s-Bloom, 0.04-Hz-Breath-LFO
+  auf der Amplitude, 2 Oktaven unter der Wurzel, Reverb-Send 0.03.
+  **Deep** = Sinus + Tri\@2× (0.06) → tanh-Saturation → HP 50 → LP 350 (Q 1.8),
+  2.5-s-Bloom, 1 Oktave unter der Wurzel, Reverb-Send 0.08.
+  Neue DSP-Primitive: **`dsp_svf_hp`** (Highpass-Ausgang des Cytomic-SVF) +
+  **`dsp_tri`** (naiver Dreieck, Harmonische ~1/n² → kein Aliasing nötig bei
+  Bass-Frequenzen). Neues Modul `bass.{h,c}`: beide Voices folgen der
+  **tiefsten gehaltenen Note** — Engine trackt aktive Cell-Frequenzen
+  (`active_freq[16]`, `lowest_held()`), `bass_note(lowest)` glided die Tonhöhe
+  legato (Portamento) solange gehalten und bloomt nur aus dem Idle bei der
+  ersten Note; `bass_release` bei allen-Noten-los. Mono (nicht-direktional →
+  gleich auf L/R). `engine_set_bass_depth` (default 0.5 → sub-amp 0.13,
+  deep-amp 0.10). Per-Layer-Sends intern im Modul (0.03/0.08, anders als der
+  globale Pad-Send). Host-Tests `test/test_bass.c`: dsp_tri-Form + Periodizität,
+  HP-Shape (pass 500 Hz = unity, −25 dB @ 12 Hz), Idle-silent, Bloom + Mono,
+  **Legato-Glide ohne Re-Trigger** bei Wurzelwechsel, Drain auf Stille (exp-
+  Tail bis −60-dB-Idle-Cutoff ≈ 7 s), über 20 s bounded.
+  **Onboard-Realität** (380-Hz-Treiber, SPEC §8 r14): famSubBass (LP 90) liegt
+  komplett unter dem Treiber, untere Hälfte von famDeepBass auch — onboard
+  primär über den Reverb-Send (Wärme der Fahne) + Line-Out hörbar. Layer
+  trägt trotzdem zum Gesamtmix + externem Monitoring bei.
+  *Hinweis: host-getestet; UF2-Build + On-Device-Hörtest brauchen Pico-SDK-
+  Hardware.*
 - **Step 12** — Harmonic-Brain-Port: Skalen, Akkord-Familien, Voice-Leading,
   Markov-Übergänge, opt-in Generative-Bed + Drone. v30-Menü (PLAY/SETUP).
   USB-MIDI-Out via TinyUSB. Doku finalisieren.
