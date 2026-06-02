@@ -29,12 +29,21 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/pad_test"
 "$tmp/pad_test"
 
-# Step 11: famReverbMaster + engine mix-bus
+# Step 10: famTexture + dsp_svf bandpass
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_texture.c" \
+    "$src/src/dsp.c" \
+    "$src/src/texture.c" \
+    -lm -o "$tmp/tex_test"
+"$tmp/tex_test"
+
+# Step 11: famReverbMaster + engine mix-bus (engine now also pulls in texture)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_reverb_engine.c" \
     "$src/src/dsp.c" \
     "$src/src/pad.c" \
     "$src/src/reverb.c" \
+    "$src/src/texture.c" \
     "$src/src/engine.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"

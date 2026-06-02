@@ -78,18 +78,18 @@ float dsp_smooth_coef(float tau_s) {
 void dsp_svf_reset(dsp_svf_t *s) {
     s->ic1eq = s->ic2eq = 0.0f;
     s->a1 = s->a2 = s->a3 = 0.0f;
+    s->k = 1.0f;
 }
 
 void dsp_svf_set(dsp_svf_t *s, float fc_hz, float q) {
     /* Keep cutoff inside (≈0, Nyquist); tanf blows up approaching Nyquist. */
-    const float nyq = 0.5f * (float)DSP_SAMPLE_RATE_HZ;
     if (fc_hz < 10.0f)          fc_hz = 10.0f;
     if (fc_hz > 0.45f * (float)DSP_SAMPLE_RATE_HZ) fc_hz = 0.45f * (float)DSP_SAMPLE_RATE_HZ;
     if (q < 0.20f) q = 0.20f;   /* below this the response is uselessly soft */
-    (void)nyq;
 
     float g = tanf(DSP_TWO_PI * 0.5f * fc_hz / (float)DSP_SAMPLE_RATE_HZ);
     float k = 1.0f / q;
+    s->k  = k;
     s->a1 = 1.0f / (1.0f + g * (g + k));
     s->a2 = g * s->a1;
     s->a3 = g * s->a2;
@@ -102,4 +102,14 @@ float dsp_svf_lp(dsp_svf_t *s, float x) {
     s->ic1eq = 2.0f * v1 - s->ic1eq;
     s->ic2eq = 2.0f * v2 - s->ic2eq;
     return v2;                  /* lowpass output */
+}
+
+float dsp_svf_bp(dsp_svf_t *s, float x) {
+    float v3 = x - s->ic2eq;
+    float v1 = s->a1 * s->ic1eq + s->a2 * v3;
+    float v2 = s->ic2eq + s->a2 * s->ic1eq + s->a3 * v3;
+    s->ic1eq = 2.0f * v1 - s->ic1eq;
+    s->ic2eq = 2.0f * v2 - s->ic2eq;
+    /* v1 is the bandpass with peak gain Q; ·k (=1/Q) normalises to ≈unity. */
+    return s->k * v1;
 }

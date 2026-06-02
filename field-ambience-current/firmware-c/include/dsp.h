@@ -64,6 +64,7 @@ float dsp_smooth_coef(float tau_s);
 typedef struct {
     float ic1eq, ic2eq;     /* integrator state */
     float a1, a2, a3;       /* derived coefficients */
+    float k;                /* 1/Q — kept so the bandpass output can normalise */
 } dsp_svf_t;
 
 /* Reset filter state to silence. */
@@ -76,5 +77,11 @@ void dsp_svf_set(dsp_svf_t *s, float fc_hz, float q);
 
 /* Process one sample, returning the lowpass output. */
 float dsp_svf_lp(dsp_svf_t *s, float x);
+
+/* Process one sample, returning the bandpass output, normalised to ≈unity
+ * peak gain at the centre frequency (the Web-Audio bandpass convention).
+ * Use a DIFFERENT filter instance than dsp_svf_lp — each instance advances
+ * its own state, so one instance produces one output type. */
+float dsp_svf_bp(dsp_svf_t *s, float x);
 
 #endif

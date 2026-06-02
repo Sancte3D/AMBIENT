@@ -13,10 +13,15 @@
 #include "engine.h"
 #include "pad.h"
 #include "reverb.h"
+#include "texture.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
 #include <string.h>
+
+/* Per-layer reverb sends (match the webapp's per-voice verbSend values).
+ * Pad uses the user-tunable engine_set_send; texture has its own fixed send. */
+#define TEXTURE_SEND  0.55f
 
 #define BLOCK     AUDIO_BUFFER_FRAMES
 
@@ -36,6 +41,7 @@ static const float SMOOTH_COEF = 0.05f;       /* per-block, ~120 ms time-const *
 void engine_init(void) {
     pad_init();
     reverb_init();
+    texture_init();
 
     /* Defaults per the webapp's mid-mode at space≈0.5, mood≈0.5. */
     reverb_size = 0.7f;
@@ -45,6 +51,10 @@ void engine_init(void) {
 
     send_amount_cur = send_amount_tgt = 0.45f;
     wet_amp_cur     = wet_amp_tgt     = 0.40f;
+
+    /* Texture bed boots at 0 (silent power-up); raise via engine_set_texture
+     * or the brain in Step 12. */
+    texture_set_amount(0.0f);
 }
 
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
@@ -65,6 +75,7 @@ void engine_set_reverb_drive(float v) { reverb_set_drive(dsp_clampf(v, 0.0f, 1.0
 void engine_set_wet_amp(float v)      { wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_brightness(float hz)  { pad_set_brightness(hz); }
+void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 
 void engine_render(int16_t *buf, int frames) {
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
@@ -81,6 +92,7 @@ void engine_render(int16_t *buf, int frames) {
     memset(sendR, 0, sizeof(float) * frames);
 
     pad_render_mix(dryL, dryR, sendL, sendR, frames, send_amount_cur);
+    texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
 
     /* Reverb writes (does not add) wet from send. */
     reverb_render(sendL, sendR, wetL, wetR, frames);

@@ -36,8 +36,9 @@ void engine_set_reverb_size(float size_0_1);
 void engine_set_reverb_damp(float damp_0_1);
 void engine_set_reverb_drive(float drive_0_1);
 void engine_set_wet_amp(float wet_0_1);
-void engine_set_send(float send_0_1);
+void engine_set_send(float send_0_1);          /* pad reverb send */
 void engine_set_brightness(float hz);          /* pass-through to pad */
+void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */

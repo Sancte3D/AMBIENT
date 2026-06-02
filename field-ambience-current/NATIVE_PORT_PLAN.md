@@ -4,10 +4,11 @@
 > lassen, sodass der Raspberry Pi Zero 2 W komplett aus dem Gerät rausfällt.
 > Eine UF2-Datei per BOOTSEL flashen, fertig.
 >
-> Status: **Steps 1–7 + 9 + 11 done** (Engine-Steps werden hörbarkeits-first
-> gebaut: 9 → 11 → 10 → 8 → 12, siehe unten). Du bist nach **Step 11** —
-> famPadCore + famReverbMaster + Engine-Mix-Bus laufen. Cell-Tap blooms zu
-> einem Pad-Voice mit langer Reverb-Fahne.
+> Status: **Steps 1–7 + 9 + 11 + 10 done** (Engine-Steps werden hörbarkeits-
+> first gebaut: 9 → 11 → 10 → 8 → 12, siehe unten). Du bist nach **Step 10** —
+> famPadCore + famReverbMaster + famTexture laufen im Engine-Mix-Bus. Cell-Tap
+> blooms zu einem Pad-Voice mit langer Reverb-Fahne über einem Noise-Bed.
+> Offen: Step 8 (Bass) und Step 12 (Brain + MIDI).
 
 ---
 
@@ -173,8 +174,25 @@ umsteuern kannst. Keine Mega-Dumps.
   size+wet kommt zusammen mit Encoder-Bindings/Brain in Step 12.
   *Hinweis: host-getestet; UF2-Build + On-Device-Hörtest brauchen Pico-SDK-
   Hardware.*
-- **Step 10** — `famTexture` (Brown + Pink Noise, BPF mit LFO-modulierter
-  Mitte, Lag-Smooth-Amp für Ducking). Nutzt SVF-BPF + Noise-Gen.
+- **Step 10** ✅ — `famTexture`. Ported aus `ensureTexture`. Dauer-Bed (kein
+  per-Note): pro Kanal Brown-Noise (leaky-integrator-White, identisch zum
+  Webapp-`_buildNoiseBuffer`) → **Rumble** (LP 220 Hz, gain 0.35) + **Breath**
+  (BP 600 Hz Q1.6, Mitte von 0.052-Hz-Sinus ±260 Hz gesweept, Amp von 0.04-Hz-
+  Sinus pulsiert 0.5±0.22) → Mix → Warm-LP 4500 Hz → langsamer Amp → dry +
+  Reverb-Send (0.55). Neue DSP-Primitive: **`dsp_svf_bp`** (Bandpass-Ausgang
+  des Cytomic-SVF, k-normalisiert auf ≈unity-Peak — k jetzt im svf-Struct).
+  Neues Modul `texture.{h,c}`: `texture_render_mix(dry, send, …)` ADDed in die
+  Engine-Buses, Control-Rate-LFOs (SR/16), Early-Out bei amount≈0. **Stereo-
+  Verbesserung ggü. dem mono Webapp-Bed**: L/R laufen unabhängige Noise-
+  Streams (geteilte LFOs/Coeffs) → breites dekorreliertes Bett.
+  Engine: `engine_set_texture(amount)`, eigener Texture-Send 0.55 (vs Pad 0.45).
+  **Boot bei amount 0** (silent power-up, SPEC §8); `main.c` blendet nach der
+  Un-Mute-Sequenz 0.20 ein → sanfter ~2-s-Glide, pop-frei, Gerät idlet als
+  Ambience. Host-Tests `test/test_texture.c`: BP-Shape (centre 0.707 = unity,
+  −15 dB Oktave drunter, −22 dB drüber), silent-at-0, Bloom + Stereo-
+  Dekorrelation (avg|L-R|≈0.006), über 30 s bounded (kein DC-Runaway).
+  *Hinweis: host-getestet; UF2-Build + On-Device-Hörtest brauchen Pico-SDK-
+  Hardware.*
 - **Step 8** — `famSubBass` + `famDeepBass` (zwei Sinus-/Tri-Stimmen, LPF,
   tanh-Saturation, Lag). Eine pro Akkord-Wurzel. Onboard primär via Reverb-Send
   hörbar (380-Hz-Treiber), voll erst über Line-Out.

@@ -8,9 +8,10 @@
  *   - Step 5: I²S DMA + 440 Hz test sine, SPEC §8 pop-suppression
  *   - Step 7: polyphonic voice pool (sine + ASR per cell tap).
  *   - Step 9: famPadCore (detuned-saw pad) replaces the placeholder sine.
- *   - Step 11 (here): famReverbMaster + engine mix-bus. The pad now feeds a
- *     dry bus AND a reverb send; the engine's Freeverb-style algorithmic
- *     reverb adds the long, dark tail that the Sound Constitution requires.
+ *   - Step 11: famReverbMaster + engine mix-bus (pad → dry + reverb send).
+ *   - Step 10 (here): famTexture noise bed under everything. The engine now
+ *     mixes pad + texture into dry + reverb-send. A quiet bed (0.20) blooms
+ *     in after the un-mute sequence so the device idles as ambience.
  *     Cell→pitch is still the placeholder C-minor-pentatonic until the
  *     harmonic brain lands (Step 12).
  *
@@ -41,7 +42,7 @@ static const uint8_t CELL_MIDI[5] = { 48, 51, 53, 55, 58 };
 
 static void draw_banner_static(void) {
     oled_text( 72,  0, "FIELD AMBIENCE", 0x0F);
-    oled_text( 88,  8, "V0.9 STEP 11",   0x0A);
+    oled_text( 88,  8, "V0.9 STEP 10",   0x0A);
     oled_text(  0, 16, "TAP A CELL",     0x07);
 }
 
@@ -140,7 +141,11 @@ int main(void) {
         printf("WARN: audio start without MCP — PCM XSMT cannot be released\n");
     }
     audio_init();
-    printf("audio: I2S pump live, engine ready (pad + reverb) — tap a cell\n");
+    /* Raise the famTexture bed only AFTER the SPEC §8 un-mute sequence has
+     * finished. It starts at 0 and glides up over ~2 s, so the power-up stays
+     * pop-free while the device settles into a quiet ambient bed at idle. */
+    engine_set_texture(0.20f);
+    printf("audio: I2S pump live, engine ready (pad + reverb + texture) — tap a cell\n");
 
     uint32_t hb_count = 0;
     absolute_time_t next_blink_at = make_timeout_time_ms(500);
