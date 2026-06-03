@@ -284,6 +284,42 @@ in eine andere Anordnung bringen**. **OFFENER PUNKT r9-B5 (Mechanik)**.
 
 ---
 
+## 7c. Audio + MIDI Klinkenbuchsen J8, J9 (r15)
+
+Zwei 3,5-mm-TRS-Klinkenbuchsen (gleicher MPN: **PJ-320A / LCSC C431535**) an
+der **linken Seitenkante** des Gehäuses (X=0, „Anschluss-Seite"). Standard-
+Synth-Optik: zwei Klinken nebeneinander mit Beschriftung „PHONES" und „MIDI".
+
+| Buchse | X (Mitte) | Y (Edge) | Kante | Funktion |
+|---|---|---|---|---|
+| J8 (Line-Out / Kopfhörer) | 0 mm | 90 mm | Left-Edge | Stereo-Audio aus PCM5102A |
+| J9 (MIDI Out, TRS Type A) | 0 mm | 75 mm | Left-Edge | UART → MIDI 1.0 / MMA-Spec |
+
+15 mm Pitch zwischen den Buchsen (PJ-320A Body-Breite ~7 mm + Bezel-Margin)
+— Standard-Synth-Optik, hat Platz für 3,5-mm-Stecker mit normalem Tüllen-
+Durchmesser nebeneinander.
+
+**Edge-Cutouts**: 6 mm Durchmesser pro Buchse durch das Gehäuse (PC/ABS-
+Bohrung). Buchsen-Body sitzt innen, Klinken-Loch fluchtet mit Gehäuse-Außen.
+
+**Y-Position 75-90 mm**: hinter dem OLED-Display (das endet bei Y=126.75
+gemäß §3) und über der Battery-Zone (siehe §7a) — keine Konflikte mit
+Cell-Switches (Y=75 mit Cap-Body bis 84, aber X=10..310, also rechts der
+Klinken-Position X=0).
+
+**Falls Y zu nah am OLED**: Alternative Y=20–35 (unter den Speakern Y=10..50)
+ginge auch, dann sitzen Klinken ganz unten links. Layout-Entscheidung im
+CAD-Modell.
+
+**Footprint**: PJ-320A ist THT, durchgesteckt mit 5 Pins (Tip + Ring + Sleeve
++ 2× Switch-Kontakte für Insertion-Detect bei J8). J9 nutzt die Switch-
+Kontakte nicht — Pads bleiben unbelegt.
+
+**Mechanische Höhe**: PJ-320A ist 13.5 mm hoch (Stecker eingeführt + Body).
+Innenraum-Zone „Side-Edge" ≥ 14 mm Z-Clearance → OK gegen 40-mm-Gehäuse.
+
+---
+
 ## 8. Pi Zero 2 W (auf Unterseite, durchgesteckter Header) — OBSOLET v0.9 (Pi-frei)
 
 Pi liegt unter dem PCB, GPIO-Header J2 durch das PCB gesteckt. Pi-Modul

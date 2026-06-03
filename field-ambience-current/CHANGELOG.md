@@ -4,9 +4,69 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r14** (Acoustic-v2: Sealed + Top-Firing, Passivradiator-Plan
-verworfen, 4Ω→8Ω Impedanz-Fix). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt
-der maßgebliche Audio-Stand.
+Aktuelle Rev: **v0.6.3-r15** (MIDI Out via TRS Type A 3.5-mm-Klinke statt
+USB-MIDI/TinyUSB; VOL_SW wandert auf MCP für freien GPIO). Generator und
+SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand.
+
+---
+
+## v0.6.3-r15 (2026-06-03) — MIDI Out: TRS Type A statt USB-MIDI
+
+**User-Direktive**: „usb midi out soll nicht tiny usb sein sondern klassisch
+wie so ein 3,5mm anschluss. das geht doch inzwischen…" — Bestätigung: ja,
+**MMA TRS Type A** ist seit 2018 der offizielle Standard für 3,5-mm-MIDI-
+Klinke (Korg, Make Noise, Novation, neuere Rolands), und der Hardware-
+Aufwand ist *kleiner* als USB-MIDI: eine Klinke, zwei Widerstände, ein
+freier UART-Pin. Kein TinyUSB-Stack, kein 5-V-Buffer.
+
+**Frage „brauchen wir auch MIDI IN?" → NEIN, bewusste Entscheidung**:
+- Gerät ist um die 5 Cells als primäres Interface gebaut. 1:1-MIDI-Note-
+  zuordnung („Note 60 = Cell 1?") würde den Harmonic Brain aushebeln.
+- MIDI-Clock-Sync wäre die einzige technisch sinnvolle Anwendung — aber
+  Generate ist absichtlich langsam-ambient, Beat-Lock wäre musikalisch falsch.
+- MIDI-OUT-Use-Case dagegen stark: das Gerät als „**denkender Controller**" —
+  5 Cells spielen → Harmonic Brain übersetzt → echte Akkord-Noten auf MIDI
+  → externer Synth/DAW. Passt zur Geräte-Identität.
+
+**Hardware-Delta**:
+- **+ 1× PJ-320A** (J9, 3.5-mm-TRS-Klinke — **gleicher MPN wie J8 Line-Out**
+  → kein neues Sourcing, gleiches Footprint, gleiches Mechanik-Profil)
+- **+ 2× 220 Ω 0603** (R_MIDI_TX, R_MIDI_REF — MIDI-Spec-Source-Impedanz)
+- **− USB-MIDI-Komponenten**: nichts. War nur Firmware-Stack (TinyUSB).
+  **Netto BOM-Aufwand: ~0,40 € + 2 Cent.**
+
+**Schaltung** (siehe SPEC §8 r15):
+```
+   Pico GP21 ─[R_MIDI_TX 220Ω]──► TRS Tip   (Daten, vom PIO-UART)
+   +3V3      ─[R_MIDI_REF 220Ω]──► TRS Ring (Strom-Referenz)
+   GND                          ──► TRS Sleeve (Schirm/Masse)
+```
+Pegel 3,3 V direkt vom Pico — **MMA-Spec-Update CA-033 (2020) erlaubt
+3,3-V-Treiber** explizit. Kein Level-Shifter nötig. Industrie-Status quo.
+
+**GPIO-Reallocation**: r15 braucht **einen** freien Pico-GPIO für MIDI_TX.
+Alle 26 Pico-GPIOs sind aktuell allokiert. Sauberste Lösung:
+- **VOL_SW (Encoder 4 Push) wandert von Pico GP21 → MCP23017 GPB5**
+- Encoder-Drehen (GP19/GP20) bleibt direkt am Pico (low-latency-IRQ)
+- Encoder-Drücken ist Mensch-Buttondruck (>50 ms); MCP-IRQ-Latenz <5 ms
+  → musikalisch ununterscheidbar vom Direktanschluss
+
+MCP23017 hat 4 freie Pins (GPB5/6/7 + GPA7 als Reserve war schon r12 belegt
+für USB_VBUS_SENSE) → GPB5 nimmt VOL_SW, GPB6/7 bleiben weiter Reserve.
+
+**Firmware (kommt mit Step 12b)**: PIO-State-Machine auf PIO1 oder PIO2
+(PIO0 macht I²S), 31250 Baud 8N1. Sendet die Akkord-Töne, die der Harmonic
+Brain pro Cell-Tap berechnet, als MIDI Note-On/Off mit Velocity-Mapping aus
+der Cell-Press-Stärke. Kein TinyUSB-Code, keine USB-MIDI-Descriptors.
+
+**Files**: SPEC §5 GPIO-Tabelle (GP21 → MIDI_TX, Note dass VOL_SW jetzt
+MCP-seitig), §7 MCP-Tabelle (neu GPB5 = VOL_SW), §8 NEU MIDI-Out-Sektion
+(volle Schaltung + Begründung kein-IN); mechanical_coordinates.md NEU §7c
+(J8+J9 Klinken-Positionen Left-Edge X=0, Y=75/90, gleicher MPN); NATIVE_PORT_PLAN
+Step 12b (TinyUSB raus, PIO-UART TRS rein); CHANGELOG (dieser Eintrag).
+**Schematic/Generator/BOM-Updates folgen** zusammen mit Step-12b-Code im
+nächsten Sprint — r15 ist erstmal Design-Doku-Commit (PCB noch nicht
+bestellt, also der richtige Zeitpunkt).
 
 ---
 

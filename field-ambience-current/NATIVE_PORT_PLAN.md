@@ -234,13 +234,23 @@ umsteuern kannst. Keine Mega-Dumps.
   add9 = [60 64 67 74], V = [55 59 62 69], aeolian-Moll-Terz, min11/sus2-
   Familien), Pitch-Class-vs-Oktave-Verhalten von voiceCentered, alle 6 Modi ×
   4 Vibes × 7 Stufen zentriert (Mean 58–70) + in MIDI-Range.
-- **Step 12b** — *offen, hardware-nah*: v30-Menü (PLAY/SETUP), USB-MIDI-Out
-  via TinyUSB, Encoder→Engine-Param-Bindings (DRIVE→reverb-drive, BRIGHT→
-  brightness, VOLUME→master, DISPLAY→Menü/Key/Mode), opt-in Generative-Bed
-  (PROGRESSIONS + DEGREE_TRANSITIONS-Markov) + Drone. Doku finalisieren. Diese
-  Teile brauchen On-Device-Hörtests + UX-Entscheidungen (Menü-Struktur, MIDI-
-  Mapping) und sind in der host-only-Umgebung weder voll testbar noch sinnvoll
-  ohne User-Input festlegbar.
+- **Step 12b** — *offen, hardware-nah*: v30-Menü (PLAY/SETUP), **MIDI Out
+  via TRS Type A (3.5-mm-Klinke)** auf PIO-UART (r15-Entscheidung — *kein*
+  USB-MIDI/TinyUSB), Encoder→Engine-Param-Bindings (DRIVE→reverb-drive,
+  BRIGHT→brightness, VOLUME→master, DISPLAY→Menü/Key/Mode), opt-in
+  Generative-Bed (PROGRESSIONS + DEGREE_TRANSITIONS-Markov) + Drone. Doku
+  finalisieren. Diese Teile brauchen On-Device-Hörtests + UX-Entscheidungen
+  (Menü-Struktur, MIDI-Mapping) und sind in der host-only-Umgebung weder
+  voll testbar noch sinnvoll ohne User-Input festlegbar.
+
+  **MIDI-Architektur (r15, 2026-06)**: PIO-State-Machine auf PIO1/PIO2
+  (PIO0 macht I²S), 31250 Baud 8N1, sendet auf GP21 → 220 Ω → TRS-Tip;
+  +3V3 → 220 Ω → TRS-Ring; GND → Sleeve. Pegel 3,3 V, MMA-Spec-Update
+  CA-033 (2020) explizit erlaubt. Kein Optokoppler nötig (nur am IN; und
+  MIDI IN kommt nicht — siehe SPEC §8 r15-Begründung).
+  Note-On/Off-Builder mit Channel + Velocity-Mapping; sendet die Akkord-
+  Töne, die der Harmonic Brain pro Cell-Tap erzeugt → Gerät wird zum
+  „denkenden Controller" für externe Synths/DAWs.
 
   **Design-Regel für Live-Parameter-Wechsel (2026-06, vom User festgelegt):**
   „Der Sound darf nicht konkurrieren." → Klarer Schnitt zwischen *globaler

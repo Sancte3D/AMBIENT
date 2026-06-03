@@ -163,6 +163,26 @@ Grille-Cutout** (38 mm Durchmesser, Top-Firing-Mount). Position-Verify
 war für r13-PR-Cutout (51 mm) schon OK; 38 mm-Grille hat noch mehr Margin
 zu Cells/OLED/Encoders → kein offener Punkt.
 
+### r15-B1: MIDI Out TRS Type A — Schematic + BOM (offen, vor Schematic-Update)
+**Status**: 🟠 IMPORTANT. r15-User-Direktive (2026-06-03): MIDI Out als
+3.5-mm-Klinke statt USB-MIDI. SPEC + Mechanik + Plan dokumentiert; Schematic-
+Eintrag und BOM-Add stehen noch aus.
+
+**Action vor nächster KiCad-Generator-Update**:
+- Neuer Net `MIDI_TX` auf Pico GP21 (war VOL_SW)
+- Neuer Net `MCP_VOL_SW` auf MCP23017 GPB5 (war GPB5 reserve)
+- Neue Bauteile in `audio.kicad_sch` (oder eigenes `midi.kicad_sch`-Sheet?):
+  - J9 = PJ-320A (3.5-mm-TRS, **same MPN als J8** → LCSC C431535)
+  - R_MIDI_TX = 220 Ω 0603 (z. B. Yageo RC0603FR-07220RL, JLC Basic)
+  - R_MIDI_REF = 220 Ω 0603 (gleicher MPN)
+- VOL_SW-Signal von Pico GP21 entfernen, MCP GPB5 hinzufügen
+- Mechanik: J8 + J9 Edge-Cutouts in Top-Plate/Bottom-Case-CAD bei X=0,
+  Y=75 (J9) bzw Y=90 (J8) — Layout-Verify im 3D-Rendering
+
+**Beim Generator-Update** (`generate_kicad_project.py`): MIDI-Block zur
+audio_sch-Generierung hinzufügen oder dediziertes midi_sch erstellen.
+Root-Sheet ergänzen.
+
 ### r14-B-impedance: PUI-AS04008PS 4Ω → 8Ω — RESOLVED 2026-06-02
 **Status**: ✅ RESOLVED. Datenblatt-Audit (im Zuge der r14-Akustik-Analyse)
 hat ergeben: PUI AS04008PS-4W-WR-R ist **8 Ω**, nicht 4 Ω. Spec sagte fälschlich

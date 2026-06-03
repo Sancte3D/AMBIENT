@@ -535,7 +535,7 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 | 24 | GP18 | EN3 SW | DISPLAY_SW |
 | 25 | GP19 | EN4 A (Volume) | VOL_A |
 | 26 | GP20 | EN4 B | VOL_B |
-| 27 | GP21 | EN4 SW | VOL_SW |
+| 27 | GP21 | **r15: PIO-UART TX → MIDI Out (TRS Type A)** (war EN4 SW; SW wandert auf MCP GPB5) | **MIDI_TX** |
 | 29 | GP22 | MCP23017 INTA | MCP_INT |
 | 31 | GP26 | **BAT_SENSE (ADC0) — Battery-Voltage via 100k/100k Spannungsteiler (NEU r12)** | **BAT_SENSE** |
 | **32** | **GP27** | **PAM8403 /SHDN (Pin 12, active LOW; GPIO HIGH = enabled)** | **AMP_nSHDN** |
@@ -627,6 +627,8 @@ Pin-Verteilung (Update v0.6.3-r5: GPA5 für XSMT-Control):
 | GPB2 | MOD_DRONE | SW8 (momentary, Press = Toggle-Event) |
 | GPB3 | MOD_GENERATE | SW9 (momentary, Press = Toggle-Event) |
 | GPB4 | MOD_CLEAR | SW10 (momentary, One-Shot-Event) |
+| **GPB5** | **VOL_SW** | **EN4 (Volume) Push-Switch (r15: verlagert von Pico GP21, der für MIDI_TX frei wurde). Mensch-Buttondruck >50 ms, MCP-IRQ-Latenz <5 ms → musikalisch ununterscheidbar von Direktanschluss.** |
+| GPB6, GPB7 | reserve | frei für zukünftige Switches/Sensoren |
 
 Alle 10 Switches: ein Pin → MCP-GPIO, anderer → GND. Interne Pull-Ups via
 GPPU-Register aktiviert (Firmware).
@@ -873,6 +875,49 @@ also gegenseitig ausschließend (Plug = Speaker aus).
 **Kopfhörer-Hinweis**: Direkter PCM5102A-Tap treibt Line-In (hochohmig) und
 hochohmige Kopfhörer (>32Ω) sauber. Für niederohmige Kopfhörer wäre ein
 dedizierter Kopfhörer-Amp (TPA6132 o.ä.) besser — v0.8-Option.
+
+### MIDI Out (J9, r15 — 2026-06)
+
+3.5-mm-TRS-Klinke, **MIDI 1.0 / MMA TRS Type A** (offizieller Standard seit
+2018). Keine USB-MIDI, kein TinyUSB. User-Use-Case: das Gerät als
+„denkender Controller" — du spielst 5 Cells, der Harmonic Brain übersetzt
+sie in echte Akkord-Noten, und ein externer Synth/DAW empfängt die ferige
+Akkord-Progression auf MIDI.
+
+| Element | Wert |
+|---|---|
+| J9 | 3.5mm TRS-Buchse, **selber MPN wie J8** (PJ-320A / LCSC C431535) — Mechanik & Sourcing wiederverwenden |
+| Treiber | **Pico GP21 → PIO-UART TX** @ 31250 Baud, 8N1 |
+| R_MIDI_TX | **220 Ω 0603** zwischen GP21 und TRS Tip (Daten / „cold side") |
+| R_MIDI_REF | **220 Ω 0603** zwischen +3V3 und TRS Ring (Strom-Referenz / „hot side") |
+| Schirm | TRS Sleeve → GND |
+
+**Pegel**: 3,3 V direkt vom Pico-GPIO. MIDI-Spec-Update **CA-033 (2020)
+erlaubt 3.3-V-Treiber** explizit → kein Level-Shifter, kein 5-V-Buffer
+nötig. Industrie-Status quo: Korg, Make Noise, Novation, Roland (neuere
+Modelle) machen das genauso.
+
+**Galvanische Isolation**: nicht nötig am OUT (nur am IN). Die 220-Ω-
+Widerstände begrenzen den Kurzschlussstrom und definieren die Source-
+Impedanz nach Spec.
+
+**Keine MIDI-IN-Buchse** (bewusste Entscheidung, siehe CHANGELOG r15):
+das Gerät ist um die 5 Cells als primäres Interface gebaut; eine 1:1-MIDI-
+Notenzuordnung („Note 60 = Cell 1?") würde den Harmonic Brain aushebeln.
+MIDI-Clock-Sync wäre die einzige technisch sinnvolle Anwendung, aber das
+Generate-Bed ist absichtlich langsam-ambient → tight Clock-Lock wäre
+musikalisch falsch.
+
+**GPIO-Reallocation für r15** (siehe §5 + §7):
+- VOL_SW wandert vom Pico (GP21) auf den MCP23017 (GPB5)
+- Encoder-Drehen bleibt auf GP19/GP20 (zeitkritisch, low-latency-IRQ)
+- Encoder-Drücken über MCP — Mensch-Buttondruck (>50 ms), MCP-Latenz
+  <5 ms → musikalisch ununterscheidbar
+
+**Firmware** (kommt mit Step 12b): PIO-State-Machine auf PIO1 oder PIO2
+(PIO0 hat I²S), 31250 Baud → 16 Bits/Baud-Takt × 31250 ≈ trivial,
+keine Belastung. Ring-Buffer Note-On/Off-Builder mit Channel + Velocity-
+Mapping.
 
 ---
 
