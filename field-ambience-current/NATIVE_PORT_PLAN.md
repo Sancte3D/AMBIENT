@@ -242,6 +242,36 @@ umsteuern kannst. Keine Mega-Dumps.
   Mapping) und sind in der host-only-Umgebung weder voll testbar noch sinnvoll
   ohne User-Input festlegbar.
 
+  **Design-Regel für Live-Parameter-Wechsel (2026-06, vom User festgelegt):**
+  „Der Sound darf nicht konkurrieren." → Klarer Schnitt zwischen *globaler
+  Klanglandschaft* und *einzelner getriggerter Note*:
+
+  | Wechsel | Folgt live (smooth) | Erst neue Noten |
+  |---|---|---|
+  | **Key** | Drone (Glide ~1–2 s wie der Bass) · Generate (nächster Akkord) | Pitch schon gehaltener Cells |
+  | **Mode** | Reverb-Preset (per-Mode t60/damp/size/high) · Generate-Stufe | Akkord-Töne schon gehaltener Cells |
+  | **Vibe** | Reverb-Bias · Generate-Familie | Akkord-Familie schon gehaltener Cells |
+  | **PadVoice (warm/strings/brass)** | **alle Voices gleiten gemeinsam** ins neue Timbre (globaler smooth-Crossfade des voiceMix) | – |
+
+  Begründungen, damit's nicht später hinterfragt wird:
+  - **Drone live statt capture-at-spawn (Abweichung vom Webapp)**: ein
+    eingefrorener Drone-Grundton auf C, während neue Cells in D spielen,
+    arbeitet harmonisch direkt gegen den neuen Key — schlimmste Konkurrenz.
+    Glide löst es; Drone-Voice bekommt Portamento analog zum Bass.
+  - **PadVoice global statt nur-neue-Voices**: sonst hörst du gleichzeitig
+    die alte warme Saw-Stimme und die neue Brass-Stimme nebeneinander → das
+    *ist* Konkurrenz. Gemeinsamer Crossfade bewegt den Klang als Einheit.
+    voiceMix wird im Pad zum gesmooth-globalen Live-Parameter (statt am
+    Note-On gebackener Per-Voice-Konstante).
+  - **Cell-Pitch *nicht* live nachpitchen**: eine Cell ist ein expliziter
+    User-Touch; deren Tonhöhe live umzupitchen wäre Eingriff in die vom
+    Spieler getroffene Note. Stattdessen verklingt sie sanft im 3-s-Release,
+    während der Drone (Fundament) sich schon angepasst hat → die alte Note
+    „schmilzt" musikalisch in die neue Tonart.
+  - **Reverb live (per-Mode/Vibe)**: der Hall ist die gemeinsame Atmosphäre,
+    sein Wechsel ist eine Stimmungs-Umschaltung. Reverb hat Coefficient-
+    Smoothing intern → kein Sprung.
+
 Nach Step 12 ist die alte MicroPython-Firmware obsolet — wird nach
 Sign-off entweder gelöscht oder als `firmware-mpy-legacy/` archiviert.
 
