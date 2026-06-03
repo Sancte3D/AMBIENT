@@ -1,5 +1,11 @@
 # FIELD AMBIENCE — Pitch (Draft v0.1)
 
+> ⚠️ **Stand-Hinweis (2026-06):** Dieses Dokument beschreibt die ursprüngliche
+> Pi+SuperCollider+Browser-Architektur (vor Step 6 des Native-Ports). Inhaltlich
+> nicht mehr aktuell — Audio-Engine + UI laufen heute nativ in C auf dem
+> RP2350. Aktueller Stand: `NATIVE_PORT_PLAN.md` + `firmware-c/`. Archivierte
+> Pre-Step-6-Artefakte unter `legacy/`.
+
 > *Working document for crowdfund / donation copy. Tighten the language before
 > publishing. Every technical number in here is verified against the schematic,
 > the SPEC, and the live JLCPCB parts library as of 2026-05-30.*

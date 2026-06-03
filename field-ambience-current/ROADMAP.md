@@ -1,5 +1,11 @@
 # Field Ambience — ROADMAP
 
+> ⚠️ **Stand-Hinweis (2026-06):** Roadmap-Inhalte stammen aus der
+> Pi+SuperCollider+Browser-Phase (vor Step 6). Architektur ist seither nativ
+> auf RP2350 (Pico 2). Aktueller technischer Stand: `NATIVE_PORT_PLAN.md`,
+> `field_ambience_pcb_SPEC_v0.6.md`, `firmware-c/`. Pre-Step-6-Quellen unter
+> `legacy/`.
+
 Stand: **v29-o (instrument mode)**. Was funktioniert, was als nächstes kommt, was später.
 
 ---
