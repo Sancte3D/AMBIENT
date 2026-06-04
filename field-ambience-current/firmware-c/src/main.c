@@ -42,6 +42,27 @@
  * key/mode/vibe. Defaults: C4 ionian, warm/add9. */
 #define CELL_VOICE_AMP 0.12f
 
+/* ---------------------------------------------------------------------------
+ * DEMO_AUTOPLAY — hear the full instrument with ONLY a Pico + a DAC.
+ *
+ * Set to 1 to make the firmware play a slow chord progression by itself, with
+ * NO MCP23017 and NO buttons wired. The cells are triggered on a timer instead
+ * of by hardware. Perfect for the breadboard listening test when the buttons
+ * won't fit: you only solder the DAC and wire 5 lines + the XSMT/SCK/FMT
+ * bridges. The DAC's XSMT must be tied high in hardware (jumper H3 → H, or the
+ * XSMT pin → 3V3), since with no MCP the firmware can't release XSMT itself.
+ *
+ * Set back to 0 for the normal build (cells played by the real buttons).
+ * ------------------------------------------------------------------------- */
+#define DEMO_AUTOPLAY 0
+
+/* Slow ambient progression over the scale degrees (cells 0..4). Each step is
+ * held for DEMO_STEP_MS; the long pad release + reverb tail overlap the steps
+ * so it never sounds choppy. A gentle I–IV–V–vi-ish wander. */
+#define DEMO_STEP_MS 5000
+static const uint8_t DEMO_SEQ[] = { 0, 3, 4, 2, 0, 4, 1, 3 };
+#define DEMO_SEQ_LEN (sizeof DEMO_SEQ / sizeof DEMO_SEQ[0])
+
 static void draw_banner_static(void) {
     oled_text( 72,  0, "FIELD AMBIENCE", 0x0F);
     oled_text( 88,  8, "V0.9 STEP 12A",  0x0A);
@@ -148,7 +169,11 @@ int main(void) {
      * finished. It starts at 0 and glides up over ~2 s, so the power-up stays
      * pop-free while the device settles into a quiet ambient bed at idle. */
     engine_set_texture(0.20f);
+#if DEMO_AUTOPLAY
+    printf("audio: I2S pump live — DEMO_AUTOPLAY on, no MCP/buttons needed\n");
+#else
     printf("audio: I2S pump live, engine ready (pad+reverb+texture+bass) — tap a cell\n");
+#endif
 
     uint32_t hb_count = 0;
     absolute_time_t next_blink_at = make_timeout_time_ms(500);
@@ -156,8 +181,30 @@ int main(void) {
     bool led_on = false;
     uint16_t prev_mcp = mcp_ok ? mcp_state() : 0xFFFF;
 
+#if DEMO_AUTOPLAY
+    /* DEMO_AUTOPLAY sequencer state. */
+    absolute_time_t next_demo_at = make_timeout_time_ms(2500);  /* let texture bloom first */
+    int demo_step = 0;
+    int demo_prev_cell = -1;
+#endif
+
     while (true) {
         bool dirty = false;
+
+#if DEMO_AUTOPLAY
+        if (absolute_time_diff_us(get_absolute_time(), next_demo_at) <= 0) {
+            if (demo_prev_cell >= 0) engine_note_off((uint8_t)demo_prev_cell);
+            int cell = DEMO_SEQ[demo_step];
+            int midi = brain_cell_root(cell);
+            engine_note_on((uint8_t)cell, dsp_midi_to_hz((float)midi), CELL_VOICE_AMP);
+            printf("DEMO step %d -> cell %d (degree %d, midi %d)\n",
+                   demo_step, cell + 1, cell + 1, midi);
+            demo_prev_cell = cell;
+            demo_step = (demo_step + 1) % (int)DEMO_SEQ_LEN;
+            next_demo_at = make_timeout_time_ms(DEMO_STEP_MS);
+            dirty = true;
+        }
+#endif
 
         if (mcp_ok && mcp_irq_pending()) {
             uint16_t v = mcp_service();

@@ -81,6 +81,16 @@ vielen Boards <b>H3 auf „L" = stumm</b>. Wenn nach allem Verkabeln gar kein To
 prüfen, H3 muss auf <b>H</b> stehen — sonst stummgeschaltet. Wir wickeln das gleich auch über den
 externen XSMT-Pin ab, aber sicher ist sicher.</div>
 
+<div class="note ok"><b>⭐ Der einfachste Weg (empfohlen): nur Pico + DAC, kein MCP, keine Tasten.</b><br>
+Echte Taster (12×12 mm) sind ~5 Spalten breit — 5 Stück + Pico + DAC + MCP passen <b>nicht</b>
+zusammen auf ein Brett. Brauchst du auch nicht: die Firmware hat einen <b>Demo-Modus</b>, der von
+selbst eine langsame Akkordfolge spielt. Damit hörst du Pad + Bass + Reverb + Harmonie mit
+<b>nur Pico + DAC</b> — weniger Löten, kein Platzproblem. So einschalten:
+<br>1. In <code>src/main.c</code> die Zeile <code>#define DEMO_AUTOPLAY 0</code> auf <code>1</code> ändern.
+<br>2. Neu bauen (<code>-DPICO_BOARD=pico2</code>) und flashen.
+<br>3. XSMT am DAC fest auf 3V3 (bzw. H3 auf „H"), da ohne MCP die Firmware das Mute nicht selbst löst.
+<br>→ <b>Stufe ② (MCP + Tasten unten) brauchst du dann gar nicht.</b> Die Anleitung dazu bleibt für später.</div>
+
 <!-- ============================== BOARDS ÜBERBLICK ============================== -->
 <h2 id="boards">Deine Boards — so erkennst du sie</h2>
 <div class="fig">
@@ -222,9 +232,19 @@ externen XSMT-Pin ab, aber sicher ist sicher.</div>
 </div>
 
 <!-- ============================== BREADBOARD PLAN ============================== -->
-<h2 id="brett">Bestückungsplan auf deinem Brett (passt!)</h2>
-<p class="lead">Du hast ein 830-Pin Brett: 60 Spalten (0–60), 10 Reihen (A–J), eine Mittelfuge.
-Hier sitzen alle vier Module nebeneinander, alle <b>über die Mittelfuge</b>.</p>
+<h2 id="brett">Bestückungsplan auf deinem Brett</h2>
+<p class="lead">830-Pin Brett: 63 Spalten, 10 Reihen (A–J), eine Mittelfuge. Pico (~20 Sp.) + DAC (~10) +
+MCP (~10) passen locker. <b>Die Taster sind das Problem:</b> 12×12-mm-Taster sind je ~5 Spalten breit
+→ 5 Stück brauchen ~25–30 Spalten extra, das sprengt das Brett.</p>
+
+<div class="note warn"><b>Deshalb gilt:</b> Setz auf das Brett nur <b>Pico + DAC</b> (+ MCP, falls du Tasten willst).
+Die <b>Taster gehören NICHT mit aufs gleiche Brett</b>. Drei Möglichkeiten:
+<br><b>(1) Demo-Modus</b> — gar keine Taster, gar kein MCP (oben empfohlen). Einfachster Weg.
+<br><b>(2) Zweites Mini-Brett</b> nur für die 5 Taster, mit 5 Jumpern (SDA·SCL·INT·3V3·GND) ans Hauptbrett.
+<br><b>(3) Taster „fliegend"</b> — gar nicht ins Brett: je ein Bein per Jumper an GND, anderes Bein an den MCP-Pin.
+Die folgende Brett-Skizze zeigt nur Pico + DAC (+ MCP). Die Taster sind separat.</div>
+
+<p class="lead">Pico, DAC und MCP sitzen nebeneinander, alle <b>über die Mittelfuge</b>.</p>
 
 <div class="fig">
 <svg viewBox="0 0 980 380" role="img" aria-label="Brett-Plan: Pico, DAC, MCP und Taster über die Mittelfuge">
@@ -277,23 +297,12 @@ Hier sitzen alle vier Module nebeneinander, alle <b>über die Mittelfuge</b>.</p
   <text x="560" y="195" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">MCP23017</text>
   <text x="560" y="210" text-anchor="middle" fill="#9fb0c0" font-size="10">Sp. 32–44</text>
 
-  <!-- buttons area: cols 46-58, 5 buttons each 2 wide spread -->
+  <!-- freed area: buttons NOT on this board -->
   <g>
-    <text x="780" y="118" text-anchor="middle" fill="#cfd8e0" font-size="11">5 Taster · Sp. 46–58</text>
-    <g>
-      <rect x="660" y="160" width="30" height="60" rx="6" fill="#2a3744" stroke="#46586a"/>
-      <rect x="710" y="160" width="30" height="60" rx="6" fill="#2a3744" stroke="#46586a"/>
-      <rect x="760" y="160" width="30" height="60" rx="6" fill="#2a3744" stroke="#46586a"/>
-      <rect x="810" y="160" width="30" height="60" rx="6" fill="#2a3744" stroke="#46586a"/>
-      <rect x="860" y="160" width="30" height="60" rx="6" fill="#2a3744" stroke="#46586a"/>
-    </g>
-    <g font-size="10" fill="#9fb0c0">
-      <text x="675" y="240" text-anchor="middle">1</text>
-      <text x="725" y="240" text-anchor="middle">2</text>
-      <text x="775" y="240" text-anchor="middle">3</text>
-      <text x="825" y="240" text-anchor="middle">4</text>
-      <text x="875" y="240" text-anchor="middle">5</text>
-    </g>
+    <rect x="660" y="150" width="240" height="80" rx="8" fill="#101820" stroke="#2b3540" stroke-dasharray="6 4"/>
+    <text x="780" y="185" text-anchor="middle" fill="#7fa0b8" font-size="12">Sp. 46–63 frei</text>
+    <text x="780" y="205" text-anchor="middle" fill="#9fb0c0" font-size="10">Taster gehören NICHT hierher</text>
+    <text x="780" y="221" text-anchor="middle" fill="#9fb0c0" font-size="10">(Demo-Modus / 2. Brett / fliegend)</text>
   </g>
 
   <!-- row labels A-J at far left -->
