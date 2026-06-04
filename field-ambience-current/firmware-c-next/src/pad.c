@@ -36,7 +36,6 @@ typedef enum { ENV_IDLE = 0, ENV_ATTACK, ENV_SUSTAIN, ENV_RELEASE } env_state_t;
 typedef struct {
     float phase[OSC_N];     /* turns [0,1) */
     float inc[OSC_N];       /* per-sample increment = f·mul / SR */
-    float gain[OSC_N];      /* saw / pulse weights, baked */
 
     dsp_svf_t svf;
     float cutoffBase, cutoffMod, fenvAmount;
@@ -70,9 +69,18 @@ static float bright_target;         /* brightness offset target (Hz) */
 static float bright_cur;            /* smoothed brightness */
 static float bright_coef;           /* per-control-block smoothing coef */
 
-/* Frequency multipliers + base gains for the 5 oscillators (voiceMix = 0). */
+/* Oscillator layout per side: 0,1,2 = saws (×1, ×freqMul, ×0.5),
+ * 3,4 = squares (×1, ×freqMul). Frequency multipliers below; the second-saw
+ * and second-square multipliers are the per-side freqMul, filled in at setup. */
 static const float OSC_MUL_BASE[OSC_N]  = { 1.0f, 1.0f, 0.5f, 1.0f, 1.0f };
-static const float OSC_SAW_GAIN[OSC_N]  = { 1.0f, 1.0f, 0.5f, 0.0f, 0.0f };
+
+/* voiceMix is a GLOBAL, smoothed timbre control (0 = warm/pure-saw … ~1.2 =
+ * brass). It is applied at render time to ALL voices at once, so changing the
+ * pad voice glides the whole stack into the new timbre together instead of
+ * leaving old and new timbres ringing side by side. */
+static float vmix_target;           /* requested voiceMix */
+static float saww_cur, pulsew_cur;  /* smoothed saw / pulse weights */
+static float vmix_coef;             /* per-control-block smoothing coef */
 
 void pad_init(void) {
     memset(voices, 0, sizeof voices);
@@ -81,9 +89,19 @@ void pad_init(void) {
     bright_cur    = 0.0f;
     /* brightness glide ~80 ms, evaluated once per control block */
     bright_coef = 1.0f - expf(-(float)CTL_DECIMATE / (0.08f * SR));
+
+    vmix_target = 0.0f;             /* warm */
+    saww_cur    = 1.0f;             /* pure saw at boot */
+    pulsew_cur  = 0.0f;
+    /* timbre glide ~150 ms */
+    vmix_coef = 1.0f - expf(-(float)CTL_DECIMATE / (0.15f * SR));
 }
 
 void pad_set_brightness(float hz) { bright_target = hz; }
+
+/* Global pad-voice timbre. 0 = warm (pure saw), ~0.6 = strings, ~1.2 = brass
+ * (matches the webapp PAD_VOICE_MIXES). Smoothed across all voices. */
+void pad_set_voice_mix(float vmix) { vmix_target = dsp_clampf(vmix, 0.0f, 1.5f); }
 
 /* Equal-power pan: p in [-1,1] → (gl,gr). */
 static void pan_gains(float p, float *gl, float *gr) {
@@ -126,7 +144,6 @@ static void side_setup(pad_side_t *s, float base_freq, int sign, float voice_pan
     for (int k = 0; k < OSC_N; ++k) {
         if (!keep_phase) s->phase[k] = 0.0f;
         s->inc[k]  = f * mul[k] / SR;
-        s->gain[k] = OSC_SAW_GAIN[k];           /* voiceMix = 0 → squares silent */
     }
 
     if (!keep_phase) dsp_svf_reset(&s->svf);
@@ -220,7 +237,15 @@ static void side_control(pad_side_t *s) {
 static void render_block_float(float *outL, float *outR, int frames) {
     for (int n = 0; n < frames; ++n) {
         bool ctl = (ctl_phase == 0);
-        if (ctl) bright_cur += bright_coef * (bright_target - bright_cur);
+        if (ctl) {
+            bright_cur += bright_coef * (bright_target - bright_cur);
+            /* Smooth the global timbre weights toward the requested voiceMix.
+             * sawWeight = 1 - mix*0.5, pulseWeight = mix*0.5 (webapp). */
+            float saww_tgt   = dsp_clampf(1.0f - vmix_target * 0.5f, 0.0f, 1.0f);
+            float pulsew_tgt = dsp_clampf(vmix_target * 0.5f,        0.0f, 1.0f);
+            saww_cur   += vmix_coef * (saww_tgt   - saww_cur);
+            pulsew_cur += vmix_coef * (pulsew_tgt - pulsew_cur);
+        }
 
         float L = 0.0f, R = 0.0f;
 
@@ -249,17 +274,20 @@ static void render_block_float(float *outL, float *outR, int frames) {
                 pad_side_t *s = &v->side[sd];
                 if (ctl) side_control(s);
 
-                /* oscillator stack */
-                float sig = 0.0f;
+                /* oscillator stack: 0,1,2 = saws (×1, ×freqMul, ×0.5);
+                 * 3,4 = squares (×1, ×freqMul). Saw and pulse halves are
+                 * crossfaded by the smoothed global timbre weights. */
+                float saws = dsp_poly_saw(s->phase[0], s->inc[0])
+                           + dsp_poly_saw(s->phase[1], s->inc[1])
+                           + 0.5f * dsp_poly_saw(s->phase[2], s->inc[2]);
+                float pulses = dsp_poly_square(s->phase[3], s->inc[3])
+                             + dsp_poly_square(s->phase[4], s->inc[4]);
+                float sig = (saww_cur * saws + pulsew_cur * pulses) * 0.4f;
+
                 for (int k = 0; k < OSC_N; ++k) {
-                    float g = s->gain[k];
-                    if (g != 0.0f) {
-                        sig += g * dsp_poly_saw(s->phase[k], s->inc[k]);
-                    }
                     s->phase[k] += s->inc[k];
                     if (s->phase[k] >= 1.0f) s->phase[k] -= 1.0f;
                 }
-                sig *= 0.4f;
 
                 float lp = dsp_svf_lp(&s->svf, sig);
 

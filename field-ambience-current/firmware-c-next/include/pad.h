@@ -49,6 +49,11 @@ void pad_all_off(void);
  * so turning it does not zipper. */
 void pad_set_brightness(float hz);
 
+/* Global pad-voice timbre, applied to ALL voices at once and smoothed so the
+ * whole stack glides into the new sound together (no old/new timbre clashing).
+ * 0 = warm (pure saw), ~0.6 = strings, ~1.2 = brass — webapp PAD_VOICE_MIXES. */
+void pad_set_voice_mix(float vmix);
+
 /* Render `frames` interleaved stereo int16 samples (L,R,L,R,…), summing all
  * active pad voices through a soft-clipped master. Audio-context safe:
  * allocation-free and bounded. Standalone form: no reverb, no engine bus.

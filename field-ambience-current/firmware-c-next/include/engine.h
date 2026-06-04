@@ -61,6 +61,11 @@ void engine_set_key(int tonic_midi);
  * in/out; it follows engine_set_key live with portamento. */
 void engine_set_drone(bool on);
 
+/* Step 12b #3 — pad timbre (warm/strings/brass = 0/1/2). All sounding voices
+ * glide together into the new timbre (smoothed global crossfade), so warm→
+ * brass never leaves the two timbres competing in the air. */
+void engine_set_pad_voice(int voice_idx);
+
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */
 void engine_render(int16_t *buf, int frames);

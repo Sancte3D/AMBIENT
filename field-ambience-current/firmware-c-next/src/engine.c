@@ -174,6 +174,14 @@ void engine_set_key(int tonic_midi) {
 }
 void engine_set_drone(bool on) { drone_enable(on); }
 
+/* PAD_VOICE_MIXES from the webapp: warm / strings / brass. */
+void engine_set_pad_voice(int voice_idx) {
+    static const float MIX[] = { 0.0f, 0.6f, 1.2f };
+    if (voice_idx < 0) voice_idx = 0;
+    if (voice_idx > 2) voice_idx = 2;
+    pad_set_voice_mix(MIX[voice_idx]);
+}
+
 void engine_render(int16_t *buf, int frames) {
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
     if (frames > BLOCK) frames = BLOCK;

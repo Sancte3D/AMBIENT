@@ -13,7 +13,7 @@ Erweiterungen, die schrittweise dazukommen.
 |---|---|---|
 | ✅ 1 | **Reverb-Presets pro Mode + Vibe-Bias** + Space/Mood-Macros · neues Modul `reverb_presets.{h,c}` + Engine-Setter `engine_set_mode/vibe/space/mood` (alle live-smoothed) | ✅ done |
 | ✅ 2 | **Drone mit Portamento-Glide** · neues Modul `drone.{h,c}` + `engine_set_key/drone`. Folgt dem Key live (Glide), bloomt 6 s, friert nicht ein wie die Webapp | ✅ done |
-| 3 | PadVoice global smoothed (warm↔strings↔brass Crossfade über alle Voices) | ✅ ja |
+| ✅ 3 | **PadVoice global smoothed** · `pad_set_voice_mix` + `engine_set_pad_voice` (warm/strings/brass). voiceMix ist jetzt globaler, gesmoothter Saw↔Square-Crossfade über alle Voices statt per-Voice gebacken | ✅ done |
 | 4 | Generative-Bed (PROGRESSIONS + Markov DEGREE_TRANSITIONS, Timer-getrieben) | ✅ ja |
 | 5 | Live-Parameter-Wiring nach der „nicht konkurrieren"-Regel | ✅ ja |
 | 6 | TRS-MIDI Out (PIO-UART 31250 Baud auf GP21) | ❌ Hardware-nah |

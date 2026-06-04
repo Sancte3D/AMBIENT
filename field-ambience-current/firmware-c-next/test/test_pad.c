@@ -175,6 +175,32 @@ static void test_pad_pool_bounded(void) {
     printf("  pad peak under full load  L=%d  R=%d\n", st.pk_l, st.pk_r);
 }
 
+/* Step 12b #3: the global voice-mix crossfade (warm/strings/brass). At warm
+ * (0) the timbre is pure saw; raising it mixes in squares. The control is
+ * global + smoothed, so it must keep the note sounding and stay click-free
+ * while gliding into the new timbre. */
+static void test_pad_voice_mix(void) {
+    drain();
+    pad_set_voice_mix(0.0f);                          /* warm */
+    pad_note_on(0, 196.0f, 0.6f);
+    render_pad(2 * DSP_SAMPLE_RATE_HZ);               /* reach sustain */
+    pad_stats_t warm = render_pad(DSP_SAMPLE_RATE_HZ / 2);
+    CHECK(warm.pk_l > 1000, "warm pad produced near-silence: L=%d", warm.pk_l);
+
+    /* Slam to brass: the timbre changes but the note must not stop, stay
+     * bounded, and glide click-free (no full-scale jump). */
+    pad_set_voice_mix(1.2f);                          /* brass */
+    pad_stats_t glide = render_pad(DSP_SAMPLE_RATE_HZ);
+    CHECK(glide.pk_l > 1000, "brass pad collapsed to near-silence: L=%d", glide.pk_l);
+    CHECK(glide.pk_l <= 32767 && glide.pk_r <= 32767, "brass pad clipped int16");
+    CHECK(glide.max_step < 9000, "voice-mix change not click-free: step=%d", glide.max_step);
+    printf("  voice-mix peak  warm L=%d  brass L=%d\n", warm.pk_l, glide.pk_l);
+
+    pad_note_off(0);
+    pad_set_voice_mix(0.0f);                          /* restore default */
+    drain();
+}
+
 int main(void) {
     dsp_init();
     pad_init();
@@ -187,6 +213,7 @@ int main(void) {
     test_pad_bloom_and_silence();
     test_pad_retrigger_no_stack();
     test_pad_pool_bounded();
+    test_pad_voice_mix();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);
     if (g_fails) { printf("RESULT: FAIL\n"); return 1; }
