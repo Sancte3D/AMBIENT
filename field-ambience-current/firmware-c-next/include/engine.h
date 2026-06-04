@@ -41,6 +41,16 @@ void engine_set_brightness(float hz);          /* pass-through to pad */
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_bass_depth(float depth_0_1);   /* famSubBass/DeepBass depth */
 
+/* Step 12b #1 — musical state. Setting any of these recomputes the four
+ * Freeverb parameters (size/damp/drive/wet) from the per-mode preset +
+ * vibe bias + space/mood macros (reverb_presets.h). Updates are applied
+ * live; the reverb's own coefficient smoothing prevents zipper, matching
+ * the "sound darf nicht konkurrieren" rule for global parameters. */
+void engine_set_mode(int mode_idx);            /* 0..5 (ionian..aeolian) */
+void engine_set_vibe(int vibe_idx);            /* 0..3 (warm..floating) */
+void engine_set_space(float space_0_1);        /* room size / tail macro */
+void engine_set_mood(float mood_0_1);          /* darkness↔brightness macro */
+
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */
 void engine_render(int16_t *buf, int frames);

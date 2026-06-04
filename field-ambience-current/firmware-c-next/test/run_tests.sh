@@ -52,7 +52,15 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/bass_test"
 "$tmp/bass_test"
 
-# Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass)
+# Step 12b #1: reverb mode/vibe presets + space/mood macro
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_reverb_presets.c" \
+    "$src/src/reverb_presets.c" \
+    -lm -o "$tmp/rp_test"
+"$tmp/rp_test"
+
+# Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass
+# and, from Step-12b #1 on, the reverb_presets + brain modules too)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_reverb_engine.c" \
     "$src/src/dsp.c" \
@@ -60,6 +68,8 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/reverb.c" \
     "$src/src/texture.c" \
     "$src/src/bass.c" \
+    "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" \
     "$src/src/engine.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"

@@ -15,6 +15,8 @@
 #include "reverb.h"
 #include "texture.h"
 #include "bass.h"
+#include "reverb_presets.h"
+#include "brain.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -62,20 +64,41 @@ static float reverb_size, reverb_damp;        /* cached, so the two setters
                                                   can change one independently */
 static const float SMOOTH_COEF = 0.05f;       /* per-block, ~120 ms time-const */
 
+/* Step 12b #1 — musical state driving the preset-based reverb mapping. */
+static int   musical_mode  = 0;     /* ionian */
+static int   musical_vibe  = 0;     /* warm */
+static float musical_space = 0.5f;
+static float musical_mood  = 0.5f;
+
+/* Recompute Freeverb settings from current mode/vibe/space/mood and push to
+ * the reverb. Cached size/damp keep manual reverb setters orthogonal. */
+static void recompute_reverb_from_presets(void) {
+    reverb_settings_t s = reverb_presets_compute(musical_mode, musical_vibe,
+                                                 musical_space, musical_mood);
+    reverb_size = s.size;
+    reverb_damp = s.damp;
+    reverb_set(reverb_size, reverb_damp);
+    reverb_set_drive(s.drive);
+    wet_amp_tgt = s.wet_amp;        /* still smoothed per block in render */
+}
+
 void engine_init(void) {
     pad_init();
     reverb_init();
     texture_init();
     bass_init();
 
-    /* Defaults per the webapp's mid-mode at space≈0.5, mood≈0.5. */
-    reverb_size = 0.7f;
-    reverb_damp = 0.3f;
-    reverb_set(reverb_size, reverb_damp);
-    reverb_set_drive(0.15f);
-
+    /* Musical state defaults: C ionian / warm / space=mood=0.5. The reverb
+     * parameters fall out of the preset table — same shape as the webapp's
+     * mid-mode landing point. */
+    musical_mode  = 0;
+    musical_vibe  = 0;
+    musical_space = 0.5f;
+    musical_mood  = 0.5f;
     send_amount_cur = send_amount_tgt = 0.45f;
     wet_amp_cur     = wet_amp_tgt     = 0.40f;
+    recompute_reverb_from_presets();
+    wet_amp_cur = wet_amp_tgt;       /* snap at boot, no glide-from-silence */
 
     /* Texture bed boots at 0 (silent power-up); raise via engine_set_texture
      * or the brain in Step 12. */
@@ -114,6 +137,35 @@ void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.
 void engine_set_brightness(float hz)  { pad_set_brightness(hz); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
+
+/* Step 12b #1 — musical-state setters. Each triggers a preset recompute so
+ * the reverb shifts character with the mode/vibe/macro change. The reverb
+ * itself smooths internally (~120 ms), so the transition is glide-not-step
+ * — matches the "sound darf nicht konkurrieren" rule for global params.
+ * Also keeps the harmonic brain's view of mode/vibe in sync so cells played
+ * after the change pick up the new harmony. */
+void engine_set_mode(int mode_idx) {
+    if (mode_idx < 0)               mode_idx = 0;
+    if (mode_idx >= RP_MODE_COUNT)  mode_idx = RP_MODE_COUNT - 1;
+    musical_mode = mode_idx;
+    brain_set_mode(mode_idx);
+    recompute_reverb_from_presets();
+}
+void engine_set_vibe(int vibe_idx) {
+    if (vibe_idx < 0)               vibe_idx = 0;
+    if (vibe_idx >= RP_VIBE_COUNT)  vibe_idx = RP_VIBE_COUNT - 1;
+    musical_vibe = vibe_idx;
+    brain_set_vibe(vibe_idx);
+    recompute_reverb_from_presets();
+}
+void engine_set_space(float v) {
+    musical_space = dsp_clampf(v, 0.0f, 1.0f);
+    recompute_reverb_from_presets();
+}
+void engine_set_mood(float v) {
+    musical_mood = dsp_clampf(v, 0.0f, 1.0f);
+    recompute_reverb_from_presets();
+}
 
 void engine_render(int16_t *buf, int frames) {
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
