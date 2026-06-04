@@ -18,6 +18,7 @@
 #include "drone.h"
 #include "reverb_presets.h"
 #include "brain.h"
+#include "generative.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -31,7 +32,12 @@
 /* Active note tracking so the bass can follow the lowest held pitch. Sources
  * are cell indices today (0..4), with headroom for MIDI later. freq 0 = idle. */
 #define MAX_SOURCES   16
+#define GEN_SOURCE    8           /* reserved pad-voice source for the bed */
+#define GEN_VOICE_AMP 0.10f
 static float active_freq[MAX_SOURCES];
+
+/* Generative-bed state. */
+static bool gen_on = false;
 
 /* Lowest currently-held frequency, or 0 if nothing is held. */
 static float lowest_held(void) {
@@ -107,6 +113,8 @@ void engine_init(void) {
     texture_set_amount(0.0f);
     bass_set_depth(0.5f);
     memset(active_freq, 0, sizeof active_freq);
+    generative_init();
+    gen_on = false;
 }
 
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
@@ -180,6 +188,26 @@ void engine_set_pad_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
     if (voice_idx > 2) voice_idx = 2;
     pad_set_voice_mix(MIX[voice_idx]);
+}
+
+static bool any_cell_held(void) {
+    for (int i = 0; i < 5; ++i) if (active_freq[i] > 0.0f) return true;
+    return false;
+}
+
+void engine_set_generative(bool on, int program) {
+    generative_set_program(program);
+    gen_on = on;
+    if (!on) engine_note_off(GEN_SOURCE);   /* release the bed voice */
+}
+
+int engine_generative_advance(void) {
+    if (!gen_on) return -1;
+    if (any_cell_held()) return -1;          /* live playing overrides the bed */
+    int deg  = generative_next_degree();     /* 1..6 */
+    int midi = brain_cell_root(deg - 1);     /* root of that degree's voiced chord */
+    engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi), GEN_VOICE_AMP);
+    return deg;
 }
 
 void engine_render(int16_t *buf, int frames) {

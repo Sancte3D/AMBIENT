@@ -66,6 +66,16 @@ void engine_set_drone(bool on);
  * brass never leaves the two timbres competing in the air. */
 void engine_set_pad_voice(int voice_idx);
 
+/* Step 12b #4 — generative bed. on=false stops it (releases its voice).
+ * program <0 selects Markov auto, >=0 selects a fixed progression index. */
+void engine_set_generative(bool on, int program);
+
+/* Advance the generative bed one step: pick the next degree, sound its chord
+ * root as a pad voice (a reserved source), and let the bass follow. Call from
+ * the bar timer. Returns the new degree (1..6) or -1 when generative is off.
+ * No-op while any cell is held — live playing overrides the bed. */
+int engine_generative_advance(void);
+
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */
 void engine_render(int16_t *buf, int frames);

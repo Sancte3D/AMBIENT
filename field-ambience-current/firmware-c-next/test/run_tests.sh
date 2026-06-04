@@ -67,6 +67,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/drone_test"
 "$tmp/drone_test"
 
+# Step 12b #4: generative progression sequencer (pure logic)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_generative.c" \
+    "$src/src/generative.c" \
+    -lm -o "$tmp/gen_test"
+"$tmp/gen_test"
+
 # Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass
 # and, from Step-12b #1 on, the reverb_presets + brain modules too)
 "$CC" "${CFLAGS[@]}" \
@@ -79,6 +86,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/drone.c" \
     "$src/src/reverb_presets.c" \
     "$src/src/brain.c" \
+    "$src/src/generative.c" \
     "$src/src/engine.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"
