@@ -1,32 +1,23 @@
-# Field Ambience — native C firmware (RP2350)
+# Field Ambience — native C firmware · HÖRTEST-Snapshot
 
-This is the **native port** of the Field Ambience engine and UI, targeting
-the Pico 2 (RP2350) directly. The plan is documented in
-`../NATIVE_PORT_PLAN.md`. When this firmware is complete, the Raspberry Pi
-Zero 2 W will no longer be part of the device — the RP2350 will host both
-the audio engine and the UI.
+> **Diese Variante (`firmware-c/`) ist eingefroren** für den On-Device-Hörtest.
+> Aktive Entwicklung läuft in `../firmware-c-next/` weiter. Wenn dort was bricht,
+> ist diese Version der sichere Rückfall.
 
-**Status:** Step 7 of 12 — **polyphonic voice pool.** Build runs Steps 1–6
-plus an 8-voice pool (sine + click-free ASR envelope) fed by the cell
-buttons: tap a cell → a sustained tone blooms in over ~0.8 s; release →
-it fades over ~2.5 s. The Step-5 test sine is replaced by `voices_render()`
-via the new pluggable `audio_set_renderer()`. Cell→pitch is a placeholder
-C-minor-pentatonic until the harmonic brain (Step 12). (Step 6 was the
-schematic-only Pi removal — no firmware change.)
+**Stand:** Steps 1–11 + 12a + DEMO_AUTOPLAY-Schalter. Alle vier Audio-Schichten
+(famPadCore + famReverbMaster + famTexture + famSubBass/famDeepBass) im
+Engine-Mix-Bus, Harmonic Brain mappt Cell → echte Skalen/Modi-Harmonie.
+Offen ist Step 12b (Menü + TRS-MIDI + Encoder-Bindings) — den baue ich in
+`../firmware-c-next/`.
 
-The MicroPython firmware in `../firmware/` remains the working firmware
-on the device during the transition. Nothing is being removed yet.
+## Wofür dieser Ordner gedacht ist
 
-## Prerequisites
+- **Hörtest**: anhand `hoertest/HOERTEST.html` einen Pico mit DAC verkabeln,
+  diese Firmware bauen und flashen → das Instrument hörbar machen.
+- **Vergleichs-Referenz**: wenn `firmware-c-next/` mal anders klingt, kann
+  diese Version gegengehört werden.
 
-- **Pico SDK 2.x** installed somewhere on disk
-- `PICO_SDK_PATH` exported to its location
-- ARM GCC toolchain (`arm-none-eabi-gcc`) on `PATH`
-- `cmake >= 3.13`, `make`
-
-Standard SDK setup — if `pico-examples` builds on your machine, this builds.
-
-## Build
+## Bauen
 
 ```bash
 cd field-ambience-current/firmware-c
@@ -35,65 +26,36 @@ cmake .. -DPICO_BOARD=pico2
 make -j
 ```
 
-Output (in `build/`):
-- `field_ambience_native.uf2` — drop this onto the Pico in BOOTSEL mode
-- `field_ambience_native.elf` — for `picotool` / OpenOCD debugging
-- `field_ambience_native.bin`, `.hex`, `.map` — for diagnostics
+Output: `build/field_ambience_native.uf2` → in BOOTSEL-Mode auf den Pico ziehen.
 
-## Host tests (no device, no SDK)
+**Voraussetzungen**: Pico SDK 2.x, `PICO_SDK_PATH` gesetzt, `arm-none-eabi-gcc`,
+`cmake ≥ 3.13`. Wenn `pico-examples` baut, baut das hier auch.
 
-The hardware-independent audio math (`src/dsp.c`, `src/voices.c`) compiles and
-runs natively, so its correctness can be checked without a Pico or the ARM
-toolchain — a clean UF2 link proves the build wires up, not that the sine is a
-sine or the envelope is click-free.
+## Demo-Modus (für den Hörtest ohne MCP + Tasten)
+
+In `src/main.c` Zeile `#define DEMO_AUTOPLAY 0` auf **`1`** ändern, neu bauen.
+Damit spielt die Firmware beim Start selbst eine langsame Akkordfolge — du
+brauchst nur Pico + DAC, keine Taster, kein MCP23017. Volle Anleitung in
+`hoertest/HOERTEST.html`.
+
+## Host-Tests (kein Gerät, kein SDK)
 
 ```bash
-cd field-ambience-current/firmware-c/test
-./run_tests.sh          # builds with host cc, runs assertions, prints PASS/FAIL
+cd field-ambience-current/firmware-c
+bash test/run_tests.sh
 ```
 
-Covers: sine-LUT accuracy vs `sinf` (< 1e-3), phase wrap, MIDI→Hz (A4=440,
-octave doubling), voice-pool alloc/re-trigger/count, 9th-note voice stealing,
-click-free attack/release ramps, attack→sustain peak, and int16 soft-clip
-bounds under 8-voice full load.
+6 Suites: dsp+voices, pad, texture, bass, brain, reverb+engine. ~3,4 M
+Assertions, sollten alle PASS sein.
 
-## Flash + verify
+## Verkabeln + hören
 
-1. Hold BOOTSEL on the Pico 2, plug in USB → `RPI-RP2` mass-storage appears
-2. Drag `field_ambience_native.uf2` onto it
-3. Pico reboots; the STATUS LED (GP26) starts blinking at 1 Hz
-4. The 256×64 SSD1322 OLED shows banner + a live voice count:
+→ Siehe `hoertest/HOERTEST.html` (Bildanleitung) bzw. `hoertest/HOERTEST.md`
+(Textanleitung).
 
-   ```
-               FIELD AMBIENCE
-               V0.9 STEP 7
-   TAP A CELL              VOX 0
+## Was als Nächstes (in `firmware-c-next/`)
 
-   DRIV  .   BRIT  .   DISP  .   VOL   .
-   +0000     +0000     +0000     +0000
-
-   C . . . . .   M . . . . .         J
-   ```
-
-5. **Play.** Tap a cell button → a tone blooms in (~0.8 s attack) and holds;
-   the `VOX` count rises. Release → it fades out (~2.5 s). Up to 8 voices
-   ring at once; a 9th steals the quietest. Cell pitches are a placeholder
-   C-minor pentatonic (C3 Eb3 F3 G3 Bb3). Plugging into J8 mutes the
-   speakers and leaves the audio on the line-out.
-
-6. USB CDC traces:
-
-   ```
-   cell 1 ON  (midi 48)
-   cell 1 OFF
-   field-ambience native v0.9-dev step7 — pico2 (RP2350) — heartbeat N
-   ```
-
-That's the success signal for Step 7. Step 8 adds the two-layer bass
-(famSubBass + famDeepBass) under the voices.
-
-## What's next
-
-See `../NATIVE_PORT_PLAN.md`. Steps 8–12 replace the sine voices with the
-real engine timbre: two-layer bass, famPadCore, texture bed, algorithmic
-reverb, and finally the harmonic brain + v30 menu + USB-MIDI.
+Step 12b: per-Mode/Vibe-Reverb-Presets, Drone mit Portamento, PadVoice live
+smoothed (warm/strings/brass), Generative-Bed (Markov), Live-Parameter-
+Wiring nach der „Sound darf nicht konkurrieren"-Regel, TRS-MIDI Out via
+PIO-UART, v30-Menü auf dem OLED, Encoder→Engine-Bindings.

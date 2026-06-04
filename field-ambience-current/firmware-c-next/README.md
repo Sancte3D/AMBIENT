@@ -1,0 +1,48 @@
+# Field Ambience — native C firmware · ENTWICKLUNG (Step 12b+)
+
+> **Hier wird aktiv weitergebaut.** Der Schwester-Ordner `../firmware-c/` ist
+> der eingefrorene Hörtest-Stand (Steps 1–11 + 12a). Wenn hier was kaputt
+> geht: dorthin zurückfallen.
+
+**Stand:** identisch zu `firmware-c/` als Ausgangspunkt, plus die Step-12b-
+Erweiterungen, die schrittweise dazukommen.
+
+## Step-12b-Plan (Reihenfolge nach „host-testbar zuerst")
+
+| # | Was | Host-testbar? |
+|---|---|---|
+| **1** | **Reverb-Presets pro Mode + Vibe-Bias** (computeReverb-Port aus Webapp) + Space/Mood-Macros | ✅ ja |
+| 2 | Drone-Modul mit Portamento-Glide (live-Key-Follow) | ✅ ja |
+| 3 | PadVoice global smoothed (warm↔strings↔brass Crossfade über alle Voices) | ✅ ja |
+| 4 | Generative-Bed (PROGRESSIONS + Markov DEGREE_TRANSITIONS, Timer-getrieben) | ✅ ja |
+| 5 | Live-Parameter-Wiring nach der „nicht konkurrieren"-Regel | ✅ ja |
+| 6 | TRS-MIDI Out (PIO-UART 31250 Baud auf GP21) | ❌ Hardware-nah |
+| 7 | OLED v30-Menü (PLAY/SETUP) | ❌ Hardware-nah |
+| 8 | Encoder→Engine-Bindings | ❌ Hardware-nah |
+
+Erstmal bis Schritt 5 host-testbar treiben, dann auf Hardware (Tasten + OLED
++ Encoder + MIDI-Jack) wechseln.
+
+## Architektur-Notiz: Live-Parameter-Regel
+
+Im Plan (`../NATIVE_PORT_PLAN.md`, Step 12b) und im CHANGELOG dokumentiert:
+*„Der Sound darf nicht konkurrieren."* → Key/Mode/Vibe/PadVoice-Wechsel
+folgen global mit Smoothing; bereits gehaltene Cell-Noten frieren ihre Pitch
+bis zum Release ein. Drone folgt dem Key live mit Glide (bewusste Abweichung
+von der Webapp-Capture-at-Spawn-Logik).
+
+## Bauen + Testen
+
+Identisch zu `firmware-c/`.
+
+```bash
+cd field-ambience-current/firmware-c-next
+bash test/run_tests.sh
+```
+
+## Was *nicht* hier ist
+
+Die Hörtest-Anleitung (`hoertest/HOERTEST.html` etc.) lebt im Schwester-Ordner
+`firmware-c/`, da sie an diesen festen Stand gebunden ist. Wenn `firmware-c-next/`
+mal stabil ist und einen eigenen Hörtest verdient, kommt eine aktualisierte
+Anleitung dort dazu.

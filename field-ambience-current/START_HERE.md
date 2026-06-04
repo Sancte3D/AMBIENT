@@ -11,10 +11,15 @@ Ports sind fertig; Step 12b (Menü + USB-MIDI) steht aus.
   Bestellung) für die finale Platine.
 
 ## Firmware (RP2350 nativ)
-- `firmware-c/` — die aktive Firmware (C, Pico-SDK 2.x)
-- `firmware-c/HOERTEST.md` / `HOERTEST.html` — Aufbau-Anleitung Hörtest
-- `firmware-c/test/run_tests.sh` — Host-Unit-Tests (kein Pico-SDK nötig)
-- `NATIVE_PORT_PLAN.md` — Steps + aktueller Fortschritt
+- `firmware-c/` — **Hörtest-Snapshot** (Steps 1–11 + 12a, eingefroren) für den
+  On-Device-Test. Build-/Test-Anleitung in `firmware-c/README.md`.
+- `firmware-c/hoertest/HOERTEST.md` + `.html` — Aufbau-Anleitung für den
+  Hörtest (Pico + DAC + optional MCP/Tasten).
+- `firmware-c-next/` — **aktive Entwicklung** (Step 12b: Reverb-Presets,
+  Drone, Live-Parameter-Regel, TRS-MIDI Out, OLED-Menü, Encoder-Bindings).
+- `firmware-c/test/run_tests.sh` und `firmware-c-next/test/run_tests.sh` —
+  Host-Unit-Tests (kein Pico-SDK nötig).
+- `NATIVE_PORT_PLAN.md` — Steps + aktueller Fortschritt.
 
 ## Audio-Engine-Referenzen (nicht-Firmware-Quellen, aktiv genutzt)
 - `field_ambience_v29o.scd` — kanonische SuperCollider-Quelle (Cross-Check)

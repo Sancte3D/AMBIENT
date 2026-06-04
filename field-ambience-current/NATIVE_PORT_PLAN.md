@@ -9,9 +9,11 @@
 > + famTexture + famSubBass/famDeepBass) laufen im Engine-Mix-Bus; der
 > **Harmonic Brain (12a)** mappt Cells auf echte Skalen/Modi/Familien-Harmonie.
 > Cell-Tap blooms zu Pad + Reverb-Fahne über Noise-Bed, mit zwei-Schicht-Bass.
-> **Offen: Step 12b** — v30-Menü (PLAY/SETUP), USB-MIDI-Out (TinyUSB),
-> Encoder→Engine-Param-Bindings. Diese Teile sind hardware-nah / UX-behaftet
-> und brauchen Hörtests + Design-Entscheidungen.
+>
+> **Repo-Layout ab 2026-06-03:** der Step-12a-Stand ist als Hörtest-Snapshot in
+> `firmware-c/` eingefroren (inkl. `firmware-c/hoertest/`-Anleitung). Aktive
+> Entwicklung von Step 12b läuft parallel im neuen `firmware-c-next/`-Ordner —
+> sicheres Zurückfallen jederzeit möglich.
 
 ---
 
