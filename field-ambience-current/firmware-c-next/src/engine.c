@@ -15,6 +15,7 @@
 #include "reverb.h"
 #include "texture.h"
 #include "bass.h"
+#include "drone.h"
 #include "reverb_presets.h"
 #include "brain.h"
 #include "dsp.h"
@@ -87,6 +88,7 @@ void engine_init(void) {
     reverb_init();
     texture_init();
     bass_init();
+    drone_init();
 
     /* Musical state defaults: C ionian / warm / space=mood=0.5. The reverb
      * parameters fall out of the preset table — same shape as the webapp's
@@ -166,6 +168,11 @@ void engine_set_mood(float v) {
     musical_mood = dsp_clampf(v, 0.0f, 1.0f);
     recompute_reverb_from_presets();
 }
+void engine_set_key(int tonic_midi) {
+    brain_set_key(tonic_midi);
+    drone_set_root_midi(tonic_midi);   /* glides live if the drone is sounding */
+}
+void engine_set_drone(bool on) { drone_enable(on); }
 
 void engine_render(int16_t *buf, int frames) {
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
@@ -184,6 +191,7 @@ void engine_render(int16_t *buf, int frames) {
     pad_render_mix(dryL, dryR, sendL, sendR, frames, send_amount_cur);
     texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
     bass_render_mix(dryL, dryR, sendL, sendR, frames);
+    drone_render_mix(dryL, dryR, sendL, sendR, frames);
 
     /* Reverb writes (does not add) wet from send. */
     reverb_render(sendL, sendR, wetL, wetR, frames);

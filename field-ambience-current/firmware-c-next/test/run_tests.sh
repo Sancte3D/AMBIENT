@@ -59,6 +59,14 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/rp_test"
 "$tmp/rp_test"
 
+# Step 12b #2: drone (portamento root pad)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_drone.c" \
+    "$src/src/dsp.c" \
+    "$src/src/drone.c" \
+    -lm -o "$tmp/drone_test"
+"$tmp/drone_test"
+
 # Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass
 # and, from Step-12b #1 on, the reverb_presets + brain modules too)
 "$CC" "${CFLAGS[@]}" \
@@ -68,6 +76,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/reverb.c" \
     "$src/src/texture.c" \
     "$src/src/bass.c" \
+    "$src/src/drone.c" \
     "$src/src/reverb_presets.c" \
     "$src/src/brain.c" \
     "$src/src/engine.c" \

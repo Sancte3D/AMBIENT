@@ -21,6 +21,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 
 void engine_init(void);
 
@@ -50,6 +51,15 @@ void engine_set_mode(int mode_idx);            /* 0..5 (ionian..aeolian) */
 void engine_set_vibe(int vibe_idx);            /* 0..3 (warm..floating) */
 void engine_set_space(float space_0_1);        /* room size / tail macro */
 void engine_set_mood(float mood_0_1);          /* darkness↔brightness macro */
+
+/* Step 12b — key tonic (MIDI). Updates the harmonic brain (future cells use
+ * the new key) and glides the drone root live; already-held cells keep their
+ * pitch ("global follows, held notes freeze" rule). */
+void engine_set_key(int tonic_midi);
+
+/* Step 12b #2 — drone toggle (DRONE modifier). Blooms a sustained root pad
+ * in/out; it follows engine_set_key live with portamento. */
+void engine_set_drone(bool on);
 
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */

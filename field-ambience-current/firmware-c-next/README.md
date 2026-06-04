@@ -12,7 +12,7 @@ Erweiterungen, die schrittweise dazukommen.
 | # | Was | Host-testbar? |
 |---|---|---|
 | ✅ 1 | **Reverb-Presets pro Mode + Vibe-Bias** + Space/Mood-Macros · neues Modul `reverb_presets.{h,c}` + Engine-Setter `engine_set_mode/vibe/space/mood` (alle live-smoothed) | ✅ done |
-| 2 | Drone-Modul mit Portamento-Glide (live-Key-Follow) | ✅ ja |
+| ✅ 2 | **Drone mit Portamento-Glide** · neues Modul `drone.{h,c}` + `engine_set_key/drone`. Folgt dem Key live (Glide), bloomt 6 s, friert nicht ein wie die Webapp | ✅ done |
 | 3 | PadVoice global smoothed (warm↔strings↔brass Crossfade über alle Voices) | ✅ ja |
 | 4 | Generative-Bed (PROGRESSIONS + Markov DEGREE_TRANSITIONS, Timer-getrieben) | ✅ ja |
 | 5 | Live-Parameter-Wiring nach der „nicht konkurrieren"-Regel | ✅ ja |
