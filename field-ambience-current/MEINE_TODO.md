@@ -5,6 +5,70 @@ Schaltplan ist fertig + validiert, Stückliste mit der SPEC abgeglichen.
 Was hier steht, muss **ich selbst** in der KiCad-GUI / am CAD / beim Bestellen
 machen — das kann Claude headless nicht erledigen.
 
+> 🆕 **r7 (2026-05-31, REVISED durch r10)**: Modifier-Switches SW6-10 als
+> momentary tactile mit Firmware-State + PCA9685 LED-Status. **r10 änderte
+> Switch-Sourcing**: weg von AliExpress mit integrierter LED → hin zu
+> **HX 12x12x7.3TPFT-B** (LCSC C36498966, JLC Extended, plain 4-pin SMD,
+> 29.840 pcs Stock). Separate SMD-0603-LEDs über jedem Button. Custom-Footprint
+> entfällt — Industrie-Standard-Footprint. Siehe r10-Block weiter unten.
+
+> 🆕 **r10 (2026-05-31) — LED-Redesign + Cell-HOLD-Status-LEDs**:
+> 1. **SW6-10 sourcing**: HX 12x12x7.3TPFT-B (C36498966, JLC Extended,
+>    $0.029-0.048 je nach Qty). Full-JLC-assembled, kein User-Supplied mehr.
+> 2. **5× neue SMD-0603-LEDs** (LED11-LED15) über jeder Cell für HOLD-Status —
+>    bei (X=Cell-X, Y=88). Plus 5× LED6-LED10 als separate SMD-0603 über jedem
+>    Modifier-Switch (X=SW-X, Y=60). Alle 10 LEDs an PCA9685 LED0-LED9.
+> 3. **5× neue R_LED11-15** (390 Ω 0603) identisch zu R_LED6-10.
+> 4. **Im KiCad-GUI**: 10× `Device:LED` Symbole + 5 neue R_LED11-15 ergänzen
+>    (Generator-Update in `kicad/generate_kicad_project.py`). PCA9685-Routing:
+>    LED0-LED4 → LED6-LED10, LED5-LED9 → LED11-LED15.
+> 5. **Optional Mechanik**: 10× 3×3 mm Front-Plate-Cutouts ODER 2-mm-Light-Pipes
+>    pro LED — siehe `mechanical_coordinates.md` §4a + §5.
+> 6. **r10-B8 SOURCING-PASS**: HX-Datasheet nicht bei LCSC; entweder
+>    Standard-Footprint `Button_Switch_SMD:SW_SPST_TL3342` (empfohlen, 12×12-
+>    Industrie-Standard) oder 1 Sample-Vermessung @ $0.05.
+
+> 🆕 **r11 (2026-05-31) — Soft-Shutdown (reines Firmware-Contract)**:
+> Long-Press CLEAR (≥3 s) triggert Save-State + Audio-Fade + AMP/MUTE/SHDN-
+> Sequenz + Pico-WFE. Keine Hardware-Änderung. Siehe SPEC §13.
+
+> 🆕 **r7.1 (2026-05-31)** — USB-C-Premium-Upgrade (PCB-Mechanik):
+> Für die Produktions-Charge JAE DX07S016JJ1 oder Amphenol-Equivalent prüfen
+> (≥10000 Cycles vs. ~5000 beim Generic). Sourcing-Pass + JLC-Stock-Verify
+> nötig. Prototyp läuft mit dem aktuellen C165948.
+
+> 🆕 **r9 (2026-05-31, REVISED durch r12)** — Battery-Add (5000 mAh LiPo):
+> 1. **BAT1 LiPo bestellen**: 3.7V 5000 mAh Pouch, Format 9050060 empfohlen
+>    (50×60×14 mm — passt neben Speaker-Cutout) ODER 9050120 falls Speaker-
+>    Cutouts anders gelöst werden. Mit JST PH 2.0 2-pin Stecker.
+> 2. **Mechanik-Entscheidung r9-B5** treffen vor PCB-Layout: kollidiert
+>    9050120 mit linkem Speaker-Cutout — entweder kleinerer Pouch oder
+>    Speaker-Position ändern. Siehe `mechanical_coordinates.md` §7a.
+> 3. **Im KiCad-GUI ein neues Sheet `battery.kicad_sch`** anlegen mit U7
+>    MCP73831, U8 TPS61089, Q1 DMG2305UX, L1 2.2µH, D3 SS34, J9 JST-PH,
+>    plus R21-R24 + 4× Caps + LED_CHRG. Alle MPNs/LCSC siehe SPEC §2.2 BOM-Tabelle.
+> 4. **r9-B6 RESOLVED durch r12**: USB-C-VBUS-Sense final auf MCP-GPA7 mit
+>    10kΩ Series + 100kΩ Pull-Down. Siehe r12-Block unten.
+> 5. **r9-B7 HW-PFAD RESOLVED durch r12**: Volume-Clamp-Algorithmus jetzt voll
+>    spec'd in SPEC §2.2 (Battery-Detection-Sub-Section). Firmware-Commit
+>    nach erstem Audio-Build.
+
+> 🆕 **r12 (2026-05-31) — Battery-Sense-Hardware lock-in (GPIO-Rebalance)**:
+> 1. **GP26 frei** für Battery-Voltage-Sense (ADC0). STATUS_LED1 wandert
+>    weg von GP26 → an PCA9685 LED10 (war reserve). R19 (820Ω) wird entfernt,
+>    neu R_LED_STATUS (390Ω 0603) als Series am LED1.
+> 2. **5 neue passive Bauteile** im KiCad-GUI ergänzen:
+>    - R_BAT_DIV_TOP, R_BAT_DIV_BOT (je 100kΩ 0603) — 2:1 Spannungsteiler VBAT → GP26
+>    - C_BAT_FILT (10nF 0603) — ADC-Glättung am GP26
+>    - R_VBUS_SENSE (10kΩ 0603) — Series VBUS → MCP-GPA7
+>    - R_VBUS_PD (100kΩ 0603) — Pull-Down GPA7 → GND
+> 3. **3 neue Nets** routen: BAT_SENSE (GP26), USB_VBUS_SENSE (GPA7),
+>    STATUS_LED (PCA9685 LED10 → LED1).
+> 4. **MCP-GPA7-Konfig**: Input mit DISABLED internal Pull-Up (sonst wird
+>    der Battery-Mode-Detect verfälscht durch interne 100kΩ-Pull-Up des MCP).
+> 5. **Firmware-Vertrag** (in SPEC §2.2 r12-Sub-Section): Battery-Low-Warning
+>    <3.4V (~10% SoC), Auto-Soft-Shutdown <3.0V (LiPo-Schutz).
+
 Reihenfolge von oben nach unten abarbeiten. **Priorität: Komponenten-
 Vollständigkeit (Abschnitt 0) zuerst.**
 

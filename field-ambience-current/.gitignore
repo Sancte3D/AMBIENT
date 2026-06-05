@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# KiCad-Analyzer-Output (regenerable via kicad-skill, default: nicht tracked)
+kicad/analysis/
