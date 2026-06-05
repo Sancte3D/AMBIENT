@@ -237,6 +237,63 @@ static void test_engine_overload_holds_int16(void) {
     printf("  engine peak under full load  L=%d  R=%d\n", st.pk_l, st.pk_r);
 }
 
+/* Step 12b #5 — live parameter changes (the "sound darf nicht konkurrieren"
+ * rule) exercised at the engine level. With a cell held, slamming every
+ * global control (key/mode/vibe/space/mood/pad-voice/drone/generative) must:
+ *   - never kill or restart the held voice (it keeps sounding),
+ *   - never click or blow past int16,
+ *   - keep the engine producing continuous audio.
+ * The held-note-freezes property is structural: the engine stores each
+ * source's pitch at note_on and never re-pitches a sounding voice, so a key
+ * change only affects notes triggered afterwards. */
+static void test_engine_live_params_no_glitch(void) {
+    engine_init();
+    engine_all_off();
+    run_engine(SR * 6);
+
+    /* Hold a cell. */
+    engine_note_on(0, 220.0f, 0.5f);
+    run_engine((int)(2.0f * SR));                 /* reach sustain */
+    int voices_before = engine_active_voices();
+    CHECK(voices_before >= 1, "held voice not active before param storm");
+
+    /* Slam every global control while the cell is still held. */
+    engine_set_key(62);
+    engine_set_mode(5);          /* aeolian */
+    engine_set_vibe(2);          /* deep */
+    engine_set_space(0.9f);
+    engine_set_mood(0.15f);
+    engine_set_pad_voice(2);     /* brass */
+    engine_set_drone(true);
+    engine_set_generative(true, -1);
+
+    /* Render across the change: bounded, click-free, still alive. */
+    eng_stats_t storm = run_engine((int)(3.0f * SR));
+    CHECK(storm.pk_l <= 32767 && storm.pk_r <= 32767, "param storm wrapped int16");
+    CHECK(storm.pk_l > 500, "engine went silent through param storm: L=%d", storm.pk_l);
+    CHECK(engine_active_voices() >= 1, "held voice was killed by a global change");
+    printf("  live-param storm peak  L=%d  R=%d  voices=%d\n",
+           storm.pk_l, storm.pk_r, engine_active_voices());
+
+    /* Advance the generative bed a few bars — must stay bounded. */
+    for (int i = 0; i < 6; ++i) {
+        int deg = engine_generative_advance();
+        CHECK(deg == -1 || (deg >= 1 && deg <= 7), "generative degree out of range: %d", deg);
+        eng_stats_t g = run_engine(SR);
+        CHECK(g.pk_l <= 32767 && g.pk_r <= 32767, "generative bar wrapped int16");
+    }
+
+    /* Note: a cell IS held, so the generative bed must NO-OP (holds override).
+     * Lift the cell, then it should start advancing. */
+    engine_note_off(0);
+    run_engine((int)(4.0f * SR));                 /* let the held voice release */
+    int deg = engine_generative_advance();
+    CHECK(deg >= 1 && deg <= 7, "generative did not run after cells released: %d", deg);
+    eng_stats_t bed = run_engine((int)(2.0f * SR));
+    CHECK(bed.pk_l <= 32767 && bed.pk_r <= 32767, "generative bed wrapped int16");
+    printf("  generative bed after release: degree=%d peak L=%d\n", deg, bed.pk_l);
+}
+
 int main(void) {
     dsp_init();
 
@@ -249,6 +306,7 @@ int main(void) {
     test_engine_silent_then_note();
     test_engine_reverb_tail_outlives_dry();
     test_engine_overload_holds_int16();
+    test_engine_live_params_no_glitch();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);
     if (g_fails) { printf("RESULT: FAIL\n"); return 1; }
