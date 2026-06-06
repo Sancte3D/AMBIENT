@@ -61,6 +61,11 @@ void oled_pill(int x, int y, int w, int h, uint8_t gs);
  * scale=1 is identical to oled_text. Used for the big value display. */
 void oled_text_scaled(int x, int y, const char *s, uint8_t gs, int scale);
 
+/* Anti-aliased scaled text: the 8x8 glyph is bilinearly upscaled and mapped to
+ * grey levels, so edges are smooth instead of blocky — uses the SSD1322's
+ * 4-bit greyscale. Looks far cleaner than oled_text_scaled at scale ≥ 2. */
+void oled_text_smooth(int x, int y, const char *s, uint8_t gs, int scale);
+
 /* Pixel width of a string when rendered with the given scale. */
 int oled_text_width(const char *s, int scale);
 

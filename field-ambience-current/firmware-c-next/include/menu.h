@@ -79,4 +79,11 @@ int          menu_value_int  (menu_param_t p);   /* continuous → 0..100 % */
  * caller invokes oled_show() afterwards on device). Host-portable. */
 void menu_render(void);
 
+/* Low-level: draw just the bottom position bar for `total` entries with
+ * `active` highlighted. menu_render uses it with the live entry count; future
+ * paged menus (different entry counts per page) and the preview tool call it
+ * directly. Adapts to any total: fits all when possible, else scroll-windows
+ * with edge fade + chevrons. */
+void menu_render_bar_only(int total, int active);
+
 #endif

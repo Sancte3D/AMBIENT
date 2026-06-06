@@ -196,26 +196,68 @@ static void render_battery(void) {
     }
 }
 
-/* Pill row at the bottom. The active slot is wider + bright, others dimmed. */
-static void render_pills(void) {
-    const int N = MP_COUNT;            /* 11 */
-    const int total_w = 240;           /* across the screen, leaving 8 px margin */
-    const int y = 55;
-    const int h = 6;
-    const int gap = 4;
-    /* normal pill width covers the non-active total */
-    const int active_w = 24;
-    int inactive_w = (total_w - active_w - (N - 1) * gap) / (N - 1);
-    if (inactive_w < 8) inactive_w = 8;
-    /* recompute total to centre */
-    int width_used = active_w + (N - 1) * inactive_w + (N - 1) * gap;
-    int x = (OLED_WIDTH - width_used) / 2;
-    for (int i = 0; i < N; ++i) {
-        int w = (i == (int)cur) ? active_w : inactive_w;
-        uint8_t gs = (i == (int)cur) ? GS_ACTIVE : GS_DIM;
-        oled_pill(x, y, w, h, gs);
-        x += w + gap;
+/* Bottom position bar — one segment per setting in the current page. Adapts to
+ * the entry count: if they all fit (with edge margins) they're shown centred;
+ * if there are more than fit, a scroll WINDOW slides with the cursor and the
+ * edges fade + a chevron shows there's more off-screen. The active segment is
+ * elongated + full white, the rest dimmed. */
+#define BAR_MARGIN 16          /* clear gap to the screen edges */
+#define BAR_Y      56
+#define BAR_H      6
+#define BAR_GAP    5
+#define BAR_SEG    8           /* inactive segment width */
+#define BAR_ACT    18          /* active segment width */
+#define BAR_PITCH  (BAR_SEG + BAR_GAP)
+
+static float bar_scroll = 0.0f;  /* eased first-visible index (animates on device) */
+
+static void draw_chevron(int cx, int cy, int dir) {   /* dir −1 = ‹ , +1 = › */
+    for (int i = 0; i < 4; ++i) {
+        oled_pixel(cx + dir * (3 - i), cy - i, GS_MID);
+        oled_pixel(cx + dir * (3 - i), cy + i, GS_MID);
     }
+}
+
+static void render_bar(int n, int active) {
+    if (n < 1) return;
+    int usable = OLED_WIDTH - 2 * BAR_MARGIN;
+
+    /* how many segments fit in the window (1 active + the rest inactive) */
+    int v = n;
+    while (v > 1 && (BAR_ACT + (v - 1) * BAR_PITCH) > usable) --v;
+
+    /* window start so the cursor stays roughly centred, clamped to ends */
+    int first = active - v / 2;
+    if (first < 0) first = 0;
+    if (first + v > n) first = n - v;
+    if (first < 0) first = 0;
+
+    /* ease the visual scroll toward the target window (smooth slide) */
+    bar_scroll += (first - bar_scroll) * 0.4f;
+    if (bar_scroll < first + 0.02f && bar_scroll > first - 0.02f) bar_scroll = first;
+    int slide = (int)((bar_scroll - first) * BAR_PITCH + 0.5f);
+
+    bool more_left  = first > 0;
+    bool more_right = first + v < n;
+
+    int total = BAR_ACT + (v - 1) * BAR_PITCH;
+    int x = (OLED_WIDTH - total) / 2 + slide;
+
+    for (int k = 0; k < v; ++k) {
+        int i = first + k;
+        bool act = (i == active);
+        int w = act ? BAR_ACT : BAR_SEG;
+        uint8_t gs = act ? GS_ACTIVE : GS_DIM;
+        if (k == 0 && more_left)       gs = 2;   /* fade the edge that has more beyond */
+        if (k == v - 1 && more_right)  gs = 2;
+        int yy = act ? BAR_Y - 1 : BAR_Y;
+        int hh = act ? BAR_H + 2 : BAR_H;
+        oled_pill(x, yy, w, hh, gs);
+        x += w + BAR_GAP;
+    }
+
+    if (more_left)  draw_chevron(BAR_MARGIN - 9, BAR_Y + BAR_H / 2, -1);
+    if (more_right) draw_chevron(OLED_WIDTH - BAR_MARGIN + 5, BAR_Y + BAR_H / 2, +1);
 }
 
 /* Big value text, scaled to roughly fill the centre band. Long values shrink. */
@@ -228,7 +270,7 @@ static void render_value(void) {
     int x = (OLED_WIDTH - w) / 2;
     int y = 20;
     uint8_t gs = (mode == MENU_EDIT) ? GS_ACTIVE : GS_MID;
-    oled_text_scaled(x, y, txt, gs, scale);
+    oled_text_smooth(x, y, txt, gs, scale);   /* anti-aliased big value */
 }
 
 void menu_render(void) {
@@ -240,5 +282,7 @@ void menu_render(void) {
 
     render_battery();
     render_value();
-    render_pills();
+    render_bar(MP_COUNT, (int)cur);   /* MP_COUNT is the entry count; bar adapts to any N */
 }
+
+void menu_render_bar_only(int total, int active) { render_bar(total, active); }

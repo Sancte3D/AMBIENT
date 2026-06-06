@@ -97,3 +97,47 @@ int oled_text_width(const char *s, int scale) {
     int n = 0; while (s[n]) ++n;
     return n * 8 * scale;
 }
+
+/* Sample the 8x8 glyph bitmap as a float field (1 = pixel on) with clamping. */
+static float glyph_at(const uint8_t *rows, int gx, int gy) {
+    if (gx < 0) gx = 0;
+    if (gx > 7) gx = 7;
+    if (gy < 0) gy = 0;
+    if (gy > 7) gy = 7;
+    return (rows[gy] & (uint8_t)(0x80u >> gx)) ? 1.0f : 0.0f;
+}
+
+static void blit_glyph_smooth(int x, int y, const uint8_t *rows, uint8_t gs, int scale) {
+    if (!rows) return;
+    int cell = 8 * scale;
+    float inv = 1.0f / (float)scale;
+    for (int ty = 0; ty < cell; ++ty) {
+        /* source-space centre of this output pixel */
+        float sy = ((float)ty + 0.5f) * inv - 0.5f;
+        int   y0 = (int)((sy < 0) ? sy - 1 : sy);
+        float fy = sy - (float)y0;
+        for (int tx = 0; tx < cell; ++tx) {
+            float sx = ((float)tx + 0.5f) * inv - 0.5f;
+            int   x0 = (int)((sx < 0) ? sx - 1 : sx);
+            float fx = sx - (float)x0;
+            /* bilinear blend of the 4 surrounding glyph cells */
+            float a = glyph_at(rows, x0,   y0);
+            float b = glyph_at(rows, x0+1, y0);
+            float c = glyph_at(rows, x0,   y0+1);
+            float d = glyph_at(rows, x0+1, y0+1);
+            float top = a + (b - a) * fx;
+            float bot = c + (d - c) * fx;
+            float cov = top + (bot - top) * fy;        /* 0..1 coverage */
+            if (cov > 0.04f) {
+                int g = (int)((float)gs * cov + 0.5f);
+                if (g > 0) plot(x + tx, y + ty, (uint8_t)g);
+            }
+        }
+    }
+}
+
+void oled_text_smooth(int x, int y, const char *s, uint8_t gs, int scale) {
+    if (scale < 2) { oled_text_scaled(x, y, s, gs, scale < 1 ? 1 : scale); return; }
+    int step = 8 * scale;
+    while (*s) { blit_glyph_smooth(x, y, font_glyph(*s), gs, scale); x += step; ++s; }
+}
