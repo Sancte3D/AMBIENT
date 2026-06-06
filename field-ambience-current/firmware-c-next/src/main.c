@@ -34,6 +34,7 @@
 #include "dsp.h"
 #include "engine.h"
 #include "brain.h"
+#include "midi.h"
 
 #define PIN_STATUS_LED  26
 
@@ -159,6 +160,8 @@ int main(void) {
     dsp_init();
     brain_init();
     engine_init();
+    midi_init();
+    midi_hw_init();          /* PIO-UART MIDI Out on GP21 (TRS Type A) */
     audio_set_renderer(engine_render);
 
     if (!mcp_ok) {
@@ -193,10 +196,14 @@ int main(void) {
 
 #if DEMO_AUTOPLAY
         if (absolute_time_diff_us(get_absolute_time(), next_demo_at) <= 0) {
-            if (demo_prev_cell >= 0) engine_note_off((uint8_t)demo_prev_cell);
+            if (demo_prev_cell >= 0) {
+                engine_note_off((uint8_t)demo_prev_cell);
+                midi_send_note_off((uint8_t)brain_cell_root(demo_prev_cell));
+            }
             int cell = DEMO_SEQ[demo_step];
             int midi = brain_cell_root(cell);
             engine_note_on((uint8_t)cell, dsp_midi_to_hz((float)midi), CELL_VOICE_AMP);
+            midi_send_note_on((uint8_t)midi, 100);
             printf("DEMO step %d -> cell %d (degree %d, midi %d)\n",
                    demo_step, cell + 1, cell + 1, midi);
             demo_prev_cell = cell;
@@ -218,9 +225,11 @@ int main(void) {
                 if (now_pressed && !was_pressed) {
                     int midi = brain_cell_root(c);
                     engine_note_on((uint8_t)c, dsp_midi_to_hz((float)midi), CELL_VOICE_AMP);
+                    midi_send_note_on((uint8_t)midi, 100);   /* "thinking controller" → MIDI out */
                     printf("cell %d ON  (degree %d, midi %d)\n", c + 1, c + 1, midi);
                 } else if (!now_pressed && was_pressed) {
                     engine_note_off((uint8_t)c);
+                    midi_send_note_off((uint8_t)brain_cell_root(c));
                     printf("cell %d OFF\n", c + 1);
                 }
             }
@@ -263,6 +272,8 @@ int main(void) {
                    (unsigned long)hb_count++);
             next_hb_at = make_timeout_time_ms(2000);
         }
+
+        midi_hw_pump();  /* drain queued MIDI bytes into the PIO-UART (non-blocking) */
 
         sleep_ms(20);   /* keep encoder/MCP latency under a frame; 1 kHz sampling runs on the timer */
     }

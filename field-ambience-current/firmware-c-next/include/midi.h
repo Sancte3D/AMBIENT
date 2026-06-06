@@ -55,4 +55,11 @@ int midi_pending(void);
  * by midi_init.) Lets the UI flag a problem rather than silently glitch. */
 bool midi_overflowed(void);
 
+/* --- Device-only hardware layer (midi_pio.c, Pico SDK build) ----------------
+ * Not compiled by the host tests. midi_hw_init sets up the PIO-UART on GP21 at
+ * 31250 baud; midi_hw_pump drains the FIFO into the PIO TX FIFO and must be
+ * called frequently from the main loop (it never blocks). */
+void midi_hw_init(void);
+void midi_hw_pump(void);
+
 #endif

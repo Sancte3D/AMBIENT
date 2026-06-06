@@ -44,6 +44,11 @@ add_executable(field_ambience_native
     src/reverb.c    # Step 11: famReverbMaster (Freeverb-style algorithmic)
     src/engine.c    # Step 11: mix-bus (pad+texture+bass → dry+send, reverb, clip)
     src/brain.c     # Step 12a: harmonic brain (cell → scale/mode/family pitch)
+    src/drone.c          # Step 12b #2: root drone (portamento)
+    src/reverb_presets.c # Step 12b #1: per-mode/vibe reverb presets
+    src/generative.c     # Step 12b #4: Markov / fixed progression sequencer
+    src/midi.c           # Step 12b #6: MIDI message builders + FIFO
+    src/midi_pio.c       # Step 12b #6: PIO-UART 31250 baud on GP21 (device-only)
 )
 
 target_include_directories(field_ambience_native PRIVATE
@@ -54,6 +59,11 @@ target_include_directories(field_ambience_native PRIVATE
 # Step 5: assemble the I²S PIO program at build time.
 pico_generate_pio_header(field_ambience_native
     ${CMAKE_CURRENT_SOURCE_DIR}/src/audio_i2s.pio
+)
+
+# Step 12b #6: assemble the MIDI-UART-TX PIO program (31250 baud on GP21).
+pico_generate_pio_header(field_ambience_native
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/midi_tx.pio
 )
 
 target_link_libraries(field_ambience_native
