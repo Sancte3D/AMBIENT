@@ -48,31 +48,43 @@ static void write_wav_header(FILE *f, uint32_t nframes) {
     fwrite("data", 1, 4, f); put_u32(f, data_bytes);
 }
 
-/* A simple control-event timeline so the render shows the instrument's
- * character: texture bloom, cells played as a gentle phrase, the drone, and
- * the generative bed. Times are in seconds. */
+/* A control timeline that plays the way you'd ACTUALLY play this instrument:
+ * slow, sustained, overlapping. Cells are tapped and left to ring (0.8 s
+ * bloom, 3 s release), the next is added before the last decays (ambient
+ * layering), a held triad sits under a drone pedal, the pad voice and mode
+ * shift once mid-performance, then everything is released into a long reverb
+ * tail. No hammering, never more than three cells at once — realistic
+ * polyphony. Cell amplitude is the firmware's real CELL_VOICE_AMP (0.12). */
+#define CELL_AMP 0.12f
 typedef struct { float t; int kind; int a; int b; } evt_t;
-enum { EV_CELL_ON, EV_CELL_OFF, EV_TEXTURE, EV_DRONE, EV_GEN, EV_GEN_STEP, EV_VOICE, EV_KEY };
+enum { EV_CELL_ON, EV_CELL_OFF, EV_TEXTURE, EV_DRONE, EV_GEN, EV_GEN_STEP,
+       EV_VOICE, EV_KEY, EV_MODE };
 
 static const evt_t TIMELINE[] = {
-    { 0.0f,  EV_TEXTURE, 20, 0 },     /* texture 0.20 — the ambient bed */
-    { 2.0f,  EV_CELL_ON,  0, 0 },     /* phrase: I */
-    { 5.0f,  EV_CELL_ON,  2, 0 },     /* + III on top */
-    { 8.0f,  EV_CELL_OFF, 0, 0 },
-    { 8.0f,  EV_CELL_ON,  3, 0 },     /* IV */
-    { 11.0f, EV_CELL_OFF, 2, 0 },
-    { 11.0f, EV_CELL_ON,  4, 0 },     /* V */
-    { 12.0f, EV_DRONE,    1, 0 },     /* bring in the root drone */
-    { 14.0f, EV_CELL_OFF, 3, 0 },
-    { 14.0f, EV_CELL_OFF, 4, 0 },
-    { 15.0f, EV_VOICE,    1, 0 },     /* glide pad voice warm→strings */
-    { 16.0f, EV_CELL_ON,  1, 0 },     /* II */
-    { 19.0f, EV_CELL_OFF, 1, 0 },
-    { 20.0f, EV_DRONE,    0, 0 },     /* drone out */
-    { 30.0f, EV_TEXTURE,  0, 0 },     /* fade texture for the tail */
+    { 0.0f,  EV_TEXTURE, 20, 0 },     /* device idles with the bed (firmware default) */
+
+    { 3.0f,  EV_CELL_ON,  0, 0 },     /* tap I, let it bloom + ring */
+    { 8.0f,  EV_CELL_ON,  3, 0 },     /* add IV while I still rings (overlap) */
+    { 12.0f, EV_CELL_OFF, 0, 0 },     /* release I, IV decays on */
+    { 13.0f, EV_CELL_ON,  4, 0 },     /* V — gentle voice leading */
+    { 14.0f, EV_DRONE,    1, 0 },     /* bring in the root drone pedal */
+    { 17.0f, EV_CELL_OFF, 3, 0 },
+    { 18.0f, EV_CELL_OFF, 4, 0 },     /* let it open up over the drone + tail */
+
+    { 23.0f, EV_CELL_ON,  0, 0 },     /* held triad: I + III + V together */
+    { 23.4f, EV_CELL_ON,  2, 0 },
+    { 23.8f, EV_CELL_ON,  4, 0 },
+    { 30.0f, EV_VOICE,    1, 0 },     /* glide the pad voice warm → strings */
+    { 35.0f, EV_MODE,     5, 0 },     /* colour shift: ionian → aeolian (reverb + harmony) */
+    { 38.0f, EV_CELL_OFF, 0, 0 },     /* release the triad, staggered */
+    { 38.6f, EV_CELL_OFF, 2, 0 },
+    { 39.2f, EV_CELL_OFF, 4, 0 },
+
+    { 42.0f, EV_DRONE,    0, 0 },     /* drone out */
+    { 44.0f, EV_TEXTURE,  0, 0 },     /* fade the bed; let the reverb ring out */
 };
 #define N_EVENTS (sizeof TIMELINE / sizeof TIMELINE[0])
-#define TOTAL_SECONDS 34
+#define TOTAL_SECONDS 52
 
 int main(int argc, char **argv) {
     const char *path = (argc > 1) ? argv[1] : "field_ambience.wav";
@@ -101,7 +113,7 @@ int main(int argc, char **argv) {
             switch (e->kind) {
                 case EV_CELL_ON: {
                     int midi = brain_cell_root(e->a);
-                    engine_note_on((uint8_t)e->a, dsp_midi_to_hz((float)midi), 0.10f);
+                    engine_note_on((uint8_t)e->a, dsp_midi_to_hz((float)midi), CELL_AMP);
                 } break;
                 case EV_CELL_OFF: engine_note_off((uint8_t)e->a); break;
                 case EV_TEXTURE:  engine_set_texture(e->a / 100.0f); break;
@@ -110,6 +122,7 @@ int main(int argc, char **argv) {
                     engine_set_drone(e->a != 0);
                 } break;
                 case EV_VOICE:    engine_set_pad_voice(e->a); break;
+                case EV_MODE:     engine_set_mode(e->a); break;
                 case EV_GEN:      engine_set_generative(e->a != 0, e->b); break;
                 case EV_KEY:      engine_set_key(e->a); break;
                 default: break;
