@@ -10,7 +10,7 @@
 
 #include "menu.h"
 #include "oled.h"
-#include "vfont.h"
+#include "baked_font.h"
 #include "battery.h"
 
 #include <stdio.h>
@@ -18,19 +18,17 @@
 
 /* --- value spaces ----------------------------------------------------- */
 
-/* All UPPER-CASE: starter font has no lowercase yet, and synth UIs read fine
- * in caps anyway. # is the sharp glyph added in font_8x8.c. */
+/* Helvetica Neue is baked with full case, so values use clean Title Case. */
 static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
 static const char * const MODE_NAMES[6] = {
-    "IONIAN","DORIAN","PHRYG","LYDIAN","MIXO","AEOLIAN"
+    "Ionian","Dorian","Phrygian","Lydian","Mixolyd.","Aeolian"
 };
-static const char * const VIBE_NAMES[4]  = { "WARM","BRIGHT","DEEP","FLOATY" };
-static const char * const VOICE_NAMES[3] = { "WARM","STRINGS","BRASS" };
-/* Generative: 0 = off, 1..5 = fixed PROGRESSIONS, 6 = Markov auto. Roman
- * numerals stay readable in caps too. */
-static const char * const GEN_NAMES[7]  = { "OFF","I-IV","I-V-VI-IV","I-IV-V-I","I-VI-III-VII","I-IV-VI-V","MARKOV" };
+static const char * const VIBE_NAMES[4]  = { "Warm","Bright","Deep","Floating" };
+static const char * const VOICE_NAMES[3] = { "Warm","Strings","Brass" };
+/* Generative: 0 = off, 1..5 = fixed PROGRESSIONS, 6 = Markov auto. */
+static const char * const GEN_NAMES[7]  = { "Off","I-IV","I-V-vi-IV","I-IV-V-I","I-vi-iii-VII","I-IV-vi-V","Markov" };
 
 /* --- live state ------------------------------------------------------- */
 
@@ -88,7 +86,7 @@ menu_mode_t  menu_mode(void)    { return mode; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "KEY","MODE","VIBE","VOICE","DRONE","GEN","TEXTURE","BASS","SPACE","MOOD","VOL"
+        "Key","Mode","Vibe","Voice","Drone","Gen","Texture","Bass","Space","Mood","Vol"
     };
     return LABELS[cur];
 }
@@ -123,7 +121,7 @@ const char *menu_current_value_text(void) {
         case MP_MODE:       return MODE_NAMES[mode_i];
         case MP_VIBE:       return VIBE_NAMES[vibe_i];
         case MP_VOICE:      return VOICE_NAMES[voice_i];
-        case MP_DRONE:      return drone ? "ON" : "OFF";
+        case MP_DRONE:      return drone ? "On" : "Off";
         case MP_GENERATIVE: return GEN_NAMES[gen_i];
         case MP_TEXTURE:    snprintf(buf, sizeof buf, "%d%%", texture); return buf;
         case MP_BASS:       snprintf(buf, sizeof buf, "%d%%", bass);    return buf;
@@ -260,25 +258,25 @@ static void render_bar(int n, int active) {
     if (more_right) draw_chevron(OLED_WIDTH - BAR_MARGIN + 5, BAR_Y + BAR_H / 2, +1);
 }
 
-/* Big value, vector font: pick the largest cap height that fits ~232 px wide,
- * crisp + anti-aliased at any size. */
+/* Big value in Helvetica Neue Light. Use the 40 px face, drop to the 24 px
+ * face if the word is too wide (e.g. "Floating"/"Strings"). */
 static void render_value(void) {
     const char *txt = menu_current_value_text();
-    int h = 34;
-    while (h > 12 && vfont_width(txt, h) > 232) h -= 2;
-    int w = vfont_width(txt, h);
+    uint8_t gs = (mode == MENU_EDIT) ? GS_ACTIVE : 11;
+    const bakedfont_t *f = &font_hn_light40;
+    if (bfont_width(f, txt) > 236) f = &font_hn_light24;
+    int w = bfont_width(f, txt);
     int x = (OLED_WIDTH - w) / 2;
-    int y = 18 + (34 - h) / 2;                /* keep vertically centred-ish */
-    uint8_t gs = (mode == MENU_EDIT) ? GS_ACTIVE : GS_MID;
-    vfont_draw(x, y, txt, h, gs);
+    int y = (OLED_HEIGHT - (int)f->line) / 2 + 2;   /* vertically centred */
+    bfont_draw(f, x, y, txt, gs);
 }
 
 void menu_render(void) {
     oled_fill(GS_BG);
 
-    /* Label top-left, slightly dim while editing so the value pops. */
-    uint8_t lbl_gs = (mode == MENU_EDIT) ? GS_DIM : GS_ACTIVE;
-    oled_text(8, 6, menu_current_label(), lbl_gs);
+    /* Label top-left in Helvetica Neue Thin, slightly dim while editing. */
+    uint8_t lbl_gs = (mode == MENU_EDIT) ? 6 : GS_ACTIVE;
+    bfont_draw(&font_hn_thin14, 8, 3, menu_current_label(), lbl_gs);
 
     render_battery();
     render_value();

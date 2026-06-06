@@ -21,3 +21,9 @@ Makefile
 *.swp
 *.swo
 .DS_Store
+
+# Proprietary fonts: OTF/TTF source files are NOT committed (Helvetica Neue is
+# licensed). The baked glyph tables (src/baked_font_data.c) are generated from
+# user-supplied OTFs via tools/generate_fonts.py.
+*.otf
+*.ttf

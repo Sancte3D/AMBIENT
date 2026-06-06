@@ -4,7 +4,7 @@
 
 #include "menu.h"
 #include "battery.h"
-#include "vfont.h"
+#include "baked_font.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,9 +120,9 @@ static void test_drone_toggle(void) {
     for (int i = 0; i < (int)MP_DRONE; ++i) menu_rotate(1);
     menu_push();
     menu_rotate(+1);
-    CHECK(st.drone_on == 1 && strcmp(menu_current_value_text(),"ON")==0, "drone on");
+    CHECK(st.drone_on == 1 && strcmp(menu_current_value_text(),"On")==0, "drone on");
     menu_rotate(+1);
-    CHECK(st.drone_on == 0 && strcmp(menu_current_value_text(),"OFF")==0, "drone off");
+    CHECK(st.drone_on == 0 && strcmp(menu_current_value_text(),"Off")==0, "drone off");
 }
 
 /* --- battery curve --- */
@@ -146,20 +146,20 @@ static void test_battery_curve(void) {
     }
 }
 
-static void test_vfont_width(void) {
-    /* empty string = 0; non-empty > 0; width grows with chars and scale. */
-    CHECK(vfont_width("", 30) == 0, "empty width != 0");
-    int wc = vfont_width("C", 30);
+static void test_bfont_width(void) {
+    /* empty = 0; non-empty > 0; longer wider; the 40px face wider than 24px. */
+    CHECK(bfont_width(&font_hn_light40, "") == 0, "empty width != 0");
+    int wc = bfont_width(&font_hn_light40, "C");
     CHECK(wc > 0, "single glyph width not positive: %d", wc);
-    CHECK(vfont_width("CC", 30) > wc, "two glyphs not wider than one");
-    CHECK(vfont_width("C", 60) > vfont_width("C", 30), "bigger height not wider");
-    /* lowercase falls back to uppercase → same width */
-    CHECK(vfont_width("abc", 30) == vfont_width("ABC", 30), "case fallback width mismatch");
+    CHECK(bfont_width(&font_hn_light40, "CC") > wc, "two glyphs not wider than one");
+    CHECK(bfont_width(&font_hn_light40, "Lydian") > bfont_width(&font_hn_light24, "Lydian"),
+          "40px face not wider than 24px");
+    CHECK(font_hn_thin14.ascent > 0 && font_hn_light40.ascent > 0, "fonts not initialised");
 }
 
 int main(void) {
     printf("== menu / battery (step12b #7) ==\n");
-    test_vfont_width();
+    test_bfont_width();
     test_browse_navigates_through_all_params();
     test_push_toggles_mode();
     test_edit_key_fires_callback_and_cycles_12();

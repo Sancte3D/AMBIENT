@@ -50,7 +50,8 @@ add_executable(field_ambience_native
     src/midi.c           # Step 12b #6: MIDI message builders + FIFO
     src/midi_pio.c       # Step 12b #6: PIO-UART 31250 baud on GP21 (device-only)
     src/oled_draw.c      # Step 12b #7: framebuffer draw primitives (AA rrect)
-    src/vfont.c          # Step 12b #7: SDF vector font (crisp big values)
+    src/baked_font.c     # Step 12b #7: Helvetica Neue baked-glyph renderer
+    src/baked_font_data.c# Step 12b #7: generated HN Light/Thin glyph tables
     src/battery.c        # Step 12b #7: LiPo voltage→% curve
     src/menu.c           # Step 12b #7: menu state machine + render
 )
