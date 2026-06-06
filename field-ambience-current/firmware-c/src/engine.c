@@ -62,6 +62,23 @@ static float reverb_size, reverb_damp;        /* cached, so the two setters
                                                   can change one independently */
 static const float SMOOTH_COEF = 0.05f;       /* per-block, ~120 ms time-const */
 
+/* Master stage (hörtest fix: earrape/brummt). DC blocker (~35 Hz HP) removes
+ * DC + subsonic rumble from the noise bed / bass / reverb feedback; a master
+ * volume gives headroom; a soft limiter is LINEAR below the knee and only
+ * rounds true peaks (the old tanf() distorted everything = the harshness). */
+#define DC_R 0.995f
+static float dc_x1L, dc_y1L, dc_x1R, dc_y1R;
+static float master_vol_cur, master_vol_tgt;
+
+static inline float soft_limit(float x) {
+    const float k = 0.75f;
+    float a = x < 0.0f ? -x : x;
+    if (a <= k) return x;
+    float over = a - k;
+    float comp = k + (1.0f - k) * (over / (over + (1.0f - k)));
+    return x < 0.0f ? -comp : comp;
+}
+
 void engine_init(void) {
     pad_init();
     reverb_init();
@@ -82,6 +99,9 @@ void engine_init(void) {
     texture_set_amount(0.0f);
     bass_set_depth(0.5f);
     memset(active_freq, 0, sizeof active_freq);
+
+    dc_x1L = dc_y1L = dc_x1R = dc_y1R = 0.0f;
+    master_vol_cur = master_vol_tgt = 0.6f;
 }
 
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
@@ -111,6 +131,7 @@ void engine_set_reverb_damp(float v) {
 void engine_set_reverb_drive(float v) { reverb_set_drive(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_wet_amp(float v)      { wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_brightness(float hz)  { pad_set_brightness(hz); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
@@ -136,15 +157,21 @@ void engine_render(int16_t *buf, int frames) {
     /* Reverb writes (does not add) wet from send. */
     reverb_render(sendL, sendR, wetL, wetR, frames);
 
-    /* Sum + master soft-clip → int16. */
+    /* Master: sum → DC-block → volume → soft limit → int16. */
+    master_vol_cur += SMOOTH_COEF * (master_vol_tgt - master_vol_cur);
     const float wa = wet_amp_cur;
+    const float mv = master_vol_cur;
     for (int n = 0; n < frames; ++n) {
         float L = dryL[n] + wetL[n] * wa;
         float R = dryR[n] + wetR[n] * wa;
-        L = tanhf(L * 0.9f);
-        R = tanhf(R * 0.9f);
-        buf[n * 2 + 0] = (int16_t)(L * 32767.0f);
-        buf[n * 2 + 1] = (int16_t)(R * 32767.0f);
+
+        float yL = L - dc_x1L + DC_R * dc_y1L; dc_x1L = L; dc_y1L = yL;
+        float yR = R - dc_x1R + DC_R * dc_y1R; dc_x1R = R; dc_y1R = yR;
+
+        yL = soft_limit(yL * mv);
+        yR = soft_limit(yR * mv);
+        buf[n * 2 + 0] = (int16_t)(yL * 32767.0f);
+        buf[n * 2 + 1] = (int16_t)(yR * 32767.0f);
     }
 }
 

@@ -294,6 +294,54 @@ static void test_engine_live_params_no_glitch(void) {
     printf("  generative bed after release: degree=%d peak L=%d\n", deg, bed.pk_l);
 }
 
+/* Master stage regression (fixes the listening-test earrape/brummt):
+ * 1. the output must be DC-free (mean ≈ 0) even with the bass + brown-noise
+ *    texture running — the one-pole DC blocker guarantees this.
+ * 2. master volume must scale the level (0 → silent, 1 → louder than 0.3).
+ * 3. output stays int16-bounded. */
+static void test_engine_master_clean(void) {
+    enum { N = 256 };
+    int16_t buf[N * 2];
+    engine_init();
+    engine_set_texture(0.2f);                 /* the noise bed that builds rumble */
+    engine_note_on(0, 130.81f, 0.5f);         /* C3 → bass goes low */
+    engine_note_on(2, 196.0f, 0.5f);
+
+    /* settle ~3 s */
+    for (int i = 0; i < 3 * SR / N; ++i) engine_render(buf, N);
+
+    /* Measure DC (mean) + peak over 2 s. */
+    double sum = 0; long cnt = 0; int peak = 0;
+    for (int i = 0; i < 2 * SR / N; ++i) {
+        engine_render(buf, N);
+        for (int k = 0; k < N; ++k) {
+            sum += buf[k*2]; ++cnt;
+            int a = abs(buf[k*2]); if (a > peak) peak = a;
+        }
+    }
+    double mean = sum / (double)cnt;
+    printf("  master: DC mean=%.1f LSB  peak=%d\n", mean, peak);
+    CHECK(fabs(mean) < 60.0, "master output has DC offset: mean=%.1f LSB", mean);
+    CHECK(peak <= 32767, "master clipped int16");
+    CHECK(peak > 500, "master unexpectedly silent: peak=%d", peak);
+
+    /* Volume scaling: 0 → silence, 1 → louder. */
+    engine_set_master_volume(0.0f);
+    for (int i = 0; i < SR / N; ++i) engine_render(buf, N);   /* smooth down */
+    int pk0 = 0;
+    for (int i = 0; i < SR / N; ++i) { engine_render(buf, N);
+        for (int k = 0; k < N; ++k) { int a = abs(buf[k*2]); if (a > pk0) pk0 = a; } }
+    CHECK(pk0 < 50, "master volume 0 not silent: peak=%d", pk0);
+
+    engine_set_master_volume(1.0f);
+    for (int i = 0; i < SR / N; ++i) engine_render(buf, N);   /* smooth up */
+    int pk1 = 0;
+    for (int i = 0; i < SR / N; ++i) { engine_render(buf, N);
+        for (int k = 0; k < N; ++k) { int a = abs(buf[k*2]); if (a > pk1) pk1 = a; } }
+    CHECK(pk1 > pk0, "master volume 1 not louder than 0: %d vs %d", pk1, pk0);
+    printf("  master volume scaling: vol0 peak=%d  vol1 peak=%d\n", pk0, pk1);
+}
+
 int main(void) {
     dsp_init();
 
@@ -307,6 +355,7 @@ int main(void) {
     test_engine_reverb_tail_outlives_dry();
     test_engine_overload_holds_int16();
     test_engine_live_params_no_glitch();
+    test_engine_master_clean();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);
     if (g_fails) { printf("RESULT: FAIL\n"); return 1; }
