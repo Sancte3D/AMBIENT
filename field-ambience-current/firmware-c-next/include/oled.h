@@ -43,4 +43,29 @@ void oled_text(int x, int y, const char *s, uint8_t gs);
 /* Stream the framebuffer to the panel (column + row window then RAM write). */
 void oled_show(void);
 
+/* --- Step 12b #7: lower-level draw primitives (used by the menu) ----------
+ * All write to the in-RAM framebuffer; they don't push to the panel. Bounds
+ * are clipped automatically — out-of-screen calls are safe no-ops. */
+
+/* Set a single pixel to grey level gs (0..15). */
+void oled_pixel(int x, int y, uint8_t gs);
+
+/* Filled rectangle. */
+void oled_rect_fill(int x, int y, int w, int h, uint8_t gs);
+
+/* Filled rounded-end pill (horizontal): a w×h rect with semicircular ends —
+ * the pill indicator in the menu. h is the diameter at the ends. */
+void oled_pill(int x, int y, int w, int h, uint8_t gs);
+
+/* Scaled bitmap font: draws each 8x8 glyph as scale×scale pixel blocks.
+ * scale=1 is identical to oled_text. Used for the big value display. */
+void oled_text_scaled(int x, int y, const char *s, uint8_t gs, int scale);
+
+/* Pixel width of a string when rendered with the given scale. */
+int oled_text_width(const char *s, int scale);
+
+/* Expose the framebuffer for host-side rendering (preview PNG). NOT used on
+ * device — there oled_show() reads it directly. */
+const uint8_t *oled_framebuffer(void);
+
 #endif

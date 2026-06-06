@@ -29,11 +29,10 @@
 #define OLED_ROW_START 0x00
 #define OLED_ROW_END   0x3F
 
-/* In-RAM framebuffer; nothing reaches the panel until oled_show(). */
-static uint8_t fb[OLED_FB_SIZE];
-
-/* The starter font lives in font_8x8.c. */
-extern const uint8_t *font_glyph(char c);
+/* Framebuffer + all draw primitives (oled_fill, oled_pixel, oled_rect_fill,
+ * oled_pill, oled_text, oled_text_scaled, oled_text_width, oled_framebuffer)
+ * live in src/oled_draw.c so they can be host-rendered without the SDK.
+ * This file owns SPI + reset + init + show only. */
 
 
 /* --- low-level: CS-/DC-managed single-byte command and bulk data --- */
@@ -112,20 +111,16 @@ void oled_init(void) {
     run_init_sequence();
 }
 
-void oled_fill(uint8_t gs) {
-    /* GS4_HMSB: 2 px per byte, both nibbles = gs. */
-    uint8_t v = (uint8_t)(((gs & 0x0F) << 4) | (gs & 0x0F));
-    memset(fb, v, sizeof fb);
-}
-
 void oled_show(void) {
+    const uint8_t *fb = oled_framebuffer();
     cmd(0x15); { const uint8_t d[2] = {OLED_COL_START, OLED_COL_END}; data(d, 2); }
     cmd(0x75); { const uint8_t d[2] = {OLED_ROW_START, OLED_ROW_END}; data(d, 2); }
     cmd(0x5C);                                              /* write RAM */
-    data(fb, sizeof fb);
+    data(fb, OLED_FB_SIZE);
 }
 
-/* --- text rendering --- */
+/* Draw primitives are in src/oled_draw.c (host-portable). End of file. */
+#if 0
 
 static void plot(int x, int y, uint8_t gs) {
     if ((unsigned)x >= OLED_WIDTH || (unsigned)y >= OLED_HEIGHT) return;
@@ -157,3 +152,4 @@ void oled_text(int x, int y, const char *s, uint8_t gs) {
         ++s;
     }
 }
+#endif
