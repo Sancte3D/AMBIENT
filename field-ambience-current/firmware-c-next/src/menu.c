@@ -10,6 +10,7 @@
 
 #include "menu.h"
 #include "oled.h"
+#include "vfont.h"
 #include "battery.h"
 
 #include <stdio.h>
@@ -174,25 +175,24 @@ void menu_rotate(int delta) {
  * corner (matches the screenshot mockup). Width depends on charge. USB present
  * draws a different style (filled + small "+"). */
 static void render_battery(void) {
-    const int x = 220, y = 6, w = 28, h = 12;
-    /* outline */
-    oled_rect_fill(x,            y,         w,     1,    GS_MID);
-    oled_rect_fill(x,            y + h - 1, w,     1,    GS_MID);
-    oled_rect_fill(x,            y,         1,     h,    GS_MID);
-    oled_rect_fill(x + w - 1,    y,         1,     h,    GS_MID);
-    /* small +tip on the right */
-    oled_rect_fill(x + w,        y + 3,     2,     6,    GS_MID);
+    const int x = 216, y = 5, w = 32, h = 14, r = 5;   /* rounded pill body */
+    /* rounded outline + nub */
+    oled_rrect_stroke(x, y, w, h, r, 2, GS_MID);
+    oled_rrect_fill(x + w + 1, y + 4, 3, h - 8, 1, GS_MID);   /* + terminal */
 
     int pct = battery_pct();
-    int fill_w = ((w - 4) * pct + 50) / 100;
-    if (fill_w < 0) fill_w = 0;
-    if (fill_w > w - 4) fill_w = w - 4;
-    oled_rect_fill(x + 2, y + 2, fill_w, h - 4, battery_usb_present() ? GS_ACTIVE : GS_MID);
+    int inner_max = w - 8;
+    int fill_w = (inner_max * pct + 50) / 100;
+    if (fill_w < 2 && pct > 0) fill_w = 2;
+    if (fill_w > inner_max) fill_w = inner_max;
+    if (fill_w > 0)
+        oled_rrect_fill(x + 4, y + 4, fill_w, h - 8, 2,
+                        battery_usb_present() ? GS_ACTIVE : GS_MID);
 
     if (battery_usb_present()) {
-        /* small "+" inside */
-        oled_rect_fill(x + 12, y + 5, 4, 2, GS_BG);
-        oled_rect_fill(x + 13, y + 4, 2, 4, GS_BG);
+        /* charging bolt: a small white notch over the fill */
+        int bx = x + w / 2;
+        oled_rrect_fill(bx - 1, y + 3, 3, h - 6, 1, GS_ACTIVE);
     }
 }
 
@@ -260,17 +260,17 @@ static void render_bar(int n, int active) {
     if (more_right) draw_chevron(OLED_WIDTH - BAR_MARGIN + 5, BAR_Y + BAR_H / 2, +1);
 }
 
-/* Big value text, scaled to roughly fill the centre band. Long values shrink. */
+/* Big value, vector font: pick the largest cap height that fits ~232 px wide,
+ * crisp + anti-aliased at any size. */
 static void render_value(void) {
     const char *txt = menu_current_value_text();
-    /* Pick the largest scale that still fits inside ~232 px wide. */
-    int scale = 4;
-    while (scale > 1 && oled_text_width(txt, scale) > 232) --scale;
-    int w = oled_text_width(txt, scale);
+    int h = 34;
+    while (h > 12 && vfont_width(txt, h) > 232) h -= 2;
+    int w = vfont_width(txt, h);
     int x = (OLED_WIDTH - w) / 2;
-    int y = 20;
+    int y = 18 + (34 - h) / 2;                /* keep vertically centred-ish */
     uint8_t gs = (mode == MENU_EDIT) ? GS_ACTIVE : GS_MID;
-    oled_text_smooth(x, y, txt, gs, scale);   /* anti-aliased big value */
+    vfont_draw(x, y, txt, h, gs);
 }
 
 void menu_render(void) {

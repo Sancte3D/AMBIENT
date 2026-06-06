@@ -49,6 +49,10 @@ add_executable(field_ambience_native
     src/generative.c     # Step 12b #4: Markov / fixed progression sequencer
     src/midi.c           # Step 12b #6: MIDI message builders + FIFO
     src/midi_pio.c       # Step 12b #6: PIO-UART 31250 baud on GP21 (device-only)
+    src/oled_draw.c      # Step 12b #7: framebuffer draw primitives (AA rrect)
+    src/vfont.c          # Step 12b #7: SDF vector font (crisp big values)
+    src/battery.c        # Step 12b #7: LiPo voltage→% curve
+    src/menu.c           # Step 12b #7: menu state machine + render
 )
 
 target_include_directories(field_ambience_native PRIVATE

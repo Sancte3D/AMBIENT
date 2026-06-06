@@ -4,6 +4,7 @@
 
 #include "menu.h"
 #include "battery.h"
+#include "vfont.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,8 +146,20 @@ static void test_battery_curve(void) {
     }
 }
 
+static void test_vfont_width(void) {
+    /* empty string = 0; non-empty > 0; width grows with chars and scale. */
+    CHECK(vfont_width("", 30) == 0, "empty width != 0");
+    int wc = vfont_width("C", 30);
+    CHECK(wc > 0, "single glyph width not positive: %d", wc);
+    CHECK(vfont_width("CC", 30) > wc, "two glyphs not wider than one");
+    CHECK(vfont_width("C", 60) > vfont_width("C", 30), "bigger height not wider");
+    /* lowercase falls back to uppercase → same width */
+    CHECK(vfont_width("abc", 30) == vfont_width("ABC", 30), "case fallback width mismatch");
+}
+
 int main(void) {
     printf("== menu / battery (step12b #7) ==\n");
+    test_vfont_width();
     test_browse_navigates_through_all_params();
     test_push_toggles_mode();
     test_edit_key_fires_callback_and_cycles_12();

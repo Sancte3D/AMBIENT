@@ -11,6 +11,7 @@
 
 #include "oled.h"
 #include <string.h>
+#include <math.h>
 
 static uint8_t fb[OLED_FB_SIZE];
 
@@ -33,6 +34,65 @@ static inline void plot(int x, int y, uint8_t gs) {
 
 void oled_pixel(int x, int y, uint8_t gs) { plot(x, y, gs); }
 
+/* Max-blend a pixel (keep the brighter) — for anti-aliased compositing. */
+static inline void plot_max(int x, int y, uint8_t gs) {
+    if ((unsigned)x >= OLED_WIDTH || (unsigned)y >= OLED_HEIGHT) return;
+    int idx = (y * OLED_WIDTH + x) >> 1;
+    uint8_t cur = (x & 1) ? (fb[idx] & 0x0F) : (fb[idx] >> 4);
+    if ((gs & 0x0F) <= cur) return;
+    plot(x, y, gs);
+}
+void oled_pixel_max(int x, int y, uint8_t gs) { plot_max(x, y, gs); }
+
+/* Signed distance from point (px,py) to a rounded rect centred at (cx,cy) with
+ * half-extents (hx,hy) and corner radius r. <0 inside. */
+static float sdf_rrect(float px, float py, float cx, float cy,
+                       float hx, float hy, float r) {
+    float qx = fabsf(px - cx) - (hx - r);
+    float qy = fabsf(py - cy) - (hy - r);
+    float ax = qx > 0 ? qx : 0, ay = qy > 0 ? qy : 0;
+    float outside = sqrtf(ax * ax + ay * ay);
+    float inside  = (qx > qy ? qx : qy); if (inside > 0) inside = 0;
+    return outside + inside - r;
+}
+
+/* Coverage from a signed distance with a ~1px anti-alias band. */
+static float cov_from_sdf(float d) {
+    float c = 0.5f - d;                 /* 1 at d=-0.5, 0 at d=+0.5 */
+    return c < 0 ? 0 : (c > 1 ? 1 : c);
+}
+
+void oled_rrect_fill(int x, int y, int w, int h, int r, uint8_t gs) {
+    if (w <= 0 || h <= 0) return;
+    float cx = x + w * 0.5f, cy = y + h * 0.5f;
+    float hx = w * 0.5f, hy = h * 0.5f;
+    float rr = (float)r;
+    if (rr > hx) rr = hx;
+    if (rr > hy) rr = hy;
+    for (int yy = y - 1; yy < y + h + 1; ++yy)
+        for (int xx = x - 1; xx < x + w + 1; ++xx) {
+            float d = sdf_rrect(xx + 0.5f, yy + 0.5f, cx, cy, hx, hy, rr);
+            float c = cov_from_sdf(d);
+            if (c > 0.0f) plot_max(xx, yy, (uint8_t)((float)gs * c + 0.5f));
+        }
+}
+
+void oled_rrect_stroke(int x, int y, int w, int h, int r, int t, uint8_t gs) {
+    if (w <= 0 || h <= 0) return;
+    float cx = x + w * 0.5f, cy = y + h * 0.5f;
+    float hx = w * 0.5f, hy = h * 0.5f;
+    float rr = (float)r;
+    if (rr > hx) rr = hx;
+    if (rr > hy) rr = hy;
+    float half = t * 0.5f;
+    for (int yy = y - 1; yy < y + h + 1; ++yy)
+        for (int xx = x - 1; xx < x + w + 1; ++xx) {
+            float d = sdf_rrect(xx + 0.5f, yy + 0.5f, cx, cy, hx, hy, rr);
+            float c = cov_from_sdf(fabsf(d) - half);   /* band around the edge */
+            if (c > 0.0f) plot_max(xx, yy, (uint8_t)((float)gs * c + 0.5f));
+        }
+}
+
 void oled_rect_fill(int x, int y, int w, int h, uint8_t gs) {
     if (w <= 0 || h <= 0) return;
     for (int yy = y; yy < y + h; ++yy)
@@ -41,24 +101,8 @@ void oled_rect_fill(int x, int y, int w, int h, uint8_t gs) {
 }
 
 void oled_pill(int x, int y, int w, int h, uint8_t gs) {
-    /* Pill = central rect + two semicircular caps of radius r=h/2. */
-    if (w <= 0 || h <= 0) return;
-    int r = h / 2;
-    if (r < 1) { oled_rect_fill(x, y, w, h, gs); return; }
-    /* Centre rectangle (between the cap centres). */
-    oled_rect_fill(x + r, y, w - 2 * r, h, gs);
-    /* Two filled semicircles. */
-    int cxl = x + r, cxr = x + w - 1 - r, cy = y + r;
-    int r2 = r * r;
-    for (int dy = -r; dy < r; ++dy) {
-        int dy2 = dy * dy;
-        for (int dx = -r; dx <= 0; ++dx) {
-            if (dx * dx + dy2 <= r2) {
-                plot(cxl + dx, cy + dy, gs);
-                plot(cxr - dx, cy + dy, gs);
-            }
-        }
-    }
+    /* Pill = anti-aliased rounded rect with full-height corner radius. */
+    oled_rrect_fill(x, y, w, h, h / 2, gs);
 }
 
 static void blit_glyph(int x, int y, const uint8_t *rows, uint8_t gs, int scale) {

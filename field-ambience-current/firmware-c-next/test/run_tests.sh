@@ -85,7 +85,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_menu_battery.c" \
     "$src/src/menu.c" "$src/src/battery.c" \
-    "$src/src/oled_draw.c" "$src/src/font_8x8.c" \
+    "$src/src/oled_draw.c" "$src/src/vfont.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/menu_test"
 "$tmp/menu_test"
 

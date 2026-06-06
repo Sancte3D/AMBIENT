@@ -57,6 +57,17 @@ void oled_rect_fill(int x, int y, int w, int h, uint8_t gs);
  * the pill indicator in the menu. h is the diameter at the ends. */
 void oled_pill(int x, int y, int w, int h, uint8_t gs);
 
+/* Anti-aliased rounded rectangle, corner radius r. SDF-based: edges are
+ * smoothed across the 4-bit grey, so pills/battery look clean, not jaggy.
+ * Pixels are max-blended so overlapping AA shapes don't darken each other. */
+void oled_rrect_fill(int x, int y, int w, int h, int r, uint8_t gs);
+
+/* Anti-aliased rounded-rectangle outline of stroke thickness `t` (px). */
+void oled_rrect_stroke(int x, int y, int w, int h, int r, int t, uint8_t gs);
+
+/* Plot a pixel taking the brighter of existing/gs (for AA compositing). */
+void oled_pixel_max(int x, int y, uint8_t gs);
+
 /* Scaled bitmap font: draws each 8x8 glyph as scale×scale pixel blocks.
  * scale=1 is identical to oled_text. Used for the big value display. */
 void oled_text_scaled(int x, int y, const char *s, uint8_t gs, int scale);
