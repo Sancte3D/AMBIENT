@@ -16,7 +16,7 @@ Erweiterungen, die schrittweise dazukommen.
 | ✅ 3 | **PadVoice global smoothed** · `pad_set_voice_mix` + `engine_set_pad_voice` (warm/strings/brass). voiceMix ist jetzt globaler, gesmoothter Saw↔Square-Crossfade über alle Voices statt per-Voice gebacken | ✅ done |
 | ✅ 4 | **Generative-Bed** · neues Modul `generative.{h,c}` (PROGRESSIONS + Markov DEGREE_TRANSITIONS, seedbarer RNG) + `engine_set_generative/advance`. Bed spielt Akkord-Wurzel pro Step, Cells überschreiben | ✅ done |
 | ✅ 5 | **Live-Parameter-Verdrahtung** nach der „nicht konkurrieren"-Regel · alle Engine-Setter (key/mode/vibe/space/mood/pad-voice/drone/generative) inkrementell verdrahtet + Integrationstest: 8 Globals gleichzeitig ändern während eine Cell hält → Voice lebt, Output bounded, kein Klick | ✅ done |
-| 6 | TRS-MIDI Out (PIO-UART 31250 Baud auf GP21) | ❌ Hardware-nah |
+| 🟡 6 | TRS-MIDI Out · `midi.{h,c}` (Message-Builder + FIFO, **host-getestet**) fertig; main.c-Verdrahtung + PIO-UART (GP21, 31250 Baud) device-only, folgt | 🟡 Kern done |
 | 7 | OLED v30-Menü (PLAY/SETUP) | ❌ Hardware-nah |
 | 8 | Encoder→Engine-Bindings | ❌ Hardware-nah |
 
