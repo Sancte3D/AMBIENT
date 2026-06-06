@@ -162,49 +162,70 @@ void menu_rotate(int delta) {
 }
 
 /* --- render ----------------------------------------------------------- */
+/*
+ * OP-1-Field-style composition: deep black, strong contrast, left-aligned with
+ * a consistent left margin and generous negative space to the right. One focus
+ * value, large; quiet label above it; battery top-right; a minimal dash row at
+ * the bottom. Active = bright white, inactive = subtle grey.
+ */
 
-/* Brightness levels: active = full white, inactive = dimmed but still readable. */
+/* Brightness levels. */
 #define GS_BG       0
-#define GS_DIM      4
-#define GS_MID      8
-#define GS_ACTIVE  15
+#define GS_DASH     3      /* inactive dash — subtle */
+#define GS_DIM      5
+#define GS_LABEL    9      /* quiet secondary text */
+#define GS_MID      9
+#define GS_ACTIVE  15      /* bright focus */
 
-/* Battery indicator: a thin pill outline + filled bar inside, in the top-right
- * corner (matches the screenshot mockup). Width depends on charge. USB present
- * draws a different style (filled + small "+"). */
-static void render_battery(void) {
-    const int x = 216, y = 5, w = 32, h = 14, r = 5;   /* rounded pill body */
-    /* rounded outline + nub */
-    oled_rrect_stroke(x, y, w, h, r, 2, GS_MID);
-    oled_rrect_fill(x + w + 1, y + 4, 3, h - 8, 1, GS_MID);   /* + terminal */
+#define PAD_L      14      /* consistent left margin */
+#define PAD_R      12
+#define PAD_T       5
 
-    int pct = battery_pct();
-    int inner_max = w - 8;
-    int fill_w = (inner_max * pct + 50) / 100;
-    if (fill_w < 2 && pct > 0) fill_w = 2;
-    if (fill_w > inner_max) fill_w = inner_max;
-    if (fill_w > 0)
-        oled_rrect_fill(x + 4, y + 4, fill_w, h - 8, 2,
-                        battery_usb_present() ? GS_ACTIVE : GS_MID);
-
-    if (battery_usb_present()) {
-        /* charging bolt: a small white notch over the fill */
-        int bx = x + w / 2;
-        oled_rrect_fill(bx - 1, y + 3, 3, h - 6, 1, GS_ACTIVE);
-    }
+/* Round the 4 screen corners to black so content respects the physical rounded
+ * OLED window (nothing lit pokes past the bezel). */
+static void mask_corners(void) {
+    const int r = 8;
+    for (int yy = 0; yy < r; ++yy)
+        for (int xx = 0; xx < r; ++xx) {
+            int dx = r - 1 - xx, dy = r - 1 - yy;
+            if (dx * dx + dy * dy > r * r) {
+                oled_pixel(xx, yy, GS_BG);
+                oled_pixel(OLED_WIDTH - 1 - xx, yy, GS_BG);
+                oled_pixel(xx, OLED_HEIGHT - 1 - yy, GS_BG);
+                oled_pixel(OLED_WIDTH - 1 - xx, OLED_HEIGHT - 1 - yy, GS_BG);
+            }
+        }
 }
 
-/* Bottom position bar — one segment per setting in the current page. Adapts to
- * the entry count: if they all fit (with edge margins) they're shown centred;
- * if there are more than fit, a scroll WINDOW slides with the cursor and the
- * edges fade + a chevron shows there's more off-screen. The active segment is
- * elongated + full white, the rest dimmed. */
-#define BAR_MARGIN 16          /* clear gap to the screen edges */
-#define BAR_Y      56
-#define BAR_H      6
-#define BAR_GAP    5
-#define BAR_SEG    8           /* inactive segment width */
-#define BAR_ACT    18          /* active segment width */
+/* Battery: rounded outline + terminal nub + rounded fill, top-right. */
+static void render_battery(void) {
+    const int w = 26, h = 11, r = 4;
+    const int x = OLED_WIDTH - PAD_R - w - 3;   /* leave room for the nub */
+    const int y = PAD_T - 1;
+    oled_rrect_stroke(x, y, w, h, r, 1, GS_MID);
+    oled_rrect_fill(x + w + 1, y + 3, 2, h - 6, 1, GS_MID);   /* terminal */
+
+    int pct = battery_pct();
+    int inner = w - 6;
+    int fw = (inner * pct + 50) / 100;
+    if (fw < 2 && pct > 0) fw = 2;
+    if (fw > inner) fw = inner;
+    if (fw > 0)
+        oled_rrect_fill(x + 3, y + 3, fw, h - 6, 2,
+                        battery_usb_present() ? GS_ACTIVE : GS_MID);
+    if (battery_usb_present())
+        oled_rrect_fill(x + w / 2 - 1, y + 2, 3, h - 4, 1, GS_ACTIVE);
+}
+
+/* Bottom dash row — one dash per setting, LEFT-aligned from the left margin
+ * (OP-1 style). Active dash = elongated + bright white; the rest = short subtle
+ * dashes. If there are more than fit, a window scrolls with the cursor and a
+ * chevron shows there's more off-screen. */
+#define BAR_Y      55
+#define BAR_H      4
+#define BAR_GAP    4
+#define BAR_SEG    7           /* inactive dash width */
+#define BAR_ACT    16          /* active dash width */
 #define BAR_PITCH  (BAR_SEG + BAR_GAP)
 
 static float bar_scroll = 0.0f;  /* eased first-visible index (animates on device) */
@@ -218,19 +239,19 @@ static void draw_chevron(int cx, int cy, int dir) {   /* dir −1 = ‹ , +1 = �
 
 static void render_bar(int n, int active) {
     if (n < 1) return;
-    int usable = OLED_WIDTH - 2 * BAR_MARGIN;
+    int usable = OLED_WIDTH - PAD_L - PAD_R;
 
-    /* how many segments fit in the window (1 active + the rest inactive) */
+    /* how many dashes fit in the window (1 active + the rest inactive) */
     int v = n;
     while (v > 1 && (BAR_ACT + (v - 1) * BAR_PITCH) > usable) --v;
 
-    /* window start so the cursor stays roughly centred, clamped to ends */
+    /* window start so the cursor stays visible, clamped to ends */
     int first = active - v / 2;
     if (first < 0) first = 0;
     if (first + v > n) first = n - v;
     if (first < 0) first = 0;
 
-    /* ease the visual scroll toward the target window (smooth slide) */
+    /* ease the visual scroll (smooth slide on device) */
     bar_scroll += (first - bar_scroll) * 0.4f;
     if (bar_scroll < first + 0.02f && bar_scroll > first - 0.02f) bar_scroll = first;
     int slide = (int)((bar_scroll - first) * BAR_PITCH + 0.5f);
@@ -238,15 +259,13 @@ static void render_bar(int n, int active) {
     bool more_left  = first > 0;
     bool more_right = first + v < n;
 
-    int total = BAR_ACT + (v - 1) * BAR_PITCH;
-    int x = (OLED_WIDTH - total) / 2 + slide;
-
+    int x = PAD_L + slide;             /* LEFT-aligned */
     for (int k = 0; k < v; ++k) {
         int i = first + k;
         bool act = (i == active);
         int w = act ? BAR_ACT : BAR_SEG;
-        uint8_t gs = act ? GS_ACTIVE : GS_DIM;
-        if (k == 0 && more_left)       gs = 2;   /* fade the edge that has more beyond */
+        uint8_t gs = act ? GS_ACTIVE : GS_DASH;
+        if (k == 0 && more_left)       gs = 2;
         if (k == v - 1 && more_right)  gs = 2;
         int yy = act ? BAR_Y - 1 : BAR_Y;
         int hh = act ? BAR_H + 2 : BAR_H;
@@ -254,33 +273,34 @@ static void render_bar(int n, int active) {
         x += w + BAR_GAP;
     }
 
-    if (more_left)  draw_chevron(BAR_MARGIN - 9, BAR_Y + BAR_H / 2, -1);
-    if (more_right) draw_chevron(OLED_WIDTH - BAR_MARGIN + 5, BAR_Y + BAR_H / 2, +1);
+    if (more_left)  draw_chevron(PAD_L - 6, BAR_Y + BAR_H / 2, -1);
+    if (more_right) draw_chevron(OLED_WIDTH - PAD_R + 2, BAR_Y + BAR_H / 2, +1);
 }
 
-/* Big value in Helvetica Neue Light. Use the 40 px face, drop to the 24 px
- * face if the word is too wide (e.g. "Floating"/"Strings"). */
+/* Big value in Helvetica Neue Light, LEFT-aligned at the left margin. Drops to
+ * the small face only if a long word would run into the battery / right edge. */
 static void render_value(void) {
     const char *txt = menu_current_value_text();
-    uint8_t gs = (mode == MENU_EDIT) ? GS_ACTIVE : 11;
-    const bakedfont_t *f = &font_hn_light40;
-    if (bfont_width(f, txt) > 236) f = &font_hn_light24;
-    int w = bfont_width(f, txt);
-    int x = (OLED_WIDTH - w) / 2;
-    int y = (OLED_HEIGHT - (int)f->line) / 2 + 2;   /* vertically centred */
-    bfont_draw(f, x, y, txt, gs);
+    uint8_t gs = (mode == MENU_EDIT) ? GS_ACTIVE : 13;
+    const bakedfont_t *f = &font_hn_value;
+    int avail = OLED_WIDTH - PAD_L - PAD_R;
+    if (bfont_width(f, txt) > avail) f = &font_hn_value_small;
+    int y = 20 + (32 - (int)f->line) / 2;     /* focus band, left-aligned, below the label */
+    bfont_draw(f, PAD_L, y, txt, gs);
 }
 
 void menu_render(void) {
     oled_fill(GS_BG);
 
-    /* Label top-left in Helvetica Neue Thin, slightly dim while editing. */
-    uint8_t lbl_gs = (mode == MENU_EDIT) ? 6 : GS_ACTIVE;
-    bfont_draw(&font_hn_thin14, 8, 3, menu_current_label(), lbl_gs);
+    /* Quiet label, top-left, Helvetica Neue Thin. */
+    uint8_t lbl_gs = (mode == MENU_EDIT) ? GS_DIM : GS_LABEL;
+    bfont_draw(&font_hn_label, PAD_L, PAD_T, menu_current_label(), lbl_gs);
 
     render_battery();
     render_value();
-    render_bar(MP_COUNT, (int)cur);   /* MP_COUNT is the entry count; bar adapts to any N */
+    render_bar(MP_COUNT, (int)cur);   /* entry count; bar adapts to any N */
+
+    mask_corners();                   /* rounded screen window */
 }
 
 void menu_render_bar_only(int total, int active) { render_bar(total, active); }

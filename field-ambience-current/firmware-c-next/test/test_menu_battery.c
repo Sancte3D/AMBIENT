@@ -148,13 +148,13 @@ static void test_battery_curve(void) {
 
 static void test_bfont_width(void) {
     /* empty = 0; non-empty > 0; longer wider; the 40px face wider than 24px. */
-    CHECK(bfont_width(&font_hn_light40, "") == 0, "empty width != 0");
-    int wc = bfont_width(&font_hn_light40, "C");
+    CHECK(bfont_width(&font_hn_value, "") == 0, "empty width != 0");
+    int wc = bfont_width(&font_hn_value, "C");
     CHECK(wc > 0, "single glyph width not positive: %d", wc);
-    CHECK(bfont_width(&font_hn_light40, "CC") > wc, "two glyphs not wider than one");
-    CHECK(bfont_width(&font_hn_light40, "Lydian") > bfont_width(&font_hn_light24, "Lydian"),
+    CHECK(bfont_width(&font_hn_value, "CC") > wc, "two glyphs not wider than one");
+    CHECK(bfont_width(&font_hn_value, "Lydian") > bfont_width(&font_hn_value_small, "Lydian"),
           "40px face not wider than 24px");
-    CHECK(font_hn_thin14.ascent > 0 && font_hn_light40.ascent > 0, "fonts not initialised");
+    CHECK(font_hn_label.ascent > 0 && font_hn_value.ascent > 0, "fonts not initialised");
 }
 
 int main(void) {

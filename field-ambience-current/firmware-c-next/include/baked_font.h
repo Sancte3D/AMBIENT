@@ -11,9 +11,9 @@
  * path for maximum sharpness on a grayscale OLED.
  *
  * Three faces are baked (see tools/generate_fonts.py):
- *   font_hn_light40  — big value, primary
- *   font_hn_light24  — big value, fallback for long words
- *   font_hn_thin14   — labels / secondary text
+ *   font_hn_value        — Light, big value (primary)
+ *   font_hn_value_small  — Light, big value fallback for long words
+ *   font_hn_label        — Thin, labels / secondary text
  */
 
 #include <stdint.h>
@@ -35,9 +35,9 @@ typedef struct {
     const uint8_t  *data;    /* packed 4-bit coverage */
 } bakedfont_t;
 
-extern const bakedfont_t font_hn_light40;
-extern const bakedfont_t font_hn_light24;
-extern const bakedfont_t font_hn_thin14;
+extern const bakedfont_t font_hn_value;
+extern const bakedfont_t font_hn_value_small;
+extern const bakedfont_t font_hn_label;
 
 /* Draw `s` with line-top at (x, y_top). Glyph coverage is scaled by maxgs
  * (0..15) so the same font can render bright (active) or dim (inactive).
