@@ -80,23 +80,37 @@ static void test_edit_key_fires_callback_and_cycles_12(void) {
     CHECK(st.key == 60, "wrap should set 60: got %d", st.key);
 }
 
-static void test_continuous_clamps_and_steps_by_5(void) {
+static void test_continuous_steps_by_tick_and_clamps(void) {
     init();
-    /* navigate to TEXTURE (index 6) */
+    /* navigate to TEXTURE (index 4) */
     for (int i = 0; i < (int)MP_TEXTURE; ++i) menu_rotate(1);
     CHECK(menu_current() == MP_TEXTURE, "didn't reach TEXTURE");
     menu_push();
-    /* default is 20% */
+    /* default is 20%. One tick = 1% (granularity-agnostic; accel lives in the
+     * input layer, so the menu just applies the tick count). */
     CHECK(menu_value_int(MP_TEXTURE) == 20, "init texture != 20");
     menu_rotate(+1);
-    CHECK(menu_value_int(MP_TEXTURE) == 25, "step should be 5");
-    /* fast scroll up to 100, then attempt to overshoot — clamps */
-    menu_rotate(+30);
+    CHECK(menu_value_int(MP_TEXTURE) == 21, "one tick should be 1%%: %d", menu_value_int(MP_TEXTURE));
+    /* an accelerated flick passes a larger tick count in one call */
+    menu_rotate(+8);
+    CHECK(menu_value_int(MP_TEXTURE) == 29, "8-tick flick should add 8%%: %d", menu_value_int(MP_TEXTURE));
+    /* overshoot clamps */
+    menu_rotate(+100);
     CHECK(menu_value_int(MP_TEXTURE) == 100, "did not clamp at 100");
     CHECK(st.texture > 0.99f, "callback texture didn't reach 1.0: %.3f", st.texture);
-    menu_rotate(-100);
+    menu_rotate(-200);
     CHECK(menu_value_int(MP_TEXTURE) == 0, "did not clamp at 0");
     CHECK(st.texture == 0.0f, "callback texture didn't reach 0");
+}
+
+static void test_browse_nav_ignores_accel(void) {
+    /* Browse must step by ONE slot regardless of tick magnitude — fast spins
+     * shouldn't skip menu items (only 8 of them). */
+    init();
+    menu_rotate(+5);
+    CHECK(menu_current() == MP_MODE, "browse should advance 1 slot on +5, got %d", menu_current());
+    menu_rotate(-3);
+    CHECK(menu_current() == MP_KEY, "browse should retreat 1 slot on -3, got %d", menu_current());
 }
 
 static void test_key_does_not_drift(void) {
@@ -151,7 +165,8 @@ int main(void) {
     test_browse_navigates_through_all_params();
     test_push_toggles_mode();
     test_edit_key_fires_callback_and_cycles_12();
-    test_continuous_clamps_and_steps_by_5();
+    test_continuous_steps_by_tick_and_clamps();
+    test_browse_nav_ignores_accel();
     test_key_does_not_drift();
     test_battery_curve();
 

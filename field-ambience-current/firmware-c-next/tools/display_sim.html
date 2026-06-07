@@ -124,7 +124,8 @@
     drehen scrollt das Menü, <b>push</b> öffnet/schließt Edit. Drive / Brightness /
     Volume sind dedizierte Audio-Macros (Drive = Reverb-Drive, Brightness = Pad-
     Tone, Volume = Master) — beim Drehen erscheint ihr Wert kurz als Overlay.
-    <b>SHIFT halten + Brightness drehen = LCD-Helligkeit</b> (Sekundärfunktion
+    <b>Langsam drehen = feine 1 %-Schritte, schnell drehen = grobe Sprünge</b>
+    (Velocity-Acceleration, §5). <b>SHIFT halten + Brightness drehen = LCD-Helligkeit</b> (Sekundärfunktion
     §12.3); kein Menü-Eintrag. Sinkt die Helligkeit auf 0 %, dunkelt der ganze
     Screen ab — zurückdrehen geht trotzdem, weil der Encoder physisch ist.
     (Tastatur: ← → + Space = Display-Encoder, Shift halten = SHIFT.)
@@ -236,22 +237,26 @@ function rotate(delta) {
    * Drive/Brightness/Volume/Backlight overlay must clear out of the way
    * (#6: one consistent rule for every transient overlay). */
   dismissOverlay();
+  /* delta is a signed TICK COUNT (mirrors menu.c). Browse is never accelerated
+   * — step one slot per gesture by sign. Continuous values move 1 % per tick;
+   * the input layer (turnEncoder) supplies the accelerated tick count. */
   if (state.mode === 'browse') {
+    const dir = Math.sign(delta);
     const old = state.cur;
-    state.cur = wrap(state.cur + delta, MP_COUNT);
-    if (state.cur !== old) onCurChange(delta);
+    state.cur = wrap(state.cur + dir, MP_COUNT);
+    if (state.cur !== old) onCurChange(dir);
     return;
   }
   let valueChanged = false;
   switch (state.cur) {
-    case MP_KEY:    state.key    = 60 + wrap(state.key - 60 + delta, 12); valueChanged = true; break;
-    case MP_MODE:   state.mode_i  = wrap(state.mode_i  + delta, 6); valueChanged = true; break;
-    case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + delta, 4); valueChanged = true; break;
-    case MP_VOICE:  state.voice_i = wrap(state.voice_i + delta, 3); valueChanged = true; break;
-    case MP_TEXTURE:state.texture = clamp(state.texture + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_BASS:   state.bass    = clamp(state.bass    + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_SPACE:  state.space   = clamp(state.space   + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_MOOD:   state.mood    = clamp(state.mood    + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_KEY:    state.key    = 60 + wrap(state.key - 60 + Math.sign(delta), 12); valueChanged = true; break;
+    case MP_MODE:   state.mode_i  = wrap(state.mode_i  + Math.sign(delta), 6); valueChanged = true; break;
+    case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + Math.sign(delta), 4); valueChanged = true; break;
+    case MP_VOICE:  state.voice_i = wrap(state.voice_i + Math.sign(delta), 3); valueChanged = true; break;
+    case MP_TEXTURE:state.texture = clamp(state.texture + delta, 0, 100); valueChanged = true; break;
+    case MP_BASS:   state.bass    = clamp(state.bass    + delta, 0, 100); valueChanged = true; break;
+    case MP_SPACE:  state.space   = clamp(state.space   + delta, 0, 100); valueChanged = true; break;
+    case MP_MOOD:   state.mood    = clamp(state.mood    + delta, 0, 100); valueChanged = true; break;
   }
   if (valueChanged) onValueChange();
 }
@@ -570,24 +575,41 @@ const ENC = {
   display:{ label: 'Display',    menu: true },
   vol:    { label: 'Volume',     get: () => state.vol,        set: v => state.vol = v },
 };
-const ENC_STEP = 4;                    /* % per detent for the dedicated knobs */
 const angle = { drive: 0, bright: 0, display: 0, vol: 0 };
+
+/* Velocity-aware stepping (SPEC §5). One deliberate detent = 1 % (fine control,
+ * fully reproducible). Spin faster and each detent is worth more, so 0→100 is a
+ * quick flick — without losing the ability to land on an exact value when you
+ * move slowly. Tiers map "ms since last detent" → ticks/detent. */
+const ACCEL_TIERS = [[28, 8], [60, 5], [120, 3], [240, 2]];   /* faster → coarser */
+const accelLast = {};
+function accelTicks(id, dir) {
+  const now = performance.now();
+  const dt  = now - (accelLast[id] ?? Infinity);
+  accelLast[id] = now;
+  let mul = 1;
+  for (const [maxDt, ticks] of ACCEL_TIERS) { if (dt < maxDt) { mul = ticks; break; } }
+  return dir * mul;
+}
 
 function turnEncoder(id, delta) {
   angle[id] += delta * 24;             /* visual dial rotation (endless) */
   const e = ENC[id];
+  const dir = Math.sign(delta) || 1;
   if (e.menu) {
-    rotate(delta);
+    /* Accelerate continuous edits only; browse + discrete edits step by 1. */
+    const ticks = (state.mode === 'edit' && curIsContinuous()) ? accelTicks('display', dir) : dir;
+    rotate(ticks);
     render();
   } else if (id === 'bright' && state.shift) {
     /* SHIFT+EN2 = LCD backlight (secondary function, §12.3). The user CAN take
      * it to 0 % — recoverable because the dial is physical, so the screen can
      * be brought back even while it's black. */
-    state.backlight = clamp(state.backlight + ENC_STEP * delta, 0, 100);
+    state.backlight = clamp(state.backlight + accelTicks(id, dir), 0, 100);
     showOverlay('Backlight', state.backlight);
     render();                          /* re-apply screen dimming immediately */
   } else {
-    e.set(clamp(e.get() + ENC_STEP * delta, 0, 100));
+    e.set(clamp(e.get() + accelTicks(id, dir), 0, 100));
     showOverlay(e.label, e.get());
   }
   refreshWidget(id);

@@ -132,9 +132,16 @@ void menu_push(void) {
     mode = (mode == MENU_BROWSE) ? MENU_EDIT : MENU_BROWSE;
 }
 
+/* `delta` is a signed TICK COUNT, not a fixed percent. The input layer owns the
+ * feel: one deliberate detent = ±1, and an accelerated fast spin passes a larger
+ * magnitude (SPEC §5 velocity-aware stepping). Continuous params therefore move
+ * 1 % per tick here — the menu stays granularity-agnostic, the encoder decides
+ * how many ticks a flick is worth. */
 void menu_rotate(int delta) {
     if (mode == MENU_BROWSE) {
-        cur = (menu_param_t)wrapi((int)cur + delta, MP_COUNT);
+        /* Browse navigation is never accelerated (only 8 slots); step by sign. */
+        int dir = (delta > 0) - (delta < 0);
+        cur = (menu_param_t)wrapi((int)cur + dir, MP_COUNT);
         return;
     }
     /* edit: step the current slot's value */
@@ -143,10 +150,10 @@ void menu_rotate(int delta) {
         case MP_MODE:       mode_i  = wrapi(mode_i  + delta, 6); break;
         case MP_VIBE:       vibe_i  = wrapi(vibe_i  + delta, 4); break;
         case MP_VOICE:      voice_i = wrapi(voice_i + delta, 3); break;
-        case MP_TEXTURE:    texture = clampi(texture + 5*delta, 0, 100); break;
-        case MP_BASS:       bass    = clampi(bass    + 5*delta, 0, 100); break;
-        case MP_SPACE:      space   = clampi(space   + 5*delta, 0, 100); break;
-        case MP_MOOD:       mood    = clampi(mood    + 5*delta, 0, 100); break;
+        case MP_TEXTURE:    texture = clampi(texture + delta, 0, 100); break;
+        case MP_BASS:       bass    = clampi(bass    + delta, 0, 100); break;
+        case MP_SPACE:      space   = clampi(space   + delta, 0, 100); break;
+        case MP_MOOD:       mood    = clampi(mood    + delta, 0, 100); break;
         default: break;
     }
     apply_current();
