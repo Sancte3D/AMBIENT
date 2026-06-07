@@ -227,7 +227,7 @@ function rotate(delta) {
   }
   let valueChanged = false;
   switch (state.cur) {
-    case MP_KEY:    state.key    += delta; valueChanged = true; break;
+    case MP_KEY:    state.key    = 60 + wrap(state.key - 60 + delta, 12); valueChanged = true; break;
     case MP_MODE:   state.mode_i  = wrap(state.mode_i  + delta, 6); valueChanged = true; break;
     case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + delta, 4); valueChanged = true; break;
     case MP_VOICE:  state.voice_i = wrap(state.voice_i + delta, 3); valueChanged = true; break;
