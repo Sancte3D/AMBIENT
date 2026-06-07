@@ -143,7 +143,7 @@ void menu_rotate(int delta) {
     }
     /* edit: step the current slot's value */
     switch (cur) {
-        case MP_KEY:        key  += delta; break;
+        case MP_KEY:        key  = 60 + wrapi(key - 60 + delta, 12); break;
         case MP_MODE:       mode_i  = wrapi(mode_i  + delta, 6); break;
         case MP_VIBE:       vibe_i  = wrapi(vibe_i  + delta, 4); break;
         case MP_VOICE:      voice_i = wrapi(voice_i + delta, 3); break;

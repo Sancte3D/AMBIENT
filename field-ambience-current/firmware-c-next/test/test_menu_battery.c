@@ -100,6 +100,20 @@ static void test_continuous_clamps_and_steps_by_5(void) {
     CHECK(st.texture == 0.0f, "callback texture didn't reach 0");
 }
 
+static void test_key_does_not_drift(void) {
+    /* Regression: state.key was `key += delta` (no wrap), so the underlying
+     * MIDI int drifted unbounded even though the display modded it. Spin the
+     * encoder a lot and check the int stays inside one octave around C4. */
+    init();
+    menu_push();  /* enter edit on KEY */
+    for (int i = 0; i < 10000; ++i) menu_rotate(+1);
+    CHECK(st.key >= 60 && st.key < 72,
+          "key drifted to %d after 10k +1 turns", st.key);
+    for (int i = 0; i < 20000; ++i) menu_rotate(-1);
+    CHECK(st.key >= 60 && st.key < 72,
+          "key drifted to %d after 20k -1 turns", st.key);
+}
+
 static void test_backlight_in_menu(void) {
     init();
     /* navigate to BACKLIGHT and toggle into edit */
@@ -155,6 +169,7 @@ int main(void) {
     test_push_toggles_mode();
     test_edit_key_fires_callback_and_cycles_12();
     test_continuous_clamps_and_steps_by_5();
+    test_key_does_not_drift();
     test_backlight_in_menu();
     test_battery_curve();
 
