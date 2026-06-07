@@ -443,8 +443,11 @@ function showOverlay(label, value) {
 
 /* ---------- Drawing ------------------------------------------------------ */
 function drawValueRow(label, valueText, labelGs, valueGs) {
+  const base = ctx.globalAlpha;        /* canvas globalAlpha is absolute, not
+                                          multiplicative — fold the outer alpha
+                                          in by hand so crossfades don't leak. */
   ctx.save();
-  ctx.globalAlpha = anim.textAlpha;
+  ctx.globalAlpha = base * anim.textAlpha;
   ctx.translate(0, anim.textY);
   ctx.fillStyle = labelGs;
   ctx.font = FONT_LABEL; ctx.textBaseline = 'top';
@@ -469,8 +472,9 @@ function lerpValueRGBA(t) {
 function drawMenu() {
   drawValueRow(LABELS[state.cur], valueText(),
                lerpRGBA(anim.labelColor), lerpValueRGBA(anim.labelColor));
+  const base = ctx.globalAlpha;        /* fold outer alpha in (see drawValueRow) */
   ctx.save();
-  ctx.globalAlpha = anim.barAlpha;
+  ctx.globalAlpha = base * anim.barAlpha;
   if (state.mode === 'browse') {
     drawPillBar(MP_COUNT, anim.barT);
   } else {
