@@ -27,3 +27,4 @@ Makefile
 # user-supplied OTFs via tools/generate_fonts.py.
 *.otf
 *.ttf
+samples/
