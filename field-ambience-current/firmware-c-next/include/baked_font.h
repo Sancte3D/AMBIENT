@@ -7,8 +7,8 @@
  * Glyphs are pre-rendered from the OTF at exact pixel sizes with anti-aliasing,
  * quantised to 4-bit grey and packed 2 px/byte (row-major, continuous nibble
  * stream). The Pico blits them 1:1 — NO runtime scaling — straight into the
- * SSD1322's grey framebuffer. This is the "native resolution + AA + no scaling"
- * path for maximum sharpness on a grayscale OLED.
+ * 4-bit grey framebuffer. This is the "native resolution + AA + no scaling"
+ * path for maximum sharpness (r16: framebuffer now feeds a 320×170 ST7789 LCD).
  *
  * Three faces are baked (see tools/generate_fonts.py):
  *   font_hn_value        — Light, big value (primary)

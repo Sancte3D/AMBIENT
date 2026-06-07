@@ -1,12 +1,12 @@
 /*
- * OLED draw layer — pure framebuffer operations, no SPI / no Pico SDK.
- * Split out of src/oled.c so the menu can be host-rendered to a preview
- * image without touching hardware. The SPI side (oled_init / oled_show)
- * stays in src/oled.c and shares the same `fb` buffer via oled_framebuffer().
+ * Display draw layer — pure framebuffer operations, no SPI / no Pico SDK.
+ * Split out of the panel driver so the menu can be host-rendered to a preview
+ * image without touching hardware. The SPI side (oled_init / oled_show) lives
+ * in src/lcd_st7789.c (r16) and shares this `fb` via oled_framebuffer().
  *
- * Layout: 256×64 4-bit grey, 2 px per byte, high nibble = left pixel
- * (matches the SSD1322 GDDRAM as it is written, so oled_show streams
- * the buffer with no transform).
+ * Layout: 320×170 4-bit grey, 2 px per byte, high nibble = left pixel.
+ * The device driver converts each grey pixel → RGB565 while streaming, so the
+ * whole draw/font/menu stack is panel-agnostic (was SSD1322 256×64 pre-r16).
  */
 
 #include "oled.h"

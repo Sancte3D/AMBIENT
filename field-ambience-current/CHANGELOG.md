@@ -4,9 +4,65 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r15** (MIDI Out via TRS Type A 3.5-mm-Klinke statt
-USB-MIDI/TinyUSB; VOL_SW wandert auf MCP für freien GPIO). Generator und
-SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche Audio-Stand.
+Aktuelle Rev: **v0.6.3-r16** (Display-Wechsel: SSD1322 256×64 OLED →
+1.9" ST7789 320×170 IPS-LCD; gleiche SPI0-Pins, Backlight über freien
+PCA9685-Kanal). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der
+maßgebliche Audio-Stand.
+
+---
+
+## v0.6.3-r16 (2026-06-06) — Display: SSD1322 OLED → 1.9" ST7789 IPS-LCD
+
+**User-Direktive** (nach OLED-vs-LCD-Abwägung): „Nimm eher ein gutes Bar-IPS-
+LCD, nicht wegen Farbe, sondern wegen Lesbarkeit, Auflösung, Outdoor-
+Tauglichkeit und animierter UI. Aber gestalte es weiterhin wie ein OLED:
+schwarzer Hintergrund, weiß/grau als Hauptsystem, keine bunten App-Farben."
+
+**Warum LCD statt OLED** (nicht Farbe):
+- **Lesbarkeit + Outdoor**: IPS-Backlight ist deutlich heller als das
+  256×64-OLED; bei Tageslicht/Bühne ablesbar.
+- **Pixeldichte**: 320×170 statt 256×64 → ~3,3× so viele Pixel, scharfe
+  Helvetica-Neue-Typo statt „pixelig".
+- **Animation**: glatte UI-Transitions (Bar-Scroll, Wert-Wechsel) bei
+  ~30 fps Vollbild.
+- **Kein Burn-in**: statische Labels/Bars über Stunden unkritisch.
+- **Design bleibt monochrom**: schwarz/weiß/grau, OP-1-Sprache. Farbe wird
+  bewusst NICHT genutzt — der Treiber rendert das 4-bit-Grey-Framebuffer
+  nur nach RGB565 um.
+
+**Hardware-Delta**:
+- **− 1× ER-OLEDM032-1W** (SSD1322 256×64 OLED, war J3 16-pin-Header)
+- **+ 1× 1.9" IPS-LCD-Modul** (ST7789V2, 170×320, 8-pin SPI-Header:
+  VCC/GND/SCL/SDA/RES/DC/CS/BLK)
+- **Pins unverändert**: das LCD nutzt **dieselbe SPI0-Gruppe** wie das OLED
+  (GP5 CS, GP6 SCK, GP7 MOSI, GP8 DC, GP9 RES) — **kein GPIO-Reallocation**.
+- **Backlight (BLK)**: alle 24 Pico-GPIOs sind belegt → BLK läuft über einen
+  **freien PCA9685-PWM-Kanal** + kleinem N-FET (Low-Side), Helligkeit also
+  per I²C im Board-Layer (passt zum vorhandenen Brightness-Encoder EN2).
+- **+ 1× N-FET (SOT-23, z. B. 2N7002)** als BLK-Low-Side-Switch.
+- **Decoupling**: C6b/C6c (10 µF + 100 nF) bleiben, jetzt am LCD-VCC (+3V3).
+  Das OLED-VBAT-(+5V)-Netz entfällt — LCD ist reine 3,3-V-Logik+Backlight.
+
+**Firmware-Delta** (`firmware-c-next/`):
+- **NEU `src/lcd_st7789.c`** ersetzt `src/oled.c`. SPI-Init, Reset, ST7789-
+  Init (SWRESET/SLPOUT/COLMOD=RGB565/MADCTL=0x60/INVON/NORON/DISPON),
+  Adress-Fenster mit **Y-Offset 35** (170-px-Seite sitzt versetzt im
+  240×320-GRAM), und grey→RGB565-Konversion zeilenweise (640 B/Zeile).
+- **`include/oled.h`**: `OLED_WIDTH 320`, `OLED_HEIGHT 170`. Der gesamte
+  Draw-/Font-/Menu-Layer (`oled_draw.c`, `baked_font.c`, `menu.c`) bleibt
+  panel-agnostisch auf dem 4-bit-Grey-Framebuffer — nur Dimensionen +
+  Layout-Konstanten + Treiber geändert.
+- **Fonts neu gebacken** (`tools/generate_fonts.py`): Helvetica Neue Light
+  56 px (Wert) / 36 px (Wert-Fallback), Thin 20 px (Label) — native AA für
+  die höhere Auflösung.
+- **Menu-Layout** für 320×170 (Pads, Akku, Bar, Ränder neu vermessen).
+- **CMakeLists**: `src/oled.c` → `src/lcd_st7789.c`.
+- **Host-Tests grün** (alle Suites PASS nach Dimensions-Umstellung); Preview-
+  Renderer erzeugt 1280×680-PGM (320×170 ×4) zur visuellen Abnahme.
+
+**Mechanik**: Display-Fenster im Top-Case schrumpft von 80×22 mm (3,2"-OLED)
+auf die kleinere 1,9"-Aktivfläche — exakte Cutout-Maße nach Datenblatt des
+gewählten Moduls (siehe `mechanical_coordinates.md` §5).
 
 ---
 

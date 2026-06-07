@@ -7,8 +7,8 @@
  * UI is the mockup the user designed: parameter label top-left, big value
  * centred, battery top-right, a row of pills at the bottom — one pill per
  * parameter, the current one elongated + full white, the others dimmed. Pure
- * monochrome white on black, using the SSD1322's 4-bit grey to fade inactive
- * elements. Host-renderable to a preview PNG.
+ * monochrome white on black, using the 4-bit grey framebuffer to fade inactive
+ * elements (r16: 320×170 ST7789 LCD). Host-renderable to a preview PNG.
  *
  * Navigation (Display encoder):
  *   - rotate in browse mode → next/previous parameter (pill moves)

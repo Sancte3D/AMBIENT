@@ -30,7 +30,7 @@ pico_sdk_init()
 
 add_executable(field_ambience_native
     src/main.c
-    src/oled.c
+    src/lcd_st7789.c     # r16: 1.9" ST7789 320×170 IPS driver (replaces SSD1322 oled.c)
     src/font_8x8.c
     src/mcp23017.c
     src/encoders.c
@@ -74,7 +74,7 @@ pico_generate_pio_header(field_ambience_native
 target_link_libraries(field_ambience_native
     pico_stdlib
     pico_time       # Step 4: repeating_timer for 1 kHz encoder sampling
-    hardware_spi    # Step 2: SSD1322 over SPI0
+    hardware_spi    # Step 2 / r16: ST7789 LCD over SPI0
     hardware_i2c    # Step 3: MCP23017 over I2C1
     hardware_gpio   # Step 3: GP22 IRQ for MCP INTA
     hardware_pio    # Step 5: I²S TX state machine

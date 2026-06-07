@@ -5,8 +5,8 @@
  * and writes the framebuffer to a PGM image. Lets the user (and the design
  * reviewer) SEE the UI before flashing — same renderer the device runs.
  *
- * The output is upscaled 4× per pixel so the 256×64 framebuffer becomes a
- * 1024×256 image — easier to look at and to compare against the mockup.
+ * The output is upscaled 4× per pixel so the 320×170 framebuffer becomes a
+ * 1280×680 image — easier to look at and to compare against the mockup.
  *
  * Usage:
  *   render_oled out_dir/
@@ -45,7 +45,7 @@ static void write_pgm(const char *path) {
     FILE *f = fopen(path, "wb");
     if (!f) { fprintf(stderr, "cannot open %s\n", path); return; }
     fprintf(f, "P5\n%d %d\n255\n", W, H);
-    static uint8_t row[256 * 4];
+    static uint8_t row[320 * 4];
     for (int y = 0; y < OLED_HEIGHT; ++y) {
         for (int x = 0; x < OLED_WIDTH; ++x) {
             int idx = (y * OLED_WIDTH + x) >> 1;

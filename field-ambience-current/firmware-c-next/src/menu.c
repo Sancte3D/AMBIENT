@@ -177,14 +177,14 @@ void menu_rotate(int delta) {
 #define GS_MID      9
 #define GS_ACTIVE  15      /* bright focus */
 
-#define PAD_L      14      /* consistent left margin */
-#define PAD_R      12
-#define PAD_T       5
+#define PAD_L      22      /* consistent left margin (320×170 LCD) */
+#define PAD_R      18
+#define PAD_T      14
 
 /* Round the 4 screen corners to black so content respects the physical rounded
- * OLED window (nothing lit pokes past the bezel). */
+ * display window (nothing lit pokes past the bezel). */
 static void mask_corners(void) {
-    const int r = 8;
+    const int r = 16;
     for (int yy = 0; yy < r; ++yy)
         for (int xx = 0; xx < r; ++xx) {
             int dx = r - 1 - xx, dy = r - 1 - yy;
@@ -199,93 +199,90 @@ static void mask_corners(void) {
 
 /* Battery: rounded outline + terminal nub + rounded fill, top-right. */
 static void render_battery(void) {
-    const int w = 26, h = 11, r = 4;
-    const int x = OLED_WIDTH - PAD_R - w - 3;   /* leave room for the nub */
-    const int y = PAD_T - 1;
-    oled_rrect_stroke(x, y, w, h, r, 1, GS_MID);
-    oled_rrect_fill(x + w + 1, y + 3, 2, h - 6, 1, GS_MID);   /* terminal */
+    const int w = 32, h = 15, r = 5;
+    const int x = OLED_WIDTH - PAD_R - w - 4;   /* leave room for the nub */
+    const int y = PAD_T;
+    oled_rrect_stroke(x, y, w, h, r, 2, GS_MID);
+    oled_rrect_fill(x + w + 1, y + 4, 2, h - 8, 1, GS_MID);   /* terminal */
 
     int pct = battery_pct();
-    int inner = w - 6;
+    int inner = w - 8;
     int fw = (inner * pct + 50) / 100;
-    if (fw < 2 && pct > 0) fw = 2;
+    if (fw < 3 && pct > 0) fw = 3;
     if (fw > inner) fw = inner;
     if (fw > 0)
-        oled_rrect_fill(x + 3, y + 3, fw, h - 6, 2,
+        oled_rrect_fill(x + 4, y + 3, fw, h - 6, 2,
                         battery_usb_present() ? GS_ACTIVE : GS_MID);
     if (battery_usb_present())
         oled_rrect_fill(x + w / 2 - 1, y + 2, 3, h - 4, 1, GS_ACTIVE);
 }
 
-/* Bottom dash row — one dash per setting, LEFT-aligned from the left margin
- * (OP-1 style). Active dash = elongated + bright white; the rest = short subtle
- * dashes. If there are more than fit, a window scrolls with the cursor and a
- * chevron shows there's more off-screen. */
-#define BAR_Y      55
-#define BAR_H      4
-#define BAR_GAP    4
-#define BAR_SEG    7           /* inactive dash width */
-#define BAR_ACT    16          /* active dash width */
-#define BAR_PITCH  (BAR_SEG + BAR_GAP)
-
-static float bar_scroll = 0.0f;  /* eased first-visible index (animates on device) */
-
-static void draw_chevron(int cx, int cy, int dir) {   /* dir −1 = ‹ , +1 = › */
-    for (int i = 0; i < 4; ++i) {
-        oled_pixel(cx + dir * (3 - i), cy - i, GS_MID);
-        oled_pixel(cx + dir * (3 - i), cy + i, GS_MID);
-    }
-}
+/* Bottom selector — N pills spanning EDGE-TO-EDGE between the side margins.
+ * One pill per setting, ALWAYS — count = number of options the user can step
+ * through. The active pill is bigger and bright; the inactive ones are small
+ * and dim. Pill sizes scale with N so 4 settings → fat pills, 11 → narrow,
+ * 24 → very narrow but still on screen — no scrolling, no chevrons. */
+#define BAR_Y      148
+#define BAR_H_INA  5      /* inactive pill height */
+#define BAR_H_ACT  8      /* active pill height — slightly taller for emphasis */
+#define BAR_GAP    6      /* gap between pills */
+#define BAR_ACT_K  24     /* active = K/10 × inactive width (≈2.4×) */
 
 static void render_bar(int n, int active) {
     if (n < 1) return;
     int usable = OLED_WIDTH - PAD_L - PAD_R;
 
-    /* how many dashes fit in the window (1 active + the rest inactive) */
-    int v = n;
-    while (v > 1 && (BAR_ACT + (v - 1) * BAR_PITCH) > usable) --v;
-
-    /* window start so the cursor stays visible, clamped to ends */
-    int first = active - v / 2;
-    if (first < 0) first = 0;
-    if (first + v > n) first = n - v;
-    if (first < 0) first = 0;
-
-    /* ease the visual scroll (smooth slide on device) */
-    bar_scroll += (first - bar_scroll) * 0.4f;
-    if (bar_scroll < first + 0.02f && bar_scroll > first - 0.02f) bar_scroll = first;
-    int slide = (int)((bar_scroll - first) * BAR_PITCH + 0.5f);
-
-    bool more_left  = first > 0;
-    bool more_right = first + v < n;
-
-    int x = PAD_L + slide;             /* LEFT-aligned */
-    for (int k = 0; k < v; ++k) {
-        int i = first + k;
-        bool act = (i == active);
-        int w = act ? BAR_ACT : BAR_SEG;
-        uint8_t gs = act ? GS_ACTIVE : GS_DASH;
-        if (k == 0 && more_left)       gs = 2;
-        if (k == v - 1 && more_right)  gs = 2;
-        int yy = act ? BAR_Y - 1 : BAR_Y;
-        int hh = act ? BAR_H + 2 : BAR_H;
-        oled_pill(x, yy, w, hh, gs);
-        x += w + BAR_GAP;
+    /* Layout: (n-1) gaps + (n-1) inactive widths + 1 active width = usable
+     * with active = (BAR_ACT_K/10) * inactive. Tighten gap on dense bars so
+     * pills don't shrink below ~4 px. */
+    int gap = BAR_GAP;
+    int gaps_total = (n - 1) * gap;
+    /* solve: inactive * ((n-1) + K/10) = usable - gaps_total */
+    int num = (usable - gaps_total) * 10;
+    int den = (n - 1) * 10 + BAR_ACT_K;
+    int ina_w = den > 0 ? num / den : usable;
+    if (ina_w < 4 && n > 1) {
+        gap = 3;
+        gaps_total = (n - 1) * gap;
+        num = (usable - gaps_total) * 10;
+        ina_w = num / den;
+        if (ina_w < 3) ina_w = 3;
     }
+    int act_w = (ina_w * BAR_ACT_K + 5) / 10;
+    if (n == 1) { ina_w = 0; act_w = usable; }
 
-    if (more_left)  draw_chevron(PAD_L - 6, BAR_Y + BAR_H / 2, -1);
-    if (more_right) draw_chevron(OLED_WIDTH - PAD_R + 2, BAR_Y + BAR_H / 2, +1);
+    /* Distribute the rounding residue across early inactive pills so the row
+     * ends exactly at the right margin (edge-to-edge). */
+    int used = act_w + (n - 1) * ina_w + gaps_total;
+    int residue = usable - used;            /* 0..n-1 px */
+
+    int x = PAD_L;
+    for (int i = 0; i < n; ++i) {
+        bool act = (i == active);
+        int w = act ? act_w : ina_w;
+        if (!act && residue > 0) { w += 1; --residue; }
+        int h  = act ? BAR_H_ACT : BAR_H_INA;
+        int yy = BAR_Y + (BAR_H_ACT - h) / 2;   /* vertically centred on the row */
+        uint8_t gs = act ? GS_ACTIVE : GS_DASH;
+        oled_pill(x, yy, w, h, gs);
+        x += w + gap;
+    }
 }
 
-/* Big value in Helvetica Neue Light, LEFT-aligned at the left margin. Drops to
- * the small face only if a long word would run into the battery / right edge. */
+/* Big value in Helvetica Neue Light, LEFT-aligned at the left margin. Vertically
+ * centred between the label baseline above and the pill row below. Drops to the
+ * small face only if a long word would run into the battery / right edge. */
 static void render_value(void) {
     const char *txt = menu_current_value_text();
     uint8_t gs = (mode == MENU_EDIT) ? GS_ACTIVE : 13;
     const bakedfont_t *f = &font_hn_value;
     int avail = OLED_WIDTH - PAD_L - PAD_R;
     if (bfont_width(f, txt) > avail) f = &font_hn_value_small;
-    int y = 20 + (32 - (int)f->line) / 2;     /* focus band, left-aligned, below the label */
+
+    /* Centre the value's line box vertically between (label bottom) and (bar top). */
+    int top    = PAD_T + (int)font_hn_label.line;   /* label baseline area ends here */
+    int bottom = BAR_Y;
+    int y = (top + bottom - (int)f->line) / 2;
     bfont_draw(f, PAD_L, y, txt, gs);
 }
 
