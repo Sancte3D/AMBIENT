@@ -7,8 +7,12 @@
  * firmware, so the sound is what the device produces (modulo the analog
  * chain).
  *
- * NOTE on Brightness: hardware EN2 ("Brightness") is the DISPLAY backlight
- * (SPEC §5 + §12). It does not affect audio — no sample.
+ * NOTE on Brightness vs display backlight: per the Sound Constitution
+ * (legacy/skill.md) "Brightness" is an AUDIO macro — the pad filter-cutoff /
+ * tone control (/fam/brightness, default -0.2, clamp +2700 Hz), rendered here
+ * as brightness.wav. The DISPLAY backlight is a SEPARATE, silent thing; SPEC
+ * v0.6 §12 mislabelled encoder EN2 as "display brightness" — that's a doc bug
+ * to reconcile, not an audio parameter.
  *
  * Build (from firmware-c-next/):  bash tools/render_samples.sh
  * Outputs every file under ./samples/ as <setting>.wav.
@@ -275,6 +279,23 @@ static void render_volume(const char *dir) {
     close_wav(f, ds, "volume");
 }
 
+/* BRIGHTNESS — pad filter-cutoff tone macro (the "Brightness" encoder).
+ * engine_set_brightness takes an Hz offset added to every voice's lowpass
+ * cutoff; the constitution caps it at +2700 Hz. Dark → neutral → bright. */
+static void render_brightness(const char *dir) {
+    long ds; FILE *f = open_wav(dir, "brightness", &ds);
+    baseline();
+    engine_set_texture(0.15f);
+    const float HZ[3] = { -700.0f, 0.0f, 2200.0f };  /* dark, neutral, bright */
+    for (int i = 0; i < 3; ++i) {
+        engine_set_brightness(HZ[i]);
+        settle_before_phrase(f);
+        play_phrase(f);
+        render_silence(f, 0.6f);
+    }
+    close_wav(f, ds, "brightness");
+}
+
 /* DRIVE — reverb-stage tanh drive (the "Drive" encoder) */
 static void render_drive(const char *dir) {
     long ds; FILE *f = open_wav(dir, "drive", &ds);
@@ -316,6 +337,7 @@ int main(int argc, char **argv) {
     render_generate(dir);
     render_volume(dir);
     render_drive(dir);
+    render_brightness(dir);
 
     /* Also drop a tiny note about Brightness so nobody wonders why it isn't here. */
     char path[1024]; snprintf(path, sizeof path, "%s/README.txt", dir);
@@ -327,8 +349,10 @@ int main(int argc, char **argv) {
             "Each file plays the SAME short ambient phrase three (or more) times,\n"
             "varying ONLY that setting between repeats, so you can A/B by ear.\n"
             "\n"
-            "Not included: Brightness. The hardware Brightness encoder (EN2) drives\n"
-            "the display backlight (SPEC §5 + §12), which doesn't affect audio.\n");
+            "brightness.wav IS the audio tone macro (pad filter cutoff, dark ->\n"
+            "neutral -> bright), per the Sound Constitution (/fam/brightness).\n"
+            "The DISPLAY backlight is a separate, silent thing — SPEC v0.6 §12\n"
+            "mislabelled encoder EN2 as 'display brightness'; that's a doc bug.\n");
         fclose(r);
     }
     fprintf(stderr, "done.\n");
