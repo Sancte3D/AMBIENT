@@ -33,6 +33,7 @@ static void noop_t   (float v)       { (void)v; }
 static void noop_b   (float v)       { (void)v; }
 static void noop_s   (float v)       { (void)v; }
 static void noop_m   (float v)       { (void)v; }
+static void noop_bl  (float v)       { (void)v; }
 
 /* Write the framebuffer as a 4× upscaled PGM image (P5, 8-bit grey). */
 static void write_pgm(const char *path) {
@@ -72,7 +73,7 @@ int main(int argc, char **argv) {
 
     menu_callbacks_t cb = {
         noop_key, noop_mode, noop_vibe, noop_voi,
-        noop_t, noop_b, noop_s, noop_m
+        noop_t, noop_b, noop_s, noop_m, noop_bl
     };
     menu_init(&cb);
 
@@ -91,7 +92,7 @@ int main(int argc, char **argv) {
     /* Render one BROWSE frame per param. */
     static const char *NAMES[MP_COUNT] = {
         "01_key","02_mode","03_vibe","04_voice",
-        "05_texture","06_bass","07_space","08_mood"
+        "05_texture","06_bass","07_space","08_mood","09_backlight"
     };
     char path[512];
     for (int p = 0; p < MP_COUNT; ++p) {
