@@ -309,10 +309,16 @@ function render() {
   ctx.textBaseline = 'top';
   ctx.fillText(valueText(), PAD_L, y);
 
-  /* bottom bar reflects the current setting's options */
-  const n = valueCount(state.cur);
-  if (n > 0) drawPillBar(n, valueIndex(state.cur));
-  else       drawFillbar(valueInt(state.cur));
+  /* Bottom bar has two meanings (must mirror menu.c):
+   *  - BROWSE: stable menu-position indicator (11 pills, current = active)
+   *  - EDIT:   current setting's value space (option pills, or fill bar) */
+  if (state.mode === 'browse') {
+    drawPillBar(MP_COUNT, state.cur);
+  } else {
+    const n = valueCount(state.cur);
+    if (n > 0) drawPillBar(n, valueIndex(state.cur));
+    else       drawFillbar(valueInt(state.cur));
+  }
 
   ctx.restore();
   /* HUD mirrors */

@@ -328,12 +328,22 @@ void menu_render(void) {
     render_battery();
     render_value();
 
-    /* Bottom bar reflects the CURRENT setting's options, not the menu position:
-     * discrete settings → one pill per option (active = current value);
-     * continuous % settings → a proportional fill bar. */
-    int n = menu_value_count(cur);
-    if (n > 0) render_bar(n, menu_value_index(cur));
-    else       render_fillbar(menu_value_int(cur));
+    /* Bottom bar has TWO meanings depending on mode:
+     *  - BROWSE: a STABLE menu-position indicator (one pill per setting, the
+     *    current one highlighted) — scrolling through settings only slides the
+     *    active pill, layout stays put.
+     *  - EDIT:   the current setting's value space — one pill per discrete
+     *    option (active = current value), or a proportional fill bar for the
+     *    continuous % settings. Layout adapts to the value, which is fine
+     *    once the user has entered edit mode by pushing.
+     */
+    if (mode == MENU_BROWSE) {
+        render_bar(MP_COUNT, (int)cur);
+    } else {
+        int n = menu_value_count(cur);
+        if (n > 0) render_bar(n, menu_value_index(cur));
+        else       render_fillbar(menu_value_int(cur));
+    }
 
     mask_corners();                   /* rounded screen window */
 }
