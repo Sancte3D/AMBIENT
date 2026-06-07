@@ -45,7 +45,6 @@ static int           texture = 20;        /* % 0..100 */
 static int           bass    = 50;
 static int           space   = 50;
 static int           mood    = 50;
-static int           volume  = 60;
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -67,7 +66,6 @@ static void apply_current(void) {
         case MP_BASS:       if (cb.set_bass_depth) cb.set_bass_depth(bass    / 100.0f);   break;
         case MP_SPACE:      if (cb.set_space)      cb.set_space   (space   / 100.0f);     break;
         case MP_MOOD:       if (cb.set_mood)       cb.set_mood    (mood    / 100.0f);     break;
-        case MP_VOLUME:     if (cb.set_master)     cb.set_master  (volume  / 100.0f);     break;
         default: break;
     }
 }
@@ -86,7 +84,7 @@ menu_mode_t  menu_mode(void)    { return mode; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "Key","Mode","Vibe","Voice","Drone","Gen","Texture","Bass","Space","Mood","Vol"
+        "Key","Mode","Vibe","Voice","Drone","Gen","Texture","Bass","Space","Mood"
     };
     return LABELS[cur];
 }
@@ -109,7 +107,6 @@ int menu_value_int(menu_param_t p) {
         case MP_BASS:    return bass;
         case MP_SPACE:   return space;
         case MP_MOOD:    return mood;
-        case MP_VOLUME:  return volume;
         default:         return 0;
     }
 }
@@ -141,7 +138,6 @@ const char *menu_current_value_text(void) {
         case MP_BASS:       snprintf(buf, sizeof buf, "%d%%", bass);    return buf;
         case MP_SPACE:      snprintf(buf, sizeof buf, "%d%%", space);   return buf;
         case MP_MOOD:       snprintf(buf, sizeof buf, "%d%%", mood);    return buf;
-        case MP_VOLUME:     snprintf(buf, sizeof buf, "%d%%", volume);  return buf;
         default: return "";
     }
 }
@@ -169,7 +165,6 @@ void menu_rotate(int delta) {
         case MP_BASS:       bass    = clampi(bass    + 5*delta, 0, 100); break;
         case MP_SPACE:      space   = clampi(space   + 5*delta, 0, 100); break;
         case MP_MOOD:       mood    = clampi(mood    + 5*delta, 0, 100); break;
-        case MP_VOLUME:     volume  = clampi(volume  + 5*delta, 0, 100); break;
         default: break;
     }
     apply_current();
@@ -211,24 +206,26 @@ static void mask_corners(void) {
         }
 }
 
-/* Battery: rounded outline + terminal nub + rounded fill, top-right. */
+/* Battery: rounded outline + terminal nub + rounded fill, top-right. Sized to
+ * match the OP-1-style minimal HUD — visually small enough to feel like a
+ * status hint, not an icon competing with the value. */
 static void render_battery(void) {
-    const int w = 32, h = 15, r = 5;
-    const int x = OLED_WIDTH - PAD_R - w - 4;   /* leave room for the nub */
-    const int y = PAD_T;
-    oled_rrect_stroke(x, y, w, h, r, 2, GS_MID);
-    oled_rrect_fill(x + w + 1, y + 4, 2, h - 8, 1, GS_MID);   /* terminal */
+    const int w = 26, h = 12, r = 4;
+    const int x = OLED_WIDTH - PAD_R - w - 3;   /* leave room for the nub */
+    const int y = PAD_T + 2;                    /* optical centre vs label */
+    oled_rrect_stroke(x, y, w, h, r, 1, GS_MID);
+    oled_rrect_fill(x + w + 1, y + 3, 2, h - 6, 1, GS_MID);   /* terminal */
 
     int pct = battery_pct();
-    int inner = w - 8;
+    int inner = w - 6;
     int fw = (inner * pct + 50) / 100;
-    if (fw < 3 && pct > 0) fw = 3;
+    if (fw < 2 && pct > 0) fw = 2;
     if (fw > inner) fw = inner;
     if (fw > 0)
-        oled_rrect_fill(x + 4, y + 3, fw, h - 6, 2,
+        oled_rrect_fill(x + 3, y + 3, fw, h - 6, 2,
                         battery_usb_present() ? GS_ACTIVE : GS_MID);
     if (battery_usb_present())
-        oled_rrect_fill(x + w / 2 - 1, y + 2, 3, h - 4, 1, GS_ACTIVE);
+        oled_rrect_fill(x + w / 2 - 1, y + 2, 2, h - 4, 1, GS_ACTIVE);
 }
 
 /* Bottom selector — one pill per OPTION OF THE CURRENT SETTING, spanning

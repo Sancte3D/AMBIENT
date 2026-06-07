@@ -14,11 +14,13 @@ static int g_checks = 0, g_fails = 0;
 #define CHECK(c, ...) do { ++g_checks; if (!(c)) { ++g_fails; \
     fprintf(stderr, "FAIL %s:%d  ", __FILE__, __LINE__); fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } } while (0)
 
-/* Capture which engine setters were called and with what. */
+/* Capture which engine setters were called and with what. (VOLUME is NOT in
+ * the menu — it has a dedicated hardware encoder, so no set_master callback
+ * here.) */
 static struct {
     int   key, mode, vibe, voice;
     int   drone_on, gen_on, gen_prog;
-    float texture, bass, space, mood, master;
+    float texture, bass, space, mood;
 } st;
 static void cb_key  (int v)             { st.key = v; }
 static void cb_mode (int v)             { st.mode = v; }
@@ -30,13 +32,12 @@ static void cb_tex  (float v)           { st.texture = v; }
 static void cb_bass (float v)           { st.bass = v; }
 static void cb_space(float v)           { st.space = v; }
 static void cb_mood (float v)           { st.mood = v; }
-static void cb_vol  (float v)           { st.master = v; }
 
 static void init(void) {
     memset(&st, 0, sizeof st);
     menu_callbacks_t cb = {
         cb_key, cb_mode, cb_vibe, cb_voice, cb_drone, cb_gen,
-        cb_tex, cb_bass, cb_space, cb_mood, cb_vol
+        cb_tex, cb_bass, cb_space, cb_mood
     };
     menu_init(&cb);
 }
