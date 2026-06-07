@@ -101,12 +101,15 @@ const GS_VAL  = 'rgba(255,255,255,0.86)';
 const GS_ACTIVE = '#ffffff';
 
 /* ---------- State machine — mirrors menu.c -------------------------------- */
+/* NOTE: VOLUME is intentionally absent — it has its own hardware encoder
+ * (EN4, SPEC §5). Putting it here would let two inputs fight for the same
+ * value. */
 const MP_KEY = 0, MP_MODE = 1, MP_VIBE = 2, MP_VOICE = 3, MP_DRONE = 4,
       MP_GEN = 5, MP_TEXTURE = 6, MP_BASS = 7, MP_SPACE = 8, MP_MOOD = 9,
-      MP_VOLUME = 10, MP_COUNT = 11;
+      MP_COUNT = 10;
 
 const LABELS = ['Key','Mode','Vibe','Voice','Drone','Gen',
-                'Texture','Bass','Space','Mood','Vol'];
+                'Texture','Bass','Space','Mood'];
 
 const KEY_NAMES  = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolyd.','Aeolian'];
@@ -117,7 +120,7 @@ const GEN_NAMES  = ['Off','I-IV','I-V-vi-IV','I-IV-V-I','I-vi-iii-VII','I-IV-vi-
 const state = {
   cur: MP_KEY, mode: 'browse',
   key: 60, mode_i: 0, vibe_i: 0, voice_i: 0, drone: false, gen_i: 0,
-  texture: 20, bass: 50, space: 50, mood: 50, volume: 60,
+  texture: 20, bass: 50, space: 50, mood: 50,
   battery_pct: 72, usb: false,
 };
 
@@ -146,7 +149,6 @@ function valueInt(p) {
   switch (p) {
     case MP_TEXTURE: return state.texture; case MP_BASS:   return state.bass;
     case MP_SPACE:   return state.space;   case MP_MOOD:   return state.mood;
-    case MP_VOLUME:  return state.volume;
   }
   return 0;
 }
@@ -162,7 +164,6 @@ function valueText() {
     case MP_BASS:    return state.bass    + '%';
     case MP_SPACE:   return state.space   + '%';
     case MP_MOOD:    return state.mood    + '%';
-    case MP_VOLUME:  return state.volume  + '%';
   }
   return '';
 }
@@ -183,7 +184,6 @@ function rotate(delta) {
     case MP_BASS:   state.bass    = clamp(state.bass    + 5*delta, 0, 100); break;
     case MP_SPACE:  state.space   = clamp(state.space   + 5*delta, 0, 100); break;
     case MP_MOOD:   state.mood    = clamp(state.mood    + 5*delta, 0, 100); break;
-    case MP_VOLUME: state.volume  = clamp(state.volume  + 5*delta, 0, 100); break;
   }
 }
 function push() { state.mode = state.mode === 'browse' ? 'edit' : 'browse'; }
@@ -209,31 +209,31 @@ function roundRect(x, y, w, h, r) {
 }
 
 function drawBattery() {
-  const w = 32, h = 15, r = 5;
-  const x = W - PAD_R - w - 4;
-  const y = PAD_T;
+  const w = 26, h = 12, r = 4;
+  const x = W - PAD_R - w - 3;
+  const y = PAD_T + 2;
   ctx.strokeStyle = GS_MID;
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth = 1.2;
   roundRect(x + 0.5, y + 0.5, w - 1, h - 1, r - 1);
   ctx.stroke();
   /* terminal nub */
   ctx.fillStyle = GS_MID;
-  roundRect(x + w + 1, y + 4, 2, h - 8, 1);
+  roundRect(x + w + 1, y + 3, 2, h - 6, 1);
   ctx.fill();
   /* fill */
-  const inner = w - 8;
+  const inner = w - 6;
   let fw = Math.round(inner * state.battery_pct / 100);
-  if (fw < 3 && state.battery_pct > 0) fw = 3;
+  if (fw < 2 && state.battery_pct > 0) fw = 2;
   if (fw > inner) fw = inner;
   if (fw > 0) {
     ctx.fillStyle = state.usb ? GS_ACTIVE : GS_MID;
-    roundRect(x + 4, y + 3, fw, h - 6, 2);
+    roundRect(x + 3, y + 3, fw, h - 6, 2);
     ctx.fill();
   }
   /* charging bolt slot — minimal */
   if (state.usb) {
     ctx.fillStyle = GS_ACTIVE;
-    roundRect(x + w / 2 - 1, y + 2, 3, h - 4, 1);
+    roundRect(x + w / 2 - 1, y + 2, 2, h - 4, 1);
     ctx.fill();
   }
 }

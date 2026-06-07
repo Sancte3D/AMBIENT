@@ -27,7 +27,12 @@ typedef enum {
     MENU_EDIT,
 } menu_mode_t;
 
-/* Parameter slots, in the order shown in the bottom pill row. */
+/* Parameter slots, in the order shown in the bottom pill row.
+ *
+ * NOTE on master volume: VOLUME is intentionally NOT in this menu — it has its
+ * own hardware encoder (EN4, GP19/GP20 per SPEC §5) that binds directly to
+ * engine_set_master_volume() in the control layer. Putting it in the display
+ * menu too would let software and hardware compete for the same value. */
 typedef enum {
     MP_KEY = 0,
     MP_MODE,
@@ -39,7 +44,6 @@ typedef enum {
     MP_BASS,
     MP_SPACE,
     MP_MOOD,
-    MP_VOLUME,
     MP_COUNT
 } menu_param_t;
 
@@ -57,7 +61,6 @@ typedef struct {
     void (*set_bass_depth) (float v01);
     void (*set_space)      (float v01);
     void (*set_mood)       (float v01);
-    void (*set_master)     (float v01);
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

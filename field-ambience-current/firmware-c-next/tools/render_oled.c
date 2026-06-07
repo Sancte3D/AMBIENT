@@ -35,7 +35,6 @@ static void noop_t   (float v)       { (void)v; }
 static void noop_b   (float v)       { (void)v; }
 static void noop_s   (float v)       { (void)v; }
 static void noop_m   (float v)       { (void)v; }
-static void noop_v   (float v)       { (void)v; }
 
 /* Write the framebuffer as a 4× upscaled PGM image (P5, 8-bit grey). */
 static void write_pgm(const char *path) {
@@ -75,7 +74,7 @@ int main(int argc, char **argv) {
 
     menu_callbacks_t cb = {
         noop_key, noop_mode, noop_vibe, noop_voi, noop_dro, noop_gen,
-        noop_t, noop_b, noop_s, noop_m, noop_v
+        noop_t, noop_b, noop_s, noop_m
     };
     menu_init(&cb);
 
@@ -98,7 +97,7 @@ int main(int argc, char **argv) {
     /* Render one BROWSE frame per param. */
     static const char *NAMES[MP_COUNT] = {
         "01_key","02_mode","03_vibe","04_voice","05_drone","06_gen",
-        "07_texture","08_bass","09_space","10_mood","11_vol"
+        "07_texture","08_bass","09_space","10_mood"
     };
     char path[512];
     for (int p = 0; p < MP_COUNT; ++p) {
@@ -115,8 +114,10 @@ int main(int argc, char **argv) {
     to_param(MP_MODE); menu_push();
     render_settled(); snprintf(path, sizeof path, "%s/menu_edit_02_mode.pgm", dir); write_pgm(path);
     menu_push();
-    to_param(MP_VOLUME); menu_push();
-    render_settled(); snprintf(path, sizeof path, "%s/menu_edit_11_vol.pgm", dir); write_pgm(path);
+    /* Continuous % fill-bar in edit mode. */
+    to_param(MP_TEXTURE); menu_push();
+    render_settled(); snprintf(path, sizeof path, "%s/menu_edit_07_texture.pgm", dir); write_pgm(path);
+    menu_push();
 
     /* USB-present variant (charging) on KEY. */
     to_param(MP_KEY);
