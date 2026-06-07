@@ -33,8 +33,12 @@ typedef enum {
  * hardware controls are deliberately NOT here so software and hardware never
  * compete for the same value:
  *   - VOLUME / DRIVE / BRIGHTNESS → own endless encoders (SPEC §5).
+ *     "Brightness" is the AUDIO tone macro (pad filter cutoff, Sound
+ *     Constitution /fam/brightness), NOT the display backlight.
  *   - DRONE / GENERATE / HOLD     → own modifier buttons (SPEC §7, GPB1..GPB3).
- *     SHIFT+GENERATE cycles the generative algorithm (SPEC §12.3). */
+ *     SHIFT+GENERATE cycles the generative algorithm (SPEC §12.3).
+ * Display BACKLIGHT lives in the menu (this list) since it has no dedicated
+ * encoder — it's a system/comfort setting, not a performance control. */
 typedef enum {
     MP_KEY = 0,
     MP_MODE,
@@ -44,6 +48,7 @@ typedef enum {
     MP_BASS,
     MP_SPACE,
     MP_MOOD,
+    MP_BACKLIGHT,
     MP_COUNT
 } menu_param_t;
 
@@ -59,6 +64,7 @@ typedef struct {
     void (*set_bass_depth) (float v01);
     void (*set_space)      (float v01);
     void (*set_mood)       (float v01);
+    void (*set_backlight)  (float v01);              /* LCD PWM via PCA9685 */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

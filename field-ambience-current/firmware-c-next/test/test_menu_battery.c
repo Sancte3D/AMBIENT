@@ -14,12 +14,12 @@ static int g_checks = 0, g_fails = 0;
 #define CHECK(c, ...) do { ++g_checks; if (!(c)) { ++g_fails; \
     fprintf(stderr, "FAIL %s:%d  ", __FILE__, __LINE__); fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } } while (0)
 
-/* Capture which engine setters were called and with what. (VOLUME / DRONE /
- * GENERATE are NOT in the menu — they have dedicated hardware controls per
- * SPEC §5 / §7, no callbacks here.) */
+/* Capture which engine setters were called and with what. (VOLUME / DRIVE /
+ * BRIGHTNESS / DRONE / GENERATE are NOT in the menu — they have dedicated
+ * hardware controls per SPEC §5 / §7, no callbacks here.) */
 static struct {
     int   key, mode, vibe, voice;
-    float texture, bass, space, mood;
+    float texture, bass, space, mood, backlight;
 } st;
 static void cb_key  (int v)             { st.key = v; }
 static void cb_mode (int v)             { st.mode = v; }
@@ -29,12 +29,13 @@ static void cb_tex  (float v)           { st.texture = v; }
 static void cb_bass (float v)           { st.bass = v; }
 static void cb_space(float v)           { st.space = v; }
 static void cb_mood (float v)           { st.mood = v; }
+static void cb_back (float v)           { st.backlight = v; }
 
 static void init(void) {
     memset(&st, 0, sizeof st);
     menu_callbacks_t cb = {
         cb_key, cb_mode, cb_vibe, cb_voice,
-        cb_tex, cb_bass, cb_space, cb_mood
+        cb_tex, cb_bass, cb_space, cb_mood, cb_back
     };
     menu_init(&cb);
 }
@@ -99,6 +100,22 @@ static void test_continuous_clamps_and_steps_by_5(void) {
     CHECK(st.texture == 0.0f, "callback texture didn't reach 0");
 }
 
+static void test_backlight_in_menu(void) {
+    init();
+    /* navigate to BACKLIGHT and toggle into edit */
+    for (int i = 0; i < (int)MP_BACKLIGHT; ++i) menu_rotate(1);
+    CHECK(menu_current() == MP_BACKLIGHT, "didn't reach BACKLIGHT");
+    menu_push();
+    /* default is 70 % */
+    CHECK(menu_value_int(MP_BACKLIGHT) == 70, "init backlight != 70: %d", menu_value_int(MP_BACKLIGHT));
+    menu_rotate(+2);
+    CHECK(menu_value_int(MP_BACKLIGHT) == 80, "step5 x2: %d", menu_value_int(MP_BACKLIGHT));
+    CHECK(st.backlight > 0.79f && st.backlight < 0.81f,
+          "callback backlight not ~0.8: %.3f", st.backlight);
+    menu_rotate(-100);
+    CHECK(menu_value_int(MP_BACKLIGHT) == 0, "did not clamp at 0");
+}
+
 /* --- battery curve --- */
 
 static void test_battery_curve(void) {
@@ -138,6 +155,7 @@ int main(void) {
     test_push_toggles_mode();
     test_edit_key_fires_callback_and_cycles_12();
     test_continuous_clamps_and_steps_by_5();
+    test_backlight_in_menu();
     test_battery_curve();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);

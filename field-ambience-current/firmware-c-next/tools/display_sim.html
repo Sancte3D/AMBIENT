@@ -113,8 +113,10 @@
     Alle 4 Encoder sind endlos (kein Anschlag). Über einem Dial <b>scrollen</b>
     oder vertikal <b>ziehen</b> = drehen, ‹ / › = ein Klick. Display-Encoder:
     drehen scrollt das Menü, <b>push</b> öffnet/schließt Edit. Drive / Brightness /
-    Volume haben keinen Menü-Eintrag — beim Drehen erscheint ihr Wert kurz
-    als Overlay auf dem Display. (Tastatur: ← → + Space steuern den Display-Encoder.)
+    Volume sind dedizierte Audio-Macros (Drive = Reverb-Drive, Brightness = Pad-
+    Tone, Volume = Master) — beim Drehen erscheint ihr Wert kurz als Overlay
+    auf dem Display. LCD-Backlight ist ein Menü-Eintrag (Backlight, am Ende).
+    (Tastatur: ← → + Space steuern den Display-Encoder.)
   </div>
 </div>
 
@@ -140,16 +142,19 @@ const GS_ACTIVE = '#ffffff';
 
 /* ---------- State machine — mirrors menu.c -------------------------------- */
 /* Items in the menu are SETTABLE VALUES the user chooses from a range.
- * The dedicated hardware controls are deliberately NOT here:
- *   - VOLUME, DRIVE, BRIGHTNESS  → own endless encoders (SPEC §5)
- *   - DRONE, GENERATE, HOLD       → own buttons (SPEC §7, GPB1..GPB3)
+ * Dedicated hardware controls are deliberately NOT here:
+ *   - VOLUME, DRIVE, BRIGHTNESS  → own endless encoders (SPEC §5).
+ *     "Brightness" is the AUDIO tone macro (pad filter cutoff, Sound
+ *     Constitution /fam/brightness), not the LCD backlight.
+ *   - DRONE, GENERATE, HOLD       → own buttons (SPEC §7).
  *     GENERATE program-cycle = SHIFT+GENERATE (§12.3).
- * Otherwise software and hardware would compete for the same value. */
+ * Display BACKLIGHT lives in the menu since it has no dedicated encoder
+ * — it's a system/comfort setting, not a performance control. */
 const MP_KEY = 0, MP_MODE = 1, MP_VIBE = 2, MP_VOICE = 3,
       MP_TEXTURE = 4, MP_BASS = 5, MP_SPACE = 6, MP_MOOD = 7,
-      MP_COUNT = 8;
+      MP_BACKLIGHT = 8, MP_COUNT = 9;
 
-const LABELS = ['Key','Mode','Vibe','Voice','Texture','Bass','Space','Mood'];
+const LABELS = ['Key','Mode','Vibe','Voice','Texture','Bass','Space','Mood','Backlight'];
 
 const KEY_NAMES  = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolyd.','Aeolian'];
@@ -160,8 +165,10 @@ const state = {
   cur: MP_KEY, mode: 'browse',
   key: 60, mode_i: 0, vibe_i: 0, voice_i: 0,
   texture: 20, bass: 50, space: 50, mood: 50,
-  /* dedicated hardware-encoder values (NOT in the display menu) */
-  drive: 30, brightness: 70, vol: 30,
+  backlight: 70,
+  /* dedicated hardware-encoder values (NOT in the display menu).
+   * `brightness` is the audio tone macro (pad cutoff), not the LCD. */
+  drive: 30, brightness: 50, vol: 30,
   battery_pct: 72, usb: false,
 };
 
@@ -187,8 +194,9 @@ function valueIndex(p) {
 }
 function valueInt(p) {
   switch (p) {
-    case MP_TEXTURE: return state.texture; case MP_BASS:   return state.bass;
-    case MP_SPACE:   return state.space;   case MP_MOOD:   return state.mood;
+    case MP_TEXTURE:   return state.texture;   case MP_BASS: return state.bass;
+    case MP_SPACE:     return state.space;     case MP_MOOD: return state.mood;
+    case MP_BACKLIGHT: return state.backlight;
   }
   return 0;
 }
@@ -198,10 +206,11 @@ function valueText() {
     case MP_MODE:  return MODE_NAMES[state.mode_i];
     case MP_VIBE:  return VIBE_NAMES[state.vibe_i];
     case MP_VOICE: return VOICE_NAMES[state.voice_i];
-    case MP_TEXTURE: return Math.round(anim.fillT) + '%';
-    case MP_BASS:    return Math.round(anim.fillT) + '%';
-    case MP_SPACE:   return Math.round(anim.fillT) + '%';
-    case MP_MOOD:    return Math.round(anim.fillT) + '%';
+    case MP_TEXTURE:   return Math.round(anim.fillT) + '%';
+    case MP_BASS:      return Math.round(anim.fillT) + '%';
+    case MP_SPACE:     return Math.round(anim.fillT) + '%';
+    case MP_MOOD:      return Math.round(anim.fillT) + '%';
+    case MP_BACKLIGHT: return Math.round(anim.fillT) + '%';
   }
   return '';
 }
@@ -222,10 +231,11 @@ function rotate(delta) {
     case MP_MODE:   state.mode_i  = wrap(state.mode_i  + delta, 6); valueChanged = true; break;
     case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + delta, 4); valueChanged = true; break;
     case MP_VOICE:  state.voice_i = wrap(state.voice_i + delta, 3); valueChanged = true; break;
-    case MP_TEXTURE:state.texture = clamp(state.texture + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_BASS:   state.bass    = clamp(state.bass    + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_SPACE:  state.space   = clamp(state.space   + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_MOOD:   state.mood    = clamp(state.mood    + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_TEXTURE:  state.texture   = clamp(state.texture   + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_BASS:     state.bass      = clamp(state.bass      + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_SPACE:    state.space     = clamp(state.space     + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_MOOD:     state.mood      = clamp(state.mood      + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_BACKLIGHT:state.backlight = clamp(state.backlight + 5*delta, 0, 100); valueChanged = true; break;
   }
   if (valueChanged) onValueChange();
 }
