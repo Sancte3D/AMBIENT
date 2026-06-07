@@ -74,16 +74,16 @@ const char  *menu_current_label(void);
 const char  *menu_current_value_text(void);  /* formatted for the big display */
 int          menu_value_index(menu_param_t p);   /* discrete params */
 int          menu_value_int  (menu_param_t p);   /* continuous → 0..100 % */
+int          menu_value_count(menu_param_t p);   /* # discrete options, 0 = % */
 
 /* Draw the current state into the OLED framebuffer (does NOT push to panel —
  * caller invokes oled_show() afterwards on device). Host-portable. */
 void menu_render(void);
 
-/* Low-level: draw just the bottom position bar for `total` entries with
- * `active` highlighted. menu_render uses it with the live entry count; future
- * paged menus (different entry counts per page) and the preview tool call it
- * directly. Adapts to any total: fits all when possible, else scroll-windows
- * with edge fade + chevrons. */
+/* Low-level: draw just the bottom option bar with `total` pills, `active`
+ * highlighted, edge-to-edge. menu_render derives total/active from the current
+ * setting's value space; the preview tool calls it directly to show how the
+ * pill row scales for different option counts. */
 void menu_render_bar_only(int total, int active);
 
 #endif

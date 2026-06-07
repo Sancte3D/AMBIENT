@@ -114,6 +114,20 @@ int menu_value_int(menu_param_t p) {
     }
 }
 
+/* Number of discrete options a parameter can step through. 0 = continuous (a
+ * 0..100 % amount) — rendered as a fill bar instead of one pill per option. */
+int menu_value_count(menu_param_t p) {
+    switch (p) {
+        case MP_KEY:        return 12;
+        case MP_MODE:       return 6;
+        case MP_VIBE:       return 4;
+        case MP_VOICE:      return 3;
+        case MP_DRONE:      return 2;
+        case MP_GENERATIVE: return 7;
+        default:            return 0;   /* TEXTURE/BASS/SPACE/MOOD/VOLUME = % */
+    }
+}
+
 const char *menu_current_value_text(void) {
     static char buf[12];
     switch (cur) {
@@ -217,11 +231,13 @@ static void render_battery(void) {
         oled_rrect_fill(x + w / 2 - 1, y + 2, 3, h - 4, 1, GS_ACTIVE);
 }
 
-/* Bottom selector — N pills spanning EDGE-TO-EDGE between the side margins.
- * One pill per setting, ALWAYS — count = number of options the user can step
- * through. The active pill is bigger and bright; the inactive ones are small
- * and dim. Pill sizes scale with N so 4 settings → fat pills, 11 → narrow,
- * 24 → very narrow but still on screen — no scrolling, no chevrons. */
+/* Bottom selector — one pill per OPTION OF THE CURRENT SETTING, spanning
+ * EDGE-TO-EDGE between the side margins. The pill count therefore depends on
+ * the setting: Mode → 6 pills, Vibe → 4, Voice → 3, Drone → 2, Key → 12. The
+ * active pill (= current value) is bigger and bright and slides left↔right as
+ * the value changes; the others are small and dim. Pill sizes scale with N so
+ * few options → fat pills, many → narrow — no scrolling, no chevrons.
+ * Continuous % settings don't use this; they get render_fillbar() instead. */
 #define BAR_Y      148
 #define BAR_H_INA  5      /* inactive pill height */
 #define BAR_H_ACT  8      /* active pill height — slightly taller for emphasis */
@@ -269,6 +285,22 @@ static void render_bar(int n, int active) {
     }
 }
 
+/* Continuous % setting (Texture/Bass/Space/Mood/Volume): a single rounded track
+ * spanning edge-to-edge with a bright fill proportional to the 0..100 value —
+ * the honest representation of a stepless amount (no fake discrete pills). */
+static void render_fillbar(int pct) {
+    int x = PAD_L;
+    int w = OLED_WIDTH - PAD_L - PAD_R;
+    int y = BAR_Y;
+    int h = BAR_H_ACT;
+    int r = h / 2;
+    oled_pill(x, y, w, h, GS_DASH);            /* dim track */
+    int fw = (w * pct + 50) / 100;
+    if (fw < h && pct > 0) fw = h;             /* keep a visible rounded cap */
+    if (fw > w) fw = w;
+    if (fw > 0) oled_rrect_fill(x, y, fw, h, r, GS_ACTIVE);
+}
+
 /* Big value in Helvetica Neue Light, LEFT-aligned at the left margin. Vertically
  * centred between the label baseline above and the pill row below. Drops to the
  * small face only if a long word would run into the battery / right edge. */
@@ -295,7 +327,13 @@ void menu_render(void) {
 
     render_battery();
     render_value();
-    render_bar(MP_COUNT, (int)cur);   /* entry count; bar adapts to any N */
+
+    /* Bottom bar reflects the CURRENT setting's options, not the menu position:
+     * discrete settings → one pill per option (active = current value);
+     * continuous % settings → a proportional fill bar. */
+    int n = menu_value_count(cur);
+    if (n > 0) render_bar(n, menu_value_index(cur));
+    else       render_fillbar(menu_value_int(cur));
 
     mask_corners();                   /* rounded screen window */
 }

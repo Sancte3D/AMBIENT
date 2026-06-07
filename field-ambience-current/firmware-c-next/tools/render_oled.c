@@ -66,9 +66,8 @@ static void to_param(menu_param_t p) {
     while (menu_current() != p && guard++ < MP_COUNT * 2) menu_rotate(+1);
 }
 
-/* Render several frames so the eased bar-scroll settles before the snapshot. */
 static void render_settled(void) {
-    for (int i = 0; i < 12; ++i) menu_render();
+    menu_render();
 }
 
 int main(int argc, char **argv) {
@@ -124,22 +123,6 @@ int main(int argc, char **argv) {
     battery_set_usb_present(true);
     render_settled(); snprintf(path, sizeof path, "%s/menu_browse_01_key_usb.pgm", dir); write_pgm(path);
     battery_set_usb_present(false);
-
-    /* Scroll demo: a page with MORE entries than fit (16). Shows the window
-     * sliding + edge fade + chevrons at start / middle / end. */
-    {
-        struct { int active; const char *tag; } shots[] = {
-            { 0,  "scroll_start" }, { 8, "scroll_mid" }, { 23, "scroll_end" }
-        };
-        for (int s = 0; s < 3; ++s) {
-            oled_fill(0);
-            oled_text(8, 6, "SETUP", 15);
-            oled_text_smooth((OLED_WIDTH - oled_text_width("24", 3)) / 2, 20, "24", 8, 3);
-            for (int i = 0; i < 30; ++i) menu_render_bar_only(24, shots[s].active);  /* settle */
-            snprintf(path, sizeof path, "%s/bar_%s.pgm", dir, shots[s].tag);
-            write_pgm(path);
-        }
-    }
 
     printf("wrote previews to %s/\n", dir);
     return 0;
