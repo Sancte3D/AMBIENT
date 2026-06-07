@@ -41,7 +41,6 @@ static int           texture = 20;        /* % 0..100 */
 static int           bass    = 50;
 static int           space   = 50;
 static int           mood    = 50;
-static int           backlight = 70;     /* LCD brightness % */
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -57,7 +56,6 @@ static void apply_current(void) {
         case MP_BASS:       if (cb.set_bass_depth) cb.set_bass_depth(bass    / 100.0f);   break;
         case MP_SPACE:      if (cb.set_space)      cb.set_space   (space   / 100.0f);     break;
         case MP_MOOD:       if (cb.set_mood)       cb.set_mood    (mood    / 100.0f);     break;
-        case MP_BACKLIGHT:  if (cb.set_backlight)  cb.set_backlight(backlight / 100.0f);  break;
         default: break;
     }
 }
@@ -76,7 +74,7 @@ menu_mode_t  menu_mode(void)    { return mode; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "Key","Mode","Vibe","Voice","Texture","Bass","Space","Mood","Backlight"
+        "Key","Mode","Vibe","Voice","Texture","Bass","Space","Mood"
     };
     return LABELS[cur];
 }
@@ -97,7 +95,6 @@ int menu_value_int(menu_param_t p) {
         case MP_BASS:      return bass;
         case MP_SPACE:     return space;
         case MP_MOOD:      return mood;
-        case MP_BACKLIGHT: return backlight;
         default:           return 0;
     }
 }
@@ -125,7 +122,6 @@ const char *menu_current_value_text(void) {
         case MP_BASS:       snprintf(buf, sizeof buf, "%d%%", bass);      return buf;
         case MP_SPACE:      snprintf(buf, sizeof buf, "%d%%", space);     return buf;
         case MP_MOOD:       snprintf(buf, sizeof buf, "%d%%", mood);      return buf;
-        case MP_BACKLIGHT:  snprintf(buf, sizeof buf, "%d%%", backlight); return buf;
         default: return "";
     }
 }
@@ -149,9 +145,8 @@ void menu_rotate(int delta) {
         case MP_VOICE:      voice_i = wrapi(voice_i + delta, 3); break;
         case MP_TEXTURE:    texture = clampi(texture + 5*delta, 0, 100); break;
         case MP_BASS:       bass    = clampi(bass    + 5*delta, 0, 100); break;
-        case MP_SPACE:      space     = clampi(space     + 5*delta, 0, 100); break;
-        case MP_MOOD:       mood      = clampi(mood      + 5*delta, 0, 100); break;
-        case MP_BACKLIGHT:  backlight = clampi(backlight + 5*delta, 0, 100); break;
+        case MP_SPACE:      space   = clampi(space   + 5*delta, 0, 100); break;
+        case MP_MOOD:       mood    = clampi(mood    + 5*delta, 0, 100); break;
         default: break;
     }
     apply_current();
