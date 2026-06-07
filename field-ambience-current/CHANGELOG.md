@@ -4,10 +4,42 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r16** (Display-Wechsel: SSD1322 256×64 OLED →
-1.9" ST7789 320×170 IPS-LCD; gleiche SPI0-Pins, Backlight über freien
-PCA9685-Kanal). Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der
-maßgebliche Audio-Stand.
+Aktuelle Rev: **v0.6.3-r17** (Display-UX: EN2-Konflikt aufgelöst —
+EN2 = Audio-Brightness, LCD-Backlight auf SHIFT+EN2; Menü zurück auf
+8 Pills; Encoder-Velocity-Acceleration; HOLD×GENERATE-Koexistenz).
+Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche
+Audio-Stand.
+
+---
+
+## v0.6.3-r17 (2026-06-07) — Display-UX: EN2-Konflikt, Backlight, Encoder-Feel
+
+**User-Review der Display-Simulation** (`firmware-c-next/tools/display_sim.html`)
+brachte mehrere UX-Entscheidungen, die Code und SPEC jetzt synchronisieren:
+
+- **EN2-Konflikt aufgelöst (war r17-offen):** Der Brightness-Encoder EN2 regelt
+  im Normalbetrieb die **Audio-Tonfarbe** (Pad-Cutoff, Sound-Constitution
+  `/fam/brightness`) — **nicht** das Display. Frühere Stellen (Display-Backlight,
+  §12.5 Boot-Tabelle) setzten EN2 fälschlich mit der LCD-Helligkeit gleich; das
+  ist korrigiert.
+- **LCD-Backlight → SHIFT+EN2** (§12.3): Sekundärfunktion, transientes Overlay
+  wie Volume/Drive, **kein** Menü-Eintrag. Darf bis 0 % (recoverable, weil
+  physischer Encoder).
+- **Backlight-Boot = Werks-Default 80 %** (§12.5): Anti-Lockout, wird NICHT aus
+  dem Snapshot wiederhergestellt → man kann sich nie auf einem dunklen Screen
+  aussperren. Idle (30 Min) dimmt sanft auf 20 % statt Display-Off.
+- **Menü zurück auf 8 Pills** (Key/Mode/Vibe/Voice/Texture/Bass/Space/Mood) —
+  Backlight war kurzzeitig ein 9. Eintrag, ist jetzt wieder raus.
+- **Encoder-Velocity-Acceleration** (§12.7): langsam = feine 1 %-Schritte,
+  schnell = grobe Sprünge. Browse/diskrete Werte beschleunigen nicht.
+- **HOLD × GENERATE = Koexistenz mit Voice-Schutz** (§12.3): GENERATE läuft
+  weiter, darf aber keine gehaltenen Drone-Voices stehlen (ersetzt die alte
+  „ignoriert"-Regel, die den Knopf tot wirken ließ).
+- **Kein Edit-Auto-Exit** (§12.7): der User kontrolliert Browse⇄Edit allein.
+- **Bugfix:** Key-Encoder-Integer driftete unbeschränkt (`key += delta` ohne
+  Wrap); jetzt auf [60,72) normalisiert.
+
+Firmware-Tests: 13 Host-Suites PASS. Display-Sim JS lint clean.
 
 ---
 
