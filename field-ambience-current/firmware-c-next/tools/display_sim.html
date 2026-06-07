@@ -71,6 +71,14 @@
     border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer;
   }
   button:hover { background: #34343a; }
+  /* SHIFT armed: highlight the latch and flag EN2's secondary function (LED6). */
+  #btn-shift { letter-spacing: 1px; }
+  body.shift-on #btn-shift {
+    background: #c9a227; color: #161608; border-color: #e6c54a;
+    box-shadow: 0 0 10px rgba(230,197,74,0.55);
+  }
+  body.shift-on .enc[data-id="bright"] .enc-label { color: #e6c54a; }
+  body.shift-on .enc[data-id="bright"] .enc-val   { color: #f0d878; }
   .legend { color: #6a6a70; font-size: 12px; max-width: 640px; text-align: center; }
 </style>
 
@@ -104,6 +112,7 @@
   </div>
 
   <div class="row">
+    <button id="btn-shift">SHIFT</button>
     <button id="btn-charge">Akku-Quelle wechseln</button>
     <button id="btn-batdec">Akku −10</button>
     <button id="btn-batinc">Akku +10</button>
@@ -114,9 +123,11 @@
     oder vertikal <b>ziehen</b> = drehen, ‹ / › = ein Klick. Display-Encoder:
     drehen scrollt das Menü, <b>push</b> öffnet/schließt Edit. Drive / Brightness /
     Volume sind dedizierte Audio-Macros (Drive = Reverb-Drive, Brightness = Pad-
-    Tone, Volume = Master) — beim Drehen erscheint ihr Wert kurz als Overlay
-    auf dem Display. LCD-Backlight ist ein Menü-Eintrag (Backlight, am Ende).
-    (Tastatur: ← → + Space steuern den Display-Encoder.)
+    Tone, Volume = Master) — beim Drehen erscheint ihr Wert kurz als Overlay.
+    <b>SHIFT halten + Brightness drehen = LCD-Helligkeit</b> (Sekundärfunktion
+    §12.3); kein Menü-Eintrag. Sinkt die Helligkeit auf 0 %, dunkelt der ganze
+    Screen ab — zurückdrehen geht trotzdem, weil der Encoder physisch ist.
+    (Tastatur: ← → + Space = Display-Encoder, Shift halten = SHIFT.)
   </div>
 </div>
 
@@ -144,17 +155,19 @@ const GS_ACTIVE = '#ffffff';
 /* Items in the menu are SETTABLE VALUES the user chooses from a range.
  * Dedicated hardware controls are deliberately NOT here:
  *   - VOLUME, DRIVE, BRIGHTNESS  → own endless encoders (SPEC §5).
- *     "Brightness" is the AUDIO tone macro (pad filter cutoff, Sound
+ *     "Brightness" (EN2) is the AUDIO tone macro (pad filter cutoff, Sound
  *     Constitution /fam/brightness), not the LCD backlight.
  *   - DRONE, GENERATE, HOLD       → own buttons (SPEC §7).
  *     GENERATE program-cycle = SHIFT+GENERATE (§12.3).
- * Display BACKLIGHT lives in the menu since it has no dedicated encoder
- * — it's a system/comfort setting, not a performance control. */
+ *   - Display BACKLIGHT           → SHIFT+EN2 (Brightness encoder's secondary
+ *     function, §12.3). Behaves like Volume/Drive: a transient overlay, never
+ *     a menu entry. Boots to a factory default so you can't lock yourself in
+ *     the dark (§12.5). */
 const MP_KEY = 0, MP_MODE = 1, MP_VIBE = 2, MP_VOICE = 3,
       MP_TEXTURE = 4, MP_BASS = 5, MP_SPACE = 6, MP_MOOD = 7,
-      MP_BACKLIGHT = 8, MP_COUNT = 9;
+      MP_COUNT = 8;
 
-const LABELS = ['Key','Mode','Vibe','Voice','Texture','Bass','Space','Mood','Backlight'];
+const LABELS = ['Key','Mode','Vibe','Voice','Texture','Bass','Space','Mood'];
 
 const KEY_NAMES  = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolyd.','Aeolian'];
@@ -165,10 +178,12 @@ const state = {
   cur: MP_KEY, mode: 'browse',
   key: 60, mode_i: 0, vibe_i: 0, voice_i: 0,
   texture: 20, bass: 50, space: 50, mood: 50,
-  backlight: 70,
   /* dedicated hardware-encoder values (NOT in the display menu).
-   * `brightness` is the audio tone macro (pad cutoff), not the LCD. */
-  drive: 30, brightness: 50, vol: 30,
+   * `brightness` is the audio tone macro (pad cutoff), not the LCD.
+   * `backlight` is the LCD PWM, reached via SHIFT+EN2; boots to a factory
+   * default (80 %) so the screen is never dark on power-on (§12.5). */
+  drive: 30, brightness: 50, vol: 30, backlight: 80,
+  shift: false,
   battery_pct: 72, usb: false,
 };
 
@@ -194,9 +209,8 @@ function valueIndex(p) {
 }
 function valueInt(p) {
   switch (p) {
-    case MP_TEXTURE:   return state.texture;   case MP_BASS: return state.bass;
-    case MP_SPACE:     return state.space;     case MP_MOOD: return state.mood;
-    case MP_BACKLIGHT: return state.backlight;
+    case MP_TEXTURE: return state.texture; case MP_BASS: return state.bass;
+    case MP_SPACE:   return state.space;   case MP_MOOD: return state.mood;
   }
   return 0;
 }
@@ -206,11 +220,10 @@ function valueText() {
     case MP_MODE:  return MODE_NAMES[state.mode_i];
     case MP_VIBE:  return VIBE_NAMES[state.vibe_i];
     case MP_VOICE: return VOICE_NAMES[state.voice_i];
-    case MP_TEXTURE:   return Math.round(anim.fillT) + '%';
-    case MP_BASS:      return Math.round(anim.fillT) + '%';
-    case MP_SPACE:     return Math.round(anim.fillT) + '%';
-    case MP_MOOD:      return Math.round(anim.fillT) + '%';
-    case MP_BACKLIGHT: return Math.round(anim.fillT) + '%';
+    case MP_TEXTURE: return Math.round(anim.fillT) + '%';
+    case MP_BASS:    return Math.round(anim.fillT) + '%';
+    case MP_SPACE:   return Math.round(anim.fillT) + '%';
+    case MP_MOOD:    return Math.round(anim.fillT) + '%';
   }
   return '';
 }
@@ -219,6 +232,10 @@ function valueText() {
 function curIsContinuous() { return valueCount(state.cur) === 0; }
 
 function rotate(delta) {
+  /* Any Display-encoder action takes focus back to the menu, so a lingering
+   * Drive/Brightness/Volume/Backlight overlay must clear out of the way
+   * (#6: one consistent rule for every transient overlay). */
+  dismissOverlay();
   if (state.mode === 'browse') {
     const old = state.cur;
     state.cur = wrap(state.cur + delta, MP_COUNT);
@@ -231,15 +248,15 @@ function rotate(delta) {
     case MP_MODE:   state.mode_i  = wrap(state.mode_i  + delta, 6); valueChanged = true; break;
     case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + delta, 4); valueChanged = true; break;
     case MP_VOICE:  state.voice_i = wrap(state.voice_i + delta, 3); valueChanged = true; break;
-    case MP_TEXTURE:  state.texture   = clamp(state.texture   + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_BASS:     state.bass      = clamp(state.bass      + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_SPACE:    state.space     = clamp(state.space     + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_MOOD:     state.mood      = clamp(state.mood      + 5*delta, 0, 100); valueChanged = true; break;
-    case MP_BACKLIGHT:state.backlight = clamp(state.backlight + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_TEXTURE:state.texture = clamp(state.texture + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_BASS:   state.bass    = clamp(state.bass    + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_SPACE:  state.space   = clamp(state.space   + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_MOOD:   state.mood    = clamp(state.mood    + 5*delta, 0, 100); valueChanged = true; break;
   }
   if (valueChanged) onValueChange();
 }
 function push() {
+  dismissOverlay();                    /* #6: clear overlay on any Display push */
   state.mode = state.mode === 'browse' ? 'edit' : 'browse';
   onModeChange();
 }
@@ -450,6 +467,14 @@ function showOverlay(label, value) {
   tween('ovFill', value, 180);
   ensureLoop();
 }
+/* Snap a visible overlay out of the way (faster than its idle timeout) when the
+ * user moves on to the Display menu. No-op if nothing is showing. */
+function dismissOverlay() {
+  if (!overlay.active && anim.ovAlpha <= 0.01) return;
+  overlay.fadeOutAt = 0;
+  tween('ovAlpha', 0, 160, easeOutCubic, () => { overlay.active = false; });
+  ensureLoop();
+}
 
 /* ---------- Drawing ------------------------------------------------------ */
 function drawValueRow(label, valueText, labelGs, valueGs) {
@@ -528,6 +553,12 @@ function render() {
   }
 
   ctx.restore();
+
+  /* LCD backlight = physical panel brightness, so it scales the WHOLE display
+   * (content + bezel glow), not the drawn greys. A CSS filter is the honest
+   * model. Tiny floor (0.05) keeps a hint of glow at 0 % so a dark screen
+   * still reads as "on but dim" rather than "broken/off". */
+  canvas.style.filter = `brightness(${(0.05 + 0.95 * state.backlight / 100).toFixed(3)})`;
 }
 
 /* ---------- Encoders ------------------------------------------------------ */
@@ -548,6 +579,13 @@ function turnEncoder(id, delta) {
   if (e.menu) {
     rotate(delta);
     render();
+  } else if (id === 'bright' && state.shift) {
+    /* SHIFT+EN2 = LCD backlight (secondary function, §12.3). The user CAN take
+     * it to 0 % — recoverable because the dial is physical, so the screen can
+     * be brought back even while it's black. */
+    state.backlight = clamp(state.backlight + ENC_STEP * delta, 0, 100);
+    showOverlay('Backlight', state.backlight);
+    render();                          /* re-apply screen dimming immediately */
   } else {
     e.set(clamp(e.get() + ENC_STEP * delta, 0, 100));
     showOverlay(e.label, e.get());
@@ -568,9 +606,20 @@ document.querySelectorAll('.enc').forEach(el => {
 function refreshWidget(id) {
   const w = widgets[id];
   w.tick.style.transform = `rotate(${angle[id]}deg)`;
-  w.val.textContent = ENC[id].menu
-    ? LABELS[state.cur] + (state.mode === 'edit' ? ' ·edit' : '')
-    : ENC[id].get() + '%';
+  if (ENC[id].menu) {
+    w.val.textContent = LABELS[state.cur] + (state.mode === 'edit' ? ' ·edit' : '');
+  } else if (id === 'bright' && state.shift) {
+    /* secondary function visible while SHIFT is held */
+    w.val.textContent = '↑ Backlight ' + state.backlight + '%';
+  } else {
+    w.val.textContent = ENC[id].get() + '%';
+  }
+}
+/* Reflect SHIFT state across the panel: EN2 retitles to its secondary label so
+ * the hidden mapping is discoverable the moment SHIFT is held (mirrors LED6). */
+function refreshShift() {
+  document.body.classList.toggle('shift-on', state.shift);
+  refreshWidget('bright');
 }
 
 /* Wire each dial: wheel to turn, vertical drag to turn, buttons for single steps. */
@@ -603,18 +652,29 @@ document.querySelectorAll('.enc').forEach(el => {
     b.onclick = () => pushEncoder(id));
 });
 
-/* Keyboard still drives the Display encoder — it's the primary one. */
+/* Keyboard still drives the Display encoder — it's the primary one. Holding
+ * Shift arms EN2's secondary (Backlight), mirroring the physical SHIFT button. */
 window.addEventListener('keydown', (e) => {
+  if (e.key === 'Shift') { if (!state.shift) { state.shift = true; refreshShift(); } return; }
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { turnEncoder('display', +1); e.preventDefault(); }
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { turnEncoder('display', -1); e.preventDefault(); }
   else if (e.key === ' ' || e.key === 'Enter') { pushEncoder('display'); e.preventDefault(); }
 });
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'Shift') { state.shift = false; refreshShift(); }
+});
+
+/* On-screen SHIFT latch (a momentary hold is unusable with a single pointer
+ * while also turning a dial, so the button toggles; keyboard Shift stays
+ * momentary for users who prefer it). */
+document.getElementById('btn-shift').onclick = () => { state.shift = !state.shift; refreshShift(); };
 
 document.getElementById('btn-charge').onclick = () => { state.usb = !state.usb; render(); };
 document.getElementById('btn-batdec').onclick = () => { state.battery_pct = clamp(state.battery_pct - 10, 0, 100); render(); };
 document.getElementById('btn-batinc').onclick = () => { state.battery_pct = clamp(state.battery_pct + 10, 0, 100); render(); };
 
 Object.keys(ENC).forEach(refreshWidget);
+refreshShift();
 render();
 </script>
 </html>
