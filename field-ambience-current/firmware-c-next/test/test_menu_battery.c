@@ -14,20 +14,17 @@ static int g_checks = 0, g_fails = 0;
 #define CHECK(c, ...) do { ++g_checks; if (!(c)) { ++g_fails; \
     fprintf(stderr, "FAIL %s:%d  ", __FILE__, __LINE__); fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } } while (0)
 
-/* Capture which engine setters were called and with what. (VOLUME is NOT in
- * the menu — it has a dedicated hardware encoder, so no set_master callback
- * here.) */
+/* Capture which engine setters were called and with what. (VOLUME / DRONE /
+ * GENERATE are NOT in the menu — they have dedicated hardware controls per
+ * SPEC §5 / §7, no callbacks here.) */
 static struct {
     int   key, mode, vibe, voice;
-    int   drone_on, gen_on, gen_prog;
     float texture, bass, space, mood;
 } st;
 static void cb_key  (int v)             { st.key = v; }
 static void cb_mode (int v)             { st.mode = v; }
 static void cb_vibe (int v)             { st.vibe = v; }
 static void cb_voice(int v)             { st.voice = v; }
-static void cb_drone(bool b)            { st.drone_on = b ? 1 : 0; }
-static void cb_gen  (bool b, int p)     { st.gen_on = b; st.gen_prog = p; }
 static void cb_tex  (float v)           { st.texture = v; }
 static void cb_bass (float v)           { st.bass = v; }
 static void cb_space(float v)           { st.space = v; }
@@ -36,7 +33,7 @@ static void cb_mood (float v)           { st.mood = v; }
 static void init(void) {
     memset(&st, 0, sizeof st);
     menu_callbacks_t cb = {
-        cb_key, cb_mode, cb_vibe, cb_voice, cb_drone, cb_gen,
+        cb_key, cb_mode, cb_vibe, cb_voice,
         cb_tex, cb_bass, cb_space, cb_mood
     };
     menu_init(&cb);
@@ -102,30 +99,6 @@ static void test_continuous_clamps_and_steps_by_5(void) {
     CHECK(st.texture == 0.0f, "callback texture didn't reach 0");
 }
 
-static void test_generative_modes(void) {
-    init();
-    for (int i = 0; i < (int)MP_GENERATIVE; ++i) menu_rotate(1);
-    menu_push();
-    /* default off */
-    CHECK(st.gen_on == 0, "");
-    menu_rotate(+1);            /* prog 0 (I–IV) */
-    CHECK(st.gen_on == 1 && st.gen_prog == 0, "first step: prog 0");
-    menu_rotate(+5);            /* prog 5 → markov */
-    CHECK(st.gen_on == 1 && st.gen_prog == -1, "wrap to markov: got %d %d", st.gen_on, st.gen_prog);
-    menu_rotate(+1);            /* wraps back to off */
-    CHECK(st.gen_on == 0, "wrap back to off");
-}
-
-static void test_drone_toggle(void) {
-    init();
-    for (int i = 0; i < (int)MP_DRONE; ++i) menu_rotate(1);
-    menu_push();
-    menu_rotate(+1);
-    CHECK(st.drone_on == 1 && strcmp(menu_current_value_text(),"On")==0, "drone on");
-    menu_rotate(+1);
-    CHECK(st.drone_on == 0 && strcmp(menu_current_value_text(),"Off")==0, "drone off");
-}
-
 /* --- battery curve --- */
 
 static void test_battery_curve(void) {
@@ -165,8 +138,6 @@ int main(void) {
     test_push_toggles_mode();
     test_edit_key_fires_callback_and_cycles_12();
     test_continuous_clamps_and_steps_by_5();
-    test_generative_modes();
-    test_drone_toggle();
     test_battery_curve();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);

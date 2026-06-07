@@ -29,17 +29,17 @@ typedef enum {
 
 /* Parameter slots, in the order shown in the bottom pill row.
  *
- * NOTE on master volume: VOLUME is intentionally NOT in this menu — it has its
- * own hardware encoder (EN4, GP19/GP20 per SPEC §5) that binds directly to
- * engine_set_master_volume() in the control layer. Putting it in the display
- * menu too would let software and hardware compete for the same value. */
+ * The menu only holds SETTABLE values the user picks from a range. Dedicated
+ * hardware controls are deliberately NOT here so software and hardware never
+ * compete for the same value:
+ *   - VOLUME / DRIVE / BRIGHTNESS → own endless encoders (SPEC §5).
+ *   - DRONE / GENERATE / HOLD     → own modifier buttons (SPEC §7, GPB1..GPB3).
+ *     SHIFT+GENERATE cycles the generative algorithm (SPEC §12.3). */
 typedef enum {
     MP_KEY = 0,
     MP_MODE,
     MP_VIBE,
     MP_VOICE,
-    MP_DRONE,
-    MP_GENERATIVE,
     MP_TEXTURE,
     MP_BASS,
     MP_SPACE,
@@ -55,8 +55,6 @@ typedef struct {
     void (*set_mode)       (int idx);                /* 0..5 */
     void (*set_vibe)       (int idx);                /* 0..3 */
     void (*set_pad_voice)  (int idx);                /* 0..2 */
-    void (*set_drone)      (bool on);
-    void (*set_generative) (bool on, int program);   /* program <0 = Markov */
     void (*set_texture)    (float v01);
     void (*set_bass_depth) (float v01);
     void (*set_space)      (float v01);

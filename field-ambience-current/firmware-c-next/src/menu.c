@@ -27,8 +27,6 @@ static const char * const MODE_NAMES[6] = {
 };
 static const char * const VIBE_NAMES[4]  = { "Warm","Bright","Deep","Floating" };
 static const char * const VOICE_NAMES[3] = { "Warm","Strings","Brass" };
-/* Generative: 0 = off, 1..5 = fixed PROGRESSIONS, 6 = Markov auto. */
-static const char * const GEN_NAMES[7]  = { "Off","I-IV","I-V-vi-IV","I-IV-V-I","I-vi-iii-VII","I-IV-vi-V","Markov" };
 
 /* --- live state ------------------------------------------------------- */
 
@@ -39,8 +37,6 @@ static int           key     = 60;        /* C4 */
 static int           mode_i  = 0;
 static int           vibe_i  = 0;
 static int           voice_i = 0;
-static bool          drone   = false;
-static int           gen_i   = 0;         /* 0=off, 1..5=fixed, 6=markov */
 static int           texture = 20;        /* % 0..100 */
 static int           bass    = 50;
 static int           space   = 50;
@@ -56,12 +52,6 @@ static void apply_current(void) {
         case MP_MODE:       if (cb.set_mode)       cb.set_mode(mode_i);                   break;
         case MP_VIBE:       if (cb.set_vibe)       cb.set_vibe(vibe_i);                   break;
         case MP_VOICE:      if (cb.set_pad_voice)  cb.set_pad_voice(voice_i);             break;
-        case MP_DRONE:      if (cb.set_drone)      cb.set_drone(drone);                   break;
-        case MP_GENERATIVE: if (cb.set_generative) {
-            if (gen_i == 0)      cb.set_generative(false, 0);
-            else if (gen_i == 6) cb.set_generative(true, -1);     /* Markov */
-            else                  cb.set_generative(true, gen_i - 1);
-        } break;
         case MP_TEXTURE:    if (cb.set_texture)    cb.set_texture(texture / 100.0f);      break;
         case MP_BASS:       if (cb.set_bass_depth) cb.set_bass_depth(bass    / 100.0f);   break;
         case MP_SPACE:      if (cb.set_space)      cb.set_space   (space   / 100.0f);     break;
@@ -84,7 +74,7 @@ menu_mode_t  menu_mode(void)    { return mode; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "Key","Mode","Vibe","Voice","Drone","Gen","Texture","Bass","Space","Mood"
+        "Key","Mode","Vibe","Voice","Texture","Bass","Space","Mood"
     };
     return LABELS[cur];
 }
@@ -95,8 +85,6 @@ int menu_value_index(menu_param_t p) {
         case MP_MODE:       return mode_i;
         case MP_VIBE:       return vibe_i;
         case MP_VOICE:      return voice_i;
-        case MP_DRONE:      return drone ? 1 : 0;
-        case MP_GENERATIVE: return gen_i;
         default: return 0;
     }
 }
@@ -119,9 +107,7 @@ int menu_value_count(menu_param_t p) {
         case MP_MODE:       return 6;
         case MP_VIBE:       return 4;
         case MP_VOICE:      return 3;
-        case MP_DRONE:      return 2;
-        case MP_GENERATIVE: return 7;
-        default:            return 0;   /* TEXTURE/BASS/SPACE/MOOD/VOLUME = % */
+        default:            return 0;   /* TEXTURE/BASS/SPACE/MOOD = % */
     }
 }
 
@@ -132,8 +118,6 @@ const char *menu_current_value_text(void) {
         case MP_MODE:       return MODE_NAMES[mode_i];
         case MP_VIBE:       return VIBE_NAMES[vibe_i];
         case MP_VOICE:      return VOICE_NAMES[voice_i];
-        case MP_DRONE:      return drone ? "On" : "Off";
-        case MP_GENERATIVE: return GEN_NAMES[gen_i];
         case MP_TEXTURE:    snprintf(buf, sizeof buf, "%d%%", texture); return buf;
         case MP_BASS:       snprintf(buf, sizeof buf, "%d%%", bass);    return buf;
         case MP_SPACE:      snprintf(buf, sizeof buf, "%d%%", space);   return buf;
@@ -159,8 +143,6 @@ void menu_rotate(int delta) {
         case MP_MODE:       mode_i  = wrapi(mode_i  + delta, 6); break;
         case MP_VIBE:       vibe_i  = wrapi(vibe_i  + delta, 4); break;
         case MP_VOICE:      voice_i = wrapi(voice_i + delta, 3); break;
-        case MP_DRONE:      drone   = !drone;                    break;
-        case MP_GENERATIVE: gen_i   = wrapi(gen_i   + delta, 7); break;
         case MP_TEXTURE:    texture = clampi(texture + 5*delta, 0, 100); break;
         case MP_BASS:       bass    = clampi(bass    + 5*delta, 0, 100); break;
         case MP_SPACE:      space   = clampi(space   + 5*delta, 0, 100); break;
