@@ -352,3 +352,91 @@ make -j
 ```
 
 Das ist der erste Atemzug. Step 2 macht das Display sprechen.
+
+---
+
+## Step 13 — MCU-Migration RP2350 → STM32H743VIT6 (NEU 2026-06-07)
+
+**Auslöser:** UX-Review der Display-Sim → Re-Evaluation der Pico-2-Wahl als
+Audio-Produkt-Plattform. Op-Counting-Schätzung war methodisch unzureichend
+(siehe SPEC v0.7-r18 Header + CHANGELOG-Eintrag für volle Begründung).
+**Entscheidung:** STM32H743VIT6 in LQFP100 als Bare-Chip. 3-4× CPU-Headroom,
+1 MB internes RAM, native SAI/QEI/USART ersetzen Pico-PIO-Tricks. Alle
+peripheren Komponenten (DAC, Amp, LCD, I²C, Encoder, USB-C, Battery) bleiben
+elektrisch identisch.
+
+### Architektur-Vertrag (was sich ändert, was nicht)
+
+**Ändert sich:**
+- MCU + sein direkter Power/Clock-Tree (Pico-Modul → H743 Bare-Chip + HSE-
+  Crystal + LDO/SMPS + Decoupling)
+- HAL-Schicht (~1000 LOC in `firmware-c-next/src/`): `audio.c`, `encoders.c`,
+  `lcd_st7789.c`, `midi_pio.c`, `mcp23017.c`, `main.c`
+- Build-System: CMake bekommt `-DTARGET=pico2|h743|host` Schalter
+- `kicad/pico.kicad_sch` → archiviert als `kicad/legacy_pico2/`, neu:
+  `kicad/stm32h743.kicad_sch`
+
+**Bleibt 1:1:**
+- DSP-Schicht (3600 LOC, Standard-C ohne Pico-Deps): pad, texture, bass,
+  drone, reverb, generative, brain, engine, menu, oled_draw, battery
+- Alle 11 Host-Test-Suites
+- Sound Constitution (MCU-agnostisch)
+- KiCad-Sheets: `oled`, `mcp`, `encoder`, `audio`, `battery` (5 von 8)
+- BOM peripher (DAC, Amp, LCD, Encoder, Speaker, USB-C, Battery-Path)
+
+### Phasen (sequenziell)
+
+**Step 13.1 — Doku (1 Tag, niedrigstes Risiko) ✓ DIESER PR**
+- SPEC v0.6 → v0.7, §1 + §3 + §4 + §5 umgeschrieben
+- CHANGELOG r18-Eintrag mit Begründung
+- ROADMAP.md + PITCH.md → `docs/archive/`
+- Dieser Step-13-Block
+
+**Step 13.2 — Firmware HAL-Abstraktion (2-3 Tage)**
+- HAL-Header in `firmware-c-next/include/`: `audio_hal.h`, `gpio_hal.h`,
+  `i2c_hal.h`, `spi_hal.h`, `uart_hal.h`
+- Pico-Treiber zu `src/hal_pico/` umgezogen (Git-Mv, kein Code-Touch)
+- CMake-Flag `-DTARGET=pico2|h743|host`
+- **Gate: Pico-Build bleibt grün als Regressions-Anker.** Host-Tests laufen.
+
+**Step 13.3 — KiCad-Schaltplan-Migration (7-12 Tage)**
+- `kicad/pico.kicad_sch` → `kicad/legacy_pico2/pico.kicad_sch`
+- `kicad/stm32h743.kicad_sch` neu via `generate_kicad_project.py`:
+  STM32H743VIT6-Symbol, LQFP-100-Footprint, SWD-Header, BOOT0-Pull-Down,
+  NRST-Reset, HSE 8 MHz Crystal + Caps, VDD/VDDA-Decoupling
+- `kicad/power_tree.kicad_sch` erweitert: AP7361A LDO aktiviert, VCAP-Bulk-Caps,
+  VDDA-Ferrit-Filter, Reset-Sequencing
+- Root-Sheet anpassen
+- ERC clean, Generator deterministisch (2× Lauf bit-identisch)
+
+**Step 13.4 — Firmware H743-Implementation (5-10 Tage)**
+- STM32CubeMX-Projekt generieren als HAL-Basis (Cube nur für Initial-Gen,
+  danach CMake)
+- `src/hal_h743/audio_h743.c` (SAI1-A + DMA Ping-Pong, 256-Frame-Block)
+- `src/hal_h743/encoders_h743.c` (TIM-QEI auf TIM2/3/5/8)
+- `src/hal_h743/lcd_h743.c` (SPI1 + DMA)
+- `src/hal_h743/midi_h743.c` (USART2 @ 31250 baud)
+- `src/hal_h743/mcp23017_h743.c` (I2C1)
+- `src/hal_h743/main.c` mit Boot-Sequenz (HSE→PLL→480 MHz, PAM-Sequencing)
+
+**Step 13.5 — Profiling (CRITICAL ACCEPTANCE GATE)**
+- DWT->CYCCNT um `engine_render()` für jeden Block
+- Worst-Case-Last via Reproduktion des 8-Min-Performance-WAV
+  (alle Voices + Reverb + Texture + Bass + Drone + Generative + UI)
+- **Acceptance: < 40 % Block-Zeit Worst-Case** (Cycles < 1.1 M von 2.8 M Budget
+  @ 480 MHz / 256 Frames / 44.1 kHz)
+- 1-Stunden-Dauerlauf ohne Crash/Underrun/Reset
+- **Vor diesem Gate: kein PCB-Layout.** Wenn Gate fällt: zurück in Phase 4 zum
+  Profile-Optimieren (DTCM-Allokation, DMA-Optimierung).
+
+**Step 13.6 — Erst dann PCB-Layout (separate Plan-Session)**
+
+### Risiken
+
+| Risiko | Mitigation |
+|---|---|
+| H743-Verfügbarkeit | Verifiziert (LCSC C114409 lagernd, Mouser/DigiKey ships today) ✓ |
+| Power-Integrity | ST AN3318 als Vorlage, Decoupling nach Datasheet |
+| Pinmux-Konflikte | H743 hat 4× SPI + 2× SAI + 12× TIM → genug Reserve, in Phase 3 finalisiert |
+| Pico-Regression | Phase 2 Gate: Pico-Build muss grün bleiben |
+| Profiling zeigt Insuffizienz | 480 MHz M7 + DTCM = pessimistisch sicher; Fallback Daisy-Modul-Plug-In |

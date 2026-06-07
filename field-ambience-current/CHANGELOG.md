@@ -4,11 +4,86 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r17** (Display-UX: EN2-Konflikt aufgelöst —
-EN2 = Audio-Brightness, LCD-Backlight auf SHIFT+EN2; Menü zurück auf
-8 Pills; Encoder-Velocity-Acceleration; HOLD×GENERATE-Koexistenz).
-Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche
-Audio-Stand.
+Aktuelle Rev: **v0.7-r18** (MCU-Migration Pico 2 → STM32H743VIT6,
+LQFP100 Bare-Chip. Major-Bump weil Architektur-Bruch. Pico-Stand
+archiviert als Fallback. PCB-Layout erst nach Profiling.)
+
+---
+
+## v0.7-r18 (2026-06-07) — MCU-Migration: Pico 2 (RP2350) → STM32H743VIT6
+
+**SPEC-Major-Bump weil Hardware-Architektur-Bruch.** SPEC-Datei umbenannt von
+`field_ambience_pcb_SPEC_v0.6.md` auf `field_ambience_pcb_SPEC_v0.7.md` (Git-Mv,
+zeigt Rename sauber im Diff).
+
+**Auslöser:** Während des UX-Reviews der Display-Sim wurde nach Cycle-Count-
+Profiling gefragt („reicht der Pico 2 wirklich?"). Eine erste Antwort von mir
+war methodisch falsch (Op-Counting statt WCET, beide M33-Cores als DSP
+gerechnet obwohl Core 1 für UI gebraucht wird, „Daisy ist drop-in" verharmloste
+den HAL-Aufwand). ChatGPT + Gemini haben die Schwächen aufgedeckt:
+
+- Op-Counting ≠ WCET auf Cortex-M33 mit Flash-XIP, Branches, Cache-Misses.
+- 300 MMACS-Annahme rechnet beide Cores als DSP-Pool → unrealistisch.
+- 25-30 % Headroom-Schätzung ohne reale Messung → keine Produktbasis.
+- DTCM/ITCM auf dem H7 löst exakt das XIP-Cache-Miss-Problem.
+- „Drop-in"-Floskel war falsch: DSP-Code portabel, Hardware-Layer (SAI/DMA/
+  Pinout/Power/Display-Treiber) braucht wirklich neue Arbeit.
+
+**User-Entscheidung:** STM32H743 als **Bare-Chip** (vs Daisy-Seed-Modul, um
+spätere doppelte Arbeit zu vermeiden) — wir sind in Design-Phase, nicht in
+Schnell-Demo-Phase.
+
+### Was sich ändert
+- **MCU**: Pico-2-Modul (SC1631, ~5€, nicht JLC-bestückbar) → STM32H743VIT6
+  Bare-Chip (LQFP100, LCSC C114409, ~$6.62, JLC SMT-stockable).
+- **CPU-Headroom**: 150 MHz dual M33 → 480 MHz single M7 + Double-Precision FPU
+  + DTCM/ITCM (3-4× effektives DSP-Budget für ein Produkt).
+- **Peripherie-Gewinne**: SAI ersetzt PIO-I²S, USART2 ersetzt PIO-UART für MIDI,
+  TIM-QEI ersetzt Software-Encoder-Polling.
+- **Power-Tree**: H743 hat internen SMPS (VCAP-Mode) → kein externer Core-LDO
+  nötig. AP7361A LDO wird aktiviert (war DNP) für +3V3-Rail. HSE 8 MHz Crystal
+  + Load-Caps neu (Audio-Jitter-relevant).
+- **GPIO-Reserve**: war 0 (alle 24 Pico-Pins belegt) → ~50 ungenutzte GPIOs
+  beim H743 LQFP100 für Rev-B-Erweiterungen.
+
+### Was sich NICHT ändert
+- PCM5102A DAC, PAM8403 Amp, ST7789 LCD, MCP23017, PCA9685, 4× EC11 Encoder,
+  10× Choc-V2-Cells, USB-C-Connector, USBLC6 ESD-Schutz, Polyfuse F1,
+  Bulk-Cap 1000 µF, MCP73831 Charger, TPS61089 Boost, P-MOSFET Power-Path,
+  TVS D2, alle Buttons, alle LEDs, Gehäuse, Speaker.
+- **Sound Constitution** — komplett MCU-agnostisch, gilt unverändert.
+- **DSP-Engine-Code** (3600 LOC in `firmware-c-next/src/`): pad/texture/bass/
+  drone/reverb/generative/brain/engine/menu/oled_draw/battery — alles
+  hardware-frei, kompiliert nativ.
+
+### Was bewusst NICHT in v0.7
+- PCB-Layout (`.kicad_pcb`) — kommt erst nach Profiling-Acceptance-Gate
+  (Step 13.5 in `NATIVE_PORT_PLAN.md`).
+- SDRAM-Bestückung — Footprint vorsehen, Bestückung in Rev-B.
+- Convolution-Reverb — Freeverb bleibt (sound-bewährt, getestet, constitution-
+  konform). Convolution wäre auf H7 möglich, aber kein A/B-Risiko jetzt.
+- Polyphony-Aufstockung über 5 Cells — Sound-Constitution unverändert.
+
+### Migrations-Phasen (siehe NATIVE_PORT_PLAN.md Step 13)
+1. **Phase 1 — Doku (DIESER PR):** SPEC v0.7 + CHANGELOG + Archivierung
+   veralteter Dateien (ROADMAP.md, PITCH.md → `docs/archive/`). Nur Doku-
+   Änderungen, kein Code, kein KiCad.
+2. **Phase 2 — Firmware HAL-Abstraktion** (HAL-Header einziehen, Pico-Treiber
+   in `src/hal_pico/`). Pico-Build bleibt grün als Regressions-Anker.
+3. **Phase 3 — KiCad-Schaltplan-Migration** (pico.kicad_sch archivieren als
+   `kicad/legacy_pico2/`, neuer stm32h743.kicad_sch via Generator).
+4. **Phase 4 — Firmware H743-Implementation** (SAI, TIM-QEI, USART, SPI, I²C).
+5. **Phase 5 — Profiling** (DWT->CYCCNT, Worst-Case-Last via 8-Min-WAV).
+   **Acceptance-Gate: < 40 % Block-Zeit Worst-Case** vor PCB-Layout-Start.
+
+### Archiviert (Git-Mv, nicht gelöscht)
+- `field_ambience_pcb_SPEC_v0.6.md` → `field_ambience_pcb_SPEC_v0.7.md` (Rename)
+- `ROADMAP.md` → `docs/archive/roadmap_pre_step6.md` (Pi-Phase-Roadmap, Pre-Step-6)
+- `PITCH.md` → `docs/archive/pitch_pre_step6.md` (Crowdfund-Draft mit Pi-Hardware)
+
+### Referenz-Diskussion
+Vollständige Re-Analyse mit ChatGPT/Gemini-Kritik der Op-Counting-Methode siehe
+Session-Log unter https://claude.ai/code/session_01K5kLTFpDCCoYwx2dq6RkAv.
 
 ---
 
