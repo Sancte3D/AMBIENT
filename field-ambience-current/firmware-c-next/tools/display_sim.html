@@ -49,6 +49,23 @@
   }
   .hud b { color: #cfcfd2; font-weight: 500; }
   .row { display: flex; gap: 24px; align-items: center; }
+  .encs { display: flex; gap: 26px; }
+  .enc { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; }
+  .dial {
+    width: 62px; height: 62px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, #36363c, #18181c);
+    box-shadow: inset 0 0 0 1px #454549, 0 5px 12px rgba(0,0,0,0.55);
+    position: relative; cursor: ns-resize; touch-action: none;
+  }
+  .enc.display .dial { box-shadow: inset 0 0 0 1px #5b6e63, 0 5px 12px rgba(0,0,0,0.55); }
+  .dial .tick {
+    position: absolute; left: 50%; top: 6px; width: 3px; height: 16px; margin-left: -1.5px;
+    background: #e9e9ec; border-radius: 2px; transform-origin: 50% 25px;
+  }
+  .enc-label { font-size: 12px; color: #9a9aa0; }
+  .enc-val   { font-size: 12px; color: #e6e6e9; font-weight: 500; min-height: 15px; }
+  .enc-btns  { display: flex; gap: 4px; }
+  .enc-btns button { padding: 2px 8px; font-size: 13px; }
   button {
     background: #2a2a2e; color: #e6e6e9; border: 1px solid #3a3a3e;
     border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer;
@@ -60,11 +77,30 @@
 <div class="stage">
   <div class="device"><canvas id="lcd" width="640" height="340"></canvas></div>
 
-  <div class="hud">
-    <span>Encoder drehen</span><b>Mausrad &nbsp;·&nbsp; ← / →</b>
-    <span>Encoder drücken</span><b>Linke Maustaste &nbsp;·&nbsp; Space / Enter</b>
-    <span>Mode</span><b id="modetag">BROWSE</b>
-    <span>Akku</span><b><span id="batpct">72</span>%, <span id="batsrc">Battery</span></b>
+  <!-- Four endless encoders (ALPS EC11J1525402, SPEC §5). Turning Drive /
+       Brightness / Volume pops up a transient readout on the display; the
+       Display encoder navigates the menu (push = enter/leave edit). -->
+  <div class="encs">
+    <div class="enc" data-id="drive">
+      <div class="dial"><div class="tick"></div></div>
+      <div class="enc-label">Drive</div><div class="enc-val"></div>
+      <div class="enc-btns"><button data-turn="-1">‹</button><button data-turn="1">›</button></div>
+    </div>
+    <div class="enc" data-id="bright">
+      <div class="dial"><div class="tick"></div></div>
+      <div class="enc-label">Brightness</div><div class="enc-val"></div>
+      <div class="enc-btns"><button data-turn="-1">‹</button><button data-turn="1">›</button></div>
+    </div>
+    <div class="enc display" data-id="display">
+      <div class="dial"><div class="tick"></div></div>
+      <div class="enc-label">Display</div><div class="enc-val"></div>
+      <div class="enc-btns"><button data-turn="-1">‹</button><button data-push="1">push</button><button data-turn="1">›</button></div>
+    </div>
+    <div class="enc" data-id="vol">
+      <div class="dial"><div class="tick"></div></div>
+      <div class="enc-label">Volume</div><div class="enc-val"></div>
+      <div class="enc-btns"><button data-turn="-1">‹</button><button data-turn="1">›</button></div>
+    </div>
   </div>
 
   <div class="row">
@@ -74,9 +110,11 @@
   </div>
 
   <div class="legend">
-    Display ist nativ 320×170 (1.9″ ST7789), hier 2× skaliert. Untere Pill-/
-    Füll-Leiste zeigt die Optionen der gerade aktiven Einstellung — Mode = 6,
-    Vibe = 4, Voice = 3, Drone = 2, Key = 12, Generate = 7, %-Werte als Fill.
+    Alle 4 Encoder sind endlos (kein Anschlag). Über einem Dial <b>scrollen</b>
+    oder vertikal <b>ziehen</b> = drehen, ‹ / › = ein Klick. Display-Encoder:
+    drehen scrollt das Menü, <b>push</b> öffnet/schließt Edit. Drive / Brightness /
+    Volume haben keinen Menü-Eintrag — beim Drehen erscheint ihr Wert kurz
+    als Overlay auf dem Display. (Tastatur: ← → + Space steuern den Display-Encoder.)
   </div>
 </div>
 
@@ -121,6 +159,8 @@ const state = {
   cur: MP_KEY, mode: 'browse',
   key: 60, mode_i: 0, vibe_i: 0, voice_i: 0, drone: false, gen_i: 0,
   texture: 20, bass: 50, space: 50, mood: 50,
+  /* dedicated hardware-encoder values (NOT in the display menu) */
+  drive: 30, brightness: 70, vol: 30,
   battery_pct: 72, usb: false,
 };
 
@@ -282,36 +322,41 @@ function drawFillbar(pct) {
   }
 }
 
-function render() {
-  /* black fill + rounded-screen clip */
-  ctx.save();
-  roundRect(0, 0, W, H, CORNER_R);
-  ctx.clip();
-  ctx.fillStyle = GS_BG;
-  ctx.fillRect(0, 0, W, H);
+const FONT_LABEL = '300 18px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
+const FONT_VALUE = '300 52px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
 
-  /* label */
-  ctx.fillStyle = (state.mode === 'edit') ? GS_DIM : GS_LABEL;
-  ctx.font = '300 18px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
-  ctx.textBaseline = 'top';
-  ctx.fillText(LABELS[state.cur], PAD_L, PAD_T);
+/* Transient readout shown when a dedicated encoder (Drive/Brightness/Volume)
+ * is turned. Fades out after a short hold, then the menu view returns. This is
+ * the "feedback comes through the display" idea — to be ported to the firmware
+ * once the feel is approved. */
+const overlay = { active: false, label: '', value: 0, until: 0 };
+let overlayRAF = 0;
+function showOverlay(label, value) {
+  overlay.active = true; overlay.label = label; overlay.value = value;
+  overlay.until = performance.now() + 1500;
+  if (!overlayRAF) overlayRAF = requestAnimationFrame(overlayLoop);
+}
+function overlayLoop() {
+  if (performance.now() >= overlay.until) overlay.active = false;
+  render();
+  overlayRAF = overlay.active ? requestAnimationFrame(overlayLoop) : 0;
+}
 
-  /* battery */
-  drawBattery();
+function drawValueRow(label, valueText, labelGs, valueGs) {
+  ctx.fillStyle = labelGs;
+  ctx.font = FONT_LABEL; ctx.textBaseline = 'top';
+  ctx.fillText(label, PAD_L, PAD_T);
+  const y = (PAD_T + 18 + BAR_Y - 56) / 2;
+  ctx.fillStyle = valueGs;
+  ctx.font = FONT_VALUE; ctx.textBaseline = 'top';
+  ctx.fillText(valueText, PAD_L, y);
+}
 
-  /* big value — vertically centred between label-bottom and bar-top */
-  const topBand = PAD_T + 18;        /* label visual height */
-  const bottomBand = BAR_Y;
-  const valueLineH = 56;
-  const y = (topBand + bottomBand - valueLineH) / 2;
-  ctx.fillStyle = (state.mode === 'edit') ? GS_ACTIVE : GS_VAL;
-  ctx.font = '300 52px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
-  ctx.textBaseline = 'top';
-  ctx.fillText(valueText(), PAD_L, y);
-
-  /* Bottom bar has two meanings (must mirror menu.c):
-   *  - BROWSE: stable menu-position indicator (11 pills, current = active)
-   *  - EDIT:   current setting's value space (option pills, or fill bar) */
+function drawMenu() {
+  drawValueRow(LABELS[state.cur], valueText(),
+               state.mode === 'edit' ? GS_DIM : GS_LABEL,
+               state.mode === 'edit' ? GS_ACTIVE : GS_VAL);
+  /* Bottom bar: BROWSE = stable menu-position indicator; EDIT = value space. */
   if (state.mode === 'browse') {
     drawPillBar(MP_COUNT, state.cur);
   } else {
@@ -319,38 +364,115 @@ function render() {
     if (n > 0) drawPillBar(n, valueIndex(state.cur));
     else       drawFillbar(valueInt(state.cur));
   }
-
-  ctx.restore();
-  /* HUD mirrors */
-  document.getElementById('modetag').textContent =
-    (state.mode === 'edit') ? 'EDIT (drücken zum Zurück)' : 'BROWSE';
-  document.getElementById('batpct').textContent = state.battery_pct;
-  document.getElementById('batsrc').textContent = state.usb ? 'USB' : 'Battery';
 }
 
-/* ---------- Input --------------------------------------------------------- */
-let wheelAcc = 0;
-canvas.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  wheelAcc += e.deltaY;
-  while (wheelAcc >  40) { rotate(+1); wheelAcc -= 40; render(); }
-  while (wheelAcc < -40) { rotate(-1); wheelAcc += 40; render(); }
-}, { passive: false });
+function drawOverlayView() {
+  const left = overlay.until - performance.now();
+  ctx.globalAlpha = left < 300 ? Math.max(0, left / 300) : 1;   /* gentle fade-out */
+  drawValueRow(overlay.label, overlay.value + '%', GS_LABEL, GS_ACTIVE);
+  drawFillbar(overlay.value);
+  ctx.globalAlpha = 1;
+}
 
-canvas.addEventListener('mousedown', (e) => {
-  if (e.button === 0) { push(); render(); }
+function render() {
+  ctx.save();
+  roundRect(0, 0, W, H, CORNER_R);
+  ctx.clip();
+  ctx.fillStyle = GS_BG;
+  ctx.fillRect(0, 0, W, H);
+
+  drawBattery();                       /* always-on status, full alpha */
+  if (overlay.active) drawOverlayView();
+  else                drawMenu();
+
+  ctx.restore();
+}
+
+/* ---------- Encoders ------------------------------------------------------ */
+/* Dedicated knobs hold a 0..100 value and pop up a display readout when turned;
+ * the Display knob drives the menu. Order matches EN1..EN4 in SPEC §5. */
+const ENC = {
+  drive:  { label: 'Drive',      get: () => state.drive,      set: v => state.drive = v },
+  bright: { label: 'Brightness', get: () => state.brightness, set: v => state.brightness = v },
+  display:{ label: 'Display',    menu: true },
+  vol:    { label: 'Volume',     get: () => state.vol,        set: v => state.vol = v },
+};
+const ENC_STEP = 4;                    /* % per detent for the dedicated knobs */
+const angle = { drive: 0, bright: 0, display: 0, vol: 0 };
+
+function turnEncoder(id, delta) {
+  angle[id] += delta * 24;             /* visual dial rotation (endless) */
+  const e = ENC[id];
+  if (e.menu) {
+    rotate(delta);
+    render();
+  } else {
+    e.set(clamp(e.get() + ENC_STEP * delta, 0, 100));
+    showOverlay(e.label, e.get());
+  }
+  refreshWidget(id);
+}
+function pushEncoder(id) {
+  if (ENC[id].menu) { push(); render(); refreshWidget('display'); }
+  /* Drive/Brightness/Volume push-switches are reserved (no-op in the sim). */
+}
+
+/* Per-widget DOM refs + value/tick refresh. */
+const widgets = {};
+document.querySelectorAll('.enc').forEach(el => {
+  const id = el.dataset.id;
+  widgets[id] = { tick: el.querySelector('.tick'), val: el.querySelector('.enc-val') };
+});
+function refreshWidget(id) {
+  const w = widgets[id];
+  w.tick.style.transform = `rotate(${angle[id]}deg)`;
+  w.val.textContent = ENC[id].menu
+    ? LABELS[state.cur] + (state.mode === 'edit' ? ' ·edit' : '')
+    : ENC[id].get() + '%';
+}
+
+/* Wire each dial: wheel to turn, vertical drag to turn, buttons for single steps. */
+document.querySelectorAll('.enc').forEach(el => {
+  const id = el.dataset.id;
+  const dial = el.querySelector('.dial');
+  let wheelAcc = 0;
+  dial.addEventListener('wheel', (ev) => {
+    ev.preventDefault();
+    wheelAcc += ev.deltaY;
+    while (wheelAcc >  40) { turnEncoder(id, +1); wheelAcc -= 40; }
+    while (wheelAcc < -40) { turnEncoder(id, -1); wheelAcc += 40; }
+  }, { passive: false });
+
+  let dragY = null, dragAcc = 0;
+  dial.addEventListener('pointerdown', (ev) => { dragY = ev.clientY; dragAcc = 0; dial.setPointerCapture(ev.pointerId); });
+  dial.addEventListener('pointermove', (ev) => {
+    if (dragY === null) return;
+    dragAcc += (dragY - ev.clientY);    /* up = positive */
+    dragY = ev.clientY;
+    while (dragAcc >  9) { turnEncoder(id, +1); dragAcc -= 9; }
+    while (dragAcc < -9) { turnEncoder(id, -1); dragAcc += 9; }
+  });
+  dial.addEventListener('pointerup',   () => { dragY = null; });
+  dial.addEventListener('pointercancel', () => { dragY = null; });
+
+  el.querySelectorAll('button[data-turn]').forEach(b =>
+    b.onclick = () => turnEncoder(id, parseInt(b.dataset.turn, 10)));
+  el.querySelectorAll('button[data-push]').forEach(b =>
+    b.onclick = () => pushEncoder(id));
 });
 
+/* Keyboard still drives the Display encoder — it's the primary one. */
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { rotate(+1); render(); e.preventDefault(); }
-  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { rotate(-1); render(); e.preventDefault(); }
-  else if (e.key === ' ' || e.key === 'Enter') { push(); render(); e.preventDefault(); }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { turnEncoder('display', +1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { turnEncoder('display', -1); e.preventDefault(); }
+  else if (e.key === ' ' || e.key === 'Enter') { pushEncoder('display'); e.preventDefault(); }
 });
 
-document.getElementById('btn-charge').onclick  = () => { state.usb = !state.usb; render(); };
-document.getElementById('btn-batdec').onclick  = () => { state.battery_pct = clamp(state.battery_pct - 10, 0, 100); render(); };
-document.getElementById('btn-batinc').onclick  = () => { state.battery_pct = clamp(state.battery_pct + 10, 0, 100); render(); };
+document.getElementById('btn-charge').onclick = () => { state.usb = !state.usb; render(); };
+document.getElementById('btn-batdec').onclick = () => { state.battery_pct = clamp(state.battery_pct - 10, 0, 100); render(); };
+document.getElementById('btn-batinc').onclick = () => { state.battery_pct = clamp(state.battery_pct + 10, 0, 100); render(); };
 
+Object.keys(ENC).forEach(refreshWidget);
 render();
 </script>
 </html>
