@@ -609,9 +609,17 @@ In Landscape ⇒ **Spalten (CASET) 0..319, Zeilen (RASET) 35..204 (Y-Offset 35)*
 
 **Backlight**: Alle 24 Pico-GPIOs sind belegt (§5), daher fährt BLK über einen
 freien **PCA9685-PWM-Kanal** + kleinen N-FET (z. B. 2N7002, SOT-23) als
-Low-Side-Switch. Helligkeit damit per I²C (passt zum Brightness-Encoder EN2).
+Low-Side-Switch. Helligkeit damit per I²C.
 Die Net-Namen `OLED_*` in §5 sind aus Kompatibilität beibehalten, treiben
 ab r16 aber das LCD.
+
+> **r17-Klarstellung (EN2-Konflikt aufgelöst):** Der **Brightness-Encoder EN2
+> regelt im Normalbetrieb die AUDIO-Tonfarbe** (Pad-Filter-Cutoff,
+> Sound-Constitution `/fam/brightness`), **nicht** das Display-Backlight. Die
+> **LCD-Helligkeit liegt auf der Sekundärfunktion SHIFT+EN2** (§12.3) und wird
+> als transientes Overlay angezeigt — wie Volume/Drive, **kein** Menü-Eintrag.
+> Frühere Formulierungen, die EN2 direkt mit der Display-Helligkeit
+> gleichsetzten, waren falsch und sind hiermit korrigiert.
 
 ---
 
@@ -1075,7 +1083,8 @@ Persistiert wird via Pico-2 Internal Flash (XIP, eigener Slot am Ende des
 |---|---|---|---|
 | Volume (EN4) | **30 %** (clamped) | Last-Saved-Snapshot zurückgesetzt auf 30 % wenn höher | Schutz vor versehentlichem Loud-Boot bei Headphones |
 | Drive (EN1) | Last-Saved | ✓ | Klang-Charakter ist gewollt persistent |
-| Brightness (EN2) | Last-Saved | ✓ | Display-Helligkeit ist Raum-spezifisch |
+| Brightness (EN2, **Audio**-Ton) | Last-Saved | ✓ | Pad-Tonfarbe (`/fam/brightness`) ist gewollt persistent |
+| **LCD-Backlight** (SHIFT+EN2) | **Werks-Default (80 %)** | ✗ | **Anti-Lockout**: Boot nie auf einen dunklen Wert, sonst sieht der User den Screen nicht und kommt nicht mehr raus. Wird NICHT aus dem Snapshot wiederhergestellt. |
 | Display-Page (EN3) | Page 0 (Home) | ✗ | Boot-State soll vorhersehbar sein |
 | **HOLD** (Mode) | **OFF** | ✗ | Sicherheit: kein Dauerton beim Einschalten |
 | **DRONE** (Mode) | **OFF** | ✗ | Sicherheit: kein Audio bevor User bewusst startet |
@@ -1096,9 +1105,10 @@ Modi sind nicht-exklusiv, aber haben definierte Vorrangsregeln:
 | Kombination | Verhalten |
 |---|---|
 | HOLD aktiv + Cell-Press | Cell wird zur sustained Drone (Voice ohne Release) — Standard |
-| HOLD aktiv + GENERATE-Trigger | GENERATE-Trigger wird **ignoriert** (verhindert dass Generator HOLD-Drones überschreibt) |
+| HOLD aktiv + GENERATE | **Koexistenz, aber HELD-Voices sind geschützt** (r17): GENERATE läuft weiter und legt neue Layer drauf, darf aber **keine gehaltenen Drone-Voices stehlen** — er allokiert nur aus dem freien Voice-Pool. So gehen keine Klangebenen verloren und nichts wird überschrieben. (Ersetzt die alte „GENERATE wird ignoriert"-Regel, die den Knopf tot wirken ließ.) Reichen die freien Voices nicht, wird die ÄLTESTE *nicht-gehaltene* Generator-Voice recycelt. |
 | GENERATE aktiv + Cell-Press | Cell wird zum Generator-Seed (Tonhöhe/Timbre-Quelle für nächsten Generator-Voice) |
-| SHIFT (gehalten) + EN1-Drehung | EN1 wird zu Secondary-Funktion (z.B. Filter-Cutoff statt Drive) — Per-Encoder-Mapping in Firmware |
+| SHIFT (gehalten) + EN1-Drehung | EN1 → Secondary (z.B. Filter-Cutoff statt Drive) — Per-Encoder-Mapping in Firmware |
+| SHIFT (gehalten) + EN2-Drehung | **EN2 → LCD-Backlight** (statt Audio-Brightness). Overlay „Backlight", 0–100 %. Darf bis 0 % (kein Min-Floor) — recoverable, weil der Encoder physisch ist und auch bei dunklem Screen zurückgedreht werden kann. |
 | SHIFT (gehalten) + HOLD-Press | **Degree-Freeze**: aktuelle Skalenstufe wird gelocked, weitere Cell-Presses bleiben in derselben Tonart |
 | SHIFT (gehalten) + DRONE-Press | DRONE-Engine-Variant-Cycle (z.B. Sub-Drone vs. Pad-Drone) |
 | SHIFT (gehalten) + GENERATE-Press | GENERATE-Algorithm-Cycle |
@@ -1155,6 +1165,44 @@ Aus §12 herausgehalten: USB-MIDI / WebUSB-Config / Serial-CLI sind Firmware-
 Aufgaben die nicht im Hardware-Vertrag stehen. Vermerk hier nur damit klar
 ist: alle USB-Funktionen laufen über den Pico-USB-Port (J7); kein zweiter
 USB-Connector geplant.
+
+### 12.7 Encoder-Feel & Display-Menü-Verhalten (NEU r17, 2026-06-07)
+
+Festgelegt nach UX-Review der Display-Simulation (`firmware-c-next/tools/
+display_sim.html`).
+
+**Velocity-Acceleration (alle 4 Encoder, Wert-Edits):** Die Schrittweite hängt
+vom Drehtempo ab. Ein bewusster, langsamer Detent = **1 %** (feine, exakt
+reproduzierbare Kontrolle — man kann auf einen genauen Wert landen). Schnelles
+Drehen vergrößert die Ticks pro Detent, sodass 0→100 ein kurzer Flick ist.
+Referenz-Kurve (ms seit letztem Detent → Ticks): ≤28→8, ≤60→5, ≤120→3, ≤240→2,
+sonst 1. Architektur-Vertrag: Der **Input-Layer** (Encoder-ISR) berechnet den
+Tick-Count, der **Menü-Layer** (`menu.c`) ist granularitäts-agnostisch und
+addiert nur den Tick-Count. **Browse-Navigation und diskrete Werte
+(Key/Mode/Vibe/Voice) beschleunigen NICHT** — sie steppen pro Geste um genau
+einen Slot/Schritt (Vorzeichen), damit ein schneller Spin keine Menü-Einträge
+überspringt (es gibt nur 8).
+
+**Kein Edit-Auto-Exit:** Der Display-Encoder-Push wechselt Browse ⇄ Edit. Es
+gibt **bewusst kein** Timeout, das selbsttätig aus dem Edit-Modus springt — der
+User kontrolliert den Zustandswechsel allein. Ein automatischer Wechsel ohne
+User-Aktion wäre verwirrend (Zustand ändert sich „von selbst").
+
+**Overlay-Vorrang:** Jede Display-Encoder-Aktion (Drehen oder Push) räumt ein
+offenes transientes Overlay (Drive/Brightness/Volume/Backlight) sofort weg —
+eine konsistente Regel für alle Overlays, kein Stapeln.
+
+**Menü-Inventar (8 Pills):** Key, Mode, Vibe, Voice, Texture, Bass, Space, Mood.
+Das Menü enthält **nur einstellbare Wertebereiche ohne eigenen Hardware-Regler**.
+Dedizierte Controls (Volume/Drive/Brightness-Encoder; Drone/Generate/Hold-
+Buttons; LCD-Backlight via SHIFT+EN2) sind **kein** Menü-Eintrag, damit Software
+und Hardware nie um denselben Wert konkurrieren.
+
+**Idle-Backlight-Dimm (kein Display-Timeout):** Statt das Display ganz
+abzuschalten, dimmt das Backlight nach **30 Min ohne Encoder-/Button-Event sanft
+auf 20 %** (Akku-Schonung, aber jederzeit sofort ablesbar). Erste Interaktion
+fährt sofort auf den eingestellten Wert zurück. Beim Reboot zählt der
+Werks-Default (§12.5), nicht der gedimmte Idle-Wert.
 
 ---
 
