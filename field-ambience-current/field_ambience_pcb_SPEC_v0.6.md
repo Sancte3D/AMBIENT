@@ -570,36 +570,48 @@ Power-Pins: VBUS (40)=+5V von USB-C, 3V3OUT (36)=+3V3 für Logik, GND mehrere.
 
 ---
 
-## 6. Display SSD1322 Konfiguration (ER-OLEDM032-1W Datasheet)
+## 6. Display ST7789 Konfiguration (1.9" 170×320 IPS-LCD) — r16
 
-[Fix H4: 256×64 ist die offizielle Wahl. Engine-/Firmware-Menü-Layout-Anpassung als separater ROADMAP-Task]
+**r16: Panel-Wechsel SSD1322 256×64 OLED → 1.9" ST7789(V2) 320×170 IPS-LCD.**
+Grund: Lesbarkeit, Outdoor-Helligkeit, ~3,3× Pixeldichte, glatte UI-Animation,
+kein Burn-in. **Visuell bleibt es monochrom** (schwarz/weiß/grau, OP-1-Sprache);
+die Firmware rendert das 4-bit-Grey-Framebuffer nur nach RGB565 um (Treiber
+`firmware-c-next/src/lcd_st7789.c`). **Pins unverändert** — das LCD nutzt
+dieselbe SPI0-Gruppe wie das alte OLED (kein GPIO-Reallocation).
 
-### Hardware-Vorbereitung am Modul (NICHT auf unserem PCB)
+### Controller-Setup (vom Treiber gefahren)
 
-Default ist 8080 Parallel. Für 4-wire SPI **Lötbrücken am Modul ändern**:
-- BS0 = LOW
-- BS1 = LOW
+| Schritt | Command | Wert | Zweck |
+|---|---|---|---|
+| 1 | SWRESET (0x01) | — | Soft-Reset, 150 ms warten |
+| 2 | SLPOUT (0x11) | — | Sleep aus, 120 ms warten |
+| 3 | COLMOD (0x3A) | 0x55 | 16-bit/Pixel RGB565 |
+| 4 | MADCTL (0x36) | 0x60 | Landscape (MX\|MV); ggf. 0xA0/0xC0 falls gespiegelt |
+| 5 | INVON (0x21) | — | Display-Inversion (IPS-Panels invertiert) |
+| 6 | NORON (0x13) | — | Normal-Modus |
+| 7 | DISPON (0x29) | — | Display an |
 
-Bei Modul-Empfang Datenblatt der konkreten Charge prüfen — Reihenfolge variiert je Rev.
+**GRAM-Offset**: Die 170-px-Seite sitzt versetzt im 240×320-Controller-GRAM.
+In Landscape ⇒ **Spalten (CASET) 0..319, Zeilen (RASET) 35..204 (Y-Offset 35)**.
 
-### Pinout 16-pin Header
+### Pinout 8-pin SPI-Header
 
 | Header Pin | Signal | Verbindung |
 |---|---|---|
-| 1 | VSS | GND |
-| 2 | VBAT | **+5V (mit lokalem 10 µF + 100 nF Decoupling, NEU)** |
-| 3 | VDD | +3V3 (Logic, 100 nF lokal) |
-| 4 | NC | leer |
-| 5 | BS1 | GND (4-wire SPI mode) |
-| 6 | BS0 | GND (4-wire SPI mode) |
-| 7 | RES# | OLED_RES (Pico GP9) |
-| 8 | CS# | OLED_CS (Pico GP5) |
-| 9 | D/C# | OLED_DC (Pico GP8) |
-| 10 | E or R/W# | GND (4-wire SPI) |
-| 11 | R/W# or E | GND (4-wire SPI) |
-| 12 | SCLK | OLED_SCK (Pico GP6) |
-| 13 | SDIN | OLED_MOSI (Pico GP7) |
-| 14-16 | NC | leer |
+| 1 | GND | GND |
+| 2 | VCC | +3V3 (Logic, 10 µF + 100 nF lokal — C6b/C6c) |
+| 3 | SCL (SCLK) | OLED_SCK (Pico GP6) |
+| 4 | SDA (MOSI) | OLED_MOSI (Pico GP7) |
+| 5 | RES | OLED_RES (Pico GP9) |
+| 6 | DC | OLED_DC (Pico GP8) |
+| 7 | CS | OLED_CS (Pico GP5) |
+| 8 | BLK (Backlight) | PCA9685-PWM-Kanal über N-FET (Low-Side) — Helligkeit per I²C |
+
+**Backlight**: Alle 24 Pico-GPIOs sind belegt (§5), daher fährt BLK über einen
+freien **PCA9685-PWM-Kanal** + kleinen N-FET (z. B. 2N7002, SOT-23) als
+Low-Side-Switch. Helligkeit damit per I²C (passt zum Brightness-Encoder EN2).
+Die Net-Namen `OLED_*` in §5 sind aus Kompatibilität beibehalten, treiben
+ab r16 aber das LCD.
 
 ---
 

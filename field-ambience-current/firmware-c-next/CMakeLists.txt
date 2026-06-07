@@ -30,7 +30,7 @@ pico_sdk_init()
 
 add_executable(field_ambience_native
     src/main.c
-    src/oled.c
+    src/lcd_st7789.c     # r16: 1.9" ST7789 320×170 IPS driver (replaces SSD1322 oled.c)
     src/font_8x8.c
     src/mcp23017.c
     src/encoders.c
@@ -44,6 +44,16 @@ add_executable(field_ambience_native
     src/reverb.c    # Step 11: famReverbMaster (Freeverb-style algorithmic)
     src/engine.c    # Step 11: mix-bus (pad+texture+bass → dry+send, reverb, clip)
     src/brain.c     # Step 12a: harmonic brain (cell → scale/mode/family pitch)
+    src/drone.c          # Step 12b #2: root drone (portamento)
+    src/reverb_presets.c # Step 12b #1: per-mode/vibe reverb presets
+    src/generative.c     # Step 12b #4: Markov / fixed progression sequencer
+    src/midi.c           # Step 12b #6: MIDI message builders + FIFO
+    src/midi_pio.c       # Step 12b #6: PIO-UART 31250 baud on GP21 (device-only)
+    src/oled_draw.c      # Step 12b #7: framebuffer draw primitives (AA rrect)
+    src/baked_font.c     # Step 12b #7: Helvetica Neue baked-glyph renderer
+    src/baked_font_data.c# Step 12b #7: generated HN Light/Thin glyph tables
+    src/battery.c        # Step 12b #7: LiPo voltage→% curve
+    src/menu.c           # Step 12b #7: menu state machine + render
 )
 
 target_include_directories(field_ambience_native PRIVATE
@@ -56,10 +66,15 @@ pico_generate_pio_header(field_ambience_native
     ${CMAKE_CURRENT_SOURCE_DIR}/src/audio_i2s.pio
 )
 
+# Step 12b #6: assemble the MIDI-UART-TX PIO program (31250 baud on GP21).
+pico_generate_pio_header(field_ambience_native
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/midi_tx.pio
+)
+
 target_link_libraries(field_ambience_native
     pico_stdlib
     pico_time       # Step 4: repeating_timer for 1 kHz encoder sampling
-    hardware_spi    # Step 2: SSD1322 over SPI0
+    hardware_spi    # Step 2 / r16: ST7789 LCD over SPI0
     hardware_i2c    # Step 3: MCP23017 over I2C1
     hardware_gpio   # Step 3: GP22 IRQ for MCP INTA
     hardware_pio    # Step 5: I²S TX state machine

@@ -23,7 +23,10 @@
 #define CTL_DECIMATE 16                         /* control-rate = SR/16 ≈ 2.76 kHz */
 
 /* Amp envelope (seconds). Slow bloom + long tail per the Sound Constitution. */
-#define PAD_ATTACK_S   1.6f
+/* Amp envelope (seconds). Webapp cellOn uses attack 0.8 / release 3.0 — the
+ * 1.5 s value from _makePadVoice defaults is for chord-spawn use, not cell
+ * taps. Using the spawn value here made cells feel bloomy instead of tap-y. */
+#define PAD_ATTACK_S   0.8f
 #define PAD_RELEASE_S  3.0f
 
 /* Per-side oscillator stack: 3 saws (×1, ×freqMul, ×0.5) + 2 squares. */
@@ -149,7 +152,12 @@ static void side_setup(pad_side_t *s, float base_freq, int sign, float voice_pan
     if (!keep_phase) dsp_svf_reset(&s->svf);
     s->cutoffBase  = cutoff_base;
     s->cutoffMod   = 500.0f;
-    s->fenvAmount  = 0.5f;
+    /* Filter envelope amount: 0 for cell taps (webapp cellOn explicitly
+     * disables this — "fenvAmount: 0.0"). The 0.5 value here would belong
+     * to the chord-spawn / drone path with their slow filter sweeps; using
+     * it on cell taps put a continuous filter-open sweep over every note
+     * and made the pad sound matschig. */
+    s->fenvAmount  = 0.0f;
 
     s->lfoInc   = cutoff_rate * (sign > 0 ? 1.13f : 1.0f) / SR;
     if (!keep_phase) s->lfoPhase = (sign > 0) ? 0.37f : 0.0f;
@@ -190,9 +198,14 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     v->relCoef = dsp_smooth_coef(PAD_RELEASE_S / 3.0f);
     v->state  = ENV_ATTACK;
 
+    /* Webapp cellOn pans cells across the stereo field: pan = (degree-4)·0.15
+     * → Cell 1 left (−0.45), Cell 5 right (+0.15). For source IDs ≥ 5
+     * (chord-spawn, generative bed) keep centred. */
+    float voice_pan = (source < 5) ? ((float)source - 3.0f) * 0.15f : 0.0f;
+
     /* side 0 = −detune, freqMul 1.003; side 1 = +detune, freqMul 0.997 */
-    side_setup(&v->side[0], freq_hz, -1, 0.0f, detune, 1.003f, cbase, crate, fatk, keep_phase);
-    side_setup(&v->side[1], freq_hz, +1, 0.0f, detune, 0.997f, cbase, crate, fatk, keep_phase);
+    side_setup(&v->side[0], freq_hz, -1, voice_pan, detune, 1.003f, cbase, crate, fatk, keep_phase);
+    side_setup(&v->side[1], freq_hz, +1, voice_pan, detune, 0.997f, cbase, crate, fatk, keep_phase);
 }
 
 void pad_note_off(uint8_t source) {

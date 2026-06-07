@@ -74,6 +74,21 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/gen_test"
 "$tmp/gen_test"
 
+# Step 12b #6: MIDI message core + FIFO
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_midi.c" \
+    "$src/src/midi.c" \
+    -lm -o "$tmp/midi_test"
+"$tmp/midi_test"
+
+# Step 12b #7: menu state machine + battery curve
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_menu_battery.c" \
+    "$src/src/menu.c" "$src/src/battery.c" \
+    "$src/src/oled_draw.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/menu_test"
+"$tmp/menu_test"
+
 # Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass
 # and, from Step-12b #1 on, the reverb_presets + brain modules too)
 "$CC" "${CFLAGS[@]}" \

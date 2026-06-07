@@ -1,0 +1,58 @@
+# Publish the browser-based display simulator to GitHub Pages so the menu UI
+# can be reviewed without flashing firmware. Stages a tiny static site that
+# contains just the simulator HTML plus an index redirect; everything else in
+# the repo stays out.
+#
+# One-time manual step the first time this runs: in repo
+# Settings → Pages → Source = "GitHub Actions" (no path needed).
+
+name: pages (display simulator)
+
+on:
+  push:
+    branches: [main, claude/read-start-here-YDlCd]
+    paths:
+      - 'field-ambience-current/firmware-c-next/tools/display_sim.html'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage site
+        run: |
+          set -eu
+          mkdir -p _site
+          cp field-ambience-current/firmware-c-next/tools/display_sim.html _site/display_sim.html
+          # Tiny landing page — the simulator is the main artifact.
+          cat > _site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>Field Ambience — Demos</title>
+          <meta http-equiv="refresh" content="0; url=display_sim.html">
+          <link rel="canonical" href="display_sim.html">
+          <p>Redirecting to <a href="display_sim.html">display_sim.html</a>…</p>
+          HTML
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
