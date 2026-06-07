@@ -139,25 +139,26 @@ const GS_VAL  = 'rgba(255,255,255,0.86)';
 const GS_ACTIVE = '#ffffff';
 
 /* ---------- State machine — mirrors menu.c -------------------------------- */
-/* NOTE: VOLUME is intentionally absent — it has its own hardware encoder
- * (EN4, SPEC §5). Putting it here would let two inputs fight for the same
- * value. */
-const MP_KEY = 0, MP_MODE = 1, MP_VIBE = 2, MP_VOICE = 3, MP_DRONE = 4,
-      MP_GEN = 5, MP_TEXTURE = 6, MP_BASS = 7, MP_SPACE = 8, MP_MOOD = 9,
-      MP_COUNT = 10;
+/* Items in the menu are SETTABLE VALUES the user chooses from a range.
+ * The dedicated hardware controls are deliberately NOT here:
+ *   - VOLUME, DRIVE, BRIGHTNESS  → own endless encoders (SPEC §5)
+ *   - DRONE, GENERATE, HOLD       → own buttons (SPEC §7, GPB1..GPB3)
+ *     GENERATE program-cycle = SHIFT+GENERATE (§12.3).
+ * Otherwise software and hardware would compete for the same value. */
+const MP_KEY = 0, MP_MODE = 1, MP_VIBE = 2, MP_VOICE = 3,
+      MP_TEXTURE = 4, MP_BASS = 5, MP_SPACE = 6, MP_MOOD = 7,
+      MP_COUNT = 8;
 
-const LABELS = ['Key','Mode','Vibe','Voice','Drone','Gen',
-                'Texture','Bass','Space','Mood'];
+const LABELS = ['Key','Mode','Vibe','Voice','Texture','Bass','Space','Mood'];
 
 const KEY_NAMES  = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolyd.','Aeolian'];
 const VIBE_NAMES = ['Warm','Bright','Deep','Floating'];
 const VOICE_NAMES= ['Warm','Strings','Brass'];
-const GEN_NAMES  = ['Off','I-IV','I-V-vi-IV','I-IV-V-I','I-vi-iii-VII','I-IV-vi-V','Markov'];
 
 const state = {
   cur: MP_KEY, mode: 'browse',
-  key: 60, mode_i: 0, vibe_i: 0, voice_i: 0, drone: false, gen_i: 0,
+  key: 60, mode_i: 0, vibe_i: 0, voice_i: 0,
   texture: 20, bass: 50, space: 50, mood: 50,
   /* dedicated hardware-encoder values (NOT in the display menu) */
   drive: 30, brightness: 70, vol: 30,
@@ -166,11 +167,12 @@ const state = {
 
 const wrap   = (v, n) => ((v % n) + n) % n;
 const clamp  = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+const lerp   = (a, b, t) => a + (b - a) * t;
 
 function valueCount(p) {
   switch (p) {
     case MP_KEY: return 12; case MP_MODE: return 6; case MP_VIBE: return 4;
-    case MP_VOICE: return 3; case MP_DRONE: return 2; case MP_GEN: return 7;
+    case MP_VOICE: return 3;
     default: return 0;        /* continuous % */
   }
 }
@@ -180,8 +182,6 @@ function valueIndex(p) {
     case MP_MODE:  return state.mode_i;
     case MP_VIBE:  return state.vibe_i;
     case MP_VOICE: return state.voice_i;
-    case MP_DRONE: return state.drone ? 1 : 0;
-    case MP_GEN:   return state.gen_i;
   }
   return 0;
 }
@@ -198,35 +198,41 @@ function valueText() {
     case MP_MODE:  return MODE_NAMES[state.mode_i];
     case MP_VIBE:  return VIBE_NAMES[state.vibe_i];
     case MP_VOICE: return VOICE_NAMES[state.voice_i];
-    case MP_DRONE: return state.drone ? 'On' : 'Off';
-    case MP_GEN:   return GEN_NAMES[state.gen_i];
-    case MP_TEXTURE: return state.texture + '%';
-    case MP_BASS:    return state.bass    + '%';
-    case MP_SPACE:   return state.space   + '%';
-    case MP_MOOD:    return state.mood    + '%';
+    case MP_TEXTURE: return Math.round(anim.fillT) + '%';
+    case MP_BASS:    return Math.round(anim.fillT) + '%';
+    case MP_SPACE:   return Math.round(anim.fillT) + '%';
+    case MP_MOOD:    return Math.round(anim.fillT) + '%';
   }
   return '';
 }
 
+/* Whether the currently-edited value is the continuous % kind. */
+function curIsContinuous() { return valueCount(state.cur) === 0; }
+
 function rotate(delta) {
   if (state.mode === 'browse') {
+    const old = state.cur;
     state.cur = wrap(state.cur + delta, MP_COUNT);
+    if (state.cur !== old) onCurChange(delta);
     return;
   }
+  let valueChanged = false;
   switch (state.cur) {
-    case MP_KEY:    state.key    += delta;                       break;
-    case MP_MODE:   state.mode_i  = wrap(state.mode_i  + delta, 6); break;
-    case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + delta, 4); break;
-    case MP_VOICE:  state.voice_i = wrap(state.voice_i + delta, 3); break;
-    case MP_DRONE:  state.drone   = !state.drone;                break;
-    case MP_GEN:    state.gen_i   = wrap(state.gen_i   + delta, 7); break;
-    case MP_TEXTURE:state.texture = clamp(state.texture + 5*delta, 0, 100); break;
-    case MP_BASS:   state.bass    = clamp(state.bass    + 5*delta, 0, 100); break;
-    case MP_SPACE:  state.space   = clamp(state.space   + 5*delta, 0, 100); break;
-    case MP_MOOD:   state.mood    = clamp(state.mood    + 5*delta, 0, 100); break;
+    case MP_KEY:    state.key    += delta; valueChanged = true; break;
+    case MP_MODE:   state.mode_i  = wrap(state.mode_i  + delta, 6); valueChanged = true; break;
+    case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + delta, 4); valueChanged = true; break;
+    case MP_VOICE:  state.voice_i = wrap(state.voice_i + delta, 3); valueChanged = true; break;
+    case MP_TEXTURE:state.texture = clamp(state.texture + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_BASS:   state.bass    = clamp(state.bass    + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_SPACE:  state.space   = clamp(state.space   + 5*delta, 0, 100); valueChanged = true; break;
+    case MP_MOOD:   state.mood    = clamp(state.mood    + 5*delta, 0, 100); valueChanged = true; break;
   }
+  if (valueChanged) onValueChange();
 }
-function push() { state.mode = state.mode === 'browse' ? 'edit' : 'browse'; }
+function push() {
+  state.mode = state.mode === 'browse' ? 'edit' : 'browse';
+  onModeChange();
+}
 
 /* ---------- Render -------------------------------------------------------- */
 const canvas = document.getElementById('lcd');
@@ -278,7 +284,13 @@ function drawBattery() {
   }
 }
 
-function drawPillBar(n, active) {
+/* Pill row with a FRACTIONAL active position. When activeT is between two
+ * pills, both grow / brighten proportionally — the active "highlight" slides
+ * smoothly between positions. With one pill fully active (d=1) the layout is
+ * identical to the old integer version (one big pill + N-1 small ones,
+ * edge-to-edge). The widths sum is conserved while activeT slides between
+ * neighbours, so the row stays anchored at both margins. */
+function drawPillBar(n, activeT) {
   if (n < 1) return;
   const usable = W - PAD_L - PAD_R;
   let gap = BAR_GAP;
@@ -290,19 +302,23 @@ function drawPillBar(n, active) {
     ina = (usable - gaps) / ((n - 1) + BAR_ACT_K);
     if (ina < 3) ina = 3;
   }
-  let act = ina * BAR_ACT_K;
-  if (n === 1) { ina = 0; act = usable; }
-  /* distribute residue so the row ends exactly at the right margin */
-  const used = act + (n - 1) * ina + gaps;
-  let residue = usable - used;
+  const act = ina * BAR_ACT_K;
+  if (n === 1) {
+    roundRect(PAD_L, BAR_Y, usable, BAR_H_ACT, BAR_H_ACT / 2);
+    ctx.fillStyle = GS_ACTIVE; ctx.fill();
+    return;
+  }
+  /* Distance-1 attention falloff: only the two neighbours of activeT animate. */
+  const d = i => Math.max(0, 1 - Math.abs(i - activeT));
   let x = PAD_L;
   for (let i = 0; i < n; ++i) {
-    const isAct = (i === active);
-    let w = isAct ? act : ina;
-    if (!isAct && residue > 0) { w += 1; residue -= 1; }
-    const h  = isAct ? BAR_H_ACT : BAR_H_INA;
+    const di = d(i);
+    const w  = ina + di * (act - ina);
+    const h  = BAR_H_INA + di * (BAR_H_ACT - BAR_H_INA);
     const yy = BAR_Y + (BAR_H_ACT - h) / 2;
-    ctx.fillStyle = isAct ? GS_ACTIVE : GS_DASH;
+    /* brightness: dim → active across di=0..1 */
+    const a  = 0.20 + di * 0.80;
+    ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
     roundRect(x, yy, w, h, h / 2);
     ctx.fill();
     x += w + gap;
@@ -325,24 +341,111 @@ function drawFillbar(pct) {
 const FONT_LABEL = '300 18px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
 const FONT_VALUE = '300 52px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
 
-/* Transient readout shown when a dedicated encoder (Drive/Brightness/Volume)
- * is turned. Fades out after a short hold, then the menu view returns. This is
- * the "feedback comes through the display" idea — to be ported to the firmware
- * once the feel is approved. */
-const overlay = { active: false, label: '', value: 0, until: 0 };
-let overlayRAF = 0;
-function showOverlay(label, value) {
-  overlay.active = true; overlay.label = label; overlay.value = value;
-  overlay.until = performance.now() + 1500;
-  if (!overlayRAF) overlayRAF = requestAnimationFrame(overlayLoop);
+/* ---------- Animation engine ---------------------------------------------
+ * Single rAF loop. Every animated value lives on `anim` and is tweened via
+ * tween(key, to, [dur], [ease], [onDone]). Starting a new tween on the same
+ * key cancels the previous one (from the current value), so rapid input
+ * never produces stutters or stalled animations. Ease-out cubic is the
+ * house curve — fast start, gentle settle — and matches the OP-1 feel. */
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+
+const anim = {
+  barT: 0,        /* fractional active position for the pill bar */
+  barAlpha: 1,    /* bar alpha — drops during mode/N changes */
+  fillT: 20,      /* animated 0..100 for the fill bar (continuous %) */
+  textY: 0,       /* vertical wipe offset for label+value */
+  textAlpha: 1,
+  labelColor: 0,  /* 0 = browse label tone, 1 = edit label tone */
+  ovAlpha: 0,     /* overlay fade */
+  ovFill: 0,      /* animated 0..100 for the overlay's fill bar */
+};
+const overlay = { active: false, label: '', value: 0, fadeOutAt: 0 };
+
+const tweens = [];
+function tween(key, to, dur = 200, ease = easeOutCubic, onDone) {
+  for (let i = tweens.length - 1; i >= 0; --i)
+    if (tweens[i].key === key) tweens.splice(i, 1);
+  tweens.push({ key, from: anim[key], to, start: performance.now(), dur, ease, onDone });
+  ensureLoop();
 }
-function overlayLoop() {
-  if (performance.now() >= overlay.until) overlay.active = false;
+function tickTweens(now) {
+  for (let i = tweens.length - 1; i >= 0; --i) {
+    const tw = tweens[i];
+    const u = Math.min(1, (now - tw.start) / tw.dur);
+    anim[tw.key] = tw.from + (tw.to - tw.from) * tw.ease(u);
+    if (u >= 1) { tweens.splice(i, 1); if (tw.onDone) tw.onDone(); }
+  }
+}
+let rafId = 0;
+function ensureLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
+function loop(now) {
+  tickTweens(now);
+  /* Overlay scheduled fade-out. */
+  if (overlay.active && now >= overlay.fadeOutAt && !tweens.some(t => t.key === 'ovAlpha')) {
+    tween('ovAlpha', 0, 260, easeOutCubic, () => { overlay.active = false; });
+  }
   render();
-  overlayRAF = overlay.active ? requestAnimationFrame(overlayLoop) : 0;
+  const alive = tweens.length > 0;
+  rafId = alive ? requestAnimationFrame(loop) : 0;
 }
 
+/* ---------- Animation triggers ------------------------------------------- */
+/* The state functions (rotate/push) call these so the input layer can stay
+ * dumb. delta tells the wipe which way to slide. */
+function onCurChange(delta) {
+  /* text wipe-in: snap small offset + alpha 0, ease back to 0,1 */
+  anim.textY = 7 * Math.sign(delta);
+  anim.textAlpha = 0;
+  tween('textY', 0, 220);
+  tween('textAlpha', 1, 220);
+  /* pill bar: slide active to new cur (still in browse mode) */
+  tween('barT', state.cur, 240);
+  /* fill bar mirrors the new setting's % (relevant only if next setting is %) */
+  if (curIsContinuous()) tween('fillT', valueInt(state.cur), 240);
+}
+function onValueChange() {
+  /* discrete: slide the active pill to new index. continuous: animate fill. */
+  if (curIsContinuous()) {
+    tween('fillT', valueInt(state.cur), 200);
+    /* text reads from anim.fillT so it counts up smoothly — no extra tween. */
+  } else {
+    tween('barT', valueIndex(state.cur), 180);
+    /* word changed: short alpha pulse, no slide (user is "inside" the slot) */
+    anim.textAlpha = 0.35;
+    tween('textAlpha', 1, 220);
+  }
+}
+function onModeChange() {
+  /* Bar topology changes (N + active definition flip): fade out, snap, fade in. */
+  tween('barAlpha', 0, 110, easeOutCubic, () => {
+    /* snap bar target to the new mode's active position */
+    anim.barT = (state.mode === 'browse') ? state.cur : valueIndex(state.cur);
+    if (state.mode === 'edit' && curIsContinuous()) anim.fillT = valueInt(state.cur);
+    tween('barAlpha', 1, 180);
+  });
+  tween('labelColor', state.mode === 'edit' ? 1 : 0, 200);
+  /* small text pulse so the value lighting up reads as a state change */
+  anim.textAlpha = 0.5;
+  tween('textAlpha', 1, 220);
+}
+function showOverlay(label, value) {
+  /* If the overlay was already showing for the same encoder, just retarget
+   * smoothly; otherwise snap the start fill to the current value so the bar
+   * jumps in fresh from the new starting point. */
+  if (!overlay.active || overlay.label !== label) anim.ovFill = value;
+  overlay.active = true; overlay.label = label; overlay.value = value;
+  overlay.fadeOutAt = performance.now() + 1100;
+  tween('ovAlpha', 1, 110);
+  tween('ovFill', value, 180);
+  ensureLoop();
+}
+
+/* ---------- Drawing ------------------------------------------------------ */
 function drawValueRow(label, valueText, labelGs, valueGs) {
+  ctx.save();
+  ctx.globalAlpha = anim.textAlpha;
+  ctx.translate(0, anim.textY);
   ctx.fillStyle = labelGs;
   ctx.font = FONT_LABEL; ctx.textBaseline = 'top';
   ctx.fillText(label, PAD_L, PAD_T);
@@ -350,28 +453,38 @@ function drawValueRow(label, valueText, labelGs, valueGs) {
   ctx.fillStyle = valueGs;
   ctx.font = FONT_VALUE; ctx.textBaseline = 'top';
   ctx.fillText(valueText, PAD_L, y);
+  ctx.restore();
+}
+
+function lerpRGBA(t) {
+  /* label colour interpolates browse(GS_LABEL) → edit(GS_DIM) */
+  const a = lerp(0.60, 0.34, t);
+  return `rgba(255,255,255,${a.toFixed(3)})`;
+}
+function lerpValueRGBA(t) {
+  const a = lerp(0.86, 1.0, t);
+  return `rgba(255,255,255,${a.toFixed(3)})`;
 }
 
 function drawMenu() {
   drawValueRow(LABELS[state.cur], valueText(),
-               state.mode === 'edit' ? GS_DIM : GS_LABEL,
-               state.mode === 'edit' ? GS_ACTIVE : GS_VAL);
-  /* Bottom bar: BROWSE = stable menu-position indicator; EDIT = value space. */
+               lerpRGBA(anim.labelColor), lerpValueRGBA(anim.labelColor));
+  ctx.save();
+  ctx.globalAlpha = anim.barAlpha;
   if (state.mode === 'browse') {
-    drawPillBar(MP_COUNT, state.cur);
+    drawPillBar(MP_COUNT, anim.barT);
   } else {
     const n = valueCount(state.cur);
-    if (n > 0) drawPillBar(n, valueIndex(state.cur));
-    else       drawFillbar(valueInt(state.cur));
+    if (n > 0) drawPillBar(n, anim.barT);
+    else       drawFillbar(anim.fillT);
   }
+  ctx.restore();
 }
 
 function drawOverlayView() {
-  const left = overlay.until - performance.now();
-  ctx.globalAlpha = left < 300 ? Math.max(0, left / 300) : 1;   /* gentle fade-out */
-  drawValueRow(overlay.label, overlay.value + '%', GS_LABEL, GS_ACTIVE);
-  drawFillbar(overlay.value);
-  ctx.globalAlpha = 1;
+  drawValueRow(overlay.label, Math.round(anim.ovFill) + '%',
+               GS_LABEL, GS_ACTIVE);
+  drawFillbar(anim.ovFill);
 }
 
 function render() {
@@ -382,8 +495,23 @@ function render() {
   ctx.fillRect(0, 0, W, H);
 
   drawBattery();                       /* always-on status, full alpha */
-  if (overlay.active) drawOverlayView();
-  else                drawMenu();
+
+  /* Crossfade overlay over menu when active. Both share the value row at the
+   * same position so the transition feels like a smooth content swap rather
+   * than two stacked screens. */
+  if (overlay.active || anim.ovAlpha > 0.01) {
+    /* menu under overlay, dimmed by overlay alpha */
+    ctx.save();
+    ctx.globalAlpha = 1 - anim.ovAlpha;
+    drawMenu();
+    ctx.restore();
+    ctx.save();
+    ctx.globalAlpha = anim.ovAlpha;
+    drawOverlayView();
+    ctx.restore();
+  } else {
+    drawMenu();
+  }
 
   ctx.restore();
 }

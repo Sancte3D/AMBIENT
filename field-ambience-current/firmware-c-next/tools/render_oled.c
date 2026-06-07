@@ -29,8 +29,6 @@ static void noop_key (int v)         { (void)v; }
 static void noop_mode(int v)         { (void)v; }
 static void noop_vibe(int v)         { (void)v; }
 static void noop_voi (int v)         { (void)v; }
-static void noop_dro (bool b)        { (void)b; }
-static void noop_gen (bool b, int p) { (void)b; (void)p; }
 static void noop_t   (float v)       { (void)v; }
 static void noop_b   (float v)       { (void)v; }
 static void noop_s   (float v)       { (void)v; }
@@ -73,7 +71,7 @@ int main(int argc, char **argv) {
     const char *dir = (argc > 1) ? argv[1] : ".";
 
     menu_callbacks_t cb = {
-        noop_key, noop_mode, noop_vibe, noop_voi, noop_dro, noop_gen,
+        noop_key, noop_mode, noop_vibe, noop_voi,
         noop_t, noop_b, noop_s, noop_m
     };
     menu_init(&cb);
@@ -89,15 +87,11 @@ int main(int argc, char **argv) {
     to_param(MP_VIBE); menu_push(); menu_rotate(+1); menu_push();
     /* TEXTURE → 35 */
     to_param(MP_TEXTURE); menu_push(); menu_rotate(+3); menu_push();
-    /* DRONE on */
-    to_param(MP_DRONE); menu_push(); menu_rotate(+1); menu_push();
-    /* GENERATIVE → markov */
-    to_param(MP_GENERATIVE); menu_push(); menu_rotate(+6); menu_push();
 
     /* Render one BROWSE frame per param. */
     static const char *NAMES[MP_COUNT] = {
-        "01_key","02_mode","03_vibe","04_voice","05_drone","06_gen",
-        "07_texture","08_bass","09_space","10_mood"
+        "01_key","02_mode","03_vibe","04_voice",
+        "05_texture","06_bass","07_space","08_mood"
     };
     char path[512];
     for (int p = 0; p < MP_COUNT; ++p) {
@@ -116,7 +110,7 @@ int main(int argc, char **argv) {
     menu_push();
     /* Continuous % fill-bar in edit mode. */
     to_param(MP_TEXTURE); menu_push();
-    render_settled(); snprintf(path, sizeof path, "%s/menu_edit_07_texture.pgm", dir); write_pgm(path);
+    render_settled(); snprintf(path, sizeof path, "%s/menu_edit_05_texture.pgm", dir); write_pgm(path);
     menu_push();
 
     /* USB-present variant (charging) on KEY. */
