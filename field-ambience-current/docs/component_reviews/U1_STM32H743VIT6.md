@@ -284,4 +284,30 @@ die 30 belegten GPIOs + dedicated Pins. Vollständige Übersicht siehe SPEC v0.7
 
 | Datum | Reviewer | Stand | Nächster Schritt |
 |---|---|---|---|
-| 2026-06-08 | Claude (Pilot-Session) | REQUIRES SOURCE / CLARIFICATION | AN3318 + DS §6/§7 lesen → vollständige Re-Verifikation |
+| 2026-06-08 (T+0) | Claude (Pilot-Session) | REQUIRES SOURCE / CLARIFICATION | AN3318 + DS §6/§7 lesen → vollständige Re-Verifikation |
+| 2026-06-08 (T+1) | Claude (Y1-Review) | REQUIRES SOURCE / CLARIFICATION | Mehrere ursprünglich offene Punkte aus DS12110 Rev 5 §6.3.4/§6.3.8 verifiziert |
+
+### Update T+1: Verifikationen aus DS12110 Rev 5 §6.3 Lesung
+
+Während des Y1-Reviews wurde DS12110 Rev 5 Pages 100-122 vollständig gelesen.
+Folgende ursprünglich offene Punkte sind jetzt belegt:
+
+| Punkt aus T+0 | Verifizierungs-Stand T+1 | Quelle |
+|---|---|---|
+| VDD-Range „1.71-3.6 V angenommen" | **Korrigiert: 1.62-3.6 V** (TT_xx I/O) | DS12110 Rev 5 Table 23 Page 100 |
+| VDDA-Toleranz vs VDD ungeprüft | **Tabelle 23 zeigt VDDA-Range separat (1.62 V min for ADC use, 1.8 V for DAC)** — keine explizite VDDA-VDD-Toleranz in Table 23. **AN3318 weiterhin offen für strikte Constraints** | DS12110 Rev 5 Table 23 |
+| VCAP-Bulk-Werte (2.2 µF angenommen) | **BESTÄTIGT: 2× 2.2 µF X5R ± 20%, ESR < 100 mΩ** | DS12110 Rev 5 Table 24 Page 101 |
+| Stromverbrauch @ 480 MHz (180 mA Annahme) | **TEILWEISE: 165 mA typ @ 400 MHz mit allen Peripherie aktiv (VOS1)**. 480 MHz mit VOS0 nicht in dieser DS-Revision → **F-5 Finding (Datasheet-Revision)** | DS12110 Rev 5 Table 29 Page 105 |
+| HSE-ESR-Limit | **Gm_critmax = 1.5 mA/V** → theoretisch ESR_max ~948 Ω, Best-Practice 5×-Margin ~190 Ω → **F-4 Finding (Y1-Crystal marginal)** | DS12110 Rev 5 Table 43 Page 120 |
+| HSE Drive Level (R_EXT) | DS Page 120 Figure 19 zeigt R_EXT optional. AN2867-Referenz im Datasheet erwähnt. **AN2867 noch zu beschaffen** | DS12110 Rev 5 Page 120 |
+| Power-Sequencing | **Reset-Timing Tabelle 25 + Table 26 BOR0-Threshold 1.62 V verifiziert** — kein spezielles Sequencing zwischen VDD/VDDA dokumentiert in §6.3.3 | DS12110 Rev 5 Tables 25, 26 |
+| BOOT0 Threshold | **VIL = 0.19×VDD+0.1 V, VIH = 0.17×VDD+0.6 V** (separater Threshold für BOOT0) | DS12110 Rev 5 Table 59 Page 131 |
+| NRST-Pull-Up Wert | NRST hat **interne Pull-Up 30-50 kΩ** (Table 59 RPU). Externe 10 kΩ Pull-Up wäre dominant — OK, aber **eigentlich nicht zwingend nötig** (interne Pull-Up reicht für normale Anwendung; externe 100 nF Cap bleibt empfehlenswert für EMI) | DS12110 Rev 5 Table 59 |
+
+### Konsequenz für U1-Status
+
+- VCAP-Werte ✓ verifiziert (2× 2.2 µF korrekt in SPEC)
+- VDD-Range ⚠ Spec hat 1.71 V min, real 1.62 V — kein Problem für unser 3.3 V Design
+- Stromverbrauch: 480 MHz-Werte fehlen weiterhin → **F-5**
+- HSE Gm_critmax → **F-4** für Y1-Crystal
+- **Status bleibt REQUIRES SOURCE / CLARIFICATION** wegen AN3318 + Datasheet-Revision für 480 MHz
