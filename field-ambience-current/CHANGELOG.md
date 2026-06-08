@@ -4,9 +4,75 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18** (MCU-Migration Pico 2 → STM32H743VIT6,
-LQFP100 Bare-Chip. Major-Bump weil Architektur-Bruch. Pico-Stand
-archiviert als Fallback. PCB-Layout erst nach Profiling.)
+Aktuelle Rev: **v0.7-r18.3** (Fakten-Verifikation: ABM3-Crystal als
+CRITICAL FAIL identifiziert nach ST AN2867-Studium — Gain Margin 0.47
+statt Min 5. Crystal-Auswahl auf PLATZHALTER. Phase 3 BLOCKED bis
+Sourcing klar.)
+
+---
+
+## v0.7-r18.3 (2026-06-08) — Y1 Crystal CRITICAL FAIL nach AN2867-Verifikation
+
+**Component-Review-Findings im Zuge der konservativen Datasheet-Verifikation
+aller PCB-Komponenten** (User-Vorgabe: keine Annahmen, jede Komponente prüfen).
+
+Wichtigster Fund: das in r18.0/r18.1 spezifizierte ABRACON ABM3-8.000MHZ-D2Y-T
+Crystal **wird mit STM32H743 wahrscheinlich nicht oszillieren**.
+
+### Korrekte Crystal-Auswahl-Formel laut ST AN2867 Rev 24:
+- `gm_crit = 4 × ESR × (2π·F)² × (C₀ + CL)²`
+- Erforderliche Gain Margin (Sicherheitsfaktor): ≥ 5
+- Für ABM3 (ESR=500 Ω, CL=18 pF, C₀=7 pF, F=8 MHz):
+  - gm_crit = 3.16 mA/V
+  - STM32H743 gm = 1.5 mA/V (DS12110 Rev 5 Table 43)
+  - **Gain Margin = 0.47** — etwa Faktor 10 unter dem AN2867-Minimum
+  - Bei Gain Margin <1: keine Oszillation
+
+### Ursache des Fehlers
+In r18.1 wurde die ESR-Berechnung ohne den Faktor 4 gemacht (Formel:
+`gm_crit = ESR × (2πF)² × (C₀+CL)²` statt korrekt mit ×4). Das ergab
+ein 4× zu optimistisches theoretisches ESR_max. Erst nach Studium von
+AN2867 wurde der Fehler aufgedeckt.
+
+### Konsequenzen
+- **SPEC v0.7 §4 BOM Y1-Zeile auf PLATZHALTER** geändert (war ABM3 LCSC C144380)
+- **BLOCKER für Phase 3** (KiCad-Schematic-Migration): Crystal muss zwingend
+  vor PCB-Layout final gewählt sein
+- Phase 2 Sourcing-Session erforderlich für Alternativen
+
+### Lösungs-Ansätze (in Phase 2 zu prüfen)
+1. Standard 8 MHz Crystal mit ESR ≤ 190 Ω bei CL=18 pF im 5032-Package
+   (schwer zu finden, viele Standard-Crystals 100-500 Ω)
+2. HC-49S-SMD Crystal (typisch ESR 30-60 Ω, aber größerer Footprint
+   ~11×4.5 mm)
+3. **MEMS-Oszillator wie SiTime SiT8008 oder SiT1602**: empfohlene Lösung,
+   eliminiert Crystal-Auswahl-Probleme komplett (aktiv, direkter Anschluss
+   an OSC_IN im Bypass-Mode, höhere Kosten ~$1-2 vs $0.20 Crystal)
+
+### Andere Findings aus Y1-Review-Session
+- **F-3:** SPEC §4 hatte fälschlich „140 Ω ESR" — echter Wert 500 Ω laut
+  ABRACON-Datasheet Rev 12.03.09 (jetzt irrelevant da Crystal ohnehin
+  ersetzt wird)
+- **F-5:** DS12110 Rev 5 dokumentiert nur bis 400 MHz; 480 MHz mit VOS0
+  erst in späteren Datasheet-Revisionen — neuere Revision noch zu beschaffen
+
+### Verifizierte Werte (positive Bestätigungen aus DS12110 Rev 5 Pages 100-122)
+Diese SPEC-Werte sind jetzt direkt aus dem ST-Datasheet belegt:
+- VCAP = 2× 2.2 µF X5R ESR<100 mΩ (Table 24) — bestätigt SPEC §5.10
+- VDD-Range 1.62-3.6 V (Table 23) — 3.3 V innerhalb Spec
+- VDD33USB ≥ 3.0 V (Table 23) — 3.3 V innerhalb Spec
+- HSE-Range 4-48 MHz (Table 43) — 8 MHz innerhalb Range
+- IDD @ 400 MHz all-periph: 165 mA typ (Table 29)
+- NRST hat interne Pull-Up 30-50 kΩ (Table 59)
+
+### Komponenten-Review-Framework
+Neu in r18.2 angelegt: `docs/component_reviews/` mit Index-README,
+10-Punkte-Template-Reviews pro Bauteil, Findings-Liste F-1..F-5.
+2 von ~19 Bauteilen bislang reviewed (U1 STM32H743VIT6, Y1 Crystal).
+
+Volle Component-Review: `docs/component_reviews/Y1_ABM3-8.000MHZ-D2Y-T.md`
+
+https://claude.ai/code/session_01K5kLTFpDCCoYwx2dq6RkAv
 
 ---
 

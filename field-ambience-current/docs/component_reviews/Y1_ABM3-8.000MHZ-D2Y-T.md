@@ -1,13 +1,20 @@
 # Component Review: Y1 — ABM3-8.000MHZ-D2Y-T (HSE Crystal)
 
-**Status:** 🟠 BLOCKED — empfohlen Crystal-Wechsel auf Low-ESR-Variante
-**Review-Datum:** 2026-06-08
+**Status:** 🔴 **CRITICAL FAIL — Crystal-Wechsel ZWINGEND erforderlich**
+**Review-Datum:** 2026-06-08 (zuletzt aktualisiert mit AN2867-Verifikation)
 **Reviewer:** Claude (Session 01K5kLTFpDCCoYwx2dq6RkAv)
 **Bezug:** SPEC v0.7-r18.1 §4 BOM (Y1), §5.9 Clock-Source
 **Migrations-Phase:** Phase 1 (Doku) — NEU in r18
 
 > **Reviewer-Haltung:** Konservative Quellenprüfung. Findings explizit benannt.
-> Kritischer Konflikt mit STM32H743 HSE-Spec identifiziert.
+> **KRITISCHER Konflikt** mit STM32H743 HSE-Spec bestätigt nach AN2867-Studium.
+
+> ⚠️ **EILUPDATE 2026-06-08 T+2:** Ursprüngliche Bewertung „BLOCKED, marginal"
+> war ZU OPTIMISTISCH. Nach Lesung der ST AN2867 (Oscillator Design Guide)
+> ist die korrekte Formel `gm_crit = 4 × ESR × (2πF)² × (C0+CL)²` mit Faktor 4.
+> Ergebnis: **Gain Margin = 0.47** (Minimum laut AN2867 = 5). Der Crystal wird
+> mit hoher Wahrscheinlichkeit **gar nicht oszillieren**. Status auf CRITICAL
+> FAIL eskaliert. Wechsel ZWINGEND.
 
 ---
 
@@ -184,7 +191,7 @@ Crystal hat 2 elektrisch äquivalente Pads. Keine "Pinout"-Tabelle im klassische
 | Vertauschtes Pinout | n/a | symmetrisch |
 | **Falsche Versorgungsspannung** | n/a | passiv |
 | **Drive-Level-Überschreitung** | ⚠ MITTEL | STM32H743 HSE-Driver kann bei Crystal mit niedrigem Drive-Level (100 µW max ABM3) übersteuern. **R_EXT könnte nötig sein** — gegen ST AN2867 prüfen |
-| **🔴 ESR-Konflikt mit STM32H743** | ⚠ **MARGINAL** | Crystal hat 500 Ω max ESR (Datasheet). STM32H743 Gm_critmax 1.5 mA/V → theoretisch max ESR ~948 Ω, aber Best-Practice 5×-Margin → 190 Ω empfohlen. **500 Ω liegt unter theoretischem Limit, aber DEUTLICH über dem 5×-Sicherheits-Margin.** Bei Temperatur-Drift oder Toleranz könnte Crystal nicht zuverlässig starten. |
+| **🔴 ESR-Konflikt mit STM32H743** | 🔴 **CRITICAL FAIL** | **AN2867-Formel: `gm_crit = 4 × ESR × (2πF)² × (C0+CL)²`** (Faktor 4 in r18.1-Berechnung übersehen). Mit ABM3-Werten (ESR=500Ω, CL=18pF, C0=7pF, F=8MHz): gm_crit = 3.16 mA/V. STM32H743 hat nur gm=1.5 mA/V. **Gain Margin = 1.5 / 3.16 = 0.47** (Minimum laut AN2867 = 5; Gain Margin <1 = keine Oszillation). **Crystal wird mit hoher Wahrscheinlichkeit NICHT oszillieren mit STM32H743**. |
 | Falsche I²C/SPI/UART/USB-Pins | n/a | — |
 | Decoupling-Kondensatoren | n/a | Load-Caps sind keine Decoupling |
 | Package-Variante verwechselt | ⚠ Risiko | Naming-Schema hat 8 Felder, Verwechslung anderer Suffix-Kombinationen möglich |
@@ -196,7 +203,56 @@ Crystal hat 2 elektrisch äquivalente Pads. Keine "Pinout"-Tabelle im klassische
 
 ## 9. Final Verdict
 
-**Status: 🟠 BLOCKED** — empfohlene Aktion: Crystal-Wechsel auf Low-ESR-Variante
+**Status: 🔴 CRITICAL FAIL** — Crystal-Wechsel ZWINGEND erforderlich. ABM3 wird mit STM32H743 wahrscheinlich nicht oszillieren.
+
+### AN2867-Verifikation (eingefügt T+2)
+
+**ST AN2867 Rev 24 (Februar 2026)** definiert die Crystal-Auswahl-Regel:
+> *„If gain margin > 5, a suitable crystal has been found. A gain margin of 5 can be considered as a minimum to ensure an efficient startup of oscillations."*
+
+**Korrekte Berechnung (Faktor 4 berücksichtigt):**
+- gm_crit = 4 × ESR × (2π·F)² × (C₀+CL)²
+- Für ABM3 @ 8 MHz, ESR=500 Ω, C₀=7 pF, CL=18 pF:
+  - (2π·8e6)² = 2.53×10¹⁵
+  - (C₀+CL)² = (25e-12)² = 6.25×10⁻²²
+  - gm_crit = 4 × 500 × 2.53×10¹⁵ × 6.25×10⁻²² = **3.16 mA/V**
+- STM32H743 gm = 1.5 mA/V (DS12110 Rev 5 Table 43)
+- **Gain Margin = 1.5 / 3.16 = 0.47** ← weit unter 5 → **FAIL**
+- Bei Gain Margin <1: Crystal oszilliert gar nicht
+- Bei Gain Margin 1-5: unzuverlässige Oszillation
+
+**Erforderlich für Gain Margin = 5 bei 8 MHz mit C₀+CL = 25 pF:**
+- ESR_max = gm / (5 × 4 × (2πF)² × (C₀+CL)²) = 1.5e-3 / (5 × 1.58e-6) = **190 Ω**
+
+→ ABM3 mit 500 Ω ist **2.6× über dem Maximum** — und sogar deutlich über dem Punkt wo Oszillation aufhört.
+
+**Lösungs-Ansätze (in Phase 2 Sourcing-Session zu klären):**
+
+1. **Crystal mit niedrigerem ESR + gleichem CL (18 pF):** ESR ≤ 190 Ω
+   - Bei 8 MHz im 5032-Standard-Package schwer zu finden (Standard-Crystals haben 100-500 Ω)
+   - HC-49S-Style (THT/größeres SMD) kann <60 Ω haben, aber Footprint anders
+2. **Crystal mit niedrigerem CL (z.B. 10 pF) + niedrigem C₀:**
+   - Bei CL=10 pF, C₀=2 pF (C₀+CL=12 pF): gm_crit halbiert sich auf ~1.5 mA/V × 144/625 = ~0.69 mA/V → Gain Margin **2.2** — auch zu niedrig
+   - Selbst mit niedrigem CL braucht es ESR ≤ 200 Ω
+3. **Crystal in HC-49S-SMD (größer, 11×4.5 mm):**
+   - Typisch 30-60 Ω ESR → Gain Margin 10+ — sicher
+   - Aber größerer Footprint
+4. **MEMS-Oszillator** (z.B. SiTime SiT8008, SiT1602):
+   - Aktiv (kein Crystal-Problem)
+   - 3.3 V Versorgung
+   - Direkt-Anschluss an OSC_IN (Bypass-Mode, OSC_OUT bleibt frei)
+   - Höhere Kosten (~$1-2 vs $0.20 für Crystal)
+   - **Einfachste Lösung, eliminiert Crystal-Probleme komplett**
+
+**Empfehlung an User:** Phase 2 Sourcing-Session muss mindestens 3 Alternativen
+gegen LCSC + JLCPCB prüfen. **Kein PCB-Layout ohne verifizierten Crystal mit
+Gain Margin ≥ 5.**
+
+---
+
+### Vorherige Bewertung (vor AN2867-Verifikation — bleibt zur Nachvollziehbarkeit)
+
+Status war: 🟠 BLOCKED, „empfohlene Aktion: Crystal-Wechsel auf Low-ESR-Variante"
 
 ### Wichtigste Fakten (verifiziert)
 - ABRACON ABM3-Serie ist eine etablierte Keramik-SMD-Crystal-Familie
@@ -248,4 +304,5 @@ Crystal hat 2 elektrisch äquivalente Pads. Keine "Pinout"-Tabelle im klassische
 
 | Datum | Reviewer | Stand | Nächster Schritt |
 |---|---|---|---|
-| 2026-06-08 | Claude | BLOCKED (ESR-Konflikt mit H743, SPEC-Fehler ESR=140Ω) | SPEC §4 fixen + Low-ESR-Alternative recherchieren |
+| 2026-06-08 (T+0) | Claude | BLOCKED (ESR-Konflikt mit H743, SPEC-Fehler ESR=140Ω) | SPEC §4 fixen + Low-ESR-Alternative recherchieren |
+| 2026-06-08 (T+2) | Claude | 🔴 **CRITICAL FAIL** | AN2867 Studium ergab: korrekte Formel hat Faktor 4. Gain Margin = 0.47 (Minimum laut AN2867: 5). Crystal wird NICHT zuverlässig oszillieren. Wechsel zwingend. |

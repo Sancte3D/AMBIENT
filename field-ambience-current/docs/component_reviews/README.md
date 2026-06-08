@@ -21,7 +21,7 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 | Ref | Bauteil | Status | Review-Datei | Letzte Prüfung | r18-Änderung? |
 |---|---|---|---|---|---|
 | U1 | STM32H743VIT6 | 🟡 REQUIRES SOURCE / CLARIFICATION | [U1_STM32H743VIT6.md](U1_STM32H743VIT6.md) | 2026-06-08 (mit DS12110 Rev 5 Pin/Power/HSE-Verifikation) | **NEU** |
-| Y1 | ABM3-8.000MHZ-D2Y-T | 🟠 **BLOCKED** (ESR-Konflikt) | [Y1_ABM3-8.000MHZ-D2Y-T.md](Y1_ABM3-8.000MHZ-D2Y-T.md) | 2026-06-08 | **NEU** |
+| Y1 | ~~ABM3-8.000MHZ-D2Y-T~~ → **PLATZHALTER** | 🔴 **CRITICAL FAIL** (Gain Margin 0.47 vs Min 5) | [Y1_ABM3-8.000MHZ-D2Y-T.md](Y1_ABM3-8.000MHZ-D2Y-T.md) | 2026-06-08 (T+2: AN2867-Eskalation) | **NEU** |
 | U5 | AP7361A-33ER | ⏳ noch nicht reviewed | — | — | **war DNP, jetzt aktiv** |
 | C_VDD\*, VCAP\*, VDDA | Decoupling-Caps | ⏳ noch nicht reviewed (VCAP = 2× 2.2 µF bereits aus DS12110 Rev 5 Table 24 bestätigt) | — | — | **NEU** |
 | R_BOOT0, R_NRST, C_NRST | Boot/Reset | ⏳ noch nicht reviewed | — | — | **NEU** |
@@ -68,12 +68,26 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 - **Wirkung:** SPEC ist 3,5× zu optimistisch in der ESR-Angabe
 - **Aktion:** SPEC §4 Y1-Zeile korrigieren auf „500 Ω max ESR"
 
-### F-4: Y1 Crystal-ESR liegt 2,6× über STM32H743 Best-Practice-Margin
-- **STM32H743 Spec (DS12110 Rev 5 Page 120 Table 43):** Gm_critmax = 1.5 mA/V
-- **Berechnung:** Theoretisch zulässiges ESR_max ≈ 948 Ω; Best-Practice 5×-Margin → empfohlenes ESR_max ≈ 190 Ω
-- **ABRACON ABM3-8.000MHZ-D2Y-T:** ESR = 500 Ω max
-- **Wirkung:** Crystal liegt **innerhalb des theoretischen Limits**, aber **außerhalb des 5×-Sicherheits-Margins**. Risiko: bei Temperatur-Drift oder Lot-Variationen unzuverlässiger Crystal-Start
-- **Aktion:** Crystal-Wechsel auf Low-ESR-Variante empfohlen (z.B. ABRACON ABM8G-8.000MHZ ~50 Ω, ECS-80-18-30B ~60 Ω, NDK NX5032GA-8.000M ~30 Ω). Alle 3 Alternativen müssen in Phase 2 Sourcing-Session gegen JLC-Stock und Datasheet verifiziert werden.
+### F-4: 🔴 **CRITICAL** — Y1 Crystal funktioniert mit STM32H743 NICHT (Gain Margin Fail)
+
+> **Update T+2 (2026-06-08):** Ursprüngliche Bewertung „BLOCKED, marginal" war zu
+> optimistisch — Berechnungsformel hatte den Faktor 4 nicht. Nach ST AN2867-Studium
+> auf CRITICAL eskaliert.
+
+- **ST AN2867 Rev 24** definiert die korrekte Formel: `gm_crit = 4 × ESR × (2πF)² × (C0+CL)²`
+  und fordert **Gain Margin ≥ 5** als Minimum für zuverlässigen Crystal-Start
+- **Für ABM3-8.000MHZ-D2Y-T** (ESR=500 Ω, CL=18 pF, C₀=7 pF, F=8 MHz):
+  - gm_crit = 4 × 500 × (2π·8e6)² × (25e-12)² = **3.16 mA/V**
+- **STM32H743 gm = 1.5 mA/V** (DS12110 Rev 5 Table 43)
+- **Gain Margin = 1.5 / 3.16 = 0.47** ← WEIT unter 5
+- **Bei Gain Margin < 1: Crystal oszilliert gar nicht!**
+- **Wirkung:** ABM3 funktioniert mit STM32H743 wahrscheinlich nicht. PCB würde im ersten Spin nicht booten.
+- **Erforderlich für Gain Margin = 5 bei 8 MHz, C₀+CL = 25 pF:** ESR ≤ **190 Ω**
+- **Aktion:** **PFLICHT-Wechsel.** Mehrere Lösungs-Pfade in Phase 2 Sourcing-Session zu prüfen:
+  - Standard 8 MHz Crystal mit ESR ≤ 190 Ω im 5032 (schwer)
+  - HC-49S-SMD Crystal (ESR meist ≤ 50 Ω, aber größerer Footprint)
+  - **MEMS-Oszillator (SiTime SiT8008, SiT1602): empfohlen** — eliminiert Crystal-Probleme komplett, direkter Anschluss an OSC_IN
+- **Status:** SPEC §4 Y1-Zeile in r18.3 auf „PLATZHALTER" geändert. **BLOCKER für Phase 3 KiCad-Schematic.**
 
 ### F-5: STM32H743 Datasheet-Revision Mismatch
 - **Lokal abgerufenes Datasheet:** DS12110 Rev 5 (Juli 2018)
