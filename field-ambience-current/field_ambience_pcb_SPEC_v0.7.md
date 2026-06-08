@@ -134,7 +134,7 @@ USB-C 5V/3A ────► USB-C  ──┬──► F1 (3A/6A) ──► 1000�
          (GPIO PB14 = nSHDN, PB15 = nMUTE — Pop-Suppression-          │
           Sequenz wie §8.3, identisch zu Pico-Variante)               │
                                                                       │
-         Plus: ADC1_INP3 = BAT_SENSE (PA3), MCP_INT = PC13            │
+         Plus: ADC1_INP15 = BAT_SENSE (PA3), MCP_INT = PC13           │
               └─────────────────────────────────────────────┘
 ```
 
@@ -332,14 +332,21 @@ zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 | LDO Quiescent (NCP163 oder vgl.) | 1 mA | 1 mA | 2 mA |
 | **TOTAL** | **246 mA** | **771 mA** | **1227 mA** |
 
-**Anmerkung v0.7 (MCU-Wechsel)**: H743 @ 480 MHz mit aktivem DSP-Load, DMA und
-8 GPIO-Banks zieht laut ST-Datasheet (RM0433, Table 33 „Typical and maximum
-current consumption in Run mode") ~180 mA typical. Pico 2 lag bei ~50 mA — die
-H743-Mehrkosten am Strom-Budget sind ~130 mA typical. Im Worst-Case (Compute
-Cache aktiv + alle Peripherie + DAC + Amp) bleibt das Gesamt-Budget mit
+**Anmerkung v0.7 (MCU-Wechsel)**: H743-Stromverbrauch laut **ST DS12110 Rev 5
+§6.3.4 (Table 33, Typical and maximum current consumption in Run mode)**:
+- 71 mA typical @ 400 MHz CPU, alle Peripherie aktiviert
+- ~120 mA gemessen auf Nucleo-H743ZI @ 480 MHz mit Cache/DMA aktiv (ST-Community-Report,
+  IDD-Jumper-Messung am Eval-Board)
+- **180 mA Worst-Case-Schätzung** in dieser Tabelle = konservativer Aufschlag
+  für unsere spezifische Last (alle GPIOs aktiv, SAI-DMA continuous, SPI-DMA
+  Burst für LCD-Blits, ADC continuous, 4× TIM-QEI). Final wird Phase 5
+  (Profiling auf echter Hardware) den exakten Wert messen.
+
+Pico 2 lag bei ~50 mA — die H743-Mehrkosten am Strom-Budget sind ~70-130 mA
+typical (mid-range Annahme). Im Worst-Case bleibt das Gesamt-Budget mit
 **~1.2 A** sehr deutlich unter F1 (3 A hold) und unter TPS61089 (2 A @ 5 V) im
 Battery-Mode → der Battery-Mode-Volume-Clamp aus r9 kann gelockert oder
-ganz entfernt werden (separater Firmware-PR in Phase 4).
+ganz entfernt werden (separater Firmware-PR in Phase 4 nach Profiling-Messung).
 
 **Anmerkung r14 (Akustik-v2, Impedanz-Korrektur 2026-06-02)**: PUI AS04008PS
 Datenblatt sagt **8 Ω** — Worst-Case-PAM8403-Strom halbiert sich entsprechend
@@ -447,7 +454,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | Ref | Part | Package | JLCPCB # | Status | Hinweis |
 |---|---|---|---|---|---|
 | **U1** | **STM32H743VIT6 (STMicroelectronics)** | **LQFP-100** | **C114409** | **Extended, ~$6.62 @1, Mouser/DigiKey lagernd, JLC SMT-bestückbar** | **NEU v0.7: 480 MHz Cortex-M7 + Double-Precision FPU + DTCM/ITCM, 1 MB internes RAM, 2 MB Flash. Symbol `MCU_ST_STM32H7:STM32H743VIT6`, Footprint `Package_QFP:LQFP-100_14x14mm_P0.5mm`. Datasheet: ST DS12110. Pin-Allocation siehe §5.** |
-| **Y1** | **HSE Crystal 8 MHz (ABRACON ABM3-8.000MHZ-D2Y-T)** | **HC-49/SMD 5.0×3.2mm** | **C115962** | **Basic** | **NEU v0.7: Audio-Master-Clock. PLL-N=384 → SYSCLK 480 MHz. 18 pF Load-Caps (2× 22 pF mit Stray-Korrektur).** |
+| **Y1** | **HSE Crystal 8 MHz (ABRACON ABM3-8.000MHZ-D2Y-T)** | **5032 2-SMD 5.0×3.2mm** | **C144380** | **Extended (ABRACON, in stock, ~$0.27)** | **NEU v0.7: Audio-Master-Clock. 18 pF Load, ±30 ppm Stability, 140 Ω ESR. PLL-Konfig: PLL_M=4 → 2 MHz PFD → PLL_N=480 → 960 MHz VCO → /PLL_P=2 → SYSCLK 480 MHz.** |
 | **C_HSE1, C_HSE2** | **22 pF C0G 0603** | **0603** | Generic | **Basic** | **NEU v0.7: HSE Load-Caps** |
 | **R_BOOT0** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: BOOT0 Pull-Down → System-Loader nur via DFU/Reset** |
 | **R_NRST** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: NRST Pull-Up zu +3V3** |
@@ -559,41 +566,48 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 
 ---
 
-## 5. STM32H743 Pin Allocation v0.7-r18 (LQFP100, Datasheet DS12110 verifiziert)
+## 5. STM32H743 Pin Allocation v0.7-r18 (LQFP100, Datasheet DS12110 Rev 5 — Tabelle 8 verifiziert)
 
-**Migrations-Hinweis:** Diese Tabelle ist die **vorläufige** Pinmux-Belegung
-und wird in Phase 3 (KiCad-Schematic-Migration) gegen die Datasheet-Alternate-
-Function-Matrix (DS12110 Table 11) final verifiziert. Jede Zeile ist gegen die
-H743-Pin-Definition aus dem Datasheet zugeordnet; Konflikte mit Sub-Mhz-
-Routing (z.B. SAI1-A vs SPI1 auf gemeinsamen AF) sind durch die
-hier gewählten alternate functions vermieden. **Es gibt keinen Pin-Mangel:**
-H743 LQFP100 hat ~80 nutzbare GPIOs, wir belegen ~30.
+**Verifikations-Stand:** Alle Pin-Nummern und Alternate Functions sind gegen
+die offizielle ST-Pin-Definitionstabelle (DS12110 Rev 5, Table 8) gegengeprüft.
+Eine erste Version dieser Sektion enthielt Off-by-N-Fehler (SAI1-Pins, SPI1-
+Pins, USB-OTG-Pins, PA15-Position) und einen Pin-76-Doppelbelegungs-Konflikt
+(PA14 vs. fälschliches „PD5 = Pin 76") — alle in r18.1 korrigiert. Die finale
+Verifikation gegen die Datasheet-Alternate-Function-Matrix (DS12110 Table 12)
+für jede AF-Nummer passiert in Phase 3 (KiCad-Symbol-Eingabe).
+
+**Pin-Reserve:** LQFP100 hat **82 GPIOs** (Datasheet S. 18) plus dedicated
+NRST/BOOT0/HSE-Pins. Wir belegen **30 GPIOs** für die Engine — also ~50 GPIO-Pins
+ungenutzt für Rev-B-Erweiterungen (Touch-Display, USB-MIDI-IN, weitere Encoder,
+DFU-Button etc.).
 
 ### 5.1 Audio (SAI1 Block A — Master Mode, I²S Format)
 
-| Pin (LQFP100) | Port | Alternate Function | Funktion | Net |
+| Pin | Port | AF | Funktion | Net |
 |---|---|---|---|---|
-| 4 | PE2 | SAI1_MCLK_A (AF6) | nicht verwendet (PCM5102A braucht kein MCLK) | — |
-| 1 | PE4 | SAI1_FS_A (AF6) | I²S Frame-Sync = LRCK → PCM5102A pin 15 | I2S_LRCK |
-| 2 | PE5 | SAI1_SCK_A (AF6) | I²S Bit-Clock = BCK → PCM5102A pin 13 | I2S_BCK |
-| 3 | PE6 | SAI1_SD_A (AF6) | I²S Serial-Data DOUT → PCM5102A pin 14 | I2S_DOUT |
+| 3 | PE4 | SAI1_FS_A (AF6) | I²S Frame-Sync = LRCK → PCM5102A pin 15 | I2S_LRCK |
+| 4 | PE5 | SAI1_SCK_A (AF6) | I²S Bit-Clock = BCK → PCM5102A pin 13 | I2S_BCK |
+| 5 | PE6 | SAI1_SD_A (AF6) | I²S Serial-Data DOUT → PCM5102A pin 14 | I2S_DOUT |
+| (1) | (PE2) | SAI1_MCLK_A (AF6) | nicht verbunden — PCM5102A braucht kein externes MCLK | — |
 
-SAI1-DMA: Stream 1 (DMA2), Memory→Peripheral, 32-bit Word, circular Mode für
-Ping-Pong-Buffering. Erster Buffer-Half-Complete-IRQ liefert je 128 Frames
-Halb-Block; Engine rendert in den jeweils anderen Half.
+SAI1-DMA: SAI1_A nutzt DMA1 oder DMA2 (in Phase 4 finalisiert), Memory→Peripheral,
+32-bit-Word, circular Mode für Ping-Pong-Buffering. Halb-Block-IRQ liefert je
+128 Frames; Engine rendert in den jeweils anderen Halb-Buffer. PE2 (Pin 1) wird
+nicht beschaltet, da PCM5102A im 3-wire-Mode arbeitet (BCK, LRCK, DIN — kein MCLK).
 
 ### 5.2 LCD (SPI1 + GPIO-Control)
 
 | Pin | Port | AF | Funktion | Net |
 |---|---|---|---|---|
-| 30 | PA5 | SPI1_SCK (AF5) | SPI Clock → LCD pin 4 (SCL) | LCD_SCK |
-| 32 | PA7 | SPI1_MOSI (AF5) | SPI Data → LCD pin 5 (SDA) | LCD_MOSI |
-| 29 | PA4 | GPIO | LCD CSn (active LOW) | LCD_CS |
-| 33 | PC4 | GPIO | LCD Data/Command-Select | LCD_DC |
-| 34 | PC5 | GPIO | LCD Reset (active LOW) | LCD_RES |
+| 29 | PA5 | SPI1_SCK (AF5) | SPI Clock → LCD pin 4 (SCL) | LCD_SCK |
+| 31 | PA7 | SPI1_MOSI (AF5) | SPI Data → LCD pin 5 (SDA) | LCD_MOSI |
+| 30 | PA6 | GPIO | LCD CSn (active LOW) | LCD_CS |
+| 32 | PC4 | GPIO | LCD Data/Command-Select | LCD_DC |
+| 33 | PC5 | GPIO | LCD Reset (active LOW) | LCD_RES |
 
-SPI1-DMA: Stream 3 (DMA1) für 320×170-Framebuffer-Blits. Backlight-PWM kommt
-nicht direkt vom MCU, sondern via PCA9685 (siehe §7.2 LED12).
+SPI1-DMA: SPI1_TX nutzt DMA für 320×170-Framebuffer-Blits (4-bit-Grey =
+27 KB pro Blit). Backlight-PWM kommt nicht direkt vom MCU, sondern via PCA9685
+(siehe §7.2 LED12).
 
 ### 5.3 I²C-Bus (MCP23017 + PCA9685)
 
@@ -603,99 +617,122 @@ nicht direkt vom MCU, sondern via PCA9685 (siehe §7.2 LED12).
 | 93 | PB7 | I2C1_SDA (AF4) | I²C Data | I2C_SDA |
 | 7 | PC13 | GPIO + EXTI | MCP23017 INTA (Wake-on-Switch) | MCP_INT |
 
-I²C-Pullups: 2× 4.7 kΩ extern zum +3V3.
+I²C-Pullups: 2× 4.7 kΩ extern zum +3V3 (PB6/PB7 sind in LQFP100 mit AF I2C1
+verfügbar — verifiziert in DS12110 Table 8 Zeile Pin 92/93).
 
 ### 5.4 Encoders (4× ALPS EC11 — Quadrature via TIM_QEI)
 
 | Pin | Port | AF | Funktion | Net |
 |---|---|---|---|---|
-| 21 | PA15 | TIM2_CH1 (AF1) | EN1 Drive A | DRIVE_A |
-| 49 | PB3 | TIM2_CH2 (AF1) | EN1 Drive B | DRIVE_B |
-| 18 | PA12 | GPIO | EN1 Drive Switch | DRIVE_SW |
-| 51 | PB5 | TIM3_CH2 (AF2) | EN2 Brightness B | BRIGHT_B |
-| 35 | PC6 | TIM3_CH1 (AF2) | EN2 Brightness A | BRIGHT_A |
-| 17 | PA11 | GPIO | EN2 Brightness Switch | BRIGHT_SW |
-| 24 | PA0 | TIM5_CH1 (AF2) | EN3 Display A | DISPLAY_A |
-| 25 | PA1 | TIM5_CH2 (AF2) | EN3 Display B | DISPLAY_B |
-| 26 | PA2 | GPIO | EN3 Display Switch | DISPLAY_SW |
-| 36 | PC7 | TIM8_CH2 (AF3) | EN4 Volume B | VOL_B |
-| 37 | PC8 | TIM8_CH1 (AF3) | EN4 Volume A (siehe Hinweis r15: VOL_SW wandert auf MCP-GPB5) | VOL_A |
+| 22 | PA0 | TIM2_CH1 (AF1) | EN1 Drive A | DRIVE_A |
+| 23 | PA1 | TIM2_CH2 (AF1) | EN1 Drive B | DRIVE_B |
+| 97 | PE0 | GPIO + EXTI | EN1 Drive Switch | DRIVE_SW |
+| 63 | PC6 | TIM3_CH1 (AF2) | EN2 Brightness A | BRIGHT_A |
+| 64 | PC7 | TIM3_CH2 (AF2) | EN2 Brightness B | BRIGHT_B |
+| 98 | PE1 | GPIO + EXTI | EN2 Brightness Switch | BRIGHT_SW |
+| 59 | PD12 | TIM4_CH1 (AF2) | EN3 Display A | DISPLAY_A |
+| 60 | PD13 | TIM4_CH2 (AF2) | EN3 Display B | DISPLAY_B |
+| 2 | PE3 | GPIO + EXTI | EN3 Display Switch | DISPLAY_SW |
+| 67 | PA8 | TIM1_CH1 (AF1) | EN4 Volume A | VOL_A |
+| 68 | PA9 | TIM1_CH2 (AF1) | EN4 Volume B | VOL_B |
+| — | — | — | EN4 Volume Switch (bleibt auf MCP-GPB5 wie r15) | VOL_SW |
 
-**Hardware-QEI** statt Software-Polling: jeder TIM zählt A/B-Quadratur direkt,
-Firmware liest nur den Counter — kein Jitter, kein Verlust bei schneller
-Drehung, halbiert die HAL-LOC. EN4 Switch (VOL_SW) bleibt wie in r15 auf
-MCP-GPB5 (kein Pico-GP21-Konflikt mehr, weil der Konflikt nur Pico-spezifisch
-war — aber wir behalten das Layout für Sheet-Kontinuität).
+**Hardware-QEI** statt Software-Polling: TIM1/2/3/4 zählen A/B-Quadratur in
+Hardware, Firmware liest nur den 32-bit-Counter — kein Jitter, kein Verlust
+bei schneller Drehung, halbiert die HAL-LOC. PC6/PC7 statt PA6/PA7 für TIM3,
+um den Konflikt mit SPI1 (PA5/PA7 → LCD) zu vermeiden. EN4 (TIM1) nutzt PA8/PA9
+— PA9 hat zusätzlich OTG_FS_VBUS als „additional function", aber Bus-Powered-
+USB ohne VBUS-Sensing ist Standard (Datasheet S. 39 fußnote).
+
+VOL_SW bleibt aus historischer Konsistenz (r15) auf MCP-GPB5 — am H7 wäre ein
+direkter MCU-Pin frei, aber der MCP-Sheet bleibt damit unverändert.
 
 ### 5.5 MIDI Out (USART2 — Hardware-UART statt PIO-Workaround)
 
 | Pin | Port | AF | Funktion | Net |
 |---|---|---|---|---|
-| 16 | PA2 | USART2_TX (AF7) — *belegt durch EN3 SW, siehe Konflikt-Hinweis* | — | — |
-| 76 | PD5 | USART2_TX (AF7, alternate Pin) | MIDI-TX @ 31250 Baud → TRS Type A | MIDI_TX |
+| 86 | PD5 | USART2_TX (AF7) | MIDI-TX @ 31250 Baud → TRS Type A | MIDI_TX |
 
-USART2_TX hat zwei mögliche Pins (PA2 oder PD5). Da PA2 von EN3 SW belegt
-ist, nehmen wir **PD5**. 8N1 @ 31250 Baud, normaler UART-Treiber, kein PIO-
-Workaround.
+USART2_TX hat zwei Pin-Optionen im LQFP100: PA2 (Pin 24) ODER PD5 (Pin 86).
+Wir wählen **PD5**, da PA2 frei bleiben soll als Reserve (zukünftig MIDI-RX
+auf USART2_RX = PA3 oder PD6 möglich). 8N1 @ 31250 Baud, Standard-HAL-UART,
+kein PIO-Workaround.
 
 ### 5.6 Amp-Control + Battery-Sense + Status
 
 | Pin | Port | AF | Funktion | Net |
 |---|---|---|---|---|
-| 28 | PA3 | ADC1_INP3 (analog) | BAT_SENSE via 100k/100k-Teiler | BAT_SENSE |
+| 25 | PA3 | ADC1_INP15 (analog) | BAT_SENSE via 100k/100k-Teiler | BAT_SENSE |
 | 53 | PB14 | GPIO | PAM8403 /SHDN (active LOW) | AMP_nSHDN |
 | 54 | PB15 | GPIO | PAM8403 /MUTE (active LOW) | AMP_nMUTE |
 | 55 | PD8 | GPIO | Status-LED (boot/heartbeat) | STATUS_LED |
 
-### 5.7 USB-OTG-FS (built-in)
+PA3-Hinweis: zusätzliche function `ADC12_INP15` (nicht INP3 wie in r18.0
+fälschlich) — Datasheet S. 60 Zeile Pin 25.
+
+PB14/PB15-Hinweis: diese Pins haben als „additional function" auch OTG_HS_DM/DP
+(High-Speed-USB mit externem ULPI-PHY). Wir nutzen NUR OTG-FS (PA11/PA12),
+keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
+(Datasheet S. 67-68).
+
+### 5.7 USB-OTG-FS (built-in, kein externer PHY)
 
 | Pin | Port | AF | Funktion | Net |
 |---|---|---|---|---|
-| 68 | PA11 | USB_OTG_FS_DM (AF10) — *Konflikt: belegt durch EN2 SW* | — | — |
-| 69 | PA12 | USB_OTG_FS_DP (AF10) — *Konflikt: belegt durch EN1 SW* | — | — |
+| 70 | PA11 | OTG_FS_DM (AF10) | USB Data Minus | USB_DM |
+| 71 | PA12 | OTG_FS_DP (AF10) | USB Data Plus | USB_DP |
 
-**Konflikt-Hinweis:** PA11/PA12 sind sowohl USB-OTG-FS-DM/DP als auch frei-
-GPIO-bar. In Phase 3 der KiCad-Migration **müssen** die Encoder-Switches
-EN1/EN2-SW auf andere GPIOs verlegt werden (z.B. PE0, PE1), damit der USB-
-Port nutzbar ist. Vorläufige Mapping-Empfehlung:
-
-| Pin | Port | Neue Funktion |
-|---|---|---|
-| 68 | PA11 | USB_DM |
-| 69 | PA12 | USB_DP |
-| 97 | PE0 | EN1 SW (statt PA12) |
-| 98 | PE1 | EN2 SW (statt PA11) |
-
-Diese Anpassung wird im stm32h743-Sheet als Default eingearbeitet.
+Externe Beschaltung: USB-C-Buchse → USBLC6-2 ESD-Schutz (bleibt aus v0.6) →
+direkt an PA11/PA12. Keine externen Serien-Widerstände nötig (H743 hat
+interne USB-PHY mit eingebauten Pull-Ups/Pull-Downs für Speed-Negotiation).
 
 ### 5.8 Debug + Boot
 
-| Pin | Port | AF | Funktion | Net |
-|---|---|---|---|---|
-| 72 | PA13 | SWDIO (AF0) | SWD Debug Data | SWDIO |
-| 76 | PA14 | SWCLK (AF0) | SWD Debug Clock | SWCLK |
-| 39 | PB3 | SWO (AF0) — *Konflikt mit EN1 B (TIM2_CH2)* | siehe Hinweis | — |
-| 94 | BOOT0 | dedicated | BOOT0 Pull-Down 10 kΩ → System-Boot-Loader nur via DFU/Reset-Knopf | BOOT0 |
-| 14 | NRST | dedicated | Reset-Pin, Pull-Up 10 kΩ + 100 nF Cap | NRST |
+| Pin | Port/Signal | Funktion | Net |
+|---|---|---|---|
+| 72 | PA13 (JTMS/SWDIO) | SWD Debug Data — Standard STM32 Belegung | SWDIO |
+| 76 | PA14 (JTCK/SWCLK) | SWD Debug Clock | SWCLK |
+| 89 | PB3 (JTDO/TRACESWO) | SWO Trace-Output (optional) | SWO |
+| 94 | BOOT0 | dedicated, Pull-Down 10 kΩ → System-Boot-Loader nur via DFU/Reset-Hold | BOOT0 |
+| 14 | NRST | dedicated, Pull-Up 10 kΩ + 100 nF Debounce-Cap | NRST |
 
-**SWO-Konflikt-Hinweis:** PB3 ist sowohl SWO als auch TIM2_CH2 (EN1 B).
-Wir nehmen TIM2_CH2 als Default (Encoder ist wichtiger im Daily-Use als
-SWO-Trace). Debugging fällt zurück auf SWDIO+SWCLK only (kein SWO-Print, kein
-SWV-Trace) — für die Migrations-Phase OK, kann später bei Bedarf umgemappt
-werden.
+SWD-Header J4 (3-Pin 1.27 mm, bestehend aus v0.6) wird auf PA13/PA14/GND
+umverdrahtet (war bei Pico ein anderer Footprint). SWO auf PB3 ist optional —
+PB3 ist in LQFP100 verfügbar (Pin 89) und hat keinen Konflikt mit anderen
+Funktionen, da wir TIM2_CH2 auf PA1 statt PB3 mappen.
 
-### 5.9 Clock-Source
+### 5.9 Clock-Source (HSE)
 
 | Pin | Funktion | Wert |
 |---|---|---|
-| 12 | OSC_IN (HSE) | 8 MHz Crystal → PLL-N=384, PLL-P=1 → SYSCLK 480 MHz |
-| 13 | OSC_OUT (HSE) | 8 MHz Crystal Pin 2 |
+| 12 | PH0-OSC_IN (HSE) | 8 MHz Crystal-Eingang |
+| 13 | PH1-OSC_OUT (HSE) | 8 MHz Crystal-Ausgang |
 
-HSE-Crystal: ABM3-8.000MHZ-D2Y-T (ABRACON), 18 pF Load-Caps (2× 22 pF
-adjusted by stray). HSI bewusst nicht als Primär-Clock — ±2 % Drift wäre für
-SAI/I²S-Sync unbrauchbar.
+HSE-Crystal: 8 MHz, Load-Caps 2× 22 pF C0G/NP0 0603, ESR < 50 Ω. PLL-Konfig:
+PLL_M=4 → 2 MHz PFD → PLL_N=480 → 960 MHz VCO → PLL_P=2 → SYSCLK 480 MHz.
+HSI bewusst nicht als Primär-Clock — ±2 % Drift wäre für SAI/I²S-Sync
+unbrauchbar (Tonhöhen-Drift hörbar bei Drone-Voices über Minuten).
 
-### 5.10 Active-Low-Konvention (unverändert seit v0.6)
+### 5.10 Power-Supply-Pins (LQFP100)
+
+| Pin | Signal | Anschluss |
+|---|---|---|
+| 6 | VBAT | mit +3V3 verbunden (kein RTC-Backup-Akku nötig) |
+| 10, 26, 49, 74 | VSS (4×) | GND |
+| 11, 27, 50, 75, 100 | VDD (5×) | +3V3 |
+| 19 | VSSA | analoge GND (mit VSS verbunden, Single-Star-Point empfohlen) |
+| 20 | VREF+ | mit VDDA verbunden |
+| 21 | VDDA | +3V3 via Ferrit BLM18AG601 + 1 µF + 100 nF |
+| 48 | VCAP1 | 2.2 µF X5R 0603 zu VSS (interner SMPS Bulk) |
+| 73 | VCAP2 | 2.2 µF X5R 0603 zu VSS (interner SMPS Bulk) |
+
+Decoupling: pro VDD-Pin (5 Stück) ein 4.7 µF X5R 0805 + ein 100 nF X7R 0603
+Bulk-Cap, möglichst nah am Pin platziert. Ferrit-Bead BLM18AG601 (LCSC C84094)
+in der VDDA-Versorgung zur Trennung Analog-Digital. Power-Sequenz: keine
+explizite Reihenfolge nötig — H7 hat keinen VDDA-Sequencing-Constraint
+(Datasheet S. 91), und das interne SMPS bringt VCAP1/VCAP2 selbst hoch.
+
+### 5.11 Active-Low-Konvention + Pop-Suppression-Sequenz (unverändert)
 
 PAM8403H /SHDN und /MUTE sind beide ACTIVE LOW. GPIO HIGH = Funktion AUS
 (= enabled/un-muted), GPIO LOW = Funktion AKTIV (= shutdown/muted).
@@ -715,10 +752,31 @@ während MCU-Boot → Amp ist default OFF + MUTED.
   3. ~50 ms später: PB14 (/SHDN) = LOW (Chip aus)
 - Resultat: kein „Klick" beim An-/Ausschalten
 
-Power-Pins (H743 LQFP100): VDD an Pins 6, 19, 32, 48, 64, 79, 91 (je 100 nF
-+ ein 4.7 µF Bulk pro VDD-Bank); VDDA an Pin 22 (Ferrit + 1 µF + 100 nF);
-VBAT an Pin 6 zu +3V3 verbunden (kein RTC-Backup-Akku nötig); VCAP1/VCAP2
-intern via SMPS (kein externer LDO erforderlich, 2× 2.2 µF Bulk).
+### 5.12 Belegungs-Übersicht (alle ~30 belegten GPIOs in LQFP100)
+
+| Pin-Bereich | Funktion |
+|---|---|
+| 3, 4, 5 | Audio I²S (SAI1) |
+| 7, 92, 93 | I²C-Bus + Interrupt |
+| 22, 23, 67, 68 | Encoder TIM-QEI (4 Pins für 2× Encoder) |
+| 59, 60, 63, 64 | Encoder TIM-QEI (4 Pins für 2× Encoder) |
+| 2, 97, 98 | Encoder-Switches (3, EN4 auf MCP) |
+| 25 | ADC BAT_SENSE |
+| 29, 30, 31, 32, 33 | LCD (SPI1 + 3 GPIOs) |
+| 53, 54 | PAM8403 Amp-Control |
+| 55 | Status-LED |
+| 70, 71 | USB-OTG-FS |
+| 72, 76 | SWD Debug |
+| 86 | MIDI-TX |
+| 89 | SWO Trace (optional) |
+| 12, 13, 14, 94 | dedicated (HSE, NRST, BOOT0) |
+| 6, 10, 11, 19, 20, 21, 26, 27, 48, 49, 50, 73, 74, 75, 100 | Power/GND/VCAP/VBAT/VDDA |
+
+**Frei** (für zukünftige Erweiterungen, ohne PCB-Re-Spin): PE2, PA2, PA4, PA10,
+PA15, PB0-PB2, PB4, PB5, PB8, PB9, PB10-PB13, PC0, PC1, PC2_C, PC3_C, PC8-PC12,
+PD0-PD4, PD6, PD7, PD9-PD11, PD14, PD15, PE7-PE15 — über 40 freie GPIOs.
+
+---
 
 ---
 
