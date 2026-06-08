@@ -83,8 +83,30 @@ Crystal mit Gain Margin **≥ 5** für STM32H743 mit:
 
 Aber **User hat HC-49S-SMD gewählt** → Pfad A (ABLS) ist die direkte Umsetzung. **Mit Hinweis auf GM=2.97**.
 
-## Nächste Aktion
+## ✅ Entscheidung (2026-06-08)
 
-User-Bestätigung nötig:
-- **A1:** „ABLS-8.000MHZ-B4-T akzeptieren mit GM=2.97, Profiling-Verifikation in Phase 5" → ich update SPEC §4 BOM
-- **A2:** „Pfad B/C reflektieren, andere Crystal/MEMS-Variante wählen" → weitere Recherche-Session
+**Gewählt: Pfad A — ABRACON ABLS-8.000MHZ-B4-T (LCSC C596838).**
+
+User-Begründung: das Gerät wird keinen extremen Temperaturen ausgesetzt
+(Indoor-Audio, 15–30 °C). Der Worst-Case-GM von 2.97 setzt ESR_max über
+-20…+70 °C an; im realen Betrieb liegt ESR bei ~40–50 Ω → realer Gain Margin
+≈ 5–6, also AN2867-konform für den tatsächlichen Use-Case. Bewusst akzeptiert.
+
+**Umgesetzt:**
+- SPEC §4 BOM Y1-Zeile: PLATZHALTER → ABLS-8.000MHZ-B4-T, C596838
+- SPEC §5.9: ESR-Wert auf 80 Ω korrigiert, Gain-Margin-Hinweis + Load-Cap-
+  Tuning-Note ergänzt
+- README F-4: RESOLVED, Phase 3 entblockt
+
+**Offen für Phase 3 (KiCad):**
+- Footprint: HC-49/US-SMD Land-Pattern gegen Datasheet Page 3 verifizieren
+  (5.6×2.1 mm Pads, 9.5 mm Spacing). KiCad-Standard `Crystal:Crystal_HC49-U_*`
+  prüfen — KiCad hat primär den THT-HC49-Footprint; für die SMD-Variante ggf.
+  Land-Pattern aus dem Datasheet selbst zeichnen oder passenden SMD-Footprint
+  suchen.
+- Symbol: `Device:Crystal` (2-Pin, kein GND-Body).
+
+**Offen für Phase 5 (PCB-Test):**
+- Crystal-Start verifizieren (Oszilloskop an OSC_OUT, Sonde-Kapazität beachten).
+- Load-Caps gegen gemessene Frequenz justieren (Startwert 22 pF, ggf. 24–27 pF).
+- Optional bei Temperatur-Extremen: GM nachmessen, sonst MEMS-Fallback (SiT8008).

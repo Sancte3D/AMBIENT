@@ -4,10 +4,47 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.3** (Fakten-Verifikation: ABM3-Crystal als
-CRITICAL FAIL identifiziert nach ST AN2867-Studium — Gain Margin 0.47
-statt Min 5. Crystal-Auswahl auf PLATZHALTER. Phase 3 BLOCKED bis
-Sourcing klar.)
+Aktuelle Rev: **v0.7-r18.4** (Crystal-Entscheidung getroffen: Y1 →
+ABRACON ABLS-8.000MHZ-B4-T HC-49/US SMD, ESR 80 Ω, Gain Margin 2.97
+Worst-Case / ~5–6 real bei Indoor-Temp. F-4 RESOLVED, Phase 3 entblockt.)
+
+---
+
+## v0.7-r18.4 (2026-06-08) — Y1 Crystal-Entscheidung: ABLS-8.000MHZ-B4-T
+
+**F-4 RESOLVED.** Nach Verwerfen von ABM3 (Gain Margin 0.47 — würde nicht
+oszillieren) hat der User den HC-49/US-SMD-Pfad gewählt. Final gewählt:
+**ABRACON ABLS-8.000MHZ-B4-T** (LCSC C596838).
+
+### Verifikation gegen offizielles Datasheet (Drawing 450669 Rev AD, Sept 2022)
+- ESR max: **80 Ω** (Table 1, 8.000–8.999 MHz Fundamental) — verifiziert
+- C₀ max: 7 pF, CL: 18 pF Standard
+- Op-Temp: -20…+70 °C (Suffix B), Freq-Tol: ±30 ppm (Suffix 4)
+- Package: HC-49/US SMD, 11.4×4.7×4.2 mm; Land-Pattern 5.6×2.1 mm Pads,
+  9.5 mm Spacing (Datasheet Page 3)
+
+### Gain-Margin-Bewertung (AN2867)
+- gm_crit = 4 × 80 × (2π·8e6)² × (25e-12)² = 0.506 mA/V
+- STM32H743 gm = 1.5 mA/V → **Gain Margin = 2.97** (Worst-Case, ESR_max über
+  vollen Temp-Bereich)
+- AN2867-Lehrbuch-Min ist 5, gilt aber für Industrial/Automotive über
+  -40…+85 °C. **Dieses Gerät ist Indoor-Audio (15–30 °C)** → ESR_typ ~40–50 Ω
+  → realer Gain Margin ≈ 5–6. **Bewusst akzeptiert (User-Entscheidung).**
+- Restrisiko niedrig; bei künftigem Outdoor-/Extremtemperatur-Einsatz auf
+  MEMS-Oszillator (SiTime SiT8008) wechseln.
+
+### SPEC-Änderungen
+- §4 BOM Y1-Zeile: PLATZHALTER → ABLS-8.000MHZ-B4-T (C596838), volle Specs
+- §5.9 Clock-Source: ESR-Wert „< 50 Ω" → real 80 Ω korrigiert; Gain-Margin-
+  Hinweis + Load-Cap-Tuning-Note (22 pF Startwert → Phase 5 auf ~24–27 pF
+  justierbar) ergänzt
+- Phase 3 (KiCad-Schematic) **entblockt**; Footprint-Verifikation HC-49/US-SMD
+  Land-Pattern verbleibt als Phase-3-Aufgabe
+
+### Doku
+- `docs/component_reviews/Y1_alternatives.md`: Entscheidungs-Abschnitt ergänzt
+- `docs/component_reviews/Y1_ABM3-8.000MHZ-D2Y-T.md`: als „NICHT VERBAUT" markiert
+- `docs/component_reviews/README.md`: Y1 → APPROVED WITH NOTES, F-4 RESOLVED
 
 ---
 

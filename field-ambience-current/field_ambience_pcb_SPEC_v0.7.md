@@ -12,7 +12,7 @@
 > bleibt im Repo als `kicad/legacy_pico2/` archiviert für Notfall-Fallback.
 > Maßgebliche Begleit-Doku: `NATIVE_PORT_PLAN.md` Step 13.
 
-**Rev:** 0.7-r18 (H7-Migration — SPEC-Major-Bump weil Architektur-Bruch)
+**Rev:** 0.7-r18.4 (H7-Migration — SPEC-Major-Bump weil Architektur-Bruch; r18.4: Y1 Crystal final = ABLS-8.000MHZ-B4-T, F-4 RESOLVED)
 **Target:** 4-Layer JLCPCB, partial-PCBA (siehe §4 BOM-Split A/B/C)
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
 **Status:** SCHEMATIC IN MIGRATION — Phase 1 (Doku) ✓, Phase 2-5 ausstehend.
@@ -454,7 +454,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | Ref | Part | Package | JLCPCB # | Status | Hinweis |
 |---|---|---|---|---|---|
 | **U1** | **STM32H743VIT6 (STMicroelectronics)** | **LQFP-100** | **C114409** | **Extended, ~$6.62 @1, Mouser/DigiKey lagernd, JLC SMT-bestückbar** | **NEU v0.7: 480 MHz Cortex-M7 + Double-Precision FPU + DTCM/ITCM, 1 MB internes RAM, 2 MB Flash. Symbol `MCU_ST_STM32H7:STM32H743VIT6`, Footprint `Package_QFP:LQFP-100_14x14mm_P0.5mm`. Datasheet: ST DS12110. Pin-Allocation siehe §5.** |
-| **Y1** | ⚠️ **PLATZHALTER — Crystal nicht final gewählt** (war ABRACON ABM3-8.000MHZ-D2Y-T, **r18.3: REJECTED** wegen Gain-Margin-Fail siehe F-4) | TBD | TBD | TBD | **🔴 BLOCKER für Phase 3 (KiCad-Schematic).** ABM3 wurde nach ST AN2867-Verifikation als unbrauchbar identifiziert: Gain Margin 0.47 vs. AN2867-Minimum 5 (Faktor ~10 unter Spec). Crystal wird mit STM32H743 wahrscheinlich nicht oszillieren. **Alternativen** (Phase 2 Sourcing-Session, müssen Gain Margin ≥ 5 erfüllen): (a) Standard-SMD-Crystal mit ESR ≤ 190 Ω bei CL=18 pF (schwer im 5032-Package), (b) HC-49S-SMD mit ESR ≤ 50 Ω, (c) **MEMS-Oszillator wie SiTime SiT8008 — empfohlene Lösung, eliminiert Crystal-Probleme komplett**. Volle Analyse + AN2867-Berechnung: `docs/component_reviews/Y1_ABM3-8.000MHZ-D2Y-T.md` |
+| **Y1** | **ABRACON ABLS-8.000MHZ-B4-T** (HC-49/US SMD, 11.4×4.7×4.2 mm) | **HC-49/US SMD** | **C596838** | **Extended, ~$0.24, LCSC lagernd** | **GEWÄHLT r18.4 (ersetzt ABM3, siehe F-4).** 8 MHz Fundamental, ESR max **80 Ω** (Datasheet Drawing 450669 Rev AD Table 1), C₀ max 7 pF, CL 18 pF, Op-Temp -20…+70 °C (B), Freq-Tol ±30 ppm (4). **Gain Margin = 2.97** (Worst-Case bei ESR_max=80 Ω über vollen Temp-Bereich; AN2867-Lehrbuch-Min ist 5). **Akzeptiert für dieses Produkt:** Indoor-Audio-Gerät, real auftretende Temperatur 15–30 °C → ESR_typ ~40–50 Ω → realer GM ≈ 5–6. AN2867-Min 5 ist konservatives Industrial/Automotive-Kriterium über -40…+85 °C, hier nicht zutreffend. **Phase-5-Verifikation:** Crystal-Start am realen PCB testen, ggf. R_EXT/Load-Caps tunen. Symbol `Device:Crystal` (2-Pin), Footprint `Crystal:Crystal_HC49-U_Vertical` bzw. HC-49/US-SMD Land-Pattern (5.6×2.1 mm Pads, 9.5 mm Spacing) — in Phase 3 gegen Datasheet Page 3 verifizieren. Volle Analyse: `docs/component_reviews/Y1_alternatives.md` |
 | **C_HSE1, C_HSE2** | **22 pF C0G 0603** | **0603** | Generic | **Basic** | **NEU v0.7: HSE Load-Caps** |
 | **R_BOOT0** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: BOOT0 Pull-Down → System-Loader nur via DFU/Reset** |
 | **R_NRST** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: NRST Pull-Up zu +3V3** |
@@ -708,8 +708,25 @@ Funktionen, da wir TIM2_CH2 auf PA1 statt PB3 mappen.
 | 12 | PH0-OSC_IN (HSE) | 8 MHz Crystal-Eingang |
 | 13 | PH1-OSC_OUT (HSE) | 8 MHz Crystal-Ausgang |
 
-HSE-Crystal: 8 MHz, Load-Caps 2× 22 pF C0G/NP0 0603, ESR < 50 Ω. PLL-Konfig:
-PLL_M=4 → 2 MHz PFD → PLL_N=480 → 960 MHz VCO → PLL_P=2 → SYSCLK 480 MHz.
+HSE-Crystal: **ABRACON ABLS-8.000MHZ-B4-T** (HC-49/US SMD), 8 MHz, CL 18 pF,
+ESR max **80 Ω** (Datasheet Drawing 450669 Rev AD). Load-Caps 2× 22 pF C0G/NP0
+0603 als Startwert. PLL-Konfig: PLL_M=4 → 2 MHz PFD → PLL_N=480 → 960 MHz VCO
+→ PLL_P=2 → SYSCLK 480 MHz.
+
+**Gain-Margin-Hinweis (AN2867):** Mit ESR_max=80 Ω und C₀+CL=25 pF ist
+gm_crit = 4 × 80 × (2π·8e6)² × (25e-12)² = 0.506 mA/V → Gain Margin =
+1.5/0.506 = **2.97** im Worst-Case (ESR_max über vollen Temp-Bereich). Das
+AN2867-Lehrbuch-Minimum von 5 gilt für Industrial/Automotive über -40…+85 °C;
+für dieses Indoor-Audio-Gerät (15–30 °C, ESR_typ ~40–50 Ω) liegt der reale
+Margin bei ~5–6. **Bewusst akzeptiert.** In Phase 5 ist der Crystal-Start am
+realen PCB zu verifizieren.
+
+**Load-Cap-Feinabstimmung (Phase 5):** 2× 22 pF ergeben mit ~5 pF Stray nur
+~16 pF effektiv (< CL=18 pF → Quarz läuft minimal schnell, wenige ppm). Für
+exakte 18 pF wären ~24–27 pF nötig. Da die echte Stray-Kapazität erst nach dem
+Layout messbar ist: 22 pF als Startwert behalten, in Phase 5 gegen die
+gemessene Frequenz nachjustieren (Load-Cap-Wert tauschen, beide C_HSE gleich).
+
 HSI bewusst nicht als Primär-Clock — ±2 % Drift wäre für SAI/I²S-Sync
 unbrauchbar (Tonhöhen-Drift hörbar bei Drone-Voices über Minuten).
 

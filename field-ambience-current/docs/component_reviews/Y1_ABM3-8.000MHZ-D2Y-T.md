@@ -1,6 +1,11 @@
-# Component Review: Y1 — ABM3-8.000MHZ-D2Y-T (HSE Crystal)
+# Component Review: Y1 — ABM3-8.000MHZ-D2Y-T (HSE Crystal) — ⛔ NICHT VERBAUT
 
-**Status:** 🔴 **CRITICAL FAIL — Crystal-Wechsel ZWINGEND erforderlich**
+> **⛔ ERSETZT (2026-06-08, T+3):** Dieses Teil wird **nicht** verbaut. Es wurde
+> durch **ABRACON ABLS-8.000MHZ-B4-T** (HC-49/US SMD) ersetzt. Diese Datei bleibt
+> als Begründung der Ablehnung erhalten. Aktueller Crystal-Review + Entscheidung:
+> [Y1_alternatives.md](Y1_alternatives.md). SPEC §4 BOM führt jetzt die ABLS.
+
+**Status:** 🔴 **CRITICAL FAIL — Crystal-Wechsel ZWINGEND erforderlich (erledigt, siehe oben)**
 **Review-Datum:** 2026-06-08 (zuletzt aktualisiert mit AN2867-Verifikation)
 **Reviewer:** Claude (Session 01K5kLTFpDCCoYwx2dq6RkAv)
 **Bezug:** SPEC v0.7-r18.1 §4 BOM (Y1), §5.9 Clock-Source

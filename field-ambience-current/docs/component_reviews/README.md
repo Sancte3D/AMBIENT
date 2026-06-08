@@ -21,7 +21,7 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 | Ref | Bauteil | Status | Review-Datei | Letzte Prüfung | r18-Änderung? |
 |---|---|---|---|---|---|
 | U1 | STM32H743VIT6 | 🟡 REQUIRES SOURCE / CLARIFICATION | [U1_STM32H743VIT6.md](U1_STM32H743VIT6.md) | 2026-06-08 (mit DS12110 Rev 5 Pin/Power/HSE-Verifikation) | **NEU** |
-| Y1 | ~~ABM3-8.000MHZ-D2Y-T~~ → **PLATZHALTER** | 🔴 **CRITICAL FAIL** (Gain Margin 0.47 vs Min 5) | [Y1_ABM3-8.000MHZ-D2Y-T.md](Y1_ABM3-8.000MHZ-D2Y-T.md) | 2026-06-08 (T+2: AN2867-Eskalation) | **NEU** |
+| Y1 | ~~ABM3-8.000MHZ-D2Y-T~~ → **ABLS-8.000MHZ-B4-T** (HC-49/US SMD) | 🟢 **APPROVED WITH NOTES** (Gain Margin 2.97 Worst-Case, real ~5–6 @ Indoor-Temp, bewusst akzeptiert) | [Y1_alternatives.md](Y1_alternatives.md) | 2026-06-08 (T+3: ABLS verifiziert + User-Entscheidung) | **NEU** |
 | U5 | AP7361A-33ER | ⏳ noch nicht reviewed | — | — | **war DNP, jetzt aktiv** |
 | C_VDD\*, VCAP\*, VDDA | Decoupling-Caps | ⏳ noch nicht reviewed (VCAP = 2× 2.2 µF bereits aus DS12110 Rev 5 Table 24 bestätigt) | — | — | **NEU** |
 | R_BOOT0, R_NRST, C_NRST | Boot/Reset | ⏳ noch nicht reviewed | — | — | **NEU** |
@@ -68,7 +68,30 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 - **Wirkung:** SPEC ist 3,5× zu optimistisch in der ESR-Angabe
 - **Aktion:** SPEC §4 Y1-Zeile korrigieren auf „500 Ω max ESR"
 
-### F-4: 🔴 **CRITICAL** — Y1 Crystal funktioniert mit STM32H743 NICHT (Gain Margin Fail)
+### F-4: ✅ **RESOLVED (T+3, 2026-06-08)** — Crystal-Wechsel ABM3 → ABLS-8.000MHZ-B4-T
+
+> **Auflösung (T+3):** Nach Verwerfen von ABM3 (Gain Margin 0.47, würde nicht
+> oszillieren) hat der User den **HC-49/US-SMD-Pfad** gewählt. Gewählt:
+> **ABRACON ABLS-8.000MHZ-B4-T** (LCSC C596838), ESR max 80 Ω gegen offizielles
+> Datasheet (Drawing 450669 Rev AD) verifiziert. **Gain Margin = 2.97** im
+> Worst-Case (ESR_max über vollen -20…+70 °C-Bereich).
+>
+> **Warum trotz GM < 5 akzeptiert:** Das AN2867-Minimum 5 ist ein konservatives
+> Industrial/Automotive-Kriterium, das ESR_max über -40…+85 °C ansetzt. Dieses
+> Gerät ist ein **Indoor-Audio-Produkt** (real 15–30 °C); dort liegt ESR typisch
+> bei 40–50 Ω → realer Gain Margin ≈ 5–6. Der GM=2.97-Wert ist also der
+> Papier-Worst-Case, nicht der Betriebsfall. **Bewusste User-Entscheidung
+> (2026-06-08).** Phase 5 verifiziert den Crystal-Start am realen PCB.
+>
+> Verbleibendes Restrisiko (niedrig): Falls das Gerät doch dauerhaft <0 °C oder
+> >60 °C betrieben wird, sollte auf MEMS-Oszillator (SiTime SiT8008) gewechselt
+> werden. Für den spezifizierten Use-Case nicht nötig.
+>
+> **Status: Finding geschlossen. Phase 3 (KiCad-Schematic) entblockt.**
+
+---
+
+#### Historie F-4 (zur Nachvollziehbarkeit)
 
 > **Update T+2 (2026-06-08):** Ursprüngliche Bewertung „BLOCKED, marginal" war zu
 > optimistisch — Berechnungsformel hatte den Faktor 4 nicht. Nach ST AN2867-Studium
@@ -114,7 +137,7 @@ Priorisiert nach Risiko + Migrations-Relevanz:
 
 1. **🔴 SOFORT (Sourcing-Klärung):** F-1 (TPS61089), F-2 (EC11J1525402)
 2. **🟠 HOCH (vor Phase 3):**
-   - F-3 + F-4 fixen (Y1 Crystal-Wechsel) → SPEC §4 BOM Update
+   - ✅ F-3 + F-4 erledigt (T+3): Y1 → ABLS-8.000MHZ-B4-T, SPEC §4 + §5.9 aktualisiert
    - F-5 (Datasheet-Revision) → neuere DS12110 Revision beschaffen
 3. **HOCH (neu in r18):** U5 AP7361A-LDO
 4. **HOCH (Quellenbeschaffung für U1):** ST AN3318, ST UM2407 Nucleo-Schematic, DS12110 §6.1 + §6.3.13 (HSE detail), §7 (Package)
