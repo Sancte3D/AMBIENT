@@ -92,3 +92,59 @@ pico_enable_stdio_uart(field_ambience_native 0)
 # Emit the UF2 + map + bin so the user can drop the UF2 onto the Pico in
 # BOOTSEL mode without further tooling.
 pico_add_extra_outputs(field_ambience_native)
+
+# ---------------------------------------------------------------------------
+# display_hw_test — breadboard bring-up for the 1.9" ST7789 panel.
+#
+# Hardware counterpart of the GitHub-Pages display simulator
+# (tools/display_sim.html): real menu.c on the real panel, driven by a
+# KY-040 push encoder + one tactile button. Wiring, controls and
+# troubleshooting are documented in the header of tools/display_hw_test.c.
+#
+# Build:  make -j display_hw_test   →  build/display_hw_test.uf2
+add_executable(display_hw_test
+    tools/display_hw_test.c
+    src/lcd_st7789.c       # panel driver (SPI0, GP5..GP9)
+    src/oled_draw.c        # framebuffer primitives
+    src/font_8x8.c         # 8x8 bitmap font (test-scene labels)
+    src/baked_font.c       # Helvetica Neue baked-glyph renderer (menu)
+    src/baked_font_data.c
+    src/battery.c          # battery % state (bench: simulated via button)
+    src/menu.c             # the menu the simulator mirrors
+)
+
+target_include_directories(display_hw_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# Breadboard wiring (user's bench, mirrors the wiring table in the file
+# header): display re-mapped to GP16-20 + backlight PWM on GP22, encoder on
+# GP2/3/4, SHIFT on GP5. The driver's pin #defines are #ifndef-guarded for
+# exactly this override. 24 MHz SPI: fast enough for ~27 fps animations,
+# tolerant of jumper wires (drop to 16 MHz if CHECKER shows artefacts,
+# try 32 MHz on short leads).
+target_compile_definitions(display_hw_test PRIVATE
+    LCD_SPI_HZ=24000000
+    LCD_PIN_SCK=18
+    LCD_PIN_MOSI=19
+    LCD_PIN_CS=17
+    LCD_PIN_DC=16
+    LCD_PIN_RES=20
+    PIN_BL=22
+    PIN_ENC_CLK=2
+    PIN_ENC_DT=3
+    PIN_ENC_SW=4
+    PIN_SHIFT=5
+)
+
+target_link_libraries(display_hw_test
+    pico_stdlib
+    pico_time          # 1 kHz encoder/button sampler
+    hardware_spi       # ST7789 over SPI0
+    hardware_gpio      # encoder + button inputs
+    hardware_pwm       # backlight dimming on PIN_BL
+)
+
+pico_enable_stdio_usb(display_hw_test 1)
+pico_enable_stdio_uart(display_hw_test 0)
+pico_add_extra_outputs(display_hw_test)

@@ -28,16 +28,35 @@
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
 
-/* --- pin map (reuses the SSD1322 SPI0 group, SPEC v0.6 §5) --- */
+/* --- pin map (reuses the SSD1322 SPI0 group, SPEC v0.6 §5) ---
+ * Every pin is #ifndef-guarded so bench targets (tools/display_hw_test.c)
+ * can re-map to their breadboard wiring via CMake compile definitions
+ * without touching this file. Device builds use the defaults below. */
+#ifndef LCD_SPI
 #define LCD_SPI      spi0
+#endif
+#ifndef LCD_PIN_SCK
 #define LCD_PIN_SCK  6
+#endif
+#ifndef LCD_PIN_MOSI
 #define LCD_PIN_MOSI 7
+#endif
+#ifndef LCD_PIN_CS
 #define LCD_PIN_CS   5
+#endif
+#ifndef LCD_PIN_DC
 #define LCD_PIN_DC   8
+#endif
+#ifndef LCD_PIN_RES
 #define LCD_PIN_RES  9
+#endif
 /* ST7789 tolerates fast SPI; 32 MHz gives ~30 fps full-frame and a clean edge
- * on the PCB header. Lower to 16 MHz if testing over long dupont leads. */
+ * on the PCB header. Lower to 16 MHz if testing over long dupont leads —
+ * the breadboard target (tools/display_hw_test.c) does exactly that via a
+ * compile definition, hence the #ifndef guard. */
+#ifndef LCD_SPI_HZ
 #define LCD_SPI_HZ   (32 * 1000 * 1000)
+#endif
 
 /* Landscape orientation + GRAM offset for the 1.9" 170×320 module.
  * MADCTL 0x60 = MX | MV (row/col exchange). If the image comes up mirrored
