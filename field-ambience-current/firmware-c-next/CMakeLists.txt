@@ -117,10 +117,24 @@ target_include_directories(display_hw_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# 16 MHz instead of 32: breadboard jumper wires are not a PCB trace. The
-# driver's LCD_SPI_HZ has an #ifndef guard for exactly this override.
+# Breadboard wiring (user's bench, mirrors the wiring table in the file
+# header): display re-mapped to GP16-20 + backlight PWM on GP22, encoder on
+# GP2/3/4, SHIFT on GP5. The driver's pin #defines are #ifndef-guarded for
+# exactly this override. 24 MHz SPI: fast enough for ~27 fps animations,
+# tolerant of jumper wires (drop to 16 MHz if CHECKER shows artefacts,
+# try 32 MHz on short leads).
 target_compile_definitions(display_hw_test PRIVATE
-    LCD_SPI_HZ=16000000
+    LCD_SPI_HZ=24000000
+    LCD_PIN_SCK=18
+    LCD_PIN_MOSI=19
+    LCD_PIN_CS=17
+    LCD_PIN_DC=16
+    LCD_PIN_RES=20
+    PIN_BL=22
+    PIN_ENC_CLK=2
+    PIN_ENC_DT=3
+    PIN_ENC_SW=4
+    PIN_SHIFT=5
 )
 
 target_link_libraries(display_hw_test
@@ -128,6 +142,7 @@ target_link_libraries(display_hw_test
     pico_time          # 1 kHz encoder/button sampler
     hardware_spi       # ST7789 over SPI0
     hardware_gpio      # encoder + button inputs
+    hardware_pwm       # backlight dimming on PIN_BL
 )
 
 pico_enable_stdio_usb(display_hw_test 1)
