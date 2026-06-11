@@ -142,20 +142,39 @@ int main(void) {
     spin_frames(25);
     CHECK(menu_mode() == MENU_BROWSE, "not back in browse");
 
-    /* ---- overlay lifecycle (stuck-bug regression guard) ----------------- */
-    show_overlay("Backlight", 80, fake_ms);
+    /* ---- overlay lifecycle ---------------------------------------------
+     * Two variants exist and BOTH have stuck-bug-class regression guards:
+     *   - transient (sticky=false): must auto-fade after the hold timeout.
+     *   - sticky    (sticky=true):  must persist past the timeout AND must
+     *                                be torn down by dismiss_overlay().    */
+    show_overlay("Backlight", 80, /*sticky=*/false, fake_ms);
     spin_frames(10);
     CHECK(overlay.active && anim[A_OVALPHA] > 0.9f, "overlay not shown");
-    show_overlay("Backlight", 60, fake_ms);    /* retarget without restart  */
+    show_overlay("Backlight", 60, false, fake_ms);  /* retarget, same kind  */
     spin_frames(15);
     CHECK((int)(anim[A_OVFILL] + 0.5f) == 60, "retarget: %f", (double)anim[A_OVFILL]);
-    spin_frames(90);                           /* > idle 1100 ms + fade     */
-    CHECK(!overlay.active, "overlay STUCK after idle");
-    CHECK(anim[A_OVALPHA] < 0.02f, "overlay alpha stuck: %f", (double)anim[A_OVALPHA]);
+    spin_frames(90);                                /* > 1100 ms + fade     */
+    CHECK(!overlay.active, "transient overlay STUCK after idle");
+    CHECK(anim[A_OVALPHA] < 0.02f, "transient alpha stuck: %f", (double)anim[A_OVALPHA]);
 
-    show_overlay("Backlight", 30, fake_ms);
+    /* sticky variant — the SHIFT-toggle brightness mode. Must NOT auto-fade
+     * (that was the ChatGPT-version bug from the other direction: the user
+     * could exit by waiting). The only exits are dismiss_overlay() and a
+     * sticky→non-sticky retarget (defence in depth). */
+    show_overlay("Backlight", 80, /*sticky=*/true, fake_ms);
+    spin_frames(10);
+    CHECK(overlay.active && overlay.sticky, "sticky not set");
+    spin_frames(120);                               /* well past 1100 ms     */
+    CHECK(overlay.active && anim[A_OVALPHA] > 0.9f,
+          "sticky overlay auto-faded — regression");
+    dismiss_overlay(fake_ms);                       /* user taps SHIFT again */
+    spin_frames(20);
+    CHECK(!overlay.active, "sticky overlay STUCK after dismiss");
+    CHECK(!overlay.sticky, "sticky bit not cleared on dismiss");
+
+    show_overlay("Backlight", 30, false, fake_ms);
     spin_frames(5);
-    dismiss_overlay(fake_ms);                  /* early dismiss path        */
+    dismiss_overlay(fake_ms);                       /* early dismiss path    */
     spin_frames(15);
     CHECK(!overlay.active, "overlay STUCK after dismiss");
 
