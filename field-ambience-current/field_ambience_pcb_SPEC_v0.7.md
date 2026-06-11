@@ -434,7 +434,7 @@ Pico 2 SMPS (3V3OUT, 300 mA) speist:
 - Pico interner Verbrauch
 **Summe ~80 mA. Locker in 300 mA-Budget.**
 
-U5 (AP7361A-33ER) bleibt **DNP** (Reserve-Footprint) für Fall, dass +3V3-Last später steigt.
+U5 (AP7361A-33) ist seit r18 **aktiv** (+3V3-Quelle; der Pico-interne SMPS entfällt mit dem Modul, siehe §4 U5-Zeile). _r18.5-Korrektur: hier stand noch 'bleibt DNP' aus der Pico-Ära._
 
 ---
 
@@ -465,7 +465,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | U2 | MCP23017-E/SS | SSOP-28 | C506653 | Extended, ~$1.62 | verifizieren via `lcsc`-Skill |
 | U3 | PCM5102APWR (TI) | TSSOP-20 | **C107671** | Extended Stock | I²S DAC, 3-wire (kein MCLK). Pinout per TI SLAS859C. **Anschluss bleibt unverändert — nur die Master-Seite ändert sich (Pico-PIO → STM32-SAI1).** |
 | U4 | PAM8403DR-H (Diodes Inc) | SOIC-16 | **C17337** | Extended Stock | Stereo Class-D 2×3W. Pinout per Diodes DS31295 |
-| U5 | AP7361A-33ER | SOT-89 | C156144 | **Aktiv (war DNP)** | **NEU v0.7: +3V3-Rail-LDO wird jetzt verbaut (war im Pico-Stand DNP, weil Pico SMPS intern hatte). 1 A LDO genügt für H743 (~180 mA typ) + LCD + I²C + PCM5102A-DVDD.** |
+| U5 | AP7361A-33ER-13 | SOT-89-5 | 🔴 **TBD — C156144 ist FALSCH** (das ist ein 910-Ω-0603-Widerstand, LCSC-Web verifiziert r18.5; Kandidat: AP7361-33E-13 = C150719) | **Aktiv (war DNP)** | **NEU v0.7: +3V3-Rail-LDO wird jetzt verbaut (war im Pico-Stand DNP, weil Pico SMPS intern hatte). 1 A LDO genügt für H743 (~180 mA typ) + LCD + I²C + PCM5102A-DVDD.** |
 | **U6** | **PCA9685PW,118 (NXP)** | **TSSOP-28** | **C2678753** | **Extended, ~$1.96 @100, ~1605 pcs Stock** | **NEU r7: 16-Kanal PWM-LED-Driver für 5 Modifier-Button-LEDs (11 Kanäle Reserve). I²C-Adresse 0x40. Symbol `Driver_LED:PCA9685PW`, Footprint `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm`. Datasheet: nxp.com/docs/en/data-sheet/PCA9685.pdf** |
 | **SDRAM (Footprint vorsehen, nicht bestücken)** | **Reserve-Footprint für IS42S16400J-7TL (4 MByte) auf SDRAM-Pads** | **TSOP-50** | C81878 | **DNP** | **NEU v0.7: Footprint vorsehen für Rev-B, falls Engine später Granular/Samples bekommt. 1 MB internes RAM reicht aktuell für DSP + Reserve.** |
 
@@ -644,7 +644,9 @@ um den Konflikt mit SPI1 (PA5/PA7 → LCD) zu vermeiden. EN4 (TIM1) nutzt PA8/PA
 — PA9 hat zusätzlich OTG_FS_VBUS als „additional function", aber Bus-Powered-
 USB ohne VBUS-Sensing ist Standard (Datasheet S. 39 fußnote).
 
-VOL_SW bleibt aus historischer Konsistenz (r15) auf MCP-GPB5 — am H7 wäre ein
+VOL_SW liegt auf MCP-GPB5 (_r18.5-Anm.: die r15-Behauptung stimmte mit dem
+Schaltplan nicht — bis r17 lag VOL_SW real am Pico-GPIO und GPB5 war NC;
+seit dem r18.5-Generator ist GPB5 tatsächlich VOL_SW_) — am H7 wäre ein
 direkter MCU-Pin frei, aber der MCP-Sheet bleibt damit unverändert.
 
 ### 5.5 MIDI Out (USART2 — Hardware-UART statt PIO-Workaround)
@@ -837,8 +839,9 @@ In Landscape ⇒ **Spalten (CASET) 0..319, Zeilen (RASET) 35..204 (Y-Offset 35)*
 **Backlight**: Alle 24 Pico-GPIOs sind belegt (§5), daher fährt BLK über einen
 freien **PCA9685-PWM-Kanal** + kleinen N-FET (z. B. 2N7002, SOT-23) als
 Low-Side-Switch. Helligkeit damit per I²C.
-Die Net-Namen `OLED_*` in §5 sind aus Kompatibilität beibehalten, treiben
-ab r16 aber das LCD.
+~~Die Net-Namen `OLED_*` in §5 sind aus Kompatibilität beibehalten~~ —
+**r18.5: Schematic-Netnamen sind jetzt `LCD_*`** (gemäß §5.2; die alte
+OLED_*-Benennung existiert nur noch in `kicad/legacy_pico2/`).
 
 > **r17-Klarstellung (EN2-Konflikt aufgelöst):** Der **Brightness-Encoder EN2
 > regelt im Normalbetrieb die AUDIO-Tonfarbe** (Pad-Filter-Cutoff,

@@ -13,11 +13,15 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ---
 
+> **r18.5 (2026-06-11):** Aktuelle, konsolidierte Blocker-Liste inkl. neuer
+> Findings (B-LDO, B-F1, B-F2, B-SW12, B-MIDI, B-FP, B-TBD):
+> **`PCB_LAYOUT_STATUS.md`**. Diese Datei behält die historischen Einträge.
+
 ## 🔴 BLOCKER v0.7-r18 (MCU-Migration, NEU 2026-06-07)
 
 ### r18-B1: STM32H743 Schematic-Sheet ersetzt pico.kicad_sch
-**Status**: 🔴 BLOCKER — Phase 3 der MCU-Migration. Siehe `NATIVE_PORT_PLAN.md`
-Step 13.3. Vorher Phase 2 (HAL-Abstraktion).
+**Status**: ✅ DONE r18.5 — `stm32h743.kicad_sch` wird vom Generator erzeugt
+(Validierung siehe PCB_LAYOUT_STATUS.md); pico/oled-Sheets in `kicad/legacy_pico2/`.
 **Fix-Pfad**: `generate_kicad_project.py` erweitern; STM32H743VIT6 Symbol +
 LQFP-100 Footprint; SWD-Header, BOOT0-Pull-Down, NRST, HSE 8 MHz Crystal +
 Load-Caps; VDD/VDDA-Decoupling nach ST AN3318.

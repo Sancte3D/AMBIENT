@@ -1,12 +1,59 @@
 # Field Ambience PCB — CHANGELOG
 
 Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
-Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
+Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.4** (Crystal-Entscheidung getroffen: Y1 →
-ABRACON ABLS-8.000MHZ-B4-T HC-49/US SMD, ESR 80 Ω, Gain Margin 2.97
-Worst-Case / ~5–6 real bei Indoor-Temp. F-4 RESOLVED, Phase 3 entblockt.)
+Aktuelle Rev: **v0.7-r18.5** (Schematic-Migration Phase 3: STM32H743-Sheet
++ LCD-Sheet generiert, AP7361A-LDO im Power-Tree, Pico/OLED → legacy.
+Layout-Status: PCB_LAYOUT_STATUS.md — KEIN .kicad_pcb, nicht bestellbar.)
+
+---
+
+## v0.7-r18.5 (2026-06-11) — Schematic-Migration Phase 3 (Generator) + Repo-Audit
+
+**KiCad-Generator auf STM32H743 migriert** (NATIVE_PORT_PLAN Step 13.3):
+
+- **NEU `stm32h743.kicad_sch`** (ersetzt `pico.kicad_sch` → `kicad/legacy_pico2/`):
+  100-Pin-Symbol aus offizieller KiCad-Lib übernommen und gegen SPEC §5
+  doppelt verifiziert (52/52 belegte Pins identisch). Alle SPEC-§5-Netze
+  verdrahtet, ~48 Reserve-GPIOs als no_connect. Support komplett: HSE
+  (Y1 ABLS C596838 + 2×22 pF), VCAP 2×2.2 µF, 5×(4.7 µF+100 nF) VDD,
+  VDDA-Ferrit(C84094)+1 µF+100 nF, BOOT0-PD, NRST-PU+100 nF, SWD-J4 auf
+  PA13/PA14/GND, BAT-Teiler an PA3, Status-LED an PD8, USB-FS PA11/PA12.
+- **NEU `lcd.kicad_sch`** (ersetzt `oled.kicad_sch` → legacy): 8-Pin-ST7789
+  per §6 inkl. C6b/C6c und Backlight-Pfad: PCA9685-Kanal 12 (mcp) →
+  `LCD_BLK_PWM` → 2N7002-Low-Side + 100k-Pulldown. Netnamen `OLED_*`→`LCD_*`.
+- **power_tree: U5 AP7361A-33 LDO** (+5V→+3V3) + Cin/Cout — der Pico-SMPS
+  entfällt. 🔴 Pinout-VERIFY B-LDO offen (AP7361A-DS war 403; Annahme aus
+  AP7361-DS33626 dokumentiert am Symbol).
+- **VOL_SW real auf MCP-GPB5** (SPEC §5.4): bis r17 lag es entgegen der
+  SPEC am Pico-GPIO, GPB5 war NC. Root-Brücken entsprechend umgebaut.
+- USB-Netze `PICO_USB_*` → `USB_DM/USB_DP`; +3V3_OUT-Hier wandert
+  pico→power_tree; `kicad_pro`-Sheetliste: Battery ergänzt (fehlte).
+
+**BOM/Datasheet-Findings (Audit):**
+
+- 🔴 **F-6 NEU: SPEC-§4-U5-LCSC-Nummer war falsch** — C156144 ist ein
+  910-Ω-0603-Widerstand (LCSC-Web verifiziert), nicht der AP7361A. SPEC
+  korrigiert auf TBD + Kandidat C150719. Hätte bei JLC-Order einen
+  Widerstand als LDO bestückt.
+- **F-2-Teilfix:** Encoder-MPN im Generator auf EC11J1525402 gesetzt,
+  Bourns-PEC11R-PDF → `datasheets/legacy/` (war falsches Teil); ALPS-
+  Drawing-Beschaffung bleibt offen.
+- **F-1 dokumentiert:** TPS61089-Schematic ist RNR (seit r12-B11 ✓), aber
+  das Repo-PDF ist weiter RNSR — RNR-PDF beschaffen (B-F1).
+- **B-SW12 NEU:** SW6-10 (HX 12×12) tragen ein ~6-mm-TL3342-Land-Pattern —
+  als FP_MISMATCH-Property an allen 5 Symbolen markiert.
+- **B-MIDI NEU:** MIDI_TX (PD5) existiert als Netz, TRS-Buchse + Serien-R
+  fehlen in SPEC §4 + Schematic.
+- SPEC-Widersprüche bereinigt: U5 „bleibt DNP"-Altsatz, §6-OLED_*-Satz,
+  §5.4-r15-Behauptung.
+
+**Validierung:** paren-balance 10/10 Dateien, 100/100 MCU-Pins angebunden,
+Hier↔Root-Crossref 7/7 PASS, Root-Label-Brücken vollständig paarig.
+GUI-ERC (B3) + alle FP_VERIFY/PIN_VERIFY-Properties bleiben offen —
+**vollständige Blocker-Liste: `PCB_LAYOUT_STATUS.md`**.
 
 ---
 
