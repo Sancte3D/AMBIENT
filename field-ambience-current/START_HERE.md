@@ -1,8 +1,14 @@
 # Field Ambience — Start Here
 
 Übersicht über das Projekt und wo was liegt. **Aktueller Stand:** Audio-Engine
-+ UI laufen nativ in C auf dem RP2350 (Pico 2). Steps 1–11 + 12a des Native-
-Ports sind fertig; Step 12b (Menü + USB-MIDI) steht aus.
++ UI laufen nativ in C, Steps 1–11 + 12a + 12b fertig.
+
+> ⚠️ **MCU-Migration aktiv: Pico 2 (RP2350) → STM32H743VIT6 Bare-Chip.**
+> SPEC v0.7-r18, siehe `NATIVE_PORT_PLAN.md` Step 13 + `CHANGELOG.md` r18.
+> Phase 1 (Doku) ✓, Phase 2–5 ausstehend. **PCB-Layout erst nach Profiling**
+> auf echter H743-Hardware (Acceptance-Gate < 40 % Block-Zeit Worst-Case).
+> Pico-Stand bleibt im Repo als Fallback unter `kicad/legacy_pico2/` (nach
+> Phase 3).
 
 ## Mein nächster Schritt
 → **`firmware-c/HOERTEST.md`** bzw. **`firmware-c/HOERTEST.html`** — On-Device-
@@ -26,7 +32,7 @@ Ports sind fertig; Step 12b (Menü + USB-MIDI) steht aus.
 - `field_ambience_webapp.html` — Web-Audio-Port, war Port-Vorlage für `firmware-c/`
 
 ## PCB
-- `field_ambience_pcb_SPEC_v0.6.md` — komplette, aktuelle Spec
+- `field_ambience_pcb_SPEC_v0.7.md` — komplette, aktuelle Spec (v0.7-r18, H7-Migration)
 - `kicad/` — KiCad-Projekt (Schaltplan fertig + validiert, generiert aus
   `generate_kicad_project.py`)
 - `kicad/libraries/` — eingebundene kiswitch-Footprints (Choc V2)
@@ -40,6 +46,7 @@ Ports sind fertig; Step 12b (Menü + USB-MIDI) steht aus.
   obsolet aber zur Nachvollziehbarkeit eingefroren. Siehe `legacy/README.md`.
 
 ## Design-Philosophie
-- `PITCH.md` / `ROADMAP.md` — beide tragen einen Stand-Hinweis: textuell aus
-  der Pre-Step-6-Phase, Klang-Vision (Sound-Constitution-Charakter) gilt
-  weiter, technische Details darin sind überholt.
+- `docs/archive/pitch_pre_step6.md` / `docs/archive/roadmap_pre_step6.md` —
+  beide aus der Pi-Phase, **archiviert in v0.7-r18**. Klang-Vision (Sound-
+  Constitution) gilt weiter, technische Hardware-Details sind überholt.
+  Ein neuer Pitch wird nach abgeschlossener H7-Migration geschrieben.

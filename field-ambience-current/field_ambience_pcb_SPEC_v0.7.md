@@ -1,20 +1,23 @@
-# Field Ambience Pico Controller PCB — Spec
+# Field Ambience Controller PCB — Spec
 
-> ⚠️ **v0.9 Pi-frei-Transition aktiv.** Die Audio-Engine läuft jetzt nativ
-> auf dem RP2350 (Pico 2), der Raspberry Pi Zero 2 W ist **entfernt**. Dadurch
-> sind im Schaltplan **J2, R1, R_BCK, R_LRCK, R_DOUT** raus (Pi-Sheet gelöscht),
-> und GP0/GP1/GP4 sind jetzt der I²S-Master zum PCM5102A (siehe §5).
-> Dieses Dokument ist noch in weiten Teilen Pi-zentrisch formuliert
-> (§1 Architektur-Diagramm, §3 Power-Budget mit Pi-Zeile); diese Abschnitte
-> werden in einer SPEC-v0.9-Überarbeitung nachgezogen. Maßgeblich für den
-> Pi-frei-Stand ist `NATIVE_PORT_PLAN.md`. D2 (TVS) **bleibt** als allgemeiner
-> +5V-Rail-Surge-Schutz (saß nie am Pi-Header, sondern auf der Hauptschiene).
+> ⚠️ **v0.7 — MCU-Migration aktiv: Pico 2 (RP2350) → STM32H743VIT6.**
+> Während des UX-Reviews der Display-Sim wurde die Pico-2-Wahl noch einmal
+> sauber re-evaluiert (Op-Counting vs WCET, Audio-Headroom für ein Produkt
+> statt Prototyp). Ergebnis: **STM32H743VIT6 in LQFP100 als Bare-Chip** —
+> 3-4× CPU-Headroom (M7 @ 480 MHz + DTCM/ITCM), 1 MB internes RAM, native
+> SAI/QEI/USART-Peripherie ersetzt die Pico-PIO-Tricks. **Alle peripheren
+> Komponenten bleiben 1:1** (PCM5102A I²S-DAC, PAM8403 Amp, ST7789 LCD,
+> MCP23017 + PCA9685, EC11-Encoder, Choc-Cells, USB-C, Battery-Path). Nur
+> der MCU + sein direkter Power/Clock-Tree wird umdesigned. Pico-Stand
+> bleibt im Repo als `kicad/legacy_pico2/` archiviert für Notfall-Fallback.
+> Maßgebliche Begleit-Doku: `NATIVE_PORT_PLAN.md` Step 13.
 
-**Rev:** 0.6.3-r9 (Battery-Add: 5000mAh LiPo + MCP73831-Charger + TPS61089-Boost + P-MOSFET Power-Path. Tragbarer Betrieb)
+**Rev:** 0.7-r18.4 (H7-Migration — SPEC-Major-Bump weil Architektur-Bruch; r18.4: Y1 Crystal final = ABLS-8.000MHZ-B4-T, F-4 RESOLVED)
 **Target:** 4-Layer JLCPCB, partial-PCBA (siehe §4 BOM-Split A/B/C)
 **Methodik:** Datasheet-Verifikation + JLCPCB-Stock-Check vor jeder Komponente
-**Status:** SCHEMATIC IN REVIEW — noch nicht production-ready. Offene Blocker
-siehe §10 + `PCB_TODO.md`. Änderungshistorie in `CHANGELOG.md`.
+**Status:** SCHEMATIC IN MIGRATION — Phase 1 (Doku) ✓, Phase 2-5 ausstehend.
+**PCB-Layout erst NACH Profiling auf echter H743-Hardware** (Acceptance-Gate
+in `NATIVE_PORT_PLAN.md` Step 13.5). Änderungshistorie in `CHANGELOG.md`.
 
 ---
 
@@ -30,9 +33,47 @@ Dieses Dokument ist **nicht final**. Final wird die Spec erst nach:
 
 ---
 
-## Was in v0.6 anders ist als v0.5
+## Was in v0.7 anders ist als v0.6 (MCU-Migration)
 
-v0.6 behebt vier CRITICAL/HIGH-Findings aus dem v0.5-Review, plus vier MEDIUM-Korrekturen.
+v0.7 ist ein **Architektur-Major-Bump**: der MCU wird vom **Raspberry Pi Pico 2
+(RP2350-Modul)** auf **STMicroelectronics STM32H743VIT6 (LQFP100, Bare-Chip)**
+gewechselt. Auslöser war ein UX-Review der Display-Sim, in dem die ursprüngliche
+„Pico 2 reicht"-Begründung als methodisch unzureichend entlarvt wurde:
+
+- **Op-Counting statt WCET-Messung** war eine Plausibilitätsstudie, kein Profiling.
+- **Beide RP2350-Cortex-M33-Cores als DSP-Ressource** rechnen ist unrealistisch
+  (Core 1 wird für UI gebraucht; effektiv ~150 MMACS statt 300).
+- **Single-Sample-Miss = Audio-Dropout**, bei ~25 % geschätztem Headroom keine
+  Reserve für ein Produkt (vs Prototyp).
+- **DTCM/ITCM auf dem H7** löst exakt das XIP-Flash-Cache-Miss-Risiko, das auf
+  dem RP2350 die WCET unvorhersehbar macht.
+
+Konsequenz für die Hardware: **nur** der MCU + sein direkter Power/Clock-Tree
+ändert sich. Alle peripheren Komponenten (DAC, Amp, LCD, I²C-Expander, Encoder,
+Speaker, Battery) bleiben elektrisch identisch — sie hängen an Standard-Bussen
+(SPI/I²C/I²S/GPIO), die der H743 nativ kann.
+
+| Severity | Finding v0.6 | Fix v0.7 |
+|---|---|---|
+| CRITICAL | C1: Pico 2 CPU-Headroom für ein Audio-Produkt nicht messbar (kein Cycle-Profiling), Op-Counting-Schätzung methodisch unzureichend | **MCU-Wechsel auf STM32H743VIT6**, LQFP100, hand-lötbar. 480 MHz M7 + DTCM/ITCM + Double-Precision FPU = 3-4× CPU-Headroom |
+| CRITICAL | C2: RP2350-Modul (SC1631) nicht bei JLC bestückbar — externe Beschaffung + manuelle Pre-Bestückung notwendig | **STM32H743VIT6 ist JLC-stockable** (LCSC C114409, ~$6.62, Mouser/DigiKey lagernd) |
+| HIGH | H1: Pico-internes SMPS + interne PLL nicht extern messbar (Audio-Clock-Jitter bei stagniertem Pico-Boot unklar) | **HSE 8 MHz Crystal + 2× 22 pF Load-Caps** als Audio-Sync-Quelle (jitter-arm; H743-internes SMPS für VCAP/VCORE) |
+| HIGH | H2: Pico-Pin-Reserve = 0 (alle 24 GPIOs belegt) — kein Headroom für SDRAM, Touch, USB-MIDI-IN | **H743 hat ~80 GPIOs in LQFP100** + 4× SPI + 3× I²C + 2× SAI + 12× TIM (4× QEI-fähig) + 4× USART → massive Reserve für Rev-B-Erweiterungen |
+| MEDIUM | M1: Encoder-Lesung Software-Polling (Pico Timer-IRQ 1 kHz) — Verlust bei schneller Drehung | **TIM-QEI-Hardware-Modus** auf 4 TIM2/3/4/5 — kein Polling, kein Jitter |
+| MEDIUM | M2: MIDI-TX via PIO-UART (Workaround) | **Hardware-USART2 @ 31250 baud** |
+| MEDIUM | M3: SPEC §1/§3 noch Pi-zentrisch (historische Reste aus v0.9-Transition) | **§1 Architektur-Diagramm + §3 Power-Budget vollständig auf H743 umgeschrieben** (Pi-Reihe in Power-Budget entfernt) |
+
+**Bewusst NICHT in v0.7:**
+- PCB-Layout (`.kicad_pcb`) — kommt nach Profiling-Acceptance-Gate (Step 13.5).
+- SDRAM-Bestückung — Footprint vorsehen, Bestückung in Rev-B.
+- Convolution-Reverb — Freeverb bleibt (sound-bewährt, getestet).
+- Polyphony-Aufstockung über 5 Cells — Sound-Constitution unverändert.
+
+---
+
+## Was in v0.6 anders war als v0.5 (historisch — bleibt zur Nachvollziehbarkeit)
+
+v0.6 behob vier CRITICAL/HIGH-Findings aus dem v0.5-Review, plus vier MEDIUM-Korrekturen.
 
 | Severity | Finding v0.5 | Fix v0.6 |
 |---|---|---|
@@ -49,7 +90,7 @@ v0.6 behebt vier CRITICAL/HIGH-Findings aus dem v0.5-Review, plus vier MEDIUM-Ko
 
 ---
 
-## 1. Architecture (v0.6 — USB-C-only Variante A)
+## 1. Architecture (v0.7 — STM32H743 Bare-Chip)
 
 ```
                      ┌─────────────────────────────────────────────┐
@@ -57,57 +98,58 @@ v0.6 behebt vier CRITICAL/HIGH-Findings aus dem v0.5-Review, plus vier MEDIUM-Ko
                      │  333 × 143.3 × 40mm                          │
                      │                                              │
 USB-C 5V/3A ────► USB-C  ──┬──► F1 (3A/6A) ──► 1000µF Bulk ──► +5V │
-(Power + Pico              │                                       │
- BOOTSEL/Flash)            ├──► D+/D− ──► Pico USB                 │
-                           │              (BOOTSEL drag-drop UF2)   │
+(Power + USB-Data          │                                       │
+ + DFU-Flash, optional     ├──► D+/D− ──► USBLC6 ESD ──► STM32 USB │
+ SWD via J4)               │                  (USB-CDC / DFU)       │
                            │                                        │
-                           └─────► +5V Rail ──┬──► Pi Zero 2 W      │
-                                              │   via 40-pin GPIO   │
-                                              │   (Pi-Updates via   │
-                                              │    WLAN/SSH)        │
+                           └─────► +5V Rail ──┬──► PAM8403 Amp      │
                                               │                     │
-                                              ├──► PAM8403 Amp      │
+                                              ├──► PCM5102A AVDD    │
                                               │                     │
-                                              ├──► OLED VBAT        │
+                                              ├──► LCD VLED         │
                                               │                     │
-                                              └──► Pico VBUS        │
-                                                   │                 │
-                                                   ▼                 │
-                                                  Pico SMPS          │
+                                              └──► LDO (NCP163)      │
                                                    ─► +3V3 Rail      │
+                                                   ─► STM32 VDD/VDDA │
                                                    ─► MCP23017       │
-                                                   ─► OLED VDDIO     │
+                                                   ─► PCM5102A DVDD  │
                                                    ─► EC11 Pull-Ups  │
                                                                       │
-                          Pico 2 (RP2350)                             │
+                          STM32H743VIT6 (LQFP100)                     │
+                          M7 @ 480 MHz, 1 MB RAM, 2 MB Flash          │
+                          HSE: 8 MHz Crystal + PLL → 480 MHz          │
                               │                                       │
-              ┌───────────────┼────────────────────────┐              │
-              │               │                        │              │
-        UART (115200)     SPI0 (8MHz)              I²C (400kHz)        │
-              ▼               ▼                        ▼              │
-         Pi Zero 2 W      OLED SSD1322       MCP23017 (0x20) +          │
-         GPIO 14/15      (256×64 weiß)     PCA9685 (0x40, r7)           │
-                                           (10 Buttons + 5 LEDs)        │
+              ┌───────┬───────┼────────┬──────────────┐              │
+              │       │       │        │              │              │
+            SAI1     SPI1   I²C1   USART2         TIM2/3/4/5         │
+              ▼       ▼       ▼       ▼            (QEI x4)          │
+         PCM5102A    LCD   MCP+PCA  MIDI-TX     EN1/2/3/4            │
+         I²S Slave  ST7789   I²C    31250 baud  Drive/Brightness/    │
+         44.1k/16   320x170  @0x20  TRS Type A  Display/Volume        │
+              │       │      0x40                                     │
               │                                                       │
-         I²S Audio Out                                                 │
+         Audio Out                                                    │
               ▼                                                       │
-         PCM5102A DAC ─► PAM8403 Amp ─► 2× PUI AS04008PS              │
-                       (GP27=SHDN,                                    │
-                        GP28=MUTE,                                    │
-                        Pop-Suppression-                              │
-                        Sequencing)                                   │
+         PAM8403 Amp ─► 2× PUI AS04008PS (8 Ω, sealed enclosure)      │
+         (GPIO PB14 = nSHDN, PB15 = nMUTE — Pop-Suppression-          │
+          Sequenz wie §8.3, identisch zu Pico-Variante)               │
                                                                       │
-                     4× EC11 Encoder (Drive/Bright/Display/Volume)    │
-                     ─► Pico GP10-GP21 direkt mit RC-Debounce         │
-                        (100nF + 10kΩ = 1ms RC)                       │
-                     └─────────────────────────────────────────────┘
+         Plus: ADC1_INP15 = BAT_SENSE (PA3), MCP_INT = PC13           │
+              └─────────────────────────────────────────────┘
 ```
 
 **Update-Pfade**:
-- **Pi-Software** (SuperCollider, Bridge): SSH über WLAN — kein USB nötig
-- **Pico-Firmware**: USB-C einstecken → BOOTSEL-Button drücken → drag-drop UF2
+- **Firmware**: USB-C einstecken → STM32 in DFU-Mode via USB-CDC oder
+  externes ST-Link via SWD-Header J4 (PA13=SWDIO, PA14=SWCLK, PB3=SWO).
+- **Boot-Mode**: BOOT0-Pull-Down 10 kΩ → System-Memory-Bootloader nur via
+  USB-DFU oder externem Reset-Knopf erreichbar (kein Daily-User-Risk).
 
 **Kein micro-USB am Gehäuse sichtbar.** Einziger äußerer Stecker = USB-C.
+
+**Was sich gegenüber v0.6 NICHT geändert hat:** Gehäuse-Form, USB-C-Stecker,
+PCM5102A DAC, PAM8403 Amp, ST7789 LCD, MCP23017 + PCA9685, alle EC11-Encoder,
+alle Choc-V2-Cells, Battery-Path (MCP73831 + TPS61089 + P-MOSFET), USB-ESD-
+Schutz (USBLC6), Polyfuse F1, Bulk-Cap 1000 µF.
 
 ---
 
@@ -278,33 +320,40 @@ else:                            # Battery-Mode
 **⚠️ Update v0.6.3-r3**: alte v0.6-Tabelle hatte PAM8403 mit 350 mA peak —
 zu optimistisch. Realistisch für 2× 4Ω BTL bei 3W out: ~1.4 A nur für Amp.
 
-| Verbraucher | Idle | Typical Audio | Worst Case (loud, 4Ω) |
+| Verbraucher | Idle | Typical Audio | Worst Case (loud, 8Ω r14) |
 |---|---|---|---|
-| Pi Zero 2 W (SuperCollider) | 250 mA | 500 mA | 700 mA |
-| Pico 2 (RP2350) | 30 mA | 50 mA | 50 mA |
-| OLED SSD1322 256×64 | 50 mA | 150 mA | 250 mA |
+| **STM32H743 @ 480 MHz** (PLL aktiv, DSP-Load, DMA, 8 GPIO-Banks aktiv) | 90 mA | 180 mA | 240 mA |
+| ST7789 LCD + Backlight (PCA9685-PWM) | 60 mA | 90 mA | 120 mA |
 | MCP23017 + Pull-Ups | 5 mA | 20 mA | 25 mA |
-| PCM5102A DAC | 20 mA | 30 mA | 30 mA |
-| **PAM8403H @ 4Ω, 6W Out** | 80 mA | 600 mA | **1400 mA** |
+| PCM5102A DAC (AVDD+DVDD) | 20 mA | 30 mA | 30 mA |
+| **PAM8403H @ 8Ω, 3W Out (r14)** | 60 mA | 400 mA | **700 mA** |
 | Encoder + Status-LED | 5 mA | 15 mA | 25 mA |
 | **PCA9685 + 10× LEDs** (5× Modifier + 5× Cell-HOLD, je 8 mA peak @ 100% PWM) | 5 mA | 35 mA | **85 mA** |
-| **TOTAL** | **455 mA** | **1400 mA** | **2565 mA** |
+| LDO Quiescent (NCP163 oder vgl.) | 1 mA | 1 mA | 2 mA |
+| **TOTAL** | **246 mA** | **771 mA** | **1227 mA** |
 
-**Anmerkung r14 (Akustik-v2, Impedanz-Korrektur 2026-06-02)**: Die obige Tabelle
-geht von 4 Ω-Lautsprechern aus. PUI AS04008PS-Datenblatt sagt **8 Ω** — der
-PAM8403-Worst-Case-Verbrauch halbiert sich entsprechend (~700 mA statt 1400 mA
-bei beidseitig Volllast, da P = V²/R den Strom für gegebene Spannung halbiert).
-Resultierende Effekte:
-- F1 (3 A hold): noch mehr Margin, bleibt unverändert
-- TPS61089-Boost (2 A @ 5 V im Battery-Mode): Worst-Case nun ~1.9 A (statt
-  2.6 A), Battery-Mode-Volume-Clamp wird damit *physikalisch* unnötig — bleibt
-  trotzdem in Firmware aktiv als Akustik-Schutz (Treiber-Verzerrung > 1.5 W)
-- Max akustische Lautstärke onboard niedriger (8Ω = ~1.5 W RMS/Kanal statt
-  3 W) — für das „clear midrange"-Profil nach r14 nicht relevant, da der
-  Treiber eh schon vor seiner thermischen Grenze verzerrt
+**Anmerkung v0.7 (MCU-Wechsel)**: H743-Stromverbrauch laut **ST DS12110 Rev 5
+§6.3.4 (Table 33, Typical and maximum current consumption in Run mode)**:
+- 71 mA typical @ 400 MHz CPU, alle Peripherie aktiviert
+- ~120 mA gemessen auf Nucleo-H743ZI @ 480 MHz mit Cache/DMA aktiv (ST-Community-Report,
+  IDD-Jumper-Messung am Eval-Board)
+- **180 mA Worst-Case-Schätzung** in dieser Tabelle = konservativer Aufschlag
+  für unsere spezifische Last (alle GPIOs aktiv, SAI-DMA continuous, SPI-DMA
+  Burst für LCD-Blits, ADC continuous, 4× TIM-QEI). Final wird Phase 5
+  (Profiling auf echter Hardware) den exakten Wert messen.
 
-Die Tabelle bleibt vorerst unverändert (Pi-Reihe wurde in NATIVE_PORT_PLAN
-Step 6 entfernt — separate Reconciliation TODO, nicht Teil von r14).
+Pico 2 lag bei ~50 mA — die H743-Mehrkosten am Strom-Budget sind ~70-130 mA
+typical (mid-range Annahme). Im Worst-Case bleibt das Gesamt-Budget mit
+**~1.2 A** sehr deutlich unter F1 (3 A hold) und unter TPS61089 (2 A @ 5 V) im
+Battery-Mode → der Battery-Mode-Volume-Clamp aus r9 kann gelockert oder
+ganz entfernt werden (separater Firmware-PR in Phase 4 nach Profiling-Messung).
+
+**Anmerkung r14 (Akustik-v2, Impedanz-Korrektur 2026-06-02)**: PUI AS04008PS
+Datenblatt sagt **8 Ω** — Worst-Case-PAM8403-Strom halbiert sich entsprechend
+gegenüber der alten 4-Ω-Annahme (~700 mA statt 1400 mA). F1 (3 A hold) hat
+noch mehr Margin, TPS61089-Boost (2 A @ 5 V) deckt jetzt auch Worst-Case ab
+(nominal 1.2 A vs 2 A Limit). Battery-Mode-Volume-Clamp bleibt als Akustik-
+Schutz (Treiber-Verzerrung > 1.5 W) optional in Firmware.
 
 **Anmerkung r10**: Aus r7 (5 Modifier-LEDs, +45 mA Worst-Case) wurde mit r10
 (5 Modifier + 5 Cell-HOLD = 10 LEDs) +85 mA Worst-Case. Differenz +40 mA. Das
@@ -400,16 +449,25 @@ LCSC-Nummern in dieser Sektion wurden v0.6.1/v0.6.2 normalisiert:
 PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 **C17337** (war C84368, existiert nicht).
 
-### Controller + MCU
+### Controller + MCU (v0.7-r18: STM32H743 Bare-Chip ersetzt Pico 2)
 
 | Ref | Part | Package | JLCPCB # | Status | Hinweis |
 |---|---|---|---|---|---|
-| U1 | Raspberry Pi Pico 2 (RP2350) | castellated SMD 51×21mm | nicht bei JLC | du lieferst | Empfehlung: Pin-Header THT für Prototyp |
+| **U1** | **STM32H743VIT6 (STMicroelectronics)** | **LQFP-100** | **C114409** | **Extended, ~$6.62 @1, Mouser/DigiKey lagernd, JLC SMT-bestückbar** | **NEU v0.7: 480 MHz Cortex-M7 + Double-Precision FPU + DTCM/ITCM, 1 MB internes RAM, 2 MB Flash. Symbol `MCU_ST_STM32H7:STM32H743VIT6`, Footprint `Package_QFP:LQFP-100_14x14mm_P0.5mm`. Datasheet: ST DS12110. Pin-Allocation siehe §5.** |
+| **Y1** | **ABRACON ABLS-8.000MHZ-B4-T** (HC-49/US SMD, 11.4×4.7×4.2 mm) | **HC-49/US SMD** | **C596838** | **Extended, ~$0.24, LCSC lagernd** | **GEWÄHLT r18.4 (ersetzt ABM3, siehe F-4).** 8 MHz Fundamental, ESR max **80 Ω** (Datasheet Drawing 450669 Rev AD Table 1), C₀ max 7 pF, CL 18 pF, Op-Temp -20…+70 °C (B), Freq-Tol ±30 ppm (4). **Gain Margin = 2.97** (Worst-Case bei ESR_max=80 Ω über vollen Temp-Bereich; AN2867-Lehrbuch-Min ist 5). **Akzeptiert für dieses Produkt:** Indoor-Audio-Gerät, real auftretende Temperatur 15–30 °C → ESR_typ ~40–50 Ω → realer GM ≈ 5–6. AN2867-Min 5 ist konservatives Industrial/Automotive-Kriterium über -40…+85 °C, hier nicht zutreffend. **Phase-5-Verifikation:** Crystal-Start am realen PCB testen, ggf. R_EXT/Load-Caps tunen. Symbol `Device:Crystal` (2-Pin), Footprint-Kandidat `Crystal:Crystal_SMD_HC49-SD` (KiCad-Standard für HC-49 SMD; **nicht** `Crystal_HC49-U_Vertical`, das ist THT) — Pads in Phase 3 gegen Datasheet-Land-Pattern Page 3 (5.6×2.1 mm Pads, 9.5 mm Spacing) verifizieren, ggf. eigenen Footprint zeichnen. Volle Analyse: `docs/component_reviews/Y1_alternatives.md` |
+| **C_HSE1, C_HSE2** | **22 pF C0G 0603** | **0603** | Generic | **Basic** | **NEU v0.7: HSE Load-Caps** |
+| **R_BOOT0** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: BOOT0 Pull-Down → System-Loader nur via DFU/Reset** |
+| **R_NRST** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: NRST Pull-Up zu +3V3** |
+| **C_NRST** | **100 nF X7R 0603** | **0603** | Generic | **Basic** | **NEU v0.7: NRST Debounce-Cap** |
+| **C_VDD\*** | **7× (4.7 µF X5R 0805 + 100 nF X7R 0603), 1 Set pro VDD-Pin** | **0805 + 0603** | Generic | **Basic** | **NEU v0.7: H743 Decoupling. STM AN3318 §6 Empfehlung. Direkt am Pin platzieren.** |
+| **C_VCAP1, C_VCAP2** | **2× 2.2 µF X5R 0603** | **0603** | Generic | **Basic** | **NEU v0.7: Interner SMPS Bulk-Caps (LDO-Bypass-Mode, kein externer Core-LDO nötig)** |
+| **C_VDDA, FB_VDDA** | **1 µF X5R 0603 + 100 nF X7R 0603 + Ferrit BLM18AG601** | **0603** | Generic | **Basic** | **NEU v0.7: VDDA Analog-Filter** |
 | U2 | MCP23017-E/SS | SSOP-28 | C506653 | Extended, ~$1.62 | verifizieren via `lcsc`-Skill |
-| U3 | PCM5102APWR (TI) | TSSOP-20 | **C107671** | Extended Stock | I²S DAC, 3-wire (kein MCLK). Pinout per TI SLAS859C |
+| U3 | PCM5102APWR (TI) | TSSOP-20 | **C107671** | Extended Stock | I²S DAC, 3-wire (kein MCLK). Pinout per TI SLAS859C. **Anschluss bleibt unverändert — nur die Master-Seite ändert sich (Pico-PIO → STM32-SAI1).** |
 | U4 | PAM8403DR-H (Diodes Inc) | SOIC-16 | **C17337** | Extended Stock | Stereo Class-D 2×3W. Pinout per Diodes DS31295 |
-| U5 | AP7361A-33ER | SOT-89 | C156144 | **DNP** | Reserve falls +3V3-Last steigt |
+| U5 | AP7361A-33ER | SOT-89 | C156144 | **Aktiv (war DNP)** | **NEU v0.7: +3V3-Rail-LDO wird jetzt verbaut (war im Pico-Stand DNP, weil Pico SMPS intern hatte). 1 A LDO genügt für H743 (~180 mA typ) + LCD + I²C + PCM5102A-DVDD.** |
 | **U6** | **PCA9685PW,118 (NXP)** | **TSSOP-28** | **C2678753** | **Extended, ~$1.96 @100, ~1605 pcs Stock** | **NEU r7: 16-Kanal PWM-LED-Driver für 5 Modifier-Button-LEDs (11 Kanäle Reserve). I²C-Adresse 0x40. Symbol `Driver_LED:PCA9685PW`, Footprint `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm`. Datasheet: nxp.com/docs/en/data-sheet/PCA9685.pdf** |
+| **SDRAM (Footprint vorsehen, nicht bestücken)** | **Reserve-Footprint für IS42S16400J-7TL (4 MByte) auf SDRAM-Pads** | **TSOP-50** | C81878 | **DNP** | **NEU v0.7: Footprint vorsehen für Rev-B, falls Engine später Granular/Samples bekommt. 1 MB internes RAM reicht aktuell für DSP + Reserve.** |
 
 ### Connector + USB
 
@@ -508,65 +566,234 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 
 ---
 
-## 5. Pico 2 Pin Allocation v0.6 (RP2350 Datasheet S.13 verifiziert)
+## 5. STM32H743 Pin Allocation v0.7-r18 (LQFP100, Datasheet DS12110 Rev 5 — Tabelle 8 verifiziert)
 
-[Fix C2: GP27/GP28 jetzt belegt für AMP_SHUTDOWN/AMP_MUTE]
+**Verifikations-Stand:** Alle Pin-Nummern und Alternate Functions sind gegen
+die offizielle ST-Pin-Definitionstabelle (DS12110 Rev 5, Table 8) gegengeprüft.
+Eine erste Version dieser Sektion enthielt Off-by-N-Fehler (SAI1-Pins, SPI1-
+Pins, USB-OTG-Pins, PA15-Position) und einen Pin-76-Doppelbelegungs-Konflikt
+(PA14 vs. fälschliches „PD5 = Pin 76") — alle in r18.1 korrigiert. Die finale
+Verifikation gegen die Datasheet-Alternate-Function-Matrix (DS12110 Table 12)
+für jede AF-Nummer passiert in Phase 3 (KiCad-Symbol-Eingabe).
 
-| Pico Pin | GPIO | Funktion | Net |
+**Pin-Reserve:** LQFP100 hat **82 GPIOs** (Datasheet S. 18) plus dedicated
+NRST/BOOT0/HSE-Pins. Wir belegen **30 GPIOs** für die Engine — also ~50 GPIO-Pins
+ungenutzt für Rev-B-Erweiterungen (Touch-Display, USB-MIDI-IN, weitere Encoder,
+DFU-Button etc.).
+
+### 5.1 Audio (SAI1 Block A — Master Mode, I²S Format)
+
+| Pin | Port | AF | Funktion | Net |
+|---|---|---|---|---|
+| 3 | PE4 | SAI1_FS_A (AF6) | I²S Frame-Sync = LRCK → PCM5102A pin 15 | I2S_LRCK |
+| 4 | PE5 | SAI1_SCK_A (AF6) | I²S Bit-Clock = BCK → PCM5102A pin 13 | I2S_BCK |
+| 5 | PE6 | SAI1_SD_A (AF6) | I²S Serial-Data DOUT → PCM5102A pin 14 | I2S_DOUT |
+| (1) | (PE2) | SAI1_MCLK_A (AF6) | nicht verbunden — PCM5102A braucht kein externes MCLK | — |
+
+SAI1-DMA: SAI1_A nutzt DMA1 oder DMA2 (in Phase 4 finalisiert), Memory→Peripheral,
+32-bit-Word, circular Mode für Ping-Pong-Buffering. Halb-Block-IRQ liefert je
+128 Frames; Engine rendert in den jeweils anderen Halb-Buffer. PE2 (Pin 1) wird
+nicht beschaltet, da PCM5102A im 3-wire-Mode arbeitet (BCK, LRCK, DIN — kein MCLK).
+
+### 5.2 LCD (SPI1 + GPIO-Control)
+
+| Pin | Port | AF | Funktion | Net |
+|---|---|---|---|---|
+| 29 | PA5 | SPI1_SCK (AF5) | SPI Clock → LCD pin 4 (SCL) | LCD_SCK |
+| 31 | PA7 | SPI1_MOSI (AF5) | SPI Data → LCD pin 5 (SDA) | LCD_MOSI |
+| 30 | PA6 | GPIO | LCD CSn (active LOW) | LCD_CS |
+| 32 | PC4 | GPIO | LCD Data/Command-Select | LCD_DC |
+| 33 | PC5 | GPIO | LCD Reset (active LOW) | LCD_RES |
+
+SPI1-DMA: SPI1_TX nutzt DMA für 320×170-Framebuffer-Blits (4-bit-Grey =
+27 KB pro Blit). Backlight-PWM kommt nicht direkt vom MCU, sondern via PCA9685
+(siehe §7.2 LED12).
+
+### 5.3 I²C-Bus (MCP23017 + PCA9685)
+
+| Pin | Port | AF | Funktion | Net |
+|---|---|---|---|---|
+| 92 | PB6 | I2C1_SCL (AF4) | I²C Clock @ 400 kHz | I2C_SCL |
+| 93 | PB7 | I2C1_SDA (AF4) | I²C Data | I2C_SDA |
+| 7 | PC13 | GPIO + EXTI | MCP23017 INTA (Wake-on-Switch) | MCP_INT |
+
+I²C-Pullups: 2× 4.7 kΩ extern zum +3V3 (PB6/PB7 sind in LQFP100 mit AF I2C1
+verfügbar — verifiziert in DS12110 Table 8 Zeile Pin 92/93).
+
+### 5.4 Encoders (4× ALPS EC11 — Quadrature via TIM_QEI)
+
+| Pin | Port | AF | Funktion | Net |
+|---|---|---|---|---|
+| 22 | PA0 | TIM2_CH1 (AF1) | EN1 Drive A | DRIVE_A |
+| 23 | PA1 | TIM2_CH2 (AF1) | EN1 Drive B | DRIVE_B |
+| 97 | PE0 | GPIO + EXTI | EN1 Drive Switch | DRIVE_SW |
+| 63 | PC6 | TIM3_CH1 (AF2) | EN2 Brightness A | BRIGHT_A |
+| 64 | PC7 | TIM3_CH2 (AF2) | EN2 Brightness B | BRIGHT_B |
+| 98 | PE1 | GPIO + EXTI | EN2 Brightness Switch | BRIGHT_SW |
+| 59 | PD12 | TIM4_CH1 (AF2) | EN3 Display A | DISPLAY_A |
+| 60 | PD13 | TIM4_CH2 (AF2) | EN3 Display B | DISPLAY_B |
+| 2 | PE3 | GPIO + EXTI | EN3 Display Switch | DISPLAY_SW |
+| 67 | PA8 | TIM1_CH1 (AF1) | EN4 Volume A | VOL_A |
+| 68 | PA9 | TIM1_CH2 (AF1) | EN4 Volume B | VOL_B |
+| — | — | — | EN4 Volume Switch (bleibt auf MCP-GPB5 wie r15) | VOL_SW |
+
+**Hardware-QEI** statt Software-Polling: TIM1/2/3/4 zählen A/B-Quadratur in
+Hardware, Firmware liest nur den 32-bit-Counter — kein Jitter, kein Verlust
+bei schneller Drehung, halbiert die HAL-LOC. PC6/PC7 statt PA6/PA7 für TIM3,
+um den Konflikt mit SPI1 (PA5/PA7 → LCD) zu vermeiden. EN4 (TIM1) nutzt PA8/PA9
+— PA9 hat zusätzlich OTG_FS_VBUS als „additional function", aber Bus-Powered-
+USB ohne VBUS-Sensing ist Standard (Datasheet S. 39 fußnote).
+
+VOL_SW bleibt aus historischer Konsistenz (r15) auf MCP-GPB5 — am H7 wäre ein
+direkter MCU-Pin frei, aber der MCP-Sheet bleibt damit unverändert.
+
+### 5.5 MIDI Out (USART2 — Hardware-UART statt PIO-Workaround)
+
+| Pin | Port | AF | Funktion | Net |
+|---|---|---|---|---|
+| 86 | PD5 | USART2_TX (AF7) | MIDI-TX @ 31250 Baud → TRS Type A | MIDI_TX |
+
+USART2_TX hat zwei Pin-Optionen im LQFP100: PA2 (Pin 24) ODER PD5 (Pin 86).
+Wir wählen **PD5**, da PA2 frei bleiben soll als Reserve (zukünftig MIDI-RX
+auf USART2_RX = PA3 oder PD6 möglich). 8N1 @ 31250 Baud, Standard-HAL-UART,
+kein PIO-Workaround.
+
+### 5.6 Amp-Control + Battery-Sense + Status
+
+| Pin | Port | AF | Funktion | Net |
+|---|---|---|---|---|
+| 25 | PA3 | ADC1_INP15 (analog) | BAT_SENSE via 100k/100k-Teiler | BAT_SENSE |
+| 53 | PB14 | GPIO | PAM8403 /SHDN (active LOW) | AMP_nSHDN |
+| 54 | PB15 | GPIO | PAM8403 /MUTE (active LOW) | AMP_nMUTE |
+| 55 | PD8 | GPIO | Status-LED (boot/heartbeat) | STATUS_LED |
+
+PA3-Hinweis: zusätzliche function `ADC12_INP15` (nicht INP3 wie in r18.0
+fälschlich) — Datasheet S. 60 Zeile Pin 25.
+
+PB14/PB15-Hinweis: diese Pins haben als „additional function" auch OTG_HS_DM/DP
+(High-Speed-USB mit externem ULPI-PHY). Wir nutzen NUR OTG-FS (PA11/PA12),
+keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
+(Datasheet S. 67-68).
+
+### 5.7 USB-OTG-FS (built-in, kein externer PHY)
+
+| Pin | Port | AF | Funktion | Net |
+|---|---|---|---|---|
+| 70 | PA11 | OTG_FS_DM (AF10) | USB Data Minus | USB_DM |
+| 71 | PA12 | OTG_FS_DP (AF10) | USB Data Plus | USB_DP |
+
+Externe Beschaltung: USB-C-Buchse → USBLC6-2 ESD-Schutz (bleibt aus v0.6) →
+direkt an PA11/PA12. Keine externen Serien-Widerstände nötig (H743 hat
+interne USB-PHY mit eingebauten Pull-Ups/Pull-Downs für Speed-Negotiation).
+
+### 5.8 Debug + Boot
+
+| Pin | Port/Signal | Funktion | Net |
 |---|---|---|---|
-| 1 | GP0 | **v0.9: PIO I²S BCK → PCM5102A pin 13** (war UART0 TX) | I2S_BCK |
-| 2 | GP1 | **v0.9: PIO I²S LRCK → PCM5102A pin 15** (war UART0 RX) | I2S_LRCK |
-| 4 | GP2 | I²C1 SDA | I2C_SDA |
-| 5 | GP3 | I²C1 SCL | I2C_SCL |
-| 6 | GP4 | **v0.9: PIO I²S DIN → PCM5102A pin 14** (war SPI0 MISO, ungenutzt) | I2S_DOUT |
-| 7 | GP5 | SPI0 CSn | OLED_CS |
-| 9 | GP6 | SPI0 SCK | OLED_SCK |
-| 10 | GP7 | SPI0 TX (MOSI) | OLED_MOSI |
-| 11 | GP8 | OLED DC | OLED_DC |
-| 12 | GP9 | OLED RES | OLED_RES |
-| 14 | GP10 | EN1 A (Drive) | DRIVE_A |
-| 15 | GP11 | EN1 B | DRIVE_B |
-| 16 | GP12 | EN1 SW | DRIVE_SW |
-| 17 | GP13 | EN2 A (Brightness) | BRIGHT_A |
-| 19 | GP14 | EN2 B | BRIGHT_B |
-| 20 | GP15 | EN2 SW | BRIGHT_SW |
-| 21 | GP16 | EN3 A (Display) | DISPLAY_A |
-| 22 | GP17 | EN3 B | DISPLAY_B |
-| 24 | GP18 | EN3 SW | DISPLAY_SW |
-| 25 | GP19 | EN4 A (Volume) | VOL_A |
-| 26 | GP20 | EN4 B | VOL_B |
-| 27 | GP21 | **r15: PIO-UART TX → MIDI Out (TRS Type A)** (war EN4 SW; SW wandert auf MCP GPB5) | **MIDI_TX** |
-| 29 | GP22 | MCP23017 INTA | MCP_INT |
-| 31 | GP26 | **BAT_SENSE (ADC0) — Battery-Voltage via 100k/100k Spannungsteiler (NEU r12)** | **BAT_SENSE** |
-| **32** | **GP27** | **PAM8403 /SHDN (Pin 12, active LOW; GPIO HIGH = enabled)** | **AMP_nSHDN** |
-| **34** | **GP28** | **PAM8403 /MUTE (Pin 5, active LOW; GPIO HIGH = un-muted)** | **AMP_nMUTE** |
+| 72 | PA13 (JTMS/SWDIO) | SWD Debug Data — Standard STM32 Belegung | SWDIO |
+| 76 | PA14 (JTCK/SWCLK) | SWD Debug Clock | SWCLK |
+| 89 | PB3 (JTDO/TRACESWO) | SWO Trace-Output (optional) | SWO |
+| 94 | BOOT0 | dedicated, Pull-Down 10 kΩ → System-Boot-Loader nur via DFU/Reset-Hold | BOOT0 |
+| 14 | NRST | dedicated, Pull-Up 10 kΩ + 100 nF Debounce-Cap | NRST |
 
-**Alle 24 funktionalen Pins jetzt belegt.** ADC0 (GP26) ab r12 für BAT_SENSE (war STATUS_LED in r3-r11; STATUS_LED1 wandert auf PCA9685 LED10, siehe §7.2). ADC1/2/3 nicht verfügbar (GP27/28 = Amp-Control, GP29 = interner Vsys/3).
+SWD-Header J4 (3-Pin 1.27 mm, bestehend aus v0.6) wird auf PA13/PA14/GND
+umverdrahtet (war bei Pico ein anderer Footprint). SWO auf PB3 ist optional —
+PB3 ist in LQFP100 verfügbar (Pin 89) und hat keinen Konflikt mit anderen
+Funktionen, da wir TIM2_CH2 auf PA1 statt PB3 mappen.
 
-**WICHTIG — Active-Low-Konvention**: PAM8403H /SHDN (Pin 12) und /MUTE (Pin 5)
-sind beide ACTIVE LOW. Pico-GPIO HIGH = Funktion AUS (= enabled/un-muted),
-GPIO LOW = Funktion AKTIV (= shutdown/muted). Hardware-Pull-Downs
-(R_SHDN_PD, R_MUTE_PD 10k) ziehen beide LOW während Pico-Boot → Amp ist
-default OFF + MUTED.
+### 5.9 Clock-Source (HSE)
 
-**Pop-Suppression-Sequenz (Firmware) — KORREKTE Reihenfolge:**
+| Pin | Funktion | Wert |
+|---|---|---|
+| 12 | PH0-OSC_IN (HSE) | 8 MHz Crystal-Eingang |
+| 13 | PH1-OSC_OUT (HSE) | 8 MHz Crystal-Ausgang |
 
-Beim Power-on muss der Chip ZUERST aufwachen (/SHDN HIGH), DANN un-muted
-werden (/MUTE HIGH). Umgekehrt würde der Chip beim /SHDN-HIGH-Übergang
-sofort un-muted aufwachen → Pop.
+HSE-Crystal: **ABRACON ABLS-8.000MHZ-B4-T** (HC-49/US SMD), 8 MHz, CL 18 pF,
+ESR max **80 Ω** (Datasheet Drawing 450669 Rev AD). Load-Caps 2× 22 pF C0G/NP0
+0603 als Startwert. PLL-Konfig: PLL_M=4 → 2 MHz PFD → PLL_N=480 → 960 MHz VCO
+→ PLL_P=2 → SYSCLK 480 MHz.
+
+**Gain-Margin-Hinweis (AN2867):** Mit ESR_max=80 Ω und C₀+CL=25 pF ist
+gm_crit = 4 × 80 × (2π·8e6)² × (25e-12)² = 0.506 mA/V → Gain Margin =
+1.5/0.506 = **2.97** im Worst-Case (ESR_max über vollen Temp-Bereich). Das
+AN2867-Lehrbuch-Minimum von 5 gilt für Industrial/Automotive über -40…+85 °C;
+für dieses Indoor-Audio-Gerät (15–30 °C, ESR_typ ~40–50 Ω) liegt der reale
+Margin bei ~5–6. **Bewusst akzeptiert.** In Phase 5 ist der Crystal-Start am
+realen PCB zu verifizieren.
+
+**Load-Cap-Feinabstimmung (Phase 5):** 2× 22 pF ergeben mit ~5 pF Stray nur
+~16 pF effektiv (< CL=18 pF → Quarz läuft minimal schnell, wenige ppm). Für
+exakte 18 pF wären ~24–27 pF nötig. Da die echte Stray-Kapazität erst nach dem
+Layout messbar ist: 22 pF als Startwert behalten, in Phase 5 gegen die
+gemessene Frequenz nachjustieren (Load-Cap-Wert tauschen, beide C_HSE gleich).
+
+HSI bewusst nicht als Primär-Clock — ±2 % Drift wäre für SAI/I²S-Sync
+unbrauchbar (Tonhöhen-Drift hörbar bei Drone-Voices über Minuten).
+
+### 5.10 Power-Supply-Pins (LQFP100)
+
+| Pin | Signal | Anschluss |
+|---|---|---|
+| 6 | VBAT | mit +3V3 verbunden (kein RTC-Backup-Akku nötig) |
+| 10, 26, 49, 74 | VSS (4×) | GND |
+| 11, 27, 50, 75, 100 | VDD (5×) | +3V3 |
+| 19 | VSSA | analoge GND (mit VSS verbunden, Single-Star-Point empfohlen) |
+| 20 | VREF+ | mit VDDA verbunden |
+| 21 | VDDA | +3V3 via Ferrit BLM18AG601 + 1 µF + 100 nF |
+| 48 | VCAP1 | 2.2 µF X5R 0603 zu VSS (interner SMPS Bulk) |
+| 73 | VCAP2 | 2.2 µF X5R 0603 zu VSS (interner SMPS Bulk) |
+
+Decoupling: pro VDD-Pin (5 Stück) ein 4.7 µF X5R 0805 + ein 100 nF X7R 0603
+Bulk-Cap, möglichst nah am Pin platziert. Ferrit-Bead BLM18AG601 (LCSC C84094)
+in der VDDA-Versorgung zur Trennung Analog-Digital. Power-Sequenz: keine
+explizite Reihenfolge nötig — H7 hat keinen VDDA-Sequencing-Constraint
+(Datasheet S. 91), und das interne SMPS bringt VCAP1/VCAP2 selbst hoch.
+
+### 5.11 Active-Low-Konvention + Pop-Suppression-Sequenz (unverändert)
+
+PAM8403H /SHDN und /MUTE sind beide ACTIVE LOW. GPIO HIGH = Funktion AUS
+(= enabled/un-muted), GPIO LOW = Funktion AKTIV (= shutdown/muted).
+Hardware-Pull-Downs R_SHDN_PD und R_MUTE_PD (10 kΩ) ziehen beide LOW
+während MCU-Boot → Amp ist default OFF + MUTED.
+
+**Pop-Suppression-Sequenz (Firmware) — KORREKTE Reihenfolge (unverändert):**
 
 - **Power-on**:
-  1. Boot: GP27 (/SHDN) und GP28 (/MUTE) LOW (Pull-Downs) + MCP-GPA5 (PCM XSMT) LOW → alles stumm
+  1. Boot: PB14 (/SHDN) und PB15 (/MUTE) LOW (Pull-Downs) + MCP-GPA5 (PCM XSMT) LOW → alles stumm
   2. Warten ~50 ms bis +5V/+3V3 stabil
-  3. GP27 (/SHDN) = HIGH → Chip wacht auf, interne Referenzen settlen (Output bleibt via /MUTE=LOW stumm)
-  4. ~50 ms später: GP28 (/MUTE) = HIGH + MCP-GPA5 (PCM XSMT) = HIGH → Audio frei
+  3. PB14 (/SHDN) = HIGH → Chip wacht auf, interne Referenzen settlen
+  4. ~50 ms später: PB15 (/MUTE) = HIGH + MCP-GPA5 (PCM XSMT) = HIGH → Audio frei
 - **Power-off (umgekehrt)**:
   1. MCP-GPA5 (PCM XSMT) = LOW (DAC stumm)
-  2. GP28 (/MUTE) = LOW (Amp-Output muted)
-  3. ~50 ms später: GP27 (/SHDN) = LOW (Chip aus)
+  2. PB15 (/MUTE) = LOW (Amp-Output muted)
+  3. ~50 ms später: PB14 (/SHDN) = LOW (Chip aus)
 - Resultat: kein „Klick" beim An-/Ausschalten
 
-Power-Pins: VBUS (40)=+5V von USB-C, 3V3OUT (36)=+3V3 für Logik, GND mehrere.
+### 5.12 Belegungs-Übersicht (alle ~30 belegten GPIOs in LQFP100)
+
+| Pin-Bereich | Funktion |
+|---|---|
+| 3, 4, 5 | Audio I²S (SAI1) |
+| 7, 92, 93 | I²C-Bus + Interrupt |
+| 22, 23, 67, 68 | Encoder TIM-QEI (4 Pins für 2× Encoder) |
+| 59, 60, 63, 64 | Encoder TIM-QEI (4 Pins für 2× Encoder) |
+| 2, 97, 98 | Encoder-Switches (3, EN4 auf MCP) |
+| 25 | ADC BAT_SENSE |
+| 29, 30, 31, 32, 33 | LCD (SPI1 + 3 GPIOs) |
+| 53, 54 | PAM8403 Amp-Control |
+| 55 | Status-LED |
+| 70, 71 | USB-OTG-FS |
+| 72, 76 | SWD Debug |
+| 86 | MIDI-TX |
+| 89 | SWO Trace (optional) |
+| 12, 13, 14, 94 | dedicated (HSE, NRST, BOOT0) |
+| 6, 10, 11, 19, 20, 21, 26, 27, 48, 49, 50, 73, 74, 75, 100 | Power/GND/VCAP/VBAT/VDDA |
+
+**Frei** (für zukünftige Erweiterungen, ohne PCB-Re-Spin): PE2, PA2, PA4, PA10,
+PA15, PB0-PB2, PB4, PB5, PB8, PB9, PB10-PB13, PC0, PC1, PC2_C, PC3_C, PC8-PC12,
+PD0-PD4, PD6, PD7, PD9-PD11, PD14, PD15, PE7-PE15 — über 40 freie GPIOs.
+
+---
 
 ---
 

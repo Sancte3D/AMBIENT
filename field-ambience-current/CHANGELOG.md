@@ -4,11 +4,191 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r17** (Display-UX: EN2-Konflikt aufgelöst —
-EN2 = Audio-Brightness, LCD-Backlight auf SHIFT+EN2; Menü zurück auf
-8 Pills; Encoder-Velocity-Acceleration; HOLD×GENERATE-Koexistenz).
-Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche
-Audio-Stand.
+Aktuelle Rev: **v0.7-r18.4** (Crystal-Entscheidung getroffen: Y1 →
+ABRACON ABLS-8.000MHZ-B4-T HC-49/US SMD, ESR 80 Ω, Gain Margin 2.97
+Worst-Case / ~5–6 real bei Indoor-Temp. F-4 RESOLVED, Phase 3 entblockt.)
+
+---
+
+## v0.7-r18.4 (2026-06-08) — Y1 Crystal-Entscheidung: ABLS-8.000MHZ-B4-T
+
+**F-4 RESOLVED.** Nach Verwerfen von ABM3 (Gain Margin 0.47 — würde nicht
+oszillieren) hat der User den HC-49/US-SMD-Pfad gewählt. Final gewählt:
+**ABRACON ABLS-8.000MHZ-B4-T** (LCSC C596838).
+
+### Verifikation gegen offizielles Datasheet (Drawing 450669 Rev AD, Sept 2022)
+- ESR max: **80 Ω** (Table 1, 8.000–8.999 MHz Fundamental) — verifiziert
+- C₀ max: 7 pF, CL: 18 pF Standard
+- Op-Temp: -20…+70 °C (Suffix B), Freq-Tol: ±30 ppm (Suffix 4)
+- Package: HC-49/US SMD, 11.4×4.7×4.2 mm; Land-Pattern 5.6×2.1 mm Pads,
+  9.5 mm Spacing (Datasheet Page 3)
+
+### Gain-Margin-Bewertung (AN2867)
+- gm_crit = 4 × 80 × (2π·8e6)² × (25e-12)² = 0.506 mA/V
+- STM32H743 gm = 1.5 mA/V → **Gain Margin = 2.97** (Worst-Case, ESR_max über
+  vollen Temp-Bereich)
+- AN2867-Lehrbuch-Min ist 5, gilt aber für Industrial/Automotive über
+  -40…+85 °C. **Dieses Gerät ist Indoor-Audio (15–30 °C)** → ESR_typ ~40–50 Ω
+  → realer Gain Margin ≈ 5–6. **Bewusst akzeptiert (User-Entscheidung).**
+- Restrisiko niedrig; bei künftigem Outdoor-/Extremtemperatur-Einsatz auf
+  MEMS-Oszillator (SiTime SiT8008) wechseln.
+
+### SPEC-Änderungen
+- §4 BOM Y1-Zeile: PLATZHALTER → ABLS-8.000MHZ-B4-T (C596838), volle Specs
+- §5.9 Clock-Source: ESR-Wert „< 50 Ω" → real 80 Ω korrigiert; Gain-Margin-
+  Hinweis + Load-Cap-Tuning-Note (22 pF Startwert → Phase 5 auf ~24–27 pF
+  justierbar) ergänzt
+- Phase 3 (KiCad-Schematic) **entblockt**; Footprint-Verifikation HC-49/US-SMD
+  Land-Pattern verbleibt als Phase-3-Aufgabe
+
+### Doku
+- `docs/component_reviews/Y1_alternatives.md`: Entscheidungs-Abschnitt ergänzt
+- `docs/component_reviews/Y1_ABM3-8.000MHZ-D2Y-T.md`: als „NICHT VERBAUT" markiert
+- `docs/component_reviews/README.md`: Y1 → APPROVED WITH NOTES, F-4 RESOLVED
+
+---
+
+## v0.7-r18.3 (2026-06-08) — Y1 Crystal CRITICAL FAIL nach AN2867-Verifikation
+
+**Component-Review-Findings im Zuge der konservativen Datasheet-Verifikation
+aller PCB-Komponenten** (User-Vorgabe: keine Annahmen, jede Komponente prüfen).
+
+Wichtigster Fund: das in r18.0/r18.1 spezifizierte ABRACON ABM3-8.000MHZ-D2Y-T
+Crystal **wird mit STM32H743 wahrscheinlich nicht oszillieren**.
+
+### Korrekte Crystal-Auswahl-Formel laut ST AN2867 Rev 24:
+- `gm_crit = 4 × ESR × (2π·F)² × (C₀ + CL)²`
+- Erforderliche Gain Margin (Sicherheitsfaktor): ≥ 5
+- Für ABM3 (ESR=500 Ω, CL=18 pF, C₀=7 pF, F=8 MHz):
+  - gm_crit = 3.16 mA/V
+  - STM32H743 gm = 1.5 mA/V (DS12110 Rev 5 Table 43)
+  - **Gain Margin = 0.47** — etwa Faktor 10 unter dem AN2867-Minimum
+  - Bei Gain Margin <1: keine Oszillation
+
+### Ursache des Fehlers
+In r18.1 wurde die ESR-Berechnung ohne den Faktor 4 gemacht (Formel:
+`gm_crit = ESR × (2πF)² × (C₀+CL)²` statt korrekt mit ×4). Das ergab
+ein 4× zu optimistisches theoretisches ESR_max. Erst nach Studium von
+AN2867 wurde der Fehler aufgedeckt.
+
+### Konsequenzen
+- **SPEC v0.7 §4 BOM Y1-Zeile auf PLATZHALTER** geändert (war ABM3 LCSC C144380)
+- **BLOCKER für Phase 3** (KiCad-Schematic-Migration): Crystal muss zwingend
+  vor PCB-Layout final gewählt sein
+- Phase 2 Sourcing-Session erforderlich für Alternativen
+
+### Lösungs-Ansätze (in Phase 2 zu prüfen)
+1. Standard 8 MHz Crystal mit ESR ≤ 47.5 Ω bei CL=18 pF im 5032-Package
+   _(Erratum r18.4: hier stand 190 Ω — Faktor 4 fehlte in der
+   Rückwärtsrechnung; korrekt 47.5 Ω für GM=5)_
+   (praktisch nicht zu finden, Standard-Crystals haben 100-500 Ω)
+2. HC-49S-SMD Crystal (typisch ESR 30-60 Ω, aber größerer Footprint
+   ~11×4.5 mm)
+3. **MEMS-Oszillator wie SiTime SiT8008 oder SiT1602**: empfohlene Lösung,
+   eliminiert Crystal-Auswahl-Probleme komplett (aktiv, direkter Anschluss
+   an OSC_IN im Bypass-Mode, höhere Kosten ~$1-2 vs $0.20 Crystal)
+
+### Andere Findings aus Y1-Review-Session
+- **F-3:** SPEC §4 hatte fälschlich „140 Ω ESR" — echter Wert 500 Ω laut
+  ABRACON-Datasheet Rev 12.03.09 (jetzt irrelevant da Crystal ohnehin
+  ersetzt wird)
+- **F-5:** DS12110 Rev 5 dokumentiert nur bis 400 MHz; 480 MHz mit VOS0
+  erst in späteren Datasheet-Revisionen — neuere Revision noch zu beschaffen
+
+### Verifizierte Werte (positive Bestätigungen aus DS12110 Rev 5 Pages 100-122)
+Diese SPEC-Werte sind jetzt direkt aus dem ST-Datasheet belegt:
+- VCAP = 2× 2.2 µF X5R ESR<100 mΩ (Table 24) — bestätigt SPEC §5.10
+- VDD-Range 1.62-3.6 V (Table 23) — 3.3 V innerhalb Spec
+- VDD33USB ≥ 3.0 V (Table 23) — 3.3 V innerhalb Spec
+- HSE-Range 4-48 MHz (Table 43) — 8 MHz innerhalb Range
+- IDD @ 400 MHz all-periph: 165 mA typ (Table 29)
+- NRST hat interne Pull-Up 30-50 kΩ (Table 59)
+
+### Komponenten-Review-Framework
+Neu in r18.2 angelegt: `docs/component_reviews/` mit Index-README,
+10-Punkte-Template-Reviews pro Bauteil, Findings-Liste F-1..F-5.
+2 von ~19 Bauteilen bislang reviewed (U1 STM32H743VIT6, Y1 Crystal).
+
+Volle Component-Review: `docs/component_reviews/Y1_ABM3-8.000MHZ-D2Y-T.md`
+
+https://claude.ai/code/session_01K5kLTFpDCCoYwx2dq6RkAv
+
+---
+
+## v0.7-r18 (2026-06-07) — MCU-Migration: Pico 2 (RP2350) → STM32H743VIT6
+
+**SPEC-Major-Bump weil Hardware-Architektur-Bruch.** SPEC-Datei umbenannt von
+`field_ambience_pcb_SPEC_v0.6.md` auf `field_ambience_pcb_SPEC_v0.7.md` (Git-Mv,
+zeigt Rename sauber im Diff).
+
+**Auslöser:** Während des UX-Reviews der Display-Sim wurde nach Cycle-Count-
+Profiling gefragt („reicht der Pico 2 wirklich?"). Eine erste Antwort von mir
+war methodisch falsch (Op-Counting statt WCET, beide M33-Cores als DSP
+gerechnet obwohl Core 1 für UI gebraucht wird, „Daisy ist drop-in" verharmloste
+den HAL-Aufwand). ChatGPT + Gemini haben die Schwächen aufgedeckt:
+
+- Op-Counting ≠ WCET auf Cortex-M33 mit Flash-XIP, Branches, Cache-Misses.
+- 300 MMACS-Annahme rechnet beide Cores als DSP-Pool → unrealistisch.
+- 25-30 % Headroom-Schätzung ohne reale Messung → keine Produktbasis.
+- DTCM/ITCM auf dem H7 löst exakt das XIP-Cache-Miss-Problem.
+- „Drop-in"-Floskel war falsch: DSP-Code portabel, Hardware-Layer (SAI/DMA/
+  Pinout/Power/Display-Treiber) braucht wirklich neue Arbeit.
+
+**User-Entscheidung:** STM32H743 als **Bare-Chip** (vs Daisy-Seed-Modul, um
+spätere doppelte Arbeit zu vermeiden) — wir sind in Design-Phase, nicht in
+Schnell-Demo-Phase.
+
+### Was sich ändert
+- **MCU**: Pico-2-Modul (SC1631, ~5€, nicht JLC-bestückbar) → STM32H743VIT6
+  Bare-Chip (LQFP100, LCSC C114409, ~$6.62, JLC SMT-stockable).
+- **CPU-Headroom**: 150 MHz dual M33 → 480 MHz single M7 + Double-Precision FPU
+  + DTCM/ITCM (3-4× effektives DSP-Budget für ein Produkt).
+- **Peripherie-Gewinne**: SAI ersetzt PIO-I²S, USART2 ersetzt PIO-UART für MIDI,
+  TIM-QEI ersetzt Software-Encoder-Polling.
+- **Power-Tree**: H743 hat internen SMPS (VCAP-Mode) → kein externer Core-LDO
+  nötig. AP7361A LDO wird aktiviert (war DNP) für +3V3-Rail. HSE 8 MHz Crystal
+  + Load-Caps neu (Audio-Jitter-relevant).
+- **GPIO-Reserve**: war 0 (alle 24 Pico-Pins belegt) → ~50 ungenutzte GPIOs
+  beim H743 LQFP100 für Rev-B-Erweiterungen.
+
+### Was sich NICHT ändert
+- PCM5102A DAC, PAM8403 Amp, ST7789 LCD, MCP23017, PCA9685, 4× EC11 Encoder,
+  10× Choc-V2-Cells, USB-C-Connector, USBLC6 ESD-Schutz, Polyfuse F1,
+  Bulk-Cap 1000 µF, MCP73831 Charger, TPS61089 Boost, P-MOSFET Power-Path,
+  TVS D2, alle Buttons, alle LEDs, Gehäuse, Speaker.
+- **Sound Constitution** — komplett MCU-agnostisch, gilt unverändert.
+- **DSP-Engine-Code** (3600 LOC in `firmware-c-next/src/`): pad/texture/bass/
+  drone/reverb/generative/brain/engine/menu/oled_draw/battery — alles
+  hardware-frei, kompiliert nativ.
+
+### Was bewusst NICHT in v0.7
+- PCB-Layout (`.kicad_pcb`) — kommt erst nach Profiling-Acceptance-Gate
+  (Step 13.5 in `NATIVE_PORT_PLAN.md`).
+- SDRAM-Bestückung — Footprint vorsehen, Bestückung in Rev-B.
+- Convolution-Reverb — Freeverb bleibt (sound-bewährt, getestet, constitution-
+  konform). Convolution wäre auf H7 möglich, aber kein A/B-Risiko jetzt.
+- Polyphony-Aufstockung über 5 Cells — Sound-Constitution unverändert.
+
+### Migrations-Phasen (siehe NATIVE_PORT_PLAN.md Step 13)
+1. **Phase 1 — Doku (DIESER PR):** SPEC v0.7 + CHANGELOG + Archivierung
+   veralteter Dateien (ROADMAP.md, PITCH.md → `docs/archive/`). Nur Doku-
+   Änderungen, kein Code, kein KiCad.
+2. **Phase 2 — Firmware HAL-Abstraktion** (HAL-Header einziehen, Pico-Treiber
+   in `src/hal_pico/`). Pico-Build bleibt grün als Regressions-Anker.
+3. **Phase 3 — KiCad-Schaltplan-Migration** (pico.kicad_sch archivieren als
+   `kicad/legacy_pico2/`, neuer stm32h743.kicad_sch via Generator).
+4. **Phase 4 — Firmware H743-Implementation** (SAI, TIM-QEI, USART, SPI, I²C).
+5. **Phase 5 — Profiling** (DWT->CYCCNT, Worst-Case-Last via 8-Min-WAV).
+   **Acceptance-Gate: < 40 % Block-Zeit Worst-Case** vor PCB-Layout-Start.
+
+### Archiviert (Git-Mv, nicht gelöscht)
+- `field_ambience_pcb_SPEC_v0.6.md` → `field_ambience_pcb_SPEC_v0.7.md` (Rename)
+- `ROADMAP.md` → `docs/archive/roadmap_pre_step6.md` (Pi-Phase-Roadmap, Pre-Step-6)
+- `PITCH.md` → `docs/archive/pitch_pre_step6.md` (Crowdfund-Draft mit Pi-Hardware)
+
+### Referenz-Diskussion
+Vollständige Re-Analyse mit ChatGPT/Gemini-Kritik der Op-Counting-Methode siehe
+Session-Log unter https://claude.ai/code/session_01K5kLTFpDCCoYwx2dq6RkAv.
 
 ---
 
