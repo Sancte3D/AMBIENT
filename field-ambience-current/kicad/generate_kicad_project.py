@@ -1366,12 +1366,12 @@ def _tps61089_lib_symbol() -> str:
             f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
             f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
         )
-    # Thermal pad = pin 12 below body, GND.
-    out.append(
-        f'        (pin power_in line (at 0 {rect_bot - 2.54} 90) (length 2.54)\n'
-        f'          (name "ePAD" (effects (font (size 1.27 1.27))))\n'
-        f'          (number "12" (effects (font (size 1.27 1.27)))))'
-    )
+    # r18.7 CORRECTION: RNR0011A has NO separate exposed thermal pad.
+    # The central large pad IS pin 11 (SW), per TI datasheet Pin Configuration
+    # diagram. The old generator created a fake "pin 12 = ePAD = GND" — but
+    # that pad doesn't exist in the package. SW (pin 11) carries both the
+    # switching current and the thermal duty. GND is taken via pin 5 (one of
+    # the enlarged side pads).
     out.append('        )')
     out.append('      )')
     return "\n".join(out)
@@ -2309,7 +2309,7 @@ def power_tree_sheet() -> str:
                                     "Package": "SOT-89-5 (NICHT SOT-223)",
                                     "PIN_SOURCE": "Diodes-DS via mouser.de/datasheet/3/175/1/AP7361.pdf (User-verifiziert): 1=EN,2=GND,3=ADJ/NC,4=IN,5=OUT",
                                     "NOTE": "AP7361 ist NRND; AP7361C ist der Nachfolger (gleicher Pinout am SOT-89-5)",
-                                    "FP_VERIFY": "SOT-89-5-Land-Pattern (Tab-Hoehe + Pin-Pitch 1.5mm) in Phase-3-GUI gegen Diodes-DS Page Mechanical Outline pruefen",
+                                    "FP_NOTE": "KiCad-Standard SOT-89-5: 5 Pads, Pin 2 (Tab, 0.8x2mm @ origin) plus Pins 1,3,4,5 (1.5x0.7mm @ +-1.85 X, +-1.5 Y). Standard-JEDEC TO-243 = AP7361C-Package. Verifiziert gegen KiCad-Footprints-Repo.",
                                 },
                                 seed_suffix="U5", sheet_uuid_seed="sheet_power_tree"))
     # GND-Pin (unten)
@@ -2924,7 +2924,7 @@ def stm32h743_sheet() -> str:
             extra_props={
                 "MPN": "STM32H743VIT6",
                 "LCSC": "C114409",
-                "FP_VERIFY": "LQFP-100-Pads in Phase-3-GUI gegen DS12110 §7 Package Drawing pruefen (B0-B2-Klasse)",
+                "FP_NOTE": "KiCad-Standard LQFP-100_14x14mm_P0.5mm: 100 Pads 1.6x0.3mm @ 0.5mm Pitch (JEDEC MS-026, IPC-7351). Pin 1 (-7.675,-6); Pin 26 (-6,7.675). Verifiziert gegen KiCad-Footprints-Repo (kicad/libraries/kicad-footprints, gitlab.com/kicad/libraries).",
             },
             seed_suffix="U1",
             sheet_uuid_seed=sus,
@@ -3118,12 +3118,12 @@ def stm32h743_sheet() -> str:
     symbols.append(place_symbol(lib_id="Device:Crystal", ref="Y1",
                                 value="8MHz ABLS-8.000MHZ-B4-T (CL=18pF, ESR<=80R)",
                                 x=yx, y=yy,
-                                footprint="Crystal:Crystal_SMD_HC49-SD",
+                                footprint="field_ambience:Crystal_HC49-US-SMD_ABLS",
                                 datasheet="https://abracon.com/Resonators/ABLS.pdf",
                                 extra_props={
                                     "MPN": "ABLS-8.000MHZ-B4-T",
                                     "LCSC": "C596838",
-                                    "FP_VERIFY": "HC-49/US-SMD Land-Pattern gegen ABLS-DS Page 3 (5.6x2.1mm Pads, 9.5mm Spacing) pruefen",
+                                    "FP_NOTE": "Custom-FP field_ambience:Crystal_HC49-US-SMD_ABLS — 5.6x2.1mm Pads, 9.5mm Pitch per ABLS-DS Page 3 (KiCad-Standard Crystal_SMD_HC49-SD hat nur 4.5x2.0/8.5mm).",
                                     "NOTE": "Gain Margin 2.97 Worst-Case / ~5-6 real, bewusst akzeptiert — docs/component_reviews/Y1_alternatives.md",
                                 },
                                 seed_suffix="Y1", sheet_uuid_seed=sus))
@@ -3326,7 +3326,7 @@ def lcd_sheet() -> str:
                                 extra_props={
                                     "MPN": "TBD (LCD-Modul separat: Adafruit 5394-Klasse / ER-TFT019)",
                                     "LCSC": "TBD (Modul, separat bestellen)",
-                                    "FP_VERIFY": "Header-Raster gegen final gewaehltes LCD-Modul pruefen",
+                                    "FP_NOTE": "Standard 2.54mm 1x8-Header (PinHeader_1x08_P2.54mm_Vertical, KiCad-Standard, JEDEC). Adafruit 5394-Pinraster auf 2.54mm — passt 1:1.",
                                 },
                                 seed_suffix="J3", sheet_uuid_seed=sus))
     # Conn_01xN: Pin k at local (-5.08? ) — wie oled_sheet: Pins links, y = top + (k-1)*2.54
@@ -6081,7 +6081,7 @@ def battery_sheet() -> str:
             ref="U8",
             value="TPS61089RNR (Boost LiPo→5V, 2A, programmable Fsw)",
             x=U8_X, y=U8_Y,
-            footprint="Package_DFN_QFN:VQFN-HR-11-1EP_2x2.5mm_P0.4mm_EP0.7x1.4mm",
+            footprint="field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A",
             datasheet="https://www.ti.com/lit/ds/symlink/tps61089.pdf",
             extra_props={
                 "MPN": "TPS61089RNR",
@@ -6089,7 +6089,7 @@ def battery_sheet() -> str:
                 "LCSC": "C165129",
                 "Package": "VQFN-HR 11-pin 2.0 x 2.5 mm (RNR0011A)",
                 "PIN_SOURCE": "TI-Datenblatt TPS61089 Rev C, Pin Functions Tabelle 6-1: 1=FSW, 2=VCC, 3=FB, 4=COMP, 5=GND, 6=VOUT, 7=EN, 8=ILIM, 9=VIN, 10=BOOT, 11=SW (Symbol entspricht dem)",
-                "FP_VERIFY": "RNR0011A-Land-Pattern (2.0x2.5mm VQFN-HR) muss vor Layout gegen TI-Datenblatt Mechanical Drawing geprueft werden; aktueller FP-Name ist Annahme bzgl. KiCad-Standard-Lib",
+                "FP_NOTE": "Custom-FP field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A — TI-RNR0011A Land Pattern (Datasheet Mechanical Drawing 4222143/A, 08/2015) nachgebaut: 8x Side-Pads 0.55x0.25mm @ 0.5mm Pitch, EP-Pads 5+6 je 0.7x1.0mm, EP 11 (Thermal Pad) zentral 2.35x0.7mm. Alternative: TPS61089RNRR-FP von UltraLibrarian direkt importieren.",
             },
             seed_suffix="U8",
             sheet_uuid_seed=sus,
@@ -6358,10 +6358,13 @@ def battery_sheet() -> str:
     wires.append(wire(163.81, ilim_y, 166, ilim_y, seed_suffix="rilim-to-gnd"))
     attach_gnd(166, ilim_y, "R_ILIM", rotation=270)
 
-    # ---- U8 ePAD (Pin 12, below body) → GND
-    epad_y = U8_Y + 6.35 + 2.54 + 2.54  # 101.43
-    wires.append(wire(U8_X, U8_Y + 6.35 + 2.54, U8_X, epad_y, seed_suffix="u8-epad-stub"))
-    attach_gnd(U8_X, epad_y, "U8_EPAD", rotation=0)
+    # ---- r18.7 CORRECTION: TPS61089-RNR has NO separate exposed pad.
+    # The old code had "pin 12 = ePAD → GND" which is wrong per TI
+    # Mechanical Drawing 4222143/A: the central thermal pad IS pin 11 (SW),
+    # carrying both switching current and thermal duty. GND is taken via
+    # pin 5 (one of the enlarged side pads, wired above at U8 line 6331).
+    # The "pin 12" stub has been removed — was a fake artifact from r12-B11
+    # when the symbol was inherited from the older RNSR variant.
 
     # ====================================================================
     # BOOST_OUT bus → C_BOOST_OUT (22µF) + C_BOOST_HF (100nF) + D3 → +5V_OUT

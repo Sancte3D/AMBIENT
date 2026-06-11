@@ -54,11 +54,11 @@ The honest answer to "where is the X?" — by topic and by role.
 | 1 | Firmware/audio prototype validated | ✅ (host tests + bench bring-up + 8-min performance render) |
 | 2 | Schematic ERC clean | 🟡 partial — schematic exists and is structurally validated, GUI-ERC not yet run |
 | 3 | BOM/footprints verified | 🟡 partial — main parts verified, ~10 FP_VERIFY properties still open |
-| 4 | PCB layout exists | ❌ — no `.kicad_pcb` |
+| 4 | PCB layout exists | ❌ — Phase-5-Profiling-Gate übersprungen (ADR-0005); jetzt blockiert nur noch Gate 2 (ERC) + Gate 3 (FP_VERIFY) |
 | 5 | DRC clean | ❌ — needs layout first |
 | 6 | Gerbers/BOM/CPL generated | ❌ |
 | 7 | Prototype ordered | ❌ |
 | 8 | Bring-up test passed | ❌ |
 | 9 | Production candidate | ❌ |
 
-**Honest current state: Gate 1.5.** Don't talk yourself or anyone else into "almost ready to order."
+**Honest current state: Gate 1.5.** Pfad nach vorn: ERC (Gate 2) → FP_VERIFY (Gate 3) → Layout (Gate 4). Phase-5-Profiling-Gate ist mit ADR-0005 entschärft — Layout darf vor Firmware-Migration starten.

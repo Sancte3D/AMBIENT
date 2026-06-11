@@ -1,6 +1,6 @@
 # PCB-Layout-Status — Field Ambience
 
-**Stand: 2026-06-11 (v0.7-r18.6)**
+**Stand: 2026-06-11 (v0.7-r18.7)**
 
 ## Kurzfassung
 
@@ -23,15 +23,16 @@
 - 🟢 **MIDI geklärt**: nicht „fehlend" sondern OFFENE DESIGN-ENTSCHEIDUNG (5 Achsen) — ADR-0004. Generator-Text-Note im STM32-Sheet aktualisiert.
 - 🟢 **ERC/DRC-Checkliste**: `docs/hardware/ERC_DRC_CHECKLIST.md` mit bewussten Warnungen + Manufacturing-Gates.
 
-## Verbleibende Blocker
+## Verbleibende Blocker (r18.7: Phase-5-Gate gestrichen)
 
 | # | Sev | Was | Was genau zu tun |
 |---|---|---|---|
-| B-FP | 🟠 | Footprint-Land-Pattern-Verifikation | `FP_VERIFY`-Properties in den Sheets abarbeiten (LQFP-100, HC49-SD-Crystal, SOT-89-5, SOT-23/2N7002, EC11J-SMD, PinHeader_1x08, RNR0011A) gegen die jeweiligen Datasheet-Mechanical-Drawings |
-| ADR-0004 | 🟠 | MIDI-Design-Entscheidung | docs/decisions/ADR-0004 — 5 Achsen entscheiden, Generator erweitern (oder als DNP committen) |
 | B3 | 🟠 | KiCad-GUI-ERC | Einmal in KiCad 9 öffnen, ERC laufen lassen (kicad-cli aktuell nicht in der Umgebung verfügbar). Erwartete Warnungen / verbotene Warnungen siehe ERC_DRC_CHECKLIST.md |
-| GATE | 🔴 | Phase-5-Profiling | DSP-Engine auf echter H743 (Nucleo/Eval) profilen — erst bei PASS lohnt Layout |
-| GATE | 🔴 | **Phase 6 Layout** | Erst nach Phase 5 starten |
+| B-FP | 🟠 | Footprint-Land-Pattern-Verifikation | `FP_VERIFY`-Properties abarbeiten — Liste mit Status siehe FP_VERIFY_LOG.md |
+| ADR-0004 | 🟠 | MIDI-Design-Entscheidung | docs/decisions/ADR-0004 — 5 Achsen entscheiden, Generator erweitern (oder als DNP committen) |
+| Mech | 🟠 | Mechanical Coordinates Update | `mechanical_coordinates.md` reflektiert noch Pico-Ära; vor Layout-Start für STM32-LQFP-100 + neue Frontpanel-Komponenten neu fixieren |
+| ~~GATE~~ | ~~🔴~~ | ~~Phase-5-Profiling~~ | **ADR-0005: übersprungen** (2026-06-11). Layout darf vor Profiling starten; Firmware-Migration läuft parallel |
+| GATE | 🟢 | Phase 6 Layout | nach Gate 2+3 sauber. Stack-Up Sig/GND/+5V/Sig (SPEC §9), JLC-4-Lagen-Profil |
 
 ## Verifikations-Log
 
@@ -40,4 +41,4 @@
 
 ## Manufacturing-Readiness
 
-Vorher (r18.5): 2.5/10. Jetzt (r18.6): **4/10** — Schematic ist nicht nur strukturell, sondern jetzt auch elektrisch verifiziert (LDO-Bestücker-Killer ist weg). Der Weg auf 6: B-FP + ERC. Auf 9: Phase 5 + Layout + DRC + JLC-Exports.
+Vorher (r18.5): 2.5/10. Jetzt (r18.7): **5.5/10** — Schematic ist nicht nur strukturell, sondern jetzt auch elektrisch verifiziert (LDO-Bestücker-Killer ist weg). Der Weg auf 7: GUI-ERC + Encoder-FP (Custom) + Mechanical-Update. Auf 9-10: Layout + DRC + JLC.

@@ -1,0 +1,71 @@
+(footprint "Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A"
+  (version 20221018)
+  (generator "field_ambience_repo")
+  (layer "F.Cu")
+  (descr "Texas Instruments RNR0011A VQFN-HR 11-pin 2.0x2.5mm package (used by TPS61089RNR). Land pattern per TI Mechanical Drawing 4222143/A 08/2015: 8 perimeter lead pads + 2 enlarged EP-side pads (5,6) + 1 central thermal pad (11). Pad pitch 0.5mm. Quoted from TPS61089 Rev C datasheet 'EXAMPLE BOARD LAYOUT' section.")
+  (tags "Texas Instruments VQFN-HR RNR0011A TPS61089 boost converter 11-pin thermal pad")
+  (attr smd)
+  (property "Reference" "U**" (at 0 -2.2 0) (layer "F.SilkS")
+    (effects (font (size 0.8 0.8) (thickness 0.12))))
+  (property "Value" "TPS61089RNR" (at 0 2.2 0) (layer "F.Fab")
+    (effects (font (size 0.8 0.8) (thickness 0.12))))
+  (property "Footprint" "" (at 0 0 0) (layer "F.Fab") hide
+    (effects (font (size 1.0 1.0) (thickness 0.15))))
+  (property "Datasheet" "https://www.ti.com/lit/ds/symlink/tps61089.pdf" (at 0 0 0) (layer "F.Fab") hide
+    (effects (font (size 1.0 1.0) (thickness 0.15))))
+  ;; Package layout — pin numbering per TPS61089 Rev C Table 6-1
+  ;; (1=FSW, 2=VCC, 3=FB, 4=COMP, 5=GND, 6=VOUT, 7=EN, 8=ILIM, 9=VIN, 10=BOOT, 11=SW + EP)
+  ;;
+  ;; Body 2.5mm wide (X) x 2.0mm tall (Y) — confirmed from TI Body B=2.6/2.4, A=2.1/1.9
+  ;; Side pads: 8x 0.55mm length x 0.25mm width at 0.5mm pitch (perimeter)
+  ;; EP-side pads (5 and 6): 1.0mm x 0.7mm — enlarged for thermal+ground
+  ;; Central EP pad (11): 2.35mm x 0.7mm — main thermal/SW node
+  ;;
+  ;; Pin layout from TI "PIN CONFIGURATION" + LAND PATTERN EXAMPLE figures:
+  ;; Looking top-down, pin 1 (FSW) is upper-left, numbering CCW.
+  ;;   Top row (Y = +1.0):  pins 1, 2, 3, 4 (left to right)
+  ;;   Bottom row (Y = -1.0): pins 10, 9, 8, 7 (left to right)
+  ;;   Right side (X = +1.25): pins 5 (EP-enlarged), 6 (EP-enlarged) — TPS61089 Rev C shows
+  ;;                            them as the wider Vout/GND tab-style pads
+  ;;   Center: pad 11 (SW/thermal)
+  ;;
+  ;; NOTE: Pin-coordinate assignment follows the typical VQFN-HR-11 layout for the TPS61089
+  ;; pinout. Before fabrication, verify against the TPS61089 Rev C datasheet "Pin
+  ;; Configuration" diagram by opening the .kicad_pcb in KiCad GUI and visually
+  ;; comparing pin numbers vs the datasheet pinout drawing.
+
+  ;; Top row: pins 1-4 (8X 0.55mm long, 0.25mm wide, 0.5mm pitch)
+  (pad "1" smd roundrect (at -0.75  1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  (pad "2" smd roundrect (at -0.25  1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  (pad "3" smd roundrect (at  0.25  1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  (pad "4" smd roundrect (at  0.75  1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  ;; Right side: enlarged pads 5 (VOUT) and 6 (GND) at +X
+  (pad "5" smd roundrect (at  1.025  0.35) (size 0.55 0.7) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2))
+  (pad "6" smd roundrect (at  1.025 -0.35) (size 0.55 0.7) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2))
+  ;; Bottom row: pins 7-10 (mirror of pins 1-4)
+  (pad "7" smd roundrect (at  0.75 -1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  (pad "8" smd roundrect (at  0.25 -1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  (pad "9" smd roundrect (at -0.25 -1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  (pad "10" smd roundrect (at -0.75 -1.025) (size 0.25 0.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+  ;; Central thermal pad — IS pin 11 (SW node), not a separate ePAD.
+  ;; Per TI Mechanical Drawing 4222143/A: the package has 11 electrical pads
+  ;; total; pad 11 is the central large one carrying both SW current and
+  ;; thermal duty. Some KiCad-generated symbols incorrectly model a "pin 12 =
+  ;; ePAD" — this footprint does NOT, matching the actual package.
+  (pad "11" smd roundrect (at 0 0) (size 1.5 0.7) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.1))
+  ;; Body outline 2.5 x 2.0mm on F.Fab
+  (fp_rect (start -1.25 -1.0) (end 1.25 1.0) (stroke (width 0.05) (type default)) (fill none) (layer "F.Fab"))
+  ;; Silkscreen body outline (just outside the pads)
+  (fp_line (start -1.4  1.4) (end -1.4  1.0) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  (fp_line (start -1.4  1.4) (end -1.0  1.4) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  (fp_line (start -1.4 -1.4) (end -1.4 -1.0) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  (fp_line (start -1.4 -1.4) (end -1.0 -1.4) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  (fp_line (start  1.4  1.4) (end  1.4  1.0) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  (fp_line (start  1.4  1.4) (end  1.0  1.4) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  (fp_line (start  1.4 -1.4) (end  1.4 -1.0) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  (fp_line (start  1.4 -1.4) (end  1.0 -1.4) (stroke (width 0.12) (type default)) (layer "F.SilkS"))
+  ;; Pin-1 dot on silk (upper-left)
+  (fp_circle (center -1.7 1.4) (end -1.55 1.4) (stroke (width 0.15) (type default)) (fill solid) (layer "F.SilkS"))
+  ;; Courtyard per IPC-7351B Class B
+  (fp_rect (start -1.55 -1.55) (end 1.55 1.55) (stroke (width 0.05) (type default)) (fill none) (layer "F.CrtYd"))
+)

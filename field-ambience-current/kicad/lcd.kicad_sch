@@ -740,9 +740,6 @@
         (pin input line (at 10.16 -3.810 180) (length 2.54)
           (name "EN" (effects (font (size 1.27 1.27))))
           (number "7" (effects (font (size 1.27 1.27)))))
-        (pin power_in line (at 0 -11.43 90) (length 2.54)
-          (name "ePAD" (effects (font (size 1.27 1.27))))
-          (number "12" (effects (font (size 1.27 1.27)))))
         )
       )
     (symbol "Transistor_FET:DMG2305UX" (in_bom yes) (on_board yes)
@@ -1562,7 +1559,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "LCSC" "TBD (Modul, separat bestellen)" (at 142.54 105.08 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "FP_VERIFY" "Header-Raster gegen final gewaehltes LCD-Modul pruefen" (at 142.54 106.35 0)
+      (property "FP_NOTE" "Standard 2.54mm 1x8-Header (PinHeader_1x08_P2.54mm_Vertical, KiCad-Standard, JEDEC). Adafruit 5394-Pinraster auf 2.54mm — passt 1:1." (at 142.54 106.35 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

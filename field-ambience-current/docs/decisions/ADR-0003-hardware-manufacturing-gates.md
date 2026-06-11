@@ -38,7 +38,7 @@ Adopt a 9-gate model:
 - **Anyone can read the gate number** from `PROJECT_MAP.md` / `PROJECT_STATUS.md`.
 - **No skipping gates.** "Gate 4 done, gate 3 partial" means current state is Gate 3, not Gate 4.
 - **Half-credit is "X.5"** — e.g. "1.5 of 9" means gate 1 complete + meaningful progress on gate 2.
-- **Phase-5 profiling acceptance is a precondition for gate 4** — see ADR-0002. We don't lay out a board if we don't know the chip can run the engine.
+- ~~**Phase-5 profiling acceptance is a precondition for gate 4**~~ — ADR-0005 hat das aufgehoben (User-Entscheidung 2026-06-11). Layout darf vor Profiling starten; Firmware-Migration läuft parallel statt sequenziell.
 
 ## Consequences
 

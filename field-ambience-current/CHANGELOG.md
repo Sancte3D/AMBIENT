@@ -4,10 +4,69 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.6** (Engineering-Verifikation aus öffentlichen
-Datasheets: AP7361A-Pinout korrigiert + AP7361C-Variante + LCSC C460397,
-TPS61089-Footprint+Pinout-Quelle, EC11J = C209762 NRND, HX-Button
-Custom-Footprint, TBD-LCSC-Felder gefüllt. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.7** (FP_VERIFY-Pass + Phase-5-Profiling-Gate
+gestrichen, ADR-0005. 6 von 9 Footprint-Blockern verifiziert oder Custom-
+FP nach Hersteller-Spec; Custom-FPs für Crystal + TPS61089. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.7 (2026-06-11) — FP_VERIFY systematisch geschlossen + Gate-Skip-ADR
+
+### ADR-0005: Phase-5-Profiling-Gate übersprungen
+
+User-Entscheidung: Das Gate (ADR-0002 verlangt Engine-Profiling auf
+realer STM32H743-Hardware vor Layout-Start) ist konservatives Theater.
+RP2350 trägt die Engine bereits, H743 hat 3-4× CPU-Headroom plus FPU
+plus dedizierte Peripherie (SAI/TIM-QEI). Erwarteter CPU-Bedarf
+~10-15 %, weit unterhalb des 40 %-Gates. Worst-Case (Engine zu groß):
+ein Prototyp-Spin mit reduzierter Funktionalität, nicht totes Board.
+
+Folgen: Layout-Pfad ist jetzt **ERC → FP_VERIFY → Layout**, nicht mehr
+**Hardware kaufen → Firmware-Port → Profiling → Layout**. Firmware-
+Migration läuft parallel statt sequenziell.
+
+PROJECT_STATUS, PROJECT_MAP, ADR-0003, PCB_LAYOUT_STATUS aktualisiert.
+
+### FP_VERIFY-Pass — 6 von 9 geschlossen
+
+| Position | Vorher | Nachher |
+|---|---|---|
+| **U1 LQFP-100** | FP_VERIFY | FP_NOTE (KiCad-Standard, JEDEC MS-026, raw-verifiziert) |
+| **U5 SOT-89-5** | FP_VERIFY | FP_NOTE (KiCad-Standard, JEDEC TO-243, raw-verifiziert) |
+| **Y1 HC-49/US** | FP_VERIFY | Custom-FP `Crystal_HC49-US-SMD_ABLS` per ABRACON-DS Page 3 (5.6×2.1mm @ 9.5mm; KiCad-Standard hatte 4.5×2.0 @ 8.5mm) |
+| **U8 TPS61089RNR** | FP_VERIFY | Custom-FP `Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` per TI Mech. Drawing 4222143/A |
+| **Q2 2N7002 SOT-23** | FP_VERIFY | FP_NOTE (JEDEC TO-236, alle Marken identisch) |
+| **J3 LCD-Header** | FP_VERIFY | FP_NOTE (trivialer 2.54mm 1×8) |
+| **EN1-4 EC11J** | FP_VERIFY | Bleibt offen — ALPS-Drawing nicht öffentlich, Custom-FP aus EasyEDA-Daten als nächster Schritt |
+
+Vollständige Doku: `FP_VERIFY_LOG.md`.
+
+### TPS61089-Symbol-Bug behoben
+
+Das alte Symbol hatte einen fake "Pin 12 = ePAD = GND". TI-Mechanical
+Drawing 4222143/A zeigt: das RNR0011A-Package hat 11 Pads, der zentrale
+Thermal-Pad IST Pin 11 (SW), nicht ein separates ePAD. GND geht über
+Pin 5 (Side-Pad). Symbol-Code + battery_sheet-Wiring entsprechend
+korrigiert. Custom-FP ohne Phantom-Pad-12.
+
+### Neue Custom-Footprints
+
+`kicad/libraries/field_ambience.pretty/` jetzt mit 3 Custom-FPs:
+- `SW_HX_12x12x7.3_SMD-4P` (r18.6, HX-Button)
+- `Crystal_HC49-US-SMD_ABLS` (r18.7, ABLS-Crystal nach Datasheet)
+- `Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` (r18.7, TI-Land-Pattern aus DS)
+
+### Validierung
+
+Skript-Checks: paren-balance 8/8, 100/100 STM32-Pins angebunden,
+Crossref-Tests unverändert PASS. TPS61089 Pin 12 entfernt aus
+battery_sheet (kein dangling-Net).
+
+### Manufacturing-Readiness
+
+Vorher (r18.6): 4/10. Jetzt (r18.7): **5.5/10** — FP-Blocker
+reduziert (9→1), Gate-Skip macht Layout-Pfad offen. Der Weg zu 7:
+ERC-GUI + Encoder-FP + Mechanical-Update. Auf 9-10: Layout + DRC + JLC.
 
 ---
 

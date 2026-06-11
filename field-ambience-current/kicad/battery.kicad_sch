@@ -744,9 +744,6 @@
         (pin input line (at 10.16 -3.810 180) (length 2.54)
           (name "EN" (effects (font (size 1.27 1.27))))
           (number "7" (effects (font (size 1.27 1.27)))))
-        (pin power_in line (at 0 -11.43 90) (length 2.54)
-          (name "ePAD" (effects (font (size 1.27 1.27))))
-          (number "12" (effects (font (size 1.27 1.27)))))
         )
       )
     (symbol "Transistor_FET:DMG2305UX" (in_bom yes) (on_board yes)
@@ -1768,7 +1765,7 @@
         (effects (font (size 1.27 1.27))))
       (property "Value" "TPS61089RNR (Boost LiPo→5V, 2A, programmable Fsw)" (at 142.54 91.27 0)
         (effects (font (size 1.27 1.27))))
-      (property "Footprint" "Package_DFN_QFN:VQFN-HR-11-1EP_2x2.5mm_P0.4mm_EP0.7x1.4mm" (at 140.0 90.0 0)
+      (property "Footprint" "field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A" (at 140.0 90.0 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "https://www.ti.com/lit/ds/symlink/tps61089.pdf" (at 140.0 90.0 0)
         (effects (font (size 1.27 1.27)) hide))
@@ -1782,7 +1779,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "PIN_SOURCE" "TI-Datenblatt TPS61089 Rev C, Pin Functions Tabelle 6-1: 1=FSW, 2=VCC, 3=FB, 4=COMP, 5=GND, 6=VOUT, 7=EN, 8=ILIM, 9=VIN, 10=BOOT, 11=SW (Symbol entspricht dem)" (at 142.54 98.89 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "FP_VERIFY" "RNR0011A-Land-Pattern (2.0x2.5mm VQFN-HR) muss vor Layout gegen TI-Datenblatt Mechanical Drawing geprueft werden; aktueller FP-Name ist Annahme bzgl. KiCad-Standard-Lib" (at 142.54 100.16 0)
+      (property "FP_NOTE" "Custom-FP field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A — TI-RNR0011A Land Pattern (Datasheet Mechanical Drawing 4222143/A, 08/2015) nachgebaut: 8x Side-Pads 0.55x0.25mm @ 0.5mm Pitch, EP-Pads 5+6 je 0.7x1.0mm, EP 11 (Thermal Pad) zentral 2.35x0.7mm. Alternative: TPS61089RNRR-FP von UltraLibrarian direkt importieren." (at 142.54 100.16 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2019,20 +2016,6 @@
     (instances
       (project "field_ambience"
         (path "/f6a664dc-7032-4108-a10b-e4076008e6bd" (reference "#PWR_R_ILIM") (unit 1)))))
-  (symbol (lib_id "Power:GND") (at 140.0 101.43 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no)
-    (uuid "89ab3f70-7d3b-48ed-a7c7-f3d625c9dfcd")
-      (property "Reference" "#PWR_U8_EPAD" (at 142.54 98.89 0)
-        (effects (font (size 1.27 1.27))))
-      (property "Value" "GND" (at 142.54 102.7 0)
-        (effects (font (size 1.27 1.27))))
-      (property "Footprint" "" (at 140.0 101.43 0)
-        (effects (font (size 1.27 1.27)) hide))
-      (property "Datasheet" "~" (at 140.0 101.43 0)
-        (effects (font (size 1.27 1.27)) hide))
-    (instances
-      (project "field_ambience"
-        (path "/f6a664dc-7032-4108-a10b-e4076008e6bd" (reference "#PWR_U8_EPAD") (unit 1)))))
   (symbol (lib_id "Device:C") (at 180 105 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid "edc17daf-844f-4c5b-a986-97e15579e834")
@@ -2294,9 +2277,6 @@
   (wire (pts (xy 163.81 91.27000000000001) (xy 166 91.27000000000001))
     (stroke (width 0) (type default))
     (uuid "78d47a5e-b093-44ec-a0a5-0dba697fcea7"))
-  (wire (pts (xy 140.0 98.89) (xy 140.0 101.43))
-    (stroke (width 0) (type default))
-    (uuid "69e6b684-b36c-41e0-a0a6-0596624c9f8d"))
   (wire (pts (xy 180 101.19) (xy 180 98))
     (stroke (width 0) (type default))
     (uuid "f168a76f-8d15-4777-ae7b-bcd2b95c40c6"))

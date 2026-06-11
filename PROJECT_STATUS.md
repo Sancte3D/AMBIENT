@@ -36,11 +36,15 @@
 
 ## Next 5 concrete actions
 
-1. **Industrial designer** picks up enclosure / panel CAD from `mechanical_coordinates.md`
-2. **Hardware engineer** runs ERC in KiCad 9 GUI on r18.6 schematic, logs results, closes real errors → unblocks gate 2
-3. **Firmware engineer** sets up STM32H743 dev hardware (Nucleo-H743 + PCM5102A breakout) for Phase-5 profiling → unblocks gate 4 prerequisite
-4. **Anyone** resolves ADR-0004 (MIDI design decision) — 5 axes need a meeting, not more code
-5. **Anyone** updates `mechanical_coordinates.md` to reflect STM32 chip footprint (it's still on Pico-era positions)
+> **Update 2026-06-11**: Phase-5-Profiling-Gate übersprungen (ADR-0005). Direkter Pfad zu Layout. Reihenfolge entsprechend.
+
+1. **Hardware engineer** runs ERC in KiCad 9 GUI on r18.6 schematic, logs results, closes real errors → unblocks gate 2
+2. **FP_VERIFY abarbeiten** — ~10 Footprints gegen Hersteller-Drawings prüfen → unblocks gate 3
+3. **Mechanical Coordinates updaten** auf STM32-LQFP-100-Footprint (war auf Pico-Era) → Layout-Vorbereitung
+4. **ADR-0004 (MIDI) entscheiden** — 5 Achsen, Entscheidung blockt Layout-Komplett-Heit (oder als DNP committen)
+5. **PCB-Layout starten** sobald Gate 2+3 sauber sind — Stack-Up Sig/GND/+5V/Sig (SPEC §9), JLC-4-Lagen-Profil
+
+**Parallel-Track (kein Blocker mehr):** Firmware-Migration STM32H743 (NATIVE_PORT_PLAN Phase 2+4). Läuft unabhängig vom Layout, profitiert vom realen Board sobald es da ist.
 
 ## What this file is not
 
