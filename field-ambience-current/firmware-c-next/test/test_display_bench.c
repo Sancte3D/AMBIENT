@@ -142,7 +142,12 @@ int main(void) {
     spin_frames(25);
     CHECK(menu_mode() == MENU_BROWSE, "not back in browse");
 
-    /* ---- overlay lifecycle (stuck-bug regression guard) ----------------- */
+    /* ---- overlay lifecycle (stuck-bug regression guard) -----------------
+     * The overlay is ALWAYS transient (sim's Drive/Volume/Brightness model):
+     * it must fade out by itself after the idle hold. The SHIFT-mode latch
+     * lives in the main loop, NOT here — so auto-fade is correct even while
+     * the mode is on. An explicit dismiss (SHIFT tap to exit, or leaving
+     * the menu scene) must also tear it down early. */
     show_overlay("Backlight", 80, fake_ms);
     spin_frames(10);
     CHECK(overlay.active && anim[A_OVALPHA] > 0.9f, "overlay not shown");
@@ -152,6 +157,15 @@ int main(void) {
     spin_frames(90);                           /* > idle 1100 ms + fade     */
     CHECK(!overlay.active, "overlay STUCK after idle");
     CHECK(anim[A_OVALPHA] < 0.02f, "overlay alpha stuck: %f", (double)anim[A_OVALPHA]);
+
+    /* re-showing after a turn must re-arm the idle timer (fresh 1100 ms) */
+    show_overlay("Backlight", 50, fake_ms);
+    spin_frames(40);                           /* 640 ms — not expired yet  */
+    show_overlay("Backlight", 55, fake_ms);    /* turn re-arms the timer    */
+    spin_frames(40);                           /* 640 ms after re-arm       */
+    CHECK(overlay.active, "overlay died before re-armed timeout");
+    spin_frames(60);                           /* now well past the re-arm  */
+    CHECK(!overlay.active, "overlay STUCK after re-armed idle");
 
     show_overlay("Backlight", 30, fake_ms);
     spin_frames(5);

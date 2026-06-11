@@ -53,13 +53,21 @@
  *                         drehen = feine 1 %-Schritte, schnell = grobe
  *                         Sprünge. Browse + diskrete Werte: 1 Schritt/Rastung.
  *   Encoder drücken       Edit-Modus rein/raus.
- *   SHIFT HALTEN + drehen Display-Helligkeit (Overlay "Backlight XX%",
- *                         blendet nach ~1 s von selbst aus). KEIN Modus —
- *                         loslassen genügt, nichts kann hängen bleiben.
- *   SHIFT HALTEN + Push   Helligkeit sofort auf 100 %.
- *   SHIFT kurz tippen     Akku-Demo: 100→90→…→0→Lade-Glyph→100.
- *   SHIFT lang (1 s,      Testbild weiterschalten:
- *   ohne zu drehen)       MENU → RAMP → CHECKER → TYPE → MENU.
+ *   SHIFT 1× tippen       SHIFT-Modus AN (gelatcht): der Encoder regelt jetzt
+ *                         die Helligkeit (PWM GP22) statt das Menü. Das
+ *                         Readout "Backlight XX%" ist TRANSIENT — es faded
+ *                         über das Menü ein und nach ~1 s Ruhe von selbst
+ *                         wieder aus, exakt wie die Drive/Volume/Brightness-
+ *                         Overlays der Sim. Der MODUS bleibt dabei an, nur
+ *                         die Anzeige geht weg.
+ *     im SHIFT-Modus:
+ *       Encoder drehen    Helligkeit ± (Readout faded wieder rein, mit
+ *                         Velocity-Acceleration wie bei %-Werten).
+ *       Encoder drücken   Helligkeit auf 100 %.
+ *       SHIFT erneut      Modus AUS: Encoder zurück am Menü.
+ *   SHIFT lang halten     Testbild weiterschalten (aus Menü UND Testbildern —
+ *   (1,5 s ohne Tippen)   so kommt man auch wieder raus; gesperrt nur im
+ *                         SHIFT-Modus): MENU → RAMP → CHECKER → TYPE → MENU.
  *
  * TESTBILDER (Panel-Verifikation, gibt es in der Sim nicht):
  *   RAMP    16 Graustufen + 1-px-Rahmen + Ecken-Ticks. Fehlende Rahmenkante
@@ -125,9 +133,9 @@
 #define ENC_HALF_STEP 0
 #endif
 
-#define LONG_PRESS_MS  1000  /* SHIFT long-press = scene switch             */
+#define LONG_PRESS_MS  1500  /* SHIFT long-press = scene switch             */
 #define DEBOUNCE_MS    20
-#define OVERLAY_HOLD_MS 1100 /* overlay idle time before fade-out (sim)     */
+#define OVERLAY_HOLD_MS 1100 /* transient overlay fade-out (post-toggle)    */
 
 /* --- layout constants — must mirror src/menu.c (and the sim) ------------- */
 #define PAD_L      22
@@ -320,7 +328,13 @@ static bool tweens_tick(uint32_t now) {
     return any;
 }
 
-/* --- overlay state (Backlight / battery-style transient readout) --------- */
+/* --- overlay state (Backlight readout) -----------------------------------
+ * ALWAYS transient — the sim's Drive/Volume/Brightness model: fades in over
+ * the menu on interaction, re-arms its idle timer on every further turn,
+ * fades out by itself after OVERLAY_HOLD_MS of inactivity. The SHIFT-mode
+ * LATCH is separate main-loop state: the encoder stays remapped to the
+ * backlight even after the readout has faded — only the display is
+ * transient, never the mode. */
 static struct {
     bool     active;
     char     label[16];
@@ -645,17 +659,10 @@ static void render_type(void) {
 /* ========================================================================= */
 /* Battery demo (mirrors the sim's "Akku −10" / charge-source buttons).     */
 /* ========================================================================= */
-
-static void battery_demo_step(void) {
-    if (battery_usb_present()) {
-        battery_set_usb_present(false);
-        battery_set_pct(100);
-    } else if (battery_pct() > 0) {
-        battery_set_pct(battery_pct() - 10);
-    } else {
-        battery_set_usb_present(true);
-    }
-}
+/* (Battery is hard-coded to a sane value below — on a real PCB the ADC      */
+/* shim wired in battery.c will replace that. The sim's "Akku −10" button    */
+/* lived in JS and has no useful place on the bench.)                        */
+/* ========================================================================= */
 
 /* ========================================================================= */
 /* Main                                                                      */
@@ -691,9 +698,19 @@ int main(void) {
     printf("encoder: CLK GP%d DT GP%d SW GP%d  SHIFT GP%d\n",
            PIN_ENC_CLK, PIN_ENC_DT, PIN_ENC_SW, PIN_SHIFT);
 
-    /* SHIFT gesture state (main-loop side). */
-    bool     shift_rotated = false;     /* turned while SHIFT held          */
-    bool     shift_longed  = false;     /* long-press already fired         */
+    /* SHIFT is a TOGGLE LATCH (the sim's on-screen SHIFT button):
+     *   1× tap → shift_mode = true: the encoder is remapped to the
+     *            backlight. The "Backlight XX%" readout is TRANSIENT —
+     *            it fades in over the menu on every turn and fades back
+     *            out after ~1 s idle; the MODE stays latched regardless.
+     *   2× tap → shift_mode = false: encoder back on the menu.
+     *   long-hold (no tap action) → cycle test scene (panel verification)
+     * `shift_t0` tracks the current press for long-press classification;
+     * `shift_rotated` and `shift_longed` veto the tap action on release so
+     * a long-press or a press-while-held-rotate never doubles as a toggle. */
+    static bool shift_mode = false;
+    bool     shift_rotated = false;
+    bool     shift_longed  = false;
     uint32_t shift_t0      = 0;
 
     uint32_t last_beat = to_ms_since_boot(get_absolute_time());
@@ -712,16 +729,24 @@ int main(void) {
 
         bool dirty = false;
 
-        /* --- SHIFT gesture bookkeeping ---------------------------------
-         * Release is handled BEFORE press: if both edges land in the same
-         * drain (fast pumping during a slow animation frame), the release
-         * belongs to the PREVIOUS press and must be judged by the previous
-         * press's flags — processing press first would reset them and turn
-         * a finished backlight gesture into a spurious battery tap. */
+        /* --- SHIFT bookkeeping -----------------------------------------
+         * Release BEFORE press: a release in the same drain as a new press
+         * belongs to the previous press, so flags must still be those of
+         * the press that ended (otherwise a quick second tap would clobber
+         * shift_rotated/longed and turn a finished long-press into a
+         * spurious toggle). */
         if (sh_release && !shift_rotated && !shift_longed) {
-            battery_demo_step();             /* plain tap = battery demo   */
-            printf("battery: %d%% usb=%d\n", battery_pct(),
-                   battery_usb_present());
+            /* short tap → toggle the SHIFT-mode latch. Entering shows the
+             * readout once (feedback + current value), then it fades like
+             * any Drive/Volume readout; leaving tears a visible one down. */
+            shift_mode = !shift_mode;
+            if (shift_mode) {
+                if (scene == SCENE_MENU)
+                    show_overlay("Backlight", backlight_pct, now);
+            } else {
+                dismiss_overlay(now);
+            }
+            printf("shift mode -> %s\n", shift_mode ? "ON" : "OFF");
             dirty = true;
         }
         if (sh_press) {
@@ -729,39 +754,46 @@ int main(void) {
             shift_rotated = false;
             shift_longed = false;
         }
-        if (sh_held && !shift_longed && !shift_rotated
+        /* Long-press = scene cycle. Fires from the menu AND from any test
+         * scene (that's the way back: the cycle ends at MENU again). The
+         * only veto is shift_mode — a long press while the encoder is
+         * remapped to the backlight would be a confusing "did my tap
+         * register?" moment; exit shift mode first (1 tap), then hold. */
+        if (sh_held && !shift_longed && !shift_rotated && !shift_mode
             && now - shift_t0 >= LONG_PRESS_MS) {
             shift_longed = true;
             scene = (scene_t)((scene + 1) % SCENE_COUNT);
+            if (scene != SCENE_MENU) {
+                /* leaving the menu: tear the menu's transient overlay down  */
+                dismiss_overlay(now);
+            }
             printf("scene -> %s\n", SCENE_NAME[scene]);
             dirty = true;
         }
 
         /* --- encoder rotation -------------------------------------------
          * While animating, one loop iteration blocks ~36 ms in oled_show(),
-         * so fast spinning can accumulate SEVERAL detents per drain. The
-         * magnitude must not be dropped: browse/discrete steps once per
-         * detent, accelerated edits multiply by the detent count. */
+         * so fast spinning can accumulate several detents per drain. The
+         * magnitude must NOT be dropped: browse/discrete steps once per
+         * detent, accelerated %-edits multiply by the detent count. */
         if (detents != 0) {
             int dir = detents > 0 ? 1 : -1;
             int n   = detents > 0 ? detents : -detents;
-            if (sh_held) {
-                /* SHIFT + turn = backlight (sim's SHIFT+EN2). HOLD gesture,
-                 * not a mode — release SHIFT and you're simply back. Works
-                 * in EVERY scene (adjusting brightness while judging the
-                 * RAMP greys is the point); overlay only renders in MENU. */
-                shift_rotated = true;
+            if (sh_held) shift_rotated = true;   /* veto the on-release tap  */
+
+            if (shift_mode) {
+                /* SHIFT mode is independent of scene — adjusting the panel
+                 * while judging RAMP greys is exactly the point. Every turn
+                 * re-shows the transient readout (and re-arms its fade). */
                 backlight_pct += accel_ticks(dir, now) * n;
                 if (backlight_pct < 0)   backlight_pct = 0;
                 if (backlight_pct > 100) backlight_pct = 100;
                 backlight_apply();
-                if (scene == SCENE_MENU) {
+                if (scene == SCENE_MENU)
                     show_overlay("Backlight", backlight_pct, now);
-                    dirty = true;
-                }
                 printf("backlight %d%%\n", backlight_pct);
+                dirty = true;
             } else if (scene == SCENE_MENU) {
-                dismiss_overlay(now);        /* any menu action clears it  */
                 menu_mode_t  m0 = menu_mode();
                 menu_param_t c0 = menu_current();
                 bool cont_edit = (m0 == MENU_EDIT) && cur_is_continuous();
@@ -782,18 +814,15 @@ int main(void) {
 
         /* --- encoder push ----------------------------------------------- */
         if (sw_press) {
-            if (sh_held) {
-                /* SHIFT + push = backlight 100 %, in every scene. */
-                shift_rotated = true;        /* it's a SHIFT gesture now   */
+            if (shift_mode) {
+                /* push inside SHIFT mode = jump to 100 % */
                 backlight_pct = 100;
                 backlight_apply();
-                if (scene == SCENE_MENU) {
+                if (scene == SCENE_MENU)
                     show_overlay("Backlight", backlight_pct, now);
-                    dirty = true;
-                }
                 printf("backlight -> 100%%\n");
+                dirty = true;
             } else if (scene == SCENE_MENU) {
-                dismiss_overlay(now);
                 menu_push();
                 on_mode_change(now);
                 printf("push -> mode=%s\n",
