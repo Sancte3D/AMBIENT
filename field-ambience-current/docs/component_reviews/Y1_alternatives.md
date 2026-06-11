@@ -100,10 +100,9 @@ User-Begründung: das Gerät wird keinen extremen Temperaturen ausgesetzt
 
 **Offen für Phase 3 (KiCad):**
 - Footprint: HC-49/US-SMD Land-Pattern gegen Datasheet Page 3 verifizieren
-  (5.6×2.1 mm Pads, 9.5 mm Spacing). KiCad-Standard `Crystal:Crystal_HC49-U_*`
-  prüfen — KiCad hat primär den THT-HC49-Footprint; für die SMD-Variante ggf.
-  Land-Pattern aus dem Datasheet selbst zeichnen oder passenden SMD-Footprint
-  suchen.
+  (5.6×2.1 mm Pads, 9.5 mm Spacing). KiCad-Kandidat: `Crystal:Crystal_SMD_HC49-SD`
+  (SMD-Variante; **nicht** `Crystal_HC49-U_Vertical`, das ist THT). Pads gegen
+  das ABRACON-Pattern matchen, bei Abweichung eigenen Footprint zeichnen.
 - Symbol: `Device:Crystal` (2-Pin, kein GND-Body).
 
 **Offen für Phase 5 (PCB-Test):**

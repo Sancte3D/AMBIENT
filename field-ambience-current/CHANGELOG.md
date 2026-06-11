@@ -78,8 +78,10 @@ AN2867 wurde der Fehler aufgedeckt.
 - Phase 2 Sourcing-Session erforderlich für Alternativen
 
 ### Lösungs-Ansätze (in Phase 2 zu prüfen)
-1. Standard 8 MHz Crystal mit ESR ≤ 190 Ω bei CL=18 pF im 5032-Package
-   (schwer zu finden, viele Standard-Crystals 100-500 Ω)
+1. Standard 8 MHz Crystal mit ESR ≤ 47.5 Ω bei CL=18 pF im 5032-Package
+   _(Erratum r18.4: hier stand 190 Ω — Faktor 4 fehlte in der
+   Rückwärtsrechnung; korrekt 47.5 Ω für GM=5)_
+   (praktisch nicht zu finden, Standard-Crystals haben 100-500 Ω)
 2. HC-49S-SMD Crystal (typisch ESR 30-60 Ω, aber größerer Footprint
    ~11×4.5 mm)
 3. **MEMS-Oszillator wie SiTime SiT8008 oder SiT1602**: empfohlene Lösung,

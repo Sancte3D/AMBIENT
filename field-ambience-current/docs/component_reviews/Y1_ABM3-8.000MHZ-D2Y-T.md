@@ -227,20 +227,25 @@ Crystal hat 2 elektrisch äquivalente Pads. Keine "Pinout"-Tabelle im klassische
 - Bei Gain Margin 1-5: unzuverlässige Oszillation
 
 **Erforderlich für Gain Margin = 5 bei 8 MHz mit C₀+CL = 25 pF:**
-- ESR_max = gm / (5 × 4 × (2πF)² × (C₀+CL)²) = 1.5e-3 / (5 × 1.58e-6) = **190 Ω**
+- 4 × (2πF)² × (C₀+CL)² = 4 × 2.5266e15 × 6.25e-22 = 6.317e-6
+- ESR_max = gm / (5 × 6.317e-6) = 1.5e-3 / 3.158e-5 = **47.5 Ω**
+  _(T+3-Korrektur: hier stand fälschlich 190 Ω — im Nenner fehlte der Faktor 4.
+  Derselbe Faktor-4-Bug, der in T+2 in der Vorwärtsrechnung gefixt wurde, steckte
+  noch in der Rückwärtsrechnung.)_
 
-→ ABM3 mit 500 Ω ist **2.6× über dem Maximum** — und sogar deutlich über dem Punkt wo Oszillation aufhört.
+→ ABM3 mit 500 Ω ist **10.5× über dem GM=5-Maximum** (500/47.5) — und sogar
+über dem Punkt, wo Oszillation ganz aufhört (GM=1 entspricht ESR = 237.5 Ω).
 
 **Lösungs-Ansätze (in Phase 2 Sourcing-Session zu klären):**
 
-1. **Crystal mit niedrigerem ESR + gleichem CL (18 pF):** ESR ≤ 190 Ω
-   - Bei 8 MHz im 5032-Standard-Package schwer zu finden (Standard-Crystals haben 100-500 Ω)
+1. **Crystal mit niedrigerem ESR + gleichem CL (18 pF):** ESR ≤ 47.5 Ω
+   - Bei 8 MHz im 5032-Standard-Package praktisch nicht zu finden (Standard-Crystals haben 100-500 Ω)
    - HC-49S-Style (THT/größeres SMD) kann <60 Ω haben, aber Footprint anders
 2. **Crystal mit niedrigerem CL (z.B. 10 pF) + niedrigem C₀:**
-   - Bei CL=10 pF, C₀=2 pF (C₀+CL=12 pF): gm_crit halbiert sich auf ~1.5 mA/V × 144/625 = ~0.69 mA/V → Gain Margin **2.2** — auch zu niedrig
-   - Selbst mit niedrigem CL braucht es ESR ≤ 200 Ω
+   - Bei CL=10 pF, C₀=2 pF (C₀+CL=12 pF): gm_crit = 3.16 mA/V × (12/25)² ≈ 0.73 mA/V → Gain Margin **≈ 2.1** — auch zu niedrig
+   - Selbst mit niedrigem CL braucht es ESR ≤ ~206 Ω für GM=5
 3. **Crystal in HC-49S-SMD (größer, 11×4.5 mm):**
-   - Typisch 30-60 Ω ESR → Gain Margin 10+ — sicher
+   - Typisch 30-60 Ω ESR → Gain Margin 4-8 (237.5/ESR) — bei 30 Ω solide, bei 60 Ω grenzwertig
    - Aber größerer Footprint
 4. **MEMS-Oszillator** (z.B. SiTime SiT8008, SiT1602):
    - Aktiv (kein Crystal-Problem)
@@ -256,6 +261,12 @@ Gain Margin ≥ 5.**
 ---
 
 ### Vorherige Bewertung (vor AN2867-Verifikation — bleibt zur Nachvollziehbarkeit)
+
+> ⚠️ **Achtung, veraltete Zahlen:** Dieser Abschnitt enthält die unkorrigierten
+> Werte von T+0 — insbesondere „theoretisch ~948 Ω" und „5×-Margin ≤190 Ω"
+> (beide ohne den AN2867-Faktor 4 gerechnet). Korrekt sind **237.5 Ω (GM=1)**
+> und **47.5 Ω (GM=5)**, siehe Abschnitt 9 oben. Nichts aus diesem Abschnitt
+> für Berechnungen weiterverwenden.
 
 Status war: 🟠 BLOCKED, „empfohlene Aktion: Crystal-Wechsel auf Low-ESR-Variante"
 

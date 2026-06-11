@@ -298,7 +298,7 @@ Folgende ursprünglich offene Punkte sind jetzt belegt:
 | VDDA-Toleranz vs VDD ungeprüft | **Tabelle 23 zeigt VDDA-Range separat (1.62 V min for ADC use, 1.8 V for DAC)** — keine explizite VDDA-VDD-Toleranz in Table 23. **AN3318 weiterhin offen für strikte Constraints** | DS12110 Rev 5 Table 23 |
 | VCAP-Bulk-Werte (2.2 µF angenommen) | **BESTÄTIGT: 2× 2.2 µF X5R ± 20%, ESR < 100 mΩ** | DS12110 Rev 5 Table 24 Page 101 |
 | Stromverbrauch @ 480 MHz (180 mA Annahme) | **TEILWEISE: 165 mA typ @ 400 MHz mit allen Peripherie aktiv (VOS1)**. 480 MHz mit VOS0 nicht in dieser DS-Revision → **F-5 Finding (Datasheet-Revision)** | DS12110 Rev 5 Table 29 Page 105 |
-| HSE-ESR-Limit | **Gm_critmax = 1.5 mA/V** → theoretisch ESR_max ~948 Ω, Best-Practice 5×-Margin ~190 Ω → **F-4 Finding (Y1-Crystal marginal)** | DS12110 Rev 5 Table 43 Page 120 |
+| HSE-ESR-Limit | **Gm_critmax = 1.5 mA/V**. AN2867: gm_crit = 4·ESR·(2πF)²·(C₀+CL)²; bei 8 MHz, C₀+CL=25 pF: ESR_max **237.5 Ω** (GM=1) bzw. **47.5 Ω** (GM≥5) _(frühere Angaben 948/190 Ω waren ohne Faktor 4 — korrigiert T+3)_ → **F-4 RESOLVED: Y1 = ABLS-8.000MHZ-B4-T, ESR 80 Ω, GM 2.97 Worst-Case / ~5-6 real @ Indoor-Temp, bewusst akzeptiert** | DS12110 Rev 5 Table 43 Page 120 |
 | HSE Drive Level (R_EXT) | DS Page 120 Figure 19 zeigt R_EXT optional. AN2867-Referenz im Datasheet erwähnt. **AN2867 noch zu beschaffen** | DS12110 Rev 5 Page 120 |
 | Power-Sequencing | **Reset-Timing Tabelle 25 + Table 26 BOR0-Threshold 1.62 V verifiziert** — kein spezielles Sequencing zwischen VDD/VDDA dokumentiert in §6.3.3 | DS12110 Rev 5 Tables 25, 26 |
 | BOOT0 Threshold | **VIL = 0.19×VDD+0.1 V, VIH = 0.17×VDD+0.6 V** (separater Threshold für BOOT0) | DS12110 Rev 5 Table 59 Page 131 |

@@ -105,10 +105,10 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 - **Gain Margin = 1.5 / 3.16 = 0.47** ← WEIT unter 5
 - **Bei Gain Margin < 1: Crystal oszilliert gar nicht!**
 - **Wirkung:** ABM3 funktioniert mit STM32H743 wahrscheinlich nicht. PCB würde im ersten Spin nicht booten.
-- **Erforderlich für Gain Margin = 5 bei 8 MHz, C₀+CL = 25 pF:** ESR ≤ **190 Ω**
+- **Erforderlich für Gain Margin = 5 bei 8 MHz, C₀+CL = 25 pF:** ESR ≤ **47.5 Ω** _(T+3-Korrektur: hier stand fälschlich 190 Ω — in der Rückwärtsrechnung ESR = gm/(5·4·(2πF)²·(C₀+CL)²) fehlte der Faktor 4)_
 - **Aktion:** **PFLICHT-Wechsel.** Mehrere Lösungs-Pfade in Phase 2 Sourcing-Session zu prüfen:
-  - Standard 8 MHz Crystal mit ESR ≤ 190 Ω im 5032 (schwer)
-  - HC-49S-SMD Crystal (ESR meist ≤ 50 Ω, aber größerer Footprint)
+  - Standard 8 MHz Crystal mit ESR ≤ 47.5 Ω im 5032 (praktisch nicht zu finden)
+  - HC-49S-SMD Crystal (ESR typisch 30-60 Ω → GM 4-8, aber größerer Footprint)
   - **MEMS-Oszillator (SiTime SiT8008, SiT1602): empfohlen** — eliminiert Crystal-Probleme komplett, direkter Anschluss an OSC_IN
 - **Status:** SPEC §4 Y1-Zeile in r18.3 auf „PLATZHALTER" geändert. **BLOCKER für Phase 3 KiCad-Schematic.**
 
