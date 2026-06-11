@@ -1009,38 +1009,54 @@ def _crystal_lib_symbol() -> str:
     return "\n".join(out)
 
 
-def _ap7361a_lib_symbol() -> str:
-    """AP7361A 1A-LDO, SOT-89-5.
+def _ap7361c_lib_symbol() -> str:
+    """AP7361C 1A LDO, SOT-89-5 (Diodes Inc.).
 
-    🔴 PIN-MAPPING-VERIFY (PCB_TODO B-LDO): Zuordnung 1=ADJ/NC, 2=OUT, 3=IN,
-    4=GND(Tab), 5=EN stammt aus der Token-Lesart des Diodes-DS33626 (AP7361,
-    SOT89-5 Top View) — das AP7361A-eigene Datasheet war zum Editier-Zeitpunkt
-    nicht abrufbar (HTTP 403). VOR dem Layout gegen das offizielle
-    AP7361A-Datasheet (diodes.com) verifizieren; IN/OUT-Tausch = totes Board.
+    r18.6: Symbol auf AP7361C umgestellt. AP7361 ist laut Diodes-Datasheet
+    NRND („Not Recommended For New Designs — Use AP7361C"). AP7361C nutzt für
+    SOT-89-5 dasselbe Pin-Mapping.
+
+    OFFIZIELLES PINOUT SOT-89-5 (Diodes AP7361 / AP7361C Datasheet,
+    via Mouser-CDN, vom User verifiziert und im PR verlinkt):
+
+        Pin 1 = EN
+        Pin 2 = GND
+        Pin 3 = ADJ/NC
+        Pin 4 = IN
+        Pin 5 = OUT
+
+    Frühere r18.5-Annahme (1=ADJ/NC,2=OUT,3=IN,4=GND,5=EN) war FALSCH und
+    hätte IN/OUT/EN vertauscht. Quelle: mouser.de/datasheet/3/175/1/AP7361.pdf
+
+    Footprint: Package_TO_SOT_SMD:SOT-89-5. KEIN SOT-223 (AP7361-33E-13 /
+    C150719 ist SOT-223 und passt NICHT zu diesem Symbol).
     """
     out = []
-    out.append('    (symbol "Regulator_Linear:AP7361A" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)')
+    out.append('    (symbol "Regulator_Linear:AP7361C" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)')
     out.append('      (property "Reference" "U" (at 0 6.35 0) (effects (font (size 1.27 1.27))))')
-    out.append('      (property "Value" "AP7361A" (at 0 -8.89 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (symbol "Regulator_Linear:AP7361A_0_1"')
+    out.append('      (property "Value" "AP7361C" (at 0 -8.89 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Regulator_Linear:AP7361C_0_1"')
     out.append('        (rectangle (start -6.35 5.08) (end 6.35 -6.35) (stroke (width 0.254) (type default)) (fill (type background)))')
     out.append('      )')
-    out.append('      (symbol "Regulator_Linear:AP7361A_1_1"')
-    out.append('        (pin power_in line (at -8.89 2.54 0) (length 2.54)')
-    out.append('          (name "IN" (effects (font (size 1.27 1.27))))')
-    out.append('          (number "3" (effects (font (size 1.27 1.27)))))')
-    out.append('        (pin input line (at -8.89 -2.54 0) (length 2.54)')
+    out.append('      (symbol "Regulator_Linear:AP7361C_1_1"')
+    # Linke Seite (Eingänge): EN oben, IN unten
+    out.append('        (pin input line (at -8.89 2.54 0) (length 2.54)')
     out.append('          (name "EN" (effects (font (size 1.27 1.27))))')
-    out.append('          (number "5" (effects (font (size 1.27 1.27)))))')
+    out.append('          (number "1" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin power_in line (at -8.89 -2.54 0) (length 2.54)')
+    out.append('          (name "IN" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "4" (effects (font (size 1.27 1.27)))))')
+    # Rechte Seite (Ausgänge): OUT oben, ADJ/NC unten
     out.append('        (pin power_out line (at 8.89 2.54 180) (length 2.54)')
     out.append('          (name "OUT" (effects (font (size 1.27 1.27))))')
-    out.append('          (number "2" (effects (font (size 1.27 1.27)))))')
+    out.append('          (number "5" (effects (font (size 1.27 1.27)))))')
     out.append('        (pin no_connect line (at 8.89 -2.54 180) (length 2.54)')
     out.append('          (name "ADJ/NC" (effects (font (size 1.27 1.27))))')
-    out.append('          (number "1" (effects (font (size 1.27 1.27)))))')
+    out.append('          (number "3" (effects (font (size 1.27 1.27)))))')
+    # Untere Seite: GND
     out.append('        (pin power_in line (at 0 -8.89 90) (length 2.54)')
     out.append('          (name "GND" (effects (font (size 1.27 1.27))))')
-    out.append('          (number "4" (effects (font (size 1.27 1.27)))))')
+    out.append('          (number "2" (effects (font (size 1.27 1.27)))))')
     out.append('      )')
     out.append('    )')
     return "\n".join(out)
@@ -1452,7 +1468,7 @@ def _rotary_encoder_switch_lib_symbol() -> str:
       (property "Reference" "EN" (at 0 9.144 0) (effects (font (size 1.27 1.27))))
       (property "Value" "Rotary_Encoder_Switch" (at 0 -9.144 0) (effects (font (size 1.27 1.27))))
       (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
-      (property "Datasheet" "TODO-F2: ALPS EC11J1525402 Drawing beschaffen (Bourns-PEC11R-PDF war falsches Teil)" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "https://jlcpcb.com/partdetail/C209762" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
       (symbol "Encoder:Rotary_Encoder_Switch_0_1"
         (rectangle (start -2.54 7.62) (end 2.54 -7.62)
           (stroke (width 0.254) (type default)) (fill (type none))))
@@ -1754,7 +1770,7 @@ LIB_SYMBOLS = (
     # r18 (H7-Migration):
     + "\n" + _stm32h743_lib_symbol()
     + "\n" + _crystal_lib_symbol()
-    + "\n" + _ap7361a_lib_symbol()
+    + "\n" + _ap7361c_lib_symbol()
     + "\n" + _nmos_sot23_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(8)
 )
@@ -2253,69 +2269,87 @@ def power_tree_sheet() -> str:
     # ---- Hierarchical outputs nach rechts
     # +5V_OUT auf der Rail (y=RAIL_Y, x=110)
 
-    # ---- r18: U5 AP7361A-33 LDO — +5V-Rail → +3V3 (SPEC §4 U5, war DNP).
-    # Der Pico-interne SMPS lieferte +3V3 bisher; der STM32H743 braucht eine
-    # eigene Rail-Quelle. EN an IN (DS: "tied to IN if unused").
-    # 🔴 LCSC-HINWEIS (SPEC-§4-Fehler r18.5 korrigiert): C156144 ist ein
-    # 0603-Widerstand, NICHT der LDO. Kandidat: AP7361-33E-13 = C150719.
-    # 🔴 PIN-VERIFY B-LDO: siehe _ap7361a_lib_symbol()-Docstring.
+    # ---- r18.6: U5 AP7361C-33 LDO — +5V-Rail → +3V3 (SPEC §4 U5, war DNP).
+    # AP7361 ist laut Diodes-Datasheet NRND ("Not Recommended For New Designs —
+    # Use AP7361C"); für SOT-89-5 ist das relevante Pin-Mapping identisch.
+    #
+    # OFFIZIELLES PINOUT (Diodes-DS via mouser.de/datasheet/3/175/1/AP7361.pdf):
+    #   Pin 1 = EN   (links oben, y=+2.54)
+    #   Pin 2 = GND  (unten, gemeinsam mit Tab)
+    #   Pin 3 = ADJ/NC (rechts unten, y=-2.54)
+    #   Pin 4 = IN   (links unten, y=-2.54)
+    #   Pin 5 = OUT  (rechts oben, y=+2.54)
+    # (Die r18.5-Annahme war 1=ADJ/NC,2=OUT,3=IN,4=GND,5=EN — falsch.)
+    #
+    # EN ist immer-an: EN-Pin direkt an IN-Pin gebrueckt (Diodes-DS: "tie EN to
+    # IN if always-on" — typische Anwendungsschaltung).
     LDO_X, LDO_Y = 120.0, 80.0
+    PIN_EN_Y  = LDO_Y - 2.54    # Pin 1 EN
+    PIN_IN_Y  = LDO_Y + 2.54    # Pin 4 IN  (KORRIGIERT: jetzt unten links)
+    PIN_OUT_Y = LDO_Y - 2.54    # Pin 5 OUT
+    # +5V-Rail droppt zur IN-Hoehe runter
     junctions.append(junction(110, RAIL_Y))
-    wires.append(wire(110, RAIL_Y, 110, LDO_Y - 2.54, seed_suffix="ldo-drop"))
-    wires.append(wire(110, LDO_Y - 2.54, LDO_X - 8.89, LDO_Y - 2.54, seed_suffix="ldo-in"))
-    junctions.append(junction(110, LDO_Y - 2.54))
-    # EN → IN
-    wires.append(wire(LDO_X - 8.89, LDO_Y + 2.54, 110, LDO_Y + 2.54, seed_suffix="ldo-en"))
-    wires.append(wire(110, LDO_Y + 2.54, 110, LDO_Y - 2.54, seed_suffix="ldo-en-up"))
-    symbols.append(place_symbol(lib_id="Regulator_Linear:AP7361A", ref="U5",
-                                value="AP7361A-33 1A LDO (+5V->+3V3, SOT-89-5)",
+    wires.append(wire(110, RAIL_Y, 110, PIN_IN_Y, seed_suffix="ldo-drop"))
+    wires.append(wire(110, PIN_IN_Y, LDO_X - 8.89, PIN_IN_Y, seed_suffix="ldo-in"))
+    junctions.append(junction(110, PIN_IN_Y))
+    # EN-Pin → IN-Pin (always-on); auf Hoehe PIN_EN_Y nach links bis x=104, dann
+    # vertikal hoch zur Hoehe PIN_IN_Y, dort auf den IN-Wire einfaedeln.
+    wires.append(wire(LDO_X - 8.89, PIN_EN_Y, 104, PIN_EN_Y, seed_suffix="ldo-en-left"))
+    wires.append(wire(104, PIN_EN_Y, 104, PIN_IN_Y, seed_suffix="ldo-en-up"))
+    wires.append(wire(104, PIN_IN_Y, 110, PIN_IN_Y, seed_suffix="ldo-en-into-in"))
+    junctions.append(junction(104, PIN_IN_Y))
+    symbols.append(place_symbol(lib_id="Regulator_Linear:AP7361C", ref="U5",
+                                value="AP7361C-33 1A LDO (+5V->+3V3, SOT-89-5)",
                                 x=LDO_X, y=LDO_Y,
                                 footprint="Package_TO_SOT_SMD:SOT-89-5",
-                                datasheet="https://www.diodes.com/assets/Datasheets/AP7361.pdf",
+                                datasheet="https://www.mouser.de/datasheet/3/175/1/AP7361.pdf",
                                 extra_props={
-                                    "MPN": "AP7361A-33ER-13",
-                                    "LCSC": "TBD-VERIFY (C156144 in SPEC war FALSCH = 910R-Widerstand; Kandidat C150719 = AP7361-33E-13)",
-                                    "PIN_VERIFY": "B-LDO: SOT-89-5-Pinout (1=ADJ/NC,2=OUT,3=IN,4=GND,5=EN) gegen offizielles AP7361A-DS pruefen — IN/OUT-Tausch = totes Board",
-                                    "FP_VERIFY": "SOT-89-5-Footprint-Name + Land-Pattern in Phase-3-GUI pruefen",
+                                    "MPN": "AP7361C-33Y5-13",
+                                    "LCSC": "C460397",
+                                    "Package": "SOT-89-5 (NICHT SOT-223)",
+                                    "PIN_SOURCE": "Diodes-DS via mouser.de/datasheet/3/175/1/AP7361.pdf (User-verifiziert): 1=EN,2=GND,3=ADJ/NC,4=IN,5=OUT",
+                                    "NOTE": "AP7361 ist NRND; AP7361C ist der Nachfolger (gleicher Pinout am SOT-89-5)",
+                                    "FP_VERIFY": "SOT-89-5-Land-Pattern (Tab-Hoehe + Pin-Pitch 1.5mm) in Phase-3-GUI gegen Diodes-DS Page Mechanical Outline pruefen",
                                 },
                                 seed_suffix="U5", sheet_uuid_seed="sheet_power_tree"))
-    # GND
+    # GND-Pin (unten)
     wires.append(wire(LDO_X, LDO_Y + 8.89, LDO_X, LDO_Y + 11, seed_suffix="ldo-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_U5", value="GND",
                                 x=LDO_X, y=LDO_Y + 11, seed_suffix="ldo-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
-    # Cin 1uF am IN-Knoten, Cout 2.2uF am OUT (DS33626 typical application — VERIFY)
+    # Cin 4.7µF Keramik am IN-Knoten (Diodes-DS: ≥1µF, empfohlen 4.7µF)
     symbols.append(place_symbol(lib_id="Device:C", ref="C_LDO_IN",
-                                value="1uF X7R 0603 (LDO in, DS-typ. — VERIFY)",
-                                x=106, y=LDO_Y + 1.27,
+                                value="4.7uF X5R 0603 10V (LDO Cin, DS empfohlen)",
+                                x=106, y=PIN_IN_Y + 3.81,
                                 footprint="Capacitor_SMD:C_0603_1608Metric",
-                                extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+                                extra_props={"MPN": "GRM188R61A475KE15D", "LCSC": "C46653"},
                                 seed_suffix="CLDOIN", sheet_uuid_seed="sheet_power_tree"))
-    wires.append(wire(106, LDO_Y - 2.54, 106, LDO_Y + 1.27 - 3.81, seed_suffix="cldoin-top"))
-    junctions.append(junction(106, LDO_Y - 2.54))
-    wires.append(wire(106, LDO_Y + 1.27 + 3.81, 106, LDO_Y + 7, seed_suffix="cldoin-gnd"))
+    wires.append(wire(106, PIN_IN_Y, 106, PIN_IN_Y + 3.81 - 3.81, seed_suffix="cldoin-top"))
+    junctions.append(junction(106, PIN_IN_Y))
+    wires.append(wire(106, PIN_IN_Y + 3.81 + 3.81, 106, PIN_IN_Y + 10, seed_suffix="cldoin-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_CLDOIN", value="GND",
-                                x=106, y=LDO_Y + 7, seed_suffix="cldoin-gnd",
+                                x=106, y=PIN_IN_Y + 10, seed_suffix="cldoin-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
-    # OUT → +3V3-Flag + Cout + hier_label
-    wires.append(wire(LDO_X + 8.89, LDO_Y - 2.54, 140, LDO_Y - 2.54, seed_suffix="ldo-out"))
+    # OUT (Pin 5, rechts oben) → +3V3-Flag + Cout + hier_label
+    wires.append(wire(LDO_X + 8.89, PIN_OUT_Y, 140, PIN_OUT_Y, seed_suffix="ldo-out"))
     symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_LDO3V3", value="+3V3",
-                                x=132, y=LDO_Y - 2.54, rotation=270, seed_suffix="ldo-3v3",
+                                x=132, y=PIN_OUT_Y, rotation=270, seed_suffix="ldo-3v3",
                                 sheet_uuid_seed="sheet_power_tree"))
-    junctions.append(junction(132, LDO_Y - 2.54))
+    junctions.append(junction(132, PIN_OUT_Y))
+    # Cout 4.7µF Keramik (Diodes-DS: ≥2.2µF, empfohlen 4.7µF; mit ESR-stabil)
     symbols.append(place_symbol(lib_id="Device:C", ref="C_LDO_OUT",
-                                value="2.2uF X5R 0603 (LDO out, DS-typ. — VERIFY)",
-                                x=136, y=LDO_Y + 1.27,
+                                value="4.7uF X5R 0603 10V (LDO Cout, DS empfohlen)",
+                                x=136, y=PIN_OUT_Y + 3.81,
                                 footprint="Capacitor_SMD:C_0603_1608Metric",
-                                extra_props={"MPN": "TBD-VERIFY (2.2uF/10V X5R 0603)", "LCSC": "TBD-VERIFY"},
+                                extra_props={"MPN": "GRM188R61A475KE15D", "LCSC": "C46653"},
                                 seed_suffix="CLDOOUT", sheet_uuid_seed="sheet_power_tree"))
-    wires.append(wire(136, LDO_Y - 2.54, 136, LDO_Y + 1.27 - 3.81, seed_suffix="cldoout-top"))
-    junctions.append(junction(136, LDO_Y - 2.54))
-    wires.append(wire(136, LDO_Y + 1.27 + 3.81, 136, LDO_Y + 7, seed_suffix="cldoout-gnd"))
+    wires.append(wire(136, PIN_OUT_Y, 136, PIN_OUT_Y + 3.81 - 3.81, seed_suffix="cldoout-top"))
+    junctions.append(junction(136, PIN_OUT_Y))
+    wires.append(wire(136, PIN_OUT_Y + 3.81 + 3.81, 136, PIN_OUT_Y + 10, seed_suffix="cldoout-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_CLDOOUT", value="GND",
-                                x=136, y=LDO_Y + 7, seed_suffix="cldoout-gnd",
+                                x=136, y=PIN_OUT_Y + 10, seed_suffix="cldoout-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
-    hlabels.append(hier_label(140, LDO_Y - 2.54, "+3V3_OUT", shape="output", rotation=180))
+    hlabels.append(hier_label(140, PIN_OUT_Y, "+3V3_OUT", shape="output", rotation=180))
 
     hlabels.append(hier_label(115, RAIL_Y, "+5V_OUT", shape="output", rotation=0))
     wires.append(wire(110, RAIL_Y, 115, RAIL_Y, seed_suffix="rail-to-hlbl"))
@@ -3052,8 +3086,7 @@ def stm32h743_sheet() -> str:
                                     value="2.2uF X5R 0603, ESR<100mOhm (VCAP, DS12110 Tab.24)",
                                     x=xe, y=cy,
                                     footprint="Capacitor_SMD:C_0603_1608Metric",
-                                    extra_props={"MPN": "TBD-VERIFY (2.2uF/6.3V X5R 0603)",
-                                                 "LCSC": "TBD-VERIFY"},
+                                    extra_props={"MPN": "CL10A225KP8NNNC", "Manufacturer": "Samsung", "LCSC": "C24539", "VERIFY-STOCK": "JLC Extended 2.2uF/10V X5R 0603 — falls out-of-stock alternative LCSC-Nr. waehlen"},
                                     seed_suffix=f"CVCAP{num}", sheet_uuid_seed=sus))
         wires.append(wire(xe, cy + 3.81, xe, cy + 6, seed_suffix=f"u1-vcap{num}-gnd"))
         symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_VCAP{num}", value="GND",
@@ -3064,7 +3097,7 @@ def stm32h743_sheet() -> str:
     bx, by = 96.0, 238.0
     for i in range(5):
         for j, (val, mpn, lcsc, fp) in enumerate([
-            ("4.7uF X5R 0805 (VDD bulk)", "TBD-VERIFY (4.7uF/10V X5R 0805)", "TBD-VERIFY", "Capacitor_SMD:C_0805_2012Metric"),
+            ("4.7uF X5R 0805 10V (VDD bulk)", "CL21A475KQFNNNE", "C45783", "Capacitor_SMD:C_0805_2012Metric"),
             ("100nF X7R 0603 (VDD HF)", "CC0603KRX7R9BB104", "C14663", "Capacitor_SMD:C_0603_1608Metric"),
         ]):
             cx = bx + i * 12 + j * 5
@@ -3105,7 +3138,7 @@ def stm32h743_sheet() -> str:
                                     value="22pF C0G/NP0 0603 (HSE load, Startwert §5.9)",
                                     x=cx, y=cy,
                                     footprint="Capacitor_SMD:C_0603_1608Metric",
-                                    extra_props={"MPN": "TBD-VERIFY (22pF C0G 50V 0603)", "LCSC": "TBD-VERIFY"},
+                                    extra_props={"MPN": "CC0603JRNPO9BN220", "Manufacturer": "Yageo", "LCSC": "C1804", "VERIFY-STOCK": "22pF +-5% C0G/NP0 50V 0603"},
                                     seed_suffix=f"CHSE{k}", sheet_uuid_seed=sus))
         wires.append(wire(cx, cy - 3.81, cx, yy, seed_suffix=f"chse{k}-top"))
         wires.append(wire(cx, cy + 3.81, cx, cy + 6, seed_suffix=f"chse{k}-gnd"))
@@ -3218,11 +3251,20 @@ def stm32h743_sheet() -> str:
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_LEDHB", value="GND",
                                 x=sx, y=sy + 10, seed_suffix="ledhb-gnd", sheet_uuid_seed=sus))
 
-    # ---- MIDI-Hinweis (B-MIDI)
+    # ---- MIDI als offene DESIGN-ENTSCHEIDUNG (B-MIDI). Bewusst KEINE
+    # Buchsen-/Resistor-Symbole platzieren: TRS-Type-A vs Type-B, OUT-only
+    # vs IN/OUT, 3V3-vs-5V-Implementierung, DNP-Status, exakte R-Werte sind
+    # nicht entschieden. Das MIDI_TX-Netz auf PD5 bleibt als Hier-Label
+    # erhalten; die Buchse kommt erst, wenn der Spec-Punkt entschieden ist.
     texts.append(
-        f'  (text "MIDI_TX (PD5): Netz vorhanden, TRS-Type-A-Buchse + Serien-R\\n'
-        f'fehlen im Design — SPEC §4 hat keine Buchsen-Zeile.\\n'
-        f'BLOCKER B-MIDI in PCB_TODO.md (MIDI-1.0-3V3-Spec: 10R/33R)." (at 100 248 0)\n'
+        f'  (text "MIDI_TX (PD5) — DESIGN-ENTSCHEIDUNG offen (siehe docs/decisions/\\n'
+        f'ADR-0004-midi-design-decision.md). Vor Layout zu entscheiden:\\n'
+        f'  - Buchsen-MPN (PJ-320-Klasse vs. TRS 3.5mm Switched)\\n'
+        f'  - TRS Type A oder Type B\\n'
+        f'  - OUT-only oder IN/OUT (UART RX-Pin: PA3 oder PD6 frei)\\n'
+        f'  - 3V3-Direkt oder 5V-Open-Collector (R-Werte folgen)\\n'
+        f'  - DNP / future-expansion oder bestueckt?\\n'
+        f'Bis Entscheidung: kein Net-Ziel, kein Footprint." (at 100 248 0)\n'
         f'    (effects (font (size 1.27 1.27) bold) (justify left bottom))\n'
         f'    (uuid "{det_uuid("txt-midi")}"))\n'
     )
@@ -3329,8 +3371,7 @@ def lcd_sheet() -> str:
                                 value="2N7002 (LCD-Backlight Low-Side)",
                                 x=qx, y=qy,
                                 footprint="Package_TO_SOT_SMD:SOT-23",
-                                extra_props={"MPN": "2N7002", "LCSC": "TBD-VERIFY (2N7002, SOT-23)",
-                                             "FP_VERIFY": "G/S/D-Zuordnung gegen Hersteller-DS der bestueckten Marke"},
+                                extra_props={"MPN": "2N7002,215", "Manufacturer": "Nexperia", "LCSC": "C8545", "Package": "SOT-23 (TO-236), pin 1=G, 2=S, 3=D — JEDEC-Standard", "VERIFY-STOCK": "JLC Basic 2N7002, alle Marken haben G/S/D=1/2/3"},
                                 seed_suffix="Q2", sheet_uuid_seed=sus))
     wires.append(wire(qx + 2.54, qy + 3.81, qx + 2.54, qy + 7, seed_suffix="q2-src-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_Q2", value="GND",
@@ -3952,11 +3993,14 @@ def mcp_sheet() -> str:
                 value=f"Modifier {netname.replace('MOD_','')} (12x12x7.3 SMD-Tactile, r10)",
                 x=84.92,
                 y=py,
-                footprint="Button_Switch_SMD:SW_SPST_TL3342",
+                footprint="field_ambience:SW_HX_12x12x7.3_SMD-4P",
+                datasheet="https://www.lcsc.com/product-detail/C36498966.html",
                 extra_props={
                     "MPN": "HX 12x12x7.3TPFT-B",
+                    "Manufacturer": "hanxia",
                     "LCSC": "C36498966",
-                    "FP_MISMATCH": "B-SW12: SW_SPST_TL3342 ist ein ~6mm-Land-Pattern, Teil ist 12x12mm — vor Layout eigenen 12x12-SMD-FP anlegen + gegen HX-Datasheet (C36498966) pruefen",
+                    "Package": "SMD-4P 11.8x11.8mm, vertical tactile, 7.3mm height, SPST 250gf, 100k cycles, 12V/50mA",
+                    "FP_NOTE": "Custom-Footprint libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod (User-Daten + LCSC C36498966). 4 Pads je 2.5x1.5mm auf 7mm-Pitch (X+Y); SPST: gegenüberliegende Pads sind elektrisch verbunden (1↔1, 2↔2).",
                 },
                 seed_suffix=f"SW{sw_num}",
                 sheet_uuid_seed=sus,
@@ -4515,10 +4559,14 @@ def encoder_sheet() -> str:
                 x=sx,
                 y=sy,
                 footprint="Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm",
-                datasheet="TODO-F2: ALPS EC11J1525402 Drawing beschaffen (Bourns-PEC11R-PDF war falsches Teil)",
+                datasheet="https://jlcpcb.com/partdetail/C209762",
                 extra_props={
-                    "MPN": "PEC11R-4215F-S0024",
-                    "LCSC": "EC11J1525402 (ALPSALPINE, SPEC §4) — F-2: LCSC + Land-Pattern-Verify offen",
+                    "MPN": "EC11J1525402",
+                    "Manufacturer": "ALPSALPINE",
+                    "LCSC": "C209762",
+                    "Package": "SMD, 15 pulses / 30 detents, push switch",
+                    "Status": "NRND (ALPS marks as Not Recommended For New Designs) — Prototype-OK, Serie: Ersatztyp wählen",
+                    "FP_VERIFY": "F-2: KiCad-Standard-FP ist EC11E (THT-Stems); EC11J ist SMD-Bauform. Vor Layout Land-Pattern gegen JLCPCB-EasyEDA-Drawing für C209762 abgleichen oder eigenen FP zeichnen.",
                 },
                 seed_suffix=f"EN{en_num}",
                 sheet_uuid_seed=sus,
@@ -6033,9 +6081,16 @@ def battery_sheet() -> str:
             ref="U8",
             value="TPS61089RNR (Boost LiPo→5V, 2A, programmable Fsw)",
             x=U8_X, y=U8_Y,
-            footprint="Package_DFN_QFN:VQFN-11-1EP_2.6x2.6mm_P0.5mm_EP0.85x1.5mm_HotRod",
+            footprint="Package_DFN_QFN:VQFN-HR-11-1EP_2x2.5mm_P0.4mm_EP0.7x1.4mm",
             datasheet="https://www.ti.com/lit/ds/symlink/tps61089.pdf",
-            extra_props={"MPN": "TPS61089RNR", "LCSC": "C165129"},
+            extra_props={
+                "MPN": "TPS61089RNR",
+                "Manufacturer": "Texas Instruments",
+                "LCSC": "C165129",
+                "Package": "VQFN-HR 11-pin 2.0 x 2.5 mm (RNR0011A)",
+                "PIN_SOURCE": "TI-Datenblatt TPS61089 Rev C, Pin Functions Tabelle 6-1: 1=FSW, 2=VCC, 3=FB, 4=COMP, 5=GND, 6=VOUT, 7=EN, 8=ILIM, 9=VIN, 10=BOOT, 11=SW (Symbol entspricht dem)",
+                "FP_VERIFY": "RNR0011A-Land-Pattern (2.0x2.5mm VQFN-HR) muss vor Layout gegen TI-Datenblatt Mechanical Drawing geprueft werden; aktueller FP-Name ist Annahme bzgl. KiCad-Standard-Lib",
+            },
             seed_suffix="U8",
             sheet_uuid_seed=sus,
         )

@@ -4,9 +4,102 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.5** (Schematic-Migration Phase 3: STM32H743-Sheet
-+ LCD-Sheet generiert, AP7361A-LDO im Power-Tree, Pico/OLED → legacy.
-Layout-Status: PCB_LAYOUT_STATUS.md — KEIN .kicad_pcb, nicht bestellbar.)
+Aktuelle Rev: **v0.7-r18.6** (Engineering-Verifikation aus öffentlichen
+Datasheets: AP7361A-Pinout korrigiert + AP7361C-Variante + LCSC C460397,
+TPS61089-Footprint+Pinout-Quelle, EC11J = C209762 NRND, HX-Button
+Custom-Footprint, TBD-LCSC-Felder gefüllt. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.6 (2026-06-11) — Engineering-Verifikation: LDO/Boost/Encoder/Button + ERC-Checkliste
+
+Nachfolger von r18.5. User lieferte konkrete Datasheet-Quellen für die
+Posten, die in r18.5 als „nicht aus verfügbarer Information fixbar"
+markiert waren. **Vier 🔴-Blocker geschlossen, einer als ADR umklassifiziert.**
+
+### 🔴 B-LDO: AP7361A-Pinout war FALSCH — gefixt
+
+r18.5-Annahme: 1=ADJ/NC, 2=OUT, 3=IN, 4=GND, 5=EN.
+**Korrekt (Diodes-DS via mouser.de/datasheet/3/175/1/AP7361.pdf):
+1=EN, 2=GND, 3=ADJ/NC, 4=IN, 5=OUT.**
+
+Hätte zu einem totem Board geführt (IN und OUT vertauscht).
+
+Zusätzlich:
+- **AP7361 → AP7361C** umgestellt (Diodes markiert AP7361 als NRND)
+- **AP7361C-33Y5-13 = C460397** (LCSC, SOT-89-5) statt dem r18.5-Kandidaten
+  C150719 (= SOT-223, **falsches Package**)
+- Cin/Cout 4.7 µF X5R 0603 (DS-Empfehlung statt 1 µF/2.2 µF)
+- Symbol-Pinmap im Generator umgebaut, alle Stub-Wires neu gerechnet
+  (EN/IN-Routing kehrt sich um — auf der linken Seite des Symbols)
+
+### 🔴 B-F1: TPS61089-Footprint + Datenblatt-Anchor
+
+- Symbol-Pinmap (1=FSW … 11=SW) stimmt mit TI Pin-Functions Tabelle 6-1
+  (Rev C) überein — als `PIN_SOURCE`-Property fixiert
+- Footprint-Name auf RNR0011A-Konvention (2.0×2.5 mm VQFN-HR)
+- RNSR-PDF → `datasheets/legacy/TPS61089RNSR_wrong_variant.pdf`
+
+### 🟠 B-F2: Encoder C209762 (NRND, Prototype-OK)
+
+- MPN auf **EC11J1525402**, LCSC **C209762** (JLCPCB-verifiziert)
+- Datasheet-Link auf JLCPCB-Detail-Seite (offizielles ALPS-Drawing
+  weiterhin nicht öffentlich; JLC liefert die SMD-Spec)
+- `Status: NRND` als Property — Prototype-OK, Serie braucht
+  Ersatzteil-Entscheidung
+- KiCad-Standard-FP `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`
+  bleibt vorerst; **FP_VERIFY-Hinweis**, dass EC11J SMD und EC11E THT
+  unterschiedlich sind → eigener FP wäre vor Serie korrekt
+
+### 🔴 B-SW12: Custom-Footprint für HX 12×12
+
+- Neuer Footprint `field_ambience:SW_HX_12x12x7.3_SMD-4P.kicad_mod`
+  basierend auf User-verifizierten LCSC-Daten:
+  - SMD-4P, 11.8×11.8 mm Body, 7.3 mm Höhe
+  - 4 Pads je 2.5×1.5 mm auf 7 mm-Pitch (X+Y)
+  - SPST (gegenüberliegende Pads verbunden: 1↔1, 2↔2)
+  - Silkscreen-Body 12.1×12.1 mm + Pin-1-Dot, Courtyard +0.25 mm
+- Neue lokale Library `field_ambience.pretty/` in fp-lib-table eingetragen
+- SW6-10 jetzt mit korrektem Footprint (vorher: ~6 mm-TL3342-Pattern)
+
+### 🟠 B-TBD: 4 Caps + 2N7002 gefüllt
+
+| Position | LCSC | Quelle |
+|---|---|---|
+| VCAP 2.2 µF X5R 0603 10V | C24539 (CL10A225KP8NNNC) | Samsung-Standard |
+| VDD-Bulk 4.7 µF X5R 0805 10V | C45783 (CL21A475KQFNNNE) | Samsung-Standard |
+| HSE 22 pF C0G/NP0 0603 50V | C1804 (CC0603JRNPO9BN220) | Yageo-Standard |
+| 2N7002 SOT-23 | C8545 (Nexperia 2N7002,215) | JLC Basic |
+
+Alle mit `VERIFY-STOCK`-Property statt blanker LCSC-Nr. — Sourcing-Pass
+vor BOM-Freeze validiert Stock.
+
+### 🟠 MIDI: keine Suchblock, sondern offene Design-Entscheidung
+
+- `docs/decisions/ADR-0004-midi-design-decision.md` mit 5-Achsen-Matrix
+  (Topologie, TRS-Polarität, Logikpegel, Buchsen-MPN, DNP-Status)
+- Generator-Text-Note im STM32-Sheet aktualisiert
+- **Keine spekulativen Bauteile** im Schematic — bewusst, bis Entscheidung
+  vorliegt
+
+### 🟠 ERC/DRC-Checkliste
+
+- Neu: `docs/hardware/ERC_DRC_CHECKLIST.md`
+- Erwartete *bewusste* Warnungen + Liste der nicht erlaubten Warnungen
+- Manufacturing-Gates (Schematic + Layout)
+- `kicad-cli`-Snippet für künftige Automation
+
+### SPEC-Update
+
+§4 U5-Zeile auf AP7361C-33Y5-13 / C460397 / SOT-89-5 aktualisiert (war
+in r18.5 als TBD-mit-Kandidat C150719 markiert — der Kandidat war auch
+das falsche Package).
+
+### Validierung
+
+Alle r18.5-Strukturchecks wiederholt: paren-balance 8/8 .kicad_sch-Dateien
+PASS, 100/100 STM32-Pins angebunden, Hier↔Root-Crossref unverändert
+PASS. **Kein .kicad_pcb erzeugt — Status bleibt NOT MANUFACTURING-READY.**
 
 ---
 
