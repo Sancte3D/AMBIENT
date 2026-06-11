@@ -73,6 +73,8 @@
  *   Backlight an, kein Bild → SCK/MOSI/TCS/DC/RST prüfen; TCS nicht SDCS!
  *   Bild gespiegelt/kopfüber → LCD_MADCTL in lcd_st7789.c (0x60↔0xA0/0xC0)
  *   Menü dreht falsch herum → ENC_DIR unten auf -1
+ *   Encoder reagiert nur auf jede 2. Rastung → ENC_HALF_STEP=1 (EC11-Variante
+ *   mit Halb-Zyklus-Rastung)
  *   Animationen ruckeln → kürzere Kabel, dann LCD_SPI_HZ=32000000 probieren
  *   USB-Konsole (loggt jeden Event): screen /dev/ttyACM0 115200
  */
@@ -114,6 +116,13 @@
 /* Flip to -1 if rotating clockwise moves the menu the wrong way. */
 #ifndef ENC_DIR
 #define ENC_DIR (+1)
+#endif
+
+/* Some EC11 variants detent every HALF quadrature cycle (2 transitions),
+ * resting alternately at 00 and 11. Symptom on such a part: the menu reacts
+ * only to every SECOND detent. Build with ENC_HALF_STEP=1 in that case. */
+#ifndef ENC_HALF_STEP
+#define ENC_HALF_STEP 0
 #endif
 
 #define LONG_PRESS_MS  1000  /* SHIFT long-press = scene switch             */
@@ -189,11 +198,19 @@ static bool sampler_1khz(struct repeating_timer *t) {
     uint8_t cur = (uint8_t)((gpio_get(PIN_ENC_CLK) << 1) | gpio_get(PIN_ENC_DT));
     q_acc += QDELTA[(q_prev << 2) | cur];
     q_prev = cur;
+#if ENC_HALF_STEP
+    if (cur == 3 || cur == 0) {              /* rest at 00 AND 11           */
+        if (q_acc >= 2)       ev_detents += ENC_DIR;
+        else if (q_acc <= -2) ev_detents -= ENC_DIR;
+        q_acc = 0;
+    }
+#else
     if (cur == 3) {
         if (q_acc >= 4)       ev_detents += ENC_DIR;
         else if (q_acc <= -4) ev_detents -= ENC_DIR;
         q_acc = 0;
     }
+#endif
 
     if (debounce_tick(&db_sw) > 0) ev_sw_press = true;
 
@@ -235,6 +252,7 @@ static int backlight_pct = 80;
 static void backlight_apply(void) {
     uint32_t p = (uint32_t)backlight_pct;
     uint32_t duty = (BL_PWM_WRAP * p * p) / (100u * 100u);   /* gamma 2 */
+    if (duty == 0 && p > 0) duty = 1;   /* 1-3 % must glow, not turn OFF   */
     pwm_set_gpio_level(PIN_BL, (uint16_t)duty);
 }
 
@@ -694,7 +712,18 @@ int main(void) {
 
         bool dirty = false;
 
-        /* --- SHIFT gesture bookkeeping --------------------------------- */
+        /* --- SHIFT gesture bookkeeping ---------------------------------
+         * Release is handled BEFORE press: if both edges land in the same
+         * drain (fast pumping during a slow animation frame), the release
+         * belongs to the PREVIOUS press and must be judged by the previous
+         * press's flags — processing press first would reset them and turn
+         * a finished backlight gesture into a spurious battery tap. */
+        if (sh_release && !shift_rotated && !shift_longed) {
+            battery_demo_step();             /* plain tap = battery demo   */
+            printf("battery: %d%% usb=%d\n", battery_pct(),
+                   battery_usb_present());
+            dirty = true;
+        }
         if (sh_press) {
             shift_t0 = now;
             shift_rotated = false;
@@ -707,40 +736,43 @@ int main(void) {
             printf("scene -> %s\n", SCENE_NAME[scene]);
             dirty = true;
         }
-        if (sh_release && !shift_rotated && !shift_longed) {
-            battery_demo_step();             /* plain tap = battery demo   */
-            printf("battery: %d%% usb=%d\n", battery_pct(),
-                   battery_usb_present());
-            dirty = true;
-        }
 
-        /* --- encoder rotation ------------------------------------------ */
+        /* --- encoder rotation -------------------------------------------
+         * While animating, one loop iteration blocks ~36 ms in oled_show(),
+         * so fast spinning can accumulate SEVERAL detents per drain. The
+         * magnitude must not be dropped: browse/discrete steps once per
+         * detent, accelerated edits multiply by the detent count. */
         if (detents != 0) {
             int dir = detents > 0 ? 1 : -1;
+            int n   = detents > 0 ? detents : -detents;
             if (sh_held) {
                 /* SHIFT + turn = backlight (sim's SHIFT+EN2). HOLD gesture,
-                 * not a mode — release SHIFT and you're simply back. */
+                 * not a mode — release SHIFT and you're simply back. Works
+                 * in EVERY scene (adjusting brightness while judging the
+                 * RAMP greys is the point); overlay only renders in MENU. */
                 shift_rotated = true;
+                backlight_pct += accel_ticks(dir, now) * n;
+                if (backlight_pct < 0)   backlight_pct = 0;
+                if (backlight_pct > 100) backlight_pct = 100;
+                backlight_apply();
                 if (scene == SCENE_MENU) {
-                    int t = accel_ticks(dir, now);
-                    backlight_pct += t;
-                    if (backlight_pct < 0)   backlight_pct = 0;
-                    if (backlight_pct > 100) backlight_pct = 100;
-                    backlight_apply();
                     show_overlay("Backlight", backlight_pct, now);
-                    printf("backlight %d%%\n", backlight_pct);
                     dirty = true;
                 }
+                printf("backlight %d%%\n", backlight_pct);
             } else if (scene == SCENE_MENU) {
                 dismiss_overlay(now);        /* any menu action clears it  */
                 menu_mode_t  m0 = menu_mode();
                 menu_param_t c0 = menu_current();
                 bool cont_edit = (m0 == MENU_EDIT) && cur_is_continuous();
-                int ticks = cont_edit ? accel_ticks(dir, now) : dir;
-                menu_rotate(ticks);
+                if (cont_edit) {
+                    menu_rotate(accel_ticks(dir, now) * n);
+                } else {
+                    for (int k = 0; k < n; ++k) menu_rotate(dir);
+                }
                 if (menu_current() != c0)      on_cur_change(dir, now);
                 else if (m0 == MENU_EDIT)      on_value_change(now);
-                printf("rotate %+d -> %s = %s\n", ticks,
+                printf("rotate %+d -> %s = %s\n", detents,
                        menu_current_label(), menu_current_value_text());
                 dirty = true;
             } else {
@@ -750,13 +782,16 @@ int main(void) {
 
         /* --- encoder push ----------------------------------------------- */
         if (sw_press) {
-            if (sh_held && scene == SCENE_MENU) {
+            if (sh_held) {
+                /* SHIFT + push = backlight 100 %, in every scene. */
                 shift_rotated = true;        /* it's a SHIFT gesture now   */
                 backlight_pct = 100;
                 backlight_apply();
-                show_overlay("Backlight", backlight_pct, now);
+                if (scene == SCENE_MENU) {
+                    show_overlay("Backlight", backlight_pct, now);
+                    dirty = true;
+                }
                 printf("backlight -> 100%%\n");
-                dirty = true;
             } else if (scene == SCENE_MENU) {
                 dismiss_overlay(now);
                 menu_push();

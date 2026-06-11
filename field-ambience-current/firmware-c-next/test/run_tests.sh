@@ -105,3 +105,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/engine.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"
+
+# Bench display tool: animated renderer + tween engine + quadrature decode +
+# backlight gamma. Compiles the REAL tools/display_hw_test.c against the fake
+# SDK headers in test/pico_stubs/ (host build of a device-only tool).
+"$CC" "${CFLAGS[@]}" -I"$here/pico_stubs" -I"$src/tools" \
+    "$here/test_display_bench.c" \
+    "$src/src/menu.c" "$src/src/battery.c" \
+    "$src/src/oled_draw.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/bench_test"
+"$tmp/bench_test"
