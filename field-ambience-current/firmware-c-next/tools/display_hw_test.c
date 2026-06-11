@@ -53,16 +53,21 @@
  *                         drehen = feine 1 %-Schritte, schnell = grobe
  *                         Sprünge. Browse + diskrete Werte: 1 Schritt/Rastung.
  *   Encoder drücken       Edit-Modus rein/raus.
- *   SHIFT 1× tippen       Brightness-Modus AN: Overlay "Backlight XX%" bleibt
- *                         stehen, der Encoder regelt jetzt die Helligkeit
- *                         (PWM GP22). Velocity-Acceleration wie sonst.
- *     im Brightness-Modus:
- *       Encoder drehen    Helligkeit ±. Beschleunigung wie bei %-Werten.
+ *   SHIFT 1× tippen       SHIFT-Modus AN (gelatcht): der Encoder regelt jetzt
+ *                         die Helligkeit (PWM GP22) statt das Menü. Das
+ *                         Readout "Backlight XX%" ist TRANSIENT — es faded
+ *                         über das Menü ein und nach ~1 s Ruhe von selbst
+ *                         wieder aus, exakt wie die Drive/Volume/Brightness-
+ *                         Overlays der Sim. Der MODUS bleibt dabei an, nur
+ *                         die Anzeige geht weg.
+ *     im SHIFT-Modus:
+ *       Encoder drehen    Helligkeit ± (Readout faded wieder rein, mit
+ *                         Velocity-Acceleration wie bei %-Werten).
  *       Encoder drücken   Helligkeit auf 100 %.
- *       SHIFT erneut      RAUS: Overlay fadet, Encoder zurück am Menü.
- *   SHIFT lang halten     Testbild weiterschalten (nur im normalen Browse,
- *   (1,5 s ohne Tippen)   nicht im Brightness-Modus, nicht in Testbildern):
- *                         MENU → RAMP → CHECKER → TYPE → MENU.
+ *       SHIFT erneut      Modus AUS: Encoder zurück am Menü.
+ *   SHIFT lang halten     Testbild weiterschalten (aus Menü UND Testbildern —
+ *   (1,5 s ohne Tippen)   so kommt man auch wieder raus; gesperrt nur im
+ *                         SHIFT-Modus): MENU → RAMP → CHECKER → TYPE → MENU.
  *
  * TESTBILDER (Panel-Verifikation, gibt es in der Sim nicht):
  *   RAMP    16 Graustufen + 1-px-Rahmen + Ecken-Ticks. Fehlende Rahmenkante
@@ -324,13 +329,14 @@ static bool tweens_tick(uint32_t now) {
 }
 
 /* --- overlay state (Backlight readout) -----------------------------------
- * `sticky` = the user is in brightness toggle mode; the overlay stays up
- * until they tap SHIFT again. `fade_out_at` is only consulted when sticky
- * is false, so a non-sticky readout (e.g. a SHIFT-toggle confirmation that
- * may later be added for other readouts) still auto-dismisses. */
+ * ALWAYS transient — the sim's Drive/Volume/Brightness model: fades in over
+ * the menu on interaction, re-arms its idle timer on every further turn,
+ * fades out by itself after OVERLAY_HOLD_MS of inactivity. The SHIFT-mode
+ * LATCH is separate main-loop state: the encoder stays remapped to the
+ * backlight even after the readout has faded — only the display is
+ * transient, never the mode. */
 static struct {
     bool     active;
-    bool     sticky;
     char     label[16];
     uint32_t fade_out_at;
     bool     closing;
@@ -391,14 +397,11 @@ static void on_mode_change(uint32_t now) {
     tween_to(A_TEXTALPHA, 1, 220, now);
 }
 
-/* sticky=true → overlay stays up until dismiss_overlay() is called (used by
- * the SHIFT brightness toggle). sticky=false → auto-fades after the hold.    */
-static void show_overlay(const char *label, int value, bool sticky, uint32_t now) {
+static void show_overlay(const char *label, int value, uint32_t now) {
     if (!overlay.active || strcmp(overlay.label, label) != 0)
         anim[A_OVFILL] = (float)value;       /* fresh start, no cross-slide */
     overlay.active = true;
     overlay.closing = false;
-    overlay.sticky = sticky;
     snprintf(overlay.label, sizeof overlay.label, "%s", label);
     overlay.fade_out_at = now + OVERLAY_HOLD_MS;
     tween_to(A_OVALPHA, 1, 110, now);
@@ -408,7 +411,6 @@ static void show_overlay(const char *label, int value, bool sticky, uint32_t now
 static void dismiss_overlay(uint32_t now) {
     if (!overlay.active && anim[A_OVALPHA] <= 0.01f) return;
     overlay.closing = true;
-    overlay.sticky  = false;                 /* dismiss always wins         */
     tween_to(A_OVALPHA, 0, 160, now);
 }
 
@@ -424,10 +426,7 @@ static void anim_housekeeping(uint32_t now) {
         }
         tween_to(A_BARALPHA, 1, 180, now);
     }
-    /* Auto-dismiss only the transient (non-sticky) variant; the brightness
-     * toggle is sticky and must persist until the user taps SHIFT again. */
-    if (overlay.active && !overlay.sticky && !overlay.closing
-        && now >= overlay.fade_out_at)
+    if (overlay.active && !overlay.closing && now >= overlay.fade_out_at)
         dismiss_overlay(now);
     if (overlay.closing && !tweens[A_OVALPHA].on && anim[A_OVALPHA] <= 0.01f) {
         overlay.active = false;
@@ -699,14 +698,17 @@ int main(void) {
     printf("encoder: CLK GP%d DT GP%d SW GP%d  SHIFT GP%d\n",
            PIN_ENC_CLK, PIN_ENC_DT, PIN_ENC_SW, PIN_SHIFT);
 
-    /* SHIFT is a TOGGLE button:
-     *   1× tap  → brightness_mode = true  (overlay sticks, encoder = BL)
-     *   2× tap  → brightness_mode = false (overlay fades, encoder = menu)
-     *   long-hold (no rotate) → cycle test scene (panel verification)
+    /* SHIFT is a TOGGLE LATCH (the sim's on-screen SHIFT button):
+     *   1× tap → shift_mode = true: the encoder is remapped to the
+     *            backlight. The "Backlight XX%" readout is TRANSIENT —
+     *            it fades in over the menu on every turn and fades back
+     *            out after ~1 s idle; the MODE stays latched regardless.
+     *   2× tap → shift_mode = false: encoder back on the menu.
+     *   long-hold (no tap action) → cycle test scene (panel verification)
      * `shift_t0` tracks the current press for long-press classification;
      * `shift_rotated` and `shift_longed` veto the tap action on release so
      * a long-press or a press-while-held-rotate never doubles as a toggle. */
-    static bool brightness_mode = false;
+    static bool shift_mode = false;
     bool     shift_rotated = false;
     bool     shift_longed  = false;
     uint32_t shift_t0      = 0;
@@ -734,14 +736,17 @@ int main(void) {
          * shift_rotated/longed and turn a finished long-press into a
          * spurious toggle). */
         if (sh_release && !shift_rotated && !shift_longed) {
-            /* short tap → TOGGLE brightness mode */
-            brightness_mode = !brightness_mode;
-            if (brightness_mode) {
-                show_overlay("Backlight", backlight_pct, /*sticky=*/true, now);
+            /* short tap → toggle the SHIFT-mode latch. Entering shows the
+             * readout once (feedback + current value), then it fades like
+             * any Drive/Volume readout; leaving tears a visible one down. */
+            shift_mode = !shift_mode;
+            if (shift_mode) {
+                if (scene == SCENE_MENU)
+                    show_overlay("Backlight", backlight_pct, now);
             } else {
                 dismiss_overlay(now);
             }
-            printf("shift toggle -> brightness_mode=%d\n", (int)brightness_mode);
+            printf("shift mode -> %s\n", shift_mode ? "ON" : "OFF");
             dirty = true;
         }
         if (sh_press) {
@@ -749,15 +754,12 @@ int main(void) {
             shift_rotated = false;
             shift_longed = false;
         }
-        /* Long-press = scene cycle. Only fires from the normal browse mode,
-         * not while inside brightness_mode (long press there would be a
-         * confusing "did my toggle work?" moment) and not from inside a
-         * test scene (the same hold should not skip MENU back to RAMP
-         * immediately). The user can always exit a scene by short-tapping
-         * SHIFT first (which toggles brightness on, then off, harmless),
-         * but in practice scenes are exited by another long-press: the
-         * cycle ends back at MENU. */
-        if (sh_held && !shift_longed && !shift_rotated && !brightness_mode
+        /* Long-press = scene cycle. Fires from the menu AND from any test
+         * scene (that's the way back: the cycle ends at MENU again). The
+         * only veto is shift_mode — a long press while the encoder is
+         * remapped to the backlight would be a confusing "did my tap
+         * register?" moment; exit shift mode first (1 tap), then hold. */
+        if (sh_held && !shift_longed && !shift_rotated && !shift_mode
             && now - shift_t0 >= LONG_PRESS_MS) {
             shift_longed = true;
             scene = (scene_t)((scene + 1) % SCENE_COUNT);
@@ -779,15 +781,16 @@ int main(void) {
             int n   = detents > 0 ? detents : -detents;
             if (sh_held) shift_rotated = true;   /* veto the on-release tap  */
 
-            if (brightness_mode) {
-                /* Brightness mode is independent of scene — adjusting the
-                 * panel while judging RAMP greys is exactly the point. */
+            if (shift_mode) {
+                /* SHIFT mode is independent of scene — adjusting the panel
+                 * while judging RAMP greys is exactly the point. Every turn
+                 * re-shows the transient readout (and re-arms its fade). */
                 backlight_pct += accel_ticks(dir, now) * n;
                 if (backlight_pct < 0)   backlight_pct = 0;
                 if (backlight_pct > 100) backlight_pct = 100;
                 backlight_apply();
                 if (scene == SCENE_MENU)
-                    show_overlay("Backlight", backlight_pct, true, now);
+                    show_overlay("Backlight", backlight_pct, now);
                 printf("backlight %d%%\n", backlight_pct);
                 dirty = true;
             } else if (scene == SCENE_MENU) {
@@ -811,12 +814,12 @@ int main(void) {
 
         /* --- encoder push ----------------------------------------------- */
         if (sw_press) {
-            if (brightness_mode) {
-                /* push inside brightness mode = jump to 100 % */
+            if (shift_mode) {
+                /* push inside SHIFT mode = jump to 100 % */
                 backlight_pct = 100;
                 backlight_apply();
                 if (scene == SCENE_MENU)
-                    show_overlay("Backlight", backlight_pct, true, now);
+                    show_overlay("Backlight", backlight_pct, now);
                 printf("backlight -> 100%%\n");
                 dirty = true;
             } else if (scene == SCENE_MENU) {
