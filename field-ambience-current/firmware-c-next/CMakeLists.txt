@@ -92,3 +92,44 @@ pico_enable_stdio_uart(field_ambience_native 0)
 # Emit the UF2 + map + bin so the user can drop the UF2 onto the Pico in
 # BOOTSEL mode without further tooling.
 pico_add_extra_outputs(field_ambience_native)
+
+# ---------------------------------------------------------------------------
+# display_hw_test — breadboard bring-up for the 1.9" ST7789 panel.
+#
+# Hardware counterpart of the GitHub-Pages display simulator
+# (tools/display_sim.html): real menu.c on the real panel, driven by a
+# KY-040 push encoder + one tactile button. Wiring, controls and
+# troubleshooting are documented in the header of tools/display_hw_test.c.
+#
+# Build:  make -j display_hw_test   →  build/display_hw_test.uf2
+add_executable(display_hw_test
+    tools/display_hw_test.c
+    src/lcd_st7789.c       # panel driver (SPI0, GP5..GP9)
+    src/oled_draw.c        # framebuffer primitives
+    src/font_8x8.c         # 8x8 bitmap font (test-scene labels)
+    src/baked_font.c       # Helvetica Neue baked-glyph renderer (menu)
+    src/baked_font_data.c
+    src/battery.c          # battery % state (bench: simulated via button)
+    src/menu.c             # the menu the simulator mirrors
+)
+
+target_include_directories(display_hw_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# 16 MHz instead of 32: breadboard jumper wires are not a PCB trace. The
+# driver's LCD_SPI_HZ has an #ifndef guard for exactly this override.
+target_compile_definitions(display_hw_test PRIVATE
+    LCD_SPI_HZ=16000000
+)
+
+target_link_libraries(display_hw_test
+    pico_stdlib
+    pico_time          # 1 kHz encoder/button sampler
+    hardware_spi       # ST7789 over SPI0
+    hardware_gpio      # encoder + button inputs
+)
+
+pico_enable_stdio_usb(display_hw_test 1)
+pico_enable_stdio_uart(display_hw_test 0)
+pico_add_extra_outputs(display_hw_test)

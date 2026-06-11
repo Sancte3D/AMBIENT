@@ -10,10 +10,12 @@ on:
   push:
     paths:
       - "field-ambience-current/firmware-c/**"
+      - "field-ambience-current/firmware-c-next/**"
       - ".github/workflows/firmware-c.yml"
   pull_request:
     paths:
       - "field-ambience-current/firmware-c/**"
+      - "field-ambience-current/firmware-c-next/**"
       - ".github/workflows/firmware-c.yml"
 
 defaults:
@@ -74,4 +76,68 @@ jobs:
         with:
           name: field_ambience_native-pico2-uf2
           path: field-ambience-current/firmware-c/build/field_ambience_native.uf2
+          if-no-files-found: error
+
+  # --- firmware-c-next: the active development tree -----------------------
+  # Same two-stage validation as firmware-c. The cross-build additionally
+  # produces display_hw_test.uf2 — the breadboard bring-up for the 1.9"
+  # ST7789 panel (tools/display_hw_test.c). Download it from the workflow
+  # artifacts, no local toolchain needed.
+
+  host-tests-next:
+    name: host unit tests (firmware-c-next)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run host tests
+        working-directory: field-ambience-current/firmware-c-next/test
+        run: ./run_tests.sh
+
+  firmware-build-next:
+    name: RP2350 build (pico2, firmware-c-next)
+    runs-on: ubuntu-latest
+    env:
+      PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi cmake build-essential
+
+      - name: Checkout Pico SDK 2.1.0
+        uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-sdk
+          ref: "2.1.0"
+          path: pico-sdk
+          submodules: false
+
+      - name: Init TinyUSB submodule (needed for USB CDC stdio)
+        working-directory: pico-sdk
+        run: git submodule update --init --depth 1 lib/tinyusb
+
+      - name: Build (pico2, all targets)
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DPICO_BOARD=pico2
+          make -j"$(nproc)"
+
+      - name: Report sizes + verify UF2s exist
+        working-directory: field-ambience-current/firmware-c-next/build
+        run: |
+          arm-none-eabi-size field_ambience_native.elf display_hw_test.elf
+          test -f field_ambience_native.uf2
+          test -f display_hw_test.uf2
+          ls -la field_ambience_native.uf2 display_hw_test.uf2
+
+      - name: Upload UF2 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-pico2-uf2
+          path: |
+            field-ambience-current/firmware-c-next/build/field_ambience_native.uf2
+            field-ambience-current/firmware-c-next/build/display_hw_test.uf2
           if-no-files-found: error
