@@ -4,10 +4,61 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.10** (Engineering-Realitätscheck nach
-IMG_9713-Sprint: BOOT-Button für USB-DFU ergänzt, USB-C upgegradet
-(C165948 → C165935, 10k Cycles), SPEC §4 BOM und mechanical §4 mit r18.9
-synchronisiert, ADR-0009 dokumentiert alle Befunde. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.11** (Audio-Buffer 256→512 Frames gegen Underrun-
+Kratzgeräusche, SAI-Clock-Architektur auf PLL3 fixiert, Audio-Layout-Constraints
+für Phase 6 dokumentiert. Gehäusedicke konkret gerechnet: ~20 mm + 10 mm
+Encoder-Knöpfe (OP-1-Field-Klasse). ADR-0010 Audio, ADR-0011 Enclosure.)
+
+---
+
+## v0.7-r18.11 (2026-06-11) — Audio-Buffer + SAI-Clock + Gehäusedicke
+
+User-Fragen: (a) wie verhindern wir Kratzgeräusche am DAC, (b) wie dick wird
+das Gehäuse mit Lautsprechern. Beide Fragen mit Engineering-Analyse beantwortet.
+
+### ADR-0010 — Anti-Kratzig
+
+Sechs Ursachen-Klassen geprüft:
+- ✅ PCM5102A Pin-Strapping verifiziert (FLT=FMT=DEMP=GND, XSMT controlled)
+- ✅ Engine-Soft-Limiter aktiv (Step 11)
+- 🔧 Buffer-Underrun-Risiko → AUDIO_BUFFER_FRAMES 256 → 512
+  (5.8 ms → 11.6 ms Window, 2× Sicherheits-Marge; Latenz weiterhin
+  sub-perception für Ambient-Pad)
+- 🔧 Clock-Jitter → SAI-Speisung aus PLL3-P (11.2896 MHz exakt) statt
+  SYSCLK; getrennte Audio-PLL ist STM32H7-Standard für Audio-Quality
+- 🔧 Layout-Constraints (SPEC §5.1 ergänzt): AVDD/DVDD-Caps <5 mm vom IC,
+  Single-Star-GND zwischen Audio und Digital, C_BULK kurzer Polygon-Loop
+  zum PAM8403-PVDD, optionaler Class-D-Output-Bead-Filter
+- Sub-Bass-Speaker-Klappern bleibt Sound-Design-Lösung
+  (SubBass-Layer ausschließlich an J8-Line-Out)
+
+Alle 12+ Host-Tests grün nach Buffer-Größen-Änderung.
+
+### ADR-0011 — Gehäusedicke
+
+Drei Stack-Up-Varianten gerechnet (Encoder-im-Gehäuse, Encoder-ragt-raus,
+Side-Mount-Speaker). Gewählt: **Variante B** (Encoder-Knopf außen).
+
+Konkretes Z-Budget:
+- Bottom-Panel 2.5 mm + Standoff 3.0 mm + PCB 1.6 mm + Top-Komponenten 8.0 mm
+  + Encoder-Schaft 12 mm + Top-Panel 2.5 mm = **Gehäuse außen 19.6 mm**
+- + Encoder-Knöpfe 10 mm = **Gesamthöhe ~30 mm**
+- → OP-1-Field-Klasse (Field selbst ist 19 mm)
+
+Speaker-Kammer pro Seite ~31 cm³ — passt für Closed-Box-Mid-Range-Sound
+der 40-mm-Treiber. Sub-Bass wie immer über J8.
+
+**C_BULK-Konflikt früh erkannt:** 1000 µF Alu-Elko ist 10.5 mm hoch, passt
+nicht in 8 mm-Top-Zone. Drei Lösungs-Optionen dokumentiert; Empfehlung:
+**Polymer-Tantal-Cap** (z. B. Panasonic 25SVPF1000M, 2.5 mm hoch, besserer
+ESR für Bass-Transienten). Entscheidung für r18.12 vor Layout.
+
+### Files
+
+- ADR-0010-audio-buffer-sai-pll-clean-sound.md NEU
+- ADR-0011-enclosure-thickness.md NEU
+- firmware-c-next/include/audio.h: AUDIO_BUFFER_FRAMES 256→512
+- SPEC §5.1 erweitert: SAI-Clock-Architektur + Audio-Layout-Constraints
 
 ---
 

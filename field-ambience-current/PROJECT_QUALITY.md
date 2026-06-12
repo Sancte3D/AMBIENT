@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-11 (v0.7-r18.10)**
+**Stand: 2026-06-11 (v0.7-r18.11)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -9,7 +9,7 @@
 
 | Aspekt | Score | Trend |
 |---|---|---|
-| **Audio-Engine (Sound)** | 9 / 10 | → |
+| **Audio-Engine (Sound)** | 9.5 / 10 | ↑ (r18.11: Buffer-Underrun-Schutz + SAI-PLL-Architektur dokumentiert) |
 | **Display-Sim Web-UI** | 7 / 10 | ↑ (von 5/10 vor IMG_9713-Redesign) |
 | **Industrial Design (Render)** | 9 / 10 | ↑ |
 | **Bench Bring-Up (Pico 2)** | 8 / 10 | → |
@@ -19,7 +19,7 @@
 | **BOM-Sourcing** | 7.5 / 10 | ↑ (Choc raus, FSR-Interface rein; FSR-MPN + 2 LED-Farben VERIFY) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
-| **Mechanical / Enclosure** | 2 / 10 | → (Pico-Ära-Koordinaten) |
+| **Mechanical / Enclosure** | 4 / 10 | ↑ (r18.11: Z-Budget konkret berechnet, Gehäusedicke ~20 mm fixiert, C_BULK-Konflikt erkannt) |
 | **Cell-Mechanik (Piano-Feel)** | 5 / 10 | ↑ (Schematic-Seite done; FSR-Wahl + Silicon-Cap offen) |
 | **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |

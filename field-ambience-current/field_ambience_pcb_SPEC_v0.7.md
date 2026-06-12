@@ -596,8 +596,35 @@ DFU-Button etc.).
 
 SAI1-DMA: SAI1_A nutzt DMA1 oder DMA2 (in Phase 4 finalisiert), Memory→Peripheral,
 32-bit-Word, circular Mode für Ping-Pong-Buffering. Halb-Block-IRQ liefert je
-128 Frames; Engine rendert in den jeweils anderen Halb-Buffer. PE2 (Pin 1) wird
-nicht beschaltet, da PCM5102A im 3-wire-Mode arbeitet (BCK, LRCK, DIN — kein MCLK).
+**512 Frames** (r18.11, war 256); Engine rendert in den jeweils anderen Halb-Buffer.
+PE2 (Pin 1) wird nicht beschaltet, da PCM5102A im 3-wire-Mode arbeitet
+(BCK, LRCK, DIN — kein MCLK).
+
+**SAI-Clock-Architektur (r18.11, ADR-0010):** SAI1 wird von **PLL2-Q oder PLL3-P**
+gespeist, **nicht** von SYSCLK. Begründung: SYSCLK-PLL trägt CPU-Last-Variation
+(Cache-Refills, IRQ-Stalls) als Phase-Noise; gekoppelt auf den BCK-Clock zum
+DAC = audible Jitter im Hochton. STM32H7 hat zwei dedicated Audio-PLLs, eine
+davon (Vorschlag: PLL3-P) auf 11.2896 MHz = 44100 × 256 → Master-Clock-Quelle
+für SAI; SAI-Divider erzeugt daraus BCK (2.8224 MHz) und LRCK (44.1 kHz).
+Wird in Phase 4 (Firmware-Migration) implementiert; PLL3-Konfig im
+NATIVE_PORT_PLAN dokumentiert.
+
+**Audio-Layout-Constraints (r18.11, vor Phase 6 Layout):**
+1. **PCM5102A AVDD/DVDD-Decoupling** (FB1 + C7a/b + C8a/b) muss **< 5 mm vom IC**
+   sitzen, vorzugsweise im selben GND-Plane-Polygon
+2. **Single-Star-GND-Punkt** zwischen Audio-Block und Digital-Block: PCM5102A-
+   GND, PAM8403-PGND, Speaker-Return alle auf einen Mid-Layer-Polygon-Anker
+   verbunden, kein direkter Pfad über Digital-GND
+3. **Class-D-Output-Filter** (PAM8403 hat keinen on-chip-Filter, BTL-Output ist
+   ~500 kHz PWM): kurze Leitung zum Speaker (max 50 mm) plus optional
+   LC-Bead-Filter (BLM18AG601 in jeder Output-Leitung, AVX TPS-Klasse) → fängt
+   die Trägerfrequenz vor dem Speaker ab und reduziert Quasi-Peak-EMI
+4. **Bulk-Cap-Platzierung:** C_BULK (1000 µF) so platzieren, dass der Strompfad
+   zum PAM8403-PVDD-Pin den kürzesten Polygon-Loop bildet (Class-D zieht
+   ~2 A-Spitzen bei Bass-Transienten; das ist der Hauptkratzigkeits-Pfad,
+   wenn die Bulk-Cap weit weg liegt)
+5. **PCM5102A-LDOO-Cap** (interner 1.8-V-LDO-Output, Pin 18): 100 nF X7R 0603
+   direkt am Pin (Cstability)
 
 ### 5.2 LCD (SPI1 + GPIO-Control)
 
