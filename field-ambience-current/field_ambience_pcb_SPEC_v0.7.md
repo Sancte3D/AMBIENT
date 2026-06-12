@@ -484,7 +484,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
 | ~~SW1-SW5~~ ✂ r18.9 | ~~Kailh Choc V2 Hot-Swap Socket~~ — r18.9: FSR-Pads; **r18.14 (ADR-0013): Cells sind jetzt Gateron-LP-MAGNETIC-Switches (pin-los, plate-mounted) + Hall-Sensor auf PCB** | — | **Ja** (Switches + LP-Stabilizer: Keyboard-Markt, z.B. Gateron direkt) |
-| **J_CELL1-5** (r18.14) | **Hall-Sensor-Site 1×3** (+3V3/OUT/GND, ADR-0013). Kandidaten: TI DRV5056A4 (SOT-23, final) / SS49E-Klasse (TO-92S, Prototyp). PINOUT-VERIFY vor Phase 6 | TBD-VERIFY | SOT-23: JLC-bestückbar; TO-92S-Prototyp: Hand |
+| **J_CELL1-5** (r18.14) | **TI DRV5056A4QDBZR** (SOT-23, 3.3V ratiometrisch). Pinout DS-verifiziert: 1=VCC / 2=OUT / 3=GND. Bridge-Site bleibt als 1×3-Header bis Phase 6 (dann SOT-23-FP), Pin-Mapping ist 1:1. | **C2152902** | JLC Extended — JLC-bestückbar |
 | **R_CELL1-5 / C_CELL1-5** (r18.14) | 5× **1 kΩ** 0603 (Hall-OUT-Serien-R) + 5× 10 nF X7R 0603 → RC fc≈16 kHz vor ADC | C21190 / C57112 | JLC-bestückt |
 | **STAB_CELL** (r18.14, ADR-0013) | **LP-Stabilizer** für Cell-Caps ≥ 2u (Spacebar-Prinzip: Switch mittig, Stabilizer links/rechts). Gateron-LP-Klasse | — (Keyboard-Markt) | **Ja**, mit Switches zusammen beschaffen |
 | **SW6-SW10** (r10) | **12×12×7.3 mm momentary tactile, plain (Modifier-Buttons Shift/Hold/Drone/Generate/Clear)**. HX 12x12x7.3TPFT-B. **Alle 5 identisch, momentary — Latch-Zustand zeigen die LEDs (§7.2), kein Rast-Schalter** | **C36498966** (JLC Extended) | JLC-bestückt mit Custom-FP `field_ambience:SW_HX_12x12x7.3_SMD-4P` (ADR r18.6) |
@@ -492,8 +492,8 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | ~~SW12~~ ✂ r18 | ~~BOOTSEL Tactile~~ — **entfernt:** war Pico-spezifisch | — | — |
 | **SW_BOOT** (r18.10) | **Mini-SMD-Tactile für BOOT0 (USB-DFU-Flash, ADR-0009)**. **r18.14: MPN korrigiert — C720477 ist XUNPU TS-1088-AR02016** (nicht TS-1185A-C-A); FP auf EasyEDA-verifiziertes `field_ambience:SW_TS1088_SMD` | **C720477** | **NEU r18.10: ohne SW_BOOT wäre USB-DFU-Flash nicht möglich** |
 | **R_BOOT_SW** (r18.10) | 1 kΩ 0603 (BOOT0-SW-Strombegrenzung) | C21190 | JLC Basic |
-| **EN3** (r18.14, ADR-0012) | **ALPS EC11E THT mit Push + Detents** (15 P/30 D; exakte Suffix-Variante TBD-VERIFY) — Display-Encoder: 1 Rastung = 1 Menü-Schritt | TBD-VERIFY | THT; ggf. Mouser/Digikey + Hand |
-| **EN1/EN2/EN4** (r18.14, ADR-0012) | **ALPS EC11E183440C** — 18 Pulse, **OHNE Detent, OHNE Switch** (glattes Drehen; Auflösung/Acceleration macht Firmware). Gleiche Schaftlänge wie EN3 → **alle 4 gleich hoch** | TBD-VERIFY | THT; ggf. Mouser/Digikey + Hand |
+| **EN3** (r18.14, ADR-0012) | **ALPS EC11E18244AU** — 18 Puls / 36 Detent, mit Push-Switch, Flat-Shaft 20 mm — Display-Encoder, 1 Rastung = 1 Menü-Schritt | **C202365** | JLC Extended (ALPS Original, in stock) — THT-Handbestückung im Prototyp |
+| **EN1/EN2/EN4** (r18.14, ADR-0012) | **ALPS EC11E183440C** — 18 Puls, **OHNE Detent**, mit Push (Firmware nutzt nur A/B), Shaft 20 mm — selbe Bauform wie EN3 → **alle 4 gleich hoch** | **C370986** | JLC Extended (ALPS Original, in stock) — THT-Handbestückung im Prototyp |
 | ~~EN1-EN4 alt~~ ✂ r18.14 | ~~EC11J1525402 SMD (C209762)~~ — **retired:** NRND + 3D-verifiziert 24.5 mm hoch (zu hoch, Kick75-Ziel) + Half-Step-Detent-Mismatch (ADR-0012) | — | — |
 
 **Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints (SW1-5 Cells) sind

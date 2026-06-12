@@ -16,7 +16,7 @@
 | **Schematic (Korrektheit)** | 9.5 / 10 | ↑ (r18.10: SW_BOOT + USB-C-Upgrade + SPEC-BOM-Sync) |
 | **Hardware-Symbole** | 9.5 / 10 | ↑ (BOOT-Button + R_BOOT_SW ergänzt) |
 | **Footprint-Verifikation** | 10 / 10 | ✅ (r18.14: 0 offene Punkte — EC11J-Blocker via Teil-Retire gelöst, TS-1088-FP EasyEDA-verifiziert) |
-| **BOM-Sourcing** | 8.5 / 10 | ↑ (r18.14: 2 kritische ID/MPN-Fixes via 3D-Verifikation; offen: EC11E-, Hall-, Polymer-LCSC-IDs) |
+| **BOM-Sourcing** | 9 / 10 | ↑ (r18.14: EC11E + Hall-Sensor LCSC-IDs verifiziert + DRV5056-Pinout DS-bestätigt; offen: Gateron-LP, Polymer-Cap, MLCC-220µF/10V) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 7 / 10 | ↑ (r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + MANIFEST mit Höhen-Tabelle) |

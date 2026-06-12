@@ -3313,10 +3313,12 @@ def stm32h743_sheet() -> str:
                                     x=jx, y=jy,
                                     footprint="Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
                                     extra_props={
-                                        "MPN": "DRV5056A4 (Kandidat) / SS49E-Klasse (Prototyp TO-92S)",
-                                        "LCSC": "TBD-VERIFY (DRV5056A4QDBZR auf LCSC pruefen; SS49E-Klone breit verfuegbar)",
-                                        "PINOUT-VERIFY": "Site-Reihenfolge 1=+3V3 2=OUT 3=GND ist SITE-Belegung, NICHT Chip-Pinout. Vor SOT-23-FP-Zuordnung DRV5056-DS pruefen (AP7361-Lektion r18.6).",
-                                        "FP_NOTE": "1x3 2.54mm-Site: nimmt SS49E TO-92S direkt oder SOT-23-Breakout. Finale SOT-23-3-Integration in Phase 6 (Layout) nach Pinout-Verifikation.",
+                                        "MPN": "DRV5056A4QDBZR (TI, SOT-23, 3.3V ratiometrisch, unipolar, 0.6V@B=0, magnet temp comp)",
+                                        "Manufacturer": "Texas Instruments",
+                                        "LCSC": "C2152902",
+                                        "Datasheet": "https://www.ti.com/lit/ds/symlink/drv5056.pdf",
+                                        "PINOUT-VERIFIED": "TI DRV5056 DS Table 4-1 (verifiziert r18.14): SOT-23 Pin 1=VCC, Pin 2=OUT, Pin 3=GND. Site-Belegung 1=+3V3 / 2=OUT / 3=GND matched 1:1. TO-92-Prototyp (LPG-Package) hat ABWEICHEND 1=VCC/2=GND/3=OUT — fuer Breadboard Beine swappen.",
+                                        "FP_NOTE": "1x3 2.54mm-Site fuer Prototyp. Phase 6: Site durch SOT-23-Footprint (Package_TO_SOT_SMD:SOT-23) ersetzen, Pin-Mapping 1->1 / 2->2 / 3->3 (siehe PINOUT-VERIFIED).",
                                         "Mechanik": "Sensor sitzt unter dem Magnet-Stem des Gateron-LP-Magnetic-Switch (plate-mounted, ADR-0013). Lange Caps (>=2u): LP-Stabilizer links/rechts wie Spacebar.",
                                     },
                                     seed_suffix=f"JCELL{ci}", sheet_uuid_seed=sus))
@@ -4610,33 +4612,35 @@ def encoder_sheet() -> str:
         sw2_x, sw2_y = sx + 5.08, sy + 2.54  # Pin 5 SW2 → GND
 
         if variant == "push":
-            enc_value = f"EC11E THT + push + detent ({net_prefix})"
+            enc_value = f"EC11E18244AU push+detent ({net_prefix})"
             enc_props = {
-                "MPN": "ALPS EC11E-Serie, 15 Puls / 30 Detent, mit Push-Switch — exakte Suffix-Variante TBD-VERIFY (Auswahl-Matrix: tech.alpsalpine.com EC11E; Schaftlänge einheitlich mit EN-smooth wählen)",
+                "MPN": "EC11E18244AU (ALPS EC11E, 18 Pulse, 36 Detents, mit Push-Switch, 0.5mm Travel)",
                 "Manufacturer": "ALPSALPINE",
-                "LCSC": "TBD-VERIFY (Original-ALPS auf LCSC prüfen, sonst Mouser/Digikey + Hand-Bestückung THT)",
-                "Package": "THT EC11E, vertikal. Detents gewollt: Menü-Navigation 1 Rastung = 1 Schritt",
-                "Variant": "DISPLAY-Encoder = einziger mit Push + Rastung (ADR-0012)",
+                "LCSC": "C202365",
+                "Package": "THT EC11E vertikal, Shaft 20mm flat — Display-Encoder: 1 Rastung = 1 Schritt (ADR-0012)",
+                "Datasheet": "https://datasheet.lcsc.com/lcsc/1809200034_ALPSALPINE-EC11E18244AU_C202365.pdf",
+                "Variant": "DISPLAY-Encoder = einziger mit Push + Rastung",
             }
         else:
             enc_value = f"EC11E183440C smooth ({net_prefix})"
             enc_props = {
-                "MPN": "EC11E183440C (18 Puls, OHNE Detent, OHNE Switch)",
+                "MPN": "EC11E183440C (ALPS EC11E, 18 Pulse, OHNE Detent, MIT Push-Switch)",
                 "Manufacturer": "ALPSALPINE",
-                "LCSC": "TBD-VERIFY (Original-ALPS auf LCSC prüfen, sonst Mouser/Digikey + Hand-Bestückung THT)",
-                "Package": "THT EC11E, vertikal, glatt drehend (kein Anschlag, kein Detent)",
-                "Variant": "Parameter-Encoder ohne Push: SW1/SW2-Löcher bleiben leer (Variante hat keine Switch-Pins); Pull-up hält SW-Net idle-high (ADR-0012)",
+                "LCSC": "C370986",
+                "Package": "THT EC11E vertikal, Shaft 20mm — Parameter-Encoder: glatt drehend (kein Detent), Push physisch vorhanden aber Firmware ignoriert (has_sw=false) — könnte als Future-Feature aktiviert werden",
+                "Datasheet": "https://datasheet.lcsc.com/lcsc/1902221132_ALPS-Electric-EC11E183440C_C370986.pdf",
+                "Variant": "Parameter-Encoder: smooth Drehung; Firmware nutzt nur A/B",
             }
         enc_props["Height"] = (
-            "Body ~7mm + Schaft (einheitliche Länge für alle 4 wählen; Ziel "
-            "Gesamt ≈ 20-22mm statt 24.5mm beim EC11J — Kick75-flaches Profil, "
-            "ADR-0012; Knopf Ø19-20 x 8-10mm Alu)"
+            "Beide Varianten gleiche Bauform: Body 11.7×12.0×4.5 mm + 20 mm "
+            "Flat-Shaft → garantiert gleich hoch (ADR-0012). Knopf Ø19-20 x "
+            "8-10 mm Alu (Kick75-flach)"
         )
         enc_props["FP_NOTE"] = (
-            "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm = "
-            "KiCad-Standard-Lib (fab-erprobt). Land-Pattern für alle "
-            "EC11E-Schafthöhen identisch; H20mm betrifft nur das 3D-Modell. "
-            "Smooth-Variante nutzt dasselbe FP — S1/S2-Löcher bleiben leer."
+            "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm — "
+            "KiCad-Standard-Lib, fab-erprobt. Identisches Land-Pattern für "
+            "beide Varianten (Push-Pins immer da, im Smooth-Fall mechanisch "
+            "ungenutzt). r18.14: LCSC-IDs verifiziert."
         )
 
         # ---- EC11E Symbol (THT, ADR-0012)
