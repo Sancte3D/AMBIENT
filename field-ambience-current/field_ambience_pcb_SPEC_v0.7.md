@@ -483,11 +483,15 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
-| SW1-SW5 | Kailh Choc V2 Hot-Swap Socket (5×, 2u Cells) | Nicht im JLC-Stock | Ja, von Keebio/Kailh |
-| **SW6-SW10** (r10) | **12×12×7.3 mm momentary tactile, plain (KEINE integrierte LED), SMD-4P. Top-Kandidat: HX 12x12x7.3TPFT-B (Mfr: HX). Pad-Pattern: 11.8×11.8 mm Body, 4 Pins gulwing.** | **C36498966 (LCSC) — JLC Extended, 29.840 pcs Stock, $0.029-0.048 je nach Qty** | **Nein (JLC-assembled). r10-B8 SOURCING-PASS noch offen: HX-Datasheet nicht bei LCSC verfügbar → entweder Sample-Vermessung oder Cross-Verify gegen Standard-12×12-SMD-4P-Footprint. Industrie-Standard für 12×12 SMD-Tactile ist 6.5 × 4.5 mm Pad-Raster mit 1.0×1.5 mm Pads. WICHTIG r10: LEDs sind separat (LED6-LED10, SMD 0603, siehe unten + §7.2).** |
-| STAB1-5 | Kailh 2u Choc V2 Stabilizer (CPG1353G24D01) | Nicht im JLC-Stock | 5× von Keebio |
+| ~~SW1-SW5~~ ✂ r18.9 | ~~Kailh Choc V2 Hot-Swap Socket~~ — **entfernt:** Cells sind seit ADR-0006 FSR-Velocity-Pads, nicht mehr Switches | — | — |
+| **J_CELL1-5** (r18.9) | **FSR-Pad-Anschluss 2-Pin** (FSR extern, ADR-0006). Connector-Bauform offen — 2.54-mm-Pinheader als Platzhalter, FFC/FPC empfohlen (siehe ADR-0009) | Pinheader: Generic | **Nein** (FSR-Pad separat: Interlink FSR 400 oder gleichwertig) |
+| **R_CELL1-5 / C_CELL1-5** (r18.9) | 5× 10 kΩ 0603 (Teiler-Bottom) + 5× 10 nF X7R 0603 (ADC S/H) | Generic | JLC-bestückt |
+| **SW6-SW10** (r10) | **12×12×7.3 mm momentary tactile, plain (Modifier-Buttons Shift/Hold/Drone/Generate/Clear)**. HX 12x12x7.3TPFT-B | **C36498966** (JLC Extended) | JLC-bestückt mit Custom-FP `field_ambience:SW_HX_12x12x7.3_SMD-4P` (ADR r18.6) |
+| ~~STAB1-5~~ ✂ r18.9 | ~~Kailh 2u Choc V2 Stabilizer~~ — **entfernt:** Stabilizer waren für Choc-Caps, FSR braucht keine | — | — |
 | SW11 | Reset Tactile 6mm SMD | Generic SMD | JLC Standard |
-| **SW12** | **BOOTSEL Tactile 6mm SMD** | Generic SMD | **NEU: dedizierter BOOTSEL-Button für Pico-Flash** |
+| ~~SW12~~ ✂ r18 | ~~BOOTSEL Tactile~~ — **entfernt:** war Pico-spezifisch | — | — |
+| **SW_BOOT** (r18.10) | **Mini-SMD-Tactile für BOOT0 (USB-DFU-Flash, ADR-0009)**. TS-1185A-C-A | **C720477** | **NEU r18.10: ohne SW_BOOT wäre USB-DFU-Flash nicht möglich** |
+| **R_BOOT_SW** (r18.10) | 1 kΩ 0603 (BOOT0-SW-Strombegrenzung) | C21190 | JLC Basic |
 | **EN1-EN4** | **ALPSALPINE EC11J1525402** (16-detent, push-switch, SMD) | **C209762** | **JLC Extended, premium-Detent-Feel. r8: MPN konkretisiert (war: generisch „EC11"). Lifecycle 30k Cycles, Detent-Force ~6 mNm typisch.** |
 
 **Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints (SW1-5 Cells) sind

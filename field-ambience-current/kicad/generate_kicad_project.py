@@ -1925,12 +1925,13 @@ def power_tree_sheet() -> str:
         place_symbol(
             lib_id="Connector:USB_C_Receptacle",
             ref="J1",
-            value="USB_C_Receptacle (TYPE-C-31-M-12, C165948)",
+            value="USB_C_Receptacle (TYPE-C-31-M-17, C165935, 10k Insertion-Cycles, drop-in zu M-12)",
             x=J1_X,
             y=J1_Y,
             footprint="Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
-            datasheet="https://datasheet.lcsc.com/lcsc/2004081102_Korean-Hroparts-Elec-TYPE-C-31-M-12_C165948.pdf",
-            extra_props={"MPN": "TYPE-C-31-M-12", "LCSC": "C165948"},
+            datasheet="https://datasheet.lcsc.com/lcsc/2204262207_Korean-Hroparts-Elec-TYPE-C-31-M-17_C165935.pdf",
+            extra_props={"MPN": "TYPE-C-31-M-17", "LCSC": "C165935",
+                         "Notes": "r18.10: Upgrade von C165948 (M-12 / 5k Cycles) auf M-17 (10k Cycles). Footprint M-12 ist drop-in kompatibel (laut HRO-Tabelle); pre-fab in Phase 6 visuell gegen M-17-Drawing prüfen."},
             seed_suffix="J1",
         )
     )
@@ -3176,7 +3177,10 @@ def stm32h743_sheet() -> str:
     junctions.append(junction(nx + 2, ny))
     junctions.append(junction(nx + 6, ny))
 
-    # ---- BOOT0: 10k Pulldown (SPEC §5.8)
+    # ---- BOOT0: 10k Pulldown + SW_BOOT-Tactile zu +3V3 (SPEC §5.8 + ADR-0009)
+    # Ohne SW_BOOT ist USB-DFU-Flash physikalisch nicht möglich (BOOT0 ist
+    # dauernd LOW). SW_BOOT zieht BOOT0 für DFU-Sequenz temporär nach +3V3.
+    # Bedienung: SW_BOOT halten → NRST tippen → loslassen → USB-Mode-Flash.
     box_, boy = 100.0, 184.0
     labels.append(label(box_, boy, "BOOT0_PIN"))
     wires.append(wire(box_, boy, box_ + 2, boy, seed_suffix="boot0-rail"))
@@ -3188,6 +3192,31 @@ def stm32h743_sheet() -> str:
     wires.append(wire(box_ + 2, boy + 7.62, box_ + 2, boy + 10, seed_suffix="rboot0-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_RBOOT0", value="GND",
                                 x=box_ + 2, y=boy + 10, seed_suffix="rboot0-gnd", sheet_uuid_seed=sus))
+    # SW_BOOT links neben dem BOOT0-Label (pin1=BOOT0_PIN, pin2=+3V3 über
+    # R_BOOT_SW 1k Strombegrenzung — direkter Pull nach +3V3 würde bei
+    # gleichzeitig betätigtem SW_RESET einen kurzzeitigen Querstrom-Konflikt
+    # über den 10k-Pulldown erzeugen, deshalb der serielle 1k).
+    bsx, bsy = box_ - 14, boy
+    symbols.append(place_symbol(lib_id="Switch:SW_Push", ref="SW_BOOT",
+                                value="BOOT0 Tactile (USB-DFU)",
+                                x=bsx, y=bsy,
+                                footprint="Button_Switch_SMD:SW_SPST_TL3342",
+                                extra_props={"MPN": "TS-1185A-C-A", "LCSC": "C720477",
+                                             "FP_NOTE": "Mini-SMD-Tactile (kleinere Bauform als HX 12x12), nur fuer Service-Use bei Flash"},
+                                seed_suffix="SWBOOT", sheet_uuid_seed=sus))
+    # SW_Push pin1 (-5.08, 0) → BOOT0_PIN-Rail, pin2 (+5.08, 0) → R_BOOT_SW → +3V3
+    wires.append(wire(bsx - 5.08, bsy, box_, bsy, seed_suffix="swboot-to-boot0"))
+    symbols.append(place_symbol(lib_id="Device:R", ref="R_BOOT_SW",
+                                value="1k 0603 (BOOT0-SW Strombegrenzung)",
+                                x=bsx + 9, y=bsy, rotation=90,
+                                footprint="Resistor_SMD:R_0603_1608Metric",
+                                extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
+                                seed_suffix="RBOOTSW", sheet_uuid_seed=sus))
+    wires.append(wire(bsx + 5.08, bsy, bsx + 9 - 3.81, bsy, seed_suffix="swboot-to-r"))
+    wires.append(wire(bsx + 9 + 3.81, bsy, bsx + 14, bsy, seed_suffix="r-to-3v3"))
+    symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_SWBOOT", value="+3V3",
+                                x=bsx + 14, y=bsy, rotation=90, seed_suffix="swboot-3v3",
+                                sheet_uuid_seed=sus))
 
     # ---- SWD J4 (3-Pin 1.27mm, bestehend aus v0.6): SWCLK / GND / SWDIO (§5.8)
     jx, jy = 196.0, 208.0

@@ -4,10 +4,57 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.9** (Schematic-Implementation der IMG_9713-
-Entscheidungen: 5× FSR-Velocity-ADC-Inputs (PC0/PC1/PA4/PB0/PB1),
-15-LED-Topologie am PCA9685 (16/16 Kanäle exakt), Choc-Hotswap-Cells
-entfernt, GPA0-4 frei. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.10** (Engineering-Realitätscheck nach
+IMG_9713-Sprint: BOOT-Button für USB-DFU ergänzt, USB-C upgegradet
+(C165948 → C165935, 10k Cycles), SPEC §4 BOM und mechanical §4 mit r18.9
+synchronisiert, ADR-0009 dokumentiert alle Befunde. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.10 (2026-06-11) — Engineering-Realitätscheck (ADR-0009)
+
+User-Frage: welche Entscheidungen sinnvoll, welche nicht. Vier Fix-Cluster:
+
+### 🔴 BOOT0-Button gefehlt (kritisch)
+
+Befund: BOOT0 hatte nur einen 10k-Pulldown. USB-DFU-Flash setzt
+BOOT0=HIGH voraus → war physikalisch nicht möglich. SPEC-§1-Diagramm
+behauptete fälschlich "USB-DFU oder ST-Link".
+
+Fix: SW_BOOT (SMD-Tactile TS-1185A-C-A / C720477) plus R_BOOT_SW 1k in
+Reihe nach +3V3 ergänzt. Bedienung: SW_BOOT halten → NRST tippen →
+loslassen → System-Memory-Boot (USB-DFU). 1k-Serien-R limitiert Querstrom
+auf 3 mA falls SW_RESET gleichzeitig gedrückt.
+
+### 🟠 USB-C-Stecker auf 10k-Cycles upgegradet
+
+C165948 (M-12 / ~5k Cycles, Generic) → **C165935 (TYPE-C-31-M-17 / 10k
+Cycles)**, drop-in Footprint laut HRO-Tabelle. Premium-Pfad (GCT/Amphenol
+~10k Cycles, andere FP) für post-Prototyp dokumentiert.
+
+### 🟠 SPEC §4 BOM ↔ Generator r18.9 synchronisiert
+
+Drift gefunden: SPEC listete noch Choc-Cells + Stabilizer + SW12-BOOTSEL
+(alles Pico-Ära). r18.9 hatte das im Generator schon raus.
+
+Fix: SPEC §4-Zeilen durchgestrichen oder ersetzt: SW1-SW5 → J_CELL1-5 +
+R_CELL + C_CELL (FSR-Interface), Stabilizer raus, SW12 raus, SW_BOOT +
+R_BOOT_SW rein. mechanical_coordinates §4 als veraltet markiert.
+
+### 🟢 Engineering-Review als ADR-0009
+
+Vollständige Befund- und Maßnahmen-Doku: USB-C-Premium-Pfad, Z-Höhen-
+Layout-Constraints (C_BULK 10.5 mm darf nicht unter LCD-Header),
+LED-Farben-JLC-Stock-Realität, FSR-Anschluss-Optimierung (FFC empfohlen),
+Display-SPI1-Funktionsfähigkeit ✓, plus die bewussten "ändern wir nicht"-
+Entscheidungen.
+
+### Validierung
+
+paren 8/8 PASS · Crossref 7/7 PASS · SW_BOOT-Pin1↔BOOT0_PIN-Rail-Wire
+verifiziert · SW_BOOT-Pin2↔R_BOOT_SW↔+3V3-Pfad verifiziert.
+
+Scores: Schematic 9 → 9.5, Symbole 9 → 9.5, Doku 9 → 9.5.
 
 ---
 

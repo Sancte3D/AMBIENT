@@ -121,7 +121,14 @@ Modul Platz für Routing.
 
 ---
 
-## 4. Cell-Switches SW1-SW5 (2u Hot-Swap, Kailh Choc V2)
+## ~~4. Cell-Switches SW1-SW5 (2u Hot-Swap, Kailh Choc V2)~~ — VERALTET seit r18.9
+
+> **Cells sind seit r18.9 keine Switches mehr, sondern FSR-Velocity-Pads
+> (ADR-0006).** Position-Daten unten sind historisch. Aktuell maßgeblich:
+> §0 oben (IMG_9713-Layout-Skizze). Detail-Koordinaten werden mit Mechanik-
+> Phase fixiert (Silicon-Cap-Frame-Design).
+
+## 4. ~~Cell-Switches~~ (legacy — wurde Choc V2 Hot-Swap)
 
 5 Switches in horizontaler Reihe.
 
