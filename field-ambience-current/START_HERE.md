@@ -28,8 +28,8 @@
 - `NATIVE_PORT_PLAN.md` — Steps + aktueller Fortschritt.
 
 ## Audio-Engine-Referenzen (nicht-Firmware-Quellen, aktiv genutzt)
-- `field_ambience_v29o.scd` — kanonische SuperCollider-Quelle (Cross-Check)
-- `field_ambience_webapp.html` — Web-Audio-Port, war Port-Vorlage für `firmware-c/`
+- `../software/supercollider_reference/field_ambience_v29o.scd` — kanonische SuperCollider-Quelle (Cross-Check)
+- `../software/webapp/field_ambience_webapp.html` — Web-Audio-Port, war Port-Vorlage für `firmware-c/`
 
 ## PCB
 - `field_ambience_pcb_SPEC_v0.7.md` — komplette, aktuelle Spec (v0.7-r18, H7-Migration)
@@ -37,16 +37,16 @@
   `generate_kicad_project.py`)
 - `kicad/libraries/` — eingebundene kiswitch-Footprints (Choc V2)
 - `kicad/datasheets/` — Datasheets der verbauten Bauteile
-- `mechanical_coordinates.md` — Platzierungs-Koordinaten fürs Layout
+- `../mechanical/coordinates/mechanical_coordinates.md` — Platzierungs-Koordinaten fürs Layout
 - `CHANGELOG.md` — Entscheidungs- und Änderungshistorie
 - `PCB_TODO.md` — detaillierter Engineering-Status
 
 ## Pre-Step-6 (archiviert)
-- `legacy/` — die alte Pi+SuperCollider+Browser-Architektur. Inhalte sind
-  obsolet aber zur Nachvollziehbarkeit eingefroren. Siehe `legacy/README.md`.
+- `../archive/legacy_pre_native/` — die alte Pi+SuperCollider+Browser-Architektur. Inhalte sind
+  obsolet aber zur Nachvollziehbarkeit eingefroren. Siehe `../archive/legacy_pre_native/README.md`.
 
 ## Design-Philosophie
-- `docs/archive/pitch_pre_step6.md` / `docs/archive/roadmap_pre_step6.md` —
+- `../archive/old_specs/pitch_pre_step6.md` / `../archive/old_specs/roadmap_pre_step6.md` —
   beide aus der Pi-Phase, **archiviert in v0.7-r18**. Klang-Vision (Sound-
   Constitution) gilt weiter, technische Hardware-Details sind überholt.
   Ein neuer Pitch wird nach abgeschlossener H7-Migration geschrieben.

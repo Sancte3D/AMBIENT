@@ -5,7 +5,7 @@
  * Per-Mode reverb presets + per-Vibe bias + Space/Mood macros.
  *
  * Direct port of the webapp's REVERB_MODE_PRESETS / VIBE_REVERB_BIAS /
- * computeReverb() (see field_ambience_webapp.html). The webapp computes
+ * computeReverb() (see ../../software/webapp/field_ambience_webapp.html). The webapp computes
  * four abstract params {t60, damp, size, high} suitable for generating a
  * convolution-reverb impulse response. The native Freeverb takes a different
  * shape — size_0_1 (comb feedback), damp_0_1 (LP coefficient in feedback),

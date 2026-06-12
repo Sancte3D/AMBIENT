@@ -131,8 +131,8 @@ umsteuern kannst. Keine Mega-Dumps.
 > Bass (Step 8) kommt zuletzt, weil der 380-Hz-Onboard-Treiber (siehe SPEC §8
 > Acoustic-Refactor) famSubBass/famDeepBass ohnehin kaum abstrahlt — das ist
 > primär ein Line-Out-Layer und onboard nur über den Reverb-Send hörbar, der
-> erst ab Step 11 existiert. Port-Vorlage: `field_ambience_webapp.html`
-> (imperativer Web-Audio-DSP, konkrete Hz/Q/Gain-Werte), `.scd` als Cross-Check.
+> erst ab Step 11 existiert. Port-Vorlage: `../software/webapp/field_ambience_webapp.html`
+> (imperativer Web-Audio-DSP, konkrete Hz/Q/Gain-Werte), `../software/supercollider_reference/field_ambience_v29o.scd` als Cross-Check.
 
 - **Step 9** ✅ — `famPadCore`. Ported aus `_makePadVoice` der Webapp.
   Neue DSP-Primitive in `dsp.{h,c}`: polyBLEP-Saw/Square (`dsp_poly_saw/square`,

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Render the engine to a reference WAV on the host (no Pico SDK, no device).
-# Listen to the result and A/B against field_ambience_webapp.html — if they
+# Listen to the result and A/B against software/webapp/field_ambience_webapp.html — if they
 # match, any remaining on-device difference is the hardware chain, not the DSP.
 #
 # Usage: ./tools/render_wav.sh [out.wav]

@@ -7,7 +7,7 @@
 
 User-Frage: „Wie dick wird das Gehäuse inklusive Lautsprecher?"
 
-Bisher in `mechanical_coordinates.md` ohne harte Z-Berechnung. Jetzt fixiert: drei Stack-Up-Varianten gegeneinander gerechnet, die realistische gewählt.
+Bisher in `../../mechanical/coordinates/mechanical_coordinates.md` ohne harte Z-Berechnung. Jetzt fixiert: drei Stack-Up-Varianten gegeneinander gerechnet, die realistische gewählt.
 
 ## Echte Bauteil-Höhen (Datenblatt-verifiziert)
 
@@ -162,4 +162,4 @@ Bei einem ~33 × 14.3 cm Gehäuse mit 19.6 mm Innenhöhe ist seitliche Speaker-K
 
 - ADR-0006 — Cell-Mechanik (Silicon-Cap = +3.5 mm Top-Zone)
 - ADR-0007 — Speaker-Mesh (Frontpanel-Aussparung)
-- mechanical_coordinates.md §0 (IMG_9713-Layout)
+- `../../mechanical/coordinates/mechanical_coordinates.md` §0 (IMG_9713-Layout)

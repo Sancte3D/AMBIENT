@@ -1,10 +1,12 @@
 # Repository Structure — Current State & Refactor Roadmap
 
-## Current state (r18.6, 2026-06-11)
+## Current state (r18.13, 2026-06-12)
 
-The repo has grown organically. Most living material is under
-`field-ambience-current/`. That folder name worked when there was a
-predecessor — there isn't anymore. It's the active code now.
+The repo has grown organically. Discipline-based top-level folders are
+being introduced phase-by-phase. Phase 2 (additive doc moves) is done as
+of r18.13. Active firmware, KiCad, and core spec docs still live under
+`field-ambience-current/` and move atomically with their CI updates in
+Phase 3+.
 
 ```
 AMBIENT/
@@ -14,6 +16,13 @@ AMBIENT/
 ├── CONTRIBUTING.md
 ├── .github/workflows/         CI: firmware-c.yml, pages.yml
 ├── demos/audio/               render samples (FLAC)
+├── mechanical/coordinates/    mechanical_coordinates.md (Phase 2)
+├── software/
+│   ├── webapp/                field_ambience_webapp.html (Phase 2)
+│   └── supercollider_reference/ field_ambience_v29o.scd (Phase 2)
+├── archive/
+│   ├── legacy_pre_native/     bridge.py + MicroPython firmware (Phase 2)
+│   └── old_specs/             pre-Step-6 pitch + roadmap (Phase 2)
 └── field-ambience-current/
     ├── (status & spec docs at top level — see PROJECT_MAP.md)
     ├── firmware-c/            FROZEN listening-test snapshot
@@ -23,10 +32,8 @@ AMBIENT/
     │   ├── libraries/         vendored kiswitch + project-local FPs
     │   └── datasheets/        active + datasheets/legacy/ for replaced
     ├── docs/                  ADRs, hardware checklists, component_reviews,
-    │                          archive of pre-Step-6 specs, onboarding
-    ├── reports/               validation reports
-    ├── scripts/               KiCad helpers (ERC, footprint check)
-    └── legacy/                pre-native bridge.py, MicroPython firmware
+    │                          onboarding
+    └── scripts/               KiCad helpers (ERC, footprint check)
 ```
 
 This structure is **honest** about what's active vs. archived. It is **not
@@ -59,15 +66,17 @@ Two reasons it's staged instead of done in one commit:
 - Onboarding docs for industrial designer / hardware / firmware / manufacturing
 - `PCB_LAYOUT_STATUS.md` made the single truth-source for manufacturing status
 
-### Phase 2 (planned — safe doc/asset moves, no CI risk)
+### Phase 2 (DONE in r18.13 — safe doc/asset moves, no CI risk)
 
-- `field-ambience-current/PITCH.md` → `product/brief/PITCH.md`
-- `field-ambience-current/mechanical_coordinates.md` → `mechanical/coordinates/`
-- `field-ambience-current/field_ambience_webapp.html` → `software/webapp/`
-- `field-ambience-current/field_ambience_v29o.scd` → `software/supercollider_reference/`
-- `field-ambience-current/reports/` → `validation/reports/`
-- `field-ambience-current/legacy/` → `archive/legacy_pre_native/`
-- `field-ambience-current/docs/archive/` → `archive/old_specs/`
+- ~~`field-ambience-current/PITCH.md` → `product/brief/PITCH.md`~~ — skipped (file never existed; pre-Step-6 archive copy is in `archive/old_specs/`)
+- ✅ `field-ambience-current/mechanical_coordinates.md` → `mechanical/coordinates/`
+- ✅ `field-ambience-current/field_ambience_webapp.html` → `software/webapp/`
+- ✅ `field-ambience-current/field_ambience_v29o.scd` → `software/supercollider_reference/`
+- ~~`field-ambience-current/reports/` → `validation/reports/`~~ — skipped (folder was empty)
+- ✅ `field-ambience-current/legacy/` → `archive/legacy_pre_native/`
+- ✅ `field-ambience-current/docs/archive/` → `archive/old_specs/`
+
+Cross-references in README, PROJECT_MAP, START_HERE, PCB_LAYOUT_STATUS, NATIVE_PORT_PLAN, INDUSTRIAL_DESIGNER_START, ADR-0007, ADR-0011, and the firmware code-comments (`render_wav.*`, `pad.h`, `reverb_presets.h`) updated in the same commit. CHANGELOG historical entries left untouched — they document state at time of commit.
 
 ### Phase 3 (planned — firmware split, atomic with CI update)
 

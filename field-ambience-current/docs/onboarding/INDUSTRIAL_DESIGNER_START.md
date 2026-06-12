@@ -22,10 +22,10 @@ white-on-black; it speaks the same OP-1 / Teenage Engineering visual language.
 
 ## Where to look
 
-- **Product brief**: [`PITCH.md`](../../PITCH.md) — what we're selling, who it's for
+- **Product brief**: [`README.md`](../../../README.md) — what we're selling, who it's for (PITCH replaced by repo README in v0.7-r18)
 - **Try the menu now**: open [`firmware-c-next/tools/display_sim.html`](../../firmware-c-next/tools/display_sim.html) in any browser, scroll-wheel on a dial to "turn" it, click to push, hold Shift to enter Brightness mode
 - **Listen to it**: [`demos/audio/`](../../../demos/audio/) at the repo root — `engine_performance_long.flac` is 8 minutes of the engine playing itself
-- **Mechanical/panel sketch**: [`mechanical_coordinates.md`](../../mechanical_coordinates.md) — current X/Y/Z constraints (provisional, will update once enclosure CAD starts)
+- **Mechanical/panel sketch**: [`mechanical_coordinates.md`](../../../mechanical/coordinates/mechanical_coordinates.md) — current X/Y/Z constraints (provisional, will update once enclosure CAD starts)
 
 ## Why each design choice is what it is
 
@@ -34,7 +34,7 @@ non-obvious choice and what was rejected.
 
 ## What to leave alone
 
-You can change anything in `PITCH.md`, `mechanical_coordinates.md`, and
+You can change anything in `mechanical/coordinates/mechanical_coordinates.md` and
 write new ADRs. Don't edit:
 
 - The schematic generator (`kicad/generate_kicad_project.py`)

@@ -40,27 +40,27 @@ AMBIENT/
 ├── REPO_STRUCTURE.md            ← roadmap for the bigger refactor
 ├── CONTRIBUTING.md
 ├── demos/audio/                 ← FLAC renders to listen to
-└── field-ambience-current/      ← all design + code + docs
+├── mechanical/coordinates/      ← X/Y/Z placement spec (r18.13 ex-field-ambience-current/)
+├── software/
+│   ├── webapp/                  ← in-browser engine reference (field_ambience_webapp.html)
+│   └── supercollider_reference/ ← canonical SC engine (field_ambience_v29o.scd)
+├── archive/
+│   ├── legacy_pre_native/       ← pre-native bridge.py, MicroPython firmware
+│   └── old_specs/               ← pre-Step-6 pitch + roadmap
+└── field-ambience-current/      ← active design + code + docs
     ├── START_HERE.md
     ├── PCB_LAYOUT_STATUS.md     ← honest manufacturing state
     ├── CHANGELOG.md             ← what changed and when
     ├── PCB_TODO.md              ← open hardware items
-    ├── PITCH.md                 ← product brief
-    ├── ROADMAP.md
     ├── NATIVE_PORT_PLAN.md      ← Pico → STM32H7 migration plan
     ├── field_ambience_pcb_SPEC_v0.7.md  ← live hardware spec
-    ├── field_ambience_webapp.html       ← in-browser engine reference
-    ├── field_ambience_v29o.scd          ← original SuperCollider reference
-    ├── mechanical_coordinates.md
     ├── firmware-c/              ← FROZEN host-test snapshot (Pico era)
     ├── firmware-c-next/         ← ACTIVE firmware development
     ├── kicad/                   ← schematic + custom footprints
     │   ├── legacy_pico2/        ← old Pico-era sheets, archived
     │   └── libraries/           ← kiswitch (vendored) + field_ambience.pretty
     ├── docs/                    ← decisions / hardware checklists / component reviews
-    ├── reports/                 ← validation results
-    ├── scripts/                 ← KiCad ERC/footprint helpers
-    └── legacy/                  ← pre-native bridge.py, MicroPython firmware, etc.
+    └── scripts/                 ← KiCad ERC/footprint helpers
 ```
 
 > **Note on folder names:** Most living material is still under

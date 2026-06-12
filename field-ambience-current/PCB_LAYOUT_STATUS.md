@@ -30,7 +30,7 @@
 | B3 | 🟠 | KiCad-GUI-ERC | Einmal in KiCad 9 öffnen, ERC laufen lassen (kicad-cli aktuell nicht in der Umgebung verfügbar). Erwartete Warnungen / verbotene Warnungen siehe ERC_DRC_CHECKLIST.md |
 | B-FP | 🟠 | Footprint-Land-Pattern-Verifikation | `FP_VERIFY`-Properties abarbeiten — Liste mit Status siehe FP_VERIFY_LOG.md |
 | ADR-0004 | 🟠 | MIDI-Design-Entscheidung | docs/decisions/ADR-0004 — 5 Achsen entscheiden, Generator erweitern (oder als DNP committen) |
-| Mech | 🟠 | Mechanical Coordinates Update | `mechanical_coordinates.md` reflektiert noch Pico-Ära; vor Layout-Start für STM32-LQFP-100 + neue Frontpanel-Komponenten neu fixieren |
+| Mech | 🟠 | Mechanical Coordinates Update | `../mechanical/coordinates/mechanical_coordinates.md` reflektiert noch Pico-Ära; vor Layout-Start für STM32-LQFP-100 + neue Frontpanel-Komponenten neu fixieren |
 | ~~GATE~~ | ~~🔴~~ | ~~Phase-5-Profiling~~ | **ADR-0005: übersprungen** (2026-06-11). Layout darf vor Profiling starten; Firmware-Migration läuft parallel |
 | GATE | 🟢 | Phase 6 Layout | nach Gate 2+3 sauber. Stack-Up Sig/GND/+5V/Sig (SPEC §9), JLC-4-Lagen-Profil |
 

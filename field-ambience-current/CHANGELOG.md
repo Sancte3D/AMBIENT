@@ -4,10 +4,81 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.12** (Pre-Layout-Cleanup: C_BULK auf 470µF Polymer
-+ 220µF MLCC parallel (löst Höhen-Konflikt aus ADR-0011 + besserer ESR pro
-ADR-0010), EC11J Custom-Footprint zeichne ich aus den ALPS-EC11J-Standard-
-Maßen als Draft (gegen EasyEDA vor Fab verifizieren). KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.13** (Repo-Refactor Phase 2: additive Doc-Moves
+nach `mechanical/`, `software/`, `archive/` — kein CI-Risiko, kein
+Generator-Output-Pfad geändert. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.13 (2026-06-12) — Repo-Refactor Phase 2 (Doc-Moves)
+
+`REPO_STRUCTURE.md` Phase 2 ausgeführt. Discipline-basierte Top-Level-Ordner
+für nicht-CI-kritische Assets eingeführt; Cross-References in lebenden Docs
+und Firmware-Code-Kommentaren synchronisiert.
+
+### git mv (5 Pfade)
+
+- `field-ambience-current/mechanical_coordinates.md` → `mechanical/coordinates/`
+- `field-ambience-current/field_ambience_webapp.html` → `software/webapp/`
+- `field-ambience-current/field_ambience_v29o.scd` → `software/supercollider_reference/`
+- `field-ambience-current/legacy/` → `archive/legacy_pre_native/`
+- `field-ambience-current/docs/archive/` → `archive/old_specs/`
+
+### Übersprungen (begründet)
+
+- **`PITCH.md`** — Datei existiert nicht im lebenden Tree (nur archivierte
+  Kopie unter `archive/old_specs/pitch_pre_step6.md`). Re-Pitch nach
+  STM32-Migration neu aufsetzen, dann `product/brief/PITCH.md` anlegen.
+- **`reports/`** — Ordner war leer.
+
+### Cross-Reference-Updates (lebende Docs, einmaliger Pass)
+
+- `README.md` — Folder-Tree zeigt neue Top-Level-Ordner; `PITCH.md`-Eintrag
+  raus, da nicht vorhanden
+- `PROJECT_MAP.md` — `mechanical_coordinates.md`-Pfad + Legacy-Pfade
+- `REPO_STRUCTURE.md` — Phase-2-Block auf DONE, Tree synchronisiert
+- `field-ambience-current/PROJECT_QUALITY.md` — Mechanical-Pfad
+- `field-ambience-current/START_HERE.md` — 4 Referenzen (`.scd`, `.html`,
+  `mechanical_coordinates.md`, `legacy/`)
+- `field-ambience-current/PCB_LAYOUT_STATUS.md` — Mech-Pfad
+- `field-ambience-current/NATIVE_PORT_PLAN.md` — Port-Vorlage-Pfad
+- `field-ambience-current/docs/onboarding/INDUSTRIAL_DESIGNER_START.md` —
+  `PITCH.md`-Verweis ersetzt durch Repo-`README.md`, Mech-Pfad
+- `field-ambience-current/docs/decisions/ADR-0007-dust-mesh-speakers.md`
+  + `ADR-0011-enclosure-thickness.md` — Related-Sektionen
+- `field-ambience-current/firmware-c-next/tools/render_wav.{c,sh}` +
+  `include/pad.h` + `include/reverb_presets.h` — Pfad-Kommentare zur
+  Webapp-Reference
+- `field-ambience-current/firmware-c/include/pad.h` — **NICHT angepasst**;
+  ist FROZEN-Snapshot, Pfad-Kommentar reflektiert State at-time-of-snapshot
+
+### Bewusst NICHT angefasst
+
+- `CHANGELOG.md` historische Einträge — dokumentieren Stand pro Commit
+- `field_ambience_pcb_SPEC_v0.7.md` Inline-Prosa-Verweise auf
+  `mechanical_coordinates.md` — strukturell Doc-Name, kein Hyperlink, wird
+  bei nächstem SPEC-Refresh (r18.14+) konsolidiert
+- `PCB_TODO.md`, `MEINE_TODO.md` — Working-Docs, Prosa-Referenzen, kein
+  Build-Blocker. Konsolidierung mit der nächsten Mechanical-Update-Welle
+- CI-relevante Pfade (`firmware-c/`, `firmware-c-next/`, `kicad/`) —
+  Phase-3-Aufgabe, atomar mit `.github/workflows/*.yml`
+
+### Score-Impact (PROJECT_QUALITY.md)
+
+| Aspekt | r18.12 | r18.13 | Trend |
+|---|---|---|---|
+| Repo-Struktur | 6/10 | **8/10** | Phase 2 von 5 abgeschlossen |
+| Doku / Onboarding | 9.5/10 | **10/10** ✅ | Pfade konsistent, Onboarding-Links korrekt |
+| Mechanical / Enclosure | 5/10 | **6/10** | Pfad-Honest-State, Inhalt unverändert |
+
+### Risiko-Bewertung
+
+- **Kein CI-Risiko**: keine `.yml`-Path-References geändert
+- **Kein Generator-Output-Risiko**: `kicad/generate_kicad_project.py`
+  unverändert, schreibt weiter nach `field-ambience-current/kicad/`
+- **Kein Firmware-Build-Risiko**: Header-Pfade nur in Kommentaren angefasst
+- **Reversibel**: 5 × `git mv` in einem Commit, jederzeit per `git revert`
+  rücknehmbar
 
 ---
 

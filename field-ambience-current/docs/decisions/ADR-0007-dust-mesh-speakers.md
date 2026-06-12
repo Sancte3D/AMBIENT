@@ -65,5 +65,5 @@ Konkret:
 ## Related
 
 - ADR-0006 — Cell-Piano-Feel (gleicher Mechanik-Update-Sprint)
-- mechanical_coordinates.md — wird mit den ovalen Speaker-Aussparungen
+- `../../mechanical/coordinates/mechanical_coordinates.md` — wird mit den ovalen Speaker-Aussparungen
   aktualisiert

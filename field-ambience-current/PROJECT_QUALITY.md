@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-11 (v0.7-r18.12)**
+**Stand: 2026-06-12 (v0.7-r18.13)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -19,16 +19,17 @@
 | **BOM-Sourcing** | 8 / 10 | ↑ (Polymer-Familie identifiziert, MLCC-1210-220uF Standard, EC11J FP draft) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
-| **Mechanical / Enclosure** | 5 / 10 | ↑ (r18.12: C_BULK-Konflikt aufgelöst via Polymer-Wechsel) |
+| **Mechanical / Enclosure** | 6 / 10 | ↑ (r18.13: Pfad nach `mechanical/coordinates/`, Honest-Naming) |
 | **Cell-Mechanik (Piano-Feel)** | 5 / 10 | ↑ (Schematic-Seite done; FSR-Wahl + Silicon-Cap offen) |
 | **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
-| **Doku / Onboarding** | 9.5 / 10 | ↑ (ADR-0009 Engineering-Review, SPEC §4 sync) |
+| **Doku / Onboarding** | 10 / 10 | ✅ (r18.13: alle Cross-Refs konsistent nach Phase-2-Moves) |
 | **Test-Abdeckung (host)** | 9 / 10 | → |
-| **Repo-Struktur** | 6 / 10 | ↑ (Phase 1 done, 2-5 queued) |
+| **Repo-Struktur** | 8 / 10 | ↑ (r18.13: Phase 2 done — Doc-Moves in `mechanical/`, `software/`, `archive/`; Phase 3-5 queued) |
 | **CI / Auto-Validierung** | 8 / 10 | → |
 
-**Gesamt-Manufacturing-Readiness: 5.5 / 10** (Gate 1.5 von 9).
+**Gesamt-Manufacturing-Readiness: 5.7 / 10** (Gate 1.5 von 9). Sub-Anstieg durch
+Repo-Struktur 6→8 + Doku 9.5→10 + Mechanical 5→6 (Pfad-Honest-State) in r18.13.
 
 ## Was jeder Score bedeutet — und was auf 10 fehlt
 
@@ -74,7 +75,7 @@
 - ⏳ Layout-abhängig
 
 ### Mechanical / Enclosure — 2 / 10
-- ✅ `mechanical_coordinates.md` existiert
+- ✅ `mechanical/coordinates/mechanical_coordinates.md` existiert (verschoben in r18.13)
 - ⏳ Fehlend für 10: Update auf STM32-LQFP-100 + neue Komponenten (Cell-Velocity-Pads, Dust-Mesh-Aussparungen, 4-Corner-Encoder-Positionen). Enclosure-CAD existiert nicht
 
 ### Cell-Mechanik (Piano-Feel) — 3 / 10
@@ -99,9 +100,10 @@
 - ✅ 12+ Suiten grün; Bench-Test mit 50+ Checks für Display-Logik
 - ⏳ Fehlend für 10: Velocity-Sampling-Test (kommt mit Cell-Velocity-Implementation)
 
-### Repo-Struktur — 6 / 10
+### Repo-Struktur — 8 / 10
 - ✅ Phase 1 done (Navigation, Onboarding, ADRs)
-- ⏳ Fehlend für 10: Phasen 2 (Doc-Moves) + 3 (Firmware-Split atomar mit CI) + 4 (KiCad-Reorg) + 5 (Manufacturing-Scaffold sobald `.kicad_pcb` existiert)
+- ✅ Phase 2 done (r18.13: Doc-Moves nach `mechanical/`, `software/`, `archive/`)
+- ⏳ Fehlend für 10: Phasen 3 (Firmware-Split atomar mit CI) + 4 (KiCad-Reorg) + 5 (Manufacturing-Scaffold sobald `.kicad_pcb` existiert)
 
 ### CI / Auto-Validierung — 8 / 10
 - ✅ firmware-c-Pipeline grün, Bench-Test in CI, Pages-Pipeline für Web-Sim
@@ -117,6 +119,6 @@
    9 → 10, Mechanical 7 → 10
 4. **PCB Layout** (Phase 6, jetzt ohne Gate-Wartezeit) — Layout 0 → 8, DRC
    0 → 8
-5. **Repo-Refactor Phasen 2–5** — Repo 6 → 10
+5. **Repo-Refactor Phasen 3–5** — Repo 8 → 10 (Phase 2 done in r18.13)
 6. **Firmware-Migration STM32H743** parallel — Audio 9 → 10
 7. **Prototype-Spin** — Bring-Up 8 → 10

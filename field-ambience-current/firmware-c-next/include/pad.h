@@ -4,7 +4,7 @@
 /*
  * famPadCore — the warm detuned-saw pad that is the instrument's core voice
  * (Step 9 of the native port). Ported from the Web-Audio reference
- * `_makePadVoice` in field_ambience_webapp.html.
+ * `_makePadVoice` in ../../software/webapp/field_ambience_webapp.html.
  *
  * Per pad voice (one per cell tap / chord tone):
  *   - two detuned "sides" (±detune cents) for chorus width

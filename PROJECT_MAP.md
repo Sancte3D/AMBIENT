@@ -14,17 +14,17 @@ The honest answer to "where is the X?" — by topic and by role.
 | Where is the **schematic generator**? | [`field-ambience-current/kicad/generate_kicad_project.py`](field-ambience-current/kicad/generate_kicad_project.py) — the source of truth, all `.kicad_sch` files are output |
 | Where is the **BOM**? | Inline in the schematic (every symbol has MPN/LCSC/Manufacturer properties). No flat BOM CSV — that gets generated from KiCad once layout exists |
 | Where are **datasheets**? | [`field-ambience-current/kicad/datasheets/`](field-ambience-current/kicad/datasheets/) — current parts. `datasheets/legacy/` for replaced/wrong-variant PDFs |
-| Where are **mechanical coordinates**? | [`field-ambience-current/mechanical_coordinates.md`](field-ambience-current/mechanical_coordinates.md) — needs update for STM32 layout |
+| Where are **mechanical coordinates**? | [`mechanical/coordinates/mechanical_coordinates.md`](mechanical/coordinates/mechanical_coordinates.md) — needs update for STM32 layout |
 | Where are **manufacturing outputs** (Gerbers, CPL)? | Not generated yet. They will live in `field-ambience-current/kicad/manufacturing/` once layout exists |
-| Where are **old/legacy files**? | `field-ambience-current/legacy/` (bridge.py, MicroPython firmware), `field-ambience-current/kicad/legacy_pico2/` (old sheets), `field-ambience-current/docs/archive/` (pre-Step-6 specs), `demos/old/` (legacy demos) |
+| Where are **old/legacy files**? | `archive/legacy_pre_native/` (bridge.py, MicroPython firmware), `field-ambience-current/kicad/legacy_pico2/` (old sheets), `archive/old_specs/` (pre-Step-6 specs), `demos/old/` (legacy demos) |
 | What should a **new person open first**? | [`README.md`](README.md) → [`field-ambience-current/START_HERE.md`](field-ambience-current/START_HERE.md) → role-based onboarding file |
 | What is the **current production gate**? | **Gate 1 + partial Gate 2**: firmware/audio prototype validated on Pico 2 bench, schematic done but ERC not yet run in GUI. See "Production Gate" below |
 
 ## By role
 
 ### Industrial designer
-1. [`field-ambience-current/PITCH.md`](field-ambience-current/PITCH.md) — what this is, who it's for
-2. [`field-ambience-current/mechanical_coordinates.md`](field-ambience-current/mechanical_coordinates.md) — frontplate / encoder positions / button layout
+1. [`README.md`](README.md) — what this is, who it's for
+2. [`mechanical/coordinates/mechanical_coordinates.md`](mechanical/coordinates/mechanical_coordinates.md) — frontplate / encoder positions / button layout
 3. [`field-ambience-current/firmware-c-next/tools/display_sim.html`](field-ambience-current/firmware-c-next/tools/display_sim.html) — interact with the menu in a browser
 4. [`field-ambience-current/docs/decisions/`](field-ambience-current/docs/decisions/) — read ADRs to understand why things are as they are
 5. **Don't touch:** schematic generator, firmware, KiCad files
