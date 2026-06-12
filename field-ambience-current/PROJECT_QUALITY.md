@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-11 (v0.7-r18.11)**
+**Stand: 2026-06-11 (v0.7-r18.12)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -15,11 +15,11 @@
 | **Bench Bring-Up (Pico 2)** | 8 / 10 | → |
 | **Schematic (Korrektheit)** | 9.5 / 10 | ↑ (r18.10: SW_BOOT + USB-C-Upgrade + SPEC-BOM-Sync) |
 | **Hardware-Symbole** | 9.5 / 10 | ↑ (BOOT-Button + R_BOOT_SW ergänzt) |
-| **Footprint-Verifikation** | 8 / 10 | ↑ (6 von 9 closed in r18.7) |
-| **BOM-Sourcing** | 7.5 / 10 | ↑ (Choc raus, FSR-Interface rein; FSR-MPN + 2 LED-Farben VERIFY) |
+| **Footprint-Verifikation** | 9 / 10 | ↑ (r18.12: EC11J Custom-Draft-FP geschlossen) |
+| **BOM-Sourcing** | 8 / 10 | ↑ (Polymer-Familie identifiziert, MLCC-1210-220uF Standard, EC11J FP draft) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
-| **Mechanical / Enclosure** | 4 / 10 | ↑ (r18.11: Z-Budget konkret berechnet, Gehäusedicke ~20 mm fixiert, C_BULK-Konflikt erkannt) |
+| **Mechanical / Enclosure** | 5 / 10 | ↑ (r18.12: C_BULK-Konflikt aufgelöst via Polymer-Wechsel) |
 | **Cell-Mechanik (Piano-Feel)** | 5 / 10 | ↑ (Schematic-Seite done; FSR-Wahl + Silicon-Cap offen) |
 | **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |

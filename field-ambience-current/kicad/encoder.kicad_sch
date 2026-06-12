@@ -1555,7 +1555,7 @@
         (effects (font (size 1.27 1.27))))
       (property "Value" "EC11 + push (DRIVE)" (at 142.54 71.27 0)
         (effects (font (size 1.27 1.27))))
-      (property "Footprint" "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm" (at 140.0 70 0)
+      (property "Footprint" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD" (at 140.0 70 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "https://jlcpcb.com/partdetail/C209762" (at 140.0 70 0)
         (effects (font (size 1.27 1.27)) hide))
@@ -1569,7 +1569,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Status" "NRND (ALPS marks as Not Recommended For New Designs) — Prototype-OK, Serie: Ersatztyp wählen" (at 142.54 78.89 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "FP_VERIFY" "F-2: KiCad-Standard-FP ist EC11E (THT-Stems); EC11J ist SMD-Bauform. Vor Layout Land-Pattern gegen JLCPCB-EasyEDA-Drawing für C209762 abgleichen oder eigenen FP zeichnen." (at 142.54 80.16 0)
+      (property "FP_DRAFT" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD ist ein DRAFT-FP aus den dokumentierten ALPS-EC11J-Standard-Maßen (12x13.4mm Body, 2.5mm Pad-Pitch). Vor Fab gegen EasyEDA-Export von C209762 verifizieren (jlcpcb.com/partdetail/ALPSALPINE-EC11J1525402/C209762 → Footprint-Download → KiCad-Import) und ggf. nachbessern." (at 142.54 80.16 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1727,7 +1727,7 @@
         (effects (font (size 1.27 1.27))))
       (property "Value" "EC11 + push (BRIGHT)" (at 142.54 106.27 0)
         (effects (font (size 1.27 1.27))))
-      (property "Footprint" "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm" (at 140.0 105 0)
+      (property "Footprint" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD" (at 140.0 105 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "https://jlcpcb.com/partdetail/C209762" (at 140.0 105 0)
         (effects (font (size 1.27 1.27)) hide))
@@ -1741,7 +1741,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Status" "NRND (ALPS marks as Not Recommended For New Designs) — Prototype-OK, Serie: Ersatztyp wählen" (at 142.54 113.89 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "FP_VERIFY" "F-2: KiCad-Standard-FP ist EC11E (THT-Stems); EC11J ist SMD-Bauform. Vor Layout Land-Pattern gegen JLCPCB-EasyEDA-Drawing für C209762 abgleichen oder eigenen FP zeichnen." (at 142.54 115.16 0)
+      (property "FP_DRAFT" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD ist ein DRAFT-FP aus den dokumentierten ALPS-EC11J-Standard-Maßen (12x13.4mm Body, 2.5mm Pad-Pitch). Vor Fab gegen EasyEDA-Export von C209762 verifizieren (jlcpcb.com/partdetail/ALPSALPINE-EC11J1525402/C209762 → Footprint-Download → KiCad-Import) und ggf. nachbessern." (at 142.54 115.16 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1899,7 +1899,7 @@
         (effects (font (size 1.27 1.27))))
       (property "Value" "EC11 + push (DISPLAY)" (at 142.54 141.27 0)
         (effects (font (size 1.27 1.27))))
-      (property "Footprint" "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm" (at 140.0 140 0)
+      (property "Footprint" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD" (at 140.0 140 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "https://jlcpcb.com/partdetail/C209762" (at 140.0 140 0)
         (effects (font (size 1.27 1.27)) hide))
@@ -1913,7 +1913,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Status" "NRND (ALPS marks as Not Recommended For New Designs) — Prototype-OK, Serie: Ersatztyp wählen" (at 142.54 148.89 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "FP_VERIFY" "F-2: KiCad-Standard-FP ist EC11E (THT-Stems); EC11J ist SMD-Bauform. Vor Layout Land-Pattern gegen JLCPCB-EasyEDA-Drawing für C209762 abgleichen oder eigenen FP zeichnen." (at 142.54 150.16 0)
+      (property "FP_DRAFT" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD ist ein DRAFT-FP aus den dokumentierten ALPS-EC11J-Standard-Maßen (12x13.4mm Body, 2.5mm Pad-Pitch). Vor Fab gegen EasyEDA-Export von C209762 verifizieren (jlcpcb.com/partdetail/ALPSALPINE-EC11J1525402/C209762 → Footprint-Download → KiCad-Import) und ggf. nachbessern." (at 142.54 150.16 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2071,7 +2071,7 @@
         (effects (font (size 1.27 1.27))))
       (property "Value" "EC11 + push (VOL)" (at 142.54 176.27 0)
         (effects (font (size 1.27 1.27))))
-      (property "Footprint" "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm" (at 140.0 175 0)
+      (property "Footprint" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD" (at 140.0 175 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "https://jlcpcb.com/partdetail/C209762" (at 140.0 175 0)
         (effects (font (size 1.27 1.27)) hide))
@@ -2085,7 +2085,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Status" "NRND (ALPS marks as Not Recommended For New Designs) — Prototype-OK, Serie: Ersatztyp wählen" (at 142.54 183.89 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "FP_VERIFY" "F-2: KiCad-Standard-FP ist EC11E (THT-Stems); EC11J ist SMD-Bauform. Vor Layout Land-Pattern gegen JLCPCB-EasyEDA-Drawing für C209762 abgleichen oder eigenen FP zeichnen." (at 142.54 185.16 0)
+      (property "FP_DRAFT" "field_ambience:RotaryEncoder_ALPS_EC11J_SMD ist ein DRAFT-FP aus den dokumentierten ALPS-EC11J-Standard-Maßen (12x13.4mm Body, 2.5mm Pad-Pitch). Vor Fab gegen EasyEDA-Export von C209762 verifizieren (jlcpcb.com/partdetail/ALPSALPINE-EC11J1525402/C209762 → Footprint-Download → KiCad-Import) und ggf. nachbessern." (at 142.54 185.16 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

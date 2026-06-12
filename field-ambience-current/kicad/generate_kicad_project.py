@@ -2033,25 +2033,29 @@ def power_tree_sheet() -> str:
     for x in rail_xs[1:-1]:
         junctions.append(junction(x, RAIL_Y))
 
-    # ---- C_BULK 1000µF polarized: pin1 (+) muss zur +5V_USB Rail
-    # Device:CP lib: pin 1 at local (0, +3.81), pin 2 at local (0, -3.81).
-    # Y-DOWN: pin1 abs = (sx, sy - 3.81). Wir wollen pin1 (+) auf Rail (y=RAIL_Y=60).
-    # → sy - 3.81 = 60 → sy = 63.81. C_BULK center @ (65, 63.81).
-    # pin1 (+) abs (65, 60), pin2 (-) abs (65, 67.62).
+    # ---- C_BULK 470µF Polymer-Alu (low-profile) + C_BULK2 220µF MLCC parallel
+    # r18.12: Wechsel von 1000µF Alu-Elko (10.5mm Höhe, ADR-0011-Konflikt)
+    # auf 470µF Polymer (~2mm Höhe). Plus 220µF MLCC X5R parallel für HF-Bulk.
+    # Effektive Bulk-Kapazität: ~690 µF (Polymer + MLCC), aber ESR ~10mΩ
+    # statt ~25mΩ → Class-D-Bass-Transienten sind sauberer (Anti-Kratzig per
+    # ADR-0010 Punkt 4). 1000→470µF ist OK weil Polymer kein Derating wie
+    # Alu hat; effective rail-energy ist vergleichbar.
+    #
+    # Device:CP Symbol bleibt (Polymer ist polarisiert), Footprint wechselt
+    # auf 7343-31 (Standard-D-Case SMD-Polymer-Tantal, 7.3×4.3×3.1mm).
     symbols.append(
         place_symbol(
             lib_id="Device:CP",
             ref="C_BULK",
-            value="1000uF 10V Low-ESR Elko (D10)",
+            value="470uF 16V Polymer (~2mm H, ESR<=15mOhm)",
             x=65,
             y=63.81,
-            # v0.7: Footprint-Fix — EEE-FK1A102P ist ein D10x10.2mm Becher,
-            # nicht D8. CP_Elec_10x10.5 ist das passende Land-Pattern.
-            footprint="Capacitor_SMD:CP_Elec_10x10.5",
-            # v0.8: realer bestellbarer Teil statt Platzhalter. JVJ16V1000M10x10
-            # = SMD-Alu 1000µF 16V, D10×10.5mm → passt exakt zum CP_Elec_10x10.5-
-            # Footprint, 16V gibt mehr Reserve am 5V-Rail als das alte 10V-Teil.
-            extra_props={"MPN": "JVJ16V1000M10x10 (1000uF 16V SMD, D10x10.5)", "LCSC": "C46550395"},
+            footprint="Capacitor_SMD:CP_Tantalum_Case-D_EIA-7343-31_Reflow",
+            extra_props={
+                "MPN": "TBD-VERIFY (Panasonic SVPF-Familie oder Kemet T520D Polymer-Tantal 470uF/16V)",
+                "LCSC": "TBD-VERIFY (JLC-Stock vor Layout pruefen)",
+                "Notes": "r18.12 (ADR-0011): Polymer statt 1000uF Alu — passt in 8mm-Top-Zone, besserer ESR. Mit C_BULK2 (220uF MLCC) parallel = ~690uF effective.",
+            },
             seed_suffix="CBULK",
         )
     )
@@ -2069,17 +2073,15 @@ def power_tree_sheet() -> str:
         )
     )
 
-    # ---- C1/C2: +5V-Rail HF-Decoupling (SPEC §3 — im BOM gelistet & gezählt,
-    # war aber nie im Schaltplan platziert; v0.8-Fix). C_BULK (1000µF Elko)
-    # puffert Bass-/Boot-Transienten, hat aber hohe ESR/ESL → schlechte HF-
-    # Antwort. C1 (10µF Keramik) + C2 (100nF Keramik) liefern den HF-Bypass am
-    # Rail-Eintritt. Device:C: pin1 local (0,+3.81), pin2 (0,-3.81); Y-DOWN →
-    # pin1 abs (x, sy-3.81). Center sy=63.81 → pin1 (x,60) sitzt auf der Rail,
-    # pin2 (x,67.62) → GND. Taps x=80/86 sind rail_xs-Waypoints (Auto-Junction),
-    # rechts von R2/R3 (≤78.81) und links von D1 (≥88) → kollisionsfrei.
-    # LCSC: beide sind JLCPCB-Basic-Parts (kein Extended-Bestückungsaufschlag),
-    # massiv auf Lager, Spannung weit über 16V (5V-Rail → top DC-Bias-Derating).
+    # ---- C_BULK2 (220µF MLCC parallel zu C_BULK Polymer, r18.12) + C1/C2 HF-Bypass
+    # r18.12: 220µF MLCC X5R 1210 parallel zum 470µF-Polymer → ~690µF effective
+    # Bulk + extrem niedrige ESR über das ganze Spektrum. 220µF MLCC in 1210
+    # ist JLC-Standard (z.B. CL32A227KQVNNNE, GRM32ER61C227ME05).
+    # C1 (10µF) + C2 (100nF) bleiben als zusätzlicher HF-Bypass am Rail-Eintritt.
     for cref, cx, cval, cfp, cmpn, clcsc in (
+        ("C_BULK2", 73, "220uF 10V X5R 1210 (MLCC parallel zu C_BULK)",
+         "Capacitor_SMD:C_1210_3225Metric",
+         "TBD-VERIFY (220uF/10V X5R 1210, z.B. CL32A227KQVNNNE)", "TBD-VERIFY"),
         ("C1", 80, "10uF X5R 0805 (+5V rail HF-bulk)",
          "Capacitor_SMD:C_0805_2012Metric",
          "CL21A106KAYNNNE (Samsung, 25V X5R)", "C15850"),
@@ -2369,7 +2371,7 @@ def power_tree_sheet() -> str:
         f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6.3 §1 + §3")\n'
-        f'    (comment 2 "USB-C → F1(3A/6A) → C_BULK(1000µF) → +5V rail")\n'
+        f'    (comment 2 "USB-C → F1(3A/6A) → C_BULK(470µF Polymer + 220µF MLCC) → +5V rail")\n'
         f'    (comment 3 "USB-C VBUS/GND-Pin-Belegung per USB Type-C Spec Rev 2.1 (v0.6.3 fix)")\n'
         f'    (comment 4 "ESD: USBLC6-2SC6 on D+/D-; TVS: SMAJ5.0A on +5V"))\n'
         "  (lib_symbols\n"
@@ -4587,7 +4589,7 @@ def encoder_sheet() -> str:
                 value=f"EC11 + push ({net_prefix})",
                 x=sx,
                 y=sy,
-                footprint="Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm",
+                footprint="field_ambience:RotaryEncoder_ALPS_EC11J_SMD",
                 datasheet="https://jlcpcb.com/partdetail/C209762",
                 extra_props={
                     "MPN": "EC11J1525402",
@@ -4595,7 +4597,7 @@ def encoder_sheet() -> str:
                     "LCSC": "C209762",
                     "Package": "SMD, 15 pulses / 30 detents, push switch",
                     "Status": "NRND (ALPS marks as Not Recommended For New Designs) — Prototype-OK, Serie: Ersatztyp wählen",
-                    "FP_VERIFY": "F-2: KiCad-Standard-FP ist EC11E (THT-Stems); EC11J ist SMD-Bauform. Vor Layout Land-Pattern gegen JLCPCB-EasyEDA-Drawing für C209762 abgleichen oder eigenen FP zeichnen.",
+                    "FP_DRAFT": "field_ambience:RotaryEncoder_ALPS_EC11J_SMD ist ein DRAFT-FP aus den dokumentierten ALPS-EC11J-Standard-Maßen (12x13.4mm Body, 2.5mm Pad-Pitch). Vor Fab gegen EasyEDA-Export von C209762 verifizieren (jlcpcb.com/partdetail/ALPSALPINE-EC11J1525402/C209762 → Footprint-Download → KiCad-Import) und ggf. nachbessern.",
                 },
                 seed_suffix=f"EN{en_num}",
                 sheet_uuid_seed=sus,

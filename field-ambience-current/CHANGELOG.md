@@ -4,10 +4,58 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.11** (Audio-Buffer 256→512 Frames gegen Underrun-
-Kratzgeräusche, SAI-Clock-Architektur auf PLL3 fixiert, Audio-Layout-Constraints
-für Phase 6 dokumentiert. Gehäusedicke konkret gerechnet: ~20 mm + 10 mm
-Encoder-Knöpfe (OP-1-Field-Klasse). ADR-0010 Audio, ADR-0011 Enclosure.)
+Aktuelle Rev: **v0.7-r18.12** (Pre-Layout-Cleanup: C_BULK auf 470µF Polymer
++ 220µF MLCC parallel (löst Höhen-Konflikt aus ADR-0011 + besserer ESR pro
+ADR-0010), EC11J Custom-Footprint zeichne ich aus den ALPS-EC11J-Standard-
+Maßen als Draft (gegen EasyEDA vor Fab verifizieren). KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.12 (2026-06-11) — Pre-Layout-Cleanup
+
+Zwei offene Pre-Layout-Punkte adressiert:
+
+### C_BULK Polymer-Wechsel (ADR-0011 Punkt 1)
+
+1000 µF Alu-Elko (10.5 mm Höhe — passte nicht in 8-mm-Top-Zone) ersetzt durch:
+- **C_BULK**: 470 µF 16V Polymer in EIA-7343-31 (D-Case, ~2 mm Höhe, ESR < 15 mΩ)
+- **C_BULK2**: 220 µF 10V X5R MLCC 1210 parallel
+
+Effektive Bulk-Kapazität ~690 µF (Polymer + MLCC), aber ESR ~10 mΩ statt ~25 mΩ
+beim Alu. Class-D-Bass-Transienten sauberer (ADR-0010 Punkt 4 "kürzester
+Polygon-Loop"-Hebel verstärkt). Title-Block-Comment im power_tree
+synchronisiert.
+
+LCSC-Nummern noch TBD-VERIFY: Panasonic SVPF-Familie oder Kemet T520D für
+Polymer; CL32A227KQVNNNE-Klasse für 220 µF MLCC.
+
+### EC11J Custom-Footprint (FP_VERIFY letzter Punkt)
+
+`libraries/field_ambience.pretty/RotaryEncoder_ALPS_EC11J_SMD.kicad_mod` neu
+gezeichnet aus den **dokumentierten ALPS-EC11J-Standard-Maßen** (12×13.4 mm
+Body, vertikaler 20-mm-Schaft, 5 SMD-Pads + 2 Mounting-Tabs). Pad-Pitch 2.5 mm,
+Pad-Größe 1.4 × 1.4 mm, Mounting-Tabs 1.8 × 3 mm bei ±6 mm.
+
+**Status:** `FP_DRAFT` (nicht `FP_NOTE`) — vor Fab gegen EasyEDA-Export von
+C209762 verifizieren. Pin-Numbering (A/C/B/S1/S2) hier rein semantisch; das
+KiCad-Symbol nutzt die Conn_01x05-Standard-Pinnummern, deshalb muss vor dem
+ersten Layout-Spin geprüft werden ob Symbol-Pin-Nummern ↔ Footprint-Pad-Nummern
+matchen (kann im Symbol-Editor angepasst werden).
+
+4 Encoder-Instanzen referenzieren jetzt den Custom-FP statt des KiCad-Standard-
+EC11E-THT-FP, der ohnehin nicht zur SMD-Bauform passte.
+
+### Validierung
+
+paren 8/8 PASS · Crossref 7/7 PASS · 4 Encoder-Instanzen mit neuem FP, 0
+Reste vom alten EC11E-Standard-FP · Polymer + MLCC parallel sauber im
+power_tree platziert · Title-Block-stale-Kommentar gefixt.
+
+### Score-Bewegung
+
+- Footprint-Verifikation 8 → 9 (EC11J Draft-FP geschlossen)
+- Mechanical 4 → 5 (C_BULK-Konflikt aufgelöst)
+- BOM-Sourcing 7.5 → 8 (Polymer-Familie identifiziert)
 
 ---
 
