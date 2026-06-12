@@ -4,9 +4,97 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.13** (Repo-Refactor Phase 2: additive Doc-Moves
-nach `mechanical/`, `software/`, `archive/` — kein CI-Risiko, kein
-Generator-Output-Pfad geändert. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.14** (Komponenten-Definitions-Sprint: 3D-STEP-Lib +
+2 kritische BOM-Fixes (USB-C-LCSC, SW_BOOT-MPN) + Encoder-Strategie ADR-0012
++ Cell-Keys Magnetic-Hall ADR-0013 + Encoder-UX-Firmware-Fix. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.14 (2026-06-12) — Komponenten-Definition: 3D-Lib, Encoder, Cell-Keys
+
+User-Direktive: PCB-Design braucht Komponenten-Definition VOR Layout — 3D-Daten
+zu allem, Cells wie HiChord mit langen Caps + Stabilizern, Encoder-Split
+(nur Display = Push), smooth + gleich hoch + flach (Kick75-Referenz), und der
+„2 Klicks = 1 %"-Encoder-Bug.
+
+### 🔴 Zwei kritische BOM-Fixes (Beifang der 3D-Verifikation)
+
+1. **USB-C: C165935 war ein STF18N65M5-MOSFET (TO-220F-3)** — nicht der
+   TYPE-C-31-M-17! Falsch seit r18.10. Entdeckt, weil der EasyEDA-3D-Abruf
+   ein TO-220-Modell lieferte. Korrekt: **C283540** (LCSC-verifiziert, 21k+
+   Stock). → Generator, SPEC §4, ADR-0009-Korrekturblock.
+2. **SW_BOOT-MPN: C720477 ist XUNPU TS-1088-AR02016** (nicht TS-1185A-C-A).
+   Zusätzlich FP-Fix: SW11/SW12/SW_BOOT wechseln von generischem
+   `SW_SPST_TL3342` (Land-Pattern passte nicht) auf EasyEDA-verifiziertes
+   `field_ambience:SW_TS1088_SMD`.
+
+**Konsequenz-Regel:** 3D-/CAD-Abruf ist ab jetzt Teil der BOM-Verifikation —
+ein falsches STEP-Modell entlarvt eine falsche LCSC-Nr. sofort.
+
+### 3D-STEP-Library (User: „brauche dringend zu allem die 3D-Dateien")
+
+- NEU `kicad/libraries/field_ambience.3dshapes/` — 9 Z-/Panel-kritische
+  STEP-Modelle (Encoder 24.5mm-Beleg, USB-C, LQFP-100, Boot-SW, Crystal,
+  Inductor, Klinke, JST, VQFN), ~20 MB.
+- NEU `mechanical/3d_models/MANIFEST.md` — Inventar, Höhen-Tabelle,
+  Regenerier-Kommando (`easyeda2kicad`), externe CAD-Quellen (Speaker, LCD,
+  EC11E, Gateron-LP, Knöpfe), Befund-Log.
+
+### ADR-0012 — Encoder-Strategie
+
+- **EN3 (Display): einziger mit Push + Detents** (Menü: 1 Rastung = 1 Schritt).
+  ALPS EC11E THT, Suffix TBD-VERIFY.
+- **EN1/2/4: EC11E183440C** — 18 Pulse, OHNE Detent, OHNE Switch, endlos
+  glatt. SW-Nets bleiben verdrahtet (Pull-up idle-high), Löcher unbestückt.
+- **Alle 4 gleiche Familie + gleiche Schaftlänge = gleich hoch.** Kick75-flach:
+  Ziel ~20–22 mm statt 24.5 mm (EC11J-STEP-Beleg). Knopf Ø19–20 × 8–10 mm Alu.
+- EC11J1525402 SMD retired (NRND + zu hoch + Half-Step-Mismatch). FP-Verify-
+  Blocker damit gegenstandslos; echtes EC11J-Pattern liegt trotzdem als
+  EasyEDA-verifizierte Referenz in der Lib (r18.12-Hand-Draft war falsch:
+  Pitch/Pad-Reihen/Body-Maße — Lehre: Custom-FPs nur aus CAD-Exporten).
+- Footprint alle 4: KiCad-Standard `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`.
+
+### Encoder-UX-Fix („zwei Klicks für ein Prozent")
+
+- Ursache: Bench-Encoder (KY-040-Klasse) rastet jede HALBE Quadratur-Periode
+  (30 Detents / 15 PPR); Firmware zählte volle Perioden.
+- `display_hw_test.c`: `ENC_HALF_STEP` Default 0 → **1** (Symptom-richtig für
+  das Bench-Teil); Host-Test pinnt explizit 0 (testet den Full-Cycle-Kern).
+- `encoders.c`: `DETENT_SUBSTEPS`-Konstante → **per-Encoder `substeps`**
+  (Display 4, Smooth 2) + **`has_sw`-Flag** (3 Encoder ohne Push pollen nicht).
+- Acceleration-Tiers unverändert (28/60/120/240 ms → ×8/×5/×3/×2), langsam
+  = exakt 1 %.
+- Alle Test-Suiten grün (854k+ Checks).
+
+### ADR-0013 — Cell-Keys: Low-Profile Magnetic + Hall (ersetzt FSR aus ADR-0006)
+
+- User wollte HiChord-Tastengefühl + lange Caps (Spacebar-Prinzip mit
+  Stabilizern). Lösung, die das Velocity-Ziel aus ADR-0006 BEHÄLT:
+  **Gateron-LP-Magnetic-Switches** (pin-los, plate-mounted, 0.1–3.3 mm analog)
+  + **linearer Hall-Sensor pro Cell auf dem PCB** (DRV5056A4-Kandidat /
+  SS49E-Prototyp; PINOUT-VERIFY vor Phase 6 — AP7361-Lektion).
+- Velocity = dPos/dt (präziser als FSR-Druck); Aftertouch + einstellbarer
+  Trigger-Punkt später als reine Firmware-Features.
+- **ADC-Interface unverändert** (PC0/PC1/PA4/PB0/PB1, CELLn_SENSE).
+  Schematic: J_CELL 1×2-FSR-Teiler → 1×3-Hall-Site + 1 kΩ Serien-R + 10 nF
+  (RC fc≈16 kHz). R_CELL 10k→1k (C25804→C21190).
+- Lange Caps ≥ 2u: LP-Stabilizer (Gateron-Klasse) — Switch mittig,
+  Stabilizer links/rechts, exakt das Spacebar-Prinzip.
+- SPEC §4 (Switches+Encoder-Tabelle komplett überarbeitet) + §5.6a rewrite.
+
+### Modifier-Buttons (User-Punkt „alle gleich, keine Einrastfunktion")
+
+Bestätigt + in SPEC §4 explizit gemacht: SW6–SW10 sind **alle 5 identisch**
+(HX 12×12×7.3, momentary). Latch-Zustand zeigen ausschließlich die LEDs
+(§7.2 / ADR-0008) — kein mechanischer Rast-Schalter irgendwo.
+
+### Files
+
+Generator (Encoder-Block variant-fähig, Hall-Cell-Block, USB-C/SW_BOOT-Fixes),
+`encoder.kicad_sch` + `stm32h743.kicad_sch` regeneriert, `encoders.c`,
+`display_hw_test.c`, `test_display_bench.c`, SPEC §4/§5.6a, FP_VERIFY_LOG
+(0 offene Punkte), ADR-0009-Korrektur, ADR-0012 NEU, ADR-0013 NEU,
+MANIFEST.md NEU, 2 Custom-FPs (TS-1088 NEU, EC11J ersetzt), 9 STEP-Modelle NEU.
 
 ---
 

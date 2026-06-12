@@ -12,18 +12,31 @@
 #include "pico/time.h"
 
 /* --- Encoder static config. Matches firmware/config.py ENCODERS table.
- * If a knob feels backwards on real hardware, flip its dir field. */
+ * If a knob feels backwards on real hardware, flip its dir field.
+ *
+ * r18.14 (ADR-0012): the four knobs are no longer identical parts —
+ *   - display = EC11E with detents + push switch. 1 detent = 1 step:
+ *     substeps = 4 for a full-cycle part (15 det / 15 PPR) or 2 for a
+ *     half-step part (30 det / 15 PPR — the "two clicks per percent" bug
+ *     class). Tune after the exact EC11E variant is sourced.
+ *   - drive / bright / volume = EC11E183440C, smooth, NO detents, NO push.
+ *     substeps = 2 → 36 ticks/rev (18 PPR), ~1 % per 10° slow turn; the
+ *     menu's velocity-acceleration layer scales fast spins. has_sw = false
+ *     skips switch polling (pin floats high via pull-up — wired but
+ *     unpopulated on the PCB). */
 typedef struct {
     uint8_t id;
     uint8_t pin_a, pin_b, pin_sw;
     int8_t  dir;          /* +1 or -1 */
+    int8_t  substeps;     /* quadrature transitions per emitted step */
+    bool    has_sw;       /* push switch populated? */
 } enc_def_t;
 
 static const enc_def_t defs[ENC_COUNT] = {
-    { 1, 10, 11, 12, +1 },  /* drive    */
-    { 2, 13, 14, 15, +1 },  /* bright   */
-    { 3, 16, 17, 18, +1 },  /* display  */
-    { 4, 19, 20, 21, +1 },  /* volume   */
+    { 1, 10, 11, 12, +1, 2, false },  /* drive   — smooth, no push */
+    { 2, 13, 14, 15, +1, 2, false },  /* bright  — smooth, no push */
+    { 3, 16, 17, 18, +1, 4, true  },  /* display — detent + push   */
+    { 4, 19, 20, 21, +1, 2, false },  /* volume  — smooth, no push */
 };
 
 /* Per-encoder runtime state. */
@@ -48,7 +61,6 @@ static const int8_t QUAD_TBL[16] = {
    -1,  0,  0, +1,
     0, +1, -1,  0,
 };
-#define DETENT_SUBSTEPS 4
 
 /* --- Tiny lock-free SP/SP ring of events for main-loop consumption. --- */
 #define EVT_RING 32   /* power-of-two */
@@ -88,12 +100,12 @@ static bool service_timer(repeating_timer_t *t) {
             uint8_t idx = (uint8_t)((s->prev_ab << 2) | ab);
             s->accum = (int8_t)(s->accum + QUAD_TBL[idx]);
             s->prev_ab = ab;
-            if (s->accum >= DETENT_SUBSTEPS) {
+            if (s->accum >= d->substeps) {
                 s->accum = 0;
                 int8_t step = d->dir;
                 s->position += step;
                 evt_push(ENC_EVENT_ROTATE, d->id, step);
-            } else if (s->accum <= -DETENT_SUBSTEPS) {
+            } else if (s->accum <= -d->substeps) {
                 s->accum = 0;
                 int8_t step = (int8_t)-d->dir;
                 s->position += step;
@@ -102,7 +114,9 @@ static bool service_timer(repeating_timer_t *t) {
         }
 
         /* Push switch (active-low). 3-of-N consecutive samples confirm a
-         * level change — same heuristic as the .py driver. */
+         * level change — same heuristic as the .py driver. Encoders without
+         * a populated switch (ADR-0012) skip polling entirely. */
+        if (!d->has_sw) continue;
         uint8_t raw = (uint8_t)gpio_get(d->pin_sw);
         if (raw == s->sw_stable) {
             s->sw_count = 0;

@@ -45,10 +45,17 @@ empfohlen für Daily-Dev). USB-DFU ist Backup für End-User-Service-Updates.
 **Befund:** TYPE-C-31-M-12 (C165948) = Generic-China, ~5000 Insertion-
 Cycles, JLC-Basic. Für ein Produkt mit täglicher USB-Verbindung knapp.
 
-**Fix r18.10:** Drop-In auf TYPE-C-31-M-17 (C165935) = gleiche Korean-
+**Fix r18.10:** Drop-In auf TYPE-C-31-M-17 = gleiche Korean-
 Hroparts-Bauform, **10 k Insertion-Cycles**, JLC-Basic. Footprint
 HRO_TYPE-C-31-M-12 bleibt drop-in laut HRO-Tabelle. Vor Fab-Order in
 Phase 6 visuell gegen M-17-Drawing prüfen.
+
+> **Korrektur r18.14:** Die in r18.10 notierte LCSC-Nr. C165935 war FALSCH —
+> das ist ein STF18N65M5-MOSFET (TO-220F-3). Entdeckt beim EasyEDA-3D-Abruf
+> (das CAD-Modell war ein TO-220). Korrekt: **C283540** (LCSC-verifiziert,
+> 21k+ Stock). Generator + SPEC gefixt. Gleiche Fehlerklasse wie der
+> C156144-Vorfall (r18.5) — 3D-Modell-Abruf ist ab jetzt Teil der
+> BOM-Verifikation (mechanical/3d_models/MANIFEST.md).
 
 **Premium-Pfad (post-Prototyp):** GCT USB4135-03-A oder Amphenol
 12401610E4-2A — beide ~10 k Cycles, höherer Anpressdruck, anderer Footprint

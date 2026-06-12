@@ -1,16 +1,16 @@
 # Footprint-Verifikations-Log
 
-**Stand: r18.7 (2026-06-11)**
+**Stand: r18.14 (2026-06-12)**
 
-Stand der `FP_VERIFY`/`FP_NOTE`-Properties an den im Schematic platzierten Symbolen. Die Quelle für jeden Eintrag ist im Generator-Code dokumentiert; bei Custom-Footprints liegt das `.kicad_mod` in `kicad/libraries/field_ambience.pretty/`.
+Stand der `FP_VERIFY`/`FP_NOTE`-Properties an den im Schematic platzierten Symbolen. Die Quelle für jeden Eintrag ist im Generator-Code dokumentiert; bei Custom-Footprints liegt das `.kicad_mod` in `kicad/libraries/field_ambience.pretty/`, 3D-STEP-Modelle in `kicad/libraries/field_ambience.3dshapes/` (siehe `mechanical/3d_models/MANIFEST.md`).
 
 ## Zusammenfassung
 
 | Status | Anzahl |
 |---|---|
-| ✅ Verifiziert (KiCad-Standard, Source quoted) | 4 |
-| ✅ Custom-FP nach Hersteller-Daten erstellt | 3 |
-| 🟡 Offen (echte FP-Verify nötig) | 1 |
+| ✅ Verifiziert (KiCad-Standard, Source quoted) | 5 |
+| ✅ Custom-FP nach Hersteller-/EasyEDA-Daten erstellt | 5 |
+| 🟡 Offen (echte FP-Verify nötig) | 0 — EC11J-Blocker in r18.14 aufgelöst (Teil retired, ADR-0012) |
 
 ## Verifikations-Details
 
@@ -59,12 +59,19 @@ Stand der `FP_VERIFY`/`FP_NOTE`-Properties an den im Schematic platzierten Symbo
 - **FP:** `Package_TO_SOT_SMD:SOT-23` (KiCad-Standard)
 - **Pinout (JEDEC TO-236):** Pin 1=G, Pin 2=S, Pin 3=D — alle Hersteller-Marken (Nexperia, Diodes, On Semi) identisch. Verbaut: Nexperia 2N7002,215 / LCSC C8545.
 
-### 🟡 EN1-EN4 EC11J1525402 — ALPS SMD Rotary Encoder
-- **FP:** `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` (KiCad-Standard, **NICHT exakt passend**)
-- **Problem:** KiCad-Standard ist EC11**E** (THT-Stems). Verbaut: EC11**J** (SMD-Bauform). Land-Pattern unterscheidet sich (KiCad ist THT-bohrungsbasiert; SMD ist Surface-Pads).
-- **Quelle für Auflösung:** ALPS-Drawing für EC11J1525402 — nicht öffentlich verfügbar. Alternative: JLCPCB-EasyEDA-Drawing für C209762 herunterladen und Custom-FP erstellen.
-- **Status:** **Echter offener Blocker.** Empfehlung: Wenn JLCPCB-EasyEDA-Drawing in der KiCad-GUI geöffnet wird, Custom-FP erstellen nach demselben Muster wie SW6-10 (HX 12×12) und Crystal_HC49-US-SMD_ABLS.
-- **Bewertung:** Production-Risk auch ohne Custom-FP — ALPS markiert EC11J1525402 als NRND ("Not Recommended for New Designs"). Für Serie sowieso Ersatztyp wählen.
+### ✅ EN1-EN4 — ALPS EC11E THT (r18.14, ADR-0012; ersetzt EC11J SMD)
+- **FP:** `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` (KiCad-Standard) für **alle 4** — jetzt passend, weil die Teile selbst auf EC11**E** THT gewechselt sind
+- **Varianten:** EN3 = EC11E mit Push+Detents (Suffix TBD-VERIFY); EN1/2/4 = EC11E183440C (smooth, ohne Switch — S1/S2-Löcher bleiben leer, gleiche Land-Pattern-Familie)
+- **Der frühere 🟡-Blocker (EC11J-SMD-Land-Pattern) ist damit GEGENSTANDSLOS.** Zusätzlich wurde das echte EC11J-Pattern via EasyEDA-Export (C209762) doch noch beschafft und als Referenz in die Project-Lib gelegt — der r18.12-Hand-Draft war nachweislich falsch (Pitch 2.54 statt 2.5, Pad-Reihen ±7.0/7.3 statt ±5.0, Body 15×18 statt 12×13.4). Lehre: Custom-FPs nur noch aus CAD-Exporten, nicht aus Prosa-Maßen.
+- **3D:** `SW-SMD_EC11J1525402-...-H24.5-P2.5.step` belegt 24.5 mm Gesamthöhe → einer der drei Retire-Gründe (ADR-0012).
+
+### ✅ SW11/SW_BOOT TS-1088-AR02016 — Mini-SMD-Tactile (r18.14)
+- **FP:** `field_ambience:SW_TS1088_SMD` (Custom, aus EasyEDA-Export C720477)
+- **Korrektur:** C720477 ist XUNPU **TS-1088-AR02016** (SW_BOOT-Property sagte fälschlich TS-1185A-C-A). Vorher generisches `SW_SPST_TL3342`-FP — Land-Pattern passte nicht (TS-1088 ist 3.9×2.9, 2-Pad @ 4.36 mm).
+
+### ✅ J1 TYPE-C-31-M-17 — LCSC-Nr.-Korrektur (r18.14)
+- **FP:** `Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12` (unverändert, drop-in)
+- **Befund:** BOM-LCSC-Nr. C165935 war ein STF18N65M5-MOSFET — beim 3D-Abruf entdeckt (STEP war ein TO-220F-3!). Korrigiert auf **C283540** (LCSC-verifiziert). 3D: `TYPE-C-SMD_6P-...-H3.2-P1.00.step`.
 
 ## Was im Code geändert wurde
 
@@ -75,12 +82,18 @@ In `generate_kicad_project.py` werden `FP_VERIFY`-Properties durch `FP_NOTE`-Pro
 
 ## Custom-Footprints in der Project-Lib
 
-Alle 3 in `kicad/libraries/field_ambience.pretty/`:
+Alle 5 in `kicad/libraries/field_ambience.pretty/`:
 
 ```
 SW_HX_12x12x7.3_SMD-4P.kicad_mod                  HX 12×12 Tactile (5 Plätze)
 Crystal_HC49-US-SMD_ABLS.kicad_mod                Y1 HSE-Crystal (1 Platz)
 Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A.kicad_mod  TPS61089RNR Boost (1 Platz)
+SW_TS1088_SMD.kicad_mod                           SW11 + SW_BOOT (EasyEDA-verifiziert, r18.14)
+RotaryEncoder_ALPS_EC11J_SMD.kicad_mod            EC11J-Referenz (EasyEDA-verifiziert; Teil retired, ADR-0012)
 ```
+
+3D-STEP-Modelle (Z-/Panel-kritische Teile) in
+`kicad/libraries/field_ambience.3dshapes/` — Inventar + Regenerier-Kommando in
+`mechanical/3d_models/MANIFEST.md`.
 
 `fp-lib-table` referenziert `${KIPRJMOD}/libraries/field_ambience.pretty`.

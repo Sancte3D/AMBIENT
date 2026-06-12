@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-12 (v0.7-r18.13)**
+**Stand: 2026-06-12 (v0.7-r18.14)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -15,12 +15,12 @@
 | **Bench Bring-Up (Pico 2)** | 8 / 10 | → |
 | **Schematic (Korrektheit)** | 9.5 / 10 | ↑ (r18.10: SW_BOOT + USB-C-Upgrade + SPEC-BOM-Sync) |
 | **Hardware-Symbole** | 9.5 / 10 | ↑ (BOOT-Button + R_BOOT_SW ergänzt) |
-| **Footprint-Verifikation** | 9 / 10 | ↑ (r18.12: EC11J Custom-Draft-FP geschlossen) |
-| **BOM-Sourcing** | 8 / 10 | ↑ (Polymer-Familie identifiziert, MLCC-1210-220uF Standard, EC11J FP draft) |
+| **Footprint-Verifikation** | 10 / 10 | ✅ (r18.14: 0 offene Punkte — EC11J-Blocker via Teil-Retire gelöst, TS-1088-FP EasyEDA-verifiziert) |
+| **BOM-Sourcing** | 8.5 / 10 | ↑ (r18.14: 2 kritische ID/MPN-Fixes via 3D-Verifikation; offen: EC11E-, Hall-, Polymer-LCSC-IDs) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
-| **Mechanical / Enclosure** | 6 / 10 | ↑ (r18.13: Pfad nach `mechanical/coordinates/`, Honest-Naming) |
-| **Cell-Mechanik (Piano-Feel)** | 5 / 10 | ↑ (Schematic-Seite done; FSR-Wahl + Silicon-Cap offen) |
+| **Mechanical / Enclosure** | 7 / 10 | ↑ (r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + MANIFEST mit Höhen-Tabelle) |
+| **Cell-Mechanik (Piano-Feel)** | 7 / 10 | ↑ (r18.14/ADR-0013: Magnetic-Hall-Architektur final, Schematic umgestellt; offen: Plate-CAD, Sensor-Pinout-Verify, Muster) |
 | **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
 | **Doku / Onboarding** | 10 / 10 | ✅ (r18.13: alle Cross-Refs konsistent nach Phase-2-Moves) |
@@ -28,8 +28,9 @@
 | **Repo-Struktur** | 8 / 10 | ↑ (r18.13: Phase 2 done — Doc-Moves in `mechanical/`, `software/`, `archive/`; Phase 3-5 queued) |
 | **CI / Auto-Validierung** | 8 / 10 | → |
 
-**Gesamt-Manufacturing-Readiness: 5.7 / 10** (Gate 1.5 von 9). Sub-Anstieg durch
-Repo-Struktur 6→8 + Doku 9.5→10 + Mechanical 5→6 (Pfad-Honest-State) in r18.13.
+**Gesamt-Manufacturing-Readiness: 6 / 10** (Gate 1.5 von 9). r18.14-Anstieg:
+FP-Verify 9→10, BOM 8→8.5, Mechanical 6→7 (3D-Lib), Cell-Mechanik 5→7
+(Magnetic-Hall final). Verbleibende Hauptlücken: Layout 0, DRC 0, Mesh 3.
 
 ## Was jeder Score bedeutet — und was auf 10 fehlt
 
@@ -59,13 +60,14 @@ Repo-Struktur 6→8 + Doku 9.5→10 + Mechanical 5→6 (Pfad-Honest-State) in r1
 - ✅ Alle Custom-Symbole nach offiziellen Datasheets gebaut
 - ⏳ Fehlend für 10: User-Velocity-Sense-FSR-Symbol noch nicht (r18.8)
 
-### Footprint-Verifikation — 8 / 10
-- ✅ 6 von 9 closed, 3 Custom-FPs nach Hersteller-Daten in `libraries/field_ambience.pretty/`
-- ⏳ Fehlend für 10: EC11J Custom-FP (ALPS-Drawing nicht öffentlich; aus EasyEDA-Daten ableiten)
+### Footprint-Verifikation — 10 / 10 ✅
+- ✅ Alle Punkte closed: 5 Custom-FPs (2 davon EasyEDA-CAD-verifiziert in r18.14), Rest KiCad-Standard mit Quelle
+- ✅ EC11J-Blocker gegenstandslos (Teil retired, ADR-0012); echtes Pattern liegt als Referenz in der Lib
+- Haltebedingung: neue Bauteile nur noch mit CAD-Export-FP oder Standard-Lib aufnehmen
 
-### BOM-Sourcing — 7 / 10
-- ✅ Alle Haupt-ICs verifiziert, LCSC-Nummern auf JLC-Stock geprüft, Custom-FPs für Edge-Cases
-- ⏳ Fehlend für 10: 5× FSR-Auswahl (ADR-0006), 4× Modifier-Standard-LEDs (3 Farben), 10× Cell-LEDs Stock-Check, Mesh-Hersteller-Entscheidung (ADR-0007)
+### BOM-Sourcing — 8.5 / 10
+- ✅ Alle Haupt-ICs verifiziert; r18.14: 2 kritische ID/MPN-Fixes (USB-C C283540, SW_BOOT TS-1088) via 3D-CAD-Abruf — der Abruf ist jetzt Teil der Verifikations-Routine
+- ⏳ Fehlend für 10: EC11E-Varianten-LCSC/Mouser-IDs (ADR-0012), Hall-Sensor-ID + Pinout-Verify (ADR-0013), Gateron-LP-Switch/Stabilizer-Beschaffungskanal, Polymer-Cap-IDs (r18.12), Cell/Modifier-LED-Stock-Check, Mesh-Hersteller (ADR-0007)
 
 ### PCB Layout — 0 / 10
 - ⏳ Existiert nicht. Pfad zu 10: Stack-Up → Placement → Routing → DRC → Gerber-Export
@@ -74,13 +76,15 @@ Repo-Struktur 6→8 + Doku 9.5→10 + Mechanical 5→6 (Pfad-Honest-State) in r1
 ### DRC / Manufacturing — 0 / 10
 - ⏳ Layout-abhängig
 
-### Mechanical / Enclosure — 2 / 10
-- ✅ `mechanical/coordinates/mechanical_coordinates.md` existiert (verschoben in r18.13)
-- ⏳ Fehlend für 10: Update auf STM32-LQFP-100 + neue Komponenten (Cell-Velocity-Pads, Dust-Mesh-Aussparungen, 4-Corner-Encoder-Positionen). Enclosure-CAD existiert nicht
+### Mechanical / Enclosure — 7 / 10
+- ✅ Z-Budget berechnet (ADR-0011), C_BULK-Konflikt gelöst (r18.12)
+- ✅ r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + `mechanical/3d_models/MANIFEST.md` mit Höhen-Tabelle — CAD-Abstimmung kann starten
+- ⏳ Fehlend für 10: `mechanical_coordinates.md`-Rewrite (IMG_9713 + EC11E-Höhen + Plate), Enclosure-CAD, Speaker/LCD/Switch-CAD von extern holen
 
-### Cell-Mechanik (Piano-Feel) — 3 / 10
-- ✅ Entscheidung dokumentiert (ADR-0006)
-- ⏳ Fehlend für 10: FSR-Komponenten-Review, Silicon-Cap-Tooling-Design, ADC-Pin-Allocation im Schematic (r18.8), Velocity-Curve-Tuning auf realer Hardware
+### Cell-Mechanik (Piano-Feel) — 7 / 10
+- ✅ Architektur final (ADR-0013): Gateron-LP-Magnetic + Hall-Sensor, Velocity = dPos/dt, lange Caps + LP-Stabilizer (Spacebar-Prinzip)
+- ✅ Schematic umgestellt (r18.14): 1×3-Hall-Sites + Serien-RC an unveränderten ADC-Pins
+- ⏳ Fehlend für 10: Sensor-Pinout-Verify (DRV5056-DS), Plate-Cutout-CAD, Magnet-/Abstands-Messung am Muster, Velocity-Curve-Tuning auf realer Hardware
 
 ### Speaker-Cover (Dust-Mesh) — 3 / 10
 - ✅ Entscheidung dokumentiert (ADR-0007)

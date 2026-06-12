@@ -6,6 +6,18 @@
 > Maßgebliche neue Stelle vorab: **Abschnitt 0 unten**. Die alten
 > Sektionen bleiben für Diff-Reviewability erhalten.
 
+> **r18.14-Update (2026-06-12)** — Komponenten-Definitionen geändert,
+> Z-relevant für jedes künftige CAD:
+> - **Encoder:** EC11E THT, einheitliche Schaftlänge, Ziel-Gesamthöhe
+>   ~20–22 mm (statt 24.5 mm EC11J — STEP-Beleg), Knöpfe Ø19–20 × 8–10 mm
+>   flach (Kick75-Referenz). Nur E-Display hat Push. → ADR-0012
+> - **Cells:** Gateron-LP-Magnetic-Switches plate-mounted + Hall-Sensor auf
+>   PCB; lange Caps ≥ 2u mit LP-Stabilizern (Spacebar-Prinzip). Plate-CAD =
+>   neues Arbeitspaket. → ADR-0013
+> - **3D-STEP-Modelle** der Z-/Panel-kritischen Teile liegen in
+>   `kicad/libraries/field_ambience.3dshapes/` —
+>   Inventar/Höhen: `mechanical/3d_models/MANIFEST.md`.
+
 ---
 
 ## 0. r18.8 IMG_9713-Update (überschreibt §3-7 unten)

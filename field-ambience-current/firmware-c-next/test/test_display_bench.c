@@ -54,6 +54,10 @@ void oled_init(void) {}
 void oled_show(void) {}
 
 /* ---- unit under test (its main renamed out of the way) ----------------- */
+/* Decoder tests below script FULL quadrature cycles; pin the half-step
+ * latch off (the bench default flipped to 1 in r18.14 for the KY-040-class
+ * 30-detent/15-PPR part — the decoder core is identical in both modes). */
+#define ENC_HALF_STEP 0
 #define main hw_main
 #include "display_hw_test.c"
 #undef main

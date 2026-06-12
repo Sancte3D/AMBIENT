@@ -483,16 +483,18 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
-| ~~SW1-SW5~~ ✂ r18.9 | ~~Kailh Choc V2 Hot-Swap Socket~~ — **entfernt:** Cells sind seit ADR-0006 FSR-Velocity-Pads, nicht mehr Switches | — | — |
-| **J_CELL1-5** (r18.9) | **FSR-Pad-Anschluss 2-Pin** (FSR extern, ADR-0006). Connector-Bauform offen — 2.54-mm-Pinheader als Platzhalter, FFC/FPC empfohlen (siehe ADR-0009) | Pinheader: Generic | **Nein** (FSR-Pad separat: Interlink FSR 400 oder gleichwertig) |
-| **R_CELL1-5 / C_CELL1-5** (r18.9) | 5× 10 kΩ 0603 (Teiler-Bottom) + 5× 10 nF X7R 0603 (ADC S/H) | Generic | JLC-bestückt |
-| **SW6-SW10** (r10) | **12×12×7.3 mm momentary tactile, plain (Modifier-Buttons Shift/Hold/Drone/Generate/Clear)**. HX 12x12x7.3TPFT-B | **C36498966** (JLC Extended) | JLC-bestückt mit Custom-FP `field_ambience:SW_HX_12x12x7.3_SMD-4P` (ADR r18.6) |
-| ~~STAB1-5~~ ✂ r18.9 | ~~Kailh 2u Choc V2 Stabilizer~~ — **entfernt:** Stabilizer waren für Choc-Caps, FSR braucht keine | — | — |
-| SW11 | Reset Tactile 6mm SMD | Generic SMD | JLC Standard |
+| ~~SW1-SW5~~ ✂ r18.9 | ~~Kailh Choc V2 Hot-Swap Socket~~ — r18.9: FSR-Pads; **r18.14 (ADR-0013): Cells sind jetzt Gateron-LP-MAGNETIC-Switches (pin-los, plate-mounted) + Hall-Sensor auf PCB** | — | **Ja** (Switches + LP-Stabilizer: Keyboard-Markt, z.B. Gateron direkt) |
+| **J_CELL1-5** (r18.14) | **Hall-Sensor-Site 1×3** (+3V3/OUT/GND, ADR-0013). Kandidaten: TI DRV5056A4 (SOT-23, final) / SS49E-Klasse (TO-92S, Prototyp). PINOUT-VERIFY vor Phase 6 | TBD-VERIFY | SOT-23: JLC-bestückbar; TO-92S-Prototyp: Hand |
+| **R_CELL1-5 / C_CELL1-5** (r18.14) | 5× **1 kΩ** 0603 (Hall-OUT-Serien-R) + 5× 10 nF X7R 0603 → RC fc≈16 kHz vor ADC | C21190 / C57112 | JLC-bestückt |
+| **STAB_CELL** (r18.14, ADR-0013) | **LP-Stabilizer** für Cell-Caps ≥ 2u (Spacebar-Prinzip: Switch mittig, Stabilizer links/rechts). Gateron-LP-Klasse | — (Keyboard-Markt) | **Ja**, mit Switches zusammen beschaffen |
+| **SW6-SW10** (r10) | **12×12×7.3 mm momentary tactile, plain (Modifier-Buttons Shift/Hold/Drone/Generate/Clear)**. HX 12x12x7.3TPFT-B. **Alle 5 identisch, momentary — Latch-Zustand zeigen die LEDs (§7.2), kein Rast-Schalter** | **C36498966** (JLC Extended) | JLC-bestückt mit Custom-FP `field_ambience:SW_HX_12x12x7.3_SMD-4P` (ADR r18.6) |
+| SW11 | Reset Tactile SMD (XUNPU TS-1088-AR02016, FP `field_ambience:SW_TS1088_SMD` EasyEDA-verifiziert r18.14) | C720477 | JLC-bestückt |
 | ~~SW12~~ ✂ r18 | ~~BOOTSEL Tactile~~ — **entfernt:** war Pico-spezifisch | — | — |
-| **SW_BOOT** (r18.10) | **Mini-SMD-Tactile für BOOT0 (USB-DFU-Flash, ADR-0009)**. TS-1185A-C-A | **C720477** | **NEU r18.10: ohne SW_BOOT wäre USB-DFU-Flash nicht möglich** |
+| **SW_BOOT** (r18.10) | **Mini-SMD-Tactile für BOOT0 (USB-DFU-Flash, ADR-0009)**. **r18.14: MPN korrigiert — C720477 ist XUNPU TS-1088-AR02016** (nicht TS-1185A-C-A); FP auf EasyEDA-verifiziertes `field_ambience:SW_TS1088_SMD` | **C720477** | **NEU r18.10: ohne SW_BOOT wäre USB-DFU-Flash nicht möglich** |
 | **R_BOOT_SW** (r18.10) | 1 kΩ 0603 (BOOT0-SW-Strombegrenzung) | C21190 | JLC Basic |
-| **EN1-EN4** | **ALPSALPINE EC11J1525402** (16-detent, push-switch, SMD) | **C209762** | **JLC Extended, premium-Detent-Feel. r8: MPN konkretisiert (war: generisch „EC11"). Lifecycle 30k Cycles, Detent-Force ~6 mNm typisch.** |
+| **EN3** (r18.14, ADR-0012) | **ALPS EC11E THT mit Push + Detents** (15 P/30 D; exakte Suffix-Variante TBD-VERIFY) — Display-Encoder: 1 Rastung = 1 Menü-Schritt | TBD-VERIFY | THT; ggf. Mouser/Digikey + Hand |
+| **EN1/EN2/EN4** (r18.14, ADR-0012) | **ALPS EC11E183440C** — 18 Pulse, **OHNE Detent, OHNE Switch** (glattes Drehen; Auflösung/Acceleration macht Firmware). Gleiche Schaftlänge wie EN3 → **alle 4 gleich hoch** | TBD-VERIFY | THT; ggf. Mouser/Digikey + Hand |
+| ~~EN1-EN4 alt~~ ✂ r18.14 | ~~EC11J1525402 SMD (C209762)~~ — **retired:** NRND + 3D-verifiziert 24.5 mm hoch (zu hoch, Kick75-Ziel) + Half-Step-Detent-Mismatch (ADR-0012) | — | — |
 
 **Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints (SW1-5 Cells) sind
 NICHT in der KiCad-Standard-Library. Benötigt die **kiswitch keyswitch-kicad-library**
@@ -712,15 +714,19 @@ keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 
 | Pin | Port | Funktion | Net |
 |---|---|---|---|
-| 15 | PC0 | ADC (FSR-Teiler Cell 1) | CELL1_SENSE |
-| 16 | PC1 | ADC (FSR-Teiler Cell 2) | CELL2_SENSE |
-| 28 | PA4 | ADC (FSR-Teiler Cell 3) | CELL3_SENSE |
-| 34 | PB0 | ADC (FSR-Teiler Cell 4) | CELL4_SENSE |
-| 35 | PB1 | ADC (FSR-Teiler Cell 5) | CELL5_SENSE |
+| 15 | PC0 | ADC (Hall-Sense Cell 1) | CELL1_SENSE |
+| 16 | PC1 | ADC (Hall-Sense Cell 2) | CELL2_SENSE |
+| 28 | PA4 | ADC (Hall-Sense Cell 3) | CELL3_SENSE |
+| 34 | PB0 | ADC (Hall-Sense Cell 4) | CELL4_SENSE |
+| 35 | PB1 | ADC (Hall-Sense Cell 5) | CELL5_SENSE |
 
-Beschaltung pro Cell: FSR (Interlink-FSR-400-Klasse, J_CELLn 2-Pin) von +3V3
-zum Knoten; 10 kΩ Knoten→GND; 10 nF Knoten→GND (S/H-Filter); Knoten→ADC-Pin.
-Druck ↑ → R_FSR ↓ → Spannung ↑. Velocity-Mapping (log-Kurve) in Firmware.
+Beschaltung pro Cell (**r18.14, ADR-0013** — ersetzt FSR-Teiler aus r18.9):
+linearer Hall-Sensor (J_CELLn 1×3-Site: +3V3/OUT/GND; DRV5056A4-Kandidat,
+SS49E-Klasse für Prototyp) unter dem Magnet-Stem des Gateron-LP-Magnetic-
+Switch. OUT → 1 kΩ Serien-R → Knoten (10 nF → GND, RC fc≈16 kHz) → ADC-Pin.
+Stem-Position = analoge Spannung; **Velocity = dPos/dt** beim Durchgang der
+Trigger-Zone (Firmware), Aftertouch/Trigger-Punkt später als reine
+Firmware-Features möglich. Pins + Netze sind identisch zum FSR-Design.
 ADC-INP-Kanal-Nummern werden in Phase 4 beim ADC-Init gegen DS12110 Table 8
 (ANA-Spalte) verifiziert. Die Cells hängen damit NICHT mehr am MCP23017 —
 GPA0-4 sind frei (Rev-B-Reserve).

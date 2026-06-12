@@ -1925,13 +1925,13 @@ def power_tree_sheet() -> str:
         place_symbol(
             lib_id="Connector:USB_C_Receptacle",
             ref="J1",
-            value="USB_C_Receptacle (TYPE-C-31-M-17, C165935, 10k Insertion-Cycles, drop-in zu M-12)",
+            value="USB_C_Receptacle (TYPE-C-31-M-17, C283540, 10k Insertion-Cycles, drop-in zu M-12)",
             x=J1_X,
             y=J1_Y,
             footprint="Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
-            datasheet="https://datasheet.lcsc.com/lcsc/2204262207_Korean-Hroparts-Elec-TYPE-C-31-M-17_C165935.pdf",
-            extra_props={"MPN": "TYPE-C-31-M-17", "LCSC": "C165935",
-                         "Notes": "r18.10: Upgrade von C165948 (M-12 / 5k Cycles) auf M-17 (10k Cycles). Footprint M-12 ist drop-in kompatibel (laut HRO-Tabelle); pre-fab in Phase 6 visuell gegen M-17-Drawing prüfen."},
+            datasheet="https://www.lcsc.com/datasheet/lcsc_datasheet_2108131830_Korean-Hroparts-Elec-TYPE-C-31-M-17_C283540.pdf",
+            extra_props={"MPN": "TYPE-C-31-M-17", "LCSC": "C283540",
+                         "Notes": "r18.10: Upgrade von C165948 (M-12 / 5k Cycles) auf M-17 (10k Cycles). Footprint M-12 ist drop-in kompatibel (laut HRO-Tabelle); pre-fab in Phase 6 visuell gegen M-17-Drawing prüfen. r18.14: LCSC-Nr. korrigiert — C165935 war ein STF18N65M5-MOSFET (TO-220F-3), via EasyEDA-CAD-Verifikation entdeckt. Korrekt: C283540. 3D-STEP in field_ambience.3dshapes (H=3.2mm)."},
             seed_suffix="J1",
         )
     )
@@ -2609,7 +2609,7 @@ def pico_sheet() -> str:  # LEGACY r18: nicht mehr geschrieben (s. legacy_pico2/
             value="Reset 6mm SMD",
             x=137,
             y=p30_y,
-            footprint="Button_Switch_SMD:SW_SPST_TL3342",
+            footprint="field_ambience:SW_TS1088_SMD",
             extra_props={"MPN": "TS-1088-AR02016", "LCSC": "C720477"},
             seed_suffix="SW11",
             sheet_uuid_seed=sus,
@@ -2770,7 +2770,7 @@ def pico_sheet() -> str:  # LEGACY r18: nicht mehr geschrieben (s. legacy_pico2/
             value="BOOTSEL 6mm SMD (DNP for THT-Pico)",
             x=137,
             y=70,
-            footprint="Button_Switch_SMD:SW_SPST_TL3342",
+            footprint="field_ambience:SW_TS1088_SMD",
             extra_props={"MPN": "TS-1088-AR02016", "LCSC": "C720477", "DNP": "true (THT-Pico)"},
             seed_suffix="SW12",
             sheet_uuid_seed=sus,
@@ -2970,9 +2970,12 @@ def stm32h743_sheet() -> str:
         72: ("SWDIO", False, ""),
         76: ("SWCLK", False, ""),
         89: ("SWO", False, ""),
-        # r18.9 (ADR-0006): Cell-Velocity-Sense — FSR-Teiler an ADC-faehigen
+        # r18.9 (ADR-0006) / r18.14 (ADR-0013): Cell-Velocity-Sense — lineare
+        # Hall-Sensoren (unter Gateron-LP-Magnetic-Switches) an ADC-faehigen
         # Pins. INP-Kanal-Zuordnung verifiziert Phase 4 gegen DS12110 Table 8
         # ANA-Spalte (PC0/PC1/PA4/PB0/PB1 sind Standard-ADC12-Pins).
+        # Pins/Nets UNVERAENDERT gegenueber FSR-Design — nur die Quelle der
+        # Analogspannung wechselt (FSR-Teiler -> Hall-OUT + Serien-RC).
         15: ("CELL1_SENSE", False, ""),
         16: ("CELL2_SENSE", False, ""),
         28: ("CELL3_SENSE", False, ""),
@@ -3202,9 +3205,9 @@ def stm32h743_sheet() -> str:
     symbols.append(place_symbol(lib_id="Switch:SW_Push", ref="SW_BOOT",
                                 value="BOOT0 Tactile (USB-DFU)",
                                 x=bsx, y=bsy,
-                                footprint="Button_Switch_SMD:SW_SPST_TL3342",
-                                extra_props={"MPN": "TS-1185A-C-A", "LCSC": "C720477",
-                                             "FP_NOTE": "Mini-SMD-Tactile (kleinere Bauform als HX 12x12), nur fuer Service-Use bei Flash"},
+                                footprint="field_ambience:SW_TS1088_SMD",
+                                extra_props={"MPN": "TS-1088-AR02016", "LCSC": "C720477",
+                                             "FP_NOTE": "Mini-SMD-Tactile (kleinere Bauform als HX 12x12), nur fuer Service-Use bei Flash. r18.14: MPN korrigiert (war TS-1185A-C-A — C720477 ist XUNPU TS-1088-AR02016) + FP auf EasyEDA-verifiziertes Land-Pattern (3.9x2.9, P4.45) gewechselt; TL3342-FP passte nicht."},
                                 seed_suffix="SWBOOT", sheet_uuid_seed=sus))
     # SW_Push pin1 (-5.08, 0) → BOOT0_PIN-Rail, pin2 (+5.08, 0) → R_BOOT_SW → +3V3
     wires.append(wire(bsx - 5.08, bsy, box_, bsy, seed_suffix="swboot-to-boot0"))
@@ -3290,58 +3293,67 @@ def stm32h743_sheet() -> str:
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_LEDHB", value="GND",
                                 x=sx, y=sy + 10, seed_suffix="ledhb-gnd", sheet_uuid_seed=sus))
 
-    # ---- r18.9 (ADR-0006): 5x FSR-Velocity-Pad-Interface.
-    # Pro Cell: J_CELLn (2-Pin, FSR-Anschluss) als Teiler gegen 10k + 10nF
-    # Glaettung. FSR von +3V3 nach Knoten; R_CELL 10k Knoten->GND;
-    # ADC misst Knoten (Druck steigt -> R_FSR sinkt -> Spannung steigt).
-    # FSR-Typ: Interlink FSR 400 Kandidat (ADR-0006) — Anschluss-Art
-    # (Pin/ZIF/laminat) folgt dem Mechanik-Design, daher generischer 2-Pin.
+    # ---- r18.14 (ADR-0013, ersetzt FSR aus ADR-0006): 5x Hall-Velocity-Sense.
+    # Cells werden Low-Profile-MAGNETIC-Switches (Gateron LP Magnetic Jade
+    # Klasse, HiChord-artiges Tastengefuehl, lange Caps + LP-Stabilizer).
+    # Der Switch selbst ist pin-los — auf dem PCB sitzt pro Cell ein linearer
+    # Hall-Sensor unter dem Magnet-Stem: Position analog -> Velocity = dPos/dt.
+    # ADC-Interface UNVERAENDERT (PC0/PC1/PA4/PB0/PB1, Labels CELLn_SENSE).
+    # Pro Cell: J_CELLn 1x3-Site (+3V3 / OUT / GND) + R 1k Serien-RC mit dem
+    # bestehenden 10nF (fc ~ 16kHz) vor dem ADC.
+    # Sensor-Kandidaten (PINOUT-VERIFY vor SOT-23-Integration — AP7361-Lektion):
+    # TI DRV5056A4 (3.3V ratiometrisch, unipolar) / Honeywell SS49E-Klasse.
+    # 1x3-2.54mm-Site erlaubt im Prototyp TO-92S-SS49E direkt ODER SOT-23-
+    # Breakout; finale SOT-23-Platzierung folgt in Phase 6 nach DS-Check.
     for ci in range(5):
         jx = 100.0 + ci * 24.0
         jy = 262.0
-        kx, ky = jx - 9.08, jy + 1.27          # Teiler-Knoten am J-Pin2
-        symbols.append(place_symbol(lib_id="Connector:Conn_01x02", ref=f"J_CELL{ci+1}",
-                                    value=f"FSR Cell {ci+1} (Velocity-Pad, ADR-0006)",
+        symbols.append(place_symbol(lib_id="Connector:Conn_01x03", ref=f"J_CELL{ci+1}",
+                                    value=f"Hall Cell {ci+1} (Velocity, ADR-0013)",
                                     x=jx, y=jy,
-                                    footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
+                                    footprint="Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
                                     extra_props={
-                                        "MPN": "Interlink FSR 400 (Kandidat)",
-                                        "LCSC": "TBD-VERIFY (FSR separat beschaffen, nicht JLC-bestueckt)",
-                                        "FP_NOTE": "Anschluss-Art (Pin vs ZIF vs Laminat) folgt Mechanik-Design — 2.54mm-Header als Prototyp-Annahme",
+                                        "MPN": "DRV5056A4 (Kandidat) / SS49E-Klasse (Prototyp TO-92S)",
+                                        "LCSC": "TBD-VERIFY (DRV5056A4QDBZR auf LCSC pruefen; SS49E-Klone breit verfuegbar)",
+                                        "PINOUT-VERIFY": "Site-Reihenfolge 1=+3V3 2=OUT 3=GND ist SITE-Belegung, NICHT Chip-Pinout. Vor SOT-23-FP-Zuordnung DRV5056-DS pruefen (AP7361-Lektion r18.6).",
+                                        "FP_NOTE": "1x3 2.54mm-Site: nimmt SS49E TO-92S direkt oder SOT-23-Breakout. Finale SOT-23-3-Integration in Phase 6 (Layout) nach Pinout-Verifikation.",
+                                        "Mechanik": "Sensor sitzt unter dem Magnet-Stem des Gateron-LP-Magnetic-Switch (plate-mounted, ADR-0013). Lange Caps (>=2u): LP-Stabilizer links/rechts wie Spacebar.",
                                     },
                                     seed_suffix=f"JCELL{ci}", sheet_uuid_seed=sus))
-        # Pin1 (oben) -> +3V3
-        wires.append(wire(jx - 5.08, jy - 1.27, jx - 9.08, jy - 1.27, seed_suffix=f"jcell{ci}-3v3"))
+        # Pin1 (oben, jy-2.54) -> +3V3
+        wires.append(wire(jx - 5.08, jy - 2.54, jx - 9.08, jy - 2.54, seed_suffix=f"jcell{ci}-3v3"))
         symbols.append(place_symbol(lib_id="Power:+3V3", ref=f"#PWR_JCELL{ci}", value="+3V3",
-                                    x=jx - 9.08, y=jy - 1.27, rotation=90,
+                                    x=jx - 9.08, y=jy - 2.54, rotation=90,
                                     seed_suffix=f"jcell{ci}-3v3", sheet_uuid_seed=sus))
-        # Pin2 (unten) -> Knoten K -> Label CELLn_SENSE
-        wires.append(wire(jx - 5.08, ky, kx, ky, seed_suffix=f"jcell{ci}-k"))
+        # Pin2 (mitte, jy) -> R_CELL 1k Serie -> Knoten K -> Label CELLn_SENSE
+        # R horizontal (rotation=90): Pins bei sym_x +/- 3.81
+        rx = jx - 12.89
+        kx, ky = jx - 16.70, jy
+        wires.append(wire(jx - 5.08, jy, rx + 3.81, jy, seed_suffix=f"jcell{ci}-k"))
+        symbols.append(place_symbol(lib_id="Device:R", ref=f"R_CELL{ci+1}",
+                                    value="1k 0603 (Hall-OUT Serien-R, RC mit C_CELL)",
+                                    x=rx, y=jy, rotation=90,
+                                    footprint="Resistor_SMD:R_0603_1608Metric",
+                                    extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
+                                    seed_suffix=f"RCELL{ci}", sheet_uuid_seed=sus))
         labels.append(label(kx, ky, f"CELL{ci+1}_SENSE"))
         junctions.append(junction(kx, ky))
-        # R_CELL 10k Knoten -> GND (vertikal unter K)
-        symbols.append(place_symbol(lib_id="Device:R", ref=f"R_CELL{ci+1}",
-                                    value="10k 0603 (FSR divider bottom)",
-                                    x=kx, y=ky + 3.81,
-                                    footprint="Resistor_SMD:R_0603_1608Metric",
-                                    extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
-                                    seed_suffix=f"RCELL{ci}", sheet_uuid_seed=sus))
-        wires.append(wire(kx, ky + 7.62, kx, ky + 10, seed_suffix=f"rcell{ci}-gnd"))
-        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_RCELL{ci}", value="GND",
-                                    x=kx, y=ky + 10, seed_suffix=f"rcell{ci}-gnd", sheet_uuid_seed=sus))
-        # C_CELL 10nF parallel (rechts neben R)
-        cx = kx + 5.0
-        wires.append(wire(kx, ky, cx, ky, seed_suffix=f"ccell{ci}-rail"))
-        junctions.append(junction(cx, ky))
+        # Pin3 (unten, jy+2.54) -> GND
+        wires.append(wire(jx - 5.08, jy + 2.54, jx - 7.5, jy + 2.54, seed_suffix=f"jcell{ci}-gnd"))
+        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_JCELL{ci}G", value="GND",
+                                    x=jx - 7.5, y=jy + 2.54, rotation=90,
+                                    seed_suffix=f"jcell{ci}-gnd", sheet_uuid_seed=sus))
+        # C_CELL 10nF am Knoten K -> GND (RC-Filter, fc ~ 16kHz mit 1k)
+        wires.append(wire(rx - 3.81, ky, kx, ky, seed_suffix=f"ccell{ci}-rail"))
         symbols.append(place_symbol(lib_id="Device:C", ref=f"C_CELL{ci+1}",
-                                    value="10nF X7R 0603 (ADC S/H filter)",
-                                    x=cx, y=ky + 3.81,
+                                    value="10nF X7R 0603 (RC-Filter mit R_CELL 1k)",
+                                    x=kx, y=ky + 3.81,
                                     footprint="Capacitor_SMD:C_0603_1608Metric",
                                     extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
                                     seed_suffix=f"CCELL{ci}", sheet_uuid_seed=sus))
-        wires.append(wire(cx, ky + 7.62, cx, ky + 10, seed_suffix=f"ccell{ci}-gnd"))
+        wires.append(wire(kx, ky + 7.62, kx, ky + 10, seed_suffix=f"ccell{ci}-gnd"))
         symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_CCELL{ci}", value="GND",
-                                    x=cx, y=ky + 10, seed_suffix=f"ccell{ci}-gnd", sheet_uuid_seed=sus))
+                                    x=kx, y=ky + 10, seed_suffix=f"ccell{ci}-gnd", sheet_uuid_seed=sus))
 
     # ---- MIDI als offene DESIGN-ENTSCHEIDUNG (B-MIDI). Bewusst KEINE
     # Buchsen-/Resistor-Symbole platzieren: TRS-Type-A vs Type-B, OUT-only
@@ -4571,8 +4583,24 @@ def encoder_sheet() -> str:
 
     def place_one_encoder(en_num: int, sy: float, net_prefix: str,
                           r_a: int, r_b: int, r_sw: int,
-                          c_a: int, c_b: int) -> None:
-        """Platziere einen EC11 + Pull-Ups + Debounce-Caps + Hier-Labels."""
+                          c_a: int, c_b: int,
+                          variant: str = "smooth") -> None:
+        """Platziere einen EC11 + Pull-Ups + Debounce-Caps + Hier-Labels.
+
+        variant (ADR-0012, r18.14):
+          "push"   — Display-Encoder: ALPS EC11E THT mit Push-Switch + Detents
+                     (Menü-Navigation: 1 Rastung = 1 Schritt).
+          "smooth" — Parameter-Encoder: EC11E183440C, 18 Puls, OHNE Rastung,
+                     OHNE Switch (glattes Drehen, Auflösung macht die Firmware
+                     über Velocity-Acceleration). SW1/SW2-Pins bleiben im
+                     Schematic verdrahtet (Pull-up = idle high, Firmware
+                     ignoriert) — die THT-Löcher bleiben unbestückt, da die
+                     Variante physisch keine Switch-Pins hat.
+        Beide Varianten: gleiches EC11E-THT-Land-Pattern, gleiche Body-Höhe,
+        gleiche Schaftlänge wählen → alle 4 Knöpfe exakt gleich hoch.
+        EC11J SMD (C209762) retired: NRND + 24.5mm Gesamthöhe (3D-verifiziert,
+        zu hoch für Kick75-flaches Zielprofil) + Half-Step-Detent-Mismatch.
+        """
         sx = 140.0
         # Pin Absolutpositionen (sym (sx, sy), KiCad Y-DOWN abs = sym - local_y):
         a_x, a_y = sx - 5.08, sy - 5.08     # Pin 1 A
@@ -4581,24 +4609,47 @@ def encoder_sheet() -> str:
         sw1_x, sw1_y = sx + 5.08, sy - 2.54  # Pin 4 SW1 → Signal
         sw2_x, sw2_y = sx + 5.08, sy + 2.54  # Pin 5 SW2 → GND
 
-        # ---- EC11 Symbol
+        if variant == "push":
+            enc_value = f"EC11E THT + push + detent ({net_prefix})"
+            enc_props = {
+                "MPN": "ALPS EC11E-Serie, 15 Puls / 30 Detent, mit Push-Switch — exakte Suffix-Variante TBD-VERIFY (Auswahl-Matrix: tech.alpsalpine.com EC11E; Schaftlänge einheitlich mit EN-smooth wählen)",
+                "Manufacturer": "ALPSALPINE",
+                "LCSC": "TBD-VERIFY (Original-ALPS auf LCSC prüfen, sonst Mouser/Digikey + Hand-Bestückung THT)",
+                "Package": "THT EC11E, vertikal. Detents gewollt: Menü-Navigation 1 Rastung = 1 Schritt",
+                "Variant": "DISPLAY-Encoder = einziger mit Push + Rastung (ADR-0012)",
+            }
+        else:
+            enc_value = f"EC11E183440C smooth ({net_prefix})"
+            enc_props = {
+                "MPN": "EC11E183440C (18 Puls, OHNE Detent, OHNE Switch)",
+                "Manufacturer": "ALPSALPINE",
+                "LCSC": "TBD-VERIFY (Original-ALPS auf LCSC prüfen, sonst Mouser/Digikey + Hand-Bestückung THT)",
+                "Package": "THT EC11E, vertikal, glatt drehend (kein Anschlag, kein Detent)",
+                "Variant": "Parameter-Encoder ohne Push: SW1/SW2-Löcher bleiben leer (Variante hat keine Switch-Pins); Pull-up hält SW-Net idle-high (ADR-0012)",
+            }
+        enc_props["Height"] = (
+            "Body ~7mm + Schaft (einheitliche Länge für alle 4 wählen; Ziel "
+            "Gesamt ≈ 20-22mm statt 24.5mm beim EC11J — Kick75-flaches Profil, "
+            "ADR-0012; Knopf Ø19-20 x 8-10mm Alu)"
+        )
+        enc_props["FP_NOTE"] = (
+            "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm = "
+            "KiCad-Standard-Lib (fab-erprobt). Land-Pattern für alle "
+            "EC11E-Schafthöhen identisch; H20mm betrifft nur das 3D-Modell. "
+            "Smooth-Variante nutzt dasselbe FP — S1/S2-Löcher bleiben leer."
+        )
+
+        # ---- EC11E Symbol (THT, ADR-0012)
         symbols.append(
             place_symbol(
                 lib_id="Encoder:Rotary_Encoder_Switch",
                 ref=f"EN{en_num}",
-                value=f"EC11 + push ({net_prefix})",
+                value=enc_value,
                 x=sx,
                 y=sy,
-                footprint="field_ambience:RotaryEncoder_ALPS_EC11J_SMD",
-                datasheet="https://jlcpcb.com/partdetail/C209762",
-                extra_props={
-                    "MPN": "EC11J1525402",
-                    "Manufacturer": "ALPSALPINE",
-                    "LCSC": "C209762",
-                    "Package": "SMD, 15 pulses / 30 detents, push switch",
-                    "Status": "NRND (ALPS marks as Not Recommended For New Designs) — Prototype-OK, Serie: Ersatztyp wählen",
-                    "FP_DRAFT": "field_ambience:RotaryEncoder_ALPS_EC11J_SMD ist ein DRAFT-FP aus den dokumentierten ALPS-EC11J-Standard-Maßen (12x13.4mm Body, 2.5mm Pad-Pitch). Vor Fab gegen EasyEDA-Export von C209762 verifizieren (jlcpcb.com/partdetail/ALPSALPINE-EC11J1525402/C209762 → Footprint-Download → KiCad-Import) und ggf. nachbessern.",
-                },
+                footprint="Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm",
+                datasheet="https://tech.alpsalpine.com/e/products/category/encorder/sub/01/series/ec11e/",
+                extra_props=enc_props,
                 seed_suffix=f"EN{en_num}",
                 sheet_uuid_seed=sus,
             )
@@ -4733,14 +4784,16 @@ def encoder_sheet() -> str:
         attach_gnd(sw2_x + 3, sw2_y, f"EN{en_num}_SW2")
 
     # Vier Encoder vertikal stacken (35mm Spacing für genug Platz)
+    # ADR-0012: nur DISPLAY (EN3) hat Push + Detents; EN1/2/4 drehen glatt
+    # ohne Rastung und ohne Switch (gleiche Bauhöhe, gleiches Footprint).
     place_one_encoder(en_num=1, sy=70, net_prefix="DRIVE",
-                      r_a=7, r_b=8, r_sw=15, c_a=10, c_b=11)
+                      r_a=7, r_b=8, r_sw=15, c_a=10, c_b=11, variant="smooth")
     place_one_encoder(en_num=2, sy=105, net_prefix="BRIGHT",
-                      r_a=9, r_b=10, r_sw=16, c_a=12, c_b=13)
+                      r_a=9, r_b=10, r_sw=16, c_a=12, c_b=13, variant="smooth")
     place_one_encoder(en_num=3, sy=140, net_prefix="DISPLAY",
-                      r_a=11, r_b=12, r_sw=17, c_a=14, c_b=15)
+                      r_a=11, r_b=12, r_sw=17, c_a=14, c_b=15, variant="push")
     place_one_encoder(en_num=4, sy=175, net_prefix="VOL",
-                      r_a=13, r_b=14, r_sw=18, c_a=16, c_b=17)
+                      r_a=13, r_b=14, r_sw=18, c_a=16, c_b=17, variant="smooth")
 
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
