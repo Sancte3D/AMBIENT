@@ -4,9 +4,91 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.7** (FP_VERIFY-Pass + Phase-5-Profiling-Gate
-gestrichen, ADR-0005. 6 von 9 Footprint-Blockern verifiziert oder Custom-
-FP nach Hersteller-Spec; Custom-FPs für Crystal + TPS61089. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.8** (IMG_9713-Industrial-Design-Update:
+keine Text-Labels, kleines Display, 4 Encoder in Ecken, 5×2 Cell-LEDs
+mit XOR-Gelb/Grün-Logik, Dust-Mesh-Speaker-Cover. ADR-0006 (Cell-Piano-
+Feel/FSR), ADR-0007 (Dust-Mesh), ADR-0008 (LED-XOR). Web-Sim komplett
+neu. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.8 (2026-06-11) — IMG_9713 Industrial-Design-Update
+
+User-Vorgabe nach dem neuen Render (IMG_9713):
+- keine Text-Labels außer am Display
+- Display kleiner und mittig zwischen den Encodern
+- 4 Encoder in den Ecken statt einer Reihe
+- 2 LEDs pro Cell (Gelb + Grün, XOR-Logik für Basis-/Shift-Hold)
+- Modifier-LED-Farben: Shift Grün, Hold Gelb, Drone/Generate/Clear Weiß
+- Speakers als schwarze Dust-Mesh-Aussparungen statt sichtbare Lochmuster
+- Cells als Piano-Feel-Tasten statt simpler Switches (HiChord-Klasse)
+
+### Drei neue ADRs
+
+- **ADR-0006** — Cell-Action = Piano-Feel: FSR + Silicon-Cap-Pad mit
+  Velocity-Sense statt Tactile-Switch. Fallback Dual-Tactile-Switch für
+  Prototype-1. 5× zusätzliche ADC-Inputs am STM32H743 (Pins frei).
+- **ADR-0007** — Speaker-Cover = Schwarzes Akustik-Polyester-Mesh
+  (Saati-Acoustex-Klasse, -1 dB Insertion-Loss). Speaker selbst (PUI
+  AS04008PS) bleibt unverändert. Frontpanel-Aussparung 36×70 mm oval.
+- **ADR-0008** — Cell-LED-Logik = XOR (Gelb @ Basis, Grün @ Shift). User-
+  Frage bewertet: pro Cell immer höchstens eine LED an; „Shift aktiv"
+  bleibt globale Modifier-LED, nicht repliziert auf jede Cell. Tabelle
+  mit allen Cell-Tap-Zuständen im ADR.
+
+### SPEC-Updates
+
+- §7.2 PCA9685-Kanal-Belegung **komplett neu**:
+  - LED0-LED4: 5 Modifier-LEDs (Grün/Gelb/Weiß/Weiß/Weiß)
+  - LED5-LED14: 5×2 Cell-LEDs (Gelb-LEDxY + Grün-LEDxG pro Cell, XOR)
+  - LED15: LCD_BLK_PWM (Backlight-PWM via Q2 N-FET)
+  - **16/16 Kanäle belegt, exakt** — kein Reserve mehr, System-Status
+    auf MCU-Direkt-GPIO (PD8, SPEC §5.6, bereits dort)
+- Cell-HOLD-Anzeige-Logik durch XOR ersetzt; Firmware-State-Machine
+  bekommt 3-Wert-Enum pro Cell
+
+### Web-Sim komplett neu (`firmware-c-next/tools/display_sim.html`)
+
+- Layout 1:1 nach IMG_9713: Slab-Body mit abgerundeten Ecken, kleines
+  zentriertes Display, 4 Encoder in den Ecken, 5 Modifier-Buttons mit
+  LED-darüber (ohne Text-Label), 5 lange Cell-Pillen mit je 2 LEDs darüber,
+  2 ovale Dust-Mesh-Speaker links/rechts
+- Modifier-Interaktion: Click toggelt; LED-Farben Grün/Gelb/Weiß je nach
+  Modifier (Clear = Flash-on-Press, kein Latch)
+- Cell-Interaktion: Tap → wenn Hold-Modifier on, latch in Gelb-State,
+  mit Shift-Modifier on → Grün-State. XOR durchgesetzt
+- Keyboard-Bindings: 1-5/Q-T = Cell-Tap, A/Z = Backlight, Shift gehalten =
+  global Shift, Pfeile + Space = Display-Encoder
+
+### Mechanical Coordinates Update
+
+- Neue §0 prefix-Sektion mit IMG_9713-Layout-Skizze + Komponenten-
+  Positionstabelle (Encoder-Ecken, Display zentriert, Modifier-Reihe,
+  Cell-Reihe, Speaker-Mesh links+rechts). Alte §3-7 (Pico-Ära-Positionen)
+  bleiben für Diff-Reviewability erhalten, sind aber als veraltet markiert.
+
+### PROJECT_QUALITY.md NEU
+
+User-Vorgabe „alles muss 10/10 sein" — neues File mit Score pro Aspekt
+(1-10) und exakte Roadmap für jeden, der noch nicht bei 10 ist. Aktueller
+Gesamtstand: 5.5/10 Manufacturing, einzelne Aspekte 9/10.
+
+### Validierung
+
+- Web-Sim lokal getestet: alle Interaktionen funktional, LED-Sync sauber,
+  Animationen unverändert (Tween-Engine unverändert), Display rendert
+  korrekt im kleineren Container
+- KiCad-Generator: r18.8-Schaltplan-Update kommt in r18.9 (Cell-FSR-
+  Symbole + LED-Topologie). r18.8 ist **Design-Decision + Doku + Sim**;
+  Schematic-Implementation folgt in r18.9 als reine Code-Änderung
+
+### Manufacturing-Readiness unverändert: 5.5/10
+
+Begründung: Schematic ist auf r18.7-Stand; r18.8 fügt **keine** Schematic-
+Änderungen hinzu, sondern legt nur das Industrial-Design + die Logik fest.
+Die r18.9 wird die Schematic-Konsequenzen implementieren (5 ADC-Inputs, 10
+Cell-LEDs, neuer Modifier-LED-Topologie). Vorher wäre eine Implementierung
+spekulativ — die FSR-Komponentenwahl ist noch nicht final.
 
 ---
 

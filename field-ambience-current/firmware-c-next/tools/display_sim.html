@@ -1,148 +1,285 @@
 <!doctype html>
 <html lang="en">
 <!--
-  Field Ambience — display simulator (no hardware needed).
+  Field Ambience — display simulator v3 (no text labels, dust-mesh speakers,
+  Hold/Shift XOR per cell).
 
-  Pixel-accurate (320×170) JS port of firmware-c-next/src/menu.c. Same layout,
-  same state machine, same per-setting option counts. Encoder is simulated by
-  the mouse wheel / arrow keys; the push button is the left mouse button or
-  Space/Enter. Drop this file on a USB stick or open it in any browser — no
-  server, no toolchain, no flash.
+  This is the live mirror of firmware-c-next/src/menu.c plus the new control
+  surface from IMG_9713 (2026-06-11):
+    - 4 endless encoders sit in the four corners
+    - small 1.9" 320×170 display sits centered between them, narrow row only
+    - 5 modifier buttons (Shift/Hold/Drone/Generate/Clear) — color-coded LEDs
+      ABOVE each button, no text labels under them. You learn them by color:
+        Shift  = green (active)
+        Hold   = yellow (active)
+        Drone  = white (active)
+        Generate = white (active)
+        Clear  = white (flash-on-press only, no latch)
+    - 5 cells (long vertical pills) with TWO LEDs above each:
+        yellow LED = HOLD this cell at current octave
+        green  LED = HOLD this cell SHIFTED (octave/voicing variant)
+        Never both at once (XOR). Either Hold→yellow, or Shift+Hold→green.
+    - the visible speakers from the old design are replaced by two dust-mesh
+      ovals on the left and right edges. Same audio path; visually a flat
+      black mesh, no grille pattern.
 
-  Visual notes:
-  - Background is deep black, content monochrome white/grey (OP-1 language).
-  - Helvetica Neue is rendered by the browser; on hardware the firmware blits
-    the baked-glyph data — same metrics, same visual weight.
-  - Layout constants mirror menu.c (PAD_L=22, PAD_R=18, PAD_T=14, BAR_Y=148,
-    corner radius 16). Edit there and here in lock-step.
+  LED-XOR logic per cell (USER QUESTION, EVALUATION):
+    Variant A (overlay): yellow=Hold-state, green=Shift-state.
+      Both on at once when Shift held AND cell on Hold.
+    Variant B (XOR):     yellow=Hold @ base octave, green=Hold @ shifted.
+      Either/or per cell.
+    → Variant B is the right one. Single-color-at-a-time per cell reads
+      unambiguously (which octave is held). "Shift active" is GLOBAL state —
+      belongs on the Shift modifier LED, not on each cell.
+
+  Keyboard:
+    ← → + Space      = Display-Encoder (browse / push)
+    Shift held       = arms global SHIFT
+    1..5 / Q..T      = tap / hold cells (taps are momentary; pressing while
+                       Hold-modifier latched → latches the cell)
+    A/Z              = backlight - / +
 -->
 <meta charset="utf-8">
 <title>Field Ambience — Display Simulator</title>
 <style>
   :root { color-scheme: dark; }
   html, body {
-    margin: 0; height: 100%;
+    margin: 0; min-height: 100%;
     background: #0c0c0e;
     color: #cfcfd2;
     font: 14px/1.4 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    padding: 28px 12px 60px;
     user-select: none; -webkit-user-select: none;
   }
   .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+  /* DEVICE — proportions taken from IMG_9713 */
   .device {
-    width: 720px; height: 410px;
-    background: #1c1c1f;
-    border-radius: 28px;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.7), inset 0 0 0 1px #2a2a2e;
-    display: flex; align-items: center; justify-content: center;
+    width: min(960px, 96vw);
+    aspect-ratio: 1240 / 770;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 35%, #1a1a1d 0%, #131316 60%, #0e0e10 100%);
+    border-radius: 36px;
+    box-shadow:
+      0 40px 80px rgba(0,0,0,0.7),
+      inset 0 0 0 1px #2a2a2e,
+      inset 0 -10px 30px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
   }
-  canvas {
-    /* 320×170 native, scaled 2× by CSS for visual size; the canvas itself uses
-       devicePixelRatio so it stays crisp on retina. */
-    width: 640px; height: 340px;
-    background: black;
-    border-radius: 18px;
+
+  /* DUST-MESH SPEAKERS (replace visible speaker grilles) */
+  .speaker {
+    position: absolute;
+    top: 38%;
+    height: 50%;
+    width: 11%;
+    background: radial-gradient(ellipse 60% 60% at 50% 50%, #161618 0%, #0c0c0e 100%);
+    border-radius: 50%;
+    box-shadow:
+      inset 0 0 0 1px rgba(40,40,44,0.8),
+      inset 0 6px 18px rgba(0,0,0,0.7);
+    transform: translateY(-50%);
   }
-  .hud {
-    display: grid; grid-template-columns: auto auto; gap: 4px 16px;
-    color: #8a8a90; font-size: 12px;
+  .speaker.left  { left: 3%; }
+  .speaker.right { right: 3%; }
+  .speaker::before {
+    content: ""; position: absolute; inset: 6%; border-radius: 50%;
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.025) 1px, transparent 1.5px);
+    background-size: 4px 4px;
+    opacity: 0.6;
+    pointer-events: none;
   }
-  .hud b { color: #cfcfd2; font-weight: 500; }
-  .row { display: flex; gap: 24px; align-items: center; }
-  .encs { display: flex; gap: 26px; }
-  .enc { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; }
-  .dial {
-    width: 62px; height: 62px; border-radius: 50%;
-    background: radial-gradient(circle at 50% 38%, #36363c, #18181c);
-    box-shadow: inset 0 0 0 1px #454549, 0 5px 12px rgba(0,0,0,0.55);
-    position: relative; cursor: ns-resize; touch-action: none;
+
+  /* DISPLAY — small, centered, narrow */
+  .lcd-wrap {
+    position: absolute;
+    top: 11%;
+    left: 50%; transform: translateX(-50%);
+    width: 31%;
+    aspect-ratio: 320 / 170;
+    background: #000;
+    border-radius: 12px;
+    box-shadow:
+      inset 0 0 0 1px #1c1c1f,
+      0 1px 0 rgba(255,255,255,0.04),
+      0 6px 16px rgba(0,0,0,0.5);
   }
-  .enc.display .dial { box-shadow: inset 0 0 0 1px #5b6e63, 0 5px 12px rgba(0,0,0,0.55); }
-  .dial .tick {
-    position: absolute; left: 50%; top: 6px; width: 3px; height: 16px; margin-left: -1.5px;
-    background: #e9e9ec; border-radius: 2px; transform-origin: 50% 25px;
+  canvas#lcd { width: 100%; height: 100%; display: block; border-radius: 12px; background: black; }
+
+  /* ENCODERS — 4 in the corners, identical, no labels */
+  .enc {
+    position: absolute;
+    width: 6.4%; aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 40%, #44444a 0%, #2a2a2e 45%, #18181c 100%);
+    box-shadow:
+      inset 0 0 0 1px #3a3a3e,
+      0 4px 12px rgba(0,0,0,0.55);
+    touch-action: none; cursor: ns-resize;
   }
-  .enc-label { font-size: 12px; color: #9a9aa0; }
-  .enc-val   { font-size: 12px; color: #e6e6e9; font-weight: 500; min-height: 15px; }
-  .enc-btns  { display: flex; gap: 4px; }
-  .enc-btns button { padding: 2px 8px; font-size: 13px; }
-  button {
-    background: #2a2a2e; color: #e6e6e9; border: 1px solid #3a3a3e;
-    border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer;
+  .enc::after {
+    content: ""; position: absolute; left: 50%; top: 8%;
+    width: 8%; height: 22%; margin-left: -4%;
+    background: #e9e9ec; border-radius: 2px;
+    transform-origin: 50% 200%;
+    transform: rotate(var(--ang, 0deg));
   }
-  button:hover { background: #34343a; }
-  /* SHIFT armed: highlight the latch and flag EN2's secondary function (LED6). */
-  #btn-shift { letter-spacing: 1px; }
-  body.shift-on #btn-shift {
-    background: #c9a227; color: #161608; border-color: #e6c54a;
-    box-shadow: 0 0 10px rgba(230,197,74,0.55);
+  .enc.e1 { top: 11%;  left: 7%;   }
+  .enc.e2 { top: 11%;  left: 19%;  }
+  .enc.e3 { top: 11%;  right: 19%; }
+  .enc.e4 { top: 11%;  right: 7%;  }
+
+  /* MODIFIER ROW — LED above, no text under */
+  .mods {
+    position: absolute;
+    top: 47%;
+    left: 50%; transform: translateX(-50%);
+    width: 41%;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1.5%;
   }
-  body.shift-on .enc[data-id="bright"] .enc-label { color: #e6c54a; }
-  body.shift-on .enc[data-id="bright"] .enc-val   { color: #f0d878; }
-  .legend { color: #6a6a70; font-size: 12px; max-width: 640px; text-align: center; }
+  .mod { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .mod-led {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #2a2a2e;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    transition: background-color 180ms ease, box-shadow 180ms ease;
+  }
+  .mod-led.on-green  { background: #5dd24c; box-shadow: 0 0 10px rgba(93,210,76,0.55), inset 0 0 0 1px rgba(255,255,255,0.15); }
+  .mod-led.on-yellow { background: #f0c63a; box-shadow: 0 0 10px rgba(240,198,58,0.55), inset 0 0 0 1px rgba(255,255,255,0.15); }
+  .mod-led.on-white  { background: #f4f4f4; box-shadow: 0 0 10px rgba(255,255,255,0.45), inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .mod-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 35%, #2c2c30 0%, #1a1a1e 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      inset 0 -2px 4px rgba(0,0,0,0.6),
+      0 3px 6px rgba(0,0,0,0.5);
+    border: none; cursor: pointer; padding: 0;
+  }
+  .mod-btn:active { box-shadow: inset 0 2px 6px rgba(0,0,0,0.7); }
+
+  /* CELLS — 5 long vertical pills, 2 LEDs above (XOR yellow/green) */
+  .cells {
+    position: absolute;
+    bottom: 6%;
+    left: 50%; transform: translateX(-50%);
+    width: 50%;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 2%;
+  }
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .cell-leds { display: flex; gap: 6px; }
+  .cell-led {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #1c1c1e;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    transition: background-color 160ms ease, box-shadow 160ms ease;
+  }
+  .cell-led.on-yellow { background: #f0c63a; box-shadow: 0 0 8px rgba(240,198,58,0.6), inset 0 0 0 1px rgba(255,255,255,0.15); }
+  .cell-led.on-green  { background: #5dd24c; box-shadow: 0 0 8px rgba(93,210,76,0.6),  inset 0 0 0 1px rgba(255,255,255,0.15); }
+  .cell-key {
+    width: 100%; aspect-ratio: 1 / 2.4;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #232327 0%, #18181b 40%, #131315 100%);
+    box-shadow:
+      inset 0 0 0 1px #2a2a2e,
+      inset 0 12px 24px rgba(0,0,0,0.65),
+      inset 0 -2px 0 rgba(255,255,255,0.02),
+      0 4px 10px rgba(0,0,0,0.55);
+    cursor: pointer;
+    transition: transform 80ms ease, box-shadow 80ms ease;
+    touch-action: none;
+  }
+  .cell-key:active, .cell-key.pressed {
+    transform: scale(0.985) translateY(1px);
+    box-shadow:
+      inset 0 0 0 1px #1f1f23,
+      inset 0 14px 28px rgba(0,0,0,0.8),
+      0 1px 3px rgba(0,0,0,0.5);
+  }
+
+  .legend {
+    color: #6a6a70; font-size: 12px; max-width: 720px; text-align: center; line-height: 1.6;
+    margin-top: 8px;
+  }
+  .legend kbd {
+    background: #1a1a1e; padding: 1px 6px; border-radius: 4px; border: 1px solid #2a2a2e; color: #bcbcc2;
+    font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 11px;
+  }
 </style>
 
 <div class="stage">
-  <div class="device"><canvas id="lcd" width="640" height="340"></canvas></div>
+  <div class="device" id="device">
+    <div class="speaker left"></div>
+    <div class="speaker right"></div>
 
-  <!-- Four endless encoders (ALPS EC11J1525402, SPEC §5). Turning Drive /
-       Brightness / Volume pops up a transient readout on the display; the
-       Display encoder navigates the menu (push = enter/leave edit). -->
-  <div class="encs">
-    <div class="enc" data-id="drive">
-      <div class="dial"><div class="tick"></div></div>
-      <div class="enc-label">Drive</div><div class="enc-val"></div>
-      <div class="enc-btns"><button data-turn="-1">‹</button><button data-turn="1">›</button></div>
-    </div>
-    <div class="enc" data-id="bright">
-      <div class="dial"><div class="tick"></div></div>
-      <div class="enc-label">Brightness</div><div class="enc-val"></div>
-      <div class="enc-btns"><button data-turn="-1">‹</button><button data-turn="1">›</button></div>
-    </div>
-    <div class="enc display" data-id="display">
-      <div class="dial"><div class="tick"></div></div>
-      <div class="enc-label">Display</div><div class="enc-val"></div>
-      <div class="enc-btns"><button data-turn="-1">‹</button><button data-push="1">push</button><button data-turn="1">›</button></div>
-    </div>
-    <div class="enc" data-id="vol">
-      <div class="dial"><div class="tick"></div></div>
-      <div class="enc-label">Volume</div><div class="enc-val"></div>
-      <div class="enc-btns"><button data-turn="-1">‹</button><button data-turn="1">›</button></div>
-    </div>
-  </div>
+    <div class="lcd-wrap"><canvas id="lcd" width="640" height="340"></canvas></div>
 
-  <div class="row">
-    <button id="btn-shift">SHIFT</button>
-    <button id="btn-charge">Akku-Quelle wechseln</button>
-    <button id="btn-batdec">Akku −10</button>
-    <button id="btn-batinc">Akku +10</button>
+    <!-- four encoders in the four corners -->
+    <div class="enc e1" data-enc="drive"></div>
+    <div class="enc e2" data-enc="bright"></div>
+    <div class="enc e3" data-enc="display"></div>
+    <div class="enc e4" data-enc="vol"></div>
+
+    <!-- modifier row -->
+    <div class="mods" id="mods">
+      <div class="mod"><div class="mod-led" data-mod="shift"></div><button class="mod-btn" data-mod="shift" aria-label="Shift"></button></div>
+      <div class="mod"><div class="mod-led" data-mod="hold"></div><button class="mod-btn" data-mod="hold" aria-label="Hold"></button></div>
+      <div class="mod"><div class="mod-led" data-mod="drone"></div><button class="mod-btn" data-mod="drone" aria-label="Drone"></button></div>
+      <div class="mod"><div class="mod-led" data-mod="generate"></div><button class="mod-btn" data-mod="generate" aria-label="Generate"></button></div>
+      <div class="mod"><div class="mod-led" data-mod="clear"></div><button class="mod-btn" data-mod="clear" aria-label="Clear"></button></div>
+    </div>
+
+    <!-- five cells -->
+    <div class="cells" id="cells">
+      <div class="cell">
+        <div class="cell-leds"><div class="cell-led" data-led="cell1-y"></div><div class="cell-led" data-led="cell1-g"></div></div>
+        <div class="cell-key" data-cell="0"></div>
+      </div>
+      <div class="cell">
+        <div class="cell-leds"><div class="cell-led" data-led="cell2-y"></div><div class="cell-led" data-led="cell2-g"></div></div>
+        <div class="cell-key" data-cell="1"></div>
+      </div>
+      <div class="cell">
+        <div class="cell-leds"><div class="cell-led" data-led="cell3-y"></div><div class="cell-led" data-led="cell3-g"></div></div>
+        <div class="cell-key" data-cell="2"></div>
+      </div>
+      <div class="cell">
+        <div class="cell-leds"><div class="cell-led" data-led="cell4-y"></div><div class="cell-led" data-led="cell4-g"></div></div>
+        <div class="cell-key" data-cell="3"></div>
+      </div>
+      <div class="cell">
+        <div class="cell-leds"><div class="cell-led" data-led="cell5-y"></div><div class="cell-led" data-led="cell5-g"></div></div>
+        <div class="cell-key" data-cell="4"></div>
+      </div>
+    </div>
   </div>
 
   <div class="legend">
-    Alle 4 Encoder sind endlos (kein Anschlag). Über einem Dial <b>scrollen</b>
-    oder vertikal <b>ziehen</b> = drehen, ‹ / › = ein Klick. Display-Encoder:
-    drehen scrollt das Menü, <b>push</b> öffnet/schließt Edit. Drive / Brightness /
-    Volume sind dedizierte Audio-Macros (Drive = Reverb-Drive, Brightness = Pad-
-    Tone, Volume = Master) — beim Drehen erscheint ihr Wert kurz als Overlay.
-    <b>Langsam drehen = feine 1 %-Schritte, schnell drehen = grobe Sprünge</b>
-    (Velocity-Acceleration, §5). <b>SHIFT halten + Brightness drehen = LCD-Helligkeit</b> (Sekundärfunktion
-    §12.3); kein Menü-Eintrag. Sinkt die Helligkeit auf 0 %, dunkelt der ganze
-    Screen ab — zurückdrehen geht trotzdem, weil der Encoder physisch ist.
-    (Tastatur: ← → + Space = Display-Encoder, Shift halten = SHIFT.)
+    No labels — controls identified by position + LED color.
+    Encoders: scroll over dial or drag vertically; <kbd>← → Space</kbd> drive the Display encoder.
+    Modifiers: <span style="color:#5dd24c">Shift</span> /
+    <span style="color:#f0c63a">Hold</span> / white = Drone, Generate, Clear (flash-on-press).
+    Hold-armed cell tap → yellow LED. <kbd>Shift</kbd> held while latching → green LED instead (XOR).
+    Backlight: <kbd>A</kbd> / <kbd>Z</kbd>.
   </div>
 </div>
 
 <script>
 'use strict';
 
-/* ---------- Layout constants — must mirror firmware-c-next/src/menu.c ---- */
 const W = 320, H = 170;
 const PAD_L = 22, PAD_R = 18, PAD_T = 14;
 const CORNER_R = 16;
 const BAR_Y = 148;
 const BAR_H_INA = 5, BAR_H_ACT = 8;
 const BAR_GAP = 6;
-const BAR_ACT_K = 2.4;          /* active pill = 2.4× inactive width */
+const BAR_ACT_K = 2.4;
 
 const GS_BG = '#000';
 const GS_DASH = 'rgba(255,255,255,0.20)';
@@ -152,24 +289,10 @@ const GS_MID  = 'rgba(255,255,255,0.60)';
 const GS_VAL  = 'rgba(255,255,255,0.86)';
 const GS_ACTIVE = '#ffffff';
 
-/* ---------- State machine — mirrors menu.c -------------------------------- */
-/* Items in the menu are SETTABLE VALUES the user chooses from a range.
- * Dedicated hardware controls are deliberately NOT here:
- *   - VOLUME, DRIVE, BRIGHTNESS  → own endless encoders (SPEC §5).
- *     "Brightness" (EN2) is the AUDIO tone macro (pad filter cutoff, Sound
- *     Constitution /fam/brightness), not the LCD backlight.
- *   - DRONE, GENERATE, HOLD       → own buttons (SPEC §7).
- *     GENERATE program-cycle = SHIFT+GENERATE (§12.3).
- *   - Display BACKLIGHT           → SHIFT+EN2 (Brightness encoder's secondary
- *     function, §12.3). Behaves like Volume/Drive: a transient overlay, never
- *     a menu entry. Boots to a factory default so you can't lock yourself in
- *     the dark (§12.5). */
 const MP_KEY = 0, MP_MODE = 1, MP_VIBE = 2, MP_VOICE = 3,
       MP_TEXTURE = 4, MP_BASS = 5, MP_SPACE = 6, MP_MOOD = 7,
       MP_COUNT = 8;
-
 const LABELS = ['Key','Mode','Vibe','Voice','Texture','Bass','Space','Mood'];
-
 const KEY_NAMES  = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolyd.','Aeolian'];
 const VIBE_NAMES = ['Warm','Bright','Deep','Floating'];
@@ -179,13 +302,11 @@ const state = {
   cur: MP_KEY, mode: 'browse',
   key: 60, mode_i: 0, vibe_i: 0, voice_i: 0,
   texture: 20, bass: 50, space: 50, mood: 50,
-  /* dedicated hardware-encoder values (NOT in the display menu).
-   * `brightness` is the audio tone macro (pad cutoff), not the LCD.
-   * `backlight` is the LCD PWM, reached via SHIFT+EN2; boots to a factory
-   * default (80 %) so the screen is never dark on power-on (§12.5). */
   drive: 30, brightness: 50, vol: 30, backlight: 80,
   shift: false,
   battery_pct: 72, usb: false,
+  hold: false, drone: false, generate: false, clear_flash: 0,
+  cells: ['off','off','off','off','off'],
 };
 
 const wrap   = (v, n) => ((v % n) + n) % n;
@@ -193,11 +314,7 @@ const clamp  = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
 const lerp   = (a, b, t) => a + (b - a) * t;
 
 function valueCount(p) {
-  switch (p) {
-    case MP_KEY: return 12; case MP_MODE: return 6; case MP_VIBE: return 4;
-    case MP_VOICE: return 3;
-    default: return 0;        /* continuous % */
-  }
+  switch (p) { case MP_KEY: return 12; case MP_MODE: return 6; case MP_VIBE: return 4; case MP_VOICE: return 3; default: return 0; }
 }
 function valueIndex(p) {
   switch (p) {
@@ -228,18 +345,10 @@ function valueText() {
   }
   return '';
 }
-
-/* Whether the currently-edited value is the continuous % kind. */
 function curIsContinuous() { return valueCount(state.cur) === 0; }
 
 function rotate(delta) {
-  /* Any Display-encoder action takes focus back to the menu, so a lingering
-   * Drive/Brightness/Volume/Backlight overlay must clear out of the way
-   * (#6: one consistent rule for every transient overlay). */
   dismissOverlay();
-  /* delta is a signed TICK COUNT (mirrors menu.c). Browse is never accelerated
-   * — step one slot per gesture by sign. Continuous values move 1 % per tick;
-   * the input layer (turnEncoder) supplies the accelerated tick count. */
   if (state.mode === 'browse') {
     const dir = Math.sign(delta);
     const old = state.cur;
@@ -247,32 +356,27 @@ function rotate(delta) {
     if (state.cur !== old) onCurChange(dir);
     return;
   }
-  let valueChanged = false;
+  let changed = false;
   switch (state.cur) {
-    case MP_KEY:    state.key    = 60 + wrap(state.key - 60 + Math.sign(delta), 12); valueChanged = true; break;
-    case MP_MODE:   state.mode_i  = wrap(state.mode_i  + Math.sign(delta), 6); valueChanged = true; break;
-    case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + Math.sign(delta), 4); valueChanged = true; break;
-    case MP_VOICE:  state.voice_i = wrap(state.voice_i + Math.sign(delta), 3); valueChanged = true; break;
-    case MP_TEXTURE:state.texture = clamp(state.texture + delta, 0, 100); valueChanged = true; break;
-    case MP_BASS:   state.bass    = clamp(state.bass    + delta, 0, 100); valueChanged = true; break;
-    case MP_SPACE:  state.space   = clamp(state.space   + delta, 0, 100); valueChanged = true; break;
-    case MP_MOOD:   state.mood    = clamp(state.mood    + delta, 0, 100); valueChanged = true; break;
+    case MP_KEY:    state.key    = 60 + wrap(state.key - 60 + Math.sign(delta), 12); changed = true; break;
+    case MP_MODE:   state.mode_i  = wrap(state.mode_i  + Math.sign(delta), 6); changed = true; break;
+    case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + Math.sign(delta), 4); changed = true; break;
+    case MP_VOICE:  state.voice_i = wrap(state.voice_i + Math.sign(delta), 3); changed = true; break;
+    case MP_TEXTURE:state.texture = clamp(state.texture + delta, 0, 100); changed = true; break;
+    case MP_BASS:   state.bass    = clamp(state.bass    + delta, 0, 100); changed = true; break;
+    case MP_SPACE:  state.space   = clamp(state.space   + delta, 0, 100); changed = true; break;
+    case MP_MOOD:   state.mood    = clamp(state.mood    + delta, 0, 100); changed = true; break;
   }
-  if (valueChanged) onValueChange();
+  if (changed) onValueChange();
 }
-function push() {
-  dismissOverlay();                    /* #6: clear overlay on any Display push */
-  state.mode = state.mode === 'browse' ? 'edit' : 'browse';
-  onModeChange();
-}
+function push() { dismissOverlay(); state.mode = state.mode === 'browse' ? 'edit' : 'browse'; onModeChange(); }
 
-/* ---------- Render -------------------------------------------------------- */
 const canvas = document.getElementById('lcd');
 const dpr = window.devicePixelRatio || 1;
 canvas.width  = W * 2 * dpr;
 canvas.height = H * 2 * dpr;
 const ctx = canvas.getContext('2d');
-ctx.scale(2 * dpr, 2 * dpr);                /* 1 unit = 1 device-pixel */
+ctx.scale(2 * dpr, 2 * dpr);
 ctx.imageSmoothingEnabled = true;
 
 function roundRect(x, y, w, h, r) {
@@ -290,57 +394,25 @@ function drawBattery() {
   const w = 26, h = 12, r = 4;
   const x = W - PAD_R - w - 3;
   const y = PAD_T + 2;
-  ctx.strokeStyle = GS_MID;
-  ctx.lineWidth = 1.2;
-  roundRect(x + 0.5, y + 0.5, w - 1, h - 1, r - 1);
-  ctx.stroke();
-  /* terminal nub */
+  ctx.strokeStyle = GS_MID; ctx.lineWidth = 1.2;
+  roundRect(x + 0.5, y + 0.5, w - 1, h - 1, r - 1); ctx.stroke();
   ctx.fillStyle = GS_MID;
-  roundRect(x + w + 1, y + 3, 2, h - 6, 1);
-  ctx.fill();
-  /* fill */
+  roundRect(x + w + 1, y + 3, 2, h - 6, 1); ctx.fill();
   const inner = w - 6;
   let fw = Math.round(inner * state.battery_pct / 100);
   if (fw < 2 && state.battery_pct > 0) fw = 2;
   if (fw > inner) fw = inner;
-  if (fw > 0) {
-    ctx.fillStyle = state.usb ? GS_ACTIVE : GS_MID;
-    roundRect(x + 3, y + 3, fw, h - 6, 2);
-    ctx.fill();
-  }
-  /* charging bolt slot — minimal */
-  if (state.usb) {
-    ctx.fillStyle = GS_ACTIVE;
-    roundRect(x + w / 2 - 1, y + 2, 2, h - 4, 1);
-    ctx.fill();
-  }
+  if (fw > 0) { ctx.fillStyle = state.usb ? GS_ACTIVE : GS_MID; roundRect(x + 3, y + 3, fw, h - 6, 2); ctx.fill(); }
+  if (state.usb) { ctx.fillStyle = GS_ACTIVE; roundRect(x + w / 2 - 1, y + 2, 2, h - 4, 1); ctx.fill(); }
 }
-
-/* Pill row with a FRACTIONAL active position. When activeT is between two
- * pills, both grow / brighten proportionally — the active "highlight" slides
- * smoothly between positions. With one pill fully active (d=1) the layout is
- * identical to the old integer version (one big pill + N-1 small ones,
- * edge-to-edge). The widths sum is conserved while activeT slides between
- * neighbours, so the row stays anchored at both margins. */
 function drawPillBar(n, activeT) {
   if (n < 1) return;
   const usable = W - PAD_L - PAD_R;
   let gap = BAR_GAP;
-  let gaps = (n - 1) * gap;
-  let ina  = (usable - gaps) / ((n - 1) + BAR_ACT_K);
-  if (ina < 4 && n > 1) {
-    gap = 3;
-    gaps = (n - 1) * gap;
-    ina = (usable - gaps) / ((n - 1) + BAR_ACT_K);
-    if (ina < 3) ina = 3;
-  }
+  let ina = (usable - (n - 1) * gap) / ((n - 1) + BAR_ACT_K);
+  if (ina < 4 && n > 1) { gap = 3; ina = (usable - (n - 1) * gap) / ((n - 1) + BAR_ACT_K); if (ina < 3) ina = 3; }
   const act = ina * BAR_ACT_K;
-  if (n === 1) {
-    roundRect(PAD_L, BAR_Y, usable, BAR_H_ACT, BAR_H_ACT / 2);
-    ctx.fillStyle = GS_ACTIVE; ctx.fill();
-    return;
-  }
-  /* Distance-1 attention falloff: only the two neighbours of activeT animate. */
+  if (n === 1) { roundRect(PAD_L, BAR_Y, usable, BAR_H_ACT, BAR_H_ACT / 2); ctx.fillStyle = GS_ACTIVE; ctx.fill(); return; }
   const d = i => Math.max(0, 1 - Math.abs(i - activeT));
   let x = PAD_L;
   for (let i = 0; i < n; ++i) {
@@ -348,56 +420,29 @@ function drawPillBar(n, activeT) {
     const w  = ina + di * (act - ina);
     const h  = BAR_H_INA + di * (BAR_H_ACT - BAR_H_INA);
     const yy = BAR_Y + (BAR_H_ACT - h) / 2;
-    /* brightness: dim → active across di=0..1 */
     const a  = 0.20 + di * 0.80;
     ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
-    roundRect(x, yy, w, h, h / 2);
-    ctx.fill();
+    roundRect(x, yy, w, h, h / 2); ctx.fill();
     x += w + gap;
   }
 }
-
 function drawFillbar(pct) {
   const x = PAD_L, y = BAR_Y, w = W - PAD_L - PAD_R, h = BAR_H_ACT, r = h / 2;
-  ctx.fillStyle = GS_DASH;
-  roundRect(x, y, w, h, r); ctx.fill();
+  ctx.fillStyle = GS_DASH; roundRect(x, y, w, h, r); ctx.fill();
   let fw = Math.round(w * pct / 100);
   if (fw < h && pct > 0) fw = h;
   if (fw > w) fw = w;
-  if (fw > 0) {
-    ctx.fillStyle = GS_ACTIVE;
-    roundRect(x, y, fw, h, r); ctx.fill();
-  }
+  if (fw > 0) { ctx.fillStyle = GS_ACTIVE; roundRect(x, y, fw, h, r); ctx.fill(); }
 }
 
 const FONT_LABEL = '300 18px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
 const FONT_VALUE = '300 52px "Helvetica Neue", Helvetica, Inter, Arial, sans-serif';
-
-/* ---------- Animation engine ---------------------------------------------
- * Single rAF loop. Every animated value lives on `anim` and is tweened via
- * tween(key, to, [dur], [ease], [onDone]). Starting a new tween on the same
- * key cancels the previous one (from the current value), so rapid input
- * never produces stutters or stalled animations. Ease-out cubic is the
- * house curve — fast start, gentle settle — and matches the OP-1 feel. */
 const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
-const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
-
-const anim = {
-  barT: 0,        /* fractional active position for the pill bar */
-  barAlpha: 1,    /* bar alpha — drops during mode/N changes */
-  fillT: 20,      /* animated 0..100 for the fill bar (continuous %) */
-  textY: 0,       /* vertical wipe offset for label+value */
-  textAlpha: 1,
-  labelColor: 0,  /* 0 = browse label tone, 1 = edit label tone */
-  ovAlpha: 0,     /* overlay fade */
-  ovFill: 0,      /* animated 0..100 for the overlay's fill bar */
-};
+const anim = { barT: 0, barAlpha: 1, fillT: 20, textY: 0, textAlpha: 1, labelColor: 0, ovAlpha: 0, ovFill: 0 };
 const overlay = { active: false, label: '', value: 0, fadeOutAt: 0 };
-
 const tweens = [];
 function tween(key, to, dur = 200, ease = easeOutCubic, onDone) {
-  for (let i = tweens.length - 1; i >= 0; --i)
-    if (tweens[i].key === key) tweens.splice(i, 1);
+  for (let i = tweens.length - 1; i >= 0; --i) if (tweens[i].key === key) tweens.splice(i, 1);
   tweens.push({ key, from: anim[key], to, start: performance.now(), dur, ease, onDone });
   ensureLoop();
 }
@@ -413,67 +458,40 @@ let rafId = 0;
 function ensureLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
 function loop(now) {
   tickTweens(now);
-  /* Overlay scheduled fade-out. */
-  if (overlay.active && now >= overlay.fadeOutAt && !tweens.some(t => t.key === 'ovAlpha')) {
+  if (overlay.active && now >= overlay.fadeOutAt && !tweens.some(t => t.key === 'ovAlpha'))
     tween('ovAlpha', 0, 260, easeOutCubic, () => { overlay.active = false; });
-  }
-  render();
-  const alive = tweens.length > 0;
+  if (state.clear_flash && now - state.clear_flash > 220) state.clear_flash = 0;
+  render(); syncLeds();
+  const alive = tweens.length > 0 || state.clear_flash !== 0;
   rafId = alive ? requestAnimationFrame(loop) : 0;
 }
 
-/* ---------- Animation triggers ------------------------------------------- */
-/* The state functions (rotate/push) call these so the input layer can stay
- * dumb. delta tells the wipe which way to slide. */
 function onCurChange(delta) {
-  /* text wipe-in: snap small offset + alpha 0, ease back to 0,1 */
-  anim.textY = 7 * Math.sign(delta);
-  anim.textAlpha = 0;
-  tween('textY', 0, 220);
-  tween('textAlpha', 1, 220);
-  /* pill bar: slide active to new cur (still in browse mode) */
+  anim.textY = 7 * Math.sign(delta); anim.textAlpha = 0;
+  tween('textY', 0, 220); tween('textAlpha', 1, 220);
   tween('barT', state.cur, 240);
-  /* fill bar mirrors the new setting's % (relevant only if next setting is %) */
   if (curIsContinuous()) tween('fillT', valueInt(state.cur), 240);
 }
 function onValueChange() {
-  /* discrete: slide the active pill to new index. continuous: animate fill. */
-  if (curIsContinuous()) {
-    tween('fillT', valueInt(state.cur), 200);
-    /* text reads from anim.fillT so it counts up smoothly — no extra tween. */
-  } else {
-    tween('barT', valueIndex(state.cur), 180);
-    /* word changed: short alpha pulse, no slide (user is "inside" the slot) */
-    anim.textAlpha = 0.35;
-    tween('textAlpha', 1, 220);
-  }
+  if (curIsContinuous()) tween('fillT', valueInt(state.cur), 200);
+  else { tween('barT', valueIndex(state.cur), 180); anim.textAlpha = 0.35; tween('textAlpha', 1, 220); }
 }
 function onModeChange() {
-  /* Bar topology changes (N + active definition flip): fade out, snap, fade in. */
   tween('barAlpha', 0, 110, easeOutCubic, () => {
-    /* snap bar target to the new mode's active position */
     anim.barT = (state.mode === 'browse') ? state.cur : valueIndex(state.cur);
     if (state.mode === 'edit' && curIsContinuous()) anim.fillT = valueInt(state.cur);
     tween('barAlpha', 1, 180);
   });
   tween('labelColor', state.mode === 'edit' ? 1 : 0, 200);
-  /* small text pulse so the value lighting up reads as a state change */
-  anim.textAlpha = 0.5;
-  tween('textAlpha', 1, 220);
+  anim.textAlpha = 0.5; tween('textAlpha', 1, 220);
 }
 function showOverlay(label, value) {
-  /* If the overlay was already showing for the same encoder, just retarget
-   * smoothly; otherwise snap the start fill to the current value so the bar
-   * jumps in fresh from the new starting point. */
   if (!overlay.active || overlay.label !== label) anim.ovFill = value;
   overlay.active = true; overlay.label = label; overlay.value = value;
   overlay.fadeOutAt = performance.now() + 1100;
-  tween('ovAlpha', 1, 110);
-  tween('ovFill', value, 180);
+  tween('ovAlpha', 1, 110); tween('ovFill', value, 180);
   ensureLoop();
 }
-/* Snap a visible overlay out of the way (faster than its idle timeout) when the
- * user moves on to the Display menu. No-op if nothing is showing. */
 function dismissOverlay() {
   if (!overlay.active && anim.ovAlpha <= 0.01) return;
   overlay.fadeOutAt = 0;
@@ -481,94 +499,45 @@ function dismissOverlay() {
   ensureLoop();
 }
 
-/* ---------- Drawing ------------------------------------------------------ */
 function drawValueRow(label, valueText, labelGs, valueGs) {
-  const base = ctx.globalAlpha;        /* canvas globalAlpha is absolute, not
-                                          multiplicative — fold the outer alpha
-                                          in by hand so crossfades don't leak. */
+  const base = ctx.globalAlpha;
   ctx.save();
   ctx.globalAlpha = base * anim.textAlpha;
   ctx.translate(0, anim.textY);
-  ctx.fillStyle = labelGs;
-  ctx.font = FONT_LABEL; ctx.textBaseline = 'top';
+  ctx.fillStyle = labelGs; ctx.font = FONT_LABEL; ctx.textBaseline = 'top';
   ctx.fillText(label, PAD_L, PAD_T);
   const y = (PAD_T + 18 + BAR_Y - 56) / 2;
-  ctx.fillStyle = valueGs;
-  ctx.font = FONT_VALUE; ctx.textBaseline = 'top';
+  ctx.fillStyle = valueGs; ctx.font = FONT_VALUE; ctx.textBaseline = 'top';
   ctx.fillText(valueText, PAD_L, y);
   ctx.restore();
 }
-
-function lerpRGBA(t) {
-  /* label colour interpolates browse(GS_LABEL) → edit(GS_DIM) */
-  const a = lerp(0.60, 0.34, t);
-  return `rgba(255,255,255,${a.toFixed(3)})`;
-}
-function lerpValueRGBA(t) {
-  const a = lerp(0.86, 1.0, t);
-  return `rgba(255,255,255,${a.toFixed(3)})`;
-}
-
+function lerpRGBA(t) { return `rgba(255,255,255,${lerp(0.60, 0.34, t).toFixed(3)})`; }
+function lerpValueRGBA(t) { return `rgba(255,255,255,${lerp(0.86, 1.0, t).toFixed(3)})`; }
 function drawMenu() {
-  drawValueRow(LABELS[state.cur], valueText(),
-               lerpRGBA(anim.labelColor), lerpValueRGBA(anim.labelColor));
-  const base = ctx.globalAlpha;        /* fold outer alpha in (see drawValueRow) */
-  ctx.save();
-  ctx.globalAlpha = base * anim.barAlpha;
-  if (state.mode === 'browse') {
-    drawPillBar(MP_COUNT, anim.barT);
-  } else {
-    const n = valueCount(state.cur);
-    if (n > 0) drawPillBar(n, anim.barT);
-    else       drawFillbar(anim.fillT);
-  }
+  drawValueRow(LABELS[state.cur], valueText(), lerpRGBA(anim.labelColor), lerpValueRGBA(anim.labelColor));
+  const base = ctx.globalAlpha;
+  ctx.save(); ctx.globalAlpha = base * anim.barAlpha;
+  if (state.mode === 'browse') drawPillBar(MP_COUNT, anim.barT);
+  else { const n = valueCount(state.cur); if (n > 0) drawPillBar(n, anim.barT); else drawFillbar(anim.fillT); }
   ctx.restore();
 }
-
 function drawOverlayView() {
-  drawValueRow(overlay.label, Math.round(anim.ovFill) + '%',
-               GS_LABEL, GS_ACTIVE);
+  drawValueRow(overlay.label, Math.round(anim.ovFill) + '%', GS_LABEL, GS_ACTIVE);
   drawFillbar(anim.ovFill);
 }
-
 function render() {
   ctx.save();
-  roundRect(0, 0, W, H, CORNER_R);
-  ctx.clip();
-  ctx.fillStyle = GS_BG;
-  ctx.fillRect(0, 0, W, H);
-
-  drawBattery();                       /* always-on status, full alpha */
-
-  /* Crossfade overlay over menu when active. Both share the value row at the
-   * same position so the transition feels like a smooth content swap rather
-   * than two stacked screens. */
+  roundRect(0, 0, W, H, CORNER_R); ctx.clip();
+  ctx.fillStyle = GS_BG; ctx.fillRect(0, 0, W, H);
+  drawBattery();
   if (overlay.active || anim.ovAlpha > 0.01) {
-    /* menu under overlay, dimmed by overlay alpha */
-    ctx.save();
-    ctx.globalAlpha = 1 - anim.ovAlpha;
-    drawMenu();
-    ctx.restore();
-    ctx.save();
-    ctx.globalAlpha = anim.ovAlpha;
-    drawOverlayView();
-    ctx.restore();
-  } else {
-    drawMenu();
-  }
-
+    ctx.save(); ctx.globalAlpha = 1 - anim.ovAlpha; drawMenu(); ctx.restore();
+    ctx.save(); ctx.globalAlpha = anim.ovAlpha;     drawOverlayView(); ctx.restore();
+  } else drawMenu();
   ctx.restore();
-
-  /* LCD backlight = physical panel brightness, so it scales the WHOLE display
-   * (content + bezel glow), not the drawn greys. A CSS filter is the honest
-   * model. Tiny floor (0.05) keeps a hint of glow at 0 % so a dark screen
-   * still reads as "on but dim" rather than "broken/off". */
   canvas.style.filter = `brightness(${(0.05 + 0.95 * state.backlight / 100).toFixed(3)})`;
 }
 
-/* ---------- Encoders ------------------------------------------------------ */
-/* Dedicated knobs hold a 0..100 value and pop up a display readout when turned;
- * the Display knob drives the menu. Order matches EN1..EN4 in SPEC §5. */
 const ENC = {
   drive:  { label: 'Drive',      get: () => state.drive,      set: v => state.drive = v },
   bright: { label: 'Brightness', get: () => state.brightness, set: v => state.brightness = v },
@@ -576,12 +545,7 @@ const ENC = {
   vol:    { label: 'Volume',     get: () => state.vol,        set: v => state.vol = v },
 };
 const angle = { drive: 0, bright: 0, display: 0, vol: 0 };
-
-/* Velocity-aware stepping (SPEC §5). One deliberate detent = 1 % (fine control,
- * fully reproducible). Spin faster and each detent is worth more, so 0→100 is a
- * quick flick — without losing the ability to land on an exact value when you
- * move slowly. Tiers map "ms since last detent" → ticks/detent. */
-const ACCEL_TIERS = [[28, 8], [60, 5], [120, 3], [240, 2]];   /* faster → coarser */
+const ACCEL_TIERS = [[28, 8], [60, 5], [120, 3], [240, 2]];
 const accelLast = {};
 function accelTicks(id, dir) {
   const now = performance.now();
@@ -591,112 +555,107 @@ function accelTicks(id, dir) {
   for (const [maxDt, ticks] of ACCEL_TIERS) { if (dt < maxDt) { mul = ticks; break; } }
   return dir * mul;
 }
-
 function turnEncoder(id, delta) {
-  angle[id] += delta * 24;             /* visual dial rotation (endless) */
+  angle[id] += delta * 24;
   const e = ENC[id];
   const dir = Math.sign(delta) || 1;
   if (e.menu) {
-    /* Accelerate continuous edits only; browse + discrete edits step by 1. */
     const ticks = (state.mode === 'edit' && curIsContinuous()) ? accelTicks('display', dir) : dir;
-    rotate(ticks);
-    render();
+    rotate(ticks); render();
   } else if (id === 'bright' && state.shift) {
-    /* SHIFT+EN2 = LCD backlight (secondary function, §12.3). The user CAN take
-     * it to 0 % — recoverable because the dial is physical, so the screen can
-     * be brought back even while it's black. */
     state.backlight = clamp(state.backlight + accelTicks(id, dir), 0, 100);
-    showOverlay('Backlight', state.backlight);
-    render();                          /* re-apply screen dimming immediately */
+    showOverlay('Backlight', state.backlight); render();
   } else {
     e.set(clamp(e.get() + accelTicks(id, dir), 0, 100));
     showOverlay(e.label, e.get());
   }
-  refreshWidget(id);
+  refreshEncoderVisual(id);
 }
-function pushEncoder(id) {
-  if (ENC[id].menu) { push(); render(); refreshWidget('display'); }
-  /* Drive/Brightness/Volume push-switches are reserved (no-op in the sim). */
+function pushEncoder(id) { if (ENC[id].menu) { push(); render(); } }
+function refreshEncoderVisual(id) {
+  const el = document.querySelector(`.enc[data-enc="${id}"]`);
+  if (el) el.style.setProperty('--ang', `${angle[id]}deg`);
 }
-
-/* Per-widget DOM refs + value/tick refresh. */
-const widgets = {};
 document.querySelectorAll('.enc').forEach(el => {
-  const id = el.dataset.id;
-  widgets[id] = { tick: el.querySelector('.tick'), val: el.querySelector('.enc-val') };
-});
-function refreshWidget(id) {
-  const w = widgets[id];
-  w.tick.style.transform = `rotate(${angle[id]}deg)`;
-  if (ENC[id].menu) {
-    w.val.textContent = LABELS[state.cur] + (state.mode === 'edit' ? ' ·edit' : '');
-  } else if (id === 'bright' && state.shift) {
-    /* secondary function visible while SHIFT is held */
-    w.val.textContent = '↑ Backlight ' + state.backlight + '%';
-  } else {
-    w.val.textContent = ENC[id].get() + '%';
-  }
-}
-/* Reflect SHIFT state across the panel: EN2 retitles to its secondary label so
- * the hidden mapping is discoverable the moment SHIFT is held (mirrors LED6). */
-function refreshShift() {
-  document.body.classList.toggle('shift-on', state.shift);
-  refreshWidget('bright');
-}
-
-/* Wire each dial: wheel to turn, vertical drag to turn, buttons for single steps. */
-document.querySelectorAll('.enc').forEach(el => {
-  const id = el.dataset.id;
-  const dial = el.querySelector('.dial');
+  const id = el.dataset.enc;
   let wheelAcc = 0;
-  dial.addEventListener('wheel', (ev) => {
+  el.addEventListener('wheel', (ev) => {
     ev.preventDefault();
     wheelAcc += ev.deltaY;
     while (wheelAcc >  40) { turnEncoder(id, +1); wheelAcc -= 40; }
     while (wheelAcc < -40) { turnEncoder(id, -1); wheelAcc += 40; }
   }, { passive: false });
-
   let dragY = null, dragAcc = 0;
-  dial.addEventListener('pointerdown', (ev) => { dragY = ev.clientY; dragAcc = 0; dial.setPointerCapture(ev.pointerId); });
-  dial.addEventListener('pointermove', (ev) => {
+  el.addEventListener('pointerdown', (ev) => { dragY = ev.clientY; dragAcc = 0; el.setPointerCapture(ev.pointerId); });
+  el.addEventListener('pointermove', (ev) => {
     if (dragY === null) return;
-    dragAcc += (dragY - ev.clientY);    /* up = positive */
-    dragY = ev.clientY;
+    dragAcc += (dragY - ev.clientY); dragY = ev.clientY;
     while (dragAcc >  9) { turnEncoder(id, +1); dragAcc -= 9; }
     while (dragAcc < -9) { turnEncoder(id, -1); dragAcc += 9; }
   });
-  dial.addEventListener('pointerup',   () => { dragY = null; });
-  dial.addEventListener('pointercancel', () => { dragY = null; });
-
-  el.querySelectorAll('button[data-turn]').forEach(b =>
-    b.onclick = () => turnEncoder(id, parseInt(b.dataset.turn, 10)));
-  el.querySelectorAll('button[data-push]').forEach(b =>
-    b.onclick = () => pushEncoder(id));
+  el.addEventListener('pointerup', () => {
+    if (dragY !== null && id === 'display' && Math.abs(dragAcc) < 4) pushEncoder(id);
+    dragY = null;
+  });
+  el.addEventListener('pointercancel', () => { dragY = null; });
 });
 
-/* Keyboard still drives the Display encoder — it's the primary one. Holding
- * Shift arms EN2's secondary (Backlight), mirroring the physical SHIFT button. */
+function pressMod(id) {
+  switch (id) {
+    case 'shift':    state.shift = !state.shift; break;
+    case 'hold':     state.hold  = !state.hold;  break;
+    case 'drone':    state.drone = !state.drone; break;
+    case 'generate': state.generate = !state.generate; break;
+    case 'clear':
+      state.clear_flash = performance.now();
+      state.cells = state.cells.map(_ => 'off');
+      ensureLoop();
+      break;
+  }
+}
+function tapCell(idx) {
+  if (state.hold) {
+    const target = state.shift ? 'green' : 'yellow';
+    state.cells[idx] = (state.cells[idx] === target) ? 'off' : target;
+  }
+  const el = document.querySelector(`.cell-key[data-cell="${idx}"]`);
+  if (el) { el.classList.add('pressed'); setTimeout(() => el.classList.remove('pressed'), 110); }
+}
+document.querySelectorAll('.mod-btn').forEach(b => {
+  b.addEventListener('click', () => pressMod(b.dataset.mod));
+});
+document.querySelectorAll('.cell-key').forEach(k => {
+  k.addEventListener('pointerdown', () => tapCell(parseInt(k.dataset.cell, 10)));
+});
+
+function syncLeds() {
+  document.querySelector('.mod-led[data-mod="shift"]').className   = 'mod-led' + (state.shift   ? ' on-green'  : '');
+  document.querySelector('.mod-led[data-mod="hold"]').className    = 'mod-led' + (state.hold    ? ' on-yellow' : '');
+  document.querySelector('.mod-led[data-mod="drone"]').className   = 'mod-led' + (state.drone   ? ' on-white'  : '');
+  document.querySelector('.mod-led[data-mod="generate"]').className= 'mod-led' + (state.generate? ' on-white'  : '');
+  document.querySelector('.mod-led[data-mod="clear"]').className   = 'mod-led' + (state.clear_flash ? ' on-white' : '');
+  for (let i = 0; i < 5; ++i) {
+    const c = state.cells[i];
+    document.querySelector(`.cell-led[data-led="cell${i+1}-y"]`).className = 'cell-led' + (c === 'yellow' ? ' on-yellow' : '');
+    document.querySelector(`.cell-led[data-led="cell${i+1}-g"]`).className = 'cell-led' + (c === 'green'  ? ' on-green'  : '');
+  }
+}
+
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Shift') { if (!state.shift) { state.shift = true; refreshShift(); } return; }
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { turnEncoder('display', +1); e.preventDefault(); }
-  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { turnEncoder('display', -1); e.preventDefault(); }
-  else if (e.key === ' ' || e.key === 'Enter') { pushEncoder('display'); e.preventDefault(); }
+  if (e.repeat) return;
+  if (e.key === 'Shift') { if (!state.shift) { state.shift = true; syncLeds(); } return; }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { turnEncoder('display', +1); e.preventDefault(); return; }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { turnEncoder('display', -1); e.preventDefault(); return; }
+  if (e.key === ' ' || e.key === 'Enter') { pushEncoder('display'); e.preventDefault(); return; }
+  if (e.key === 'a' || e.key === 'A') { state.backlight = clamp(state.backlight - 10, 0, 100); showOverlay('Backlight', state.backlight); render(); return; }
+  if (e.key === 'z' || e.key === 'Z') { state.backlight = clamp(state.backlight + 10, 0, 100); showOverlay('Backlight', state.backlight); render(); return; }
+  const ks = '12345qwert';
+  const i = ks.indexOf(e.key.toLowerCase());
+  if (i >= 0) { tapCell(i % 5); syncLeds(); }
 });
-window.addEventListener('keyup', (e) => {
-  if (e.key === 'Shift') { state.shift = false; refreshShift(); }
-});
+window.addEventListener('keyup', (e) => { if (e.key === 'Shift') { state.shift = false; syncLeds(); } });
 
-/* On-screen SHIFT latch (a momentary hold is unusable with a single pointer
- * while also turning a dial, so the button toggles; keyboard Shift stays
- * momentary for users who prefer it). */
-document.getElementById('btn-shift').onclick = () => { state.shift = !state.shift; refreshShift(); };
-
-document.getElementById('btn-charge').onclick = () => { state.usb = !state.usb; render(); };
-document.getElementById('btn-batdec').onclick = () => { state.battery_pct = clamp(state.battery_pct - 10, 0, 100); render(); };
-document.getElementById('btn-batinc').onclick = () => { state.battery_pct = clamp(state.battery_pct + 10, 0, 100); render(); };
-
-Object.keys(ENC).forEach(refreshWidget);
-refreshShift();
-render();
+syncLeds(); render();
+Object.keys(ENC).forEach(refreshEncoderVisual);
 </script>
 </html>

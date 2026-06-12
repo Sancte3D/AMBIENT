@@ -1,9 +1,70 @@
 # Field Ambience PCB — Mechanical Coordinates
 
-PCB-Layout-Constraints für die kommende Layout-Phase (Sheet 2 in KiCad
-PCB-Editor). **Status (v0.7): alle Positionen definiert.** Die X/Y-Werte
-sind verbindliche Layout-Vorgaben; die CAD-/Gehäuse-Validierung bestätigt
-sie nur noch (keine offenen Platzierungs-Entscheidungen mehr).
+> **🟡 r18.8-Status (2026-06-11)** — IMG_9713-Industrial-Design-Stand
+> verschiebt mehrere Komponenten. Sektionen 3, 4, 5, 6, 7 unten sind
+> **veraltet** (Pico/Pi-Ära) und werden in r18.9 systematisch ersetzt.
+> Maßgebliche neue Stelle vorab: **Abschnitt 0 unten**. Die alten
+> Sektionen bleiben für Diff-Reviewability erhalten.
+
+---
+
+## 0. r18.8 IMG_9713-Update (überschreibt §3-7 unten)
+
+### 0.1 Layout-Konzept
+
+Frontpanel-Aufteilung (alle Maße provisorisch, finalisiert in Phase 6):
+
+```
+┌──────────────────────────────────────────────────┐
+│  E1  E2     [─Display─]     E3  E4               │  ← Encoder-Reihe
+│                                                  │
+│           ●  ●  ●  ●  ●                          │  ← LED über Modifier
+│           ◯  ◯  ◯  ◯  ◯                          │  ← Modifier-Buttons
+│                                                  │
+│ ╭──╮  ●●  ●●  ●●  ●●  ●●  ╭──╮                  │  ← LED über Cells
+│ │  │                       │  │                  │
+│ │S │  ║  ║  ║  ║  ║       │S │                  │  ← Dust-Mesh
+│ │  │  ║  ║  ║  ║  ║       │  │                  │     (Speaker, oval)
+│ │  │  C1 C2 C3 C4 C5       │  │                  │
+│ ╰──╯                       ╰──╯                  │
+└──────────────────────────────────────────────────┘
+```
+
+| Element | X-Position (mm) | Y-Position (mm) | Notiz |
+|---|---|---|---|
+| Display (LCD-Modul) | Mitte (160) | Top, ~110 | klein, schmaler Streifen ~50×28 mm Active |
+| Encoder E1 (Drive) | ~30 | ~115 | Top-Left |
+| Encoder E2 (Brightness) | ~70 | ~115 | Top-Left-Inner |
+| Encoder E3 (Display) | ~250 | ~115 | Top-Right-Inner |
+| Encoder E4 (Volume) | ~290 | ~115 | Top-Right |
+| Modifier-Reihe (5×) | 70..250 (verteilt) | ~75 | unter Display |
+| Modifier-LEDs (5×) | über Buttons | ~85 | je ~10 mm darüber |
+| Cell-Reihe (5×) | 70..250 (verteilt) | ~30 | unten zentriert |
+| Cell-LEDs (5×2) | über Cells | ~58 | gelb+grün pro Cell |
+| Speaker-Mesh links | ~22 | Mitte vertikal (~65) | oval 36×70 mm |
+| Speaker-Mesh rechts | ~298 | Mitte vertikal (~65) | oval 36×70 mm |
+
+### 0.2 Was ÄNDERT sich gegen v0.7-Stand
+
+| Aspekt | Vorher | r18.8 |
+|---|---|---|
+| Display | 80×22 mm OLED zentral oben | **kleiner, 1.9" ST7789 320×170 (40×22 mm Active), zentriert** |
+| Encoder | 4 in einer Reihe | **4 in den Ecken** (2 links, 2 rechts vom Display) |
+| Cell-Switches | 5× Choc V2 Hotswap (Mech-Keyboard-Keycaps) | **5× FSR + Silicon-Cap Pad** (ADR-0006, Piano-Feel) |
+| Cell-LEDs | 1× pro Cell (rote/weiße Hold-Indicator) | **2× pro Cell, Gelb + Grün, XOR-Logik** (ADR-0008) |
+| Modifier-Buttons | 5× HX 12×12 (separates Custom-FP) | bleibt (HX 12×12 Custom-FP, ADR von r18.6) |
+| Modifier-LEDs | LED-Farbe einheitlich (weiß) | **Shift=Grün, Hold=Gelb, Drone/Generate/Clear=Weiß** |
+| Speaker-Cover | sichtbare Lochmuster | **schwarzes Dust-Mesh, ovale Aussparungen** (ADR-0007) |
+| Text-Labels | „Shift", „Hold", „Drone", „Generate", „Clear" auf Frontpanel | **keine Text-Labels** außer Display |
+
+### 0.3 Open Points für r18.9-Update
+
+1. Exakte X/Y für jede Komponente (provisorisch geschätzt, finalisiert mit
+   Frontpanel-CAD)
+2. FSR-Hersteller + exakte Pad-Größe → wirkt auf Cell-Pitch
+3. Mesh-Aussparung 36×70 mm — Mesh-Hersteller-Tooling-Bestätigung
+4. Z-Höhen: STM32-LQFP-100 (1.4 mm Top-Profil) vs Pico-Modul (~3 mm) →
+   andere Component-Height-Zones (§11 unten)
 
 ---
 

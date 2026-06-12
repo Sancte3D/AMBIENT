@@ -916,22 +916,36 @@ frühere Spec-Fassungen sagten irrtümlich „NC" — wäre ein latenter Bug
 (undefined HF-Pickup, kann Oszillator destabilisieren). Im KiCad-Schematic
 muss Pin 25 explizit eine GND-Verbindung haben, nicht nur ein NC-Label.
 
-**LED-Kanal-Belegung (erweitert r10 — 5 Cell-HOLD-Status-LEDs hinzu):**
+**LED-Kanal-Belegung (r18.8 — IMG_9713-Stand, 5×2 Cell-LEDs XOR-Logik, ADR-0008):**
 
-| PCA9685 LEDn | Funktion | LED-Ref | Switch-Ref | LED-Anzeige-Logik |
+| PCA9685 LEDn | Funktion | LED-Ref | LED-Farbe | Anzeige-Logik |
 |---|---|---|---|---|
-| LED0 | Modifier SHIFT | LED6 | SW6 | An solange Taster gedrückt (Modifier-Anzeige) |
-| LED1 | Modifier HOLD | LED7 | SW7 | An = HOLD-Mode aktiv (Firmware-Toggle) |
-| LED2 | Modifier DRONE | LED8 | SW8 | An = Drone spielt (Firmware-Toggle), sanfter Fade |
-| LED3 | Modifier GENERATE | LED9 | SW9 | An = Generative-Mode aktiv (Firmware-Toggle) |
-| LED4 | Modifier CLEAR | LED10 | SW10 | Short-Press: 200 ms Flash. Long-Press-Hold: 0.5 Hz Pulse (§12.1) |
-| **LED5** | **Cell-HOLD CELL1** | **LED11** | **SW1** | **An = Cell1 ist HOLD-aktiv (Drone sustaining)** |
-| **LED6** | **Cell-HOLD CELL2** | **LED12** | **SW2** | **An = Cell2 HOLD-aktiv** |
-| **LED7** | **Cell-HOLD CELL3** | **LED13** | **SW3** | **An = Cell3 HOLD-aktiv** |
-| **LED8** | **Cell-HOLD CELL4** | **LED14** | **SW4** | **An = Cell4 HOLD-aktiv** |
-| **LED9** | **Cell-HOLD CELL5** | **LED15** | **SW5** | **An = Cell5 HOLD-aktiv** |
-| **LED10** (r12) | **System-Status (heartbeat / battery-low / error)** | **LED1** | — | **Übernimmt die Rolle der bisherigen GP26-STATUS_LED. GP26 wird in r12 frei für BAT_SENSE (ADC0). PWM-Heartbeat-Pattern, Battery-Low-Pulse, Error-Code-Flashes.** |
-| LED11-LED15 | Reserve | — | — | 5 Kanäle frei für Future |
+| LED0 | Modifier SHIFT | LED6 | **Grün** | An wenn Shift-Latch aktiv (toggle, persistiert) |
+| LED1 | Modifier HOLD | LED7 | **Gelb** | An wenn Hold-Modifier-Latch aktiv |
+| LED2 | Modifier DRONE | LED8 | **Weiß** | An wenn Drone spielt, sanfter Fade |
+| LED3 | Modifier GENERATE | LED9 | **Weiß** | An wenn Generative-Mode aktiv |
+| LED4 | Modifier CLEAR | LED10 | **Weiß** | Flash-on-press 200 ms, kein Latch |
+| LED5 | Cell-1 Hold @ Basis | LED11Y | **Gelb** | An wenn Cell-1 = HOLD_BASE |
+| LED6 | Cell-1 Hold @ Shift | LED11G | **Grün** | An wenn Cell-1 = HOLD_SHIFT (XOR mit LED5) |
+| LED7 | Cell-2 Hold @ Basis | LED12Y | **Gelb** | An wenn Cell-2 = HOLD_BASE |
+| LED8 | Cell-2 Hold @ Shift | LED12G | **Grün** | An wenn Cell-2 = HOLD_SHIFT (XOR mit LED7) |
+| LED9 | Cell-3 Hold @ Basis | LED13Y | **Gelb** | An wenn Cell-3 = HOLD_BASE |
+| LED10 | Cell-3 Hold @ Shift | LED13G | **Grün** | An wenn Cell-3 = HOLD_SHIFT (XOR mit LED9) |
+| LED11 | Cell-4 Hold @ Basis | LED14Y | **Gelb** | An wenn Cell-4 = HOLD_BASE |
+| LED12 | Cell-4 Hold @ Shift | LED14G | **Grün** | An wenn Cell-4 = HOLD_SHIFT (XOR mit LED11) |
+| LED13 | Cell-5 Hold @ Basis | LED15Y | **Gelb** | An wenn Cell-5 = HOLD_BASE |
+| LED14 | Cell-5 Hold @ Shift | LED15G | **Grün** | An wenn Cell-5 = HOLD_SHIFT (XOR mit LED13) |
+| LED15 | **LCD_BLK_PWM** | (via Q2 N-FET) | n/a | PCA-PWM steuert Backlight-Helligkeit |
+
+**Budget: 16/16 PCA-Kanäle belegt, exakt.** Kein Status-LED-Reserve mehr —
+System-Status (Heartbeat/Battery-Low) wandert auf MCU-Direkt-GPIO (PD8 per
+SPEC §5.6), das ist der STATUS_LED-Pin am STM32H743. Damit ist die r12-Lösung
+„System-LED via PCA10" obsolet.
+
+**XOR-Logik (ADR-0008):** Pro Cell ist immer höchstens **eine** LED an —
+entweder Gelb (Cell-Hold @ Basis-Oktave) oder Grün (Cell-Hold @ Shift-Oktave).
+Niemals beide. Firmware-State-Machine hält pro Cell ein 3-Werte-Enum
+{OFF, HOLD_BASE, HOLD_SHIFT} und gibt das an die PCA9685-Treiber.
 
 **LED-Bauform-Änderung (r10)**: alle 10 Anzeige-LEDs sind **SMD 0603**, NICHT
 mehr THT 3 mm und NICHT mehr im Switch-Body integriert. Position: über jedem
