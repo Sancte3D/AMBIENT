@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-11 (v0.7-r18.8)**
+**Stand: 2026-06-11 (v0.7-r18.9)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -13,16 +13,16 @@
 | **Display-Sim Web-UI** | 7 / 10 | ↑ (von 5/10 vor IMG_9713-Redesign) |
 | **Industrial Design (Render)** | 9 / 10 | ↑ |
 | **Bench Bring-Up (Pico 2)** | 8 / 10 | → |
-| **Schematic (Korrektheit)** | 8 / 10 | → |
+| **Schematic (Korrektheit)** | 9 / 10 | ↑ (r18.9: Cell-ADC + LED-Topologie implementiert) |
 | **Hardware-Symbole** | 9 / 10 | → |
 | **Footprint-Verifikation** | 8 / 10 | ↑ (6 von 9 closed in r18.7) |
-| **BOM-Sourcing** | 7 / 10 | ↑ |
+| **BOM-Sourcing** | 7.5 / 10 | ↑ (Choc raus, FSR-Interface rein; FSR-MPN + 2 LED-Farben VERIFY) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 2 / 10 | → (Pico-Ära-Koordinaten) |
-| **Cell-Mechanik (Piano-Feel)** | 3 / 10 | ↑ (ADR-0006 erstellt) |
+| **Cell-Mechanik (Piano-Feel)** | 5 / 10 | ↑ (Schematic-Seite done; FSR-Wahl + Silicon-Cap offen) |
 | **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
-| **LED-Logik (Cell + Modifier)** | 9 / 10 | ↑ (ADR-0008 erstellt) |
+| **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
 | **Doku / Onboarding** | 9 / 10 | → |
 | **Test-Abdeckung (host)** | 9 / 10 | → |
 | **Repo-Struktur** | 6 / 10 | ↑ (Phase 1 done, 2-5 queued) |

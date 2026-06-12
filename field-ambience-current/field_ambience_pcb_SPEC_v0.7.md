@@ -677,6 +677,23 @@ PB14/PB15-Hinweis: diese Pins haben als „additional function" auch OTG_HS_DM/D
 keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 (Datasheet S. 67-68).
 
+### 5.6a Cell-Velocity-Sense (NEU r18.9, ADR-0006)
+
+| Pin | Port | Funktion | Net |
+|---|---|---|---|
+| 15 | PC0 | ADC (FSR-Teiler Cell 1) | CELL1_SENSE |
+| 16 | PC1 | ADC (FSR-Teiler Cell 2) | CELL2_SENSE |
+| 28 | PA4 | ADC (FSR-Teiler Cell 3) | CELL3_SENSE |
+| 34 | PB0 | ADC (FSR-Teiler Cell 4) | CELL4_SENSE |
+| 35 | PB1 | ADC (FSR-Teiler Cell 5) | CELL5_SENSE |
+
+Beschaltung pro Cell: FSR (Interlink-FSR-400-Klasse, J_CELLn 2-Pin) von +3V3
+zum Knoten; 10 kΩ Knoten→GND; 10 nF Knoten→GND (S/H-Filter); Knoten→ADC-Pin.
+Druck ↑ → R_FSR ↓ → Spannung ↑. Velocity-Mapping (log-Kurve) in Firmware.
+ADC-INP-Kanal-Nummern werden in Phase 4 beim ADC-Init gegen DS12110 Table 8
+(ANA-Spalte) verifiziert. Die Cells hängen damit NICHT mehr am MCP23017 —
+GPA0-4 sind frei (Rev-B-Reserve).
+
 ### 5.7 USB-OTG-FS (built-in, kein externer PHY)
 
 | Pin | Port | AF | Funktion | Net |

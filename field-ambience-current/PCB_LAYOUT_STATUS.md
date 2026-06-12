@@ -1,6 +1,6 @@
 # PCB-Layout-Status — Field Ambience
 
-**Stand: 2026-06-11 (v0.7-r18.7)**
+**Stand: 2026-06-11 (v0.7-r18.9)**
 
 ## Kurzfassung
 
@@ -38,6 +38,7 @@
 
 - 2026-06-11 r18.5: Struktur-Validierung PASS (paren-balance 10/10, 100/100 MCU-Pins, Crossref 7/7)
 - 2026-06-11 r18.6: nach LDO-Pinout-Korrektur und Footprint-/MPN-Updates: alle Skript-Checks wiederholt, PASS
+- 2026-06-11 r18.9: Cell-FSR-ADC (5 Pins) + 15-LED-Topologie: alle Skript-Checks PASS (100/100 Pins, 15 LEDs, Crossref 7/7)
 
 ## Manufacturing-Readiness
 

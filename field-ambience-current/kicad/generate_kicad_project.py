@@ -2967,6 +2967,14 @@ def stm32h743_sheet() -> str:
         72: ("SWDIO", False, ""),
         76: ("SWCLK", False, ""),
         89: ("SWO", False, ""),
+        # r18.9 (ADR-0006): Cell-Velocity-Sense — FSR-Teiler an ADC-faehigen
+        # Pins. INP-Kanal-Zuordnung verifiziert Phase 4 gegen DS12110 Table 8
+        # ANA-Spalte (PC0/PC1/PA4/PB0/PB1 sind Standard-ADC12-Pins).
+        15: ("CELL1_SENSE", False, ""),
+        16: ("CELL2_SENSE", False, ""),
+        28: ("CELL3_SENSE", False, ""),
+        34: ("CELL4_SENSE", False, ""),
+        35: ("CELL5_SENSE", False, ""),
         12: ("HSE_IN", False, ""),
         13: ("HSE_OUT", False, ""),
         14: ("NRST", False, ""),
@@ -3250,6 +3258,59 @@ def stm32h743_sheet() -> str:
     wires.append(wire(sx, sy + 7.62, sx, sy + 10, seed_suffix="ledhb-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_LEDHB", value="GND",
                                 x=sx, y=sy + 10, seed_suffix="ledhb-gnd", sheet_uuid_seed=sus))
+
+    # ---- r18.9 (ADR-0006): 5x FSR-Velocity-Pad-Interface.
+    # Pro Cell: J_CELLn (2-Pin, FSR-Anschluss) als Teiler gegen 10k + 10nF
+    # Glaettung. FSR von +3V3 nach Knoten; R_CELL 10k Knoten->GND;
+    # ADC misst Knoten (Druck steigt -> R_FSR sinkt -> Spannung steigt).
+    # FSR-Typ: Interlink FSR 400 Kandidat (ADR-0006) — Anschluss-Art
+    # (Pin/ZIF/laminat) folgt dem Mechanik-Design, daher generischer 2-Pin.
+    for ci in range(5):
+        jx = 100.0 + ci * 24.0
+        jy = 262.0
+        kx, ky = jx - 9.08, jy + 1.27          # Teiler-Knoten am J-Pin2
+        symbols.append(place_symbol(lib_id="Connector:Conn_01x02", ref=f"J_CELL{ci+1}",
+                                    value=f"FSR Cell {ci+1} (Velocity-Pad, ADR-0006)",
+                                    x=jx, y=jy,
+                                    footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
+                                    extra_props={
+                                        "MPN": "Interlink FSR 400 (Kandidat)",
+                                        "LCSC": "TBD-VERIFY (FSR separat beschaffen, nicht JLC-bestueckt)",
+                                        "FP_NOTE": "Anschluss-Art (Pin vs ZIF vs Laminat) folgt Mechanik-Design — 2.54mm-Header als Prototyp-Annahme",
+                                    },
+                                    seed_suffix=f"JCELL{ci}", sheet_uuid_seed=sus))
+        # Pin1 (oben) -> +3V3
+        wires.append(wire(jx - 5.08, jy - 1.27, jx - 9.08, jy - 1.27, seed_suffix=f"jcell{ci}-3v3"))
+        symbols.append(place_symbol(lib_id="Power:+3V3", ref=f"#PWR_JCELL{ci}", value="+3V3",
+                                    x=jx - 9.08, y=jy - 1.27, rotation=90,
+                                    seed_suffix=f"jcell{ci}-3v3", sheet_uuid_seed=sus))
+        # Pin2 (unten) -> Knoten K -> Label CELLn_SENSE
+        wires.append(wire(jx - 5.08, ky, kx, ky, seed_suffix=f"jcell{ci}-k"))
+        labels.append(label(kx, ky, f"CELL{ci+1}_SENSE"))
+        junctions.append(junction(kx, ky))
+        # R_CELL 10k Knoten -> GND (vertikal unter K)
+        symbols.append(place_symbol(lib_id="Device:R", ref=f"R_CELL{ci+1}",
+                                    value="10k 0603 (FSR divider bottom)",
+                                    x=kx, y=ky + 3.81,
+                                    footprint="Resistor_SMD:R_0603_1608Metric",
+                                    extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
+                                    seed_suffix=f"RCELL{ci}", sheet_uuid_seed=sus))
+        wires.append(wire(kx, ky + 7.62, kx, ky + 10, seed_suffix=f"rcell{ci}-gnd"))
+        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_RCELL{ci}", value="GND",
+                                    x=kx, y=ky + 10, seed_suffix=f"rcell{ci}-gnd", sheet_uuid_seed=sus))
+        # C_CELL 10nF parallel (rechts neben R)
+        cx = kx + 5.0
+        wires.append(wire(kx, ky, cx, ky, seed_suffix=f"ccell{ci}-rail"))
+        junctions.append(junction(cx, ky))
+        symbols.append(place_symbol(lib_id="Device:C", ref=f"C_CELL{ci+1}",
+                                    value="10nF X7R 0603 (ADC S/H filter)",
+                                    x=cx, y=ky + 3.81,
+                                    footprint="Capacitor_SMD:C_0603_1608Metric",
+                                    extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
+                                    seed_suffix=f"CCELL{ci}", sheet_uuid_seed=sus))
+        wires.append(wire(cx, ky + 7.62, cx, ky + 10, seed_suffix=f"ccell{ci}-gnd"))
+        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_CCELL{ci}", value="GND",
+                                    x=cx, y=ky + 10, seed_suffix=f"ccell{ci}-gnd", sheet_uuid_seed=sus))
 
     # ---- MIDI als offene DESIGN-ENTSCHEIDUNG (B-MIDI). Bewusst KEINE
     # Buchsen-/Resistor-Symbole platzieren: TRS-Type-A vs Type-B, OUT-only
@@ -3945,34 +4006,15 @@ def mcp_sheet() -> str:
     # Wir wollen SW horizontal: pin1 (left) connects to MCP, pin2 (right) to GND.
     # SW center @ (sx, sy), sym placed so pin1 abs at x=PIN_R_X + 30 (right of MCP signal labels).
     # For pin1 abs x = 165: sx = 165 + 5.08 = 170.08. pin2 abs x = 175.16.
-    cell_pins = [(21, "CELL1", 1), (22, "CELL2", 2), (23, "CELL3", 3), (24, "CELL4", 4), (25, "CELL5", 5)]
-    for mcp_pin, netname, sw_num in cell_pins:
+    # ---- r18.9 (ADR-0006): Cells sind KEINE MCP-Switches mehr. Die 5 Cell-
+    # Inputs sind jetzt FSR-Velocity-Pads am STM32-ADC (stm32h743_sheet,
+    # Netze CELL1..5_SENSE an PC0/PC1/PA4/PB0/PB1). Die Kailh-Choc-Hotswap-
+    # Sockets + Stabilizer entfallen aus der BOM. GPA0-4 frei (NC, Rev-B-
+    # Reserve).
+    for mcp_pin in (21, 22, 23, 24, 25):
         py = mcp_right_pin_y(mcp_pin)
-        # Pin-Wire vom MCP nach rechts mit Net-Label
-        wires.append(wire(PIN_R_X, py, 168, py, seed_suffix=f"u2-cell-stub-{mcp_pin}"))
-        labels.append(label(145, py, netname))
-        # SW Symbol
-        symbols.append(
-            place_symbol(
-                lib_id="Switch:SW_Push",
-                ref=f"SW{sw_num}",
-                value=f"Cell {sw_num} (2u Choc V2 Hot-Swap)",
-                x=173.08,
-                y=py,
-                footprint="Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_2.00u",
-                extra_props={
-                    "MPN": "Kailh Choc V2 hot-swap socket",
-                    "LCSC": "TBD (separat bestellen, JLC stockt keine Hot-Swap-Sockets)",
-                },
-                seed_suffix=f"SW{sw_num}",
-                sheet_uuid_seed=sus,
-            )
-        )
-        # SW pin1 abs (168, py), pin2 abs (178.16, py)
-        # Tiny touch wire pin1 (already part of u2-cell-stub).
-        # GND via pin2
-        wires.append(wire(178.16, py, 181, py, seed_suffix=f"sw{sw_num}-to-gnd"))
-        attach_gnd(181, py, f"SW{sw_num}")
+        wires.append(wire(PIN_R_X, py, 145, py, seed_suffix=f"u2-cell-stub-{mcp_pin}"))
+        labels.append(label(145, py, f"NC_GPA{mcp_pin - 21}"))
 
     # ---- Switches SW6-SW10 (Modifier) auf GPB0-GPB4 (pins 1-5). Links vom MCP.
     # SW_Push reversed: pin2 (right) connects to MCP via pin1 to GND.
@@ -4328,20 +4370,36 @@ def mcp_sheet() -> str:
     # Row 2 (y=215): LED11-LED15 (Cell-HOLD-Indicators per PCA-Ch 5-9)
     # Per pair: R (rot=90) at (sx, sy) → LED (rot=180) at (sx+7.62, sy)
     #   +5V flag at (sx-6, sy), Kathode-label at (sx+13.43, sy)
+    # r18.9 (ADR-0008): 15 LEDs — 5 Modifier (farbcodiert: Shift=Gruen,
+    # Hold=Gelb, Drone/Generate/Clear=Weiss) + 5x2 Cell-LEDs (Gelb=Hold@Basis,
+    # Gruen=Hold@Shift, XOR — nie beide). Kanal 15 = LCD_BLK_PWM (s.u.).
+    # System-Status-LED ist seit r18.5 auf MCU-PD8 (stm32h743_sheet LED_HB) —
+    # der r12-PCA-Kanal-10-Status entfaellt.
+    # R einheitlich 390R an +5V-Anode: Gelb/Gruen Vf~2.1V -> ~7.4mA,
+    # Weiss Vf~3.0V -> ~5.1mA. Beide < 8mA PCA-Sink-Budget; Helligkeits-
+    # Matching macht die Firmware per PWM-Duty (Gelb/Gruen ggf. ~70%).
+    LED_W = ("XL-1608UWC-04 (warm-white 0603)", "C965808")
+    LED_Y = ("XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)", "TBD-VERIFY (JLC-Stock gelb 0603)")
+    LED_G = ("XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)", "TBD-VERIFY (JLC-Stock gruen 0603)")
     led_array = [
-        # (pca_channel, led_ref, sx, sy, label_name, descr)
-        (0,  6,  80, 200, "LED6_K",  "SHIFT-Modifier"),
-        (1,  7, 105, 200, "LED7_K",  "HOLD-Mode"),
-        (2,  8, 130, 200, "LED8_K",  "DRONE-Mode"),
-        (3,  9, 155, 200, "LED9_K",  "GENERATE-Mode"),
-        (4, 10, 180, 200, "LED10_K", "CLEAR-Confirm"),
-        (5, 11,  80, 215, "LED11_K", "CELL1 HOLD"),
-        (6, 12, 105, 215, "LED12_K", "CELL2 HOLD"),
-        (7, 13, 130, 215, "LED13_K", "CELL3 HOLD"),
-        (8, 14, 155, 215, "LED14_K", "CELL4 HOLD"),
-        (9, 15, 180, 215, "LED15_K", "CELL5 HOLD"),
+        # (pca_channel, led_ref(str), sx, sy, label_name, descr, (mpn, lcsc))
+        (0,  "6",   80, 200, "LED6_K",   "SHIFT-Modifier (gruen)",   LED_G),
+        (1,  "7",  105, 200, "LED7_K",   "HOLD-Mode (gelb)",         LED_Y),
+        (2,  "8",  130, 200, "LED8_K",   "DRONE-Mode (weiss)",       LED_W),
+        (3,  "9",  155, 200, "LED9_K",   "GENERATE-Mode (weiss)",    LED_W),
+        (4,  "10", 180, 200, "LED10_K",  "CLEAR-Confirm (weiss)",    LED_W),
+        (5,  "11Y",  80, 215, "LED11Y_K", "CELL1 Hold@Basis (gelb)",  LED_Y),
+        (6,  "11G",  80, 228, "LED11G_K", "CELL1 Hold@Shift (gruen)", LED_G),
+        (7,  "12Y", 105, 215, "LED12Y_K", "CELL2 Hold@Basis (gelb)",  LED_Y),
+        (8,  "12G", 105, 228, "LED12G_K", "CELL2 Hold@Shift (gruen)", LED_G),
+        (9,  "13Y", 130, 215, "LED13Y_K", "CELL3 Hold@Basis (gelb)",  LED_Y),
+        (10, "13G", 130, 228, "LED13G_K", "CELL3 Hold@Shift (gruen)", LED_G),
+        (11, "14Y", 155, 215, "LED14Y_K", "CELL4 Hold@Basis (gelb)",  LED_Y),
+        (12, "14G", 155, 228, "LED14G_K", "CELL4 Hold@Shift (gruen)", LED_G),
+        (13, "15Y", 180, 215, "LED15Y_K", "CELL5 Hold@Basis (gelb)",  LED_Y),
+        (14, "15G", 180, 228, "LED15G_K", "CELL5 Hold@Shift (gruen)", LED_G),
     ]
-    for pca_ch, led_ref, sx, sy, lname, descr in led_array:
+    for pca_ch, led_ref, sx, sy, lname, descr, (led_mpn, led_lcsc) in led_array:
         # R_LEDn at (sx, sy), rotation=90 horizontal: pin1 (sx-3.81, sy), pin2 (sx+3.81, sy)
         symbols.append(
             place_symbol(
@@ -4381,7 +4439,7 @@ def mcp_sheet() -> str:
                 y=sy,
                 rotation=180,
                 footprint="LED_SMD:LED_0603_1608Metric",
-                extra_props={"MPN": "XL-1608UWC-04 (warm-white 0603, Extended)", "LCSC": "C965808"},
+                extra_props={"MPN": led_mpn, "LCSC": led_lcsc},
                 seed_suffix=f"LED{led_ref}",
                 sheet_uuid_seed=sus,
             )
@@ -4408,76 +4466,18 @@ def mcp_sheet() -> str:
             wires.append(wire(PCA_PIN_R_X, ppy, PCA_PIN_R_X + 5, ppy, seed_suffix=f"u6-led{pca_ch}-stub"))
             labels.append(label(PCA_PIN_R_X + 5, ppy, lname))
 
-    # ---- PCA9685 LED10 (Pin 17) → STATUS_LED1 (r12). LED11-LED15 bleiben Reserve.
-    # LED10-Pin ist rechts (channel 10 → Pin 15 + (10-8) = 17). pca_right_pin_y(17).
-    p_led10_y = pca_right_pin_y(17)
-    wires.append(wire(PCA_PIN_R_X, p_led10_y, PCA_PIN_R_X + 5, p_led10_y, seed_suffix="u6-led10-stub"))
-    labels.append(label(PCA_PIN_R_X + 5, p_led10_y, "STATUS_LED_K"))
+    # ---- r18.9: Kanal 15 (Pin 22) = LCD-Backlight-PWM (war ch12 in r18.5;
+    # ch5-14 sind jetzt die 10 Cell-LEDs). Kein Reserve-Kanal mehr — 16/16
+    # exakt belegt (SPEC §7.2-Tabelle).
+    blk_py = pca_right_pin_y(22)
+    wires.append(wire(PCA_PIN_R_X, blk_py, PCA_PIN_R_X + 5, blk_py, seed_suffix="u6-nc-led15"))
+    labels.append(label(PCA_PIN_R_X + 5, blk_py, "LCD_BLK_PWM"))
+    wires.append(wire(PCA_PIN_R_X + 5, blk_py, PCA_PIN_R_X + 12, blk_py, seed_suffix="u6-led15-hier"))
+    hlabels.append(hier_label(PCA_PIN_R_X + 12, blk_py, "LCD_BLK_PWM", shape="output", rotation=180))
 
-    # LED11-LED15 (Pins 18-22) Reserve — NC labels (Label muss auf Wire-Endpunkt sitzen)
-    for pca_ch in range(11, 16):
-        pca_pin = 15 + (pca_ch - 8)
-        ppy = pca_right_pin_y(pca_pin)
-        wires.append(wire(PCA_PIN_R_X, ppy, PCA_PIN_R_X + 5, ppy, seed_suffix=f"u6-nc-led{pca_ch}"))
-        if pca_ch == 12:
-            # r18: Kanal 12 = LCD-Backlight-PWM (SPEC §5.2/§6 → lcd_sheet Q2)
-            labels.append(label(PCA_PIN_R_X + 5, ppy, "LCD_BLK_PWM"))
-            wires.append(wire(PCA_PIN_R_X + 5, ppy, PCA_PIN_R_X + 12, ppy, seed_suffix="u6-led12-hier"))
-            hlabels.append(hier_label(PCA_PIN_R_X + 12, ppy, "LCD_BLK_PWM", shape="output", rotation=180))
-        else:
-            labels.append(label(PCA_PIN_R_X + 5, ppy, f"NC_PCA_LED{pca_ch}"))
-
-    # ---- LED1 + R_LED_STATUS (r12) — System-Heartbeat/Battery-Low/Error-Indikator
-    # Wandert von Pico-GP26 (r3) hierher auf PCA-Channel 10. Position: zentriert unter
-    # PCA9685, unterhalb der existierenden 5×2 LED-Grid (y=200/215). Layout: y=230, sx=130.
-    led1_sx, led1_sy = 130.0, 230.0
-    # R_LED_STATUS rotation=90 horizontal at (sx, sy)
-    symbols.append(
-        place_symbol(
-            lib_id="Device:R",
-            ref="R_LED_STATUS",
-            value="390R 0603 (LED1 System-Status Series, r12)",
-            x=led1_sx,
-            y=led1_sy,
-            rotation=90,
-            footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF3900T5E", "LCSC": "C23151"},
-            seed_suffix="R_LED_STATUS",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # +5V at R pin1 (sx-3.81)
-    wires.append(wire(led1_sx - 3.81, led1_sy, led1_sx - 6, led1_sy, seed_suffix="r-led-status-5v"))
-    symbols.append(
-        place_symbol(
-            lib_id="Power:+5V",
-            ref="#PWR_R_LED_STATUS",
-            value="+5V",
-            x=led1_sx - 6,
-            y=led1_sy,
-            rotation=270,
-            seed_suffix="r-led-status-5v-pwr",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # LED1 at (sx+7.62, sy), rotation=180. Anode (pin2) abs (sx+3.81, sy), Kathode (pin1) abs (sx+11.43, sy)
-    symbols.append(
-        place_symbol(
-            lib_id="Device:LED",
-            ref="LED1",
-            value="SMD 0603 System-Status (warm-white, r12)",
-            x=led1_sx + 7.62,
-            y=led1_sy,
-            rotation=180,
-            footprint="LED_SMD:LED_0603_1608Metric",
-            extra_props={"MPN": "XL-1608UWC-04 (warm-white 0603, Extended)", "LCSC": "C965808"},
-            seed_suffix="LED1",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # LED1 Kathode → STATUS_LED_K label (matcht PCA-LED10 label oben)
-    wires.append(wire(led1_sx + 11.43, led1_sy, led1_sx + 13.43, led1_sy, seed_suffix="led1-k-stub"))
-    labels.append(label(led1_sx + 13.43, led1_sy, "STATUS_LED_K"))
+    # ---- r18.9: LED1/R_LED_STATUS (PCA-ch10-System-Status, r12) ENTFERNT.
+    # System-Status/Heartbeat ist seit r18.5 die LED_HB an MCU-PD8
+    # (stm32h743_sheet); PCA-Kanal 10 ist jetzt LED13G (Cell-3 Hold@Shift).
 
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'

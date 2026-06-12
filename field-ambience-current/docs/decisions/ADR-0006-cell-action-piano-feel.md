@@ -62,7 +62,7 @@ für Spin 1 nicht trägt, fallback auf **Dual-Tactile-Switch** (2 Switches,
 
 | Phase | Was |
 |---|---|
-| Schematic r18.8 | 5× ADC-Input ergänzen (PA0, PA1, PA2, PA4, PA6 — alle frei laut SPEC §5.4 wenn Encoder auf TIM-QEI bleiben) für FSR-Pfad. Tactile-Pfad bleibt parallel als DNP optional |
+| Schematic r18.9 | ✅ DONE — 5× ADC-Inputs **PC0 (Pin 15), PC1 (16), PA4 (28), PB0 (34), PB1 (35)** mit FSR-Teiler-Interface (J_CELL1-5 + 10k + 10nF). _Korrektur: die r18.8-Erstfassung dieses ADRs nannte PA0/PA1/PA2/PA6 — PA0/PA1 sind TIM2-Encoder-Pins, PA6 ist LCD_CS; gegen die verifizierte Pin-Tabelle geprüft und ersetzt._ |
 | Component Review | FSR-Kandidaten: Interlink FSR 400 (~$3, 5 mm), Tekscan FlexiForce A201 — gegen Verfügbarkeit + Lebensdauer prüfen |
 | Mechanical CAD | Silicon-Cap-Profil + Frame-Tooling — gehört in mechanical_coordinates Update |
 | Firmware | ADC-Sampling 1 kHz + Velocity-Curve (log-mapping) + Note-On-Trigger an Generative-Bed/Voicing |

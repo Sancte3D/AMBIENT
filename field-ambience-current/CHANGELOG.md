@@ -4,11 +4,51 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.8** (IMG_9713-Industrial-Design-Update:
-keine Text-Labels, kleines Display, 4 Encoder in Ecken, 5×2 Cell-LEDs
-mit XOR-Gelb/Grün-Logik, Dust-Mesh-Speaker-Cover. ADR-0006 (Cell-Piano-
-Feel/FSR), ADR-0007 (Dust-Mesh), ADR-0008 (LED-XOR). Web-Sim komplett
-neu. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.9** (Schematic-Implementation der IMG_9713-
+Entscheidungen: 5× FSR-Velocity-ADC-Inputs (PC0/PC1/PA4/PB0/PB1),
+15-LED-Topologie am PCA9685 (16/16 Kanäle exakt), Choc-Hotswap-Cells
+entfernt, GPA0-4 frei. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.9 (2026-06-11) — Schematic-Implementation IMG_9713 (Generator)
+
+Implementiert die r18.8-Design-Entscheidungen im KiCad-Generator.
+
+### Cell-Velocity (ADR-0006)
+
+- **stm32h743_sheet**: 5 neue ADC-Netze CELL1..5_SENSE an **PC0 (Pin 15),
+  PC1 (16), PA4 (28), PB0 (34), PB1 (35)** — alle vorher no_connect, alle
+  Standard-ADC12-fähig. FSR-Interface pro Cell: J_CELLn (2-Pin) von +3V3,
+  10 kΩ Teiler-Bottom, 10 nF S/H-Filter, Knoten → ADC-Pin
+- **ADR-0006-Korrektur**: Erstfassung nannte PA0/PA1/PA2/PA6 als freie
+  Pins — FALSCH (PA0/PA1 = TIM2-Encoder, PA6 = LCD_CS). Gegen die
+  verifizierte Pin-Tabelle ersetzt
+- **mcp_sheet**: SW1-5 (Kailh-Choc-V2-Hotswap, 2u, Stabilizer) komplett
+  entfernt; GPA0-4 → NC (Rev-B-Reserve). BOM: −5 Hotswap-Sockets,
+  −5 Stabilizer; +5 J_CELL, +5 R 10k, +5 C 10nF, +5 FSR (separat)
+- SPEC §5.6a NEU mit der Pin-Tabelle
+
+### LED-Topologie (ADR-0008)
+
+- **mcp_sheet led_array**: 10 → **15 LEDs**, farbcodiert:
+  - LED6 grün (Shift), LED7 gelb (Hold), LED8-10 weiß (Drone/Gen/Clear)
+  - LED11Y/G … LED15Y/G: 5×2 Cell-LEDs (gelb @Basis / grün @Shift, XOR)
+- PCA-Kanäle 0-14 = LEDs, **Kanal 15 = LCD_BLK_PWM** (war ch12)
+- **LED1 + R_LED_STATUS entfernt** (r12-System-Status via PCA ch10) —
+  Heartbeat ist seit r18.5 LED_HB an MCU-PD8. Kanal 10 jetzt LED13G
+- Gelb/Grün-MPN-Kandidaten XL-1608UYC/UGC-04 (XINGLIGHT-Serie) mit
+  TBD-VERIFY-Stock; weiß bleibt XL-1608UWC-04/C965808
+- 390R-Serie einheitlich (gelb/grün ~7.4 mA, weiß ~5.1 mA — beide unter
+  PCA-Sink-Budget; Helligkeits-Matching per Firmware-PWM-Duty)
+
+### Validierung
+
+- paren-balance 8/8 PASS
+- 100/100 STM32-Pins angebunden (5 Cell-Pins jetzt WIRE statt no_connect)
+- mcp: 15 LEDs, 0 STATUS_LED_K-Reste, 0 NC_PCA-Reste, 0 Choc-Reste,
+  NC_GPA0-4 vorhanden, LCD_BLK_PWM-hier intakt
+- Hier↔Root-Crossref 7/7 PASS
 
 ---
 
