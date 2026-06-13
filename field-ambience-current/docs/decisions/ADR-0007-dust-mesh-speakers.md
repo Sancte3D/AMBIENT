@@ -83,37 +83,67 @@ höhere Kosten. Nur nötig, wenn das Gerät eine IP-Klasse bekommen soll.
 | Production | Marian-PSA-Stanzteil (Saati Acoustex 020–032) | ⏳ vor Serie |
 | Akustik-Charakterisierung | Insertion-Loss am realen Muster messen (Volume-Kalibrierung) | ⏳ Bring-Up |
 
-## Lautsprecher — bleibt PUI, aber Spec-Korrekturen (r18.17b)
+## Lautsprecher — Wechsel auf Cloth-Cone (r18.18)
 
-**Treiber bleibt PUI AS04008PS-4W-WR-R** — 2026 aktiv und gut lagernd
-(DigiKey ~1600, Mouser ~500 Stück), niedrigstes F0 (380 Hz) seiner Klasse,
-passt zum Ambient-Charakter. **Aber drei Datenblatt-Korrekturen:**
+**Primär: Same Sky (CUI) CMS-402811-28SP**, Stoff-Konus, NdFeB-Magnet,
+40 × 28.3 × 11.5 mm rechteckig, 8 Ω, 2 W RMS / 3 W max, F0 = 450 Hz,
+84 dB @ 1 W/50 cm, Löt-Eyelets, DigiKey/Arrow/Mouser-lagernd, ~$3–$5/Stk.
 
-| Was | Falsch (bisher) | Korrekt |
+**Sekundär (drop-in zweite Quelle): PUI Audio AS04008PS-4W-WR-R**, identischer
+Footprint, **behandeltes Papier statt Stoff**, F0 = 380 Hz, ~$6.78/Stk.
+
+### Warum CMS jetzt primär (r18.18)
+
+PUIs „-WR" steht für Water-Resistant und meint eine wasserabweisende
+Beschichtung — die Membran darunter ist Papier-Pulpe (Datenblatt + Mouser-
+Attribut + RS-Components-Listing: „diaphragm material: treated paper").
+Die r18.17b-Annahme „premium genug" war zu wohlwollend.
+
+Cloth-Cone ist eine real bessere Klasse:
+- **Glattere Mitten** (keine Papier-Boxigkeit im Sprach-Bereich)
+- **Feuchteresistenter / langlebiger** (Schweißfinger, Transport)
+- **Niedrigere Eigenverluste** in der Membran-Aufhängung
+
+Trade-Off: F0 380 → 450 Hz (70 Hz weniger Tiefgang). In einer 15–30 cm³
+Sealed-Box ohnehin nicht hörbar (Roll-Off lag schon bei ~500 Hz). Mitten-
+Klarheit gewinnt deutlich.
+
+Bonus: halber Stückpreis. Mechanik 100% identisch (Footprint, Tiefe,
+Eyelet-Position) → kein CAD-Change.
+
+### Drei r18.17b-Datenblatt-Korrekturen, die auch für beide Treiber gelten
+
+| Was | Falsch (vor r18.17b) | Korrekt |
 |---|---|---|
-| Maße | 40 × 40 × 9 mm | **40 × 28.3 × 11.5 mm** (rechteckiger Rahmen) |
-| „-WR"-Suffix | (als „Wire" gelesen) | **Water-Resistant** (behandelter Konus) |
+| Maße | 40 × 40 × 9 mm | **40 × 28.3 × 11.5 mm** (rechteckig) |
+| „-WR"-Suffix bei PUI | (als „Wire" gelesen) | **Water-Resistant** (Beschichtung) |
 | Terminierung | (Kabel angenommen) | **Löt-Eyelets, KEINE Kabel** — Draht selbst anlöten |
 
-**Assembly-Konsequenz:** Der Treiber ist **Hand-Assembly, kein PCB-/JLC-
-Bestücken** (Eyelet-Through-Body, nicht Pick&Place). JLCPCB führt überhaupt
-keinen 40-mm-8-Ω-2-W-Kompakt-Treiber in der Bestück-Bibliothek (nur große
-Visaton-HiFi-Chassis) — der Speaker ist in jedem Fall ein separates
+**Assembly-Konsequenz** (beide Treiber): Hand-Assembly, kein JLC-Bestücken.
+JLCPCB führt keinen 40-mm-8-Ω-2-W-Kompakt-Treiber in der Bestück-Bibliothek
+(nur große Visaton-HiFi-Chassis) — der Speaker ist in jedem Fall separat
 Hand-Lötteil an den PAM8403-Ausgang.
 
 **Mechanik-Konsequenz** (11.5 mm Tiefe statt 9 mm): Gehäuse-Außenhöhe
 19.6 → 21.6 mm (Above-PCB-Raum 10 → 12 mm), damit der von der Top-Platte
 hängende Treiber nicht in die PCB-Ebene kollidiert. Details
-`mechanical_coordinates.md` §2/§7.
+`../mechanical/coordinates/mechanical_coordinates.md` §2/§7.
 
-**Dokumentierte Zweitquelle:** **Same Sky (CUI) CMS-402811-28SP** — gleicher
-40 × 28.3 × 11.5-Footprint, 8 Ω, 2 W, Löt-Eyelet, F0 = 450 Hz (etwas weniger
-Tiefgang als PUI → PUI bleibt erste Wahl). DigiKey/Mouser-lagernd.
+### Verworfene Alternativen (gleicher Footprint geprüft)
+
+- Visaton K 28.40-8: Papier + nur 79 dB SPL (5 dB leiser → halb so laut empfunden) → schlechter
+- Same Sky CDS-40288: Papier-Pulp, kein Gewinn
+- Same Sky CDS-4028-16: Stoff, aber 16 Ω → halbe Leistung in den PAM8403
+- Dayton CE40-28P-8: Papier-Konus
+- PUI AS04008CO-WR-R: Stoff, aber nur 20 mm breit → CAD-Rework nötig
+- Tang Band / Knowles BA / Soberton: kein 40×28-Rechteck-Footprint
 
 ## Was bewusst NICHT geändert wird
 
 - **Audio-Path:** PCM5102A → PAM8403 → Speaker-Eyelets bleibt
 - **Stereo-Trennung:** ein Speaker links, einer rechts — bleibt
+- **Mechanik (Gehäuse 21.6 mm, Cutout 36 × 24 mm, Keepout 42 × 32 mm)** — beide
+  Treiber identisch, kein Re-Work
 
 ## Related
 

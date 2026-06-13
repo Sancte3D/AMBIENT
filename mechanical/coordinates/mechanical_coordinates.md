@@ -74,7 +74,8 @@ unterbringbar ist und in die beide Speaker-Kammern noch das Mindestvolumen
 ```
 
 > **r18.17b-Änderung:** Above-PCB-Raum 10 → **12 mm**, weil der reale
-> PUI-AS04008PS-Treiber **11.5 mm tief** ist (Datenblatt-Korrektur, war
+> Cloth-Cone-Mini-Treiber (CMS-402811-28SP primär / PUI AS04008PS sekundär,
+> r18.18) ist **11.5 mm tief** (Datenblatt-Korrektur, war
 > fälschlich 9 mm angenommen). Bei 10 mm Raum wäre der von der Top-Platte
 > hängende Treiber 1.5 mm in die PCB-Ebene kollidiert. 12 mm → 0.5 mm
 > Luft. Allgemeine Top-Komponenten bleiben ≤ 8 mm; nur Encoder-Schaft
@@ -247,12 +248,13 @@ Boost-Inductor L1 ist aber 4.5 mm — siehe §7).
 | MCP23017 | X 153–163, Y 41–47 | 2.0 mm | Nahe Modifier-LEDs (kurze GPIO-Stubs) |
 | PCA9685 + 220-Ω-LED-Rs | X 165–187, Y 41–47 | 1.0 mm | Nahe Cell-LED-Reihe |
 
-**Speaker-Lötpunkte J6/J7** (PUI AS04008PS, Footprint 40 × 28.3 mm, 11.5 mm
+**Speaker-Lötpunkte J6/J7** (Same Sky CMS-402811-28SP Cloth-Cone primär /
+PUI AS04008PS Treated-Paper sekundär, beide Footprint 40 × 28.3 mm, 11.5 mm
 tief, **Löt-Eyelets — keine Kabel ab Werk**; Hand-Assembly, kein PCB-Mount,
 kein JLC-Bestücken): zwei 2-Pin-Pads je Speaker am Rand des Keepouts
 (X ≈ 7 / X ≈ 49 bzw. 203 / 245, Y ≈ 50), maximal flach (≤ 0.5 mm). Draht vom
-Pad zum Treiber-Eyelet wird von Hand gelötet (siehe ADR-0007, „-WR" =
-Water-Resistant, nicht Wire).
+Pad zum Treiber-Eyelet wird von Hand gelötet. Siehe ADR-0007 für Wahl
+Cloth- statt Papier-Konus (r18.18).
 
 ### 3.10 Battery JST-PH 2.0 J_BAT (S2B-PH-SM4-TB, C295747)
 
@@ -328,7 +330,7 @@ Koordinaten (Top-Panel und PCB sind kongruent angeordnet).
 **Speaker-Kammer-Volumen** (geschlossen, sealed): Treiber-Footprint
 40 × 28.3 mm, Treiber-Tiefe 11.5 mm. Brutto-Footprint-Volumen ≈ 15 cm³;
 durch Kammerwände im Bottom-Case auf ~20–30 cm³ erweiterbar (Wände etwas
-weiter als der Treiber-Footprint). Für einen Sealed-F0=380-Hz-Mid-Range-
+weiter als der Treiber-Footprint). Für einen Sealed-F0=450-Hz-Mid-Range-
 Treiber unkritisch (ADR-0011/SPEC §8: Tiefbass kommt ohnehin nur über
 Line-Out; die Kammer ist nur Roll-Off-Punkt, kein Klang-Charakter).
 

@@ -130,7 +130,7 @@ USB-C 5V/3A ────► USB-C  ──┬──► F1 (3A/6A) ──► 1000�
               │                                                       │
          Audio Out                                                    │
               ▼                                                       │
-         PAM8403 Amp ─► 2× PUI AS04008PS (8 Ω, sealed enclosure)      │
+         PAM8403 Amp ─► 2× CMS-402811-28SP (8 Ω, sealed enclosure)    │
          (GPIO PB14 = nSHDN, PB15 = nMUTE — Pop-Suppression-          │
           Sequenz wie §8.3, identisch zu Pico-Variante)               │
                                                                       │
@@ -348,9 +348,10 @@ typical (mid-range Annahme). Im Worst-Case bleibt das Gesamt-Budget mit
 Battery-Mode → der Battery-Mode-Volume-Clamp aus r9 kann gelockert oder
 ganz entfernt werden (separater Firmware-PR in Phase 4 nach Profiling-Messung).
 
-**Anmerkung r14 (Akustik-v2, Impedanz-Korrektur 2026-06-02)**: PUI AS04008PS
-Datenblatt sagt **8 Ω** — Worst-Case-PAM8403-Strom halbiert sich entsprechend
-gegenüber der alten 4-Ω-Annahme (~700 mA statt 1400 mA). F1 (3 A hold) hat
+**Anmerkung r14 (Akustik-v2, Impedanz-Korrektur 2026-06-02; r18.18 Treiber-
+Wechsel)**: Beide Treiber (CMS-402811-28SP primär, AS04008PS-4W-WR-R
+sekundär) sind laut Datenblatt **8 Ω** — Worst-Case-PAM8403-Strom halbiert
+sich entsprechend gegenüber der alten 4-Ω-Annahme (~700 mA statt 1400 mA). F1 (3 A hold) hat
 noch mehr Margin, TPS61089-Boost (2 A @ 5 V) deckt jetzt auch Worst-Case ab
 (nominal 1.2 A vs 2 A Limit). Battery-Mode-Volume-Clamp bleibt als Akustik-
 Schutz (Treiber-Verzerrung > 1.5 W) optional in Firmware.
@@ -1141,16 +1142,26 @@ Verhindert „Klick"-Geräusch beim An- und Ausschalten.
 
 ### Speakers (r14 Acoustic-v2 — Sealed + Top-Firing, 2026-06-02)
 
-2× **PUI AS04008PS-4W-WR-R**, **40 × 28.3 × 11.5 mm** (r18.17b-Korrektur — war
-fälschlich 40×40×9), **8 Ω**, 2 W RMS / 4 W max, **F0 = 380 Hz ± 20 %**,
-Frequenzbereich 200 Hz – 20 kHz, 84 dB @ 1 W/50 cm. **„-WR" = Water-Resistant**
-(behandelter Konus), Terminierung **Löt-Eyelets, keine Kabel ab Werk** →
-Hand-Assembly, kein JLC-Bestücken. 2026 aktiv lagernd (DigiKey/Mouser).
-Quelle: [PUI Audio Datenblatt](https://puiaudio.com/file/specs-AS04008PS-4W-WR-R.pdf).
+2× **Same Sky (CUI) CMS-402811-28SP** (r18.18-Wechsel von PUI weg —
+Stoff-Membran statt behandeltem Papier; identischer Footprint, halber Preis):
+**40 × 28.3 × 11.5 mm** rechteckiger Rahmen, **8 Ω**, 2 W RMS / 3 W max,
+**Stoff-Konus (Cloth Cone)**, NdFeB-Neodym-Magnet, **F0 = 450 Hz**,
+84 ± 3 dB @ 1 W/50 cm, **Löt-Eyelets — keine Kabel ab Werk** → Hand-Assembly,
+kein JLC-Bestücken. DigiKey-Stock-OK + Arrow + Mouser.
+Quelle: [Same Sky CMS-402811-28SP Datenblatt](https://www.sameskydevices.com/product/resource/cms-402811-28sp.pdf).
 
-**Zweitquelle (dokumentiert):** Same Sky (CUI) **CMS-402811-28SP** — gleicher
-40 × 28.3 × 11.5-Footprint, 8 Ω, 2 W, Löt-Eyelet, F0 = 450 Hz (etwas weniger
-Tiefgang; PUI bleibt erste Wahl).
+**Zweitquelle (dokumentiert):** PUI Audio **AS04008PS-4W-WR-R** — identischer
+40 × 28.3 × 11.5-Footprint, 8 Ω, 2 W, Löt-Eyelets, F0 = 380 Hz (etwas
+mehr Tiefgang), aber **behandeltes Papier statt Stoff** → akustisch boxiger
+in den unteren Mitten + feuchteanfälliger. Stoff-Variante CMS bevorzugt.
+
+**Warum der Wechsel (r18.18):** Drei Datenblatt-Quellen bestätigen: PUI-Konus
+ist „treated paper" — eine Papier-Pulpe-Membran mit Wasserschutz-Beschichtung.
+Cloth-Cone ist eine spürbar bessere Membran-Klasse: niedrigere innere
+Verluste, glattere Mitten ohne „Papier-Boxigkeit", besser feucht-/
+schweißbeständig. Trade-Off ist 70 Hz höhere F0 — in einer 15–30 cm³ Sealed-
+Box mit F-Rolloff ohnehin bei ~500 Hz nicht hörbar. Cloth-Mitten-Klarheit
+gewinnt deutlich. Bonus: ~$3–5 statt ~$6.78 pro Treiber.
 
 **Dust-Mesh-Cover (ADR-0007):** Saati Acoustex 020–032 (transparent, ~25–32
 g/m²), PSA-Klebering-Konvertierung via Marian Inc. für Serie; AliExpress-
@@ -1160,31 +1171,35 @@ Klebe-Mesh für Prototyp. Ovaler Frontpanel-Cutout 36 × 24 mm (passt zum
 **Mechanik-Hinweis (11.5 mm Tiefe):** Gehäuse-Außenhöhe 21.6 mm (war 19.6) —
 der von der Top-Platte hängende Treiber braucht 12 mm Above-PCB-Raum + 42×32-
 Bauteil-Keepout je Treiber-Footprint. Details `../mechanical/coordinates/mechanical_coordinates.md` §2/§7.
+**Mechanik unverändert beim Wechsel** — der CMS-Treiber hat identische
+Außenmaße + Tiefe + Eyelet-Position.
 
 **Akustik-Konzept: Sealed Box + Top-Firing (kein Bass-Reflex, kein Passivradiator)**
 
 | Element | Wert | Begründung |
 |---|---|---|
-| Kammer | **Geschlossen pro Kanal**, Trennsteg L/R im Bottom-Case-Inlay | Einzige sinnvolle Kammerform für einen Treiber mit F0=380 Hz. Reflex-Systeme (Port oder PR) lassen sich physikalisch nicht unter F0 abstimmen — ein PR mit Fb≈330 Hz würde nur eine Resonanzspitze in den unteren Mitten machen, schlimmster Fehlerfall für Drone/Sustain-Audio (One-Note-Boom). Sealed = saubere monotonische Roll-Off, kein Dröhnen. |
-| Treiber-Ausrichtung | **Top-Firing in der Top-Plate**, nicht down-firing | Down-firing nutzt nur Boundary-Coupled-Bass — den dieser Treiber nicht erzeugt (F0=380 Hz). Top-firing maximiert die *einzige* echte Stärke (Mitten/Höhen-Klarheit) durch direkten Schallweg zum Ohr, ohne Tisch-Reflexion und Kammfilter. |
+| Kammer | **Geschlossen pro Kanal**, Trennsteg L/R im Bottom-Case-Inlay | Einzige sinnvolle Kammerform für einen Treiber mit F0=450 Hz (CMS, r18.18; auch bei der 380-Hz-Zweitquelle PUI gültig). Reflex-Systeme (Port oder PR) lassen sich physikalisch nicht unter F0 abstimmen — eine PR mit Fb≈400 Hz würde nur eine Resonanzspitze in den unteren Mitten machen, schlimmster Fehlerfall für Drone/Sustain-Audio (One-Note-Boom). Sealed = saubere monotonische Roll-Off, kein Dröhnen. |
+| Treiber-Ausrichtung | **Top-Firing in der Top-Plate**, nicht down-firing | Down-firing nutzt nur Boundary-Coupled-Bass — den dieser Treiber nicht erzeugt (F0=450 Hz). Top-firing maximiert die *einzige* echte Stärke (Mitten/Höhen-Klarheit) durch direkten Schallweg zum Ohr, ohne Tisch-Reflexion und Kammfilter. |
 | Mount | Speaker-Rahmen von unten gegen die Top-Plate, 4× M2 | PCB-Speaker-Cutouts (alt: 41 mm dia bei Y=30) **entfallen** — Treiber sitzen nicht mehr im PCB. Akustik-Kammer wird durch Top-Plate + Bottom-Case + Trennsteg gebildet. |
 | Top-Plate-Grille | 2× **ovale Dust-Mesh-Aussparung 50 × 30 mm** bei **(28, 50)** und **(224, 50)** (r18.16-Mechanik-Koordinaten), schwarzes Akustik-Mesh statt Lochmuster (ADR-0007) | Schallaustritt direkt nach oben. Cutout-Höhe < Treiber-Außenmaß (40 mm) damit die Membran am Rand abgedeckt bleibt; Mesh schließt die Öffnung staubdicht + akustisch transparent. |
 
-**Realistische akustische Erwartung**: 
+**Realistische akustische Erwartung** (CMS-Cloth-Konus, r18.18):
 
-- Onboard ehrlich nutzbar etwa **200 Hz – 20 kHz** (vom Datenblatt).
-- Was klingt: klare Mitten, präsente Höhen, Pad-Saws fett und transparent,
-  Reverb-Fahnen sauber.
-- Was *nicht* klingt: alles unter ~200 Hz. famSubBass (LP90) und der untere
+- Onboard ehrlich nutzbar etwa **250 Hz – 20 kHz** (F0=450 Hz, nutzbar etwa
+  −10 dB unter F0; war ~200 Hz mit der PUI-Papier-Zweitquelle bei F0=380 Hz).
+- Was klingt: **glattere Mitten** als beim Papier-Treiber (kein
+  Papier-Boxig-Klang im Sprach-Bereich), präsente Höhen, Pad-Saws fett und
+  transparent, Reverb-Fahnen sauber.
+- Was *nicht* klingt: alles unter ~250 Hz. famSubBass (LP90) und der untere
   Teil von famDeepBass (HP50/LP350) sind **onboard schlicht nicht hörbar** —
   sie sind direkter Beitrag null. Indirekt sind sie über den Reverb-Send
   (`verbSend 0.03` bzw. `0.08`) als Wärme der Fahne präsent, aber das ist
   alles. Voller Tiefgang ausschließlich über **Line-Out J8** → externe Boxen.
 
-Ein sanfter DSP-Low-Shelf bei ~400 Hz kann später optional die wahrgenommene
+Ein sanfter DSP-Low-Shelf bei ~450 Hz kann später optional die wahrgenommene
 Wärme im Treiber-Eigenbereich anheben (Firmware-seitig, Engine-Step 11/Master
 oder Engine-Step 8/Bass). Echten Bass *erzeugt* DSP nicht — der Treiber hat
-schlicht keinen Hub unter 200 Hz.
+schlicht keinen Hub unter ~250 Hz.
 
 **Mechanik-Konsequenzen** (siehe `../mechanical/coordinates/mechanical_coordinates.md`
 §3.4/§5/§7, r18.16-Stand):

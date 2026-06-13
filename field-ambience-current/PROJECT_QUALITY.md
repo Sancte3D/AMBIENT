@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-13 (v0.7-r18.17)**
+**Stand: 2026-06-13 (v0.7-r18.18)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -21,7 +21,7 @@
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 9 / 10 | ↑ (r18.16: `mechanical_coordinates.md` echt + geometrisch validiert, Power-Insel verortet, Speaker-Höhen-Constraint) |
 | **Cell-Mechanik (Piano-Feel)** | 8 / 10 | ↑ (r18.15: Velocity-Modell in Firmware implementiert + host-getestet + Engine-Pfad + Sim; offen: Plate-CAD, Muster-Tuning) |
-| **Speaker-Cover (Dust-Mesh)** | 6 / 10 | ↑ (r18.17: Mesh-Klasse Acoustex 020–032 + Marian-PSA-Pfad + PUI-Datenblatt-Korrekturen + Z-Kollision behoben) |
+| **Speaker-Cover (Dust-Mesh)** | 7 / 10 | ↑ (r18.18: Membran-Upgrade Cloth-Cone CMS-402811-28SP primär; Papier-PUI demoted zur Zweitquelle) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
 | **Doku / Onboarding** | 10 / 10 | ✅ (r18.13: alle Cross-Refs konsistent nach Phase-2-Moves) |
 | **Test-Abdeckung (host)** | 9.5 / 10 | ↑ (r18.15: 13. Suite test_cells.c + Engine-Velocity-Check) |
@@ -89,11 +89,12 @@ das ist jetzt der einzige große Block vor Gate 2.
 - ✅ Velocity-Modell IMPLEMENTIERT (r18.15): `cells.{h,c}` + Engine-Pfad + 25-Check-Test + Sim-Spiegelung
 - ⏳ Fehlend für 10: Plate-Cutout-CAD, Magnet-/Abstands-Messung am Muster, Velocity-Curve-Feintuning auf realer Hardware
 
-### Speaker-Cover (Dust-Mesh) — 6 / 10
+### Speaker-Cover (Dust-Mesh) — 7 / 10
 - ✅ Material fix (r18.17): Saati Acoustex 020–032 (transparent ~25–32 g/m²), PSA-Konvertierung via Marian Inc.; AliExpress-Sticker für Prototyp
-- ✅ Speaker-Datenblatt verifiziert + 3 Korrekturen (40×28.3×11.5, -WR=Water-Resistant, Löt-Eyelets); Zweitquelle Same Sky CMS-402811-28SP
+- ✅ Speaker-Datenblatt verifiziert + 3 Korrekturen (40×28.3×11.5, -WR=Water-Resistant, Löt-Eyelets)
 - ✅ Z-Kollision (11.5 mm Treiber) behoben → Außenhöhe 21.6 mm; Cutout 36×24 passt zum Treiber
-- ⏳ Fehlend für 10: Akustik-Charakterisierung am Muster (Insertion-Loss), Marian-PSA-Quote, Kammer-CAD
+- ✅ Membran-Upgrade (r18.18): Same Sky CMS-402811-28SP **Cloth-Cone** primär; PUI Treated-Paper als Zweitquelle. Identischer Footprint → Mechanik unverändert
+- ⏳ Fehlend für 10: Akustik-Charakterisierung am Muster (Insertion-Loss + A/B Cloth vs Paper), Marian-PSA-Quote, Kammer-CAD
 
 ### LED-Logik (Cell + Modifier) — 9 / 10
 - ✅ XOR-Entscheidung dokumentiert (ADR-0008)

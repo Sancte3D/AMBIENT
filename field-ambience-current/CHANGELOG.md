@@ -4,10 +4,67 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.17** (Speaker-Reconciliation: Mesh-Material +
-PUI-Datenblatt-Korrekturen + Z-Kollision behoben. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.18** (Speaker-Membran-Wechsel: Cloth-Cone primär
+(Same Sky CMS-402811-28SP), PUI-Paper als Zweitquelle dokumentiert. KEIN
+.kicad_pcb.)
 
 ---
+
+## v0.7-r18.18 (2026-06-13) — Cloth-Cone Speaker (CMS-402811-28SP)
+
+User: „selbes format und größe aber eben premium.. nicht papier?" — berechtigt:
+PUI AS04008PS hat einen **behandelten Papier-Konus** (drei Quellen bestätigt:
+PUI-Datenblatt, Mouser-Attribut, RS-Components-Listing „treated paper").
+
+### Primärquelle: Same Sky (CUI) CMS-402811-28SP
+
+- **Stoff-Konus (Cloth Cone)** statt Papier — glattere Mitten ohne
+  „Papier-Boxigkeit", feuchteresistent, niedrigere Verluste
+- Identischer 40 × 28.3 × 11.5-Footprint → **keine CAD-/Mechanik-Änderung**
+- Identische elektrische Specs: 8 Ω, 2 W RMS, 84 dB @ 1 W/50 cm,
+  NdFeB-Magnet, Löt-Eyelets
+- F0 = 450 Hz (statt 380 Hz beim PUI) → 70 Hz weniger Tiefgang, in der
+  15–30 cm³ Sealed-Box mit Roll-Off bei ~500 Hz nicht hörbar
+- Preis ~$3–$5 statt ~$6.78 (halber BOM-Cost)
+- DigiKey + Arrow + Mouser-lagernd
+- LCSC führt **keinen** passenden 40-mm-8-Ω-Treiber → ohnehin Hand-Assembly
+
+### Zweitquelle bleibt PUI AS04008PS-4W-WR-R
+
+Identischer Footprint, behandeltes Papier, F0 = 380 Hz, ~$6.78. Backup
+falls CMS-Lieferengpass.
+
+### Verworfene Alternativen (5 Treiber im 40×28-Footprint geprüft)
+
+- Visaton K 28.40-8: Papier + 79 dB SPL (5 dB leiser, halb so laut empfunden)
+- Same Sky CDS-40288: Papier-Pulp
+- Same Sky CDS-4028-16: Stoff aber 16 Ω → halbe PAM8403-Leistung
+- Dayton CE40-28P-8: Papier
+- PUI AS04008CO-WR-R: Stoff aber 20 mm breit → CAD-Rework
+
+### Akustik-Erwartung (SPEC §8 angepasst)
+
+- Onboard ehrlich nutzbar **250 Hz – 20 kHz** (war ~200 Hz mit PUI bei F0=380)
+- Glattere Mitten als Papier-Variante (kein „Papier-Box"-Klang im Sprach-Bereich)
+- Tieferer Bass unverändert nicht onboard hörbar → bleibt Line-Out-Sache
+
+### Files
+
+SPEC §3-Übersichts-Diagramm, §8.x (Treiber-Beschreibung +
+Akustik-Begründung + Realistische-Erwartung), §10-Impedanz-Note;
+ADR-0007 (Lautsprecher-Sektion komplett umgedreht + Recherche-Begründung +
+Verworfene-Alternativen); ADR-0011 (Speaker-Höhe-Zeile + Kammer-Sektion);
+mechanical_coordinates §2/§3.9/§5; mechanical/3d_models/MANIFEST.
+
+Mechanik unverändert (Footprint, Tiefe, Outline, Cutout, Keepout, Außenhöhe
+21.6 mm — alles identisch beim Wechsel). Firmware unberührt (13 Suiten PASS).
+
+Score: Speaker-Cover 6 → 7 (Membran-Klasse aufgewertet; offen weiterhin
+Akustik-Charakterisierung am Muster + Marian-PSA-Quote).
+
+---
+
+## v0.7-r18.17 (2026-06-13) — Speaker: Mesh-Material + Datenblatt-Korrekturen
 
 ## v0.7-r18.17 (2026-06-13) — Speaker: Mesh-Material + Datenblatt-Korrekturen
 

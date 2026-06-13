@@ -19,7 +19,7 @@ Bisher in `../../mechanical/coordinates/mechanical_coordinates.md` ohne harte Z-
 | **USB-C TYPE-C-31-M-17** | **7.5 mm** Connector + 7 mm Mate | HRO M-17 Drawing |
 | **SW6-10 HX 12×12×7.3** | **7.3 mm** | LCSC C36498966 |
 | **J9 JST-PH 2.0 Battery** | **6.0 mm** | JST S2B-PH-SM4-TB |
-| **PUI AS04008PS Speaker** | ~~5.0 mm~~ → **11.5 mm Treiber-Tiefe** (r18.17b-Korrektur; Footprint 40×28.3) | PUI/DigiKey/Mouser |
+| **Cloth-Cone Speaker (CMS-402811-28SP primär, AS04008PS sekundär)** | **11.5 mm Treiber-Tiefe** (r18.17b-Korrektur; Footprint 40×28.3, beide Treiber identisch) | Same Sky/PUI Datasheets |
 | **HC-49/US-SMD Crystal Y1** | **4.2 mm** | ABRACON ABLS Drawing |
 | **LCD-Modul ST7789 (Adafruit 5394)** | **3.5 mm** (über Header-Standoff) | Adafruit Drawing |
 | **L1 Boost-Inductor 0630** | **3.0 mm** | SWPA6045S2R2MT |
@@ -140,7 +140,8 @@ TOTAL: gleiches Profil wie B, Speaker eingeschwenkt
 
 ## Speaker-Anschluss-Kammer
 
-PUI AS04008PS (40-mm-Treiber) brauchen Innenvolumen für Mid-Range-Performance:
+40-mm-Mini-Treiber (CMS-402811-28SP primär / AS04008PS sekundär, r18.18)
+brauchen Innenvolumen für Mid-Range-Performance:
 
 - **Closed-Box**: ~5-8 cm³ minimal, sonst zu dumpf
 - **Bass-Reflex**: 15-25 cm³ + Reflex-Port

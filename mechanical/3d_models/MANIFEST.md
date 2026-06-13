@@ -36,7 +36,7 @@ easyeda2kicad --full --lcsc_id=C<ID> --output <lib-pfad>
 | Bauteil | Höhe (DS) | Quelle |
 |---|---|---|
 | HX 12×12×7.3 Taster (C36498966) | 7.3 mm | kein EasyEDA-3D; bei Bedarf aus DS extrudieren |
-| PUI AS04008PS Speaker | 5.0 mm Frame | puiaudio.com → CAD-Download |
+| Cloth-Cone Mini-Speaker (CMS-402811-28SP primär / AS04008PS sekundär) | **11.5 mm** Treiber-Tiefe, Footprint 40 × 28.3 mm | sameskydevices.com / puiaudio.com → CAD-Download |
 | LCD-Modul ST7789 (Adafruit 5394) | 3.5 mm über Standoff | Adafruit GitHub (CAD-Repo) |
 | EC11E THT Encoder-Familie (ADR-0012, neu) | Body 7 + Schaft n. Wahl | ALPS tech.alpsalpine.com → 3D-Download je Variante; LCSC-ID nach Sourcing-Verifikation fetchen |
 | Gateron LP Magnetic Switch + Stabilizer (ADR-0013) | ~8 mm Stack | Gateron/NuPhy; Community-CAD (kbd-Ökosystem) |
