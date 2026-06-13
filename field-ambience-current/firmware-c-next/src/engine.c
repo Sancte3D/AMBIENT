@@ -19,6 +19,7 @@
 #include "reverb_presets.h"
 #include "brain.h"
 #include "generative.h"
+#include "cells.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -135,6 +136,7 @@ void engine_init(void) {
     bass_set_depth(0.5f);
     memset(active_freq, 0, sizeof active_freq);
     generative_init();
+    cells_init();                    /* ADR-0013 cell-velocity state */
     gen_on = false;
 
     /* Master stage: DC-block cleared, moderate default volume (no on-device
@@ -157,6 +159,23 @@ void engine_all_off(void) {
     pad_all_off();
     memset(active_freq, 0, sizeof active_freq);
     bass_release();
+}
+
+/* ADR-0013 — Hall cell sample → velocity note. The cell index doubles as the
+ * pad-voice source (0..4), matching the digital-cell path, so re-pressing a
+ * cell re-blooms its own voice rather than stacking. */
+bool engine_cell_sample(uint8_t cell, float pos_0_1, uint32_t now_ms) {
+    cell_event_t ev = cells_update(cell, pos_0_1, now_ms);
+    if (ev.kind == CELL_EVENT_PRESS) {
+        int midi = brain_cell_root(ev.cell);
+        engine_note_on(ev.cell, dsp_midi_to_hz((float)midi), ev.amp);
+        return true;
+    }
+    if (ev.kind == CELL_EVENT_RELEASE) {
+        engine_note_off(ev.cell);
+        return true;
+    }
+    return false;
 }
 
 void engine_set_reverb_size(float v) {

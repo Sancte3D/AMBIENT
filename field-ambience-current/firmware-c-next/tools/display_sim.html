@@ -183,6 +183,7 @@
   .cell-led.on-yellow { background: #f0c63a; box-shadow: 0 0 8px rgba(240,198,58,0.6), inset 0 0 0 1px rgba(255,255,255,0.15); }
   .cell-led.on-green  { background: #5dd24c; box-shadow: 0 0 8px rgba(93,210,76,0.6),  inset 0 0 0 1px rgba(255,255,255,0.15); }
   .cell-key {
+    position: relative; overflow: hidden;
     width: 100%; aspect-ratio: 1 / 2.4;
     border-radius: 999px;
     background: linear-gradient(180deg, #232327 0%, #18181b 40%, #131315 100%);
@@ -201,6 +202,23 @@
       inset 0 0 0 1px #1f1f23,
       inset 0 14px 28px rgba(0,0,0,0.8),
       0 1px 3px rgba(0,0,0,0.5);
+  }
+  /* Velocity feedback (ADR-0013): a fill that rises from the bottom of the
+     pill in proportion to the mapped amplitude, plus a transient % readout.
+     The click's vertical position picks the velocity (sim affordance for the
+     real Hall press speed): lower on the pill = harder/faster = louder. */
+  .cell-vel-fill {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
+    background: linear-gradient(180deg, rgba(93,210,76,0.55) 0%, rgba(93,210,76,0.15) 100%);
+    transition: height 60ms ease, opacity 420ms ease;
+    opacity: 0; pointer-events: none;
+  }
+  .cell-vel-num {
+    position: absolute; left: 0; right: 0; top: 8%;
+    text-align: center; font-size: 11px; font-weight: 600;
+    color: #cfe9c8; opacity: 0; pointer-events: none;
+    transition: opacity 420ms ease;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
   }
 
   .legend {
@@ -239,23 +257,23 @@
     <div class="cells" id="cells">
       <div class="cell">
         <div class="cell-leds"><div class="cell-led" data-led="cell1-y"></div><div class="cell-led" data-led="cell1-g"></div></div>
-        <div class="cell-key" data-cell="0"></div>
+        <div class="cell-key" data-cell="0"><div class="cell-vel-fill"></div><div class="cell-vel-num"></div></div>
       </div>
       <div class="cell">
         <div class="cell-leds"><div class="cell-led" data-led="cell2-y"></div><div class="cell-led" data-led="cell2-g"></div></div>
-        <div class="cell-key" data-cell="1"></div>
+        <div class="cell-key" data-cell="1"><div class="cell-vel-fill"></div><div class="cell-vel-num"></div></div>
       </div>
       <div class="cell">
         <div class="cell-leds"><div class="cell-led" data-led="cell3-y"></div><div class="cell-led" data-led="cell3-g"></div></div>
-        <div class="cell-key" data-cell="2"></div>
+        <div class="cell-key" data-cell="2"><div class="cell-vel-fill"></div><div class="cell-vel-num"></div></div>
       </div>
       <div class="cell">
         <div class="cell-leds"><div class="cell-led" data-led="cell4-y"></div><div class="cell-led" data-led="cell4-g"></div></div>
-        <div class="cell-key" data-cell="3"></div>
+        <div class="cell-key" data-cell="3"><div class="cell-vel-fill"></div><div class="cell-vel-num"></div></div>
       </div>
       <div class="cell">
         <div class="cell-leds"><div class="cell-led" data-led="cell5-y"></div><div class="cell-led" data-led="cell5-g"></div></div>
-        <div class="cell-key" data-cell="4"></div>
+        <div class="cell-key" data-cell="4"><div class="cell-vel-fill"></div><div class="cell-vel-num"></div></div>
       </div>
     </div>
   </div>
@@ -266,6 +284,7 @@
     Modifiers: <span style="color:#5dd24c">Shift</span> /
     <span style="color:#f0c63a">Hold</span> / white = Drone, Generate, Clear (flash-on-press).
     Hold-armed cell tap → yellow LED. <kbd>Shift</kbd> held while latching → green LED instead (XOR).
+    Cell velocity (ADR-0013): click <em>low</em> on a pill = hard/fast = loud, <em>high</em> = soft; the green fill + 0–127 readout mirror the firmware curve.
     Backlight: <kbd>A</kbd> / <kbd>Z</kbd>.
   </div>
 </div>
@@ -613,11 +632,48 @@ function pressMod(id) {
       break;
   }
 }
-function tapCell(idx) {
+/* ---- Cell velocity (mirror of firmware include/cells.h, ADR-0013) --------
+   These constants and the amp mapping are kept identical to the C module so
+   the sim shows the same dynamics the device will produce. */
+const CELL_AMP_MIN = 0.05, CELL_AMP_MAX = 0.22, CELL_AMP_GAMMA = 0.8;
+function cellVelocityToAmp(v) {
+  v = clamp(v, 0, 1);
+  return CELL_AMP_MIN + (CELL_AMP_MAX - CELL_AMP_MIN) * Math.pow(v, CELL_AMP_GAMMA);
+}
+
+function showCellVelocity(idx, velocity) {
+  const key = document.querySelector(`.cell-key[data-cell="${idx}"]`);
+  if (!key) return;
+  const fill = key.querySelector('.cell-vel-fill');
+  const num  = key.querySelector('.cell-vel-num');
+  const amp  = cellVelocityToAmp(velocity);
+  /* Fill height tracks amp across its own [MIN,MAX] range so a soft hit still
+     shows a sliver and a hard hit nearly fills the pill. */
+  const frac = (amp - CELL_AMP_MIN) / (CELL_AMP_MAX - CELL_AMP_MIN);
+  if (fill) {
+    fill.style.transition = 'height 60ms ease';
+    fill.style.opacity = '1';
+    fill.style.height = (10 + frac * 88).toFixed(0) + '%';
+    requestAnimationFrame(() => {
+      fill.style.transition = 'height 420ms ease, opacity 420ms ease';
+      fill.style.opacity = '0';
+      fill.style.height = '0%';
+    });
+  }
+  if (num) {
+    num.textContent = Math.round(velocity * 127);   /* MIDI-style 0..127 */
+    num.style.opacity = '1';
+    setTimeout(() => { num.style.opacity = '0'; }, 360);
+  }
+}
+
+function tapCell(idx, velocity) {
+  if (velocity === undefined) velocity = 0.7;        /* keyboard default */
   if (state.hold) {
     const target = state.shift ? 'green' : 'yellow';
     state.cells[idx] = (state.cells[idx] === target) ? 'off' : target;
   }
+  showCellVelocity(idx, velocity);
   const el = document.querySelector(`.cell-key[data-cell="${idx}"]`);
   if (el) { el.classList.add('pressed'); setTimeout(() => el.classList.remove('pressed'), 110); }
 }
@@ -625,7 +681,13 @@ document.querySelectorAll('.mod-btn').forEach(b => {
   b.addEventListener('click', () => pressMod(b.dataset.mod));
 });
 document.querySelectorAll('.cell-key').forEach(k => {
-  k.addEventListener('pointerdown', () => tapCell(parseInt(k.dataset.cell, 10)));
+  k.addEventListener('pointerdown', (e) => {
+    /* Sim affordance for press speed: where you click on the pill picks the
+       velocity — top = soft (slow press), bottom = hard (fast press). */
+    const r = k.getBoundingClientRect();
+    const yFrac = r.height ? clamp((e.clientY - r.top) / r.height, 0, 1) : 0.7;
+    tapCell(parseInt(k.dataset.cell, 10), yFrac);
+  });
 });
 
 function syncLeds() {

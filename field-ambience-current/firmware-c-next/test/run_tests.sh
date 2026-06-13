@@ -44,6 +44,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/brain_test"
 "$tmp/brain_test"
 
+# ADR-0013: cell-velocity input model (Hall position → velocity → amp)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_cells.c" \
+    "$src/src/cells.c" \
+    -lm -o "$tmp/cells_test"
+"$tmp/cells_test"
+
 # Step 8: famSubBass + famDeepBass + dsp_svf highpass / dsp_tri
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bass.c" \
@@ -102,6 +109,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/reverb_presets.c" \
     "$src/src/brain.c" \
     "$src/src/generative.c" \
+    "$src/src/cells.c" \
     "$src/src/engine.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"

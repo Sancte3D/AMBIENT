@@ -16,6 +16,7 @@
 #include "reverb.h"
 #include "engine.h"
 #include "pad.h"
+#include "cells.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -342,6 +343,37 @@ static void test_engine_master_clean(void) {
     printf("  master volume scaling: vol0 peak=%d  vol1 peak=%d\n", pk0, pk1);
 }
 
+/* ADR-0013 — a fast Hall press must end up louder than a slow one, end to end
+ * through the engine (not just in the cells unit). Ramps a normalised position
+ * across the velocity band in `band_ms`, then renders ~0.6 s and returns the
+ * peak. */
+static int press_and_peak(uint8_t cell, float band_ms) {
+    static uint32_t ms = 100000;
+    engine_all_off();
+    run_engine(SR * 4);                               /* drain previous tail */
+    const float band = CELL_VEL_BAND_HI - CELL_VEL_BAND_LO;
+    const float step = band / band_ms;                /* per 1 ms sample */
+    for (float pos = 0.0f; pos < 1.0f; pos += step)
+        engine_cell_sample(cell, pos, ++ms);
+    engine_cell_sample(cell, 1.0f, ++ms);
+    eng_stats_t st = run_engine((int)(0.6f * SR));
+    int pk = st.pk_l > st.pk_r ? st.pk_l : st.pk_r;
+    /* release so the next call starts clean */
+    for (float pos = 1.0f; pos > 0.0f; pos -= 0.1f)
+        engine_cell_sample(cell, pos, ++ms);
+    return pk;
+}
+
+static void test_engine_cell_velocity(void) {
+    engine_init();
+    int soft = press_and_peak(0, 60.0f);   /* slow press */
+    int loud = press_and_peak(0, 5.0f);    /* fast press */
+    printf("  cell velocity: slow press peak=%d  fast press peak=%d\n", soft, loud);
+    CHECK(soft > 0, "slow cell press produced audio: %d", soft);
+    CHECK(loud > soft, "fast press louder than slow (loud=%d soft=%d)", loud, soft);
+    CHECK(loud <= 32767, "velocity press clipped int16");
+}
+
 int main(void) {
     dsp_init();
 
@@ -356,6 +388,7 @@ int main(void) {
     test_engine_overload_holds_int16();
     test_engine_live_params_no_glitch();
     test_engine_master_clean();
+    test_engine_cell_velocity();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);
     if (g_fails) { printf("RESULT: FAIL\n"); return 1; }

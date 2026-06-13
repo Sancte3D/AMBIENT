@@ -4,9 +4,63 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.14** (Komponenten-Definitions-Sprint: 3D-STEP-Lib +
-2 kritische BOM-Fixes (USB-C-LCSC, SW_BOOT-MPN) + Encoder-Strategie ADR-0012
-+ Cell-Keys Magnetic-Hall ADR-0013 + Encoder-UX-Firmware-Fix. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.15** (Cell-Velocity in Firmware: `cells.{h,c}`
+Velocity-Modell aus ADR-0013, Engine-Integration, Host-Test, Web-Sim-Anzeige.
+KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.15 (2026-06-13) — Cell-Velocity in Firmware (ADR-0013 Code-Seite)
+
+ADR-0013 hatte die Magnetic-Hall-Architektur im Schematic fixiert, aber den
+Pfad „Hall-ADC → Velocity → Note" nur beschrieben. Dieser ist jetzt
+implementiert und host-getestet — unabhängig von der noch fehlenden Hardware.
+
+### Neues Modul `cells.{h,c}`
+
+- Per-Cell-State-Machine REST → ARMED → HELD, gefüttert mit normierter
+  Stem-Position `pos` ∈ [0,1] (0 = Ruhe, 1 = Bottom-Out).
+- **Velocity = Banddurchlaufzeit** (BAND_LO 0.15 → BAND_HI 0.55): schneller
+  Druck quert das Band in ≤ 6 ms (laut), langsamer in ≥ 70 ms (leise).
+  Note-On feuert am Trigger (BAND_HI), Note-Off bei Rückzug < RELEASE 0.30
+  (Hysterese gegen Chatter).
+- Velocity (0..1) → Voice-Amplitude 0.05…0.22 (Gamma 0.8). Median ≈ die alte
+  feste 0.12 der Binär-Cells, jetzt mit echtem Dynamikumfang.
+- Pure Logic, kein SDK → identisch auf RP2040-Bench (synthetische Position)
+  und STM32 (echtes ADC). Robust gegen grobes Sampling (Single-Sample-Slam =
+  Max-Velocity).
+
+### Engine-Integration
+
+- `engine_cell_sample(cell, pos, now_ms)` — Engine-Einstiegspunkt: PRESS
+  spielt den Akkord-Grundton der Cell (harmonic brain) mit velocity-skalierter
+  Amplitude, RELEASE stoppt ihn. `cells_init()` in `engine_init()`.
+
+### Tests
+
+- NEU `test/test_cells.c` (25 Checks): slow/fast, Monotonie, Hysterese,
+  abgebrochener Druck, kein Doppel-Trigger, Single-Sample-Slam, Bounds,
+  Mapping-Endpunkte. → **13. Test-Suite**.
+- Engine-Suite um End-to-End-Velocity-Check erweitert: schneller Druck
+  messbar lauter als langsamer durch die volle Engine (Peak 8156 vs 4459).
+- Alle 13 Suiten grün.
+
+### Web-Sim (`tools/display_sim.html`)
+
+- Cell-Velocity sichtbar: Klick-Höhe auf der Pille = Velocity (oben weich,
+  unten hart), grüner Fill steigt proportional zur Amplitude + 0–127-Readout.
+- Velocity-Konstanten **verbatim aus `cells.h` gespiegelt** (kommentiert).
+
+### Doku
+
+- SPEC §5.6a: Velocity-Modell-Tabelle (alle Konstanten) + Source-of-Truth-Verweis.
+- ADR-0013: „Firmware-Stand (implementiert r18.15)" ergänzt.
+- PROJECT_QUALITY: Cell-Mechanik 7→8, Test 9→9.5, Display-Sim 7→8.
+
+### Risiko
+
+Rein additiv in `firmware-c-next` (neues Modul + 1 Engine-Funktion + Sim-
+Anzeige). Kein Schematic-, BOM- oder Generator-Change. Kein CI-Pfad berührt.
 
 ---
 

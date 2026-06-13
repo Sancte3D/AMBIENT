@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-12 (v0.7-r18.14)**
+**Stand: 2026-06-13 (v0.7-r18.15)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -10,7 +10,7 @@
 | Aspekt | Score | Trend |
 |---|---|---|
 | **Audio-Engine (Sound)** | 9.5 / 10 | ↑ (r18.11: Buffer-Underrun-Schutz + SAI-PLL-Architektur dokumentiert) |
-| **Display-Sim Web-UI** | 7 / 10 | ↑ (von 5/10 vor IMG_9713-Redesign) |
+| **Display-Sim Web-UI** | 8 / 10 | ↑ (r18.15: Cell-Velocity sichtbar — Fill + 0–127-Readout, Firmware-Kurve gespiegelt) |
 | **Industrial Design (Render)** | 9 / 10 | ↑ |
 | **Bench Bring-Up (Pico 2)** | 8 / 10 | → |
 | **Schematic (Korrektheit)** | 9.5 / 10 | ↑ (r18.10: SW_BOOT + USB-C-Upgrade + SPEC-BOM-Sync) |
@@ -20,28 +20,28 @@
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 7 / 10 | ↑ (r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + MANIFEST mit Höhen-Tabelle) |
-| **Cell-Mechanik (Piano-Feel)** | 7 / 10 | ↑ (r18.14/ADR-0013: Magnetic-Hall-Architektur final, Schematic umgestellt; offen: Plate-CAD, Sensor-Pinout-Verify, Muster) |
+| **Cell-Mechanik (Piano-Feel)** | 8 / 10 | ↑ (r18.15: Velocity-Modell in Firmware implementiert + host-getestet + Engine-Pfad + Sim; offen: Plate-CAD, Muster-Tuning) |
 | **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
 | **Doku / Onboarding** | 10 / 10 | ✅ (r18.13: alle Cross-Refs konsistent nach Phase-2-Moves) |
-| **Test-Abdeckung (host)** | 9 / 10 | → |
+| **Test-Abdeckung (host)** | 9.5 / 10 | ↑ (r18.15: 13. Suite test_cells.c + Engine-Velocity-Check) |
 | **Repo-Struktur** | 8 / 10 | ↑ (r18.13: Phase 2 done — Doc-Moves in `mechanical/`, `software/`, `archive/`; Phase 3-5 queued) |
 | **CI / Auto-Validierung** | 8 / 10 | → |
 
-**Gesamt-Manufacturing-Readiness: 6 / 10** (Gate 1.5 von 9). r18.14-Anstieg:
-FP-Verify 9→10, BOM 8→8.5, Mechanical 6→7 (3D-Lib), Cell-Mechanik 5→7
-(Magnetic-Hall final). Verbleibende Hauptlücken: Layout 0, DRC 0, Mesh 3.
+**Gesamt-Manufacturing-Readiness: 6 / 10** (Gate 1.5 von 9). r18.15: Cell-Velocity
+in Firmware real (Cell-Mechanik 7→8, Test 9→9.5, Display-Sim 7→8). Verbleibende
+Hauptlücken bleiben hardware-/layout-seitig: Layout 0, DRC 0, Mesh 3.
 
 ## Was jeder Score bedeutet — und was auf 10 fehlt
 
 ### Audio-Engine — 9 / 10
-- ✅ Läuft host-portabel, 12 Test-Suiten grün, 8-Min-Performance-Render hörbar
+- ✅ Läuft host-portabel, 13 Test-Suiten grün, 8-Min-Performance-Render hörbar
 - ⏳ Fehlend für 10: STM32H743-Native-Build (Phase-Pfad-Migration, kein Acceptance-Gate mehr per ADR-0005)
 
-### Display-Sim Web-UI — 7 / 10
+### Display-Sim Web-UI — 8 / 10
 - ✅ Mirror des `menu.c`, animiert, Acceleration, Shift-Modus, Backlight
-- ✅ NEU (r18.8): IMG_9713-Render umgesetzt — kleines Display, 4 Encoder in Ecken, Modifier mit LEDs, 5 Cell-Pillen mit XOR-LEDs, Dust-Mesh-Speakers
-- ⏳ Fehlend für 10: Velocity-Visualisierung der Cell-Pads (ADR-0006), Drone/Generate transient-Animationen, Battery-Akku-Simulation (USB-Stecker-Toggle entfernt — könnte zurückkommen)
+- ✅ IMG_9713-Render (r18.8) + Cell-Velocity-Anzeige (r18.15: grüner Fill + 0–127-Readout, exakt die `cells.h`-Kurve)
+- ⏳ Fehlend für 10: Drone/Generate transient-Animationen, Battery-Akku-Simulation
 
 ### Industrial Design (Render) — 9 / 10
 - ✅ IMG_9713-Stand ist klar, kohärent, OP-1-Field-Sprache konsequent
@@ -65,9 +65,9 @@ FP-Verify 9→10, BOM 8→8.5, Mechanical 6→7 (3D-Lib), Cell-Mechanik 5→7
 - ✅ EC11J-Blocker gegenstandslos (Teil retired, ADR-0012); echtes Pattern liegt als Referenz in der Lib
 - Haltebedingung: neue Bauteile nur noch mit CAD-Export-FP oder Standard-Lib aufnehmen
 
-### BOM-Sourcing — 8.5 / 10
-- ✅ Alle Haupt-ICs verifiziert; r18.14: 2 kritische ID/MPN-Fixes (USB-C C283540, SW_BOOT TS-1088) via 3D-CAD-Abruf — der Abruf ist jetzt Teil der Verifikations-Routine
-- ⏳ Fehlend für 10: EC11E-Varianten-LCSC/Mouser-IDs (ADR-0012), Hall-Sensor-ID + Pinout-Verify (ADR-0013), Gateron-LP-Switch/Stabilizer-Beschaffungskanal, Polymer-Cap-IDs (r18.12), Cell/Modifier-LED-Stock-Check, Mesh-Hersteller (ADR-0007)
+### BOM-Sourcing — 9 / 10
+- ✅ Alle Haupt-ICs verifiziert; r18.14: 2 kritische ID/MPN-Fixes (USB-C C283540, SW_BOOT TS-1088) via 3D-CAD-Abruf + EC11E (C202365/C370986) + Hall-Sensor (DRV5056 C2152902) LCSC-IDs + DRV5056-Pinout DS-bestätigt
+- ⏳ Fehlend für 10: Gateron-LP-Switch/Stabilizer-Beschaffungskanal (Keyboard-Markt, kein LCSC), Polymer-Cap-IDs (r18.12), 220µF/10V-MLCC, Cell/Modifier-LED-Stock-Check, Mesh-Hersteller (ADR-0007)
 
 ### PCB Layout — 0 / 10
 - ⏳ Existiert nicht. Pfad zu 10: Stack-Up → Placement → Routing → DRC → Gerber-Export
@@ -81,10 +81,11 @@ FP-Verify 9→10, BOM 8→8.5, Mechanical 6→7 (3D-Lib), Cell-Mechanik 5→7
 - ✅ r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + `mechanical/3d_models/MANIFEST.md` mit Höhen-Tabelle — CAD-Abstimmung kann starten
 - ⏳ Fehlend für 10: `mechanical_coordinates.md`-Rewrite (IMG_9713 + EC11E-Höhen + Plate), Enclosure-CAD, Speaker/LCD/Switch-CAD von extern holen
 
-### Cell-Mechanik (Piano-Feel) — 7 / 10
-- ✅ Architektur final (ADR-0013): Gateron-LP-Magnetic + Hall-Sensor, Velocity = dPos/dt, lange Caps + LP-Stabilizer (Spacebar-Prinzip)
-- ✅ Schematic umgestellt (r18.14): 1×3-Hall-Sites + Serien-RC an unveränderten ADC-Pins
-- ⏳ Fehlend für 10: Sensor-Pinout-Verify (DRV5056-DS), Plate-Cutout-CAD, Magnet-/Abstands-Messung am Muster, Velocity-Curve-Tuning auf realer Hardware
+### Cell-Mechanik (Piano-Feel) — 8 / 10
+- ✅ Architektur final (ADR-0013): Gateron-LP-Magnetic + Hall-Sensor, Velocity = Banddurchlaufzeit, lange Caps + LP-Stabilizer (Spacebar-Prinzip)
+- ✅ Schematic (r18.14) + Sensor-Pinout DS-verifiziert (DRV5056 C2152902)
+- ✅ Velocity-Modell IMPLEMENTIERT (r18.15): `cells.{h,c}` + Engine-Pfad + 25-Check-Test + Sim-Spiegelung
+- ⏳ Fehlend für 10: Plate-Cutout-CAD, Magnet-/Abstands-Messung am Muster, Velocity-Curve-Feintuning auf realer Hardware
 
 ### Speaker-Cover (Dust-Mesh) — 3 / 10
 - ✅ Entscheidung dokumentiert (ADR-0007)
@@ -100,9 +101,9 @@ FP-Verify 9→10, BOM 8→8.5, Mechanical 6→7 (3D-Lib), Cell-Mechanik 5→7
 - ✅ Real-README, PROJECT_MAP, PROJECT_STATUS, REPO_STRUCTURE, CONTRIBUTING, 4 Onboarding-Docs, 8 ADRs, ERC/DRC-Checklist, FP_VERIFY-Log
 - ⏳ Fehlend für 10: SPEC v0.7 ist auf r18.7 — r18.8 muss alle Cell/LED/Speaker-Updates reflektieren
 
-### Test-Abdeckung (host) — 9 / 10
-- ✅ 12+ Suiten grün; Bench-Test mit 50+ Checks für Display-Logik
-- ⏳ Fehlend für 10: Velocity-Sampling-Test (kommt mit Cell-Velocity-Implementation)
+### Test-Abdeckung (host) — 9.5 / 10
+- ✅ 13 Suiten grün; Bench-Test mit 50+ Checks; r18.15: `test_cells.c` (25 Checks) + End-to-End-Velocity-Check in der Engine-Suite
+- ⏳ Fehlend für 10: ADC-Normalisierungs-/Driver-Layer-Test (kommt mit STM32-HAL)
 
 ### Repo-Struktur — 8 / 10
 - ✅ Phase 1 done (Navigation, Onboarding, ADRs)

@@ -731,6 +731,28 @@ ADC-INP-Kanal-Nummern werden in Phase 4 beim ADC-Init gegen DS12110 Table 8
 (ANA-Spalte) verifiziert. Die Cells hängen damit NICHT mehr am MCP23017 —
 GPA0-4 sind frei (Rev-B-Reserve).
 
+**Velocity-Modell (Firmware, ADR-0013 — implementiert r18.15):** Der ADC-Wert
+wird auf eine normierte Stem-Position `pos` ∈ [0,1] skaliert (0 = Ruhe, 1 =
+Bottom-Out). Die Velocity entsteht aus der **Zeit, in der der Stem das
+Velocity-Band durchquert** — exakt wie bei einer echten Hall-Keybed:
+
+| Konstante | Wert | Bedeutung |
+|---|---|---|
+| `CELL_VEL_BAND_LO` | 0.15 | Start der Velocity-Zeitmessung |
+| `CELL_VEL_BAND_HI` | 0.55 | Trigger-Punkt — Note-On feuert hier |
+| `CELL_POS_RELEASE` | 0.30 | Note-Off bei Rückzug darunter (Hysterese) |
+| `CELL_T_FAST_MS` | 6 ms | Banddurchlauf ≤ → Velocity 1.0 |
+| `CELL_T_SLOW_MS` | 70 ms | Banddurchlauf ≥ → Velocity 0.0 |
+| `CELL_AMP_MIN/MAX` | 0.05 … 0.22 | Velocity → Voice-Peak-Amplitude |
+| `CELL_AMP_GAMMA` | 0.8 | Kurve (<1 spreizt das leise Ende) |
+
+Quelle der Wahrheit: `firmware-c-next/include/cells.h` + `src/cells.c`
+(host-getestet, `test/test_cells.c`), in die Engine eingebunden über
+`engine_cell_sample(cell, pos, now_ms)`. Dieselben Konstanten sind im
+Web-Sim (`tools/display_sim.html`) gespiegelt (sichtbare Velocity-Anzeige).
+Aftertouch und ein einstellbarer Trigger-Punkt sind später reine
+Firmware-Erweiterungen (analoge Kurve liegt vor).
+
 ### 5.7 USB-OTG-FS (built-in, kein externer PHY)
 
 | Pin | Port | AF | Funktion | Net |

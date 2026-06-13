@@ -73,6 +73,26 @@ Phase 6 **nach** Datasheet-Pinout-Check (nicht vorher raten — r18.6-Lektion).
   Mechanik-Schnittstelle (LP-Stem-Kreuz + Stabilizer-Raster) ist Standard im
   Keyboard-Ökosystem → Community-CAD verfügbar.
 
+## Firmware-Stand (implementiert r18.15)
+
+Das Velocity-Modell ist in Code und host-getestet, unabhängig von der noch
+fehlenden Hardware:
+
+- `include/cells.h` + `src/cells.c` — per-Cell-State-Machine (REST→ARMED→HELD),
+  Velocity aus der Banddurchlaufzeit (BAND_LO→BAND_HI), Mapping auf
+  Voice-Amplitude. Konstanten siehe SPEC §5.6a. Pure Logic, kein SDK.
+- `engine_cell_sample(cell, pos, now_ms)` — Engine-Einstieg: PRESS spielt den
+  Akkord-Grundton der Cell (harmonic brain) mit velocity-skalierter Amplitude,
+  RELEASE stoppt ihn. Auf STM32 ruft die ADC-Schleife das; der RP2040-Bench
+  kann Positionen aus den Digital-Buttons synthetisieren.
+- `test/test_cells.c` (25 Checks) + ein End-to-End-Check im Engine-Test
+  (schneller Druck messbar lauter als langsamer: Peak 8156 vs 4459).
+- Web-Sim spiegelt die Kurve sichtbar (Klick-Höhe = Velocity, grüner Fill +
+  0–127-Readout).
+
+Offen bleibt nur das, was echte Hardware braucht: Velocity-Curve-Feintuning
+am Muster, Z-Abstand Magnet↔Sensor, Trigger-Punkt-Geschmack.
+
 ## Konsequenzen
 
 **Positiv:** Piano-Feel-Ziel aus ADR-0006 bleibt erreicht (sogar präziser);
