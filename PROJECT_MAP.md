@@ -12,7 +12,7 @@ The honest answer to "where is the X?" — by topic and by role.
 | Where is the **schematic**? | [`field-ambience-current/kicad/field_ambience.kicad_sch`](field-ambience-current/kicad/) (+ 7 child sheets) |
 | Where will the **PCB layout** live? | Same folder, as `field_ambience.kicad_pcb` — doesn't exist yet, see [`PCB_LAYOUT_STATUS.md`](field-ambience-current/PCB_LAYOUT_STATUS.md) |
 | Where is the **schematic generator**? | [`field-ambience-current/kicad/generate_kicad_project.py`](field-ambience-current/kicad/generate_kicad_project.py) — the source of truth, all `.kicad_sch` files are output |
-| Where is the **BOM**? | Inline in the schematic (every symbol has MPN/LCSC/Manufacturer properties). No flat BOM CSV — that gets generated from KiCad once layout exists |
+| Where is the **BOM**? | [`BOM_MASTER.md`](BOM_MASTER.md) — kanonische Sourcing-Sicht (Link / Footprint-Quelle / 3D pro Komponente). Inline im Schematic-Generator stehen die LCSC-/MPN-Properties (technische Quelle) |
 | Where are **datasheets**? | [`field-ambience-current/kicad/datasheets/`](field-ambience-current/kicad/datasheets/) — current parts. `datasheets/legacy/` for replaced/wrong-variant PDFs |
 | Where are **mechanical coordinates**? | [`mechanical/coordinates/mechanical_coordinates.md`](mechanical/coordinates/mechanical_coordinates.md) — needs update for STM32 layout |
 | Where are **manufacturing outputs** (Gerbers, CPL)? | Not generated yet. They will live in `field-ambience-current/kicad/manufacturing/` once layout exists |
