@@ -29,7 +29,7 @@ und die r9/r10/r14/r15-Pico-Ära-Sektionen.
 
 | Element | Maß | Notiz |
 |---|---|---|
-| Gehäuse Außenmaß | **260 × 110 × 19.6 mm** (ohne Encoder-Knöpfe) | Knöpfe addieren ~10 mm → ~30 mm Gesamt |
+| Gehäuse Außenmaß | **260 × 110 × 21.6 mm** (ohne Encoder-Knöpfe) | Knöpfe addieren ~10 mm → ~32 mm Gesamt. **r18.17b: +2 mm gegenüber 19.6 mm — der reale Speaker-Treiber ist 11.5 mm tief (nicht 9 mm), siehe §7** |
 | PCB-Outline | **252 × 102 × 1.6 mm**, 4-Layer FR4 | 4 mm Bezel auf jeder Seite zwischen PCB-Edge und Gehäuse-Außen |
 | Edge-Keepout (PCBA-Rail-Bereich) | 3 mm rundherum, „weich" | Für Pick&Place; in Phase 6 final |
 | Bauteil-zu-Edge | ≥ 2 mm | DRC-Regel; ausgenommen Edge-Connectors (J1, Audio-Jack) |
@@ -42,7 +42,7 @@ Anordnung mit Cells + Modifier-Reihe + 4 Eckencodern + 2 Speaker-Kammern;
 260 × 110 ist die kleinste rechteckige Hülle, in die das IMG_9713-Layout mit
 ≥ 12 mm Pitch zwischen Cells und ≥ 8 mm Pitch zwischen Modifier-Buttons
 unterbringbar ist und in die beide Speaker-Kammern noch das Mindestvolumen
-(20 cm³ pro Seite, sealed) bekommen. Final-Maß = Industrial-Design-Sprint.
+(≥ 15 cm³ pro Seite, sealed) bekommen. Final-Maß = Industrial-Design-Sprint.
 
 ## 2. Z-Stack-Up (aus ADR-0011)
 
@@ -53,11 +53,12 @@ unterbringbar ist und in die beide Speaker-Kammern noch das Mindestvolumen
 2.5 mm Top-Panel (ABS/PC)                           │  Aussparungen siehe §5
    ├────────────────────────────────────────────────┤
 12  mm Encoder-Schaft (durch Bohrung Ø 7 mm)        │  Innenraum
-       Andere Komponenten ≤ 8 mm hoch in dieser Zone│  (siehe §6 Höhen-Zonen)
+       Andere Komponenten ≤ 8 mm hoch in dieser Zone│  (siehe §7 Höhen-Zonen)
    ├────────────────────────────────────────────────┤
- 8  mm Top-Komponenten-Zone (über PCB):             │
+12  mm Above-PCB-Raum (PCB-top → Panel-innen):      │
         - Encoder-Body 7 mm                         │
         - Cell-Switch + Cap-Stack ~8 mm             │
+        - Speaker-Treiber 11.5 mm (hängt v. Panel)  │  ← treibt die 12-mm-Höhe
         - USB-C 3.2 mm, LCD-Modul 3.5 mm            │
         - Polymer-Cap 2.0 mm (ADR-0011)             │
    ├════════════════════════════════════════════════┤
@@ -67,10 +68,22 @@ unterbringbar ist und in die beide Speaker-Kammern noch das Mindestvolumen
    ├────────────────────────────────────────────────┤
 2.5 mm Bottom-Panel                                 │
    └────────────────────────────────────────────────┘
-   Gehäuse-Innenhöhe  14.6 mm
-   Gehäuse-Außenhöhe  19.6 mm  (ohne Knöpfe)
-   Gesamt mit Knöpfen ~30 mm
+   Gehäuse-Innenhöhe  16.6 mm
+   Gehäuse-Außenhöhe  21.6 mm  (ohne Knöpfe)
+   Gesamt mit Knöpfen ~32 mm
 ```
+
+> **r18.17b-Änderung:** Above-PCB-Raum 10 → **12 mm**, weil der reale
+> PUI-AS04008PS-Treiber **11.5 mm tief** ist (Datenblatt-Korrektur, war
+> fälschlich 9 mm angenommen). Bei 10 mm Raum wäre der von der Top-Platte
+> hängende Treiber 1.5 mm in die PCB-Ebene kollidiert. 12 mm → 0.5 mm
+> Luft. Allgemeine Top-Komponenten bleiben ≤ 8 mm; nur Encoder-Schaft
+> (durchstoßend) und Speaker-Treiber nutzen die volle Höhe.
+> **Alternative ohne +2 mm Höhe** (falls 19.6 mm zwingend): lokaler
+> Ø-24-mm-PCB-Relief-Cutout je Speaker für den Magnet-Boss — verworfen,
+> weil ohne Treiber-Mechanik-Zeichnung (Datenblatt-PDF aktuell 503) die
+> Magnet-Boss-Geometrie unbekannt ist; +2 mm Höhe ist die robuste,
+> geometrie-unabhängige Lösung.
 
 ## 3. Top-Side Komponenten (alle Body-Center)
 
@@ -202,7 +215,12 @@ Beide Service-Only, **kein** Frontpanel-Cutout — Druck via Pin-Spitze durch
 | Ref | X (mm) | Y (mm) | Footprint |
 |---|---|---|---|
 | SW11 (Reset) | **240** | **30** | field_ambience:SW_TS1088_SMD |
-| SW_BOOT | **245** | **45** | field_ambience:SW_TS1088_SMD |
+| SW_BOOT | **245** | **72** | field_ambience:SW_TS1088_SMD |
+
+> r18.17b: SW_BOOT von (245, 45) → **(245, 72)** verschoben — die alte Position
+> lag im rechten Speaker-Treiber-Keepout (Y 34…66, §7). Y=72 ist außerhalb
+> (2.5 mm zum Keepout-Rand), 4.5 mm unter J_BAT (245, 80). SW11 (240, 30) und
+> J4 (245, 15) liegen schon unterhalb des Keepouts.
 
 ### 3.9 Audio-/Power-IC-Cluster (Layout-Constraint aus ADR-0010 + §7)
 
@@ -229,9 +247,12 @@ Boost-Inductor L1 ist aber 4.5 mm — siehe §7).
 | MCP23017 | X 153–163, Y 41–47 | 2.0 mm | Nahe Modifier-LEDs (kurze GPIO-Stubs) |
 | PCA9685 + 220-Ω-LED-Rs | X 165–187, Y 41–47 | 1.0 mm | Nahe Cell-LED-Reihe |
 
-**Speaker-Lötpunkte J6/J7** (PUI AS04008PS Treiber-Kabel, kein PCB-mount):
-zwei 2-Pin-Pads direkt am Treiber-Mitte-Footprint (X ≈ 28 / X ≈ 224, Y ≈ 50),
-maximal flach (Pad-Höhe ≤ 0.5 mm).
+**Speaker-Lötpunkte J6/J7** (PUI AS04008PS, Footprint 40 × 28.3 mm, 11.5 mm
+tief, **Löt-Eyelets — keine Kabel ab Werk**; Hand-Assembly, kein PCB-Mount,
+kein JLC-Bestücken): zwei 2-Pin-Pads je Speaker am Rand des Keepouts
+(X ≈ 7 / X ≈ 49 bzw. 203 / 245, Y ≈ 50), maximal flach (≤ 0.5 mm). Draht vom
+Pad zum Treiber-Eyelet wird von Hand gelötet (siehe ADR-0007, „-WR" =
+Water-Resistant, nicht Wire).
 
 ### 3.10 Battery JST-PH 2.0 J_BAT (S2B-PH-SM4-TB, C295747)
 
@@ -292,19 +313,24 @@ Koordinaten (Top-Panel und PCB sind kongruent angeordnet).
 | Modifier-LED-Bohrungen LED6–LED10 | je Ø 2 mm | gleiche X wie SW6–10 | 66 |
 | Cell-Cutouts (Switch-Frame) | je 14 × 14 mm | 82, 104, 126, 148, 170 | 26 |
 | Cell-LED-Bohrungen LED11–LED20 | je Ø 2 mm | siehe §3.4 | 40 |
-| Dust-Mesh-Aussparung links | oval **50 × 30 mm** mit 0.3-mm-Mesh-Inset | 28 | 50 |
-| Dust-Mesh-Aussparung rechts | oval **50 × 30 mm** | 224 | 50 |
+| Dust-Mesh-Aussparung links | oval **36 × 24 mm** mit 0.3-mm-Mesh-Inset | 28 | 50 |
+| Dust-Mesh-Aussparung rechts | oval **36 × 24 mm** | 224 | 50 |
 
-> Outline-Check r18.16: Top-Panel-Außenmaß 260 × 110 mm, PCB 252 × 102 mm
-> mittig → Top-Panel-X-Bereich in PCB-Koordinaten = −4 … 256.
-> Mesh-L X = 28 ± 25 = 3 … 53 → 7 mm Bezel zur Außenkante, 3 mm Sicherheits-
-> abstand zur PCB-Edge. Mesh-R analog.
+> **Cutout-Sizing r18.17b:** Der reale Treiber-Footprint ist **40 × 28.3 mm**
+> (Datenblatt-Korrektur, war fälschlich 40 × 40). Ein 50 × 30-Cutout wäre
+> GRÖSSER als der Treiber → kein Material für den Rahmen-Rim zum Abdichten.
+> 36 × 24 mm lässt **2 mm Rim-Seat** rundum (Treiber-Rim 40×28.3 presst gegen
+> Panel-innen um die Öffnung). Mesh deckt die Öffnung staubdicht.
+> Outline-Check: Top-Panel 260 × 110, PCB 252 × 102 mittig → Panel-X-Bereich
+> −4 … 256. Mesh-L X = 28 ± 18 = 10 … 46, Mesh-R X = 224 ± 18 = 206 … 242 —
+> beide gut innerhalb Panel + ≥ 10 mm zu jeder Außenkante.
 
-**Speaker-Kammer-Volumen** (geschlossen, sealed):
-- Links: ~3.5 × 7 × 1.5 cm ≈ 37 cm³
-- Rechts: ~3.5 × 7 × 1.5 cm ≈ 37 cm³
-
-Beide über dem Mindestvolumen für PUI-AS04008PS-Mid-Range-Closed-Box (ADR-0011).
+**Speaker-Kammer-Volumen** (geschlossen, sealed): Treiber-Footprint
+40 × 28.3 mm, Treiber-Tiefe 11.5 mm. Brutto-Footprint-Volumen ≈ 15 cm³;
+durch Kammerwände im Bottom-Case auf ~20–30 cm³ erweiterbar (Wände etwas
+weiter als der Treiber-Footprint). Für einen Sealed-F0=380-Hz-Mid-Range-
+Treiber unkritisch (ADR-0011/SPEC §8: Tiefbass kommt ohnehin nur über
+Line-Out; die Kammer ist nur Roll-Off-Punkt, kein Klang-Charakter).
 
 ---
 
@@ -331,21 +357,23 @@ Standoff-Z-Slot aus §2.
 
 | Bereich | Z-Limit über PCB | Quelle |
 |---|---|---|
-| Globale Top-Zone | ≤ 8 mm | ADR-0011 |
+| Globale Top-Zone | ≤ 8 mm | ADR-0011 (above-PCB-Raum 12 mm, 4 mm Reserve) |
 | Ausnahme „Encoder-Schaft" | bis 19 mm (durchstoßend) | EC11E-Schaft + Knopfdurchgang |
-| **Speaker-Treiber-Zone L** (X 8…48, Y 22…72) | **≤ 4 mm** auf PCB | Treiber hängt 5 mm vom Top-Panel; Hangtiefe-Restraum 9.6 mm minus 5-mm-Treiber − 0.6-mm-Sicherheit = 4 mm |
-| **Speaker-Treiber-Zone R** (X 204…244, Y 22…72) | **≤ 4 mm** auf PCB | s. o. |
+| **Speaker-Treiber-Footprint L** (X 7…49, Y 34…66, = 42×32 um Treiber 40×28.3) | **Bauteil-Keepout** (nur Traces/Vias, Bauteile ≤ 0.4 mm) | Treiber hängt 11.5 mm vom Panel → nur 0.5 mm über PCB. Direkt darunter keine Bauteile. |
+| **Speaker-Treiber-Footprint R** (X 203…245, Y 34…66) | **Bauteil-Keepout** | s. o. |
 | Bottom-Side | ≤ 1 mm (Reserve, Prototyp blank) | Vereinfacht Reflow auf eine Seite |
 
 C_BULK-Polymer (470 µF, ~2 mm) erfüllt die 8-mm-Zone (ADR-0011 r18.12); der
 alte 10.5-mm-Alu-Elko ist retired.
 
-**Komponenten in den Speaker-Treiber-Zonen sind explizit erlaubt**, solange
-ihre Z-Höhe ≤ 4 mm. SMD-Passives (0603/0805), LQFP/SOIC/SSOP-ICs (≤ 2 mm),
-SOT-23/SOT-89-5 (≤ 1.5 mm), SMA-Dioden, Footprint-Pads — alles OK. Verboten
-in dieser Zone: L1 Boost-Inductor (4.5 mm), JST-PH-Connector (6 mm),
-Audio-Klinke (5 mm Body über Edge), Encoder-Body (7 mm), Cell-/Modifier-
-Switches.
+**r18.17b-Vereinfachung:** Mit dem auf 12 mm angehobenen Above-PCB-Raum (§2)
+ist die einzige Speaker-Höhen-Restriktion der **42 × 32 mm Bauteil-Keepout
+direkt unter jedem Treiber-Footprint** (nur 0.5 mm Luft zum hängenden
+Treiber). Außerhalb dieses Keepouts gilt überall die normale 8-mm-Zone — die
+frühere „≤ 4 mm in 40×50-Zone"-Regel (auf der 9-mm-Treiber-Fehlannahme
+basierend) entfällt. L1 Boost (4.5 mm) und JST-PH (6 mm) bleiben dennoch
+außerhalb der Keepouts platziert (siehe §3.9/§3.10), brauchen aber keine
+Sonderbehandlung mehr.
 
 ---
 

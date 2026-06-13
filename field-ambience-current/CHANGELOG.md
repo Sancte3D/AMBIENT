@@ -4,9 +4,60 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.16** (`mechanical_coordinates.md` komplett neu —
-echte X/Y/Z für alle Top-Side-Komponenten, IMG_9713 + EC11E + Hall + ADR-0011-
-Z-Stack, geometrisch validiert. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.17** (Speaker-Reconciliation: Mesh-Material +
+PUI-Datenblatt-Korrekturen + Z-Kollision behoben. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.17 (2026-06-13) — Speaker: Mesh-Material + Datenblatt-Korrekturen
+
+Komponenten-Recherche zu Dust-Mesh + Speaker. Dabei **zwei Maßfehler** in der
+bisherigen Spec gefunden, einer davon eine mechanische Kollision.
+
+### r18.17a — Positions-Reconciliation (separater Commit)
+
+SPEC §8, ADR-0007 und mechanical widersprachen sich bei Speaker-Grille-Geometrie
+(38 mm rund @ (50,30) vs 36×70 oval vs 50×30 oval). Alle auf den r18.16-Stand
+gezogen, mechanical bleibt Source of Truth.
+
+### r18.17b — Material-Entscheidung + Datenblatt-Korrekturen
+
+**Mesh:** Saati **Acoustex 020–032** (transparente Klasse, ~25–32 g/m²) statt
+des fälschlich notierten „150–200 g/m²" (= Dämpfungs-Klasse, hätte den Treiber
+dumpf gemacht). Rohmesh nicht selbstklebend → PSA-Klebering-Konvertierung via
+**Marian Inc.** für Serie; AliExpress-Klebe-Mesh-Sticker für Prototyp. Kein
+LCSC-Teil für Akustik-Mesh existiert. GORE Acoustic Vent als IP-Option notiert.
+
+**🔴 Speaker-Datenblatt-Korrekturen (PUI AS04008PS-4W-WR-R bleibt):**
+- **Maße 40 × 40 × 9 mm → 40 × 28.3 × 11.5 mm** (rechteckiger Rahmen)
+- **„-WR" = Water-Resistant**, nicht Wire — **Löt-Eyelets, keine Kabel** →
+  Hand-Assembly, kein JLC-Bestücken (JLC führt keinen 40-mm-Kompakt-Treiber)
+- Zweitquelle dokumentiert: Same Sky CMS-402811-28SP (gleicher Footprint,
+  F0=450 Hz)
+
+**🔴 Z-Kollision behoben:** Der reale Treiber ist **11.5 mm tief** (nicht 9).
+Bei 10 mm Above-PCB-Raum wäre der von der Top-Platte hängende Treiber 1.5 mm
+in die PCB-Ebene kollidiert. Fix: Above-PCB-Raum **10 → 12 mm**, Außenhöhe
+**19.6 → 21.6 mm** (geometrie-unabhängig; PCB-Relief-Cutout als Alternative
+verworfen, da Magnet-Boss-Geometrie ohne Datenblatt-Zeichnung unbekannt).
+
+**Mesh-Cutout 50×30 → 36×24 mm** (passt zum realen 40×28.3-Treiber, 2 mm
+Rim-Seat; 50×30 wäre größer als der Treiber gewesen → kein Rim zum Abdichten).
+
+**Speaker-Treiber-Keepout:** statt „≤ 4 mm in 40×50-Zone" jetzt 42×32-Bauteil-
+Keepout direkt unter jedem Treiber-Footprint (0.5 mm Luft). SW_BOOT von
+(245,45) → (245,72) verschoben (lag im rechten Keepout).
+
+### Files
+
+mechanical §1/§2/§5/§7/§3.8/§3.9, ADR-0007 (Decision + Lautsprecher +
+Implementation Plan), ADR-0011 (Höhen-Update-Notiz + Speaker-Höhe),
+SPEC §8 (Treiber-Maße + Terminierung + Zweitquelle + Mechanik-Hinweis).
+Geometrie erneut Python-validiert (0 Konflikte nach SW_BOOT-Move).
+
+Score: Speaker-Cover 3 → 6 (Material + Lieferanten-Pfad fix; offen:
+Akustik-Charakterisierung am Muster, Marian-Quote). Mechanical bleibt 9
+(Kollision war latent, jetzt sauber).
 
 ---
 

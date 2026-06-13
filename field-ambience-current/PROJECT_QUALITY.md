@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-13 (v0.7-r18.16)**
+**Stand: 2026-06-13 (v0.7-r18.17)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -21,16 +21,17 @@
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 9 / 10 | ↑ (r18.16: `mechanical_coordinates.md` echt + geometrisch validiert, Power-Insel verortet, Speaker-Höhen-Constraint) |
 | **Cell-Mechanik (Piano-Feel)** | 8 / 10 | ↑ (r18.15: Velocity-Modell in Firmware implementiert + host-getestet + Engine-Pfad + Sim; offen: Plate-CAD, Muster-Tuning) |
-| **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
+| **Speaker-Cover (Dust-Mesh)** | 6 / 10 | ↑ (r18.17: Mesh-Klasse Acoustex 020–032 + Marian-PSA-Pfad + PUI-Datenblatt-Korrekturen + Z-Kollision behoben) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
 | **Doku / Onboarding** | 10 / 10 | ✅ (r18.13: alle Cross-Refs konsistent nach Phase-2-Moves) |
 | **Test-Abdeckung (host)** | 9.5 / 10 | ↑ (r18.15: 13. Suite test_cells.c + Engine-Velocity-Check) |
 | **Repo-Struktur** | 8 / 10 | ↑ (r18.13: Phase 2 done — Doc-Moves in `mechanical/`, `software/`, `archive/`; Phase 3-5 queued) |
 | **CI / Auto-Validierung** | 8 / 10 | → |
 
-**Gesamt-Manufacturing-Readiness: 6.5 / 10** (Gate 1.5 von 9). r18.16: echte
-Mechanik-Koordinaten (Mechanical 7→9). Verbleibende Hauptlücken bleiben
-hardware-/layout-seitig: Layout 0, DRC 0, Mesh 3.
+**Gesamt-Manufacturing-Readiness: 6.5 / 10** (Gate 1.5 von 9). r18.17: Speaker-
+Cover-Material + Datenblatt-Korrekturen + Z-Kollision behoben (Speaker-Cover
+3→6). Verbleibende Hauptlücken bleiben layout-seitig: **PCB Layout 0, DRC 0** —
+das ist jetzt der einzige große Block vor Gate 2.
 
 ## Was jeder Score bedeutet — und was auf 10 fehlt
 
@@ -88,9 +89,11 @@ hardware-/layout-seitig: Layout 0, DRC 0, Mesh 3.
 - ✅ Velocity-Modell IMPLEMENTIERT (r18.15): `cells.{h,c}` + Engine-Pfad + 25-Check-Test + Sim-Spiegelung
 - ⏳ Fehlend für 10: Plate-Cutout-CAD, Magnet-/Abstands-Messung am Muster, Velocity-Curve-Feintuning auf realer Hardware
 
-### Speaker-Cover (Dust-Mesh) — 3 / 10
-- ✅ Entscheidung dokumentiert (ADR-0007)
-- ⏳ Fehlend für 10: Mesh-Hersteller-Auswahl, Akustik-Charakterisierung, Tooling-Design
+### Speaker-Cover (Dust-Mesh) — 6 / 10
+- ✅ Material fix (r18.17): Saati Acoustex 020–032 (transparent ~25–32 g/m²), PSA-Konvertierung via Marian Inc.; AliExpress-Sticker für Prototyp
+- ✅ Speaker-Datenblatt verifiziert + 3 Korrekturen (40×28.3×11.5, -WR=Water-Resistant, Löt-Eyelets); Zweitquelle Same Sky CMS-402811-28SP
+- ✅ Z-Kollision (11.5 mm Treiber) behoben → Außenhöhe 21.6 mm; Cutout 36×24 passt zum Treiber
+- ⏳ Fehlend für 10: Akustik-Charakterisierung am Muster (Insertion-Loss), Marian-PSA-Quote, Kammer-CAD
 
 ### LED-Logik (Cell + Modifier) — 9 / 10
 - ✅ XOR-Entscheidung dokumentiert (ADR-0008)

@@ -19,22 +19,45 @@ Akustik-Mesh.
 Speaker-Cover wird zu einem **Schwarzakustik-Mesh (Anti-Dust + Schallpass)**
 gewechselt.
 
-Konkret:
+Konkret (Material r18.17b nach Komponenten-Recherche festgelegt):
 
-- Cover-Material: **Akustisches Polyester-Mesh** (z. B. Saati Acoustex,
-  3M C2003F oder gleichwertig), schwarz, ~150-200 g/m² Flächengewicht,
-  hohe Schallpässigkeit (-1 bis -2 dB Insertion-Loss bei 100 Hz - 8 kHz)
-- Form: **Ovale Aussparung im Frontpanel** (50 × 30 mm pro Seite, r18.16-
-  Mechanik-Koordinaten — die ursprüngliche 36×70-Angabe galt für den alten
-  333×143-Outline und ist retired; maßgeblich ist
-  `mechanical/coordinates/mechanical_coordinates.md` §5), nicht rund — passt
-  zum Industrial Design
+- **Cover-Material: Saati Acoustex 020–032** (präzisionsgewebtes
+  Polyester-Monofilament, schwarz). Das ist die transparente Speaker-Cover-
+  Klasse:
+
+  | Grade | Akust. Impedanz | Poren | Offene Fläche | Dicke | Gewicht |
+  |---|---|---|---|---|---|
+  | Acoustex 020 | 20 Rayls | 68 µm | 38 % | 62 µm | 32 g/m² |
+  | Acoustex 032 | 32 Rayls | 38 µm | 31 % | 48 µm | 25 g/m² |
+
+  > **Korrektur:** Die frühere Angabe „~150–200 g/m²" war FALSCH — das ist eine
+  > Saati-**Dämpfungs**-Klasse (080/115/155), die den Treiber dumpf machen würde.
+  > Für eine Grille (Schallaustritt) gilt die transparente Klasse 020–032
+  > (~25–32 g/m²). 3M-Akustik-Mesh wäre eine gleichwertige Alternative.
+- **Selbstklebend (PSA):** Acoustex-Rohmesh ist **nicht** selbstklebend. Für
+  die Serie wird es von einem Konverter (**Marian Inc.**, Standard-Saati-
+  Konverter) gestanzt und mit einem **PSA-Klebering** (Kleber nur am Rand,
+  Mitte atmet) laminiert → fertiges selbstklebendes Cover-Teil.
+- **Prototyp-Pfad (erste 5–10 Einheiten):** selbstklebende „Phone-Speaker-
+  Dustproof-Mesh"-Sticker (AliExpress/Amazon, schwarz, 20–200 Stück für
+  wenige Euro), 36×24-Oval ausstanzen. Kein Hard-Tooling — deckt sich mit dem
+  „kein Hard-Tooling für erste Einheiten"-Plan unten.
+- **LCSC/Mouser/Digikey führen KEIN Akustik-Mesh** — Mesh-Beschaffung läuft
+  über Saati→Marian (Serie) oder AliExpress-Sticker (Prototyp).
+- Form: **Ovale Aussparung 36 × 24 mm pro Seite** (maßgeblich
+  `mechanical/coordinates/mechanical_coordinates.md` §5; passt zum realen
+  40×28.3-Treiber mit 2 mm Rim-Seat — die 50×30- und 36×70-Werte früherer
+  Revisionen sind retired).
 - Mesh wird zwischen Frontpanel und Speaker-Frame **eingeklebt oder
   thermofixiert** (Mesh-zu-Plastik-Bond, Standard-Lautsprecher-Tooling)
-- Innerer Speaker-Mount unverändert: PUI AS04008PS bleibt, 40 mm runder
-  Lautsprecher-Frame **dahinter** zentriert in der ovalen Aussparung
-- Innenraum: Bass-Reflex oder Closed-Box je Enclosure-Volumen — gehört in
-  Mechanical-CAD-Phase
+- Innenraum: **Closed-Box** (sealed, ADR-0011/SPEC §8 — kein Reflex bei
+  F0=380 Hz), ~20–30 cm³ pro Kanal.
+
+### Optionale Alternative (falls IP-Schutz gewünscht)
+
+**GORE Acoustic Vent** (ePTFE-Membran, selbstklebend, IP-rated) statt
+gewebtem Mesh — bessere Wasser-/Staub-Dichtheit bei gleichem Akustik-Verlust,
+höhere Kosten. Nur nötig, wenn das Gerät eine IP-Klasse bekommen soll.
 
 ## Consequences
 
@@ -52,17 +75,44 @@ Konkret:
 
 ## Implementation Plan
 
-| Phase | Was |
-|---|---|
-| Mechanical CAD | Frontpanel-Aussparung 36×70 mm ovale, Mesh-Sitz-Tasche (0.3 mm Versenkung) |
-| Component Review | Mesh-Hersteller-Vergleich (Saati Acoustex, 3M Akustik-Tape, Pyramid Acoustic), Akustik-Specs verifizieren |
-| Prototype | Stanz-Tool oder Cricut-Cut für erste 5-10 Einheiten — kein Hard-Tooling nötig |
+| Phase | Was | Status |
+|---|---|---|
+| Mechanical CAD | Frontpanel-Aussparung 36×24 mm oval, Mesh-Sitz-Tasche (0.3 mm Versenkung) | ✅ in `mechanical_coordinates.md` §5 |
+| Component Review | Mesh-Klasse + Lieferant + Speaker-Verifikation | ✅ r18.17b: Acoustex 020–032 + Marian-PSA + PUI-Korrekturen |
+| Prototype | AliExpress-Klebe-Mesh-Sticker, 36×24-Oval ausstanzen — kein Hard-Tooling | ⏳ bei Proto-Bau |
+| Production | Marian-PSA-Stanzteil (Saati Acoustex 020–032) | ⏳ vor Serie |
+| Akustik-Charakterisierung | Insertion-Loss am realen Muster messen (Volume-Kalibrierung) | ⏳ Bring-Up |
+
+## Lautsprecher — bleibt PUI, aber Spec-Korrekturen (r18.17b)
+
+**Treiber bleibt PUI AS04008PS-4W-WR-R** — 2026 aktiv und gut lagernd
+(DigiKey ~1600, Mouser ~500 Stück), niedrigstes F0 (380 Hz) seiner Klasse,
+passt zum Ambient-Charakter. **Aber drei Datenblatt-Korrekturen:**
+
+| Was | Falsch (bisher) | Korrekt |
+|---|---|---|
+| Maße | 40 × 40 × 9 mm | **40 × 28.3 × 11.5 mm** (rechteckiger Rahmen) |
+| „-WR"-Suffix | (als „Wire" gelesen) | **Water-Resistant** (behandelter Konus) |
+| Terminierung | (Kabel angenommen) | **Löt-Eyelets, KEINE Kabel** — Draht selbst anlöten |
+
+**Assembly-Konsequenz:** Der Treiber ist **Hand-Assembly, kein PCB-/JLC-
+Bestücken** (Eyelet-Through-Body, nicht Pick&Place). JLCPCB führt überhaupt
+keinen 40-mm-8-Ω-2-W-Kompakt-Treiber in der Bestück-Bibliothek (nur große
+Visaton-HiFi-Chassis) — der Speaker ist in jedem Fall ein separates
+Hand-Lötteil an den PAM8403-Ausgang.
+
+**Mechanik-Konsequenz** (11.5 mm Tiefe statt 9 mm): Gehäuse-Außenhöhe
+19.6 → 21.6 mm (Above-PCB-Raum 10 → 12 mm), damit der von der Top-Platte
+hängende Treiber nicht in die PCB-Ebene kollidiert. Details
+`mechanical_coordinates.md` §2/§7.
+
+**Dokumentierte Zweitquelle:** **Same Sky (CUI) CMS-402811-28SP** — gleicher
+40 × 28.3 × 11.5-Footprint, 8 Ω, 2 W, Löt-Eyelet, F0 = 450 Hz (etwas weniger
+Tiefgang als PUI → PUI bleibt erste Wahl). DigiKey/Mouser-lagernd.
 
 ## Was bewusst NICHT geändert wird
 
-- **Lautsprecher selbst:** PUI AS04008PS bleibt (40 mm, 8 Ω, 4 W, mid-range
-  voiced — passt zum Ambient-Sound-Charakter)
-- **Audio-Path:** PCM5102A → PAM8403 → Speaker-Klemmen bleibt
+- **Audio-Path:** PCM5102A → PAM8403 → Speaker-Eyelets bleibt
 - **Stereo-Trennung:** ein Speaker links, einer rechts — bleibt
 
 ## Related

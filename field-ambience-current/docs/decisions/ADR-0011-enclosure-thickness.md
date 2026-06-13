@@ -19,7 +19,7 @@ Bisher in `../../mechanical/coordinates/mechanical_coordinates.md` ohne harte Z-
 | **USB-C TYPE-C-31-M-17** | **7.5 mm** Connector + 7 mm Mate | HRO M-17 Drawing |
 | **SW6-10 HX 12×12×7.3** | **7.3 mm** | LCSC C36498966 |
 | **J9 JST-PH 2.0 Battery** | **6.0 mm** | JST S2B-PH-SM4-TB |
-| **PUI AS04008PS Speaker** | **5.0 mm** Treiber-Frame | PUI Datasheet |
+| **PUI AS04008PS Speaker** | ~~5.0 mm~~ → **11.5 mm Treiber-Tiefe** (r18.17b-Korrektur; Footprint 40×28.3) | PUI/DigiKey/Mouser |
 | **HC-49/US-SMD Crystal Y1** | **4.2 mm** | ABRACON ABLS Drawing |
 | **LCD-Modul ST7789 (Adafruit 5394)** | **3.5 mm** (über Header-Standoff) | Adafruit Drawing |
 | **L1 Boost-Inductor 0630** | **3.0 mm** | SWPA6045S2R2MT |
@@ -105,7 +105,16 @@ TOTAL: gleiches Profil wie B, Speaker eingeschwenkt
 
 ## Entscheidung
 
-**Variante B**, mit folgenden Detail-Maßen:
+> **r18.17b-Update:** Die unten stehende Tabelle ist der ursprüngliche
+> 19.6-mm-Stand. Nach der Datenblatt-Korrektur (realer Speaker-Treiber
+> **11.5 mm tief**, nicht 5–9 mm) wurde der Über-PCB-Bereich **8 → 12 mm**
+> und damit die Außenhöhe **19.6 → 21.6 mm** angehoben — sonst kollidiert der
+> von der Top-Platte hängende Treiber mit der PCB-Ebene. Maßgeblich ist jetzt
+> `mechanical/coordinates/mechanical_coordinates.md` §2. Allgemeine
+> Top-Komponenten bleiben ≤ 8 mm; nur Encoder-Schaft und Speaker-Treiber
+> nutzen die volle Höhe.
+
+**Variante B**, mit folgenden Detail-Maßen (ursprünglicher 19.6-mm-Stand):
 
 | Zone | Dicke | Notiz |
 |---|---|---|

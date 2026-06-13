@@ -1141,10 +1141,25 @@ Verhindert „Klick"-Geräusch beim An- und Ausschalten.
 
 ### Speakers (r14 Acoustic-v2 — Sealed + Top-Firing, 2026-06-02)
 
-2× **PUI AS04008PS-4W-WR-R**, 40×40×9mm, **8 Ω** (Datenblatt — korrigiert
-gegenüber früheren Spec-Fassungen die fälschlich 4 Ω angaben), 2 W RMS / 4 W max,
-**F0 = 380 Hz ± 20 %**, Frequenzbereich 200 Hz – 20 kHz, 84 dB @ 1 W/50 cm.
+2× **PUI AS04008PS-4W-WR-R**, **40 × 28.3 × 11.5 mm** (r18.17b-Korrektur — war
+fälschlich 40×40×9), **8 Ω**, 2 W RMS / 4 W max, **F0 = 380 Hz ± 20 %**,
+Frequenzbereich 200 Hz – 20 kHz, 84 dB @ 1 W/50 cm. **„-WR" = Water-Resistant**
+(behandelter Konus), Terminierung **Löt-Eyelets, keine Kabel ab Werk** →
+Hand-Assembly, kein JLC-Bestücken. 2026 aktiv lagernd (DigiKey/Mouser).
 Quelle: [PUI Audio Datenblatt](https://puiaudio.com/file/specs-AS04008PS-4W-WR-R.pdf).
+
+**Zweitquelle (dokumentiert):** Same Sky (CUI) **CMS-402811-28SP** — gleicher
+40 × 28.3 × 11.5-Footprint, 8 Ω, 2 W, Löt-Eyelet, F0 = 450 Hz (etwas weniger
+Tiefgang; PUI bleibt erste Wahl).
+
+**Dust-Mesh-Cover (ADR-0007):** Saati Acoustex 020–032 (transparent, ~25–32
+g/m²), PSA-Klebering-Konvertierung via Marian Inc. für Serie; AliExpress-
+Klebe-Mesh für Prototyp. Ovaler Frontpanel-Cutout 36 × 24 mm (passt zum
+40×28.3-Treiber, 2 mm Rim-Seat).
+
+**Mechanik-Hinweis (11.5 mm Tiefe):** Gehäuse-Außenhöhe 21.6 mm (war 19.6) —
+der von der Top-Platte hängende Treiber braucht 12 mm Above-PCB-Raum + 42×32-
+Bauteil-Keepout je Treiber-Footprint. Details `../mechanical/coordinates/mechanical_coordinates.md` §2/§7.
 
 **Akustik-Konzept: Sealed Box + Top-Firing (kein Bass-Reflex, kein Passivradiator)**
 
