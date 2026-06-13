@@ -24,8 +24,11 @@ Konkret:
 - Cover-Material: **Akustisches Polyester-Mesh** (z. B. Saati Acoustex,
   3M C2003F oder gleichwertig), schwarz, ~150-200 g/m² Flächengewicht,
   hohe Schallpässigkeit (-1 bis -2 dB Insertion-Loss bei 100 Hz - 8 kHz)
-- Form: **Ovale Aussparung im Frontpanel** (~36 × 70 mm pro Seite), nicht
-  rund — passt zum Industrial Design
+- Form: **Ovale Aussparung im Frontpanel** (50 × 30 mm pro Seite, r18.16-
+  Mechanik-Koordinaten — die ursprüngliche 36×70-Angabe galt für den alten
+  333×143-Outline und ist retired; maßgeblich ist
+  `mechanical/coordinates/mechanical_coordinates.md` §5), nicht rund — passt
+  zum Industrial Design
 - Mesh wird zwischen Frontpanel und Speaker-Frame **eingeklebt oder
   thermofixiert** (Mesh-zu-Plastik-Bond, Standard-Lautsprecher-Tooling)
 - Innerer Speaker-Mount unverändert: PUI AS04008PS bleibt, 40 mm runder

@@ -1153,7 +1153,7 @@ Quelle: [PUI Audio Datenblatt](https://puiaudio.com/file/specs-AS04008PS-4W-WR-R
 | Kammer | **Geschlossen pro Kanal**, Trennsteg L/R im Bottom-Case-Inlay | Einzige sinnvolle Kammerform für einen Treiber mit F0=380 Hz. Reflex-Systeme (Port oder PR) lassen sich physikalisch nicht unter F0 abstimmen — ein PR mit Fb≈330 Hz würde nur eine Resonanzspitze in den unteren Mitten machen, schlimmster Fehlerfall für Drone/Sustain-Audio (One-Note-Boom). Sealed = saubere monotonische Roll-Off, kein Dröhnen. |
 | Treiber-Ausrichtung | **Top-Firing in der Top-Plate**, nicht down-firing | Down-firing nutzt nur Boundary-Coupled-Bass — den dieser Treiber nicht erzeugt (F0=380 Hz). Top-firing maximiert die *einzige* echte Stärke (Mitten/Höhen-Klarheit) durch direkten Schallweg zum Ohr, ohne Tisch-Reflexion und Kammfilter. |
 | Mount | Speaker-Rahmen von unten gegen die Top-Plate, 4× M2 | PCB-Speaker-Cutouts (alt: 41 mm dia bei Y=30) **entfallen** — Treiber sitzen nicht mehr im PCB. Akustik-Kammer wird durch Top-Plate + Bottom-Case + Trennsteg gebildet. |
-| Top-Plate-Grille | 2× Cutout 38 mm dia bei (50, 30) und (270, 30), mit Schutzgitter oder Lochmuster | Schallaustritt direkt nach oben. Cutout < Treiber-Außenmaß (40×40 mm) damit die Membran abgedeckt bleibt. |
+| Top-Plate-Grille | 2× **ovale Dust-Mesh-Aussparung 50 × 30 mm** bei **(28, 50)** und **(224, 50)** (r18.16-Mechanik-Koordinaten), schwarzes Akustik-Mesh statt Lochmuster (ADR-0007) | Schallaustritt direkt nach oben. Cutout-Höhe < Treiber-Außenmaß (40 mm) damit die Membran am Rand abgedeckt bleibt; Mesh schließt die Öffnung staubdicht + akustisch transparent. |
 
 **Realistische akustische Erwartung**: 
 
@@ -1171,11 +1171,14 @@ Wärme im Treiber-Eigenbereich anheben (Firmware-seitig, Engine-Step 11/Master
 oder Engine-Step 8/Bass). Echten Bass *erzeugt* DSP nicht — der Treiber hat
 schlicht keinen Hub unter 200 Hz.
 
-**Mechanik-Konsequenzen** (siehe `mechanical_coordinates.md` §7 r14):
+**Mechanik-Konsequenzen** (siehe `../mechanical/coordinates/mechanical_coordinates.md`
+§3.4/§5/§7, r18.16-Stand):
 - PCB-Speaker-Cutouts entfallen (mehr nutzbare PCB-Fläche im unteren Streifen)
-- Top-Plate bekommt 2× 38 mm Grille-Cutout bei (50, 30) / (270, 30) —
-  identische X/Y wie die alten Speaker-Positionen, daher keine Re-Verifikation
-  gegen Front-Plate-Bezel/OLED/Encoder-Cluster nötig (in r13 schon gemacht)
+- Top-Plate bekommt 2× ovale Dust-Mesh-Aussparung 50 × 30 mm bei (28, 50) /
+  (224, 50) (r18.16-Koordinaten, neuer 252×102-Outline — die alten
+  (50,30)/(270,30) galten für den 333×143-Outline und sind retired)
+- PCB-seitige Speaker-Treiber-Zone hat Höhen-Limit 4 mm (Treiber hängt 5 mm
+  vom Top-Panel; siehe mechanical §7) — L1-Boost-Inductor + JST-PH dort verboten
 - Bottom-Case wird zur reinen Kammer-Rückwand, kein Speaker-Mount mehr,
   keine Port-Ausschnitte, kein Grille-Pattern
 
