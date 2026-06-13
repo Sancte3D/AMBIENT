@@ -4,9 +4,66 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.15** (Cell-Velocity in Firmware: `cells.{h,c}`
-Velocity-Modell aus ADR-0013, Engine-Integration, Host-Test, Web-Sim-Anzeige.
-KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.16** (`mechanical_coordinates.md` komplett neu —
+echte X/Y/Z für alle Top-Side-Komponenten, IMG_9713 + EC11E + Hall + ADR-0011-
+Z-Stack, geometrisch validiert. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.16 (2026-06-13) — Mechanical Coordinates: ehrlicher Rewrite
+
+`mechanical/coordinates/mechanical_coordinates.md` war seit r18.8 nur in §0
+ehrlich, der Rest war Pico/Pi/Choc/FSR/OLED-Müll aus früheren Revisionen.
+Komplette Neuschreibung als Single Source of Truth für Phase 6 (PCB-Layout)
+und Enclosure-CAD.
+
+### Festgelegt
+
+- **Outline**: PCB 252 × 102 × 1.6 mm, Gehäuse 260 × 110 × 19.6 mm (ohne
+  Encoder-Knöpfe → +10 mm Knopf-Erhebung = ~30 mm Gesamthöhe; OP-1-Field-
+  flach pro ADR-0011)
+- **Z-Stack** vollständig aus ADR-0011 übernommen (Bottom-Panel 2.5 + Standoff
+  3 + PCB 1.6 + 8 mm Top-Zone + 12 mm Encoder-Schaft + Top-Panel 2.5)
+- **4 Encoder** in den Ecken (Y=88), Pitch 30 mm zwischen Paaren
+- **Display** ST7789 1.9″ aktiv 40 × 22 mm, Modul-Mitte (126, 84), 4 mm Bezel
+  zur Top-Edge
+- **5 Modifier** identisch HX 12×12, Reihe Y=58, Pitch 14 mm
+- **5 Cells** Gateron-LP-Magnetic, Reihe Y=26, Pitch 22 mm, je 14×14 mm
+  Frontpanel-Cutout
+- **2 Speaker** Dust-Mesh-Aussparung 50 × 30 mm oval, Mitte (28, 50) und
+  (224, 50) — Top-Panel-hängend, PCB darunter mit Höhen-Limit 4 mm
+  (Speaker-Treiber-Zone)
+- **Power-/Audio-/MCU-Insel** komplett im 17 mm hohen Y-Streifen 34…51 mm
+  (zwischen Cell-Body-Top und Modifier-Body-Bottom) — STM32, PCM5102A,
+  PAM8403, C_BULK-Polymer, TPS61089, L1, AP7361C, Y1 Crystal (rechts neben
+  STM32), MCP23017, PCA9685, Backlight-Q2
+- **USB-C** Edge-Bottom-Center (126, 0); Audio + MIDI Edge-Left bei Y=88/66;
+  Battery, SWD, Reset, BOOT0 alle in der rechten Service-Spalte (X ≥ 240)
+- **4 Mounting-Holes** M2.5 bei (12, 6), (240, 6), (12, 96), (240, 96)
+
+### Validierung
+
+Python-Sanity-Checks: alle Bauteile innerhalb PCB-Outline, keine echten
+Bauteil-Bauteil-Überlapps (Y1 Crystal nahe STM32 ist Design-Absicht, AN2867
+≤ 5 mm), kein Bauteil > 4 mm in Speaker-Treiber-Zonen, keine Mounting-Hole-
+Kollision mit Bauteil-Bodies. Kritische Lücken: STM32↔Crystal 2.3 mm,
+Modifier↔STM32 3 mm, Cell-Body↔Power-Cluster 6.6 mm — alle ≥ 2 mm DRC-OK.
+
+### Implizit gelöst
+
+- C_BULK 10.5 mm Konflikt aus ADR-0011 r18.12 (Polymer-Wechsel) jetzt
+  geometrisch verortet: Insel-Y 46…50 mm, ≤ 2 mm hoch.
+- BOOT0 + Reset + SWD ohne Frontpanel-Cutout: Service-Zugang via 2 mm Loch
+  Bottom-Panel.
+- Battery-Pouch 50 × 60 × 9 mm Plan: liegt rechte Hälfte unter PCB, 9050060
+  statt 8050120 (Konflikt mit Speaker-Kammer gelöst).
+
+### Offen (Phase 6 / Industrial-Design)
+
+- Knopf-CAD, finale Außenmaße (±2 mm), Gateron-LP-Cutout 14×14 verifizieren,
+  Plate-Material, Mesh-Lieferant — §10 der Datei zählt sie auf.
+- Score-Impact: Mechanical 7 → 9 (echte Koordinaten + Z-Validierung;
+  10 erst nach Enclosure-CAD-Mockup).
 
 ---
 

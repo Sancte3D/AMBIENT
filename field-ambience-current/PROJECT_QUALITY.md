@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-13 (v0.7-r18.15)**
+**Stand: 2026-06-13 (v0.7-r18.16)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -19,7 +19,7 @@
 | **BOM-Sourcing** | 9 / 10 | ↑ (r18.14: EC11E + Hall-Sensor LCSC-IDs verifiziert + DRV5056-Pinout DS-bestätigt; offen: Gateron-LP, Polymer-Cap, MLCC-220µF/10V) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
-| **Mechanical / Enclosure** | 7 / 10 | ↑ (r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + MANIFEST mit Höhen-Tabelle) |
+| **Mechanical / Enclosure** | 9 / 10 | ↑ (r18.16: `mechanical_coordinates.md` echt + geometrisch validiert, Power-Insel verortet, Speaker-Höhen-Constraint) |
 | **Cell-Mechanik (Piano-Feel)** | 8 / 10 | ↑ (r18.15: Velocity-Modell in Firmware implementiert + host-getestet + Engine-Pfad + Sim; offen: Plate-CAD, Muster-Tuning) |
 | **Speaker-Cover (Dust-Mesh)** | 3 / 10 | ↑ (ADR-0007 erstellt) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
@@ -28,9 +28,9 @@
 | **Repo-Struktur** | 8 / 10 | ↑ (r18.13: Phase 2 done — Doc-Moves in `mechanical/`, `software/`, `archive/`; Phase 3-5 queued) |
 | **CI / Auto-Validierung** | 8 / 10 | → |
 
-**Gesamt-Manufacturing-Readiness: 6 / 10** (Gate 1.5 von 9). r18.15: Cell-Velocity
-in Firmware real (Cell-Mechanik 7→8, Test 9→9.5, Display-Sim 7→8). Verbleibende
-Hauptlücken bleiben hardware-/layout-seitig: Layout 0, DRC 0, Mesh 3.
+**Gesamt-Manufacturing-Readiness: 6.5 / 10** (Gate 1.5 von 9). r18.16: echte
+Mechanik-Koordinaten (Mechanical 7→9). Verbleibende Hauptlücken bleiben
+hardware-/layout-seitig: Layout 0, DRC 0, Mesh 3.
 
 ## Was jeder Score bedeutet — und was auf 10 fehlt
 
@@ -76,10 +76,11 @@ Hauptlücken bleiben hardware-/layout-seitig: Layout 0, DRC 0, Mesh 3.
 ### DRC / Manufacturing — 0 / 10
 - ⏳ Layout-abhängig
 
-### Mechanical / Enclosure — 7 / 10
+### Mechanical / Enclosure — 9 / 10
 - ✅ Z-Budget berechnet (ADR-0011), C_BULK-Konflikt gelöst (r18.12)
-- ✅ r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + `mechanical/3d_models/MANIFEST.md` mit Höhen-Tabelle — CAD-Abstimmung kann starten
-- ⏳ Fehlend für 10: `mechanical_coordinates.md`-Rewrite (IMG_9713 + EC11E-Höhen + Plate), Enclosure-CAD, Speaker/LCD/Switch-CAD von extern holen
+- ✅ r18.14: 3D-STEP-Lib für Z-/Panel-kritische Teile + `mechanical/3d_models/MANIFEST.md` mit Höhen-Tabelle
+- ✅ r18.16: `mechanical_coordinates.md` echt — Outline 252×102, alle X/Y/Z, Power-/Audio-Insel im 17-mm-Y-Streifen, Speaker-Treiber-Zone-Höhen-Constraint, geometrisch validiert (Python-Sanity-Check, 0 Konflikte)
+- ⏳ Fehlend für 10: Enclosure-CAD (FreeCAD/Fusion-Modell), physisches Mockup, Knopf-CAD
 
 ### Cell-Mechanik (Piano-Feel) — 8 / 10
 - ✅ Architektur final (ADR-0013): Gateron-LP-Magnetic + Hall-Sensor, Velocity = Banddurchlaufzeit, lange Caps + LP-Stabilizer (Spacebar-Prinzip)

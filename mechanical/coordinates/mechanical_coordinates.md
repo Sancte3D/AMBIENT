@@ -1,492 +1,403 @@
 # Field Ambience PCB — Mechanical Coordinates
 
-> **🟡 r18.8-Status (2026-06-11)** — IMG_9713-Industrial-Design-Stand
-> verschiebt mehrere Komponenten. Sektionen 3, 4, 5, 6, 7 unten sind
-> **veraltet** (Pico/Pi-Ära) und werden in r18.9 systematisch ersetzt.
-> Maßgebliche neue Stelle vorab: **Abschnitt 0 unten**. Die alten
-> Sektionen bleiben für Diff-Reviewability erhalten.
+**Stand: v0.7-r18.16 (2026-06-13).** Single Source of Truth für PCB-Layout
+(Phase 6) und Frontpanel-/Enclosure-CAD. Ersetzt vollständig die r18.8-§0-Skizze
+und die r9/r10/r14/r15-Pico-Ära-Sektionen.
 
-> **r18.14-Update (2026-06-12)** — Komponenten-Definitionen geändert,
-> Z-relevant für jedes künftige CAD:
-> - **Encoder:** EC11E THT, einheitliche Schaftlänge, Ziel-Gesamthöhe
->   ~20–22 mm (statt 24.5 mm EC11J — STEP-Beleg), Knöpfe Ø19–20 × 8–10 mm
->   flach (Kick75-Referenz). Nur E-Display hat Push. → ADR-0012
-> - **Cells:** Gateron-LP-Magnetic-Switches plate-mounted + Hall-Sensor auf
->   PCB; lange Caps ≥ 2u mit LP-Stabilizern (Spacebar-Prinzip). Plate-CAD =
->   neues Arbeitspaket. → ADR-0013
-> - **3D-STEP-Modelle** der Z-/Panel-kritischen Teile liegen in
->   `kicad/libraries/field_ambience.3dshapes/` —
->   Inventar/Höhen: `mechanical/3d_models/MANIFEST.md`.
+> **Auflösungs-Konvention.** PCB-Ursprung = Bottom-Left-Corner (0, 0), X nach
+> rechts, Y nach oben (KiCad-PCB-Editor-Konvention — anders als Schematic
+> Y-DOWN!). Alle Maße in mm, alle Bauteilpositionen sind Body-Center außer
+> ausdrücklich anders markiert (Edge-Connectors). Z wird auf der PCB-
+> Topside-Oberfläche bei 0 gemessen.
+
+## Geltende Quellen
+
+| Quelle | Was sie festlegt |
+|---|---|
+| ADR-0011 | Z-Stack-Up, 8 mm Top-Komponenten-Zone, 19.6 mm Außenhöhe ohne Knöpfe |
+| ADR-0012 | Encoder = EC11E THT, alle 4 gleiche Höhe, Knopf Ø 19–20 × 8–10 mm |
+| ADR-0013 | Cell-Switches Gateron LP Magnetic, Hall-Sensor PCB-seitig, lange Caps + LP-Stabilizer |
+| ADR-0007 | Speaker = Dust-Mesh-Aussparung (Saati Acoustex), kein sichtbares Lochmuster |
+| ADR-0008 | LED-XOR (Cell-LEDs gelb/grün, Modifier Shift=grün/Hold=gelb/Drone/Generate/Clear=weiß) |
+| `mechanical/3d_models/MANIFEST.md` | Body-Höhen aller Z-/Panel-kritischen Teile (STEP-Modelle) |
+| `field_ambience_pcb_SPEC_v0.7.md` §4 | BOM-Status (LCSC-IDs, Footprints) |
+| IMG_9713 | Industrial-Design-Bezugsbild |
 
 ---
 
-## 0. r18.8 IMG_9713-Update (überschreibt §3-7 unten)
+## 1. Gehäuse-Außen + PCB-Outline
 
-### 0.1 Layout-Konzept
+| Element | Maß | Notiz |
+|---|---|---|
+| Gehäuse Außenmaß | **260 × 110 × 19.6 mm** (ohne Encoder-Knöpfe) | Knöpfe addieren ~10 mm → ~30 mm Gesamt |
+| PCB-Outline | **252 × 102 × 1.6 mm**, 4-Layer FR4 | 4 mm Bezel auf jeder Seite zwischen PCB-Edge und Gehäuse-Außen |
+| Edge-Keepout (PCBA-Rail-Bereich) | 3 mm rundherum, „weich" | Für Pick&Place; in Phase 6 final |
+| Bauteil-zu-Edge | ≥ 2 mm | DRC-Regel; ausgenommen Edge-Connectors (J1, Audio-Jack) |
+| Tilt | 0° | Wie OP-1-Field, kein Kick75-Tilt |
+| Frontpanel-Material | ABS oder Polycarbonat-Spritzguss, 2.5 mm | ADR-0011 |
+| Bottom-Case-Material | gleiches Material, 2.5 mm | ADR-0011 |
 
-Frontpanel-Aufteilung (alle Maße provisorisch, finalisiert in Phase 6):
+**Warum 260 × 110**: Felder von OP-1-Field (200 × 100) zu groß für unsere
+Anordnung mit Cells + Modifier-Reihe + 4 Eckencodern + 2 Speaker-Kammern;
+260 × 110 ist die kleinste rechteckige Hülle, in die das IMG_9713-Layout mit
+≥ 12 mm Pitch zwischen Cells und ≥ 8 mm Pitch zwischen Modifier-Buttons
+unterbringbar ist und in die beide Speaker-Kammern noch das Mindestvolumen
+(20 cm³ pro Seite, sealed) bekommen. Final-Maß = Industrial-Design-Sprint.
+
+## 2. Z-Stack-Up (aus ADR-0011)
 
 ```
-┌──────────────────────────────────────────────────┐
-│  E1  E2     [─Display─]     E3  E4               │  ← Encoder-Reihe
-│                                                  │
-│           ●  ●  ●  ●  ●                          │  ← LED über Modifier
-│           ◯  ◯  ◯  ◯  ◯                          │  ← Modifier-Buttons
-│                                                  │
-│ ╭──╮  ●●  ●●  ●●  ●●  ●●  ╭──╮                  │  ← LED über Cells
-│ │  │                       │  │                  │
-│ │S │  ║  ║  ║  ║  ║       │S │                  │  ← Dust-Mesh
-│ │  │  ║  ║  ║  ║  ║       │  │                  │     (Speaker, oval)
-│ │  │  C1 C2 C3 C4 C5       │  │                  │
-│ ╰──╯                       ╰──╯                  │
-└──────────────────────────────────────────────────┘
+   ┌────────────────────────────────────────────────┐
+8–10mm Encoder-Knopf (Aluminium, außerhalb Gehäuse) │
+   ├────────────────────────────────────────────────┤
+2.5 mm Top-Panel (ABS/PC)                           │  Aussparungen siehe §5
+   ├────────────────────────────────────────────────┤
+12  mm Encoder-Schaft (durch Bohrung Ø 7 mm)        │  Innenraum
+       Andere Komponenten ≤ 8 mm hoch in dieser Zone│  (siehe §6 Höhen-Zonen)
+   ├────────────────────────────────────────────────┤
+ 8  mm Top-Komponenten-Zone (über PCB):             │
+        - Encoder-Body 7 mm                         │
+        - Cell-Switch + Cap-Stack ~8 mm             │
+        - USB-C 3.2 mm, LCD-Modul 3.5 mm            │
+        - Polymer-Cap 2.0 mm (ADR-0011)             │
+   ├════════════════════════════════════════════════┤
+1.6 mm PCB                                          │
+   ├────────────────────────────────────────────────┤
+ 3  mm PCB-Standoff (M2.5 oder integrierter Boss)   │
+   ├────────────────────────────────────────────────┤
+2.5 mm Bottom-Panel                                 │
+   └────────────────────────────────────────────────┘
+   Gehäuse-Innenhöhe  14.6 mm
+   Gehäuse-Außenhöhe  19.6 mm  (ohne Knöpfe)
+   Gesamt mit Knöpfen ~30 mm
 ```
 
-| Element | X-Position (mm) | Y-Position (mm) | Notiz |
-|---|---|---|---|
-| Display (LCD-Modul) | Mitte (160) | Top, ~110 | klein, schmaler Streifen ~50×28 mm Active |
-| Encoder E1 (Drive) | ~30 | ~115 | Top-Left |
-| Encoder E2 (Brightness) | ~70 | ~115 | Top-Left-Inner |
-| Encoder E3 (Display) | ~250 | ~115 | Top-Right-Inner |
-| Encoder E4 (Volume) | ~290 | ~115 | Top-Right |
-| Modifier-Reihe (5×) | 70..250 (verteilt) | ~75 | unter Display |
-| Modifier-LEDs (5×) | über Buttons | ~85 | je ~10 mm darüber |
-| Cell-Reihe (5×) | 70..250 (verteilt) | ~30 | unten zentriert |
-| Cell-LEDs (5×2) | über Cells | ~58 | gelb+grün pro Cell |
-| Speaker-Mesh links | ~22 | Mitte vertikal (~65) | oval 36×70 mm |
-| Speaker-Mesh rechts | ~298 | Mitte vertikal (~65) | oval 36×70 mm |
+## 3. Top-Side Komponenten (alle Body-Center)
 
-### 0.2 Was ÄNDERT sich gegen v0.7-Stand
+> **Bauteilkürzel:** „Planung" = aus IMG_9713 + Z-/Pitch-Constraints abgeleitet,
+> in Phase 6 final fixiert. „Final" = unverhandelbar (Pinout, Bohrungen,
+> Edge-Cutouts). Spalte „Höhe" siehe `mechanical/3d_models/MANIFEST.md`.
 
-| Aspekt | Vorher | r18.8 |
-|---|---|---|
-| Display | 80×22 mm OLED zentral oben | **kleiner, 1.9" ST7789 320×170 (40×22 mm Active), zentriert** |
-| Encoder | 4 in einer Reihe | **4 in den Ecken** (2 links, 2 rechts vom Display) |
-| Cell-Switches | 5× Choc V2 Hotswap (Mech-Keyboard-Keycaps) | **5× FSR + Silicon-Cap Pad** (ADR-0006, Piano-Feel) |
-| Cell-LEDs | 1× pro Cell (rote/weiße Hold-Indicator) | **2× pro Cell, Gelb + Grün, XOR-Logik** (ADR-0008) |
-| Modifier-Buttons | 5× HX 12×12 (separates Custom-FP) | bleibt (HX 12×12 Custom-FP, ADR von r18.6) |
-| Modifier-LEDs | LED-Farbe einheitlich (weiß) | **Shift=Grün, Hold=Gelb, Drone/Generate/Clear=Weiß** |
-| Speaker-Cover | sichtbare Lochmuster | **schwarzes Dust-Mesh, ovale Aussparungen** (ADR-0007) |
-| Text-Labels | „Shift", „Hold", „Drone", „Generate", „Clear" auf Frontpanel | **keine Text-Labels** außer Display |
+### 3.1 Encoder-Eckcluster (alle EC11E THT, Push nur EN3, ADR-0012)
 
-### 0.3 Open Points für r18.9-Update
-
-1. Exakte X/Y für jede Komponente (provisorisch geschätzt, finalisiert mit
-   Frontpanel-CAD)
-2. FSR-Hersteller + exakte Pad-Größe → wirkt auf Cell-Pitch
-3. Mesh-Aussparung 36×70 mm — Mesh-Hersteller-Tooling-Bestätigung
-4. Z-Höhen: STM32-LQFP-100 (1.4 mm Top-Profil) vs Pico-Modul (~3 mm) →
-   andere Component-Height-Zones (§11 unten)
-
----
-
-## 1. Außen-Geometrie
-
-| Element | Wert |
-|---|---|
-| Gehäuse Außen | 333 × 143.3 × 40 mm |
-| PCB-Outline | 320 × 130 mm, 1.6 mm dick |
-| Gehäuse-Bezel rundherum | 6.5 mm |
-| Edge-Rails (für PCBA, werden gebrochen) | 5 mm rundherum |
-| Component-to-Edge | min 2.5 mm |
-| Top-Plate Material | PC oder ABS, 2.5 mm dick |
-| Bottom-Case Material | PC oder Aluminium, mit Speaker-Grille-Pattern |
-| Tilt | 0° (Kick75 hat 6°, wir nicht) |
-
-PCB-Ursprung: Bottom-Left-Corner = (0, 0). X nach rechts, Y nach oben
-(KiCad-PCB-Editor-Konvention — anders als Schematic-Y-DOWN!).
-
----
-
-## 2. USB-C-Stecker (J1) — TOP-Edge zentriert
-
-| Parameter | Wert | Quelle |
-|---|---|---|
-| X (Mitte) | 160 mm | von left edge |
-| Y (Edge) | 130 mm | Top-Edge |
-| Z-Offset | Stecker-Front bündig mit Top-Edge oder 0.5 mm Inset |
-| Edge-Cutout | TYPE-C-31-M-12 Standard-Footprint |
-| USB-Stecker-Tiefe | ~6.5 mm Insertion |
-
----
-
-## 3. OLED-Display (J3 + Modul ER-OLEDM032-1W)
-
-OLED-Modul hat Active-Area 80×22 mm, Modul-Außenabmessungen ~100.5×33.5 mm.
-
-| Parameter | Wert |
-|---|---|
-| Active-Area X-Mitte | ~80 mm |
-| Active-Area Y-Mitte | ~110 mm |
-| Active-Area Größe | 80 × 22 mm |
-| Top-Plate Cutout-Größe | 82 × 24 mm (1 mm Toleranz) |
-| J3 Header X | 80 mm (mittig unter Modul-Unterkante) |
-| J3 Header Y | 95 mm |
-| J3 Orientierung | Liegender 2.54mm-Header, Pins Richtung -Y (Board-Mitte) |
-
-**Entscheidung (v0.7)**: Option (a) — Modul auf 8mm-Standoffs über dem PCB,
-J3 als liegender Pin-Header an der Modul-Unterkante (Y=95). Modul-Außenmaße
-~100.5×33.5mm spannen X 30..130.5, Y 93.25..126.75. Standoffs an den 4
-Modul-Ecken. Begründung: hält die Active-Area auf einheitlicher Höhe mit der
-Front-Plate (8mm Component-Height-Zone unter Display) und lässt unter dem
-Modul Platz für Routing.
-
----
-
-## ~~4. Cell-Switches SW1-SW5 (2u Hot-Swap, Kailh Choc V2)~~ — VERALTET seit r18.9
-
-> **Cells sind seit r18.9 keine Switches mehr, sondern FSR-Velocity-Pads
-> (ADR-0006).** Position-Daten unten sind historisch. Aktuell maßgeblich:
-> §0 oben (IMG_9713-Layout-Skizze). Detail-Koordinaten werden mit Mechanik-
-> Phase fixiert (Silicon-Cap-Frame-Design).
-
-## 4. ~~Cell-Switches~~ (legacy — wurde Choc V2 Hot-Swap)
-
-5 Switches in horizontaler Reihe.
-
-| Switch | X (Mitte) | Y (Mitte) | Notes |
-|---|---|---|---|
-| SW1 (CELL1) | 67.5 mm | 75 mm | links außen |
-| SW2 (CELL2) | 105 mm | 75 mm | |
-| SW3 (CELL3) | 142.5 mm | 75 mm | mitte |
-| SW4 (CELL4) | 180 mm | 75 mm | |
-| SW5 (CELL5) | 217.5 mm | 75 mm | rechts außen |
-
-Spacing: 37.5 mm zwischen Cells (2u Cap = ~37.5 mm). Stabilizer-Position
-zusätzlich zur Switch-Position: je 5.95 mm links und rechts vom Switch-Center
-(2u Choc V2 Stabilizer-Hole-Spacing).
-
-**Top-Plate Cutout**: ~17×18 mm pro Cell-Pos für 2u-Cap-Profil.
-
----
-
-## 4a. Cell-HOLD-Status-LEDs LED11-LED15 (NEU r10)
-
-5 SMD-0603-LEDs, je eine über jeder Cell. Sichtbarer Indikator dass Cell N im
-HOLD-Modus sustained spielt (Firmware-State, gespeist via PCA9685 LED5-LED9).
-
-| LED | X (Mitte) | Y (Mitte) | Funktion | PCA9685-Kanal |
-|---|---|---|---|---|
-| LED11 (CELL1 HOLD) | 67.5 mm | 88 mm | über SW1 | LED5 |
-| LED12 (CELL2 HOLD) | 105 mm | 88 mm | über SW2 | LED6 |
-| LED13 (CELL3 HOLD) | 142.5 mm | 88 mm | über SW3 | LED7 |
-| LED14 (CELL4 HOLD) | 180 mm | 88 mm | über SW4 | LED8 |
-| LED15 (CELL5 HOLD) | 217.5 mm | 88 mm | über SW5 | LED9 |
-
-**Y=88 Begründung**: Cells bei Y=75 mit 2u-Cap-Profil (Höhe ~18 mm) belegen
-Y=66..84. OLED-Modul-Bottom bei Y=93. Die 9 mm-Lücke Y=84..93 ist freie
-Front-Plate-Zone — LED bei Y=88 ist mittig in dieser Lücke, ungeniert sichtbar
-beim Cell-Spielen ohne dass die Hand sie verdeckt.
-
-**Top-Plate-Cutout pro LED**: 3 × 3 mm transparentes Fenster ODER 2-mm-Bohrung
-mit Light-Pipe (1.5 mm Acrylstab). Erste Iteration: Bohrung-Variante (einfacher
-Fabrikations-Schritt).
-
-**Pad-Geometrie**: SMD-0603-Standard, 0.95×1.0 mm Pads, 0.8 mm Spacing.
-Footprint: `LED_SMD:LED_0603_1608Metric`. R_LED11-15 (390 Ω 0603) sitzt
-direkt neben jeder LED auf der PCB (≤2 mm Distanz für saubere LED-Anode-
-Routing).
-
----
-
-## 5. Modifier-Switches SW6-SW10 (12×12×7.3 mm plain SMD-Tactile, r10)
-
-5 Switches in horizontaler Reihe. **r10-Wechsel**: weg vom AliExpress-Generic
-mit integrierter LED (r7) → hin zu **HX 12x12x7.3TPFT-B** (LCSC C36498966)
-JLC Extended SMD-Tactile mit **4 Pins, KEINE integrierte LED**. State lebt
-in Firmware, LED zeigt Zustand über **separate SMD-0603-LEDs** direkt über
-jedem Switch (siehe LED-Tabelle unten + SPEC §7.2).
-
-| Switch | X (Mitte) | Y (Mitte) | Label | LED-Ref (r10) | LED X/Y |
+| Ref | X (mm) | Y (mm) | Funktion | Knopfdurchmesser | Höhe Schaft+Body |
 |---|---|---|---|---|---|
-| SW6 (SHIFT) | 95 mm | 50 mm | | LED6 (SMD 0603) | 95 / 60 |
-| SW7 (HOLD) | 120 mm | 50 mm | | LED7 | 120 / 60 |
-| SW8 (DRONE) | 145 mm | 50 mm | | LED8 | 145 / 60 |
-| SW9 (GENERATE) | 170 mm | 50 mm | | LED9 | 170 / 60 |
-| SW10 (CLEAR) | 195 mm | 50 mm | | LED10 | 195 / 60 |
+| EN1 | **22** | **88** | Drive (smooth) | Ø 20 mm Alu | 7 mm Body + 12 mm Schaft = 19 mm |
+| EN2 | **52** | **88** | Brightness (smooth) | Ø 20 mm Alu | s. o. |
+| EN3 | **200** | **88** | Display (push + detent) | Ø 20 mm Alu | s. o. |
+| EN4 | **230** | **88** | Volume (smooth) | Ø 20 mm Alu | s. o. |
 
-Spacing: 25 mm Mitte-zu-Mitte (bleibt) → 13 mm Lücke zwischen 12 mm
-Switch-Bodies (ergonomisch erreichbar mit Daumen während Cell-Spiel).
+**Pitch innerhalb der Paare**: 30 mm Mitte-zu-Mitte → 10 mm Lücke zwischen
+benachbarten Ø-20-Knöpfen, ergonomisch greifbar mit zwei Fingern.
+**Pitch Paar-zu-Display**: 28 mm Mitte-Encoder zu Display-Kante.
 
-**LED-Y=60 Begründung**: Modifier-Switch-Body bei Y=50 erstreckt sich Y=44..56
-(12 mm Body). LED bei Y=60 sitzt 4 mm über der Body-Oberkante — direkt
-sichtbar, kein Konflikt mit Switch-Mechanik. Y=60 liegt unter Cell-Cap-Bottom
-(Y=66) → kein Cell-Konflikt.
-
-**Top-Plate-Cutout pro Switch**: **12.5 × 12.5 mm** für Cap. Plus pro LED:
-3×3 mm transparentes Fenster oder 2-mm-Light-Pipe-Bohrung (gleiche Bauweise
-wie Cell-LEDs §4a).
-
-**Switch-Höhe ab PCB**: 7.3 mm Body + ~3-5 mm Cap = 10.3-12.3 mm. Liegt im
-bestehenden 15 mm-Component-Height-Budget.
-
-**Footprint** (JLC-Standard, KEIN Custom mehr — r7-B1 RESOLVED):
-
-```
-        Top View (Switch, viewed from above PCB)
-        
-        ┌─────────────────────────┐  ← 11.8 × 11.8 mm Body
-        │  ●1              ●4     │
-        │                         │
-        │       (plunger)         │  ← Square plunger, ~5×5 mm,
-        │                         │      nimmt custom caps auf
-        │  ●2              ●3     │
-        │                         │
-        └─────────────────────────┘
-
-        Pad-Raster (Industrie-Standard 12×12 SMD-4P):
-        - Pins 1↔2 vertikal: 4.5 mm
-        - Pins 1↔4 / 2↔3 horizontal: 6.5 mm
-        - Pad-Größe SMD: 1.0 × 1.5 mm (Gull-Wing-Lötfläche)
-```
-
-**Pin-Verdrahtung**: Pin 1+2 sind intern eine Seite, Pin 3+4 die andere.
-Schalt-Element ist 1+2 ↔ 3+4. Im Schematic: Pin 1 → MCP23017 GPB(n-6),
-Pin 3 → GND. Pin 2, Pin 4 = NC (oder parallel zum Schalt-Partner für
-Redundanz).
-
-**LED-Schaltung pro Switch (separat, NICHT mehr integriert)**:
-- LED6-LED10 SMD-0603 (Anode → R_LEDn 390 Ω → +5 V; Kathode → PCA9685 LED0-LED4)
-- R_LED6-10 (390 Ω 0603) direkt neben jeder LED platziert, ≤2 mm Distanz
-
-**r10-B8 SOURCING-PASS noch offen**: HX 12x12x7.3TPFT-B Datasheet nicht bei
-LCSC verfügbar. Standard-12×12-SMD-4P-Footprint sollte stimmen, aber vor
-PCB-Layout-Freigabe entweder:
-1. 1 Sample bestellen ($0.05) und Pin-Pitch mit Caliper auf 0.1 mm verifizieren, ODER
-2. JLC LCSC-API einen alternativen MPN mit verfügbarem Datasheet finden (z.B. KH-12X12X7H-SMT C18186471, $0.055, 328 pcs Stock — weniger Stock aber Datasheet potentiell vorhanden), ODER
-3. Standard-KiCad-Footprint `Button_Switch_SMD:SW_SPST_TL3342` 1:1 nehmen (12×12-Industrie-Standard).
-
-Empfehlung: (3) — Industrie-Standard ist seit 2010er-Jahren stabil, und HX
-übernimmt nachweislich diesen Footprint (Package-Bezeichnung jlcsearch:
-„SMD-4P,11.8×11.8mm" matcht Standard).
-
----
-
-## 6. Encoder EN1-EN4 (EC11 mit Push, 4 Stück)
-
-4 Encoder in horizontaler Reihe oben, neben dem Display.
-
-| Encoder | X (Mitte) | Y (Mitte) | Funktion |
-|---|---|---|---|
-| EN1 | 195 mm | 110 mm | Drive |
-| EN2 | 225 mm | 110 mm | Brightness |
-| EN3 | 255 mm | 110 mm | Display (Menu) |
-| EN4 | 285 mm | 110 mm | Volume |
-
-Encoder-Shaft-Höhe: 20 mm ab PCB (EC11 H20mm). Top-Plate-Bohrung: 7 mm
-Durchmesser (EC11 6.4mm Standard-Bushing).
-
----
-
-## 7. Lautsprecher (J6, J7 + PUI AS04008PS Treiber) — r14 Acoustic-v2
-
-**Top-Firing, Top-Plate-Mount**. Wechsel von Down-firing nach r13 weil F0=380 Hz
-den Treiber zum Mitten-/Sprach-Treiber macht — sein einziger akustischer Wert
-liegt im 200 Hz–20 kHz-Bereich, und der profitiert von direktem Schallweg zum
-Ohr (Top-Firing) statt Boundary-Coupling am Tisch (Down-firing nutzlos ohne
-Bass). Siehe SPEC §8 r14 für die volle Begründung.
-
-| Lautsprecher | X (Mitte) | Y (Mitte) | Top-Plate-Cutout (Grille) |
-|---|---|---|---|
-| Links (J6 = SPK_L) | 50 mm | 30 mm | 38 mm Durchmesser |
-| Rechts (J7 = SPK_R) | 270 mm | 30 mm | 38 mm Durchmesser |
-
-**Mount**: Treiber-Rahmen (40×40 mm) von unten gegen die Top-Plate, 4× M2-Schrauben.
-Treiber sitzt vollständig zwischen Top-Plate und PCB. **PCB-Speaker-Cutouts
-entfallen** (waren in v0.6/r13 noch 41 mm dia pro Speaker für Down-firing-Mount
-im Bottom-Case) → der entsprechende PCB-Streifen Y=10..50 ist jetzt für Routing
-oder Battery-Position nutzbar.
-
-**Top-Plate-Cutout 38 mm**: kleiner als Treiber-Außenmaß (40 mm) damit die
-Membran vom Top-Plate-Rand mechanisch abgedeckt bleibt und der Treiber-Rahmen
-flächig an die Plate gepresst werden kann. Cutout selbst entweder mit
-Schutzgitter (Metall-Mesh) oder Lochmuster im Top-Plate-Material (Polycarbonat-
-oder ABS-Spritzguss).
-
-**Akustik-Kammer**: Geschlossen pro Kanal. Begrenzt von:
-- oben: Top-Plate (Treiber dichtet hier ab via Schaumstoff-Dichtung)
-- unten: Bottom-Case-Inlay
-- seitlich: Trennsteg L/R im Bottom-Case-Inlay sowie Gehäuse-Innenwände
-- Treiber-Rückseite spielt in dieses geschlossene Volumen
-
-Innen-Volumen pro Kammer ~80–120 cm³ (abhängig von Battery-Position und PCB-
-Routing im jetzt freigewordenen Y=10..50-Streifen, siehe §7a). Akustisch
-unkritisch — bei einem F0=380-Hz-Sealed-Treiber ist die Kammer-Größe nur
-Tiefton-Roll-off-Punkt, nicht Klang-Charakter.
-
-**Bass-Reflex-Ports UND Top-Plate-Passivradiator beide ENTFERNT in r14**.
-F0=380 Hz schließt jedes Reflex-System (Port oder PR) aus — ein Reflex-System
-kann nicht weit unter F0 abgestimmt werden, und der unterste sinnvolle
-Tuning-Punkt (≈330 Hz) würde nur eine Resonanzspitze in den unteren Mitten
-machen — der schlimmste Fehlerfall für Drone/Sustain-Audio (One-Note-Boom).
-Volle Begründung in SPEC §8 r14 + CHANGELOG-Eintrag r14.
-
----
-
-## 7b. (gestrichen in r14 — Passivradiator entfernt)
-
-Diese Sektion enthielt in r13 die Spec für 2× Top-Plate-Passivradiatoren. Wurde
-in r14 verworfen weil F0=380 Hz physikalisch keine Reflex-Lösung erlaubt (Port
-oder PR). Geschichte in CHANGELOG r14.
-
----
-
-## 7a. Battery BAT1 (NEU r9, LiPo 5000 mAh)
-
-LiPo-Pouch 8050120 oder 9050120 (8-9 mm × 50 mm × 120 mm), liegt **unter
-dem PCB**, längs zur PCB-Längsachse (X) ausgerichtet. JST PH 2.0 2-pin
-Connector J9 auf PCB-Unterseite, Plus-Pin polarisiert.
+### 3.2 Display (J3, ST7789 1.9″ 320×170 IPS via 1×8-Header)
 
 | Parameter | Wert |
 |---|---|
-| BAT1 Center X | 80 mm (linker Bereich, neben Speaker-Cutout-Bereich) |
-| BAT1 Center Y | 65 mm (unter den Cells, unter dem Modifier-Bereich) |
-| BAT1 Außenmaße | 8-9 × 50 × 120 mm (Z-Tiefe nach unten) |
-| BAT1 Keepout (Unterseite) | 60 × 130 mm @ X=20..140, Y=0..130 |
-| J9 (Battery-Connector) X | 25 mm |
-| J9 (Battery-Connector) Y | 65 mm |
-| J9 Z-Offset | Bottom-Side, vertical SMD |
-| Z-Tiefe zusätzlich für Gehäuse | +9 mm Unterseite (geht in 40-mm-Gesamthöhe rein) |
+| Active-Area X-Mitte | **126** mm |
+| Active-Area Y-Mitte | **84** mm |
+| Active-Area Größe | 40 × 22 mm (Datenblatt Adafruit 5394) |
+| Modul-Außenmaß | 50 × 28 mm (über 4 M2-Standoffs) → belegt Y 70…98 (4 mm Bezel zur Top-Edge) |
+| J3 X-Mitte | **126** mm |
+| J3 Y | **70** mm (unter Modul-Bottom-Edge) |
+| J3 Orientierung | Liegender 2.54 mm 1×8-Header, Pins Richtung −Y |
+| Standoff-Höhe | 3.5 mm (Modul-Topface bündig mit 7-mm-Encoder-Body-Zone) |
 
-**Vereinbarkeit mit Pi-frei-Stand (v0.9)**: Pi ist raus → Bottom-Side-Keepout
-für Pi (X 125..195, Y 72..108) **frei**. Battery passt in den freigewordenen
-Bereich rechts (X=20..140, Y=0..130) — Pi-Zone (X=125..195) bleibt für
-zukünftige Erweiterung oder leer.
+**Frontpanel-Aussparung**: 42 × 24 mm rechteckiger Cutout, mittig auf Active-Area.
 
-**Speaker-Cutout-Kompatibilität**: Speaker-Cutouts liegen X=10..90, Y=10..50
-(links) und X=230..310, Y=10..50 (rechts). Battery-Zone Y=0..130 würde mit
-linker Speaker-Cutout überlappen — Battery-Pouch **muss in Y-Position auf
-Y=60..120 begrenzt** werden (also weiter oben) um Speaker freizuhalten.
-Revidierte Battery-Center: **X=80, Y=80, Pouch-Footprint 50×60 mm**.
-Bei 9050120-Pouch (50×120) passt das NICHT — dann Wahl: **kleinerer Pouch
-9050060 = 5000 mAh in 50×60 mm² × 14 mm** (etwas dicker), ODER **Speaker-Cutouts
-in eine andere Anordnung bringen**. **OFFENER PUNKT r9-B5 (Mechanik)**.
+### 3.3 Modifier-Reihe (5× HX 12×12, ADR-0008-Farben)
 
----
+5 identische Buttons, alle momentary, Pitch 14 mm Mitte-zu-Mitte (→ 2 mm Lücke
+zwischen 12-mm-Bodies, daumengerecht), Reihe zentriert unter dem Display.
 
-## 7c. Audio + MIDI Klinkenbuchsen J8, J9 (r15)
-
-Zwei 3,5-mm-TRS-Klinkenbuchsen (gleicher MPN: **PJ-320A / LCSC C431535**) an
-der **linken Seitenkante** des Gehäuses (X=0, „Anschluss-Seite"). Standard-
-Synth-Optik: zwei Klinken nebeneinander mit Beschriftung „PHONES" und „MIDI".
-
-| Buchse | X (Mitte) | Y (Edge) | Kante | Funktion |
+| Ref | X (mm) | Y (mm) | Funktion | Zugeordnete LED (XOR-Farbe) |
 |---|---|---|---|---|
-| J8 (Line-Out / Kopfhörer) | 0 mm | 90 mm | Left-Edge | Stereo-Audio aus PCM5102A |
-| J9 (MIDI Out, TRS Type A) | 0 mm | 75 mm | Left-Edge | UART → MIDI 1.0 / MMA-Spec |
+| SW6  | **98**  | **58** | Shift    | LED6 (grün) |
+| SW7  | **112** | **58** | Hold     | LED7 (gelb) |
+| SW8  | **126** | **58** | Drone    | LED8 (weiß) |
+| SW9  | **140** | **58** | Generate | LED9 (weiß) |
+| SW10 | **154** | **58** | Clear    | LED10 (weiß, flash-on-press) |
 
-15 mm Pitch zwischen den Buchsen (PJ-320A Body-Breite ~7 mm + Bezel-Margin)
-— Standard-Synth-Optik, hat Platz für 3,5-mm-Stecker mit normalem Tüllen-
-Durchmesser nebeneinander.
+**Modifier-LED-Reihe** (LED6–LED10, jeweils 8 mm über zugehörigem Switch):
+gleiche X, **Y = 66 mm**, SMD 0603, Light-Pipe Ø 1.5 mm im Frontpanel.
+(4 mm Lücke zur Display-Modul-Bottom-Edge bei Y = 70.)
 
-**Edge-Cutouts**: 6 mm Durchmesser pro Buchse durch das Gehäuse (PC/ABS-
-Bohrung). Buchsen-Body sitzt innen, Klinken-Loch fluchtet mit Gehäuse-Außen.
+**Frontpanel-Aussparungen**: 12.5 × 12.5 mm pro Switch + Ø-2-mm-Bohrung pro
+Modifier-LED.
 
-**Y-Position 75-90 mm**: hinter dem OLED-Display (das endet bei Y=126.75
-gemäß §3) und über der Battery-Zone (siehe §7a) — keine Konflikte mit
-Cell-Switches (Y=75 mit Cap-Body bis 84, aber X=10..310, also rechts der
-Klinken-Position X=0).
+### 3.4 Cell-Reihe (5× Gateron LP Magnetic Hot-Swap Site, ADR-0013)
 
-**Falls Y zu nah am OLED**: Alternative Y=20–35 (unter den Speakern Y=10..50)
-ginge auch, dann sitzen Klinken ganz unten links. Layout-Entscheidung im
-CAD-Modell.
+5 identische Cell-Sites, Pitch 22 mm Mitte-zu-Mitte (LP-Switch-Body ~14 × 14
+mm + Stem-Cross-Mount; Pitch erlaubt 2u-Caps **ohne** Stabilizer auf den
+äußeren Cells und 2u-Caps **mit** LP-Stabilizer auf längeren Cells in einer
+späteren Geschmacks-Iteration). Reihe zentriert unter der Modifier-Reihe.
 
-**Footprint**: PJ-320A ist THT, durchgesteckt mit 5 Pins (Tip + Ring + Sleeve
-+ 2× Switch-Kontakte für Insertion-Detect bei J8). J9 nutzt die Switch-
-Kontakte nicht — Pads bleiben unbelegt.
-
-**Mechanische Höhe**: PJ-320A ist 13.5 mm hoch (Stecker eingeführt + Body).
-Innenraum-Zone „Side-Edge" ≥ 14 mm Z-Clearance → OK gegen 40-mm-Gehäuse.
-
----
-
-## 8. Pi Zero 2 W (auf Unterseite, durchgesteckter Header) — OBSOLET v0.9 (Pi-frei)
-
-Pi liegt unter dem PCB, GPIO-Header J2 durch das PCB gesteckt. Pi-Modul
-selbst nimmt ~65×30 mm ein.
-
-| Parameter | Wert |
-|---|---|
-| J2-Header X | 160 mm (mittig, unter Display/Encoder-Bereich) |
-| J2-Header Y | 90 mm |
-| Pi Z-Offset | 0..-15 mm (Pi und Header zusammen ~12 mm dick) |
-| Pi Keepout-Area | 70×35 mm unter PCB (5 mm Toleranz) → X 125..195, Y 72..108 |
-
-**Entscheidung (v0.7)**: J2 @ (160, 90). Mittig platziert, damit der Pi unter
-dem Display/Encoder-Cluster sitzt (dort ist die Top-Side ohnehin von Modul +
-Encodern belegt, also keine Doppelnutzung). Keepout 70×35mm bleibt frei von
-Bottom-Side-Komponenten. Kollidiert nicht mit Speaker-Cutouts (X<90 / X>230).
-
----
-
-## 9. Pico 2 (RP2350, optional THT-Header oder SMD-castellated)
-
-THT-Variante (Empfehlung Prototyp): Pin-Header durchgesteckt.
-
-| Parameter | Wert |
-|---|---|
-| U1 Position X | 270 mm |
-| U1 Position Y | 80 mm |
-| Pico-Höhe | 5 mm Modul + 8 mm Header = 13 mm |
-
-**Entscheidung (v0.7)**: U1 @ (270, 80). Pico-Modul ~51×21mm spannt X 244..296,
-Y 69.5..90.5 — liegt vollständig in der 15mm-Height-Zone (Cell/Modifier-Bereich
-Y=40..90), nicht in der 5mm-Encoder-Zone (Y≥95). Rechts neben den Cells, kurze
-I²S-/I²C-Wege zum Audio-Block und MCP. SWD-Header J4 daneben platzieren.
-
----
-
-## 10. Mounting-Holes
-
-| Hole | X | Y | Spec |
+| Ref | X (mm) | Y (mm) | Cap (Plan) |
 |---|---|---|---|
-| MH1 | 5 mm | 5 mm | M3, Bottom-Left |
-| MH2 | 315 mm | 5 mm | M3, Bottom-Right |
-| MH3 | 5 mm | 125 mm | M3, Top-Left |
-| MH4 | 315 mm | 125 mm | M3, Top-Right |
-| MH5 (opt) | 160 mm | 5 mm | M3, Bottom-Center für Verstärkung |
-| MH6 (opt) | 160 mm | 125 mm | M3, Top-Center |
+| Cell 1 | **82**  | **26** | 2u-LP, Center-Pin = Switch, ±9.525 mm Stab-Stems |
+| Cell 2 | **104** | **26** | 2u-LP |
+| Cell 3 | **126** | **26** | 2u-LP |
+| Cell 4 | **148** | **26** | 2u-LP |
+| Cell 5 | **170** | **26** | 2u-LP |
 
-Hole-Diameter: 3.2 mm (für M3 mit etwas Spiel). Pad-Annular: 6 mm
-für Schraubkopf-Sitz.
+**Hall-Sensor pro Cell (J_CELL1–5, DRV5056A4 SOT-23, ADR-0013)**: sitzt
+direkt unter dem Magnet-Stem in PCB-Mitte des Cell-Footprints. Pinout
+SOT-23: 1=VCC / 2=OUT / 3=GND (TI-DS r18.14-verifiziert).
 
----
+**Cell-LED-Reihe** (LED11–LED20, 2 LEDs pro Cell, gelb + grün, XOR pro ADR-0008):
 
-## 11. Component-Height-Zones (Gehäuse-Innenraum)
-
-Gehäuse-Innenraum: 40 mm minus Top-Plate (2.5 mm) minus Bottom-Case
-(2.5 mm) minus Bottom-Speaker-Volume (~10 mm) = ~25 mm nutzbar.
-
-| Bereich | Max Component Height | Anmerkung |
+| Cell | LED-Y (mm) | LED-X-Pärchen (mm) |
 |---|---|---|
-| Unter Encoder (X=180..305, Y=95..125) | 5 mm | Encoder-Bushing belegt Vertical-Space |
-| Unter Display (X=40..120, Y=95..125) | 8 mm | OLED-Modul auf Standoffs |
-| Cells/Modifier-Bereich (Y=40..90) | 15 mm | Switches durchgesteckt durch PCB |
-| Pi-Bereich (Bottom-Side, X=130..200) | unter-PCB 13 mm | Pi+Header durchgesteckt |
-| USB-C-Bereich (Y=125..130) | edge-mounted | Front-Plate-Cutout |
-| Speaker-Bereich (X=10..90 und X=230..310, Y=10..50) | 0 mm (Cutout) | PCB hat hier ein 41-mm-Loch |
+| 1 | **40** | 78 (gelb), 86 (grün) |
+| 2 | **40** | 100 (gelb), 108 (grün) |
+| 3 | **40** | 122 (gelb), 130 (grün) |
+| 4 | **40** | 144 (gelb), 152 (grün) |
+| 5 | **40** | 166 (gelb), 174 (grün) |
+
+(8 mm Pitch innerhalb des Pärchens; 4 mm Innenabstand am Cell-Center.)
+
+**Frontpanel-Aussparungen**: Per Cell ein 14 × 14 mm Switch-Cutout (Gateron-LP-
+Standard, in Phase 6 gegen Schalter-Drawing final verifizieren) + Ø-2-mm-Bohrung
+pro LED, Light-Pipe-Stab Ø 1.5 mm.
+
+### 3.5 USB-C-Stecker J1 (TYPE-C-31-M-17, C283540)
+
+Edge-mounted an der **Bottom-Edge des PCBs** (Y = 0), zentriert.
+
+| Parameter | Wert |
+|---|---|
+| X-Mitte | **126** mm |
+| Y (Connector-Face) | **0** mm |
+| Body-Tiefe | 7.35 mm in das PCB (Y-Ausdehnung 0 → 7.35) |
+| Höhe über PCB | 3.2 mm (STEP-verifiziert, MANIFEST.md) |
+| Gehäuse-Cutout | M-17 Standardprofil im Bottom-Bezel |
+
+### 3.6 Audio-Klinke + MIDI-Klinke (J8, J9 = PJ-320D, C431535)
+
+Beide an der **Left-Edge** des PCBs (X = 0), Top-Side-mounted.
+
+| Ref | X (Body) | Y (Mitte) | Funktion |
+|---|---|---|---|
+| J8 | **3 mm** in PCB | **88 mm** | Line-Out / Kopfhörer 3,5 mm TRS Stereo, mit Insertion-Detect |
+| J9 | **3 mm** in PCB | **66 mm** | MIDI-Out (TRS-A) — DNP bis ADR-0004 entschieden |
+
+Jack-Buchsenfront sitzt **bündig mit PCB-Edge** (X = 0); Body ragt nach +X.
+Gehäuse hat seitliche Bohrungen Ø 6 mm in Höhe der Y-Positionen.
+Z-Body-Höhe 5.0 mm — passt in 8-mm-Top-Zone.
+
+### 3.7 SWD-Header J4 (TC2030-IDC 3-Pin, Service-Only)
+
+| Parameter | Wert |
+|---|---|
+| X | **245** mm |
+| Y | **15** mm |
+| Orientierung | THT, 3 Pin in Linie, kein Cap → kein Frontpanel-Cutout |
+
+### 3.8 Boot-/Reset-Buttons (SW11 Reset + SW_BOOT BOOT0)
+
+Beide Service-Only, **kein** Frontpanel-Cutout — Druck via Pin-Spitze durch
+2-mm-Bohrung in der Bottom-Plate.
+
+| Ref | X (mm) | Y (mm) | Footprint |
+|---|---|---|---|
+| SW11 (Reset) | **240** | **30** | field_ambience:SW_TS1088_SMD |
+| SW_BOOT | **245** | **45** | field_ambience:SW_TS1088_SMD |
+
+### 3.9 Audio-/Power-IC-Cluster (Layout-Constraint aus ADR-0010 + §7)
+
+Alle Höhen ≤ 4 mm wenn der Cluster in der Speaker-Treiber-Zone (X 8–48 oder
+204–244, Y 22–72) liegt; sonst ≤ 8 mm. **Power-Cluster wandert wegen L1
+(4.5 mm hoch) in den linken Mittenbereich, außerhalb der Speaker-Treiber-
+Zone.**
+
+**Power-/Audio-/MCU-Insel** liegt komplett im Y-Streifen **34…51 mm** (zwischen
+Cell-Body-Top Y=33 und Modifier-Body-Bottom Y=52). Das hält alles aus den
+Speaker-Treiber-Zonen heraus (X 8…48 und X 204…244 wären nur ≤ 4 mm hoch, der
+Boost-Inductor L1 ist aber 4.5 mm — siehe §7).
+
+| Block | Zone (X, Y) | Höhe | Begründung |
+|---|---|---|---|
+| PCM5102A | X 60–70, Y 40–46 | 1.2 mm | Kurzer Weg zu J8 (Audio-Klinke links, X=3) und zum PAM8403 |
+| PAM8403 Class-D | X 75–95, Y 40–46 | 1.8 mm | Direkt neben C_BULK-Polymer (ADR-0010 „kürzester Polygon-Loop") |
+| C_BULK Polymer 470 µF + 220 µF MLCC | X 75–95, Y 46–50 | 2.0 mm | Bass-Transient-Pfad, Layout-Constraint ADR-0010 |
+| TPS61089 Boost VQFN-HR | X 100–104, Y 40–43 | 1.0 mm | Power-Eingangsseite |
+| L1 Boost-Inductor (4.5 mm) | X 100–108, Y 44–50 | 4.5 mm | Direkt neben TPS61089; **OK** weil hier Y > 33 (außerhalb Cell-Body) und X außerhalb Speaker-Zonen |
+| AP7361C-33Y5 LDO | X 110–115, Y 40–43 | 1.5 mm | Nach Boost, vor MCU |
+| Y1 Crystal HC-49/US-SMD | X 134–146, Y 39–45 | 4.2 mm | **Rechts neben** STM32, auf gleicher Höhe wie OSC-Pins; AN2867 ≤ 5 mm zum nächsten OSC-Pin (Trace-Routing in Phase 6) |
+| STM32H743VIT6 LQFP-100 | X 118–132, Y 35–49 | 1.4 mm | Zentral unter Modifier-Reihe (1 mm Lücke zu SW8); kurzer Routing zu Display (oben) + Cells (unten) + Modifier-Reihe (direkt darüber) |
+| MCP23017 | X 153–163, Y 41–47 | 2.0 mm | Nahe Modifier-LEDs (kurze GPIO-Stubs) |
+| PCA9685 + 220-Ω-LED-Rs | X 165–187, Y 41–47 | 1.0 mm | Nahe Cell-LED-Reihe |
+
+**Speaker-Lötpunkte J6/J7** (PUI AS04008PS Treiber-Kabel, kein PCB-mount):
+zwei 2-Pin-Pads direkt am Treiber-Mitte-Footprint (X ≈ 28 / X ≈ 224, Y ≈ 50),
+maximal flach (Pad-Höhe ≤ 0.5 mm).
+
+### 3.10 Battery JST-PH 2.0 J_BAT (S2B-PH-SM4-TB, C295747)
+
+Top-Side-mounted, **außerhalb** der Speaker-Treiber-Zone (Y > 72), damit der
+6-mm-Connector nicht im 5-mm-Höhenlimit unter dem hängenden Speaker-Treiber
+endet (§7).
+
+| Parameter | Wert |
+|---|---|
+| X-Mitte | **245** mm |
+| Y-Mitte | **80** mm |
+| Höhe | 6 mm (STEP-verifiziert) |
+| Battery-Pouch | Liegt **unter** dem PCB im Bottom-Case (siehe §4) |
+
+### 3.11 LCD-Backlight-Driver Q2 (2N7002, SOT-23)
+
+| Parameter | Wert |
+|---|---|
+| X | **155** mm |
+| Y | **70** mm |
+| Hinweis | Rechts neben dem Display-Modul-Right-Edge (X=151), neben J3-Receptacle; BLK-Pfad ~5 mm |
 
 ---
 
-## 12. PCB-Edge-Annahmen für Layout
+## 4. Bottom-Side / Battery-Kammer
+
+Bottom-Side ist im Prototyp **leer von SMD-Komponenten** (vereinfacht Reflow
+auf nur einer Seite + Hand-Lötung der THT-Teile). Im Bottom-Case unter dem PCB
+liegt die LiPo-Pouch-Batterie.
+
+| Element | Lage / Maß | Notiz |
+|---|---|---|
+| Battery LiPo (5000 mAh) | Pouch 50 × 60 × 9 mm „9050060" | Liegt im rechten Hälfte des Bottom-Case unter PCB |
+| Battery-Y-Bereich | Y = 30 … 90 mm | Außerhalb der Speaker-Kammern (§5) |
+| Battery-X-Bereich | X = 190 … 250 mm | Unter Boost-/Power-Cluster, nahe J_BAT |
+| Battery-Anschluss | 100-mm-JST-PH-Kabel zu J_BAT (§3.10) | |
+
+> Größere Pouches (z. B. 8050120, 5000 mAh in 8 × 50 × 120 mm) passen NICHT
+> bei diesem Outline ohne Konflikt mit der linken Speaker-Kammer. Falls
+> mehr Kapazität gewünscht: Bottom-Case zusätzlich 2 mm tiefer (→ Außenhöhe
+> 21.6 mm) ODER zweiten kleineren Pouch auf der linken Seite.
+
+---
+
+## 5. Frontpanel-Aussparungen (Top-Panel-CAD)
+
+Sammelübersicht aller Cutouts/Bohrungen im 2.5-mm-Top-Panel, X/Y in PCB-
+Koordinaten (Top-Panel und PCB sind kongruent angeordnet).
+
+| Element | Geometrie | X-Mitte | Y-Mitte |
+|---|---|---|---|
+| Encoder-Bohrung EN1 | Ø 7 mm | 22 | 88 |
+| Encoder-Bohrung EN2 | Ø 7 mm | 52 | 88 |
+| Encoder-Bohrung EN3 | Ø 7 mm | 200 | 88 |
+| Encoder-Bohrung EN4 | Ø 7 mm | 230 | 88 |
+| Display-Cutout | 42 × 24 mm Rechteck | 126 | 84 |
+| Modifier-Cutouts SW6–SW10 | je 12.5 × 12.5 mm | 98, 112, 126, 140, 154 | 58 |
+| Modifier-LED-Bohrungen LED6–LED10 | je Ø 2 mm | gleiche X wie SW6–10 | 66 |
+| Cell-Cutouts (Switch-Frame) | je 14 × 14 mm | 82, 104, 126, 148, 170 | 26 |
+| Cell-LED-Bohrungen LED11–LED20 | je Ø 2 mm | siehe §3.4 | 40 |
+| Dust-Mesh-Aussparung links | oval **50 × 30 mm** mit 0.3-mm-Mesh-Inset | 28 | 50 |
+| Dust-Mesh-Aussparung rechts | oval **50 × 30 mm** | 224 | 50 |
+
+> Outline-Check r18.16: Top-Panel-Außenmaß 260 × 110 mm, PCB 252 × 102 mm
+> mittig → Top-Panel-X-Bereich in PCB-Koordinaten = −4 … 256.
+> Mesh-L X = 28 ± 25 = 3 … 53 → 7 mm Bezel zur Außenkante, 3 mm Sicherheits-
+> abstand zur PCB-Edge. Mesh-R analog.
+
+**Speaker-Kammer-Volumen** (geschlossen, sealed):
+- Links: ~3.5 × 7 × 1.5 cm ≈ 37 cm³
+- Rechts: ~3.5 × 7 × 1.5 cm ≈ 37 cm³
+
+Beide über dem Mindestvolumen für PUI-AS04008PS-Mid-Range-Closed-Box (ADR-0011).
+
+---
+
+## 6. Mounting Holes (Top-Plate-zu-Bottom-Case-Verschraubung)
+
+4 Mounting-Holes, M2.5, plattiert auf der PCB.
+
+| Hole | X (mm) | Y (mm) | Spec |
+|---|---|---|---|
+| MH1 | **12**  | **6**   | M2.5, Ø-Bohrung 2.7 mm, Pad Ø 6 mm |
+| MH2 | **240** | **6**   | s. o. |
+| MH3 | **12**  | **96**  | s. o. |
+| MH4 | **240** | **96**  | s. o. |
+
+Holes versetzt zu den Edges (≥ 3 mm zur PCB-Edge), zu den Encoder-Bodies
+(Encoder bei X 22/52/200/230, Y 88 — MH3/MH4 ≥ 7 mm horizontaler Abstand zum
+nächsten Encoder-Body-Rand) und zur Audio-Klinke (J8 X 0…6, MH1/MH3 bei X=12
+→ 6 mm zum J8-Body). Standoff im Bottom-Case 3 mm hoch → trifft den 3-mm-
+Standoff-Z-Slot aus §2.
+
+---
+
+## 7. Component-Height-Zones (DRC-Vorgabe für Layout)
+
+| Bereich | Z-Limit über PCB | Quelle |
+|---|---|---|
+| Globale Top-Zone | ≤ 8 mm | ADR-0011 |
+| Ausnahme „Encoder-Schaft" | bis 19 mm (durchstoßend) | EC11E-Schaft + Knopfdurchgang |
+| **Speaker-Treiber-Zone L** (X 8…48, Y 22…72) | **≤ 4 mm** auf PCB | Treiber hängt 5 mm vom Top-Panel; Hangtiefe-Restraum 9.6 mm minus 5-mm-Treiber − 0.6-mm-Sicherheit = 4 mm |
+| **Speaker-Treiber-Zone R** (X 204…244, Y 22…72) | **≤ 4 mm** auf PCB | s. o. |
+| Bottom-Side | ≤ 1 mm (Reserve, Prototyp blank) | Vereinfacht Reflow auf eine Seite |
+
+C_BULK-Polymer (470 µF, ~2 mm) erfüllt die 8-mm-Zone (ADR-0011 r18.12); der
+alte 10.5-mm-Alu-Elko ist retired.
+
+**Komponenten in den Speaker-Treiber-Zonen sind explizit erlaubt**, solange
+ihre Z-Höhe ≤ 4 mm. SMD-Passives (0603/0805), LQFP/SOIC/SSOP-ICs (≤ 2 mm),
+SOT-23/SOT-89-5 (≤ 1.5 mm), SMA-Dioden, Footprint-Pads — alles OK. Verboten
+in dieser Zone: L1 Boost-Inductor (4.5 mm), JST-PH-Connector (6 mm),
+Audio-Klinke (5 mm Body über Edge), Encoder-Body (7 mm), Cell-/Modifier-
+Switches.
+
+---
+
+## 8. PCB-Edge-Konnektoren (Übersicht)
 
 | Edge | Belegung |
 |---|---|
-| Top (Y=130) | USB-C zentriert. Kein Routing innerhalb 3 mm zur Edge |
-| Bottom (Y=0) | Edge-Rail 5 mm — keine Komponenten. Speaker-Cutouts unterbrechen |
-| Left/Right (X=0/320) | Edge-Rails 5 mm |
+| Top (Y = 102) | nur Speaker-Kammer-Aussparungen im Panel; PCB-Edge frei |
+| Bottom (Y = 0) | J1 USB-C zentriert (§3.5) |
+| Left (X = 0) | J8 Audio + J9 MIDI vertikal gestapelt (§3.6) |
+| Right (X = 252) | frei (Service-Side, SWD-/Boot-Buttons sitzen 5–10 mm einwärts) |
 
 ---
 
-## Status / TODOs für Layout-Phase
+## 9. Layout-Reihenfolge für Phase 6 (Empfehlung)
 
-Alle Komponenten-Positionen sind festgelegt (✅). Verbleibend sind reine
-Layout-/CAD-Ausführungsschritte (keine Entscheidungen mehr):
+1. **Edge.Cuts**: 252 × 102 mm Rechteck, 4 Mounting-Holes (§6), USB-C-Edge-Cut.
+2. **Critical-Path-Placement** (in dieser Reihenfolge platzieren, weil sie die
+   maximalen Layout-Constraints erzeugen):
+   1. STM32H743 LQFP-100 (§3.9, mittig)
+   2. HSE-Crystal + Caps direkt an OSC-Pins
+   3. PCM5102A + PAM8403 + C_BULK-Stack (ADR-0010-Constraint)
+   4. TPS61089 Boost + L1
+   5. AP7361C-33Y5 LDO
+3. **Panel-Placement** (Positionen fix aus §3): 4× Encoder, ST7789-Header,
+   5× Modifier-Buttons, 5× Cell-Sites, alle LEDs.
+4. **Edge-Connectors**: J1 USB-C, J8/J9 Audio.
+5. **Service**: SW11, SW_BOOT, J4 SWD, J_BAT.
+6. **Routing-Reihenfolge**:
+   1. GND-Pour Top + Bottom (Quiet-AGND-Insel unter PCM5102A)
+   2. Power-Pours (+3V3, +5V) — separate Layer 3 wenn 4-Layer
+   3. Audio-Differential-Pairs (SAI → PCM5102A)
+   4. HSE-Loop (kürzest)
+   5. ADC-Cell-Leitungen mit Guard-Trace
+   6. I²C/I²S, SPI-LCD
+   7. GPIO-Stubs
+7. **DRC + ERC + 3D-Viewer-Check** gegen `field_ambience.3dshapes/`.
 
-- ✅ OLED-J3-Position festgelegt: (80, 95), liegender Header, Option (a) Standoffs
-- ✅ Pi-J2-Position festgelegt: (160, 90)
-- ✅ Pico-U1-Position festgelegt: (270, 80)
-- [ ] CAD-Modell erstellen (FreeCAD/Fusion) zur Bestätigung der Maße
-- [ ] DXF-Export der Board-Outline (mit Speaker-Cutouts + Mounting-Holes)
-- [ ] DXF-Import in KiCad als Edge.Cuts-Layer
-- [ ] Komponenten in KiCad-PCB-Editor auf obige Koordinaten platzieren + routen
+---
+
+## 10. Offene Punkte (Phase 6 / Industrial-Design-Sprint)
+
+| Punkt | Beschluss durch |
+|---|---|
+| Finale Außenmaße (Gehäuse-Höhe ggf. ±2 mm) | Industrial Design |
+| Knopf-Material + exakte Knopf-CAD (Ø 19 oder 20 mm) | Industrial Design |
+| Cell-Cap-Profil (2u vs eigener Custom-Cap) | Industrial Design + Muster-Test |
+| Gateron-LP-Switch-Cutout exakt 14×14 mm vs Datenblatt | Phase 6 gegen Switch-Drawing prüfen |
+| LP-Stabilizer-Notwendigkeit bei 2u in dieser Pitch | Erfahrungswert nach Muster-Druck |
+| Plate-Material (Aluminium vs ABS-Spritzguss) | Mockup-Bau |
+| Mesh-Lieferant (Saati Acoustex T-Klasse vs Alternative) | ADR-0007 follow-up |
+
+Alle hier offenen Punkte verzögern Phase 6 NICHT — sie verfeinern die schon
+festgelegten Cutout-Maße um max. 1 mm und können in der CAD-Iteration nach
+dem ersten DRC-Pass eingearbeitet werden.
