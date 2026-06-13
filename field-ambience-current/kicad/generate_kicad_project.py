@@ -1925,13 +1925,13 @@ def power_tree_sheet() -> str:
         place_symbol(
             lib_id="Connector:USB_C_Receptacle",
             ref="J1",
-            value="USB_C_Receptacle (TYPE-C-31-M-17, C283540, 10k Insertion-Cycles, drop-in zu M-12)",
+            value="USB_C_Receptacle (TYPE-C-31-M-12, C165948, 16-Pin mit D+/D-/CC, ~5k Insertion-Cycles)",
             x=J1_X,
             y=J1_Y,
             footprint="Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
-            datasheet="https://www.lcsc.com/datasheet/lcsc_datasheet_2108131830_Korean-Hroparts-Elec-TYPE-C-31-M-17_C283540.pdf",
-            extra_props={"MPN": "TYPE-C-31-M-17", "LCSC": "C283540",
-                         "Notes": "r18.10: Upgrade von C165948 (M-12 / 5k Cycles) auf M-17 (10k Cycles). Footprint M-12 ist drop-in kompatibel (laut HRO-Tabelle); pre-fab in Phase 6 visuell gegen M-17-Drawing prüfen. r18.14: LCSC-Nr. korrigiert — C165935 war ein STF18N65M5-MOSFET (TO-220F-3), via EasyEDA-CAD-Verifikation entdeckt. Korrekt: C283540. 3D-STEP in field_ambience.3dshapes (H=3.2mm)."},
+            datasheet="https://datasheet.lcsc.com/lcsc/1903211732_Korean-Hroparts-Elec-TYPE-C-31-M-12_C165948.pdf",
+            extra_props={"MPN": "TYPE-C-31-M-12", "LCSC": "C165948",
+                         "Notes": "r18.19-REVERT auf das 16-Pin-Original: Die r18.10/r18.14-Variante C283540 (TYPE-C-31-M-17) wurde am LCSC-Produktseite als **6-Pin POWER-ONLY** identifiziert — keine D+/D-, kein CC. Damit waere USB-DFU-Flashen (PA11/PA12, ADR-0009) physikalisch unmoeglich gewesen und alle USB_DM/USB_DP-/CC-Pads des Schematic floateten. Zurueck auf C165948 (16-Pin volle USB-C-Belegung, 168k+ Stock). Insertion-Cycle-Trade-Off 10k -> ~5k bewusst akzeptiert (typischer Hobby-Gebrauch < 5k ueber Jahre)."},
             seed_suffix="J1",
         )
     )
@@ -5547,10 +5547,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Connector:Conn_01x02",
             ref="J6",
-            value="Speaker L (PUI AS04008PS, 4R 4W)",
+            value="Speaker L (Same Sky CMS-402811-28SP, Cloth-Cone, 8R 2W)",
             x=j6_x, y=j6_y,
             footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
-            extra_props={"MPN": "AS04008PS-4W-WR-R", "LCSC": "TBD"},
+            extra_props={"MPN": "Same Sky CMS-402811-28SP (Cloth-Cone primaer; PUI AS04008PS-4W-WR-R sekundaer)", "LCSC": "TBD (kein LCSC-Stock fuer 40mm-Treiber; DigiKey 102-CMS-402811-28SP-ND)", "Notes": "Treiber haengt vom Top-Panel (Top-Firing, ADR-0007/ADR-0011), kein PCB-Mount. J6/J7 sind nur 2-Pin-Loetpads; Draht zum Treiber-Eyelet manuell. r18.18: Cloth-Cone-Wechsel."},
             seed_suffix="J6",
             sheet_uuid_seed=sus,
         )
@@ -5566,10 +5566,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Connector:Conn_01x02",
             ref="J7",
-            value="Speaker R (PUI AS04008PS, 4R 4W)",
+            value="Speaker R (Same Sky CMS-402811-28SP, Cloth-Cone, 8R 2W)",
             x=j7_x, y=j7_y,
             footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
-            extra_props={"MPN": "AS04008PS-4W-WR-R", "LCSC": "TBD"},
+            extra_props={"MPN": "Same Sky CMS-402811-28SP (Cloth-Cone primaer; PUI AS04008PS-4W-WR-R sekundaer)", "LCSC": "TBD (kein LCSC-Stock fuer 40mm-Treiber; DigiKey 102-CMS-402811-28SP-ND)", "Notes": "Treiber haengt vom Top-Panel (Top-Firing, ADR-0007/ADR-0011), kein PCB-Mount. J6/J7 sind nur 2-Pin-Loetpads; Draht zum Treiber-Eyelet manuell. r18.18: Cloth-Cone-Wechsel."},
             seed_suffix="J7",
             sheet_uuid_seed=sus,
         )
@@ -5631,7 +5631,7 @@ def audio_sheet() -> str:
             ref="J8",
             value="3.5mm TRS Line/Headphone Out (PJ-320 class, w/ detect)",
             x=j8_x, y=j8_y,
-            footprint="Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal",
+            footprint="field_ambience:Jack_3.5mm_PJ-320D_SMT",
             # v0.8: C2884109 existierte nicht in der JLC-Teile-DB → ersetzt durch
             # PJ-320D (C431535, SMD 3.5mm TRS mit Schaltkontakt, lagernd). Footprint
             # gegen PJ-320D-Pads im GUI verifizieren (TODO B0b) + Detect-Polarität.

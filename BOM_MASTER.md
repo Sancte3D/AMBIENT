@@ -31,7 +31,7 @@ Bestell-Link.
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **J1** USB-C | **TYPE-C-31-M-17** (Korean Hroparts) | [C283540](https://www.lcsc.com/product-detail/C283540.html) | `Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12` | KiCad-Standard | STEP im Repo |
+| **J1** USB-C | **TYPE-C-31-M-12** (Korean Hroparts) — 16-Pin volle USB-C-Belegung (VBUS/GND/CC1/CC2/D+/D−/SBU). r18.19-REVERT: r18.10 hatte fälschlich auf M-17 „upgraded", M-17 ist aber 6-Pin power-only → USB-DFU wäre kaputt gewesen. | [C165948](https://www.lcsc.com/product-detail/C165948.html) | `Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12` | KiCad-Standard | STEP im Repo |
 | D1 | **USBLC6-2SC6** ESD-Schutz | [C2687116](https://www.lcsc.com/product-detail/C2687116.html) | `Package_TO_SOT_SMD:SOT-23-6` | KiCad-Standard | Standard-Lib-3D |
 | F1 | **1812L300/16GR** PTC 3 A | [C18198349](https://www.lcsc.com/product-detail/C18198349.html) | `Fuse:Fuse_1812_4532Metric` | KiCad-Standard | Standard-Lib-3D |
 | D2 | **SMAJ5.0A** TVS | [C113952](https://www.lcsc.com/product-detail/C113952.html) | `Diode_SMD:D_SMA` | KiCad-Standard | Standard-Lib-3D |
@@ -53,8 +53,8 @@ Bestell-Link.
 | **U3** DAC | **PCM5102APWR** TSSOP-20 | [C107671](https://www.lcsc.com/product-detail/C107671.html) | `Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 | **U4** Class-D Amp | **PAM8403DR-H** SOIC-16 | [C17337](https://www.lcsc.com/product-detail/C17337.html) | `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` | KiCad-Standard | Standard-Lib-3D |
 | FB1/FB2 Ferrite Bead | **BLM18AG601SN1D** 0603 600 Ω | [C19330](https://www.lcsc.com/product-detail/C19330.html) (FB1) / [C84094](https://www.lcsc.com/product-detail/C84094.html) (FB2) | `Inductor_SMD:L_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **J8** Line-Out 3.5 mm TRS | **PJ-320D** mit Insertion-Detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | `Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal` | KiCad-Standard | STEP im Repo |
-| **J9** MIDI-Out 3.5 mm TRS-A (DNP bis ADR-0004) | **PJ-320D** | [C431535](https://www.lcsc.com/product-detail/C431535.html) | s. J8 | KiCad-Standard | STEP im Repo |
+| **J8** Line-Out 3.5 mm TRS | **PJ-320D** (SHOU HAN, SMT) mit Insertion-Detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (EasyEDA-CAD vendored r18.19) | field_ambience (Custom) | STEP im Repo |
+| **J9** MIDI-Out 3.5 mm TRS-A (DNP bis ADR-0004) | **PJ-320D** | [C431535](https://www.lcsc.com/product-detail/C431535.html) | s. J8 | field_ambience (Custom) | STEP im Repo |
 
 ### Speaker (r18.18 — Cloth-Cone primär)
 
@@ -183,5 +183,7 @@ Wer prüft was wann:
 | AP7361C-Pinout User-bestätigt | ✅ Diodes-DS | r18.6 |
 | TPS61089 Pin 11 = SW + Thermal | ✅ TI-DS | r18.7 |
 | Speaker-Membran (Cloth vs Paper) | ✅ Cloth-Cone primär | r18.18 |
-| USB-C LCSC-ID korrekt | ✅ C283540 (war fälschlich C165935 = MOSFET) | r18.14 |
+| USB-C LCSC-ID korrekt | ✅ C165948 (16-Pin TYPE-C-31-M-12). r18.10 hatte auf M-17 „geupgraded", r18.14 LCSC-Nr. von C165935 (MOSFET) auf C283540 korrigiert, r18.19-Audit fand C283540 = 6-Pin power-only → Revert auf M-12 | r18.19 |
+| Audio-Jack-Footprint | ✅ `field_ambience:Jack_3.5mm_PJ-320D_SMT` (EasyEDA-CAD vendored, 4 SMD + 2 NPTH). Vorher CUI SJ-3523-SMT-FP zugewiesen — Pad-Layout passte nicht zu C431535 (SHOU HAN) | r18.19 |
+| Speaker-Wert in Schaltplan | ✅ `value="CMS-402811-28SP Cloth-Cone 8R 2W"` (J6/J7). Vorher stale „PUI AS04008PS 4R 4W" — falsche Impedanz + falscher Treiber | r18.19 |
 | SW_BOOT-MPN korrekt | ✅ TS-1088-AR02016 (war fälschlich TS-1185A) | r18.14 |

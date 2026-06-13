@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-13 (v0.7-r18.18)**
+**Stand: 2026-06-13 (v0.7-r18.19)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -16,7 +16,7 @@
 | **Schematic (Korrektheit)** | 9.5 / 10 | ↑ (r18.10: SW_BOOT + USB-C-Upgrade + SPEC-BOM-Sync) |
 | **Hardware-Symbole** | 9.5 / 10 | ↑ (BOOT-Button + R_BOOT_SW ergänzt) |
 | **Footprint-Verifikation** | 10 / 10 | ✅ (r18.14: 0 offene Punkte — EC11J-Blocker via Teil-Retire gelöst, TS-1088-FP EasyEDA-verifiziert) |
-| **BOM-Sourcing** | 9 / 10 | ↑ (r18.14: EC11E + Hall-Sensor LCSC-IDs verifiziert + DRV5056-Pinout DS-bestätigt; offen: Gateron-LP, Polymer-Cap, MLCC-220µF/10V) |
+| **BOM-Sourcing** | 9.5 / 10 | ↑ (r18.19: USB-C-Pin-Count-Bug gefunden+gefixt (C283540 6-Pin power-only → C165948 16-Pin), Audio-Jack-FP vendored, Speaker-Wert sync; Audit-Standard erweitert) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 9 / 10 | ↑ (r18.16: `mechanical_coordinates.md` echt + geometrisch validiert, Power-Insel verortet, Speaker-Höhen-Constraint) |

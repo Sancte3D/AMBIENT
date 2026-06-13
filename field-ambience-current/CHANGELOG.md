@@ -4,9 +4,94 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.18** (Speaker-Membran-Wechsel: Cloth-Cone primär
-(Same Sky CMS-402811-28SP), PUI-Paper als Zweitquelle dokumentiert. KEIN
-.kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.19** (Audit-Fixes: USB-C-Revert auf 16-Pin M-12,
+Audio-Jack-Footprint korrigiert, Speaker-Wert im Schaltplan aktualisiert,
+Generator erstmals seit r18.14b regeneriert. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.19 (2026-06-13) — Hardware-Audit-Fixes
+
+Senior-Engineer-Audit ergab vier Defekte, davon einer **kritisch**:
+
+### 🔴 Critical — USB-C-Revert auf 16-Pin (Flashen über USB-C gerettet)
+
+LCSC-Produktseite C283540 (TYPE-C-31-M-17) listet **„6P" = 6 Pins, power-only**.
+Keine D+/D-, kein CC1/CC2. Damit wäre **USB-DFU-Flashen über PA11/PA12
+physikalisch unmöglich** gewesen (PA11/PA12 = USB_DM/USB_DP), der gesamte
+Zweck des SW_BOOT-Tasters (ADR-0009 Punkt 1) ausgehebelt; im Schaltplan
+hätten USB_DM/USB_DP/CC1/CC2/SBU-Pads auf der Stecker-Seite gar nicht
+existiert.
+
+**Fix:** Revert auf **C165948 / TYPE-C-31-M-12** (16-Pin volle USB-C-Belegung
+inkl. D+/D-/CC, 168k+ LCSC-Stock). Footprint war von Anfang an für diese
+Variante gemacht (`USB_C_Receptacle_HRO_TYPE-C-31-M-12`). Insertion-Cycle-
+Trade-Off ~10k → ~5k bewusst akzeptiert — für ein persönliches Hobby-Gerät
+weit ausreichend, und 10k waren ohnehin Overkill.
+
+**Wurzel-Ursache:** r18.10-„Upgrade" auf M-17 hatte sich auf eine generische
+„drop-in laut HRO-Tabelle"-Annahme verlassen, ohne Pin-Count zu verifizieren.
+r18.14 korrigierte zwar die zwischenzeitlich falsche LCSC-Nr. (C165935 war
+ein MOSFET), pickte aber innerhalb der M-17-Familie die 6-Pin-Variante.
+
+**Lehre:** Pin-Count muss explizit aus Datenblatt/Produktseite bestätigt
+werden, nicht aus Bauform-Ähnlichkeit abgeleitet.
+
+### 🟠 High — Audio-Jack-Footprint passte nicht zum Bauteil
+
+J8/J9 hatten `Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal`
+zugewiesen — das ist die CUI-SMT-Klasse. Verbaut wird aber C431535
+(SHOU HAN PJ-320D). Pad-Layouts inkompatibel. Assembly wäre gescheitert.
+
+**Fix:** EasyEDA-CAD-verifizierter Footprint für C431535 in die Project-Lib
+vendored: `field_ambience:Jack_3.5mm_PJ-320D_SMT` (4 SMD-Pads + 2 NPTH-Posts,
+exakt aus der LCSC-CAD-Datei extrahiert — gleiche Methodik wie SW_TS1088
+und EC11J in r18.14).
+
+### 🟠 High — Speaker-Wert im Audio-Sheet seit r18.18 stale
+
+J6/J7 standen seit r14 hartcodiert als
+`value="Speaker L (PUI AS04008PS, 4R 4W)"` — drei Fehler auf einmal: 4 Ω
+(seit r14 als 8 Ω korrigiert; Power-Budget rechnet mit 8 Ω → 700 mA, mit
+4 Ω wären es 1.4 A → TPS61089 grenzwertig), PUI statt CMS-402811-28SP
+(seit r18.18 Primärwahl), MPN ist die Papier-Variante.
+
+**Fix:** Value + MPN auf
+`Same Sky CMS-402811-28SP (Cloth-Cone, 8R 2W)`, Notes erklärt Top-Firing-
+Mount + manuelles Anlöten der Eyelets.
+
+### 🟠 Critical (Prozess) — Generator seit r18.14b nicht regeneriert
+
+Alle Entscheidungen r18.15–r18.18 lebten nur in den Docs. Das Schematic
+(= einzige Netlist-Quelle) hing auf r18.14b-Stand fest. Mit r18.19 erstmals
+wieder synchron regeneriert; ab jetzt jeder relevante Doc-Change zieht den
+Generator nach.
+
+### Verifizierung
+
+- Generator + Sheets regeneriert: alle 8 .kicad_sch paren-balanced ✅
+- USB-C: 4 × C165948/M-12 in power_tree.kicad_sch, 0 unerwünschte Leftovers
+  (das eine verbleibende C283540/M-17 steht ausschließlich in der Audit-
+  Trail-Notiz)
+- Audio-Jack-FP: 1 × field_ambience:Jack_3.5mm_PJ-320D_SMT in audio sheet,
+  0 CUI-SJ-3523-Leftovers
+- Speaker: 6 × CMS-402811-28SP in audio sheet, 0 stale „PUI 4R" Leftovers
+- Firmware 13/13 Suiten PASS (unberührt)
+
+### Files
+
+- `kicad/generate_kicad_project.py` (3 Edits)
+- `kicad/libraries/field_ambience.pretty/Jack_3.5mm_PJ-320D_SMT.kicad_mod` NEU
+- 8 × `kicad/*.kicad_sch` regeneriert
+- `field-ambience-current/docs/decisions/ADR-0009-engineering-realitaetscheck.md`
+  (Korrektur-Block r18.19 + Tabellen-Update)
+- `BOM_MASTER.md` (USB-C, Audio-Jack, Audit-Trail)
+- SPEC §8 hatte CMS bereits → keine Änderung nötig
+- SPEC §4 hatte M-12 nie verlassen → keine Änderung nötig
+
+Score: BOM-Sourcing 9 → 9.5 (kritische Pin-Count-Verifikation in den Audit-
+Standard aufgenommen); FP-Verify bleibt 10 (Custom-FP für C431535 ist nach
+EasyEDA-CAD verifiziert wie unsere anderen Customs).
 
 ---
 

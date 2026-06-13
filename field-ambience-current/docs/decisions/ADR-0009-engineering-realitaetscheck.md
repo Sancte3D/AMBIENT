@@ -56,6 +56,20 @@ Phase 6 visuell gegen M-17-Drawing prüfen.
 > 21k+ Stock). Generator + SPEC gefixt. Gleiche Fehlerklasse wie der
 > C156144-Vorfall (r18.5) — 3D-Modell-Abruf ist ab jetzt Teil der
 > BOM-Verifikation (mechanical/3d_models/MANIFEST.md).
+>
+> 🔴 **REVERT r18.19:** Hardware-Audit ergab: **C283540 (TYPE-C-31-M-17)
+> ist 6-Pin POWER-ONLY** (LCSC-Produktseite, „6P"). Keine D+/D-, kein
+> CC1/CC2. Damit waere **USB-DFU-Flashen ueber PA11/PA12 physikalisch
+> unmoeglich** gewesen — der gesamte Sinn des SW_BOOT-Tasters
+> (oben Punkt 1) waere ausgehebelt; alle USB_DM/USB_DP/CC-Pads im
+> Schaltplan floateten. **Zurueck auf das 16-Pin-Original C165948
+> (TYPE-C-31-M-12)**, 168k+ Stock, der Footprint war von Anfang an dafuer
+> gemacht. Insertion-Cycle-Trade-Off ~10k -> ~5k bewusst akzeptiert
+> (typischer Hobby-Gebrauch < 5k ueber Jahre; 10k waere fuer ein
+> personliches Geraet ohnehin Overkill gewesen). Lehre: „drop-in
+> kompatibel laut HRO-Tabelle" ist KEINE Verifikation — Pin-Count muss
+> explizit aus Datenblatt/Produktseite bestaetigt werden, nicht aus
+> Bauform-Aehnlichkeit abgeleitet.
 
 **Premium-Pfad (post-Prototyp):** GCT USB4135-03-A oder Amphenol
 12401610E4-2A — beide ~10 k Cycles, höherer Anpressdruck, anderer Footprint
@@ -80,7 +94,7 @@ Höchste Komponenten (absteigend, gegen Datenblatt verifiziert):
 | EN1-4 EC11J Encoder | ~19 mm | bestimmt Gehäuse-Mindesthöhe + Frontplatten-Auslass |
 | C_BULK 1000 µF Elko 10×10.5 | 10.5 mm | Layout: nicht unter LCD-Modul platzieren |
 | J3 LCD-Header 2.54 mm | 8.5 mm | Standoff für LCD-Modul drauf |
-| USB-C TYPE-C-31-M-17 | 7.5 mm | + 7 mm Mate-Höhe = 14.5 mm Aussparung |
+| USB-C TYPE-C-31-M-12 (16-Pin, r18.19 revert) | 7.5 mm | + 7 mm Mate-Höhe = 14.5 mm Aussparung |
 | SW6-10 HX 12×12×7.3 | 7.3 mm | Modifier-Buttons, Frontplatten-Cap drauf |
 | J9 JST PH 2.0 | 6.0 mm | LiPo-Batterie-Anschluss |
 | J6/J7 Speaker | ~5 mm | + Dust-Mesh +0.3 mm Inset |
