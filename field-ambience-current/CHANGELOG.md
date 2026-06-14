@@ -4,8 +4,55 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.23** (UX-Korrektur: Cell-LED-XOR → Independent Latches.
-Hardware unverändert, Sim + ADR-0008 amendiert. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.24** (3 offene Verifikations-Punkte geschlossen:
+weiße-LED-Package-Bug, VREF+-Decoupling ergänzt, ADC-Channels DS-bestätigt.
+KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.24 (2026-06-14) — Drei offene Verifikations-Punkte geschlossen
+
+Aus der „gibt es noch offene Fragen"-Bestandsaufnahme die 3 autonom lösbaren
+Punkte abgeräumt.
+
+### 🟠 Weiße-LED-Package-Bug (neu gefunden)
+
+LED_HB (Heartbeat) hatte MPN „XL-1608UWC-04" (0603) + 0603-Footprint, aber
+**LCSC C965818 = XL-2012UWC, ein 0805-Teil** (live verifiziert). Package-
+Mismatch — 0805-LED auf 0603-Land-Pattern. Fix: **C965808** (echtes
+XL-1608UWC-04 0603, 2.5 M Stock). BOM_MASTER hatte zusätzlich die 3 Modifier-
+Weiß-LEDs fälschlich auf C965818 → ebenfalls auf C965808 korrigiert.
+
+### 🟠 VREF+ Decoupling ergänzt (Audit-Punkt 5)
+
+VREF+ (Pin 20) war nur an VDDA_3V3 gebunden, **kein dedizierter Cap am Pin**.
+ST-Empfehlung: 1 µF + 100 nF nah am VREF+. Ergänzt: **C_VREF1 (1 µF) +
+C_VREF2 (100 nF)** VREF+ → GND. Reduziert ADC-Sample-Jitter bei der
+Hall-Velocity (ratiometrisch, daher Referenz-Fehler unkritisch, aber Rauschen
+zählt). +2 Bauteile (C15849, C14663 — beide schon im BOM).
+
+### 🟢 ADC-Channels DS-bestätigt (Audit-Punkt 4)
+
+ST-PDF via Distrelec-Mirror geparst (pdftotext): **PA4=ADC12_INP18,
+PB0=ADC12_INP9, PB1=ADC12_INP5 verbatim aus DS12110 bestätigt**;
+PC0=ADC123_INP10 (ST-Community + DS), PC1=ADC123_INP11 (PCx-Sequenz). Alle 5
+auf ADC1 → Scan-Mode reicht. SPEC §5.6a von „vor ADC-Init bestätigen" auf
+„DS-bestätigt" hochgestuft.
+
+### Verifizierung
+
+8/8 paren-balanced, LED_HB C965808 (0 C965818-Reste außer Audit-Notiz),
+C_VREF1/2 present, SPEC „DS-bestätigt", Firmware 13/13 PASS.
+
+### Files
+
+generate_kicad_project.py (LED_HB-LCSC + VREF+-Caps), stm32h743.kicad_sch regen,
+SPEC §5.6a, BOM_MASTER (LEDs + VREF-Caps), CHANGELOG.
+
+### Verbleibende offene Punkte (nicht autonom lösbar)
+
+GUI-ERC (User), PCB-Layout (großer Block), Display-Pin-Order vs gekauftes Modul,
+MIDI-Entscheidung (ADR-0004), STM32-Firmware-Port, Gehäuse/Plate-CAD.
 
 ---
 

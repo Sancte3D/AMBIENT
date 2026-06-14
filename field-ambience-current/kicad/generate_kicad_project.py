@@ -3053,9 +3053,29 @@ def stm32h743_sheet() -> str:
     wires.append(wire(x19, y19, x19 - 5, y19, seed_suffix="u1-vssa"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_U1_VSSA", value="GND",
                                 x=x19 - 5, y=y19, rotation=90, seed_suffix="u1-vssa", sheet_uuid_seed=sus))
+    # VREF+ (20): an VDDA_3V3 + DEDIZIERTES lokales Decoupling am Pin (r18.24,
+    # Audit-Punkt 5). ST DS12110 / AN: VREF+ braucht 1µF + 100nF nah am Pin für
+    # rauscharmen ADC-Ref. Für die Hall-Velocity (ratiometrisch gegen denselben
+    # 3V3-Rail) reduziert das v.a. Sample-Jitter. C_VREF1 (1µF) + C_VREF2 (100nF)
+    # VREF+ → GND.
     x20, y20, _ = pa(20)
     wires.append(wire(x20, y20, x20 - 5, y20, seed_suffix="u1-vref"))
     labels.append(label(x20 - 5, y20, "VDDA_3V3"))
+    for i, (val, mpn, lcsc) in enumerate([
+        ("1uF X5R 0603 (VREF+ ref-decoupling)", "CL10A105KB8NNNC", "C15849"),
+        ("100nF X7R 0603 (VREF+ HF)", "CC0603KRX7R9BB104", "C14663"),
+    ]):
+        vcx = x20 - 12 - i * 6
+        wires.append(wire(x20 - 5, y20, vcx, y20, seed_suffix=f"vref-c{i}-rail"))
+        junctions.append(junction(vcx, y20)) if i == 0 else None
+        symbols.append(place_symbol(lib_id="Device:C", ref=f"C_VREF{i+1}", value=val,
+                                    x=vcx, y=y20 + 3.81, rotation=0,
+                                    footprint="Capacitor_SMD:C_0603_1608Metric",
+                                    extra_props={"MPN": mpn, "LCSC": lcsc},
+                                    seed_suffix=f"CVREF{i+1}", sheet_uuid_seed=sus))
+        wires.append(wire(vcx, y20 + 7.62, vcx, y20 + 10, seed_suffix=f"vref-c{i}-gnd"))
+        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_CVREF{i+1}", value="GND",
+                                    x=vcx, y=y20 + 10, seed_suffix=f"cvref{i}-gnd", sheet_uuid_seed=sus))
     x21, y21, _ = pa(21)
     wires.append(wire(x21, y21, x21 - 5, y21, seed_suffix="u1-vdda"))
     labels.append(label(x21 - 5, y21, "VDDA_3V3"))
@@ -3295,7 +3315,7 @@ def stm32h743_sheet() -> str:
                                 value="0603 warm-white (heartbeat)",
                                 x=sx, y=sy + 3.81, rotation=90,
                                 footprint="LED_SMD:LED_0603_1608Metric",
-                                extra_props={"MPN": "XL-1608UWC-04", "LCSC": "C965818"},
+                                extra_props={"MPN": "XL-1608UWC-04", "LCSC": "C965808"},
                                 seed_suffix="LEDHB", sheet_uuid_seed=sus))
     wires.append(wire(sx, sy + 7.62, sx, sy + 10, seed_suffix="ledhb-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_LEDHB", value="GND",

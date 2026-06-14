@@ -713,7 +713,7 @@ keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 
 ### 5.6a Cell-Velocity-Sense (NEU r18.9, ADR-0006)
 
-| Pin | Port | ADC-Channel (Standard-Mapping) | Net |
+| Pin | Port | ADC-Channel (DS12110-bestätigt) | Net |
 |---|---|---|---|
 | 15 | PC0 | ADC123_INP10 | CELL1_SENSE |
 | 16 | PC1 | ADC123_INP11 | CELL2_SENSE |
@@ -721,15 +721,14 @@ keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 | 34 | PB0 | ADC12_INP9 | CELL4_SENSE |
 | 35 | PB1 | ADC12_INP5 | CELL5_SENSE |
 
-**ADC-Channel-Hinweis (r18.20):** Alle 5 Channels liegen auf **ADC1** (INP5,
-INP9, INP10, INP11, INP18) → ein einzelner ADC1 kann alle fünf Cells
-sequenziell (Scan-Mode) abtasten, kein Multi-ADC nötig. PC0/PC1 sind
+**ADC-Channel-Hinweis (r18.24 — DS-bestätigt):** Alle 5 Channels liegen auf
+**ADC1** (INP5, INP9, INP10, INP11, INP18) → ein einzelner ADC1 kann alle fünf
+Cells sequenziell (Scan-Mode) abtasten, kein Multi-ADC nötig. PC0/PC1 sind
 zusätzlich auf ADC3 erreichbar (für künftiges Dual-Simultaneous-Sampling).
-Die INP-Nummern sind das STM32H743-Standard-Mapping (RM0433 / DS12110
-Table 8 ANA-Spalte) — **vor dem Firmware-ADC-Init final gegen DS12110
-Table 8 bestätigen** (Lese-Bestätigung war in der Audit-Session wegen
-ST-PDF-HTTP-503 nicht möglich; Pin-Nummern selbst sind via
-`docs/component_reviews/U1_STM32H743VIT6.md` verifiziert).
+**Verifikation r18.24:** PA4=ADC12_INP18, PB0=ADC12_INP9, PB1=ADC12_INP5 sind
+**verbatim aus DS12110 (STM32H743xI, Additional-Functions-Tabelle)** bestätigt;
+PC0=ADC123_INP10 via ST-Community + DS; PC1=ADC123_INP11 folgt der PCx-Sequenz.
+Audit-Punkt 4 geschlossen.
 
 Beschaltung pro Cell (**r18.14, ADR-0013** — ersetzt FSR-Teiler aus r18.9):
 linearer Hall-Sensor (J_CELLn 1×3-Site: +3V3/OUT/GND; DRV5056A4-Kandidat,

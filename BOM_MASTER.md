@@ -1,6 +1,6 @@
 # BOM Master — Field Ambience
 
-**Stand: v0.7-r18.22 (2026-06-14).** Single Source of Truth für alle aktiv
+**Stand: v0.7-r18.24 (2026-06-14).** Single Source of Truth für alle aktiv
 verbauten Komponenten. Pro Eintrag: aktuelle Wahl, Footprint-Quelle, 3D-Quelle,
 Bestell-Link.
 
@@ -119,10 +119,10 @@ Bestell-Link.
 |---|---|---|---|---|---|
 | **Modifier-LED Hold (gelb)** | Hubei KENTO KT-0603Y (Vf 2.4V → 6.7mA @ 5V/390Ω) | [C2287](https://www.lcsc.com/product-detail/C2287.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **Modifier-LED Shift (grün)** | Hubei KENTO KT-0603G pure-green 525nm (Vf 3.1V → 4.9mA @ 5V/390Ω) | [C12624](https://www.lcsc.com/product-detail/C12624.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **Modifier-LEDs Drone / Generate / Clear (3× weiß)** | XL-1608UWC-04 (warmweiß 0603, same as Heartbeat) | [C965818](https://www.lcsc.com/product-detail/C965818.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **Modifier-LEDs Drone / Generate / Clear (3× weiß)** | XL-1608UWC-04 (warmweiß 0603) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
 | **Cell-LEDs 5× Gelb** | Hubei KENTO KT-0603Y | [C2287](https://www.lcsc.com/product-detail/C2287.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
 | **Cell-LEDs 5× Grün** | Hubei KENTO KT-0603G | [C12624](https://www.lcsc.com/product-detail/C12624.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
-| **LED_HB** Heartbeat (warmweiß) | **XL-1608UWC-04** | [C965818](https://www.lcsc.com/product-detail/C965818.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **LED_HB** Heartbeat (warmweiß) | **XL-1608UWC-04** (r18.24-Fix: war C965818 = XL-2012UWC **0805**, falsches Package) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
 | **LED_CHRG** Charger-Status (amber) | Generic Amber 0603 | [C72041](https://www.lcsc.com/product-detail/C72041.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
 | LED-Vorwiderstände **390 Ω** 0603 (15×, an +5V-Anode → LED → PCA9685-Sink) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
@@ -137,7 +137,7 @@ LCSC-Nr verlinkt; Sortiment hier nur referenziert:
 | Caps 0603 X7R / X5R | C14663 (100 n), C57112 (10 n), C46653 (4.7 µ X5R), C1588 (1 n), C1804 (auto-generated), C15849 (1 µ X5R), C14858 (10 n B) |
 | Caps 0805 | C15850 (10 µ X5R), C45783 (22 µ X5R) |
 | MLCC 1210 | C2880380 (100 µF/10V X5R, C_BULK2); C444831 (470µF/10V Polymer-Tantal Case-E, C_BULK) |
-| Caps spezifisch | C24539 (2.2 µF VCAP STM32); C107045 (27 pF C0G/NP0, HSE-Load, 2×) |
+| Caps spezifisch | C24539 (2.2 µF VCAP); C107045 (27 pF C0G, HSE 2×); C15849 (1 µF, VREF+ & VDDA); C14663 (100 nF, VREF+ & VDDA) |
 
 Alle Standard-FPs: `Resistor_SMD:R_0603_1608Metric`, `Capacitor_SMD:C_0603_1608Metric`,
 `Capacitor_SMD:C_0805_2012Metric`, `Capacitor_SMD:C_1210_3225Metric` — alle KiCad-Standard,
