@@ -47,8 +47,22 @@ Der Kick75-Knob sitzt flach am Deck (Low-Profile-Board, Gateron LP 3.0),
 
 | Position | Variante | Eigenschaften |
 |---|---|---|
-| EN3 (Display) | EC11E-Serie **mit** Push + Detents (15 P / 30 D; exakte Suffix-Variante TBD-VERIFY gegen ALPS-Matrix) | Menü-Navigation + Klick |
-| EN1/2/4 (Drive/Bright/Vol) | **EC11E183440C** — 18 Pulse, **ohne** Detent, **ohne** Switch | glatt, endlos |
+| EN3 (Display) | **EC11E18244AU** — 18 Puls / 36 Detents, mit Push-Switch (active, C202365) | Menü-Navigation + Klick |
+| EN1/2/4 (Drive/Bright/Vol) | **EC11E18244AU (gleiches Teil)** — r18.22-Pivot wegen NRND-Status der früheren EC11E183440C-Wahl | Detents werden vom Firmware-Acceleration-Layer unsichtbar: langsam = 1 %/Klick (UX-Ziel), schnell = ×8/Klick |
+
+> **r18.22-NRND-Pivot:** Die ursprüngliche r18.14-Wahl EC11E183440C
+> (0-Detent + Push, C370986) wurde als NRND bestätigt. Der obvious-Kandidat
+> EC11E1834403 (C361165) ist **ebenfalls NRND** — ALPS hat die gesamte
+> „EC11E 0-Detent + Push-Switch"-SKU-Familie phased out. Kein aktives
+> Drop-in-Equivalent existiert. Pivot auf **alle 4 = EC11E18244AU** (active).
+> Der „smooth"-UX-Wunsch („1 % pro langsamem Klick") wird ohnehin von der
+> Firmware-Acceleration erfüllt — die 36 Detents stören dabei nicht; bei
+> schneller Drehung kommen sie kaum ins Bewusstsein, und langsam ist jeder
+> Klick = 1 %. Bonus: alle 4 Encoder identisch → Lagerhaltung simpel.
+>
+> Lehre: **Lifecycle-Status muss aktiv verifiziert werden, nicht nur Stock**.
+> Die r18.14-Sourcing-Recherche prüfte Stock, nicht NRND. Das ist ab jetzt
+> Pflichtteil jeder Komponenten-Auswahl (analog zu Pin-Count nach r18.19).
 
 Warum THT statt des bisherigen EC11J SMD (C209762):
 1. **EC11J ist NRND** (seit r18.6 bekannt).

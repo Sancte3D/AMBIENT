@@ -4597,19 +4597,21 @@ def encoder_sheet() -> str:
                           variant: str = "smooth") -> None:
         """Platziere einen EC11 + Pull-Ups + Debounce-Caps + Hier-Labels.
 
-        variant (ADR-0012, r18.14):
-          "push"   — Display-Encoder: ALPS EC11E THT mit Push-Switch + Detents
-                     (Menü-Navigation: 1 Rastung = 1 Schritt).
-          "smooth" — Parameter-Encoder: EC11E183440C, 18 Puls, OHNE Rastung,
-                     OHNE Switch (glattes Drehen, Auflösung macht die Firmware
-                     über Velocity-Acceleration). SW1/SW2-Pins bleiben im
-                     Schematic verdrahtet (Pull-up = idle high, Firmware
-                     ignoriert) — die THT-Löcher bleiben unbestückt, da die
-                     Variante physisch keine Switch-Pins hat.
-        Beide Varianten: gleiches EC11E-THT-Land-Pattern, gleiche Body-Höhe,
-        gleiche Schaftlänge wählen → alle 4 Knöpfe exakt gleich hoch.
-        EC11J SMD (C209762) retired: NRND + 24.5mm Gesamthöhe (3D-verifiziert,
-        zu hoch für Kick75-flaches Zielprofil) + Half-Step-Detent-Mismatch.
+        variant (ADR-0012, r18.14; r18.22 vereinfacht):
+          "push"   — Display-Encoder: ALPS EC11E18244AU, 36 Detents/U, mit
+                     Push-Switch (Menue-Navigation: 1 Rastung = 1 Schritt).
+          "smooth" — Parameter-Encoder. **r18.22-Pivot:** physisch jetzt das
+                     GLEICHE Teil (EC11E18244AU) wegen NRND-Status der frueheren
+                     Wahl EC11E183440C UND des Folge-Kandidaten EC11E1834403
+                     (ALPS hat die gesamte "0-Detent+Push"-Familie phased out).
+                     UX bleibt identisch zum frueheren Smooth, weil die Firmware-
+                     Acceleration langsam = 1 %/Klick, schnell = x8/Klick macht
+                     (Originalanforderung „2 Klicks fuer 1%" gefixt). Die
+                     variant-Unterscheidung dient nur noch der internen
+                     Sortierung — beide Aeste platzieren dasselbe Bauteil.
+        Beide Varianten: gleiches EC11E-THT-Land-Pattern + identisches Teil.
+        EC11J SMD (C209762) retired: NRND + 24.5mm Gesamthöhe + Half-Step-
+        Detent-Mismatch.
         """
         sx = 140.0
         # Pin Absolutpositionen (sym (sx, sy), KiCad Y-DOWN abs = sym - local_y):
@@ -4630,14 +4632,22 @@ def encoder_sheet() -> str:
                 "Variant": "DISPLAY-Encoder = einziger mit Push + Rastung",
             }
         else:
-            enc_value = f"EC11E183440C smooth ({net_prefix})"
+            # r18.22 (Audit-NRND-Fix): EC11E183440C ist NRND, der Kandidat
+            # EC11E1834403 ebenfalls. Komplette ALPS-"0-Detent+Push"-Familie
+            # ist phased out. Daher: alle 4 Encoder = active EC11E18244AU
+            # (36 Detents). UX-funktional gleich, weil Firmware-Acceleration
+            # langsam = 1 %/Klick, schnell = x8/Klick macht (genau die ur-
+            # spruengliche User-Anforderung). Kein Smooth/Detent-Unterschied
+            # mehr — Stueckzahl-Bestellung einfacher.
+            enc_value = f"EC11E18244AU push+detent ({net_prefix}, r18.22 NRND-Pivot)"
             enc_props = {
-                "MPN": "EC11E183440C (ALPS EC11E, 18 Pulse, OHNE Detent, MIT Push-Switch)",
+                "MPN": "EC11E18244AU (ALPS EC11E, 18 Pulse, 36 Detents, mit Push-Switch, Flat-Shaft 20 mm)",
                 "Manufacturer": "ALPSALPINE",
-                "LCSC": "C370986",
-                "Package": "THT EC11E vertikal, Shaft 20mm — Parameter-Encoder: glatt drehend (kein Detent), Push physisch vorhanden aber Firmware ignoriert (has_sw=false) — könnte als Future-Feature aktiviert werden",
-                "Datasheet": "https://datasheet.lcsc.com/lcsc/1902221132_ALPS-Electric-EC11E183440C_C370986.pdf",
-                "Variant": "Parameter-Encoder: smooth Drehung; Firmware nutzt nur A/B",
+                "LCSC": "C202365",
+                "Package": "THT EC11E vertikal, Shaft 20mm flat — Parameter-Encoder (r18.22): 36 Detents/U, mit Firmware-Acceleration langsam=1%/Klick, schnell=x8 (NATIVE_PORT_PLAN encoders.c)",
+                "Datasheet": "https://datasheet.lcsc.com/lcsc/1809200034_ALPSALPINE-EC11E18244AU_C202365.pdf",
+                "Variant": "Parameter-Encoder = identisch zu Display-Encoder (r18.22 Vereinfachung wegen NRND-Pivot der Smooth-Variante)",
+                "Lifecycle-VERIFIED": "ALPS-Hersteller-Seite: Standard / for new designs (r18.22 verifiziert tech.alpsalpine.com). Die frühere Wahl EC11E183440C (C370986) und der Folge-Kandidat EC11E1834403 (C361165) sind beide NRND laut Octopart.",
             }
         enc_props["Height"] = (
             "Beide Varianten gleiche Bauform: Body 11.7×12.0×4.5 mm + 20 mm "

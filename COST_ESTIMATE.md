@@ -1,6 +1,6 @@
 # Cost Estimate — Field Ambience
 
-**Stand: v0.7-r18.21 (2026-06-14).** Ehrliche Kostenschätzung für einen
+**Stand: v0.7-r18.22 (2026-06-14).** Ehrliche Kostenschätzung für einen
 **5-Geräte-Prototyp-Run** über JLCPCB-PCBA + Hand-Supply-Teile, mit den
 r18.21-Kostensenkungen. Erfahrungsbasiert ±20 % — die exakte Zahl liefert das
 JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/BOM/CPL existieren.
@@ -29,13 +29,13 @@ JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/BOM/CPL existieren.
 
 | Teil | pro Gerät | × 5 | Quelle |
 |---|---|---|---|
-| 4× ALPS EC11E THT-Encoder | ~$5 | $25 | LCSC/Mouser |
+| 4× ALPS EC11E18244AU (alle 4 gleich, r18.22 NRND-Pivot) | ~$5 | $25 | LCSC C202365 (~3.052 Stock, active) |
 | 5× Gateron LP Magnetic Jade | ~$4 | $20 | Gateron/NuPhy/Ukeebs |
 | ~~Stabilizer~~ | **$0** | **$0** | **gestrichen (1u-Caps, r18.21)** |
 | 4× Encoder-Knöpfe | **$0** | **$0** | **selbst 3D-gedruckt** |
 | 5× Cell-Caps | **$0** | **$0** | **selbst 3D-gedruckt (1u)** |
 | 2× CMS-Speaker | ~$6 | $30 | DigiKey |
-| 1× **bare ST7789V**-Display | ~$4 | $20 | AliExpress (war Adafruit $75!) |
+| 1× **Waveshare 1.9in ST7789V2**-Display (r18.22 von bare-AliExpress; QC + Level-Shifter) | ~$12 | $60 | PiHut £11.60 / Waveshare direkt |
 | 1× **2000 mAh** LiPo | ~$8 | $40 | (war 5000 mAh ~$60) |
 | Tag-Connect TC2030-IDC (Tool, **einmalig**) | — | $15 | Tag-Connect |
 | Dust-Mesh-Sticker | ~$1 | $5 | AliExpress |
@@ -62,26 +62,33 @@ Für 5 Prototypen **3D-gedruckt** statt Spritzguss-Tool (4-stellig):
 | Block | 5 Geräte |
 |---|---|
 | JLCPCB (Fab + PCBA + SMD-BOM + Versand) | ~$190 |
-| Hand-Supply (mit Kostensenkung) | ~$185 |
+| Hand-Supply (r18.22: Waveshare-Display statt bare) | ~$225 |
 | Gehäuse (FDM selbst) | ~$30 |
-| **GESAMT** | **~$405** |
-| **pro Stück** | **~$81** |
+| **GESAMT** | **~$445** |
+| **pro Stück** | **~$89** |
 
-Mit SLS-Gehäuse + etwas Puffer: **~$450–520 / ~$90–104 pro Stück**.
+Mit SLS-Gehäuse + etwas Puffer: **~$490–560 / ~$98–112 pro Stück**.
 
 ## 6. Was die r18.21-Kostensenkung gebracht hat
 
 | Maßnahme | Ersparnis (5er-Run) |
 |---|---|
-| Display Adafruit → bare ST7789V | ~$55 |
+| Display Adafruit → **Waveshare** (r18.22 von bare zurück) | ~$15 |
 | Knöpfe + Cell-Caps selbst 3D-drucken | ~$50–200 |
 | Stabilizer gestrichen (1u-Caps) | ~$25–75 |
 | Akku 5000 → 2000 mAh | ~$20 |
-| **Summe** | **~$150–350** |
+| Encoder vereinheitlicht (r18.22: keine NRND-Variante mehr, gleicher Stückpreis) | 0 (Sicherheit) |
+| **Summe** | **~$110–310** |
 
-Vorher (erste Schätzung): ~$750. Jetzt: **~$405–520**. Der Rest ist
+Vorher (erste Schätzung): ~$750. Jetzt: **~$440–560**. Der Rest ist
 hauptsächlich der STM32H743 (Kern, gebührenfrei „Preferred", nicht ersetzbar
 ohne Audio-Risiko) + die Magnetic-Switches.
+
+> **r18.22-Korrektur:** Die r18.21-„bare ST7789V"-Senkung war zu aggressiv.
+> Display ist jetzt Waveshare (~$11 statt $3 bare statt $15 Adafruit) — gleiche
+> Panel-Qualität wie Adafruit + branded QC + Level-Shifter. $4 Ersparnis statt
+> $12, dafür kein DOA-Risiko. Und alle 4 Encoder sind jetzt das gleiche active
+> ALPS-Teil (statt 3× NRND + 1× active) — Sicherheits-Pivot, kein Mehrpreis.
 
 ## 7. Weitere Spar-Optionen (nicht umgesetzt — Trade-Off)
 

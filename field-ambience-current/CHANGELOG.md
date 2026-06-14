@@ -4,9 +4,89 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.21** (Kostensenkung: Display Adafruit→bare ST7789V,
-Akku 5000→2000mAh, Stabilizer gestrichen, Knöpfe/Caps selbst 3D-gedruckt.
-COST_ESTIMATE.md NEU. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.22** (User-Verifikation: 2 echte Befunde —
+3 von 4 Encoder waren NRND, bare-AliExpress-Display war zu riskant.
+Beide Pivots umgesetzt. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.22 (2026-06-14) — User-Audit: Encoder-NRND + Display-Qualität
+
+User: „Er ist nochmal alles gegen checken und verifizieren. Glaube die Encoder
+waren markiert als Not-Recommended-for-future-designs? Und das Display darf
+nicht schlecht sein." → **Beide Punkte berechtigt, beide gefixt.**
+
+### 🔴 HIGH — Encoder NRND-Pivot (3 von 4 Encodern betroffen)
+
+Zwei unabhängige Verifikationen (Octopart + RS Online + ALPS-Hersteller-Seite +
+LCSC-Cross-Check) bestätigten:
+
+| Teil | Rolle | Status |
+|---|---|---|
+| **EC11E18244AU** (C202365) | EN3 Display, push+detent | **ACTIVE** ✅ |
+| **EC11E183440C** (C370986) | EN1/2/4 Smooth | **NRND** 🔴 |
+| EC11E1834403 (C361165) | Kandidat-Ersatz | **AUCH NRND** 🔴 |
+
+ALPS hat die gesamte **„EC11E 0-Detent + Push-Switch"-SKU-Familie phased out**
+(jeder Standard-EC11E hat heute Detents). Kein aktives Drop-in existiert.
+
+**Pivot: alle 4 Encoder = EC11E18244AU (active, ~3.052 LCSC-Stock).** Die ur-
+sprüngliche „smooth"-UX-Anforderung („1 % pro langsamem Klick") wird vom
+Firmware-Acceleration-Layer erfüllt (langsam = 1 %/Klick, schnell = ×8/Klick),
+**die Detents stören dabei nicht** — sie WAREN die ursprüngliche Lösung. Bonus:
+alle 4 identisch → einfachere Lagerhaltung. Generator + BOM_MASTER + ADR-0012
+nachgezogen.
+
+### 🟠 HIGH — Display-Qualitäts-Pivot (r18.21-Korrektur)
+
+Die r18.21-„bare AliExpress ST7789V"-Senkung war zu aggressiv. Live-
+Verifikation (Adafruit-Produktseite + Goldenmorning-OEM + mboehmerm-GitHub +
+Waveshare-Wiki) zeigte:
+
+- Bare-AliExpress nutzt **das gleiche Panel** wie Adafruit (kein Premium-Bin)
+- Aber: **kein Level-Shifter, kein QC, DOA-Lotterie, FFC-Qualitäts-Roulette**
+- Adafruit ($15) zahlt für Features, die wir bei 3.3-V-STM32 nicht brauchen
+  (Level-Shifter, SD-Slot, EYESPI-Connector)
+- **Mittelweg: Waveshare 1.9″ ST7789V2-Modul (~$11–13)** — gleiches Panel +
+  branded QC + Level-Shifter + dokumentierte Init-Sequenz + EU/US-Vendoren
+
+**Pivot: Waveshare** (PiHut £11.60 / Waveshare direkt / Amazon). $4
+Ersparnis statt $12 (vs Adafruit), aber Quality-DOA-Risiko eliminiert.
+
+### Lehre dokumentiert
+
+In ADR-0012 als Standard fixiert: **Lifecycle-Status muss aktiv verifiziert
+werden, nicht nur Stock**. r18.14-Sourcing hatte nur Stock geprüft. Ab jetzt
+Pflichtteil — analog zur Pin-Count-Pflicht nach r18.19.
+
+### Verifizierung
+
+- Generator regen, 8/8 paren-balanced
+- encoder.kicad_sch: 8× C202365 active (war 3× C202365 + 9× C370986)
+- 3 C370986/EC11E183440C-Vorkommen verbleibend = ausschließlich in
+  Lifecycle-VERIFIED-Audit-Trail-Notizen (Begründung der Wahl)
+- Firmware 13/13 PASS (substeps=4 für Display, =2 für Parameter — UX unverändert)
+
+### Cost-Impact (COST_ESTIMATE aktualisiert)
+
+| Posten | r18.21 (war) | r18.22 (neu) |
+|---|---|---|
+| Display × 5 | $20 bare (DOA-Risiko) | $60 Waveshare |
+| Encoder × 20 | $25 (3× NRND-Stock) | $25 (active) |
+| **Gesamt 5 Geräte** | ~$405 | **~$445** |
+| Pro Stück | $81 | $89 |
+
+Aufpreis $40 für komplette Risk-Reduktion (NRND weg + DOA-Lotterie weg). Wert.
+
+### Files
+
+- generate_kicad_project.py (Smooth-Encoder-Block + variant-Docstring)
+- encoder.kicad_sch regen
+- BOM_MASTER §6 (Encoder + Display), Stand-Bump
+- ADR-0012 (Tabellen + NRND-Pivot-Block + Lehre)
+- COST_ESTIMATE.md (Display + Encoder + Summen)
+- PROJECT_QUALITY nicht angefasst (BOM 10/10 bleibt — die Wahl-Korrekturen sind
+  Risk-Management, kein Sourcing-Gap)
 
 ---
 

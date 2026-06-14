@@ -1,6 +1,6 @@
 # BOM Master — Field Ambience
 
-**Stand: v0.7-r18.21 (2026-06-14).** Single Source of Truth für alle aktiv
+**Stand: v0.7-r18.22 (2026-06-14).** Single Source of Truth für alle aktiv
 verbauten Komponenten. Pro Eintrag: aktuelle Wahl, Footprint-Quelle, 3D-Quelle,
 Bestell-Link.
 
@@ -83,7 +83,7 @@ Bestell-Link.
 | Ref | MPN | Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
 | **J3** 1×8 Receptacle 2.54 mm | (Generic) | (DigiKey/RS) | `Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical` | KiCad-Standard | Standard-Lib-3D |
-| **LCD-Modul** bare **ST7789V 1.9in 320×170 IPS** 8-Pin-SPI (r18.21: Adafruit 5394 ~$15 → bare ~$3-5, gleicher Controller/Auflösung/SPI) **WARN: Pin-ORDER des gekauften Moduls gegen J3 verifizieren** (variiert je Vendor) | Generic ST7789V 1.9in | AliExpress: Suche `1.9 inch ST7789 320x170 IPS` | Modul (steckt in J3) | — | Vendor-CAD |
+| **LCD-Modul** **Waveshare 1.9in 170×320 ST7789V2** IPS-Modul (r18.22-Pivot von bare-AliExpress: gleiches Panel wie Adafruit + branded QC + Level-Shifter + dokumentiert; ~$11–13 statt Adafruit $15 / bare-AliExpress-DOA-Lotterie. **Pin-ORDER des Moduls gegen J3-Belegung verifizieren** — variiert je Vendor) | Waveshare 1.9inch LCD Module 170x320 SPI | [PiHut £11.60](https://thepihut.com/products/1-9-ips-lcd-display-module-170x320-spi) · [Waveshare](https://www.waveshare.com/1.9inch-lcd-module.htm) · [Amazon](https://www.amazon.com/Waveshare-1-9inch-Display-Resolution-Interface/dp/B0BRXXSZC5) | Modul (steckt in J3) | — | Vendor-CAD |
 | Q2 Backlight-Driver | **2N7002,215** SOT-23 | [C8545](https://www.lcsc.com/product-detail/C8545.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 
 ## 6. Encoder (ADR-0012 — 1× Push+Detent, 3× Smooth)
@@ -91,7 +91,7 @@ Bestell-Link.
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
 | **EN3** (Display: Push + Detent) | **ALPS EC11E18244AU** (18 Puls, 36 Detents, mit Push-Switch, Flat-Shaft 20 mm) | [C202365](https://www.lcsc.com/product-detail/C202365.html) | `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | KiCad-Standard | Standard-Lib-3D |
-| **EN1 / EN2 / EN4** (Smooth: kein Detent) | **ALPS EC11E183440C** (18 Puls, OHNE Detent, mit Push — Firmware ignoriert SW; gleicher Footprint wie EN3) | [C370986](https://www.lcsc.com/product-detail/C370986.html) | gleicher FP wie EN3 | KiCad-Standard | Standard-Lib-3D |
+| **EN1 / EN2 / EN4** (r18.22-Pivot: einheitlich auf den ACTIVE Display-Encoder, weil sowohl EC11E183440C als auch der Kandidat EC11E1834403 NRND sind und die gesamte ALPS-„0-Detent+Push"-Familie phased-out ist) | **ALPS EC11E18244AU** (= Display-Encoder, 36 Detents/U + Push; Firmware-Acceleration macht langsam = 1 %/Klick, schnell = ×8/Klick — UX-funktional identisch zum Smooth) | [C202365](https://www.lcsc.com/product-detail/C202365.html) (~3.052 Stock) | gleicher FP wie EN3 | KiCad-Standard | Standard-Lib-3D |
 | Knöpfe (4×) Ø 19–20 × 8–10 mm, **selbst 3D-gedruckt** (r18.21 — statt Alu-CNC, spart $50-200/5er-Run) | Eigenes 3D-Print | — | — | — | Custom-CAD (User) |
 
 ## 7. Cells (ADR-0013 — Low-Profile Magnetic + Hall)
