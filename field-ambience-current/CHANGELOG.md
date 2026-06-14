@@ -4,9 +4,63 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.19** (Audit-Fixes: USB-C-Revert auf 16-Pin M-12,
-Audio-Jack-Footprint korrigiert, Speaker-Wert im Schaltplan aktualisiert,
-Generator erstmals seit r18.14b regeneriert. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.20** (Audit-Folge-Fixes: Hall-Sensor-Footprint auf
+echtes SOT-23, HSE-Load-Caps 22→27 pF, SPEC-Frei-Liste + ADC-Channel-Doku.
+LCSC-Sourcing-Fills folgen in r18.20b. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.20 (2026-06-14) — Audit-Folge-Fixes (Schematic-Korrektheit)
+
+Aus dem Senior-Engineering-Audit die autonom umsetzbaren Schematic-Fixes:
+
+### 🟠 HIGH — Hall-Sensor-Footprint auf echtes SOT-23
+
+J_CELL1-5 hatten `Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical`
+(2.54-mm-Header-Platzhalter), verbaut wird aber DRV5056A4QDBZR im **SOT-23**.
+Eine PCB hätte 5 falsche Land-Patterns gehabt. Umgestellt auf
+`Package_TO_SOT_SMD:SOT-23`. Das 3-Pin-Symbol (Conn_01x03) Pin 1/2/3 mappt
+1:1 auf SOT-23-Pad 1/2/3 = DRV5056 VCC/OUT/GND (TI-DS Table 4-1, r18.14
+verifiziert). Site-Wiring Pin1→+3V3, Pin2→CELLn_SENSE, Pin3→GND unverändert.
+JLC-bestückbar (Extended).
+
+### 🟠 HIGH — HSE-Load-Caps 22 → 27 pF
+
+C_HSE1/2 waren 22 pF — das impliziert C_stray = CL − C/2 = 18 − 11 = 7 pF,
+unrealistisch hoch für ein 4-Lagen-Layout nahe dem MCU. Off-frequency-
+Start-Risiko (SAI-PLL3-Audio-Sample-Rate, USB-Sync). Neu: **27 pF**
+(C_ext = 2·(CL − C_stray) = 2·(18 − 4.5) = 27 pF, E12-Standard, C0G/NP0).
+Note ergänzt: finaler Wert ist layout-abhängig, am realen Board per 10x-Probe
+am OSC_OUT messen.
+
+### 🟡 MEDIUM — SPEC §5.12 Frei-Liste bereinigt
+
+PC0/PC1/PA4/PB0/PB1 aus der „Frei für Erweiterungen"-Liste entfernt — seit
+r18.9 für CELL1..5_SENSE vergeben. Reviewer hätte sie sonst doppelt belegen
+können.
+
+### 🟡 MEDIUM — ADC-Channel-Doku ergänzt (SPEC §5.6a)
+
+Standard-Mapping der 5 Cell-Pins dokumentiert: PC0=ADC123_INP10,
+PC1=ADC123_INP11, PA4=ADC12_INP18, PB0=ADC12_INP9, PB1=ADC12_INP5. **Alle
+5 auf ADC1** → ein ADC im Scan-Mode reicht. Mit Hinweis: vor Firmware-ADC-
+Init final gegen DS12110 Table 8 bestätigen (ST-PDF war HTTP-503 in der
+Audit-Session; Pin-Nummern via U1_STM32H743VIT6.md verifiziert).
+
+### Verifizierung
+
+- Generator regeneriert, 8/8 .kicad_sch paren-balanced
+- stm32-Sheet: 5× SOT-23 für J_CELL (0 Header-Leftovers), 5× DRV5056A4-Label
+- HSE: 27 pF (0 22-pF-Leftovers)
+- CELL1-5_SENSE-Nets intakt
+- Firmware 13/13 Suiten PASS
+
+### Offen → r18.20b (Sourcing-Agent läuft)
+
+- C_HSE LCSC-Nr. (27 pF C0G/NP0 0603) — derzeit TBD-r18.20
+- C_BULK Polymer 470 µF/16 V LCSC-Nr.
+- 220 µF MLCC auf 10 V (statt 6.3 V Headroom-Derating)
+- Cell-/Modifier-LED-Farben (5× gelb + 5× grün) LCSC-Nr.
 
 ---
 

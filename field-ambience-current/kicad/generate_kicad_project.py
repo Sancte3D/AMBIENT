@@ -3127,7 +3127,12 @@ def stm32h743_sheet() -> str:
                                         x=cx, y=by + 6, seed_suffix=f"cvdd{i}{j}b", sheet_uuid_seed=sus))
             wires.append(wire(cx, by + 3.81, cx, by + 6, seed_suffix=f"cvdd{i}{j}-bot"))
 
-    # ---- HSE: Y1 + 2× 22 pF (SPEC §5.9). Nets HSE_IN/HSE_OUT per Label.
+    # ---- HSE: Y1 + 2× 27 pF (SPEC §5.9). Nets HSE_IN/HSE_OUT per Label.
+    # r18.20 (Audit-HIGH-Fix): Load-Cap 22 -> 27 pF. CL=18pF, C_ext = 2*(CL -
+    # C_stray); 22pF implizierte C_stray=7pF (zu hoch fuer 4-Lagen-Layout nahe
+    # MCU). Mit realistischem C_stray~4.5pF -> C_ext = 2*(18-4.5) = 27pF.
+    # Finaler Wert ist layout-abhaengig: am realen Board Frequenz mit 10x-Probe
+    # am OSC_OUT messen, Cs ggf. nachjustieren (beide C_HSE gleich halten).
     yx, yy = 100.0, 196.0
     symbols.append(place_symbol(lib_id="Device:Crystal", ref="Y1",
                                 value="8MHz ABLS-8.000MHZ-B4-T (CL=18pF, ESR<=80R)",
@@ -3149,10 +3154,10 @@ def stm32h743_sheet() -> str:
         cx = yx + side
         cy = yy + 6.35
         symbols.append(place_symbol(lib_id="Device:C", ref=f"C_HSE{k}",
-                                    value="22pF C0G/NP0 0603 (HSE load, Startwert §5.9)",
+                                    value="27pF C0G/NP0 0603 (HSE load, berechnet §5.9, bench-final)",
                                     x=cx, y=cy,
                                     footprint="Capacitor_SMD:C_0603_1608Metric",
-                                    extra_props={"MPN": "CC0603JRNPO9BN220", "Manufacturer": "Yageo", "LCSC": "C1804", "VERIFY-STOCK": "22pF +-5% C0G/NP0 50V 0603"},
+                                    extra_props={"MPN": "CC0603JRNPO9BN270", "Manufacturer": "Yageo", "LCSC": "TBD-r18.20 (27pF C0G/NP0 50V 0603 — Sourcing-Agent)", "VERIFY-STOCK": "27pF +-5% C0G/NP0 50V 0603; vorher 22pF/C1804 (zu klein, C_stray-Annahme 7pF)"},
                                     seed_suffix=f"CHSE{k}", sheet_uuid_seed=sus))
         wires.append(wire(cx, cy - 3.81, cx, yy, seed_suffix=f"chse{k}-top"))
         wires.append(wire(cx, cy + 3.81, cx, cy + 6, seed_suffix=f"chse{k}-gnd"))
@@ -3299,26 +3304,26 @@ def stm32h743_sheet() -> str:
     # Der Switch selbst ist pin-los — auf dem PCB sitzt pro Cell ein linearer
     # Hall-Sensor unter dem Magnet-Stem: Position analog -> Velocity = dPos/dt.
     # ADC-Interface UNVERAENDERT (PC0/PC1/PA4/PB0/PB1, Labels CELLn_SENSE).
-    # Pro Cell: J_CELLn 1x3-Site (+3V3 / OUT / GND) + R 1k Serien-RC mit dem
+    # Pro Cell: DRV5056A4 SOT-23 (VCC/OUT/GND) + R 1k Serien-RC mit dem
     # bestehenden 10nF (fc ~ 16kHz) vor dem ADC.
-    # Sensor-Kandidaten (PINOUT-VERIFY vor SOT-23-Integration — AP7361-Lektion):
-    # TI DRV5056A4 (3.3V ratiometrisch, unipolar) / Honeywell SS49E-Klasse.
-    # 1x3-2.54mm-Site erlaubt im Prototyp TO-92S-SS49E direkt ODER SOT-23-
-    # Breakout; finale SOT-23-Platzierung folgt in Phase 6 nach DS-Check.
+    # r18.20: Footprint von 1x3-Header-Platzhalter auf echtes SOT-23 umgestellt
+    # (Audit-HIGH-Fix). 3-Pin-Symbol Conn_01x03 Pin 1/2/3 -> SOT-23 Pad 1/2/3
+    # = DRV5056 VCC/OUT/GND (TI-DS Table 4-1, r18.14 verifiziert). Site-Wiring
+    # Pin1->+3V3, Pin2->CELLn_SENSE, Pin3->GND matched 1:1.
     for ci in range(5):
         jx = 100.0 + ci * 24.0
         jy = 262.0
         symbols.append(place_symbol(lib_id="Connector:Conn_01x03", ref=f"J_CELL{ci+1}",
-                                    value=f"Hall Cell {ci+1} (Velocity, ADR-0013)",
+                                    value=f"DRV5056A4 Hall Cell {ci+1} SOT-23 (Velocity, ADR-0013)",
                                     x=jx, y=jy,
-                                    footprint="Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
+                                    footprint="Package_TO_SOT_SMD:SOT-23",
                                     extra_props={
                                         "MPN": "DRV5056A4QDBZR (TI, SOT-23, 3.3V ratiometrisch, unipolar, 0.6V@B=0, magnet temp comp)",
                                         "Manufacturer": "Texas Instruments",
                                         "LCSC": "C2152902",
                                         "Datasheet": "https://www.ti.com/lit/ds/symlink/drv5056.pdf",
-                                        "PINOUT-VERIFIED": "TI DRV5056 DS Table 4-1 (verifiziert r18.14): SOT-23 Pin 1=VCC, Pin 2=OUT, Pin 3=GND. Site-Belegung 1=+3V3 / 2=OUT / 3=GND matched 1:1. TO-92-Prototyp (LPG-Package) hat ABWEICHEND 1=VCC/2=GND/3=OUT — fuer Breadboard Beine swappen.",
-                                        "FP_NOTE": "1x3 2.54mm-Site fuer Prototyp. Phase 6: Site durch SOT-23-Footprint (Package_TO_SOT_SMD:SOT-23) ersetzen, Pin-Mapping 1->1 / 2->2 / 3->3 (siehe PINOUT-VERIFIED).",
+                                        "PINOUT-VERIFIED": "TI DRV5056 DS Table 4-1 (r18.14): SOT-23 Pin 1=VCC, Pin 2=OUT, Pin 3=GND. Symbol-Conn_01x03-Pin 1/2/3 -> SOT-23-Pad 1/2/3 = VCC/OUT/GND. Site-Wiring 1=+3V3 / 2=CELLn_SENSE / 3=GND matched 1:1.",
+                                        "FP_NOTE": "r18.20: SOT-23 final (Package_TO_SOT_SMD:SOT-23, KiCad-Standard). Vorher 1x3-Header-Platzhalter (Audit-Fix). JLC-bestueckbar (Extended). Pin-1-Marker im GUI gegen TI-DS Pin Configuration pruefen.",
                                         "Mechanik": "Sensor sitzt unter dem Magnet-Stem des Gateron-LP-Magnetic-Switch (plate-mounted, ADR-0013). Lange Caps (>=2u): LP-Stabilizer links/rechts wie Spacebar.",
                                     },
                                     seed_suffix=f"JCELL{ci}", sheet_uuid_seed=sus))
