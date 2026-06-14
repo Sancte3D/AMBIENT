@@ -41,8 +41,8 @@ Bestell-Link.
 | Q1 | **DMG2305UX-7** P-Ch MOSFET | [C150470](https://www.lcsc.com/product-detail/C150470.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 | **U5** LDO | **AP7361C-33Y5-13** SOT-89-5 (Pinout 1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT verifiziert) | [C460397](https://www.lcsc.com/product-detail/C460397.html) | `Package_TO_SOT_SMD:SOT-89-5` | KiCad-Standard | Standard-Lib-3D |
 | **U7** Charger | **MCP73831T-2ACI/OT** SOT-23-5 | [C424093](https://www.lcsc.com/product-detail/C424093.html) | `Package_TO_SOT_SMD:SOT-23-5` | KiCad-Standard | Standard-Lib-3D |
-| **C_BULK** Polymer 470 µF / 16 V EIA-7343-31 | TBD-VERIFY (Panasonic SVPF / Kemet T520D) | TBD-VERIFY | `Capacitor_SMD:CP_Tantalum_Case-D_EIA-7343-31_Reflow` | KiCad-Standard | Standard-Lib-3D |
-| **C_BULK2** MLCC 220 µF / 6.3 V 1210 (parallel zu C_BULK) | CL32A227MQVNNNE | [C400951](https://www.lcsc.com/product-detail/C400951.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
+| **C_BULK** Polymer-Tantal 470 µF / 10 V Case-E 7343-43 (ESR 100 mΩ; <25 mΩ-Flachteile bei LCSC nicht lagernd — Transient-ESR liefert C_BULK2) | TPSE477K010R0100 (Kyocera AVX) | [C444831](https://www.lcsc.com/product-detail/C444831.html) | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | KiCad-Standard | Standard-Lib-3D |
+| **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 existiert nicht → 100µF echter Headroom statt 220µF/6.3V-Derating) | LMK325ABJ107MM-T (Taiyo Yuden) | [C2880380](https://www.lcsc.com/product-detail/C2880380.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J_BAT** JST-PH 2.0 2-Pin | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | STEP im Repo |
 | LiPo-Pouch 9050060 (50×60×9 mm, ~1500 mAh) | TBD (Generic) | — (Generic) | — (kein PCB-FP, Bottom-Case-Slot) | — | Vendor-CAD |
 
@@ -117,12 +117,14 @@ Bestell-Link.
 
 | Funktion | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **Modifier-LEDs Shift (grün) + Hold (gelb)** | TBD-VERIFY (passende XL-Serie pro Farbe in 0603) | TBD | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **Modifier-LED Hold (gelb)** | Hubei KENTO KT-0603Y (Vf 2.4V → 6.7mA @ 5V/390Ω) | [C2287](https://www.lcsc.com/product-detail/C2287.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **Modifier-LED Shift (grün)** | Hubei KENTO KT-0603G pure-green 525nm (Vf 3.1V → 4.9mA @ 5V/390Ω) | [C12624](https://www.lcsc.com/product-detail/C12624.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **Modifier-LEDs Drone / Generate / Clear (3× weiß)** | XL-1608UWC-04 (warmweiß 0603, same as Heartbeat) | [C965818](https://www.lcsc.com/product-detail/C965818.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
-| **Cell-LEDs 5× Gelb + 5× Grün** | TBD-VERIFY | TBD | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **Cell-LEDs 5× Gelb** | Hubei KENTO KT-0603Y | [C2287](https://www.lcsc.com/product-detail/C2287.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **Cell-LEDs 5× Grün** | Hubei KENTO KT-0603G | [C12624](https://www.lcsc.com/product-detail/C12624.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
 | **LED_HB** Heartbeat (warmweiß) | **XL-1608UWC-04** | [C965818](https://www.lcsc.com/product-detail/C965818.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
 | **LED_CHRG** Charger-Status (amber) | Generic Amber 0603 | [C72041](https://www.lcsc.com/product-detail/C72041.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
-| LED-Vorwiderstände 220 Ω 0603 (16×) | 0603WAF2200T5E-Klasse | (Standard-Sortiment) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| LED-Vorwiderstände **390 Ω** 0603 (15×, an +5V-Anode → LED → PCA9685-Sink) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
 ## 10. Standard-Passives (Sortiment)
 
@@ -134,8 +136,8 @@ LCSC-Nr verlinkt; Sortiment hier nur referenziert:
 | Widerstände 0603 1 % | C21190 (1 k), C25804 (10 k), C23253 (820), C23186 (5.1 k), C23146 (36 k), C23153 (39 k), C23162 (470), C23345 (22), C25803 (100 k), C25811 (200 k), C4184 (20 k), C22975 (2 k), C31850 (22 k), C72041 |
 | Caps 0603 X7R / X5R | C14663 (100 n), C57112 (10 n), C46653 (4.7 µ X5R), C1588 (1 n), C1804 (auto-generated), C15849 (1 µ X5R), C14858 (10 n B) |
 | Caps 0805 | C15850 (10 µ X5R), C45783 (22 µ X5R) |
-| MLCC 1210 | C400951 (220 µF/6.3V X5R, C_BULK2) |
-| Caps spezifisch | C24539 (2.2 µF VCAP STM32) |
+| MLCC 1210 | C2880380 (100 µF/10V X5R, C_BULK2); C444831 (470µF/10V Polymer-Tantal Case-E, C_BULK) |
+| Caps spezifisch | C24539 (2.2 µF VCAP STM32); C107045 (27 pF C0G/NP0, HSE-Load, 2×) |
 
 Alle Standard-FPs: `Resistor_SMD:R_0603_1608Metric`, `Capacitor_SMD:C_0603_1608Metric`,
 `Capacitor_SMD:C_0805_2012Metric`, `Capacitor_SMD:C_1210_3225Metric` — alle KiCad-Standard,

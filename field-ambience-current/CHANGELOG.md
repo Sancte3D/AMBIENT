@@ -4,11 +4,68 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.20** (Audit-Folge-Fixes: Hall-Sensor-Footprint auf
-echtes SOT-23, HSE-Load-Caps 22→27 pF, SPEC-Frei-Liste + ADC-Channel-Doku.
-LCSC-Sourcing-Fills folgen in r18.20b. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.20b** (Sourcing-Fills: alle JLC-bestückbaren TBD-
+LCSC geschlossen — C_HSE 27pF, C_BULK Polymer, C_BULK2 100µF/10V, LED gelb+grün.
+2 Engineering-Flags gelöst. KEIN .kicad_pcb.)
 
 ---
+
+## v0.7-r18.20b (2026-06-14) — Sourcing-Fills + 2 Engineering-Flags
+
+Sourcing-Agent lieferte verifizierte LCSC-Teile für alle r18.20-TBDs. Alle
+JLC-bestückbaren Schematic-TBD-LCSCs sind jetzt geschlossen.
+
+### Fills
+
+| Teil | LCSC | Detail |
+|---|---|---|
+| C_HSE1/2 (HSE-Load) | **C107045** | Yageo 27pF C0G/NP0 50V 0603, JLC Basic, ~834k Stock |
+| C_BULK (Polymer) | **C444831** | Kyocera AVX TPSE477K010R0100, 470µF/10V Case-E |
+| C_BULK2 (MLCC) | **C2880380** | Taiyo Yuden 100µF/10V 1210 |
+| LED gelb (Hold + 5 Cell) | **C2287** | Hubei KENTO KT-0603Y, Vf 2.4V |
+| LED grün (Shift + 5 Cell) | **C12624** | Hubei KENTO KT-0603G pure-green 525nm, Vf 3.1V |
+
+### 🔧 Engineering-Flag 1 — „220µF/10V/1210 existiert nicht"
+
+C_BULK2 war als „220µF/10V X5R 1210" gelabelt — diese Kombination wird von
+keinem Hersteller gebaut (220µF gibt es im 1210-Case nur bis 6.3V). Statt
+220µF/6.3V (am 5V-Rail auf ~70–110µF DC-Bias-derated) → **100µF/10V** mit
+echtem Voltage-Headroom. Effektiv-Bulk vergleichbar, audit-sauber.
+
+### 🔧 Engineering-Flag 2 — Polymer-ESR-Realität
+
+Die ~10-mΩ-Flach-Polymer-Caps aus ADR-0011 (Panasonic SVPF / Kemet T520)
+sind bei LCSC nicht lagernd. Bester JLC-Flach-Reflow-Polymer: C444831
+(100 mΩ ESR). Verfehlt das 10-mΩ-Ziel, aber der parallele 100µF-MLCC
+(~5 mΩ) dominiert die Transient-Impedanz → Bulk-ESR unkritisch. Footprint
+auf Case-E (7343-43, 4.3mm H) umgestellt (passt in 8-mm-Top-Zone).
+
+### Beifang-Fix — R_LED-Wert in BOM_MASTER
+
+BOM_MASTER §9 sagte „220Ω LED-Vorwiderstand", Generator sagt **390Ω** (an
++5V-Anode → LED → PCA9685-Sink). Bei 5V/390Ω: gelb 6.7mA, grün 4.9mA — beide
+im 2–8mA-Fenster, Widerstand bleibt 390Ω. BOM_MASTER korrigiert.
+
+### LED-Strom-Verifikation (5V-Rail, 390Ω)
+
+- Gelb C2287 (Vf 2.4V): (5−2.4)/390 = 6.7 mA ✓
+- Grün C12624 (Vf 3.1V): (5−3.1)/390 = 4.9 mA ✓ (bei 5V genug Headroom für die 3.1V-Emerald-Green; bei 3.3V wäre sie unbrauchbar gewesen)
+- Weiß C965808 (Vf ~3V): ~5 mA ✓
+
+### Verifizierung
+
+- Generator regen, 8/8 paren-balanced
+- C107045 ×2, C444831 + Case-E-FP, C2880380, 0 „220uF 10V"-Leftovers
+- LED gelb C2287 ×6 (1 Hold + 5 Cell), grün C12624 ×6 (1 Shift + 5 Cell)
+- **0 TBD-VERIFY-Leftovers** in power_tree + mcp
+- Firmware 13/13 PASS
+
+Score: BOM-Sourcing 9.5 → 10 (alle JLC-bestückbaren Teile haben verifizierte
+in-Stock-LCSC-IDs; Hand-Assembly-Teile haben Vendor-Quellen in BOM_MASTER).
+
+---
+
+## v0.7-r18.20 (2026-06-14) — Audit-Folge-Fixes (Schematic-Korrektheit)
 
 ## v0.7-r18.20 (2026-06-14) — Audit-Folge-Fixes (Schematic-Korrektheit)
 

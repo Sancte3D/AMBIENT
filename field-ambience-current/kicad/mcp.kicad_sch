@@ -2295,9 +2295,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 87.62 200 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)" (at 90.16000000000001 203.81 0)
+      (property "MPN" "KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)" (at 90.16000000000001 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gruen 0603)" (at 90.16000000000001 205.08 0)
+      (property "LCSC" "C12624" (at 90.16000000000001 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2345,9 +2345,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 112.62 200 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)" (at 115.16000000000001 203.81 0)
+      (property "MPN" "KT-0603Y (Hubei KENTO, yellow 0603, Vf 2.4V)" (at 115.16000000000001 203.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gelb 0603)" (at 115.16000000000001 205.08 0)
+      (property "LCSC" "C2287" (at 115.16000000000001 205.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2545,9 +2545,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 87.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)" (at 90.16000000000001 218.81 0)
+      (property "MPN" "KT-0603Y (Hubei KENTO, yellow 0603, Vf 2.4V)" (at 90.16000000000001 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gelb 0603)" (at 90.16000000000001 220.08 0)
+      (property "LCSC" "C2287" (at 90.16000000000001 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2595,9 +2595,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 87.62 228 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)" (at 90.16000000000001 231.81 0)
+      (property "MPN" "KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)" (at 90.16000000000001 231.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gruen 0603)" (at 90.16000000000001 233.08 0)
+      (property "LCSC" "C12624" (at 90.16000000000001 233.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2645,9 +2645,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 112.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)" (at 115.16000000000001 218.81 0)
+      (property "MPN" "KT-0603Y (Hubei KENTO, yellow 0603, Vf 2.4V)" (at 115.16000000000001 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gelb 0603)" (at 115.16000000000001 220.08 0)
+      (property "LCSC" "C2287" (at 115.16000000000001 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2695,9 +2695,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 112.62 228 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)" (at 115.16000000000001 231.81 0)
+      (property "MPN" "KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)" (at 115.16000000000001 231.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gruen 0603)" (at 115.16000000000001 233.08 0)
+      (property "LCSC" "C12624" (at 115.16000000000001 233.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2745,9 +2745,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 137.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)" (at 140.16 218.81 0)
+      (property "MPN" "KT-0603Y (Hubei KENTO, yellow 0603, Vf 2.4V)" (at 140.16 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gelb 0603)" (at 140.16 220.08 0)
+      (property "LCSC" "C2287" (at 140.16 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2795,9 +2795,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 137.62 228 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)" (at 140.16 231.81 0)
+      (property "MPN" "KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)" (at 140.16 231.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gruen 0603)" (at 140.16 233.08 0)
+      (property "LCSC" "C12624" (at 140.16 233.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2845,9 +2845,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 162.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)" (at 165.16 218.81 0)
+      (property "MPN" "KT-0603Y (Hubei KENTO, yellow 0603, Vf 2.4V)" (at 165.16 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gelb 0603)" (at 165.16 220.08 0)
+      (property "LCSC" "C2287" (at 165.16 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2895,9 +2895,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 162.62 228 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)" (at 165.16 231.81 0)
+      (property "MPN" "KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)" (at 165.16 231.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gruen 0603)" (at 165.16 233.08 0)
+      (property "LCSC" "C12624" (at 165.16 233.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2945,9 +2945,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 187.62 215 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)" (at 190.16 218.81 0)
+      (property "MPN" "KT-0603Y (Hubei KENTO, yellow 0603, Vf 2.4V)" (at 190.16 218.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gelb 0603)" (at 190.16 220.08 0)
+      (property "LCSC" "C2287" (at 190.16 220.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2995,9 +2995,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 187.62 228 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)" (at 190.16 231.81 0)
+      (property "MPN" "KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)" (at 190.16 231.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-VERIFY (JLC-Stock gruen 0603)" (at 190.16 233.08 0)
+      (property "LCSC" "C12624" (at 190.16 233.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

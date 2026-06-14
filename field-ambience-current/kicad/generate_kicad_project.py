@@ -2047,14 +2047,14 @@ def power_tree_sheet() -> str:
         place_symbol(
             lib_id="Device:CP",
             ref="C_BULK",
-            value="470uF 16V Polymer (~2mm H, ESR<=15mOhm)",
+            value="470uF 10V Polymer-Tantal (Case-E 7343-43, ESR 100mOhm)",
             x=65,
             y=63.81,
-            footprint="Capacitor_SMD:CP_Tantalum_Case-D_EIA-7343-31_Reflow",
+            footprint="Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow",
             extra_props={
-                "MPN": "TBD-VERIFY (Panasonic SVPF-Familie oder Kemet T520D Polymer-Tantal 470uF/16V)",
+                "MPN": "TPSE477K010R0100 (Kyocera AVX, Polymer-Tantal)",
                 "LCSC": "TBD-VERIFY (JLC-Stock vor Layout pruefen)",
-                "Notes": "r18.12 (ADR-0011): Polymer statt 1000uF Alu — passt in 8mm-Top-Zone, besserer ESR. Mit C_BULK2 (220uF MLCC) parallel = ~690uF effective.",
+                "LCSC": "C444831", "Notes": "r18.20b: Sourcing final. 470uF/10V Polymer-Tantal Case-E (7343-43, 4.3mm H — passt in 8mm-Top-Zone), JLC Extended ~517 Stock. ESR 100mOhm (NICHT <25mOhm — die <25mOhm-Flachteile sind bei LCSC nicht lagernd; siehe ADR-0011). Die niedrige Transient-ESR liefert der parallele C_BULK2-MLCC (~5mOhm). 16V/8mOhm-Alternative C403795 (Panasonic 16SEPG470M) waere ein zylindrischer 8x8.9mm-Can mit ~43 Stock — verworfen wegen Bauhoehe + Stock.",
             },
             seed_suffix="CBULK",
         )
@@ -2074,14 +2074,17 @@ def power_tree_sheet() -> str:
     )
 
     # ---- C_BULK2 (220µF MLCC parallel zu C_BULK Polymer, r18.12) + C1/C2 HF-Bypass
-    # r18.12: 220µF MLCC X5R 1210 parallel zum 470µF-Polymer → ~690µF effective
-    # Bulk + extrem niedrige ESR über das ganze Spektrum. 220µF MLCC in 1210
-    # ist JLC-Standard (z.B. CL32A227KQVNNNE, GRM32ER61C227ME05).
+    # r18.20b: 100µF/10V MLCC X5R 1210 parallel zum 470µF-Polymer. WICHTIG:
+    # 220µF/10V in 1210 EXISTIERT NICHT (220µF gibt es nur bis 6.3V im 1210-
+    # Case). 100µF/10V (echter Headroom am 5V-Rail, minimales DC-Bias-Derating)
+    # statt 220µF/6.3V (waere am 5V-Rail auf ~70-110µF derated). Effektiv-Bulk
+    # vergleichbar, aber audit-sauberer Voltage-Headroom. Sehr niedrige ESR
+    # (~5mOhm) deckt den Transient-Pfad (ADR-0010).
     # C1 (10µF) + C2 (100nF) bleiben als zusätzlicher HF-Bypass am Rail-Eintritt.
     for cref, cx, cval, cfp, cmpn, clcsc in (
-        ("C_BULK2", 73, "220uF 10V X5R 1210 (MLCC parallel zu C_BULK)",
+        ("C_BULK2", 73, "100uF 10V X5R 1210 (MLCC parallel zu C_BULK)",
          "Capacitor_SMD:C_1210_3225Metric",
-         "TBD-VERIFY (220uF/10V X5R 1210, z.B. CL32A227KQVNNNE)", "TBD-VERIFY"),
+         "LMK325ABJ107MM-T (Taiyo Yuden, 100uF 10V X5R)", "C2880380"),
         ("C1", 80, "10uF X5R 0805 (+5V rail HF-bulk)",
          "Capacitor_SMD:C_0805_2012Metric",
          "CL21A106KAYNNNE (Samsung, 25V X5R)", "C15850"),
@@ -3157,7 +3160,7 @@ def stm32h743_sheet() -> str:
                                     value="27pF C0G/NP0 0603 (HSE load, berechnet §5.9, bench-final)",
                                     x=cx, y=cy,
                                     footprint="Capacitor_SMD:C_0603_1608Metric",
-                                    extra_props={"MPN": "CC0603JRNPO9BN270", "Manufacturer": "Yageo", "LCSC": "TBD-r18.20 (27pF C0G/NP0 50V 0603 — Sourcing-Agent)", "VERIFY-STOCK": "27pF +-5% C0G/NP0 50V 0603; vorher 22pF/C1804 (zu klein, C_stray-Annahme 7pF)"},
+                                    extra_props={"MPN": "CC0603JRNPO9BN270", "Manufacturer": "Yageo", "LCSC": "C107045", "NOTE": "27pF C0G/NP0 50V 0603, JLC Basic, ~834k Stock (r18.20b verifiziert). Vorher 22pF/C1804 (zu klein, implizierte C_stray=7pF). Final bench-tuned am OSC_OUT."},
                                     seed_suffix=f"CHSE{k}", sheet_uuid_seed=sus))
         wires.append(wire(cx, cy - 3.81, cx, yy, seed_suffix=f"chse{k}-top"))
         wires.append(wire(cx, cy + 3.81, cx, cy + 6, seed_suffix=f"chse{k}-gnd"))
@@ -4429,8 +4432,8 @@ def mcp_sheet() -> str:
     # Weiss Vf~3.0V -> ~5.1mA. Beide < 8mA PCA-Sink-Budget; Helligkeits-
     # Matching macht die Firmware per PWM-Duty (Gelb/Gruen ggf. ~70%).
     LED_W = ("XL-1608UWC-04 (warm-white 0603)", "C965808")
-    LED_Y = ("XL-1608UYC-04 (yellow 0603, XINGLIGHT-Serie)", "TBD-VERIFY (JLC-Stock gelb 0603)")
-    LED_G = ("XL-1608UGC-04 (green 0603, XINGLIGHT-Serie)", "TBD-VERIFY (JLC-Stock gruen 0603)")
+    LED_Y = ("KT-0603Y (Hubei KENTO, yellow 0603, Vf 2.4V)", "C2287")
+    LED_G = ("KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)", "C12624")
     led_array = [
         # (pca_channel, led_ref(str), sx, sy, label_name, descr, (mpn, lcsc))
         (0,  "6",   80, 200, "LED6_K",   "SHIFT-Modifier (gruen)",   LED_G),

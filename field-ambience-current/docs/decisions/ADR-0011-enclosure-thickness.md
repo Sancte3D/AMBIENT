@@ -138,6 +138,23 @@ TOTAL: gleiches Profil wie B, Speaker eingeschwenkt
 
 **Empfehlung: Option 1** (Polymer-Cap). Bessere Audio-Eigenschaften UND Höhenproblem gelöst. Wird in r18.12 oder vor Layout-Phase fixiert.
 
+> **ESR-Realität (r18.20b Sourcing):** Die ~10-mΩ-Flach-Polymer-Caps
+> (Panasonic SVPF, Kemet T520/T525) sind bei **LCSC nicht lagernd**. Der
+> beste JLC-bestückbare Flach-Reflow-Polymer ist **Kyocera AVX
+> TPSE477K010R0100** (C444831, 470 µF / 10 V, Case-E 7343-43, 4.3 mm H,
+> **100 mΩ ESR**, ~517 Stock). Die 100 mΩ verfehlen das 10-mΩ-Ziel — aber
+> der **parallele C_BULK2-MLCC** (jetzt 100 µF / 10 V, C2880380, ESR ~5 mΩ)
+> dominiert die Impedanz im Audio-/Transient-Band, sodass die Bulk-ESR
+> unkritisch wird. Echtes 16 V / 8 mΩ gäbe es nur als zylindrischen
+> 8×8.9-mm-Can (Panasonic 16SEPG470M, C403795, ~43 Stock) — verworfen wegen
+> Bauhöhe (> 8 mm) + Stock. Die 8-mm-Top-Zone hält Case-E (4.3 mm) locker.
+>
+> **C_BULK2-Korrektur:** 220 µF / 10 V im 1210-Case **existiert nicht**
+> (220 µF gibt es nur bis 6.3 V). Gewählt: 100 µF / 10 V (echter
+> Voltage-Headroom am 5-V-Rail, minimales DC-Bias-Derating) statt
+> 220 µF / 6.3 V (würde am 5-V-Rail auf ~70–110 µF derated). Effektiv-Bulk
+> vergleichbar, Voltage-Headroom audit-sauber.
+
 ## Speaker-Anschluss-Kammer
 
 40-mm-Mini-Treiber (CMS-402811-28SP primär / AS04008PS sekundär, r18.18)

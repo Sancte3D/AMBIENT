@@ -1,6 +1,6 @@
 # Project Quality — Rating Card
 
-**Stand: 2026-06-13 (v0.7-r18.19)**
+**Stand: 2026-06-14 (v0.7-r18.20b)**
 
 > User-Vorgabe: Alles hat eine Skala 1–10, am Ende soll alles **10/10** sein.
 > Dieses File ist der ehrliche, aktuelle Zwischenstand pro Aspekt.
@@ -16,7 +16,7 @@
 | **Schematic (Korrektheit)** | 9.5 / 10 | ↑ (r18.10: SW_BOOT + USB-C-Upgrade + SPEC-BOM-Sync) |
 | **Hardware-Symbole** | 9.5 / 10 | ↑ (BOOT-Button + R_BOOT_SW ergänzt) |
 | **Footprint-Verifikation** | 10 / 10 | ✅ (r18.14: 0 offene Punkte — EC11J-Blocker via Teil-Retire gelöst, TS-1088-FP EasyEDA-verifiziert) |
-| **BOM-Sourcing** | 9.5 / 10 | ↑ (r18.19: USB-C-Pin-Count-Bug gefunden+gefixt (C283540 6-Pin power-only → C165948 16-Pin), Audio-Jack-FP vendored, Speaker-Wert sync; Audit-Standard erweitert) |
+| **BOM-Sourcing** | 10 / 10 | ✅ (r18.20b: alle JLC-bestückbaren Teile haben verifizierte in-Stock-LCSC; C_BULK/MLCC/HSE/LED-Fills + 2 Engineering-Flags (220µF/10V-Phantom, Polymer-ESR-Realität)) |
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 9 / 10 | ↑ (r18.16: `mechanical_coordinates.md` echt + geometrisch validiert, Power-Insel verortet, Speaker-Höhen-Constraint) |
@@ -28,10 +28,10 @@
 | **Repo-Struktur** | 8 / 10 | ↑ (r18.13: Phase 2 done — Doc-Moves in `mechanical/`, `software/`, `archive/`; Phase 3-5 queued) |
 | **CI / Auto-Validierung** | 8 / 10 | → |
 
-**Gesamt-Manufacturing-Readiness: 6.5 / 10** (Gate 1.5 von 9). r18.17: Speaker-
-Cover-Material + Datenblatt-Korrekturen + Z-Kollision behoben (Speaker-Cover
-3→6). Verbleibende Hauptlücken bleiben layout-seitig: **PCB Layout 0, DRC 0** —
-das ist jetzt der einzige große Block vor Gate 2.
+**Gesamt-Manufacturing-Readiness: 7 / 10** (Gate 1.5 von 9). r18.19/20: Audit-
+Fixes (USB-C, Jack, Hall-SOT-23, HSE-Caps) + BOM-Sourcing komplett (10/10).
+Verbleibende Hauptlücken: **PCB Layout 0, DRC 0** + GUI-ERC (nur User) — das
+ist der einzige große Block vor Gate 2.
 
 ## Was jeder Score bedeutet — und was auf 10 fehlt
 
@@ -66,9 +66,11 @@ das ist jetzt der einzige große Block vor Gate 2.
 - ✅ EC11J-Blocker gegenstandslos (Teil retired, ADR-0012); echtes Pattern liegt als Referenz in der Lib
 - Haltebedingung: neue Bauteile nur noch mit CAD-Export-FP oder Standard-Lib aufnehmen
 
-### BOM-Sourcing — 9 / 10
-- ✅ Alle Haupt-ICs verifiziert; r18.14: 2 kritische ID/MPN-Fixes (USB-C C283540, SW_BOOT TS-1088) via 3D-CAD-Abruf + EC11E (C202365/C370986) + Hall-Sensor (DRV5056 C2152902) LCSC-IDs + DRV5056-Pinout DS-bestätigt
-- ⏳ Fehlend für 10: Gateron-LP-Switch/Stabilizer-Beschaffungskanal (Keyboard-Markt, kein LCSC), Polymer-Cap-IDs (r18.12), 220µF/10V-MLCC, Cell/Modifier-LED-Stock-Check, Mesh-Hersteller (ADR-0007)
+### BOM-Sourcing — 10 / 10 ✅
+- ✅ Alle Haupt-ICs + Passives + Caps + LEDs haben verifizierte in-Stock-LCSC-IDs (r18.20b: C_HSE C107045, C_BULK C444831, C_BULK2 C2880380, LED gelb C2287 + grün C12624)
+- ✅ 2 Engineering-Flags gelöst: 220µF/10V/1210 existiert nicht → 100µF/10V; Polymer-<25mΩ bei LCSC nicht lagernd → C444831 100mΩ + paralleler MLCC dominiert Transient-ESR
+- ✅ Hand-Assembly-Teile (Speaker, Gateron-Switches, Stabilizer, Mesh, Knöpfe, Display, Tag-Connect) haben Vendor-Quellen + Links in BOM_MASTER
+- Haltebedingung: kritischer Pin-Count/Package immer Produktseiten-verifiziert (USB-C-Lektion r18.19)
 
 ### PCB Layout — 0 / 10
 - ⏳ Existiert nicht. Pfad zu 10: Stack-Up → Placement → Routing → DRC → Gerber-Export

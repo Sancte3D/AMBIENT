@@ -2383,9 +2383,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Manufacturer" "Yageo" (at 95.54 207.43 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-r18.20 (27pF C0G/NP0 50V 0603 — Sourcing-Agent)" (at 95.54 208.7 0)
+      (property "LCSC" "C107045" (at 95.54 208.7 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "VERIFY-STOCK" "27pF +-5% C0G/NP0 50V 0603; vorher 22pF/C1804 (zu klein, C_stray-Annahme 7pF)" (at 95.54 209.97 0)
+      (property "NOTE" "27pF C0G/NP0 50V 0603, JLC Basic, ~834k Stock (r18.20b verifiziert). Vorher 22pF/C1804 (zu klein, implizierte C_stray=7pF). Final bench-tuned am OSC_OUT." (at 95.54 209.97 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -2419,9 +2419,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Manufacturer" "Yageo" (at 109.54 207.43 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "TBD-r18.20 (27pF C0G/NP0 50V 0603 — Sourcing-Agent)" (at 109.54 208.7 0)
+      (property "LCSC" "C107045" (at 109.54 208.7 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "VERIFY-STOCK" "27pF +-5% C0G/NP0 50V 0603; vorher 22pF/C1804 (zu klein, C_stray-Annahme 7pF)" (at 109.54 209.97 0)
+      (property "NOTE" "27pF C0G/NP0 50V 0603, JLC Basic, ~834k Stock (r18.20b verifiziert). Vorher 22pF/C1804 (zu klein, implizierte C_stray=7pF). Final bench-tuned am OSC_OUT." (at 109.54 209.97 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
