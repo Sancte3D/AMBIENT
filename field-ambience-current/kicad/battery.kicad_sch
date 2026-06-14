@@ -1791,7 +1791,7 @@
         (effects (font (size 1.27 1.27))))
       (property "Value" "2.2uH 5A Shielded 0630 (TPS61089 Boost Inductor)" (at 142.54 76.27 0)
         (effects (font (size 1.27 1.27))))
-      (property "Footprint" "Inductor_SMD:L_0630_6.0x6.0mm" (at 140 75 0)
+      (property "Footprint" "field_ambience:L_Sunlord_SWPA6045" (at 140 75 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 140 75 0)
         (effects (font (size 1.27 1.27)) hide))

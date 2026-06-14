@@ -6225,7 +6225,7 @@ def battery_sheet() -> str:
             value="2.2uH 5A Shielded 0630 (TPS61089 Boost Inductor)",
             x=140, y=75,
             rotation=0,
-            footprint="Inductor_SMD:L_0630_6.0x6.0mm",
+            footprint="field_ambience:L_Sunlord_SWPA6045",
             extra_props={"MPN": "SWPA6045S2R2MT", "LCSC": "C83455"},
             seed_suffix="L1",
             sheet_uuid_seed=sus,

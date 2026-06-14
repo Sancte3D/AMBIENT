@@ -82,13 +82,15 @@ In `generate_kicad_project.py` werden `FP_VERIFY`-Properties durch `FP_NOTE`-Pro
 
 ## Custom-Footprints in der Project-Lib
 
-Alle 5 in `kicad/libraries/field_ambience.pretty/`:
+Alle 7 in `kicad/libraries/field_ambience.pretty/`:
 
 ```
 SW_HX_12x12x7.3_SMD-4P.kicad_mod                  HX 12×12 Tactile (5 Plätze)
 Crystal_HC49-US-SMD_ABLS.kicad_mod                Y1 HSE-Crystal (1 Platz)
 Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A.kicad_mod  TPS61089RNR Boost (1 Platz)
 SW_TS1088_SMD.kicad_mod                           SW11 + SW_BOOT (EasyEDA-verifiziert, r18.14)
+Jack_3.5mm_PJ-320D_SMT.kicad_mod                  J8/J9 Audio+MIDI-Klinke (EasyEDA-verifiziert, r18.19)
+L_Sunlord_SWPA6045.kicad_mod                      L1 Boost-Inductor 2.2µH (EasyEDA-verifiziert r18.20c — Phantom-Name L_0630 ersetzt)
 RotaryEncoder_ALPS_EC11J_SMD.kicad_mod            EC11J-Referenz (EasyEDA-verifiziert; Teil retired, ADR-0012)
 ```
 

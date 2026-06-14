@@ -4,9 +4,45 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.20b** (Sourcing-Fills: alle JLC-bestückbaren TBD-
-LCSC geschlossen — C_HSE 27pF, C_BULK Polymer, C_BULK2 100µF/10V, LED gelb+grün.
-2 Engineering-Flags gelöst. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.20c** (Phantom-FP-Fix: L1 SWPA6045 — der referenzierte
+`Inductor_SMD:L_0630_6.0x6.0mm` existiert in KiCad-Lib NICHT. Vendored aus
+EasyEDA-CAD. Plus 2 stale STEP-Files entfernt. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.20c (2026-06-14) — Phantom-FP-Fix + Stale-STEPs cleanup
+
+### 🟠 HIGH — L1 Boost-Inductor: Phantom-Footprint-Name
+
+Der Generator referenzierte `Inductor_SMD:L_0630_6.0x6.0mm` für die SWPA6045
+2.2µH-Drossel. Dieser Footprint **existiert in der KiCad-Standard-Library
+NICHT** (gibt nur `L_0603_1608Metric` als Wildcard-Match). PCB-Bestellung
+hätte gar nicht ohne Fehler exportieren können — oder schlimmer, KiCad hätte
+einen leeren Footprint angenommen.
+
+**Fix:** EasyEDA-verifizierter Footprint für C83455 (war schon in
+`/tmp/3dfetch/` aus der r18.14-3D-Aktion) als
+`field_ambience:L_Sunlord_SWPA6045` in Project-Lib vendored (2 SMD-Pads
+2.2×5.72 mm @ 5 mm Pitch, gleiche Methodik wie SW_TS1088, Jack_PJ-320D etc.).
+
+### 🟡 LOW — Stale STEPs entfernt
+
+`SW-SMD_EC11J1525402-...-H24.5.step` (EC11J retired r18.14, ADR-0012) +
+`TYPE-C-SMD_6P-...-H3.2.step` (M-17 retired r18.19) aus 3D-Lib entfernt.
+MANIFEST.md aktualisiert: beide Teile als retired markiert, USB-C-C165948-
+STEP-Regen via easyeda2kicad als TODO notiert.
+
+### Status
+
+7 Custom-FPs in `field_ambience.pretty/` (war 5). 0 Phantom-Footprints im
+gesamten Schaltplan (verifiziert via Footprint-Coverage-Scan: 25
+KiCad-Standard + 5 Custom (jetzt 7) — alle physisch vorhanden).
+
+Verifizierung: 8/8 paren-balanced, Firmware 13/13 PASS.
+
+Files: generate_kicad_project.py (FP-Replace), libraries/field_ambience.pretty/
+L_Sunlord_SWPA6045.kicad_mod NEU, 8 Sheets regen, FP_VERIFY_LOG (7/7),
+BOM_MASTER, MANIFEST.
 
 ---
 

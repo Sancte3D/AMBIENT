@@ -11,8 +11,9 @@ Quelle: EasyEDA/LCSC-CAD-Daten, gezogen mit `easyeda2kicad --full --lcsc_id=<ID>
 
 | LCSC | Bauteil | STEP-Datei | Höhe über PCB |
 |---|---|---|---|
-| C209762 | EC11J1525402 Encoder (SMD, r18.14: nur noch Referenz — ersetzt durch EC11E THT, ADR-0012) | `SW-SMD_EC11J1525402-L15.0-W18.0-H24.5-P2.5.step` | **24.5 mm** (Beleg: zu hoch) |
-| C283540 | USB-C TYPE-C-31-M-17 (**r18.14: LCSC-Nr. korrigiert**, war C165935 = MOSFET!) | `TYPE-C-SMD_6P-L8.9-W6.8-H3.2-P1.00.step` | 3.2 mm |
+| ~~C209762~~ retired | EC11J1525402 Encoder (SMD) — durch EC11E THT ersetzt (ADR-0012, r18.14); STEP entfernt r18.20c | — | Beleg „24.5 mm zu hoch" war Grund der Retire — Doku in ADR-0012 |
+| ~~C283540~~ retired | TYPE-C-31-M-17 — durch C165948 ersetzt (r18.19-Revert, M-17 war 6-Pin power-only); STEP entfernt r18.20c | — | Aktiver USB-C ist C165948 (16-Pin) — STEP via easyeda2kicad regenerierbar |
+| C165948 | USB-C TYPE-C-31-M-12 (aktiv) | TBD-regen | 3.2 mm — STEP nachholbar via `easyeda2kicad --full --lcsc_id=C165948` |
 | C114409 | STM32H743VIT6 LQFP-100 | `LQFP-100_L14.0-W14.0-H1.4-LS16.0-P0.50.step` | 1.4 mm |
 | C720477 | SW_BOOT Taster (**r18.14: MPN korrigiert** — XUNPU TS-1088-AR02016, nicht TS-1185A) | `SW-SMD_L3.9-W2.9-H2.0-LS4.8.step` | 2.0 mm |
 | C596838 | ABLS-8.000MHZ-B4-T Crystal HC-49/US-SMD | `CRYSTAL-SMD_L11.4-W4.7-LS12.7.step` | 4.2 mm |

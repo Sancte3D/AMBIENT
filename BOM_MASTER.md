@@ -36,7 +36,7 @@ Bestell-Link.
 | F1 | **1812L300/16GR** PTC 3 A | [C18198349](https://www.lcsc.com/product-detail/C18198349.html) | `Fuse:Fuse_1812_4532Metric` | KiCad-Standard | Standard-Lib-3D |
 | D2 | **SMAJ5.0A** TVS | [C113952](https://www.lcsc.com/product-detail/C113952.html) | `Diode_SMD:D_SMA` | KiCad-Standard | Standard-Lib-3D |
 | **U8** TPS61089 Boost VQFN-HR | [C165129](https://www.lcsc.com/product-detail/C165129.html) | `field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` | field_ambience | STEP im Repo |
-| L1 Boost-Inductor | **SWPA6045S2R2MT** 2.2 µH | [C83455](https://www.lcsc.com/product-detail/C83455.html) | `Inductor_SMD:L_0630_6.0x6.0mm` | KiCad-Standard | STEP im Repo |
+| L1 Boost-Inductor | **SWPA6045S2R2MT** 2.2 µH | [C83455](https://www.lcsc.com/product-detail/C83455.html) | `field_ambience:L_Sunlord_SWPA6045` (EasyEDA-CAD vendored r18.20c — Phantom-Name L_0630 ersetzt) | field_ambience (Custom) | STEP im Repo |
 | D3 | **SS34** Schottky-Diode | [C8678](https://www.lcsc.com/product-detail/C8678.html) | `Diode_SMD:D_SMA` | KiCad-Standard | Standard-Lib-3D |
 | Q1 | **DMG2305UX-7** P-Ch MOSFET | [C150470](https://www.lcsc.com/product-detail/C150470.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 | **U5** LDO | **AP7361C-33Y5-13** SOT-89-5 (Pinout 1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT verifiziert) | [C460397](https://www.lcsc.com/product-detail/C460397.html) | `Package_TO_SOT_SMD:SOT-89-5` | KiCad-Standard | Standard-Lib-3D |
