@@ -4,9 +4,56 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.22** (User-Verifikation: 2 echte Befunde —
-3 von 4 Encoder waren NRND, bare-AliExpress-Display war zu riskant.
-Beide Pivots umgesetzt. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.23** (UX-Korrektur: Cell-LED-XOR → Independent Latches.
+Hardware unverändert, Sim + ADR-0008 amendiert. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.23 (2026-06-14) — Cell-LED-Logik: XOR → Independent Latches (ADR-0008 r2)
+
+User: „Es können eigentlich sowohl grün als auch gelb gleichzeitig erkennbar
+sein. Funktional sinnvoller. Es kann ja beide gleichzeitig geben, rein logisch."
+
+**Berechtigt.** Die XOR-Wahl in r18.9 war eine Annahme („eine Cell nur eine
+Pitch"), nicht eine Notwendigkeit. „Cell hält Grundoktave" und „Cell hält
+Shift-Oktave" sind **logisch unabhängig** — beide simultan = **Oktav-Stack**
+(klassischer Ambient-Drone-Effekt).
+
+### Hardware: NICHTS
+
+Beide LEDs hingen schon vorher an unabhängigen PCA9685-Kanälen. XOR war reine
+Firmware-Logik. Schaltplan, Footprint, BOM unverändert.
+
+### Sim sofort umgesetzt
+
+`tools/display_sim.html`:
+- State: `cells[i] = 'off'|'yellow'|'green'` (1 Wert)
+  → `cells[i] = {base: bool, shift: bool}` (2 unabhängige Bits)
+- Tap-Logik: Hold-armed Tap toggelt nur den vom Shift-State bestimmten Branch;
+  der andere bleibt
+- LED-Render: gelb ↔ base, grün ↔ shift — unabhängig (beide gleichzeitig
+  erlaubt)
+- Clear setzt beide Bits auf 0
+- Header-Kommentar + Help-Text aktualisiert
+- JS-Syntax-Check OK
+
+### Firmware-Side (zu bauen mit STM32-Port)
+
+ADR-0008 r2 dokumentiert verbindlich:
+- State-Modell `cell_hold[i] = (base_bit, shift_bit)`
+- Voice-Routing Cell `i` base = source `i`, Cell `i` shift = source `i+5`
+- `PAD_MAX` 8 → 12 (5 Cells × 2 Oktaven = 10 + 2 Headroom Generate/Drone)
+- `MAX_SOURCES = 16` reicht
+- Master-Soft-Clip in `engine.c` fängt die +6 dB bei voller Stack-Belegung
+  ohne neuen Eingriff
+
+Firmware-Tests 13/13 unverändert PASS (Sim ist HTML, keine C-Änderung).
+
+### Files
+
+`firmware-c-next/tools/display_sim.html` (State + Tap + Render + Doku),
+`docs/decisions/ADR-0008-cell-led-xor-shift-hold.md` (Amendment r2 vor dem
+Original-XOR-Text, Original als Kontext erhalten).
 
 ---
 

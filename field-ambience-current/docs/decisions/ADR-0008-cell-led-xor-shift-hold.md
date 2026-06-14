@@ -1,7 +1,66 @@
-# ADR-0008: Cell-LED-Logik — Hold/Shift+Hold als XOR (gelb/grün)
+# ADR-0008: Cell-LED-Logik — Hold/Shift+Hold (Independent Latches, r2)
 
-**Status:** ACCEPTED (User-Entscheidung 2026-06-11)
-**Date:** 2026-06-11
+**Status:** SUPERSEDED → AMENDED r2 (2026-06-14): Independent Latches statt XOR
+**Date (Original r1):** 2026-06-11
+**Date (Amendment r2):** 2026-06-14
+
+---
+
+## Amendment r2 (2026-06-14) — XOR → Independent Latches
+
+> **User-Einwand:** „Es können eigentlich sowohl grün als auch gelb gleichzeitig
+> erkennbar sein. Funktional sinnvoller. Im Shift Mode, dann im Hold Mode. Es
+> kann ja beide gleichzeitig geben, rein logisch."
+
+**Entscheidung:** Berechtigt. Die XOR-Wahl von r18.9 war eine Annahme, dass
+„eine Cell nur eine Pitch sustainen kann". Tatsächlich sind „Cell hält
+Grund-Oktave" und „Cell hält Shift-Oktave" **logisch unabhängige Zustände**:
+beide gleichzeitig aktiv = Cell sustainet beide Oktaven simultan =
+**Oktav-Stack** (klassischer fetter Ambient-Drone-Effekt).
+
+### Neue Logik (verbindlich, ersetzt die XOR-Regel im Original-Abschnitt unten)
+
+| `hold_base[cell]` | `hold_shift[cell]` | Gelb-LED | Grün-LED | Voicing |
+|---|---|---|---|---|
+| false | false | aus | aus | Cell sustainet nichts |
+| **true** | false | **an** | aus | Cell sustainet Grund-Oktave |
+| false | **true** | aus | **an** | Cell sustainet Shift-Oktave |
+| **true** | **true** | **an** | **an** | Cell sustainet BEIDE Oktaven (Stack) |
+
+**Tap-Logik:** Hold-Modifier latched + Cell-Tap toggelt nur den vom **Shift-
+State** bestimmten Branch (Shift gedrückt → `hold_shift`; sonst → `hold_base`).
+Der jeweils ANDERE Branch bleibt unverändert. `Clear` setzt beide Bits auf 0.
+
+### Hardware-Folgen: KEINE
+
+Beide LEDs hingen schon vorher an unabhängigen PCA9685-Kanälen — XOR war reine
+Firmware-Logik. Kein Schaltplan-, kein Footprint-, kein BOM-Change.
+
+### Firmware-Folgen
+
+Zu implementieren, wenn der STM32-Port den MCP23017-Button-Handler baut:
+- State-Modell: `cell_hold[i] = (base_bit, shift_bit)` statt heutigem
+  einwertigem Enum
+- Voice-Routing: Cell `i` base → source `i`; Cell `i` shift → source `i+5`
+- **`PAD_MAX` 8 → 12** in `include/pad.h` (Worst-Case 5 Cells × 2 Oktaven =
+  10 Voices + 2 Headroom für Generate/Drone)
+- `MAX_SOURCES` in `engine.c` ist schon 16 → ausreichend
+
+### Sim-Folgen
+
+Sofort umgesetzt in `firmware-c-next/tools/display_sim.html` (r18.23): State
+ist `{base: bool, shift: bool}` pro Cell, Click toggelt nur den aktiven Branch,
+LED-Render zeigt beide unabhängig.
+
+### Audio-Folgen
+
+Bei voller Stack-Belegung (alle 5 Cells × 2 = 10 Pad-Voices simultan) wäre
+~6 dB Pegel-Anstieg möglich. Der Master-Soft-Clip in `engine.c` fängt das
+schon — kein zusätzlicher Eingriff nötig.
+
+---
+
+## Original (r1, 2026-06-11) — XOR-Wahl, durch r2 SUPERSEDED
 
 ## Context
 

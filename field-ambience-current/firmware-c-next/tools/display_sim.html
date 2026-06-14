@@ -2,7 +2,8 @@
 <html lang="en">
 <!--
   Field Ambience — display simulator v3 (no text labels, dust-mesh speakers,
-  Hold/Shift XOR per cell).
+  Hold/Shift Independent Latches per cell — both can be lit at once
+  (octave-stacked drone). Resolved r18.23 → ADR-0008 r2.
 
   This is the live mirror of firmware-c-next/src/menu.c plus the new control
   surface from IMG_9713 (2026-06-11):
@@ -16,17 +17,20 @@
         Generate = white (active)
         Clear  = white (flash-on-press only, no latch)
     - 5 cells (long vertical pills) with TWO LEDs above each:
-        yellow LED = HOLD this cell at current octave
+        yellow LED = HOLD this cell at base octave
         green  LED = HOLD this cell SHIFTED (octave/voicing variant)
-        Never both at once (XOR). Either Hold→yellow, or Shift+Hold→green.
+        ADR-0008 r2: INDEPENDENT — both can be lit at once = octave-stacked
+        drone (cell sustains base AND shifted pitch simultaneously).
     - the visible speakers from the old design are replaced by two dust-mesh
       ovals on the left and right edges. Same audio path; visually a flat
       black mesh, no grille pattern.
 
-  LED-XOR logic per cell (USER QUESTION, EVALUATION):
-    Variant A (overlay): yellow=Hold-state, green=Shift-state.
-      Both on at once when Shift held AND cell on Hold.
-    Variant B (XOR):     yellow=Hold @ base octave, green=Hold @ shifted.
+  LED logic per cell (resolved r18.23 → ADR-0008 r2):
+    Variant CHOSEN (Independent Latches): yellow = base-octave hold,
+      green = shifted-octave hold. Two independent bits per cell;
+      both can be lit at once → octave-stacked sustain (rich ambient
+      effect). User pointed out both states are logically independent
+      and shouldn't be mutually exclusive.
       Either/or per cell.
     → Variant B is the right one. Single-color-at-a-time per cell reads
       unambiguously (which octave is held). "Shift active" is GLOBAL state —
@@ -163,7 +167,7 @@
   }
   .mod-btn:active { box-shadow: inset 0 2px 6px rgba(0,0,0,0.7); }
 
-  /* CELLS — 5 long vertical pills, 2 LEDs above (XOR yellow/green) */
+  /* CELLS — 5 long vertical pills, 2 LEDs above (yellow=base, green=shift, INDEPENDENT — ADR-0008 r2) */
   .cells {
     position: absolute;
     bottom: 6%;
@@ -283,7 +287,7 @@
     Encoders: scroll over dial or drag vertically; <kbd>← → Space</kbd> drive the Display encoder.
     Modifiers: <span style="color:#5dd24c">Shift</span> /
     <span style="color:#f0c63a">Hold</span> / white = Drone, Generate, Clear (flash-on-press).
-    Hold-armed cell tap → yellow LED. <kbd>Shift</kbd> held while latching → green LED instead (XOR).
+    Hold-armed cell tap → yellow LED (base octave). <kbd>Shift</kbd> held while latching → green LED (shifted octave). <strong>Beide unabhängig</strong> — beide gleichzeitig aktiv = Oktav-Stack.
     Cell velocity (ADR-0013): click <em>low</em> on a pill = hard/fast = loud, <em>high</em> = soft; the green fill + 0–127 readout mirror the firmware curve.
     Backlight: <kbd>A</kbd> / <kbd>Z</kbd>.
   </div>
@@ -325,7 +329,10 @@ const state = {
   shift: false,
   battery_pct: 72, usb: false,
   hold: false, drone: false, generate: false, clear_flash: 0,
-  cells: ['off','off','off','off','off'],
+  /* ADR-0008 r2: independent latches per cell. {base, shift} are independent
+     bits. yellow LED ↔ base, green LED ↔ shift. Both can be true simultaneously
+     (octave-stacked drone). */
+  cells: [{base:false,shift:false},{base:false,shift:false},{base:false,shift:false},{base:false,shift:false},{base:false,shift:false}],
 };
 
 const wrap   = (v, n) => ((v % n) + n) % n;
@@ -627,7 +634,7 @@ function pressMod(id) {
     case 'generate': state.generate = !state.generate; break;
     case 'clear':
       state.clear_flash = performance.now();
-      state.cells = state.cells.map(_ => 'off');
+      state.cells = state.cells.map(_ => ({base:false, shift:false}));
       ensureLoop();
       break;
   }
@@ -670,8 +677,13 @@ function showCellVelocity(idx, velocity) {
 function tapCell(idx, velocity) {
   if (velocity === undefined) velocity = 0.7;        /* keyboard default */
   if (state.hold) {
-    const target = state.shift ? 'green' : 'yellow';
-    state.cells[idx] = (state.cells[idx] === target) ? 'off' : target;
+    /* ADR-0008 r2 (Independent Latches): yellow=base-octave hold, green=
+       shifted-octave hold. They are INDEPENDENT bits — a cell can be held
+       in base, in shift, or BOTH at once (octave-stacked drone). The
+       Shift-modifier picks which bit a Hold-tap toggles; the OTHER bit
+       stays as it was. */
+    const key = state.shift ? 'shift' : 'base';
+    state.cells[idx][key] = !state.cells[idx][key];
   }
   showCellVelocity(idx, velocity);
   const el = document.querySelector(`.cell-key[data-cell="${idx}"]`);
@@ -696,10 +708,11 @@ function syncLeds() {
   document.querySelector('.mod-led[data-mod="drone"]').className   = 'mod-led' + (state.drone   ? ' on-white'  : '');
   document.querySelector('.mod-led[data-mod="generate"]').className= 'mod-led' + (state.generate? ' on-white'  : '');
   document.querySelector('.mod-led[data-mod="clear"]').className   = 'mod-led' + (state.clear_flash ? ' on-white' : '');
+  /* ADR-0008 r2: yellow + green are independent (both can be lit at once). */
   for (let i = 0; i < 5; ++i) {
     const c = state.cells[i];
-    document.querySelector(`.cell-led[data-led="cell${i+1}-y"]`).className = 'cell-led' + (c === 'yellow' ? ' on-yellow' : '');
-    document.querySelector(`.cell-led[data-led="cell${i+1}-g"]`).className = 'cell-led' + (c === 'green'  ? ' on-green'  : '');
+    document.querySelector(`.cell-led[data-led="cell${i+1}-y"]`).className = 'cell-led' + (c.base  ? ' on-yellow' : '');
+    document.querySelector(`.cell-led[data-led="cell${i+1}-g"]`).className = 'cell-led' + (c.shift ? ' on-green'  : '');
   }
 }
 
