@@ -66,9 +66,19 @@ Phase 6 **nach** Datasheet-Pinout-Check (nicht vorher raten — r18.6-Lektion).
 
 ### Lange Caps / Stabilizer
 
-- Cell-Caps ≥ 2u bekommen **Low-Profile-Stabilizer** (Gateron-LP-Klasse, wie
-  NuPhy-Spacebars): Switch mittig, Stabilizer-Stems links/rechts — exakt das
-  Spacebar-Prinzip aus der User-Anforderung.
+> **r18.21-Kostenrevision:** Stabilizer für den **Prototyp gestrichen**. Der
+> User druckt die Cell-Caps selbst 3D — also werden sie **kurz (1u, ein Switch
+> mittig)** gemacht statt lang (≥2u). Eine 1u-Cap braucht **keinen Stabilizer**
+> (Stabilizer verhindern nur das Wackeln langer Tasten). Das spart $25–75 pro
+> 5er-Run + vereinfacht das Plate-Design. **Wichtig:** Das HiChord-Spielgefühl
+> kommt vom **Magnetic-Switch-Hub (0.1–3.3 mm analog)**, NICHT von der
+> Cap-Länge — die Velocity-Erfassung bleibt voll erhalten. Lange Caps +
+> Stabilizer bleiben als spätere Option dokumentiert (unten), falls das
+> Industrial-Design es doch will.
+
+- *(Spätere Option)* Cell-Caps ≥ 2u bekämen **Low-Profile-Stabilizer**
+  (Gateron-LP-Klasse, wie NuPhy-Spacebars): Switch mittig, Stabilizer-Stems
+  links/rechts — das Spacebar-Prinzip aus der ursprünglichen User-Anforderung.
 - Cap-Geometrie (Länge, Profil, Material) = Industrial-Design-Sprint; die
   Mechanik-Schnittstelle (LP-Stem-Kreuz + Stabilizer-Raster) ist Standard im
   Keyboard-Ökosystem → Community-CAD verfügbar.

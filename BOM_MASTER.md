@@ -1,6 +1,6 @@
 # BOM Master — Field Ambience
 
-**Stand: v0.7-r18.18 (2026-06-13).** Single Source of Truth für alle aktiv
+**Stand: v0.7-r18.21 (2026-06-14).** Single Source of Truth für alle aktiv
 verbauten Komponenten. Pro Eintrag: aktuelle Wahl, Footprint-Quelle, 3D-Quelle,
 Bestell-Link.
 
@@ -44,7 +44,7 @@ Bestell-Link.
 | **C_BULK** Polymer-Tantal 470 µF / 10 V Case-E 7343-43 (ESR 100 mΩ; <25 mΩ-Flachteile bei LCSC nicht lagernd — Transient-ESR liefert C_BULK2) | TPSE477K010R0100 (Kyocera AVX) | [C444831](https://www.lcsc.com/product-detail/C444831.html) | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 existiert nicht → 100µF echter Headroom statt 220µF/6.3V-Derating) | LMK325ABJ107MM-T (Taiyo Yuden) | [C2880380](https://www.lcsc.com/product-detail/C2880380.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J_BAT** JST-PH 2.0 2-Pin | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | STEP im Repo |
-| LiPo-Pouch 9050060 (50×60×9 mm, ~1500 mAh) | TBD (Generic) | — (Generic) | — (kein PCB-FP, Bottom-Case-Slot) | — | Vendor-CAD |
+| LiPo-Pouch **503759** (50×37×9.4 mm, **2000 mAh ~6.6 h @ 300 mA**) — r18.21 rightsize von 5000mAh-Overkill | Generic LiPo 2000mAh JST-PH 2.0 | [PiHut 2000mAh](https://thepihut.com/products/2000mah-3-7v-lipo-battery) | — (kein PCB-FP, Bottom-Case-Slot) | — | Vendor |
 
 ## 3. Audio-Path
 
@@ -83,7 +83,7 @@ Bestell-Link.
 | Ref | MPN | Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
 | **J3** 1×8 Receptacle 2.54 mm | (Generic) | (DigiKey/RS) | `Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical` | KiCad-Standard | Standard-Lib-3D |
-| **LCD-Modul** Adafruit 5394 (ST7789 1.9″ 320×170 IPS) | Adafruit Product 5394 | [Adafruit Shop](https://www.adafruit.com/product/5394) | Modul (steckt in J3) | — | [Adafruit GitHub Mech-CAD](https://github.com/adafruit/) |
+| **LCD-Modul** bare **ST7789V 1.9in 320×170 IPS** 8-Pin-SPI (r18.21: Adafruit 5394 ~$15 → bare ~$3-5, gleicher Controller/Auflösung/SPI) **WARN: Pin-ORDER des gekauften Moduls gegen J3 verifizieren** (variiert je Vendor) | Generic ST7789V 1.9in | AliExpress: Suche `1.9 inch ST7789 320x170 IPS` | Modul (steckt in J3) | — | Vendor-CAD |
 | Q2 Backlight-Driver | **2N7002,215** SOT-23 | [C8545](https://www.lcsc.com/product-detail/C8545.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 
 ## 6. Encoder (ADR-0012 — 1× Push+Detent, 3× Smooth)
@@ -92,16 +92,16 @@ Bestell-Link.
 |---|---|---|---|---|---|
 | **EN3** (Display: Push + Detent) | **ALPS EC11E18244AU** (18 Puls, 36 Detents, mit Push-Switch, Flat-Shaft 20 mm) | [C202365](https://www.lcsc.com/product-detail/C202365.html) | `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | KiCad-Standard | Standard-Lib-3D |
 | **EN1 / EN2 / EN4** (Smooth: kein Detent) | **ALPS EC11E183440C** (18 Puls, OHNE Detent, mit Push — Firmware ignoriert SW; gleicher Footprint wie EN3) | [C370986](https://www.lcsc.com/product-detail/C370986.html) | gleicher FP wie EN3 | KiCad-Standard | Standard-Lib-3D |
-| Knöpfe (4×) Ø 19–20 × 8–10 mm Alu, Kick75-Stil | TBD (Industrial-Design-Sprint) | — | — | — | Custom-CAD |
+| Knöpfe (4×) Ø 19–20 × 8–10 mm, **selbst 3D-gedruckt** (r18.21 — statt Alu-CNC, spart $50-200/5er-Run) | Eigenes 3D-Print | — | — | — | Custom-CAD (User) |
 
 ## 7. Cells (ADR-0013 — Low-Profile Magnetic + Hall)
 
 | Ref | MPN | Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
 | **Switch (5×)** | **Gateron Low Profile Magnetic Jade** (pin-los, plate-mounted, 0.1–3.3 mm analog Hub, 100 M Zyklen) | [Gateron Direct](https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch) · [NuPhy](https://nuphy.com/products/gateron-low-profile-magnetic-jade-switches) · [Ukeebs (EU)](https://ukeebs.com/products/gateron-low-profile-magnetic-jade-switch-set) | — (kein PCB-Pin, Plate-Cutout 14×14 mm) | — | Community-CAD (Keyboard-Ökosystem) |
-| **Stabilizer (für Caps ≥ 2u)** | LP-Stabilizer, Gateron-LP-Klasse | s. Gateron-Channel | — (Plate-Mount, Spacebar-Prinzip) | — | Community-CAD |
+| ~~Stabilizer~~ **(r18.21 gestrichen für Prototyp)** | Nur nötig bei langen ≥2u-Caps. Cell-Caps selbst 3D-gedruckt + **kurz (1u)** → kein Stabilizer. Spart $25-75/5er-Run + vereinfacht Plate | — | — | — |
 | **Hall-Sensor pro Cell (J_CELL1–5)** | **TI DRV5056A4QDBZR** (SOT-23, 3.3 V ratiometrisch, Pin 1=VCC / 2=OUT / 3=GND DS-verifiziert) | [C2152902](https://www.lcsc.com/product-detail/C2152902.html) · [TI DS](https://www.ti.com/lit/ds/symlink/drv5056.pdf) | aktuell `Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical` als Site (Phase-6: → `Package_TO_SOT_SMD:SOT-23`) | KiCad-Standard | Standard-Lib-3D |
-| **Cell-Caps (5×)** ≥ 2u, LP-Profil | TBD (Industrial-Design-Sprint; Cap-Hersteller folgt Plate-Design) | — | — | — | Custom-CAD |
+| **Cell-Caps (5×)** **1u, selbst 3D-gedruckt** (r18.21 — statt ≥2u; kein Stabilizer nötig) | Eigenes 3D-Print | — | — | — | Custom-CAD (User) |
 | Hall-Sensor-RC pro Cell: R_CELL 1 kΩ 0603 + C_CELL 10 nF 0603 | 0603WAF1001T5E / 0603B103K500NT | [C21190](https://www.lcsc.com/product-detail/C21190.html) / [C57112](https://www.lcsc.com/product-detail/C57112.html) | `Resistor_SMD:R_0603_1608Metric` / `Capacitor_SMD:C_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
 ## 8. Modifier-Buttons + Service-Buttons
@@ -155,8 +155,8 @@ Standard-Lib-3D.
 |---|---|---|
 | Gehäuse Außen 260 × 110 × 21.6 mm | ABS / PC Spritzguss 2.5 mm (Top + Bottom) | TBD (Industrial Design Sprint) |
 | 4× Mounting-Hardware M2.5 | (Standard Hex-Standoff 3 mm) | RS / Reichelt |
-| Encoder-Knöpfe (4×) Ø 19–20 × 8–10 mm Alu | TBD (Kick75-Stil) | Industrial Design |
-| Cell-Caps (5×, ≥ 2u, LP) | TBD | Industrial Design |
+| Encoder-Knöpfe (4×) Ø 19–20 × 8–10 mm | **selbst 3D-gedruckt** (r18.21) | User |
+| Cell-Caps (5×, 1u) | **selbst 3D-gedruckt** (r18.21) | User |
 | Plate für Magnetic-Switches | TBD-CAD | Industrial Design |
 
 ---

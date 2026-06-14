@@ -4,9 +4,54 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.20c** (Phantom-FP-Fix: L1 SWPA6045 — der referenzierte
-`Inductor_SMD:L_0630_6.0x6.0mm` existiert in KiCad-Lib NICHT. Vendored aus
-EasyEDA-CAD. Plus 2 stale STEP-Files entfernt. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.21** (Kostensenkung: Display Adafruit→bare ST7789V,
+Akku 5000→2000mAh, Stabilizer gestrichen, Knöpfe/Caps selbst 3D-gedruckt.
+COST_ESTIMATE.md NEU. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.21 (2026-06-14) — Kostensenkung (5er-Prototyp-Run)
+
+User: „Insgesamt zu teuer… wo wir Kosten sparen können, sollten wir das."
+Sourcing-Recherche → die echten Hebel identifiziert. Erste Schätzung ~$750,
+jetzt **~$405–520 für 5 Geräte**.
+
+### Wichtige Korrektur der eigenen Schätzung
+
+Die „$3-Extended-Setup-Gebühr × 32 Teile = ~$96"-Annahme war FALSCH. JLCPCB
+hat die Feeder-Gebühr Ende 2025 auf $1.50 gesenkt UND stuft unsere großen ICs
+(STM32H743, PCM5102A, PAM8403, PCA9685, AP7361C, Crystal) als **„Extended
+(Preferred)" = gebührenfrei** ein. Real: nur 3 plain-Extended-Teile (MCP23017,
+MCP73831, DRV5056A4) × $1.50 = **~$4.50 für den ganzen Run**.
+
+### Umgesetzte Kostensenkungen
+
+| Maßnahme | Ersparnis 5er-Run |
+|---|---|
+| Display Adafruit 5394 ($15) → bare ST7789V ($3–5) | ~$55 |
+| Knöpfe + Cell-Caps selbst 3D-drucken (statt Alu-CNC) | ~$50–200 |
+| Stabilizer gestrichen (1u-Caps statt ≥2u) | ~$25–75 |
+| Akku 5000 → 2000 mAh (503759) | ~$20 |
+
+### Warum kein IC-Swap
+
+MCP23017/MCP73831/DRV5056 sind plain-Extended, aber ihre Alternativen
+(TCA9555/TP4056/günstigere Hall) sind AUCH Extended + bräuchten Footprint-/
+Firmware-Rework. Bei 5 Stück frisst die Umbau-Arbeit die Ersparnis. STM32H743
+& Co. sind „Preferred" = schon gebührenfrei. Alle behalten.
+
+### Files
+
+- **COST_ESTIMATE.md NEU** (Root) — ehrliche Aufschlüsselung JLC + Hand-Supply
+  + Gehäuse, mit Spar-Optionen + Trade-Offs
+- BOM_MASTER: Display→bare ST7789V (Pin-Order-Verify-Flag), Akku→2000mAh,
+  Stabilizer gestrichen, Knöpfe/Caps→3D-Print
+- SPEC §4 Battery-Zeile → 2000mAh (war 5000mAh, Pi-Ära-Leiche)
+- ADR-0013: Stabilizer für Prototyp gestrichen (1u-Caps; HiChord-Feel kommt vom
+  Magnetic-Hub, nicht der Cap-Länge); lange-Caps-Option bleibt dokumentiert
+
+Keine Schematic-/Generator-Änderung (Display steckt in J3-Header, Akku am
+JST-Connector — beide unverändert). Reine BOM-/Doku-/Sourcing-Revision.
 
 ---
 

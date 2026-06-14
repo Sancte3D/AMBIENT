@@ -218,7 +218,7 @@ Q1-Logik: USB-C-VBUS HIGH = Q1 leitet (Bypass-Boost), Battery lädt parallel
 
 | Ref | Part | LCSC | JLC | Funktion |
 |---|---|---|---|---|
-| BAT1 | LiPo 3.7V 5000mAh Pouch 8050120 oder 9050120 (8-9mm × 50mm × 120mm) | nicht JLC | du lieferst | Energiespeicher, JST PH 2.0 2-pin |
+| BAT1 | LiPo 3.7V **2000mAh** Pouch 503759 (9.4×37×50mm) — **r18.21 rightsize von 5000mAh** (Overkill; 2000mAh ~6.6h @ 300mA) | nicht JLC | du lieferst | Energiespeicher, JST PH 2.0 2-pin |
 | J9 | JST PH 2.0 2-pin Battery-Connector vertical SMD | C2845240-Klasse | JLC Basic | Battery-Anschluss, polarisiert |
 | U7 | **MCP73831T-2ACI/OT** (Microchip, SOT-23-5) | C424093 | Basic | LiPo Single-Cell Charger, Ladestrom programmierbar via R_PROG (R21 = 2 kΩ → 500 mA charge) |
 | U8 | **TPS61089RNR** (TI, VQFN-11 HotRod 2×2.5mm + Thermal Pad) | C165129 | Extended | Boost-Converter LiPo→5V, bis 2A @ 5V Out. Programmable Fsw via R_FSW (360k → ~1.21 MHz, über Audio-Band). r12-B11: Wechsel von RNSR auf RNR-Variante wegen JLC-Stock-Verfügbarkeit. Benötigt 5 zusätzliche externe Bauteile: C_VCC 1µF (interne LDO-Decoupling), R_FSW 360k (Fsw-Set), R_ILIM 20k (current-limit ~4A peak), C_BOOT 100nF (high-side gate driver bootstrap zwischen BOOT und SW), R_COMP 22k + C_COMP 1nF (Type-II loop-compensation). |
