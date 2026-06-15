@@ -1,7 +1,45 @@
-# ADR-0004: MIDI-Out-Hardware — Design-Entscheidung offen
+# ADR-0004: MIDI-Out — DEFERRED (r18.30)
 
-**Status:** OPEN (Design-Entscheidung, kein Engineering-Blocker)
-**Datum:** 2026-06-11 (r18.6)
+**Status:** DEFERRED → out of scope für den 5er-Prototyp-Run (User-Entscheidung 2026-06-15)
+**Datum (Original):** 2026-06-11 (r18.6)
+**Datum (Deferral):** 2026-06-15 (r18.30)
+
+---
+
+## Deferral r18.30 — „vielleicht brauchen wir gar kein MIDI"
+
+User-Entscheidung: MIDI fällt aus dem aktiven Scope. Begründung: das Gerät
+ist ein **Standalone-Ambient-Instrument** — der Klang lebt im Gerät selbst,
+nicht als „denkender Controller" für externe Synths. Für den 5er-Prototyp-Run
+nicht nötig; bei späterem Interesse jederzeit nachrüstbar, weil die Hardware-
+Vorarbeit auf der PCB-Seite folgendes konserviert hat:
+
+- **J9 (PJ-320D)**: bleibt im Schaltplan als **DNP** (Do Not Populate).
+  Edge-Cutout + Footprint vorhanden — nur die Buchse + die 2× 220 Ω werden
+  beim 5er-Run nicht bestückt.
+- **PD5 (STM32 USART2_TX) bleibt für MIDI reserviert** (kein anderer Verbraucher).
+- **`src/midi.c`** (Logic) + **`src/hal_h743/midi_uart_h743.c`** (Skelett)
+  bleiben im Code, werden aber im STM32-Build nicht initialisiert
+  (`midi_tx_init()` wird im `main_h743.c` auskommentiert).
+- **`engine.c`** sendet keine `midi_send_note_on/off` mehr (waren ohnehin
+  optional, hängen am gleichen FIFO).
+
+**Konsequenzen für r18.30:**
+- BOM_MASTER §3: J9-Zeile bleibt mit Hinweis „DNP für 5er-Run (ADR-0004
+  deferred); Footprint + Cutout konserviert"
+- COST_ESTIMATE: 1× PJ-320D weniger pro Board ≈ $0.30 × 5 = $1.50 (Pfennig-
+  Ersparnis, real wert wegen reduzierter Bestück-Komplexität)
+- 5 Achsen unten bleiben als Future-Entscheidung dokumentiert für den Tag,
+  an dem MIDI doch reaktiviert wird.
+
+**Reaktivierung:** Nur ein Re-Spin nötig wenn die 220-Ω-Schaltung anders sein
+soll (TRS-Type-A/B, OUT-only, 3V3-direkt — alles im Original-Body unten).
+Sonst nur: Buchse + 2× 220 Ω einlöten, `midi_tx_init()` in `main_h743.c`
+einkommentieren, fertig.
+
+---
+
+## Original (r1, 2026-06-11) — Design-Entscheidung offen
 **Kontext:** Schaltplan hat MIDI_TX-Netz auf PD5 (STM32-USART2_TX, SPEC §5.5). Buchse + Serien-R wurden bewusst NICHT instanziiert.
 
 ## Warum diese ADR existiert

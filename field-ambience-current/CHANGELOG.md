@@ -4,9 +4,62 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.29** (Firmware-Ausbau Teil 2: params.c — Encoder→
-Engine-Bindings mit Acceleration (15. Suite); controls+params in STM32-Main-
-Loop verdrahtet. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.30** (Firmware-Ausbau Teil 3: leds.c (16. Suite),
+Menü-Encoder-Binding, MIDI deferred. Firmware-LOGIK komplett + verdrahtet.
+KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.30 (2026-06-15) — leds.c + Menü-Encoder + MIDI deferred
+
+User: „vielleicht brauchen wir gar kein MIDI? Rest ausbauen."
+
+### 🟡 MIDI deferred (ADR-0004 r18.30)
+
+J9 wird im 5er-Prototyp-Run **NICHT bestückt** (DNP). Hardware-Vorarbeit
+konserviert (Footprint + Edge-Cutout + PD5-Pin-Reservierung), Code bleibt
+(`src/midi.c` + `src/hal_h743/midi_uart_h743.c`), aber `midi_tx_init()` ist
+in `main_h743.c` auskommentiert. Reaktivierung später = J9 + 2× 220 Ω
+bestücken + 1 Zeile uncommenten. ADR-0004 als „DEFERRED" markiert mit
+Original-Diskussion erhalten.
+
+### NEU leds.c + leds.h — controls/modifier state → PCA9685 16-ch PWM
+
+Hardware-unabhängiges LED-Render-Modul (16. Suite):
+- 16-Kanal-Mapping per SPEC §7.2 (vs Generator-Z.4459 verifiziert)
+- Per-Channel-Fade-Engine: 0↔TARGET über LED_FADE_MS = 120 ms
+- Per-Farbe-Duty-Matching (gelb 70 %, grün 100 %, weiß 80 % wegen Vf-Diff)
+- ADR-0008-r2-konform: gelb (ch 5/7/9/11/13) zeigt `controls_hold_base[c]`,
+  grün (ch 6/8/10/12/14) zeigt `controls_hold_shift[c]` — **unabhängig**
+- Clear-Flash auf ch 4 (250 ms on Clear-Press)
+- Backlight (ch 15) eigenständig settbar
+- API: `leds_render(now, dt, out[16])` → der HAL pusht `out[]` per
+  `pca_set_pwm()` über I²C
+
+### NEU test_leds.c (16. Suite, 28 Checks)
+
+Boot-Dark, alle Modifier-Channels, Cell-Pärchen (base+shift gleichzeitig =
+Oktav-Stack), Clear-Flash + Decay, Backlight, Fade-Out, Mid-Fade-Interpolation.
+16/16 Suiten PASS.
+
+### Menü-Encoder verdrahtet
+
+`src/hal_h743/main_h743.c`: DISPLAY-Encoder-Rotate → `menu_rotate(delta)`,
+Push → `menu_push()`. LED-Render-Loop bei 60 Hz mit `pca_set_pwm`-Burst.
+
+### Firmware-LOGIK-Stand: komplett ✅
+
+DSP-Engine, cells (Velocity), controls (Hold-Latch + Modifier), params
+(Encoder-Bindings), leds (16-ch-PWM + Fade), menu-Encoder-Binding —
+**alles hardware-unabhängig + host-getestet**. Der STM32-Build muss nur
+noch die HAL-Reads/-Writes (HAL_GetTick, mcp_read, adc_read, pca_set_pwm,
+oled_show) gegen ST-HAL füllen.
+
+### Verbleibt für lauffähigen STM32-Build (Step 13.3)
+
+ARM-GCC-Toolchain-File, Linker-Script, Startup-File, CubeH7-HAL-Sources,
+SystemClock_Config (PLL1 480 MHz, PLL3 11.2896 MHz), 6× HAL-Body-Stubs
+mit echten `HAL_*`-Calls füllen.
 
 ---
 

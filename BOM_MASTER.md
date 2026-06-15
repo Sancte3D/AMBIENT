@@ -54,7 +54,7 @@ Bestell-Link.
 | **U4** Class-D Amp | **PAM8403DR-H** SOIC-16 | [C17337](https://www.lcsc.com/product-detail/C17337.html) | `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` | KiCad-Standard | Standard-Lib-3D |
 | FB1/FB2 Ferrite Bead | **BLM18AG601SN1D** 0603 600 Ω | [C19330](https://www.lcsc.com/product-detail/C19330.html) (FB1) / [C84094](https://www.lcsc.com/product-detail/C84094.html) (FB2) | `Inductor_SMD:L_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J8** Line-Out 3.5 mm TRS | **PJ-320D** (SHOU HAN, SMT) mit Insertion-Detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (EasyEDA-CAD vendored r18.19) | field_ambience (Custom) | STEP im Repo |
-| **J9** MIDI-Out 3.5 mm TRS-A (DNP bis ADR-0004) | **PJ-320D** | [C431535](https://www.lcsc.com/product-detail/C431535.html) | s. J8 | field_ambience (Custom) | STEP im Repo |
+| ~~**J9** MIDI-Out~~ **DNP für 5er-Run** (ADR-0004 r18.30 deferred — User-Entscheidung „vielleicht brauchen wir gar kein MIDI"). Footprint + Edge-Cutout konserviert; Reaktivierung später durch Bestücken von J9 + 2× 220 Ω + Auskommentieren `midi_tx_init()` in main_h743.c | (PJ-320D — DNP) | — | s. J8 | field_ambience (Custom) | STEP im Repo |
 
 ### Speaker (r18.18 — Cloth-Cone primär)
 

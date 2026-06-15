@@ -45,6 +45,8 @@
 #include "cells.h"       /* Hall velocity model (ADR-0013) */
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
 #include "params.h"      /* encoder → engine param bindings */
+#include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
+#include "menu.h"        /* menu state machine */
 
 /* MCP23017 GPIO bit map (SPEC §7.2 / mcp23017_h743.c) — which expander bit is
  * which modifier button. Modifier push of EN1/2/4 also lands on GPB. */
@@ -60,13 +62,16 @@ int main(void) {
     oled_init();
     mcp_init();
     enc_init();
-    midi_tx_init();
+    /* midi_tx_init();  -- DEFERRED r18.30 (ADR-0004). J9 DNP für 5er-Run.
+     * Hardware-Pfad PD5 → USART2 bleibt reserviert; bei Reaktivierung nur
+     * diese Zeile einkommentieren + Buchse/220Ω auf PCB bestücken. */
     dsp_init();
     brain_init();
     engine_init();
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     params_init();            /* encoder param values → engine defaults */
     cells_init();             /* Hall velocity model */
+    leds_init();              /* 16-ch PWM render */
     audio_init();
     audio_set_renderer(engine_render);
 
@@ -81,12 +86,12 @@ int main(void) {
             uint32_t now = 0; /* TODO(13.3): HAL_GetTick() */
             if (ev.kind == ENC_EVENT_ROTATE) {
                 if (ev.id == PARAM_ENC_DISPLAY) {
-                    /* TODO: menu_scroll(ev.value) — key/mode/setup navigation */
+                    menu_rotate(ev.value);              /* DISPLAY-Encoder: Menü-Navigation */
                 } else {
                     params_encoder(ev.id, ev.value, now);   /* DRIVE/BRIGHT/VOLUME */
                 }
             } else if (ev.kind == ENC_EVENT_PUSH && ev.value) {
-                if (ev.id == PARAM_ENC_DISPLAY) { /* TODO: menu_enter() */ }
+                if (ev.id == PARAM_ENC_DISPLAY) menu_push(); /* DISPLAY-Push: Menü-Enter */
             }
         }
 
@@ -111,7 +116,22 @@ int main(void) {
          *   if (ce.kind == CELL_EVENT_RELEASE) controls_cell_release(c);     */
 
         /* --- 4. Generative bar timer (SysTick-driven) → engine_generative_advance() --- */
-        /* --- 5. LED render: pca_set_pwm() from controls_hold_base/shift + modifiers --- */
-        /* --- 6. Menu refresh: oled_show() at ~30 fps --- */
+
+        /* --- 5. LED render @ ~60 Hz: state → 16 PCA9685 channels → I²C --- */
+        {
+            static uint32_t last_ms = 0;
+            uint32_t now = 0;             /* TODO(13.3): HAL_GetTick() */
+            uint16_t dt = (uint16_t)(now - last_ms);
+            if (dt >= 16) {                /* 60 Hz tick */
+                uint16_t pwm[LED_CH_COUNT];
+                leds_render(now, dt, pwm);
+                for (uint8_t ch = 0; ch < LED_CH_COUNT; ++ch)
+                    pca_set_pwm(ch, 0, pwm[ch]);   /* on_count=0, off_count=duty */
+                last_ms = now;
+            }
+        }
+
+        /* --- 6. Menu refresh @ ~30 fps: menu_render() + oled_show() --- */
+        /* TODO(13.3): rate-limit + framebuffer flush. */
     }
 }
