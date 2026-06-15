@@ -36,15 +36,22 @@ Der jeweils ANDERE Branch bleibt unverändert. `Clear` setzt beide Bits auf 0.
 Beide LEDs hingen schon vorher an unabhängigen PCA9685-Kanälen — XOR war reine
 Firmware-Logik. Kein Schaltplan-, kein Footprint-, kein BOM-Change.
 
-### Firmware-Folgen
+### Firmware-Folgen — IMPLEMENTIERT (r18.28) ✅
 
-Zu implementieren, wenn der STM32-Port den MCP23017-Button-Handler baut:
-- State-Modell: `cell_hold[i] = (base_bit, shift_bit)` statt heutigem
-  einwertigem Enum
-- Voice-Routing: Cell `i` base → source `i`; Cell `i` shift → source `i+5`
-- **`PAD_MAX` 8 → 12** in `include/pad.h` (Worst-Case 5 Cells × 2 Oktaven =
-  10 Voices + 2 Headroom für Generate/Drone)
-- `MAX_SOURCES` in `engine.c` ist schon 16 → ausreichend
+`src/controls.c` + `include/controls.h` (host-getestet, `test/test_controls.c`,
+19 Checks):
+- State-Modell `hold_base[5]` + `hold_shift[5]` (zwei unabhängige Bit-Arrays)
+- Voice-Routing: Cell `i` base → source `i` (0..4); Cell `i` shift → source
+  `i+9` (9..13) — kollidiert nicht mit dem Gen-Bed-Source 8
+- **`PAD_MAX` 8 → 12** in `include/pad.h` (r18.25, Worst-Case 5 Cells × 2 = 10
+  Voices + 2 Headroom); `MAX_SOURCES = 16` reicht
+- Tap-Logik: Hold latched + Shift-State wählt Branch, anderer Branch bleibt
+- Modifier-Handler (Shift/Hold/Drone/Generate/Clear), Drone+Generate
+  forwarden an `engine_set_drone` / `engine_set_generative`
+- Momentary-Modus (ohne Hold): Tap = Note an, Release = Note aus
+- Der STM32-Button-Handler (`src/hal_h743/main_h743.c`) muss nur noch
+  MCP23017-Edges in `controls_modifier()` / `controls_cell_press/release()`
+  einspeisen — die ganze Logik liegt schon hardware-unabhängig vor.
 
 ### Sim-Folgen
 

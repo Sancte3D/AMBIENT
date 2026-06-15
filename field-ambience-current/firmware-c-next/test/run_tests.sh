@@ -51,6 +51,16 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/cells_test"
 "$tmp/cells_test"
 
+# ADR-0008 r2: modifier + cell hold-latch state machine (controls.c)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_controls.c" \
+    "$src/src/controls.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    -lm -o "$tmp/controls_test"
+"$tmp/controls_test"
+
 # Step 8: famSubBass + famDeepBass + dsp_svf highpass / dsp_tri
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bass.c" \

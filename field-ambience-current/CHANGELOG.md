@@ -4,9 +4,53 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.27** (Firmware-HAL-Reorg: STM32 wird Produktziel,
-Pico nur noch Bench-Tool. 8 Pico-Files → `src/hal_pico/`, 6 STM32-Skelette
-→ `src/hal_h743/`. NATIVE_PORT_PLAN Step 13.2 ✅. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.28** (Firmware-Logik ausgebaut: controls.c —
+Hold-Latch-State-Machine + Modifier-Handler, host-getestet (14. Suite).
+ADR-0008 r2 Firmware-Folgen DONE. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.28 (2026-06-15) — controls.c: Hold-Latch + Modifier-Handler
+
+User: „wieso meintest du alles ist fertig wenn wir noch nicht mal die Firmware
+drumherum haben? Ausbauen." → Berechtigt. „Schematic order-fähig" hatte ich
+fälschlich mit „Gerät fertig" vermischt. Beginn des Firmware-Ausbaus mit der
+zentralen Logik-Lücke.
+
+### NEU controls.c + controls.h — hardware-unabhängige Spiel-Logik
+
+Die Bedien-Logik, die bisher NUR im Web-Sim lebte, jetzt als getestetes
+C-Modul (Single Source für STM32 + Bench):
+- **Hold-Latch-State-Machine (ADR-0008 r2):** `hold_base[5]` + `hold_shift[5]`,
+  zwei unabhängige Bit-Arrays → Cell kann base, shift, oder BEIDE (Oktav-Stack)
+  halten. Tap toggelt den vom Shift-State gewählten Branch.
+- **Modifier-Handler:** Shift/Hold (latching), Drone/Generate (latch +
+  forward an engine_set_drone / engine_set_generative), Clear (momentary:
+  wipe alle Holds + Silence).
+- **Momentary-Modus** (ohne Hold): Cell-Press = Note an, Release = aus;
+  Shift wählt Oktave.
+- **Velocity** kommt aus cells.c (ADR-0013), als amp-Parameter durchgereicht.
+- Voice-Routing: base → source 0..4, shift → source 9..13 (kollidiert nicht
+  mit Gen-Bed-Source 8).
+
+### Test (14. Suite)
+
+`test/test_controls.c` — 19 Checks: momentary tap+release, Hold-Latch-Toggle,
+Shift+Hold unabhängig von base, Oktav-Stack (beide Bits), Clear wischt +
+Tail decayt, Drone/Generate latchen + klingen, Release-Edge lässt Hold-Latch
+in Ruhe. Alle 14 Suiten PASS.
+
+### Was der STM32-Button-Handler jetzt nur noch tun muss
+
+`src/hal_h743/main_h743.c`: MCP23017-Button-Edges in `controls_modifier()` /
+`controls_cell_press/release()` einspeisen — die gesamte Spiel-Logik liegt
+hardware-unabhängig vor und ist getestet.
+
+### Verbleibend im Firmware-Ausbau
+
+- Encoder→Engine-Param-Bindings (DRIVE/BRIGHT/VOLUME/DISPLAY) mit Acceleration
+- STM32-Toolchain (ARM-GCC, Linker, Startup) + ST-HAL-Bodies (Step 13.3)
+- SystemClock-Config (PLL1 480 MHz, PLL3 für SAI)
 
 ---
 
