@@ -4,11 +4,59 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.24** (3 offene Verifikations-Punkte geschlossen:
-weiße-LED-Package-Bug, VREF+-Decoupling ergänzt, ADC-Channels DS-bestätigt.
-KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.27** (Firmware-HAL-Reorg: STM32 wird Produktziel,
+Pico nur noch Bench-Tool. 8 Pico-Files → `src/hal_pico/`, 6 STM32-Skelette
+→ `src/hal_h743/`. NATIVE_PORT_PLAN Step 13.2 ✅. KEIN .kicad_pcb.)
 
 ---
+
+## v0.7-r18.27 (2026-06-15) — Firmware-HAL-Reorg: STM32 → Produkt, Pico → Bench
+
+User: „weiter. aber wir nutzen ja kein pico mehr." → Pico-Build wird auf reines
+Bench-Tool (display_hw_test) reduziert; STM32 wird Default-Target.
+
+### Reorg
+
+8 Pico-spezifische Files via `git mv` nach `src/hal_pico/`:
+audio.c → audio_pico.c, audio_i2s.pio, encoders.c → encoders_pico.c,
+lcd_st7789.c → lcd_st7789_pico.c, main.c → main_pico.c, mcp23017.c →
+mcp23017_pico.c, midi_pio.c, midi_tx.pio.
+
+6 STM32-Skelett-Files NEU unter `src/hal_h743/`:
+- audio_h743.c — SAI1 Block A Master + DMA-Plan (PE4/5/6 AF6, PLL3-P
+  @ 11.2896 MHz für jitter-freies 44.1 kHz)
+- encoders_h743.c — TIM1/2/3/4 Hardware-Encoder-Mode (kein PIO/Polling)
+- lcd_st7789_h743.c — SPI1 (PA5/PA7) + GPIO (PA6/PC4/PC5)
+- mcp23017_h743.c — I²C1 @ 400 kHz Fast (PB6/PB7), EXTI13 für MCP_INT
+- midi_uart_h743.c — USART2 @ 31250 Baud (PD5, AF7)
+- main_h743.c — Boot-Sequenz + Hold-Latch-Logik-Plan (ADR-0008 r2)
+
+Jedes Skelett: API matched bestehende Headers (include/audio.h etc.), Body
+ist `TODO(Step 13.3)`-Stub mit ST-HAL-Plan in Kommentaren. Step 13.3 füllt
+die TODOs gegen STM32CubeH7.
+
+### CMake
+
+CMakeLists.txt neu: `-DTARGET=h743|pico|host`-Schalter, default h743.
+- `h743` baut field_ambience_h743 aus 19 DSP-Files + 6 hal_h743-Skelett-Files
+  (linkt erst ab Step 13.3 mit ST-HAL)
+- `pico` baut NUR display_hw_test (Bench-Tool, kein Produktions-Build mehr)
+- `host` baut DSP-Static-Lib für die Offline-Renderer
+
+### Test-Stabilität
+
+19 reine DSP/Logic-Module bleiben unverändert in `src/` —
+`test/run_tests.sh` linkt nur diese, fasst kein HAL-File an. 13/13 Suiten
+PASS unverändert.
+
+### NATIVE_PORT_PLAN
+
+Step 13.2 als DONE ✅ markiert, Step 13.3 neu definiert (ST-HAL-Integration:
+Toolchain-File, Linker-Script, Startup, TODOs füllen).
+
+---
+
+## v0.7-r18.24 (2026-06-14) — 3 offene Verifikations-Punkte geschlossen
 
 ## v0.7-r18.24 (2026-06-14) — Drei offene Verifikations-Punkte geschlossen
 

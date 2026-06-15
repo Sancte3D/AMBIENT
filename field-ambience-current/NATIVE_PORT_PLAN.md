@@ -392,12 +392,29 @@ elektrisch identisch.
 - ROADMAP.md + PITCH.md → `docs/archive/`
 - Dieser Step-13-Block
 
-**Step 13.2 — Firmware HAL-Abstraktion (2-3 Tage)**
-- HAL-Header in `firmware-c-next/include/`: `audio_hal.h`, `gpio_hal.h`,
-  `i2c_hal.h`, `spi_hal.h`, `uart_hal.h`
-- Pico-Treiber zu `src/hal_pico/` umgezogen (Git-Mv, kein Code-Touch)
-- CMake-Flag `-DTARGET=pico2|h743|host`
-- **Gate: Pico-Build bleibt grün als Regressions-Anker.** Host-Tests laufen.
+**Step 13.2 — Firmware HAL-Reorg (DONE r18.27, 2026-06-15)** ✅
+- 8 Pico-spezifische Files nach `src/hal_pico/` verschoben (audio.c,
+  audio_i2s.pio, encoders.c, lcd_st7789.c, main.c, mcp23017.c, midi_pio.c,
+  midi_tx.pio) — `git mv`, kein Code-Touch
+- 6 STM32-Skelett-Files unter `src/hal_h743/` angelegt: audio_h743.c
+  (SAI1+DMA-Plan), encoders_h743.c (TIM1/2/3/4 Hardware-Encoder-Mode),
+  lcd_st7789_h743.c (SPI1+DMA), mcp23017_h743.c (I²C1@400 kHz für
+  MCP+PCA), midi_uart_h743.c (USART2@31250 für TRS-MIDI), main_h743.c
+  (Boot-Sequenz + Hold-Latch-Logik-Plan)
+- CMakeLists.txt mit `-DTARGET=h743|pico|host`-Schalter (default=h743)
+- **User-Direktive r18.27: „kein Pico mehr im Produkt"** — Pico-Build bleibt
+  ausschließlich als Bench-Tool (`display_hw_test`) für die ST7789+Encoder-
+  Bring-Up-Tests verfügbar; kein Pico-Produktions-Build mehr
+- Reine DSP/Logic-Module (19 .c) bleiben unverändert in `src/` —
+  test/run_tests.sh (13 Suiten) linkt nur diese, kein HAL-Touch
+- **Gate ✅:** Host-Tests 13/13 PASS unverändert. Skelette enthalten
+  `TODO(Step 13.3)`-Marker pro Funktion mit klarem ST-HAL-Plan
+
+**Step 13.3 — ST-HAL-Integration (offen, ~5-7 Tage)**
+- STM32CubeH7-HAL-Sources + Linker-Script + Startup-File integrieren
+- ARM-GCC-Toolchain-File für `-DTARGET=h743`-Build
+- Skelett-TODOs in `src/hal_h743/*.c` mit echten HAL_*-Calls füllen
+- Erstes UF2-Image via ST-Link auf real STM32H743 (Steckbrett / erstes PCB)
 
 **Step 13.3 — KiCad-Schaltplan-Migration (7-12 Tage)**
 - `kicad/pico.kicad_sch` → `kicad/legacy_pico2/pico.kicad_sch`

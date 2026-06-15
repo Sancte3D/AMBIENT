@@ -1,150 +1,142 @@
-# Field Ambience — native C firmware for RP2350 (Pico 2).
+# Field Ambience — native C firmware build.
 #
-# Step 1 = bare-bones skeleton: blinks the STATUS LED on GP26 and prints a
-# heartbeat on USB CDC every 2 seconds. No audio, no UI, no menu yet — just
-# proof that the C codebase + Pico SDK toolchain are wired up and produce
-# a working UF2.
+# Target platform: STM32H743VIT6 (LQFP-100) as the product MCU. The repo
+# still keeps the Pico-2 bench tooling (display_hw_test) because the breadboard
+# is the only place where the menu + ST7789 + encoder can be physically driven
+# until the STM32 prototype exists.
 #
-# Build (with Pico SDK 2.x installed and PICO_SDK_PATH set):
-#   mkdir build && cd build
-#   cmake .. -DPICO_BOARD=pico2
-#   make -j
+# Build targets:
+#   -DTARGET=h743  → STM32 firmware (the product). Needs the STM32 ARM-GCC
+#                    toolchain + CubeH7 HAL. Skeleton stubs live in
+#                    `src/hal_h743/`; ST-HAL integration is Step 13.3.
+#   -DTARGET=pico  → bench-only Pico-2 firmware (display_hw_test bring-up tool,
+#                    not a product build). Uses `src/hal_pico/`.
+#   -DTARGET=host  → host-only DSP/engine library for offline rendering
+#                    (tools/render_performance.c, render_wav.c). No HAL.
+#
+# Host tests (the `test/` suite) ignore CMake — see `test/run_tests.sh`. They
+# compile pure-C DSP + logic modules directly with `cc -O2 -lm`.
 
-cmake_minimum_required(VERSION 3.13)
-
-# Pull in the SDK (one-liner standard-boilerplate file next to this CMakeLists).
-include(pico_sdk_import.cmake)
-
-# v0.9-dev native port. Bump on each major step.
+cmake_minimum_required(VERSION 3.16)
 project(field_ambience_native C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-# Default to the Pico 2 board (RP2350). Caller can override on the command
-# line with -DPICO_BOARD=pico for an RP2040 dev test if needed.
-if(NOT DEFINED PICO_BOARD)
-    set(PICO_BOARD pico2)
-endif()
-
-pico_sdk_init()
-
-add_executable(field_ambience_native
-    src/main.c
-    src/lcd_st7789.c     # r16: 1.9" ST7789 320×170 IPS driver (replaces SSD1322 oled.c)
-    src/font_8x8.c
-    src/mcp23017.c
-    src/encoders.c
-    src/audio.c
-    src/dsp.c       # Step 7/9: sine LUT, midi→Hz, polyBLEP osc, SVF, smoothing
-    src/voices.c    # Step 7: sine voice pool (superseded as the live renderer
-                    #         in Step 9; kept + unit-tested for now)
-    src/pad.c       # Step 9: famPadCore voice pool
-    src/texture.c   # Step 10: famTexture noise bed
-    src/bass.c      # Step 8: famSubBass + famDeepBass (two-layer bass)
-    src/reverb.c    # Step 11: famReverbMaster (Freeverb-style algorithmic)
-    src/engine.c    # Step 11: mix-bus (pad+texture+bass → dry+send, reverb, clip)
-    src/brain.c     # Step 12a: harmonic brain (cell → scale/mode/family pitch)
-    src/drone.c          # Step 12b #2: root drone (portamento)
-    src/reverb_presets.c # Step 12b #1: per-mode/vibe reverb presets
-    src/generative.c     # Step 12b #4: Markov / fixed progression sequencer
-    src/midi.c           # Step 12b #6: MIDI message builders + FIFO
-    src/midi_pio.c       # Step 12b #6: PIO-UART 31250 baud on GP21 (device-only)
-    src/oled_draw.c      # Step 12b #7: framebuffer draw primitives (AA rrect)
-    src/baked_font.c     # Step 12b #7: Helvetica Neue baked-glyph renderer
-    src/baked_font_data.c# Step 12b #7: generated HN Light/Thin glyph tables
-    src/battery.c        # Step 12b #7: LiPo voltage→% curve
-    src/menu.c           # Step 12b #7: menu state machine + render
-)
-
-target_include_directories(field_ambience_native PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_BINARY_DIR}        # generated audio_i2s.pio.h lives here
-)
-
-# Step 5: assemble the I²S PIO program at build time.
-pico_generate_pio_header(field_ambience_native
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/audio_i2s.pio
-)
-
-# Step 12b #6: assemble the MIDI-UART-TX PIO program (31250 baud on GP21).
-pico_generate_pio_header(field_ambience_native
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/midi_tx.pio
-)
-
-target_link_libraries(field_ambience_native
-    pico_stdlib
-    pico_time       # Step 4: repeating_timer for 1 kHz encoder sampling
-    hardware_spi    # Step 2 / r16: ST7789 LCD over SPI0
-    hardware_i2c    # Step 3: MCP23017 over I2C1
-    hardware_gpio   # Step 3: GP22 IRQ for MCP INTA
-    hardware_pio    # Step 5: I²S TX state machine
-    hardware_dma    # Step 5: ping-pong DMA into PIO FIFO
-    hardware_clocks # Step 5: PIO clk divider sizing
-    hardware_irq    # Step 5: DMA completion IRQ
-)
-
-# USB CDC for the v0.9-dev heartbeat — easier to inspect than UART on a
-# device that has no other obvious console. UART stays off; we'll bring it
-# back if we need it for a hardware diagnostic later.
-pico_enable_stdio_usb(field_ambience_native 1)
-pico_enable_stdio_uart(field_ambience_native 0)
-
-# Emit the UF2 + map + bin so the user can drop the UF2 onto the Pico in
-# BOOTSEL mode without further tooling.
-pico_add_extra_outputs(field_ambience_native)
+# ---------------------------------------------------------------------------
+# TARGET selector — single switch that determines which HAL gets linked.
+# ---------------------------------------------------------------------------
+set(TARGET "h743" CACHE STRING "Build target: h743 | pico | host")
+set_property(CACHE TARGET PROPERTY STRINGS h743 pico host)
 
 # ---------------------------------------------------------------------------
-# display_hw_test — breadboard bring-up for the 1.9" ST7789 panel.
-#
-# Hardware counterpart of the GitHub-Pages display simulator
-# (tools/display_sim.html): real menu.c on the real panel, driven by a
-# KY-040 push encoder + one tactile button. Wiring, controls and
-# troubleshooting are documented in the header of tools/display_hw_test.c.
-#
-# Build:  make -j display_hw_test   →  build/display_hw_test.uf2
-add_executable(display_hw_test
-    tools/display_hw_test.c
-    src/lcd_st7789.c       # panel driver (SPI0, GP5..GP9)
-    src/oled_draw.c        # framebuffer primitives
-    src/font_8x8.c         # 8x8 bitmap font (test-scene labels)
-    src/baked_font.c       # Helvetica Neue baked-glyph renderer (menu)
+# Shared DSP / logic sources (target-independent, pure C, host-portable).
+# These are the 19 files exercised by test/run_tests.sh — never touch the
+# hardware directly. Single source for all three target builds.
+# ---------------------------------------------------------------------------
+set(DSP_SOURCES
+    src/dsp.c
+    src/voices.c
+    src/pad.c
+    src/texture.c
+    src/bass.c
+    src/reverb.c
+    src/reverb_presets.c
+    src/engine.c
+    src/brain.c
+    src/drone.c
+    src/generative.c
+    src/midi.c
+    src/cells.c
+    src/oled_draw.c
+    src/baked_font.c
     src/baked_font_data.c
-    src/battery.c          # battery % state (bench: simulated via button)
-    src/menu.c             # the menu the simulator mirrors
+    src/font_8x8.c
+    src/battery.c
+    src/menu.c
 )
 
-target_include_directories(display_hw_test PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+# ---------------------------------------------------------------------------
+# Target-specific build dispatch.
+# ---------------------------------------------------------------------------
+if(TARGET STREQUAL "h743")
+    message(STATUS "Field Ambience: STM32H743 product target (skeleton)")
+    # Step 13.2 (this commit) lays the file structure and CMake stub. The
+    # actual STM32 toolchain integration (STM32CubeH7 HAL, ARM-GCC, OpenOCD
+    # flashing) is Step 13.3. Until then this branch only validates that the
+    # HAL files compile syntactically; the SAI/DMA/USB/SPI wiring is TODO.
+    add_executable(field_ambience_h743
+        ${DSP_SOURCES}
+        src/hal_h743/main_h743.c
+        src/hal_h743/audio_h743.c
+        src/hal_h743/encoders_h743.c
+        src/hal_h743/lcd_st7789_h743.c
+        src/hal_h743/mcp23017_h743.c
+        src/hal_h743/midi_uart_h743.c
+    )
+    target_include_directories(field_ambience_h743 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/hal
+    )
+    # TODO(Step 13.3): ARM-GCC toolchain file, CubeH7 HAL sources +
+    # include paths, linker script, startup file. For now this target only
+    # builds if the user supplies CMAKE_TOOLCHAIN_FILE manually.
 
-# Breadboard wiring (user's bench, mirrors the wiring table in the file
-# header): display re-mapped to GP16-20 + backlight PWM on GP22, encoder on
-# GP2/3/4, SHIFT on GP5. The driver's pin #defines are #ifndef-guarded for
-# exactly this override. 24 MHz SPI: fast enough for ~27 fps animations,
-# tolerant of jumper wires (drop to 16 MHz if CHECKER shows artefacts,
-# try 32 MHz on short leads).
-target_compile_definitions(display_hw_test PRIVATE
-    LCD_SPI_HZ=24000000
-    LCD_PIN_SCK=18
-    LCD_PIN_MOSI=19
-    LCD_PIN_CS=17
-    LCD_PIN_DC=16
-    LCD_PIN_RES=20
-    PIN_BL=22
-    PIN_ENC_CLK=2
-    PIN_ENC_DT=3
-    PIN_ENC_SW=4
-    PIN_SHIFT=5
-)
+elseif(TARGET STREQUAL "pico")
+    message(STATUS "Field Ambience: Pico-2 bench-tool target")
+    # The Pico build only exists to drive the display_hw_test breadboard
+    # for menu + ST7789 + encoder bring-up. NOT a product build.
+    include(pico_sdk_import.cmake)
+    if(NOT DEFINED PICO_BOARD)
+        set(PICO_BOARD pico2)
+    endif()
+    pico_sdk_init()
 
-target_link_libraries(display_hw_test
-    pico_stdlib
-    pico_time          # 1 kHz encoder/button sampler
-    hardware_spi       # ST7789 over SPI0
-    hardware_gpio      # encoder + button inputs
-    hardware_pwm       # backlight dimming on PIN_BL
-)
+    # --- display_hw_test: bench tool that drives a real ST7789 + encoder ---
+    add_executable(display_hw_test
+        tools/display_hw_test.c
+        src/hal_pico/lcd_st7789_pico.c
+        src/oled_draw.c
+        src/font_8x8.c
+        src/baked_font.c
+        src/baked_font_data.c
+        src/battery.c
+        src/menu.c
+    )
+    target_include_directories(display_hw_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(display_hw_test PRIVATE
+        LCD_SPI_HZ=24000000
+        LCD_PIN_SCK=18
+        LCD_PIN_MOSI=19
+        LCD_PIN_CS=17
+        LCD_PIN_DC=16
+        LCD_PIN_RES=20
+        PIN_BL=22
+        PIN_ENC_CLK=2
+        PIN_ENC_DT=3
+        PIN_ENC_SW=4
+        PIN_SHIFT=5
+    )
+    target_link_libraries(display_hw_test
+        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm
+    )
+    pico_enable_stdio_usb(display_hw_test 1)
+    pico_enable_stdio_uart(display_hw_test 0)
+    pico_add_extra_outputs(display_hw_test)
 
-pico_enable_stdio_usb(display_hw_test 1)
-pico_enable_stdio_uart(display_hw_test 0)
-pico_add_extra_outputs(display_hw_test)
+elseif(TARGET STREQUAL "host")
+    message(STATUS "Field Ambience: host DSP library + offline renderers")
+    # Host build: just the DSP + engine compiled to a static library so the
+    # offline renderers in tools/ can link it. The actual renderer binaries
+    # (render_performance, render_wav) are built ad-hoc with `cc` — see
+    # tools/render_performance.c header. This target is mainly for CI smoke.
+    add_library(field_ambience_dsp STATIC ${DSP_SOURCES})
+    target_include_directories(field_ambience_dsp PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(field_ambience_dsp PUBLIC m)
+
+else()
+    message(FATAL_ERROR "Unknown TARGET '${TARGET}' — must be h743, pico, or host")
+endif()
