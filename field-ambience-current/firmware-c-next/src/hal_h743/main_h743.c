@@ -42,6 +42,17 @@
 #include "mcp23017.h"
 #include "oled.h"
 #include "midi.h"
+#include "cells.h"       /* Hall velocity model (ADR-0013) */
+#include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
+#include "params.h"      /* encoder → engine param bindings */
+
+/* MCP23017 GPIO bit map (SPEC §7.2 / mcp23017_h743.c) — which expander bit is
+ * which modifier button. Modifier push of EN1/2/4 also lands on GPB. */
+#define MCP_BIT_SHIFT     0   /* GPB0 */
+#define MCP_BIT_HOLD      1
+#define MCP_BIT_DRONE     2
+#define MCP_BIT_GENERATE  3
+#define MCP_BIT_CLEAR     4
 
 int main(void) {
     /* TODO(Step 13.3): SystemClock_Config(); HAL_Init(); SysTick at 1 kHz. */
@@ -53,14 +64,54 @@ int main(void) {
     dsp_init();
     brain_init();
     engine_init();
+    controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
+    params_init();            /* encoder param values → engine defaults */
+    cells_init();             /* Hall velocity model */
     audio_init();
     audio_set_renderer(engine_render);
 
-    /* TODO: main loop. */
+    /* Main loop. All gameplay LOGIC is hardware-independent (controls.c /
+     * params.c / cells.c, host-tested) — this loop only ROUTES hardware
+     * events into it. The TODOs are the HAL reads, not logic. */
+    uint16_t prev_gpio = 0xFFFF;          /* MCP pull-ups → idle high */
     for (;;) {
-        /* drain encoder events → menu / param bindings */
-        /* drain MCP IRQ → modifier toggles + hold-latch state machine */
-        /* advance generative bar timer */
-        /* refresh menu framebuffer + oled_show() */
+        /* --- 1. Encoder rotate/push → params + menu --- */
+        enc_event_t ev;
+        while (enc_pop_event(&ev)) {
+            uint32_t now = 0; /* TODO(13.3): HAL_GetTick() */
+            if (ev.kind == ENC_EVENT_ROTATE) {
+                if (ev.id == PARAM_ENC_DISPLAY) {
+                    /* TODO: menu_scroll(ev.value) — key/mode/setup navigation */
+                } else {
+                    params_encoder(ev.id, ev.value, now);   /* DRIVE/BRIGHT/VOLUME */
+                }
+            } else if (ev.kind == ENC_EVENT_PUSH && ev.value) {
+                if (ev.id == PARAM_ENC_DISPLAY) { /* TODO: menu_enter() */ }
+            }
+        }
+
+        /* --- 2. MCP23017 buttons → modifiers + cell taps --- */
+        uint16_t gpio;
+        if (mcp_read_gpio(&gpio)) {
+            uint16_t fell = (uint16_t)(prev_gpio & ~gpio);   /* 1→0 = press */
+            uint16_t rose = (uint16_t)(~prev_gpio & gpio);   /* 0→1 = release */
+            if (fell & (1u<<MCP_BIT_SHIFT))    controls_modifier(MOD_SHIFT, true);
+            if (fell & (1u<<MCP_BIT_HOLD))     controls_modifier(MOD_HOLD, true);
+            if (fell & (1u<<MCP_BIT_DRONE))    controls_modifier(MOD_DRONE, true);
+            if (fell & (1u<<MCP_BIT_GENERATE)) controls_modifier(MOD_GENERATE, true);
+            if (fell & (1u<<MCP_BIT_CLEAR))    controls_modifier(MOD_CLEAR, true);
+            (void)rose;
+            prev_gpio = gpio;
+        }
+
+        /* --- 3. Cell Hall ADCs → velocity → controls --- */
+        /* TODO(13.3): for each cell c: float pos = adc_read_norm(c);
+         *   cell_event_t ce = cells_update(c, pos, HAL_GetTick());
+         *   if (ce.kind == CELL_EVENT_PRESS)   controls_cell_press(c, ce.amp);
+         *   if (ce.kind == CELL_EVENT_RELEASE) controls_cell_release(c);     */
+
+        /* --- 4. Generative bar timer (SysTick-driven) → engine_generative_advance() --- */
+        /* --- 5. LED render: pca_set_pwm() from controls_hold_base/shift + modifiers --- */
+        /* --- 6. Menu refresh: oled_show() at ~30 fps --- */
     }
 }

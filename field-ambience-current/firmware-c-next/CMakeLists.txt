@@ -47,6 +47,8 @@ set(DSP_SOURCES
     src/generative.c
     src/midi.c
     src/cells.c
+    src/controls.c      # ADR-0008 r2: hold-latch + modifier state machine
+    src/params.c        # encoder → engine parameter bindings + acceleration
     src/oled_draw.c
     src/baked_font.c
     src/baked_font_data.c

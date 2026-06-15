@@ -61,6 +61,16 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/controls_test"
 "$tmp/controls_test"
 
+# Encoder → engine parameter bindings + acceleration (params.c)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_params.c" \
+    "$src/src/params.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    -lm -o "$tmp/params_test"
+"$tmp/params_test"
+
 # Step 8: famSubBass + famDeepBass + dsp_svf highpass / dsp_tri
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bass.c" \

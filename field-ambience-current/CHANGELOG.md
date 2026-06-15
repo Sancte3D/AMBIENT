@@ -4,9 +4,48 @@ Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
 Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.7-r18.28** (Firmware-Logik ausgebaut: controls.c —
-Hold-Latch-State-Machine + Modifier-Handler, host-getestet (14. Suite).
-ADR-0008 r2 Firmware-Folgen DONE. KEIN .kicad_pcb.)
+Aktuelle Rev: **v0.7-r18.29** (Firmware-Ausbau Teil 2: params.c — Encoder→
+Engine-Bindings mit Acceleration (15. Suite); controls+params in STM32-Main-
+Loop verdrahtet. KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.29 (2026-06-15) — params.c + STM32-Main-Loop-Verdrahtung
+
+Fortsetzung des Firmware-Ausbaus.
+
+### NEU params.c + params.h — Encoder → Engine-Parameter
+
+Die 3 Audio-Knöpfe an die Engine gebunden, mit der SPEC-§5-Velocity-
+Acceleration (langsam = 1 %/Klick, schnell bis ×8):
+- EN1 DRIVE → engine_set_reverb_drive (0..100 %)
+- EN2 BRIGHT → engine_set_brightness (−600..+800 Hz, 20 Hz/Detent)
+- EN4 VOLUME → engine_set_master_volume (0..100 %)
+- EN3 DISPLAY → ignoriert (Menü besitzt diesen Encoder)
+Per-Encoder-Acceleration-State, Clamp an Range-Grenzen, Defaults = engine_init-
+Werte (drive 15 %, volume 60 %, bright 0).
+
+### Test (15. Suite)
+
+`test/test_params.c` — 12 Checks: Defaults, langsame Detents = 1 %/Step,
+Richtung, Clamp 0/100, Acceleration (fast > slow), Brightness-Hz + Clamp,
+DISPLAY ignoriert. 15/15 Suiten PASS.
+
+### STM32-Main-Loop verdrahtet (main_h743.c)
+
+`src/hal_h743/main_h743.c` Main-Loop konkretisiert: routet
+Encoder-Events → `params_encoder()` / Menü, MCP23017-Button-Edges →
+`controls_modifier()`, Cell-Hall-ADC → `cells_update()` → `controls_cell_*()`.
+Die gesamte Spiel-LOGIK ist hardware-unabhängig + getestet — die verbleibenden
+TODOs sind nur noch HAL-Reads (HAL_GetTick, adc_read, mcp_read), keine Logik.
+
+controls.c + params.c in CMake-DSP_SOURCES (target-unabhängig, alle 3 Targets).
+
+### Firmware-Logik-Stand
+
+Komplett + host-getestet: DSP-Engine, cells (Velocity), controls (Hold-Latch +
+Modifier), params (Encoder-Bindings). Verbleibt: STM32-Toolchain + ST-HAL-
+Bodies (Step 13.3), SystemClock-Config, Menü-Navigation-Feinschliff.
 
 ---
 
