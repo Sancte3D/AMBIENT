@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define PAD_MAX 8       /* 5 cells + headroom for chord spawns later */
+#define PAD_MAX 12      /* 5 cells × 2 octaves (base+shift, ADR-0008 r2) + gen bed + headroom */
 
 /* Build the pool. Call once after dsp_init(). */
 void pad_init(void);
