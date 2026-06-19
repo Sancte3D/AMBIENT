@@ -16,6 +16,7 @@
 #include "v2/field_voice.h"
 #include "v2/worlds.h"
 #include "v2/arp.h"
+#include "v2/beat.h"
 #include "dsp.h"
 #include "audio.h"
 #include "reverb.h"
@@ -398,6 +399,64 @@ static void test_arp(void) {
     EXPECT(peak_abs(L, AUDIO_BUFFER_FRAMES) < 1e-4f, "arp: silent at amount=0");
 }
 
+/* --------------------------------------------------- beat -------------- */
+
+static void test_beat(void) {
+    printf("\n=== beat (drum machine) ===\n");
+    dsp_init();
+    beat_t b;
+    beat_init(&b, 11);
+    beat_set_pattern(&b, BEAT_PATTERN_CC);
+    beat_set_amount(&b, 0.8f);
+
+    float L[AUDIO_BUFFER_FRAMES], R[AUDIO_BUFFER_FRAMES];
+    float sL[AUDIO_BUFFER_FRAMES], sR[AUDIO_BUFFER_FRAMES];
+
+    /* Simulate a 138 BPM 16th clock for ~4 s and render. */
+    float bpm = 138.0f, sps = bpm / 60.0f * 4.0f;
+    float dt = (float)AUDIO_BUFFER_FRAMES / 44100.0f;
+    float phase = 0.0f; int step = 0;
+    float peak = 0.0f; int hit_blocks = 0;
+    for (int blk = 0; blk < (int)(4.0f / dt); ++blk) {
+        phase += sps * dt;
+        while (phase >= 1.0f) { phase -= 1.0f; step++; beat_on_step(&b, step); }
+        for (int i = 0; i < AUDIO_BUFFER_FRAMES; ++i) { L[i]=R[i]=sL[i]=sR[i]=0.0f; }
+        beat_render_add(&b, L, R, sL, sR, AUDIO_BUFFER_FRAMES, 0.3f);
+        float p = peak_abs(L, AUDIO_BUFFER_FRAMES);
+        if (p > peak) peak = p;
+        if (p > 0.01f) ++hit_blocks;
+        if (has_nan_or_inf(L, AUDIO_BUFFER_FRAMES)) { fail++; printf("  ✗ beat NaN\n"); return; }
+    }
+    printf("    peak=%.3f hit_blocks=%d\n", peak, hit_blocks);
+    EXPECT(peak > 0.05f, "beat: produces audible hits");
+    EXPECT(hit_blocks > 20, "beat: sustained groove over time");
+
+    /* Silent at amount 0. */
+    beat_set_amount(&b, 0.0f);
+    for (int i = 0; i < AUDIO_BUFFER_FRAMES; ++i) { L[i]=R[i]=sL[i]=sR[i]=0.0f; }
+    for (int s = 0; s < 64; ++s) { beat_on_step(&b, s); beat_render_add(&b, L, R, sL, sR, AUDIO_BUFFER_FRAMES, 0.3f); }
+    EXPECT(peak_abs(L, AUDIO_BUFFER_FRAMES) < 1e-4f, "beat: silent at amount=0");
+
+    /* All four patterns produce signal without blowing up. */
+    int patterns_ok = 0;
+    for (int pat = 0; pat < BEAT_PATTERN_COUNT; ++pat) {
+        beat_init(&b, 7 + pat);
+        beat_set_pattern(&b, pat);
+        beat_set_amount(&b, 0.8f);
+        float pk = 0.0f; int bad = 0;
+        for (int s = 0; s < 32; ++s) {
+            beat_on_step(&b, s);
+            for (int i = 0; i < AUDIO_BUFFER_FRAMES; ++i) { L[i]=R[i]=sL[i]=sR[i]=0.0f; }
+            beat_render_add(&b, L, R, sL, sR, AUDIO_BUFFER_FRAMES, 0.3f);
+            float p = peak_abs(L, AUDIO_BUFFER_FRAMES);
+            if (p > pk) pk = p;
+            if (has_nan_or_inf(L, AUDIO_BUFFER_FRAMES) || p > 2.0f) bad = 1;
+        }
+        if (pk > 0.05f && !bad) ++patterns_ok;
+    }
+    EXPECT(patterns_ok == BEAT_PATTERN_COUNT, "beat: all patterns sound & stay bounded");
+}
+
 /* --------------------------------------------------- engine_v2 --------- */
 
 static void test_engine_v2(void) {
@@ -482,6 +541,7 @@ int main(void) {
     test_worlds();
     test_consonance();
     test_arp();
+    test_beat();
     test_engine_v2();
 
     printf("\n-------------------------\n");

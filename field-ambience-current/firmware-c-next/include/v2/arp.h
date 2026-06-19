@@ -31,22 +31,27 @@ typedef struct {
 
 typedef struct {
     uint32_t rng;
-    float    step_phase;     /* 0..1 within a step */
-    float    rate_hz;        /* steps per second */
+    float    step_phase;     /* 0..1 within a step (free-run mode) */
+    float    rate_hz;        /* steps per second (free-run mode) */
     float    amount;         /* 0..1 master level */
+    int      division;       /* tempo-sync: 16th steps between notes */
     int      pattern_pos;
     int      dir;            /* +1 up, -1 down */
     arp_note_t notes[ARP_POLY];
 } arp_t;
 
 void arp_init(arp_t *a, uint32_t seed);
-void arp_set_rate(arp_t *a, float hz);       /* 0 = silent */
+void arp_set_rate(arp_t *a, float hz);       /* free-run mode: 0 = silent */
+void arp_set_division(arp_t *a, int steps);  /* tempo-sync: 16ths per note */
 void arp_set_amount(arp_t *a, float amt_0_1);
 
-/* Advance the step clock by dt_s; trigger new notes from the current scale.
- * root_midi + scale provide the pentatonic tones (read from harmony_field).
- * Call once per audio block BEFORE arp_render. */
+/* Free-run mode: advance the internal clock by dt_s; trigger notes. */
 void arp_tick(arp_t *a, float dt_s);
+
+/* Tempo-sync mode: the engine's master 16th-note clock calls this on every
+ * 16th step. The arp plays when (step % division == 0). Preferred for the
+ * Crystal-Castles grid-locked feel. */
+void arp_on_step(arp_t *a, int global_step);
 
 /* Render `frames` mono bell output, MIXED-IN to L/R with pan + send split.
  * color 0..1 brightens the bell; send_scale routes a copy for reverb shimmer

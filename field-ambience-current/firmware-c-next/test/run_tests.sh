@@ -154,7 +154,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/v2/field_voice.c" "$src/src/v2/material_texture.c" \
     "$src/src/v2/diffuser.c" "$src/src/v2/mod_delay.c" \
     "$src/src/v2/beauty_guard.c" "$src/src/v2/worlds.c" \
-    "$src/src/v2/arp.c" "$src/src/v2/engine_v2.c" \
+    "$src/src/v2/arp.c" "$src/src/v2/beat.c" "$src/src/v2/engine_v2.c" \
     -lm -o "$tmp/v2_test"
 "$tmp/v2_test"
 

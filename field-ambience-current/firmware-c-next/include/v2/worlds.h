@@ -20,7 +20,7 @@ typedef enum {
     WORLD_DUST,
     WORLD_FOG,
     WORLD_TAPE,
-    WORLD_MACHINE,
+    WORLD_CRYSTAL,          /* (was MACHINE) — full Crystal-Castles beat world */
     WORLD_COUNT,
 } world_id_t;
 
@@ -33,9 +33,22 @@ typedef struct {
      * pentatonic (dreamy/dark). Both are clash-proof. */
     int scale_minor;
 
-    /* Arpeggio / bell layer — the melodic "schöne Töne". */
-    float arp_rate_hz;           /* steps per second (0 = no arp) */
+    /* Tempo grid — drives both the arp and the beat (16th-note clock). */
+    float bpm;
+
+    /* Arpeggio / bell layer — the melodic, tempo-locked "schöne Töne".
+     * arp_division = number of 16th steps between notes (1 = 16ths driving,
+     * 2 = 8ths, 4 = quarters/ambient). */
+    int   arp_division;
     float arp_amount;            /* 0..1 master level */
+
+    /* Beat / drum machine (Crystal-Castles energy). beat_amount 0 = ambient,
+     * no drums. */
+    int   beat_pattern;          /* beat_pattern_t */
+    float beat_amount;           /* 0..1 */
+
+    /* Lo-fi grit — bitcrush + drive for the gritty CC texture. 0 = clean. */
+    float grit;                  /* 0..1 */
 
     /* Reverb base mapping (size, wet, damp range over Blur 0..1). */
     float reverb_size_base;

@@ -29,6 +29,7 @@ void arp_init(arp_t *a, uint32_t seed) {
     a->rng = seed ? seed : 0x1234ABCDu;
     a->rate_hz = 1.6f;
     a->amount = 0.0f;
+    a->division = 2;
     a->dir = 1;
     a->pattern_pos = 0;
 }
@@ -37,6 +38,12 @@ void arp_set_rate(arp_t *a, float hz) {
     if (hz < 0.0f) hz = 0.0f;
     if (hz > 12.0f) hz = 12.0f;
     a->rate_hz = hz;
+}
+
+void arp_set_division(arp_t *a, int steps) {
+    if (steps < 1) steps = 1;
+    if (steps > 16) steps = 16;
+    a->division = steps;
 }
 void arp_set_amount(arp_t *a, float amt) {
     if (amt < 0.0f) amt = 0.0f;
@@ -90,6 +97,15 @@ void arp_tick(arp_t *a, float dt_s) {
         }
         a->pattern_pos = (a->pattern_pos + 1) % PATTERN_LEN;
     }
+}
+
+void arp_on_step(arp_t *a, int global_step) {
+    if (a->amount <= 0.0001f) return;
+    if (a->division < 1) a->division = 1;
+    if ((global_step % a->division) != 0) return;
+    /* Slight gap for breathing room — denser than free-run since it's gridded. */
+    if (urand_a(&a->rng) < 0.88f) trigger(a, a->pattern_pos);
+    a->pattern_pos = (a->pattern_pos + 1) % PATTERN_LEN;
 }
 
 void arp_render_add(arp_t *a, float *L, float *R, float *sL, float *sR,

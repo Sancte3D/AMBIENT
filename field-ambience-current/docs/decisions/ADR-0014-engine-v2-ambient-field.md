@@ -431,6 +431,45 @@ Neue Dateien: `src/v2/arp.c`, `include/v2/arp.h`. Geändert: harmony_field
 arp-Felder, Particle raus), field_voice (Tape-Wärme), engine_v2 (Arp-Layer).
 Test: +Konsonanz-Test +Arp-Test → 79 Checks grün.
 
+## r3 (2026-06-19) — Richtungswechsel: Crystal-Castles-Energie statt „Kirche"
+
+User nach r2:
+> „einfach so dass es geil klingt. geil spielbar. nix kirche. sondern
+> entfaltung, wie crystal castles das macht mit deren beats!! ja genau so!!"
+
+Klare Ansage: weg vom reinen Eno-Ambient-Drone, hin zu treibender,
+melancholisch-energetischer Elektronik mit Beats. Moll-Pentatonik passt dazu
+perfekt (CC ist sehr moll-lastig) — die Konsonanz-Garantie aus r2 bleibt also.
+Drei neue Bausteine:
+
+1. **`beat.c` — Synth-Drum-Machine.** Kick (Sinus mit 126→48 Hz Pitch-Drop +
+   Click), Snare/Clap (bandpass-Noise + 185 Hz Body), Hi-Hats (highpass-Noise,
+   closed/open). Vier 16-Step-Patterns (FOUR / CC-broken / HALF / DRIVE),
+   getriggert vom Master-16tel-Clock. Kick bleibt trocken, Snare+Hat-Tails
+   gehen in den Reverb-Send.
+
+2. **Master-Tempo-Grid + Tempo-sync Arps.** engine_v2 hat jetzt einen BPM-
+   getriebenen 16tel-Clock. Der Arp ist von Free-Run auf grid-locked
+   umgestellt (`arp_on_step`, `arp_division`): division 1 = treibende 16tel
+   (CRYSTAL), 4 = Viertel (Ambient-Welten). Pro World eigenes BPM
+   (76 Ambient … 138 CRYSTAL).
+
+3. **Lo-Fi-Grit.** Drive + Bitcrush (11→5 bit) + Sample&Hold-SR-Reduktion auf
+   dem Master, geblendet per `grit` (0 = clean Ambient-Welten, 0.65 CRYSTAL).
+   Das ist der körnige CC-Dreck.
+
+World-Set überarbeitet: GLASS/WARM/DEEP FOG bleiben beatlos-ambient; DUST
+(four-on-floor), TAPE (gritty half-time) und **CRYSTAL** (ex-MACHINE, voller
+broken CC-Beat + 16tel-Arps + Grit, 138 BPM) sind die beat-getriebenen.
+„Entfaltung" entsteht über die Macro-Automation (Density/Glow/Grit steigen in
+die Climax-Sektion). Demo-Render: Intro −27 dBFS → CRYSTAL-Drop −10 dBFS →
+Outro, kein Clipping (Peak 0.79).
+
+Neu: `src/v2/beat.c`, `include/v2/beat.h`. Geändert: arp (Step-Trigger),
+worlds (bpm/arp_division/beat/grit + CRYSTAL), engine_v2 (Clock + Beat + Grit).
+Test: +Beat-Test (alle 4 Patterns) → 83 Checks grün. Konsonanz weiter 0
+Clashes (Pentatonik unverändert).
+
 ## Verhältnis zu anderen ADRs
 
 - **ADR-0008 r2** (Cell-LED Independent Latches) → Hold/Shift-Cells bleiben

@@ -36,6 +36,7 @@
 #include "v2/beauty_guard.h"
 #include "v2/worlds.h"
 #include "v2/arp.h"
+#include "v2/beat.h"
 
 #include "dsp.h"
 #include "reverb.h"
@@ -60,6 +61,16 @@ typedef struct {
     mod_delay_t mdelay;
     beauty_guard_t guard;
     arp_t      arp;
+    beat_t     beat;
+
+    /* Master tempo grid (16th-note clock) driving arp + beat. */
+    float bpm;
+    float clock_phase;       /* 0..1 within the current 16th step */
+    int   step16;            /* free-running 16th-note counter */
+    float grit;              /* 0..1 lo-fi amount (bitcrush + drive) */
+    float lofi_hold;         /* sample&hold state for SR reduction (L) */
+    float lofi_holdR;
+    int   lofi_cnt;          /* sample&hold counter */
 
     /* Smoothed wet amount + per-block scratch. */
     float wet_amp;
@@ -99,9 +110,22 @@ static void apply_world(const world_t *w) {
     hf_set_dissonance(w->dissonance_limit + E.density * 0.1f);
     hf_set_motion(E.motion);
 
-    /* Arpeggio / bell layer — density scales rate slightly, glow lifts level. */
-    arp_set_rate(&E.arp, w->arp_rate_hz * (0.8f + 0.4f * E.density));
+    /* Tempo grid. */
+    E.bpm = w->bpm;
+
+    /* Arpeggio / bell layer — tempo-locked. Density tightens the division
+     * (busier), glow lifts level. */
+    int div = w->arp_division;
+    if (E.density > 0.7f && div > 1) div -= 1;     /* busier when dense */
+    arp_set_division(&E.arp, div);
     arp_set_amount(&E.arp, w->arp_amount * (0.7f + 0.6f * E.glow));
+
+    /* Beat / drum machine. Density scales level so a quiet field stays calm. */
+    beat_set_pattern(&E.beat, w->beat_pattern);
+    beat_set_amount(&E.beat, w->beat_amount * (0.6f + 0.5f * E.density));
+
+    /* Lo-fi grit. */
+    E.grit = w->grit;
 
     /* Motion engine speed. */
     motion_set_speed(&E.mot, w->motion_speed * (0.5f + 1.5f * E.motion));
@@ -135,6 +159,11 @@ void engine_v2_init(uint32_t seed) {
     mod_delay_init(&E.mdelay);
     bg_init(&E.guard);
     arp_init(&E.arp, seed ^ 0x7777);
+    beat_init(&E.beat, seed ^ 0x2222);
+    E.bpm = 120.0f;
+    E.clock_phase = 0.0f;
+    E.step16 = 0;
+    E.grit = 0.0f;
     reverb_init();
     hf_init(seed ^ 0x4444, E.center_midi);
 
@@ -192,6 +221,20 @@ void engine_v2_render(int16_t *buf, int frames) {
     motion_advance(&E.mot, dt_block);
     if (!E.freeze) {
         hf_advance(dt_block);
+    }
+
+    /* Master 16th-note clock → trigger beat + arp on each step. (One 16th at
+     * 138 BPM ≈ 108 ms, a block ≈ 5.8 ms, so usually 0–1 steps per block;
+     * the while-loop covers tempo spikes / long blocks.) */
+    if (!E.freeze) {
+        float steps_per_sec = E.bpm / 60.0f * 4.0f;
+        E.clock_phase += steps_per_sec * dt_block;
+        while (E.clock_phase >= 1.0f) {
+            E.clock_phase -= 1.0f;
+            E.step16++;
+            beat_on_step(&E.beat, E.step16);
+            arp_on_step(&E.arp, E.step16);
+        }
     }
 
     /* Effective Color = base color * world ceiling-floor + glow lift. */
@@ -255,12 +298,16 @@ void engine_v2_render(int16_t *buf, int frames) {
     /* Mod Delay on dry path (parallel — adds wet, dry remains). */
     mod_delay_process(&E.mdelay, dryL, dryR, frames);
 
-    /* Arpeggio / bell layer — advance the step clock then render. Bells go
+    /* Arpeggio / bell layer — triggered by the master clock above. Bells go
      * into the (post-diffuser) dry path for clarity, plus a generous reverb
      * send for shimmer tails. */
-    if (!E.freeze) arp_tick(&E.arp, dt_block);
     arp_render_add(&E.arp, dryL, dryR, sendL, sendR, frames,
                    color_eff, 0.6f + 0.3f * E.glow);
+
+    /* Beat / drum machine — punchy, mostly dry (kick stays out of reverb,
+     * snare + hat tails get a send). Rendered post-diffuser so the transients
+     * hit clean. */
+    beat_render_add(&E.beat, dryL, dryR, sendL, sendR, frames, 0.30f);
 
     /* Reverb on send path → wetL/R. */
     reverb_render(sendL, sendR, wetL, wetR, frames);
@@ -275,6 +322,32 @@ void engine_v2_render(int16_t *buf, int frames) {
     for (int i = 0; i < frames; ++i) {
         dryL[i] = (dryL[i] + wetL[i] * E.wet_amp) * vol;
         dryR[i] = (dryR[i] + wetR[i] * E.wet_amp) * vol;
+    }
+
+    /* Lo-fi grit — drive + bitcrush + sample&hold, blended by `grit`. Gives
+     * the gritty Crystal-Castles texture without nuking the clean worlds
+     * (grit≈0 → bypassed). */
+    if (E.grit > 0.01f) {
+        float g = E.grit;
+        int   bits = (int)(11.0f - g * 6.0f);          /* 11 → 5 bits */
+        if (bits < 4) bits = 4;
+        float q = (float)(1u << bits);
+        int   hold_n = 1 + (int)(g * 3.0f + 0.5f);     /* SR ÷ 1..4 */
+        float drive = 1.0f + g * 2.2f;
+        for (int i = 0; i < frames; ++i) {
+            if (E.lofi_cnt <= 0) {
+                E.lofi_hold  = dryL[i];
+                E.lofi_holdR = dryR[i];
+                E.lofi_cnt   = hold_n;
+            }
+            E.lofi_cnt--;
+            float xl = tanhf(E.lofi_hold  * drive);
+            float xr = tanhf(E.lofi_holdR * drive);
+            xl = floorf(xl * q + 0.5f) / q;
+            xr = floorf(xr * q + 0.5f) / q;
+            dryL[i] = dryL[i] * (1.0f - g) + xl * g;
+            dryR[i] = dryR[i] * (1.0f - g) + xr * g;
+        }
     }
 
     /* Beauty Guard last — soft compress + tanh limiter. */

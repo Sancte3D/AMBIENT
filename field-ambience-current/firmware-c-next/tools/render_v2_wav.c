@@ -72,15 +72,18 @@ typedef struct {
     float density, motion, color, blur, texture, glow;
 } seg_t;
 
+/* Crystal-Castles "Entfaltung" arc: ambient intro → the beat drops → gritty
+ * half-time → brighter four-on-floor build → full climax → ambient outro. */
 static const seg_t SCRIPT[] = {
     /*    start  end  world          center    D     M     C     B     T     G   */
-    {   0.0f,  20.0f, WORLD_FOG,        57,  0.45f, 0.30f, 0.45f, 0.55f, 0.20f, 0.15f },
-    {  20.0f,  40.0f, WORLD_GLASS,      62,  0.55f, 0.60f, 0.85f, 0.55f, 0.20f, 0.35f },
-    {  40.0f,  60.0f, WORLD_DUST,       60,  0.65f, 0.75f, 0.60f, 0.70f, 0.45f, 0.30f },
-    {  60.0f,  80.0f, WORLD_WARM,       55,  0.50f, 0.40f, 0.55f, 0.45f, 0.25f, 0.15f },
-    {  80.0f, 100.0f, WORLD_TAPE,       58,  0.55f, 0.55f, 0.45f, 0.65f, 0.35f, 0.20f },
-    { 100.0f, 120.0f, WORLD_MACHINE,    62,  0.60f, 0.70f, 0.65f, 0.40f, 0.40f, 0.25f },
-    { 120.0f, 150.0f, WORLD_FOG,        53,  0.40f, 0.25f, 0.40f, 0.65f, 0.25f, 0.10f },
+    {   0.0f,  14.0f, WORLD_FOG,        53,  0.40f, 0.30f, 0.40f, 0.60f, 0.20f, 0.10f }, /* intro atmosphere */
+    {  14.0f,  30.0f, WORLD_CRYSTAL,    53,  0.45f, 0.60f, 0.65f, 0.40f, 0.30f, 0.35f }, /* beat drops in */
+    {  30.0f,  48.0f, WORLD_CRYSTAL,    55,  0.70f, 0.80f, 0.80f, 0.40f, 0.40f, 0.55f }, /* driving, opening up */
+    {  48.0f,  68.0f, WORLD_TAPE,       50,  0.60f, 0.55f, 0.45f, 0.65f, 0.45f, 0.25f }, /* gritty half-time */
+    {  68.0f,  88.0f, WORLD_DUST,       57,  0.65f, 0.75f, 0.70f, 0.55f, 0.40f, 0.35f }, /* brighter four-on-floor */
+    {  88.0f, 110.0f, WORLD_CRYSTAL,    57,  0.85f, 0.90f, 0.88f, 0.45f, 0.45f, 0.70f }, /* climax */
+    { 110.0f, 126.0f, WORLD_CRYSTAL,    52,  0.75f, 0.85f, 0.75f, 0.40f, 0.40f, 0.55f }, /* second wave */
+    { 126.0f, 150.0f, WORLD_WARM,       55,  0.45f, 0.40f, 0.55f, 0.55f, 0.25f, 0.20f }, /* ambient outro */
 };
 #define NSEG (int)(sizeof SCRIPT / sizeof SCRIPT[0])
 
