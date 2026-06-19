@@ -59,6 +59,24 @@ set(DSP_SOURCES
 )
 
 # ---------------------------------------------------------------------------
+# Engine V2 — ADR-0014, NEBEN V1 (nicht ersetzt). Wird mit V1 zusammen in
+# alle Targets gelinkt, aber engine_v2_render() wird erst Phase 3 aktiv per
+# Menü-Toggle aus main_h743.c gerufen. Bis dahin nur über Host-Tests + den
+# offline-Renderer in tools/render_v2_wav.c hörbar.
+# ---------------------------------------------------------------------------
+set(V2_SOURCES
+    src/v2/motion.c
+    src/v2/harmony_field.c
+    src/v2/field_voice.c
+    src/v2/material_texture.c
+    src/v2/diffuser.c
+    src/v2/mod_delay.c
+    src/v2/beauty_guard.c
+    src/v2/worlds.c
+    src/v2/engine_v2.c
+)
+
+# ---------------------------------------------------------------------------
 # Target-specific build dispatch.
 # ---------------------------------------------------------------------------
 if(TARGET STREQUAL "h743")
@@ -69,6 +87,7 @@ if(TARGET STREQUAL "h743")
     # HAL files compile syntactically; the SAI/DMA/USB/SPI wiring is TODO.
     add_executable(field_ambience_h743
         ${DSP_SOURCES}
+        ${V2_SOURCES}
         src/hal_h743/main_h743.c
         src/hal_h743/audio_h743.c
         src/hal_h743/encoders_h743.c
@@ -134,7 +153,7 @@ elseif(TARGET STREQUAL "host")
     # offline renderers in tools/ can link it. The actual renderer binaries
     # (render_performance, render_wav) are built ad-hoc with `cc` — see
     # tools/render_performance.c header. This target is mainly for CI smoke.
-    add_library(field_ambience_dsp STATIC ${DSP_SOURCES})
+    add_library(field_ambience_dsp STATIC ${DSP_SOURCES} ${V2_SOURCES})
     target_include_directories(field_ambience_dsp PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )

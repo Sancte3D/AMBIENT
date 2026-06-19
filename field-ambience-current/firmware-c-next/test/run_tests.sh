@@ -144,6 +144,20 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"
 
+# ADR-0014: Engine V2 (ambient field instrument) — host smoke test for all
+# v2 modules (motion, harmony_field, field_voice, material_texture, diffuser,
+# mod_delay, beauty_guard, worlds, engine_v2). V1 untouched.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_v2.c" \
+    "$src/src/dsp.c" "$src/src/reverb.c" \
+    "$src/src/v2/motion.c" "$src/src/v2/harmony_field.c" \
+    "$src/src/v2/field_voice.c" "$src/src/v2/material_texture.c" \
+    "$src/src/v2/diffuser.c" "$src/src/v2/mod_delay.c" \
+    "$src/src/v2/beauty_guard.c" "$src/src/v2/worlds.c" \
+    "$src/src/v2/engine_v2.c" \
+    -lm -o "$tmp/v2_test"
+"$tmp/v2_test"
+
 # Bench display tool: animated renderer + tween engine + quadrature decode +
 # backlight gamma. Compiles the REAL tools/display_hw_test.c against the fake
 # SDK headers in test/pico_stubs/ (host build of a device-only tool).
