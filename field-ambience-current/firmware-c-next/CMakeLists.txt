@@ -14,10 +14,16 @@
 #   host  → host-only DSP/engine library for offline rendering
 #           (tools/render_performance.c, render_wav.c). No HAL.
 #
-# NB: the selector variable is FAM_TARGET, *not* TARGET. `TARGET` is a
+# NB1: the selector variable is FAM_TARGET, *not* TARGET. `TARGET` is a
 # reserved keyword in CMake's if() command (`if(TARGET <name>)`), so a cache
 # variable named TARGET makes `if(TARGET STREQUAL "h743")` mis-parse and abort
 # configuration with "Unknown arguments specified".
+#
+# NB2: the Pico SDK injects its ARM cross-toolchain through
+# pico_sdk_import.cmake, which MUST be included BEFORE project() — otherwise
+# project() enables the C/CXX/ASM languages with the host x86 compiler and the
+# SDK's ARM boot2 assembly is fed to /usr/bin/cc (boot2_w25q080.S → "expected
+# (%rsi)"). So target selection + the SDK import happen above project().
 #
 # Convenience: when -DPICO_BOARD is passed (the Pico SDK CI path) and the user
 # did not name a target, FAM_TARGET auto-selects `pico` — the only thing a
@@ -27,13 +33,11 @@
 # compile pure-C DSP + logic modules directly with `cc -O2 -lm`.
 
 cmake_minimum_required(VERSION 3.16)
-project(field_ambience_native C CXX ASM)
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
 
 # ---------------------------------------------------------------------------
-# FAM_TARGET selector — single switch that determines which HAL gets linked.
-# (Named FAM_TARGET, never TARGET — see the keyword-collision note above.)
+# FAM_TARGET selector — resolved BEFORE project() so the Pico SDK can set up
+# its ARM toolchain ahead of language enablement. (Named FAM_TARGET, never
+# TARGET — see NB1 above.)
 # ---------------------------------------------------------------------------
 if(DEFINED PICO_BOARD AND NOT DEFINED FAM_TARGET)
     set(_fam_default "pico")        # Pico SDK in play → bench tool only
@@ -43,9 +47,26 @@ endif()
 set(FAM_TARGET "${_fam_default}" CACHE STRING "Build target: h743 | pico | host")
 set_property(CACHE FAM_TARGET PROPERTY STRINGS h743 pico host)
 
+# Pico target: pull in the SDK BEFORE project() (see NB2). host/h743 do not
+# touch the Pico SDK at all.
+if(FAM_TARGET STREQUAL "pico")
+    include(pico_sdk_import.cmake)
+    if(NOT DEFINED PICO_BOARD)
+        set(PICO_BOARD pico2)
+    endif()
+endif()
+
+project(field_ambience_native C CXX ASM)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+
+if(FAM_TARGET STREQUAL "pico")
+    pico_sdk_init()
+endif()
+
 # ---------------------------------------------------------------------------
 # Shared DSP / logic sources (target-independent, pure C, host-portable).
-# These are the 19 files exercised by test/run_tests.sh — never touch the
+# These are the files exercised by test/run_tests.sh — never touch the
 # hardware directly. Single source for all three target builds.
 # ---------------------------------------------------------------------------
 set(DSP_SOURCES
@@ -75,9 +96,10 @@ set(DSP_SOURCES
 
 # ---------------------------------------------------------------------------
 # Engine V2 — ADR-0014, NEBEN V1 (nicht ersetzt). Wird mit V1 zusammen in
-# alle Targets gelinkt, aber engine_v2_render() wird erst Phase 3 aktiv per
-# Menü-Toggle aus main_h743.c gerufen. Bis dahin nur über Host-Tests + den
-# offline-Renderer in tools/render_v2_wav.c hörbar.
+# die h743 + host Targets gelinkt, aber engine_v2_render() wird erst Phase 3
+# aktiv per Menü-Toggle aus main_h743.c gerufen. Bis dahin nur über Host-Tests
+# + den offline-Renderer in tools/render_v2_wav.c hörbar. (Der pico-Bench-Tool
+# linkt V2 nicht — es rendert keinen Sound, sondern testet nur das Display.)
 # ---------------------------------------------------------------------------
 set(V2_SOURCES
     src/v2/motion.c
@@ -121,12 +143,8 @@ if(FAM_TARGET STREQUAL "h743")
 elseif(FAM_TARGET STREQUAL "pico")
     message(STATUS "Field Ambience: Pico-2 bench-tool target")
     # The Pico build only exists to drive the display_hw_test breadboard
-    # for menu + ST7789 + encoder bring-up. NOT a product build.
-    include(pico_sdk_import.cmake)
-    if(NOT DEFINED PICO_BOARD)
-        set(PICO_BOARD pico2)
-    endif()
-    pico_sdk_init()
+    # for menu + ST7789 + encoder bring-up. NOT a product build. The SDK was
+    # imported + initialised above project() (see NB2).
 
     # --- display_hw_test: bench tool that drives a real ST7789 + encoder ---
     add_executable(display_hw_test
