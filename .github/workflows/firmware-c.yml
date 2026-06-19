@@ -79,10 +79,13 @@ jobs:
           if-no-files-found: error
 
   # --- firmware-c-next: the active development tree -----------------------
-  # Same two-stage validation as firmware-c. The cross-build additionally
-  # produces display_hw_test.uf2 — the breadboard bring-up for the 1.9"
-  # ST7789 panel (tools/display_hw_test.c). Download it from the workflow
-  # artifacts, no local toolchain needed.
+  # Two-stage validation: host unit tests (incl. Engine V2) + a Pico SDK
+  # cross-build. Since the r18.27 HAL reorg the product MCU is STM32H743
+  # (ADR-0002); the Pico build is bench-only and produces display_hw_test.uf2
+  # — the breadboard bring-up for the 1.9" ST7789 panel
+  # (tools/display_hw_test.c). Download it from the workflow artifacts, no
+  # local toolchain needed. (The STM32 product build gets CI once the Step
+  # 13.3 ARM-GCC toolchain file + linker + startup land.)
 
   host-tests-next:
     name: host unit tests (firmware-c-next)
@@ -118,26 +121,27 @@ jobs:
         working-directory: pico-sdk
         run: git submodule update --init --depth 1 lib/tinyusb
 
-      - name: Build (pico2, all targets)
+      - name: Build (pico2 bench tool — display_hw_test)
         working-directory: field-ambience-current/firmware-c-next
+        # Since the r18.27 HAL reorg the Pico target is bench-only: the SDK
+        # cross-build produces the display_hw_test bring-up tool, not a
+        # product firmware (the product moved to STM32H743 — ADR-0002). The
+        # -DPICO_BOARD flag auto-selects FAM_TARGET=pico in CMakeLists.txt.
         run: |
           mkdir -p build && cd build
           cmake .. -DPICO_BOARD=pico2
           make -j"$(nproc)"
 
-      - name: Report sizes + verify UF2s exist
+      - name: Report size + verify UF2 exists
         working-directory: field-ambience-current/firmware-c-next/build
         run: |
-          arm-none-eabi-size field_ambience_native.elf display_hw_test.elf
-          test -f field_ambience_native.uf2
+          arm-none-eabi-size display_hw_test.elf
           test -f display_hw_test.uf2
-          ls -la field_ambience_native.uf2 display_hw_test.uf2
+          ls -la display_hw_test.uf2
 
-      - name: Upload UF2 artifacts
+      - name: Upload UF2 artifact
         uses: actions/upload-artifact@v4
         with:
           name: firmware-c-next-pico2-uf2
-          path: |
-            field-ambience-current/firmware-c-next/build/field_ambience_native.uf2
-            field-ambience-current/firmware-c-next/build/display_hw_test.uf2
+          path: field-ambience-current/firmware-c-next/build/display_hw_test.uf2
           if-no-files-found: error

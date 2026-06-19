@@ -5,14 +5,23 @@
 # is the only place where the menu + ST7789 + encoder can be physically driven
 # until the STM32 prototype exists.
 #
-# Build targets:
-#   -DTARGET=h743  → STM32 firmware (the product). Needs the STM32 ARM-GCC
-#                    toolchain + CubeH7 HAL. Skeleton stubs live in
-#                    `src/hal_h743/`; ST-HAL integration is Step 13.3.
-#   -DTARGET=pico  → bench-only Pico-2 firmware (display_hw_test bring-up tool,
-#                    not a product build). Uses `src/hal_pico/`.
-#   -DTARGET=host  → host-only DSP/engine library for offline rendering
-#                    (tools/render_performance.c, render_wav.c). No HAL.
+# Build targets (-DFAM_TARGET=...):
+#   h743  → STM32 firmware (the product). Needs the STM32 ARM-GCC toolchain +
+#           CubeH7 HAL. Skeleton stubs live in `src/hal_h743/`; ST-HAL
+#           integration is Step 13.3.
+#   pico  → bench-only Pico-2 firmware (display_hw_test bring-up tool, not a
+#           product build). Uses `src/hal_pico/`.
+#   host  → host-only DSP/engine library for offline rendering
+#           (tools/render_performance.c, render_wav.c). No HAL.
+#
+# NB: the selector variable is FAM_TARGET, *not* TARGET. `TARGET` is a
+# reserved keyword in CMake's if() command (`if(TARGET <name>)`), so a cache
+# variable named TARGET makes `if(TARGET STREQUAL "h743")` mis-parse and abort
+# configuration with "Unknown arguments specified".
+#
+# Convenience: when -DPICO_BOARD is passed (the Pico SDK CI path) and the user
+# did not name a target, FAM_TARGET auto-selects `pico` — the only thing a
+# Pico toolchain can build is the bench tool.
 #
 # Host tests (the `test/` suite) ignore CMake — see `test/run_tests.sh`. They
 # compile pure-C DSP + logic modules directly with `cc -O2 -lm`.
@@ -23,10 +32,16 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 # ---------------------------------------------------------------------------
-# TARGET selector — single switch that determines which HAL gets linked.
+# FAM_TARGET selector — single switch that determines which HAL gets linked.
+# (Named FAM_TARGET, never TARGET — see the keyword-collision note above.)
 # ---------------------------------------------------------------------------
-set(TARGET "h743" CACHE STRING "Build target: h743 | pico | host")
-set_property(CACHE TARGET PROPERTY STRINGS h743 pico host)
+if(DEFINED PICO_BOARD AND NOT DEFINED FAM_TARGET)
+    set(_fam_default "pico")        # Pico SDK in play → bench tool only
+else()
+    set(_fam_default "h743")        # default product target
+endif()
+set(FAM_TARGET "${_fam_default}" CACHE STRING "Build target: h743 | pico | host")
+set_property(CACHE FAM_TARGET PROPERTY STRINGS h743 pico host)
 
 # ---------------------------------------------------------------------------
 # Shared DSP / logic sources (target-independent, pure C, host-portable).
@@ -79,7 +94,7 @@ set(V2_SOURCES
 # ---------------------------------------------------------------------------
 # Target-specific build dispatch.
 # ---------------------------------------------------------------------------
-if(TARGET STREQUAL "h743")
+if(FAM_TARGET STREQUAL "h743")
     message(STATUS "Field Ambience: STM32H743 product target (skeleton)")
     # Step 13.2 (this commit) lays the file structure and CMake stub. The
     # actual STM32 toolchain integration (STM32CubeH7 HAL, ARM-GCC, OpenOCD
@@ -103,7 +118,7 @@ if(TARGET STREQUAL "h743")
     # include paths, linker script, startup file. For now this target only
     # builds if the user supplies CMAKE_TOOLCHAIN_FILE manually.
 
-elseif(TARGET STREQUAL "pico")
+elseif(FAM_TARGET STREQUAL "pico")
     message(STATUS "Field Ambience: Pico-2 bench-tool target")
     # The Pico build only exists to drive the display_hw_test breadboard
     # for menu + ST7789 + encoder bring-up. NOT a product build.
@@ -147,7 +162,7 @@ elseif(TARGET STREQUAL "pico")
     pico_enable_stdio_uart(display_hw_test 0)
     pico_add_extra_outputs(display_hw_test)
 
-elseif(TARGET STREQUAL "host")
+elseif(FAM_TARGET STREQUAL "host")
     message(STATUS "Field Ambience: host DSP library + offline renderers")
     # Host build: just the DSP + engine compiled to a static library so the
     # offline renderers in tools/ can link it. The actual renderer binaries
@@ -160,5 +175,5 @@ elseif(TARGET STREQUAL "host")
     target_link_libraries(field_ambience_dsp PUBLIC m)
 
 else()
-    message(FATAL_ERROR "Unknown TARGET '${TARGET}' — must be h743, pico, or host")
+    message(FATAL_ERROR "Unknown FAM_TARGET '${FAM_TARGET}' — must be h743, pico, or host")
 endif()
