@@ -35,6 +35,7 @@
 #include "v2/mod_delay.h"
 #include "v2/beauty_guard.h"
 #include "v2/worlds.h"
+#include "v2/arp.h"
 
 #include "dsp.h"
 #include "reverb.h"
@@ -58,6 +59,7 @@ typedef struct {
     diffuser_t diff;
     mod_delay_t mdelay;
     beauty_guard_t guard;
+    arp_t      arp;
 
     /* Smoothed wet amount + per-block scratch. */
     float wet_amp;
@@ -92,9 +94,14 @@ static void apply_world(const world_t *w) {
     mod_delay_set_amount(&E.mdelay, w->mod_delay_amount * (0.5f + 0.5f * E.blur));
 
     /* Harmony field constraints. */
+    hf_set_scale_minor(w->scale_minor != 0);
     hf_set_voice_target_count(w->voice_target_count + (E.density - 0.5f) * 2.0f);
     hf_set_dissonance(w->dissonance_limit + E.density * 0.1f);
     hf_set_motion(E.motion);
+
+    /* Arpeggio / bell layer — density scales rate slightly, glow lifts level. */
+    arp_set_rate(&E.arp, w->arp_rate_hz * (0.8f + 0.4f * E.density));
+    arp_set_amount(&E.arp, w->arp_amount * (0.7f + 0.6f * E.glow));
 
     /* Motion engine speed. */
     motion_set_speed(&E.mot, w->motion_speed * (0.5f + 1.5f * E.motion));
@@ -127,6 +134,7 @@ void engine_v2_init(uint32_t seed) {
     diffuser_init(&E.diff);
     mod_delay_init(&E.mdelay);
     bg_init(&E.guard);
+    arp_init(&E.arp, seed ^ 0x7777);
     reverb_init();
     hf_init(seed ^ 0x4444, E.center_midi);
 
@@ -226,7 +234,7 @@ void engine_v2_render(int16_t *buf, int frames) {
             (v == HF_VOICE_BASS)         ? 0.10f :
             (v == HF_VOICE_HIGH_PARTIAL) ? 0.85f : 0.55f;
         /* Glow boosts upper-voice send. */
-        if (v >= HF_VOICE_NINTH) send_scale += E.glow * 0.2f;
+        if (v >= HF_VOICE_UPPER) send_scale += E.glow * 0.2f;
 
         for (int i = 0; i < frames; ++i) {
             float s = fv_render(st, f, a, color_eff, mot_walk, mot_slow);
@@ -237,19 +245,22 @@ void engine_v2_render(int16_t *buf, int frames) {
         }
     }
 
-    /* Texture: adds to BOTH dry and send (texture goes through reverb too). */
+    /* Texture: adds to the dry pad bed (it rides through diffuser + delay). */
     mt_render_add(&E.texture, dryL, dryR, frames, E.texture_amt, mot_walk);
-    /* A muted copy into send for distant texture tail. */
-    for (int i = 0; i < frames; ++i) {
-        sendL[i] += dryL[i] * 0.0f;  /* texture already in dry; send stays voice-only */
-        sendR[i] += dryR[i] * 0.0f;
-    }
 
-    /* Diffuser on dry path (smears voice attacks into a cloud). */
+    /* Diffuser on the pad/texture dry path (smears voice attacks into a
+     * cloud). The arp is added AFTER so its bells stay crisp and present. */
     diffuser_process(&E.diff, dryL, dryR, frames);
 
     /* Mod Delay on dry path (parallel — adds wet, dry remains). */
     mod_delay_process(&E.mdelay, dryL, dryR, frames);
+
+    /* Arpeggio / bell layer — advance the step clock then render. Bells go
+     * into the (post-diffuser) dry path for clarity, plus a generous reverb
+     * send for shimmer tails. */
+    if (!E.freeze) arp_tick(&E.arp, dt_block);
+    arp_render_add(&E.arp, dryL, dryR, sendL, sendR, frames,
+                   color_eff, 0.6f + 0.3f * E.glow);
 
     /* Reverb on send path → wetL/R. */
     reverb_render(sendL, sendR, wetL, wetR, frames);

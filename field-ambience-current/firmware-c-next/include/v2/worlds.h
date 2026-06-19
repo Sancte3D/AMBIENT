@@ -29,6 +29,14 @@ typedef struct {
     fv_type_t   primary_voice;
     fv_type_t   secondary_voice;
 
+    /* Scale character: 0 = major pentatonic (bright/open), 1 = minor
+     * pentatonic (dreamy/dark). Both are clash-proof. */
+    int scale_minor;
+
+    /* Arpeggio / bell layer — the melodic "schöne Töne". */
+    float arp_rate_hz;           /* steps per second (0 = no arp) */
+    float arp_amount;            /* 0..1 master level */
+
     /* Reverb base mapping (size, wet, damp range over Blur 0..1). */
     float reverb_size_base;
     float reverb_wet_lo, reverb_wet_hi;
@@ -43,8 +51,8 @@ typedef struct {
 
     /* Harmony field constraints. */
     float motion_speed;          /* multiplier for slow1/slow2 + retarget */
-    float voice_target_count;    /* 3..7 */
-    float dissonance_limit;      /* 0..1 */
+    float voice_target_count;    /* 3..8 */
+    float dissonance_limit;      /* 0..1 — upper-voice wander, never a clash */
 
     /* Color range — World may e.g. always live bright (Glass) or dark (Fog). */
     float color_floor, color_ceiling;

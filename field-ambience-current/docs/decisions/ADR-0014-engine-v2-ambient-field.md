@@ -391,6 +391,46 @@ sondern `LEVEL PROTECTED`.
 > **Complex engine, simple instrument. No deep menus. No exposed synthesis
 > parameters. Only curated Worlds and macro gestures.**
 
+## r2 (2026-06-19) — Sound-Rework: „klingt wie Horror" → schön by construction
+
+User-Feedback nach der ersten Klangprobe:
+> „v2 klingt allerdings richtig schäbig und wie horror. Null schöne töne.
+> Kein appregatio … es klingt wie in einem thriller, dabei sollen es schön
+> klingende töne sein. … Ich glaube du hast blind gebaut ohne die sound logik
+> zu beachten."
+
+Berechtigt. r1 hatte die Architektur, aber den musikalischen Inhalt nicht
+festgezurrt. Die drei Horror-Ursachen + Fixes:
+
+1. **Random Halbton-Cluster.** r1 ließ 8 Voices unabhängig zufällige
+   Semitone-Offsets wählen und streute sogar aktiv Spannungsintervalle
+   (kleine Sekunde, Tritonus) ein. → **Pentatonik-Lock**: jede Voice ist auf
+   eine Major-/Minor-Pentatonik gesperrt. Pentatonik enthält *keine*
+   Halbtöne und *keinen* Tritonus → ein harter Cluster ist mathematisch
+   unmöglich. Bewiesen im Test: 289.380 Intervall-Checks über 60 s bei
+   max Motion + max „dissonance" = **0 Clashes**. Die „dissonance"-Macro
+   steuert jetzt nur noch, wie weit obere Voices unter Skalentönen wandern.
+
+2. **Metallische Particle-Pings.** Die Particle-Voice (High-Q-Bandpass auf
+   zufällig getriggerten Grains) war reines Thriller-Sounddesign und lief in
+   Deep Fog als Default-Sekundärstimme. → **Particle aus den Default-Voice-
+   Rollen entfernt.** Pads tragen jetzt Glass + Tape; die Melodie der Arp.
+
+3. **Keine Melodie / „kein appregatio".** → Neuer **`arp.c`**: sanfter
+   Pentatonik-Glocken-Arpeggiator (weicher Attack, langer exp. Release,
+   leichte Inharmonizität — Felt-Piano / Music-Box / Eno-Bell). Jede Note
+   ist ein Skalenton → immer konsonant zum Pad-Feld. Pro World eigenes Tempo
+   + Pegel; Glow hebt den Bell-Anteil.
+
+Zusätzlich: Tape-Voice entbuzzt (Saw mit Grund-Sinus gerundet, dunklerer
+LP-Ceiling 4.2 kHz statt 6 kHz, sanftere Sättigung). Bells werden NACH dem
+Diffuser gerendert, damit sie klar bleiben statt zu verwaschen.
+
+Neue Dateien: `src/v2/arp.c`, `include/v2/arp.h`. Geändert: harmony_field
+(Pentatonik-Voicing + Stimmführung in Skalenschritten), worlds (scale_minor +
+arp-Felder, Particle raus), field_voice (Tape-Wärme), engine_v2 (Arp-Layer).
+Test: +Konsonanz-Test +Arp-Test → 79 Checks grün.
+
 ## Verhältnis zu anderen ADRs
 
 - **ADR-0008 r2** (Cell-LED Independent Latches) → Hold/Shift-Cells bleiben

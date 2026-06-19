@@ -15,6 +15,7 @@
 #include "v2/beauty_guard.h"
 #include "v2/field_voice.h"
 #include "v2/worlds.h"
+#include "v2/arp.h"
 #include "dsp.h"
 #include "audio.h"
 #include "reverb.h"
@@ -282,6 +283,121 @@ static void test_worlds(void) {
     }
 }
 
+/* ------------------------------------------------ consonance ------------
+ * The r2 promise: pentatonic-locked harmony can NEVER produce a minor-2nd
+ * (1 semitone) or a tritone (6) between simultaneous voices. Drive the field
+ * hard for 60 s with max motion + dissonance and verify the interval set
+ * stays clean — this is the objective "no horror" guarantee. */
+
+static int interval_class(int a, int b) {
+    int d = a - b; if (d < 0) d = -d;
+    return d % 12;
+}
+
+static void test_consonance(void) {
+    printf("\n=== consonance (pentatonic lock) ===\n");
+    hf_init(2024, 57);
+    hf_set_scale_minor(true);
+    hf_set_motion(1.0f);          /* maximum wander */
+    hf_set_dissonance(1.0f);      /* widest upper-voice range */
+    hf_set_voice_target_count(8.0f);
+
+    float dt = 256.0f / 44100.0f;
+    int steps = (int)(60.0f / dt);
+    int clashes = 0;
+    int checks = 0;
+    for (int s = 0; s < steps; ++s) {
+        hf_advance(dt);
+        for (int i = 0; i < HF_VOICE_COUNT; ++i) {
+            const hf_voice_t *vi = hf_voice(i);
+            if (!vi->active) continue;
+            for (int j = i + 1; j < HF_VOICE_COUNT; ++j) {
+                const hf_voice_t *vj = hf_voice(j);
+                if (!vj->active) continue;
+                int ic = interval_class(vi->midi_note, vj->midi_note);
+                ++checks;
+                if (ic == 1 || ic == 6 || ic == 11) ++clashes;
+            }
+        }
+    }
+    printf("    %d interval checks over 60s, %d clashes\n", checks, clashes);
+    EXPECT(checks > 1000, "consonance: ran many interval checks");
+    EXPECT(clashes == 0, "consonance: ZERO minor-2nd/tritone clashes ever");
+
+    /* Major pentatonic must be equally clean. */
+    hf_set_scale_minor(false);
+    clashes = 0;
+    for (int s = 0; s < steps; ++s) {
+        hf_advance(dt);
+        for (int i = 0; i < HF_VOICE_COUNT; ++i) {
+            const hf_voice_t *vi = hf_voice(i);
+            if (!vi->active) continue;
+            for (int j = i + 1; j < HF_VOICE_COUNT; ++j) {
+                const hf_voice_t *vj = hf_voice(j);
+                if (!vj->active) continue;
+                int ic = interval_class(vi->midi_note, vj->midi_note);
+                if (ic == 1 || ic == 6 || ic == 11) ++clashes;
+            }
+        }
+    }
+    EXPECT(clashes == 0, "consonance: major pentatonic also clash-free");
+
+    /* Every voice pitch must be a scale member of the current root. */
+    hf_init(99, 60);
+    hf_set_scale_minor(false);
+    int non_scale = 0;
+    for (int s = 0; s < 500; ++s) {
+        hf_advance(dt);
+        for (int i = 0; i < HF_VOICE_COUNT; ++i) {
+            const hf_voice_t *v = hf_voice(i);
+            int pc = ((v->midi_note - hf_root_midi()) % 12 + 12) % 12;
+            int ok = 0;
+            for (int k = 0; k < hf_scale_len(); ++k)
+                if (hf_scale_semitone(k) == pc) ok = 1;
+            if (!ok) ++non_scale;
+        }
+    }
+    EXPECT(non_scale == 0, "consonance: every voice is a scale tone");
+}
+
+/* --------------------------------------------------- arp --------------- */
+
+static void test_arp(void) {
+    printf("\n=== arp (pentatonic bells) ===\n");
+    dsp_init();
+    hf_init(7, 57);
+    hf_set_scale_minor(false);
+
+    arp_t a;
+    arp_init(&a, 42);
+    arp_set_rate(&a, 2.5f);
+    arp_set_amount(&a, 0.6f);
+
+    float L[AUDIO_BUFFER_FRAMES], R[AUDIO_BUFFER_FRAMES];
+    float sL[AUDIO_BUFFER_FRAMES], sR[AUDIO_BUFFER_FRAMES];
+    float dt = (float)AUDIO_BUFFER_FRAMES / 44100.0f;
+
+    float peak = 0.0f;
+    int nonzero_blocks = 0;
+    for (int b = 0; b < (int)(8.0f / dt); ++b) {
+        for (int i = 0; i < AUDIO_BUFFER_FRAMES; ++i) { L[i]=R[i]=sL[i]=sR[i]=0.0f; }
+        arp_tick(&a, dt);
+        arp_render_add(&a, L, R, sL, sR, AUDIO_BUFFER_FRAMES, 0.6f, 0.6f);
+        float p = peak_abs(L, AUDIO_BUFFER_FRAMES);
+        if (p > peak) peak = p;
+        if (p > 0.001f) ++nonzero_blocks;
+        if (has_nan_or_inf(L, AUDIO_BUFFER_FRAMES)) { fail++; printf("  ✗ arp NaN\n"); return; }
+    }
+    EXPECT(peak > 0.02f, "arp: produces audible bells");
+    EXPECT(nonzero_blocks > 10, "arp: sustained over time");
+
+    /* Silent when amount = 0. */
+    arp_set_amount(&a, 0.0f);
+    for (int i = 0; i < AUDIO_BUFFER_FRAMES; ++i) { L[i]=R[i]=sL[i]=sR[i]=0.0f; }
+    for (int b = 0; b < 20; ++b) { arp_tick(&a, dt); arp_render_add(&a, L, R, sL, sR, AUDIO_BUFFER_FRAMES, 0.6f, 0.6f); }
+    EXPECT(peak_abs(L, AUDIO_BUFFER_FRAMES) < 1e-4f, "arp: silent at amount=0");
+}
+
 /* --------------------------------------------------- engine_v2 --------- */
 
 static void test_engine_v2(void) {
@@ -364,6 +480,8 @@ int main(void) {
     test_mod_delay();
     test_beauty_guard();
     test_worlds();
+    test_consonance();
+    test_arp();
     test_engine_v2();
 
     printf("\n-------------------------\n");

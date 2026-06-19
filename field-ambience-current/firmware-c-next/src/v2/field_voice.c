@@ -81,15 +81,19 @@ static float render_tape(fv_state_t *s, float f, float amp,
     if (s->phase1 >= 1.0f) s->phase1 -= 1.0f;
 
     float saw = dsp_poly_saw(s->phase1, dt);
+    /* Round the saw with a touch of its own fundamental sine so it reads warm
+     * (felt/tape) rather than buzzy. */
+    float fund = dsp_sin(s->phase1);
+    float src = 0.62f * saw + 0.38f * fund;
 
-    /* Color → 1-pole LP cutoff 350..6000 Hz. */
-    float fc = 350.0f + 5650.0f * color * (0.85f + 0.15f * slow);
-    if (fc > 18000.0f) fc = 18000.0f;
+    /* Color → 1-pole LP cutoff 300..4200 Hz (kept dark — tape, not synth-lead). */
+    float fc = 300.0f + 3900.0f * color * (0.85f + 0.15f * slow);
+    if (fc > 9000.0f) fc = 9000.0f;
     float a = 1.0f - expf(-2.0f * 3.14159265f * fc / SR);
-    s->lp_state += a * (saw - s->lp_state);
+    s->lp_state += a * (src - s->lp_state);
 
-    /* Saturation increases with color. */
-    float drive = 1.0f + color * 1.5f;
+    /* Gentle saturation for analog warmth, scaled modestly with color. */
+    float drive = 1.0f + color * 0.8f;
     float sat = soft_clip(s->lp_state * drive) / drive;
     return sat * amp;
 }

@@ -110,6 +110,7 @@ set(V2_SOURCES
     src/v2/mod_delay.c
     src/v2/beauty_guard.c
     src/v2/worlds.c
+    src/v2/arp.c            # pentatonic bell arpeggio (the melodic layer)
     src/v2/engine_v2.c
 )
 
