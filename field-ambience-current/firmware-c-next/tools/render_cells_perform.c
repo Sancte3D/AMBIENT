@@ -28,6 +28,7 @@
 #include "brain.h"
 #include "dsp.h"
 #include "reverb.h"
+#include "texture.h"
 #include "v2/diffuser.h"
 
 #include <stdint.h>
@@ -63,16 +64,20 @@ static const mel_t MELODY[] = {
 };
 #define N_MEL (sizeof MELODY / sizeof MELODY[0])
 
-/* wet automation — granular+reverb as ATMOSPHERIC SPICE on top of the dry
- * chord, not as the main sound. Max 0.45, never drowning the chord. */
+/* wet automation — pro-mix rule: 15–25 % is "tasteful hall", over 30 % is
+ * "I love my reverb". For wind/wald/nebel territory we live at ~20 % with a
+ * slow open to 28 %, never higher. Dry stays >= 90 %. */
 static float wet_at(float t){
-    static const float bt[] = {  0.0f, 12.0f, 30.0f, 48.0f, 60.0f };
-    static const float bv[] = { 0.08f, 0.22f, 0.42f, 0.38f, 0.28f };
-    int n = 5;
+    static const float bt[] = {  0.0f, 16.0f, 38.0f, 60.0f };
+    static const float bv[] = { 0.10f, 0.20f, 0.28f, 0.22f };
+    int n = 4;
     if (t <= bt[0]) return bv[0];
     for (int i=1;i<n;i++) if (t<=bt[i]){ float f=(t-bt[i-1])/(bt[i]-bt[i-1]); return bv[i-1]+(bv[i]-bv[i-1])*f; }
     return bv[n-1];
 }
+
+/* soft-clip saturation — "Orgel → Material". Light; only colours the peaks. */
+static inline float sat(float x){ return tanhf(x * 1.25f) * 0.85f; }
 
 typedef struct { float t; uint8_t src; } pend_t;
 static pend_t pend[PAD_MAX*2]; static int npend = 0;
@@ -91,7 +96,7 @@ static void sched_off(float t, uint8_t s){ if(npend<(int)(sizeof pend/sizeof pen
 #define GBUF_LEN  (1u<<16)
 #define GBUF_MASK (GBUF_LEN-1u)
 #define MAXG      24
-#define GR_SPACING   4000    /* ~11 grains/s — audible as a cloud, not brei */
+#define GR_SPACING   6000    /* ~7 grains/s — wind-sparse, lets dry chord breathe */
 #define WAVE_SPACING 200     /* slow forward scan — grains sample neighbours */
 
 typedef struct { int active; float pos, inc; int age, len; float pan, amp; } grain_t;
@@ -112,14 +117,15 @@ static void grain_spawn(void){
         if(grains[g].active) continue;
         grain_t *gr=&grains[g];
         gr->active=1; gr->age=0;
-        gr->len   =9000+(int)(frand()*13000.0f);    /* 200..500 ms — proper cloud */
+        gr->len   =13000+(int)(frand()*18000.0f);   /* 300..700 ms — longer wash */
         /* read into recent history (NEVER past gwrite); slow forward scan */
         uint32_t jit=(uint32_t)(frand()*8000.0f);   /* ±180 ms time-jitter */
-        gr->pos=(float)((gwrite-(GBUF_LEN-12000)+scan+jit)&GBUF_MASK);
-        scan+=WAVE_SPACING; if(scan>(GBUF_LEN-16000)) scan=0;
-        /* pitch: unison-dominant, only octaves (in-key) — NO +5th transposer */
-        float r=frand();
-        gr->inc=(r<0.75f)?1.0f:(r<0.88f)?2.0f:0.5f;
+        gr->pos=(float)((gwrite-(GBUF_LEN-16000)+scan+jit)&GBUF_MASK);
+        scan+=WAVE_SPACING; if(scan>(GBUF_LEN-20000)) scan=0;
+        /* pitch: unison dominant + occasional -oct for body. NO +oct — that
+         * is functionally a "shimmer" layer and the #1 trigger for the
+         * Kirchen-/Klangschalen-Charakter we are trying to escape. */
+        gr->inc = (frand() < 0.82f) ? 1.0f : 0.5f;
         /* stereo-pair pan: alternating L/R, narrow spread → phase-stable bus */
         gr->pan=(grain_pair^=1) ? (0.22f+frand()*0.18f)   /* 0.22..0.40 L */
                                 : (0.60f+frand()*0.18f);  /* 0.60..0.78 R */
@@ -147,16 +153,22 @@ int main(int argc, char **argv){
     dsp_init();
     brain_init(); brain_set_key(60); brain_set_mode(1);
     pad_init();
-    /* reverb + diffuser tamed: was size 0.90 / damp 0.40 / drive 0.18 and
-     * blur 0.78 — at those values both effects "wash" and they matschen
-     * together. Now: gentler hall, brighter top damped, blur halved so it
-     * smooths instead of doubling the wash. */
-    reverb_init(); reverb_set(0.72f,0.55f); reverb_set_drive(0.10f);
-    diffuser_t df; diffuser_init(&df); diffuser_set_amount(&df,0.45f);
+    /* Producer-rule: when reverb sounds "geil" it's already too much. Wind/
+     * Wald/Nebel lives on a DRY foreground with a hint of room — small hall
+     * (size 0.50, decay ~3 s), well-damped highs, soft drive. Diffuser only
+     * smooths the grain edges; it's not a second wash. */
+    reverb_init(); reverb_set(0.50f,0.62f); reverb_set_drive(0.05f);
+    diffuser_t df; diffuser_init(&df); diffuser_set_amount(&df,0.30f);
+    /* Brown-noise wind/body texture — the "70% atmosphere" the take was
+     * missing. texture.c renders Air + Body bands stereo-decorrelated. */
+    texture_init(); texture_set_amount(0.35f);
     memset(gbufL,0,sizeof gbufL); memset(gbufR,0,sizeof gbufR); memset(grains,0,sizeof grains);
 
-    /* drone bed (Bed profile), held nearly the whole take */
+    /* All voices on Bed (the darkest profile, cutoff 380 Hz). Same character
+     * across drone + chords = one cohesive "wood/wind body" instead of three
+     * different timbres competing. */
     pad_set_profile(0);
+    /* Drone bed, held nearly the whole take */
     pad_note_on(10, dsp_midi_to_hz(36.0f), 0.11f);   /* C2  */
     pad_note_on(11, dsp_midi_to_hz(43.0f), 0.09f);   /* G2  */
     sched_off(57.0f, 10); sched_off(57.0f, 11);
@@ -175,37 +187,38 @@ int main(int argc, char **argv){
 
     while(frame<total){
         float t=(float)frame/SR;
-        /* chord presses → up to 4 voiced notes on the alternating bank */
+        /* chord presses → up to 3 voiced notes (capped), Bed profile, voicings
+         * transposed -7 (perfect 4th down) so the chord sits in the warm mid-
+         * low band instead of the Klangschalen register. Melody removed —
+         * 70 % atmosphere / 20 % harmony / 10 % melody → for the demo, 0 %. */
         while(ci<N_CH && CHORDS[ci].t<=t){
             const chord_t *c=&CHORDS[ci]; int bank=(kchord%2)*4;
-            brain_set_vibe(c->vibe); pad_set_profile(1);
+            brain_set_vibe(c->vibe);
             int notes[BRAIN_MAX_CHORD], nn=brain_chord(c->degree,notes,BRAIN_MAX_CHORD);
-            if(nn>4) nn=4;                                  /* cap → fits voice budget */
+            if(nn>3) nn=3;                                  /* 3 voices keeps it open */
             float per=c->vel/sqrtf((float)(nn>0?nn:1));
-            for(int j=0;j<nn;++j){ uint8_t s=(uint8_t)(bank+j); pad_note_on(s,dsp_midi_to_hz((float)notes[j]),per); sched_off(t+c->hold,s); }
+            for(int j=0;j<nn;++j){ uint8_t s=(uint8_t)(bank+j); pad_note_on(s,dsp_midi_to_hz((float)(notes[j]-7)),per); sched_off(t+c->hold,s); }
             ++kchord; ++ci;
         }
-        /* melody taps (Air) on the dedicated source */
-        while(mi<N_MEL && MELODY[mi].t<=t){
-            const mel_t *m=&MELODY[mi]; pad_set_profile(2);
-            pad_note_on(9, dsp_midi_to_hz((float)m->midi), m->vel); sched_off(t+m->dur,9); ++mi;
-        }
+        (void)mi;   /* melody intentionally disabled in this revision */
         for(int i=0;i<npend;){ if(pend[i].t<=t){ pad_note_off(pend[i].src); pend[i]=pend[--npend]; } else ++i; }
 
         int n=(int)((total-frame)<BLOCK?(total-frame):BLOCK);
         memset(dryL,0,sizeof(float)*n); memset(dryR,0,sizeof(float)*n);
+        memset(zL,0,sizeof(float)*n);   memset(zR,0,sizeof(float)*n);
         pad_render_mix(dryL,dryR,zL,zR,n,0.0f);
-        granular_block(dryL,dryR,gL,gR,n);
+        texture_render_mix(dryL,dryR,zL,zR,n,0.0f);     /* wind/body bed INTO dry */
+        granular_block(dryL,dryR,gL,gR,n);              /* grains read chord+texture */
         diffuser_process(&df,gL,gR,n);
         reverb_render(gL,gR,wL,wR,n);
 
         for(int i=0;i<n;++i){
             float wet=wet_at((float)(frame+i)/SR);
-            /* dry-floor: never drop the clean chord below 70 % — wet adds
-             * ON TOP as atmosphere, doesn't replace the source. */
-            float dry=1.0f-0.30f*wet;
-            float L=(dryL[i]*dry + wL[i]*0.55f*wet)*1.25f;
-            float R=(dryR[i]*dry + wR[i]*0.55f*wet)*1.25f;
+            /* dry-floor: never drop dry below 92 % — wet hangs off the chord
+             * as a hint of room, never replaces it. */
+            float dry=1.0f-0.08f*wet;
+            float L = sat( (dryL[i]*dry + wL[i]*0.40f*wet) * 1.20f );
+            float R = sat( (dryR[i]*dry + wR[i]*0.40f*wet) * 1.20f );
             int li=(int)(L*32767.0f), ri=(int)(R*32767.0f);
             if(li>32767)li=32767; if(li<-32768)li=-32768;
             if(ri>32767)ri=32767; if(ri<-32768)ri=-32768;
