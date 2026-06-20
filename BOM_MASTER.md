@@ -151,15 +151,21 @@ Standard-Lib-3D.
 |---|---|---|---|---|---|
 | **J4** TC2030-IDC 3-Pin | Tag-Connect TC2030-IDC | [Tag-Connect Shop](https://www.tag-connect.com/product/tc2030-idc) | `Connector_PinHeader_1.27mm:PinHeader_1x03_P1.27mm_Vertical` | KiCad-Standard | Vendor-CAD |
 
-## 12. Mechanik (Gehäuse + Knöpfe)
+## 12. Mechanik (Gehäuse + Knöpfe) — **post-PCB, kein Schematic/Layout-Blocker**
 
-| Element | Wahl | Quelle |
-|---|---|---|
-| Gehäuse Außen 260 × 110 × 21.6 mm | ABS / PC Spritzguss 2.5 mm (Top + Bottom) | TBD (Industrial Design Sprint) — **TODO: kein CAD-File im Repo** |
-| 4× Mounting-Hardware M2.5 | (Standard Hex-Standoff 3 mm) | RS / Reichelt |
-| Encoder-Knöpfe (4×) Ø 19–20 × 8–10 mm | **selbst 3D-gedruckt** (r18.21) | User — **TODO: STL noch nicht im Repo** |
-| Cell-Caps (5×, 1u) | **selbst 3D-gedruckt** (r18.21) | User — **TODO: STL noch nicht im Repo** |
-| Plate für Magnetic-Switches | TBD-CAD | Industrial Design — **TODO: kein CAD-File im Repo** |
+> Alle Einträge hier sind Gehäuse-/Hand-Hardware. Sie wirken NICHT auf das
+> PCB-Layout (keine Bohrungen, keine Pads, keine Höhen-Constraints außer den
+> bereits in `mechanical/coordinates/mechanical_coordinates.md` validierten).
+> Der PCB-Sprint kann ohne diese Files starten und abschließen — sie werden
+> erst nach Schematic/Layout-Freigabe gezogen.
+
+| Element | Wahl | Quelle | Status |
+|---|---|---|---|
+| Gehäuse Außen 260 × 110 × 21.6 mm | ABS / PC Spritzguss 2.5 mm (Top + Bottom) | TBD (Industrial Design Sprint) | post-PCB |
+| 4× Mounting-Hardware M2.5 | (Standard Hex-Standoff 3 mm) | RS / Reichelt | post-PCB |
+| Encoder-Knöpfe (4×) Ø 19–20 × 8–10 mm | **selbst 3D-gedruckt** (r18.21) | User | post-PCB |
+| Cell-Caps (5×, 1u) | **selbst 3D-gedruckt** (r18.21) | User | post-PCB |
+| Plate für Magnetic-Switches | TBD-CAD | Industrial Design | post-PCB |
 
 ---
 
@@ -180,8 +186,8 @@ Wer prüft was wann:
 
 | Punkt | Status | Verweis |
 |---|---|---|
-| Alle Footprints geprüft | ✅ 7 Custom in [`field_ambience.pretty/`](field-ambience-current/kicad/libraries/field_ambience.pretty/), Rest KiCad-Standard. Davon **6 aktiv referenziert** (Y1, J8, L1, U8, SW6-10, SW11/SW_BOOT); **1 Leiche** (`RotaryEncoder_ALPS_EC11J_SMD.kicad_mod` — nicht referenziert, EN1–4 nutzen seit ADR-0012 KiCad-Standard `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`; Kandidat für Cleanup) | [`field-ambience-current/FP_VERIFY_LOG.md`](field-ambience-current/FP_VERIFY_LOG.md) |
-| 3D-STEPs für Z-/Panel-kritische Teile | ✅ 7 Stück in [`field_ambience.3dshapes/`](field-ambience-current/kicad/libraries/field_ambience.3dshapes/) (U1, Y1, U8, L1, J_BAT, J8, SW11/SW_BOOT). USB-C-Receptacle nutzt KiCad-Standard-STEP (kein Custom-STEP nötig) | r18.36 — vorher fälschlich auf nicht existierendes `mechanical/3d_models/MANIFEST.md` verwiesen |
+| Alle Footprints geprüft | ✅ **6 Custom** in [`field_ambience.pretty/`](field-ambience-current/kicad/libraries/field_ambience.pretty/) — alle aktiv referenziert (Y1, J8, L1, U8, SW6-10, SW11/SW_BOOT); Rest KiCad-Standard. Keine Leichen | [`field-ambience-current/FP_VERIFY_LOG.md`](field-ambience-current/FP_VERIFY_LOG.md) |
+| 3D-STEPs für Z-/Panel-kritische Teile | ✅ **7 Stück** in [`field_ambience.3dshapes/`](field-ambience-current/kicad/libraries/field_ambience.3dshapes/) (U1, Y1, U8, L1, J_BAT, J8, SW11/SW_BOOT). USB-C-Receptacle nutzt KiCad-Standard-STEP (kein Custom-STEP nötig). Z-Höhen-Tabelle pro STEP (für Enclosure-CAD): [`mechanical/3d_models/MANIFEST.md`](mechanical/3d_models/MANIFEST.md) | r18.36 |
 | Mechanische X/Y/Z + Höhen-Constraints | ✅ Python-validiert, 0 Konflikte | `mechanical/coordinates/mechanical_coordinates.md` |
 | DRV5056-Pinout DS-bestätigt | ✅ TI-DS Table 4-1 | r18.14b |
 | AP7361C-Pinout User-bestätigt | ✅ Diodes-DS | r18.6 |
@@ -191,4 +197,5 @@ Wer prüft was wann:
 | Audio-Jack-Footprint | ✅ `field_ambience:Jack_3.5mm_PJ-320D_SMT` (EasyEDA-CAD vendored, 4 SMD + 2 NPTH). Vorher CUI SJ-3523-SMT-FP zugewiesen — Pad-Layout passte nicht zu C431535 (SHOU HAN) | r18.19 |
 | Speaker-Wert in Schaltplan | ✅ `value="CMS-402811-28SP Cloth-Cone 8R 2W"` (J6/J7). Vorher stale „PUI AS04008PS 4R 4W" — falsche Impedanz + falscher Treiber | r18.19 |
 | SW_BOOT-MPN korrekt | ✅ TS-1088-AR02016 (war fälschlich TS-1185A) | r18.14 |
-| CAD-Files klickbar verlinkt + 3D-Spalten-Konsistenz | ✅ alle 7 STEPs + 6 aktiv genutzten Custom-Footprints als relative Markdown-Links eingetragen; J1 USB-C („STEP im Repo" → „Standard-Lib-3D") und SW11/SW_BOOT („Vendor-CAD" → „STEP im Repo") korrigiert; Custom-3D-Print-Files (Knöpfe, Cell-Caps, Plate, Gehäuse) als offene TODOs markiert; 1 unreferenzierte Footprint-Leiche (`RotaryEncoder_ALPS_EC11J_SMD`) im Audit ausgewiesen | r18.36 |
+| CAD-Files klickbar verlinkt + 3D-Spalten-Konsistenz | ✅ alle 7 STEPs + 6 aktiv genutzten Custom-Footprints als relative Markdown-Links eingetragen; J1 USB-C („STEP im Repo" → „Standard-Lib-3D") und SW11/SW_BOOT („Vendor-CAD" → „STEP im Repo") korrigiert; unreferenzierte Footprint-Leiche `RotaryEncoder_ALPS_EC11J_SMD` gelöscht. **PCB-Path ist damit Schematic/Layout-bereit — keine offenen CAD-TODOs für PCB** | r18.36 |
+| Mechanik-Sektion (§12) klar als post-PCB markiert | ✅ Custom-3D-Print-Files (Encoder-Knöpfe, Cell-Caps, Switch-Plate, Gehäuse) sind **nicht PCB-blockierend** — sie kommen nach Schematic/Layout-Freigabe und beeinflussen das Board nicht (keine Bohrungen / kein Pad-Pattern). §12 entsprechend annotiert | r18.36 |

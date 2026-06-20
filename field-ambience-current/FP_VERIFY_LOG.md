@@ -82,7 +82,7 @@ In `generate_kicad_project.py` werden `FP_VERIFY`-Properties durch `FP_NOTE`-Pro
 
 ## Custom-Footprints in der Project-Lib
 
-Alle 7 in `kicad/libraries/field_ambience.pretty/`:
+Alle 6 in `kicad/libraries/field_ambience.pretty/`:
 
 ```
 SW_HX_12x12x7.3_SMD-4P.kicad_mod                  HX 12×12 Tactile (5 Plätze)
@@ -91,11 +91,16 @@ Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A.kicad_mod  TPS61089RNR Boost (1 Platz)
 SW_TS1088_SMD.kicad_mod                           SW11 + SW_BOOT (EasyEDA-verifiziert, r18.14)
 Jack_3.5mm_PJ-320D_SMT.kicad_mod                  J8/J9 Audio+MIDI-Klinke (EasyEDA-verifiziert, r18.19)
 L_Sunlord_SWPA6045.kicad_mod                      L1 Boost-Inductor 2.2µH (EasyEDA-verifiziert r18.20c — Phantom-Name L_0630 ersetzt)
-RotaryEncoder_ALPS_EC11J_SMD.kicad_mod            EC11J-Referenz (EasyEDA-verifiziert; Teil retired, ADR-0012)
 ```
 
 3D-STEP-Modelle (Z-/Panel-kritische Teile) in
-`kicad/libraries/field_ambience.3dshapes/` — Inventar + Regenerier-Kommando in
-`mechanical/3d_models/MANIFEST.md`.
+`kicad/libraries/field_ambience.3dshapes/` — 7 STEPs (U1, Y1, U8, L1, J_BAT,
+J8, SW11/SW_BOOT). Z-Höhen-Tabelle + Regenerier-Kommando in
+`mechanical/3d_models/MANIFEST.md` (Repo-Root, nicht unter
+`field-ambience-current/`).
+
+r18.36: Footprint `RotaryEncoder_ALPS_EC11J_SMD.kicad_mod` entfernt
+(unreferenzierte Leiche — EN1–4 nutzen seit ADR-0012 KiCad-Standard
+`Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`).
 
 `fp-lib-table` referenziert `${KIPRJMOD}/libraries/field_ambience.pretty`.
