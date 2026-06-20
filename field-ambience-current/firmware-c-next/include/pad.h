@@ -49,10 +49,21 @@ void pad_all_off(void);
  * so turning it does not zipper. */
 void pad_set_brightness(float hz);
 
-/* Global pad-voice timbre, applied to ALL voices at once and smoothed so the
- * whole stack glides into the new sound together (no old/new timbre clashing).
- * 0 = warm (pure saw), ~0.6 = strings, ~1.2 = brass — webapp PAD_VOICE_MIXES. */
+/* Global pad-voice saw↔pulse mix INSIDE the active profile. Kept for
+ * backward compat (test_pad / older callers). For switching between distinct
+ * character families, use pad_set_profile() below. */
 void pad_set_voice_mix(float vmix);
+
+/* Four selectable pad timbre profiles (0..3):
+ *   0 = WarmChorus    — Juno-106 inspired, friendly + warm + short-attack
+ *   1 = CinematicWash — CS-80/OB-Xa inspired, broad + vibrato'd + lush
+ *   2 = TapeSoft      — Boards of Canada inspired, dark + lo-fi tape-wow
+ *   3 = PluckedBell   — subtractive bell, short attack + ringy partials
+ * The change takes effect on the next note_on; voices already ringing keep
+ * the profile they were born with so a live switch never zippers. */
+void pad_set_profile(int id);
+int  pad_get_profile(void);
+const char *pad_profile_name(int id);
 
 /* Render `frames` interleaved stereo int16 samples (L,R,L,R,…), summing all
  * active pad voices through a soft-clipped master. Audio-context safe:

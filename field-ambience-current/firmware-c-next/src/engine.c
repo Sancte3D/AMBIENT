@@ -228,12 +228,14 @@ void engine_set_key(int tonic_midi) {
 }
 void engine_set_drone(bool on) { drone_enable(on); }
 
-/* PAD_VOICE_MIXES from the webapp: warm / strings / brass. */
+/* Four pad timbre profiles (0..3): WarmChorus / CinematicWash / TapeSoft /
+ * PluckedBell — each a distinct character family inside the same engine.
+ * Legacy callers passing 0..2 land on the first three profiles, so the old
+ * "warm / strings / brass" labels still map to something sensible. */
 void engine_set_pad_voice(int voice_idx) {
-    static const float MIX[] = { 0.0f, 0.6f, 1.2f };
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 2) voice_idx = 2;
-    pad_set_voice_mix(MIX[voice_idx]);
+    if (voice_idx > 3) voice_idx = 3;
+    pad_set_profile(voice_idx);
 }
 
 static bool any_cell_held(void) {
