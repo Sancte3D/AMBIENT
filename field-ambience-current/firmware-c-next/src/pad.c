@@ -38,8 +38,7 @@ typedef enum { ENV_IDLE = 0, ENV_ATTACK, ENV_SUSTAIN, ENV_RELEASE } env_state_t;
 
 typedef struct {
     float phase[OSC_N];     /* turns [0,1) */
-    float inc[OSC_N];       /* per-sample increment = f·mul / SR (wow-modulated) */
-    float base_inc[OSC_N];  /* nominal increment (no wow); inc = base_inc·wow_mul */
+    float inc[OSC_N];       /* per-sample increment = f·mul / SR */
 
     dsp_svf_t svf;
     float cutoffBase, cutoffMod, fenvAmount;
@@ -65,170 +64,7 @@ typedef struct {
     float       atkInc;     /* per-sample linear attack step */
     float       relCoef;    /* per-sample exponential release coef */
     env_state_t state;
-
-    /* per-voice tape-wow / vibrato LFO. Modulates osc increments at control
-     * rate. Depth/rate come from the active profile. */
-    float       wow_phase;
-    float       wow_inc;    /* per-sample LFO phase increment */
-    float       wow_depth;  /* fraction, e.g. 0.0017 ≈ ±3 cents */
-
-    int         profile;    /* which profile this voice was born under */
 } pad_voice_t;
-
-/* ============================================================================
- * Pad voice PROFILES — four selectable timbres on the same saw-stack engine.
- * Switch via pad_set_profile(0..3). Each profile is a parameter set that
- * pad_note_on() reads at trigger time + the render loop reads each control
- * block (per-voice fields that need to survive a profile switch are baked
- * into pad_voice_t / pad_side_t at note_on time). ========================== */
-
-typedef struct {
-    const char *name;
-
-    float attack_s;          /* amp attack */
-    float release_s;         /* amp release */
-
-    float cutoff_base;       /* LP base cutoff in Hz */
-    float cutoff_mod;        /* LFO cutoff modulation depth in Hz */
-    float q_mul;             /* SVF Q multiplier (1.0 = neutral; >1 ringy) */
-    float fenv_amount;       /* filter envelope amount (0 = no sweep) */
-    float fenv_attack_s;     /* filter env attack time */
-    float lfo_rate_hz;       /* cutoff LFO rate (base; per-source variation added) */
-
-    /* tape-wow / vibrato (per-voice LFO modulating osc increments) */
-    float wow_depth;         /* 0 = none, 0.0017 = ±3 cents, 0.008 = ±14 cents */
-    float wow_rate_hz;       /* 0.3–0.6 reads as tape-wow; 4–6 reads as vibrato */
-
-    float detune_cents;      /* between-sides detune (base; per-source variation added) */
-
-    /* oscillator stack mix (renormalised inside the render loop). The base
-     * stack is 3 saws (×1, ×freqMul, ×0.5) + 2 squares (×1, ×freqMul);
-     * these are the relative levels. */
-    float saw1_w;            /* fundamental saws (both ×1 and ×freqMul) */
-    float sub_w;             /* ×0.5 sub-saw weight */
-    float pulse_w;           /* squares weight */
-
-    /* reverb send override (-1 = leave engine default). Used to keep the
-     * plucked-bell from drowning in wash; not yet wired through engine but
-     * available if we want it later. */
-    float send_amount;
-} pad_profile_t;
-
-#define PAD_PROFILE_COUNT 4
-
-/* All four profiles are ROLES INSIDE ONE AMBIENT FAMILY — not four separate
- * genres. Tuned toward a sleep / binaural / solfeggio aesthetic: very dark
- * LP so the saw stack reads as near-sinus, no filter movement (cutoff_mod /
- * fenv_amount ≈ 0), long blooms, minimal stack (no pulse → no synth bite),
- * tiny detune (a chorus-light binaural feel rather than the heavy 7–12 c
- * ensemble of a Juno).
- *
- * Shared family constraints (so the four layer into one coherent vibe):
- *   - cutoff_base    380 – 820 Hz   (all near-sinus through the LP)
- *   - cutoff_mod     0 – 60 Hz      (essentially no LFO sweep)
- *   - q_mul          0.75 – 0.95    (none ringy — soft, undriven)
- *   - fenv_amount    0 – 0.10       (no filter-attack click)
- *   - attack_s       0.45 – 1.20    (all slow bloom, no percussive snap)
- *   - release_s      3.0  – 4.6     (long, ambient-typical, inside test drain)
- *   - wow_rate_hz    0.25 – 0.45    (slow tape-wow only)
- *   - wow_depth      ≤ 0.0012       (kaum Vibrato; meditativ-static)
- *   - detune_cents   3 – 6          (light chorus, binaural-leaning)
- *   - pulse_w        0              (kein Synth-Pulse-Charakter)
- *
- * What varies = ROLE in the mix when layered. */
-static const pad_profile_t PROFILES[PAD_PROFILE_COUNT] = {
-    /* 0 — Bed : the foundation drone
-     *   Very dark (cutoff 380 Hz → saw stack survives as ~grundton + 2./3.
-     *   harmonic, effectively a slightly-coloured sinus). Slowest bloom of
-     *   the four — sits underneath as a body. Sub-saw kept light so it
-     *   doesn't muddy the binaural feel. */
-    {   "Bed",
-        .attack_s        = 1.20f,
-        .release_s       = 3.0f,         /* matches old PAD_RELEASE_S; test_pad
-                                          * drain check assumes 12 s is enough */
-        .cutoff_base     = 380.0f,       /* near-sinus through the LP */
-        .cutoff_mod      = 0.0f,         /* no LFO movement */
-        .q_mul           = 0.90f,
-        .fenv_amount     = 0.0f,         /* static — no filter-attack sweep */
-        .fenv_attack_s   = 1.0f,
-        .lfo_rate_hz     = 0.04f,
-        .wow_depth       = 0.0006f,      /* almost no wow — meditativ-static */
-        .wow_rate_hz     = 0.26f,
-        .detune_cents    = 5.0f,
-        .saw1_w          = 0.90f,        /* fundamental dominates → sinus-like */
-        .sub_w           = 0.30f,        /* light sub for warmth, not brummend */
-        .pulse_w         = 0.0f,         /* no pulse → no synth bite */
-        .send_amount     = -1.0f,
-    },
-    /* 1 — Felt : the cell-tap pad (default voice)
-     *   The most "concrete" of the four but still very soft. Slightly faster
-     *   bloom so a tapped cell reads as a note rather than fading-in air. */
-    {   "Felt",
-        .attack_s        = 0.55f,
-        .release_s       = 3.2f,
-        .cutoff_base     = 520.0f,
-        .cutoff_mod      = 40.0f,        /* tiny breathing only */
-        .q_mul           = 0.85f,
-        .fenv_amount     = 0.0f,
-        .fenv_attack_s   = 0.50f,
-        .lfo_rate_hz     = 0.05f,
-        .wow_depth       = 0.0009f,
-        .wow_rate_hz     = 0.32f,
-        .detune_cents    = 4.0f,         /* tight binaural-leaning detune */
-        .saw1_w          = 0.95f,
-        .sub_w           = 0.20f,
-        .pulse_w         = 0.0f,
-        .send_amount     = -1.0f,
-    },
-    /* 2 — Air : the highlight / shimmer pad
-     *   Brightest of the four (cutoff 820 → a few more harmonics survive,
-     *   reads as airy / luminous) and slowest bloom. Sub kept very low so it
-     *   leaves room for Bed. Slightly wider detune for a beating, breathing
-     *   high layer that floats above the others. */
-    {   "Air",
-        .attack_s        = 0.95f,
-        .release_s       = 3.4f,         /* under ~3.3 limit not needed here
-                                          * because release coef is gentle */
-        .cutoff_base     = 820.0f,
-        .cutoff_mod      = 60.0f,
-        .q_mul           = 0.80f,
-        .fenv_amount     = 0.0f,
-        .fenv_attack_s   = 0.80f,
-        .lfo_rate_hz     = 0.06f,
-        .wow_depth       = 0.0012f,
-        .wow_rate_hz     = 0.42f,
-        .detune_cents    = 6.0f,
-        .saw1_w          = 0.85f,
-        .sub_w           = 0.08f,        /* leaves the low band to Bed */
-        .pulse_w         = 0.0f,
-        .send_amount     = -1.0f,
-    },
-    /* 3 — Hush : the soft-mallet accent pad
-     *   The most "articulated" of the four but still well inside the
-     *   sleep-vibe — a 0.45 s bloom, no filter click, no pulse, no ringy Q.
-     *   Used for accents that mark phrases without breaking the wash. */
-    {   "Hush",
-        .attack_s        = 0.45f,
-        .release_s       = 3.0f,
-        .cutoff_base     = 650.0f,
-        .cutoff_mod      = 30.0f,
-        .q_mul           = 0.85f,
-        .fenv_amount     = 0.0f,
-        .fenv_attack_s   = 0.40f,
-        .lfo_rate_hz     = 0.05f,
-        .wow_depth       = 0.0008f,
-        .wow_rate_hz     = 0.28f,
-        .detune_cents    = 4.0f,
-        .saw1_w          = 0.90f,
-        .sub_w           = 0.25f,
-        .pulse_w         = 0.0f,
-        .send_amount     = -1.0f,
-    },
-};
-
-static int active_profile = 0;
-
-#define PROF (&PROFILES[active_profile])
 
 static pad_voice_t voices[PAD_MAX];
 static int   ctl_phase;             /* shared control-rate counter */
@@ -251,10 +87,9 @@ static float vmix_coef;             /* per-control-block smoothing coef */
 
 void pad_init(void) {
     memset(voices, 0, sizeof voices);
-    ctl_phase      = 0;
-    bright_target  = 0.0f;
-    bright_cur     = 0.0f;
-    active_profile = 0;             /* default → WarmChorus */
+    ctl_phase     = 0;
+    bright_target = 0.0f;
+    bright_cur    = 0.0f;
     /* brightness glide ~80 ms, evaluated once per control block */
     bright_coef = 1.0f - expf(-(float)CTL_DECIMATE / (0.08f * SR));
 
@@ -267,25 +102,9 @@ void pad_init(void) {
 
 void pad_set_brightness(float hz) { bright_target = hz; }
 
-/* Global pad-voice timbre — kept as the saw/pulse balance knob INSIDE the
- * active profile. Backward-compatible; tests still use this. The bigger
- * pad_set_profile() switches between four distinct timbre families. */
+/* Global pad-voice timbre. 0 = warm (pure saw), ~0.6 = strings, ~1.2 = brass
+ * (matches the webapp PAD_VOICE_MIXES). Smoothed across all voices. */
 void pad_set_voice_mix(float vmix) { vmix_target = dsp_clampf(vmix, 0.0f, 1.5f); }
-
-/* Select one of four character profiles. The switch takes effect on the next
- * pad_note_on (currently-ringing voices keep the profile they were born with
- * → no zipper). 0=WarmChorus, 1=CinematicWash, 2=TapeSoft, 3=PluckedBell. */
-void pad_set_profile(int id) {
-    if (id < 0) id = 0;
-    if (id >= PAD_PROFILE_COUNT) id = PAD_PROFILE_COUNT - 1;
-    active_profile = id;
-}
-
-int pad_get_profile(void) { return active_profile; }
-const char *pad_profile_name(int id) {
-    if (id < 0 || id >= PAD_PROFILE_COUNT) return "?";
-    return PROFILES[id].name;
-}
 
 /* Equal-power pan: p in [-1,1] → (gl,gr). */
 static void pan_gains(float p, float *gl, float *gr) {
@@ -320,22 +139,25 @@ static int alloc_slot(void) {
 
 static void side_setup(pad_side_t *s, float base_freq, int sign, float voice_pan,
                        float detune_cents, float freq_mul, float cutoff_base,
-                       float cutoff_rate, float fenv_attack_s, bool keep_phase,
-                       const pad_profile_t *p) {
+                       float cutoff_rate, float fenv_attack_s, bool keep_phase) {
     float f = base_freq * powf(2.0f, (sign * detune_cents) / 1200.0f);
 
     const float mul[OSC_N] = { OSC_MUL_BASE[0], freq_mul, OSC_MUL_BASE[2],
                                OSC_MUL_BASE[3], freq_mul };
     for (int k = 0; k < OSC_N; ++k) {
         if (!keep_phase) s->phase[k] = 0.0f;
-        s->base_inc[k] = f * mul[k] / SR;
-        s->inc[k]      = s->base_inc[k];        /* wow scales this each ctl block */
+        s->inc[k]  = f * mul[k] / SR;
     }
 
     if (!keep_phase) dsp_svf_reset(&s->svf);
     s->cutoffBase  = cutoff_base;
-    s->cutoffMod   = p->cutoff_mod;
-    s->fenvAmount  = p->fenv_amount;
+    s->cutoffMod   = 500.0f;
+    /* Filter envelope amount: 0 for cell taps (webapp cellOn explicitly
+     * disables this — "fenvAmount: 0.0"). The 0.5 value here would belong
+     * to the chord-spawn / drone path with their slow filter sweeps; using
+     * it on cell taps put a continuous filter-open sweep over every note
+     * and made the pad sound matschig. */
+    s->fenvAmount  = 0.0f;
 
     s->lfoInc   = cutoff_rate * (sign > 0 ? 1.13f : 1.0f) / SR;
     if (!keep_phase) s->lfoPhase = (sign > 0) ? 0.37f : 0.0f;
@@ -361,34 +183,20 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     if (i < 0) return;
     pad_voice_t *v = &voices[i];
 
-    const pad_profile_t *p = PROF;
-
     /* Deterministic per-source variation (no rand(): keeps tests reproducible
-     * while still detuning each voice differently). The profile sets the
-     * BASE for each parameter; we add a small per-source offset for ensemble
-     * decorrelation. */
-    float detune = p->detune_cents + (float)(source & 3);            /* base + 0..3c */
-    float cbase  = p->cutoff_base + (float)(source % 5) * 30.0f;     /* base + 0..120 Hz */
-    float crate  = p->lfo_rate_hz + (float)(source % 4) * 0.012f;
-    float fatk   = p->fenv_attack_s + (float)(source % 3) * 0.05f;
+     * while still detuning each voice differently). */
+    float detune = 7.0f + (float)(source & 3);          /* 7 … 10 cents   */
+    float cbase  = 1100.0f + (float)(source % 5) * 40.0f;
+    float crate  = 0.05f + (float)(source % 4) * 0.015f;
+    float fatk   = 2.5f + (float)(source % 3) * 0.5f;
 
     v->used   = true;
     v->source = source;
-    v->profile = active_profile;
     v->amp    = dsp_clampf(amp, 0.0f, 1.0f);
     if (!keep_phase) v->env = 0.0001f;
-    v->atkInc  = v->amp / (p->attack_s * SR);
-    v->relCoef = dsp_smooth_coef(p->release_s / 3.0f);
-    v->state   = ENV_ATTACK;
-
-    /* tape-wow / vibrato per voice. Phase deterministic per source so the
-     * ensemble decorrelates without rand(); rate also varies slightly so
-     * voices don't lock-step. */
-    if (!keep_phase) {
-        v->wow_phase = (float)(source & 7) * 0.125f;
-        v->wow_inc   = (p->wow_rate_hz + 0.013f * (float)(source % 10)) / SR;
-        v->wow_depth = p->wow_depth;
-    }
+    v->atkInc = v->amp / (PAD_ATTACK_S * SR);
+    v->relCoef = dsp_smooth_coef(PAD_RELEASE_S / 3.0f);
+    v->state  = ENV_ATTACK;
 
     /* Webapp cellOn pans cells across the stereo field: pan = (degree-4)·0.15
      * → Cell 1 left (−0.45), Cell 5 right (+0.15). For source IDs ≥ 5
@@ -396,8 +204,8 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     float voice_pan = (source < 5) ? ((float)source - 3.0f) * 0.15f : 0.0f;
 
     /* side 0 = −detune, freqMul 1.003; side 1 = +detune, freqMul 0.997 */
-    side_setup(&v->side[0], freq_hz, -1, voice_pan, detune, 1.003f, cbase, crate, fatk, keep_phase, p);
-    side_setup(&v->side[1], freq_hz, +1, voice_pan, detune, 0.997f, cbase, crate, fatk, keep_phase, p);
+    side_setup(&v->side[0], freq_hz, -1, voice_pan, detune, 1.003f, cbase, crate, fatk, keep_phase);
+    side_setup(&v->side[1], freq_hz, +1, voice_pan, detune, 0.997f, cbase, crate, fatk, keep_phase);
 }
 
 void pad_note_off(uint8_t source) {
@@ -412,16 +220,9 @@ void pad_all_off(void) {
             voices[i].state = ENV_RELEASE;
 }
 
-/* Control-rate update for one side: apply wow to osc increments, advance
- * LFO + filter env, recompute the lowpass cutoff. Called every CTL_DECIMATE
- * samples. wow_mul comes from the parent voice (per-voice wow → both sides
- * wobble coherently; voices wobble independently → ensemble chorus). Q comes
- * from the active profile (profile-of-the-voice — read via voice->profile
- * by the caller, then passed in as q_mul). */
-static void side_control(pad_side_t *s, float wow_mul, float q_mul) {
-    /* apply wow to osc increments (tape-wow / vibrato — kills static orgel) */
-    for (int k = 0; k < OSC_N; ++k) s->inc[k] = s->base_inc[k] * wow_mul;
-
+/* Control-rate update for one side: advance LFO + filter env, recompute the
+ * lowpass cutoff. Called every CTL_DECIMATE samples. */
+static void side_control(pad_side_t *s) {
     /* LFO */
     s->lfoPhase += s->lfoInc * (float)CTL_DECIMATE;
     if (s->lfoPhase >= 1.0f) s->lfoPhase -= 1.0f;
@@ -439,7 +240,7 @@ static void side_control(pad_side_t *s, float wow_mul, float q_mul) {
                  + lfo  * s->cutoffMod * 0.5f
                  + s->fenv * s->cutoffMod * s->fenvAmount
                  + bright_cur;
-    dsp_svf_set(&s->svf, dsp_clampf(cutoff, 80.0f, 8000.0f), 0.18f * 12.0f * q_mul);
+    dsp_svf_set(&s->svf, dsp_clampf(cutoff, 80.0f, 8000.0f), 0.18f * 12.0f);
 }
 
 /* Raw stereo float render — no master soft-clip, no int16 conversion. The
@@ -481,46 +282,20 @@ static void render_block_float(float *outL, float *outR, int frames) {
             }
             if (!v->used) continue;
 
-            /* per-voice tape-wow / vibrato: advance phase + compute multiplier
-             * once per control block (16 samples). Profile-controlled depth +
-             * rate. wow_mul = 1 + sin(phase) * depth. */
-            float wow_mul = 1.0f;
-            if (ctl) {
-                v->wow_phase += v->wow_inc * (float)CTL_DECIMATE;
-                if (v->wow_phase >= 1.0f) v->wow_phase -= 1.0f;
-                wow_mul = 1.0f + dsp_sin(v->wow_phase) * v->wow_depth;
-            }
-
-            /* Per-voice profile (the voice was born under its own profile;
-             * re-triggering an existing source keeps its original profile so
-             * a live profile switch never zippers a ringing voice). */
-            const pad_profile_t *vp = &PROFILES[v->profile];
-
             float vL = 0.0f, vR = 0.0f;
             for (int sd = 0; sd < 2; ++sd) {
                 pad_side_t *s = &v->side[sd];
-                if (ctl) side_control(s, wow_mul, vp->q_mul);
+                if (ctl) side_control(s);
 
-                /* Oscillator stack mix from the voice's profile.
-                 *   saws[0,1] = fundamental, saws[2] = sub-octave (×0.5)
-                 *   pulses[3,4] = squares (×1, ×freqMul)
-                 * Profile weights (saw1_w, sub_w, pulse_w) re-balance the
-                 * stack so each profile has a recognisable timbral identity
-                 * instead of every voice being the same 5-osc soup. */
-                float saw_fund = dsp_poly_saw(s->phase[0], s->inc[0])
-                               + dsp_poly_saw(s->phase[1], s->inc[1]);
-                float saw_sub  = dsp_poly_saw(s->phase[2], s->inc[2]);
-                float pulses   = dsp_poly_square(s->phase[3], s->inc[3])
-                               + dsp_poly_square(s->phase[4], s->inc[4]);
-
-                float saws = vp->saw1_w * saw_fund + vp->sub_w * saw_sub;
-                /* `saww_cur` / `pulsew_cur` are still the global saw↔pulse
-                 * macro crossfade (pad_set_voice_mix). It multiplies the
-                 * profile pulse weight, so the macro acts as an extra slider
-                 * INSIDE each profile rather than replacing it. */
-                float sig = (saws * saww_cur
-                            + pulses * vp->pulse_w * (0.5f + pulsew_cur))
-                            * 0.32f;
+                /* oscillator stack: 0,1,2 = saws (×1, ×freqMul, ×0.5);
+                 * 3,4 = squares (×1, ×freqMul). Saw and pulse halves are
+                 * crossfaded by the smoothed global timbre weights. */
+                float saws = dsp_poly_saw(s->phase[0], s->inc[0])
+                           + dsp_poly_saw(s->phase[1], s->inc[1])
+                           + 0.5f * dsp_poly_saw(s->phase[2], s->inc[2]);
+                float pulses = dsp_poly_square(s->phase[3], s->inc[3])
+                             + dsp_poly_square(s->phase[4], s->inc[4]);
+                float sig = (saww_cur * saws + pulsew_cur * pulses) * 0.4f;
 
                 for (int k = 0; k < OSC_N; ++k) {
                     s->phase[k] += s->inc[k];
