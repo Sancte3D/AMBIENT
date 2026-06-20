@@ -53,39 +53,64 @@ static inline void warm_sat(float *L, float *R, int n, float drive){
     }
 }
 
-/* ---- universal wind/breath: bandpass-swept noise around 600 Hz --------
- * The "default wind sound" the user liked. Runs in every world at a
- * subtle level. NOT the brown-noise body rumble that was making the
- * brumm — that came from texture.c body and is now off. */
+/* ---- universal wind/breath: REAL resonant bandpass on pink-ish noise,
+ * slow sweep + amplitude gusts. The previous version was a wide-band 1-pole
+ * cascade and sounded like pure white noise — this uses dsp_svf_bp at Q≈2.5
+ * for a narrow band, slow LFO that walks the centre between 350..900 Hz over
+ * ~14 s, plus random gust envelopes every 4..8 s for the "atmen" feel. */
 static uint32_t wnd_rng_L = 0xACE12345u, wnd_rng_R = 0x7B19F88Au;
-static float wnd_lpL=0, wnd_lpR=0, wnd_bpL=0, wnd_bpR=0, wnd_lfo=0;
+static dsp_svf_t wnd_bpL_f, wnd_bpR_f;
+static float wnd_lfo = 0;
+static float wnd_pink_L_b0=0, wnd_pink_L_b1=0, wnd_pink_L_b2=0;
+static float wnd_pink_R_b0=0, wnd_pink_R_b1=0, wnd_pink_R_b2=0;
+static float wnd_gust_env = 0.5f;
+static int   wnd_gust_until = 0;
+static int   wnd_initialised = 0;
 static inline float wnd_white(uint32_t *r){
     *r = (*r) * 1664525u + 1013904223u;
     return ((int32_t)*r) * (1.0f / 2147483648.0f);
 }
+/* Cheap 3-pole pink-noise filter (Paul Kellet approximation). Wind sources
+ * have far more low-mid energy than white noise — this is what makes it
+ * sound like air moving instead of static. */
+static inline float wnd_pink(uint32_t *rng, float *b0, float *b1, float *b2){
+    float w = wnd_white(rng);
+    *b0 = 0.99765f * (*b0) + w * 0.0990460f;
+    *b1 = 0.96300f * (*b1) + w * 0.2965164f;
+    *b2 = 0.57000f * (*b2) + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
 static inline void wind_block(float *L, float *R, int n, float amount){
     if (amount <= 0.0f) return;
+    if (!wnd_initialised){
+        dsp_svf_reset(&wnd_bpL_f); dsp_svf_reset(&wnd_bpR_f);
+        wnd_gust_until = (int)SR * 5;
+        wnd_initialised = 1;
+    }
     for (int i = 0; i < n; ++i){
-        /* 0.055 Hz LFO sweeps the bandpass centre */
-        wnd_lfo += 0.055f / (float)SR;
+        /* 14 s sweep: centre 350..900 Hz */
+        wnd_lfo += (1.0f / 14.0f) / (float)SR;
         if (wnd_lfo >= 1.0f) wnd_lfo -= 1.0f;
         float s = sinf(wnd_lfo * 6.2831853f);
-        /* approximate bandpass via LP + (x - LP_slow). Two 1-pole stages. */
-        float wL = wnd_white(&wnd_rng_L);
-        float wR = wnd_white(&wnd_rng_R);
-        /* LP at ~1200 Hz, modulated ±400 Hz by LFO → "shape" of wind */
-        float a_lp = 0.18f + s * 0.06f;
-        wnd_lpL += a_lp * (wL - wnd_lpL);
-        wnd_lpR += a_lp * (wR - wnd_lpR);
-        /* HP via subtracting a slower LP at ~150 Hz removes the rumble */
-        wnd_bpL += 0.022f * (wnd_lpL - wnd_bpL);
-        wnd_bpR += 0.022f * (wnd_lpR - wnd_bpR);
-        float bpL = (wnd_lpL - wnd_bpL);
-        float bpR = (wnd_lpR - wnd_bpR);
-        /* slow amplitude breath, 0.04 Hz */
-        float breath = 0.7f + 0.3f * sinf(wnd_lfo * 2.0f * 6.2831853f * 0.7f);
-        L[i] += bpL * amount * breath;
-        R[i] += bpR * amount * breath;
+        float centre = 625.0f + s * 275.0f;
+        dsp_svf_set(&wnd_bpL_f, centre,        2.5f);
+        dsp_svf_set(&wnd_bpR_f, centre * 1.07f, 2.5f);   /* slight L/R offset */
+
+        /* random gusts every 4..8 s */
+        if (--wnd_gust_until <= 0){
+            wnd_gust_env   = 0.85f + (wnd_white(&wnd_rng_L) * 0.5f + 0.5f) * 0.5f;
+            wnd_gust_until = (int)SR * (4 + (int)((wnd_white(&wnd_rng_R) * 0.5f + 0.5f) * 4));
+        }
+        wnd_gust_env *= 0.99996f;                       /* slow attack/decay */
+        float gust = 0.40f + wnd_gust_env * 0.6f;
+
+        float pL = wnd_pink(&wnd_rng_L, &wnd_pink_L_b0, &wnd_pink_L_b1, &wnd_pink_L_b2);
+        float pR = wnd_pink(&wnd_rng_R, &wnd_pink_R_b0, &wnd_pink_R_b1, &wnd_pink_R_b2);
+        float bpL = dsp_svf_bp(&wnd_bpL_f, pL);
+        float bpR = dsp_svf_bp(&wnd_bpR_f, pR);
+
+        L[i] += bpL * amount * gust;
+        R[i] += bpR * amount * gust;
     }
 }
 
@@ -299,10 +324,10 @@ static const evt_t HOURS_EVTS[] = {
 
 static const world_demo_t WORLDS[N_WORLDS] = {
     /* name             vmix  bright wind  amb         amb_amt hiss   rsiz  rdmp rdrv  wet   sat   gain  d_root d_5th  d_rvel d_5vel evts        n  hold */
-    { "TOKYO CITY",     0.00f,   0.0f, 0.05f, AMB_RAIN,    0.10f, 0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
-    { "CRYSTAL COAST",  0.45f, 200.0f, 0.04f, AMB_WAVES,   0.09f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
-    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.07f, AMB_TRAFFIC, 0.11f, 0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
-    { "AFTER HOURS",    0.00f,-100.0f, 0.03f, AMB_VINYL,   0.12f, 0.012f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
+    { "TOKYO CITY",     0.00f,   0.0f, 0.022f, AMB_RAIN,    0.10f, 0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
+    { "CRYSTAL COAST",  0.45f, 200.0f, 0.018f, AMB_WAVES,   0.09f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
+    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.030f, AMB_TRAFFIC, 0.11f, 0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
+    { "AFTER HOURS",    0.00f,-100.0f, 0.014f, AMB_VINYL,   0.12f, 0.012f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
 };
 
 /* ---- WAV ----------------------------------------------------------- */
