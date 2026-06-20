@@ -172,8 +172,100 @@ int main(int argc, char **argv) {
         snprintf(path, sizeof path, "%s%d_%s.wav", prefix, i, pad_profile_name(i));
         if (render_profile(i, path, cf) != 0) { fclose(cf); return 1; }
     }
-
     fclose(cf);
-    printf("Done. Combined: %s (%d s total)\n", combined_path, PROFILE_SECS * N_PROFILES);
+    printf("Done. Combined solo: %s (%d s total)\n", combined_path, PROFILE_SECS * N_PROFILES);
+
+    /* ------------------------------------------------------------------ *
+     * Layer test: all four profiles playing different musical roles      *
+     * simultaneously for 30 s. The real proof that they share an ambient *
+     * vibe is whether they cohabit a mix without colliding.              *
+     * ------------------------------------------------------------------ */
+    char layer_path[512];
+    snprintf(layer_path, sizeof layer_path, "%slayered.wav", prefix);
+    FILE *lf = fopen(layer_path, "wb");
+    if (!lf) { fprintf(stderr, "cannot open %s\n", layer_path); return 1; }
+
+    const int LAYER_SECS = 30;
+    wav_header(lf, (uint32_t)LAYER_SECS * SR);
+
+    pad_init();
+    npend = 0;
+
+    /* Schedule for the layer test: a slow chord progression where each
+     * profile takes a different role.
+     *   Bed   (profile 0, src 5..7)   — long held chord underneath
+     *   Felt  (profile 1, src 0..4)   — melodic cell-taps over the top
+     *   Air   (profile 2, src 8..10)  — high-octave shimmer entries
+     *   Hush  (profile 3, src 11)     — soft mallet accents on beat
+     * Source IDs avoid the cell-pan range for chord/air voices (already
+     * the convention in pad_note_on: src ≥ 5 is centered).               */
+
+    typedef struct { float t; int prof; uint8_t src; int midi; float vel; float dur; } levt_t;
+    static const levt_t LEV[] = {
+        /* Bed chord at t=0 (held for the whole take) */
+        {  0.5f, 0,  5, 48, 0.13f, 28.0f },   /* C3   */
+        {  0.7f, 0,  6, 55, 0.11f, 28.0f },   /* G3   */
+        {  0.9f, 0,  7, 60, 0.10f, 28.0f },   /* C4   */
+
+        /* Air enters at t=4 with a high triad */
+        {  4.0f, 2,  8, 72, 0.08f, 24.0f },   /* C5   */
+        {  4.4f, 2,  9, 79, 0.07f, 24.0f },   /* G5   */
+        {  4.9f, 2, 10, 84, 0.07f, 24.0f },   /* C6   */
+
+        /* Felt melodic line — cells 0..4, wandering */
+        {  6.0f, 1,  0, 75, 0.12f, 1.6f },
+        {  7.5f, 1,  2, 79, 0.10f, 1.4f },
+        {  9.0f, 1,  4, 77, 0.13f, 1.6f },
+        { 10.5f, 1,  1, 82, 0.11f, 1.4f },
+        { 12.0f, 1,  3, 75, 0.10f, 1.5f },
+        { 13.5f, 1,  0, 80, 0.12f, 1.6f },
+        { 15.0f, 1,  2, 75, 0.13f, 1.4f },
+        { 16.5f, 1,  4, 82, 0.11f, 1.5f },
+        { 18.0f, 1,  1, 79, 0.10f, 1.6f },
+        { 19.5f, 1,  3, 77, 0.12f, 1.4f },
+        { 21.0f, 1,  0, 84, 0.13f, 1.8f },
+
+        /* Hush soft mallet accents — sparse, marks 4-bar phrases */
+        {  8.0f, 3, 11, 67, 0.10f, 1.0f },
+        { 12.0f, 3, 11, 65, 0.10f, 1.0f },
+        { 16.0f, 3, 11, 70, 0.11f, 1.0f },
+        { 20.0f, 3, 11, 67, 0.09f, 1.2f },
+        { 24.0f, 3, 11, 65, 0.09f, 1.5f },
+    };
+    const size_t N_LEV = sizeof LEV / sizeof LEV[0];
+
+    int16_t buf[BLOCK*2];
+    uint32_t total = (uint32_t)LAYER_SECS * SR;
+    uint32_t frame = 0;
+    size_t evt_i = 0;
+    int peak = 0; double sumsq = 0; long sumN = 0;
+
+    while (frame < total) {
+        float t = (float)frame / SR;
+        while (evt_i < N_LEV && LEV[evt_i].t <= t) {
+            const levt_t *e = &LEV[evt_i++];
+            pad_set_profile(e->prof);                 /* select role */
+            pad_note_on(e->src, dsp_midi_to_hz((float)e->midi), e->vel);
+            sched_off(t + e->dur, e->src);
+        }
+        for (int i = 0; i < npend; ) {
+            if (pend[i].t <= t) { pad_note_off(pend[i].src); pend[i] = pend[--npend]; }
+            else ++i;
+        }
+        int n = (int)((total - frame) < BLOCK ? (total - frame) : BLOCK);
+        pad_render(buf, n);
+        for (int i = 0; i < n*2; ++i) {
+            int a = buf[i] < 0 ? -buf[i] : buf[i];
+            if (a > peak) peak = a;
+            double s = buf[i] / 32768.0; sumsq += s*s; ++sumN;
+        }
+        fwrite(buf, sizeof(int16_t), (size_t)n*2, lf);
+        frame += (uint32_t)n;
+    }
+    fclose(lf);
+    double rms = sqrt(sumsq / (double)sumN);
+    printf("Layer test → %s : peak %d (%.1f dBFS), RMS %.4f (%.1f dBFS)\n",
+           layer_path, peak, 20.0*log10((double)(peak?peak:1)/32767.0),
+           rms, 20.0*log10(rms+1e-12));
     return 0;
 }

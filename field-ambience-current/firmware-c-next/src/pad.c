@@ -116,88 +116,105 @@ typedef struct {
 
 #define PAD_PROFILE_COUNT 4
 
-/* All four profiles. Hand-tuned, deliberately distinct characters; all are
- * warm/friendly, none should read as sacred/organ/cathedral. */
+/* All four profiles are ROLES INSIDE ONE AMBIENT FAMILY — not four separate
+ * genres. They share a common warm/dark DNA so they layer cleanly:
+ *   - cutoff_base       700 – 1200 Hz   (all warm, no shrill highs)
+ *   - q_mul             0.95 – 1.40     (none ringy / resonant)
+ *   - attack_s          0.08 – 0.40     (all moderate, nothing percussive-snap)
+ *   - release_s         2.6  – 3.6      (all long, ambient-typical)
+ *   - wow_rate_hz       0.30 – 0.85     (all slow tape-wow, no fast vibrato)
+ *   - wow_depth         0.0014 – 0.0030 (all subtle, ≤ ±5 cents)
+ *   - detune_cents      7 – 12          (all warm-chorus, none harsh)
+ *   - saw-based stack with similar sub_w  (shared sonic DNA)
+ *
+ * What varies = ROLE in the mix when layered. */
 static const pad_profile_t PROFILES[PAD_PROFILE_COUNT] = {
-    /* 0 — WarmChorus (Juno-106 inspired)
-     *   short attack, sub-saw heavy, modest LP with subtle Q, light tape-wow
-     *   acting as BBD-chorus simulacrum. The closest match to "warm 80s pad". */
-    {   "WarmChorus",
-        .attack_s        = 0.06f,
-        .release_s       = 1.4f,
-        .cutoff_base     = 850.0f,
-        .cutoff_mod      = 350.0f,
-        .q_mul           = 1.35f,
-        .fenv_amount     = 0.30f,
-        .fenv_attack_s   = 0.04f,
-        .lfo_rate_hz     = 0.55f,
-        .wow_depth       = 0.0022f,    /* ≈ ±3.8 cents */
-        .wow_rate_hz     = 0.42f,
-        .detune_cents    = 7.0f,
-        .saw1_w          = 0.55f,
-        .sub_w           = 1.10f,      /* sub heavy → octave-down warmth */
-        .pulse_w         = 0.18f,
-        .send_amount     = -1.0f,
-    },
-    /* 1 — CinematicWash (CS-80 / OB-Xa inspired)
-     *   longer attack, full saw+pulse stack, audible vibrato (5 Hz), wider
-     *   detune. Reads as filmic / spacious / "lived-in". */
-    {   "CinematicWash",
-        .attack_s        = 0.32f,
-        .release_s       = 2.6f,
-        .cutoff_base     = 1050.0f,
-        .cutoff_mod      = 700.0f,
-        .q_mul           = 1.10f,
-        .fenv_amount     = 0.45f,
-        .fenv_attack_s   = 0.20f,
-        .lfo_rate_hz     = 0.08f,
-        .wow_depth       = 0.0030f,    /* ≈ ±5 cents — gentle vibrato */
-        .wow_rate_hz     = 4.6f,
-        .detune_cents    = 11.0f,
-        .saw1_w          = 0.85f,
-        .sub_w           = 0.55f,
-        .pulse_w         = 0.42f,
-        .send_amount     = -1.0f,
-    },
-    /* 2 — TapeSoft (Boards of Canada / Wavestation inspired)
-     *   dark LP, slow-deep tape-wow (clearly audible), moderate stack, no
-     *   resonance. Reads as nostalgic / lo-fi / dreamy. */
-    {   "TapeSoft",
-        .attack_s        = 0.22f,
-        .release_s       = 2.4f,
-        .cutoff_base     = 620.0f,     /* dark */
-        .cutoff_mod      = 260.0f,
-        .q_mul           = 0.90f,      /* less resonant → softer */
-        .fenv_amount     = 0.20f,
-        .fenv_attack_s   = 0.18f,
-        .lfo_rate_hz     = 0.04f,
-        .wow_depth       = 0.0090f,    /* ≈ ±15 cents — audible wobble */
-        .wow_rate_hz     = 0.55f,
-        .detune_cents    = 13.0f,      /* lazy out-of-tune feel */
-        .saw1_w          = 0.65f,
-        .sub_w           = 0.70f,
-        .pulse_w         = 0.32f,
-        .send_amount     = -1.0f,
-    },
-    /* 3 — PluckedBell (subtractive bell, not FM)
-     *   very fast attack, fenv sweeps the LP wide open then closes, high Q
-     *   for ringy partials, almost no sustain — read as percussive mallet.
-     *   NOT a DX7-FM impersonation; an honest subtractive plucked-bell. */
-    {   "PluckedBell",
-        .attack_s        = 0.005f,
-        .release_s       = 1.8f,
-        .cutoff_base     = 1400.0f,
-        .cutoff_mod      = 1200.0f,
-        .q_mul           = 2.20f,      /* ringy partials */
-        .fenv_amount     = 0.85f,      /* strong filter-attack click */
-        .fenv_attack_s   = 0.004f,     /* fast filter open */
+    /* 0 — Bed : the foundation pad
+     *   Dark, sub-heavy, slow bloom. Sits underneath everything else; provides
+     *   the warmth and the body. Long attack → no percussive transient that
+     *   would compete with cell taps. */
+    {   "Bed",
+        .attack_s        = 0.35f,
+        .release_s       = 3.0f,         /* matches old PAD_RELEASE_S; test_pad
+                                          * drain check assumes 12 s is enough */
+        .cutoff_base     = 720.0f,
+        .cutoff_mod      = 220.0f,
+        .q_mul           = 1.00f,
+        .fenv_amount     = 0.15f,
+        .fenv_attack_s   = 0.30f,
         .lfo_rate_hz     = 0.06f,
-        .wow_depth       = 0.0008f,    /* almost none — clean attack */
-        .wow_rate_hz     = 0.30f,
-        .detune_cents    = 5.0f,       /* tight detune so partials don't smear */
-        .saw1_w          = 0.40f,
-        .sub_w           = 0.30f,
-        .pulse_w         = 0.85f,      /* pulse-heavy → glockig */
+        .wow_depth       = 0.0016f,
+        .wow_rate_hz     = 0.34f,
+        .detune_cents    = 9.0f,
+        .saw1_w          = 0.55f,
+        .sub_w           = 1.20f,        /* sub heavy → low warmth */
+        .pulse_w         = 0.20f,
+        .send_amount     = -1.0f,
+    },
+    /* 1 — Felt : the cell-tap pad (default voice)
+     *   Warm with a gentle articulated bloom that lets a tapped note read as a
+     *   note rather than a wash. The most "concrete" of the four. */
+    {   "Felt",
+        .attack_s        = 0.12f,
+        .release_s       = 2.8f,
+        .cutoff_base     = 880.0f,
+        .cutoff_mod      = 320.0f,
+        .q_mul           = 1.15f,
+        .fenv_amount     = 0.28f,
+        .fenv_attack_s   = 0.10f,
+        .lfo_rate_hz     = 0.10f,
+        .wow_depth       = 0.0022f,
+        .wow_rate_hz     = 0.48f,
+        .detune_cents    = 8.0f,
+        .saw1_w          = 0.75f,
+        .sub_w           = 0.85f,
+        .pulse_w         = 0.25f,
+        .send_amount     = -1.0f,
+    },
+    /* 2 — Air : the highlight / shimmer pad
+     *   A touch brighter and a slightly longer bloom — used to add a high
+     *   layer that floats above Bed/Felt without breaking the dark warmth.
+     *   Pulse-leaning so it occupies a different harmonic slot than Felt. */
+    {   "Air",
+        .attack_s        = 0.30f,
+        .release_s       = 3.2f,         /* kept under ~3.3 so any future
+                                          * profile-swept drain test still drains
+                                          * within the 12-s allowance */
+        .cutoff_base     = 1180.0f,      /* upper end of the family range */
+        .cutoff_mod      = 400.0f,
+        .q_mul           = 1.10f,
+        .fenv_amount     = 0.35f,
+        .fenv_attack_s   = 0.22f,
+        .lfo_rate_hz     = 0.12f,
+        .wow_depth       = 0.0028f,
+        .wow_rate_hz     = 0.62f,
+        .detune_cents    = 11.0f,
+        .saw1_w          = 0.65f,
+        .sub_w           = 0.45f,        /* less sub → leaves room for Bed */
+        .pulse_w         = 0.55f,        /* pulse-leaning timbral shift */
+        .send_amount     = -1.0f,
+    },
+    /* 3 — Hush : the soft-mallet accent pad
+     *   The most percussive of the four, but still well inside ambient
+     *   territory — short-ish attack (80 ms, no snap) with a long warm tail.
+     *   Used for accents that mark beats without breaking the wash.
+     *   Deliberately NOT bell-bright — the Q stays low so it never reads
+     *   as a chime. */
+    {   "Hush",
+        .attack_s        = 0.08f,
+        .release_s       = 2.6f,
+        .cutoff_base     = 820.0f,
+        .cutoff_mod      = 280.0f,
+        .q_mul           = 1.25f,
+        .fenv_amount     = 0.40f,
+        .fenv_attack_s   = 0.06f,
+        .lfo_rate_hz     = 0.08f,
+        .wow_depth       = 0.0018f,
+        .wow_rate_hz     = 0.40f,
+        .detune_cents    = 7.0f,
+        .saw1_w          = 0.70f,
+        .sub_w           = 0.75f,
+        .pulse_w         = 0.30f,
         .send_amount     = -1.0f,
     },
 };
