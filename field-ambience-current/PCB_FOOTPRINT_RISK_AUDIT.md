@@ -1,6 +1,6 @@
 # AMBIENT PCB Footprint Risk Audit
 
-**Stand:** r18.36 (2026-06-20)
+**Stand:** r18.37 (2026-06-20, post-Hall-FP-doc-fix + LCSC-diff-pass)
 **Scope:** Risk-based footprint classification per the AMBIENT Footprint Verification Brief. Not a full manual audit of every passive — those pass with package-match only.
 **Source of truth:** `BOM_MASTER.md` (Bestell/Lese-Sicht) + `kicad/generate_kicad_project.py` (technisch). Where this audit disagrees with the generator, the generator wins.
 **Coverage caveat:** This audit classifies risk and flags what needs to be done before layout/order. It does NOT itself perform pad-by-pad geometry comparison or 1:1 print verification — those are the targeted next actions listed in §12.
@@ -76,7 +76,7 @@ KiCad-Standard libraries (`Package_QFP`, `Package_SO`, `Package_TO_SOT_SMD`, `Re
 | **LCD module** | Waveshare 1.9" 170×320 ST7789V2 | – | – | Module (sits in J3) | MECH_CRITICAL | Window cutout + screen-to-bezel alignment | Module-only | YES (mech) | Per r18.22 pivot from bare AliExpress |
 | **Q2** | Backlight FET | 2N7002,215 | C8545 | `Package_TO_SOT_SMD:SOT-23` | PACKAGE_SAFE | Pin 1, G/D/S | OK pkg | No | |
 | **EN1–EN4** | Rotary encoders | ALPS EC11E18244AU | C202365 | `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Shaft height 20 mm + tab spacing + knob clearance + panel cutout, A/B/C + push-switch pins | Pkg OK per ADR-0012 r18.22 pivot | YES (mech) | All four use same MPN (NRND-pivot consolidated); confirm 3D-printed knob ID matches shaft diameter |
-| **J_CELL1–J_CELL5** | Hall sensors | TI DRV5056A4QDBZR | C2152902 | `Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical` (placeholder) → **Phase-6 target** `Package_TO_SOT_SMD:SOT-23` | **MECH_CRITICAL** + EXACT_MODEL_SAFE-target | Position directly under Gateron magnet, X/Y tolerance ±0.5 mm, pin order 1=VCC/2=OUT/3=GND | Pinout DS-verified r18.14b; **footprint still placeholder, NOT final SOT-23** | **YES** | Switch to SOT-23 before layout; magnet-to-sensor stack height critical for analog range |
+| **J_CELL1–J_CELL5** | Hall sensors | TI DRV5056A4QDBZR | C2152902 | `Package_TO_SOT_SMD:SOT-23` (r18.20 final; BOM_MASTER claim "Phase-6 placeholder" was stale doc) | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Position directly under Gateron magnet, X/Y tolerance ±0.5 mm, pin order 1=VCC/2=OUT/3=GND | Pinout DS-verified r18.14b; FP final in generator since r18.20 | YES (mech only) | Magnet-to-sensor stack height critical for analog range — verify on 1:1 print |
 | **R_CELL / C_CELL** | 1 kΩ + 10 nF 0603 (5× each) | 0603WAF1001T5E / 0603B103K500NT | C21190 / C57112 | `Resistor_SMD:R_0603_1608Metric` / `Capacitor_SMD:C_0603_1608Metric` | DEFAULT_SAFE | Pkg | OK | No | RC anti-alias per Hall output |
 | **SW6–SW10** | Modifier tactiles | HX 12×12×7.3 TPFT-B | C36498966 | `field_ambience:SW_HX_12x12x7.3_SMD-4P` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Cap window cutouts in top panel, button height ≈7.3 mm | Custom FP vendored | YES (mech) | All 5 identical — Shift / Hold / Drone / Generate / Clear |
 | **SW11** | Reset tactile | XUNPU TS-1088-AR02016 | C720477 | `field_ambience:SW_TS1088_SMD` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Service hole in bottom plate aligned to button | EasyEDA-verified r18.14 | YES (mech) | Bottom-plate access hole |
@@ -125,7 +125,7 @@ These pass a generic KiCad ERC + a one-time human eyeball comparing symbol pin o
 
 Order roughly by tolerance pain (tight → loose):
 
-1. **J_CELL1–J_CELL5 (Hall sensors)** — position under Gateron magnetic switches. Magnet field-line geometry determines analog range, so ±0.5 mm in X/Y is the practical tolerance. **AND** the current placeholder footprint is `PinHeader_1x03` — must switch to SOT-23 before layout (BOM Notes call this "Phase-6 target"). **This is the highest-risk single item in the project.**
+1. **J_CELL1–J_CELL5 (Hall sensors)** — position under Gateron magnetic switches. Magnet field-line geometry determines analog range, so ±0.5 mm in X/Y is the practical tolerance. (Earlier audit revision flagged the footprint itself as a blocker — that was based on stale BOM doc; the generator switched to `Package_TO_SOT_SMD:SOT-23` already in r18.20.)
 2. **EN1–EN4 (Encoders)** — 20 mm shaft + knob alignment with top panel + tab spacing for through-hole mounting tabs.
 3. **SW6–SW10 (Modifier buttons)** — 5× cap windows in top panel must align to button centres.
 4. **J1 (USB-C)** — board-edge cutout, mouth alignment with side wall, shell-to-shield contact.
@@ -183,7 +183,24 @@ The only "placeholder" footprint still in use is the Hall sensors (`PinHeader_1x
 | r18.24 | LED_HB had LCSC C965818 (= XL-2012UWC 0805, wrong package) | Corrected to **C965808** (XL-1608UWC-04 0603) |
 | r18.20c | Sunlord inductor had phantom FP name `L_0630` | Renamed to `L_Sunlord_SWPA6045`, EasyEDA-CAD vendored |
 
-**Recommended:** Re-run a string-diff between BOM_MASTER.md LCSC codes and the `extra_props["LCSC"]` fields in `generate_kicad_project.py` before order. ~5 minutes.
+**LCSC string-diff performed r18.37:**
+
+```
+BOM unique LCSC codes:        60
+Generator unique LCSC codes:  53
+
+BOM-only codes (8): C12624, C2287, C2880380, C1804, C2030, C165935, C283540, C965818
+Generator-only codes (1): C23140
+```
+
+Breakdown:
+- **C12624 (green LED), C2287 (yellow LED), C2880380 (100 µF MLCC)** — all present in generator, just at non-LCSC-tagged reference lines that the regex missed. No actual mismatch.
+- **C1804** — labelled "auto-generated" in BOM §10 passives sortiment, no specific component slot. Reference-only.
+- **C2030** — false positive: regex matched the "2030" in "TC2030-IDC" (Tag-Connect dev-header name).
+- **C165935, C283540, C965818** — historical mentions in the BOM audit-trail (USB-C MOSFET-mismatch, M-17 6-pin-power-only revert, 0805-vs-0603 LED fix). Doc-only, all already corrected.
+- **C23140 (33 Ω 0603 I²S series-termination)** — lives in `pi_sheet()` which is marked `LEGACY r18: nicht mehr geschrieben`. `main()` does NOT call `(OUT_DIR / "pi.kicad_sch").write_text(pi_sheet())`, so this resistor never lands in any generated schematic. Effectively dead code; not a BOM gap.
+
+**Conclusion: 0 actual JLC/LCSC mismatches between BOM and generator.** Re-run this diff before order to catch any new doc-drift.
 
 ---
 
@@ -191,11 +208,12 @@ The only "placeholder" footprint still in use is the Hall sensors (`PinHeader_1x
 
 In priority order:
 
-1. **Hall sensor footprint placeholder** (`PinHeader_1x03` → `Package_TO_SOT_SMD:SOT-23`). Without this the routing of the analog cell-input traces is wrong. **Must fix before any layout work on the cell region.**
-2. **TPS61089 layout pre-study.** Read TI SLVSD38C §10, sketch the U8 + L1 + C_IN + C_OUT placement on paper or in KiCad before committing routes — re-routing a HotRod boost layout after the fact is painful.
-3. **ERC + symbol-pin walkthrough** of the 9 PACKAGE_SAFE ICs (§5). One sitting.
+1. **TPS61089 layout pre-study.** Read TI SLVSD38C §10, sketch the U8 + L1 + C_IN + C_OUT placement on paper or in KiCad before committing routes — re-routing a HotRod boost layout after the fact is painful.
+2. **ERC + symbol-pin walkthrough** of the 9 PACKAGE_SAFE ICs (§5). One sitting, ~30 min.
 
-These three are *layout-blocking*. The mech-critical items in §6 are *order-blocking* but not layout-blocking — layout can proceed in parallel with enclosure CAD.
+These two are *layout-blocking*. The mech-critical items in §6 are *order-blocking* but not layout-blocking — layout can proceed in parallel with enclosure CAD.
+
+(Previously a third blocker was listed — the Hall-sensor footprint — but verification of `generate_kicad_project.py` line 3342 showed the FP was already finalised to `Package_TO_SOT_SMD:SOT-23` in r18.20. The blocker was a BOM_MASTER doc-drift, not an actual generator state. Closed in r18.37.)
 
 ---
 
@@ -216,9 +234,9 @@ In priority order:
 
 ### Today / this week (cheap, unblocks layout)
 
-- [ ] Switch Hall sensor footprint from `PinHeader_1x03` to `Package_TO_SOT_SMD:SOT-23` in the generator. Re-run, regenerate project.
-- [ ] One sitting of ERC + symbol-pin-vs-datasheet walkthrough for U1, U2, U3, U4, U5, U6, U7, D1, Q1, Q2 (≈30 min).
-- [ ] BOM ↔ generator LCSC string-diff (≈5 min).
+- [x] ~~Switch Hall sensor footprint to SOT-23 in generator.~~ Already done in r18.20; doc-fixed in BOM_MASTER r18.37.
+- [x] ~~BOM ↔ generator LCSC string-diff.~~ Performed r18.37, 0 actual mismatches.
+- [ ] One sitting of ERC + symbol-pin-vs-datasheet walkthrough for U1, U2, U3, U4, U5, U6, U7, D1, Q1, Q2 (≈30 min). Requires KiCad GUI — not autonomous.
 
 ### Before committing to layout (technical study)
 
@@ -243,8 +261,12 @@ In priority order:
 ```
 The PCB is not blocked by standard passive footprints.
 The PCB is blocked only by unresolved critical mechanical, connector, and power footprints —
-specifically: Hall-sensor footprint upgrade SOT-23, TPS61089 datasheet layout review,
-LCD pin-order verification, and 1:1 print of the ten mech-critical parts against enclosure.
+specifically: TPS61089 datasheet layout review, LCD pin-order verification, and 1:1 print
+of the ten mech-critical parts against enclosure.
 The next step is not a full-footprint audit of everything,
 but targeted verification of those high-risk parts and a one-time ERC pass on the IC pinouts.
+
+r18.37 cleared two items from the prior list:
+  - Hall-sensor FP was already SOT-23 in the generator (BOM doc-drift, fixed).
+  - LCSC string-diff between BOM and generator showed 0 actual mismatches.
 ```
