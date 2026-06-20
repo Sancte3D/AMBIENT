@@ -172,8 +172,8 @@ static inline void waves_block(float *L, float *R, int n, float amount){
         wv_lfo += 0.10f / (float)SR;
         if (wv_lfo >= 1.0f) wv_lfo -= 1.0f;
         float swell = 0.35f + 0.55f * (0.5f + 0.5f * sinf(wv_lfo * 6.2831853f));
-        L[i] += wv_brnL * amount * swell * 3.0f;
-        R[i] += wv_brnR * amount * swell * 3.0f;
+        L[i] += wv_brnL * amount * swell;   /* the *3.0 here was the loud culprit */
+        R[i] += wv_brnR * amount * swell;
     }
 }
 
@@ -322,12 +322,19 @@ static const evt_t HOURS_EVTS[] = {
     { 40.0f, 63, 0.15f },                                     /* Eb4 */
 };
 
+/* Ambience amounts re-calibrated from the SOLO measurement so every layer
+ * sits subtle (~-44 dBFS RMS solo) instead of fighting the pad. The previous
+ * waves *3.0 + uncalibrated amounts made waves/rain the "loud noise that
+ * drowns everything"; wind was -60 dBFS (inaudible). Targets:
+ *   wind  ~-48 (subtle universal bed, now actually present)
+ *   rain  ~-44   waves ~-44   traffic ~-44   vinyl ~-42 (bar a touch louder)
+ *   hiss  ~-47 */
 static const world_demo_t WORLDS[N_WORLDS] = {
     /* name             vmix  bright wind  amb         amb_amt hiss   rsiz  rdmp rdrv  wet   sat   gain  d_root d_5th  d_rvel d_5vel evts        n  hold */
-    { "TOKYO CITY",     0.00f,   0.0f, 0.022f, AMB_RAIN,    0.10f, 0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
-    { "CRYSTAL COAST",  0.45f, 200.0f, 0.018f, AMB_WAVES,   0.09f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
-    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.030f, AMB_TRAFFIC, 0.11f, 0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
-    { "AFTER HOURS",    0.00f,-100.0f, 0.014f, AMB_VINYL,   0.12f, 0.012f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
+    { "TOKYO CITY",     0.00f,   0.0f, 0.090f, AMB_RAIN,    0.024f, 0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
+    { "CRYSTAL COAST",  0.45f, 200.0f, 0.075f, AMB_WAVES,   0.035f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
+    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.110f, AMB_TRAFFIC, 0.066f, 0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
+    { "AFTER HOURS",    0.00f,-100.0f, 0.060f, AMB_VINYL,   0.051f, 0.008f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
 };
 
 /* ---- WAV ----------------------------------------------------------- */
@@ -432,9 +439,48 @@ static int render_world(const world_demo_t *w, const char *out_path, FILE *combi
     return 0;
 }
 
+/* ---- diagnostic: render each layer SOLO 5 s and report level ---------- */
+static void measure_one(const char *name, void (*fn)(float*,float*,int,float), float amt){
+    float L[BLOCK], R[BLOCK];
+    int peak = 0; double sumsq = 0; long sumN = 0;
+    int total = SR * 5;
+    for (int frame = 0; frame < total; frame += BLOCK){
+        int n = (total - frame) < BLOCK ? (total - frame) : BLOCK;
+        memset(L, 0, sizeof(float)*n); memset(R, 0, sizeof(float)*n);
+        fn(L, R, n, amt);
+        for (int i = 0; i < n; ++i){
+            int li = (int)(L[i]*32767.0f);
+            if (li > 32767) li = 32767; if (li < -32768) li = -32768;
+            int a = li < 0 ? -li : li; if (a > peak) peak = a;
+            double s = L[i]; sumsq += s*s; ++sumN;
+        }
+    }
+    double rms = sqrt(sumsq/(double)sumN);
+    printf("  %-10s amt=%.3f  peak %5.1f dBFS   RMS %5.1f dBFS\n",
+           name, amt, 20.0*log10((double)(peak?peak:1)/32767.0), 20.0*log10(rms+1e-12));
+}
+
 int main(int argc, char **argv){
     const char *prefix = (argc > 1) ? argv[1] : "/tmp/worlds_";
     dsp_init();
+
+    if (argc > 2 && strcmp(argv[2], "measure") == 0){
+        printf("=== per-layer SOLO levels (5 s each, at the per-world amount) ===\n");
+        measure_one("wind",    wind_block,    0.110f);   /* DRIVE (max) */
+        measure_one("rain",    rain_block,    0.024f);   /* TOKYO */
+        measure_one("waves",   waves_block,   0.055f);   /* COAST */
+        measure_one("traffic", traffic_block, 0.066f);   /* DRIVE */
+        measure_one("vinyl",   vinyl_block,   0.051f);   /* HOURS */
+        measure_one("hiss",    hiss_block,    0.008f);   /* HOURS */
+        printf("--- same generators at amt=1.0 (raw level, amount removed) ---\n");
+        measure_one("wind",    wind_block,    1.0f);
+        measure_one("rain",    rain_block,    1.0f);
+        measure_one("waves",   waves_block,   1.0f);
+        measure_one("traffic", traffic_block, 1.0f);
+        measure_one("vinyl",   vinyl_block,   1.0f);
+        measure_one("hiss",    hiss_block,    1.0f);
+        return 0;
+    }
 
     char combined_path[512];
     snprintf(combined_path, sizeof combined_path, "%sall.wav", prefix);
