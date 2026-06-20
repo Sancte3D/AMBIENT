@@ -1,8 +1,10 @@
 # BOM Master — Field Ambience
 
-**Stand: v0.7-r18.24 (2026-06-14).** Single Source of Truth für alle aktiv
+**Stand: v0.7-r18.36 (2026-06-20).** Single Source of Truth für alle aktiv
 verbauten Komponenten. Pro Eintrag: aktuelle Wahl, Footprint-Quelle, 3D-Quelle,
-Bestell-Link.
+Bestell-Link. **Footprint- und STEP-Spalten sind ab r18.36 klickbar** und
+zeigen auf die jeweilige Datei im Repo (relative Markdown-Links, funktionieren
+auf GitHub und in jedem Markdown-Editor).
 
 > Generator (`field-ambience-current/kicad/generate_kicad_project.py`) ist die
 > technische Quelle (LCSC, MPN, Footprint im Schematic). Diese Datei ist die
@@ -24,26 +26,26 @@ Bestell-Link.
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| U1 | **STM32H743VIT6** LQFP-100 | [C114409](https://www.lcsc.com/product-detail/C114409.html) | `Package_QFP:LQFP-100_14x14mm_P0.5mm` | KiCad-Standard | STEP im Repo |
-| Y1 | **ABLS-8.000MHZ-B4-T** HC-49/US-SMD | [C596838](https://www.lcsc.com/product-detail/C596838.html) | `field_ambience:Crystal_HC49-US-SMD_ABLS` | field_ambience | STEP im Repo |
+| U1 | **STM32H743VIT6** LQFP-100 | [C114409](https://www.lcsc.com/product-detail/C114409.html) | `Package_QFP:LQFP-100_14x14mm_P0.5mm` | KiCad-Standard | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/LQFP-100_L14.0-W14.0-H1.4-LS16.0-P0.50.step) |
+| Y1 | **ABLS-8.000MHZ-B4-T** HC-49/US-SMD | [C596838](https://www.lcsc.com/product-detail/C596838.html) | [`field_ambience:Crystal_HC49-US-SMD_ABLS`](field-ambience-current/kicad/libraries/field_ambience.pretty/Crystal_HC49-US-SMD_ABLS.kicad_mod) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/CRYSTAL-SMD_L11.4-W4.7-LS12.7.step) |
 
 ## 2. Power-Stack
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **J1** USB-C | **TYPE-C-31-M-12** (Korean Hroparts) — 16-Pin volle USB-C-Belegung (VBUS/GND/CC1/CC2/D+/D−/SBU). r18.19-REVERT: r18.10 hatte fälschlich auf M-17 „upgraded", M-17 ist aber 6-Pin power-only → USB-DFU wäre kaputt gewesen. | [C165948](https://www.lcsc.com/product-detail/C165948.html) | `Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12` | KiCad-Standard | STEP im Repo |
+| **J1** USB-C | **TYPE-C-31-M-12** (Korean Hroparts) — 16-Pin volle USB-C-Belegung (VBUS/GND/CC1/CC2/D+/D−/SBU). r18.19-REVERT: r18.10 hatte fälschlich auf M-17 „upgraded", M-17 ist aber 6-Pin power-only → USB-DFU wäre kaputt gewesen. | [C165948](https://www.lcsc.com/product-detail/C165948.html) | `Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12` | KiCad-Standard | Standard-Lib-3D (r18.36-Fix: vorher fälschlich „STEP im Repo" — kein Custom-STEP existiert) |
 | D1 | **USBLC6-2SC6** ESD-Schutz | [C2687116](https://www.lcsc.com/product-detail/C2687116.html) | `Package_TO_SOT_SMD:SOT-23-6` | KiCad-Standard | Standard-Lib-3D |
 | F1 | **1812L300/16GR** PTC 3 A | [C18198349](https://www.lcsc.com/product-detail/C18198349.html) | `Fuse:Fuse_1812_4532Metric` | KiCad-Standard | Standard-Lib-3D |
 | D2 | **SMAJ5.0A** TVS | [C113952](https://www.lcsc.com/product-detail/C113952.html) | `Diode_SMD:D_SMA` | KiCad-Standard | Standard-Lib-3D |
-| **U8** TPS61089 Boost VQFN-HR | [C165129](https://www.lcsc.com/product-detail/C165129.html) | `field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` | field_ambience | STEP im Repo |
-| L1 Boost-Inductor | **SWPA6045S2R2MT** 2.2 µH | [C83455](https://www.lcsc.com/product-detail/C83455.html) | `field_ambience:L_Sunlord_SWPA6045` (EasyEDA-CAD vendored r18.20c — Phantom-Name L_0630 ersetzt) | field_ambience (Custom) | STEP im Repo |
+| **U8** TPS61089 Boost VQFN-HR | [C165129](https://www.lcsc.com/product-detail/C165129.html) | [`field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A`](field-ambience-current/kicad/libraries/field_ambience.pretty/Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A.kicad_mod) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/VQFN-HR_L2.5-W2.0-H1.0-P0.50.step) |
+| L1 Boost-Inductor | **SWPA6045S2R2MT** 2.2 µH | [C83455](https://www.lcsc.com/product-detail/C83455.html) | [`field_ambience:L_Sunlord_SWPA6045`](field-ambience-current/kicad/libraries/field_ambience.pretty/L_Sunlord_SWPA6045.kicad_mod) (EasyEDA-CAD vendored r18.20c — Phantom-Name L_0630 ersetzt) | field_ambience (Custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/IND-SMD_L6.0-W6.0-H4.5.step) |
 | D3 | **SS34** Schottky-Diode | [C8678](https://www.lcsc.com/product-detail/C8678.html) | `Diode_SMD:D_SMA` | KiCad-Standard | Standard-Lib-3D |
 | Q1 | **DMG2305UX-7** P-Ch MOSFET | [C150470](https://www.lcsc.com/product-detail/C150470.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 | **U5** LDO | **AP7361C-33Y5-13** SOT-89-5 (Pinout 1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT verifiziert) | [C460397](https://www.lcsc.com/product-detail/C460397.html) | `Package_TO_SOT_SMD:SOT-89-5` | KiCad-Standard | Standard-Lib-3D |
 | **U7** Charger | **MCP73831T-2ACI/OT** SOT-23-5 | [C424093](https://www.lcsc.com/product-detail/C424093.html) | `Package_TO_SOT_SMD:SOT-23-5` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK** Polymer-Tantal 470 µF / 10 V Case-E 7343-43 (ESR 100 mΩ; <25 mΩ-Flachteile bei LCSC nicht lagernd — Transient-ESR liefert C_BULK2) | TPSE477K010R0100 (Kyocera AVX) | [C444831](https://www.lcsc.com/product-detail/C444831.html) | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 existiert nicht → 100µF echter Headroom statt 220µF/6.3V-Derating) | LMK325ABJ107MM-T (Taiyo Yuden) | [C2880380](https://www.lcsc.com/product-detail/C2880380.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
-| **J_BAT** JST-PH 2.0 2-Pin | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | STEP im Repo |
+| **J_BAT** JST-PH 2.0 2-Pin | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN.step) |
 | LiPo-Pouch **503759** (50×37×9.4 mm, **2000 mAh ~6.6 h @ 300 mA**) — r18.21 rightsize von 5000mAh-Overkill | Generic LiPo 2000mAh JST-PH 2.0 | [PiHut 2000mAh](https://thepihut.com/products/2000mah-3-7v-lipo-battery) | — (kein PCB-FP, Bottom-Case-Slot) | — | Vendor |
 
 ## 3. Audio-Path
@@ -53,8 +55,8 @@ Bestell-Link.
 | **U3** DAC | **PCM5102APWR** TSSOP-20 | [C107671](https://www.lcsc.com/product-detail/C107671.html) | `Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 | **U4** Class-D Amp | **PAM8403DR-H** SOIC-16 | [C17337](https://www.lcsc.com/product-detail/C17337.html) | `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` | KiCad-Standard | Standard-Lib-3D |
 | FB1/FB2 Ferrite Bead | **BLM18AG601SN1D** 0603 600 Ω | [C19330](https://www.lcsc.com/product-detail/C19330.html) (FB1) / [C84094](https://www.lcsc.com/product-detail/C84094.html) (FB2) | `Inductor_SMD:L_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **J8** Line-Out 3.5 mm TRS | **PJ-320D** (SHOU HAN, SMT) mit Insertion-Detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (EasyEDA-CAD vendored r18.19) | field_ambience (Custom) | STEP im Repo |
-| ~~**J9** MIDI-Out~~ **DNP für 5er-Run** (ADR-0004 r18.30 deferred — User-Entscheidung „vielleicht brauchen wir gar kein MIDI"). Footprint + Edge-Cutout konserviert; Reaktivierung später durch Bestücken von J9 + 2× 220 Ω + Auskommentieren `midi_tx_init()` in main_h743.c | (PJ-320D — DNP) | — | s. J8 | field_ambience (Custom) | STEP im Repo |
+| **J8** Line-Out 3.5 mm TRS | **PJ-320D** (SHOU HAN, SMT) mit Insertion-Detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | [`field_ambience:Jack_3.5mm_PJ-320D_SMT`](field-ambience-current/kicad/libraries/field_ambience.pretty/Jack_3.5mm_PJ-320D_SMT.kicad_mod) (EasyEDA-CAD vendored r18.19) | field_ambience (Custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
+| ~~**J9** MIDI-Out~~ **DNP für 5er-Run** (ADR-0004 r18.30 deferred — User-Entscheidung „vielleicht brauchen wir gar kein MIDI"). Footprint + Edge-Cutout konserviert; Reaktivierung später durch Bestücken von J9 + 2× 220 Ω + Auskommentieren `midi_tx_init()` in main_h743.c | (PJ-320D — DNP) | — | s. J8 | field_ambience (Custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
 
 ### Speaker (r18.18 — Cloth-Cone primär)
 
@@ -108,9 +110,9 @@ Bestell-Link.
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) | **HX 12×12×7.3 TPFT-B** | [C36498966](https://www.lcsc.com/product-detail/C36498966.html) | `field_ambience:SW_HX_12x12x7.3_SMD-4P` (Custom) | field_ambience | Vendor-CAD (LCSC EasyEDA-Export) |
-| **SW11** Reset (Mini-SMD-Tactile, Service-Bohrung Bottom-Plate) | **XUNPU TS-1088-AR02016** | [C720477](https://www.lcsc.com/product-detail/C720477.html) | `field_ambience:SW_TS1088_SMD` (EasyEDA-verifiziert) | field_ambience | Vendor-CAD |
-| **SW_BOOT** BOOT0 (USB-DFU-Flash, Service-Bohrung Bottom-Plate) | gleiches Teil wie SW11 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | gleicher FP wie SW11 | field_ambience | Vendor-CAD |
+| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) | **HX 12×12×7.3 TPFT-B** | [C36498966](https://www.lcsc.com/product-detail/C36498966.html) | [`field_ambience:SW_HX_12x12x7.3_SMD-4P`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod) (Custom) | field_ambience | Vendor-CAD (LCSC EasyEDA-Export — kein STEP im Repo) |
+| **SW11** Reset (Mini-SMD-Tactile, Service-Bohrung Bottom-Plate) | **XUNPU TS-1088-AR02016** | [C720477](https://www.lcsc.com/product-detail/C720477.html) | [`field_ambience:SW_TS1088_SMD`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_TS1088_SMD.kicad_mod) (EasyEDA-verifiziert) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (r18.36-Fix: vorher fälschlich „Vendor-CAD" — STEP liegt im Repo) |
+| **SW_BOOT** BOOT0 (USB-DFU-Flash, Service-Bohrung Bottom-Plate) | gleiches Teil wie SW11 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | gleicher FP wie SW11 | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (s. SW11) |
 | R_BOOT_SW 1 kΩ 0603 (BOOT0-Pull-up) | s. R_CELL | [C21190](https://www.lcsc.com/product-detail/C21190.html) | s. R_CELL | KiCad-Standard | Standard-Lib-3D |
 
 ## 9. LEDs (Cell + Modifier — ADR-0008 XOR-Logik)
@@ -153,11 +155,11 @@ Standard-Lib-3D.
 
 | Element | Wahl | Quelle |
 |---|---|---|
-| Gehäuse Außen 260 × 110 × 21.6 mm | ABS / PC Spritzguss 2.5 mm (Top + Bottom) | TBD (Industrial Design Sprint) |
+| Gehäuse Außen 260 × 110 × 21.6 mm | ABS / PC Spritzguss 2.5 mm (Top + Bottom) | TBD (Industrial Design Sprint) — **TODO: kein CAD-File im Repo** |
 | 4× Mounting-Hardware M2.5 | (Standard Hex-Standoff 3 mm) | RS / Reichelt |
-| Encoder-Knöpfe (4×) Ø 19–20 × 8–10 mm | **selbst 3D-gedruckt** (r18.21) | User |
-| Cell-Caps (5×, 1u) | **selbst 3D-gedruckt** (r18.21) | User |
-| Plate für Magnetic-Switches | TBD-CAD | Industrial Design |
+| Encoder-Knöpfe (4×) Ø 19–20 × 8–10 mm | **selbst 3D-gedruckt** (r18.21) | User — **TODO: STL noch nicht im Repo** |
+| Cell-Caps (5×, 1u) | **selbst 3D-gedruckt** (r18.21) | User — **TODO: STL noch nicht im Repo** |
+| Plate für Magnetic-Switches | TBD-CAD | Industrial Design — **TODO: kein CAD-File im Repo** |
 
 ---
 
@@ -178,8 +180,8 @@ Wer prüft was wann:
 
 | Punkt | Status | Verweis |
 |---|---|---|
-| Alle Footprints geprüft | ✅ 5 Custom in `field_ambience.pretty/`, Rest KiCad-Standard | `field-ambience-current/FP_VERIFY_LOG.md` |
-| 3D-STEPs für Z-/Panel-kritische Teile | ✅ 9 Stück in `field_ambience.3dshapes/` | `mechanical/3d_models/MANIFEST.md` |
+| Alle Footprints geprüft | ✅ 7 Custom in [`field_ambience.pretty/`](field-ambience-current/kicad/libraries/field_ambience.pretty/), Rest KiCad-Standard. Davon **6 aktiv referenziert** (Y1, J8, L1, U8, SW6-10, SW11/SW_BOOT); **1 Leiche** (`RotaryEncoder_ALPS_EC11J_SMD.kicad_mod` — nicht referenziert, EN1–4 nutzen seit ADR-0012 KiCad-Standard `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`; Kandidat für Cleanup) | [`field-ambience-current/FP_VERIFY_LOG.md`](field-ambience-current/FP_VERIFY_LOG.md) |
+| 3D-STEPs für Z-/Panel-kritische Teile | ✅ 7 Stück in [`field_ambience.3dshapes/`](field-ambience-current/kicad/libraries/field_ambience.3dshapes/) (U1, Y1, U8, L1, J_BAT, J8, SW11/SW_BOOT). USB-C-Receptacle nutzt KiCad-Standard-STEP (kein Custom-STEP nötig) | r18.36 — vorher fälschlich auf nicht existierendes `mechanical/3d_models/MANIFEST.md` verwiesen |
 | Mechanische X/Y/Z + Höhen-Constraints | ✅ Python-validiert, 0 Konflikte | `mechanical/coordinates/mechanical_coordinates.md` |
 | DRV5056-Pinout DS-bestätigt | ✅ TI-DS Table 4-1 | r18.14b |
 | AP7361C-Pinout User-bestätigt | ✅ Diodes-DS | r18.6 |
@@ -189,3 +191,4 @@ Wer prüft was wann:
 | Audio-Jack-Footprint | ✅ `field_ambience:Jack_3.5mm_PJ-320D_SMT` (EasyEDA-CAD vendored, 4 SMD + 2 NPTH). Vorher CUI SJ-3523-SMT-FP zugewiesen — Pad-Layout passte nicht zu C431535 (SHOU HAN) | r18.19 |
 | Speaker-Wert in Schaltplan | ✅ `value="CMS-402811-28SP Cloth-Cone 8R 2W"` (J6/J7). Vorher stale „PUI AS04008PS 4R 4W" — falsche Impedanz + falscher Treiber | r18.19 |
 | SW_BOOT-MPN korrekt | ✅ TS-1088-AR02016 (war fälschlich TS-1185A) | r18.14 |
+| CAD-Files klickbar verlinkt + 3D-Spalten-Konsistenz | ✅ alle 7 STEPs + 6 aktiv genutzten Custom-Footprints als relative Markdown-Links eingetragen; J1 USB-C („STEP im Repo" → „Standard-Lib-3D") und SW11/SW_BOOT („Vendor-CAD" → „STEP im Repo") korrigiert; Custom-3D-Print-Files (Knöpfe, Cell-Caps, Plate, Gehäuse) als offene TODOs markiert; 1 unreferenzierte Footprint-Leiche (`RotaryEncoder_ALPS_EC11J_SMD`) im Audit ausgewiesen | r18.36 |
