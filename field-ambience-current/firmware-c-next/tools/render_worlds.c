@@ -116,102 +116,230 @@ static inline void wind_block(float *L, float *R, int n, float amount){
 
 /* ---- per-world atmospheric layers ---------------------------------- */
 
-/* RAIN (TOKYO CITY): high-pass white noise (the "sshhh") + sparse low-Q
- * resonant impulses (the drops on pavement). */
+/* RAIN (TOKYO CITY): wet-pavement rain. Background = pink noise through a
+ * bandpass around 2.5 kHz (the "sshhh" of countless small drops). Foreground
+ * = pool of 12 short percussive DROPS — each is a white-noise burst through
+ * a resonant bandpass at 1500..4500 Hz Q=4 with a 15..40 ms exponential
+ * decay. Drops are noise bursts (not sine pings — those were the old bug,
+ * sounded like synth blips not water). Up to several drops overlap, random
+ * inter-onset 30..180 ms, so it reads as a SHOWER not as discrete events. */
+#define RAIN_MAX_DROPS 12
+typedef struct { int active; float env; float decay; dsp_svf_t bp; } drop_t;
+static drop_t rain_drops[RAIN_MAX_DROPS];
 static uint32_t rn_rng = 0x5417F00Du;
-static float rn_lpL=0, rn_lpR=0;
-static float rn_drop_env=0, rn_drop_freq=2400;
-static int   rn_until_drop=0;
+static dsp_svf_t rain_bg_bpL, rain_bg_bpR;
+static float rain_pink_b0L=0,rain_pink_b1L=0,rain_pink_b2L=0;
+static float rain_pink_b0R=0,rain_pink_b1R=0,rain_pink_b2R=0;
+static int   rain_until_next = 0;
+static int   rain_initialised = 0;
 static inline float rn_white(void){
     rn_rng = rn_rng * 1664525u + 1013904223u;
     return ((int32_t)rn_rng) * (1.0f / 2147483648.0f);
 }
+static inline float rain_pink(float *b0, float *b1, float *b2){
+    float w = rn_white();
+    *b0 = 0.99765f * *b0 + w * 0.0990460f;
+    *b1 = 0.96300f * *b1 + w * 0.2965164f;
+    *b2 = 0.57000f * *b2 + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
 static inline void rain_block(float *L, float *R, int n, float amount){
     if (amount <= 0.0f) return;
+    if (!rain_initialised){
+        for (int d = 0; d < RAIN_MAX_DROPS; ++d){
+            rain_drops[d].active = 0; rain_drops[d].env = 0;
+            dsp_svf_reset(&rain_drops[d].bp);
+        }
+        dsp_svf_reset(&rain_bg_bpL); dsp_svf_reset(&rain_bg_bpR);
+        dsp_svf_set(&rain_bg_bpL, 2500.0f, 1.4f);
+        dsp_svf_set(&rain_bg_bpR, 2700.0f, 1.4f);
+        rain_initialised = 1;
+        rain_until_next = (int)((float)SR * 0.04f);
+    }
     for (int i = 0; i < n; ++i){
-        /* shhh: high-passed noise = white - slow LP (HP corner ~2 kHz) */
-        float wL = rn_white(), wR = rn_white();
-        rn_lpL += 0.20f * (wL - rn_lpL);
-        rn_lpR += 0.20f * (wR - rn_lpR);
-        float hpL = wL - rn_lpL * 1.6f;
-        float hpR = wR - rn_lpR * 1.6f;
-        /* sparse drops: trigger an exponential 2-3 kHz hit every ~3500-9000 samples */
-        if (--rn_until_drop <= 0){
-            rn_drop_env  = 0.35f;
-            rn_drop_freq = 2000.0f + (rn_white() * 0.5f + 0.5f) * 1200.0f;
-            rn_until_drop = 3500 + (int)((rn_white() * 0.5f + 0.5f) * 5500.0f);
+        /* background "sshhh" — pink noise through wide bandpass at ~2.5 kHz */
+        float pL = rain_pink(&rain_pink_b0L, &rain_pink_b1L, &rain_pink_b2L);
+        float pR = rain_pink(&rain_pink_b0R, &rain_pink_b1R, &rain_pink_b2R);
+        float bgL = dsp_svf_bp(&rain_bg_bpL, pL) * 0.7f;
+        float bgR = dsp_svf_bp(&rain_bg_bpR, pR) * 0.7f;
+
+        /* schedule new drops 30..180 ms apart on average */
+        if (--rain_until_next <= 0){
+            for (int d = 0; d < RAIN_MAX_DROPS; ++d){
+                if (!rain_drops[d].active){
+                    rain_drops[d].active = 1;
+                    rain_drops[d].env    = 0.4f + (rn_white()*0.5f+0.5f) * 0.35f;
+                    float fc   = 1500.0f + (rn_white()*0.5f+0.5f) * 3000.0f;
+                    float dec  = 0.015f + (rn_white()*0.5f+0.5f) * 0.025f;   /* 15..40 ms */
+                    dsp_svf_set(&rain_drops[d].bp, fc, 4.0f);
+                    rain_drops[d].decay = expf(-1.0f / (dec * (float)SR));
+                    break;
+                }
+            }
+            float interval = 0.030f + (rn_white()*0.5f+0.5f) * 0.150f;
+            rain_until_next = (int)(interval * (float)SR);
         }
-        float drop = 0.0f;
-        if (rn_drop_env > 0.0001f){
-            static float drop_phase = 0;
-            drop_phase += rn_drop_freq / (float)SR;
-            if (drop_phase >= 1.0f) drop_phase -= 1.0f;
-            drop = sinf(drop_phase * 6.2831853f) * rn_drop_env;
-            rn_drop_env *= 0.998f;
+
+        /* sum active drops — each is a noise-burst through resonant BP */
+        float dropL = 0.0f, dropR = 0.0f;
+        for (int d = 0; d < RAIN_MAX_DROPS; ++d){
+            if (!rain_drops[d].active) continue;
+            float src = rn_white();
+            float out = dsp_svf_bp(&rain_drops[d].bp, src) * rain_drops[d].env;
+            /* spatial spread: even drops left-leaning, odd drops right */
+            if (d & 1){ dropR += out; dropL += out * 0.4f; }
+            else      { dropL += out; dropR += out * 0.4f; }
+            rain_drops[d].env *= rain_drops[d].decay;
+            if (rain_drops[d].env < 0.001f) rain_drops[d].active = 0;
         }
-        L[i] += (hpL * 0.55f + drop) * amount;
-        R[i] += (hpR * 0.55f - drop * 0.7f) * amount;  /* slight stereo offset */
+
+        L[i] += (bgL + dropL * 0.45f) * amount;
+        R[i] += (bgR + dropR * 0.45f) * amount;
     }
 }
 
-/* WAVES (CRYSTAL COAST): brown noise with very slow amplitude swell.
- * "wash in / wash out" of the surf. */
+/* WAVES (CRYSTAL COAST): real surf has ASYMMETRIC envelope — fast crest
+ * (1..2 s build), longer wash-out (5..9 s decay) — and a high-frequency
+ * "splash" right at the crest. Previous version was a symmetric sine LFO
+ * on brown noise; sounded like LFO-tremolo, not water. New version uses a
+ * wave-event scheduler with two layers: low body (brown -> LP 400 Hz) for
+ * the swash, plus a brief HF splash (pink -> BP 2.5 kHz) at the crest. */
 static uint32_t wv_rng = 0xBADCAFE1u;
-static float wv_brnL=0, wv_brnR=0, wv_lfo=0;
+static float wv_brnL=0, wv_brnR=0;
+static float wv_pink_b0L=0,wv_pink_b1L=0,wv_pink_b2L=0;
+static float wv_pink_b0R=0,wv_pink_b1R=0,wv_pink_b2R=0;
+static dsp_svf_t wv_lp, wv_splashL, wv_splashR;
+static int   wv_state = 0;            /* 0 idle, 1 attack, 2 decay */
+static int   wv_until_next = 0, wv_phase_samples = 0, wv_phase_len = 1;
+static float wv_env = 0;
+static int   wv_initialised = 0;
 static inline float wv_white(void){
     wv_rng = wv_rng * 1664525u + 1013904223u;
     return ((int32_t)wv_rng) * (1.0f / 2147483648.0f);
 }
+static inline float wv_pink(float *b0, float *b1, float *b2){
+    float w = wv_white();
+    *b0 = 0.99765f * *b0 + w * 0.0990460f;
+    *b1 = 0.96300f * *b1 + w * 0.2965164f;
+    *b2 = 0.57000f * *b2 + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
 static inline void waves_block(float *L, float *R, int n, float amount){
     if (amount <= 0.0f) return;
+    if (!wv_initialised){
+        dsp_svf_reset(&wv_lp);       dsp_svf_set(&wv_lp,        400.0f, 0.7f);
+        dsp_svf_reset(&wv_splashL);  dsp_svf_set(&wv_splashL, 2500.0f, 1.6f);
+        dsp_svf_reset(&wv_splashR);  dsp_svf_set(&wv_splashR, 2700.0f, 1.6f);
+        wv_until_next = (int)((float)SR * 2.0f);
+        wv_initialised = 1;
+    }
     for (int i = 0; i < n; ++i){
-        /* brown via integration */
-        wv_brnL = wv_brnL * 0.996f + wv_white() * 0.04f;
-        wv_brnR = wv_brnR * 0.996f + wv_white() * 0.04f;
-        /* 0.10 Hz swell — "wave every 10 s" */
-        wv_lfo += 0.10f / (float)SR;
-        if (wv_lfo >= 1.0f) wv_lfo -= 1.0f;
-        float swell = 0.35f + 0.55f * (0.5f + 0.5f * sinf(wv_lfo * 6.2831853f));
-        L[i] += wv_brnL * amount * swell;   /* the *3.0 here was the loud culprit */
-        R[i] += wv_brnR * amount * swell;
+        if (wv_state == 0){
+            if (--wv_until_next <= 0){
+                wv_state = 1; wv_phase_samples = 0;
+                wv_phase_len = (int)((float)SR * (1.2f + (wv_white()*0.5f+0.5f) * 0.8f));  /* 1.2..2.0 s attack */
+            }
+        } else if (wv_state == 1){
+            wv_env = (float)wv_phase_samples / (float)wv_phase_len;
+            if (++wv_phase_samples >= wv_phase_len){
+                wv_state = 2; wv_phase_samples = 0;
+                wv_phase_len = (int)((float)SR * (5.0f + (wv_white()*0.5f+0.5f) * 4.0f));  /* 5..9 s decay */
+            }
+        } else {
+            wv_env = 1.0f - (float)wv_phase_samples / (float)wv_phase_len;
+            if (++wv_phase_samples >= wv_phase_len){
+                wv_state = 0; wv_env = 0;
+                wv_until_next = (int)((float)SR * (1.0f + (wv_white()*0.5f+0.5f) * 3.0f));  /* 1..4 s gap */
+            }
+        }
+
+        /* body: brown noise LP'd, modulated by envelope */
+        wv_brnL = wv_brnL * 0.998f + wv_white() * 0.02f;
+        wv_brnR = wv_brnR * 0.998f + wv_white() * 0.02f;
+        float bodyL = dsp_svf_lp(&wv_lp, wv_brnL) * wv_env;
+        float bodyR = dsp_svf_lp(&wv_lp, wv_brnR) * wv_env;
+
+        /* splash: short HF burst at the crest only (when env is near peak) */
+        float crest = (wv_env > 0.75f) ? (wv_env - 0.75f) * 4.0f : 0.0f;
+        float pL = wv_pink(&wv_pink_b0L, &wv_pink_b1L, &wv_pink_b2L);
+        float pR = wv_pink(&wv_pink_b0R, &wv_pink_b1R, &wv_pink_b2R);
+        float splashL = dsp_svf_bp(&wv_splashL, pL) * crest;
+        float splashR = dsp_svf_bp(&wv_splashR, pR) * crest;
+
+        L[i] += (bodyL * 1.8f + splashL * 0.35f) * amount;
+        R[i] += (bodyR * 1.8f + splashR * 0.35f) * amount;
     }
 }
 
-/* WIND + DISTANT TRAFFIC (MIDNIGHT DRIVE): broader wind plus occasional
- * filtered low-mid sweep (the "whoosh" of an oncoming/passing car). */
+/* WIND + DISTANT TRAFFIC (MIDNIGHT DRIVE): passing cars are broadband noise
+ * with Doppler pitch SHIFT (filter-cutoff sweep through the burst), not a
+ * sine sweep down. Each event: a pink-noise burst gated by a fast-attack,
+ * slow-decay envelope (~2 s total), pushed through a bandpass whose centre
+ * sweeps 1400 -> 350 Hz over the event (Doppler down as the car passes),
+ * plus an amplitude pan from one side to the other (the car drives by). */
 static uint32_t tr_rng = 0x912EAFEEu;
-static float tr_lpL=0, tr_lpR=0;
-static float tr_sweep_env=0, tr_sweep_freq=200;
-static int   tr_until_sweep=0;
+static float tr_pink_b0L=0,tr_pink_b1L=0,tr_pink_b2L=0;
+static float tr_pink_b0R=0,tr_pink_b1R=0,tr_pink_b2R=0;
+static dsp_svf_t tr_bpL, tr_bpR;
+static int   tr_state = 0;
+static int   tr_until_next = 0, tr_phase = 0, tr_total = 1;
+static float tr_freq = 1400.0f;
+static int   tr_dir = 0;              /* 0: L->R, 1: R->L */
+static int   tr_initialised = 0;
 static inline float tr_white(void){
     tr_rng = tr_rng * 1664525u + 1013904223u;
     return ((int32_t)tr_rng) * (1.0f / 2147483648.0f);
 }
+static inline float tr_pink(float *b0, float *b1, float *b2){
+    float w = tr_white();
+    *b0 = 0.99765f * *b0 + w * 0.0990460f;
+    *b1 = 0.96300f * *b1 + w * 0.2965164f;
+    *b2 = 0.57000f * *b2 + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
 static inline void traffic_block(float *L, float *R, int n, float amount){
     if (amount <= 0.0f) return;
+    if (!tr_initialised){
+        dsp_svf_reset(&tr_bpL); dsp_svf_reset(&tr_bpR);
+        tr_until_next = (int)((float)SR * 4.0f);
+        tr_initialised = 1;
+    }
     for (int i = 0; i < n; ++i){
-        /* mid-band wind, broader than the universal one */
-        float wL = tr_white(), wR = tr_white();
-        tr_lpL += 0.10f * (wL - tr_lpL);
-        tr_lpR += 0.10f * (wR - tr_lpR);
-        /* sweep: filtered noise burst whose centre drops over ~1 s */
-        if (--tr_until_sweep <= 0){
-            tr_sweep_env  = 0.55f;
-            tr_sweep_freq = 800.0f;
-            tr_until_sweep = (int)SR * (3 + (int)((tr_white() * 0.5f + 0.5f) * 6));   /* every 3-9 s */
+        if (tr_state == 0){
+            if (--tr_until_next <= 0){
+                tr_state = 1; tr_phase = 0;
+                tr_total = (int)((float)SR * (1.6f + (tr_white()*0.5f+0.5f) * 0.8f));  /* 1.6..2.4 s */
+                tr_freq  = 1400.0f;
+                tr_dir   = (tr_white() > 0.0f) ? 0 : 1;
+            }
         }
-        float sweep = 0.0f;
-        if (tr_sweep_env > 0.0005f){
-            static float ph = 0;
-            tr_sweep_freq *= 0.99996f;
-            if (tr_sweep_freq < 80.0f) tr_sweep_freq = 80.0f;
-            ph += tr_sweep_freq / (float)SR; if (ph >= 1.0f) ph -= 1.0f;
-            float src = wL * 0.6f + sinf(ph * 6.2831853f) * 0.4f;
-            sweep = src * tr_sweep_env;
-            tr_sweep_env *= 0.99988f;
+        float out = 0.0f;
+        float panL = 0.5f, panR = 0.5f;
+        if (tr_state == 1){
+            float prog = (float)tr_phase / (float)tr_total;
+            /* envelope: triangular with peak at 0.4 (car closest then recedes) */
+            float env;
+            if (prog < 0.4f) env = prog / 0.4f;
+            else             env = (1.0f - prog) / 0.6f;
+            if (env < 0) env = 0;
+            /* Doppler: 1400 Hz -> 350 Hz over the event */
+            float fc = 1400.0f - prog * 1050.0f;
+            dsp_svf_set(&tr_bpL, fc,         1.6f);
+            dsp_svf_set(&tr_bpR, fc * 0.98f, 1.6f);
+            float src = tr_pink(&tr_pink_b0L, &tr_pink_b1L, &tr_pink_b2L);
+            float bpL = dsp_svf_bp(&tr_bpL, src);
+            float bpR = dsp_svf_bp(&tr_bpR, src);
+            out = (bpL + bpR) * 0.5f * env;
+            /* pan: linear sweep across stereo field */
+            float pan = (tr_dir == 0) ? prog : (1.0f - prog);
+            panL = 1.0f - pan; panR = pan;
+            if (++tr_phase >= tr_total){
+                tr_state = 0;
+                tr_until_next = (int)((float)SR * (3.5f + (tr_white()*0.5f+0.5f) * 5.5f));   /* 3.5..9 s gap */
+            }
         }
-        L[i] += (tr_lpL * 0.7f + sweep * 0.45f) * amount;
-        R[i] += (tr_lpR * 0.7f - sweep * 0.45f) * amount;
+        L[i] += out * panL * amount;
+        R[i] += out * panR * amount;
     }
 }
 
@@ -331,9 +459,9 @@ static const evt_t HOURS_EVTS[] = {
  *   hiss  ~-47 */
 static const world_demo_t WORLDS[N_WORLDS] = {
     /* name             vmix  bright wind  amb         amb_amt hiss   rsiz  rdmp rdrv  wet   sat   gain  d_root d_5th  d_rvel d_5vel evts        n  hold */
-    { "TOKYO CITY",     0.00f,   0.0f, 0.090f, AMB_RAIN,    0.024f, 0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
-    { "CRYSTAL COAST",  0.45f, 200.0f, 0.075f, AMB_WAVES,   0.035f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
-    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.110f, AMB_TRAFFIC, 0.066f, 0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
+    { "TOKYO CITY",     0.00f,   0.0f, 0.090f, AMB_RAIN,    0.10f,  0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
+    { "CRYSTAL COAST",  0.45f, 200.0f, 0.075f, AMB_WAVES,   0.045f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
+    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.110f, AMB_TRAFFIC, 0.18f,  0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
     { "AFTER HOURS",    0.00f,-100.0f, 0.060f, AMB_VINYL,   0.051f, 0.008f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
 };
 
