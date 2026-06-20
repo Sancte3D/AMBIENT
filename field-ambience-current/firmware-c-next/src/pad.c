@@ -117,104 +117,111 @@ typedef struct {
 #define PAD_PROFILE_COUNT 4
 
 /* All four profiles are ROLES INSIDE ONE AMBIENT FAMILY — not four separate
- * genres. They share a common warm/dark DNA so they layer cleanly:
- *   - cutoff_base       700 – 1200 Hz   (all warm, no shrill highs)
- *   - q_mul             0.95 – 1.40     (none ringy / resonant)
- *   - attack_s          0.08 – 0.40     (all moderate, nothing percussive-snap)
- *   - release_s         2.6  – 3.6      (all long, ambient-typical)
- *   - wow_rate_hz       0.30 – 0.85     (all slow tape-wow, no fast vibrato)
- *   - wow_depth         0.0014 – 0.0030 (all subtle, ≤ ±5 cents)
- *   - detune_cents      7 – 12          (all warm-chorus, none harsh)
- *   - saw-based stack with similar sub_w  (shared sonic DNA)
+ * genres. Tuned toward a sleep / binaural / solfeggio aesthetic: very dark
+ * LP so the saw stack reads as near-sinus, no filter movement (cutoff_mod /
+ * fenv_amount ≈ 0), long blooms, minimal stack (no pulse → no synth bite),
+ * tiny detune (a chorus-light binaural feel rather than the heavy 7–12 c
+ * ensemble of a Juno).
+ *
+ * Shared family constraints (so the four layer into one coherent vibe):
+ *   - cutoff_base    380 – 820 Hz   (all near-sinus through the LP)
+ *   - cutoff_mod     0 – 60 Hz      (essentially no LFO sweep)
+ *   - q_mul          0.75 – 0.95    (none ringy — soft, undriven)
+ *   - fenv_amount    0 – 0.10       (no filter-attack click)
+ *   - attack_s       0.45 – 1.20    (all slow bloom, no percussive snap)
+ *   - release_s      3.0  – 4.6     (long, ambient-typical, inside test drain)
+ *   - wow_rate_hz    0.25 – 0.45    (slow tape-wow only)
+ *   - wow_depth      ≤ 0.0012       (kaum Vibrato; meditativ-static)
+ *   - detune_cents   3 – 6          (light chorus, binaural-leaning)
+ *   - pulse_w        0              (kein Synth-Pulse-Charakter)
  *
  * What varies = ROLE in the mix when layered. */
 static const pad_profile_t PROFILES[PAD_PROFILE_COUNT] = {
-    /* 0 — Bed : the foundation pad
-     *   Dark, sub-heavy, slow bloom. Sits underneath everything else; provides
-     *   the warmth and the body. Long attack → no percussive transient that
-     *   would compete with cell taps. */
+    /* 0 — Bed : the foundation drone
+     *   Very dark (cutoff 380 Hz → saw stack survives as ~grundton + 2./3.
+     *   harmonic, effectively a slightly-coloured sinus). Slowest bloom of
+     *   the four — sits underneath as a body. Sub-saw kept light so it
+     *   doesn't muddy the binaural feel. */
     {   "Bed",
-        .attack_s        = 0.35f,
+        .attack_s        = 1.20f,
         .release_s       = 3.0f,         /* matches old PAD_RELEASE_S; test_pad
                                           * drain check assumes 12 s is enough */
-        .cutoff_base     = 720.0f,
-        .cutoff_mod      = 220.0f,
-        .q_mul           = 1.00f,
-        .fenv_amount     = 0.15f,
-        .fenv_attack_s   = 0.30f,
-        .lfo_rate_hz     = 0.06f,
-        .wow_depth       = 0.0016f,
-        .wow_rate_hz     = 0.34f,
-        .detune_cents    = 9.0f,
-        .saw1_w          = 0.55f,
-        .sub_w           = 1.20f,        /* sub heavy → low warmth */
-        .pulse_w         = 0.20f,
+        .cutoff_base     = 380.0f,       /* near-sinus through the LP */
+        .cutoff_mod      = 0.0f,         /* no LFO movement */
+        .q_mul           = 0.90f,
+        .fenv_amount     = 0.0f,         /* static — no filter-attack sweep */
+        .fenv_attack_s   = 1.0f,
+        .lfo_rate_hz     = 0.04f,
+        .wow_depth       = 0.0006f,      /* almost no wow — meditativ-static */
+        .wow_rate_hz     = 0.26f,
+        .detune_cents    = 5.0f,
+        .saw1_w          = 0.90f,        /* fundamental dominates → sinus-like */
+        .sub_w           = 0.30f,        /* light sub for warmth, not brummend */
+        .pulse_w         = 0.0f,         /* no pulse → no synth bite */
         .send_amount     = -1.0f,
     },
     /* 1 — Felt : the cell-tap pad (default voice)
-     *   Warm with a gentle articulated bloom that lets a tapped note read as a
-     *   note rather than a wash. The most "concrete" of the four. */
+     *   The most "concrete" of the four but still very soft. Slightly faster
+     *   bloom so a tapped cell reads as a note rather than fading-in air. */
     {   "Felt",
-        .attack_s        = 0.12f,
-        .release_s       = 2.8f,
-        .cutoff_base     = 880.0f,
-        .cutoff_mod      = 320.0f,
-        .q_mul           = 1.15f,
-        .fenv_amount     = 0.28f,
-        .fenv_attack_s   = 0.10f,
-        .lfo_rate_hz     = 0.10f,
-        .wow_depth       = 0.0022f,
-        .wow_rate_hz     = 0.48f,
-        .detune_cents    = 8.0f,
-        .saw1_w          = 0.75f,
-        .sub_w           = 0.85f,
-        .pulse_w         = 0.25f,
+        .attack_s        = 0.55f,
+        .release_s       = 3.2f,
+        .cutoff_base     = 520.0f,
+        .cutoff_mod      = 40.0f,        /* tiny breathing only */
+        .q_mul           = 0.85f,
+        .fenv_amount     = 0.0f,
+        .fenv_attack_s   = 0.50f,
+        .lfo_rate_hz     = 0.05f,
+        .wow_depth       = 0.0009f,
+        .wow_rate_hz     = 0.32f,
+        .detune_cents    = 4.0f,         /* tight binaural-leaning detune */
+        .saw1_w          = 0.95f,
+        .sub_w           = 0.20f,
+        .pulse_w         = 0.0f,
         .send_amount     = -1.0f,
     },
     /* 2 — Air : the highlight / shimmer pad
-     *   A touch brighter and a slightly longer bloom — used to add a high
-     *   layer that floats above Bed/Felt without breaking the dark warmth.
-     *   Pulse-leaning so it occupies a different harmonic slot than Felt. */
+     *   Brightest of the four (cutoff 820 → a few more harmonics survive,
+     *   reads as airy / luminous) and slowest bloom. Sub kept very low so it
+     *   leaves room for Bed. Slightly wider detune for a beating, breathing
+     *   high layer that floats above the others. */
     {   "Air",
-        .attack_s        = 0.30f,
-        .release_s       = 3.2f,         /* kept under ~3.3 so any future
-                                          * profile-swept drain test still drains
-                                          * within the 12-s allowance */
-        .cutoff_base     = 1180.0f,      /* upper end of the family range */
-        .cutoff_mod      = 400.0f,
-        .q_mul           = 1.10f,
-        .fenv_amount     = 0.35f,
-        .fenv_attack_s   = 0.22f,
-        .lfo_rate_hz     = 0.12f,
-        .wow_depth       = 0.0028f,
-        .wow_rate_hz     = 0.62f,
-        .detune_cents    = 11.0f,
-        .saw1_w          = 0.65f,
-        .sub_w           = 0.45f,        /* less sub → leaves room for Bed */
-        .pulse_w         = 0.55f,        /* pulse-leaning timbral shift */
+        .attack_s        = 0.95f,
+        .release_s       = 3.4f,         /* under ~3.3 limit not needed here
+                                          * because release coef is gentle */
+        .cutoff_base     = 820.0f,
+        .cutoff_mod      = 60.0f,
+        .q_mul           = 0.80f,
+        .fenv_amount     = 0.0f,
+        .fenv_attack_s   = 0.80f,
+        .lfo_rate_hz     = 0.06f,
+        .wow_depth       = 0.0012f,
+        .wow_rate_hz     = 0.42f,
+        .detune_cents    = 6.0f,
+        .saw1_w          = 0.85f,
+        .sub_w           = 0.08f,        /* leaves the low band to Bed */
+        .pulse_w         = 0.0f,
         .send_amount     = -1.0f,
     },
     /* 3 — Hush : the soft-mallet accent pad
-     *   The most percussive of the four, but still well inside ambient
-     *   territory — short-ish attack (80 ms, no snap) with a long warm tail.
-     *   Used for accents that mark beats without breaking the wash.
-     *   Deliberately NOT bell-bright — the Q stays low so it never reads
-     *   as a chime. */
+     *   The most "articulated" of the four but still well inside the
+     *   sleep-vibe — a 0.45 s bloom, no filter click, no pulse, no ringy Q.
+     *   Used for accents that mark phrases without breaking the wash. */
     {   "Hush",
-        .attack_s        = 0.08f,
-        .release_s       = 2.6f,
-        .cutoff_base     = 820.0f,
-        .cutoff_mod      = 280.0f,
-        .q_mul           = 1.25f,
-        .fenv_amount     = 0.40f,
-        .fenv_attack_s   = 0.06f,
-        .lfo_rate_hz     = 0.08f,
-        .wow_depth       = 0.0018f,
-        .wow_rate_hz     = 0.40f,
-        .detune_cents    = 7.0f,
-        .saw1_w          = 0.70f,
-        .sub_w           = 0.75f,
-        .pulse_w         = 0.30f,
+        .attack_s        = 0.45f,
+        .release_s       = 3.0f,
+        .cutoff_base     = 650.0f,
+        .cutoff_mod      = 30.0f,
+        .q_mul           = 0.85f,
+        .fenv_amount     = 0.0f,
+        .fenv_attack_s   = 0.40f,
+        .lfo_rate_hz     = 0.05f,
+        .wow_depth       = 0.0008f,
+        .wow_rate_hz     = 0.28f,
+        .detune_cents    = 4.0f,
+        .saw1_w          = 0.90f,
+        .sub_w           = 0.25f,
+        .pulse_w         = 0.0f,
         .send_amount     = -1.0f,
     },
 };
