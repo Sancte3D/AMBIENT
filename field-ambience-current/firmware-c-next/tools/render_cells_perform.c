@@ -41,36 +41,34 @@
 #define PART_SECS 60
 
 /* ----------------------------- performance ----------------------------- */
-/* C-dorian (key 60, mode 1). Degrees 1..5 = i, ii, bIII, IV, v. */
+/* C-dorian (key 60, mode 1). Long holds, simple progression — ambient beauty
+ * comes from VERWEILEN, not abwechslung. 5 chord changes in 60 s, not 9. */
 typedef struct { float t; int degree, vibe; float vel, hold; } chord_t;
 static const chord_t CHORDS[] = {
-    {  1.5f, 1, 0, 0.11f, 7.0f },   /* Cm  add9   (intro) */
-    {  8.0f, 3, 0, 0.10f, 7.0f },   /* Eb  add9   */
-    { 15.0f, 4, 1, 0.12f, 6.0f },   /* F   maj7   (bright enters) */
-    { 21.0f, 5, 1, 0.11f, 6.0f },   /* Gm  maj7   */
-    { 27.0f, 1, 1, 0.13f, 6.0f },   /* Cm  maj7   */
-    { 33.0f, 3, 2, 0.12f, 6.0f },   /* Eb  min11  (deep) */
-    { 39.0f, 4, 2, 0.12f, 6.0f },   /* F   min11  */
-    { 45.0f, 5, 2, 0.11f, 5.0f },   /* Gm  min11  */
-    { 49.5f, 1, 3, 0.10f, 9.0f },   /* Cm  sus2   (floating outro, long) */
+    {  1.0f, 1, 0, 0.12f, 15.0f },   /* Cm  add9   (intro, long hold) */
+    { 14.0f, 6, 0, 0.11f, 14.0f },   /* Am  add9   (vi — relative minor open) */
+    { 26.0f, 3, 1, 0.10f, 12.0f },   /* Eb  maj7   (gentle major — colour shift) */
+    { 36.0f, 4, 3, 0.11f, 12.0f },   /* F   sus2   (suspension) */
+    { 46.0f, 1, 0, 0.10f, 14.0f },   /* Cm  add9   (return home) */
 };
 #define N_CH (sizeof CHORDS / sizeof CHORDS[0])
 
+/* sparse melody: 4 notes in 60 s — leerstellen are part of the music */
 typedef struct { float t; int midi; float vel, dur; } mel_t;
 static const mel_t MELODY[] = {
-    { 16.0f, 79, 0.12f, 2.0f }, { 19.0f, 75, 0.10f, 1.5f },
-    { 23.0f, 82, 0.11f, 2.5f }, { 28.0f, 77, 0.10f, 2.0f },
-    { 31.0f, 79, 0.12f, 2.0f }, { 35.0f, 84, 0.11f, 3.0f },
-    { 41.0f, 81, 0.10f, 2.0f }, { 44.0f, 79, 0.11f, 2.0f },
-    { 47.0f, 75, 0.10f, 2.5f }, { 53.0f, 72, 0.09f, 5.0f },
+    { 18.0f, 79, 0.11f, 4.0f },   /* G5  — over Am */
+    { 28.0f, 75, 0.10f, 5.0f },   /* Eb5 — on the Eb change */
+    { 38.0f, 77, 0.10f, 5.0f },   /* F5  — on the F change */
+    { 50.0f, 72, 0.09f, 8.0f },   /* C5  — resolution, long tail */
 };
 #define N_MEL (sizeof MELODY / sizeof MELODY[0])
 
-/* the player opening / closing the wash over the take (wet 0..1) */
+/* wet automation — granular+reverb as ATMOSPHERIC SPICE on top of the dry
+ * chord, not as the main sound. Max 0.45, never drowning the chord. */
 static float wet_at(float t){
-    static const float bt[] = { 0, 12, 18, 34, 45, 52, 60 };
-    static const float bv[] = { 0.15f,0.25f,0.55f,0.80f,0.85f,0.70f,0.60f };
-    int n = 7;
+    static const float bt[] = {  0.0f, 12.0f, 30.0f, 48.0f, 60.0f };
+    static const float bv[] = { 0.08f, 0.22f, 0.42f, 0.38f, 0.28f };
+    int n = 5;
     if (t <= bt[0]) return bv[0];
     for (int i=1;i<n;i++) if (t<=bt[i]){ float f=(t-bt[i-1])/(bt[i]-bt[i-1]); return bv[i-1]+(bv[i]-bv[i-1])*f; }
     return bv[n-1];
@@ -81,11 +79,20 @@ static pend_t pend[PAD_MAX*2]; static int npend = 0;
 static void sched_off(float t, uint8_t s){ if(npend<(int)(sizeof pend/sizeof pend[0])){pend[npend].t=t;pend[npend].src=s;npend++;} }
 
 /* ----------------------------- granular -------------------------------- */
+/* The cloud is ATMOSPHERIC SPICE, not the main sound. Tuned for ambient
+ * beauty (Eno / Stars-of-the-Lid territory) rather than FM-noise density:
+ *   - dense cloud was 49 grains/s → now ~11/s (audible as a wash, not a brei)
+ *   - grains were 34..113 ms → now 200..500 ms (proper clouds, not knister)
+ *   - pitch scatter was unison/+oct/-oct/+5th → now unison/+oct/-oct ONLY.
+ *     +5th transposes "ghost" reads of the OLD chord into the new key during
+ *     transitions — that was the main "falsche Töne im Hintergrund" source.
+ *   - random pan was 0..1 per grain → now stereo-pair pattern (left grain
+ *     pans left, right grain pans right) so the bus stays phase-stable. */
 #define GBUF_LEN  (1u<<16)
 #define GBUF_MASK (GBUF_LEN-1u)
-#define MAXG      40
-#define GR_SPACING   900     /* GR spacing — denser cloud for a full take */
-#define WAVE_SPACING 900     /* wave spacing — forward read-scan */
+#define MAXG      24
+#define GR_SPACING   4000    /* ~11 grains/s — audible as a cloud, not brei */
+#define WAVE_SPACING 200     /* slow forward scan — grains sample neighbours */
 
 typedef struct { int active; float pos, inc; int age, len; float pan, amp; } grain_t;
 static float gbufL[GBUF_LEN], gbufR[GBUF_LEN];
@@ -99,17 +106,24 @@ static inline float gread(const float *b, float pos){
     uint32_t i0=(uint32_t)pos&GBUF_MASK, i1=(i0+1)&GBUF_MASK; float fr=pos-floorf(pos);
     return b[i0]*(1.0f-fr)+b[i1]*fr;
 }
+static int grain_pair = 0;     /* alternates L/R for stereo-pair panning */
 static void grain_spawn(void){
     for(int g=0; g<MAXG; ++g){
         if(grains[g].active) continue;
         grain_t *gr=&grains[g];
-        gr->active=1; gr->age=0; gr->len=1500+(int)(frand()*3500.0f);
-        uint32_t jit=(uint32_t)(frand()*4000.0f);
-        gr->pos=(float)((gwrite-(GBUF_LEN-6000)+scan+jit)&GBUF_MASK);
-        scan+=WAVE_SPACING; if(scan>(GBUF_LEN-12000)) scan=0;
+        gr->active=1; gr->age=0;
+        gr->len   =9000+(int)(frand()*13000.0f);    /* 200..500 ms — proper cloud */
+        /* read into recent history (NEVER past gwrite); slow forward scan */
+        uint32_t jit=(uint32_t)(frand()*8000.0f);   /* ±180 ms time-jitter */
+        gr->pos=(float)((gwrite-(GBUF_LEN-12000)+scan+jit)&GBUF_MASK);
+        scan+=WAVE_SPACING; if(scan>(GBUF_LEN-16000)) scan=0;
+        /* pitch: unison-dominant, only octaves (in-key) — NO +5th transposer */
         float r=frand();
-        gr->inc=(r<0.62f)?1.0f:(r<0.82f)?2.0f:(r<0.92f)?0.5f:1.5f;
-        gr->pan=frand(); gr->amp=0.55f; return;
+        gr->inc=(r<0.75f)?1.0f:(r<0.88f)?2.0f:0.5f;
+        /* stereo-pair pan: alternating L/R, narrow spread → phase-stable bus */
+        gr->pan=(grain_pair^=1) ? (0.22f+frand()*0.18f)   /* 0.22..0.40 L */
+                                : (0.60f+frand()*0.18f);  /* 0.60..0.78 R */
+        gr->amp=0.55f; return;
     }
 }
 static void granular_block(const float *inL,const float *inR,float *outL,float *outR,int n){
@@ -133,8 +147,12 @@ int main(int argc, char **argv){
     dsp_init();
     brain_init(); brain_set_key(60); brain_set_mode(1);
     pad_init();
-    reverb_init(); reverb_set(0.90f,0.40f); reverb_set_drive(0.18f);
-    diffuser_t df; diffuser_init(&df); diffuser_set_amount(&df,0.78f);
+    /* reverb + diffuser tamed: was size 0.90 / damp 0.40 / drive 0.18 and
+     * blur 0.78 — at those values both effects "wash" and they matschen
+     * together. Now: gentler hall, brighter top damped, blur halved so it
+     * smooths instead of doubling the wash. */
+    reverb_init(); reverb_set(0.72f,0.55f); reverb_set_drive(0.10f);
+    diffuser_t df; diffuser_init(&df); diffuser_set_amount(&df,0.45f);
     memset(gbufL,0,sizeof gbufL); memset(gbufR,0,sizeof gbufR); memset(grains,0,sizeof grains);
 
     /* drone bed (Bed profile), held nearly the whole take */
@@ -183,9 +201,11 @@ int main(int argc, char **argv){
 
         for(int i=0;i<n;++i){
             float wet=wet_at((float)(frame+i)/SR);
-            float dry=1.0f-0.55f*wet;
-            float L=(dryL[i]*dry + wL[i]*0.85f*wet)*1.40f;
-            float R=(dryR[i]*dry + wR[i]*0.85f*wet)*1.40f;
+            /* dry-floor: never drop the clean chord below 70 % — wet adds
+             * ON TOP as atmosphere, doesn't replace the source. */
+            float dry=1.0f-0.30f*wet;
+            float L=(dryL[i]*dry + wL[i]*0.55f*wet)*1.25f;
+            float R=(dryR[i]*dry + wR[i]*0.55f*wet)*1.25f;
             int li=(int)(L*32767.0f), ri=(int)(R*32767.0f);
             if(li>32767)li=32767; if(li<-32768)li=-32768;
             if(ri>32767)ri=32767; if(ri<-32768)ri=-32768;
