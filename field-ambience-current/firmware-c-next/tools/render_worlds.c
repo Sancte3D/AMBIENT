@@ -53,16 +53,196 @@ static inline void warm_sat(float *L, float *R, int n, float drive){
     }
 }
 
+/* ---- universal wind/breath: bandpass-swept noise around 600 Hz --------
+ * The "default wind sound" the user liked. Runs in every world at a
+ * subtle level. NOT the brown-noise body rumble that was making the
+ * brumm — that came from texture.c body and is now off. */
+static uint32_t wnd_rng_L = 0xACE12345u, wnd_rng_R = 0x7B19F88Au;
+static float wnd_lpL=0, wnd_lpR=0, wnd_bpL=0, wnd_bpR=0, wnd_lfo=0;
+static inline float wnd_white(uint32_t *r){
+    *r = (*r) * 1664525u + 1013904223u;
+    return ((int32_t)*r) * (1.0f / 2147483648.0f);
+}
+static inline void wind_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    for (int i = 0; i < n; ++i){
+        /* 0.055 Hz LFO sweeps the bandpass centre */
+        wnd_lfo += 0.055f / (float)SR;
+        if (wnd_lfo >= 1.0f) wnd_lfo -= 1.0f;
+        float s = sinf(wnd_lfo * 6.2831853f);
+        /* approximate bandpass via LP + (x - LP_slow). Two 1-pole stages. */
+        float wL = wnd_white(&wnd_rng_L);
+        float wR = wnd_white(&wnd_rng_R);
+        /* LP at ~1200 Hz, modulated ±400 Hz by LFO → "shape" of wind */
+        float a_lp = 0.18f + s * 0.06f;
+        wnd_lpL += a_lp * (wL - wnd_lpL);
+        wnd_lpR += a_lp * (wR - wnd_lpR);
+        /* HP via subtracting a slower LP at ~150 Hz removes the rumble */
+        wnd_bpL += 0.022f * (wnd_lpL - wnd_bpL);
+        wnd_bpR += 0.022f * (wnd_lpR - wnd_bpR);
+        float bpL = (wnd_lpL - wnd_bpL);
+        float bpR = (wnd_lpR - wnd_bpR);
+        /* slow amplitude breath, 0.04 Hz */
+        float breath = 0.7f + 0.3f * sinf(wnd_lfo * 2.0f * 6.2831853f * 0.7f);
+        L[i] += bpL * amount * breath;
+        R[i] += bpR * amount * breath;
+    }
+}
+
+/* ---- per-world atmospheric layers ---------------------------------- */
+
+/* RAIN (TOKYO CITY): high-pass white noise (the "sshhh") + sparse low-Q
+ * resonant impulses (the drops on pavement). */
+static uint32_t rn_rng = 0x5417F00Du;
+static float rn_lpL=0, rn_lpR=0;
+static float rn_drop_env=0, rn_drop_freq=2400;
+static int   rn_until_drop=0;
+static inline float rn_white(void){
+    rn_rng = rn_rng * 1664525u + 1013904223u;
+    return ((int32_t)rn_rng) * (1.0f / 2147483648.0f);
+}
+static inline void rain_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    for (int i = 0; i < n; ++i){
+        /* shhh: high-passed noise = white - slow LP (HP corner ~2 kHz) */
+        float wL = rn_white(), wR = rn_white();
+        rn_lpL += 0.20f * (wL - rn_lpL);
+        rn_lpR += 0.20f * (wR - rn_lpR);
+        float hpL = wL - rn_lpL * 1.6f;
+        float hpR = wR - rn_lpR * 1.6f;
+        /* sparse drops: trigger an exponential 2-3 kHz hit every ~3500-9000 samples */
+        if (--rn_until_drop <= 0){
+            rn_drop_env  = 0.35f;
+            rn_drop_freq = 2000.0f + (rn_white() * 0.5f + 0.5f) * 1200.0f;
+            rn_until_drop = 3500 + (int)((rn_white() * 0.5f + 0.5f) * 5500.0f);
+        }
+        float drop = 0.0f;
+        if (rn_drop_env > 0.0001f){
+            static float drop_phase = 0;
+            drop_phase += rn_drop_freq / (float)SR;
+            if (drop_phase >= 1.0f) drop_phase -= 1.0f;
+            drop = sinf(drop_phase * 6.2831853f) * rn_drop_env;
+            rn_drop_env *= 0.998f;
+        }
+        L[i] += (hpL * 0.55f + drop) * amount;
+        R[i] += (hpR * 0.55f - drop * 0.7f) * amount;  /* slight stereo offset */
+    }
+}
+
+/* WAVES (CRYSTAL COAST): brown noise with very slow amplitude swell.
+ * "wash in / wash out" of the surf. */
+static uint32_t wv_rng = 0xBADCAFE1u;
+static float wv_brnL=0, wv_brnR=0, wv_lfo=0;
+static inline float wv_white(void){
+    wv_rng = wv_rng * 1664525u + 1013904223u;
+    return ((int32_t)wv_rng) * (1.0f / 2147483648.0f);
+}
+static inline void waves_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    for (int i = 0; i < n; ++i){
+        /* brown via integration */
+        wv_brnL = wv_brnL * 0.996f + wv_white() * 0.04f;
+        wv_brnR = wv_brnR * 0.996f + wv_white() * 0.04f;
+        /* 0.10 Hz swell — "wave every 10 s" */
+        wv_lfo += 0.10f / (float)SR;
+        if (wv_lfo >= 1.0f) wv_lfo -= 1.0f;
+        float swell = 0.35f + 0.55f * (0.5f + 0.5f * sinf(wv_lfo * 6.2831853f));
+        L[i] += wv_brnL * amount * swell * 3.0f;
+        R[i] += wv_brnR * amount * swell * 3.0f;
+    }
+}
+
+/* WIND + DISTANT TRAFFIC (MIDNIGHT DRIVE): broader wind plus occasional
+ * filtered low-mid sweep (the "whoosh" of an oncoming/passing car). */
+static uint32_t tr_rng = 0x912EAFEEu;
+static float tr_lpL=0, tr_lpR=0;
+static float tr_sweep_env=0, tr_sweep_freq=200;
+static int   tr_until_sweep=0;
+static inline float tr_white(void){
+    tr_rng = tr_rng * 1664525u + 1013904223u;
+    return ((int32_t)tr_rng) * (1.0f / 2147483648.0f);
+}
+static inline void traffic_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    for (int i = 0; i < n; ++i){
+        /* mid-band wind, broader than the universal one */
+        float wL = tr_white(), wR = tr_white();
+        tr_lpL += 0.10f * (wL - tr_lpL);
+        tr_lpR += 0.10f * (wR - tr_lpR);
+        /* sweep: filtered noise burst whose centre drops over ~1 s */
+        if (--tr_until_sweep <= 0){
+            tr_sweep_env  = 0.55f;
+            tr_sweep_freq = 800.0f;
+            tr_until_sweep = (int)SR * (3 + (int)((tr_white() * 0.5f + 0.5f) * 6));   /* every 3-9 s */
+        }
+        float sweep = 0.0f;
+        if (tr_sweep_env > 0.0005f){
+            static float ph = 0;
+            tr_sweep_freq *= 0.99996f;
+            if (tr_sweep_freq < 80.0f) tr_sweep_freq = 80.0f;
+            ph += tr_sweep_freq / (float)SR; if (ph >= 1.0f) ph -= 1.0f;
+            float src = wL * 0.6f + sinf(ph * 6.2831853f) * 0.4f;
+            sweep = src * tr_sweep_env;
+            tr_sweep_env *= 0.99988f;
+        }
+        L[i] += (tr_lpL * 0.7f + sweep * 0.45f) * amount;
+        R[i] += (tr_lpR * 0.7f - sweep * 0.45f) * amount;
+    }
+}
+
+/* VINYL + SMOKY BAR (AFTER HOURS): hi-passed noise crackle + sparse
+ * sharper crackle pops + very slow low rumble (distant city through walls). */
+static uint32_t vy_rng = 0xC0DEFEEDu;
+static float vy_lpL=0, vy_lpR=0, vy_rumL=0, vy_rumR=0;
+static int   vy_until_pop = 0;
+static float vy_pop_env = 0;
+static inline float vy_white(void){
+    vy_rng = vy_rng * 1664525u + 1013904223u;
+    return ((int32_t)vy_rng) * (1.0f / 2147483648.0f);
+}
+static inline void vinyl_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    for (int i = 0; i < n; ++i){
+        float wL = vy_white(), wR = vy_white();
+        /* hi-pass crackle: subtract slow LP */
+        vy_lpL += 0.30f * (wL - vy_lpL);
+        vy_lpR += 0.30f * (wR - vy_lpR);
+        float crL = wL - vy_lpL;
+        float crR = wR - vy_lpR;
+        /* sparse sharp pops */
+        if (--vy_until_pop <= 0){
+            vy_pop_env = 0.5f + (vy_white() * 0.5f + 0.5f) * 0.4f;
+            vy_until_pop = 800 + (int)((vy_white() * 0.5f + 0.5f) * 3000.0f);
+        }
+        float pop = 0.0f;
+        if (vy_pop_env > 0.001f){
+            pop = vy_white() * vy_pop_env;
+            vy_pop_env *= 0.975f;
+        }
+        /* slow far-city rumble: brown noise heavily LP'd */
+        vy_rumL = vy_rumL * 0.9985f + vy_white() * 0.0008f;
+        vy_rumR = vy_rumR * 0.9985f + vy_white() * 0.0008f;
+        L[i] += (crL * 0.35f + pop * 0.55f + vy_rumL * 1.5f) * amount;
+        R[i] += (crR * 0.35f - pop * 0.55f + vy_rumR * 1.5f) * amount;
+    }
+}
+
 /* ---- world definitions --------------------------------------------- */
 typedef struct { float t; int midi; float vel; } evt_t;
+
+typedef enum { AMB_NONE = 0, AMB_RAIN, AMB_WAVES, AMB_TRAFFIC, AMB_VINYL } amb_kind_t;
 
 typedef struct {
     const char *name;
     /* pad timbre */
     float pad_vmix;          /* 0 = warm/pure saw, 0.6 = strings, 1.2 = brass */
     float pad_bright_hz;     /* cutoff offset */
-    /* texture + hiss + room + master */
-    float texture_amt;
+    /* ambient layers — texture.c body rumble OFF (was the "brumm"); replaced
+     * by a universal wind/breath at wind_amt + a world-specific layer below. */
+    float wind_amt;          /* universal wind/breath, runs in every world */
+    amb_kind_t world_amb;    /* which world-specific layer */
+    float world_amb_amt;
+    /* tape hiss + room + master */
     float hiss_amt;
     float rev_size, rev_damp, rev_drive;
     float wet_amp;
@@ -118,11 +298,11 @@ static const evt_t HOURS_EVTS[] = {
 };
 
 static const world_demo_t WORLDS[N_WORLDS] = {
-    /* name             vmix  bright tex   hiss   rsiz  rdmp rdrv  wet   sat   gain   d_root d_5th  d_rvel d_5vel evts        n  hold */
-    { "TOKYO CITY",     0.00f,   0.0f, 0.12f, 0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
-    { "CRYSTAL COAST",  0.45f, 200.0f, 0.08f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
-    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.15f, 0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
-    { "AFTER HOURS",    0.00f,-100.0f, 0.18f, 0.012f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
+    /* name             vmix  bright wind  amb         amb_amt hiss   rsiz  rdmp rdrv  wet   sat   gain  d_root d_5th  d_rvel d_5vel evts        n  hold */
+    { "TOKYO CITY",     0.00f,   0.0f, 0.05f, AMB_RAIN,    0.10f, 0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
+    { "CRYSTAL COAST",  0.45f, 200.0f, 0.04f, AMB_WAVES,   0.09f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
+    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.07f, AMB_TRAFFIC, 0.11f, 0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
+    { "AFTER HOURS",    0.00f,-100.0f, 0.03f, AMB_VINYL,   0.12f, 0.012f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
 };
 
 /* ---- WAV ----------------------------------------------------------- */
@@ -146,7 +326,7 @@ static int render_world(const world_demo_t *w, const char *out_path, FILE *combi
     pad_init();
     pad_set_voice_mix(w->pad_vmix);
     pad_set_brightness(w->pad_bright_hz);
-    texture_init(); texture_set_amount(w->texture_amt);
+    texture_init(); texture_set_amount(0.0f);     /* OFF — was the brumm source */
     reverb_init();
     reverb_set(w->rev_size, w->rev_damp); reverb_set_drive(w->rev_drive);
     npend = 0;
@@ -188,7 +368,16 @@ static int render_world(const world_demo_t *w, const char *out_path, FILE *combi
         memset(sndL, 0, sizeof(float) * n); memset(sndR, 0, sizeof(float) * n);
 
         pad_render_mix(dryL, dryR, sndL, sndR, n, 0.75f);
-        texture_render_mix(dryL, dryR, sndL, sndR, n, 0.55f);
+        /* universal wind/breath + world-specific ambience layer, both summed
+         * into the dry bus and then also sent (a bit) to the reverb */
+        wind_block(dryL, dryR, n, w->wind_amt);
+        switch (w->world_amb){
+        case AMB_RAIN:    rain_block   (dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_WAVES:   waves_block  (dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_TRAFFIC: traffic_block(dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_VINYL:   vinyl_block  (dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_NONE:    default: break;
+        }
         hiss_block(dryL, dryR, n, w->hiss_amt);
         reverb_render(sndL, sndR, wL, wR, n);
         for (int i = 0; i < n; ++i){
