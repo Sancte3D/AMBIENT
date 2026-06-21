@@ -2,7 +2,7 @@
  * Offline render harness — renders the real engine to a stereo 16-bit WAV on
  * the host, with NO Pico SDK and NO hardware. This is the reference-audio
  * loop (the "export reference audio" step): listen to the WAV on a computer
- * and A/B it against field_ambience_webapp.html. If the WAV matches the
+ * and A/B it against ../../software/webapp/field_ambience_webapp.html. If the WAV matches the
  * webapp, any remaining difference on the device is the hardware chain
  * (DAC / amp / speaker / ground / supply), not the DSP code.
  *

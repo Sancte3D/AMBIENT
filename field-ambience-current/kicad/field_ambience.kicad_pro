@@ -143,12 +143,12 @@
       "PowerTree"
     ],
     [
-      "c986df58-892e-4ab4-ae53-8af3816b4566",
-      "Pico"
+      "e3bc855f-ca21-4bea-a5ff-d24a556f7f9e",
+      "STM32H743"
     ],
     [
-      "17bd270c-7309-4c60-a88c-f7727be8d5a6",
-      "OLED"
+      "b69bec51-cf25-40ed-a68d-2acf8a844a66",
+      "LCD"
     ],
     [
       "ae4d8abd-ab57-48bd-a18a-f37b38917ad2",
@@ -161,6 +161,10 @@
     [
       "66fcdc89-be06-4d61-a855-abf9641d963c",
       "Audio"
+    ],
+    [
+      "f6a664dc-7032-4108-a10b-e4076008e6bd",
+      "Battery"
     ]
   ],
   "text_variables": {}

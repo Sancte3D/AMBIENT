@@ -31,6 +31,15 @@ void engine_note_on(uint8_t source, float freq_hz, float amp);
 void engine_note_off(uint8_t source);
 void engine_all_off(void);
 
+/* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
+ * for cell `cell` (0..4) at `now_ms`. The cell-velocity model (cells.c) turns
+ * the position stream into note events: a PRESS sounds that cell's chord root
+ * (via the harmonic brain) at a velocity-scaled amplitude; a RELEASE stops it.
+ * This is the single cell entry point the STM32 ADC loop calls; the RP2040
+ * bench can synthesise positions from its digital buttons. Returns true when a
+ * note started or stopped this sample (for LED / debug). */
+bool engine_cell_sample(uint8_t cell, float pos_0_1, uint32_t now_ms);
+
 /* Live-tunable engine knobs (smoothed by the reverb internally; the wet/
  * send mix is smoothed here). All are 0..1; defaults applied at engine_init. */
 void engine_set_reverb_size(float size_0_1);

@@ -44,6 +44,43 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/brain_test"
 "$tmp/brain_test"
 
+# ADR-0013: cell-velocity input model (Hall position → velocity → amp)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_cells.c" \
+    "$src/src/cells.c" \
+    -lm -o "$tmp/cells_test"
+"$tmp/cells_test"
+
+# ADR-0008 r2: modifier + cell hold-latch state machine (controls.c)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_controls.c" \
+    "$src/src/controls.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    -lm -o "$tmp/controls_test"
+"$tmp/controls_test"
+
+# Encoder → engine parameter bindings + acceleration (params.c)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_params.c" \
+    "$src/src/params.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    -lm -o "$tmp/params_test"
+"$tmp/params_test"
+
+# LED render: controls/modifier state → PCA9685 16-ch PWM with fade engine
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_leds.c" \
+    "$src/src/leds.c" "$src/src/controls.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    -lm -o "$tmp/leds_test"
+"$tmp/leds_test"
+
 # Step 8: famSubBass + famDeepBass + dsp_svf highpass / dsp_tri
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bass.c" \
@@ -102,9 +139,24 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/reverb_presets.c" \
     "$src/src/brain.c" \
     "$src/src/generative.c" \
+    "$src/src/cells.c" \
     "$src/src/engine.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"
+
+# ADR-0014: Engine V2 (ambient field instrument) — host smoke test for all
+# v2 modules (motion, harmony_field, field_voice, material_texture, diffuser,
+# mod_delay, beauty_guard, worlds, engine_v2). V1 untouched.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_v2.c" \
+    "$src/src/dsp.c" "$src/src/reverb.c" \
+    "$src/src/v2/motion.c" "$src/src/v2/harmony_field.c" \
+    "$src/src/v2/field_voice.c" "$src/src/v2/material_texture.c" \
+    "$src/src/v2/diffuser.c" "$src/src/v2/mod_delay.c" \
+    "$src/src/v2/beauty_guard.c" "$src/src/v2/worlds.c" \
+    "$src/src/v2/arp.c" "$src/src/v2/beat.c" "$src/src/v2/engine_v2.c" \
+    -lm -o "$tmp/v2_test"
+"$tmp/v2_test"
 
 # Bench display tool: animated renderer + tween engine + quadrature decode +
 # backlight gamma. Compiles the REAL tools/display_hw_test.c against the fake

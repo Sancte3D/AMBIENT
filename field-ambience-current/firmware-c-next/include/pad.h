@@ -4,7 +4,7 @@
 /*
  * famPadCore — the warm detuned-saw pad that is the instrument's core voice
  * (Step 9 of the native port). Ported from the Web-Audio reference
- * `_makePadVoice` in field_ambience_webapp.html.
+ * `_makePadVoice` in ../../software/webapp/field_ambience_webapp.html.
  *
  * Per pad voice (one per cell tap / chord tone):
  *   - two detuned "sides" (±detune cents) for chorus width
@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define PAD_MAX 8       /* 5 cells + headroom for chord spawns later */
+#define PAD_MAX 12      /* 5 cells × 2 octaves (base+shift, ADR-0008 r2) + gen bed + headroom */
 
 /* Build the pool. Call once after dsp_init(). */
 void pad_init(void);

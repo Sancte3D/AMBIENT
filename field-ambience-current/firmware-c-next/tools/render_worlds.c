@@ -1,0 +1,631 @@
+/*
+ * render_worlds.c — 4 x 45 s audition of the MVP world set:
+ *   TOKYO CITY, CRYSTAL COAST, MIDNIGHT DRIVE, AFTER HOURS
+ *
+ * Each world is one combined preset of pad voice-mix + brightness, texture
+ * amount, tape hiss amount, reverb size/damp/drive/wet, master tanh drive,
+ * drone root + optional 5th, plus a world-specific composition (key/mode +
+ * sparse note arc that fits the vibe).
+ *
+ * Drums intentionally off in this audition — the user wants drums as a menu
+ * option with a per-world appropriateness system; that's the next layer.
+ *
+ * Runs on the V1 warm-chorus pad restored by r18.37. No engine code yet —
+ * this is the SOUND TARGET each world must hit when the real engine refactor
+ * builds the world-preset structure.
+ *
+ * Build (from firmware-c-next/):
+ *   cc -std=c11 -O2 -Iinclude tools/render_worlds.c \
+ *      src/dsp.c src/pad.c src/texture.c src/reverb.c -lm \
+ *      -o /tmp/render_worlds
+ *   /tmp/render_worlds /tmp/worlds_  (prefix; writes combined + per-world WAVs)
+ */
+
+#include "pad.h"
+#include "texture.h"
+#include "reverb.h"
+#include "dsp.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#define SR           44100
+#define BLOCK        256
+#define WORLD_SECS   45
+#define N_WORLDS     4
+
+/* ---- tape hiss + saturation (same building blocks as dreamy_warm) ---- */
+static uint32_t hr_L = 0xC0FFEE11u, hr_R = 0xDEADBEEFu;
+static inline float hn(uint32_t *r){
+    *r = (*r) * 1664525u + 1013904223u;
+    return ((int32_t)*r) * (1.0f / 2147483648.0f);
+}
+static inline void hiss_block(float *L, float *R, int n, float amp){
+    for (int i = 0; i < n; ++i){ L[i] += hn(&hr_L) * amp; R[i] += hn(&hr_R) * amp; }
+}
+static inline void warm_sat(float *L, float *R, int n, float drive){
+    for (int i = 0; i < n; ++i){
+        L[i] = tanhf(L[i] * drive) * 0.78f;
+        R[i] = tanhf(R[i] * drive) * 0.78f;
+    }
+}
+
+/* ---- universal wind/breath: REAL resonant bandpass on pink-ish noise,
+ * slow sweep + amplitude gusts. The previous version was a wide-band 1-pole
+ * cascade and sounded like pure white noise — this uses dsp_svf_bp at Q≈2.5
+ * for a narrow band, slow LFO that walks the centre between 350..900 Hz over
+ * ~14 s, plus random gust envelopes every 4..8 s for the "atmen" feel. */
+static uint32_t wnd_rng_L = 0xACE12345u, wnd_rng_R = 0x7B19F88Au;
+static dsp_svf_t wnd_bpL_f, wnd_bpR_f;
+static float wnd_lfo = 0;
+static float wnd_pink_L_b0=0, wnd_pink_L_b1=0, wnd_pink_L_b2=0;
+static float wnd_pink_R_b0=0, wnd_pink_R_b1=0, wnd_pink_R_b2=0;
+static float wnd_gust_env = 0.5f;
+static int   wnd_gust_until = 0;
+static int   wnd_initialised = 0;
+static inline float wnd_white(uint32_t *r){
+    *r = (*r) * 1664525u + 1013904223u;
+    return ((int32_t)*r) * (1.0f / 2147483648.0f);
+}
+/* Cheap 3-pole pink-noise filter (Paul Kellet approximation). Wind sources
+ * have far more low-mid energy than white noise — this is what makes it
+ * sound like air moving instead of static. */
+static inline float wnd_pink(uint32_t *rng, float *b0, float *b1, float *b2){
+    float w = wnd_white(rng);
+    *b0 = 0.99765f * (*b0) + w * 0.0990460f;
+    *b1 = 0.96300f * (*b1) + w * 0.2965164f;
+    *b2 = 0.57000f * (*b2) + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
+static inline void wind_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    if (!wnd_initialised){
+        dsp_svf_reset(&wnd_bpL_f); dsp_svf_reset(&wnd_bpR_f);
+        wnd_gust_until = (int)SR * 5;
+        wnd_initialised = 1;
+    }
+    for (int i = 0; i < n; ++i){
+        /* 14 s sweep: centre 350..900 Hz */
+        wnd_lfo += (1.0f / 14.0f) / (float)SR;
+        if (wnd_lfo >= 1.0f) wnd_lfo -= 1.0f;
+        float s = sinf(wnd_lfo * 6.2831853f);
+        float centre = 625.0f + s * 275.0f;
+        dsp_svf_set(&wnd_bpL_f, centre,        2.5f);
+        dsp_svf_set(&wnd_bpR_f, centre * 1.07f, 2.5f);   /* slight L/R offset */
+
+        /* random gusts every 4..8 s */
+        if (--wnd_gust_until <= 0){
+            wnd_gust_env   = 0.85f + (wnd_white(&wnd_rng_L) * 0.5f + 0.5f) * 0.5f;
+            wnd_gust_until = (int)SR * (4 + (int)((wnd_white(&wnd_rng_R) * 0.5f + 0.5f) * 4));
+        }
+        wnd_gust_env *= 0.99996f;                       /* slow attack/decay */
+        float gust = 0.40f + wnd_gust_env * 0.6f;
+
+        float pL = wnd_pink(&wnd_rng_L, &wnd_pink_L_b0, &wnd_pink_L_b1, &wnd_pink_L_b2);
+        float pR = wnd_pink(&wnd_rng_R, &wnd_pink_R_b0, &wnd_pink_R_b1, &wnd_pink_R_b2);
+        float bpL = dsp_svf_bp(&wnd_bpL_f, pL);
+        float bpR = dsp_svf_bp(&wnd_bpR_f, pR);
+
+        L[i] += bpL * amount * gust;
+        R[i] += bpR * amount * gust;
+    }
+}
+
+/* ---- per-world atmospheric layers ---------------------------------- */
+
+/* RAIN (TOKYO CITY): wet-pavement rain. Background = pink noise through a
+ * bandpass around 2.5 kHz (the "sshhh" of countless small drops). Foreground
+ * = pool of 12 short percussive DROPS — each is a white-noise burst through
+ * a resonant bandpass at 1500..4500 Hz Q=4 with a 15..40 ms exponential
+ * decay. Drops are noise bursts (not sine pings — those were the old bug,
+ * sounded like synth blips not water). Up to several drops overlap, random
+ * inter-onset 30..180 ms, so it reads as a SHOWER not as discrete events. */
+#define RAIN_MAX_DROPS 12
+typedef struct { int active; float env; float decay; dsp_svf_t bp; } drop_t;
+static drop_t rain_drops[RAIN_MAX_DROPS];
+static uint32_t rn_rng = 0x5417F00Du;
+static dsp_svf_t rain_bg_bpL, rain_bg_bpR;
+static float rain_pink_b0L=0,rain_pink_b1L=0,rain_pink_b2L=0;
+static float rain_pink_b0R=0,rain_pink_b1R=0,rain_pink_b2R=0;
+static int   rain_until_next = 0;
+static int   rain_initialised = 0;
+static inline float rn_white(void){
+    rn_rng = rn_rng * 1664525u + 1013904223u;
+    return ((int32_t)rn_rng) * (1.0f / 2147483648.0f);
+}
+static inline float rain_pink(float *b0, float *b1, float *b2){
+    float w = rn_white();
+    *b0 = 0.99765f * *b0 + w * 0.0990460f;
+    *b1 = 0.96300f * *b1 + w * 0.2965164f;
+    *b2 = 0.57000f * *b2 + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
+static inline void rain_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    if (!rain_initialised){
+        for (int d = 0; d < RAIN_MAX_DROPS; ++d){
+            rain_drops[d].active = 0; rain_drops[d].env = 0;
+            dsp_svf_reset(&rain_drops[d].bp);
+        }
+        dsp_svf_reset(&rain_bg_bpL); dsp_svf_reset(&rain_bg_bpR);
+        dsp_svf_set(&rain_bg_bpL, 2500.0f, 1.4f);
+        dsp_svf_set(&rain_bg_bpR, 2700.0f, 1.4f);
+        rain_initialised = 1;
+        rain_until_next = (int)((float)SR * 0.04f);
+    }
+    for (int i = 0; i < n; ++i){
+        /* background "sshhh" — pink noise through wide bandpass at ~2.5 kHz */
+        float pL = rain_pink(&rain_pink_b0L, &rain_pink_b1L, &rain_pink_b2L);
+        float pR = rain_pink(&rain_pink_b0R, &rain_pink_b1R, &rain_pink_b2R);
+        float bgL = dsp_svf_bp(&rain_bg_bpL, pL) * 0.7f;
+        float bgR = dsp_svf_bp(&rain_bg_bpR, pR) * 0.7f;
+
+        /* schedule new drops 30..180 ms apart on average */
+        if (--rain_until_next <= 0){
+            for (int d = 0; d < RAIN_MAX_DROPS; ++d){
+                if (!rain_drops[d].active){
+                    rain_drops[d].active = 1;
+                    rain_drops[d].env    = 0.4f + (rn_white()*0.5f+0.5f) * 0.35f;
+                    float fc   = 1500.0f + (rn_white()*0.5f+0.5f) * 3000.0f;
+                    float dec  = 0.015f + (rn_white()*0.5f+0.5f) * 0.025f;   /* 15..40 ms */
+                    dsp_svf_set(&rain_drops[d].bp, fc, 4.0f);
+                    rain_drops[d].decay = expf(-1.0f / (dec * (float)SR));
+                    break;
+                }
+            }
+            float interval = 0.030f + (rn_white()*0.5f+0.5f) * 0.150f;
+            rain_until_next = (int)(interval * (float)SR);
+        }
+
+        /* sum active drops — each is a noise-burst through resonant BP */
+        float dropL = 0.0f, dropR = 0.0f;
+        for (int d = 0; d < RAIN_MAX_DROPS; ++d){
+            if (!rain_drops[d].active) continue;
+            float src = rn_white();
+            float out = dsp_svf_bp(&rain_drops[d].bp, src) * rain_drops[d].env;
+            /* spatial spread: even drops left-leaning, odd drops right */
+            if (d & 1){ dropR += out; dropL += out * 0.4f; }
+            else      { dropL += out; dropR += out * 0.4f; }
+            rain_drops[d].env *= rain_drops[d].decay;
+            if (rain_drops[d].env < 0.001f) rain_drops[d].active = 0;
+        }
+
+        L[i] += (bgL + dropL * 0.45f) * amount;
+        R[i] += (bgR + dropR * 0.45f) * amount;
+    }
+}
+
+/* WAVES (CRYSTAL COAST): real surf has ASYMMETRIC envelope — fast crest
+ * (1..2 s build), longer wash-out (5..9 s decay) — and a high-frequency
+ * "splash" right at the crest. Previous version was a symmetric sine LFO
+ * on brown noise; sounded like LFO-tremolo, not water. New version uses a
+ * wave-event scheduler with two layers: low body (brown -> LP 400 Hz) for
+ * the swash, plus a brief HF splash (pink -> BP 2.5 kHz) at the crest. */
+static uint32_t wv_rng = 0xBADCAFE1u;
+static float wv_brnL=0, wv_brnR=0;
+static float wv_pink_b0L=0,wv_pink_b1L=0,wv_pink_b2L=0;
+static float wv_pink_b0R=0,wv_pink_b1R=0,wv_pink_b2R=0;
+static dsp_svf_t wv_lp, wv_splashL, wv_splashR;
+static int   wv_state = 0;            /* 0 idle, 1 attack, 2 decay */
+static int   wv_until_next = 0, wv_phase_samples = 0, wv_phase_len = 1;
+static float wv_env = 0;
+static int   wv_initialised = 0;
+static inline float wv_white(void){
+    wv_rng = wv_rng * 1664525u + 1013904223u;
+    return ((int32_t)wv_rng) * (1.0f / 2147483648.0f);
+}
+static inline float wv_pink(float *b0, float *b1, float *b2){
+    float w = wv_white();
+    *b0 = 0.99765f * *b0 + w * 0.0990460f;
+    *b1 = 0.96300f * *b1 + w * 0.2965164f;
+    *b2 = 0.57000f * *b2 + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
+static inline void waves_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    if (!wv_initialised){
+        dsp_svf_reset(&wv_lp);       dsp_svf_set(&wv_lp,        400.0f, 0.7f);
+        dsp_svf_reset(&wv_splashL);  dsp_svf_set(&wv_splashL, 2500.0f, 1.6f);
+        dsp_svf_reset(&wv_splashR);  dsp_svf_set(&wv_splashR, 2700.0f, 1.6f);
+        wv_until_next = (int)((float)SR * 2.0f);
+        wv_initialised = 1;
+    }
+    for (int i = 0; i < n; ++i){
+        if (wv_state == 0){
+            if (--wv_until_next <= 0){
+                wv_state = 1; wv_phase_samples = 0;
+                wv_phase_len = (int)((float)SR * (1.2f + (wv_white()*0.5f+0.5f) * 0.8f));  /* 1.2..2.0 s attack */
+            }
+        } else if (wv_state == 1){
+            wv_env = (float)wv_phase_samples / (float)wv_phase_len;
+            if (++wv_phase_samples >= wv_phase_len){
+                wv_state = 2; wv_phase_samples = 0;
+                wv_phase_len = (int)((float)SR * (5.0f + (wv_white()*0.5f+0.5f) * 4.0f));  /* 5..9 s decay */
+            }
+        } else {
+            wv_env = 1.0f - (float)wv_phase_samples / (float)wv_phase_len;
+            if (++wv_phase_samples >= wv_phase_len){
+                wv_state = 0; wv_env = 0;
+                wv_until_next = (int)((float)SR * (1.0f + (wv_white()*0.5f+0.5f) * 3.0f));  /* 1..4 s gap */
+            }
+        }
+
+        /* body: brown noise LP'd, modulated by envelope */
+        wv_brnL = wv_brnL * 0.998f + wv_white() * 0.02f;
+        wv_brnR = wv_brnR * 0.998f + wv_white() * 0.02f;
+        float bodyL = dsp_svf_lp(&wv_lp, wv_brnL) * wv_env;
+        float bodyR = dsp_svf_lp(&wv_lp, wv_brnR) * wv_env;
+
+        /* splash: short HF burst at the crest only (when env is near peak) */
+        float crest = (wv_env > 0.75f) ? (wv_env - 0.75f) * 4.0f : 0.0f;
+        float pL = wv_pink(&wv_pink_b0L, &wv_pink_b1L, &wv_pink_b2L);
+        float pR = wv_pink(&wv_pink_b0R, &wv_pink_b1R, &wv_pink_b2R);
+        float splashL = dsp_svf_bp(&wv_splashL, pL) * crest;
+        float splashR = dsp_svf_bp(&wv_splashR, pR) * crest;
+
+        L[i] += (bodyL * 1.8f + splashL * 0.35f) * amount;
+        R[i] += (bodyR * 1.8f + splashR * 0.35f) * amount;
+    }
+}
+
+/* WIND + DISTANT TRAFFIC (MIDNIGHT DRIVE): passing cars are broadband noise
+ * with Doppler pitch SHIFT (filter-cutoff sweep through the burst), not a
+ * sine sweep down. Each event: a pink-noise burst gated by a fast-attack,
+ * slow-decay envelope (~2 s total), pushed through a bandpass whose centre
+ * sweeps 1400 -> 350 Hz over the event (Doppler down as the car passes),
+ * plus an amplitude pan from one side to the other (the car drives by). */
+static uint32_t tr_rng = 0x912EAFEEu;
+static float tr_pink_b0L=0,tr_pink_b1L=0,tr_pink_b2L=0;
+static float tr_pink_b0R=0,tr_pink_b1R=0,tr_pink_b2R=0;
+static dsp_svf_t tr_bpL, tr_bpR;
+static int   tr_state = 0;
+static int   tr_until_next = 0, tr_phase = 0, tr_total = 1;
+static float tr_freq = 1400.0f;
+static int   tr_dir = 0;              /* 0: L->R, 1: R->L */
+static int   tr_initialised = 0;
+static inline float tr_white(void){
+    tr_rng = tr_rng * 1664525u + 1013904223u;
+    return ((int32_t)tr_rng) * (1.0f / 2147483648.0f);
+}
+static inline float tr_pink(float *b0, float *b1, float *b2){
+    float w = tr_white();
+    *b0 = 0.99765f * *b0 + w * 0.0990460f;
+    *b1 = 0.96300f * *b1 + w * 0.2965164f;
+    *b2 = 0.57000f * *b2 + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
+static inline void traffic_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    if (!tr_initialised){
+        dsp_svf_reset(&tr_bpL); dsp_svf_reset(&tr_bpR);
+        tr_until_next = (int)((float)SR * 4.0f);
+        tr_initialised = 1;
+    }
+    for (int i = 0; i < n; ++i){
+        if (tr_state == 0){
+            if (--tr_until_next <= 0){
+                tr_state = 1; tr_phase = 0;
+                tr_total = (int)((float)SR * (1.6f + (tr_white()*0.5f+0.5f) * 0.8f));  /* 1.6..2.4 s */
+                tr_freq  = 1400.0f;
+                tr_dir   = (tr_white() > 0.0f) ? 0 : 1;
+            }
+        }
+        float out = 0.0f;
+        float panL = 0.5f, panR = 0.5f;
+        if (tr_state == 1){
+            float prog = (float)tr_phase / (float)tr_total;
+            /* envelope: triangular with peak at 0.4 (car closest then recedes) */
+            float env;
+            if (prog < 0.4f) env = prog / 0.4f;
+            else             env = (1.0f - prog) / 0.6f;
+            if (env < 0) env = 0;
+            /* Doppler: 1400 Hz -> 350 Hz over the event */
+            float fc = 1400.0f - prog * 1050.0f;
+            dsp_svf_set(&tr_bpL, fc,         1.6f);
+            dsp_svf_set(&tr_bpR, fc * 0.98f, 1.6f);
+            float src = tr_pink(&tr_pink_b0L, &tr_pink_b1L, &tr_pink_b2L);
+            float bpL = dsp_svf_bp(&tr_bpL, src);
+            float bpR = dsp_svf_bp(&tr_bpR, src);
+            out = (bpL + bpR) * 0.5f * env;
+            /* pan: linear sweep across stereo field */
+            float pan = (tr_dir == 0) ? prog : (1.0f - prog);
+            panL = 1.0f - pan; panR = pan;
+            if (++tr_phase >= tr_total){
+                tr_state = 0;
+                tr_until_next = (int)((float)SR * (3.5f + (tr_white()*0.5f+0.5f) * 5.5f));   /* 3.5..9 s gap */
+            }
+        }
+        L[i] += out * panL * amount;
+        R[i] += out * panR * amount;
+    }
+}
+
+/* VINYL + SMOKY BAR (AFTER HOURS): hi-passed noise crackle + sparse
+ * sharper crackle pops + very slow low rumble (distant city through walls). */
+static uint32_t vy_rng = 0xC0DEFEEDu;
+static float vy_lpL=0, vy_lpR=0, vy_rumL=0, vy_rumR=0;
+static int   vy_until_pop = 0;
+static float vy_pop_env = 0;
+static inline float vy_white(void){
+    vy_rng = vy_rng * 1664525u + 1013904223u;
+    return ((int32_t)vy_rng) * (1.0f / 2147483648.0f);
+}
+static inline void vinyl_block(float *L, float *R, int n, float amount){
+    if (amount <= 0.0f) return;
+    for (int i = 0; i < n; ++i){
+        float wL = vy_white(), wR = vy_white();
+        /* hi-pass crackle: subtract slow LP */
+        vy_lpL += 0.30f * (wL - vy_lpL);
+        vy_lpR += 0.30f * (wR - vy_lpR);
+        float crL = wL - vy_lpL;
+        float crR = wR - vy_lpR;
+        /* sparse sharp pops */
+        if (--vy_until_pop <= 0){
+            vy_pop_env = 0.5f + (vy_white() * 0.5f + 0.5f) * 0.4f;
+            vy_until_pop = 800 + (int)((vy_white() * 0.5f + 0.5f) * 3000.0f);
+        }
+        float pop = 0.0f;
+        if (vy_pop_env > 0.001f){
+            pop = vy_white() * vy_pop_env;
+            vy_pop_env *= 0.975f;
+        }
+        /* slow far-city rumble: brown noise heavily LP'd */
+        vy_rumL = vy_rumL * 0.9985f + vy_white() * 0.0008f;
+        vy_rumR = vy_rumR * 0.9985f + vy_white() * 0.0008f;
+        L[i] += (crL * 0.35f + pop * 0.55f + vy_rumL * 1.5f) * amount;
+        R[i] += (crR * 0.35f - pop * 0.55f + vy_rumR * 1.5f) * amount;
+    }
+}
+
+/* ---- world definitions --------------------------------------------- */
+typedef struct { float t; int midi; float vel; } evt_t;
+
+typedef enum { AMB_NONE = 0, AMB_RAIN, AMB_WAVES, AMB_TRAFFIC, AMB_VINYL } amb_kind_t;
+
+typedef struct {
+    const char *name;
+    /* pad timbre */
+    float pad_vmix;          /* 0 = warm/pure saw, 0.6 = strings, 1.2 = brass */
+    float pad_bright_hz;     /* cutoff offset */
+    /* ambient layers — texture.c body rumble OFF (was the "brumm"); replaced
+     * by a universal wind/breath at wind_amt + a world-specific layer below. */
+    float wind_amt;          /* universal wind/breath, runs in every world */
+    amb_kind_t world_amb;    /* which world-specific layer */
+    float world_amb_amt;
+    /* tape hiss + room + master */
+    float hiss_amt;
+    float rev_size, rev_damp, rev_drive;
+    float wet_amp;
+    float sat_drive;
+    float master_gain;
+    /* drone (set to -1 to disable a side) */
+    int   drone_root_midi;
+    int   drone_5th_midi;
+    float drone_root_vel, drone_5th_vel;
+    /* composition */
+    const evt_t *evts;
+    int         n_evts;
+    float       note_hold_s;
+} world_demo_t;
+
+/* TOKYO CITY — Tokyo night, neon on wet street, melancholic-bright.
+ *   A-major with the F#-minor wistful pull. The "DAS IST ES" reference. */
+static const evt_t TOKYO_EVTS[] = {
+    {  1.0f, 69, 0.20f }, {  5.0f, 73, 0.18f }, {  9.0f, 76, 0.17f },
+    { 13.0f, 71, 0.18f }, { 18.0f, 78, 0.16f }, { 22.0f, 74, 0.17f },
+    { 27.0f, 69, 0.19f }, { 32.0f, 81, 0.14f }, { 36.0f, 76, 0.16f },
+    { 40.0f, 69, 0.14f },
+};
+
+/* CRYSTAL COAST — Mediterranean sunset, chrome high-rises, Frutiger Aero
+ *   2003 optimism. D-major, brighter pad, less hall, open horizon. */
+static const evt_t COAST_EVTS[] = {
+    {  1.0f, 74, 0.20f }, {  5.0f, 78, 0.18f }, {  9.0f, 81, 0.17f },
+    { 13.0f, 86, 0.16f }, { 18.0f, 83, 0.17f }, { 22.0f, 78, 0.18f },
+    { 27.0f, 74, 0.19f }, { 32.0f, 86, 0.15f }, { 36.0f, 81, 0.17f },
+    { 40.0f, 74, 0.16f },
+};
+
+/* MIDNIGHT DRIVE — Initial D / Tokyo Xtreme Racer highway, tunnel lights
+ *   sweeping past. F#-minor (dorian-flavoured), tape-warm, descending arc. */
+static const evt_t DRIVE_EVTS[] = {
+    {  1.0f, 78, 0.18f }, {  4.5f, 73, 0.17f }, {  8.0f, 76, 0.16f },
+    { 12.0f, 71, 0.17f }, { 16.0f, 78, 0.18f }, { 20.0f, 73, 0.16f },
+    { 25.0f, 69, 0.17f }, { 30.0f, 73, 0.16f }, { 34.0f, 76, 0.15f },
+    { 38.0f, 71, 0.15f }, { 42.0f, 66, 0.14f },
+};
+
+/* AFTER HOURS — Cowboy Bebop jazz bar at 3 AM, lonely-but-okay. C-minor,
+ *   thicker tape hiss (vinyl/club), deep drone, sparse jazz-y notes. */
+static const evt_t HOURS_EVTS[] = {
+    {  1.5f, 75, 0.18f },                                     /* Eb5 */
+    {  7.0f, 79, 0.16f },                                     /* G5  */
+    { 13.0f, 82, 0.15f },                                     /* Bb5 */
+    { 19.5f, 75, 0.17f },                                     /* Eb5 */
+    { 26.0f, 72, 0.18f },                                     /* C5  */
+    { 33.0f, 70, 0.16f },                                     /* Bb4 */
+    { 40.0f, 63, 0.15f },                                     /* Eb4 */
+};
+
+/* Ambience amounts re-calibrated from the SOLO measurement so every layer
+ * sits subtle (~-44 dBFS RMS solo) instead of fighting the pad. The previous
+ * waves *3.0 + uncalibrated amounts made waves/rain the "loud noise that
+ * drowns everything"; wind was -60 dBFS (inaudible). Targets:
+ *   wind  ~-48 (subtle universal bed, now actually present)
+ *   rain  ~-44   waves ~-44   traffic ~-44   vinyl ~-42 (bar a touch louder)
+ *   hiss  ~-47 */
+static const world_demo_t WORLDS[N_WORLDS] = {
+    /* name             vmix  bright wind  amb         amb_amt hiss   rsiz  rdmp rdrv  wet   sat   gain  d_root d_5th  d_rvel d_5vel evts        n  hold */
+    { "TOKYO CITY",     0.00f,   0.0f, 0.090f, AMB_RAIN,    0.10f,  0.005f, 0.60f, 0.40f, 0.08f, 0.42f, 1.10f, 0.95f,  33,  40,   0.13f, 0.10f, TOKYO_EVTS, sizeof TOKYO_EVTS/sizeof TOKYO_EVTS[0], 5.5f },
+    { "CRYSTAL COAST",  0.45f, 200.0f, 0.075f, AMB_WAVES,   0.045f, 0.000f, 0.42f, 0.32f, 0.05f, 0.36f, 1.05f, 1.00f,  38,  -1,   0.10f, 0.00f, COAST_EVTS, sizeof COAST_EVTS/sizeof COAST_EVTS[0], 4.0f },
+    { "MIDNIGHT DRIVE", 0.20f,   0.0f, 0.110f, AMB_TRAFFIC, 0.18f,  0.008f, 0.55f, 0.50f, 0.15f, 0.40f, 1.15f, 0.95f,  30,  37,   0.13f, 0.10f, DRIVE_EVTS, sizeof DRIVE_EVTS/sizeof DRIVE_EVTS[0], 5.0f },
+    { "AFTER HOURS",    0.00f,-100.0f, 0.060f, AMB_VINYL,   0.051f, 0.008f, 0.75f, 0.55f, 0.18f, 0.50f, 1.20f, 0.92f,  24,  31,   0.13f, 0.10f, HOURS_EVTS, sizeof HOURS_EVTS/sizeof HOURS_EVTS[0], 7.5f },
+};
+
+/* ---- WAV ----------------------------------------------------------- */
+static void put_u32(FILE *f, uint32_t v){ fputc(v&0xff,f); fputc((v>>8)&0xff,f); fputc((v>>16)&0xff,f); fputc((v>>24)&0xff,f); }
+static void put_u16(FILE *f, uint16_t v){ fputc(v&0xff,f); fputc((v>>8)&0xff,f); }
+static void wav_header(FILE *f, uint32_t nf){
+    uint32_t data = nf * 4u;
+    fwrite("RIFF", 1, 4, f); put_u32(f, 36 + data); fwrite("WAVE", 1, 4, f);
+    fwrite("fmt ", 1, 4, f); put_u32(f, 16); put_u16(f, 1); put_u16(f, 2);
+    put_u32(f, SR); put_u32(f, SR * 4u); put_u16(f, 4); put_u16(f, 16);
+    fwrite("data", 1, 4, f); put_u32(f, data);
+}
+
+/* ---- scheduler ----------------------------------------------------- */
+typedef struct { float t; uint8_t src; } pend_t;
+static pend_t pend[32]; static int npend = 0;
+static void sched_off(float t, uint8_t s){ if (npend < 32){ pend[npend].t = t; pend[npend].src = s; npend++; } }
+
+/* Render one world to its own WAV and (if combined != NULL) also append to it. */
+static int render_world(const world_demo_t *w, const char *out_path, FILE *combined){
+    pad_init();
+    pad_set_voice_mix(w->pad_vmix);
+    pad_set_brightness(w->pad_bright_hz);
+    texture_init(); texture_set_amount(0.0f);     /* OFF — was the brumm source */
+    reverb_init();
+    reverb_set(w->rev_size, w->rev_damp); reverb_set_drive(w->rev_drive);
+    npend = 0;
+
+    /* Drone */
+    pad_note_on(10, dsp_midi_to_hz((float)w->drone_root_midi), w->drone_root_vel);
+    sched_off((float)(WORLD_SECS - 3), 10);
+    if (w->drone_5th_midi > 0){
+        pad_note_on(11, dsp_midi_to_hz((float)w->drone_5th_midi), w->drone_5th_vel);
+        sched_off((float)(WORLD_SECS - 3), 11);
+    }
+
+    FILE *f = fopen(out_path, "wb");
+    if (!f){ fprintf(stderr, "open %s\n", out_path); return -1; }
+    wav_header(f, (uint32_t)WORLD_SECS * SR);
+
+    float dryL[BLOCK], dryR[BLOCK], sndL[BLOCK], sndR[BLOCK], wL[BLOCK], wR[BLOCK];
+    int16_t out16[BLOCK * 2];
+    uint32_t total = (uint32_t)WORLD_SECS * SR, frame = 0;
+    int ei = 0;
+    int peak = 0; double sumsq = 0; long sumN = 0;
+
+    while (frame < total){
+        float t = (float)frame / SR;
+
+        while (ei < w->n_evts && w->evts[ei].t <= t){
+            uint8_t s = (uint8_t)(ei % 6);
+            pad_note_on(s, dsp_midi_to_hz((float)w->evts[ei].midi), w->evts[ei].vel);
+            sched_off(t + w->note_hold_s, s);
+            ++ei;
+        }
+        for (int i = 0; i < npend; ){
+            if (pend[i].t <= t){ pad_note_off(pend[i].src); pend[i] = pend[--npend]; }
+            else ++i;
+        }
+
+        int n = (int)((total - frame) < BLOCK ? (total - frame) : BLOCK);
+        memset(dryL, 0, sizeof(float) * n); memset(dryR, 0, sizeof(float) * n);
+        memset(sndL, 0, sizeof(float) * n); memset(sndR, 0, sizeof(float) * n);
+
+        pad_render_mix(dryL, dryR, sndL, sndR, n, 0.75f);
+        /* universal wind/breath + world-specific ambience layer, both summed
+         * into the dry bus and then also sent (a bit) to the reverb */
+        wind_block(dryL, dryR, n, w->wind_amt);
+        switch (w->world_amb){
+        case AMB_RAIN:    rain_block   (dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_WAVES:   waves_block  (dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_TRAFFIC: traffic_block(dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_VINYL:   vinyl_block  (dryL, dryR, n, w->world_amb_amt); break;
+        case AMB_NONE:    default: break;
+        }
+        hiss_block(dryL, dryR, n, w->hiss_amt);
+        reverb_render(sndL, sndR, wL, wR, n);
+        for (int i = 0; i < n; ++i){
+            dryL[i] = (dryL[i] + wL[i] * w->wet_amp) * w->master_gain;
+            dryR[i] = (dryR[i] + wR[i] * w->wet_amp) * w->master_gain;
+        }
+        warm_sat(dryL, dryR, n, w->sat_drive);
+
+        for (int i = 0; i < n; ++i){
+            int li = (int)(dryL[i] * 32767.0f); int ri = (int)(dryR[i] * 32767.0f);
+            if (li >  32767) li =  32767; if (li < -32768) li = -32768;
+            if (ri >  32767) ri =  32767; if (ri < -32768) ri = -32768;
+            out16[i*2] = (int16_t)li; out16[i*2+1] = (int16_t)ri;
+            int a = li < 0 ? -li : li; if (a > peak) peak = a;
+            double s = li / 32768.0; sumsq += s * s; ++sumN;
+        }
+        fwrite(out16, sizeof(int16_t), (size_t)n * 2, f);
+        if (combined) fwrite(out16, sizeof(int16_t), (size_t)n * 2, combined);
+        frame += (uint32_t)n;
+    }
+    fclose(f);
+    pad_all_off();
+    double rms = sqrt(sumsq / (double)sumN);
+    printf("  %-16s peak %d (%5.1f dBFS), RMS %.4f (%.1f dBFS)\n",
+           w->name, peak, 20.0*log10((double)(peak?peak:1)/32767.0),
+           rms, 20.0*log10(rms+1e-12));
+    return 0;
+}
+
+/* ---- diagnostic: render each layer SOLO 5 s and report level ---------- */
+static void measure_one(const char *name, void (*fn)(float*,float*,int,float), float amt){
+    float L[BLOCK], R[BLOCK];
+    int peak = 0; double sumsq = 0; long sumN = 0;
+    int total = SR * 5;
+    for (int frame = 0; frame < total; frame += BLOCK){
+        int n = (total - frame) < BLOCK ? (total - frame) : BLOCK;
+        memset(L, 0, sizeof(float)*n); memset(R, 0, sizeof(float)*n);
+        fn(L, R, n, amt);
+        for (int i = 0; i < n; ++i){
+            int li = (int)(L[i]*32767.0f);
+            if (li > 32767) li = 32767; if (li < -32768) li = -32768;
+            int a = li < 0 ? -li : li; if (a > peak) peak = a;
+            double s = L[i]; sumsq += s*s; ++sumN;
+        }
+    }
+    double rms = sqrt(sumsq/(double)sumN);
+    printf("  %-10s amt=%.3f  peak %5.1f dBFS   RMS %5.1f dBFS\n",
+           name, amt, 20.0*log10((double)(peak?peak:1)/32767.0), 20.0*log10(rms+1e-12));
+}
+
+int main(int argc, char **argv){
+    const char *prefix = (argc > 1) ? argv[1] : "/tmp/worlds_";
+    dsp_init();
+
+    if (argc > 2 && strcmp(argv[2], "measure") == 0){
+        printf("=== per-layer SOLO levels (5 s each, at the per-world amount) ===\n");
+        measure_one("wind",    wind_block,    0.110f);   /* DRIVE (max) */
+        measure_one("rain",    rain_block,    0.024f);   /* TOKYO */
+        measure_one("waves",   waves_block,   0.055f);   /* COAST */
+        measure_one("traffic", traffic_block, 0.066f);   /* DRIVE */
+        measure_one("vinyl",   vinyl_block,   0.051f);   /* HOURS */
+        measure_one("hiss",    hiss_block,    0.008f);   /* HOURS */
+        printf("--- same generators at amt=1.0 (raw level, amount removed) ---\n");
+        measure_one("wind",    wind_block,    1.0f);
+        measure_one("rain",    rain_block,    1.0f);
+        measure_one("waves",   waves_block,   1.0f);
+        measure_one("traffic", traffic_block, 1.0f);
+        measure_one("vinyl",   vinyl_block,   1.0f);
+        measure_one("hiss",    hiss_block,    1.0f);
+        return 0;
+    }
+
+    char combined_path[512];
+    snprintf(combined_path, sizeof combined_path, "%sall.wav", prefix);
+    FILE *cf = fopen(combined_path, "wb");
+    if (!cf){ fprintf(stderr, "open %s\n", combined_path); return 1; }
+    wav_header(cf, (uint32_t)WORLD_SECS * SR * N_WORLDS);
+
+    printf("Rendering %d worlds x %d s -> %s + per-world files\n",
+           N_WORLDS, WORLD_SECS, combined_path);
+
+    for (int i = 0; i < N_WORLDS; ++i){
+        char path[512];
+        snprintf(path, sizeof path, "%s%d_%s.wav", prefix, i, WORLDS[i].name);
+        for (char *p = path; *p; ++p) if (*p == ' ') *p = '_';
+        if (render_world(&WORLDS[i], path, cf) != 0){ fclose(cf); return 1; }
+    }
+    fclose(cf);
+    printf("Combined: %s (%d s total)\n", combined_path, WORLD_SECS * N_WORLDS);
+    return 0;
+}

@@ -25,7 +25,18 @@
 #include <stdint.h>
 
 #define AUDIO_SAMPLE_RATE_HZ  44100
-#define AUDIO_BUFFER_FRAMES   256          /* per buffer */
+/* AUDIO_BUFFER_FRAMES = 512 (r18.11, was 256):
+ * - 256 frames @ 44.1 kHz = 5.8 ms window. Tight if engine_render() takes
+ *   a burst longer than ~5 ms (Generative-Bed-triggered cell + reverb tail
+ *   simultaneous). Underrun → DMA replays last buffer → audible click/buzz.
+ * - 512 frames = 11.6 ms window. 2× safety. Still below ambient-pad
+ *   perceptual latency threshold (~20 ms is the conventional limit for
+ *   sustain instruments; touch-response is encoder/cell input, not audio
+ *   output). Worth the SRAM cost (extra 1 kB total).
+ * - STM32H7 SAI-DMA Half-Transfer + Transfer-Complete IRQ pair gives the
+ *   same ping-pong semantics natively, no manual swap.
+ */
+#define AUDIO_BUFFER_FRAMES   512          /* per buffer */
 #define AUDIO_NUM_BUFFERS     2            /* ping-pong */
 
 /* Initialise pins + PIO + DMA, kick off the audio pump streaming silence,

@@ -1,14 +1,1674 @@
 # Field Ambience PCB — CHANGELOG
 
 Vollständige Änderungshistorie der PCB-Spec und des KiCad-Schematic.
-Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.6.md`) beschreibt
+Die Spec-Body selbst (`field_ambience_pcb_SPEC_v0.7.md`) beschreibt
 **immer den aktuellen Stand** — diese Datei trackt wie wir dahin kamen.
 
-Aktuelle Rev: **v0.6.3-r17** (Display-UX: EN2-Konflikt aufgelöst —
-EN2 = Audio-Brightness, LCD-Backlight auf SHIFT+EN2; Menü zurück auf
-8 Pills; Encoder-Velocity-Acceleration; HOLD×GENERATE-Koexistenz).
-Generator und SPEC im Sync. Pi-frei (v0.9) bleibt der maßgebliche
-Audio-Stand.
+Aktuelle Rev: **v0.7-r18.30** (Firmware-Ausbau Teil 3: leds.c (16. Suite),
+Menü-Encoder-Binding, MIDI deferred. Firmware-LOGIK komplett + verdrahtet.
+KEIN .kicad_pcb.)
+
+---
+
+## v0.7-r18.30 (2026-06-15) — leds.c + Menü-Encoder + MIDI deferred
+
+User: „vielleicht brauchen wir gar kein MIDI? Rest ausbauen."
+
+### 🟡 MIDI deferred (ADR-0004 r18.30)
+
+J9 wird im 5er-Prototyp-Run **NICHT bestückt** (DNP). Hardware-Vorarbeit
+konserviert (Footprint + Edge-Cutout + PD5-Pin-Reservierung), Code bleibt
+(`src/midi.c` + `src/hal_h743/midi_uart_h743.c`), aber `midi_tx_init()` ist
+in `main_h743.c` auskommentiert. Reaktivierung später = J9 + 2× 220 Ω
+bestücken + 1 Zeile uncommenten. ADR-0004 als „DEFERRED" markiert mit
+Original-Diskussion erhalten.
+
+### NEU leds.c + leds.h — controls/modifier state → PCA9685 16-ch PWM
+
+Hardware-unabhängiges LED-Render-Modul (16. Suite):
+- 16-Kanal-Mapping per SPEC §7.2 (vs Generator-Z.4459 verifiziert)
+- Per-Channel-Fade-Engine: 0↔TARGET über LED_FADE_MS = 120 ms
+- Per-Farbe-Duty-Matching (gelb 70 %, grün 100 %, weiß 80 % wegen Vf-Diff)
+- ADR-0008-r2-konform: gelb (ch 5/7/9/11/13) zeigt `controls_hold_base[c]`,
+  grün (ch 6/8/10/12/14) zeigt `controls_hold_shift[c]` — **unabhängig**
+- Clear-Flash auf ch 4 (250 ms on Clear-Press)
+- Backlight (ch 15) eigenständig settbar
+- API: `leds_render(now, dt, out[16])` → der HAL pusht `out[]` per
+  `pca_set_pwm()` über I²C
+
+### NEU test_leds.c (16. Suite, 28 Checks)
+
+Boot-Dark, alle Modifier-Channels, Cell-Pärchen (base+shift gleichzeitig =
+Oktav-Stack), Clear-Flash + Decay, Backlight, Fade-Out, Mid-Fade-Interpolation.
+16/16 Suiten PASS.
+
+### Menü-Encoder verdrahtet
+
+`src/hal_h743/main_h743.c`: DISPLAY-Encoder-Rotate → `menu_rotate(delta)`,
+Push → `menu_push()`. LED-Render-Loop bei 60 Hz mit `pca_set_pwm`-Burst.
+
+### Firmware-LOGIK-Stand: komplett ✅
+
+DSP-Engine, cells (Velocity), controls (Hold-Latch + Modifier), params
+(Encoder-Bindings), leds (16-ch-PWM + Fade), menu-Encoder-Binding —
+**alles hardware-unabhängig + host-getestet**. Der STM32-Build muss nur
+noch die HAL-Reads/-Writes (HAL_GetTick, mcp_read, adc_read, pca_set_pwm,
+oled_show) gegen ST-HAL füllen.
+
+### Verbleibt für lauffähigen STM32-Build (Step 13.3)
+
+ARM-GCC-Toolchain-File, Linker-Script, Startup-File, CubeH7-HAL-Sources,
+SystemClock_Config (PLL1 480 MHz, PLL3 11.2896 MHz), 6× HAL-Body-Stubs
+mit echten `HAL_*`-Calls füllen.
+
+---
+
+## v0.7-r18.29 (2026-06-15) — params.c + STM32-Main-Loop-Verdrahtung
+
+Fortsetzung des Firmware-Ausbaus.
+
+### NEU params.c + params.h — Encoder → Engine-Parameter
+
+Die 3 Audio-Knöpfe an die Engine gebunden, mit der SPEC-§5-Velocity-
+Acceleration (langsam = 1 %/Klick, schnell bis ×8):
+- EN1 DRIVE → engine_set_reverb_drive (0..100 %)
+- EN2 BRIGHT → engine_set_brightness (−600..+800 Hz, 20 Hz/Detent)
+- EN4 VOLUME → engine_set_master_volume (0..100 %)
+- EN3 DISPLAY → ignoriert (Menü besitzt diesen Encoder)
+Per-Encoder-Acceleration-State, Clamp an Range-Grenzen, Defaults = engine_init-
+Werte (drive 15 %, volume 60 %, bright 0).
+
+### Test (15. Suite)
+
+`test/test_params.c` — 12 Checks: Defaults, langsame Detents = 1 %/Step,
+Richtung, Clamp 0/100, Acceleration (fast > slow), Brightness-Hz + Clamp,
+DISPLAY ignoriert. 15/15 Suiten PASS.
+
+### STM32-Main-Loop verdrahtet (main_h743.c)
+
+`src/hal_h743/main_h743.c` Main-Loop konkretisiert: routet
+Encoder-Events → `params_encoder()` / Menü, MCP23017-Button-Edges →
+`controls_modifier()`, Cell-Hall-ADC → `cells_update()` → `controls_cell_*()`.
+Die gesamte Spiel-LOGIK ist hardware-unabhängig + getestet — die verbleibenden
+TODOs sind nur noch HAL-Reads (HAL_GetTick, adc_read, mcp_read), keine Logik.
+
+controls.c + params.c in CMake-DSP_SOURCES (target-unabhängig, alle 3 Targets).
+
+### Firmware-Logik-Stand
+
+Komplett + host-getestet: DSP-Engine, cells (Velocity), controls (Hold-Latch +
+Modifier), params (Encoder-Bindings). Verbleibt: STM32-Toolchain + ST-HAL-
+Bodies (Step 13.3), SystemClock-Config, Menü-Navigation-Feinschliff.
+
+---
+
+## v0.7-r18.28 (2026-06-15) — controls.c: Hold-Latch + Modifier-Handler
+
+User: „wieso meintest du alles ist fertig wenn wir noch nicht mal die Firmware
+drumherum haben? Ausbauen." → Berechtigt. „Schematic order-fähig" hatte ich
+fälschlich mit „Gerät fertig" vermischt. Beginn des Firmware-Ausbaus mit der
+zentralen Logik-Lücke.
+
+### NEU controls.c + controls.h — hardware-unabhängige Spiel-Logik
+
+Die Bedien-Logik, die bisher NUR im Web-Sim lebte, jetzt als getestetes
+C-Modul (Single Source für STM32 + Bench):
+- **Hold-Latch-State-Machine (ADR-0008 r2):** `hold_base[5]` + `hold_shift[5]`,
+  zwei unabhängige Bit-Arrays → Cell kann base, shift, oder BEIDE (Oktav-Stack)
+  halten. Tap toggelt den vom Shift-State gewählten Branch.
+- **Modifier-Handler:** Shift/Hold (latching), Drone/Generate (latch +
+  forward an engine_set_drone / engine_set_generative), Clear (momentary:
+  wipe alle Holds + Silence).
+- **Momentary-Modus** (ohne Hold): Cell-Press = Note an, Release = aus;
+  Shift wählt Oktave.
+- **Velocity** kommt aus cells.c (ADR-0013), als amp-Parameter durchgereicht.
+- Voice-Routing: base → source 0..4, shift → source 9..13 (kollidiert nicht
+  mit Gen-Bed-Source 8).
+
+### Test (14. Suite)
+
+`test/test_controls.c` — 19 Checks: momentary tap+release, Hold-Latch-Toggle,
+Shift+Hold unabhängig von base, Oktav-Stack (beide Bits), Clear wischt +
+Tail decayt, Drone/Generate latchen + klingen, Release-Edge lässt Hold-Latch
+in Ruhe. Alle 14 Suiten PASS.
+
+### Was der STM32-Button-Handler jetzt nur noch tun muss
+
+`src/hal_h743/main_h743.c`: MCP23017-Button-Edges in `controls_modifier()` /
+`controls_cell_press/release()` einspeisen — die gesamte Spiel-Logik liegt
+hardware-unabhängig vor und ist getestet.
+
+### Verbleibend im Firmware-Ausbau
+
+- Encoder→Engine-Param-Bindings (DRIVE/BRIGHT/VOLUME/DISPLAY) mit Acceleration
+- STM32-Toolchain (ARM-GCC, Linker, Startup) + ST-HAL-Bodies (Step 13.3)
+- SystemClock-Config (PLL1 480 MHz, PLL3 für SAI)
+
+---
+
+## v0.7-r18.27 (2026-06-15) — Firmware-HAL-Reorg: STM32 → Produkt, Pico → Bench
+
+User: „weiter. aber wir nutzen ja kein pico mehr." → Pico-Build wird auf reines
+Bench-Tool (display_hw_test) reduziert; STM32 wird Default-Target.
+
+### Reorg
+
+8 Pico-spezifische Files via `git mv` nach `src/hal_pico/`:
+audio.c → audio_pico.c, audio_i2s.pio, encoders.c → encoders_pico.c,
+lcd_st7789.c → lcd_st7789_pico.c, main.c → main_pico.c, mcp23017.c →
+mcp23017_pico.c, midi_pio.c, midi_tx.pio.
+
+6 STM32-Skelett-Files NEU unter `src/hal_h743/`:
+- audio_h743.c — SAI1 Block A Master + DMA-Plan (PE4/5/6 AF6, PLL3-P
+  @ 11.2896 MHz für jitter-freies 44.1 kHz)
+- encoders_h743.c — TIM1/2/3/4 Hardware-Encoder-Mode (kein PIO/Polling)
+- lcd_st7789_h743.c — SPI1 (PA5/PA7) + GPIO (PA6/PC4/PC5)
+- mcp23017_h743.c — I²C1 @ 400 kHz Fast (PB6/PB7), EXTI13 für MCP_INT
+- midi_uart_h743.c — USART2 @ 31250 Baud (PD5, AF7)
+- main_h743.c — Boot-Sequenz + Hold-Latch-Logik-Plan (ADR-0008 r2)
+
+Jedes Skelett: API matched bestehende Headers (include/audio.h etc.), Body
+ist `TODO(Step 13.3)`-Stub mit ST-HAL-Plan in Kommentaren. Step 13.3 füllt
+die TODOs gegen STM32CubeH7.
+
+### CMake
+
+CMakeLists.txt neu: `-DTARGET=h743|pico|host`-Schalter, default h743.
+- `h743` baut field_ambience_h743 aus 19 DSP-Files + 6 hal_h743-Skelett-Files
+  (linkt erst ab Step 13.3 mit ST-HAL)
+- `pico` baut NUR display_hw_test (Bench-Tool, kein Produktions-Build mehr)
+- `host` baut DSP-Static-Lib für die Offline-Renderer
+
+### Test-Stabilität
+
+19 reine DSP/Logic-Module bleiben unverändert in `src/` —
+`test/run_tests.sh` linkt nur diese, fasst kein HAL-File an. 13/13 Suiten
+PASS unverändert.
+
+### NATIVE_PORT_PLAN
+
+Step 13.2 als DONE ✅ markiert, Step 13.3 neu definiert (ST-HAL-Integration:
+Toolchain-File, Linker-Script, Startup, TODOs füllen).
+
+---
+
+## v0.7-r18.24 (2026-06-14) — 3 offene Verifikations-Punkte geschlossen
+
+## v0.7-r18.24 (2026-06-14) — Drei offene Verifikations-Punkte geschlossen
+
+Aus der „gibt es noch offene Fragen"-Bestandsaufnahme die 3 autonom lösbaren
+Punkte abgeräumt.
+
+### 🟠 Weiße-LED-Package-Bug (neu gefunden)
+
+LED_HB (Heartbeat) hatte MPN „XL-1608UWC-04" (0603) + 0603-Footprint, aber
+**LCSC C965818 = XL-2012UWC, ein 0805-Teil** (live verifiziert). Package-
+Mismatch — 0805-LED auf 0603-Land-Pattern. Fix: **C965808** (echtes
+XL-1608UWC-04 0603, 2.5 M Stock). BOM_MASTER hatte zusätzlich die 3 Modifier-
+Weiß-LEDs fälschlich auf C965818 → ebenfalls auf C965808 korrigiert.
+
+### 🟠 VREF+ Decoupling ergänzt (Audit-Punkt 5)
+
+VREF+ (Pin 20) war nur an VDDA_3V3 gebunden, **kein dedizierter Cap am Pin**.
+ST-Empfehlung: 1 µF + 100 nF nah am VREF+. Ergänzt: **C_VREF1 (1 µF) +
+C_VREF2 (100 nF)** VREF+ → GND. Reduziert ADC-Sample-Jitter bei der
+Hall-Velocity (ratiometrisch, daher Referenz-Fehler unkritisch, aber Rauschen
+zählt). +2 Bauteile (C15849, C14663 — beide schon im BOM).
+
+### 🟢 ADC-Channels DS-bestätigt (Audit-Punkt 4)
+
+ST-PDF via Distrelec-Mirror geparst (pdftotext): **PA4=ADC12_INP18,
+PB0=ADC12_INP9, PB1=ADC12_INP5 verbatim aus DS12110 bestätigt**;
+PC0=ADC123_INP10 (ST-Community + DS), PC1=ADC123_INP11 (PCx-Sequenz). Alle 5
+auf ADC1 → Scan-Mode reicht. SPEC §5.6a von „vor ADC-Init bestätigen" auf
+„DS-bestätigt" hochgestuft.
+
+### Verifizierung
+
+8/8 paren-balanced, LED_HB C965808 (0 C965818-Reste außer Audit-Notiz),
+C_VREF1/2 present, SPEC „DS-bestätigt", Firmware 13/13 PASS.
+
+### Files
+
+generate_kicad_project.py (LED_HB-LCSC + VREF+-Caps), stm32h743.kicad_sch regen,
+SPEC §5.6a, BOM_MASTER (LEDs + VREF-Caps), CHANGELOG.
+
+### Verbleibende offene Punkte (nicht autonom lösbar)
+
+GUI-ERC (User), PCB-Layout (großer Block), Display-Pin-Order vs gekauftes Modul,
+MIDI-Entscheidung (ADR-0004), STM32-Firmware-Port, Gehäuse/Plate-CAD.
+
+---
+
+## v0.7-r18.23 (2026-06-14) — Cell-LED-Logik: XOR → Independent Latches (ADR-0008 r2)
+
+User: „Es können eigentlich sowohl grün als auch gelb gleichzeitig erkennbar
+sein. Funktional sinnvoller. Es kann ja beide gleichzeitig geben, rein logisch."
+
+**Berechtigt.** Die XOR-Wahl in r18.9 war eine Annahme („eine Cell nur eine
+Pitch"), nicht eine Notwendigkeit. „Cell hält Grundoktave" und „Cell hält
+Shift-Oktave" sind **logisch unabhängig** — beide simultan = **Oktav-Stack**
+(klassischer Ambient-Drone-Effekt).
+
+### Hardware: NICHTS
+
+Beide LEDs hingen schon vorher an unabhängigen PCA9685-Kanälen. XOR war reine
+Firmware-Logik. Schaltplan, Footprint, BOM unverändert.
+
+### Sim sofort umgesetzt
+
+`tools/display_sim.html`:
+- State: `cells[i] = 'off'|'yellow'|'green'` (1 Wert)
+  → `cells[i] = {base: bool, shift: bool}` (2 unabhängige Bits)
+- Tap-Logik: Hold-armed Tap toggelt nur den vom Shift-State bestimmten Branch;
+  der andere bleibt
+- LED-Render: gelb ↔ base, grün ↔ shift — unabhängig (beide gleichzeitig
+  erlaubt)
+- Clear setzt beide Bits auf 0
+- Header-Kommentar + Help-Text aktualisiert
+- JS-Syntax-Check OK
+
+### Firmware-Side (zu bauen mit STM32-Port)
+
+ADR-0008 r2 dokumentiert verbindlich:
+- State-Modell `cell_hold[i] = (base_bit, shift_bit)`
+- Voice-Routing Cell `i` base = source `i`, Cell `i` shift = source `i+5`
+- `PAD_MAX` 8 → 12 (5 Cells × 2 Oktaven = 10 + 2 Headroom Generate/Drone)
+- `MAX_SOURCES = 16` reicht
+- Master-Soft-Clip in `engine.c` fängt die +6 dB bei voller Stack-Belegung
+  ohne neuen Eingriff
+
+Firmware-Tests 13/13 unverändert PASS (Sim ist HTML, keine C-Änderung).
+
+### Files
+
+`firmware-c-next/tools/display_sim.html` (State + Tap + Render + Doku),
+`docs/decisions/ADR-0008-cell-led-xor-shift-hold.md` (Amendment r2 vor dem
+Original-XOR-Text, Original als Kontext erhalten).
+
+---
+
+## v0.7-r18.22 (2026-06-14) — User-Audit: Encoder-NRND + Display-Qualität
+
+User: „Er ist nochmal alles gegen checken und verifizieren. Glaube die Encoder
+waren markiert als Not-Recommended-for-future-designs? Und das Display darf
+nicht schlecht sein." → **Beide Punkte berechtigt, beide gefixt.**
+
+### 🔴 HIGH — Encoder NRND-Pivot (3 von 4 Encodern betroffen)
+
+Zwei unabhängige Verifikationen (Octopart + RS Online + ALPS-Hersteller-Seite +
+LCSC-Cross-Check) bestätigten:
+
+| Teil | Rolle | Status |
+|---|---|---|
+| **EC11E18244AU** (C202365) | EN3 Display, push+detent | **ACTIVE** ✅ |
+| **EC11E183440C** (C370986) | EN1/2/4 Smooth | **NRND** 🔴 |
+| EC11E1834403 (C361165) | Kandidat-Ersatz | **AUCH NRND** 🔴 |
+
+ALPS hat die gesamte **„EC11E 0-Detent + Push-Switch"-SKU-Familie phased out**
+(jeder Standard-EC11E hat heute Detents). Kein aktives Drop-in existiert.
+
+**Pivot: alle 4 Encoder = EC11E18244AU (active, ~3.052 LCSC-Stock).** Die ur-
+sprüngliche „smooth"-UX-Anforderung („1 % pro langsamem Klick") wird vom
+Firmware-Acceleration-Layer erfüllt (langsam = 1 %/Klick, schnell = ×8/Klick),
+**die Detents stören dabei nicht** — sie WAREN die ursprüngliche Lösung. Bonus:
+alle 4 identisch → einfachere Lagerhaltung. Generator + BOM_MASTER + ADR-0012
+nachgezogen.
+
+### 🟠 HIGH — Display-Qualitäts-Pivot (r18.21-Korrektur)
+
+Die r18.21-„bare AliExpress ST7789V"-Senkung war zu aggressiv. Live-
+Verifikation (Adafruit-Produktseite + Goldenmorning-OEM + mboehmerm-GitHub +
+Waveshare-Wiki) zeigte:
+
+- Bare-AliExpress nutzt **das gleiche Panel** wie Adafruit (kein Premium-Bin)
+- Aber: **kein Level-Shifter, kein QC, DOA-Lotterie, FFC-Qualitäts-Roulette**
+- Adafruit ($15) zahlt für Features, die wir bei 3.3-V-STM32 nicht brauchen
+  (Level-Shifter, SD-Slot, EYESPI-Connector)
+- **Mittelweg: Waveshare 1.9″ ST7789V2-Modul (~$11–13)** — gleiches Panel +
+  branded QC + Level-Shifter + dokumentierte Init-Sequenz + EU/US-Vendoren
+
+**Pivot: Waveshare** (PiHut £11.60 / Waveshare direkt / Amazon). $4
+Ersparnis statt $12 (vs Adafruit), aber Quality-DOA-Risiko eliminiert.
+
+### Lehre dokumentiert
+
+In ADR-0012 als Standard fixiert: **Lifecycle-Status muss aktiv verifiziert
+werden, nicht nur Stock**. r18.14-Sourcing hatte nur Stock geprüft. Ab jetzt
+Pflichtteil — analog zur Pin-Count-Pflicht nach r18.19.
+
+### Verifizierung
+
+- Generator regen, 8/8 paren-balanced
+- encoder.kicad_sch: 8× C202365 active (war 3× C202365 + 9× C370986)
+- 3 C370986/EC11E183440C-Vorkommen verbleibend = ausschließlich in
+  Lifecycle-VERIFIED-Audit-Trail-Notizen (Begründung der Wahl)
+- Firmware 13/13 PASS (substeps=4 für Display, =2 für Parameter — UX unverändert)
+
+### Cost-Impact (COST_ESTIMATE aktualisiert)
+
+| Posten | r18.21 (war) | r18.22 (neu) |
+|---|---|---|
+| Display × 5 | $20 bare (DOA-Risiko) | $60 Waveshare |
+| Encoder × 20 | $25 (3× NRND-Stock) | $25 (active) |
+| **Gesamt 5 Geräte** | ~$405 | **~$445** |
+| Pro Stück | $81 | $89 |
+
+Aufpreis $40 für komplette Risk-Reduktion (NRND weg + DOA-Lotterie weg). Wert.
+
+### Files
+
+- generate_kicad_project.py (Smooth-Encoder-Block + variant-Docstring)
+- encoder.kicad_sch regen
+- BOM_MASTER §6 (Encoder + Display), Stand-Bump
+- ADR-0012 (Tabellen + NRND-Pivot-Block + Lehre)
+- COST_ESTIMATE.md (Display + Encoder + Summen)
+- PROJECT_QUALITY nicht angefasst (BOM 10/10 bleibt — die Wahl-Korrekturen sind
+  Risk-Management, kein Sourcing-Gap)
+
+---
+
+## v0.7-r18.21 (2026-06-14) — Kostensenkung (5er-Prototyp-Run)
+
+User: „Insgesamt zu teuer… wo wir Kosten sparen können, sollten wir das."
+Sourcing-Recherche → die echten Hebel identifiziert. Erste Schätzung ~$750,
+jetzt **~$405–520 für 5 Geräte**.
+
+### Wichtige Korrektur der eigenen Schätzung
+
+Die „$3-Extended-Setup-Gebühr × 32 Teile = ~$96"-Annahme war FALSCH. JLCPCB
+hat die Feeder-Gebühr Ende 2025 auf $1.50 gesenkt UND stuft unsere großen ICs
+(STM32H743, PCM5102A, PAM8403, PCA9685, AP7361C, Crystal) als **„Extended
+(Preferred)" = gebührenfrei** ein. Real: nur 3 plain-Extended-Teile (MCP23017,
+MCP73831, DRV5056A4) × $1.50 = **~$4.50 für den ganzen Run**.
+
+### Umgesetzte Kostensenkungen
+
+| Maßnahme | Ersparnis 5er-Run |
+|---|---|
+| Display Adafruit 5394 ($15) → bare ST7789V ($3–5) | ~$55 |
+| Knöpfe + Cell-Caps selbst 3D-drucken (statt Alu-CNC) | ~$50–200 |
+| Stabilizer gestrichen (1u-Caps statt ≥2u) | ~$25–75 |
+| Akku 5000 → 2000 mAh (503759) | ~$20 |
+
+### Warum kein IC-Swap
+
+MCP23017/MCP73831/DRV5056 sind plain-Extended, aber ihre Alternativen
+(TCA9555/TP4056/günstigere Hall) sind AUCH Extended + bräuchten Footprint-/
+Firmware-Rework. Bei 5 Stück frisst die Umbau-Arbeit die Ersparnis. STM32H743
+& Co. sind „Preferred" = schon gebührenfrei. Alle behalten.
+
+### Files
+
+- **COST_ESTIMATE.md NEU** (Root) — ehrliche Aufschlüsselung JLC + Hand-Supply
+  + Gehäuse, mit Spar-Optionen + Trade-Offs
+- BOM_MASTER: Display→bare ST7789V (Pin-Order-Verify-Flag), Akku→2000mAh,
+  Stabilizer gestrichen, Knöpfe/Caps→3D-Print
+- SPEC §4 Battery-Zeile → 2000mAh (war 5000mAh, Pi-Ära-Leiche)
+- ADR-0013: Stabilizer für Prototyp gestrichen (1u-Caps; HiChord-Feel kommt vom
+  Magnetic-Hub, nicht der Cap-Länge); lange-Caps-Option bleibt dokumentiert
+
+Keine Schematic-/Generator-Änderung (Display steckt in J3-Header, Akku am
+JST-Connector — beide unverändert). Reine BOM-/Doku-/Sourcing-Revision.
+
+---
+
+## v0.7-r18.20c (2026-06-14) — Phantom-FP-Fix + Stale-STEPs cleanup
+
+### 🟠 HIGH — L1 Boost-Inductor: Phantom-Footprint-Name
+
+Der Generator referenzierte `Inductor_SMD:L_0630_6.0x6.0mm` für die SWPA6045
+2.2µH-Drossel. Dieser Footprint **existiert in der KiCad-Standard-Library
+NICHT** (gibt nur `L_0603_1608Metric` als Wildcard-Match). PCB-Bestellung
+hätte gar nicht ohne Fehler exportieren können — oder schlimmer, KiCad hätte
+einen leeren Footprint angenommen.
+
+**Fix:** EasyEDA-verifizierter Footprint für C83455 (war schon in
+`/tmp/3dfetch/` aus der r18.14-3D-Aktion) als
+`field_ambience:L_Sunlord_SWPA6045` in Project-Lib vendored (2 SMD-Pads
+2.2×5.72 mm @ 5 mm Pitch, gleiche Methodik wie SW_TS1088, Jack_PJ-320D etc.).
+
+### 🟡 LOW — Stale STEPs entfernt
+
+`SW-SMD_EC11J1525402-...-H24.5.step` (EC11J retired r18.14, ADR-0012) +
+`TYPE-C-SMD_6P-...-H3.2.step` (M-17 retired r18.19) aus 3D-Lib entfernt.
+MANIFEST.md aktualisiert: beide Teile als retired markiert, USB-C-C165948-
+STEP-Regen via easyeda2kicad als TODO notiert.
+
+### Status
+
+7 Custom-FPs in `field_ambience.pretty/` (war 5). 0 Phantom-Footprints im
+gesamten Schaltplan (verifiziert via Footprint-Coverage-Scan: 25
+KiCad-Standard + 5 Custom (jetzt 7) — alle physisch vorhanden).
+
+Verifizierung: 8/8 paren-balanced, Firmware 13/13 PASS.
+
+Files: generate_kicad_project.py (FP-Replace), libraries/field_ambience.pretty/
+L_Sunlord_SWPA6045.kicad_mod NEU, 8 Sheets regen, FP_VERIFY_LOG (7/7),
+BOM_MASTER, MANIFEST.
+
+---
+
+## v0.7-r18.20b (2026-06-14) — Sourcing-Fills + 2 Engineering-Flags
+
+Sourcing-Agent lieferte verifizierte LCSC-Teile für alle r18.20-TBDs. Alle
+JLC-bestückbaren Schematic-TBD-LCSCs sind jetzt geschlossen.
+
+### Fills
+
+| Teil | LCSC | Detail |
+|---|---|---|
+| C_HSE1/2 (HSE-Load) | **C107045** | Yageo 27pF C0G/NP0 50V 0603, JLC Basic, ~834k Stock |
+| C_BULK (Polymer) | **C444831** | Kyocera AVX TPSE477K010R0100, 470µF/10V Case-E |
+| C_BULK2 (MLCC) | **C2880380** | Taiyo Yuden 100µF/10V 1210 |
+| LED gelb (Hold + 5 Cell) | **C2287** | Hubei KENTO KT-0603Y, Vf 2.4V |
+| LED grün (Shift + 5 Cell) | **C12624** | Hubei KENTO KT-0603G pure-green 525nm, Vf 3.1V |
+
+### 🔧 Engineering-Flag 1 — „220µF/10V/1210 existiert nicht"
+
+C_BULK2 war als „220µF/10V X5R 1210" gelabelt — diese Kombination wird von
+keinem Hersteller gebaut (220µF gibt es im 1210-Case nur bis 6.3V). Statt
+220µF/6.3V (am 5V-Rail auf ~70–110µF DC-Bias-derated) → **100µF/10V** mit
+echtem Voltage-Headroom. Effektiv-Bulk vergleichbar, audit-sauber.
+
+### 🔧 Engineering-Flag 2 — Polymer-ESR-Realität
+
+Die ~10-mΩ-Flach-Polymer-Caps aus ADR-0011 (Panasonic SVPF / Kemet T520)
+sind bei LCSC nicht lagernd. Bester JLC-Flach-Reflow-Polymer: C444831
+(100 mΩ ESR). Verfehlt das 10-mΩ-Ziel, aber der parallele 100µF-MLCC
+(~5 mΩ) dominiert die Transient-Impedanz → Bulk-ESR unkritisch. Footprint
+auf Case-E (7343-43, 4.3mm H) umgestellt (passt in 8-mm-Top-Zone).
+
+### Beifang-Fix — R_LED-Wert in BOM_MASTER
+
+BOM_MASTER §9 sagte „220Ω LED-Vorwiderstand", Generator sagt **390Ω** (an
++5V-Anode → LED → PCA9685-Sink). Bei 5V/390Ω: gelb 6.7mA, grün 4.9mA — beide
+im 2–8mA-Fenster, Widerstand bleibt 390Ω. BOM_MASTER korrigiert.
+
+### LED-Strom-Verifikation (5V-Rail, 390Ω)
+
+- Gelb C2287 (Vf 2.4V): (5−2.4)/390 = 6.7 mA ✓
+- Grün C12624 (Vf 3.1V): (5−3.1)/390 = 4.9 mA ✓ (bei 5V genug Headroom für die 3.1V-Emerald-Green; bei 3.3V wäre sie unbrauchbar gewesen)
+- Weiß C965808 (Vf ~3V): ~5 mA ✓
+
+### Verifizierung
+
+- Generator regen, 8/8 paren-balanced
+- C107045 ×2, C444831 + Case-E-FP, C2880380, 0 „220uF 10V"-Leftovers
+- LED gelb C2287 ×6 (1 Hold + 5 Cell), grün C12624 ×6 (1 Shift + 5 Cell)
+- **0 TBD-VERIFY-Leftovers** in power_tree + mcp
+- Firmware 13/13 PASS
+
+Score: BOM-Sourcing 9.5 → 10 (alle JLC-bestückbaren Teile haben verifizierte
+in-Stock-LCSC-IDs; Hand-Assembly-Teile haben Vendor-Quellen in BOM_MASTER).
+
+---
+
+## v0.7-r18.20 (2026-06-14) — Audit-Folge-Fixes (Schematic-Korrektheit)
+
+## v0.7-r18.20 (2026-06-14) — Audit-Folge-Fixes (Schematic-Korrektheit)
+
+Aus dem Senior-Engineering-Audit die autonom umsetzbaren Schematic-Fixes:
+
+### 🟠 HIGH — Hall-Sensor-Footprint auf echtes SOT-23
+
+J_CELL1-5 hatten `Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical`
+(2.54-mm-Header-Platzhalter), verbaut wird aber DRV5056A4QDBZR im **SOT-23**.
+Eine PCB hätte 5 falsche Land-Patterns gehabt. Umgestellt auf
+`Package_TO_SOT_SMD:SOT-23`. Das 3-Pin-Symbol (Conn_01x03) Pin 1/2/3 mappt
+1:1 auf SOT-23-Pad 1/2/3 = DRV5056 VCC/OUT/GND (TI-DS Table 4-1, r18.14
+verifiziert). Site-Wiring Pin1→+3V3, Pin2→CELLn_SENSE, Pin3→GND unverändert.
+JLC-bestückbar (Extended).
+
+### 🟠 HIGH — HSE-Load-Caps 22 → 27 pF
+
+C_HSE1/2 waren 22 pF — das impliziert C_stray = CL − C/2 = 18 − 11 = 7 pF,
+unrealistisch hoch für ein 4-Lagen-Layout nahe dem MCU. Off-frequency-
+Start-Risiko (SAI-PLL3-Audio-Sample-Rate, USB-Sync). Neu: **27 pF**
+(C_ext = 2·(CL − C_stray) = 2·(18 − 4.5) = 27 pF, E12-Standard, C0G/NP0).
+Note ergänzt: finaler Wert ist layout-abhängig, am realen Board per 10x-Probe
+am OSC_OUT messen.
+
+### 🟡 MEDIUM — SPEC §5.12 Frei-Liste bereinigt
+
+PC0/PC1/PA4/PB0/PB1 aus der „Frei für Erweiterungen"-Liste entfernt — seit
+r18.9 für CELL1..5_SENSE vergeben. Reviewer hätte sie sonst doppelt belegen
+können.
+
+### 🟡 MEDIUM — ADC-Channel-Doku ergänzt (SPEC §5.6a)
+
+Standard-Mapping der 5 Cell-Pins dokumentiert: PC0=ADC123_INP10,
+PC1=ADC123_INP11, PA4=ADC12_INP18, PB0=ADC12_INP9, PB1=ADC12_INP5. **Alle
+5 auf ADC1** → ein ADC im Scan-Mode reicht. Mit Hinweis: vor Firmware-ADC-
+Init final gegen DS12110 Table 8 bestätigen (ST-PDF war HTTP-503 in der
+Audit-Session; Pin-Nummern via U1_STM32H743VIT6.md verifiziert).
+
+### Verifizierung
+
+- Generator regeneriert, 8/8 .kicad_sch paren-balanced
+- stm32-Sheet: 5× SOT-23 für J_CELL (0 Header-Leftovers), 5× DRV5056A4-Label
+- HSE: 27 pF (0 22-pF-Leftovers)
+- CELL1-5_SENSE-Nets intakt
+- Firmware 13/13 Suiten PASS
+
+### Offen → r18.20b (Sourcing-Agent läuft)
+
+- C_HSE LCSC-Nr. (27 pF C0G/NP0 0603) — derzeit TBD-r18.20
+- C_BULK Polymer 470 µF/16 V LCSC-Nr.
+- 220 µF MLCC auf 10 V (statt 6.3 V Headroom-Derating)
+- Cell-/Modifier-LED-Farben (5× gelb + 5× grün) LCSC-Nr.
+
+---
+
+## v0.7-r18.19 (2026-06-13) — Hardware-Audit-Fixes
+
+Senior-Engineer-Audit ergab vier Defekte, davon einer **kritisch**:
+
+### 🔴 Critical — USB-C-Revert auf 16-Pin (Flashen über USB-C gerettet)
+
+LCSC-Produktseite C283540 (TYPE-C-31-M-17) listet **„6P" = 6 Pins, power-only**.
+Keine D+/D-, kein CC1/CC2. Damit wäre **USB-DFU-Flashen über PA11/PA12
+physikalisch unmöglich** gewesen (PA11/PA12 = USB_DM/USB_DP), der gesamte
+Zweck des SW_BOOT-Tasters (ADR-0009 Punkt 1) ausgehebelt; im Schaltplan
+hätten USB_DM/USB_DP/CC1/CC2/SBU-Pads auf der Stecker-Seite gar nicht
+existiert.
+
+**Fix:** Revert auf **C165948 / TYPE-C-31-M-12** (16-Pin volle USB-C-Belegung
+inkl. D+/D-/CC, 168k+ LCSC-Stock). Footprint war von Anfang an für diese
+Variante gemacht (`USB_C_Receptacle_HRO_TYPE-C-31-M-12`). Insertion-Cycle-
+Trade-Off ~10k → ~5k bewusst akzeptiert — für ein persönliches Hobby-Gerät
+weit ausreichend, und 10k waren ohnehin Overkill.
+
+**Wurzel-Ursache:** r18.10-„Upgrade" auf M-17 hatte sich auf eine generische
+„drop-in laut HRO-Tabelle"-Annahme verlassen, ohne Pin-Count zu verifizieren.
+r18.14 korrigierte zwar die zwischenzeitlich falsche LCSC-Nr. (C165935 war
+ein MOSFET), pickte aber innerhalb der M-17-Familie die 6-Pin-Variante.
+
+**Lehre:** Pin-Count muss explizit aus Datenblatt/Produktseite bestätigt
+werden, nicht aus Bauform-Ähnlichkeit abgeleitet.
+
+### 🟠 High — Audio-Jack-Footprint passte nicht zum Bauteil
+
+J8/J9 hatten `Connector_Audio:Jack_3.5mm_CUI_SJ-3523-SMT_Horizontal`
+zugewiesen — das ist die CUI-SMT-Klasse. Verbaut wird aber C431535
+(SHOU HAN PJ-320D). Pad-Layouts inkompatibel. Assembly wäre gescheitert.
+
+**Fix:** EasyEDA-CAD-verifizierter Footprint für C431535 in die Project-Lib
+vendored: `field_ambience:Jack_3.5mm_PJ-320D_SMT` (4 SMD-Pads + 2 NPTH-Posts,
+exakt aus der LCSC-CAD-Datei extrahiert — gleiche Methodik wie SW_TS1088
+und EC11J in r18.14).
+
+### 🟠 High — Speaker-Wert im Audio-Sheet seit r18.18 stale
+
+J6/J7 standen seit r14 hartcodiert als
+`value="Speaker L (PUI AS04008PS, 4R 4W)"` — drei Fehler auf einmal: 4 Ω
+(seit r14 als 8 Ω korrigiert; Power-Budget rechnet mit 8 Ω → 700 mA, mit
+4 Ω wären es 1.4 A → TPS61089 grenzwertig), PUI statt CMS-402811-28SP
+(seit r18.18 Primärwahl), MPN ist die Papier-Variante.
+
+**Fix:** Value + MPN auf
+`Same Sky CMS-402811-28SP (Cloth-Cone, 8R 2W)`, Notes erklärt Top-Firing-
+Mount + manuelles Anlöten der Eyelets.
+
+### 🟠 Critical (Prozess) — Generator seit r18.14b nicht regeneriert
+
+Alle Entscheidungen r18.15–r18.18 lebten nur in den Docs. Das Schematic
+(= einzige Netlist-Quelle) hing auf r18.14b-Stand fest. Mit r18.19 erstmals
+wieder synchron regeneriert; ab jetzt jeder relevante Doc-Change zieht den
+Generator nach.
+
+### Verifizierung
+
+- Generator + Sheets regeneriert: alle 8 .kicad_sch paren-balanced ✅
+- USB-C: 4 × C165948/M-12 in power_tree.kicad_sch, 0 unerwünschte Leftovers
+  (das eine verbleibende C283540/M-17 steht ausschließlich in der Audit-
+  Trail-Notiz)
+- Audio-Jack-FP: 1 × field_ambience:Jack_3.5mm_PJ-320D_SMT in audio sheet,
+  0 CUI-SJ-3523-Leftovers
+- Speaker: 6 × CMS-402811-28SP in audio sheet, 0 stale „PUI 4R" Leftovers
+- Firmware 13/13 Suiten PASS (unberührt)
+
+### Files
+
+- `kicad/generate_kicad_project.py` (3 Edits)
+- `kicad/libraries/field_ambience.pretty/Jack_3.5mm_PJ-320D_SMT.kicad_mod` NEU
+- 8 × `kicad/*.kicad_sch` regeneriert
+- `field-ambience-current/docs/decisions/ADR-0009-engineering-realitaetscheck.md`
+  (Korrektur-Block r18.19 + Tabellen-Update)
+- `BOM_MASTER.md` (USB-C, Audio-Jack, Audit-Trail)
+- SPEC §8 hatte CMS bereits → keine Änderung nötig
+- SPEC §4 hatte M-12 nie verlassen → keine Änderung nötig
+
+Score: BOM-Sourcing 9 → 9.5 (kritische Pin-Count-Verifikation in den Audit-
+Standard aufgenommen); FP-Verify bleibt 10 (Custom-FP für C431535 ist nach
+EasyEDA-CAD verifiziert wie unsere anderen Customs).
+
+---
+
+## v0.7-r18.18 (2026-06-13) — Cloth-Cone Speaker (CMS-402811-28SP)
+
+User: „selbes format und größe aber eben premium.. nicht papier?" — berechtigt:
+PUI AS04008PS hat einen **behandelten Papier-Konus** (drei Quellen bestätigt:
+PUI-Datenblatt, Mouser-Attribut, RS-Components-Listing „treated paper").
+
+### Primärquelle: Same Sky (CUI) CMS-402811-28SP
+
+- **Stoff-Konus (Cloth Cone)** statt Papier — glattere Mitten ohne
+  „Papier-Boxigkeit", feuchteresistent, niedrigere Verluste
+- Identischer 40 × 28.3 × 11.5-Footprint → **keine CAD-/Mechanik-Änderung**
+- Identische elektrische Specs: 8 Ω, 2 W RMS, 84 dB @ 1 W/50 cm,
+  NdFeB-Magnet, Löt-Eyelets
+- F0 = 450 Hz (statt 380 Hz beim PUI) → 70 Hz weniger Tiefgang, in der
+  15–30 cm³ Sealed-Box mit Roll-Off bei ~500 Hz nicht hörbar
+- Preis ~$3–$5 statt ~$6.78 (halber BOM-Cost)
+- DigiKey + Arrow + Mouser-lagernd
+- LCSC führt **keinen** passenden 40-mm-8-Ω-Treiber → ohnehin Hand-Assembly
+
+### Zweitquelle bleibt PUI AS04008PS-4W-WR-R
+
+Identischer Footprint, behandeltes Papier, F0 = 380 Hz, ~$6.78. Backup
+falls CMS-Lieferengpass.
+
+### Verworfene Alternativen (5 Treiber im 40×28-Footprint geprüft)
+
+- Visaton K 28.40-8: Papier + 79 dB SPL (5 dB leiser, halb so laut empfunden)
+- Same Sky CDS-40288: Papier-Pulp
+- Same Sky CDS-4028-16: Stoff aber 16 Ω → halbe PAM8403-Leistung
+- Dayton CE40-28P-8: Papier
+- PUI AS04008CO-WR-R: Stoff aber 20 mm breit → CAD-Rework
+
+### Akustik-Erwartung (SPEC §8 angepasst)
+
+- Onboard ehrlich nutzbar **250 Hz – 20 kHz** (war ~200 Hz mit PUI bei F0=380)
+- Glattere Mitten als Papier-Variante (kein „Papier-Box"-Klang im Sprach-Bereich)
+- Tieferer Bass unverändert nicht onboard hörbar → bleibt Line-Out-Sache
+
+### Files
+
+SPEC §3-Übersichts-Diagramm, §8.x (Treiber-Beschreibung +
+Akustik-Begründung + Realistische-Erwartung), §10-Impedanz-Note;
+ADR-0007 (Lautsprecher-Sektion komplett umgedreht + Recherche-Begründung +
+Verworfene-Alternativen); ADR-0011 (Speaker-Höhe-Zeile + Kammer-Sektion);
+mechanical_coordinates §2/§3.9/§5; mechanical/3d_models/MANIFEST.
+
+Mechanik unverändert (Footprint, Tiefe, Outline, Cutout, Keepout, Außenhöhe
+21.6 mm — alles identisch beim Wechsel). Firmware unberührt (13 Suiten PASS).
+
+Score: Speaker-Cover 6 → 7 (Membran-Klasse aufgewertet; offen weiterhin
+Akustik-Charakterisierung am Muster + Marian-PSA-Quote).
+
+---
+
+## v0.7-r18.17 (2026-06-13) — Speaker: Mesh-Material + Datenblatt-Korrekturen
+
+## v0.7-r18.17 (2026-06-13) — Speaker: Mesh-Material + Datenblatt-Korrekturen
+
+Komponenten-Recherche zu Dust-Mesh + Speaker. Dabei **zwei Maßfehler** in der
+bisherigen Spec gefunden, einer davon eine mechanische Kollision.
+
+### r18.17a — Positions-Reconciliation (separater Commit)
+
+SPEC §8, ADR-0007 und mechanical widersprachen sich bei Speaker-Grille-Geometrie
+(38 mm rund @ (50,30) vs 36×70 oval vs 50×30 oval). Alle auf den r18.16-Stand
+gezogen, mechanical bleibt Source of Truth.
+
+### r18.17b — Material-Entscheidung + Datenblatt-Korrekturen
+
+**Mesh:** Saati **Acoustex 020–032** (transparente Klasse, ~25–32 g/m²) statt
+des fälschlich notierten „150–200 g/m²" (= Dämpfungs-Klasse, hätte den Treiber
+dumpf gemacht). Rohmesh nicht selbstklebend → PSA-Klebering-Konvertierung via
+**Marian Inc.** für Serie; AliExpress-Klebe-Mesh-Sticker für Prototyp. Kein
+LCSC-Teil für Akustik-Mesh existiert. GORE Acoustic Vent als IP-Option notiert.
+
+**🔴 Speaker-Datenblatt-Korrekturen (PUI AS04008PS-4W-WR-R bleibt):**
+- **Maße 40 × 40 × 9 mm → 40 × 28.3 × 11.5 mm** (rechteckiger Rahmen)
+- **„-WR" = Water-Resistant**, nicht Wire — **Löt-Eyelets, keine Kabel** →
+  Hand-Assembly, kein JLC-Bestücken (JLC führt keinen 40-mm-Kompakt-Treiber)
+- Zweitquelle dokumentiert: Same Sky CMS-402811-28SP (gleicher Footprint,
+  F0=450 Hz)
+
+**🔴 Z-Kollision behoben:** Der reale Treiber ist **11.5 mm tief** (nicht 9).
+Bei 10 mm Above-PCB-Raum wäre der von der Top-Platte hängende Treiber 1.5 mm
+in die PCB-Ebene kollidiert. Fix: Above-PCB-Raum **10 → 12 mm**, Außenhöhe
+**19.6 → 21.6 mm** (geometrie-unabhängig; PCB-Relief-Cutout als Alternative
+verworfen, da Magnet-Boss-Geometrie ohne Datenblatt-Zeichnung unbekannt).
+
+**Mesh-Cutout 50×30 → 36×24 mm** (passt zum realen 40×28.3-Treiber, 2 mm
+Rim-Seat; 50×30 wäre größer als der Treiber gewesen → kein Rim zum Abdichten).
+
+**Speaker-Treiber-Keepout:** statt „≤ 4 mm in 40×50-Zone" jetzt 42×32-Bauteil-
+Keepout direkt unter jedem Treiber-Footprint (0.5 mm Luft). SW_BOOT von
+(245,45) → (245,72) verschoben (lag im rechten Keepout).
+
+### Files
+
+mechanical §1/§2/§5/§7/§3.8/§3.9, ADR-0007 (Decision + Lautsprecher +
+Implementation Plan), ADR-0011 (Höhen-Update-Notiz + Speaker-Höhe),
+SPEC §8 (Treiber-Maße + Terminierung + Zweitquelle + Mechanik-Hinweis).
+Geometrie erneut Python-validiert (0 Konflikte nach SW_BOOT-Move).
+
+Score: Speaker-Cover 3 → 6 (Material + Lieferanten-Pfad fix; offen:
+Akustik-Charakterisierung am Muster, Marian-Quote). Mechanical bleibt 9
+(Kollision war latent, jetzt sauber).
+
+---
+
+## v0.7-r18.16 (2026-06-13) — Mechanical Coordinates: ehrlicher Rewrite
+
+`mechanical/coordinates/mechanical_coordinates.md` war seit r18.8 nur in §0
+ehrlich, der Rest war Pico/Pi/Choc/FSR/OLED-Müll aus früheren Revisionen.
+Komplette Neuschreibung als Single Source of Truth für Phase 6 (PCB-Layout)
+und Enclosure-CAD.
+
+### Festgelegt
+
+- **Outline**: PCB 252 × 102 × 1.6 mm, Gehäuse 260 × 110 × 19.6 mm (ohne
+  Encoder-Knöpfe → +10 mm Knopf-Erhebung = ~30 mm Gesamthöhe; OP-1-Field-
+  flach pro ADR-0011)
+- **Z-Stack** vollständig aus ADR-0011 übernommen (Bottom-Panel 2.5 + Standoff
+  3 + PCB 1.6 + 8 mm Top-Zone + 12 mm Encoder-Schaft + Top-Panel 2.5)
+- **4 Encoder** in den Ecken (Y=88), Pitch 30 mm zwischen Paaren
+- **Display** ST7789 1.9″ aktiv 40 × 22 mm, Modul-Mitte (126, 84), 4 mm Bezel
+  zur Top-Edge
+- **5 Modifier** identisch HX 12×12, Reihe Y=58, Pitch 14 mm
+- **5 Cells** Gateron-LP-Magnetic, Reihe Y=26, Pitch 22 mm, je 14×14 mm
+  Frontpanel-Cutout
+- **2 Speaker** Dust-Mesh-Aussparung 50 × 30 mm oval, Mitte (28, 50) und
+  (224, 50) — Top-Panel-hängend, PCB darunter mit Höhen-Limit 4 mm
+  (Speaker-Treiber-Zone)
+- **Power-/Audio-/MCU-Insel** komplett im 17 mm hohen Y-Streifen 34…51 mm
+  (zwischen Cell-Body-Top und Modifier-Body-Bottom) — STM32, PCM5102A,
+  PAM8403, C_BULK-Polymer, TPS61089, L1, AP7361C, Y1 Crystal (rechts neben
+  STM32), MCP23017, PCA9685, Backlight-Q2
+- **USB-C** Edge-Bottom-Center (126, 0); Audio + MIDI Edge-Left bei Y=88/66;
+  Battery, SWD, Reset, BOOT0 alle in der rechten Service-Spalte (X ≥ 240)
+- **4 Mounting-Holes** M2.5 bei (12, 6), (240, 6), (12, 96), (240, 96)
+
+### Validierung
+
+Python-Sanity-Checks: alle Bauteile innerhalb PCB-Outline, keine echten
+Bauteil-Bauteil-Überlapps (Y1 Crystal nahe STM32 ist Design-Absicht, AN2867
+≤ 5 mm), kein Bauteil > 4 mm in Speaker-Treiber-Zonen, keine Mounting-Hole-
+Kollision mit Bauteil-Bodies. Kritische Lücken: STM32↔Crystal 2.3 mm,
+Modifier↔STM32 3 mm, Cell-Body↔Power-Cluster 6.6 mm — alle ≥ 2 mm DRC-OK.
+
+### Implizit gelöst
+
+- C_BULK 10.5 mm Konflikt aus ADR-0011 r18.12 (Polymer-Wechsel) jetzt
+  geometrisch verortet: Insel-Y 46…50 mm, ≤ 2 mm hoch.
+- BOOT0 + Reset + SWD ohne Frontpanel-Cutout: Service-Zugang via 2 mm Loch
+  Bottom-Panel.
+- Battery-Pouch 50 × 60 × 9 mm Plan: liegt rechte Hälfte unter PCB, 9050060
+  statt 8050120 (Konflikt mit Speaker-Kammer gelöst).
+
+### Offen (Phase 6 / Industrial-Design)
+
+- Knopf-CAD, finale Außenmaße (±2 mm), Gateron-LP-Cutout 14×14 verifizieren,
+  Plate-Material, Mesh-Lieferant — §10 der Datei zählt sie auf.
+- Score-Impact: Mechanical 7 → 9 (echte Koordinaten + Z-Validierung;
+  10 erst nach Enclosure-CAD-Mockup).
+
+---
+
+## v0.7-r18.15 (2026-06-13) — Cell-Velocity in Firmware (ADR-0013 Code-Seite)
+
+ADR-0013 hatte die Magnetic-Hall-Architektur im Schematic fixiert, aber den
+Pfad „Hall-ADC → Velocity → Note" nur beschrieben. Dieser ist jetzt
+implementiert und host-getestet — unabhängig von der noch fehlenden Hardware.
+
+### Neues Modul `cells.{h,c}`
+
+- Per-Cell-State-Machine REST → ARMED → HELD, gefüttert mit normierter
+  Stem-Position `pos` ∈ [0,1] (0 = Ruhe, 1 = Bottom-Out).
+- **Velocity = Banddurchlaufzeit** (BAND_LO 0.15 → BAND_HI 0.55): schneller
+  Druck quert das Band in ≤ 6 ms (laut), langsamer in ≥ 70 ms (leise).
+  Note-On feuert am Trigger (BAND_HI), Note-Off bei Rückzug < RELEASE 0.30
+  (Hysterese gegen Chatter).
+- Velocity (0..1) → Voice-Amplitude 0.05…0.22 (Gamma 0.8). Median ≈ die alte
+  feste 0.12 der Binär-Cells, jetzt mit echtem Dynamikumfang.
+- Pure Logic, kein SDK → identisch auf RP2040-Bench (synthetische Position)
+  und STM32 (echtes ADC). Robust gegen grobes Sampling (Single-Sample-Slam =
+  Max-Velocity).
+
+### Engine-Integration
+
+- `engine_cell_sample(cell, pos, now_ms)` — Engine-Einstiegspunkt: PRESS
+  spielt den Akkord-Grundton der Cell (harmonic brain) mit velocity-skalierter
+  Amplitude, RELEASE stoppt ihn. `cells_init()` in `engine_init()`.
+
+### Tests
+
+- NEU `test/test_cells.c` (25 Checks): slow/fast, Monotonie, Hysterese,
+  abgebrochener Druck, kein Doppel-Trigger, Single-Sample-Slam, Bounds,
+  Mapping-Endpunkte. → **13. Test-Suite**.
+- Engine-Suite um End-to-End-Velocity-Check erweitert: schneller Druck
+  messbar lauter als langsamer durch die volle Engine (Peak 8156 vs 4459).
+- Alle 13 Suiten grün.
+
+### Web-Sim (`tools/display_sim.html`)
+
+- Cell-Velocity sichtbar: Klick-Höhe auf der Pille = Velocity (oben weich,
+  unten hart), grüner Fill steigt proportional zur Amplitude + 0–127-Readout.
+- Velocity-Konstanten **verbatim aus `cells.h` gespiegelt** (kommentiert).
+
+### Doku
+
+- SPEC §5.6a: Velocity-Modell-Tabelle (alle Konstanten) + Source-of-Truth-Verweis.
+- ADR-0013: „Firmware-Stand (implementiert r18.15)" ergänzt.
+- PROJECT_QUALITY: Cell-Mechanik 7→8, Test 9→9.5, Display-Sim 7→8.
+
+### Risiko
+
+Rein additiv in `firmware-c-next` (neues Modul + 1 Engine-Funktion + Sim-
+Anzeige). Kein Schematic-, BOM- oder Generator-Change. Kein CI-Pfad berührt.
+
+---
+
+## v0.7-r18.14 (2026-06-12) — Komponenten-Definition: 3D-Lib, Encoder, Cell-Keys
+
+User-Direktive: PCB-Design braucht Komponenten-Definition VOR Layout — 3D-Daten
+zu allem, Cells wie HiChord mit langen Caps + Stabilizern, Encoder-Split
+(nur Display = Push), smooth + gleich hoch + flach (Kick75-Referenz), und der
+„2 Klicks = 1 %"-Encoder-Bug.
+
+### 🔴 Zwei kritische BOM-Fixes (Beifang der 3D-Verifikation)
+
+1. **USB-C: C165935 war ein STF18N65M5-MOSFET (TO-220F-3)** — nicht der
+   TYPE-C-31-M-17! Falsch seit r18.10. Entdeckt, weil der EasyEDA-3D-Abruf
+   ein TO-220-Modell lieferte. Korrekt: **C283540** (LCSC-verifiziert, 21k+
+   Stock). → Generator, SPEC §4, ADR-0009-Korrekturblock.
+2. **SW_BOOT-MPN: C720477 ist XUNPU TS-1088-AR02016** (nicht TS-1185A-C-A).
+   Zusätzlich FP-Fix: SW11/SW12/SW_BOOT wechseln von generischem
+   `SW_SPST_TL3342` (Land-Pattern passte nicht) auf EasyEDA-verifiziertes
+   `field_ambience:SW_TS1088_SMD`.
+
+**Konsequenz-Regel:** 3D-/CAD-Abruf ist ab jetzt Teil der BOM-Verifikation —
+ein falsches STEP-Modell entlarvt eine falsche LCSC-Nr. sofort.
+
+### 3D-STEP-Library (User: „brauche dringend zu allem die 3D-Dateien")
+
+- NEU `kicad/libraries/field_ambience.3dshapes/` — 9 Z-/Panel-kritische
+  STEP-Modelle (Encoder 24.5mm-Beleg, USB-C, LQFP-100, Boot-SW, Crystal,
+  Inductor, Klinke, JST, VQFN), ~20 MB.
+- NEU `mechanical/3d_models/MANIFEST.md` — Inventar, Höhen-Tabelle,
+  Regenerier-Kommando (`easyeda2kicad`), externe CAD-Quellen (Speaker, LCD,
+  EC11E, Gateron-LP, Knöpfe), Befund-Log.
+
+### ADR-0012 — Encoder-Strategie
+
+- **EN3 (Display): einziger mit Push + Detents** (Menü: 1 Rastung = 1 Schritt).
+  ALPS EC11E THT, Suffix TBD-VERIFY.
+- **EN1/2/4: EC11E183440C** — 18 Pulse, OHNE Detent, OHNE Switch, endlos
+  glatt. SW-Nets bleiben verdrahtet (Pull-up idle-high), Löcher unbestückt.
+- **Alle 4 gleiche Familie + gleiche Schaftlänge = gleich hoch.** Kick75-flach:
+  Ziel ~20–22 mm statt 24.5 mm (EC11J-STEP-Beleg). Knopf Ø19–20 × 8–10 mm Alu.
+- EC11J1525402 SMD retired (NRND + zu hoch + Half-Step-Mismatch). FP-Verify-
+  Blocker damit gegenstandslos; echtes EC11J-Pattern liegt trotzdem als
+  EasyEDA-verifizierte Referenz in der Lib (r18.12-Hand-Draft war falsch:
+  Pitch/Pad-Reihen/Body-Maße — Lehre: Custom-FPs nur aus CAD-Exporten).
+- Footprint alle 4: KiCad-Standard `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`.
+
+### Encoder-UX-Fix („zwei Klicks für ein Prozent")
+
+- Ursache: Bench-Encoder (KY-040-Klasse) rastet jede HALBE Quadratur-Periode
+  (30 Detents / 15 PPR); Firmware zählte volle Perioden.
+- `display_hw_test.c`: `ENC_HALF_STEP` Default 0 → **1** (Symptom-richtig für
+  das Bench-Teil); Host-Test pinnt explizit 0 (testet den Full-Cycle-Kern).
+- `encoders.c`: `DETENT_SUBSTEPS`-Konstante → **per-Encoder `substeps`**
+  (Display 4, Smooth 2) + **`has_sw`-Flag** (3 Encoder ohne Push pollen nicht).
+- Acceleration-Tiers unverändert (28/60/120/240 ms → ×8/×5/×3/×2), langsam
+  = exakt 1 %.
+- Alle Test-Suiten grün (854k+ Checks).
+
+### ADR-0013 — Cell-Keys: Low-Profile Magnetic + Hall (ersetzt FSR aus ADR-0006)
+
+- User wollte HiChord-Tastengefühl + lange Caps (Spacebar-Prinzip mit
+  Stabilizern). Lösung, die das Velocity-Ziel aus ADR-0006 BEHÄLT:
+  **Gateron-LP-Magnetic-Switches** (pin-los, plate-mounted, 0.1–3.3 mm analog)
+  + **linearer Hall-Sensor pro Cell auf dem PCB** (DRV5056A4-Kandidat /
+  SS49E-Prototyp; PINOUT-VERIFY vor Phase 6 — AP7361-Lektion).
+- Velocity = dPos/dt (präziser als FSR-Druck); Aftertouch + einstellbarer
+  Trigger-Punkt später als reine Firmware-Features.
+- **ADC-Interface unverändert** (PC0/PC1/PA4/PB0/PB1, CELLn_SENSE).
+  Schematic: J_CELL 1×2-FSR-Teiler → 1×3-Hall-Site + 1 kΩ Serien-R + 10 nF
+  (RC fc≈16 kHz). R_CELL 10k→1k (C25804→C21190).
+- Lange Caps ≥ 2u: LP-Stabilizer (Gateron-Klasse) — Switch mittig,
+  Stabilizer links/rechts, exakt das Spacebar-Prinzip.
+- SPEC §4 (Switches+Encoder-Tabelle komplett überarbeitet) + §5.6a rewrite.
+
+### Modifier-Buttons (User-Punkt „alle gleich, keine Einrastfunktion")
+
+Bestätigt + in SPEC §4 explizit gemacht: SW6–SW10 sind **alle 5 identisch**
+(HX 12×12×7.3, momentary). Latch-Zustand zeigen ausschließlich die LEDs
+(§7.2 / ADR-0008) — kein mechanischer Rast-Schalter irgendwo.
+
+### Files
+
+Generator (Encoder-Block variant-fähig, Hall-Cell-Block, USB-C/SW_BOOT-Fixes),
+`encoder.kicad_sch` + `stm32h743.kicad_sch` regeneriert, `encoders.c`,
+`display_hw_test.c`, `test_display_bench.c`, SPEC §4/§5.6a, FP_VERIFY_LOG
+(0 offene Punkte), ADR-0009-Korrektur, ADR-0012 NEU, ADR-0013 NEU,
+MANIFEST.md NEU, 2 Custom-FPs (TS-1088 NEU, EC11J ersetzt), 9 STEP-Modelle NEU.
+
+---
+
+## v0.7-r18.13 (2026-06-12) — Repo-Refactor Phase 2 (Doc-Moves)
+
+`REPO_STRUCTURE.md` Phase 2 ausgeführt. Discipline-basierte Top-Level-Ordner
+für nicht-CI-kritische Assets eingeführt; Cross-References in lebenden Docs
+und Firmware-Code-Kommentaren synchronisiert.
+
+### git mv (5 Pfade)
+
+- `field-ambience-current/mechanical_coordinates.md` → `mechanical/coordinates/`
+- `field-ambience-current/field_ambience_webapp.html` → `software/webapp/`
+- `field-ambience-current/field_ambience_v29o.scd` → `software/supercollider_reference/`
+- `field-ambience-current/legacy/` → `archive/legacy_pre_native/`
+- `field-ambience-current/docs/archive/` → `archive/old_specs/`
+
+### Übersprungen (begründet)
+
+- **`PITCH.md`** — Datei existiert nicht im lebenden Tree (nur archivierte
+  Kopie unter `archive/old_specs/pitch_pre_step6.md`). Re-Pitch nach
+  STM32-Migration neu aufsetzen, dann `product/brief/PITCH.md` anlegen.
+- **`reports/`** — Ordner war leer.
+
+### Cross-Reference-Updates (lebende Docs, einmaliger Pass)
+
+- `README.md` — Folder-Tree zeigt neue Top-Level-Ordner; `PITCH.md`-Eintrag
+  raus, da nicht vorhanden
+- `PROJECT_MAP.md` — `mechanical_coordinates.md`-Pfad + Legacy-Pfade
+- `REPO_STRUCTURE.md` — Phase-2-Block auf DONE, Tree synchronisiert
+- `field-ambience-current/PROJECT_QUALITY.md` — Mechanical-Pfad
+- `field-ambience-current/START_HERE.md` — 4 Referenzen (`.scd`, `.html`,
+  `mechanical_coordinates.md`, `legacy/`)
+- `field-ambience-current/PCB_LAYOUT_STATUS.md` — Mech-Pfad
+- `field-ambience-current/NATIVE_PORT_PLAN.md` — Port-Vorlage-Pfad
+- `field-ambience-current/docs/onboarding/INDUSTRIAL_DESIGNER_START.md` —
+  `PITCH.md`-Verweis ersetzt durch Repo-`README.md`, Mech-Pfad
+- `field-ambience-current/docs/decisions/ADR-0007-dust-mesh-speakers.md`
+  + `ADR-0011-enclosure-thickness.md` — Related-Sektionen
+- `field-ambience-current/firmware-c-next/tools/render_wav.{c,sh}` +
+  `include/pad.h` + `include/reverb_presets.h` — Pfad-Kommentare zur
+  Webapp-Reference
+- `field-ambience-current/firmware-c/include/pad.h` — **NICHT angepasst**;
+  ist FROZEN-Snapshot, Pfad-Kommentar reflektiert State at-time-of-snapshot
+
+### Bewusst NICHT angefasst
+
+- `CHANGELOG.md` historische Einträge — dokumentieren Stand pro Commit
+- `field_ambience_pcb_SPEC_v0.7.md` Inline-Prosa-Verweise auf
+  `mechanical_coordinates.md` — strukturell Doc-Name, kein Hyperlink, wird
+  bei nächstem SPEC-Refresh (r18.14+) konsolidiert
+- `PCB_TODO.md`, `MEINE_TODO.md` — Working-Docs, Prosa-Referenzen, kein
+  Build-Blocker. Konsolidierung mit der nächsten Mechanical-Update-Welle
+- CI-relevante Pfade (`firmware-c/`, `firmware-c-next/`, `kicad/`) —
+  Phase-3-Aufgabe, atomar mit `.github/workflows/*.yml`
+
+### Score-Impact (PROJECT_QUALITY.md)
+
+| Aspekt | r18.12 | r18.13 | Trend |
+|---|---|---|---|
+| Repo-Struktur | 6/10 | **8/10** | Phase 2 von 5 abgeschlossen |
+| Doku / Onboarding | 9.5/10 | **10/10** ✅ | Pfade konsistent, Onboarding-Links korrekt |
+| Mechanical / Enclosure | 5/10 | **6/10** | Pfad-Honest-State, Inhalt unverändert |
+
+### Risiko-Bewertung
+
+- **Kein CI-Risiko**: keine `.yml`-Path-References geändert
+- **Kein Generator-Output-Risiko**: `kicad/generate_kicad_project.py`
+  unverändert, schreibt weiter nach `field-ambience-current/kicad/`
+- **Kein Firmware-Build-Risiko**: Header-Pfade nur in Kommentaren angefasst
+- **Reversibel**: 5 × `git mv` in einem Commit, jederzeit per `git revert`
+  rücknehmbar
+
+---
+
+## v0.7-r18.12 (2026-06-11) — Pre-Layout-Cleanup
+
+Zwei offene Pre-Layout-Punkte adressiert:
+
+### C_BULK Polymer-Wechsel (ADR-0011 Punkt 1)
+
+1000 µF Alu-Elko (10.5 mm Höhe — passte nicht in 8-mm-Top-Zone) ersetzt durch:
+- **C_BULK**: 470 µF 16V Polymer in EIA-7343-31 (D-Case, ~2 mm Höhe, ESR < 15 mΩ)
+- **C_BULK2**: 220 µF 10V X5R MLCC 1210 parallel
+
+Effektive Bulk-Kapazität ~690 µF (Polymer + MLCC), aber ESR ~10 mΩ statt ~25 mΩ
+beim Alu. Class-D-Bass-Transienten sauberer (ADR-0010 Punkt 4 "kürzester
+Polygon-Loop"-Hebel verstärkt). Title-Block-Comment im power_tree
+synchronisiert.
+
+LCSC-Nummern noch TBD-VERIFY: Panasonic SVPF-Familie oder Kemet T520D für
+Polymer; CL32A227KQVNNNE-Klasse für 220 µF MLCC.
+
+### EC11J Custom-Footprint (FP_VERIFY letzter Punkt)
+
+`libraries/field_ambience.pretty/RotaryEncoder_ALPS_EC11J_SMD.kicad_mod` neu
+gezeichnet aus den **dokumentierten ALPS-EC11J-Standard-Maßen** (12×13.4 mm
+Body, vertikaler 20-mm-Schaft, 5 SMD-Pads + 2 Mounting-Tabs). Pad-Pitch 2.5 mm,
+Pad-Größe 1.4 × 1.4 mm, Mounting-Tabs 1.8 × 3 mm bei ±6 mm.
+
+**Status:** `FP_DRAFT` (nicht `FP_NOTE`) — vor Fab gegen EasyEDA-Export von
+C209762 verifizieren. Pin-Numbering (A/C/B/S1/S2) hier rein semantisch; das
+KiCad-Symbol nutzt die Conn_01x05-Standard-Pinnummern, deshalb muss vor dem
+ersten Layout-Spin geprüft werden ob Symbol-Pin-Nummern ↔ Footprint-Pad-Nummern
+matchen (kann im Symbol-Editor angepasst werden).
+
+4 Encoder-Instanzen referenzieren jetzt den Custom-FP statt des KiCad-Standard-
+EC11E-THT-FP, der ohnehin nicht zur SMD-Bauform passte.
+
+### Validierung
+
+paren 8/8 PASS · Crossref 7/7 PASS · 4 Encoder-Instanzen mit neuem FP, 0
+Reste vom alten EC11E-Standard-FP · Polymer + MLCC parallel sauber im
+power_tree platziert · Title-Block-stale-Kommentar gefixt.
+
+### Score-Bewegung
+
+- Footprint-Verifikation 8 → 9 (EC11J Draft-FP geschlossen)
+- Mechanical 4 → 5 (C_BULK-Konflikt aufgelöst)
+- BOM-Sourcing 7.5 → 8 (Polymer-Familie identifiziert)
+
+---
+
+## v0.7-r18.11 (2026-06-11) — Audio-Buffer + SAI-Clock + Gehäusedicke
+
+User-Fragen: (a) wie verhindern wir Kratzgeräusche am DAC, (b) wie dick wird
+das Gehäuse mit Lautsprechern. Beide Fragen mit Engineering-Analyse beantwortet.
+
+### ADR-0010 — Anti-Kratzig
+
+Sechs Ursachen-Klassen geprüft:
+- ✅ PCM5102A Pin-Strapping verifiziert (FLT=FMT=DEMP=GND, XSMT controlled)
+- ✅ Engine-Soft-Limiter aktiv (Step 11)
+- 🔧 Buffer-Underrun-Risiko → AUDIO_BUFFER_FRAMES 256 → 512
+  (5.8 ms → 11.6 ms Window, 2× Sicherheits-Marge; Latenz weiterhin
+  sub-perception für Ambient-Pad)
+- 🔧 Clock-Jitter → SAI-Speisung aus PLL3-P (11.2896 MHz exakt) statt
+  SYSCLK; getrennte Audio-PLL ist STM32H7-Standard für Audio-Quality
+- 🔧 Layout-Constraints (SPEC §5.1 ergänzt): AVDD/DVDD-Caps <5 mm vom IC,
+  Single-Star-GND zwischen Audio und Digital, C_BULK kurzer Polygon-Loop
+  zum PAM8403-PVDD, optionaler Class-D-Output-Bead-Filter
+- Sub-Bass-Speaker-Klappern bleibt Sound-Design-Lösung
+  (SubBass-Layer ausschließlich an J8-Line-Out)
+
+Alle 12+ Host-Tests grün nach Buffer-Größen-Änderung.
+
+### ADR-0011 — Gehäusedicke
+
+Drei Stack-Up-Varianten gerechnet (Encoder-im-Gehäuse, Encoder-ragt-raus,
+Side-Mount-Speaker). Gewählt: **Variante B** (Encoder-Knopf außen).
+
+Konkretes Z-Budget:
+- Bottom-Panel 2.5 mm + Standoff 3.0 mm + PCB 1.6 mm + Top-Komponenten 8.0 mm
+  + Encoder-Schaft 12 mm + Top-Panel 2.5 mm = **Gehäuse außen 19.6 mm**
+- + Encoder-Knöpfe 10 mm = **Gesamthöhe ~30 mm**
+- → OP-1-Field-Klasse (Field selbst ist 19 mm)
+
+Speaker-Kammer pro Seite ~31 cm³ — passt für Closed-Box-Mid-Range-Sound
+der 40-mm-Treiber. Sub-Bass wie immer über J8.
+
+**C_BULK-Konflikt früh erkannt:** 1000 µF Alu-Elko ist 10.5 mm hoch, passt
+nicht in 8 mm-Top-Zone. Drei Lösungs-Optionen dokumentiert; Empfehlung:
+**Polymer-Tantal-Cap** (z. B. Panasonic 25SVPF1000M, 2.5 mm hoch, besserer
+ESR für Bass-Transienten). Entscheidung für r18.12 vor Layout.
+
+### Files
+
+- ADR-0010-audio-buffer-sai-pll-clean-sound.md NEU
+- ADR-0011-enclosure-thickness.md NEU
+- firmware-c-next/include/audio.h: AUDIO_BUFFER_FRAMES 256→512
+- SPEC §5.1 erweitert: SAI-Clock-Architektur + Audio-Layout-Constraints
+
+---
+
+## v0.7-r18.10 (2026-06-11) — Engineering-Realitätscheck (ADR-0009)
+
+User-Frage: welche Entscheidungen sinnvoll, welche nicht. Vier Fix-Cluster:
+
+### 🔴 BOOT0-Button gefehlt (kritisch)
+
+Befund: BOOT0 hatte nur einen 10k-Pulldown. USB-DFU-Flash setzt
+BOOT0=HIGH voraus → war physikalisch nicht möglich. SPEC-§1-Diagramm
+behauptete fälschlich "USB-DFU oder ST-Link".
+
+Fix: SW_BOOT (SMD-Tactile TS-1185A-C-A / C720477) plus R_BOOT_SW 1k in
+Reihe nach +3V3 ergänzt. Bedienung: SW_BOOT halten → NRST tippen →
+loslassen → System-Memory-Boot (USB-DFU). 1k-Serien-R limitiert Querstrom
+auf 3 mA falls SW_RESET gleichzeitig gedrückt.
+
+### 🟠 USB-C-Stecker auf 10k-Cycles upgegradet
+
+C165948 (M-12 / ~5k Cycles, Generic) → **C165935 (TYPE-C-31-M-17 / 10k
+Cycles)**, drop-in Footprint laut HRO-Tabelle. Premium-Pfad (GCT/Amphenol
+~10k Cycles, andere FP) für post-Prototyp dokumentiert.
+
+### 🟠 SPEC §4 BOM ↔ Generator r18.9 synchronisiert
+
+Drift gefunden: SPEC listete noch Choc-Cells + Stabilizer + SW12-BOOTSEL
+(alles Pico-Ära). r18.9 hatte das im Generator schon raus.
+
+Fix: SPEC §4-Zeilen durchgestrichen oder ersetzt: SW1-SW5 → J_CELL1-5 +
+R_CELL + C_CELL (FSR-Interface), Stabilizer raus, SW12 raus, SW_BOOT +
+R_BOOT_SW rein. mechanical_coordinates §4 als veraltet markiert.
+
+### 🟢 Engineering-Review als ADR-0009
+
+Vollständige Befund- und Maßnahmen-Doku: USB-C-Premium-Pfad, Z-Höhen-
+Layout-Constraints (C_BULK 10.5 mm darf nicht unter LCD-Header),
+LED-Farben-JLC-Stock-Realität, FSR-Anschluss-Optimierung (FFC empfohlen),
+Display-SPI1-Funktionsfähigkeit ✓, plus die bewussten "ändern wir nicht"-
+Entscheidungen.
+
+### Validierung
+
+paren 8/8 PASS · Crossref 7/7 PASS · SW_BOOT-Pin1↔BOOT0_PIN-Rail-Wire
+verifiziert · SW_BOOT-Pin2↔R_BOOT_SW↔+3V3-Pfad verifiziert.
+
+Scores: Schematic 9 → 9.5, Symbole 9 → 9.5, Doku 9 → 9.5.
+
+---
+
+## v0.7-r18.9 (2026-06-11) — Schematic-Implementation IMG_9713 (Generator)
+
+Implementiert die r18.8-Design-Entscheidungen im KiCad-Generator.
+
+### Cell-Velocity (ADR-0006)
+
+- **stm32h743_sheet**: 5 neue ADC-Netze CELL1..5_SENSE an **PC0 (Pin 15),
+  PC1 (16), PA4 (28), PB0 (34), PB1 (35)** — alle vorher no_connect, alle
+  Standard-ADC12-fähig. FSR-Interface pro Cell: J_CELLn (2-Pin) von +3V3,
+  10 kΩ Teiler-Bottom, 10 nF S/H-Filter, Knoten → ADC-Pin
+- **ADR-0006-Korrektur**: Erstfassung nannte PA0/PA1/PA2/PA6 als freie
+  Pins — FALSCH (PA0/PA1 = TIM2-Encoder, PA6 = LCD_CS). Gegen die
+  verifizierte Pin-Tabelle ersetzt
+- **mcp_sheet**: SW1-5 (Kailh-Choc-V2-Hotswap, 2u, Stabilizer) komplett
+  entfernt; GPA0-4 → NC (Rev-B-Reserve). BOM: −5 Hotswap-Sockets,
+  −5 Stabilizer; +5 J_CELL, +5 R 10k, +5 C 10nF, +5 FSR (separat)
+- SPEC §5.6a NEU mit der Pin-Tabelle
+
+### LED-Topologie (ADR-0008)
+
+- **mcp_sheet led_array**: 10 → **15 LEDs**, farbcodiert:
+  - LED6 grün (Shift), LED7 gelb (Hold), LED8-10 weiß (Drone/Gen/Clear)
+  - LED11Y/G … LED15Y/G: 5×2 Cell-LEDs (gelb @Basis / grün @Shift, XOR)
+- PCA-Kanäle 0-14 = LEDs, **Kanal 15 = LCD_BLK_PWM** (war ch12)
+- **LED1 + R_LED_STATUS entfernt** (r12-System-Status via PCA ch10) —
+  Heartbeat ist seit r18.5 LED_HB an MCU-PD8. Kanal 10 jetzt LED13G
+- Gelb/Grün-MPN-Kandidaten XL-1608UYC/UGC-04 (XINGLIGHT-Serie) mit
+  TBD-VERIFY-Stock; weiß bleibt XL-1608UWC-04/C965808
+- 390R-Serie einheitlich (gelb/grün ~7.4 mA, weiß ~5.1 mA — beide unter
+  PCA-Sink-Budget; Helligkeits-Matching per Firmware-PWM-Duty)
+
+### Validierung
+
+- paren-balance 8/8 PASS
+- 100/100 STM32-Pins angebunden (5 Cell-Pins jetzt WIRE statt no_connect)
+- mcp: 15 LEDs, 0 STATUS_LED_K-Reste, 0 NC_PCA-Reste, 0 Choc-Reste,
+  NC_GPA0-4 vorhanden, LCD_BLK_PWM-hier intakt
+- Hier↔Root-Crossref 7/7 PASS
+
+---
+
+## v0.7-r18.8 (2026-06-11) — IMG_9713 Industrial-Design-Update
+
+User-Vorgabe nach dem neuen Render (IMG_9713):
+- keine Text-Labels außer am Display
+- Display kleiner und mittig zwischen den Encodern
+- 4 Encoder in den Ecken statt einer Reihe
+- 2 LEDs pro Cell (Gelb + Grün, XOR-Logik für Basis-/Shift-Hold)
+- Modifier-LED-Farben: Shift Grün, Hold Gelb, Drone/Generate/Clear Weiß
+- Speakers als schwarze Dust-Mesh-Aussparungen statt sichtbare Lochmuster
+- Cells als Piano-Feel-Tasten statt simpler Switches (HiChord-Klasse)
+
+### Drei neue ADRs
+
+- **ADR-0006** — Cell-Action = Piano-Feel: FSR + Silicon-Cap-Pad mit
+  Velocity-Sense statt Tactile-Switch. Fallback Dual-Tactile-Switch für
+  Prototype-1. 5× zusätzliche ADC-Inputs am STM32H743 (Pins frei).
+- **ADR-0007** — Speaker-Cover = Schwarzes Akustik-Polyester-Mesh
+  (Saati-Acoustex-Klasse, -1 dB Insertion-Loss). Speaker selbst (PUI
+  AS04008PS) bleibt unverändert. Frontpanel-Aussparung 36×70 mm oval.
+- **ADR-0008** — Cell-LED-Logik = XOR (Gelb @ Basis, Grün @ Shift). User-
+  Frage bewertet: pro Cell immer höchstens eine LED an; „Shift aktiv"
+  bleibt globale Modifier-LED, nicht repliziert auf jede Cell. Tabelle
+  mit allen Cell-Tap-Zuständen im ADR.
+
+### SPEC-Updates
+
+- §7.2 PCA9685-Kanal-Belegung **komplett neu**:
+  - LED0-LED4: 5 Modifier-LEDs (Grün/Gelb/Weiß/Weiß/Weiß)
+  - LED5-LED14: 5×2 Cell-LEDs (Gelb-LEDxY + Grün-LEDxG pro Cell, XOR)
+  - LED15: LCD_BLK_PWM (Backlight-PWM via Q2 N-FET)
+  - **16/16 Kanäle belegt, exakt** — kein Reserve mehr, System-Status
+    auf MCU-Direkt-GPIO (PD8, SPEC §5.6, bereits dort)
+- Cell-HOLD-Anzeige-Logik durch XOR ersetzt; Firmware-State-Machine
+  bekommt 3-Wert-Enum pro Cell
+
+### Web-Sim komplett neu (`firmware-c-next/tools/display_sim.html`)
+
+- Layout 1:1 nach IMG_9713: Slab-Body mit abgerundeten Ecken, kleines
+  zentriertes Display, 4 Encoder in den Ecken, 5 Modifier-Buttons mit
+  LED-darüber (ohne Text-Label), 5 lange Cell-Pillen mit je 2 LEDs darüber,
+  2 ovale Dust-Mesh-Speaker links/rechts
+- Modifier-Interaktion: Click toggelt; LED-Farben Grün/Gelb/Weiß je nach
+  Modifier (Clear = Flash-on-Press, kein Latch)
+- Cell-Interaktion: Tap → wenn Hold-Modifier on, latch in Gelb-State,
+  mit Shift-Modifier on → Grün-State. XOR durchgesetzt
+- Keyboard-Bindings: 1-5/Q-T = Cell-Tap, A/Z = Backlight, Shift gehalten =
+  global Shift, Pfeile + Space = Display-Encoder
+
+### Mechanical Coordinates Update
+
+- Neue §0 prefix-Sektion mit IMG_9713-Layout-Skizze + Komponenten-
+  Positionstabelle (Encoder-Ecken, Display zentriert, Modifier-Reihe,
+  Cell-Reihe, Speaker-Mesh links+rechts). Alte §3-7 (Pico-Ära-Positionen)
+  bleiben für Diff-Reviewability erhalten, sind aber als veraltet markiert.
+
+### PROJECT_QUALITY.md NEU
+
+User-Vorgabe „alles muss 10/10 sein" — neues File mit Score pro Aspekt
+(1-10) und exakte Roadmap für jeden, der noch nicht bei 10 ist. Aktueller
+Gesamtstand: 5.5/10 Manufacturing, einzelne Aspekte 9/10.
+
+### Validierung
+
+- Web-Sim lokal getestet: alle Interaktionen funktional, LED-Sync sauber,
+  Animationen unverändert (Tween-Engine unverändert), Display rendert
+  korrekt im kleineren Container
+- KiCad-Generator: r18.8-Schaltplan-Update kommt in r18.9 (Cell-FSR-
+  Symbole + LED-Topologie). r18.8 ist **Design-Decision + Doku + Sim**;
+  Schematic-Implementation folgt in r18.9 als reine Code-Änderung
+
+### Manufacturing-Readiness unverändert: 5.5/10
+
+Begründung: Schematic ist auf r18.7-Stand; r18.8 fügt **keine** Schematic-
+Änderungen hinzu, sondern legt nur das Industrial-Design + die Logik fest.
+Die r18.9 wird die Schematic-Konsequenzen implementieren (5 ADC-Inputs, 10
+Cell-LEDs, neuer Modifier-LED-Topologie). Vorher wäre eine Implementierung
+spekulativ — die FSR-Komponentenwahl ist noch nicht final.
+
+---
+
+## v0.7-r18.7 (2026-06-11) — FP_VERIFY systematisch geschlossen + Gate-Skip-ADR
+
+### ADR-0005: Phase-5-Profiling-Gate übersprungen
+
+User-Entscheidung: Das Gate (ADR-0002 verlangt Engine-Profiling auf
+realer STM32H743-Hardware vor Layout-Start) ist konservatives Theater.
+RP2350 trägt die Engine bereits, H743 hat 3-4× CPU-Headroom plus FPU
+plus dedizierte Peripherie (SAI/TIM-QEI). Erwarteter CPU-Bedarf
+~10-15 %, weit unterhalb des 40 %-Gates. Worst-Case (Engine zu groß):
+ein Prototyp-Spin mit reduzierter Funktionalität, nicht totes Board.
+
+Folgen: Layout-Pfad ist jetzt **ERC → FP_VERIFY → Layout**, nicht mehr
+**Hardware kaufen → Firmware-Port → Profiling → Layout**. Firmware-
+Migration läuft parallel statt sequenziell.
+
+PROJECT_STATUS, PROJECT_MAP, ADR-0003, PCB_LAYOUT_STATUS aktualisiert.
+
+### FP_VERIFY-Pass — 6 von 9 geschlossen
+
+| Position | Vorher | Nachher |
+|---|---|---|
+| **U1 LQFP-100** | FP_VERIFY | FP_NOTE (KiCad-Standard, JEDEC MS-026, raw-verifiziert) |
+| **U5 SOT-89-5** | FP_VERIFY | FP_NOTE (KiCad-Standard, JEDEC TO-243, raw-verifiziert) |
+| **Y1 HC-49/US** | FP_VERIFY | Custom-FP `Crystal_HC49-US-SMD_ABLS` per ABRACON-DS Page 3 (5.6×2.1mm @ 9.5mm; KiCad-Standard hatte 4.5×2.0 @ 8.5mm) |
+| **U8 TPS61089RNR** | FP_VERIFY | Custom-FP `Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` per TI Mech. Drawing 4222143/A |
+| **Q2 2N7002 SOT-23** | FP_VERIFY | FP_NOTE (JEDEC TO-236, alle Marken identisch) |
+| **J3 LCD-Header** | FP_VERIFY | FP_NOTE (trivialer 2.54mm 1×8) |
+| **EN1-4 EC11J** | FP_VERIFY | Bleibt offen — ALPS-Drawing nicht öffentlich, Custom-FP aus EasyEDA-Daten als nächster Schritt |
+
+Vollständige Doku: `FP_VERIFY_LOG.md`.
+
+### TPS61089-Symbol-Bug behoben
+
+Das alte Symbol hatte einen fake "Pin 12 = ePAD = GND". TI-Mechanical
+Drawing 4222143/A zeigt: das RNR0011A-Package hat 11 Pads, der zentrale
+Thermal-Pad IST Pin 11 (SW), nicht ein separates ePAD. GND geht über
+Pin 5 (Side-Pad). Symbol-Code + battery_sheet-Wiring entsprechend
+korrigiert. Custom-FP ohne Phantom-Pad-12.
+
+### Neue Custom-Footprints
+
+`kicad/libraries/field_ambience.pretty/` jetzt mit 3 Custom-FPs:
+- `SW_HX_12x12x7.3_SMD-4P` (r18.6, HX-Button)
+- `Crystal_HC49-US-SMD_ABLS` (r18.7, ABLS-Crystal nach Datasheet)
+- `Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` (r18.7, TI-Land-Pattern aus DS)
+
+### Validierung
+
+Skript-Checks: paren-balance 8/8, 100/100 STM32-Pins angebunden,
+Crossref-Tests unverändert PASS. TPS61089 Pin 12 entfernt aus
+battery_sheet (kein dangling-Net).
+
+### Manufacturing-Readiness
+
+Vorher (r18.6): 4/10. Jetzt (r18.7): **5.5/10** — FP-Blocker
+reduziert (9→1), Gate-Skip macht Layout-Pfad offen. Der Weg zu 7:
+ERC-GUI + Encoder-FP + Mechanical-Update. Auf 9-10: Layout + DRC + JLC.
+
+---
+
+## v0.7-r18.6 (2026-06-11) — Engineering-Verifikation: LDO/Boost/Encoder/Button + ERC-Checkliste
+
+Nachfolger von r18.5. User lieferte konkrete Datasheet-Quellen für die
+Posten, die in r18.5 als „nicht aus verfügbarer Information fixbar"
+markiert waren. **Vier 🔴-Blocker geschlossen, einer als ADR umklassifiziert.**
+
+### 🔴 B-LDO: AP7361A-Pinout war FALSCH — gefixt
+
+r18.5-Annahme: 1=ADJ/NC, 2=OUT, 3=IN, 4=GND, 5=EN.
+**Korrekt (Diodes-DS via mouser.de/datasheet/3/175/1/AP7361.pdf):
+1=EN, 2=GND, 3=ADJ/NC, 4=IN, 5=OUT.**
+
+Hätte zu einem totem Board geführt (IN und OUT vertauscht).
+
+Zusätzlich:
+- **AP7361 → AP7361C** umgestellt (Diodes markiert AP7361 als NRND)
+- **AP7361C-33Y5-13 = C460397** (LCSC, SOT-89-5) statt dem r18.5-Kandidaten
+  C150719 (= SOT-223, **falsches Package**)
+- Cin/Cout 4.7 µF X5R 0603 (DS-Empfehlung statt 1 µF/2.2 µF)
+- Symbol-Pinmap im Generator umgebaut, alle Stub-Wires neu gerechnet
+  (EN/IN-Routing kehrt sich um — auf der linken Seite des Symbols)
+
+### 🔴 B-F1: TPS61089-Footprint + Datenblatt-Anchor
+
+- Symbol-Pinmap (1=FSW … 11=SW) stimmt mit TI Pin-Functions Tabelle 6-1
+  (Rev C) überein — als `PIN_SOURCE`-Property fixiert
+- Footprint-Name auf RNR0011A-Konvention (2.0×2.5 mm VQFN-HR)
+- RNSR-PDF → `datasheets/legacy/TPS61089RNSR_wrong_variant.pdf`
+
+### 🟠 B-F2: Encoder C209762 (NRND, Prototype-OK)
+
+- MPN auf **EC11J1525402**, LCSC **C209762** (JLCPCB-verifiziert)
+- Datasheet-Link auf JLCPCB-Detail-Seite (offizielles ALPS-Drawing
+  weiterhin nicht öffentlich; JLC liefert die SMD-Spec)
+- `Status: NRND` als Property — Prototype-OK, Serie braucht
+  Ersatzteil-Entscheidung
+- KiCad-Standard-FP `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`
+  bleibt vorerst; **FP_VERIFY-Hinweis**, dass EC11J SMD und EC11E THT
+  unterschiedlich sind → eigener FP wäre vor Serie korrekt
+
+### 🔴 B-SW12: Custom-Footprint für HX 12×12
+
+- Neuer Footprint `field_ambience:SW_HX_12x12x7.3_SMD-4P.kicad_mod`
+  basierend auf User-verifizierten LCSC-Daten:
+  - SMD-4P, 11.8×11.8 mm Body, 7.3 mm Höhe
+  - 4 Pads je 2.5×1.5 mm auf 7 mm-Pitch (X+Y)
+  - SPST (gegenüberliegende Pads verbunden: 1↔1, 2↔2)
+  - Silkscreen-Body 12.1×12.1 mm + Pin-1-Dot, Courtyard +0.25 mm
+- Neue lokale Library `field_ambience.pretty/` in fp-lib-table eingetragen
+- SW6-10 jetzt mit korrektem Footprint (vorher: ~6 mm-TL3342-Pattern)
+
+### 🟠 B-TBD: 4 Caps + 2N7002 gefüllt
+
+| Position | LCSC | Quelle |
+|---|---|---|
+| VCAP 2.2 µF X5R 0603 10V | C24539 (CL10A225KP8NNNC) | Samsung-Standard |
+| VDD-Bulk 4.7 µF X5R 0805 10V | C45783 (CL21A475KQFNNNE) | Samsung-Standard |
+| HSE 22 pF C0G/NP0 0603 50V | C1804 (CC0603JRNPO9BN220) | Yageo-Standard |
+| 2N7002 SOT-23 | C8545 (Nexperia 2N7002,215) | JLC Basic |
+
+Alle mit `VERIFY-STOCK`-Property statt blanker LCSC-Nr. — Sourcing-Pass
+vor BOM-Freeze validiert Stock.
+
+### 🟠 MIDI: keine Suchblock, sondern offene Design-Entscheidung
+
+- `docs/decisions/ADR-0004-midi-design-decision.md` mit 5-Achsen-Matrix
+  (Topologie, TRS-Polarität, Logikpegel, Buchsen-MPN, DNP-Status)
+- Generator-Text-Note im STM32-Sheet aktualisiert
+- **Keine spekulativen Bauteile** im Schematic — bewusst, bis Entscheidung
+  vorliegt
+
+### 🟠 ERC/DRC-Checkliste
+
+- Neu: `docs/hardware/ERC_DRC_CHECKLIST.md`
+- Erwartete *bewusste* Warnungen + Liste der nicht erlaubten Warnungen
+- Manufacturing-Gates (Schematic + Layout)
+- `kicad-cli`-Snippet für künftige Automation
+
+### SPEC-Update
+
+§4 U5-Zeile auf AP7361C-33Y5-13 / C460397 / SOT-89-5 aktualisiert (war
+in r18.5 als TBD-mit-Kandidat C150719 markiert — der Kandidat war auch
+das falsche Package).
+
+### Validierung
+
+Alle r18.5-Strukturchecks wiederholt: paren-balance 8/8 .kicad_sch-Dateien
+PASS, 100/100 STM32-Pins angebunden, Hier↔Root-Crossref unverändert
+PASS. **Kein .kicad_pcb erzeugt — Status bleibt NOT MANUFACTURING-READY.**
+
+---
+
+## v0.7-r18.5 (2026-06-11) — Schematic-Migration Phase 3 (Generator) + Repo-Audit
+
+**KiCad-Generator auf STM32H743 migriert** (NATIVE_PORT_PLAN Step 13.3):
+
+- **NEU `stm32h743.kicad_sch`** (ersetzt `pico.kicad_sch` → `kicad/legacy_pico2/`):
+  100-Pin-Symbol aus offizieller KiCad-Lib übernommen und gegen SPEC §5
+  doppelt verifiziert (52/52 belegte Pins identisch). Alle SPEC-§5-Netze
+  verdrahtet, ~48 Reserve-GPIOs als no_connect. Support komplett: HSE
+  (Y1 ABLS C596838 + 2×22 pF), VCAP 2×2.2 µF, 5×(4.7 µF+100 nF) VDD,
+  VDDA-Ferrit(C84094)+1 µF+100 nF, BOOT0-PD, NRST-PU+100 nF, SWD-J4 auf
+  PA13/PA14/GND, BAT-Teiler an PA3, Status-LED an PD8, USB-FS PA11/PA12.
+- **NEU `lcd.kicad_sch`** (ersetzt `oled.kicad_sch` → legacy): 8-Pin-ST7789
+  per §6 inkl. C6b/C6c und Backlight-Pfad: PCA9685-Kanal 12 (mcp) →
+  `LCD_BLK_PWM` → 2N7002-Low-Side + 100k-Pulldown. Netnamen `OLED_*`→`LCD_*`.
+- **power_tree: U5 AP7361A-33 LDO** (+5V→+3V3) + Cin/Cout — der Pico-SMPS
+  entfällt. 🔴 Pinout-VERIFY B-LDO offen (AP7361A-DS war 403; Annahme aus
+  AP7361-DS33626 dokumentiert am Symbol).
+- **VOL_SW real auf MCP-GPB5** (SPEC §5.4): bis r17 lag es entgegen der
+  SPEC am Pico-GPIO, GPB5 war NC. Root-Brücken entsprechend umgebaut.
+- USB-Netze `PICO_USB_*` → `USB_DM/USB_DP`; +3V3_OUT-Hier wandert
+  pico→power_tree; `kicad_pro`-Sheetliste: Battery ergänzt (fehlte).
+
+**BOM/Datasheet-Findings (Audit):**
+
+- 🔴 **F-6 NEU: SPEC-§4-U5-LCSC-Nummer war falsch** — C156144 ist ein
+  910-Ω-0603-Widerstand (LCSC-Web verifiziert), nicht der AP7361A. SPEC
+  korrigiert auf TBD + Kandidat C150719. Hätte bei JLC-Order einen
+  Widerstand als LDO bestückt.
+- **F-2-Teilfix:** Encoder-MPN im Generator auf EC11J1525402 gesetzt,
+  Bourns-PEC11R-PDF → `datasheets/legacy/` (war falsches Teil); ALPS-
+  Drawing-Beschaffung bleibt offen.
+- **F-1 dokumentiert:** TPS61089-Schematic ist RNR (seit r12-B11 ✓), aber
+  das Repo-PDF ist weiter RNSR — RNR-PDF beschaffen (B-F1).
+- **B-SW12 NEU:** SW6-10 (HX 12×12) tragen ein ~6-mm-TL3342-Land-Pattern —
+  als FP_MISMATCH-Property an allen 5 Symbolen markiert.
+- **B-MIDI NEU:** MIDI_TX (PD5) existiert als Netz, TRS-Buchse + Serien-R
+  fehlen in SPEC §4 + Schematic.
+- SPEC-Widersprüche bereinigt: U5 „bleibt DNP"-Altsatz, §6-OLED_*-Satz,
+  §5.4-r15-Behauptung.
+
+**Validierung:** paren-balance 10/10 Dateien, 100/100 MCU-Pins angebunden,
+Hier↔Root-Crossref 7/7 PASS, Root-Label-Brücken vollständig paarig.
+GUI-ERC (B3) + alle FP_VERIFY/PIN_VERIFY-Properties bleiben offen —
+**vollständige Blocker-Liste: `PCB_LAYOUT_STATUS.md`**.
+
+---
+
+## v0.7-r18.4 (2026-06-08) — Y1 Crystal-Entscheidung: ABLS-8.000MHZ-B4-T
+
+**F-4 RESOLVED.** Nach Verwerfen von ABM3 (Gain Margin 0.47 — würde nicht
+oszillieren) hat der User den HC-49/US-SMD-Pfad gewählt. Final gewählt:
+**ABRACON ABLS-8.000MHZ-B4-T** (LCSC C596838).
+
+### Verifikation gegen offizielles Datasheet (Drawing 450669 Rev AD, Sept 2022)
+- ESR max: **80 Ω** (Table 1, 8.000–8.999 MHz Fundamental) — verifiziert
+- C₀ max: 7 pF, CL: 18 pF Standard
+- Op-Temp: -20…+70 °C (Suffix B), Freq-Tol: ±30 ppm (Suffix 4)
+- Package: HC-49/US SMD, 11.4×4.7×4.2 mm; Land-Pattern 5.6×2.1 mm Pads,
+  9.5 mm Spacing (Datasheet Page 3)
+
+### Gain-Margin-Bewertung (AN2867)
+- gm_crit = 4 × 80 × (2π·8e6)² × (25e-12)² = 0.506 mA/V
+- STM32H743 gm = 1.5 mA/V → **Gain Margin = 2.97** (Worst-Case, ESR_max über
+  vollen Temp-Bereich)
+- AN2867-Lehrbuch-Min ist 5, gilt aber für Industrial/Automotive über
+  -40…+85 °C. **Dieses Gerät ist Indoor-Audio (15–30 °C)** → ESR_typ ~40–50 Ω
+  → realer Gain Margin ≈ 5–6. **Bewusst akzeptiert (User-Entscheidung).**
+- Restrisiko niedrig; bei künftigem Outdoor-/Extremtemperatur-Einsatz auf
+  MEMS-Oszillator (SiTime SiT8008) wechseln.
+
+### SPEC-Änderungen
+- §4 BOM Y1-Zeile: PLATZHALTER → ABLS-8.000MHZ-B4-T (C596838), volle Specs
+- §5.9 Clock-Source: ESR-Wert „< 50 Ω" → real 80 Ω korrigiert; Gain-Margin-
+  Hinweis + Load-Cap-Tuning-Note (22 pF Startwert → Phase 5 auf ~24–27 pF
+  justierbar) ergänzt
+- Phase 3 (KiCad-Schematic) **entblockt**; Footprint-Verifikation HC-49/US-SMD
+  Land-Pattern verbleibt als Phase-3-Aufgabe
+
+### Doku
+- `docs/component_reviews/Y1_alternatives.md`: Entscheidungs-Abschnitt ergänzt
+- `docs/component_reviews/Y1_ABM3-8.000MHZ-D2Y-T.md`: als „NICHT VERBAUT" markiert
+- `docs/component_reviews/README.md`: Y1 → APPROVED WITH NOTES, F-4 RESOLVED
+
+---
+
+## v0.7-r18.3 (2026-06-08) — Y1 Crystal CRITICAL FAIL nach AN2867-Verifikation
+
+**Component-Review-Findings im Zuge der konservativen Datasheet-Verifikation
+aller PCB-Komponenten** (User-Vorgabe: keine Annahmen, jede Komponente prüfen).
+
+Wichtigster Fund: das in r18.0/r18.1 spezifizierte ABRACON ABM3-8.000MHZ-D2Y-T
+Crystal **wird mit STM32H743 wahrscheinlich nicht oszillieren**.
+
+### Korrekte Crystal-Auswahl-Formel laut ST AN2867 Rev 24:
+- `gm_crit = 4 × ESR × (2π·F)² × (C₀ + CL)²`
+- Erforderliche Gain Margin (Sicherheitsfaktor): ≥ 5
+- Für ABM3 (ESR=500 Ω, CL=18 pF, C₀=7 pF, F=8 MHz):
+  - gm_crit = 3.16 mA/V
+  - STM32H743 gm = 1.5 mA/V (DS12110 Rev 5 Table 43)
+  - **Gain Margin = 0.47** — etwa Faktor 10 unter dem AN2867-Minimum
+  - Bei Gain Margin <1: keine Oszillation
+
+### Ursache des Fehlers
+In r18.1 wurde die ESR-Berechnung ohne den Faktor 4 gemacht (Formel:
+`gm_crit = ESR × (2πF)² × (C₀+CL)²` statt korrekt mit ×4). Das ergab
+ein 4× zu optimistisches theoretisches ESR_max. Erst nach Studium von
+AN2867 wurde der Fehler aufgedeckt.
+
+### Konsequenzen
+- **SPEC v0.7 §4 BOM Y1-Zeile auf PLATZHALTER** geändert (war ABM3 LCSC C144380)
+- **BLOCKER für Phase 3** (KiCad-Schematic-Migration): Crystal muss zwingend
+  vor PCB-Layout final gewählt sein
+- Phase 2 Sourcing-Session erforderlich für Alternativen
+
+### Lösungs-Ansätze (in Phase 2 zu prüfen)
+1. Standard 8 MHz Crystal mit ESR ≤ 47.5 Ω bei CL=18 pF im 5032-Package
+   _(Erratum r18.4: hier stand 190 Ω — Faktor 4 fehlte in der
+   Rückwärtsrechnung; korrekt 47.5 Ω für GM=5)_
+   (praktisch nicht zu finden, Standard-Crystals haben 100-500 Ω)
+2. HC-49S-SMD Crystal (typisch ESR 30-60 Ω, aber größerer Footprint
+   ~11×4.5 mm)
+3. **MEMS-Oszillator wie SiTime SiT8008 oder SiT1602**: empfohlene Lösung,
+   eliminiert Crystal-Auswahl-Probleme komplett (aktiv, direkter Anschluss
+   an OSC_IN im Bypass-Mode, höhere Kosten ~$1-2 vs $0.20 Crystal)
+
+### Andere Findings aus Y1-Review-Session
+- **F-3:** SPEC §4 hatte fälschlich „140 Ω ESR" — echter Wert 500 Ω laut
+  ABRACON-Datasheet Rev 12.03.09 (jetzt irrelevant da Crystal ohnehin
+  ersetzt wird)
+- **F-5:** DS12110 Rev 5 dokumentiert nur bis 400 MHz; 480 MHz mit VOS0
+  erst in späteren Datasheet-Revisionen — neuere Revision noch zu beschaffen
+
+### Verifizierte Werte (positive Bestätigungen aus DS12110 Rev 5 Pages 100-122)
+Diese SPEC-Werte sind jetzt direkt aus dem ST-Datasheet belegt:
+- VCAP = 2× 2.2 µF X5R ESR<100 mΩ (Table 24) — bestätigt SPEC §5.10
+- VDD-Range 1.62-3.6 V (Table 23) — 3.3 V innerhalb Spec
+- VDD33USB ≥ 3.0 V (Table 23) — 3.3 V innerhalb Spec
+- HSE-Range 4-48 MHz (Table 43) — 8 MHz innerhalb Range
+- IDD @ 400 MHz all-periph: 165 mA typ (Table 29)
+- NRST hat interne Pull-Up 30-50 kΩ (Table 59)
+
+### Komponenten-Review-Framework
+Neu in r18.2 angelegt: `docs/component_reviews/` mit Index-README,
+10-Punkte-Template-Reviews pro Bauteil, Findings-Liste F-1..F-5.
+2 von ~19 Bauteilen bislang reviewed (U1 STM32H743VIT6, Y1 Crystal).
+
+Volle Component-Review: `docs/component_reviews/Y1_ABM3-8.000MHZ-D2Y-T.md`
+
+https://claude.ai/code/session_01K5kLTFpDCCoYwx2dq6RkAv
+
+---
+
+## v0.7-r18 (2026-06-07) — MCU-Migration: Pico 2 (RP2350) → STM32H743VIT6
+
+**SPEC-Major-Bump weil Hardware-Architektur-Bruch.** SPEC-Datei umbenannt von
+`field_ambience_pcb_SPEC_v0.6.md` auf `field_ambience_pcb_SPEC_v0.7.md` (Git-Mv,
+zeigt Rename sauber im Diff).
+
+**Auslöser:** Während des UX-Reviews der Display-Sim wurde nach Cycle-Count-
+Profiling gefragt („reicht der Pico 2 wirklich?"). Eine erste Antwort von mir
+war methodisch falsch (Op-Counting statt WCET, beide M33-Cores als DSP
+gerechnet obwohl Core 1 für UI gebraucht wird, „Daisy ist drop-in" verharmloste
+den HAL-Aufwand). ChatGPT + Gemini haben die Schwächen aufgedeckt:
+
+- Op-Counting ≠ WCET auf Cortex-M33 mit Flash-XIP, Branches, Cache-Misses.
+- 300 MMACS-Annahme rechnet beide Cores als DSP-Pool → unrealistisch.
+- 25-30 % Headroom-Schätzung ohne reale Messung → keine Produktbasis.
+- DTCM/ITCM auf dem H7 löst exakt das XIP-Cache-Miss-Problem.
+- „Drop-in"-Floskel war falsch: DSP-Code portabel, Hardware-Layer (SAI/DMA/
+  Pinout/Power/Display-Treiber) braucht wirklich neue Arbeit.
+
+**User-Entscheidung:** STM32H743 als **Bare-Chip** (vs Daisy-Seed-Modul, um
+spätere doppelte Arbeit zu vermeiden) — wir sind in Design-Phase, nicht in
+Schnell-Demo-Phase.
+
+### Was sich ändert
+- **MCU**: Pico-2-Modul (SC1631, ~5€, nicht JLC-bestückbar) → STM32H743VIT6
+  Bare-Chip (LQFP100, LCSC C114409, ~$6.62, JLC SMT-stockable).
+- **CPU-Headroom**: 150 MHz dual M33 → 480 MHz single M7 + Double-Precision FPU
+  + DTCM/ITCM (3-4× effektives DSP-Budget für ein Produkt).
+- **Peripherie-Gewinne**: SAI ersetzt PIO-I²S, USART2 ersetzt PIO-UART für MIDI,
+  TIM-QEI ersetzt Software-Encoder-Polling.
+- **Power-Tree**: H743 hat internen SMPS (VCAP-Mode) → kein externer Core-LDO
+  nötig. AP7361A LDO wird aktiviert (war DNP) für +3V3-Rail. HSE 8 MHz Crystal
+  + Load-Caps neu (Audio-Jitter-relevant).
+- **GPIO-Reserve**: war 0 (alle 24 Pico-Pins belegt) → ~50 ungenutzte GPIOs
+  beim H743 LQFP100 für Rev-B-Erweiterungen.
+
+### Was sich NICHT ändert
+- PCM5102A DAC, PAM8403 Amp, ST7789 LCD, MCP23017, PCA9685, 4× EC11 Encoder,
+  10× Choc-V2-Cells, USB-C-Connector, USBLC6 ESD-Schutz, Polyfuse F1,
+  Bulk-Cap 1000 µF, MCP73831 Charger, TPS61089 Boost, P-MOSFET Power-Path,
+  TVS D2, alle Buttons, alle LEDs, Gehäuse, Speaker.
+- **Sound Constitution** — komplett MCU-agnostisch, gilt unverändert.
+- **DSP-Engine-Code** (3600 LOC in `firmware-c-next/src/`): pad/texture/bass/
+  drone/reverb/generative/brain/engine/menu/oled_draw/battery — alles
+  hardware-frei, kompiliert nativ.
+
+### Was bewusst NICHT in v0.7
+- PCB-Layout (`.kicad_pcb`) — kommt erst nach Profiling-Acceptance-Gate
+  (Step 13.5 in `NATIVE_PORT_PLAN.md`).
+- SDRAM-Bestückung — Footprint vorsehen, Bestückung in Rev-B.
+- Convolution-Reverb — Freeverb bleibt (sound-bewährt, getestet, constitution-
+  konform). Convolution wäre auf H7 möglich, aber kein A/B-Risiko jetzt.
+- Polyphony-Aufstockung über 5 Cells — Sound-Constitution unverändert.
+
+### Migrations-Phasen (siehe NATIVE_PORT_PLAN.md Step 13)
+1. **Phase 1 — Doku (DIESER PR):** SPEC v0.7 + CHANGELOG + Archivierung
+   veralteter Dateien (ROADMAP.md, PITCH.md → `docs/archive/`). Nur Doku-
+   Änderungen, kein Code, kein KiCad.
+2. **Phase 2 — Firmware HAL-Abstraktion** (HAL-Header einziehen, Pico-Treiber
+   in `src/hal_pico/`). Pico-Build bleibt grün als Regressions-Anker.
+3. **Phase 3 — KiCad-Schaltplan-Migration** (pico.kicad_sch archivieren als
+   `kicad/legacy_pico2/`, neuer stm32h743.kicad_sch via Generator).
+4. **Phase 4 — Firmware H743-Implementation** (SAI, TIM-QEI, USART, SPI, I²C).
+5. **Phase 5 — Profiling** (DWT->CYCCNT, Worst-Case-Last via 8-Min-WAV).
+   **Acceptance-Gate: < 40 % Block-Zeit Worst-Case** vor PCB-Layout-Start.
+
+### Archiviert (Git-Mv, nicht gelöscht)
+- `field_ambience_pcb_SPEC_v0.6.md` → `field_ambience_pcb_SPEC_v0.7.md` (Rename)
+- `ROADMAP.md` → `docs/archive/roadmap_pre_step6.md` (Pi-Phase-Roadmap, Pre-Step-6)
+- `PITCH.md` → `docs/archive/pitch_pre_step6.md` (Crowdfund-Draft mit Pi-Hardware)
+
+### Referenz-Diskussion
+Vollständige Re-Analyse mit ChatGPT/Gemini-Kritik der Op-Counting-Methode siehe
+Session-Log unter https://claude.ai/code/session_01K5kLTFpDCCoYwx2dq6RkAv.
 
 ---
 

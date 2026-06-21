@@ -128,9 +128,15 @@
 
 /* Some EC11 variants detent every HALF quadrature cycle (2 transitions),
  * resting alternately at 00 and 11. Symptom on such a part: the menu reacts
- * only to every SECOND detent. Build with ENC_HALF_STEP=1 in that case. */
+ * only to every SECOND detent ("zwei Klicks für 1 %").
+ *
+ * r18.14: Default is now 1 — the bench encoder (KY-040-class, 30 detents /
+ * 15 PPR) IS such a half-step part; the user-visible 2-clicks-per-percent
+ * bug was exactly this mismatch. Full-cycle encoders (15 det / 15 PPR)
+ * build with ENC_HALF_STEP=0. The decoder core is identical either way —
+ * only the rest-position latch differs (00+11 vs 11 only). */
 #ifndef ENC_HALF_STEP
-#define ENC_HALF_STEP 0
+#define ENC_HALF_STEP 1
 #endif
 
 #define LONG_PRESS_MS  1500  /* SHIFT long-press = scene switch             */

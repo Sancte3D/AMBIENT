@@ -2,19 +2,37 @@
 #define FAM_MENU_H
 
 /*
- * Menu / display state — Step 12b #7.
+ * Menu / display state — WORLD model (r18.38).
  *
- * UI is the mockup the user designed: parameter label top-left, big value
- * centred, battery top-right, a row of pills at the bottom — one pill per
- * parameter, the current one elongated + full white, the others dimmed. Pure
- * monochrome white on black, using the 4-bit grey framebuffer to fade inactive
- * elements (r16: 320×170 ST7789 LCD). Host-renderable to a preview PNG.
+ * Reworked from the old V1 parameter list (Key/Mode/Vibe/Voice/Texture/Bass/
+ * Space/Mood) to the world-instrument model the project settled on: the user
+ * picks one of a few curated WORLDS (Tokyo City / Crystal Coast / Midnight
+ * Drive / After Hours) and tunes a handful of global macros over the top.
+ * Each world also carries default macro values, so selecting a world loads its
+ * preset; the user can then nudge from there.
+ *
+ * UI is unchanged in spirit: parameter label top-left, big value centred,
+ * battery top-right, a row of pills at the bottom — one pill per parameter,
+ * the current one elongated + full white, the others dimmed. Pure monochrome
+ * white on black on the 4-bit grey framebuffer (320×170 ST7789 LCD).
  *
  * Navigation (Display encoder):
  *   - rotate in browse mode → next/previous parameter (pill moves)
  *   - push                  → enter edit mode (value emphasised)
  *   - rotate in edit mode   → change the current parameter's value
  *   - push                  → back to browse
+ *
+ * Parameters in the bottom pill row, in order:
+ *   WORLD      discrete, 4 worlds   (selecting one loads its macro preset)
+ *   SPACE      % reverb / hall amount
+ *   TONE       % pad brightness / colour (dark ↔ bright)
+ *   ATMOS      % outdoor-ambience layer level (rain / waves / traffic / vinyl)
+ *   DRUMS      discrete, Off / On   (per-world appropriate pattern, user asked
+ *              for this to be a menu toggle)
+ *
+ * DRONE / HOLD / SHIFT / GENERATE / CLEAR are MODIFIER BUTTONS (hardware), not
+ * menu entries — so software and hardware never compete for the same value.
+ * Display backlight is SHIFT+encoder (transient overlay), also not a menu row.
  *
  * State applies via engine_set_*() callbacks that the engine layer registers.
  */
@@ -27,44 +45,29 @@ typedef enum {
     MENU_EDIT,
 } menu_mode_t;
 
-/* Parameter slots, in the order shown in the bottom pill row.
- *
- * The menu only holds SETTABLE values the user picks from a range. Dedicated
- * hardware controls are deliberately NOT here so software and hardware never
- * compete for the same value:
- *   - VOLUME / DRIVE / BRIGHTNESS → own endless encoders (SPEC §5).
- *     "Brightness" is the AUDIO tone macro (pad filter cutoff, Sound
- *     Constitution /fam/brightness), NOT the display backlight.
- *   - DRONE / GENERATE / HOLD     → own modifier buttons (SPEC §7, GPB1..GPB3).
- *     SHIFT+GENERATE cycles the generative algorithm (SPEC §12.3).
- *   - Display BACKLIGHT            → SHIFT+EN2 (Brightness encoder, secondary
- *     function per SPEC §12.3), shown as a transient overlay like Volume/Drive.
- *     It is NOT a menu entry: it boots to a factory default (never restored to
- *     a dark value, see SPEC §12.5) so the user can never get locked out. */
+/* Parameter slots, in the order shown in the bottom pill row. */
 typedef enum {
-    MP_KEY = 0,
-    MP_MODE,
-    MP_VIBE,
-    MP_VOICE,
-    MP_TEXTURE,
-    MP_BASS,
+    MP_WORLD = 0,
     MP_SPACE,
-    MP_MOOD,
+    MP_TONE,
+    MP_ATMOS,
+    MP_DRUMS,
     MP_COUNT
 } menu_param_t;
 
+/* Number of curated worlds (keep in sync with WORLD_NAMES in menu.c). */
+#define MENU_WORLD_COUNT 4
+
 /* Reset to defaults + register the engine apply callback (so a value change
  * actually drives the audio). The callback is invoked synchronously from
- * menu_rotate / menu_push, never from the audio thread. */
+ * menu_rotate / menu_push, never from the audio thread. Pass NULL for a
+ * display-only build (the Pico bench tool, the preview renderer). */
 typedef struct {
-    void (*set_key)        (int midi_root);          /* 60 = C4 */
-    void (*set_mode)       (int idx);                /* 0..5 */
-    void (*set_vibe)       (int idx);                /* 0..3 */
-    void (*set_pad_voice)  (int idx);                /* 0..2 */
-    void (*set_texture)    (float v01);
-    void (*set_bass_depth) (float v01);
-    void (*set_space)      (float v01);
-    void (*set_mood)       (float v01);
+    void (*set_world)      (int idx);                /* 0..MENU_WORLD_COUNT-1 */
+    void (*set_space)      (float v01);              /* reverb / hall amount  */
+    void (*set_tone)       (float v01);              /* pad brightness        */
+    void (*set_atmosphere) (float v01);              /* ambience layer level  */
+    void (*set_drums)      (int on);                 /* 0 = off, 1 = on       */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);
@@ -82,6 +85,11 @@ const char  *menu_current_value_text(void);  /* formatted for the big display */
 int          menu_value_index(menu_param_t p);   /* discrete params */
 int          menu_value_int  (menu_param_t p);   /* continuous → 0..100 % */
 int          menu_value_count(menu_param_t p);   /* # discrete options, 0 = % */
+
+/* Current world index + its flavour subtitle (e.g. "night · rain"), for a
+ * renderer that wants to show the world identity beyond the big value. */
+int          menu_world_index(void);
+const char  *menu_world_subtitle(void);
 
 /* Draw the current state into the OLED framebuffer (does NOT push to panel —
  * caller invokes oled_show() afterwards on device). Host-portable. */

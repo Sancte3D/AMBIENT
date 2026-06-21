@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=0.5, viewport-fit=cover">
+<title>Field Ambience</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --stage-bg:        #000;
+  --device-frame:    #d8d4cc;
+  --panel-cream:     #f4ede0;
+  --panel-edge:      #e0d8c8;
+  --panel-shadow:    rgba(0,0,0,0.06);
+
+  --ink:             #1a1a1a;
+  --ink-soft:        #2a2a2a;
+  --ink-faint:       #888880;
+  --ink-quiet:       #b0aaa0;
+
+  --led-blue:        #2e8be8;
+  --led-red:         #e84e3a;
+  --led-green:       #3acc6e;
+  --led-yellow:      #ffd542;
+  --led-amber:       #ffb842;
+
+  --shadow-card:     0 1px 0 rgba(255,255,255,0.5),
+                     0 2px 4px rgba(0,0,0,0.04),
+                     0 4px 12px rgba(0,0,0,0.04);
+  --shadow-key:      0 1px 0 rgba(255,255,255,0.5),
+                     0 2px 3px rgba(0,0,0,0.06),
+                     0 4px 8px rgba(0,0,0,0.04);
+  --shadow-pressed:  inset 0 2px 5px rgba(0,0,0,0.18),
+                     inset 0 -1px 0 rgba(255,255,255,0.4);
+  --shadow-knob:     0 2px 4px rgba(0,0,0,0.4),
+                     0 6px 14px rgba(0,0,0,0.3),
+                     inset 0 -2px 4px rgba(0,0,0,0.4),
+                     inset 0 2px 2px rgba(255,255,255,0.05);
+  --shadow-display:  inset 0 2px 8px rgba(0,0,0,0.6),
+                     inset 0 -1px 1px rgba(255,255,255,0.04);
+
+  --radius-card:     14px;
+  --radius-cell:     32px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-weight: 400;
+  background: var(--stage-bg);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.studio {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+}
+
+/* ============================================================
+   THE DEVICE
+   Outer aluminum bezel + cream inner panel
+   ============================================================ */
+.device {
+  position: relative;
+  width: 1180px;
+  background: linear-gradient(180deg, #ddd9d1 0%, var(--device-frame) 50%, #c8c2b8 100%);
+  border-radius: 14px;
+  box-shadow:
+    0 32px 60px -16px rgba(0,0,0,0.7),
+    0 16px 24px -8px rgba(0,0,0,0.5);
+  padding: 18px;
+  border: 1px solid #b8b3aa;
+}
+
+/* ============================================================
+   CREAM INNER PANEL — the actual UI surface
+   ============================================================ */
+.panel {
+  background: var(--panel-cream);
+  border-radius: 8px;
+  padding: 14px;
+  border: 1px solid var(--panel-edge);
+  display: flex;
+  flex-direction: column;
+}
+.panel > * + * { margin-top: 14px; }
+
+/* ============================================================
+   TOP ROW: Drive | Brightness | Display | Display-Encoder | Volume
+   Each encoder lives in its own small card.
+   ============================================================ */
+.top-row {
+  display: flex;
+  align-items: stretch;
+}
+.top-row > * + * { margin-left: 14px; }
+
+.encoder-card {
+  flex: 0 0 130px;
+  background: var(--panel-cream);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--panel-edge);
+  padding: 18px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 130px;
+}
+.encoder-card .knob-label {
+  margin-top: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
+/* The black encoder knob -- physical look */
+.knob {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 35%, #2a2a2a 0%, #0a0a0a 70%, #000 100%);
+  box-shadow: var(--shadow-knob);
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;     /* v29-o: prevents page scroll while dragging knob */
+  flex: 0 0 64px;
+}
+.knob.dragging,
+.knob:active {
+  cursor: grabbing;
+}
+/* LED indicator dot on knob -- shows position via rotation */
+.knob-led {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.12s ease-out;   /* v29-o: snappier */
+}
+.knob-led::after {
+  content: '';
+  position: absolute;
+  top: 8px; left: 50%;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--led-color, var(--led-amber));
+  box-shadow: 0 0 6px var(--led-color, var(--led-amber)),
+              0 0 2px rgba(255,255,255,0.6);
+}
+.knob:active {
+  transform: scale(0.97);
+}
+
+/* Display strip in the middle of the top row */
+.display-card {
+  flex: 1 1 auto;
+  background: linear-gradient(180deg, #050505 0%, #000 100%);
+  border-radius: var(--radius-card);
+  border: 1px solid #2a2622;
+  box-shadow: var(--shadow-display);
+  position: relative;
+  padding: 16px 22px;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.display-card::before {
+  /* faint screen reflection */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, transparent 60%, rgba(255,255,255,0.04) 80%, transparent 100%);
+  pointer-events: none;
+  border-radius: var(--radius-card);
+}
+.display-card::after {
+  /* scanline texture */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 1px,
+    rgba(0,0,0,0.18) 2px,
+    rgba(0,0,0,0.18) 3px);
+  pointer-events: none;
+}
+.display-corner-label {
+  position: absolute;
+  top: 10px; left: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  z-index: 2;
+}
+.display-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.display-line {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--led-amber);
+  text-shadow: 0 0 4px rgba(255,140,40,0.6);
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+.display-line.label {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  margin-bottom: 8px;
+}
+.display-line.value {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   MIDDLE + BOTTOM: Speaker L | Center cells/modifier | Speaker R
+   This is one big block split into 3 columns.
+   ============================================================ */
+.main-row {
+  display: flex;
+  align-items: stretch;
+}
+.main-row > * + * { margin-left: 14px; }
+
+/* SPEAKER CARD */
+.speaker-card {
+  flex: 0 0 320px;
+  background: var(--panel-cream);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--panel-edge);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.speaker-label {
+  position: absolute;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
+/* v29-o: Simpler speaker — flat dark surface with cone + voice-coil only.
+   Removed the multi-stop radial gradient outer ring that was creating
+   a visible "line" around the speaker. */
+.speaker {
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  position: relative;
+  background: #1a1a1a;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.4),
+    0 1px 3px rgba(0,0,0,0.2);
+  flex: 0 0 auto;
+}
+/* Cone — absolutely positioned in the speaker circle */
+.speaker::before {
+  content: '';
+  position: absolute;
+  top: 8%; left: 8%;
+  width: 84%;
+  height: 84%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 45%,
+      #3a3a3a 0%,
+      #1a1a1a 50%,
+      #0a0a0a 100%);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+}
+/* Voice coil cap */
+.speaker::after {
+  content: '';
+  position: absolute;
+  top: 39%; left: 39%;
+  width: 22%;
+  height: 22%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 35%,
+      #4a4a4a 0%,
+      #1a1a1a 70%,
+      #0a0a0a 100%);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+/* No mounting screws -- they read as noise on a small mockup */
+.speaker-screw { display: none; }
+
+/* CENTER CONSOLE: cells row + modifiers row */
+.center-stack {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.center-stack > * + * { margin-top: 12px; }
+
+/* CELL ROW */
+.cells-row {
+  display: flex;
+  flex: 1 1 auto;
+}
+.cells-row > * + * { margin-left: 12px; }
+
+.cell {
+  flex: 1 1 0;
+  background: var(--panel-cream);
+  border-radius: var(--radius-cell);
+  box-shadow: var(--shadow-key);
+  border: 1px solid var(--panel-edge);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 38px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  min-height: 200px;
+  position: relative;
+  transition: box-shadow 0.06s, transform 0.06s, background 0.06s;
+}
+.cell:hover { background: #fbf7eb; }
+.cell.pressed,
+.cell:active {
+  background: #e8e0cc;
+  box-shadow: var(--shadow-pressed);
+  transform: translateY(1px);
+}
+.cell.held {
+  background: linear-gradient(180deg, #ffd542 0%, #f0b820 100%);
+  border-color: #d4a818;
+}
+
+/* MODIFIERS ROW */
+.modifiers-row {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+}
+.modifiers-row > * + * { margin-left: 16px; }
+
+.mod-btn {
+  flex: 0 0 70px;
+  width: 70px;
+  height: 70px;
+  background: var(--panel-cream);
+  border-radius: 50%;
+  box-shadow: var(--shadow-key);
+  border: 1px solid var(--panel-edge);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  transition: box-shadow 0.06s, background 0.06s, transform 0.06s;
+}
+.mod-btn:hover { background: #fbf7eb; }
+.mod-btn:active {
+  background: #e8e0cc;
+  box-shadow: var(--shadow-pressed);
+  transform: translateY(1px);
+}
+.mod-btn.active {
+  background: linear-gradient(180deg, #ffd542 0%, #f0b820 100%);
+  border-color: #d4a818;
+  color: var(--ink);
+}
+
+@media (max-width: 1240px) {
+  .device { width: 100%; max-width: 1180px; }
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="studio">
+
+  <div class="device">
+    <div class="panel">
+
+      <!-- TOP ROW: Drive | Brightness | Display | Display-Encoder | Volume -->
+      <div class="top-row">
+
+        <div class="encoder-card">
+          <div class="knob" id="knobDrive" tabindex="0" role="button" aria-label="Drive"
+               style="--led-color: var(--led-blue);">
+            <div class="knob-led" id="knobDriveLed"></div>
+          </div>
+          <div class="knob-label">Drive</div>
+        </div>
+
+        <div class="encoder-card">
+          <div class="knob" id="knobBrightness" tabindex="0" role="button" aria-label="Brightness"
+               style="--led-color: var(--led-red);">
+            <div class="knob-led" id="knobBrightnessLed"></div>
+          </div>
+          <div class="knob-label">Brightness</div>
+        </div>
+
+        <div class="display-card">
+          <div class="display-corner-label">Display</div>
+          <div class="display-content">
+            <div class="display-line label" id="oledLabel">KEY</div>
+            <div class="display-line value" id="oledValue">C</div>
+          </div>
+        </div>
+
+        <div class="encoder-card">
+          <div class="knob" id="knobMenu" tabindex="0" role="button" aria-label="Display Controller"
+               style="--led-color: var(--led-green);">
+            <div class="knob-led" id="knobMenuLed"></div>
+          </div>
+          <div class="knob-label">Display</div>
+        </div>
+
+        <div class="encoder-card">
+          <div class="knob" id="knobVolume" tabindex="0" role="button" aria-label="Volume"
+               style="--led-color: var(--led-yellow);">
+            <div class="knob-led" id="knobVolumeLed"></div>
+          </div>
+          <div class="knob-label">Volume</div>
+        </div>
+
+      </div>
+
+      <!-- MAIN ROW: Speaker L | Cells+Modifiers | Speaker R -->
+      <div class="main-row">
+
+        <div class="speaker-card">
+          <div class="speaker">
+            <span class="speaker-screw s1"></span>
+            <span class="speaker-screw s2"></span>
+            <span class="speaker-screw s3"></span>
+            <span class="speaker-screw s4"></span>
+          </div>
+          <div class="speaker-label">Speaker L</div>
+        </div>
+
+        <div class="center-stack">
+          <div class="cells-row">
+            <div class="cell" data-degree="1">I</div>
+            <div class="cell" data-degree="2">II</div>
+            <div class="cell" data-degree="3">III</div>
+            <div class="cell" data-degree="4">IV</div>
+            <div class="cell" data-degree="5">V</div>
+          </div>
+          <div class="modifiers-row">
+            <button class="mod-btn" id="btnShift">Shift</button>
+            <button class="mod-btn" id="btnHoldMode">Hold</button>
+            <button class="mod-btn" id="btnProgHold">Drone</button>
+            <button class="mod-btn" id="btnAuto">Generate</button>
+            <button class="mod-btn" id="btnClear">Clear</button>
+          </div>
+        </div>
+
+        <div class="speaker-card">
+          <div class="speaker">
+            <span class="speaker-screw s1"></span>
+            <span class="speaker-screw s2"></span>
+            <span class="speaker-screw s3"></span>
+            <span class="speaker-screw s4"></span>
+          </div>
+          <div class="speaker-label">Speaker R</div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="sr-only" aria-hidden="true">
+  <div id="ampStatus" class="amp-status active">AMP ON</div>
+  <input id="moodSlider" type="range" min="0" max="100" value="50">
+  <div id="wsStatus"></div>
+  <input id="sliderDrive" type="range" min="0" max="100" value="0">
+  <input id="sliderBrightness" type="range" min="-100" max="100" value="0">
+  <span id="valDrive"></span>
+  <span id="valBrightness"></span>
+</div>
+
+<script>
+
+const KEYS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯/G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+const KEY_MIDI = [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71];
+// v29-o: LOCRIAN removed (Constitution: never dissonant)
+const MODES = ['Major', 'Dorian', 'Phrygian', 'Lydian', 'Mixolyd.', 'Minor'];
+// v29-o: Slow Bed default + 4 progressions
+const PROGS = ['Slow Bed', 'I-V-vi-IV', 'I-IV-V-I', 'Minor Cycle', 'Minor Walk'];
+// v29-o: SHARP removed (Constitution: never harsh)
+const MOODS = ['Warm', 'Bright', 'Deep', 'Floating'];
+const VOICES = ['Warm', 'Strings', 'Brass'];
+const OCTAVES = ['Low', 'Mid', 'High'];
+
+const state = {
+  keyIdx: 0, mode: 0, prog: 0, tempo: 54, mood: 0.5, vibe: 0,
+  voice: 0, midi: false, vol: 0.85, padVoice: 0, padOctave: 1,
+  drive: 0.18, brightness: -0.2, texture: 0.0, space: 0.5,
+  depth: 0.5, bloom: 0.5,
+  holdMode: false, shifted: false, autoPlay: false, frozen: false,
+  generative: false, drone: false,
+  ampEnabled: true, jackInserted: false,
+  heldCells: new Set(),
+  cursorIdx: 0, menuMode: 'navigate'
+};
+
+function toTitle(s) { return s.charAt(0) + s.slice(1).toLowerCase(); }
+
+// v29-o: Display menu — every label fits on a 128x64 OLED line (max 10 chars).
+// Every value safe-clamped on the SuperCollider side. No combination of
+// settings here can produce harsh sound.
+const MENU = [
+  // Sound character
+  { key: 'KEY',     get: () => KEYS[state.keyIdx],
+                    range: 12,  read: () => state.keyIdx,
+                    setByIdx: (i) => { state.keyIdx = i; sendOsc('/fam/key', [KEY_MIDI[i]]); } },
+  { key: 'MODE',    get: () => MODES[state.mode],
+                    range: 6,   read: () => state.mode,    // v29-o: 6 modes (locrian dropped)
+                    setByIdx: (i) => { state.mode = i; sendOsc('/fam/mode', [i]); } },
+  { key: 'CHORDS',  get: () => state.prog < 0 ? 'Markov' : PROGS[state.prog],
+                    range: 6,   read: () => state.prog + 1,
+                    setByIdx: (i) => { state.prog = i - 1; sendOsc('/fam/prog', [state.prog]); } },
+  { key: 'MOOD',    get: () => MOODS[state.vibe],
+                    range: 4,   read: () => state.vibe,    // v29-o: 4 moods (sharp dropped)
+                    setByIdx: (i) => { state.vibe = i; sendOsc('/fam/vibe', [i]); } },
+  // Pad shape
+  { key: 'VOICE',   get: () => VOICES[state.padVoice],
+                    range: 3,   read: () => state.padVoice,
+                    setByIdx: (i) => { state.padVoice = i; sendOsc('/fam/padvoice', [i]); } },
+  { key: 'OCTAVE',  get: () => OCTAVES[state.padOctave],
+                    range: 3,   read: () => state.padOctave,
+                    setByIdx: (i) => { state.padOctave = i; sendOsc('/fam/padoctave', [i]); } },
+  // Tempo (range 40..90 -- Constitution: never fast)
+  { key: 'TEMPO',   get: () => Math.round(state.tempo) + ' BPM',
+                    range: 51,  read: () => Math.round(state.tempo) - 40,
+                    setByIdx: (i) => { state.tempo = 40 + i; sendOsc('/fam/tempo', [state.tempo]); } },
+  // Macro performance (texture bed + reverb space)
+  { key: 'TEXTURE', get: () => Math.round(state.texture * 100) + '%',
+                    range: 21,  read: () => Math.round(state.texture * 20),
+                    setByIdx: (i) => {
+                      state.texture = i / 20;
+                      sendOsc('/fam/texture', [state.texture]);
+                    } },
+  { key: 'SPACE',   get: () => Math.round(state.space * 100) + '%',
+                    range: 21,  read: () => Math.round(state.space * 20),
+                    setByIdx: (i) => {
+                      state.space = i / 20;
+                      sendOsc('/fam/space', [state.space]);
+                    } },
+  // v29-o: DEPTH macro (sub + deep + release)
+  { key: 'DEPTH',   get: () => Math.round(state.depth * 100) + '%',
+                    range: 21,  read: () => Math.round(state.depth * 20),
+                    setByIdx: (i) => {
+                      state.depth = i / 20;
+                      sendOsc('/fam/depth', [state.depth]);
+                    } },
+  // v29-o: BLOOM macro (pad swell + reverb wash)
+  { key: 'BLOOM',   get: () => Math.round(state.bloom * 100) + '%',
+                    range: 21,  read: () => Math.round(state.bloom * 20),
+                    setByIdx: (i) => {
+                      state.bloom = i / 20;
+                      sendOsc('/fam/bloom', [state.bloom]);
+                    } }
+];
+
+// ============================================================
+// Display + LED rotations
+// ============================================================
+function refreshDisplay() {
+  const item = MENU[state.cursorIdx];
+  document.getElementById('oledLabel').textContent =
+    state.menuMode === 'edit' ? 'EDIT · ' + item.key : item.key;
+  document.getElementById('oledValue').textContent = item.get();
+  // Menu LED rotation reflects cursor position
+  let menuNorm;
+  if (state.menuMode === 'edit') {
+    menuNorm = item.read() / Math.max(1, item.range - 1);
+  } else {
+    menuNorm = state.cursorIdx / Math.max(1, MENU.length - 1);
+  }
+  setLedRotation('knobMenuLed', menuNorm);
+  // Other LEDs always reflect their value
+  setLedRotation('knobDriveLed', state.drive);
+  setLedRotation('knobBrightnessLed', (state.brightness + 1) / 2);
+  setLedRotation('knobVolumeLed', state.vol);
+}
+function setLedRotation(id, norm) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const deg = (norm * 270) - 135;
+  el.style.setProperty('--rot', deg + 'deg');
+}
+
+// ============================================================
+// Generic encoder with vertical-drag + wheel + arrow-keys
+// ============================================================
+// v29-o: encoder uses Pointer Events for unified mouse+touch+pen.
+// Drag mechanics:
+//   - pixelsPerStep determines how much movement = 1 step (smaller = more sensitive)
+//   - vertical: up = +, down = -
+//   - horizontal: right = +, left = -
+//   - takes the larger of the two axes (whichever direction the user is dragging)
+//   - setPointerCapture means dragging out of the knob area still works
+//   - cursor changes to grabbing during drag
+function bindEncoder(knobId, opts) {
+  const knob = document.getElementById(knobId);
+  if (!knob) return;
+  const pixelsPerStep = opts.pixelsPerStep || 4;   // v29-o: was 8/12, now 4 (snappier)
+  let dragStartX = null, dragStartY = null;
+  let totalDeltaSteps = 0;
+  let pointerId = null;
+  let dragDistance = 0;
+
+  function applyDelta(delta) { opts.onDelta(delta); refreshDisplay(); }
+  function pushHandler() { if (opts.onPush) opts.onPush(); refreshDisplay(); }
+
+  // Mouse wheel — one step per notch
+  knob.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    applyDelta(e.deltaY > 0 ? 1 : -1);
+  }, { passive: false });
+
+  // Pointer-based drag (unified mouse + touch + pen)
+  knob.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    totalDeltaSteps = 0;
+    dragDistance = 0;
+    pointerId = e.pointerId;
+    knob.setPointerCapture(pointerId);
+    knob.style.cursor = 'grabbing';
+    knob.classList.add('dragging');
+  });
+
+  knob.addEventListener('pointermove', (e) => {
+    if (pointerId !== e.pointerId || dragStartX === null) return;
+    const dx = e.clientX - dragStartX;
+    const dy = dragStartY - e.clientY;        // up = positive
+    // take whichever axis has more movement
+    const primary = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
+    dragDistance = Math.max(dragDistance, Math.abs(primary));
+    const targetSteps = Math.trunc(primary / pixelsPerStep);
+    const stepsDelta = targetSteps - totalDeltaSteps;
+    if (stepsDelta !== 0) {
+      const dir = stepsDelta > 0 ? 1 : -1;
+      for (let i = 0; i < Math.abs(stepsDelta); i++) applyDelta(dir);
+      totalDeltaSteps = targetSteps;
+    }
+  });
+
+  function endDrag(e) {
+    if (pointerId !== null && pointerId === e.pointerId) {
+      knob.releasePointerCapture(pointerId);
+      pointerId = null;
+      knob.style.cursor = 'grab';
+      knob.classList.remove('dragging');
+      // Treat as a click (push) only if barely moved
+      if (dragDistance < 4) pushHandler();
+      dragStartX = null;
+      dragStartY = null;
+    }
+  }
+  knob.addEventListener('pointerup', endDrag);
+  knob.addEventListener('pointercancel', endDrag);
+
+  // Keyboard
+  knob.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); applyDelta(1); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); applyDelta(-1); }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pushHandler(); }
+  });
+}
+let _activeKnob = null;
+
+// MENU encoder (green) — navigates the menu
+bindEncoder('knobMenu', {
+  pixelsPerStep: 6,    // menu navigation - slower
+  onDelta: (delta) => {
+    if (state.menuMode === 'navigate') {
+      state.cursorIdx = (state.cursorIdx + delta + MENU.length) % MENU.length;
+    } else {
+      const item = MENU[state.cursorIdx];
+      const cur = item.read();
+      const next = Math.max(0, Math.min(item.range - 1, cur + delta));
+      if (next !== cur) item.setByIdx(next);
+    }
+  },
+  onPush: () => {
+    state.menuMode = state.menuMode === 'navigate' ? 'edit' : 'navigate';
+  }
+});
+
+// VOLUME encoder (yellow)
+bindEncoder('knobVolume', {
+  pixelsPerStep: 4,    // value adjustment - snappy
+  onDelta: (delta) => {
+    state.vol = Math.max(0, Math.min(1, state.vol + delta * 0.02));
+    sendOsc('/fam/vol', [state.vol]);
+  }
+});
+
+// DRIVE encoder (blue) — 0..1
+bindEncoder('knobDrive', {
+  pixelsPerStep: 4,    // value adjustment - snappy
+  onDelta: (delta) => {
+    state.drive = Math.max(0, Math.min(1, state.drive + delta * 0.02));
+    sendOsc('/fam/drive', [state.drive]);
+  },
+  onPush: () => {
+    state.drive = 0;
+    sendOsc('/fam/drive', [0]);
+  }
+});
+
+// BRIGHTNESS encoder (red) — -1..+1
+bindEncoder('knobBrightness', {
+  pixelsPerStep: 4,    // value adjustment - snappy
+  onDelta: (delta) => {
+    state.brightness = Math.max(-1, Math.min(1, state.brightness + delta * 0.02));
+    sendOsc('/fam/brightness', [state.brightness]);
+  },
+  onPush: () => {
+    state.brightness = 0;
+    sendOsc('/fam/brightness', [0]);
+  }
+});
+
+// ============================================================
+// Cells
+// ============================================================
+document.querySelectorAll('.cell').forEach(cell => {
+  const degree = parseInt(cell.dataset.degree, 10);
+  const onDown = (e) => {
+    e.preventDefault();
+    cell.classList.add('pressed');
+    const degreeEffective = state.shifted ? degree + 5 : degree;
+    if (state.holdMode) {
+      if (state.heldCells.has(degreeEffective)) {
+        sendOsc('/fam/hold', [degreeEffective, 0]);
+        state.heldCells.delete(degreeEffective);
+        cell.classList.remove('held');
+      } else {
+        sendOsc('/fam/hold', [degreeEffective, 1]);
+        state.heldCells.add(degreeEffective);
+        cell.classList.add('held');
+      }
+    } else {
+      sendOsc('/fam/cell', [degreeEffective, 0, 1.0]);
+      cell.dataset.tappedDegree = degreeEffective;
+    }
+  };
+  const onUp = () => {
+    cell.classList.remove('pressed');
+    if (cell.dataset.tappedDegree) {
+      sendOsc('/fam/celloff', [parseInt(cell.dataset.tappedDegree, 10)]);
+      delete cell.dataset.tappedDegree;
+    }
+  };
+  cell.addEventListener('mousedown', onDown);
+  cell.addEventListener('mouseup', onUp);
+  cell.addEventListener('mouseleave', onUp);
+  cell.addEventListener('touchstart', onDown, { passive: false });
+  cell.addEventListener('touchend', onUp);
+});
+
+// ============================================================
+// Modifiers
+// ============================================================
+// v29-o: AUTO toggles between fixed progression and Markov chord variation.
+// v29-o INSTRUMENT MODE:
+//   Generate-button toggles auto-progression bed (default OFF).
+//   When OFF, the device makes no sound on its own — cells are the voice.
+//   When ON, the engine cycles chords automatically (the legacy ambient bed).
+document.getElementById('btnAuto').onclick = () => {
+  state.generative = !state.generative;
+  sendOsc('/fam/generative', [state.generative ? 1 : 0]);
+  document.getElementById('btnAuto').classList.toggle('active', state.generative);
+  refreshDisplay();
+};
+document.getElementById('btnShift').onclick = () => {
+  state.shifted = !state.shifted;
+  document.getElementById('btnShift').classList.toggle('active', state.shifted);
+};
+document.getElementById('btnHoldMode').onclick = () => {
+  state.holdMode = !state.holdMode;
+  document.getElementById('btnHoldMode').classList.toggle('active', state.holdMode);
+  // v29-o BUGFIX: when toggling HOLD off, also release all active holds.
+  if (!state.holdMode && state.heldCells.size > 0) {
+    sendOsc('/fam/holdclear', []);
+    state.heldCells.clear();
+    document.querySelectorAll('.cell.held').forEach(c => c.classList.remove('held'));
+  }
+};
+// v29-o INSTRUMENT MODE: btnProgHold is now DRONE — toggles a soft tonic
+// drone for harmonic reference. Replaces the old Freeze (which was confusing).
+document.getElementById('btnProgHold').onclick = () => {
+  state.drone = !state.drone;
+  sendOsc('/fam/drone', [state.drone ? 1 : 0]);
+  document.getElementById('btnProgHold').classList.toggle('active', state.drone);
+};
+document.getElementById('btnClear').onclick = () => {
+  sendOsc('/fam/holdclear', []);
+  state.heldCells.clear();
+  document.querySelectorAll('.cell.held').forEach(c => c.classList.remove('held'));
+  const btn = document.getElementById('btnClear');
+  btn.classList.add('active');
+  setTimeout(() => btn.classList.remove('active'), 250);
+};
+
+// ============================================================
+// Keyboard shortcuts
+// ============================================================
+const _activeCellKeys = new Set();
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key >= '1' && e.key <= '5') {
+    if (_activeCellKeys.has(e.key)) return;
+    _activeCellKeys.add(e.key);
+    const degree = parseInt(e.key);
+    const degreeEffective = state.shifted ? degree + 5 : degree;
+    const cell = document.querySelector(`.cell[data-degree="${degree}"]`);
+    if (cell) cell.classList.add('pressed');
+    if (state.holdMode) {
+      if (state.heldCells.has(degreeEffective)) {
+        sendOsc('/fam/hold', [degreeEffective, 0]);
+        state.heldCells.delete(degreeEffective);
+        if (cell) cell.classList.remove('held');
+      } else {
+        sendOsc('/fam/hold', [degreeEffective, 1]);
+        state.heldCells.add(degreeEffective);
+        if (cell) cell.classList.add('held');
+      }
+    } else {
+      sendOsc('/fam/cell', [degreeEffective, 0, 1.0]);
+    }
+  }
+  if (e.key === '0') {
+    sendOsc('/fam/holdclear', []);
+    state.heldCells.clear();
+    document.querySelectorAll('.cell.held').forEach(c => c.classList.remove('held'));
+  }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key >= '1' && e.key <= '5' && _activeCellKeys.has(e.key)) {
+    _activeCellKeys.delete(e.key);
+    const degree = parseInt(e.key);
+    const degreeEffective = state.shifted ? degree + 5 : degree;
+    const cell = document.querySelector(`.cell[data-degree="${degree}"]`);
+    if (cell) cell.classList.remove('pressed');
+    if (!state.holdMode) sendOsc('/fam/celloff', [degreeEffective]);
+  }
+});
+
+// ============================================================
+// WebSocket
+// ============================================================
+let ws = null, reconnectTimer = null;
+function sendOsc(addr, args) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'osc', addr, args: args || [] }));
+  }
+}
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => { reconnectTimer = null; connectWS(); }, 2000);
+}
+function connectWS() {
+  const host = location.hostname || 'localhost';
+  const url = 'ws://' + host + ':8765';
+  try { ws = new WebSocket(url); }
+  catch (e) { scheduleReconnect(); return; }
+  ws.onopen = () => {
+    setTimeout(() => {
+      sendOsc('/fam/key', [KEY_MIDI[state.keyIdx]]);
+      sendOsc('/fam/mode', [state.mode]);
+      sendOsc('/fam/prog', [state.prog]);
+      sendOsc('/fam/tempo', [state.tempo]);
+      sendOsc('/fam/vibe', [state.vibe]);
+      sendOsc('/fam/vol', [state.vol]);
+      sendOsc('/fam/padvoice', [state.padVoice]);
+      sendOsc('/fam/padoctave', [state.padOctave]);
+      sendOsc('/fam/drive', [state.drive]);
+      sendOsc('/fam/brightness', [state.brightness]);
+      sendOsc('/fam/texture', [state.texture]);    // v29-o
+      sendOsc('/fam/space', [state.space]);        // v29-o
+      sendOsc('/fam/depth', [state.depth]);        // v29-o
+      sendOsc('/fam/bloom', [state.bloom]);        // v29-o
+      sendOsc('/fam/generative', [state.generative ? 1 : 0]);  // v29-o
+      sendOsc('/fam/drone', [state.drone ? 1 : 0]);            // v29-o
+      sendOsc('/fam/query', []);
+    }, 200);
+  };
+  ws.onclose = () => { scheduleReconnect(); };
+  ws.onerror = () => {};
+  ws.onmessage = (ev) => {
+    try {
+      const m = JSON.parse(ev.data);
+      if (m.type === 'state') applyRemote(m);
+    } catch (e) {}
+  };
+}
+function applyRemote(m) {
+  if (typeof m.bpm === 'number') state.tempo = m.bpm;
+  if (typeof m.mood === 'number') state.mood = m.mood;
+  if (typeof m.vibe === 'number') state.vibe = m.vibe;
+  if (typeof m.midi === 'number') state.midi = !!m.midi;
+  if (typeof m.vol === 'number') state.vol = m.vol;
+  if (typeof m.padVoice === 'number') state.padVoice = m.padVoice;
+  if (typeof m.padOctave === 'number') state.padOctave = m.padOctave;
+  if (typeof m.jackInserted === 'boolean') state.jackInserted = m.jackInserted;
+  if (typeof m.drive === 'number') state.drive = m.drive;
+  if (typeof m.brightness === 'number') state.brightness = m.brightness;
+  if (typeof m.texture === 'number') state.texture = m.texture;     // v29-o
+  if (typeof m.space === 'number') state.space = m.space;           // v29-o
+  if (typeof m.depth === 'number') state.depth = m.depth;           // v29-o
+  if (typeof m.bloom === 'number') state.bloom = m.bloom;           // v29-o
+  if (typeof m.generative === 'number') {
+    state.generative = !!m.generative;
+    const btn = document.getElementById('btnAuto');
+    if (btn) btn.classList.toggle('active', state.generative);
+  }
+  if (typeof m.drone === 'number') {
+    state.drone = !!m.drone;
+    const btn = document.getElementById('btnProgHold');
+    if (btn) btn.classList.toggle('active', state.drone);
+  }
+  if (typeof m.key === 'number') {
+    const idx = KEY_MIDI.indexOf(m.key);
+    if (idx >= 0) state.keyIdx = idx;
+  }
+  if (typeof m.mode === 'number') state.mode = m.mode;
+  if (typeof m.prog === 'number') {
+    state.prog = m.prog;
+    // v29-o: mirror Markov-toggle state into AUTO button visual
+    state.autoPlay = (m.prog < 0);
+    const btn = document.getElementById('btnAuto');
+    if (btn) btn.classList.toggle('active', state.autoPlay);
+  }
+  refreshDisplay();
+  refreshHud();
+}
+
+// v29-o: no HUD in industrial mockup layout; keep stub for compat
+function refreshHud() { /* intentionally empty */ }
+
+refreshDisplay();
+connectWS();
+</script>
+</body>
+</html>

@@ -13,6 +13,37 @@ trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.
 
 ---
 
+> **r18.5 (2026-06-11):** Aktuelle, konsolidierte Blocker-Liste inkl. neuer
+> Findings (B-LDO, B-F1, B-F2, B-SW12, B-MIDI, B-FP, B-TBD):
+> **`PCB_LAYOUT_STATUS.md`**. Diese Datei behält die historischen Einträge.
+
+## 🔴 BLOCKER v0.7-r18 (MCU-Migration, NEU 2026-06-07)
+
+### r18-B1: STM32H743 Schematic-Sheet ersetzt pico.kicad_sch
+**Status**: ✅ DONE r18.5 — `stm32h743.kicad_sch` wird vom Generator erzeugt
+(Validierung siehe PCB_LAYOUT_STATUS.md); pico/oled-Sheets in `kicad/legacy_pico2/`.
+**Fix-Pfad**: `generate_kicad_project.py` erweitern; STM32H743VIT6 Symbol +
+LQFP-100 Footprint; SWD-Header, BOOT0-Pull-Down, NRST, HSE 8 MHz Crystal +
+Load-Caps; VDD/VDDA-Decoupling nach ST AN3318.
+
+### r18-B2: power_tree.kicad_sch erweitern für H743
+**Status**: 🔴 BLOCKER — Phase 3. AP7361A LDO aktivieren (war DNP), VCAP-Caps,
+VDDA-Ferrit-Filter, Reset-Sequencing-Schaltung.
+
+### r18-B3: Firmware HAL-Layer einziehen
+**Status**: 🔴 BLOCKER für H743-Firmware — Phase 2. HAL-Header
+(`audio_hal.h`, `gpio_hal.h`, etc.) abstrakte Interfaces; Pico-Treiber in
+`src/hal_pico/` archivieren; CMake `-DTARGET=pico2|h743|host` Schalter.
+**Gate**: Pico-Build muss grün bleiben als Regressions-Anker.
+
+### r18-B4: Profiling-Acceptance-Gate vor PCB-Layout
+**Status**: 🔴 BLOCKER — Phase 5. Cycle-Count-Messung via DWT->CYCCNT auf
+echter H743-Hardware. Acceptance < 40 % Block-Zeit Worst-Case (1.1 M Cycles
+von 2.8 M Budget @ 480 MHz / 256 Frames / 44.1 kHz). 1-Stunden-Dauerlauf
+ohne Underrun. **Vor diesem Gate: KEIN PCB-Layout.**
+
+---
+
 ## 🔴 BLOCKER für PCB-Layout (r7/r10-spezifisch, 2026-05-31)
 
 ### r7-B1: 12×12×7.3 Modifier-Switch Pin-Pitch verifizieren — RESOLVED durch r10

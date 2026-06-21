@@ -54,6 +54,10 @@ void oled_init(void) {}
 void oled_show(void) {}
 
 /* ---- unit under test (its main renamed out of the way) ----------------- */
+/* Decoder tests below script FULL quadrature cycles; pin the half-step
+ * latch off (the bench default flipped to 1 in r18.14 for the KY-040-class
+ * 30-detent/15-PPR part — the decoder core is identical in both modes). */
+#define ENC_HALF_STEP 0
 #define main hw_main
 #include "display_hw_test.c"
 #undef main
@@ -121,7 +125,7 @@ int main(void) {
               "barT out of range: %f", (double)anim[A_BART]);
     }
 
-    while (menu_current() != MP_TEXTURE) {     /* go to a continuous param  */
+    while (menu_current() != MP_SPACE) {     /* go to a continuous param  */
         menu_rotate(1); on_cur_change(1, fake_ms); spin_frames(2);
     }
     spin_frames(20);
@@ -131,11 +135,11 @@ int main(void) {
     CHECK(!barseq.pending, "bar sequence stuck");
     CHECK(anim[A_BARALPHA] > 0.99f, "bar alpha not restored");
 
-    int v0 = menu_value_int(MP_TEXTURE);
+    int v0 = menu_value_int(MP_SPACE);
     menu_rotate(8);                            /* accelerated burst         */
     on_value_change(fake_ms);
     spin_frames(20);
-    CHECK(menu_value_int(MP_TEXTURE) == v0 + 8, "value: %d", menu_value_int(MP_TEXTURE));
+    CHECK(menu_value_int(MP_SPACE) == v0 + 8, "value: %d", menu_value_int(MP_SPACE));
     CHECK((int)(anim[A_FILLT] + 0.5f) == v0 + 8, "fill lagged: %f", (double)anim[A_FILLT]);
 
     menu_push(); on_mode_change(fake_ms);
