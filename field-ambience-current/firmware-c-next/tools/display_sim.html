@@ -312,19 +312,23 @@ const GS_MID  = 'rgba(255,255,255,0.60)';
 const GS_VAL  = 'rgba(255,255,255,0.86)';
 const GS_ACTIVE = '#ffffff';
 
-const MP_KEY = 0, MP_MODE = 1, MP_VIBE = 2, MP_VOICE = 3,
-      MP_TEXTURE = 4, MP_BASS = 5, MP_SPACE = 6, MP_MOOD = 7,
-      MP_COUNT = 8;
-const LABELS = ['Key','Mode','Vibe','Voice','Texture','Bass','Space','Mood'];
-const KEY_NAMES  = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolyd.','Aeolian'];
-const VIBE_NAMES = ['Warm','Bright','Deep','Floating'];
-const VOICE_NAMES= ['Warm','Strings','Brass'];
+const MP_WORLD = 0, MP_SPACE = 1, MP_TONE = 2, MP_ATMOS = 3, MP_DRUMS = 4,
+      MP_COUNT = 5;
+const LABELS = ['World','Space','Tone','Atmosphere','Drums'];
+const WORLD_NAMES = ['Tokyo City','Crystal Coast','Midnight Drive','After Hours'];
+const WORLD_SUBTITLE = ['night . rain','sunset . waves','highway . wind','3am . vinyl'];
+const WORLD_PRESET = [  /* space, tone, atmos */
+  { space: 42, tone: 50, atmos: 35 },
+  { space: 30, tone: 70, atmos: 25 },
+  { space: 40, tone: 45, atmos: 45 },
+  { space: 55, tone: 30, atmos: 50 },
+];
+const DRUMS_NAMES = ['Off','On'];
+const WORLD_COUNT = 4;
 
 const state = {
-  cur: MP_KEY, mode: 'browse',
-  key: 60, mode_i: 0, vibe_i: 0, voice_i: 0,
-  texture: 20, bass: 50, space: 50, mood: 50,
+  cur: MP_WORLD, mode: 'browse',
+  world_i: 0, space: 42, tone: 50, atmos: 35, drums: 0,
   drive: 30, brightness: 50, vol: 30, backlight: 80,
   shift: false,
   battery_pct: 72, usb: false,
@@ -340,38 +344,39 @@ const clamp  = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
 const lerp   = (a, b, t) => a + (b - a) * t;
 
 function valueCount(p) {
-  switch (p) { case MP_KEY: return 12; case MP_MODE: return 6; case MP_VIBE: return 4; case MP_VOICE: return 3; default: return 0; }
+  switch (p) { case MP_WORLD: return WORLD_COUNT; case MP_DRUMS: return 2; default: return 0; }
 }
 function valueIndex(p) {
   switch (p) {
-    case MP_KEY:   return wrap(state.key - 60, 12);
-    case MP_MODE:  return state.mode_i;
-    case MP_VIBE:  return state.vibe_i;
-    case MP_VOICE: return state.voice_i;
+    case MP_WORLD: return state.world_i;
+    case MP_DRUMS: return state.drums;
   }
   return 0;
 }
 function valueInt(p) {
   switch (p) {
-    case MP_TEXTURE: return state.texture; case MP_BASS: return state.bass;
-    case MP_SPACE:   return state.space;   case MP_MOOD: return state.mood;
+    case MP_SPACE: return state.space;
+    case MP_TONE:  return state.tone;
+    case MP_ATMOS: return state.atmos;
   }
   return 0;
 }
 function valueText() {
   switch (state.cur) {
-    case MP_KEY:   return KEY_NAMES[wrap(state.key - 60, 12)];
-    case MP_MODE:  return MODE_NAMES[state.mode_i];
-    case MP_VIBE:  return VIBE_NAMES[state.vibe_i];
-    case MP_VOICE: return VOICE_NAMES[state.voice_i];
-    case MP_TEXTURE: return Math.round(anim.fillT) + '%';
-    case MP_BASS:    return Math.round(anim.fillT) + '%';
-    case MP_SPACE:   return Math.round(anim.fillT) + '%';
-    case MP_MOOD:    return Math.round(anim.fillT) + '%';
+    case MP_WORLD: return WORLD_NAMES[state.world_i];
+    case MP_DRUMS: return DRUMS_NAMES[state.drums];
+    case MP_SPACE: return Math.round(anim.fillT) + '%';
+    case MP_TONE:  return Math.round(anim.fillT) + '%';
+    case MP_ATMOS: return Math.round(anim.fillT) + '%';
   }
   return '';
 }
 function curIsContinuous() { return valueCount(state.cur) === 0; }
+
+function loadWorldPreset() {
+  const p = WORLD_PRESET[state.world_i];
+  state.space = p.space; state.tone = p.tone; state.atmos = p.atmos;
+}
 
 function rotate(delta) {
   dismissOverlay();
@@ -384,14 +389,11 @@ function rotate(delta) {
   }
   let changed = false;
   switch (state.cur) {
-    case MP_KEY:    state.key    = 60 + wrap(state.key - 60 + Math.sign(delta), 12); changed = true; break;
-    case MP_MODE:   state.mode_i  = wrap(state.mode_i  + Math.sign(delta), 6); changed = true; break;
-    case MP_VIBE:   state.vibe_i  = wrap(state.vibe_i  + Math.sign(delta), 4); changed = true; break;
-    case MP_VOICE:  state.voice_i = wrap(state.voice_i + Math.sign(delta), 3); changed = true; break;
-    case MP_TEXTURE:state.texture = clamp(state.texture + delta, 0, 100); changed = true; break;
-    case MP_BASS:   state.bass    = clamp(state.bass    + delta, 0, 100); changed = true; break;
-    case MP_SPACE:  state.space   = clamp(state.space   + delta, 0, 100); changed = true; break;
-    case MP_MOOD:   state.mood    = clamp(state.mood    + delta, 0, 100); changed = true; break;
+    case MP_WORLD:  state.world_i = wrap(state.world_i + Math.sign(delta), WORLD_COUNT); loadWorldPreset(); changed = true; break;
+    case MP_SPACE:  state.space   = clamp(state.space + delta, 0, 100); changed = true; break;
+    case MP_TONE:   state.tone    = clamp(state.tone  + delta, 0, 100); changed = true; break;
+    case MP_ATMOS:  state.atmos   = clamp(state.atmos + delta, 0, 100); changed = true; break;
+    case MP_DRUMS:  state.drums   = wrap(state.drums + Math.sign(delta), 2); changed = true; break;
   }
   if (changed) onValueChange();
 }

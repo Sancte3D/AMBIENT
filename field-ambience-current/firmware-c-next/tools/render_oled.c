@@ -1,18 +1,16 @@
 /*
- * OLED preview renderer — Step 12b #7.
+ * OLED preview renderer — WORLD model (r18.38).
  *
  * Builds the menu state on the host, asks it to draw into the OLED framebuffer,
- * and writes the framebuffer to a PGM image. Lets the user (and the design
- * reviewer) SEE the UI before flashing — same renderer the device runs.
+ * and writes the framebuffer to a PGM image. Lets the user SEE the UI before
+ * flashing — same renderer the device runs.
  *
  * The output is upscaled 4× per pixel so the 320×170 framebuffer becomes a
- * 1280×680 image — easier to look at and to compare against the mockup.
+ * 1280×680 image — easier to look at.
  *
  * Usage:
  *   render_oled out_dir/
- * Produces:
- *   out_dir/menu_browse_<param>.pgm    one per slot in browse mode
- *   out_dir/menu_edit_<param>.pgm      one per slot in edit mode
+ * Produces a browse frame per parameter + a few edit frames.
  */
 
 #include "menu.h"
@@ -25,14 +23,11 @@
 
 /* Engine setters are no-ops for the preview — the menu fires them but we just
  * want pixels. */
-static void noop_key (int v)         { (void)v; }
-static void noop_mode(int v)         { (void)v; }
-static void noop_vibe(int v)         { (void)v; }
-static void noop_voi (int v)         { (void)v; }
-static void noop_t   (float v)       { (void)v; }
-static void noop_b   (float v)       { (void)v; }
-static void noop_s   (float v)       { (void)v; }
-static void noop_m   (float v)       { (void)v; }
+static void noop_world(int v)   { (void)v; }
+static void noop_space(float v) { (void)v; }
+static void noop_tone (float v) { (void)v; }
+static void noop_atmos(float v) { (void)v; }
+static void noop_drums(int v)   { (void)v; }
 
 /* Write the framebuffer as a 4× upscaled PGM image (P5, 8-bit grey). */
 static void write_pgm(const char *path) {
@@ -56,67 +51,64 @@ static void write_pgm(const char *path) {
 }
 
 static void to_param(menu_param_t p) {
-    /* navigation only works in browse mode; in edit mode rotate changes the
-     * value, not the slot — so leave edit first. */
     if (menu_mode() != MENU_BROWSE) menu_push();
     int guard = 0;
     while (menu_current() != p && guard++ < MP_COUNT * 2) menu_rotate(+1);
-}
-
-static void render_settled(void) {
-    menu_render();
 }
 
 int main(int argc, char **argv) {
     const char *dir = (argc > 1) ? argv[1] : ".";
 
     menu_callbacks_t cb = {
-        noop_key, noop_mode, noop_vibe, noop_voi,
-        noop_t, noop_b, noop_s, noop_m
+        noop_world, noop_space, noop_tone, noop_atmos, noop_drums
     };
     menu_init(&cb);
 
-    /* Plausible battery state to match the mockup. */
     battery_set_pct(72);
     battery_set_usb_present(false);
 
-    /* Pre-set a couple of values so the previews are not all defaults. */
-    /* MODE → lydian */
-    to_param(MP_MODE); menu_push(); menu_rotate(+3); menu_push();
-    /* VIBE → bright */
-    to_param(MP_VIBE); menu_push(); menu_rotate(+1); menu_push();
-    /* TEXTURE → 35 */
-    to_param(MP_TEXTURE); menu_push(); menu_rotate(+3); menu_push();
-
-    /* Render one BROWSE frame per param. */
-    static const char *NAMES[MP_COUNT] = {
-        "01_key","02_mode","03_vibe","04_voice",
-        "05_texture","06_bass","07_space","08_mood"
-    };
     char path[512];
+
+    /* One BROWSE frame per parameter, on each of the four worlds for WORLD. */
+    static const char *NAMES[MP_COUNT] = {
+        "01_world","02_space","03_tone","04_atmos","05_drums"
+    };
     for (int p = 0; p < MP_COUNT; ++p) {
         to_param((menu_param_t)p);
-        render_settled();
+        menu_render();
         snprintf(path, sizeof path, "%s/menu_browse_%s.pgm", dir, NAMES[p]);
         write_pgm(path);
     }
 
-    /* Render EDIT-mode previews for a couple of slots. */
-    to_param(MP_KEY); menu_push();
-    render_settled(); snprintf(path, sizeof path, "%s/menu_edit_01_key.pgm", dir); write_pgm(path);
+    /* All four world names in browse mode (long-name fit check). */
+    to_param(MP_WORLD);
+    for (int w = 0; w < MENU_WORLD_COUNT; ++w) {
+        menu_push();                       /* enter edit */
+        /* step world to index w */
+        int guard = 0;
+        while (menu_world_index() != w && guard++ < MENU_WORLD_COUNT * 2)
+            menu_rotate(+1);
+        menu_push();                       /* back to browse */
+        menu_render();
+        snprintf(path, sizeof path, "%s/menu_world_%d.pgm", dir, w);
+        write_pgm(path);
+    }
+
+    /* EDIT-mode previews. */
+    to_param(MP_WORLD); menu_push();
+    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_world.pgm", dir); write_pgm(path);
     menu_push();
-    to_param(MP_MODE); menu_push();
-    render_settled(); snprintf(path, sizeof path, "%s/menu_edit_02_mode.pgm", dir); write_pgm(path);
+    to_param(MP_SPACE); menu_push();
+    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_space.pgm", dir); write_pgm(path);
     menu_push();
-    /* Continuous % fill-bar in edit mode. */
-    to_param(MP_TEXTURE); menu_push();
-    render_settled(); snprintf(path, sizeof path, "%s/menu_edit_05_texture.pgm", dir); write_pgm(path);
+    to_param(MP_DRUMS); menu_push(); menu_rotate(+1);   /* drums ON */
+    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_drums.pgm", dir); write_pgm(path);
     menu_push();
 
-    /* USB-present variant (charging) on KEY. */
-    to_param(MP_KEY);
+    /* USB-present variant (charging). */
+    to_param(MP_WORLD);
     battery_set_usb_present(true);
-    render_settled(); snprintf(path, sizeof path, "%s/menu_browse_01_key_usb.pgm", dir); write_pgm(path);
+    menu_render(); snprintf(path, sizeof path, "%s/menu_world_usb.pgm", dir); write_pgm(path);
     battery_set_usb_present(false);
 
     printf("wrote previews to %s/\n", dir);
