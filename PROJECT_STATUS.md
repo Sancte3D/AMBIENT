@@ -165,6 +165,11 @@ separate ⏳ chunk, lives only as audition tools.
    engine modules.
 5. **PCB layout-blockers** (user-side KiCad work — ERC pass + TPS61089
    layout study).
+6. **AI-Ready Schematic Standard compliance** (binding rule, see
+   `docs/hardware/AI_READY_SCHEMATIC_STANDARD.md` §"compliance snapshot"):
+   safe generator edits — rename active-low nets to `_N` suffix
+   (`nSHDN`→`AMP_SHDN_N`), populate per-sheet title-block revision/date/author,
+   add `TP_*` test pads. Plus the GUI-ERC pin-map + NC audit (= blocker B3).
 
 ---
 

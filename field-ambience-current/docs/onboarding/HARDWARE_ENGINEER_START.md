@@ -10,6 +10,7 @@
 
 ## What to read
 
+0. **NEW — [`docs/hardware/KICAD_BLUEPRINT.md`](../hardware/KICAD_BLUEPRINT.md)** — idiot-proof step-by-step: open project → ERC → footprints → Update-PCB-from-Schematic → board setup (stackup, design rules, track widths) → placement/routing order → DRC → Gerber/JLC. Start here if you've never laid out a PCB. The key fact: **you don't draw the schematic, it's generated** — your work is ERC + the layout.
 1. [`PCB_LAYOUT_STATUS.md`](../../PCB_LAYOUT_STATUS.md) — current state, current blockers, what's verified and what's `FP_VERIFY`
 2. [`field_ambience_pcb_SPEC_v0.7.md`](../../field_ambience_pcb_SPEC_v0.7.md) §5 — full STM32H743 pin allocation (verified against DS12110 Rev 5 Table 8 AND the official KiCad symbol library, 52/52 used pins identical)
 3. [`docs/component_reviews/`](../component_reviews/) — verified parts with datasheet quotes
