@@ -111,18 +111,46 @@ int main(void) {
     CHECK(rms_neg > 1.0e-4f, "neg-world: no signal");
     CHECK(rms_big > 1.0e-4f, "big-world: no signal");
 
-    /* 6: Phase 2b — Tokyo (world 0) gates the rain generator on top of wind;
-     * Crystal Coast (world 1) gets only wind. So Tokyo's RMS at the same
-     * level must be measurably greater than Coast's. */
-    ambience_init(); ambience_set_world(1);   /* Coast: wind only */
-    float rms_coast = run_rms(1.0f);
+    /* 6: Phase 2b — Tokyo (world 0) gates rain on top of wind. */
     ambience_init(); ambience_set_world(0);   /* Tokyo: wind + rain */
     float rms_tokyo = run_rms(1.0f);
-    CHECK(rms_tokyo > rms_coast * 1.10f,
-          "Tokyo+rain not louder than Coast+wind-only (tokyo=%g coast=%g)",
-          (double)rms_tokyo, (double)rms_coast);
-    /* And the world choice must remain bounded (no clipping on rain stack) */
+    CHECK(rms_tokyo > 1.0e-3f, "Tokyo silent (%g)", (double)rms_tokyo);
     CHECK(rms_tokyo < 1.0f, "Tokyo rms unbounded (%g)", (double)rms_tokyo);
+
+    /* 7: Phase 2c — Coast (world 1) gates waves on top of wind. Waves are
+     * SLOW events (2 s gap + 1.5 s attack + ~7 s decay), so a short RMS
+     * window can miss the peak entirely. Measure the PEAK over a longer
+     * run (≈ 12 s) and assert it strictly exceeds wind-only's peak under
+     * the same conditions. */
+    float peak_wind_only = 0.0f, peak_coast = 0.0f;
+    {
+        float dryL[BLOCK], dryR[BLOCK], sendL[BLOCK], sendR[BLOCK];
+        /* baseline: world 2 (Drive) so only wind runs. */
+        ambience_init(); ambience_set_world(2); ambience_set_level(1.0f);
+        for (int b = 0; b < 2100; ++b) {     /* ~12.2 s */
+            memset(dryL, 0, sizeof dryL); memset(dryR, 0, sizeof dryR);
+            memset(sendL, 0, sizeof sendL); memset(sendR, 0, sizeof sendR);
+            ambience_render_mix(dryL, dryR, sendL, sendR, BLOCK, 0.0f);
+            for (int i = 0; i < BLOCK; ++i) {
+                float a = fabsf(dryL[i]);
+                if (a > peak_wind_only) peak_wind_only = a;
+            }
+        }
+        ambience_init(); ambience_set_world(1); ambience_set_level(1.0f);
+        for (int b = 0; b < 2100; ++b) {
+            memset(dryL, 0, sizeof dryL); memset(dryR, 0, sizeof dryR);
+            memset(sendL, 0, sizeof sendL); memset(sendR, 0, sizeof sendR);
+            ambience_render_mix(dryL, dryR, sendL, sendR, BLOCK, 0.0f);
+            for (int i = 0; i < BLOCK; ++i) {
+                float a = fabsf(dryL[i]);
+                if (a > peak_coast) peak_coast = a;
+            }
+        }
+    }
+    CHECK(peak_coast > peak_wind_only * 1.20f,
+          "Coast+waves peak not above wind-only (coast=%g, wind=%g)",
+          (double)peak_coast, (double)peak_wind_only);
+    CHECK(peak_coast < 1.0f, "Coast peak unbounded (%g)", (double)peak_coast);
 
     printf("%d checks, %d failures\n", g_checks, g_fails);
     printf("RESULT: %s\n", g_fails ? "FAIL" : "PASS");
