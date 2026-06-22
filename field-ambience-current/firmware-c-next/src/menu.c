@@ -68,10 +68,12 @@ static int           drums   = 0;         /* 0 = off, 1 = on */
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
 
-/* Push the current world's display accent to the colour layer. */
-static void apply_world_accent(void) {
+/* Push the current world's display accent to the colour layer. `animate` =
+ * crossfade toward it (world change); otherwise snap (boot/init). */
+static void set_world_accent(bool animate) {
     const world_accent_t *a = &WORLD_ACCENT[world_i];
-    oled_set_accent(a->r, a->g, a->b);
+    if (animate) oled_set_accent_target(a->r, a->g, a->b);
+    else         oled_set_accent(a->r, a->g, a->b);
 }
 
 /* Apply the current slot's value to the engine via callback. */
@@ -93,7 +95,7 @@ static void load_world_preset(void) {
     space = p->space;
     tone  = p->tone;
     atmos = p->atmos;
-    apply_world_accent();          /* tint the UI to the new world */
+    set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_space)      cb.set_space(space / 100.0f);
     if (cb.set_tone)       cb.set_tone (tone  / 100.0f);
@@ -109,7 +111,7 @@ void menu_init(const menu_callbacks_t *cbs) {
     tone  = WORLD_PRESET[0].tone;
     atmos = WORLD_PRESET[0].atmos;
     drums = 0;
-    apply_world_accent();          /* boot world's tint (world 0) */
+    set_world_accent(false);       /* boot world's tint (world 0), snap */
     /* Don't push the macro defaults here — the engine sets its own at
      * engine_init. The accent IS set: it's a display concern, not an engine
      * callback, and the panel should boot already tinted to world 0. */

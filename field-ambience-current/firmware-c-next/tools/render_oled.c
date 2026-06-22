@@ -37,6 +37,7 @@ static void noop_drums(int v)   { (void)v; }
  * step 1) — so the preview shows the per-world tint exactly as it will appear
  * on the panel. RGB565 is expanded back to RGB888 for the image. */
 static void write_ppm(const char *path) {
+    oled_accent_settle();          /* no frame loop here — snap to the target */
     const int SCALE = 4;
     const int W = OLED_WIDTH * SCALE, H = OLED_HEIGHT * SCALE;
     const uint8_t *fb = oled_framebuffer();
