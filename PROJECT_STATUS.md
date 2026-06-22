@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.49 — ambience layer Phase 2a: wind generator lifted)**
+**Updated: 2026-06-22 (r18.50 — ambience Phase 2b: rain for Tokyo on top of wind)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -62,7 +62,7 @@ product build.
 | `drone.c`, `bass.c`, `brain.c` | ✅ |
 | 4-world sound spec (Tokyo / Coast / Drive / After Hours) | 🟠 only as `tools/render_worlds.c` |
 | Universal wind generator (resonant BP, pink noise, gusts) | 🟠 inline in render_worlds.c |
-| Per-world ambience layer in engine (ADR-0017 Phase 2) | 🟡 r18.49 — `src/ambience.c` wind generator gelifted + engine-verkabelt; rain/waves/vinyl Phase 2b/c/d |
+| Per-world ambience layer in engine (ADR-0017 Phase 2) | 🟡 r18.49/.50 — Wind universal + Rain für Tokyo (World 0); Waves/Vinyl Phase 2c/d offen |
 | Worlds-Modul (single source of truth) | ✅ r18.48 `src/worlds.c` + `worlds.h` (ADR-0017 Phase 1) — Lift aus menu.c, exakte RGB/Preset-Erhaltung per Test |
 | Tape-hiss generator | 🟠 inline in render_dreamy_warm.c |
 | Warm-tanh master saturation | 🟠 inline in render_dreamy_warm.c |

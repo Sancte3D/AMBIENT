@@ -111,6 +111,19 @@ int main(void) {
     CHECK(rms_neg > 1.0e-4f, "neg-world: no signal");
     CHECK(rms_big > 1.0e-4f, "big-world: no signal");
 
+    /* 6: Phase 2b — Tokyo (world 0) gates the rain generator on top of wind;
+     * Crystal Coast (world 1) gets only wind. So Tokyo's RMS at the same
+     * level must be measurably greater than Coast's. */
+    ambience_init(); ambience_set_world(1);   /* Coast: wind only */
+    float rms_coast = run_rms(1.0f);
+    ambience_init(); ambience_set_world(0);   /* Tokyo: wind + rain */
+    float rms_tokyo = run_rms(1.0f);
+    CHECK(rms_tokyo > rms_coast * 1.10f,
+          "Tokyo+rain not louder than Coast+wind-only (tokyo=%g coast=%g)",
+          (double)rms_tokyo, (double)rms_coast);
+    /* And the world choice must remain bounded (no clipping on rain stack) */
+    CHECK(rms_tokyo < 1.0f, "Tokyo rms unbounded (%g)", (double)rms_tokyo);
+
     printf("%d checks, %d failures\n", g_checks, g_fails);
     printf("RESULT: %s\n", g_fails ? "FAIL" : "PASS");
     return g_fails ? 1 : 0;
