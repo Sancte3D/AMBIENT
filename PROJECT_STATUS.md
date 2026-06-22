@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.54 — HAL wiring: menu→engine callbacks live, ADR-0017 Phase 4 COMPLETE)**
+**Updated: 2026-06-22 (r18.55 — UI: pill-bloom animation on cursor + value change)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -97,6 +97,7 @@ product build.
 | Engine ↔ menu callbacks wired in HAL | ✅ r18.54 — `main_h743.c` `menu_init()` mit `engine_set_world/space/tone/atmosphere`-Bindings (ADR-0017 Phase 4) |
 | **Display Akzent-Farbe pro World (Grau→RGB565-Tint)** | ✅ r18.44 `src/oled_color.c` — ADR-0015 Schritt 1; Default=Mono, pro World dezenter Cast; Host-Preview farbig |
 | **Akzent-Crossfade beim World-Wechsel (erste UI-Animation)** | ✅ r18.45 — `oled_accent_tick/settle`, libm-frei; auf Pico-Bench testbar |
+| **Pill-Bloom-Animation (zweite UI-Animation)** | ✅ r18.55 — Aktive Pill macht Scale-Pop (1.25× → 1.0×) bei Cursor-Wechsel + 1.15× bei discrete Value-Change |
 | **Bench `display_hw_test` aktuell zur World-UI (Subtitle + panel-agnostische Verdrahtung)** | ✅ r18.44/45 — 1.9″ Adafruit *und* Waveshare Silk; `display_hw_test.uf2` als CI-Artefakt |
 | **Schaltbild-Walkthrough (A–Z PCB-Engineer-Tour)** | 🟡 r18.46 — `docs/hardware/SCHEMATIC_WALKTHROUGH.md`; Power + MCU + Audio voll, übrige 4 Sheets in Folge-PRs |
 | **Power/Sleep-Architektur (ADR-0016, kein Switch)** | ⏳ ADR-0016 PROPOSED — `U9` TPS22918 Load-Switch + `SW_BOOT` Dual-Use |
