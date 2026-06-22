@@ -64,6 +64,28 @@ int main(void) {
     for (int n = 0; n < 16; ++n)
         CHECK(lut[n] == oled_grey565((uint8_t)n), "LUT vs fn mismatch at %d", n);
 
+    /* 6: accent crossfade — set a target, tick toward it, must converge and
+     * then report "done" (0). Start live at white, target at amber. */
+    oled_set_accent(255, 255, 255);
+    oled_set_accent_target(255, 205, 150);
+    uint8_t r0, g0, b0;
+    oled_get_accent(&r0, &g0, &b0);
+    CHECK(g0 == 255 && b0 == 255, "tick: live moved before any tick");
+    int moved = 0;
+    uint32_t t = 1000;
+    for (int i = 0; i < 200 && oled_accent_tick(t += 16); ++i) moved = 1;
+    CHECK(moved, "tick: never reported motion");
+    oled_get_accent(&r0, &g0, &b0);
+    CHECK(r0 == 255 && g0 == 205 && b0 == 150, "tick: did not converge (%d,%d,%d)", r0, g0, b0);
+    CHECK(oled_accent_tick(t += 16) == 0, "tick: not idle at target");
+
+    /* 7: settle snaps instantly. */
+    oled_set_accent(255, 255, 255);
+    oled_set_accent_target(100, 120, 255);
+    oled_accent_settle();
+    oled_get_accent(&r0, &g0, &b0);
+    CHECK(r0 == 100 && g0 == 120 && b0 == 255, "settle: did not snap (%d,%d,%d)", r0, g0, b0);
+
     /* restore default so nothing leaks if linked alongside other suites. */
     oled_set_accent(255, 255, 255);
 

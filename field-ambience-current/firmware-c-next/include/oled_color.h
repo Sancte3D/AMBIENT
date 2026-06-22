@@ -25,9 +25,28 @@
 
 #include <stdint.h>
 
-/* Set / read the active accent (RGB888). Default is white (pure monochrome). */
+/* Set the accent IMMEDIATELY (live = target). Default is white (mono). Use at
+ * boot / init so the first frame is already the right colour, no fade-in. */
 void            oled_set_accent(uint8_t r, uint8_t g, uint8_t b);
+
+/* Read the live (currently-displayed) accent. */
 void            oled_get_accent(uint8_t *r, uint8_t *g, uint8_t *b);
+
+/* Set the accent TARGET — the live accent then crossfades toward it as
+ * oled_accent_tick() is called from the render loop (~120 ms time constant).
+ * This is what a world change uses, so the screen morphs blue→aqua→… instead
+ * of snapping. */
+void            oled_set_accent_target(uint8_t r, uint8_t g, uint8_t b);
+
+/* Advance the live accent toward the target by the time since the last tick.
+ * Call once per rendered frame from the UI loop; returns non-zero while the
+ * accent is still moving (so the caller knows to keep redrawing). No-op once
+ * live == target. */
+int             oled_accent_tick(uint32_t now_ms);
+
+/* Snap live ← target instantly (for static renderers / the preview tool that
+ * have no frame loop to tick). */
+void            oled_accent_settle(void);
 
 /* Convert one 4-bit grey level (0..15) to accent-tinted RGB565. */
 uint16_t        oled_grey565(uint8_t grey4);

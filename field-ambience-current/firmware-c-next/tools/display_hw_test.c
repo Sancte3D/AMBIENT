@@ -109,6 +109,7 @@
 #include "hardware/sync.h"
 
 #include "oled.h"
+#include "oled_color.h"
 #include "menu.h"
 #include "battery.h"
 #include "baked_font.h"
@@ -863,10 +864,11 @@ int main(void) {
 
         /* --- animate + render ------------------------------------------- */
         if (scene == SCENE_MENU) {
+            bool accent_anim = oled_accent_tick(now);   /* world-tint crossfade */
             bool animating = tweens_tick(now);
             anim_housekeeping(now);
             bool overlay_busy = overlay.active || anim[A_OVALPHA] > 0.01f;
-            if (dirty || animating || overlay_busy || barseq.pending) {
+            if (dirty || animating || accent_anim || overlay_busy || barseq.pending) {
                 render_menu_scene();
                 oled_show();                 /* frame pacing = SPI stream  */
                 continue;                    /* keep animating, no sleep   */
