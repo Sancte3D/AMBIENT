@@ -187,6 +187,10 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
      * while still detuning each voice differently). */
     float detune = 7.0f + (float)(source & 3);          /* 7 … 10 cents   */
     float cbase  = 1100.0f + (float)(source % 5) * 40.0f;
+    /* Tier A #1: velocity → cutoff. Harder tap opens the LP a touch, softer
+     * tap darkens it; symmetric around 0.5 so mid-velocity = unchanged. ±300
+     * Hz at v=1.0/0.0, well inside the SVF's 80..8000 clamp. */
+    cbase += (dsp_clampf(amp, 0.0f, 1.0f) - 0.5f) * 600.0f;
     float crate  = 0.05f + (float)(source % 4) * 0.015f;
     float fatk   = 2.5f + (float)(source % 3) * 0.5f;
 
