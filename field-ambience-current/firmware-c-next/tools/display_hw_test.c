@@ -11,21 +11,31 @@
  * ───────────────────────────────────────────────────────────────────────────
  * HARDWARE
  *   - Raspberry Pi Pico 2 (RP2350)
- *   - Adafruit 1.9" 320×170 IPS TFT, ST7789 (Adafruit #5394 / buyzero)
+ *   - 1.9" 320×170 IPS TFT, ST7789 — ANY such module works (das „vorherige
+ *     LCD"). Die Verdrahtung ist nach SIGNAL, nicht nach Vendor-Silk: das
+ *     Adafruit #5394 und das Waveshare 1.9" Module sind dasselbe Panel, nur
+ *     mit anderen Pad-Beschriftungen. Spalte „Signal" ist maßgeblich.
  *   - EC11/KY-040 Push-Encoder (GND, +, SW, DT, CLK)
  *   - 1× Tactile-Button als SHIFT
  *
- * VERDRAHTUNG — Display (Pin-Namen wie auf dem Adafruit-Silk):
- *   Adafruit-Pin   Pico-GPIO   Pico-Pin (physisch)
- *   Vin            3V3 (OUT)   36          (Board hat eigenen Regler)
- *   Gnd            GND         38 (o. a. GND)
- *   SCK            GP18        24
- *   MOSI           GP19        25
- *   TFT_CS (TCS!)  GP17        22          ← TCS, NICHT SDCS
- *   D/C            GP16        21
- *   RST            GP20        26
- *   Lite           GP22        29          ← Backlight-PWM (SHIFT+drehen)
- *   MISO, SD_CS    unverbunden (SD-Slot wird nicht benutzt)
+ * VERDRAHTUNG — Display (nach SIGNAL; beide Silk-Varianten gelistet):
+ *   Signal      Adafruit-Silk   Waveshare-Silk   Pico-GPIO   Pico-Pin
+ *   3V3         Vin             VCC              3V3 (OUT)   36
+ *   GND         Gnd             GND              GND         38
+ *   SPI-Clock   SCK             CLK              GP18        24
+ *   SPI-Data    MOSI            DIN              GP19        25
+ *   Chip-Sel.   TFT_CS (TCS!)   CS               GP17        22   ← NICHT SDCS
+ *   Data/Cmd    D/C             DC               GP16        21
+ *   Reset       RST             RST              GP20        26
+ *   Backlight   Lite            BL               GP22        29   ← SHIFT+drehen
+ *   (MISO / SD_CS am Adafruit bleiben unverbunden — SD-Slot ungenutzt.)
+ *
+ * FARBE (r18.44): Die UI ist jetzt farbig — pro World ein dezenter Akzent
+ *   (Tokyo=kühlblau, Crystal Coast=aqua, Midnight Drive=violett, After
+ *   Hours=amber). Beim Boot siehst du Tokyo (blau). World wechseln: am WORLD-
+ *   Slot drücken (Edit) und drehen → der Tint folgt sofort. Default ohne
+ *   World = reines Schwarzweiß wie bisher. (Tint sitzt in der Grau→RGB565-
+ *   Umwandlung, src/oled_color.c — gilt auch für die Testbilder unten.)
  *
  * VERDRAHTUNG — Encoder:
  *   Encoder-Pin    Pico-GPIO   Pico-Pin (physisch)
@@ -522,8 +532,12 @@ static void render_fillbar_anim(float pct, float alpha) {
 }
 
 /* Label top-left + big value, with the wipe offset/alpha applied (sim's
- * drawValueRow). `layer_alpha` folds in the overlay crossfade. */
+ * drawValueRow). `layer_alpha` folds in the overlay crossfade. `subtitle`
+ * (or NULL) draws a quiet flavour line under the value — used for the WORLD
+ * slot ("night . rain" …), mirroring menu.c's static renderer so the bench
+ * matches the device. It shares the value's wipe offset + alpha. */
 static void render_value_row(const char *label, const char *value,
+                             const char *subtitle,
                              int label_gs, int value_gs, float layer_alpha,
                              bool apply_wipe) {
     float a   = layer_alpha * (apply_wipe ? anim[A_TEXTALPHA] : 1.0f);
@@ -539,6 +553,12 @@ static void render_value_row(const char *label, const char *value,
     int bottom = BAR_Y;
     int y = (top + bottom - (int)f->line) / 2;
     bfont_draw(f, PAD_L, y + dy, value, gs_a(value_gs, a));
+
+    if (subtitle && subtitle[0]) {
+        int sy = y + (int)f->line + 2;
+        if (sy + (int)font_hn_label.line < BAR_Y - 4)
+            bfont_draw(&font_hn_label, PAD_L, sy + dy, subtitle, gs_a(GS_DIM, a));
+    }
 }
 
 static float lerpf(float a, float b, float t) { return a + (b - a) * t; }
@@ -558,7 +578,9 @@ static void render_menu_layer(float layer_alpha) {
     } else {
         vtxt = menu_current_value_text();
     }
-    render_value_row(menu_current_label(), vtxt, label_gs, value_gs,
+    /* WORLD slot shows its flavour subtitle under the name, like the device. */
+    const char *sub = (menu_current() == MP_WORLD) ? menu_world_subtitle() : NULL;
+    render_value_row(menu_current_label(), vtxt, sub, label_gs, value_gs,
                      layer_alpha, true);
 
     float bar_a = anim[A_BARALPHA] * layer_alpha;
@@ -574,7 +596,7 @@ static void render_menu_layer(float layer_alpha) {
 static void render_overlay_layer(float layer_alpha) {
     char buf[8];
     snprintf(buf, sizeof buf, "%d%%", (int)(anim[A_OVFILL] + 0.5f));
-    render_value_row(overlay.label, buf, GS_LABEL, GS_ACTIVE, layer_alpha, false);
+    render_value_row(overlay.label, buf, NULL, GS_LABEL, GS_ACTIVE, layer_alpha, false);
     render_fillbar_anim(anim[A_OVFILL], layer_alpha);
 }
 
