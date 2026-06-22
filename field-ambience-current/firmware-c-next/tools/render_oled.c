@@ -26,11 +26,11 @@
 
 /* Engine setters are no-ops for the preview — the menu fires them but we just
  * want pixels. */
-static void noop_world(int v)   { (void)v; }
-static void noop_space(float v) { (void)v; }
-static void noop_tone (float v) { (void)v; }
-static void noop_atmos(float v) { (void)v; }
-static void noop_drums(int v)   { (void)v; }
+static void noop_world (int v)   { (void)v; }
+static void noop_space (float v) { (void)v; }
+static void noop_atmos (float v) { (void)v; }
+static void noop_motion(float v) { (void)v; }
+static void noop_age   (float v) { (void)v; }
 
 /* Write the framebuffer as a 4× upscaled COLOR PPM (P6, 8-bit RGB) using the
  * SAME accent-tinted grey→RGB565 conversion the device driver uses (ADR-0015
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     const char *dir = (argc > 1) ? argv[1] : ".";
 
     menu_callbacks_t cb = {
-        noop_world, noop_space, noop_tone, noop_atmos, noop_drums
+        noop_world, noop_space, noop_atmos, noop_motion, noop_age
     };
     menu_init(&cb);
 
@@ -83,9 +83,9 @@ int main(int argc, char **argv) {
 
     char path[512];
 
-    /* One BROWSE frame per parameter, on each of the four worlds for WORLD. */
+    /* One BROWSE frame per parameter. */
     static const char *NAMES[MP_COUNT] = {
-        "01_world","02_space","03_tone","04_atmos","05_drums"
+        "01_world","02_space","03_atmos","04_motion","05_age"
     };
     for (int p = 0; p < MP_COUNT; ++p) {
         to_param((menu_param_t)p);
@@ -115,8 +115,8 @@ int main(int argc, char **argv) {
     to_param(MP_SPACE); menu_push();
     menu_render(); snprintf(path, sizeof path, "%s/menu_edit_space.ppm", dir); write_ppm(path);
     menu_push();
-    to_param(MP_DRUMS); menu_push(); menu_rotate(+1);   /* drums ON */
-    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_drums.ppm", dir); write_ppm(path);
+    to_param(MP_AGE); menu_push(); menu_rotate(+20);    /* nudge age */
+    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_age.ppm", dir); write_ppm(path);
     menu_push();
 
     /* USB-present variant (charging). */

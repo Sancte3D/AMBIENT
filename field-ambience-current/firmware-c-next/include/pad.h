@@ -49,6 +49,12 @@ void pad_all_off(void);
  * so turning it does not zipper. */
 void pad_set_brightness(float hz);
 
+/* Global LFO-depth multiplier for the filter sweep (0..2). 0 = LFO has no
+ * effect on cutoff (static voice). 1 = current default (audible chorus
+ * movement). 2 = strong, dramatic motion. Maps the "Motion" menu macro.
+ * Audio-thread-safe (read in control-rate update). */
+void pad_set_motion(float depth_0_2);
+
 /* Global pad-voice timbre, applied to ALL voices at once and smoothed so the
  * whole stack glides into the new sound together (no old/new timbre clashing).
  * 0 = warm (pure saw), ~0.6 = strings, ~1.2 = brass — webapp PAD_VOICE_MIXES. */

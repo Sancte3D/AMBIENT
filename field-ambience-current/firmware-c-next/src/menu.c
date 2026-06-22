@@ -24,8 +24,6 @@
  * worlds.c (ADR-0017). This module only owns *menu state* (cursor, edit mode,
  * live macro values). */
 
-static const char * const DRUMS_NAMES[2] = { "Off", "On" };
-
 /* --- live state ------------------------------------------------------- */
 
 static menu_callbacks_t cb;
@@ -33,9 +31,9 @@ static menu_param_t  cur     = MP_WORLD;
 static menu_mode_t   mode    = MENU_BROWSE;
 static int           world_i = 0;
 static int           space   = 42;        /* % 0..100 */
-static int           tone    = 50;
 static int           atmos   = 35;
-static int           drums   = 0;         /* 0 = off, 1 = on */
+static int           motion  = 40;
+static int           age     = 30;
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -51,11 +49,11 @@ static void set_world_accent(bool animate) {
 /* Apply the current slot's value to the engine via callback. */
 static void apply_current(void) {
     switch (cur) {
-        case MP_WORLD: if (cb.set_world)      cb.set_world(world_i);          break;
-        case MP_SPACE: if (cb.set_space)      cb.set_space(space / 100.0f);   break;
-        case MP_TONE:  if (cb.set_tone)       cb.set_tone (tone  / 100.0f);   break;
-        case MP_ATMOS: if (cb.set_atmosphere) cb.set_atmosphere(atmos/100.0f);break;
-        case MP_DRUMS: if (cb.set_drums)      cb.set_drums(drums);            break;
+        case MP_WORLD:  if (cb.set_world)      cb.set_world(world_i);            break;
+        case MP_SPACE:  if (cb.set_space)      cb.set_space (space  / 100.0f);   break;
+        case MP_ATMOS:  if (cb.set_atmosphere) cb.set_atmosphere(atmos / 100.0f);break;
+        case MP_MOTION: if (cb.set_motion)     cb.set_motion(motion / 100.0f);   break;
+        case MP_AGE:    if (cb.set_age)        cb.set_age   (age    / 100.0f);   break;
         default: break;
     }
 }
@@ -64,14 +62,16 @@ static void apply_current(void) {
  * Called when the user changes the WORLD value. */
 static void load_world_preset(void) {
     const world_t *w = worlds_get(world_i);
-    space = w->space_pct;
-    tone  = w->tone_pct;
-    atmos = w->atmos_pct;
+    space  = w->space_pct;
+    atmos  = w->atmos_pct;
+    motion = w->motion_pct;
+    age    = w->age_pct;
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
-    if (cb.set_space)      cb.set_space(space / 100.0f);
-    if (cb.set_tone)       cb.set_tone (tone  / 100.0f);
-    if (cb.set_atmosphere) cb.set_atmosphere(atmos / 100.0f);
+    if (cb.set_space)      cb.set_space     (space  / 100.0f);
+    if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
+    if (cb.set_motion)     cb.set_motion    (motion / 100.0f);
+    if (cb.set_age)        cb.set_age       (age    / 100.0f);
 }
 
 void menu_init(const menu_callbacks_t *cbs) {
@@ -81,11 +81,11 @@ void menu_init(const menu_callbacks_t *cbs) {
     world_i = 0;
     {
         const world_t *w = worlds_get(0);
-        space = w->space_pct;
-        tone  = w->tone_pct;
-        atmos = w->atmos_pct;
+        space  = w->space_pct;
+        atmos  = w->atmos_pct;
+        motion = w->motion_pct;
+        age    = w->age_pct;
     }
-    drums = 0;
     set_world_accent(false);       /* boot world's tint (world 0), snap */
     /* Don't push the macro defaults here — the engine sets its own at
      * engine_init. The accent IS set: it's a display concern, not an engine
@@ -102,7 +102,7 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "World","Space","Tone","Atmosphere","Drums"
+        "World","Space","Atmosphere","Motion","Age"
     };
     return LABELS[cur];
 }
@@ -110,17 +110,17 @@ const char *menu_current_label(void) {
 int menu_value_index(menu_param_t p) {
     switch (p) {
         case MP_WORLD: return world_i;
-        case MP_DRUMS: return drums;
         default: return 0;
     }
 }
 
 int menu_value_int(menu_param_t p) {
     switch (p) {
-        case MP_SPACE: return space;
-        case MP_TONE:  return tone;
-        case MP_ATMOS: return atmos;
-        default:       return 0;
+        case MP_SPACE:  return space;
+        case MP_ATMOS:  return atmos;
+        case MP_MOTION: return motion;
+        case MP_AGE:    return age;
+        default:        return 0;
     }
 }
 
@@ -129,19 +129,18 @@ int menu_value_int(menu_param_t p) {
 int menu_value_count(menu_param_t p) {
     switch (p) {
         case MP_WORLD: return worlds_count();
-        case MP_DRUMS: return 2;
-        default:       return 0;   /* SPACE / TONE / ATMOS = % */
+        default:       return 0;   /* SPACE / ATMOS / MOTION / AGE = % */
     }
 }
 
 const char *menu_current_value_text(void) {
     static char buf[12];
     switch (cur) {
-        case MP_WORLD: return worlds_get(world_i)->name;
-        case MP_DRUMS: return DRUMS_NAMES[drums];
-        case MP_SPACE: snprintf(buf, sizeof buf, "%d%%", space); return buf;
-        case MP_TONE:  snprintf(buf, sizeof buf, "%d%%", tone);  return buf;
-        case MP_ATMOS: snprintf(buf, sizeof buf, "%d%%", atmos); return buf;
+        case MP_WORLD:  return worlds_get(world_i)->name;
+        case MP_SPACE:  snprintf(buf, sizeof buf, "%d%%", space);  return buf;
+        case MP_ATMOS:  snprintf(buf, sizeof buf, "%d%%", atmos);  return buf;
+        case MP_MOTION: snprintf(buf, sizeof buf, "%d%%", motion); return buf;
+        case MP_AGE:    snprintf(buf, sizeof buf, "%d%%", age);    return buf;
         default: return "";
     }
 }
@@ -167,10 +166,10 @@ void menu_rotate(int delta) {
             world_i = wrapi(world_i + delta, worlds_count());
             load_world_preset();        /* selecting a world loads its preset */
             return;                     /* preset push covers the callbacks   */
-        case MP_SPACE: space = clampi(space + delta, 0, 100); break;
-        case MP_TONE:  tone  = clampi(tone  + delta, 0, 100); break;
-        case MP_ATMOS: atmos = clampi(atmos + delta, 0, 100); break;
-        case MP_DRUMS: drums = wrapi(drums + delta, 2); break;
+        case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
+        case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;
+        case MP_MOTION: motion = clampi(motion + delta, 0, 100); break;
+        case MP_AGE:    age    = clampi(age    + delta, 0, 100); break;
         default: break;
     }
     apply_current();

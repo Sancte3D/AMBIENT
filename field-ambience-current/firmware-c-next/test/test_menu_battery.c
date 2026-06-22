@@ -16,20 +16,21 @@ static int g_checks = 0, g_fails = 0;
 
 /* Capture which engine setters were called and with what. (DRONE / HOLD /
  * SHIFT / GENERATE / CLEAR are MODIFIER BUTTONS, not menu entries — no
- * callbacks here.) */
+ * callbacks here. Tone + Drums dropped in r18.58 — Tone duplicated the
+ * Brightness encoder, Drums needs an adaptive-drums engine we don't have.) */
 static struct {
-    int   world, drums;
-    float space, tone, atmos;
+    int   world;
+    float space, atmos, motion, age;
 } st;
-static void cb_world(int v)   { st.world = v; }
-static void cb_space(float v) { st.space = v; }
-static void cb_tone (float v) { st.tone  = v; }
-static void cb_atmos(float v) { st.atmos = v; }
-static void cb_drums(int v)   { st.drums = v; }
+static void cb_world (int v)   { st.world  = v; }
+static void cb_space (float v) { st.space  = v; }
+static void cb_atmos (float v) { st.atmos  = v; }
+static void cb_motion(float v) { st.motion = v; }
+static void cb_age   (float v) { st.age    = v; }
 
 static void init(void) {
     memset(&st, 0, sizeof st);
-    menu_callbacks_t cb = { cb_world, cb_space, cb_tone, cb_atmos, cb_drums };
+    menu_callbacks_t cb = { cb_world, cb_space, cb_atmos, cb_motion, cb_age };
     menu_init(&cb);
 }
 
@@ -67,9 +68,10 @@ static void test_edit_world_cycles_4_and_loads_preset(void) {
     menu_rotate(1);                       /* → Crystal Coast */
     CHECK(menu_world_index() == 1, "world+1 != 1");
     CHECK(st.world == 1, "set_world not called with 1: got %d", st.world);
-    /* selecting a world loads its preset → space/tone/atmos callbacks fire */
-    CHECK(st.space > 0.0f, "world change should push space preset");
-    CHECK(st.tone  > 0.0f, "world change should push tone preset");
+    /* selecting a world loads its preset → space/atmos/motion/age callbacks fire */
+    CHECK(st.space  > 0.0f, "world change should push space preset");
+    CHECK(st.motion > 0.0f, "world change should push motion preset");
+    CHECK(st.age    > 0.0f, "world change should push age preset");
 
     /* 4 worlds → wrap back to Tokyo City */
     for (int i = 0; i < 3; ++i) menu_rotate(1);
@@ -97,19 +99,26 @@ static void test_continuous_steps_by_tick_and_clamps(void) {
     CHECK(st.space == 0.0f, "callback space didn't reach 0");
 }
 
-static void test_drums_toggle(void) {
+static void test_motion_and_age_macros(void) {
     init();
-    for (int i = 0; i < (int)MP_DRUMS; ++i) menu_rotate(1);
-    CHECK(menu_current() == MP_DRUMS, "didn't reach DRUMS");
+    /* navigate to MOTION (slot 3) and bump it up; check the engine setter
+     * fires with the expected scaled value. Same for AGE (slot 4). */
+    for (int i = 0; i < (int)MP_MOTION; ++i) menu_rotate(1);
+    CHECK(menu_current() == MP_MOTION, "didn't reach MOTION");
     menu_push();
-    CHECK(menu_value_index(MP_DRUMS) == 0, "drums init != Off");
-    CHECK(strcmp(menu_current_value_text(), "Off") == 0, "drums text != Off");
+    int v0 = menu_value_int(MP_MOTION);
+    menu_rotate(+25);
+    CHECK(menu_value_int(MP_MOTION) == v0 + 25, "motion value didn't move");
+    CHECK(st.motion > 0.0f && st.motion <= 1.0f, "motion cb out of range: %g", (double)st.motion);
+
+    menu_push();  /* back to browse */
     menu_rotate(+1);
-    CHECK(menu_value_index(MP_DRUMS) == 1, "drums didn't toggle to On");
-    CHECK(strcmp(menu_current_value_text(), "On") == 0, "drums text != On");
-    CHECK(st.drums == 1, "set_drums not called with 1");
-    menu_rotate(+1);                      /* wraps back to Off */
-    CHECK(menu_value_index(MP_DRUMS) == 0, "drums didn't wrap to Off");
+    CHECK(menu_current() == MP_AGE, "didn't reach AGE");
+    menu_push();
+    int a0 = menu_value_int(MP_AGE);
+    menu_rotate(+10);
+    CHECK(menu_value_int(MP_AGE) == a0 + 10, "age value didn't move");
+    CHECK(st.age > 0.0f && st.age <= 1.0f, "age cb out of range: %g", (double)st.age);
 }
 
 static void test_browse_nav_ignores_accel(void) {
@@ -181,7 +190,7 @@ int main(void) {
     test_push_toggles_mode();
     test_edit_world_cycles_4_and_loads_preset();
     test_continuous_steps_by_tick_and_clamps();
-    test_drums_toggle();
+    test_motion_and_age_macros();
     test_browse_nav_ignores_accel();
     test_world_does_not_drift();
     test_subtitle_present();

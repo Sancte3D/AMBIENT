@@ -312,23 +312,23 @@ const GS_MID  = 'rgba(255,255,255,0.60)';
 const GS_VAL  = 'rgba(255,255,255,0.86)';
 const GS_ACTIVE = '#ffffff';
 
-const MP_WORLD = 0, MP_SPACE = 1, MP_TONE = 2, MP_ATMOS = 3, MP_DRUMS = 4,
+/* r18.58 — Reddit-style perform macros: World/Space/Atmos/Motion/Age. */
+const MP_WORLD = 0, MP_SPACE = 1, MP_ATMOS = 2, MP_MOTION = 3, MP_AGE = 4,
       MP_COUNT = 5;
-const LABELS = ['World','Space','Tone','Atmosphere','Drums'];
+const LABELS = ['World','Space','Atmosphere','Motion','Age'];
 const WORLD_NAMES = ['Tokyo City','Crystal Coast','Midnight Drive','After Hours'];
 const WORLD_SUBTITLE = ['night . rain','sunset . waves','highway . wind','3am . vinyl'];
-const WORLD_PRESET = [  /* space, tone, atmos */
-  { space: 42, tone: 50, atmos: 35 },
-  { space: 30, tone: 70, atmos: 25 },
-  { space: 40, tone: 45, atmos: 45 },
-  { space: 55, tone: 30, atmos: 50 },
+const WORLD_PRESET = [  /* space, atmos, motion, age */
+  { space: 42, atmos: 35, motion: 40, age: 30 },
+  { space: 30, atmos: 25, motion: 60, age: 20 },
+  { space: 40, atmos: 45, motion: 30, age: 50 },
+  { space: 55, atmos: 50, motion: 20, age: 70 },
 ];
-const DRUMS_NAMES = ['Off','On'];
 const WORLD_COUNT = 4;
 
 const state = {
   cur: MP_WORLD, mode: 'browse',
-  world_i: 0, space: 42, tone: 50, atmos: 35, drums: 0,
+  world_i: 0, space: 42, atmos: 35, motion: 40, age: 30,
   drive: 30, brightness: 50, vol: 30, backlight: 80,
   shift: false,
   battery_pct: 72, usb: false,
@@ -344,30 +344,28 @@ const clamp  = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
 const lerp   = (a, b, t) => a + (b - a) * t;
 
 function valueCount(p) {
-  switch (p) { case MP_WORLD: return WORLD_COUNT; case MP_DRUMS: return 2; default: return 0; }
+  switch (p) { case MP_WORLD: return WORLD_COUNT; default: return 0; }
 }
 function valueIndex(p) {
-  switch (p) {
-    case MP_WORLD: return state.world_i;
-    case MP_DRUMS: return state.drums;
-  }
+  switch (p) { case MP_WORLD: return state.world_i; }
   return 0;
 }
 function valueInt(p) {
   switch (p) {
-    case MP_SPACE: return state.space;
-    case MP_TONE:  return state.tone;
-    case MP_ATMOS: return state.atmos;
+    case MP_SPACE:  return state.space;
+    case MP_ATMOS:  return state.atmos;
+    case MP_MOTION: return state.motion;
+    case MP_AGE:    return state.age;
   }
   return 0;
 }
 function valueText() {
   switch (state.cur) {
     case MP_WORLD: return WORLD_NAMES[state.world_i];
-    case MP_DRUMS: return DRUMS_NAMES[state.drums];
-    case MP_SPACE: return Math.round(anim.fillT) + '%';
-    case MP_TONE:  return Math.round(anim.fillT) + '%';
-    case MP_ATMOS: return Math.round(anim.fillT) + '%';
+    case MP_SPACE:
+    case MP_ATMOS:
+    case MP_MOTION:
+    case MP_AGE:   return Math.round(anim.fillT) + '%';
   }
   return '';
 }
@@ -375,7 +373,10 @@ function curIsContinuous() { return valueCount(state.cur) === 0; }
 
 function loadWorldPreset() {
   const p = WORLD_PRESET[state.world_i];
-  state.space = p.space; state.tone = p.tone; state.atmos = p.atmos;
+  state.space  = p.space;
+  state.atmos  = p.atmos;
+  state.motion = p.motion;
+  state.age    = p.age;
 }
 
 function rotate(delta) {
@@ -390,10 +391,10 @@ function rotate(delta) {
   let changed = false;
   switch (state.cur) {
     case MP_WORLD:  state.world_i = wrap(state.world_i + Math.sign(delta), WORLD_COUNT); loadWorldPreset(); changed = true; break;
-    case MP_SPACE:  state.space   = clamp(state.space + delta, 0, 100); changed = true; break;
-    case MP_TONE:   state.tone    = clamp(state.tone  + delta, 0, 100); changed = true; break;
-    case MP_ATMOS:  state.atmos   = clamp(state.atmos + delta, 0, 100); changed = true; break;
-    case MP_DRUMS:  state.drums   = wrap(state.drums + Math.sign(delta), 2); changed = true; break;
+    case MP_SPACE:  state.space   = clamp(state.space  + delta, 0, 100); changed = true; break;
+    case MP_ATMOS:  state.atmos   = clamp(state.atmos  + delta, 0, 100); changed = true; break;
+    case MP_MOTION: state.motion  = clamp(state.motion + delta, 0, 100); changed = true; break;
+    case MP_AGE:    state.age     = clamp(state.age    + delta, 0, 100); changed = true; break;
   }
   if (changed) onValueChange();
 }
