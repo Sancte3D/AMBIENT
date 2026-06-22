@@ -12,9 +12,13 @@
  */
 
 #include "oled_color.h"
-#include <math.h>
 
+/* No libm: the pico bench build links no math lib, and a tint fade does not
+ * justify pulling one in. The one-pole coefficient dt/(tau+dt) is the same
+ * libm-free smoother drone.c uses for pitch drift. */
 #define ACCENT_TAU_MS  120.0f         /* crossfade time constant */
+
+static inline float absf_(float x) { return x < 0.0f ? -x : x; }
 
 static float   live_r = 255.0f, live_g = 255.0f, live_b = 255.0f;
 static uint8_t tgt_r  = 255,    tgt_g  = 255,    tgt_b  = 255;
@@ -69,14 +73,14 @@ int oled_accent_tick(uint32_t now_ms) {
     float dr = (float)tgt_r - live_r, dg = (float)tgt_g - live_g, db = (float)tgt_b - live_b;
     if (dr == 0.0f && dg == 0.0f && db == 0.0f) return 0;
 
-    float k = 1.0f - expf(-(float)dt / ACCENT_TAU_MS);
+    float k = (float)dt / (ACCENT_TAU_MS + (float)dt);   /* one-pole, libm-free */
     if (k > 1.0f) k = 1.0f;
     live_r += dr * k; live_g += dg * k; live_b += db * k;
 
     /* snap when within half a code so we actually reach the target */
-    if (fabsf((float)tgt_r - live_r) < 0.5f) live_r = tgt_r;
-    if (fabsf((float)tgt_g - live_g) < 0.5f) live_g = tgt_g;
-    if (fabsf((float)tgt_b - live_b) < 0.5f) live_b = tgt_b;
+    if (absf_((float)tgt_r - live_r) < 0.5f) live_r = tgt_r;
+    if (absf_((float)tgt_g - live_g) < 0.5f) live_g = tgt_g;
+    if (absf_((float)tgt_b - live_b) < 0.5f) live_b = tgt_b;
 
     dirty = 1;
     return 1;
