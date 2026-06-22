@@ -51,6 +51,8 @@ void engine_set_master_volume(float vol_0_1);  /* master level (VOLUME encoder) 
 void engine_set_brightness(float hz);          /* pass-through to pad */
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-0017) */
+void engine_set_motion(float amount_0_1);      /* Pad LFO depth (perform macro) */
+void engine_set_age(float amount_0_1);         /* tape hiss + saturation combo */
 void engine_set_bass_depth(float depth_0_1);   /* famSubBass/DeepBass depth */
 void engine_set_world(int world_idx);          /* pick ambience generator (ADR-0017) */
 

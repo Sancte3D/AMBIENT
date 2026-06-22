@@ -22,13 +22,17 @@
  *   - rotate in edit mode   → change the current parameter's value
  *   - push                  → back to browse
  *
- * Parameters in the bottom pill row, in order:
+ * Parameters in the bottom pill row, in order (r18.58 — Reddit-style
+ * performance macros, drops the duplicate Brightness-encoder / Tone and
+ * the under-spec adaptive Drums):
  *   WORLD      discrete, 4 worlds   (selecting one loads its macro preset)
- *   SPACE      % reverb / hall amount
- *   TONE       % pad brightness / colour (dark ↔ bright)
- *   ATMOS      % outdoor-ambience layer level (rain / waves / traffic / vinyl)
- *   DRUMS      discrete, Off / On   (per-world appropriate pattern, user asked
- *              for this to be a menu toggle)
+ *   SPACE      % reverb size + decay + wet (one macro = many internal params)
+ *   ATMOS      % ambience layer level (rain / waves / wind / vinyl per world)
+ *   MOTION     % pad LFO depth (filter sweep movement — the "alive" feel)
+ *   AGE        % tape hiss + saturation drive (the "vinyl/cassette" feel)
+ *
+ * DRIVE + BRIGHTNESS sit on dedicated encoders (params.c) — not menu entries
+ * so they never duplicate-fight the menu.
  *
  * DRONE / HOLD / SHIFT / GENERATE / CLEAR are MODIFIER BUTTONS (hardware), not
  * menu entries — so software and hardware never compete for the same value.
@@ -49,9 +53,9 @@ typedef enum {
 typedef enum {
     MP_WORLD = 0,
     MP_SPACE,
-    MP_TONE,
     MP_ATMOS,
-    MP_DRUMS,
+    MP_MOTION,
+    MP_AGE,
     MP_COUNT
 } menu_param_t;
 
@@ -68,9 +72,9 @@ typedef enum {
 typedef struct {
     void (*set_world)      (int idx);                /* 0..MENU_WORLD_COUNT-1 */
     void (*set_space)      (float v01);              /* reverb / hall amount  */
-    void (*set_tone)       (float v01);              /* pad brightness        */
     void (*set_atmosphere) (float v01);              /* ambience layer level  */
-    void (*set_drums)      (int on);                 /* 0 = off, 1 = on       */
+    void (*set_motion)     (float v01);              /* pad LFO depth         */
+    void (*set_age)        (float v01);              /* tape hiss + sat       */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

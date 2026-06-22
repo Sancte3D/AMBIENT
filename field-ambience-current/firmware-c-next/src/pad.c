@@ -71,6 +71,7 @@ static int   ctl_phase;             /* shared control-rate counter */
 static float bright_target;         /* brightness offset target (Hz) */
 static float bright_cur;            /* smoothed brightness */
 static float bright_coef;           /* per-control-block smoothing coef */
+static float motion_depth = 1.0f;   /* LFO-depth multiplier (Motion macro) */
 
 /* Oscillator layout per side: 0,1,2 = saws (×1, ×freqMul, ×0.5),
  * 3,4 = squares (×1, ×freqMul). Frequency multipliers below; the second-saw
@@ -101,6 +102,7 @@ void pad_init(void) {
 }
 
 void pad_set_brightness(float hz) { bright_target = hz; }
+void pad_set_motion(float d)      { motion_depth = dsp_clampf(d, 0.0f, 2.0f); }
 
 /* Global pad-voice timbre. 0 = warm (pure saw), ~0.6 = strings, ~1.2 = brass
  * (matches the webapp PAD_VOICE_MIXES). Smoothed across all voices. */
@@ -241,7 +243,7 @@ static void side_control(pad_side_t *s) {
     }
 
     float cutoff = s->cutoffBase
-                 + lfo  * s->cutoffMod * 0.5f
+                 + lfo  * s->cutoffMod * 0.5f * motion_depth
                  + s->fenv * s->cutoffMod * s->fenvAmount
                  + bright_cur;
     dsp_svf_set(&s->svf, dsp_clampf(cutoff, 80.0f, 8000.0f), 0.18f * 12.0f);

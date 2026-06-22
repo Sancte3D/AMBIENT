@@ -216,6 +216,20 @@ void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1
 void engine_set_world(int idx)        { ambience_set_world(idx); }
 void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
 
+/* Perform-macros: combine multiple internal params under one user knob. */
+void engine_set_motion(float v) {
+    v = dsp_clampf(v, 0.0f, 1.0f);
+    /* user 0..1 → pad-LFO depth 0..2 (centre 0.5 = default movement). */
+    pad_set_motion(v * 2.0f);
+}
+void engine_set_age(float v) {
+    v = dsp_clampf(v, 0.0f, 1.0f);
+    /* user 0..1 → hiss 0..0.015 (≈ -36 dBFS at max) + sat drive 1.0..1.40.
+     * v=0.30 lands near the dreamy_warm reference (hiss 0.005, drive 1.10). */
+    tape_set_hiss_amount(v * 0.015f);
+    tape_set_saturation_drive(1.0f + v * 0.40f);
+}
+
 /* Step 12b #1 — musical-state setters. Each triggers a preset recompute so
  * the reverb shifts character with the mode/vibe/macro change. The reverb
  * itself smooths internally (~120 ms), so the transition is glide-not-step

@@ -29,11 +29,12 @@ typedef struct {
     uint8_t     accent_g;
     uint8_t     accent_b;
     uint8_t     space_pct;         /* macro defaults (0..100) — loaded on    */
-    uint8_t     tone_pct;          /* world-change; user can then nudge from  */
-    uint8_t     atmos_pct;         /* there                                   */
-    /* Phase 2/3 slots are intentionally left out of the struct for now —    */
-    /* they'll be added when the modules they feed exist, so we don't        */
-    /* commit to an interface we can't validate yet.                         */
+    uint8_t     atmos_pct;         /* world-change; user can then nudge from  */
+    uint8_t     motion_pct;        /* LFO-Depth / Pad-Movement (Reddit Motion)*/
+    uint8_t     age_pct;           /* Tape-Hiss + Saturation (Reddit Age)     */
+    /* Phase 3 slots are intentionally left out for now — they'll be added
+     * when the modules they feed exist, so we don't commit to an interface
+     * we can't validate yet. */
 } world_t;
 
 /* Get the immutable descriptor for a world index. Index is clamped to

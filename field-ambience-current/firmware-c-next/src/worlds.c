@@ -21,25 +21,29 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .name = "Tokyo City",
         .subtitle = "night . rain",
         .accent_r = 175, .accent_g = 205, .accent_b = 255,   /* cool blue */
-        .space_pct = 42, .tone_pct = 50, .atmos_pct = 35,
+        .space_pct = 42, .atmos_pct = 35,
+        .motion_pct = 40, .age_pct = 30,
     },
     {
         .name = "Crystal Coast",
         .subtitle = "sunset . waves",
         .accent_r = 180, .accent_g = 245, .accent_b = 240,   /* aqua */
-        .space_pct = 30, .tone_pct = 70, .atmos_pct = 25,
+        .space_pct = 30, .atmos_pct = 25,
+        .motion_pct = 60, .age_pct = 20,
     },
     {
         .name = "Midnight Drive",
         .subtitle = "highway . wind",
         .accent_r = 220, .accent_g = 180, .accent_b = 255,   /* violet */
-        .space_pct = 40, .tone_pct = 45, .atmos_pct = 45,
+        .space_pct = 40, .atmos_pct = 45,
+        .motion_pct = 30, .age_pct = 50,
     },
     {
         .name = "After Hours",
         .subtitle = "3am . vinyl",
         .accent_r = 255, .accent_g = 205, .accent_b = 150,   /* warm amber */
-        .space_pct = 55, .tone_pct = 30, .atmos_pct = 50,
+        .space_pct = 55, .atmos_pct = 50,
+        .motion_pct = 20, .age_pct = 70,
     },
 };
 

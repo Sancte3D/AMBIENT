@@ -56,17 +56,16 @@
 #define MCP_BIT_GENERATE  3
 #define MCP_BIT_CLEAR     4
 
-/* Menu → engine binding (ADR-0017 Phase 4). The menu state machine doesn't
- * know about engine.h; it calls the user-supplied callbacks. Wire them here
- * so a World/Space/Tone/Atmos/Drums change in the UI actually drives the
- * engine (Worlds module + Ambience + Tape are otherwise idle from the
- * user's perspective). Synchronous from menu_rotate/menu_push — never from
- * the audio thread. */
+/* Menu → engine binding (ADR-0017 Phase 4, r18.58 Reddit-macro pass).
+ * Menu slots are now World/Space/Atmos/Motion/Age — Tone was dropped (it
+ * duplicated the Brightness encoder) and Drums was dropped (adaptive drums
+ * is its own can of worms; we ship sound, not timing). Synchronous from
+ * menu_rotate/menu_push, never from the audio thread. */
 static void hal_set_world      (int   idx) { engine_set_world(idx); }
 static void hal_set_space      (float v)   { engine_set_space(v); }
-static void hal_set_tone       (float v)   { engine_set_brightness(800.0f + v * 4200.0f); }
 static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
-static void hal_set_drums      (int   on)  { (void)on;  /* Phase: drums.c lift */ }
+static void hal_set_motion     (float v)   { engine_set_motion(v); }
+static void hal_set_age        (float v)   { engine_set_age(v); }
 
 int main(void) {
     /* TODO(Step 13.3): SystemClock_Config(); HAL_Init(); SysTick at 1 kHz. */
@@ -81,13 +80,13 @@ int main(void) {
     brain_init();
     engine_init();
     {
-        /* ADR-0017 Phase 4: menu → engine wiring */
+        /* ADR-0017 Phase 4 + r18.58 Reddit-macro menu */
         menu_callbacks_t cb = {
             .set_world      = hal_set_world,
             .set_space      = hal_set_space,
-            .set_tone       = hal_set_tone,
             .set_atmosphere = hal_set_atmosphere,
-            .set_drums      = hal_set_drums,
+            .set_motion     = hal_set_motion,
+            .set_age        = hal_set_age,
         };
         menu_init(&cb);
     }
