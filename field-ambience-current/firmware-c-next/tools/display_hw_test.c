@@ -305,10 +305,11 @@ enum {
     A_LABELC,     /* 0 = browse label tone, 1 = edit tone        */
     A_OVALPHA,    /* overlay fade                                */
     A_OVFILL,     /* animated 0..100 for the overlay fill        */
+    A_PILLBLOOM,  /* active-pill scale pop on arrival (1.25 → 1.0) */
     A_COUNT
 };
 
-static float anim[A_COUNT] = { 0, 1, 20, 0, 1, 0, 0, 0 };
+static float anim[A_COUNT] = { 0, 1, 20, 0, 1, 0, 0, 0, 1 };
 
 typedef struct {
     bool     on;
@@ -384,6 +385,11 @@ static void on_cur_change(int dir, uint32_t now) {
     tween_to(A_BART, (float)menu_current(), 240, now);
     if (cur_is_continuous())
         tween_to(A_FILLT, (float)menu_value_int(menu_current()), 240, now);
+    /* Scale-pop on the active pill: jump to 1.25×, ease back to 1.0× over
+     * 260 ms. Reads as a snappy "arrived" beat without competing with the
+     * slide itself. */
+    anim[A_PILLBLOOM] = 1.25f;
+    tween_to(A_PILLBLOOM, 1.0f, 260, now);
 }
 
 static void on_value_change(uint32_t now) {
@@ -394,6 +400,10 @@ static void on_value_change(uint32_t now) {
         tween_to(A_BART, (float)menu_value_index(menu_current()), 180, now);
         anim[A_TEXTALPHA] = 0.35f;
         tween_to(A_TEXTALPHA, 1, 220, now);
+        /* Discrete value-change also blooms the active pill (smaller pop
+         * than on cursor-change). */
+        anim[A_PILLBLOOM] = 1.15f;
+        tween_to(A_PILLBLOOM, 1.0f, 200, now);
     }
 }
 
@@ -504,6 +514,11 @@ static void render_bar_anim(int n, float active_t, float alpha) {
         oled_pill(PAD_L, BAR_Y, (int)usable, BAR_H_ACT, gs_a(GS_ACTIVE, alpha));
         return;
     }
+    /* Scale-pop on the visually-active pill only: di == 1 marks the focus,
+     * less-active pills stay un-bloomed. bloom_scale rides anim[A_PILLBLOOM]
+     * but is applied multiplicatively against the active-vs-inactive lerp,
+     * so a mid-slide doesn't pop both pills together. */
+    float bloom = anim[A_PILLBLOOM];
     float x = PAD_L;
     for (int i = 0; i < n; ++i) {
         float di = 1.0f - (active_t > (float)i ? active_t - (float)i
@@ -511,6 +526,12 @@ static void render_bar_anim(int n, float active_t, float alpha) {
         if (di < 0) di = 0;
         float w = ina + di * (act - ina);
         float h = (float)BAR_H_INA + di * (float)(BAR_H_ACT - BAR_H_INA);
+        /* bloom only the pill we're (near-)centred on. di near 1.0 → full
+         * bloom; di mid-slide → blended. */
+        float bs = 1.0f + (bloom - 1.0f) * di;
+        if (bs < 1.0f) bs = 1.0f;
+        w *= bs;
+        h *= bs;
         int   hi = (int)(h + 0.5f);
         int   yy = BAR_Y + (BAR_H_ACT - hi) / 2;
         float a  = 0.20f + di * 0.80f;          /* dim → active brightness  */
