@@ -121,7 +121,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # Step 12b #7: menu state machine + battery curve
 "$CC" "${CFLAGS[@]}" \
     "$here/test_menu_battery.c" \
-    "$src/src/menu.c" "$src/src/battery.c" \
+    "$src/src/menu.c" "$src/src/battery.c" "$src/src/worlds.c" \
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/menu_test"
 "$tmp/menu_test"
@@ -132,6 +132,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/oled_color.c" \
     -lm -o "$tmp/oled_color_test"
 "$tmp/oled_color_test"
+
+# ADR-0017 Phase 1: worlds module (single source of truth for the 4 worlds)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_worlds.c" \
+    "$src/src/worlds.c" \
+    -lm -o "$tmp/worlds_test"
+"$tmp/worlds_test"
 
 # Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass
 # and, from Step-12b #1 on, the reverb_presets + brain modules too)
@@ -170,7 +177,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # SDK headers in test/pico_stubs/ (host build of a device-only tool).
 "$CC" "${CFLAGS[@]}" -I"$here/pico_stubs" -I"$src/tools" \
     "$here/test_display_bench.c" \
-    "$src/src/menu.c" "$src/src/battery.c" \
+    "$src/src/menu.c" "$src/src/battery.c" "$src/src/worlds.c" \
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/bench_test"
 "$tmp/bench_test"
