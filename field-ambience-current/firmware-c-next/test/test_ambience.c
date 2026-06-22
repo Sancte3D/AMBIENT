@@ -152,6 +152,18 @@ int main(void) {
           (double)peak_coast, (double)peak_wind_only);
     CHECK(peak_coast < 1.0f, "Coast peak unbounded (%g)", (double)peak_coast);
 
+    /* 8: Phase 2d — After Hours (world 3) gets vinyl on top of wind. Vinyl
+     * is continuous (crackle + rumble) plus sparse pops; RMS must clearly
+     * exceed wind-only. Bounded. */
+    ambience_init(); ambience_set_world(2);   /* Drive: wind only */
+    float rms_wind_only = run_rms(1.0f);
+    ambience_init(); ambience_set_world(3);   /* After Hours: wind + vinyl */
+    float rms_hours = run_rms(1.0f);
+    CHECK(rms_hours > rms_wind_only * 1.20f,
+          "After Hours+vinyl not louder than Drive+wind-only (hours=%g, wind=%g)",
+          (double)rms_hours, (double)rms_wind_only);
+    CHECK(rms_hours < 1.0f, "After Hours rms unbounded (%g)", (double)rms_hours);
+
     printf("%d checks, %d failures\n", g_checks, g_fails);
     printf("RESULT: %s\n", g_fails ? "FAIL" : "PASS");
     return g_fails ? 1 : 0;

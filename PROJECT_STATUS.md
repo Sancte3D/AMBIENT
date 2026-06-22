@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.51 — ambience Phase 2c: waves for Coast)**
+**Updated: 2026-06-22 (r18.52 — ambience Phase 2d: vinyl for After Hours = Phase 2 complete)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -62,7 +62,7 @@ product build.
 | `drone.c`, `bass.c`, `brain.c` | ✅ |
 | 4-world sound spec (Tokyo / Coast / Drive / After Hours) | 🟠 only as `tools/render_worlds.c` |
 | Universal wind generator (resonant BP, pink noise, gusts) | 🟠 inline in render_worlds.c |
-| Per-world ambience layer in engine (ADR-0017 Phase 2) | 🟡 r18.49/.50/.51 — Wind universal + Rain Tokyo + Waves Coast; Vinyl (After Hours) Phase 2d offen |
+| Per-world ambience layer in engine (ADR-0017 Phase 2 KOMPLETT) | ✅ r18.49-.52 — Wind universal + Rain Tokyo + Waves Coast + Vinyl After Hours. Drive bekommt Wind als „highway" (kein dedizierter Traffic-Generator, Wind ist character-genug). |
 | Worlds-Modul (single source of truth) | ✅ r18.48 `src/worlds.c` + `worlds.h` (ADR-0017 Phase 1) — Lift aus menu.c, exakte RGB/Preset-Erhaltung per Test |
 | Tape-hiss generator | 🟠 inline in render_dreamy_warm.c |
 | Warm-tanh master saturation | 🟠 inline in render_dreamy_warm.c |
