@@ -31,6 +31,16 @@ static brown_t   brown[2];           /* L, R independent streams */
 static dsp_svf_t rumbleLP[2];        /* lowpass 220 Hz   */
 static dsp_svf_t breathBP[2];        /* bandpass 600 Hz, swept */
 static dsp_svf_t warmLP[2];          /* lowpass 4500 Hz  */
+/* Tier A #5 — independent white noise + HP at ~3 kHz for the missing "air"
+ * band in the dreamy/PS2 mix. Runs at 0.18× the bed level — present, not
+ * loud (RMS roughly −44 dBFS at amount=1.0, well under the breath body). */
+static dsp_svf_t airHP[2];           /* highpass 3000 Hz */
+typedef struct { uint32_t lcg; } air_t;
+static air_t airN[2];
+static inline float air_white(air_t *a){
+    a->lcg = a->lcg * 1664525u + 1013904223u;
+    return (float)((int32_t)a->lcg) / 2147483648.0f;
+}
 
 static float sweep_phase;            /* 0.052 Hz — BP centre sweep */
 static float breath_phase;           /* 0.04 Hz  — breath amp pulse */
@@ -54,7 +64,9 @@ void texture_init(void) {
         dsp_svf_reset(&rumbleLP[c]); dsp_svf_set(&rumbleLP[c], 220.0f, 0.707f);
         dsp_svf_reset(&breathBP[c]); dsp_svf_set(&breathBP[c], 600.0f, 1.6f);
         dsp_svf_reset(&warmLP[c]);   dsp_svf_set(&warmLP[c],   4500.0f, 0.707f);
+        dsp_svf_reset(&airHP[c]);    dsp_svf_set(&airHP[c],    3000.0f, 0.707f);
     }
+    airN[0].lcg = 0xBEEFFACEu; airN[1].lcg = 0xFACECAFEu;   /* decorrelated */
     sweep_phase = 0.0f;
     breath_phase = 0.0f;
     breath_gain = 0.5f;
@@ -97,10 +109,15 @@ void texture_render_mix(float *dry_L, float *dry_R,
 
         for (int c = 0; c < 2; ++c) {
             float nz = brown_next(&brown[c]);
-            float rumble = dsp_svf_lp(&rumbleLP[c], nz) * 0.35f;
+            /* Tier A #4 — body weight dropped 0.35 → 0.10: removes the
+             * "Brumm" the user heard at amount ≥ 0.12, keeps a hint of low
+             * warmth so the bed isn't only breath. */
+            float rumble = dsp_svf_lp(&rumbleLP[c], nz) * 0.10f;
             float breath = dsp_svf_bp(&breathBP[c], nz) * breath_gain;
             float warm   = dsp_svf_lp(&warmLP[c], rumble + breath);
-            float out    = warm * amp_cur;
+            /* Tier A #5 — air band, parallel (NOT through warmLP). */
+            float air    = dsp_svf_hp(&airHP[c], air_white(&airN[c])) * 0.18f;
+            float out    = (warm + air) * amp_cur;
 
             if (c == 0) { dry_L[n] += out; send_L[n] += out * send_amount; }
             else        { dry_R[n] += out; send_R[n] += out * send_amount; }

@@ -145,7 +145,22 @@ void engine_init(void) {
     master_vol_cur = master_vol_tgt = 0.6f;
 }
 
+/* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
+ * audibly, but enough that two consecutive identical cell taps aren't
+ * bit-identical → no "mechanical" feel on repeats. */
+static uint32_t humanize_rng = 0xA5C3F19Du;
+static inline float humanize_rand_unit(void){      /* in [-1, +1] */
+    humanize_rng = humanize_rng * 1664525u + 1013904223u;
+    return ((int32_t)humanize_rng) * (1.0f / 2147483648.0f);
+}
+
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
+    /* ±0.5 cent pitch jitter, ±0.3 % amp jitter. Bass / drone get the same
+     * freq downstream (refresh_bass) so the jitter is consistent per press. */
+    float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);   /* cents */
+    float amp_jitter   = humanize_rand_unit() * 0.003f;
+    freq_hz *= 1.0f + pitch_jitter;                    /* 2^(jit) ≈ 1+jit at tiny jit */
+    amp     *= 1.0f + amp_jitter;
     pad_note_on(source, freq_hz, amp);
     if (source < MAX_SOURCES) active_freq[source] = freq_hz;
     refresh_bass();

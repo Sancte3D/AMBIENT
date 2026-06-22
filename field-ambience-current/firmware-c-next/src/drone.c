@@ -71,6 +71,21 @@ static float fenvAtkInc, fenvDecCoef;
 
 static int   ctl_phase;
 
+/* Tier A #3 — drift + breath. Random walk on pitch (±2 cents, tau ~18 s) so
+ * the drone never sits exactly still; breath tremolo (0.04 Hz, ±0.5 dB) on
+ * the amp env so the amplitude breathes. Classic Eno-style drone trick. */
+#define DRIFT_PEAK_CENTS  2.0f
+#define DRIFT_TAU_S       18.0f
+#define BREATH_HZ         0.04f
+#define BREATH_DB         0.5f
+static float drift_cents;
+static float breath_phase;
+static uint32_t drift_rng = 0xD0FFEEDu;
+static inline float drift_white(void){
+    drift_rng = drift_rng * 1664525u + 1013904223u;
+    return ((int32_t)drift_rng) * (1.0f / 2147483648.0f);
+}
+
 static void update_incs(void);       /* defined below */
 
 static float ctl_coef(float tau_s) {
@@ -98,6 +113,8 @@ void drone_init(void) {
     }
     freq_cur = freq_tgt = dsp_midi_to_hz(60.0f);   /* C4 until set */
     glide_coef = ctl_coef(GLIDE_S);
+    drift_cents = 0.0f;
+    breath_phase = 0.0f;
     env = 0.0f;
     atkInc  = DRONE_AMP / (ATTACK_S * SR);
     relCoef = dsp_smooth_coef(RELEASE_S);
@@ -144,8 +161,24 @@ static void update_incs(void) {
 }
 
 static void control_update(void) {
+    /* Tier A #3 — drift the target freq by a slow random walk; let the glide
+     * one-pole smooth it. dt_block = CTL_DECIMATE / SR per control tick. */
+    {
+        float target = drift_white() * DRIFT_PEAK_CENTS;
+        float dt     = (float)CTL_DECIMATE / SR;
+        float a      = dt / (DRIFT_TAU_S + dt);
+        drift_cents += a * (target - drift_cents);
+        /* breath LFO phase */
+        breath_phase += BREATH_HZ * dt;
+        if (breath_phase >= 1.0f) breath_phase -= 1.0f;
+    }
+    /* effective target = base target × 2^(drift/1200). Glide stays linear in
+     * Hz, which is fine for ±2 cents at low frequencies — perceptually flat. */
+    float drift_ratio = 1.0f + drift_cents * (0.6931f / 1200.0f); /* small-angle */
+    float eff_tgt = freq_tgt * drift_ratio;
+
     /* pitch glide */
-    freq_cur += glide_coef * (freq_tgt - freq_cur);
+    freq_cur += glide_coef * (eff_tgt - freq_cur);
     update_incs();
 
     /* filter envelope */
@@ -213,7 +246,10 @@ void drone_render_mix(float *dry_L, float *dry_R,
 
         if (++ctl_phase >= CTL_DECIMATE) ctl_phase = 0;
 
-        float oL = L * env, oR = R * env;
+        /* Tier A #3 — breath tremolo: ±BREATH_DB. linear gain = 10^(dB/20). */
+        float trem_db   = BREATH_DB * sinf(breath_phase * 6.2831853f);
+        float trem_gain = powf(10.0f, trem_db / 20.0f);
+        float oL = L * env * trem_gain, oR = R * env * trem_gain;
         dry_L[n]  += oL;            dry_R[n]  += oR;
         send_L[n] += oL * VERB_SEND; send_R[n] += oR * VERB_SEND;
     }
