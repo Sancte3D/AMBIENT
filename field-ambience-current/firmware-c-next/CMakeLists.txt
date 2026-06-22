@@ -87,6 +87,7 @@ set(DSP_SOURCES
     src/params.c        # encoder → engine parameter bindings + acceleration
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
     src/oled_draw.c
+    src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)
     src/baked_font.c
     src/baked_font_data.c
     src/font_8x8.c
@@ -153,6 +154,7 @@ elseif(FAM_TARGET STREQUAL "pico")
         tools/display_hw_test.c
         src/hal_pico/lcd_st7789_pico.c
         src/oled_draw.c
+        src/oled_color.c
         src/font_8x8.c
         src/baked_font.c
         src/baked_font_data.c

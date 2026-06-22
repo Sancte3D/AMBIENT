@@ -12,6 +12,7 @@
 
 #include "menu.h"
 #include "oled.h"
+#include "oled_color.h"
 #include "baked_font.h"
 #include "battery.h"
 
@@ -39,6 +40,18 @@ static const world_preset_t WORLD_PRESET[MENU_WORLD_COUNT] = {
     /* After Hours   */ { 55, 30, 50 },
 };
 
+/* Per-world DISPLAY accent (ADR-0015 step 1). A subtle cast over the OP-1
+ * monochrome UI — text stays legible, the screen takes on the world's mood.
+ * One channel stays near 255 so whites stay bright. Tune by nudging these RGBs;
+ * set all three to 255 for a pure-mono world. */
+typedef struct { uint8_t r, g, b; } world_accent_t;
+static const world_accent_t WORLD_ACCENT[MENU_WORLD_COUNT] = {
+    /* Tokyo City    — night . rain . neon  */ { 175, 205, 255 },  /* cool blue  */
+    /* Crystal Coast — sunset . waves       */ { 180, 245, 240 },  /* aqua       */
+    /* Midnight Drive— highway . wind        */ { 220, 180, 255 },  /* violet     */
+    /* After Hours   — 3am . vinyl           */ { 255, 205, 150 },  /* warm amber */
+};
+
 static const char * const DRUMS_NAMES[2] = { "Off", "On" };
 
 /* --- live state ------------------------------------------------------- */
@@ -54,6 +67,12 @@ static int           drums   = 0;         /* 0 = off, 1 = on */
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
+
+/* Push the current world's display accent to the colour layer. */
+static void apply_world_accent(void) {
+    const world_accent_t *a = &WORLD_ACCENT[world_i];
+    oled_set_accent(a->r, a->g, a->b);
+}
 
 /* Apply the current slot's value to the engine via callback. */
 static void apply_current(void) {
@@ -74,6 +93,7 @@ static void load_world_preset(void) {
     space = p->space;
     tone  = p->tone;
     atmos = p->atmos;
+    apply_world_accent();          /* tint the UI to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_space)      cb.set_space(space / 100.0f);
     if (cb.set_tone)       cb.set_tone (tone  / 100.0f);
@@ -89,7 +109,10 @@ void menu_init(const menu_callbacks_t *cbs) {
     tone  = WORLD_PRESET[0].tone;
     atmos = WORLD_PRESET[0].atmos;
     drums = 0;
-    /* Don't push defaults here — the engine sets its own at engine_init. */
+    apply_world_accent();          /* boot world's tint (world 0) */
+    /* Don't push the macro defaults here — the engine sets its own at
+     * engine_init. The accent IS set: it's a display concern, not an engine
+     * callback, and the panel should boot already tinted to world 0. */
 }
 
 /* --- state queries ---------------------------------------------------- */

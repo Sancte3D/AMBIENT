@@ -1,8 +1,21 @@
 # ADR-0015: Display-Pivot 1.9″ → 2.0″ + Farb-/Animations-Architektur
 
-**Status:** PROPOSED — Hardware-Pivot vorgeschlagen, Firmware-Pfad geplant
+**Status:** PARTIALLY IMPLEMENTED — Panel-Pivot PROPOSED (User-Verify offen);
+**Farb-Schritt 1 (Akzent-Tint) implementiert r18.44**.
 **Date:** 2026-06-22
 **Supersedes for display panel:** ADR-implicit r16 (SSD1322 → Waveshare 1.9″ ST7789V2)
+
+> **Implementation note r18.44** — Schritt 1 von D2 ist gebaut, aber *schlauer*
+> als ursprünglich skizziert: statt sofort auf einen vollen RGB565-Framebuffer
+> zu wechseln (154 KB, Rewrite jeder `oled_*`-Primitive), bleibt der 4-bit-
+> Grau-Framebuffer und der **Akzent-Tint passiert in der Grau→RGB565-Umwandlung**
+> (`src/oled_color.c`). Default-Akzent = Weiß ⇒ exakt der bisherige Mono-Look
+> (bit-genau, per Test bewiesen). Pro World eine dezente Akzentfarbe
+> (Tokyo=kühlblau, Coast=aqua, Drive=violett, AfterHours=amber). Null FB-Bloat,
+> null Draw-Layer-Rewrite, läuft schon auf dem 1.9″-Panel — der 2.0″-Pivot ist
+> davon entkoppelt. Der volle Per-Pixel-RGB565-FB bleibt **Schritt 2**, nur
+> nötig falls die UI mal beliebige Mehrfarb-Inhalte (nicht nur einen Cast)
+> braucht.
 
 ## Kontext
 

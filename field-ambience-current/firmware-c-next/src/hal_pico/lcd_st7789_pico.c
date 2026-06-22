@@ -24,6 +24,7 @@
  */
 
 #include "oled.h"
+#include "oled_color.h"          /* shared accent-tinted grey→RGB565 LUT */
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
@@ -77,17 +78,9 @@
 #define ST_MADCTL  0x36
 #define ST_COLMOD  0x3A
 
-/* grey 0..15 → RGB565 (native order; written MS-byte-first on the wire below).
- * grey8 = nib*17 (0..255); r=g=b grey ⇒ r5=b5=grey8>>3, g6=grey8>>2. */
-static uint16_t grey565[16];
-
-static void build_grey_lut(void) {
-    for (int n = 0; n < 16; ++n) {
-        int g8 = n * 17;                 /* 0,17,...,255 */
-        int r5 = g8 >> 3, g6 = g8 >> 2, b5 = g8 >> 3;
-        grey565[n] = (uint16_t)((r5 << 11) | (g6 << 5) | b5);
-    }
-}
+/* grey 0..15 → RGB565 now lives in oled_color.c (shared with the H743 driver
+ * + host preview, and carries the per-world accent tint). The default accent
+ * is white, so with no world selected this is the legacy neutral grey ramp. */
 
 /* --- low-level CS/DC-managed command + bulk data --- */
 
@@ -132,8 +125,6 @@ static void run_init_sequence(void) {
 }
 
 void oled_init(void) {
-    build_grey_lut();
-
     spi_init(LCD_SPI, LCD_SPI_HZ);
     spi_set_format(LCD_SPI, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(LCD_PIN_SCK,  GPIO_FUNC_SPI);
@@ -160,6 +151,7 @@ void oled_show(void) {
                                             (uint8_t)(ye >> 8), (uint8_t)ye }; data(d, 4); }
     cmd(ST_RAMWR);
 
+    const uint16_t *grey565 = oled_grey565_lut();   /* accent-tinted, shared */
     static uint8_t line[OLED_WIDTH * 2];   /* one row of RGB565, byte-swapped */
     lcd_dc(true);
     lcd_cs(true);

@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.43, PR #37 merged)**
+**Updated: 2026-06-22 (r18.44 — display accent colour; PR #38 open)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -94,7 +94,8 @@ product build.
 | `tools/display_sim.html` JS port | ✅ updated to world model (sim still committed, just no auto-deploy) |
 | Pico 2 bench build (`display_hw_test.uf2`) | ✅ CI RP2350 build green |
 | Engine ↔ menu callbacks wired in HAL | ⏳ `menu_callbacks_t` exists, no HAL `main_*` currently wires it |
-| **Panel-Pivot 1.9″ → 2.0″ + RGB565 + DMA-Animations-Architektur** | ⏳ ADR-0015 (r18.43, PROPOSED) — BOM-Kandidat als UNVERIFIED eingetragen |
+| **Display Akzent-Farbe pro World (Grau→RGB565-Tint)** | ✅ r18.44 `src/oled_color.c` — ADR-0015 Schritt 1; Default=Mono, pro World dezenter Cast; Host-Preview farbig |
+| **Panel-Pivot 1.9″ → 2.0″ + voller RGB565-FB + DMA-Animationen** | ⏳ ADR-0015 (PROPOSED) — Panel + Animations-Pfad; BOM-Kandidat UNVERIFIED |
 
 ### Cells / Input
 
