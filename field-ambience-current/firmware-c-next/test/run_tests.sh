@@ -122,9 +122,16 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_menu_battery.c" \
     "$src/src/menu.c" "$src/src/battery.c" \
-    "$src/src/oled_draw.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/menu_test"
 "$tmp/menu_test"
+
+# ADR-0015 step 1: accent-tinted grey→RGB565 colour LUT
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_oled_color.c" \
+    "$src/src/oled_color.c" \
+    -lm -o "$tmp/oled_color_test"
+"$tmp/oled_color_test"
 
 # Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass
 # and, from Step-12b #1 on, the reverb_presets + brain modules too)
@@ -164,6 +171,6 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" -I"$here/pico_stubs" -I"$src/tools" \
     "$here/test_display_bench.c" \
     "$src/src/menu.c" "$src/src/battery.c" \
-    "$src/src/oled_draw.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/bench_test"
 "$tmp/bench_test"

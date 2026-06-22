@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-21 (r18.39)**
+**Updated: 2026-06-22 (r18.44 — display accent colour; PR #38 open)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -20,7 +20,7 @@ end of every session that changes a shipping state.
 
 ## 1. Where we are right now
 
-**Working branch:** `claude/read-start-here-YDlCd` → PR #35 (Sancte3D/AMBIENT)
+**Working branch:** `claude/read-start-here-YDlCd` → PR #37 merged to `main` 2026-06-22
 **Latest user direction:**
 - Sound stays synthetic (no field-recording samples). Stage is "fast gut genug".
 - No web simulator — Pico 2 is the bench, not a browser
@@ -53,8 +53,13 @@ product build.
 | Item | State |
 |---|---|
 | V1 warm-chorus pad ("100x better" sound) | ✅ `src/pad.c`, reverted from soften'd profiles in r18.37 |
-| `texture.c` body / breath | ✅ exists; body rumble is the "brumm" — disabled in demos, engine still uses old default |
-| `reverb.c`, `drone.c`, `bass.c`, `brain.c` | ✅ |
+| Tier A #1: velocity → filter cutoff | ✅ `src/pad.c` r18.43 — bright hits open up |
+| Tier A #2: micro-humanisation (±0.5 cent / ±0.3% amp jitter) | ✅ `src/engine.c` r18.43 |
+| Tier A #3: drone drift + breath (±2 cent walk, 0.04 Hz tremolo) | ✅ `src/drone.c` r18.43 |
+| Tier A #4: texture body weight 0.35 → 0.10 (removes the Brumm) | ✅ `src/texture.c` r18.43 |
+| Tier A #5: air band (+HP 3 kHz on white noise, 0.18×) | ✅ `src/texture.c` r18.43 |
+| LIQUID modulated FDN reverb (default) | ✅ `src/reverb.c` r18.42 — Freeverb as `-DFAM_REVERB_MODE=0` fallback |
+| `drone.c`, `bass.c`, `brain.c` | ✅ |
 | 4-world sound spec (Tokyo / Coast / Drive / After Hours) | 🟠 only as `tools/render_worlds.c` |
 | Universal wind generator (resonant BP, pink noise, gusts) | 🟠 inline in render_worlds.c |
 | Per-world ambience (rain / waves / traffic / vinyl) | 🟠 inline in render_worlds.c, generators believable, not in engine |
@@ -89,6 +94,8 @@ product build.
 | `tools/display_sim.html` JS port | ✅ updated to world model (sim still committed, just no auto-deploy) |
 | Pico 2 bench build (`display_hw_test.uf2`) | ✅ CI RP2350 build green |
 | Engine ↔ menu callbacks wired in HAL | ⏳ `menu_callbacks_t` exists, no HAL `main_*` currently wires it |
+| **Display Akzent-Farbe pro World (Grau→RGB565-Tint)** | ✅ r18.44 `src/oled_color.c` — ADR-0015 Schritt 1; Default=Mono, pro World dezenter Cast; Host-Preview farbig |
+| **Panel-Pivot 1.9″ → 2.0″ + voller RGB565-FB + DMA-Animationen** | ⏳ ADR-0015 (PROPOSED) — Panel + Animations-Pfad; BOM-Kandidat UNVERIFIED |
 
 ### Cells / Input
 
@@ -152,12 +159,16 @@ separate ⏳ chunk, lives only as audition tools.
 
 ## 5. What's next, in priority order
 
-1. **Merge PR #35 to main** (after pages.yml removal turns CI green).
-2. **Engine refactor — world model:** `worlds.c` + `ambience.c` (lift the
+1. **Display-Pivot 1.9″ → 2.0″ + RGB565 + Animations-Architektur** ⏳ ADR-0015
+   (r18.43, PROPOSED). User-Side: Modul-SKU + Pin-Order + Maße verifizieren.
+   Firmware-Side: `oled_*` API von 4-bit Grau auf RGB565 portieren, FB nach
+   AXI-SRAM, SPI-DMA + DMA2D in `lcd_st7789_h743.c` ausimplementieren
+   (Step 13.3 TODO). Generator-Sheet erst nach Pin-Order-Bestätigung anfassen.
+2. **Engine refactor — world model** ⏳ `worlds.c` + `ambience.c` (lift the
    inline generators from `tools/render_worlds.c` into real modules),
    `hiss.c`, warm-saturation module, rewrite `engine.c` to be world-driven,
-   wire `menu_callbacks_t` in `src/hal_h743/main_h743.c`. ADR-0015 to draft
-   first, then implement in small steps.
+   wire `menu_callbacks_t` in `src/hal_h743/main_h743.c`. Eigene ADR (0016)
+   beim Start drafting.
 3. **Per-world drums system:** extract `src/v2/beat.c` into `src/drums.c`,
    per-world pattern + tempo selection, wired to the menu Drums toggle.
    Retire the rest of `src/v2/` afterwards.

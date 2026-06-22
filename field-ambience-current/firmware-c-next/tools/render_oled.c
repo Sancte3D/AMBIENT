@@ -2,8 +2,9 @@
  * OLED preview renderer — WORLD model (r18.38).
  *
  * Builds the menu state on the host, asks it to draw into the OLED framebuffer,
- * and writes the framebuffer to a PGM image. Lets the user SEE the UI before
- * flashing — same renderer the device runs.
+ * and writes the framebuffer to a COLOR PPM image through the device's own
+ * accent-tinted grey→RGB565 conversion (ADR-0015 step 1). Lets the user SEE
+ * the UI — including the per-world colour tint — before flashing.
  *
  * The output is upscaled 4× per pixel so the 320×170 framebuffer becomes a
  * 1280×680 image — easier to look at.
@@ -16,10 +17,12 @@
 #include "menu.h"
 #include "battery.h"
 #include "oled.h"
+#include "oled_color.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Engine setters are no-ops for the preview — the menu fires them but we just
  * want pixels. */
@@ -29,23 +32,33 @@ static void noop_tone (float v) { (void)v; }
 static void noop_atmos(float v) { (void)v; }
 static void noop_drums(int v)   { (void)v; }
 
-/* Write the framebuffer as a 4× upscaled PGM image (P5, 8-bit grey). */
-static void write_pgm(const char *path) {
+/* Write the framebuffer as a 4× upscaled COLOR PPM (P6, 8-bit RGB) using the
+ * SAME accent-tinted grey→RGB565 conversion the device driver uses (ADR-0015
+ * step 1) — so the preview shows the per-world tint exactly as it will appear
+ * on the panel. RGB565 is expanded back to RGB888 for the image. */
+static void write_ppm(const char *path) {
     const int SCALE = 4;
     const int W = OLED_WIDTH * SCALE, H = OLED_HEIGHT * SCALE;
     const uint8_t *fb = oled_framebuffer();
     FILE *f = fopen(path, "wb");
     if (!f) { fprintf(stderr, "cannot open %s\n", path); return; }
-    fprintf(f, "P5\n%d %d\n255\n", W, H);
-    static uint8_t row[320 * 4];
+    fprintf(f, "P6\n%d %d\n255\n", W, H);
+    static uint8_t row[320 * 4 * 3];
     for (int y = 0; y < OLED_HEIGHT; ++y) {
         for (int x = 0; x < OLED_WIDTH; ++x) {
             int idx = (y * OLED_WIDTH + x) >> 1;
             uint8_t v4 = (x & 1) ? (fb[idx] & 0x0F) : (fb[idx] >> 4);
-            uint8_t v8 = (uint8_t)((v4 << 4) | v4);     /* 4-bit → 8-bit */
-            for (int s = 0; s < SCALE; ++s) row[x * SCALE + s] = v8;
+            uint16_t px = oled_grey565(v4);
+            uint8_t r5 = (px >> 11) & 0x1F, g6 = (px >> 5) & 0x3F, b5 = px & 0x1F;
+            uint8_t r8 = (uint8_t)((r5 << 3) | (r5 >> 2));   /* 5→8 bit */
+            uint8_t g8 = (uint8_t)((g6 << 2) | (g6 >> 4));   /* 6→8 bit */
+            uint8_t b8 = (uint8_t)((b5 << 3) | (b5 >> 2));   /* 5→8 bit */
+            for (int s = 0; s < SCALE; ++s) {
+                uint8_t *o = row + (size_t)(x * SCALE + s) * 3;
+                o[0] = r8; o[1] = g8; o[2] = b8;
+            }
         }
-        for (int s = 0; s < SCALE; ++s) fwrite(row, 1, (size_t)W, f);
+        for (int s = 0; s < SCALE; ++s) fwrite(row, 1, (size_t)W * 3, f);
     }
     fclose(f);
 }
@@ -76,8 +89,8 @@ int main(int argc, char **argv) {
     for (int p = 0; p < MP_COUNT; ++p) {
         to_param((menu_param_t)p);
         menu_render();
-        snprintf(path, sizeof path, "%s/menu_browse_%s.pgm", dir, NAMES[p]);
-        write_pgm(path);
+        snprintf(path, sizeof path, "%s/menu_browse_%s.ppm", dir, NAMES[p]);
+        write_ppm(path);
     }
 
     /* All four world names in browse mode (long-name fit check). */
@@ -90,25 +103,25 @@ int main(int argc, char **argv) {
             menu_rotate(+1);
         menu_push();                       /* back to browse */
         menu_render();
-        snprintf(path, sizeof path, "%s/menu_world_%d.pgm", dir, w);
-        write_pgm(path);
+        snprintf(path, sizeof path, "%s/menu_world_%d.ppm", dir, w);
+        write_ppm(path);
     }
 
     /* EDIT-mode previews. */
     to_param(MP_WORLD); menu_push();
-    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_world.pgm", dir); write_pgm(path);
+    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_world.ppm", dir); write_ppm(path);
     menu_push();
     to_param(MP_SPACE); menu_push();
-    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_space.pgm", dir); write_pgm(path);
+    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_space.ppm", dir); write_ppm(path);
     menu_push();
     to_param(MP_DRUMS); menu_push(); menu_rotate(+1);   /* drums ON */
-    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_drums.pgm", dir); write_pgm(path);
+    menu_render(); snprintf(path, sizeof path, "%s/menu_edit_drums.ppm", dir); write_ppm(path);
     menu_push();
 
     /* USB-present variant (charging). */
     to_param(MP_WORLD);
     battery_set_usb_present(true);
-    menu_render(); snprintf(path, sizeof path, "%s/menu_world_usb.pgm", dir); write_pgm(path);
+    menu_render(); snprintf(path, sizeof path, "%s/menu_world_usb.ppm", dir); write_ppm(path);
     battery_set_usb_present(false);
 
     printf("wrote previews to %s/\n", dir);

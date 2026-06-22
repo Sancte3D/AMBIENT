@@ -30,8 +30,14 @@ void oled_init(void) {
      *      for safety; 24 MHz is the bench-proven sweet spot.
      *   3. Run the standard ST7789 init sequence (same byte stream as the
      *      Pico driver — porting that block verbatim).
-     *   4. Allocate the 320×170×16-bit framebuffer (108 KB) in DTCM-RAM so
-     *      the SPI DMA can read it without contending with the audio path.
+     *   4. Stream the 4-bit grey framebuffer converting via the SHARED
+     *      oled_color.c LUT (oled_grey565_lut()) — same conversion + per-world
+     *      accent tint as the Pico driver, so the two never drift.
+     *
+     * NB framebuffer placement (ADR-0015 D3): the RGB565 line/scratch buffer
+     * goes in AXI-SRAM (D1, 0x24000000), NOT DTCM — DMA1/DMA2 on the H743
+     * cannot reach DTCM (only MDMA can), so an SPI-DMA flush must read from
+     * AXI-SRAM. (Earlier drafts of this comment said DTCM — that was wrong.)
      */
 }
 
