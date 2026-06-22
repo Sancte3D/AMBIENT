@@ -43,6 +43,69 @@ Wenn du das hier von oben nach unten liest, weißt du am Ende:
 Plus das Top-Level `field_ambience.kicad_sch` — verbindet die 7 Sheets über
 Hierarchical Labels.
 
+### Block-Diagramm (Signalfluss + Power)
+
+Zeigt wer mit wem direkt redet. Pfeile = Signal- oder Power-Richtung; Doppel-
+pfeile = bidirektional (I²C/SPI command + status).
+
+```text
+                              ┌──────────────────┐
+                              │   USB-C  J1      │
+                              │  (Power + Data)  │
+                              └────┬─────────────┘
+                                   │
+                  ┌────────────────┴────────────────┐
+                  │ VBUS                            │ D±
+                  ▼                                 ▼
+        ┌──────────────────┐                ┌────────────────┐
+        │  F1 Polyfuse +   │                │ D1 USBLC6 ESD  │
+        │  USBLC6 ESD      │                └───────┬────────┘
+        └──────┬───────────┘                        │
+               │ +5V_USB                            │ USB_DM/DP
+               ▼                                    │
+        ┌──────────────────┐ ◄──── Akku (LiPo) ──── │
+        │  Q1 Power-Path   │      via J_BAT         │
+        │  (USB ↔ Akku)    │                        │
+        └──────┬───────────┘                        │
+               │ +5V_RAIL                           │
+               │                                    │
+               ├────► PAM8403 Class-D ──► Speakers  │
+               │                                    │
+               ▼                                    │
+        ┌──────────────────┐                        │
+        │  U5 AP7361A LDO  │                        │
+        │  +5V → +3V3      │                        │
+        └──────┬───────────┘                        │
+               │ +3V3                               │
+               ▼                                    │
+        ┌──────────────────────────────────────────┐│
+        │             STM32H743 (U1)               ││
+        │  ◄── SPI ───► LCD (J3)                   ││
+        │  ◄── I²S ────► PCM5102A ─► Line-Out (J8) ││
+        │                          └─► PAM8403 ─► SP
+        │  ◄── I²C ────► MCP23017 ─► 10× Buttons   ││
+        │                          └─► Hall × 5    ││
+        │  ◄── I²C ────► PCA9685 ──► 10× LEDs      ││
+        │                          └─► Q2 BL-FET   ││
+        │  ◄── TIM-QEI ─► 4× EC11 Encoder          ││
+        │  ◄── USB-OTG-FS ─────────────────────────┘│
+        └──────────────────────────────────────────┘
+                       │ ADC1_INP15
+                       └──◄── BAT_SENSE-Teiler (LiPo+)
+
+   (Lade-Pfad parallel: USB-VBUS → U7 MCP73831 → LiPo+ — immer aktiv)
+   (Boost-Pfad parallel: LiPo+ → U8 TPS61089 + L1 → +5V_RAIL via D3)
+```
+
+Drei Geschwindigkeits-Tiers im Signal:
+
+1. **Schnell (≥10 MHz):** USB-D± (12 Mbps), SPI-LCD (24–32 MHz), SAI-I²S
+   (1,4 MHz BCK aber MHz-Edges). → Diese alle auf Top-Layer mit
+   ungebrochener GND-Plane drunter (ADR-0018).
+2. **Mittel (100 kHz – 1 MHz):** I²C (100 kHz Fast, beide Slaves auf einem
+   Bus), PCA9685-PWM-Träger, ADC-Sampling.
+3. **Langsam:** Encoder-Quadratur (≤1 kHz), Button-Polling, Hall-DC.
+
 ---
 
 ## §1 — Power Tree (Sheet 1)
