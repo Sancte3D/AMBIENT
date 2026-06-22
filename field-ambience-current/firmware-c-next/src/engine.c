@@ -15,6 +15,7 @@
 #include "reverb.h"
 #include "texture.h"
 #include "ambience.h"
+#include "tape.h"
 #include "bass.h"
 #include "drone.h"
 #include "reverb_presets.h"
@@ -118,6 +119,7 @@ void engine_init(void) {
     reverb_init();
     texture_init();
     ambience_init();
+    tape_init();
     bass_init();
     drone_init();
 
@@ -296,13 +298,21 @@ void engine_render(int16_t *buf, int frames) {
     bass_render_mix(dryL, dryR, sendL, sendR, frames);
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
 
+    /* Tape character (ADR-0017 Phase 3): subtle hiss into the DRY bus only —
+     * we don't want the reverb to amplify the noise floor. */
+    tape_hiss_render_add(dryL, dryR, frames);
+
     /* Reverb writes (does not add) wet from send. */
     reverb_render(sendL, sendR, wetL, wetR, frames);
 
-    /* Master: sum → DC-block → volume → soft limit → int16. */
+    /* Master: sum + DC-block + volume → outL/outR; then tanh warmth
+     * (block call); then soft-limit safety net → int16. Two-pass keeps
+     * the saturation block-call cheap (one loop body, one tanh call/sample). */
     master_vol_cur += SMOOTH_COEF * (master_vol_tgt - master_vol_cur);
     const float wa = wet_amp_cur;
     const float mv = master_vol_cur;
+
+    static float outL[BLOCK], outR[BLOCK];
     for (int n = 0; n < frames; ++n) {
         float L = dryL[n] + wetL[n] * wa;
         float R = dryR[n] + wetR[n] * wa;
@@ -311,8 +321,18 @@ void engine_render(int16_t *buf, int frames) {
         float yL = L - dc_x1L + DC_R * dc_y1L; dc_x1L = L; dc_y1L = yL;
         float yR = R - dc_x1R + DC_R * dc_y1R; dc_x1R = R; dc_y1R = yR;
 
-        yL = soft_limit(yL * mv);
-        yR = soft_limit(yR * mv);
+        outL[n] = yL * mv;
+        outR[n] = yR * mv;
+    }
+    /* Warm tanh saturation — "tape" colour. Always-on at the dreamy_warm
+     * reference drive (1.10). Peaks roll into the tanh knee, even harmonics
+     * appear, makeup-gain implicit (×0.78 inside). */
+    tape_saturation_process(outL, outR, frames);
+    for (int n = 0; n < frames; ++n) {
+        /* soft_limit is now a safety net for the rare residual peak above
+         * 0.75 — saturation usually already keeps us in range. */
+        float yL = soft_limit(outL[n]);
+        float yR = soft_limit(outR[n]);
         buf[n * 2 + 0] = (int16_t)(yL * 32767.0f);
         buf[n * 2 + 1] = (int16_t)(yR * 32767.0f);
     }

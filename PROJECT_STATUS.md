@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.52 — ambience Phase 2d: vinyl for After Hours = Phase 2 complete)**
+**Updated: 2026-06-22 (r18.53 — tape character: hiss + warm saturation in master, ADR-0017 Phase 3)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -65,7 +65,7 @@ product build.
 | Per-world ambience layer in engine (ADR-0017 Phase 2 KOMPLETT) | ✅ r18.49-.52 — Wind universal + Rain Tokyo + Waves Coast + Vinyl After Hours. Drive bekommt Wind als „highway" (kein dedizierter Traffic-Generator, Wind ist character-genug). |
 | Worlds-Modul (single source of truth) | ✅ r18.48 `src/worlds.c` + `worlds.h` (ADR-0017 Phase 1) — Lift aus menu.c, exakte RGB/Preset-Erhaltung per Test |
 | Tape-hiss generator | 🟠 inline in render_dreamy_warm.c |
-| Warm-tanh master saturation | 🟠 inline in render_dreamy_warm.c |
+| Tape character (hiss + warm-tanh saturation) im Master | ✅ r18.53 `src/tape.c` (ADR-0017 Phase 3); always-on, Default = dreamy_warm-Referenz (hiss 0.005, drive 1.10) |
 | World preset application from engine | ⏳ next refactor step |
 | Per-world drums system (menu toggle exists) | ⏳ `beat.c` lives in `src/v2/` and can be lifted out |
 | Aliasing pre-filter on noise sources | ⏳ noted "macht prinzipiell Sinn", not done |

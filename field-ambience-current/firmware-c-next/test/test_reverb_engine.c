@@ -178,10 +178,15 @@ static void test_engine_silent_then_note(void) {
     engine_all_off();
     run_engine(SR * 6);                          /* drain any tail */
 
-    /* Silent boot: output stays at zero. */
+    /* "Silent" boot — since ADR-0017 Phase 3, the engine is always running
+     * a tiny tape-hiss layer (~−46 dBFS, "colour not body") that the user
+     * approved as part of the dreamy/warm reference. Strict pk==0 no longer
+     * holds; allow up to ±300 (hiss + DC-blocker settling). Note hits stay
+     * an order of magnitude above this floor, so the assertion still proves
+     * the engine isn't accidentally producing audible signal at idle. */
     eng_stats_t silent = run_engine(SR);
-    CHECK(silent.pk_l == 0 && silent.pk_r == 0,
-          "engine boot not silent: L=%d R=%d", silent.pk_l, silent.pk_r);
+    CHECK(silent.pk_l < 300 && silent.pk_r < 300,
+          "engine idle leaking above noise floor: L=%d R=%d", silent.pk_l, silent.pk_r);
 
     /* Tap a cell; output rises through the pad attack + reverb buildup. */
     engine_note_on(0, 220.0f, 0.5f);
