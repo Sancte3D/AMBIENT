@@ -14,6 +14,7 @@
 #include "pad.h"
 #include "reverb.h"
 #include "texture.h"
+#include "ambience.h"
 #include "bass.h"
 #include "drone.h"
 #include "reverb_presets.h"
@@ -29,6 +30,7 @@
  * Pad uses the user-tunable engine_set_send; texture has its own fixed send;
  * the bass applies its two per-layer sends internally. */
 #define TEXTURE_SEND  0.55f
+#define AMBIENCE_SEND 0.35f           /* slightly less wet than texture — ADR-0017 */
 
 /* Active note tracking so the bass can follow the lowest held pitch. Sources
  * are cell indices today (0..4), with headroom for MIDI later. freq 0 = idle. */
@@ -115,6 +117,7 @@ void engine_init(void) {
     pad_init();
     reverb_init();
     texture_init();
+    ambience_init();
     bass_init();
     drone_init();
 
@@ -207,6 +210,8 @@ void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.
 void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_brightness(float hz)  { pad_set_brightness(hz); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
+void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1.0f)); }
+void engine_set_world(int idx)        { ambience_set_world(idx); }
 void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
 
 /* Step 12b #1 — musical-state setters. Each triggers a preset recompute so
@@ -287,6 +292,7 @@ void engine_render(int16_t *buf, int frames) {
 
     pad_render_mix(dryL, dryR, sendL, sendR, frames, send_amount_cur);
     texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
+    ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
     bass_render_mix(dryL, dryR, sendL, sendR, frames);
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
 

@@ -190,6 +190,13 @@ einen externen DAC (`U3`), der DAC fährt entweder die Class-D-Speaker-Endstufe
 (ADR-0010 §6) — die 40-mm-Speaker können keinen Sub-Bass, das wäre nur
 Geklapper.
 
+Was bis zum I²S-Stream geschickt wird, ist die fertige DSP-Mischung aus
+firmware-c-next/src/: Pad + Texture + **Ambience (Wind / Rain / Waves /
+Vinyl — ADR-0017 Phase 2)** + Bass + Drone + Reverb → Master mit DC-Block +
+soft-Limiter → Int16. Die *Ambience*-Schicht macht aus Tokyo akustisches
+Nacht-Stadt-Atmen, aus Coast Sonnenuntergang-Wellen, etc. — sie sitzt
+software-seitig im Engine-Mix-Bus, nicht in der PCB.
+
 ### Bauteile
 
 | Ref | Teil | Wozu | Footprint |

@@ -84,6 +84,7 @@ set(DSP_SOURCES
     src/voices.c
     src/pad.c
     src/texture.c
+    src/ambience.c      # ADR-0017 Phase 2: per-world atmospheric layer (wind today)
     src/bass.c
     src/reverb.c
     src/reverb_presets.c
