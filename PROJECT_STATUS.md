@@ -94,6 +94,7 @@ product build.
 | `tools/display_sim.html` JS port | ✅ updated to world model (sim still committed, just no auto-deploy) |
 | Pico 2 bench build (`display_hw_test.uf2`) | ✅ CI RP2350 build green |
 | Engine ↔ menu callbacks wired in HAL | ⏳ `menu_callbacks_t` exists, no HAL `main_*` currently wires it |
+| **Panel-Pivot 1.9″ → 2.0″ + RGB565 + DMA-Animations-Architektur** | ⏳ ADR-0015 (r18.43, PROPOSED) — BOM-Kandidat als UNVERIFIED eingetragen |
 
 ### Cells / Input
 
@@ -157,11 +158,16 @@ separate ⏳ chunk, lives only as audition tools.
 
 ## 5. What's next, in priority order
 
-1. **Engine refactor — world model** ⏳ `worlds.c` + `ambience.c` (lift the
+1. **Display-Pivot 1.9″ → 2.0″ + RGB565 + Animations-Architektur** ⏳ ADR-0015
+   (r18.43, PROPOSED). User-Side: Modul-SKU + Pin-Order + Maße verifizieren.
+   Firmware-Side: `oled_*` API von 4-bit Grau auf RGB565 portieren, FB nach
+   AXI-SRAM, SPI-DMA + DMA2D in `lcd_st7789_h743.c` ausimplementieren
+   (Step 13.3 TODO). Generator-Sheet erst nach Pin-Order-Bestätigung anfassen.
+2. **Engine refactor — world model** ⏳ `worlds.c` + `ambience.c` (lift the
    inline generators from `tools/render_worlds.c` into real modules),
    `hiss.c`, warm-saturation module, rewrite `engine.c` to be world-driven,
-   wire `menu_callbacks_t` in `src/hal_h743/main_h743.c`. ADR-0015 to draft
-   first, then implement in small steps.
+   wire `menu_callbacks_t` in `src/hal_h743/main_h743.c`. Eigene ADR (0016)
+   beim Start drafting.
 3. **Per-world drums system:** extract `src/v2/beat.c` into `src/drums.c`,
    per-world pattern + tempo selection, wired to the menu Drums toggle.
    Retire the rest of `src/v2/` afterwards.
