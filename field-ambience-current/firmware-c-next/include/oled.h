@@ -4,23 +4,47 @@
 /*
  * Display abstraction (historical "oled_" namespace).
  *
- * r16 panel change: switched from the SSD1322 256×64 mono OLED to a 1.9"
- * ST7789 320×170 IPS LCD — chosen for readability, higher pixel density,
- * smooth UI transitions and outdoor brightness (no burn-in). The VISUAL
- * design stays minimal monochrome (black/white/grey, OP-1 language); colour
- * is not used. The whole draw/font/menu layer keeps working on a 4-bit GREY
- * framebuffer; the device driver (src/lcd_st7789.c) converts grey → RGB565
- * when streaming to the panel, so only the driver + dimensions changed.
+ * Panel: 320×WIDTH or 240×WIDTH ST7789 IPS LCD — selectable via the
+ * FAM_LCD_PANEL define so we can prep for ADR-0015's 1.9"→2.0" pivot
+ * without changing default behaviour. The whole draw/font/menu layer
+ * keeps working on a 4-bit GREY framebuffer; the device driver
+ * (src/hal_pico/lcd_st7789_pico.c, src/hal_h743/lcd_st7789_h743.c)
+ * converts grey → RGB565 via src/oled_color.c (accent-tinted).
  *
  * Framebuffer: WIDTH×HEIGHT, 4-bit grey, 2 px/byte (high nibble = left pixel).
  * All draws are buffered; nothing reaches the panel until oled_show().
+ *
+ * --- Panel selection (ADR-0015) ----------------------------------------
+ * Default: 1.9" 170×320 (current hardware). Pass -DFAM_LCD_PANEL_2_0 to
+ * build for the proposed 2.0" 240×320 module. UI layout constants in
+ * menu.c / display_hw_test.c (BAR_Y etc.) are tuned for 170 px height;
+ * the 2.0" build will compile and display correctly but leaves visible
+ * dead space at the bottom until the layout is rebalanced — that's a
+ * separate task after the physical module is verified.
+ *
+ * Anti-guess: do NOT enable FAM_LCD_PANEL_2_0 in any default
+ * configuration until the real Waveshare 2" module SKU + pin-order +
+ * mechanical dimensions are confirmed against the shipped part (see
+ * BOM_MASTER §5 UNVERIFIED entry).
  */
 
 #include <stdint.h>
 #include <stddef.h>
 
-#define OLED_WIDTH   320
-#define OLED_HEIGHT  170
+#if defined(FAM_LCD_PANEL_2_0)
+#  define OLED_PANEL_NAME       "2.0in 240x320 ST7789 (PROPOSED, UNVERIFIED)"
+#  define OLED_WIDTH            320
+#  define OLED_HEIGHT           240
+#  define OLED_LCD_X_OFFSET     0
+#  define OLED_LCD_Y_OFFSET     0      /* 2.0" die is the full 240×320 */
+#else  /* default: FAM_LCD_PANEL_1_9 */
+#  define OLED_PANEL_NAME       "1.9in 170x320 ST7789V2"
+#  define OLED_WIDTH            320
+#  define OLED_HEIGHT           170
+#  define OLED_LCD_X_OFFSET     0
+#  define OLED_LCD_Y_OFFSET     35     /* 170-px window inside 240×320 GRAM */
+#endif
+
 #define OLED_FB_SIZE ((OLED_WIDTH * OLED_HEIGHT + 1) / 2)  /* 4 bpp grey */
 
 /* Bring up SPI0, the GPIOs, reset the panel, run the init sequence, and

@@ -47,6 +47,16 @@ endif()
 set(FAM_TARGET "${_fam_default}" CACHE STRING "Build target: h743 | pico | host")
 set_property(CACHE FAM_TARGET PROPERTY STRINGS h743 pico host)
 
+# ---------------------------------------------------------------------------
+# Panel selection (ADR-0015 prep). Default = current 1.9" hardware (170×320).
+# Set FAM_LCD_PANEL=2_0inch when the proposed 2" 240×320 module is verified
+# (BOM_MASTER §5 UNVERIFIED row, SKU/pin-order/mech-dims). Until then this
+# defaults safely to the 1.9" build. The flag propagates into the firmware
+# via FAM_LCD_PANEL_2_0 in oled.h.
+# ---------------------------------------------------------------------------
+set(FAM_LCD_PANEL "1_9inch" CACHE STRING "LCD panel: 1_9inch (current) | 2_0inch (proposed)")
+set_property(CACHE FAM_LCD_PANEL PROPERTY STRINGS 1_9inch 2_0inch)
+
 # Pico target: pull in the SDK BEFORE project() (see NB2). host/h743 do not
 # touch the Pico SDK at all.
 if(FAM_TARGET STREQUAL "pico")
@@ -139,6 +149,9 @@ if(FAM_TARGET STREQUAL "h743")
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/include/hal
     )
+    target_compile_definitions(field_ambience_h743 PRIVATE
+        "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
+    )
     # TODO(Step 13.3): ARM-GCC toolchain file, CubeH7 HAL sources +
     # include paths, linker script, startup file. For now this target only
     # builds if the user supplies CMAKE_TOOLCHAIN_FILE manually.
@@ -176,6 +189,9 @@ elseif(FAM_TARGET STREQUAL "pico")
         PIN_ENC_DT=3
         PIN_ENC_SW=4
         PIN_SHIFT=5
+        # Panel selection (ADR-0015 prep). Add FAM_LCD_PANEL_2_0 when the
+        # 2.0" module is verified — until then we stay on 1.9".
+        "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
     target_link_libraries(display_hw_test
         pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm

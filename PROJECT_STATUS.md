@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.46 — schematic walkthrough + ADR-0016 power/sleep)**
+**Updated: 2026-06-22 (r18.47 — display panel selector for ADR-0015 step 2)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -99,7 +99,9 @@ product build.
 | **Bench `display_hw_test` aktuell zur World-UI (Subtitle + panel-agnostische Verdrahtung)** | ✅ r18.44/45 — 1.9″ Adafruit *und* Waveshare Silk; `display_hw_test.uf2` als CI-Artefakt |
 | **Schaltbild-Walkthrough (A–Z PCB-Engineer-Tour)** | 🟡 r18.46 — `docs/hardware/SCHEMATIC_WALKTHROUGH.md`; Power + MCU + Audio voll, übrige 4 Sheets in Folge-PRs |
 | **Power/Sleep-Architektur (ADR-0016, kein Switch)** | ⏳ ADR-0016 PROPOSED — `U9` TPS22918 Load-Switch + `SW_BOOT` Dual-Use |
-| **Panel-Pivot 1.9″ → 2.0″ + voller RGB565-FB + DMA-Animationen** | ⏳ ADR-0015 (PROPOSED) — Panel + Animations-Pfad; BOM-Kandidat UNVERIFIED |
+| **Panel-Selector Firmware-Pfad (1.9″ ↔ 2.0″ via CMake-Flag)** | ✅ r18.47 — `oled.h` + Pico-Treiber + CMake; Default 1.9″ unverändert, 2.0″-Build kompiliert sauber. UI-Layout-Rebalance offen (70 px Dead-Space) |
+| **Panel-Hardware-Pivot 1.9″ → 2.0″ (physisches Modul)** | ⏳ ADR-0015 — wartet auf User-Verifikation SKU/Pin-Order/Maße; BOM-Kandidat UNVERIFIED |
+| **Voller RGB565-FB + DMA-Animationen** | ⏳ ADR-0015 D4 — nach Hardware-Pivot |
 
 ### Cells / Input
 
