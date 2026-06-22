@@ -55,8 +55,11 @@ typedef enum {
     MP_COUNT
 } menu_param_t;
 
-/* Number of curated worlds (keep in sync with WORLD_NAMES in menu.c). */
-#define MENU_WORLD_COUNT 4
+/* Number of curated worlds. Single source of truth is WORLD_COUNT in
+ * worlds.h (ADR-0017); MENU_WORLD_COUNT is kept as an alias for backward
+ * compat with existing tests / tools / the JS sim port. */
+#include "worlds.h"
+#define MENU_WORLD_COUNT WORLD_COUNT
 
 /* Reset to defaults + register the engine apply callback (so a value change
  * actually drives the audio). The callback is invoked synchronously from

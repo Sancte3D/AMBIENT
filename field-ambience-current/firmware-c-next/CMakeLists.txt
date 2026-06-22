@@ -103,6 +103,7 @@ set(DSP_SOURCES
     src/font_8x8.c
     src/battery.c
     src/menu.c
+    src/worlds.c        # ADR-0017 Phase 1: world descriptors as a real module
 )
 
 # ---------------------------------------------------------------------------
@@ -173,6 +174,7 @@ elseif(FAM_TARGET STREQUAL "pico")
         src/baked_font_data.c
         src/battery.c
         src/menu.c
+        src/worlds.c
     )
     target_include_directories(display_hw_test PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -15,42 +15,14 @@
 #include "oled_color.h"
 #include "baked_font.h"
 #include "battery.h"
+#include "worlds.h"
 
 #include <stdio.h>
 #include <string.h>
 
-/* --- worlds ----------------------------------------------------------- */
-
-/* Short display names — kept under ~13 chars so the big value font fits the
- * 320-px width (Helvetica value face, see render_value fallback). */
-static const char * const WORLD_NAMES[MENU_WORLD_COUNT] = {
-    "Tokyo City", "Crystal Coast", "Midnight Drive", "After Hours"
-};
-static const char * const WORLD_SUBTITLE[MENU_WORLD_COUNT] = {
-    "night . rain", "sunset . waves", "highway . wind", "3am . vinyl"
-};
-
-/* Per-world macro presets (0..100). Derived from the tools/render_worlds.c
- * audition settings: space≈wet, tone≈brightness, atmos≈ambience level. */
-typedef struct { int space, tone, atmos; } world_preset_t;
-static const world_preset_t WORLD_PRESET[MENU_WORLD_COUNT] = {
-    /* Tokyo City    */ { 42, 50, 35 },
-    /* Crystal Coast */ { 30, 70, 25 },
-    /* Midnight Drive*/ { 40, 45, 45 },
-    /* After Hours   */ { 55, 30, 50 },
-};
-
-/* Per-world DISPLAY accent (ADR-0015 step 1). A subtle cast over the OP-1
- * monochrome UI — text stays legible, the screen takes on the world's mood.
- * One channel stays near 255 so whites stay bright. Tune by nudging these RGBs;
- * set all three to 255 for a pure-mono world. */
-typedef struct { uint8_t r, g, b; } world_accent_t;
-static const world_accent_t WORLD_ACCENT[MENU_WORLD_COUNT] = {
-    /* Tokyo City    — night . rain . neon  */ { 175, 205, 255 },  /* cool blue  */
-    /* Crystal Coast — sunset . waves       */ { 180, 245, 240 },  /* aqua       */
-    /* Midnight Drive— highway . wind        */ { 220, 180, 255 },  /* violet     */
-    /* After Hours   — 3am . vinyl           */ { 255, 205, 150 },  /* warm amber */
-};
+/* World identity + per-world presets + per-world accent colour all live in
+ * worlds.c (ADR-0017). This module only owns *menu state* (cursor, edit mode,
+ * live macro values). */
 
 static const char * const DRUMS_NAMES[2] = { "Off", "On" };
 
@@ -71,9 +43,9 @@ static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; 
 /* Push the current world's display accent to the colour layer. `animate` =
  * crossfade toward it (world change); otherwise snap (boot/init). */
 static void set_world_accent(bool animate) {
-    const world_accent_t *a = &WORLD_ACCENT[world_i];
-    if (animate) oled_set_accent_target(a->r, a->g, a->b);
-    else         oled_set_accent(a->r, a->g, a->b);
+    const world_t *w = worlds_get(world_i);
+    if (animate) oled_set_accent_target(w->accent_r, w->accent_g, w->accent_b);
+    else         oled_set_accent(w->accent_r, w->accent_g, w->accent_b);
 }
 
 /* Apply the current slot's value to the engine via callback. */
@@ -91,10 +63,10 @@ static void apply_current(void) {
 /* Load a world's macro preset into the live macros + push them to the engine.
  * Called when the user changes the WORLD value. */
 static void load_world_preset(void) {
-    const world_preset_t *p = &WORLD_PRESET[world_i];
-    space = p->space;
-    tone  = p->tone;
-    atmos = p->atmos;
+    const world_t *w = worlds_get(world_i);
+    space = w->space_pct;
+    tone  = w->tone_pct;
+    atmos = w->atmos_pct;
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_space)      cb.set_space(space / 100.0f);
@@ -107,9 +79,12 @@ void menu_init(const menu_callbacks_t *cbs) {
     cur = MP_WORLD;
     mode = MENU_BROWSE;
     world_i = 0;
-    space = WORLD_PRESET[0].space;
-    tone  = WORLD_PRESET[0].tone;
-    atmos = WORLD_PRESET[0].atmos;
+    {
+        const world_t *w = worlds_get(0);
+        space = w->space_pct;
+        tone  = w->tone_pct;
+        atmos = w->atmos_pct;
+    }
     drums = 0;
     set_world_accent(false);       /* boot world's tint (world 0), snap */
     /* Don't push the macro defaults here — the engine sets its own at
@@ -123,7 +98,7 @@ menu_param_t menu_current(void) { return cur; }
 menu_mode_t  menu_mode(void)    { return mode; }
 
 int          menu_world_index(void)    { return world_i; }
-const char  *menu_world_subtitle(void) { return WORLD_SUBTITLE[world_i]; }
+const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
@@ -153,7 +128,7 @@ int menu_value_int(menu_param_t p) {
  * 0..100 % amount) — rendered as a fill bar instead of one pill per option. */
 int menu_value_count(menu_param_t p) {
     switch (p) {
-        case MP_WORLD: return MENU_WORLD_COUNT;
+        case MP_WORLD: return worlds_count();
         case MP_DRUMS: return 2;
         default:       return 0;   /* SPACE / TONE / ATMOS = % */
     }
@@ -162,7 +137,7 @@ int menu_value_count(menu_param_t p) {
 const char *menu_current_value_text(void) {
     static char buf[12];
     switch (cur) {
-        case MP_WORLD: return WORLD_NAMES[world_i];
+        case MP_WORLD: return worlds_get(world_i)->name;
         case MP_DRUMS: return DRUMS_NAMES[drums];
         case MP_SPACE: snprintf(buf, sizeof buf, "%d%%", space); return buf;
         case MP_TONE:  snprintf(buf, sizeof buf, "%d%%", tone);  return buf;
@@ -189,7 +164,7 @@ void menu_rotate(int delta) {
     /* edit: step the current slot's value */
     switch (cur) {
         case MP_WORLD:
-            world_i = wrapi(world_i + delta, MENU_WORLD_COUNT);
+            world_i = wrapi(world_i + delta, worlds_count());
             load_world_preset();        /* selecting a world loads its preset */
             return;                     /* preset push covers the callbacks   */
         case MP_SPACE: space = clampi(space + delta, 0, 100); break;
