@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.53 — tape character: hiss + warm saturation in master, ADR-0017 Phase 3)**
+**Updated: 2026-06-22 (r18.54 — HAL wiring: menu→engine callbacks live, ADR-0017 Phase 4 COMPLETE)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -94,7 +94,7 @@ product build.
 | `tools/render_oled.c` host preview | ✅ updated to world model |
 | `tools/display_sim.html` JS port | ✅ updated to world model (sim still committed, just no auto-deploy) |
 | Pico 2 bench build (`display_hw_test.uf2`) | ✅ CI RP2350 build green |
-| Engine ↔ menu callbacks wired in HAL | ⏳ `menu_callbacks_t` exists, no HAL `main_*` currently wires it |
+| Engine ↔ menu callbacks wired in HAL | ✅ r18.54 — `main_h743.c` `menu_init()` mit `engine_set_world/space/tone/atmosphere`-Bindings (ADR-0017 Phase 4) |
 | **Display Akzent-Farbe pro World (Grau→RGB565-Tint)** | ✅ r18.44 `src/oled_color.c` — ADR-0015 Schritt 1; Default=Mono, pro World dezenter Cast; Host-Preview farbig |
 | **Akzent-Crossfade beim World-Wechsel (erste UI-Animation)** | ✅ r18.45 — `oled_accent_tick/settle`, libm-frei; auf Pico-Bench testbar |
 | **Bench `display_hw_test` aktuell zur World-UI (Subtitle + panel-agnostische Verdrahtung)** | ✅ r18.44/45 — 1.9″ Adafruit *und* Waveshare Silk; `display_hw_test.uf2` als CI-Artefakt |

@@ -56,6 +56,18 @@
 #define MCP_BIT_GENERATE  3
 #define MCP_BIT_CLEAR     4
 
+/* Menu → engine binding (ADR-0017 Phase 4). The menu state machine doesn't
+ * know about engine.h; it calls the user-supplied callbacks. Wire them here
+ * so a World/Space/Tone/Atmos/Drums change in the UI actually drives the
+ * engine (Worlds module + Ambience + Tape are otherwise idle from the
+ * user's perspective). Synchronous from menu_rotate/menu_push — never from
+ * the audio thread. */
+static void hal_set_world      (int   idx) { engine_set_world(idx); }
+static void hal_set_space      (float v)   { engine_set_space(v); }
+static void hal_set_tone       (float v)   { engine_set_brightness(800.0f + v * 4200.0f); }
+static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
+static void hal_set_drums      (int   on)  { (void)on;  /* Phase: drums.c lift */ }
+
 int main(void) {
     /* TODO(Step 13.3): SystemClock_Config(); HAL_Init(); SysTick at 1 kHz. */
 
@@ -68,6 +80,17 @@ int main(void) {
     dsp_init();
     brain_init();
     engine_init();
+    {
+        /* ADR-0017 Phase 4: menu → engine wiring */
+        menu_callbacks_t cb = {
+            .set_world      = hal_set_world,
+            .set_space      = hal_set_space,
+            .set_tone       = hal_set_tone,
+            .set_atmosphere = hal_set_atmosphere,
+            .set_drums      = hal_set_drums,
+        };
+        menu_init(&cb);
+    }
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     params_init();            /* encoder param values → engine defaults */
     cells_init();             /* Hall velocity model */
