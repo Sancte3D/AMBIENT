@@ -1,19 +1,20 @@
 /*
- * ambience.c — per-world atmospheric layer (ADR-0017 Phase 2a/2b).
+ * ambience.c — per-world atmospheric layer (ADR-0017 Phase 2a/2b/2c).
  *
- * Two generators run inside engine_render() between texture and bass:
- *   • WIND  — universal, runs for every world. Pink noise → resonant BP
- *             swept 350..900 Hz over ~14 s + random gust envelopes.
- *   • RAIN  — Tokyo only (world index 0). Background "sshhh" (pink-noise
- *             through wide BP at 2.5/2.7 kHz) plus a pool of up to 12
- *             noise-burst "drops" through resonant BP at 1.5..4.5 kHz
- *             with 15..40 ms exponential decay, scheduled 30..180 ms apart.
+ * Generators run inside engine_render() between texture and bass:
+ *   • WIND   — universal, every world. Pink-BP swept 350..900 Hz / 14 s
+ *              + random gust envelopes.
+ *   • RAIN   — Tokyo only (world 0). Background pink-BP "sshhh" + pool of
+ *              12 noise-burst drops through resonant BP at 1.5..4.5 kHz
+ *              with 15..40 ms exp decay, scheduled 30..180 ms apart.
+ *   • WAVES  — Crystal Coast only (world 1). Asymmetric envelope (1.2..2 s
+ *              attack, 5..9 s decay, 1..4 s gap). Body = LP'd brown noise.
+ *              Splash at crest = BP'd pink at 2.5/2.7 kHz.
  *
- * Phase 2c/d: WAVES (Crystal Coast), VINYL (After Hours). Same pattern —
- * a new static block, gated by world index in ambience_render_mix.
+ * Phase 2d: VINYL (After Hours). Same pattern.
  *
  * All generators lifted near-verbatim from tools/render_worlds.c so the
- * on-device sound matches the audition tools the user signed off on.
+ * on-device sound matches the audition tools.
  */
 
 #include "ambience.h"
@@ -28,6 +29,7 @@
 /* World index keys per-world dispatch. Index meaning matches worlds.c:
  *   0 = Tokyo City, 1 = Crystal Coast, 2 = Midnight Drive, 3 = After Hours. */
 #define WORLD_TOKYO   0
+#define WORLD_COAST   1
 
 static int   world_i = 0;
 static float level_cur = 0.0f, level_tgt = 0.0f;
@@ -186,6 +188,95 @@ static inline void rain_tick(float *outL, float *outR) {
 }
 
 /* ===========================================================================
+ * Waves (Phase 2c) — Crystal Coast only.
+ *
+ * Real surf has an ASYMMETRIC envelope — fast crest (1.2..2 s build), longer
+ * wash-out (5..9 s decay), then a 1..4 s gap. Two layers:
+ *   - body : brown noise → LP 400 Hz, modulated by the envelope
+ *   - splash: pink noise → BP at 2.5/2.7 kHz, gated by the *crest* portion
+ *             (env > 0.75)
+ *
+ * Earlier symmetric-sine versions sounded like LFO-tremolo on noise. The
+ * scheduler-driven version reads as water.
+ * =========================================================================== */
+
+static uint32_t  wv_rng = 0xBADCAFE1u;
+static float     wv_brnL = 0.0f, wv_brnR = 0.0f;
+static float     wv_pink_b0L = 0, wv_pink_b1L = 0, wv_pink_b2L = 0;
+static float     wv_pink_b0R = 0, wv_pink_b1R = 0, wv_pink_b2R = 0;
+static dsp_svf_t wv_lp, wv_splashL, wv_splashR;
+static int       wv_state = 0;           /* 0 idle, 1 attack, 2 decay */
+static int       wv_until_next = 0;
+static int       wv_phase_samples = 0;
+static int       wv_phase_len = 1;
+static float     wv_env = 0.0f;
+
+static inline float wv_white(void) {
+    wv_rng = wv_rng * 1664525u + 1013904223u;
+    return (float)((int32_t)wv_rng) * (1.0f / 2147483648.0f);
+}
+
+static inline float wv_pink(float *b0, float *b1, float *b2) {
+    float w = wv_white();
+    *b0 = 0.99765f * (*b0) + w * 0.0990460f;
+    *b1 = 0.96300f * (*b1) + w * 0.2965164f;
+    *b2 = 0.57000f * (*b2) + w * 1.0526913f;
+    return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
+}
+
+static void waves_reset(void) {
+    dsp_svf_reset(&wv_lp);       dsp_svf_set(&wv_lp,        400.0f, 0.7f);
+    dsp_svf_reset(&wv_splashL);  dsp_svf_set(&wv_splashL, 2500.0f, 1.6f);
+    dsp_svf_reset(&wv_splashR);  dsp_svf_set(&wv_splashR, 2700.0f, 1.6f);
+    wv_brnL = wv_brnR = 0.0f;
+    wv_pink_b0L = wv_pink_b1L = wv_pink_b2L = 0.0f;
+    wv_pink_b0R = wv_pink_b1R = wv_pink_b2R = 0.0f;
+    wv_state = 0;
+    wv_phase_samples = 0;
+    wv_phase_len = 1;
+    wv_env = 0.0f;
+    wv_until_next = (int)(SR * 2.0f);
+}
+
+static inline void waves_tick(float *outL, float *outR) {
+    /* Envelope state machine: idle → attack → decay → idle, then a gap. */
+    if (wv_state == 0) {
+        if (--wv_until_next <= 0) {
+            wv_state = 1; wv_phase_samples = 0;
+            wv_phase_len = (int)(SR * (1.2f + (wv_white() * 0.5f + 0.5f) * 0.8f));
+        }
+    } else if (wv_state == 1) {
+        wv_env = (float)wv_phase_samples / (float)wv_phase_len;
+        if (++wv_phase_samples >= wv_phase_len) {
+            wv_state = 2; wv_phase_samples = 0;
+            wv_phase_len = (int)(SR * (5.0f + (wv_white() * 0.5f + 0.5f) * 4.0f));
+        }
+    } else {
+        wv_env = 1.0f - (float)wv_phase_samples / (float)wv_phase_len;
+        if (++wv_phase_samples >= wv_phase_len) {
+            wv_state = 0; wv_env = 0.0f;
+            wv_until_next = (int)(SR * (1.0f + (wv_white() * 0.5f + 0.5f) * 3.0f));
+        }
+    }
+
+    /* body: brown-noise LP @ 400 Hz, envelope-modulated */
+    wv_brnL = wv_brnL * 0.998f + wv_white() * 0.02f;
+    wv_brnR = wv_brnR * 0.998f + wv_white() * 0.02f;
+    float bodyL = dsp_svf_lp(&wv_lp, wv_brnL) * wv_env;
+    float bodyR = dsp_svf_lp(&wv_lp, wv_brnR) * wv_env;
+
+    /* splash: HF pink-BP at the crest only */
+    float crest = (wv_env > 0.75f) ? (wv_env - 0.75f) * 4.0f : 0.0f;
+    float pL = wv_pink(&wv_pink_b0L, &wv_pink_b1L, &wv_pink_b2L);
+    float pR = wv_pink(&wv_pink_b0R, &wv_pink_b1R, &wv_pink_b2R);
+    float splashL = dsp_svf_bp(&wv_splashL, pL) * crest;
+    float splashR = dsp_svf_bp(&wv_splashR, pR) * crest;
+
+    *outL += bodyL * 1.8f + splashL * 0.35f;
+    *outR += bodyR * 1.8f + splashR * 0.35f;
+}
+
+/* ===========================================================================
  * Public API
  * =========================================================================== */
 
@@ -195,6 +286,7 @@ void ambience_init(void) {
     level_tgt = 0.0f;
     wind_reset();
     rain_reset();
+    waves_reset();
 }
 
 void ambience_set_world(int idx) {
@@ -218,12 +310,14 @@ void ambience_render_mix(float *dry_L, float *dry_R,
 
     if (level_cur < SILENCE_EPS && level_tgt < SILENCE_EPS) return;
 
-    const int do_rain = (world_i == WORLD_TOKYO);
+    const int do_rain  = (world_i == WORLD_TOKYO);
+    const int do_waves = (world_i == WORLD_COAST);
 
     for (int n = 0; n < frames; ++n) {
         float L = 0.0f, R = 0.0f;
         wind_tick(&L, &R);
-        if (do_rain) rain_tick(&L, &R);
+        if (do_rain)  rain_tick(&L, &R);
+        if (do_waves) waves_tick(&L, &R);
 
         float outL = L * level_cur;
         float outR = R * level_cur;
