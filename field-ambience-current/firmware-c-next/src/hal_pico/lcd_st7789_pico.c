@@ -59,12 +59,14 @@
 #define LCD_SPI_HZ   (32 * 1000 * 1000)
 #endif
 
-/* Landscape orientation + GRAM offset for the 1.9" 170×320 module.
- * MADCTL 0x60 = MX | MV (row/col exchange). If the image comes up mirrored
- * or upside-down on the bench, flip to 0xA0 / 0xC0 / 0x00 — purely cosmetic. */
+/* Landscape orientation. MADCTL 0x60 = MX | MV (row/col exchange). If the
+ * image comes up mirrored or upside-down on the bench, flip to 0xA0/0xC0/0x00
+ * — purely cosmetic.
+ *
+ * GRAM X/Y offsets come from include/oled.h (panel-selectable via
+ * FAM_LCD_PANEL_2_0). 1.9" needs Y=35 (170-px window inside the controller's
+ * 240×320 GRAM); 2.0" is the full 240×320 die, no offset. */
 #define LCD_MADCTL   0x60
-#define LCD_X_OFFSET 0
-#define LCD_Y_OFFSET 35
 
 /* ST7789 command set (subset used here). */
 #define ST_SWRESET 0x01
@@ -143,8 +145,8 @@ void oled_init(void) {
 void oled_show(void) {
     const uint8_t *fb = oled_framebuffer();
 
-    uint16_t xs = LCD_X_OFFSET, xe = LCD_X_OFFSET + OLED_WIDTH  - 1;
-    uint16_t ys = LCD_Y_OFFSET, ye = LCD_Y_OFFSET + OLED_HEIGHT - 1;
+    uint16_t xs = OLED_LCD_X_OFFSET, xe = OLED_LCD_X_OFFSET + OLED_WIDTH  - 1;
+    uint16_t ys = OLED_LCD_Y_OFFSET, ye = OLED_LCD_Y_OFFSET + OLED_HEIGHT - 1;
     cmd(ST_CASET); { const uint8_t d[4] = { (uint8_t)(xs >> 8), (uint8_t)xs,
                                             (uint8_t)(xe >> 8), (uint8_t)xe }; data(d, 4); }
     cmd(ST_RASET); { const uint8_t d[4] = { (uint8_t)(ys >> 8), (uint8_t)ys,

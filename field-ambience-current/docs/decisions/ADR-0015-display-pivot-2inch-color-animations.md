@@ -5,6 +5,18 @@
 **Date:** 2026-06-22
 **Supersedes for display panel:** ADR-implicit r16 (SSD1322 → Waveshare 1.9″ ST7789V2)
 
+> **Implementation note r18.47** — Schritt 2 (Panel-Selector) ist gebaut.
+> `oled.h` exportiert jetzt `FAM_LCD_PANEL_1_9` (Default, 170×320, Y-Offset 35)
+> und `FAM_LCD_PANEL_2_0` (240×320, Y-Offset 0). CMake-Cache-Var
+> `FAM_LCD_PANEL=1_9inch|2_0inch` schaltet um, alle Render-Pfade
+> (host-preview, Pico-Treiber, H743-Skeleton) ziehen die Konstanten zentral
+> aus `oled.h`. Build + Tests grün in beiden Modi (178 menu-Checks unter
+> 2.0", komplette Host-Suite unter Default). **Default bleibt 1.9"** bis du
+> das echte 2.0"-Modul verifizierst (BOM-UNVERIFIED-Marker bleibt). Offen:
+> UI-Layout-Konstanten (BAR_Y=148 etc.) sind für 170 px tuned → 2.0"-Build
+> hat 70 px Dead-Space am unteren Rand bis die Layout-Rebalance separat
+> kommt (siehe `/tmp/panel_compare.png`-Preview im Session-Verlauf).
+
 > **Implementation note r18.44** — Schritt 1 von D2 ist gebaut, aber *schlauer*
 > als ursprünglich skizziert: statt sofort auf einen vollen RGB565-Framebuffer
 > zu wechseln (154 KB, Rewrite jeder `oled_*`-Primitive), bleibt der 4-bit-
