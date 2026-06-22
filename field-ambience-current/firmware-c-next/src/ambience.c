@@ -1,17 +1,21 @@
 /*
- * ambience.c — per-world atmospheric layer (ADR-0017 Phase 2a/2b/2c).
+ * ambience.c — per-world atmospheric layer (ADR-0017 Phase 2a..d).
  *
  * Generators run inside engine_render() between texture and bass:
- *   • WIND   — universal, every world. Pink-BP swept 350..900 Hz / 14 s
- *              + random gust envelopes.
- *   • RAIN   — Tokyo only (world 0). Background pink-BP "sshhh" + pool of
- *              12 noise-burst drops through resonant BP at 1.5..4.5 kHz
- *              with 15..40 ms exp decay, scheduled 30..180 ms apart.
- *   • WAVES  — Crystal Coast only (world 1). Asymmetric envelope (1.2..2 s
- *              attack, 5..9 s decay, 1..4 s gap). Body = LP'd brown noise.
- *              Splash at crest = BP'd pink at 2.5/2.7 kHz.
+ *   • WIND    — universal, every world. Pink-BP swept 350..900 Hz / 14 s
+ *               + random gust envelopes.
+ *   • RAIN    — Tokyo only (world 0). Pink-BP "sshhh" + pool of 12
+ *               noise-burst drops at 1.5..4.5 kHz, 15..40 ms decay.
+ *   • WAVES   — Crystal Coast only (world 1). Asymmetric envelope
+ *               (1.2..2 s attack, 5..9 s decay, 1..4 s gap). LP'd brown
+ *               body + HF pink-BP splash gated to crest.
+ *   • VINYL   — After Hours only (world 3). Hi-pass noise crackle +
+ *               sparse sharp pops every ~0.02..0.08 s + slow LP'd brown
+ *               rumble (distant city through walls).
  *
- * Phase 2d: VINYL (After Hours). Same pattern.
+ * Midnight Drive (world 2) intentionally gets only WIND today — the
+ * highway feel comes from wind sweep; distant-traffic generator can be
+ * added later without changing the API.
  *
  * All generators lifted near-verbatim from tools/render_worlds.c so the
  * on-device sound matches the audition tools.
@@ -30,6 +34,7 @@
  *   0 = Tokyo City, 1 = Crystal Coast, 2 = Midnight Drive, 3 = After Hours. */
 #define WORLD_TOKYO   0
 #define WORLD_COAST   1
+#define WORLD_HOURS   3
 
 static int   world_i = 0;
 static float level_cur = 0.0f, level_tgt = 0.0f;
@@ -277,6 +282,65 @@ static inline void waves_tick(float *outL, float *outR) {
 }
 
 /* ===========================================================================
+ * Vinyl (Phase 2d) — After Hours only.
+ *
+ * Three sub-layers:
+ *   • crackle: white noise minus its own slow LP (cheap hi-pass) — the
+ *              continuous "surface noise" of an LP record
+ *   • pops:    sparse short noise bursts, env decays at 0.975 per sample
+ *              (~50 ms half-life), scheduled every ~0.02..0.08 s
+ *   • rumble:  brown-noise integrator (very LP'd) — distant city through
+ *              walls / sub-rumble of a tonearm
+ *
+ * R-channel pop is sign-inverted vs L → wider stereo.
+ * =========================================================================== */
+
+static uint32_t vy_rng = 0xC0DEFEEDu;
+static float    vy_lpL = 0.0f, vy_lpR = 0.0f;
+static float    vy_rumL = 0.0f, vy_rumR = 0.0f;
+static int      vy_until_pop = 0;
+static float    vy_pop_env = 0.0f;
+
+static inline float vy_white(void) {
+    vy_rng = vy_rng * 1664525u + 1013904223u;
+    return (float)((int32_t)vy_rng) * (1.0f / 2147483648.0f);
+}
+
+static void vinyl_reset(void) {
+    vy_lpL = vy_lpR = 0.0f;
+    vy_rumL = vy_rumR = 0.0f;
+    vy_until_pop = 800;
+    vy_pop_env = 0.0f;
+}
+
+static inline void vinyl_tick(float *outL, float *outR) {
+    float wL = vy_white(), wR = vy_white();
+    /* hi-pass crackle: subtract slow LP from raw white */
+    vy_lpL += 0.30f * (wL - vy_lpL);
+    vy_lpR += 0.30f * (wR - vy_lpR);
+    float crL = wL - vy_lpL;
+    float crR = wR - vy_lpR;
+
+    /* sparse sharp pops */
+    if (--vy_until_pop <= 0) {
+        vy_pop_env = 0.5f + (vy_white() * 0.5f + 0.5f) * 0.4f;
+        vy_until_pop = 800 + (int)((vy_white() * 0.5f + 0.5f) * 3000.0f);
+    }
+    float pop = 0.0f;
+    if (vy_pop_env > 0.001f) {
+        pop = vy_white() * vy_pop_env;
+        vy_pop_env *= 0.975f;
+    }
+
+    /* slow rumble — distant city / sub */
+    vy_rumL = vy_rumL * 0.9985f + vy_white() * 0.0008f;
+    vy_rumR = vy_rumR * 0.9985f + vy_white() * 0.0008f;
+
+    *outL += crL * 0.35f + pop * 0.55f + vy_rumL * 1.5f;
+    *outR += crR * 0.35f - pop * 0.55f + vy_rumR * 1.5f;
+}
+
+/* ===========================================================================
  * Public API
  * =========================================================================== */
 
@@ -287,6 +351,7 @@ void ambience_init(void) {
     wind_reset();
     rain_reset();
     waves_reset();
+    vinyl_reset();
 }
 
 void ambience_set_world(int idx) {
@@ -312,12 +377,14 @@ void ambience_render_mix(float *dry_L, float *dry_R,
 
     const int do_rain  = (world_i == WORLD_TOKYO);
     const int do_waves = (world_i == WORLD_COAST);
+    const int do_vinyl = (world_i == WORLD_HOURS);
 
     for (int n = 0; n < frames; ++n) {
         float L = 0.0f, R = 0.0f;
         wind_tick(&L, &R);
         if (do_rain)  rain_tick(&L, &R);
         if (do_waves) waves_tick(&L, &R);
+        if (do_vinyl) vinyl_tick(&L, &R);
 
         float outL = L * level_cur;
         float outR = R * level_cur;
