@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-23 (r18.60 — Echo + Blur macros; 7-slot menu complete per Reddit)**
+**Updated: 2026-06-23 (r18.62 — ADR-0019 LED smart-RGB chain; BOM aligned)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
