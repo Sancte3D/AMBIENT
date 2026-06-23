@@ -57,6 +57,7 @@ typedef enum {
     MP_MOTION,
     MP_AGE,
     MP_ECHO,
+    MP_BLUR,
     MP_COUNT
 } menu_param_t;
 
@@ -77,6 +78,7 @@ typedef struct {
     void (*set_motion)     (float v01);              /* pad LFO depth         */
     void (*set_age)        (float v01);              /* tape hiss + sat       */
     void (*set_echo)       (float v01);              /* tape-style delay      */
+    void (*set_blur)       (float v01);              /* granular cloud        */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

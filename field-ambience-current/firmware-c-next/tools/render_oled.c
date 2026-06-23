@@ -32,6 +32,7 @@ static void noop_atmos (float v) { (void)v; }
 static void noop_motion(float v) { (void)v; }
 static void noop_age   (float v) { (void)v; }
 static void noop_echo  (float v) { (void)v; }
+static void noop_blur  (float v) { (void)v; }
 
 /* Write the framebuffer as a 4× upscaled COLOR PPM (P6, 8-bit RGB) using the
  * SAME accent-tinted grey→RGB565 conversion the device driver uses (ADR-0015
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
     const char *dir = (argc > 1) ? argv[1] : ".";
 
     menu_callbacks_t cb = {
-        noop_world, noop_space, noop_atmos, noop_motion, noop_age, noop_echo
+        noop_world, noop_space, noop_atmos, noop_motion, noop_age, noop_echo, noop_blur
     };
     menu_init(&cb);
 
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
 
     /* One BROWSE frame per parameter. */
     static const char *NAMES[MP_COUNT] = {
-        "01_world","02_space","03_atmos","04_motion","05_age","06_echo"
+        "01_world","02_space","03_atmos","04_motion","05_age","06_echo","07_blur"
     };
     for (int p = 0; p < MP_COUNT; ++p) {
         to_param((menu_param_t)p);

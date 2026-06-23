@@ -33,6 +33,7 @@ typedef struct {
     uint8_t     motion_pct;        /* LFO-Depth / Pad-Movement (Reddit Motion)*/
     uint8_t     age_pct;           /* Tape-Hiss + Saturation (Reddit Age)     */
     uint8_t     echo_pct;          /* Tape-style stereo delay (Reddit Echo)   */
+    uint8_t     blur_pct;          /* Granular cloud / smear (Reddit Blur)    */
     /* Phase 3 slots are intentionally left out for now — they'll be added
      * when the modules they feed exist, so we don't commit to an interface
      * we can't validate yet. */

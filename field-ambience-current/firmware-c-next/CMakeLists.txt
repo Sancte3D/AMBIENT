@@ -87,6 +87,7 @@ set(DSP_SOURCES
     src/ambience.c      # ADR-0017 Phase 2: per-world atmospheric layer
     src/tape.c          # ADR-0017 Phase 3: hiss + warm-tanh saturation (master)
     src/echo.c          # Reddit Echo macro: tape-style stereo delay
+    src/blur.c          # Reddit Blur macro: granular cloud
     src/bass.c
     src/reverb.c
     src/reverb_presets.c
