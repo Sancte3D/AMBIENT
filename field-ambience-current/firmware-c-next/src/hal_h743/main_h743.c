@@ -66,6 +66,7 @@ static void hal_set_space      (float v)   { engine_set_space(v); }
 static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
 static void hal_set_motion     (float v)   { engine_set_motion(v); }
 static void hal_set_age        (float v)   { engine_set_age(v); }
+static void hal_set_echo       (float v)   { engine_set_echo(v); }
 
 int main(void) {
     /* TODO(Step 13.3): SystemClock_Config(); HAL_Init(); SysTick at 1 kHz. */
@@ -87,6 +88,7 @@ int main(void) {
             .set_atmosphere = hal_set_atmosphere,
             .set_motion     = hal_set_motion,
             .set_age        = hal_set_age,
+            .set_echo       = hal_set_echo,
         };
         menu_init(&cb);
     }

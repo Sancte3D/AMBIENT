@@ -314,21 +314,21 @@ const GS_ACTIVE = '#ffffff';
 
 /* r18.58 — Reddit-style perform macros: World/Space/Atmos/Motion/Age. */
 const MP_WORLD = 0, MP_SPACE = 1, MP_ATMOS = 2, MP_MOTION = 3, MP_AGE = 4,
-      MP_COUNT = 5;
-const LABELS = ['World','Space','Atmosphere','Motion','Age'];
+      MP_ECHO = 5, MP_COUNT = 6;
+const LABELS = ['World','Space','Atmosphere','Motion','Age','Echo'];
 const WORLD_NAMES = ['Tokyo City','Crystal Coast','Midnight Drive','After Hours'];
 const WORLD_SUBTITLE = ['night . rain','sunset . waves','highway . wind','3am . vinyl'];
-const WORLD_PRESET = [  /* space, atmos, motion, age */
-  { space: 42, atmos: 35, motion: 40, age: 30 },
-  { space: 30, atmos: 25, motion: 60, age: 20 },
-  { space: 40, atmos: 45, motion: 30, age: 50 },
-  { space: 55, atmos: 50, motion: 20, age: 70 },
+const WORLD_PRESET = [  /* space, atmos, motion, age, echo */
+  { space: 42, atmos: 35, motion: 40, age: 30, echo: 35 },
+  { space: 30, atmos: 25, motion: 60, age: 20, echo: 15 },
+  { space: 40, atmos: 45, motion: 30, age: 50, echo: 55 },
+  { space: 55, atmos: 50, motion: 20, age: 70, echo: 45 },
 ];
 const WORLD_COUNT = 4;
 
 const state = {
   cur: MP_WORLD, mode: 'browse',
-  world_i: 0, space: 42, atmos: 35, motion: 40, age: 30,
+  world_i: 0, space: 42, atmos: 35, motion: 40, age: 30, echo: 35,
   drive: 30, brightness: 50, vol: 30, backlight: 80,
   shift: false,
   battery_pct: 72, usb: false,
@@ -356,6 +356,7 @@ function valueInt(p) {
     case MP_ATMOS:  return state.atmos;
     case MP_MOTION: return state.motion;
     case MP_AGE:    return state.age;
+    case MP_ECHO:   return state.echo;
   }
   return 0;
 }
@@ -365,7 +366,8 @@ function valueText() {
     case MP_SPACE:
     case MP_ATMOS:
     case MP_MOTION:
-    case MP_AGE:   return Math.round(anim.fillT) + '%';
+    case MP_AGE:
+    case MP_ECHO:  return Math.round(anim.fillT) + '%';
   }
   return '';
 }
@@ -377,6 +379,7 @@ function loadWorldPreset() {
   state.atmos  = p.atmos;
   state.motion = p.motion;
   state.age    = p.age;
+  state.echo   = p.echo;
 }
 
 function rotate(delta) {
@@ -395,6 +398,7 @@ function rotate(delta) {
     case MP_ATMOS:  state.atmos   = clamp(state.atmos  + delta, 0, 100); changed = true; break;
     case MP_MOTION: state.motion  = clamp(state.motion + delta, 0, 100); changed = true; break;
     case MP_AGE:    state.age     = clamp(state.age    + delta, 0, 100); changed = true; break;
+    case MP_ECHO:   state.echo    = clamp(state.echo   + delta, 0, 100); changed = true; break;
   }
   if (changed) onValueChange();
 }
