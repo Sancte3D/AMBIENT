@@ -16,6 +16,7 @@
 #include "texture.h"
 #include "ambience.h"
 #include "tape.h"
+#include "echo.h"
 #include "bass.h"
 #include "drone.h"
 #include "reverb_presets.h"
@@ -120,6 +121,7 @@ void engine_init(void) {
     texture_init();
     ambience_init();
     tape_init();
+    echo_init();
     bass_init();
     drone_init();
 
@@ -230,6 +232,12 @@ void engine_set_age(float v) {
     tape_set_saturation_drive(1.0f + v * 0.40f);
 }
 
+/* Echo macro — single setter, internally maps to time + feedback + wet +
+ * tone in echo.c. See echo.c::recompute_internals for the mapping. */
+void engine_set_echo(float v) {
+    echo_set_amount(dsp_clampf(v, 0.0f, 1.0f));
+}
+
 /* Step 12b #1 — musical-state setters. Each triggers a preset recompute so
  * the reverb shifts character with the mode/vibe/macro change. The reverb
  * itself smooths internally (~120 ms), so the transition is glide-not-step
@@ -311,6 +319,11 @@ void engine_render(int16_t *buf, int frames) {
     ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
     bass_render_mix(dryL, dryR, sendL, sendR, frames);
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
+
+    /* Echo sits AFTER all generators but BEFORE the reverb so the delay
+     * picks up the whole mix; send_amount=0.40 routes a copy of the
+     * delayed signal into the reverb send so the echo also picks up room. */
+    echo_render_mix(dryL, dryR, sendL, sendR, frames, 0.40f);
 
     /* Tape character (ADR-0017 Phase 3): subtle hiss into the DRY bus only —
      * we don't want the reverb to amplify the noise floor. */

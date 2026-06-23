@@ -55,7 +55,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_controls.c" \
     "$src/src/controls.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
     -lm -o "$tmp/controls_test"
@@ -65,7 +65,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_params.c" \
     "$src/src/params.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
     -lm -o "$tmp/params_test"
@@ -75,7 +75,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_leds.c" \
     "$src/src/leds.c" "$src/src/controls.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
     -lm -o "$tmp/leds_test"
@@ -154,6 +154,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/tape_test"
 "$tmp/tape_test"
 
+# Reddit Echo macro: tape-style stereo delay
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_echo.c" \
+    "$src/src/echo.c" "$src/src/dsp.c" \
+    -lm -o "$tmp/echo_test"
+"$tmp/echo_test"
+
 # Step 11: famReverbMaster + engine mix-bus (engine pulls in pad+texture+bass
 # and, from Step-12b #1 on, the reverb_presets + brain modules too)
 "$CC" "${CFLAGS[@]}" \
@@ -164,6 +171,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/texture.c" \
     "$src/src/ambience.c" \
     "$src/src/tape.c" \
+    "$src/src/echo.c" \
     "$src/src/bass.c" \
     "$src/src/drone.c" \
     "$src/src/reverb_presets.c" \

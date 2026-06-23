@@ -34,6 +34,7 @@ static int           space   = 42;        /* % 0..100 */
 static int           atmos   = 35;
 static int           motion  = 40;
 static int           age     = 30;
+static int           echo    = 35;
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -54,6 +55,7 @@ static void apply_current(void) {
         case MP_ATMOS:  if (cb.set_atmosphere) cb.set_atmosphere(atmos / 100.0f);break;
         case MP_MOTION: if (cb.set_motion)     cb.set_motion(motion / 100.0f);   break;
         case MP_AGE:    if (cb.set_age)        cb.set_age   (age    / 100.0f);   break;
+        case MP_ECHO:   if (cb.set_echo)       cb.set_echo  (echo   / 100.0f);   break;
         default: break;
     }
 }
@@ -66,12 +68,14 @@ static void load_world_preset(void) {
     atmos  = w->atmos_pct;
     motion = w->motion_pct;
     age    = w->age_pct;
+    echo   = w->echo_pct;
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_space)      cb.set_space     (space  / 100.0f);
     if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
     if (cb.set_motion)     cb.set_motion    (motion / 100.0f);
     if (cb.set_age)        cb.set_age       (age    / 100.0f);
+    if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
 }
 
 void menu_init(const menu_callbacks_t *cbs) {
@@ -85,6 +89,7 @@ void menu_init(const menu_callbacks_t *cbs) {
         atmos  = w->atmos_pct;
         motion = w->motion_pct;
         age    = w->age_pct;
+        echo   = w->echo_pct;
     }
     set_world_accent(false);       /* boot world's tint (world 0), snap */
     /* Don't push the macro defaults here — the engine sets its own at
@@ -102,7 +107,7 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "World","Space","Atmosphere","Motion","Age"
+        "World","Space","Atmosphere","Motion","Age","Echo"
     };
     return LABELS[cur];
 }
@@ -120,6 +125,7 @@ int menu_value_int(menu_param_t p) {
         case MP_ATMOS:  return atmos;
         case MP_MOTION: return motion;
         case MP_AGE:    return age;
+        case MP_ECHO:   return echo;
         default:        return 0;
     }
 }
@@ -141,6 +147,7 @@ const char *menu_current_value_text(void) {
         case MP_ATMOS:  snprintf(buf, sizeof buf, "%d%%", atmos);  return buf;
         case MP_MOTION: snprintf(buf, sizeof buf, "%d%%", motion); return buf;
         case MP_AGE:    snprintf(buf, sizeof buf, "%d%%", age);    return buf;
+        case MP_ECHO:   snprintf(buf, sizeof buf, "%d%%", echo);   return buf;
         default: return "";
     }
 }
@@ -170,6 +177,7 @@ void menu_rotate(int delta) {
         case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;
         case MP_MOTION: motion = clampi(motion + delta, 0, 100); break;
         case MP_AGE:    age    = clampi(age    + delta, 0, 100); break;
+        case MP_ECHO:   echo   = clampi(echo   + delta, 0, 100); break;
         default: break;
     }
     apply_current();

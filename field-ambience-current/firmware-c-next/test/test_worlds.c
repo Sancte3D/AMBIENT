@@ -30,15 +30,15 @@ int main(void) {
         { 255, 205, 150 },
     };
     /* same preservation requirement for macro presets:
-     * space, atmos, motion, age (Reddit-style perform macros).
-     * Tone dropped (duplicate of Brightness encoder); Drums dropped
-     * (adaptive drums = own can of worms). */
-    uint8_t expect_preset[4][4] = {
-        /* space, atmos, motion, age */
-        { 42, 35, 40, 30 },
-        { 30, 25, 60, 20 },
-        { 40, 45, 30, 50 },
-        { 55, 50, 20, 70 },
+     * space, atmos, motion, age, echo. Tone dropped (duplicate of
+     * Brightness encoder); Drums dropped (adaptive drums = own can of
+     * worms). Echo added in the post-Phase-4 perform-macros pass. */
+    uint8_t expect_preset[4][5] = {
+        /* space, atmos, motion, age, echo */
+        { 42, 35, 40, 30, 35 },
+        { 30, 25, 60, 20, 15 },
+        { 40, 45, 30, 50, 55 },
+        { 55, 50, 20, 70, 45 },
     };
 
     for (int i = 0; i < 4; ++i) {
@@ -57,11 +57,12 @@ int main(void) {
         CHECK(w->space_pct  == expect_preset[i][0] &&
               w->atmos_pct  == expect_preset[i][1] &&
               w->motion_pct == expect_preset[i][2] &&
-              w->age_pct    == expect_preset[i][3],
-              "preset[%d] = (%d,%d,%d,%d), want (%d,%d,%d,%d)", i,
-              w->space_pct, w->atmos_pct, w->motion_pct, w->age_pct,
+              w->age_pct    == expect_preset[i][3] &&
+              w->echo_pct   == expect_preset[i][4],
+              "preset[%d] = (%d,%d,%d,%d,%d), want (%d,%d,%d,%d,%d)", i,
+              w->space_pct, w->atmos_pct, w->motion_pct, w->age_pct, w->echo_pct,
               expect_preset[i][0], expect_preset[i][1],
-              expect_preset[i][2], expect_preset[i][3]);
+              expect_preset[i][2], expect_preset[i][3], expect_preset[i][4]);
         /* every accent must keep at least one channel near full so whites
          * stay bright in the grey→RGB565 cast (ADR-0015) */
         int max_ch = w->accent_r;
