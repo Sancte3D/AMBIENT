@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-22 (r18.55 — UI: pill-bloom animation on cursor + value change)**
+**Updated: 2026-06-23 (r18.60 — Echo + Blur macros; 7-slot menu complete per Reddit)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -66,6 +66,8 @@ product build.
 | Worlds-Modul (single source of truth) | ✅ r18.48 `src/worlds.c` + `worlds.h` (ADR-0017 Phase 1) — Lift aus menu.c, exakte RGB/Preset-Erhaltung per Test |
 | Tape-hiss generator | 🟠 inline in render_dreamy_warm.c |
 | Tape character (hiss + warm-tanh saturation) im Master | ✅ r18.53 `src/tape.c` (ADR-0017 Phase 3); always-on, Default = dreamy_warm-Referenz (hiss 0.005, drive 1.10) |
+| **Echo: tape-style stereo delay (Reddit #1 perform effect)** | ✅ r18.58 `src/echo.c` — Macro 0..1 maps zu time/feedback/wet/tone; LP-im-Feedback = Tape-Charakter |
+| **Blur: granular cloud / smear (Reddit ambient block)** | ✅ r18.60 `src/blur.c` — 16 Grains × 200 ms Ring; Macro hides density/size/jitter/scatter/wet |
 | World preset application from engine | ⏳ next refactor step |
 | Per-world drums system (menu toggle exists) | ⏳ `beat.c` lives in `src/v2/` and can be lifted out |
 | Aliasing pre-filter on noise sources | ⏳ noted "macht prinzipiell Sinn", not done |
@@ -94,7 +96,8 @@ product build.
 | `tools/render_oled.c` host preview | ✅ updated to world model |
 | `tools/display_sim.html` JS port | ✅ updated to world model (sim still committed, just no auto-deploy) |
 | Pico 2 bench build (`display_hw_test.uf2`) | ✅ CI RP2350 build green |
-| Engine ↔ menu callbacks wired in HAL | ✅ r18.54 — `main_h743.c` `menu_init()` mit `engine_set_world/space/tone/atmosphere`-Bindings (ADR-0017 Phase 4) |
+| Engine ↔ menu callbacks wired in HAL | ✅ r18.54/.58/.60 — `main_h743.c` `menu_init()` mit world/space/atmos/motion/age/echo/blur Bindings (ADR-0017 Phase 4 + Reddit-Macros) |
+| **Reddit-style 7-slot Perform-Menü** | ✅ r18.58/.60 — World · Space · Atmosphere · Motion · Age · Echo · Blur; per-World-Presets in `worlds.c`; Encoder dedicated (Drive · Brightness · Volume · Display-Nav) — keine Duplikate |
 | **Display Akzent-Farbe pro World (Grau→RGB565-Tint)** | ✅ r18.44 `src/oled_color.c` — ADR-0015 Schritt 1; Default=Mono, pro World dezenter Cast; Host-Preview farbig |
 | **Akzent-Crossfade beim World-Wechsel (erste UI-Animation)** | ✅ r18.45 — `oled_accent_tick/settle`, libm-frei; auf Pico-Bench testbar |
 | **Pill-Bloom-Animation (zweite UI-Animation)** | ✅ r18.55 — Aktive Pill macht Scale-Pop (1.25× → 1.0×) bei Cursor-Wechsel + 1.15× bei discrete Value-Change |
