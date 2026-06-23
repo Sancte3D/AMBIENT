@@ -17,6 +17,8 @@
 #include "engine.h"
 #include "pad.h"
 #include "cells.h"
+#include "brain.h"
+#include "worlds.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -379,6 +381,40 @@ static void test_engine_cell_velocity(void) {
     CHECK(loud <= 32767, "velocity press clipped int16");
 }
 
+/* Per-world musical identity: selecting a world must push its key/mode/vibe
+ * into the harmonic brain so cell taps actually play in that world's key. */
+static void test_engine_world_changes_key(void) {
+    engine_init();
+    /* boot world 0 (Tokyo) — brain should already be A-ionian-warm */
+    CHECK(brain_get_key()  == worlds_get(0)->key_midi, "boot key != Tokyo (%d)", brain_get_key());
+    CHECK(brain_get_mode() == worlds_get(0)->mode,     "boot mode != Tokyo");
+    CHECK(brain_get_vibe() == worlds_get(0)->vibe,     "boot vibe != Tokyo");
+
+    int prev_root = brain_cell_root(0);
+    int distinct_roots = 0, last_root = prev_root;
+
+    for (int wi = 0; wi < worlds_count(); ++wi) {
+        engine_set_world(wi);
+        const world_t *w = worlds_get(wi);
+        CHECK(brain_get_key()  == w->key_midi, "world %d key not applied (got %d want %d)",
+              wi, brain_get_key(), w->key_midi);
+        CHECK(brain_get_mode() == w->mode, "world %d mode not applied", wi);
+        CHECK(brain_get_vibe() == w->vibe, "world %d vibe not applied", wi);
+        int r = brain_cell_root(0);
+        if (r != last_root) ++distinct_roots;
+        last_root = r;
+        printf("  world %d (%s): cell0 root MIDI=%d  key=%d mode=%d vibe=%d\n",
+               wi, w->name, r, brain_get_key(), brain_get_mode(), brain_get_vibe());
+    }
+    /* At least 3 of the 4 worlds should voice cell 0 to a different root —
+     * they're in different keys, so the harmony genuinely differs. */
+    CHECK(distinct_roots >= 2, "worlds barely differ harmonically (distinct=%d)", distinct_roots);
+
+    /* And after touching all worlds, going back to Tokyo restores its key. */
+    engine_set_world(0);
+    CHECK(brain_get_key() == worlds_get(0)->key_midi, "return-to-Tokyo key not restored");
+}
+
 int main(void) {
     dsp_init();
 
@@ -394,6 +430,7 @@ int main(void) {
     test_engine_live_params_no_glitch();
     test_engine_master_clean();
     test_engine_cell_velocity();
+    test_engine_world_changes_key();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);
     if (g_fails) { printf("RESULT: FAIL\n"); return 1; }

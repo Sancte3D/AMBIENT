@@ -23,6 +23,8 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .accent_r = 175, .accent_g = 205, .accent_b = 255,   /* cool blue */
         .space_pct = 42, .atmos_pct = 35,
         .motion_pct = 40, .age_pct = 30, .echo_pct = 35, .blur_pct = 15,
+        /* A-major ionian, warm add9 — "DAS IST ES" dreamy reference */
+        .key_midi = 57, .mode = 0, .vibe = 0,
     },
     {
         .name = "Crystal Coast",
@@ -30,6 +32,8 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .accent_r = 180, .accent_g = 245, .accent_b = 240,   /* aqua */
         .space_pct = 30, .atmos_pct = 25,
         .motion_pct = 60, .age_pct = 20, .echo_pct = 15, .blur_pct = 25,
+        /* D-major ionian, bright maj7 — sunset optimism, open horizon */
+        .key_midi = 62, .mode = 0, .vibe = 1,
     },
     {
         .name = "Midnight Drive",
@@ -37,6 +41,8 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .accent_r = 220, .accent_g = 180, .accent_b = 255,   /* violet */
         .space_pct = 40, .atmos_pct = 45,
         .motion_pct = 30, .age_pct = 50, .echo_pct = 55, .blur_pct = 10,
+        /* F#-minor dorian, deep min11 — moody highway, descending arc */
+        .key_midi = 54, .mode = 1, .vibe = 2,
     },
     {
         .name = "After Hours",
@@ -44,6 +50,8 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .accent_r = 255, .accent_g = 205, .accent_b = 150,   /* warm amber */
         .space_pct = 55, .atmos_pct = 50,
         .motion_pct = 20, .age_pct = 70, .echo_pct = 45, .blur_pct = 35,
+        /* C-minor aeolian, floating sus2 — 3am jazz bar, lonely but okay */
+        .key_midi = 60, .mode = 5, .vibe = 3,
     },
 };
 

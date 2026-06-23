@@ -34,6 +34,12 @@ typedef struct {
     uint8_t     age_pct;           /* Tape-Hiss + Saturation (Reddit Age)     */
     uint8_t     echo_pct;          /* Tape-style stereo delay (Reddit Echo)   */
     uint8_t     blur_pct;          /* Granular cloud / smear (Reddit Blur)    */
+    /* Musical identity (harmonic brain). On world change the engine applies
+     * key + mode + vibe so each world sounds harmonically distinct, not just
+     * texturally. Values from the tools/render_worlds.c audition. */
+    uint8_t     key_midi;          /* tonic MIDI note (brain_set_key)         */
+    uint8_t     mode;              /* 0..5 ionian..aeolian (brain_set_mode)   */
+    uint8_t     vibe;              /* 0..3 warm/bright/deep/floating (vibe)   */
     /* Phase 3 slots are intentionally left out for now — they'll be added
      * when the modules they feed exist, so we don't commit to an interface
      * we can't validate yet. */

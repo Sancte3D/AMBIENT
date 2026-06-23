@@ -22,6 +22,7 @@
 #include "drone.h"
 #include "reverb_presets.h"
 #include "brain.h"
+#include "worlds.h"
 #include "generative.h"
 #include "cells.h"
 #include "dsp.h"
@@ -152,6 +153,12 @@ void engine_init(void) {
      * volume knob bound yet — keeps headphones from being slammed). */
     dc_x1L = dc_y1L = dc_x1R = dc_y1R = 0.0f;
     master_vol_cur = master_vol_tgt = 0.6f;
+
+    /* Boot world 0 (Tokyo) — align the harmonic identity with the displayed
+     * world so the first cell tap already plays in A-major, not the bare
+     * C-ionian default. Sets brain key/mode/vibe + ambience world + reverb
+     * preset; produces no sound (no notes held). */
+    engine_set_world(0);
 }
 
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
@@ -217,7 +224,18 @@ void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.
 void engine_set_brightness(float hz)  { pad_set_brightness(hz); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1.0f)); }
-void engine_set_world(int idx)        { ambience_set_world(idx); }
+/* World change applies BOTH the texture layer (ambience) AND the harmonic
+ * identity (key/mode/vibe) so each world sounds musically distinct, not just
+ * texturally. The cell taps then play in the world's key/mode (brain), the
+ * drone follows the root, and the reverb character shifts via the per-mode/
+ * vibe preset table. Values live in worlds.c (audition-derived). */
+void engine_set_world(int idx) {
+    ambience_set_world(idx);
+    const world_t *w = worlds_get(idx);
+    engine_set_key ((int)w->key_midi);   /* brain key + drone root          */
+    engine_set_mode((int)w->mode);       /* brain mode + reverb recompute   */
+    engine_set_vibe((int)w->vibe);       /* brain vibe + reverb recompute   */
+}
 void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
 
 /* Perform-macros: combine multiple internal params under one user knob. */
