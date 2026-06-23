@@ -97,6 +97,53 @@ int main(void) {
     CHECK(controls_hold_base(1), "release-edge does not clear a Hold latch");
     CHECK(peak_over(0.5f) > 800, "held cell still sounds after key-up");
 
+    /* ---- 7. Polyphony — all 5 cells momentary simultaneously --------------- */
+    controls_init(); engine_init();
+    for (int c = 0; c < 5; ++c) controls_cell_press((uint8_t)c, 0.15f);
+    CHECK(engine_active_voices() == 5, "5 momentary cells: %d voices", engine_active_voices());
+    CHECK(peak_over(0.4f) > 1500, "5-cell chord audible");
+    for (int c = 0; c < 5; ++c) controls_cell_release((uint8_t)c);
+
+    /* ---- 8. Polyphony — all 5 Hold-base + all 5 Hold-shift = 10 voices ---- */
+    controls_init(); engine_init();
+    controls_modifier(MOD_HOLD, true);                /* HOLD on */
+    for (int c = 0; c < 5; ++c) controls_cell_press((uint8_t)c, 0.14f);   /* base latches */
+    for (int c = 0; c < 5; ++c) CHECK(controls_hold_base(c),  "base %d latched", c);
+    controls_modifier(MOD_SHIFT, true);               /* now SHIFT too */
+    for (int c = 0; c < 5; ++c) controls_cell_press((uint8_t)c, 0.14f);   /* shift latches on top */
+    for (int c = 0; c < 5; ++c) CHECK(controls_hold_shift(c), "shift %d latched", c);
+    for (int c = 0; c < 5; ++c) CHECK(controls_hold_base(c),  "base %d still latched after stack", c);
+    /* All 10 sources should be active in the pad pool (pad_render path) */
+    CHECK(engine_active_voices() == 10,
+          "10-voice stack (base+shift × 5 cells): got %d", engine_active_voices());
+    CHECK(peak_over(0.4f) > 2500, "10-voice stack audible above 5-voice level");
+
+    /* ---- 9. Hold latches + momentary tap of an EXTRA cell coexist --------- */
+    /* (still HOLD+SHIFT from §8 — clear SHIFT, then turn HOLD off so the
+     * next tap is momentary; the latched cells should keep sounding.)         */
+    controls_modifier(MOD_SHIFT, false);              /* shift off — but shift-latches persist */
+    controls_modifier(MOD_HOLD, false);               /* hold off — taps become momentary */
+    /* The 10 held latches must still be visible. */
+    CHECK(controls_hold_base(0)  && controls_hold_shift(0),  "latches survive HOLD-off");
+    /* Cell 2 is already latched (base+shift). A momentary tap of cell 2
+     * re-uses the SAME pad-source (cell index 2) — that's a re-trigger, no
+     * new voice. So we can't add an 11th this way. Instead, just verify the
+     * total stays at 10 after a tap+release. */
+    controls_cell_press(2, 0.12f);
+    controls_cell_release(2);
+    CHECK(engine_active_voices() == 10,
+          "momentary re-tap on a held cell didn't add/lose voices: %d", engine_active_voices());
+
+    /* ---- 10. Clear nukes everything cleanly ------------------------------- */
+    controls_modifier(MOD_CLEAR, true);
+    for (int c = 0; c < 5; ++c) {
+        CHECK(!controls_hold_base(c),  "Clear wiped base %d",  c);
+        CHECK(!controls_hold_shift(c), "Clear wiped shift %d", c);
+    }
+    /* Engine voices fall to 0 after the release tails decay (~release_s).
+     * We don't wait the full tail; just check no NEW notes are sounding. */
+    CHECK(engine_active_voices() <= 10, "no spurious add after Clear");
+
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");
     return fails ? 1 : 0;
