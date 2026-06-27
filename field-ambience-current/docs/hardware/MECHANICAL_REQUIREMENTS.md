@@ -92,16 +92,24 @@ Gehäuse oder die Bedienflächen positionell fest.
 | Plate-Mounted, NICHT PCB-Mounted | bedeutet: Cells sitzen auf einer separaten Plate über dem PCB; Hall sieht den Magnet durch's PCB | ADR-0013 |
 | Plate-Material | 3D-gedruckte Plate ODER 1,5 mm FR-4 Plate (Stretch-Goal) | TBD |
 
-### 1.6 Modifier-Buttons × 5 (Mini-Tact, oben)
+### 1.6 Modifier-Buttons × 5 `SW6..SW10` (HX 12×12×7.3TPFT-B)
+
+> **r18.65-FIX:** Diese Tabelle führte fälschlich den **TS-1088** (3,9×2,9 mm
+> Service-Taster aus §1.9) als Modifier-Button. Quelle der Wahrheit (Generator
+> Z. 4111) verbaut für SW6–SW10 den **HX 12×12×7.3TPFT-B** (C36498966),
+> Custom-Footprint `field_ambience:SW_HX_12x12x7.3_SMD-4P`. Höhe daher **7,3 mm**
+> statt der alten falschen ~2 mm — relevant fürs Top-Plate-Clearance.
 
 | Maß | Wert | Quelle |
 |---|---|---|
-| Switch-Body | XUNPU TS-1088-AR02016, ~3,9 × 2,9 × 2,0 mm | BOM §7 |
-| Cap-Höhe (3D-Print über Top-Plate) | ~3 mm | User-CAD |
-| Cutout im Gehäuse | Ø 3,5 mm pro Button | Standard |
-| Pitch | ≥ 6 mm — Finger trifft 1 Button auf einmal | ergonomisch |
-| Lage | Top-Plate, oberhalb oder neben den Cells | User-Entscheidung |
-| LED-Anordnung daneben | jede Modifier-LED links/rechts des zugeordneten Buttons | siehe Walkthrough §4 |
+| Switch-Body (LxBxH) | **11,8 × 11,8 × 7,3 mm** (vertikaler Plunger oben) | Footprint-descr + LCSC C36498966 |
+| Höhe über PCB | **7,3 mm** (Plunger-Spitze) → Vertical-Clearance Top-Plate | Datasheet |
+| Pad-Pattern / Keep-out | 4× 2,5×1,5 mm Pads auf 7 mm-Pitch (X+Y); 11,8×11,8 mm Body-Keep-out | Generator FP_NOTE Z. 4118 |
+| Cutout im Gehäuse | Plunger-Ø **UNVERIFIED — DS prüfen**; bei 3D-Print-Cap: per Cap | Anti-Guess |
+| Cap-Höhe (optional 3D-Print über Top-Plate) | User-CAD | User |
+| Pitch | ≥ 16 mm Center-to-Center (12 mm Body + Fingerabstand) | ergonomisch |
+| Lage | Top-Plate, oberhalb/neben den Cells | User-Entscheidung |
+| LED daneben | je 1 Modifier-LED neben dem Button (Walkthrough §4) | — |
 
 ### 1.7 Speaker × 2 `J7` (PUI AS04008PS 8 Ω 40 mm)
 
