@@ -1,0 +1,35 @@
+name: hw-consistency
+
+# Guards against hardware-doc drift: the generator NETS dict
+# (kicad/generate_kicad_project.py) is the single source of truth for the
+# STM32 pin -> net map; docs/hardware/PINMAP.md is the human mirror the PCB
+# engineer reads. This job fails if they disagree (e.g. the scrambled encoder
+# pins the audit found). Stdlib-only, no toolchain needed.
+
+on:
+  push:
+    paths:
+      - "field-ambience-current/kicad/generate_kicad_project.py"
+      - "field-ambience-current/docs/hardware/PINMAP.md"
+      - "field-ambience-current/scripts/check_pinmap.py"
+      - ".github/workflows/hw-consistency.yml"
+  pull_request:
+    paths:
+      - "field-ambience-current/kicad/generate_kicad_project.py"
+      - "field-ambience-current/docs/hardware/PINMAP.md"
+      - "field-ambience-current/scripts/check_pinmap.py"
+      - ".github/workflows/hw-consistency.yml"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  pinmap-consistency:
+    name: PINMAP <-> generator NETS consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check pin-map drift
+        working-directory: field-ambience-current
+        run: python3 scripts/check_pinmap.py
