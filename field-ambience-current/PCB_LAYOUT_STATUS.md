@@ -4,7 +4,7 @@
 
 ## Kurzfassung
 
-**Es existiert KEIN `.kicad_pcb`. Keine Gerber, keine BOM/CPL-Exports, keine Bestellung.** Der Schaltplan ist auf STM32H743 migriert (r18.5) und in r18.6 mit allen verfügbaren öffentlichen Datenblatt-Quellen verifiziert. Layout (= NATIVE_PORT_PLAN Step 13 **Phase 6**) ist bewusst noch nicht gestartet: davor steht das **Phase-5-Profiling-Acceptance-Gate** (DWT->CYCCNT < 40 % Block-Zeit auf echter H743-Hardware).
+**Es existiert KEIN `.kicad_pcb`. Keine Gerber, keine BOM/CPL-Exports, keine Bestellung.** Der Schaltplan ist auf STM32H743 migriert (r18.5) und in r18.6 mit allen verfügbaren öffentlichen Datenblatt-Quellen verifiziert. Layout (= NATIVE_PORT_PLAN Step 13 **Phase 6**) ist bewusst noch nicht gestartet: davor stehen **GUI-ERC + die Pinmap-/Power-Konsistenz-Fixes** (das Phase-5-Profiling-Gate ist per ADR-0005 gestrichen, s.u. — alter Stand korrigiert).
 
 ## Was fertig ist
 
