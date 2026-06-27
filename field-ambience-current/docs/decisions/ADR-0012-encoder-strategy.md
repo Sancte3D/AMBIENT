@@ -1,7 +1,25 @@
-# ADR-0012: Encoder-Strategie — 1× Push+Detent, 3× Smooth, alle gleich hoch
+# ADR-0012: Encoder-Strategie — 4× Push-Encoder, alle gleich hoch
 
-**Status:** ACCEPTED (User-Direktive + Engineering-Analyse, 2026-06-12)
-**Date:** 2026-06-12
+**Status:** ACCEPTED · **AMENDED 2026-06-27** (User-Direktive: alle 4 = Push)
+**Date:** 2026-06-12 (urspr.) / 2026-06-27 (Amendment)
+
+## Amendment 2026-06-27 — alle 4 Encoder sind Push-Encoder
+
+User-Direktive: **„alle vier Encoder werden Push-Encoder, sodass wir mehrere
+Funktionen zuweisen können."** Das ist **hardware-seitig bereits erfüllt** und
+erfordert **keine PCB-Änderung**:
+
+- Alle 4 sind ohnehin **EC11E18244AU** (mit Push-Switch) — der r18.22-NRND-Pivot
+  unten machte schon alle vier zum Push-Teil.
+- Alle 4 Push-Switch-Netze sind im Generator **verdrahtet**: `DISPLAY_SW` (PE3),
+  `VOL_SW` (MCP23017-GPB5), `DRIVE_SW` (PE0), `BRIGHT_SW` (PE1).
+
+Damit ist die ursprüngliche „1× Push + 3× Smooth (Switch-Pins leer, `has_sw=false`)"-
+Linie **überholt**: physisch haben alle vier einen Switch, alle vier sind
+verdrahtet. **Offen (Firmware, kein HW-/PCB-Blocker):** in `encoders.c`/`controls.c`
+`has_sw=true` für alle vier setzen und die Push-Funktionen belegen (Mapping =
+Produkt-UX-Entscheidung, noch offen). Die Detent-Mechanik bleibt wie unten
+(Display mit Detents; Parameter-Encoder via Firmware-Acceleration „smooth").
 
 ## Kontext (User-Anforderung, wörtlich destilliert)
 
@@ -76,9 +94,10 @@ Warum THT statt des bisherigen EC11J SMD (C209762):
 
 Footprint: **KiCad-Standard-Lib** `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm`
 für ALLE vier (fab-erprobt; Land-Pattern ist für alle Schafthöhen identisch,
-H20mm betrifft nur das 3D-Modell). Die Smooth-Variante hat physisch keine
-Switch-Pins — die S1/S2-Löcher bleiben leer; das SW-Net bleibt im Schematic
-verdrahtet (Pull-up = idle high, Firmware pollt nicht: `has_sw = false`).
+H20mm betrifft nur das 3D-Modell). **Amendment 2026-06-27:** Da alle vier das
+Push-Teil EC11E18244AU sind, haben alle vier physisch einen Switch (S1/S2 belegt)
+und alle vier SW-Netze sind verdrahtet — die frühere „Smooth-Variante ohne
+Switch-Pins, `has_sw=false`"-Annahme ist damit überholt (siehe Amendment oben).
 
 ### UX-Gesetz (Firmware, verbindlich)
 

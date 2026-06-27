@@ -19,7 +19,7 @@ yet — **not orderable**.
 | **Hardware schematic** (8 sheets, generator-based) | [`field-ambience-current/kicad/`](field-ambience-current/kicad/) | STM32H743 migration done (r18.6), **no `.kicad_pcb` yet** |
 | **What we know about the parts** (datasheets, verifications) | [`field-ambience-current/docs/component_reviews/`](field-ambience-current/docs/component_reviews/) | 2 reviews complete, ~20 open |
 | **What's blocking manufacturing** | [`field-ambience-current/PCB_LAYOUT_STATUS.md`](field-ambience-current/PCB_LAYOUT_STATUS.md) | honest, updated every revision |
-| **How decisions were made** | [`field-ambience-current/docs/decisions/`](field-ambience-current/docs/decisions/) | 4 ADRs |
+| **How decisions were made** | [`field-ambience-current/docs/decisions/`](field-ambience-current/docs/decisions/) | 19 ADRs (rejected ones marked SUPERSEDED) |
 | **Render samples to listen to** | [`demos/audio/`](demos/audio/) | 4 FLAC, latest is an 8-minute performance |
 | **Full project map / what to open first per role** | [`PROJECT_MAP.md`](PROJECT_MAP.md) | role-based |
 
@@ -46,12 +46,12 @@ AMBIENT/
 │   └── supercollider_reference/ ← canonical SC engine (field_ambience_v29o.scd)
 ├── archive/
 │   ├── legacy_pre_native/       ← pre-native bridge.py, MicroPython firmware
-│   └── old_specs/               ← pre-Step-6 pitch + roadmap
+│   ├── old_specs/               ← pre-Step-6 pitch + roadmap
+│   └── PCB_TODO_historical.md   ← pre-H743 hardware issue log (history only)
 └── field-ambience-current/      ← active design + code + docs
     ├── START_HERE.md
     ├── PCB_LAYOUT_STATUS.md     ← honest manufacturing state
     ├── CHANGELOG.md             ← what changed and when
-    ├── PCB_TODO.md              ← open hardware items
     ├── NATIVE_PORT_PLAN.md      ← Pico → STM32H7 migration plan
     ├── field_ambience_pcb_SPEC_v0.7.md  ← live hardware spec
     ├── firmware-c/              ← FROZEN host-test snapshot (Pico era)
