@@ -4456,8 +4456,8 @@ def mcp_sheet() -> str:
     LED_G = ("KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)", "C12624")
     led_array = [
         # (pca_channel, led_ref(str), sx, sy, label_name, descr, (mpn, lcsc))
-        (0,  "6",   80, 200, "LED6_K",   "SHIFT-Modifier (gruen)",   LED_G),
-        (1,  "7",  105, 200, "LED7_K",   "HOLD-Mode (gelb)",         LED_Y),
+        (0,  "6",   80, 200, "LED6_K",   "SHIFT-Modifier (gelb)",    LED_Y),
+        (1,  "7",  105, 200, "LED7_K",   "HOLD-Mode (gruen)",        LED_G),
         (2,  "8",  130, 200, "LED8_K",   "DRONE-Mode (weiss)",       LED_W),
         (3,  "9",  155, 200, "LED9_K",   "GENERATE-Mode (weiss)",    LED_W),
         (4,  "10", 180, 200, "LED10_K",  "CLEAR-Confirm (weiss)",    LED_W),

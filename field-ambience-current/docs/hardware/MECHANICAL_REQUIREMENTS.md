@@ -44,7 +44,8 @@ Gehäuse oder die Bedienflächen positionell fest.
 | Pin-Reihenfolge (gegen J3) | **UNVERIFIED — gegen geliefertes Modul prüfen** vor finaler Layout-Bestätigung | r18.22 Note |
 | Gehäuse-Fenster-Cutout | Active Area + ≤ 1 mm Toleranz pro Seite (LxB ≈ 41 × 23 mm) | Standard |
 | Tiefe vom PCB | 5,2 mm Modul-Höhe + ~3 mm J3-Pin-Header → **min. 8 mm Vertical-Clearance** zwischen PCB-Top und Gehäuse-Front-Innenseite | Stack-Up |
-| **ADR-0015 PROPOSED:** Pivot auf 2.0″ 240×320 | Maße noch zu verifizieren | BOM UNVERIFIED |
+| **Display für diesen PCB-Rev EINGEFROREN auf 1.9″** (r18.64, User „1,9 zoll reicht safe") | verwende die 1.9″-Maße oben | nicht layout-blockierend |
+| **ADR-0015 PROPOSED:** Pivot auf 2.0″ 240×320 → **Rev-B** | Maße noch zu verifizieren | BOM UNVERIFIED, kein Blocker mehr |
 
 ### 1.2 USB-C Connector `J1` (TYPE-C-31-M-12)
 
