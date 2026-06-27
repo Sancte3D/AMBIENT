@@ -2,7 +2,9 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
-> **r18.66 offen:** (a) blaue VU-LED LCSC verifizieren (NO-LCSC-Liste), (b) Firmware Level-Berechnung + U10-I²C-Treiber, (c) GUI-ERC für den U10-Block (wie Board-weit, Blocker B3). Position der LED-Reihe = Layout-TBD.
+> **r18.67:** MIDI-Out **reaktiviert + implementiert** als **J10** (TRS Type A, OUT-only, 3,3 V/CA-033; MIDI_TX=PD5 → 2× 220 Ω → Tip/Ring). Refdes-Kollision behoben: **J9 = Akku, J10 = MIDI**. Power-Aus: Schiebeschalter auf der **Boost-EN-Leitung** entschieden (signal-level, Laden bleibt) — **noch zu implementieren**.
+>
+> **Offen:** (a) blaue VU-LED + 220-Ω-MIDI LCSC verifizieren (NO-LCSC-Liste), (b) Firmware: Level-Meter (U10-I²C) + MIDI-UART (PD5) + Encoder-Push-Mapping, (c) Power-Schiebeschalter im Generator umsetzen, (d) GUI-ERC board-weit (Blocker B3), (e) Doc-Sweep J_BAT→J9 in Restdocs.
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.

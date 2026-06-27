@@ -1261,7 +1261,7 @@ also gegenseitig ausschließend (Plug = Speaker aus).
 hochohmige Kopfhörer (>32Ω) sauber. Für niederohmige Kopfhörer wäre ein
 dedizierter Kopfhörer-Amp (TPA6132 o.ä.) besser — v0.8-Option.
 
-### MIDI Out (J9, r15 — 2026-06)
+### MIDI Out (J10, r18.67 — implementiert; vorher fälschlich „J9" = Akku)
 
 3.5-mm-TRS-Klinke, **MIDI 1.0 / MMA TRS Type A** (offizieller Standard seit
 2018). Keine USB-MIDI, kein TinyUSB. User-Use-Case: das Gerät als
@@ -1271,7 +1271,7 @@ Akkord-Progression auf MIDI.
 
 | Element | Wert |
 |---|---|
-| J9 | 3.5mm TRS-Buchse, **selber MPN wie J8** (PJ-320A / LCSC C431535) — Mechanik & Sourcing wiederverwenden |
+| **J10** (nicht J9 = Akku!) | 3.5mm TRS-Buchse, **selber MPN wie J8** (PJ-320D / LCSC C431535) — Mechanik & Sourcing wiederverwenden |
 | Treiber | **Pico GP21 → PIO-UART TX** @ 31250 Baud, 8N1 |
 | R_MIDI_TX | **220 Ω 0603** zwischen GP21 und TRS Tip (Daten / „cold side") |
 | R_MIDI_REF | **220 Ω 0603** zwischen +3V3 und TRS Ring (Strom-Referenz / „hot side") |

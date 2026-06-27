@@ -1,8 +1,26 @@
-# ADR-0004: MIDI-Out — DEFERRED (r18.30)
+# ADR-0004: MIDI-Out — REAKTIVIERT & IMPLEMENTIERT (r18.67)
 
-**Status:** DEFERRED → out of scope für den 5er-Prototyp-Run (User-Entscheidung 2026-06-15)
-**Datum (Original):** 2026-06-11 (r18.6)
-**Datum (Deferral):** 2026-06-15 (r18.30)
+**Status:** ✅ **ACCEPTED / IMPLEMENTED** (User-Entscheidung 2026-06-27) — vorher DEFERRED
+**Datum (Original):** 2026-06-11 (r18.6) · **Deferral:** 2026-06-15 (r18.30) · **Reaktiviert:** 2026-06-27 (r18.67)
+
+## Amendment 2026-06-27 — MIDI-Out kommt rein (J10)
+
+User-Entscheidung: **MIDI-Out wird bestückt.** Use-Case: das Gerät als
+„denkender Controller" — 5 Cells → Harmonic Brain → echte Akkord-Progression
+auf MIDI an externen Synth/DAW. Implementierung (Generator, `stm32h743_sheet`):
+
+- **Refdes `J10`** (3,5-mm-TRS, PJ-320D, **selber MPN wie J8** / C431535).
+  ⚠️ **NICHT J9** — J9 ist der Akku-Stecker.
+- **TRS Type A**, **OUT-only**, **3,3 V direkt** (MIDI-Spec **CA-033** erlaubt
+  3.3-V-Treiber → kein Level-Shifter).
+- `MIDI_TX` (PD5) → **R_MIDI_TX 220 Ω** → Tip; **+3V3** → **R_MIDI_REF 220 Ω** →
+  Ring; Sleeve → GND; DET-Pin = no_connect.
+- Offen: 220-Ω-LCSC verifizieren (NEEDS-VERIFY, NO-LCSC-Liste); UART-TX auf PD5
+  in der Firmware (31250 Baud, 8N1) — kein PCB-Blocker; GUI-ERC wie board-weit.
+
+Die folgende Deferral-Begründung ist damit **überholt** (nur als History).
+
+---
 
 ---
 

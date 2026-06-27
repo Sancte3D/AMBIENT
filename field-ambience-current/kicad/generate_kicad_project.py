@@ -3385,21 +3385,56 @@ def stm32h743_sheet() -> str:
         symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_CCELL{ci}", value="GND",
                                     x=kx, y=ky + 10, seed_suffix=f"ccell{ci}-gnd", sheet_uuid_seed=sus))
 
-    # ---- MIDI als offene DESIGN-ENTSCHEIDUNG (B-MIDI). Bewusst KEINE
-    # Buchsen-/Resistor-Symbole platzieren: TRS-Type-A vs Type-B, OUT-only
-    # vs IN/OUT, 3V3-vs-5V-Implementierung, DNP-Status, exakte R-Werte sind
-    # nicht entschieden. Das MIDI_TX-Netz auf PD5 bleibt als Hier-Label
-    # erhalten; die Buchse kommt erst, wenn der Spec-Punkt entschieden ist.
+    # ---- MIDI-Out (J10) — ENTSCHIEDEN r18.67 (ADR-0004 / User): TRS **Type A**,
+    # OUT-only, 3.3V direkt (MIDI-Spec CA-033, kein Level-Shifter). Verschaltung:
+    #   MIDI_TX (PD5) --R_MIDI_TX 220R--> Tip ("cold/data")
+    #   +3V3        --R_MIDI_REF 220R--> Ring ("hot/ref")
+    #   Sleeve --> GND ;  DET-Pin = no_connect (MIDI nutzt keinen Insert-Detect)
+    # Eigener Refdes **J10** (J9 ist der Akku-Stecker, NICHT MIDI!). Verbindung via
+    # Net-Labels (MIDI_TX/MIDI_TIP/MIDI_RING) = robust, keine langen Wires.
+    # 220R-LCSC = NEEDS-VERIFY (Anti-Guess) → NO-LCSC-Liste.
+    symbols.append(place_symbol(
+        lib_id="Connector:AudioJack3_Switch", ref="J10",
+        value="3.5mm TRS MIDI-Out (Type A, PJ-320 class)",
+        x=150, y=258, footprint="field_ambience:Jack_3.5mm_PJ-320D_SMT",
+        extra_props={"MPN": "PJ-320D (3.5mm TRS w/ switch)", "LCSC": "C431535"},
+        seed_suffix="J10", sheet_uuid_seed=sus))
+    # J10 Tip (157.62, 255.46) -> MIDI_TIP
+    wires.append(wire(157.62, 255.46, 161, 255.46, seed_suffix="j10-tip"))
+    labels.append(label(161, 255.46, "MIDI_TIP"))
+    # J10 Ring (157.62, 258) -> MIDI_RING
+    wires.append(wire(157.62, 258, 161, 258, seed_suffix="j10-ring"))
+    labels.append(label(161, 258, "MIDI_RING"))
+    # J10 Sleeve (157.62, 260.54) -> GND
+    wires.append(wire(157.62, 260.54, 161, 260.54, seed_suffix="j10-sleeve"))
+    symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_J10_S", value="GND",
+        x=161, y=260.54, rotation=270, seed_suffix="j10-s-gnd", sheet_uuid_seed=sus))
+    # J10 DET (142.38, 258) -> no_connect
+    ncs.append(no_connect(142.38, 258))
+    # R_MIDI_TX 220R: MIDI_TX -> Tip
+    symbols.append(place_symbol(lib_id="Device:R", ref="R_MIDI_TX",
+        value="220R 0603 (MIDI TX series, Type-A Tip)", x=130, y=255.46, rotation=90,
+        footprint="Resistor_SMD:R_0603_1608Metric",
+        extra_props={"MPN": "0603WAF2200T5E (220R 0603)", "LCSC": ""},
+        seed_suffix="R_MIDI_TX", sheet_uuid_seed=sus))
+    wires.append(wire(126.19, 255.46, 123, 255.46, seed_suffix="rmiditx-tx"))
+    labels.append(label(123, 255.46, "MIDI_TX"))
+    wires.append(wire(133.81, 255.46, 137, 255.46, seed_suffix="rmiditx-tip"))
+    labels.append(label(137, 255.46, "MIDI_TIP"))
+    # R_MIDI_REF 220R: +3V3 -> Ring
+    symbols.append(place_symbol(lib_id="Device:R", ref="R_MIDI_REF",
+        value="220R 0603 (MIDI ref, Type-A Ring)", x=130, y=258, rotation=90,
+        footprint="Resistor_SMD:R_0603_1608Metric",
+        extra_props={"MPN": "0603WAF2200T5E (220R 0603)", "LCSC": ""},
+        seed_suffix="R_MIDI_REF", sheet_uuid_seed=sus))
+    wires.append(wire(126.19, 258, 123, 258, seed_suffix="rmidiref-3v3"))
+    symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_R_MIDI_REF", value="+3V3",
+        x=123, y=258, rotation=90, seed_suffix="rmidiref-3v3-pwr", sheet_uuid_seed=sus))
+    wires.append(wire(133.81, 258, 137, 258, seed_suffix="rmidiref-ring"))
+    labels.append(label(137, 258, "MIDI_RING"))
     texts.append(
-        f'  (text "MIDI_TX (PD5) — DESIGN-ENTSCHEIDUNG offen (siehe docs/decisions/\\n'
-        f'ADR-0004-midi-design-decision.md). Vor Layout zu entscheiden:\\n'
-        f'  - Buchsen-MPN (PJ-320-Klasse vs. TRS 3.5mm Switched)\\n'
-        f'  - TRS Type A oder Type B\\n'
-        f'  - OUT-only oder IN/OUT (UART RX-Pin: PA3 oder PD6 frei)\\n'
-        f'  - 3V3-Direkt oder 5V-Open-Collector (R-Werte folgen)\\n'
-        f'  - DNP / future-expansion oder bestueckt?\\n'
-        f'Bis Entscheidung: kein Net-Ziel, kein Footprint." (at 100 248 0)\n'
-        f'    (effects (font (size 1.27 1.27) bold) (justify left bottom))\n'
+        f'  (text "MIDI-Out J10 (TRS Type A, OUT-only, 3.3V/CA-033). MIDI_TX=PD5. J9=Akku!" (at 100 250 0)\n'
+        f'    (effects (font (size 1.27 1.27)) (justify left bottom))\n'
         f'    (uuid "{det_uuid("txt-midi")}"))\n'
     )
     texts.append(
