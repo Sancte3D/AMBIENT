@@ -56,10 +56,15 @@ void leds_render(uint32_t now_ms, uint16_t dt_ms, uint16_t out[LED_CH_COUNT]) {
     if (step == 0) step = 1;
     uint16_t step16 = (step > 0xFFFFu) ? 0xFFFFu : (uint16_t)step;
 
-    /* ---- Targets from live state ---- */
+    /* ---- Targets from live state ----
+     * Modifier LED colours per user spec (r18.64): Shift=yellow, Hold=green,
+     * Generate/Drone/Clear=white. (This swaps Shift/Hold vs the earlier
+     * convention that matched the modifier colour to its cell-hold LED;
+     * the user spec takes precedence.) Clear is momentary (s_clear_until):
+     * it flashes on click and goes dark; the others show persistent status. */
     uint16_t target[LED_CH_COUNT] = {0};
-    target[CH_SHIFT]    = controls_modifier_active(MOD_SHIFT)    ? LED_DUTY_GREEN  : 0;
-    target[CH_HOLD]     = controls_modifier_active(MOD_HOLD)     ? LED_DUTY_YELLOW : 0;
+    target[CH_SHIFT]    = controls_modifier_active(MOD_SHIFT)    ? LED_DUTY_YELLOW : 0;
+    target[CH_HOLD]     = controls_modifier_active(MOD_HOLD)     ? LED_DUTY_GREEN  : 0;
     target[CH_DRONE]    = controls_modifier_active(MOD_DRONE)    ? LED_DUTY_WHITE  : 0;
     target[CH_GENERATE] = controls_modifier_active(MOD_GENERATE) ? LED_DUTY_WHITE  : 0;
     target[CH_CLEAR]    = (now_ms < s_clear_until)               ? LED_DUTY_WHITE  : 0;

@@ -1,10 +1,18 @@
 # ADR-0019: LED-System — Smart RGB (SK6812-Mini-V5) statt PCA9685 + diskrete LEDs
 
-**Status:** PROPOSED — Hardware-Vereinfachung beschlossen; BOM-/Generator-/
-Firmware-Migration in Folge-PRs.
+> **❌ SUPERSEDED / VERWORFEN (r18.64, 2026-06-23).** Dieser ADR basierte auf
+> einer falschen Annahme: die LEDs sollten **nie** die World-Farbe spiegeln /
+> RGB sein. Tatsächlich sind die LEDs **feste Mono-Status-Anzeigen**:
+> 5 Modifier-LEDs (Shift=gelb, Hold=grün, Generate/Drone/Clear=weiß; Clear nur
+> Klick-Blitz) + 10 Cell-LEDs (je 2 pro Cell, gelb+grün). Das ist exakt das
+> bestehende **PCA9685 + 15-diskrete-LED-Design**, das im Generator bleibt.
+> SK6812 wird nicht umgesetzt; PCA9685 bleibt. Das Dokument bleibt zur
+> Nachvollziehbarkeit, ist aber **nicht** umzusetzen.
+
+**Status:** ~~PROPOSED~~ → **SUPERSEDED / REJECTED (r18.64)** — diskretes
+Mono-LED-System (PCA9685 + 15 LEDs) wird beibehalten.
 **Date:** 2026-06-23
-**Supersedes:** das PCA9685-basierte 16-Kanal-PWM-LED-Subsystem (Sheet 4, U6
-in `mcp_sheet`) für die User-LEDs. PCA9685 selbst bleibt nicht im Design.
+**Supersedes:** *(nichts — der bestehende PCA9685-Pfad bleibt unverändert)*
 
 ## Kontext
 

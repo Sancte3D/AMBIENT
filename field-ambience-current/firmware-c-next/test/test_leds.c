@@ -34,17 +34,17 @@ int main(void) {
     leds_render(now, 8, out);
     for (int ch = 0; ch < LED_CH_COUNT; ++ch) CHECK(out[ch] == 0, "ch %d boots dark", ch);
 
-    /* ---- 2. SHIFT latch lights ch 0 (green target) ---- */
+    /* ---- 2. SHIFT latch lights ch 0 (yellow target, r18.64 spec) ---- */
     controls_modifier(MOD_SHIFT, true);
     settle(&now, out, 200);
-    CHECK(out[0] == LED_DUTY_GREEN, "SHIFT lit on ch 0 (%d)", out[0]);
+    CHECK(out[0] == LED_DUTY_YELLOW, "SHIFT lit yellow on ch 0 (%d)", out[0]);
     CHECK(out[1] == 0, "HOLD still off");
 
-    /* ---- 3. HOLD latch lights ch 1 (yellow), SHIFT stays ---- */
+    /* ---- 3. HOLD latch lights ch 1 (green), SHIFT stays ---- */
     controls_modifier(MOD_HOLD, true);
     settle(&now, out, 200);
-    CHECK(out[0] == LED_DUTY_GREEN,  "SHIFT still lit");
-    CHECK(out[1] == LED_DUTY_YELLOW, "HOLD lit on ch 1");
+    CHECK(out[0] == LED_DUTY_YELLOW, "SHIFT still lit yellow");
+    CHECK(out[1] == LED_DUTY_GREEN,  "HOLD lit green on ch 1");
 
     /* ---- 4. Cell 2 base hold lights ch 9 (yellow), shift bit lights ch 10 ---- */
     /* Clear shift first (it latched on in test 2). */

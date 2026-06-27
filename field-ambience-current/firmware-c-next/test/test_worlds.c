@@ -71,7 +71,32 @@ int main(void) {
         if (w->accent_g > max_ch) max_ch = w->accent_g;
         if (w->accent_b > max_ch) max_ch = w->accent_b;
         CHECK(max_ch >= 240, "accent[%d] too dark (max=%d)", i, max_ch);
+
+        /* musical identity in valid ranges */
+        CHECK(w->key_midi <= 127, "key[%d] out of MIDI range", i);
+        CHECK(w->mode < 6, "mode[%d] out of range (%d)", i, w->mode);
+        CHECK(w->vibe < 4, "vibe[%d] out of range (%d)", i, w->vibe);
     }
+
+    /* per-world musical identity from the render_worlds audition: each world
+     * is a distinct (key, mode, vibe). Tokyo A-ionian-warm, Coast D-ionian-
+     * bright, Drive F#-dorian-deep, Hours C-aeolian-floating. */
+    uint8_t expect_key [4] = { 57, 62, 54, 60 };
+    uint8_t expect_mode[4] = {  0,  0,  1,  5 };
+    uint8_t expect_vibe[4] = {  0,  1,  2,  3 };
+    for (int i = 0; i < 4; ++i) {
+        const world_t *w = worlds_get(i);
+        CHECK(w->key_midi == expect_key[i],  "key[%d] = %d, want %d",  i, w->key_midi, expect_key[i]);
+        CHECK(w->mode     == expect_mode[i], "mode[%d] = %d, want %d", i, w->mode,     expect_mode[i]);
+        CHECK(w->vibe     == expect_vibe[i], "vibe[%d] = %d, want %d", i, w->vibe,     expect_vibe[i]);
+    }
+    /* all four worlds should differ harmonically — no two identical triples */
+    for (int a = 0; a < 4; ++a)
+        for (int b = a + 1; b < 4; ++b) {
+            const world_t *wa = worlds_get(a), *wb = worlds_get(b);
+            CHECK(!(wa->key_midi == wb->key_midi && wa->mode == wb->mode && wa->vibe == wb->vibe),
+                  "worlds %d and %d are harmonically identical", a, b);
+        }
 
     /* out-of-range index must clamp, not crash */
     CHECK(worlds_get(-1) == worlds_get(0), "clamp -1 → 0");

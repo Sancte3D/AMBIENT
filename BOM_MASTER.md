@@ -73,12 +73,12 @@ auf GitHub und in jedem Markdown-Editor).
 | Mesh **Serie** | Saati **Acoustex 020–032** (transparente Klasse, ~25–32 g/m²) + PSA-Konvertierung via Marian Inc. | [Saati Acoustex](https://www.saati.com/products/filtration/brands/saatifil-acoustex/) · [Marian (Konverter)](https://marianinc.com/materials/filters-venting-fabric/) | Vendor-Direktkauf, Custom-Quote |
 | Mesh **Prototyp** | Generic selbstklebende „Phone-Speaker-Dustproof-Mesh"-Sticker, 36 × 24 mm ovale ausstanzen | AliExpress / Amazon (Multipack ~5 €) | Generic |
 
-## 4. I/O Expander
+## 4. I/O Expander + LED Driver
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
 | **U2** GPIO-Expander | **MCP23017-E/SS** SSOP-28 | [C506653](https://www.lcsc.com/product-detail/C506653.html) | `Package_SO:SSOP-28_5.3x10.2mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
-| ~~**U6** PWM-LED-Driver PCA9685PW~~ | **REMOVED r18.62 / ADR-0019** — durch SK6812-Mini-V5 Smart-LED-Chain ersetzt (siehe §9). Backlight-Steuerung wandert auf einen MCU-TIM-PWM-Pin (Pin-Reservation in Folge-PR). | — | — | — | — |
+| **U6** PWM-LED-Driver | **PCA9685PW,118** TSSOP-28 (16 Kanäle: 5 Modifier + 10 Cell + 1 Backlight, exakt 16/16) | [C2678753](https://www.lcsc.com/product-detail/C2678753.html) | `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 
 ## 5. Display
 
@@ -86,7 +86,7 @@ auf GitHub und in jedem Markdown-Editor).
 |---|---|---|---|---|---|
 | **J3** 1×8 Receptacle 2.54 mm | (Generic) | (DigiKey/RS) | `Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical` | KiCad-Standard | Standard-Lib-3D |
 | **LCD-Modul** **Waveshare 1.9in 170×320 ST7789V2** IPS-Modul (r18.22-Pivot von bare-AliExpress: gleiches Panel wie Adafruit + branded QC + Level-Shifter + dokumentiert; ~$11–13 statt Adafruit $15 / bare-AliExpress-DOA-Lotterie. **Pin-ORDER des Moduls gegen J3-Belegung verifizieren** — variiert je Vendor) | Waveshare 1.9inch LCD Module 170x320 SPI | [PiHut £11.60](https://thepihut.com/products/1-9-ips-lcd-display-module-170x320-spi) · [Waveshare](https://www.waveshare.com/1.9inch-lcd-module.htm) · [Amazon](https://www.amazon.com/Waveshare-1-9inch-Display-Resolution-Interface/dp/B0BRXXSZC5) | Modul (steckt in J3) | — | Vendor-CAD |
-| **LCD-Modul — PROPOSED r18.43 / ADR-0015** **Waveshare 2.0in 240×320 ST7789** IPS-Modul. Pivot 1.9″ → 2.0″ für mehr Fläche + Animations-Headroom + native RGB565-Farbe. Gleiche ST7789-Controller-Familie, gleiches 8-Pin-SPI-Interface. Backlight-Pfad: Q2 bleibt; Gate-Treiber wandert ab r18.62 / ADR-0019 von PCA9685 auf MCU-TIM-PWM. **UNVERIFIED — NEEDS HUMAN CHECK:** (a) Beschaffungspfad/SKU (LCSC-PN existiert evtl. nicht; Beschaffung via Waveshare/PiHut/Amazon wie 1.9″), (b) 8-Pin-Header-Reihenfolge gegen geliefertes Modul, (c) Außenmaße + Active-Area-Position gegen Bezel-Fenster. Bezel-Ausschnitt + Generator-Sheet erst ändern wenn (a)–(c) bestätigt. | Waveshare 2inch LCD Module 240×320 SPI | [Waveshare](https://www.waveshare.com/2inch-lcd-module.htm) | Modul (steckt in J3, ggf. Pin-Order-Anpassung) | — | Vendor-CAD |
+| **LCD-Modul — PROPOSED r18.43 / ADR-0015** **Waveshare 2.0in 240×320 ST7789** IPS-Modul. Pivot 1.9″ → 2.0″ für mehr Fläche + Animations-Headroom + native RGB565-Farbe. Gleiche ST7789-Controller-Familie, gleiches 8-Pin-SPI-Interface, gleicher Backlight-Pfad (Q2/PCA9685-Kanal 12). **UNVERIFIED — NEEDS HUMAN CHECK:** (a) Beschaffungspfad/SKU (LCSC-PN existiert evtl. nicht; Beschaffung via Waveshare/PiHut/Amazon wie 1.9″), (b) 8-Pin-Header-Reihenfolge gegen geliefertes Modul, (c) Außenmaße + Active-Area-Position gegen Bezel-Fenster. Bezel-Ausschnitt + Generator-Sheet erst ändern wenn (a)–(c) bestätigt. | Waveshare 2inch LCD Module 240×320 SPI | [Waveshare](https://www.waveshare.com/2inch-lcd-module.htm) | Modul (steckt in J3, ggf. Pin-Order-Anpassung) | — | Vendor-CAD |
 | Q2 Backlight-Driver | **2N7002,215** SOT-23 | [C8545](https://www.lcsc.com/product-detail/C8545.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 
 ## 6. Encoder (ADR-0012 — 1× Push+Detent, 3× Smooth)
@@ -118,38 +118,31 @@ auf GitHub und in jedem Markdown-Editor).
 
 ## 9. LEDs (Cell + Modifier — ADR-0008 XOR-Logik)
 
-> **r18.62 / ADR-0019 — System-Wechsel auf Smart-RGB-Chain.** Alle 10 User-
-> LEDs (5 Cells + 5 Modifier) werden durch eine einzige Daisy-Chain aus
-> **SK6812-Mini-V5 RGB-Smart-LEDs** ersetzt. PCA9685 (§4 U6), die 10
-> diskreten Single-Color-LEDs und alle 10 zugehörigen Strom-Begrenzungs-
-> Widerstände entfallen ersatzlos. Begründung + Trade-Offs siehe
-> [ADR-0019](field-ambience-current/docs/decisions/ADR-0019-led-system-smart-rgb.md).
-> `LED_HB` (Heartbeat) und `LED_CHRG` (Charger-Status) bleiben als
-> diskrete Service-LEDs auf dem MCU bzw. am Charger.
-
-### Aktiv (r18.62)
+> **r18.64 — diskretes Mono-LED-System bestätigt (ADR-0019 SK6812 verworfen).**
+> Die LEDs sind **feste Status-Anzeigen, keine World-Farben/RGB**. 15 diskrete
+> Mono-LEDs, von `U6` PCA9685 (§4) PWM-getrieben, je 1 Vorwiderstand:
+> **5 Modifier-LEDs** (1 pro Tactile-Button) + **10 Cell-LEDs** (je 2 pro Cell,
+> gelb + grün). Semantik: persistenter aktiver Status; nur **Clear** blinkt kurz
+> beim Klick und erlischt sofort (`leds.c` `s_clear_until`). Backlight bleibt
+> PCA9685-Kanal 12 → Q2. Siehe [ADR-0019](field-ambience-current/docs/decisions/ADR-0019-led-system-smart-rgb.md)
+> (SUPERSEDED).
 
 | Funktion | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **D_LED1..10** SK6812-Mini-V5 (10×, RGB Smart-LED, WS2812-kompatibles Protokoll, integrierte Strom-Begrenzer, 3,4×3,4 mm PLCC4) | Opsco SK6812-Mini-V5 | **UNVERIFIED — needs LCSC-PN lookup** (Anti-Guess: ein konkreter LCSC-PN wird vor Bestellung verifiziert). [Vendor-Datasheet](https://cdn-shop.adafruit.com/product-files/2686/SK6812MINI_REV.01-1-2.pdf) | `LED_SMD:LED_SK6812_PLCC4_3.4x3.4mm_P2.5mm` (KiCad-Standard — **UNVERIFIED** gegen reales Datasheet-Pad-Layout) | KiCad-Standard | Standard-Lib-3D |
-| **C_LED1..10** 100 nF X7R 0603 (10×, lokales Decoupling pro SK6812 am VDD-Pin, Hersteller-Empfehlung) | KE-CL10B104KB8NNNC | [C14663](https://www.lcsc.com/product-detail/C14663.html) | `Capacitor_SMD:C_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **R_DIN** 470 Ω 0603 (Serien-Widerstand MCU-MOSI → LED1.DIN, Reflection-Dämpfung) | 0603WAF4700T5E | [C23162](https://www.lcsc.com/product-detail/C23162.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **U10** TPS22918DBVR SOT-23-6 (Load-Switch +5V → LED_VDD, gated im Sleep — analog ADR-0016 `U9` für HALL_VDD) | TI TPS22918DBVR | C68913 (LCSC) — **UNVERIFIED** wie U9 | `Package_TO_SOT_SMD:SOT-23-6` | KiCad-Standard | Standard-Lib-3D |
-| **LED_HB** Heartbeat (warmweiß) — *bleibt diskret* | **XL-1608UWC-04** | [C965808](https://www.lcsc.com/product-detail/C965808.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **LED_CHRG** Charger-Status (amber) — *bleibt diskret* | Generic Amber 0603 | [C72041](https://www.lcsc.com/product-detail/C72041.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **R_HB / R_CHRG** Strom-Begrenzer für LED_HB + LED_CHRG (2× 390 Ω 0603) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **Modifier-LED Shift (gelb)** | Hubei KENTO KT-0603Y (Vf 2.4V → 6.7mA @ 5V/390Ω) | [C2287](https://www.lcsc.com/product-detail/C2287.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **Modifier-LED Hold (grün)** | Hubei KENTO KT-0603G pure-green 525nm (Vf 3.1V → 4.9mA @ 5V/390Ω) | [C12624](https://www.lcsc.com/product-detail/C12624.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **Modifier-LEDs Drone / Generate / Clear (3× weiß)** | XL-1608UWC-04 (warmweiß 0603) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **Cell-LEDs 5× Gelb** (base-hold-Status) | Hubei KENTO KT-0603Y | [C2287](https://www.lcsc.com/product-detail/C2287.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **Cell-LEDs 5× Grün** (shift-hold-Status) | Hubei KENTO KT-0603G | [C12624](https://www.lcsc.com/product-detail/C12624.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **LED_HB** Heartbeat (warmweiß) | **XL-1608UWC-04** (r18.24-Fix: war C965818 = XL-2012UWC **0805**, falsches Package) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **LED_CHRG** Charger-Status (amber) | Generic Amber 0603 | [C72041](https://www.lcsc.com/product-detail/C72041.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| LED-Vorwiderstände **390 Ω** 0603 (15×, an +5V-Anode → LED → PCA9685-Sink) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
-### Entfällt mit r18.62 / ADR-0019 (zur Nachvollziehbarkeit gelistet)
-
-| Funktion (gestrichen) | warum weg |
-|---|---|
-| ~~**U6** PCA9685PW (PWM-LED-Driver, §4)~~ | Smart-LED-Daisy-Chain braucht keinen externen PWM-Driver. Backlight-FET-Gate wandert auf MCU-TIM-PWM. |
-| ~~Modifier-LED Hold (gelb) KT-0603Y~~ | jetzt eine RGB-Cell in der Chain |
-| ~~Modifier-LED Shift (grün) KT-0603G~~ | jetzt RGB-Cell |
-| ~~Modifier-LEDs Drone / Generate / Clear (3× weiß) XL-1608UWC-04~~ | jetzt RGB-Cells |
-| ~~Cell-LEDs 5× Gelb KT-0603Y~~ | jetzt RGB-Cells |
-| ~~Cell-LEDs 5× Grün KT-0603G~~ | jetzt RGB-Cells |
-| ~~LED-Vorwiderstände 13× 390 Ω 0603 (für User-LEDs)~~ | SK6812-Mini-V5 hat Strom-Begrenzer integriert. 2× 390 Ω bleiben für LED_HB + LED_CHRG. |
+> **Farb-Mapping (r18.64, User-Spec):** Shift=gelb, Hold=grün, Generate/Drone/
+> Clear=weiß. Dies vertauscht Shift/Hold gegenüber der bisherigen Firmware-
+> Konvention (die die Modifier-Farbe an die Cell-Hold-Farbe koppelte:
+> base-hold=gelb, shift-hold=grün). `firmware-c-next/src/leds.c` ist auf die
+> User-Spec angepasst.
 
 ## 10. Standard-Passives (Sortiment)
 

@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-23 (r18.62 — ADR-0019 LED smart-RGB chain; BOM aligned)**
+**Updated: 2026-06-23 (r18.63 — per-world musical key/mode/vibe wired into the brain)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -64,6 +64,7 @@ product build.
 | Universal wind generator (resonant BP, pink noise, gusts) | 🟠 inline in render_worlds.c |
 | Per-world ambience layer in engine (ADR-0017 Phase 2 KOMPLETT) | ✅ r18.49-.52 — Wind universal + Rain Tokyo + Waves Coast + Vinyl After Hours. Drive bekommt Wind als „highway" (kein dedizierter Traffic-Generator, Wind ist character-genug). |
 | Worlds-Modul (single source of truth) | ✅ r18.48 `src/worlds.c` + `worlds.h` (ADR-0017 Phase 1) — Lift aus menu.c, exakte RGB/Preset-Erhaltung per Test |
+| **Per-World musikalische Identität (Tonart/Mode/Vibe)** | ✅ r18.63 — Tokyo A-Dur ionian warm · Coast D-Dur ionian bright · Drive Fis-Moll dorian deep · Hours C-Moll aeolian floating. `engine_set_world` pusht key/mode/vibe in den brain; Cell-Roots verifiziert distinct (57/62/54/60) |
 | Tape-hiss generator | 🟠 inline in render_dreamy_warm.c |
 | Tape character (hiss + warm-tanh saturation) im Master | ✅ r18.53 `src/tape.c` (ADR-0017 Phase 3); always-on, Default = dreamy_warm-Referenz (hiss 0.005, drive 1.10) |
 | **Echo: tape-style stereo delay (Reddit #1 perform effect)** | ✅ r18.58 `src/echo.c` — Macro 0..1 maps zu time/feedback/wet/tone; LP-im-Feedback = Tape-Charakter |
