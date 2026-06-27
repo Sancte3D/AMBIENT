@@ -28,7 +28,7 @@
 | **Repo-Struktur** | 8 / 10 | ↑ (r18.13: Phase 2 done — Doc-Moves in `mechanical/`, `software/`, `archive/`; Phase 3-5 queued) |
 | **CI / Auto-Validierung** | 8 / 10 | → |
 
-**Gesamt-Manufacturing-Readiness: 7 / 10** (Gate 1.5 von 9). r18.19/20: Audit-
+**Gesamt-Manufacturing-Readiness: ~3 / 10 (gated, nicht gemittelt: ohne .kicad_pcb / DRC / GUI-ERC / Gerber+CPL / eingefrorene Mechanik nicht bestellbar)** (Gate 1.5 von 9). r18.19/20: Audit-
 Fixes (USB-C, Jack, Hall-SOT-23, HSE-Caps) + BOM-Sourcing komplett (10/10).
 Verbleibende Hauptlücken: **PCB Layout 0, DRC 0** + GUI-ERC (nur User) — das
 ist der einzige große Block vor Gate 2.

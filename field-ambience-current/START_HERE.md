@@ -5,8 +5,8 @@
 
 > ⚠️ **MCU-Migration aktiv: Pico 2 (RP2350) → STM32H743VIT6 Bare-Chip.**
 > SPEC v0.7-r18, siehe `NATIVE_PORT_PLAN.md` Step 13 + `CHANGELOG.md` r18.
-> Phase 1 (Doku) ✓, Phase 2–5 ausstehend. **PCB-Layout erst nach Profiling**
-> auf echter H743-Hardware (Acceptance-Gate < 40 % Block-Zeit Worst-Case).
+> Phase 1 (Doku) ✓, Phase 2–5 ausstehend. **PCB-Layout darf parallel zur Firmware starten**
+> das fruehere Phase-5-Profiling-Gate ist per ADR-0005 (r18.7) GESTRICHEN. Echte Gates vor Layout: GUI-ERC + Pinmap/Power-Konsistenz (siehe PCB_LAYOUT_STATUS.md).
 > Pico-Stand bleibt im Repo als Fallback unter `kicad/legacy_pico2/` (nach
 > Phase 3).
 
