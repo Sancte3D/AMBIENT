@@ -19,7 +19,7 @@ yet — **not orderable**.
 | **Hardware schematic** (8 sheets, generator-based) | [`field-ambience-current/kicad/`](field-ambience-current/kicad/) | STM32H743 migration done (r18.6), **no `.kicad_pcb` yet** |
 | **What we know about the parts** (datasheets, verifications) | [`field-ambience-current/docs/component_reviews/`](field-ambience-current/docs/component_reviews/) | 2 reviews complete, ~20 open |
 | **What's blocking manufacturing** | [`field-ambience-current/PCB_LAYOUT_STATUS.md`](field-ambience-current/PCB_LAYOUT_STATUS.md) | honest, updated every revision |
-| **How decisions were made** | [`field-ambience-current/docs/decisions/`](field-ambience-current/docs/decisions/) | 19 ADRs (rejected ones marked SUPERSEDED) |
+| **How decisions were made** | [`field-ambience-current/docs/decisions/`](field-ambience-current/docs/decisions/) | 20 ADRs (rejected ones marked SUPERSEDED) |
 | **Render samples to listen to** | [`demos/audio/`](demos/audio/) | 4 FLAC, latest is an 8-minute performance |
 | **Full project map / what to open first per role** | [`PROJECT_MAP.md`](PROJECT_MAP.md) | role-based |
 
