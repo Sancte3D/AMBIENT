@@ -45,7 +45,7 @@ auf GitHub und in jedem Markdown-Editor).
 | **U7** Charger | **MCP73831T-2ACI/OT** SOT-23-5 | [C424093](https://www.lcsc.com/product-detail/C424093.html) | `Package_TO_SOT_SMD:SOT-23-5` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK** Polymer-Tantal 470 µF / 10 V Case-E 7343-43 (ESR 100 mΩ; <25 mΩ-Flachteile bei LCSC nicht lagernd — Transient-ESR liefert C_BULK2) | TPSE477K010R0100 (Kyocera AVX) | [C444831](https://www.lcsc.com/product-detail/C444831.html) | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 existiert nicht → 100µF echter Headroom statt 220µF/6.3V-Derating) | LMK325ABJ107MM-T (Taiyo Yuden) | [C2880380](https://www.lcsc.com/product-detail/C2880380.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
-| **J_BAT** JST-PH 2.0 2-Pin | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN.step) |
+| **J9** JST-PH 2.0 2-Pin (LiPo-Akku — Generator-Refdes, **nicht** J_BAT) | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN.step) |
 | LiPo-Pouch **503759** (50×37×9.4 mm, **2000 mAh ~6.6 h @ 300 mA**) — r18.21 rightsize von 5000mAh-Overkill | Generic LiPo 2000mAh JST-PH 2.0 | [PiHut 2000mAh](https://thepihut.com/products/2000mah-3-7v-lipo-battery) | — (kein PCB-FP, Bottom-Case-Slot) | — | Vendor |
 
 ## 3. Audio-Path
@@ -56,7 +56,7 @@ auf GitHub und in jedem Markdown-Editor).
 | **U4** Class-D Amp | **PAM8403DR-H** SOIC-16 | [C17337](https://www.lcsc.com/product-detail/C17337.html) | `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` | KiCad-Standard | Standard-Lib-3D |
 | FB1/FB2 Ferrite Bead | **BLM18AG601SN1D** 0603 600 Ω | [C19330](https://www.lcsc.com/product-detail/C19330.html) (FB1) / [C84094](https://www.lcsc.com/product-detail/C84094.html) (FB2) | `Inductor_SMD:L_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J8** Line-Out 3.5 mm TRS | **PJ-320D** (SHOU HAN, SMT) mit Insertion-Detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | [`field_ambience:Jack_3.5mm_PJ-320D_SMT`](field-ambience-current/kicad/libraries/field_ambience.pretty/Jack_3.5mm_PJ-320D_SMT.kicad_mod) (EasyEDA-CAD vendored r18.19) | field_ambience (Custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
-| ~~**J9** MIDI-Out~~ **DNP für 5er-Run** (ADR-0004 r18.30 deferred — User-Entscheidung „vielleicht brauchen wir gar kein MIDI"). Footprint + Edge-Cutout konserviert; Reaktivierung später durch Bestücken von J9 + 2× 220 Ω + Auskommentieren `midi_tx_init()` in main_h743.c | (PJ-320D — DNP) | — | s. J8 | field_ambience (Custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
+| **MIDI-Out** — *nicht im Schematic* | Nur das Netz `MIDI_TX` (PD5) ist reserviert; **keine Buchse im Design** (ADR-0004 offen). ⚠️ **`J9` ist der Akku-Stecker, NICHT MIDI** (alter Doc-Stand vertauschte das). Zum Hinzufügen: eigene 3,5-mm-TRS-Buchse mit **eigenem Refdes (z.B. `J10`)** + 2× 220 Ω + Firmware | — | — | — | — | — |
 
 ### Speaker (r18.18 — Cloth-Cone primär)
 
@@ -223,7 +223,7 @@ Wer prüft was wann:
 | Punkt | Status | Verweis |
 |---|---|---|
 | Alle Footprints geprüft | ✅ **6 Custom** in [`field_ambience.pretty/`](field-ambience-current/kicad/libraries/field_ambience.pretty/) — alle aktiv referenziert (Y1, J8, L1, U8, SW6-10, SW11/SW_BOOT); Rest KiCad-Standard. Keine Leichen | [`field-ambience-current/FP_VERIFY_LOG.md`](field-ambience-current/FP_VERIFY_LOG.md) |
-| 3D-STEPs für Z-/Panel-kritische Teile | ✅ **7 Stück** in [`field_ambience.3dshapes/`](field-ambience-current/kicad/libraries/field_ambience.3dshapes/) (U1, Y1, U8, L1, J_BAT, J8, SW11/SW_BOOT). USB-C-Receptacle nutzt KiCad-Standard-STEP (kein Custom-STEP nötig). Z-Höhen-Tabelle pro STEP (für Enclosure-CAD): [`mechanical/3d_models/MANIFEST.md`](mechanical/3d_models/MANIFEST.md) | r18.36 |
+| 3D-STEPs für Z-/Panel-kritische Teile | ✅ **7 Stück** in [`field_ambience.3dshapes/`](field-ambience-current/kicad/libraries/field_ambience.3dshapes/) (U1, Y1, U8, L1, J9-Akku, J8, SW11/SW_BOOT). USB-C-Receptacle nutzt KiCad-Standard-STEP (kein Custom-STEP nötig). Z-Höhen-Tabelle pro STEP (für Enclosure-CAD): [`mechanical/3d_models/MANIFEST.md`](mechanical/3d_models/MANIFEST.md) | r18.36 |
 | Mechanische X/Y/Z + Höhen-Constraints | ✅ Python-validiert, 0 Konflikte | `mechanical/coordinates/mechanical_coordinates.md` |
 | DRV5056-Pinout DS-bestätigt | ✅ TI-DS Table 4-1 | r18.14b |
 | AP7361C-Pinout User-bestätigt | ✅ Diodes-DS | r18.6 |
