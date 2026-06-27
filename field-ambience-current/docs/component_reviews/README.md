@@ -50,23 +50,24 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 
 ## Sofortige Findings (vor Phase 3 zu klären)
 
-### F-1: TPS61089-Varianten-Mismatch
-- **Repo-Datasheet:** `kicad/datasheets/TPS61089RNSR.pdf` (RNSR-Variante)
-- **SPEC v0.7 §2.2:** `TPS61089RNR` (RNR-Variante, r12-B11 Wechsel wegen JLC-Stock)
-- **Wirkung:** RNR und RNSR sind unterschiedliche Packages (RNR = QFN-11 HotRod, RNSR = ähnlich aber andere Pin-Belegung möglich)
-- **Aktion:** RNR-Datasheet beschaffen, RNSR-Datei umbenennen oder löschen, Pin-Belegung gegen aktuellen Schematic prüfen
+### F-1: TPS61089-Varianten-Mismatch — 🟡 **HYGIENE DONE, DATASHEET-FETCH OFFEN**
+- Falsche `TPS61089RNSR.pdf` ist nach `kicad/datasheets/legacy/` als
+  `TPS61089RNSR_wrong_variant.pdf` verschoben ✓. Das *Bauteil* ist korrekt:
+  Schematic/BOM = **TPS61089RNR** (C165129), `jlc_bom.csv` bestätigt.
+- **Rest-Aktion (vor Layout):** korrektes RNR-Datasheet von ti.com beschaffen
+  + Pin-Belegung im battery-Sheet dagegen prüfen. (Web/User-Task.)
 
-### F-2: EC11-Encoder-Datasheet falsch
-- **Repo-Datasheet:** `kicad/datasheets/PEC11R-4215F-S0024.pdf` (Bourns PEC11R)
-- **SPEC v0.7 §4:** `ALPSALPINE EC11J1525402` (ALPS, anderer Hersteller)
-- **Wirkung:** PEC11R ≠ EC11J — andere Mechanik (Pitch, Schaftlänge), andere Detents, anderer Push-Switch
-- **Aktion:** ALPSALPINE EC11J1525402 Datasheet beschaffen, PEC11R-Datei entfernen oder ins `legacy/`-Archiv
+### F-2: EC11-Encoder-Datasheet falsch — 🟡 **HYGIENE DONE, DATASHEET-FETCH OFFEN**
+- Falsche Bourns `PEC11R-4215F-S0024.pdf` ist nach `kicad/datasheets/legacy/`
+  verschoben ✓. Das *Bauteil* ist korrekt: ALPS **EC11E18244AU** (C202365),
+  `jlc_bom.csv` bestätigt.
+- **Rest-Aktion (vor Layout):** ALPS-EC11E-Datasheet beschaffen. (Web/User-Task.)
 
-### F-3: SPEC §4 BOM enthält FALSCHEN ESR-Wert für Y1 Crystal
-- **SPEC v0.7-r18.1 §4 BOM Y1-Zeile:** „140 Ω ESR"
-- **ABRACON Datasheet (Rev 12.03.09) Table 1 „Standard ESR":** **500 Ω max** für 8 MHz Fundamental
-- **Wirkung:** SPEC ist 3,5× zu optimistisch in der ESR-Angabe
-- **Aktion:** SPEC §4 Y1-Zeile korrigieren auf „500 Ω max ESR"
+### F-3: Y1-Crystal-ESR — ✅ **RESOLVED**
+- Die alte „140 Ω / 500 Ω"-Diskussion betraf das **verworfene** ABM3-Teil
+  (siehe F-4). Das gewählte **ABLS-8.000MHZ-B4-T** hat **ESR max 80 Ω** — und
+  SPEC v0.7 §4 Y1-Zeile gibt diesen Wert bereits korrekt an (Drawing 450669
+  Rev AD Table 1), inkl. Gain-Margin-2.97-Begründung. Keine Aktion offen.
 
 ### F-4: ✅ **RESOLVED (T+3, 2026-06-08)** — Crystal-Wechsel ABM3 → ABLS-8.000MHZ-B4-T
 

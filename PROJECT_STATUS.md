@@ -1,6 +1,6 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-23 (r18.63 — per-world musical key/mode/vibe wired into the brain)**
+**Updated: 2026-06-27 (r18.64 — PCB completeness: pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.
@@ -106,7 +106,8 @@ product build.
 | **Schaltbild-Walkthrough (A–Z PCB-Engineer-Tour)** | 🟡 r18.46 — `docs/hardware/SCHEMATIC_WALKTHROUGH.md`; Power + MCU + Audio voll, übrige 4 Sheets in Folge-PRs |
 | **Power/Sleep-Architektur (ADR-0016, kein Switch)** | ⏳ ADR-0016 PROPOSED — `U9` TPS22918 Load-Switch + `SW_BOOT` Dual-Use |
 | **Panel-Selector Firmware-Pfad (1.9″ ↔ 2.0″ via CMake-Flag)** | ✅ r18.47 — `oled.h` + Pico-Treiber + CMake; Default 1.9″ unverändert, 2.0″-Build kompiliert sauber. UI-Layout-Rebalance offen (70 px Dead-Space) |
-| **Panel-Hardware-Pivot 1.9″ → 2.0″ (physisches Modul)** | ⏳ ADR-0015 — wartet auf User-Verifikation SKU/Pin-Order/Maße; BOM-Kandidat UNVERIFIED |
+| **Display für diesen PCB-Rev: 1.9″ EINGEFROREN** | ✅ r18.64 — User-Entscheidung „1,9 zoll reicht safe"; verifiziert + im Schematic. Entblockt das Layout. |
+| **Panel-Hardware-Pivot 1.9″ → 2.0″ (physisches Modul)** | ⏳ **Rev-B** ADR-0015 — kein Blocker mehr; später wenn User reales 2.0″-Modul (SKU/Pin-Order/Maße) verifiziert |
 | **Voller RGB565-FB + DMA-Animationen** | ⏳ ADR-0015 D4 — nach Hardware-Pivot |
 
 ### Cells / Input
