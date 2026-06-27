@@ -145,3 +145,26 @@ jobs:
           name: firmware-c-next-pico2-uf2
           path: field-ambience-current/firmware-c-next/build/display_hw_test.uf2
           if-no-files-found: error
+
+  # --- STM32H743 product target: syntax + link gate -----------------------
+  # The product MCU is STM32H743 (ADR-0002). The full ARM-GCC/CubeH7 build is
+  # Step 13.3 (not yet), but the HAL skeleton compiles + links with the HOST
+  # compiler (CMakeLists FAM_TARGET=h743 branch). This job builds that, so
+  # prototype/declaration regressions in src/hal_h743/** are caught in CI
+  # instead of staying green while the product target silently breaks.
+  h743-syntax-next:
+    name: STM32H743 syntax+link (skeleton, host gcc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake build-essential
+      - name: Build h743 skeleton (FAM_TARGET=h743)
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build-h743 && cd build-h743
+          cmake .. -DFAM_TARGET=h743
+          make -j"$(nproc)"
+          test -f field_ambience_h743 && echo "h743 skeleton linked OK"
