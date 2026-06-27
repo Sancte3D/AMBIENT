@@ -79,6 +79,7 @@ auf GitHub und in jedem Markdown-Editor).
 |---|---|---|---|---|---|
 | **U2** GPIO-Expander | **MCP23017-E/SS** SSOP-28 | [C506653](https://www.lcsc.com/product-detail/C506653.html) | `Package_SO:SSOP-28_5.3x10.2mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 | **U6** PWM-LED-Driver | **PCA9685PW,118** TSSOP-28 (16 Kanäle: 5 Modifier + 10 Cell + 1 Backlight, exakt 16/16) | [C2678753](https://www.lcsc.com/product-detail/C2678753.html) | `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
+| **U10** PWM-LED-Driver #2 | **PCA9685PW,118** TSSOP-28 (r18.66 — Level-Meter: 8 VU-LEDs auf Ch 0-7. I²C **0x41** (A0=+3V3), gleicher Bus wie U6/MCP. Decoupling 10µF+100nF, /OE-Pull-up R_OE2 10k) | [C2678753](https://www.lcsc.com/product-detail/C2678753.html) | `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 
 ## 5. Display
 
@@ -148,6 +149,20 @@ auf GitHub und in jedem Markdown-Editor).
 > Konvention (die die Modifier-Farbe an die Cell-Hold-Farbe koppelte:
 > base-hold=gelb, shift-hold=grün). `firmware-c-next/src/leds.c` ist auf die
 > User-Spec angepasst.
+
+### Live-Level-Meter (VU — r18.66, OP-1-Field-Stil)
+
+> **8 kleine LEDs in einer Reihe als Live-Pegel-Anzeige** (wie der dB-Ausschlag
+> in After Effects beim Abspielen). Getrieben von **U10** (2. PCA9685, §4) auf
+> Channels 0-7; je 1 Vorwiderstand 390 Ω an +5V-Anode → U10-Sink. Die Firmware
+> rechnet RMS/Peak aus dem Audio-Buffer und treibt die Segmente per PWM (echtes
+> Meter, nicht nur Knopfstellung). **Position der Reihe im PCB = Layout-TBD.**
+
+| Funktion | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
+|---|---|---|---|---|---|
+| **VU-LEDs 6× Blau** (Pegel, LED_VU1–6) | KT-0603B (Hubei KENTO, blue 0603, Vf ~3.0V) | **NEEDS-VERIFY** — blaue 0603-LCSC vor Order fixieren (Anti-Guess, steht in der NO-LCSC-Liste von `export_jlc_bom.py`) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **VU-LEDs 2× Weiß** (Peak, LED_VU7–8) | XL-1608UWC-04 (warm-white 0603) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| VU-Vorwiderstände **390 Ω** 0603 (8×, R_VU1–8) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
 ## 10. Standard-Passives (Sortiment)
 

@@ -1,6 +1,8 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-27 (r18.64 — PCB completeness: pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
+**Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
+
+> **r18.66 offen:** (a) blaue VU-LED LCSC verifizieren (NO-LCSC-Liste), (b) Firmware Level-Berechnung + U10-I²C-Treiber, (c) GUI-ERC für den U10-Block (wie Board-weit, Blocker B3). Position der LED-Reihe = Layout-TBD.
 
 **Purpose:** persistent orientation document so the assistant (and the user)
 can pick up the project without re-scanning the full history each session.

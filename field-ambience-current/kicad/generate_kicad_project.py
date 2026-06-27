@@ -4552,6 +4552,196 @@ def mcp_sheet() -> str:
     # System-Status/Heartbeat ist seit r18.5 die LED_HB an MCU-PD8
     # (stm32h743_sheet); PCA-Kanal 10 ist jetzt LED13G (Cell-3 Hold@Shift).
 
+    # ========================================================================
+    # r18.66 — U10 PCA9685PW #2 (I²C 0x41) → 8× Live-Level-Meter-LEDs (VU)
+    # ========================================================================
+    # OP-1-Field-Stil: wenige LEDs, blau + weiss. Die Firmware rechnet RMS/Peak
+    # aus dem Audio-Buffer und treibt 8 Segmente per PWM (echtes Live-Meter, nicht
+    # nur Knopfstellung). 2. PCA9685 weil U6 voll ist (16/16). Teilt sich denselben
+    # I²C-Bus: U10-SDA/SCL haengen via LOKALE Labels I2C_SDA/I2C_SCL am selben Netz
+    # wie U6 (das Hier-Label bringt das Netz aufs Sheet). KEINE neuen MCU-Pins,
+    # KEINE Root-/PINMAP-Aenderung. Adresse 0x41: A0=+3V3, A1-A5=GND.
+    # 8 LEDs auf Channels 0-7 (Pins 6-13, links). VU1-6 blau (Pegel), VU7-8 weiss
+    # (Peak). Position der LED-Reihe im PCB = Layout-Entscheidung (TBD).
+    # Blaue LED LCSC: NEEDS-VERIFY (Anti-Guess) — landet in der NO-LCSC-Liste.
+    U10_X, U10_Y = 300.0, 120.0
+    P10_L_X = U10_X - 12.7
+    P10_R_X = U10_X + 12.7
+
+    def p10_left_y(pin: int) -> float:
+        return U10_Y - 16.51 + (pin - 1) * 2.54
+
+    def p10_right_y(pin: int) -> float:
+        return U10_Y - 16.51 + (28 - pin) * 2.54
+
+    symbols.append(
+        place_symbol(
+            lib_id="Driver_LED:PCA9685PW",
+            ref="U10",
+            value="PCA9685PW #2 (16-Ch I²C PWM, 0x41 — Level-Meter)",
+            x=U10_X,
+            y=U10_Y,
+            footprint="Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm",
+            datasheet="https://www.nxp.com/docs/en/data-sheet/PCA9685.pdf",
+            extra_props={"MPN": "PCA9685PW,118", "LCSC": "C2678753"},
+            seed_suffix="U10",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # ---- A0 (Pin 1, left) → +3V3  => Adresse 0x41
+    a0y = p10_left_y(1)
+    wires.append(wire(P10_L_X, a0y, P10_L_X - 7, a0y, seed_suffix="u10-a0"))
+    symbols.append(
+        place_symbol(lib_id="Power:+3V3", ref="#PWR_U10_A0", value="+3V3",
+                     x=P10_L_X - 7, y=a0y, rotation=270,
+                     seed_suffix="u10-a0-3v3", sheet_uuid_seed=sus)
+    )
+    # ---- A1..A4 (Pins 2-5, left) → GND
+    for pin in (2, 3, 4, 5):
+        py = p10_left_y(pin)
+        wires.append(wire(P10_L_X, py, P10_L_X - 7, py, seed_suffix=f"u10-a-{pin}"))
+        symbols.append(
+            place_symbol(lib_id="Power:GND", ref=f"#PWR_U10_A{pin-1}", value="GND",
+                         x=P10_L_X - 7, y=py, rotation=90,
+                         seed_suffix=f"u10-a-{pin}-gnd", sheet_uuid_seed=sus)
+        )
+    # ---- A5 (Pin 24, right) → GND
+    a5y = p10_right_y(24)
+    wires.append(wire(P10_R_X, a5y, P10_R_X + 7, a5y, seed_suffix="u10-a5"))
+    symbols.append(
+        place_symbol(lib_id="Power:GND", ref="#PWR_U10_A5", value="GND",
+                     x=P10_R_X + 7, y=a5y, rotation=270,
+                     seed_suffix="u10-a5-gnd", sheet_uuid_seed=sus)
+    )
+    # ---- VSS (Pin 14, left, bottommost) → GND
+    vss10 = p10_left_y(14)
+    wires.append(wire(P10_L_X, vss10, P10_L_X - 7, vss10, seed_suffix="u10-vss"))
+    symbols.append(
+        place_symbol(lib_id="Power:GND", ref="#PWR_U10_VSS", value="GND",
+                     x=P10_L_X - 7, y=vss10, rotation=90,
+                     seed_suffix="u10-vss-gnd", sheet_uuid_seed=sus)
+    )
+    # ---- VDD (Pin 28, right, topmost) → +3V3 + C_PCA2_VDD 10µF + C_PCA2_VDD_HF 100nF
+    vdd10 = p10_right_y(28)
+    wires.append(wire(P10_R_X, vdd10, P10_R_X + 9, vdd10, seed_suffix="u10-vdd-stub"))
+    symbols.append(
+        place_symbol(lib_id="Power:+3V3", ref="#PWR_U10_VDD", value="+3V3",
+                     x=P10_R_X + 9, y=vdd10, rotation=0,
+                     seed_suffix="u10-vdd-3v3", sheet_uuid_seed=sus)
+    )
+    cx1 = P10_R_X + 15
+    symbols.append(
+        place_symbol(lib_id="Device:C", ref="C_PCA2_VDD",
+                     value="10uF X5R 0805 (PCA2 VDD bulk)",
+                     x=cx1, y=vdd10 + 5, footprint="Capacitor_SMD:C_0805_2012Metric",
+                     extra_props={"MPN": "CL21A106KOQNNNG-class", "LCSC": "C15850"},
+                     seed_suffix="C_PCA2_VDD", sheet_uuid_seed=sus)
+    )
+    wires.append(wire(cx1, vdd10 + 5 - 3.81, cx1, vdd10, seed_suffix="c-pca2-vdd-top"))
+    wires.append(wire(P10_R_X + 9, vdd10, cx1, vdd10, seed_suffix="c-pca2-vdd-tee"))
+    junctions.append(junction(cx1, vdd10))
+    symbols.append(
+        place_symbol(lib_id="Power:GND", ref="#PWR_C_PCA2_VDD", value="GND",
+                     x=cx1, y=vdd10 + 5 + 5, rotation=0,
+                     seed_suffix="c-pca2-vdd-gnd", sheet_uuid_seed=sus)
+    )
+    wires.append(wire(cx1, vdd10 + 5 + 3.81, cx1, vdd10 + 5 + 5, seed_suffix="c-pca2-vdd-bot"))
+    cx2 = P10_R_X + 21
+    symbols.append(
+        place_symbol(lib_id="Device:C", ref="C_PCA2_VDD_HF",
+                     value="100nF X7R 0603 (PCA2 VDD HF)",
+                     x=cx2, y=vdd10 + 5, footprint="Capacitor_SMD:C_0603_1608Metric",
+                     extra_props={"MPN": "CL10B104KO8NNNC-class", "LCSC": "C14663"},
+                     seed_suffix="C_PCA2_VDD_HF", sheet_uuid_seed=sus)
+    )
+    wires.append(wire(cx2, vdd10 + 5 - 3.81, cx2, vdd10, seed_suffix="c-pca2-vddhf-top"))
+    wires.append(wire(cx1, vdd10, cx2, vdd10, seed_suffix="c-pca2-vddhf-tee"))
+    junctions.append(junction(cx2, vdd10))
+    symbols.append(
+        place_symbol(lib_id="Power:GND", ref="#PWR_C_PCA2_VDD_HF", value="GND",
+                     x=cx2, y=vdd10 + 5 + 5, rotation=0,
+                     seed_suffix="c-pca2-vddhf-gnd", sheet_uuid_seed=sus)
+    )
+    wires.append(wire(cx2, vdd10 + 5 + 3.81, cx2, vdd10 + 5 + 5, seed_suffix="c-pca2-vddhf-bot"))
+    # ---- SDA (Pin 27, right) → lokales Label I2C_SDA (selber Bus wie U6)
+    sda10 = p10_right_y(27)
+    wires.append(wire(P10_R_X, sda10, P10_R_X + 7, sda10, seed_suffix="u10-sda"))
+    labels.append(label(P10_R_X + 7, sda10, "I2C_SDA"))
+    # ---- SCL (Pin 26, right) → lokales Label I2C_SCL
+    scl10 = p10_right_y(26)
+    wires.append(wire(P10_R_X, scl10, P10_R_X + 7, scl10, seed_suffix="u10-scl"))
+    labels.append(label(P10_R_X + 7, scl10, "I2C_SCL"))
+    # ---- EXTCLK (Pin 25, right) → GND (NXP DS Rev4 S.7 Footnote [2], wenn unused)
+    ext10 = p10_right_y(25)
+    wires.append(wire(P10_R_X, ext10, P10_R_X + 7, ext10, seed_suffix="u10-extclk"))
+    symbols.append(
+        place_symbol(lib_id="Power:GND", ref="#PWR_U10_EXTCLK", value="GND",
+                     x=P10_R_X + 7, y=ext10, rotation=270,
+                     seed_suffix="u10-extclk-gnd", sheet_uuid_seed=sus)
+    )
+    # ---- ~OE (Pin 23, right, active LOW) → R_OE2 10k pull-up zu +3V3 (default off)
+    oe10 = p10_right_y(23)
+    wires.append(wire(P10_R_X, oe10, P10_R_X + 3.19, oe10, seed_suffix="u10-oe-stub"))
+    symbols.append(
+        place_symbol(lib_id="Device:R", ref="R_OE2",
+                     value="10k 0603 (PCA9685 #2 /OE pull-up)",
+                     x=P10_R_X + 7, y=oe10, rotation=90,
+                     footprint="Resistor_SMD:R_0603_1608Metric",
+                     extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
+                     seed_suffix="R_OE2", sheet_uuid_seed=sus)
+    )
+    wires.append(wire(P10_R_X + 10.81, oe10, P10_R_X + 14, oe10, seed_suffix="r-oe2-to-3v3"))
+    symbols.append(
+        place_symbol(lib_id="Power:+3V3", ref="#PWR_R_OE2", value="+3V3",
+                     x=P10_R_X + 14, y=oe10, rotation=90,
+                     seed_suffix="r-oe2-3v3", sheet_uuid_seed=sus)
+    )
+    # ---- 8× VU-Meter LED+R (Channels 0-7 = Pins 6-13, links). Anode +5V via 390R,
+    # Kathode → PCA-Channel-Sink. Eigene Reihe (y=255), x-Position im PCB = TBD.
+    LED_BLUE = ("KT-0603B (Hubei KENTO, blue 0603, Vf ~3.0V) — LCSC NEEDS-VERIFY", "")
+    vu_array = [
+        # (pca_channel, vu_ref, sx, sy, (mpn,lcsc), descr)
+        (0, "1",  70, 255, LED_BLUE, "Level seg 1 (blau)"),
+        (1, "2",  95, 255, LED_BLUE, "Level seg 2 (blau)"),
+        (2, "3", 120, 255, LED_BLUE, "Level seg 3 (blau)"),
+        (3, "4", 145, 255, LED_BLUE, "Level seg 4 (blau)"),
+        (4, "5", 170, 255, LED_BLUE, "Level seg 5 (blau)"),
+        (5, "6", 195, 255, LED_BLUE, "Level seg 6 (blau)"),
+        (6, "7", 220, 255, LED_W,    "Peak seg 7 (weiss)"),
+        (7, "8", 245, 255, LED_W,    "Peak seg 8 (weiss)"),
+    ]
+    for ch, vref, sx, sy, (vmpn, vlcsc), vdescr in vu_array:
+        lname = f"VU{vref}_K"
+        symbols.append(
+            place_symbol(lib_id="Device:R", ref=f"R_VU{vref}",
+                         value=f"390R 0603 ({vdescr} series)",
+                         x=sx, y=sy, rotation=90,
+                         footprint="Resistor_SMD:R_0603_1608Metric",
+                         extra_props={"MPN": "0603WAF3900T5E", "LCSC": "C23151"},
+                         seed_suffix=f"R_VU{vref}", sheet_uuid_seed=sus)
+        )
+        wires.append(wire(sx - 3.81, sy, sx - 6, sy, seed_suffix=f"r-vu{vref}-5v"))
+        symbols.append(
+            place_symbol(lib_id="Power:+5V", ref=f"#PWR_R_VU{vref}", value="+5V",
+                         x=sx - 6, y=sy, rotation=270,
+                         seed_suffix=f"r-vu{vref}-5v-pwr", sheet_uuid_seed=sus)
+        )
+        symbols.append(
+            place_symbol(lib_id="Device:LED", ref=f"LED_VU{vref}",
+                         value=f"SMD 0603 level-meter ({vdescr})",
+                         x=sx + 7.62, y=sy, rotation=180,
+                         footprint="LED_SMD:LED_0603_1608Metric",
+                         extra_props={"MPN": vmpn, "LCSC": vlcsc},
+                         seed_suffix=f"LED_VU{vref}", sheet_uuid_seed=sus)
+        )
+        wires.append(wire(sx + 11.43, sy, sx + 13.43, sy, seed_suffix=f"vu{vref}-k-stub"))
+        labels.append(label(sx + 13.43, sy, lname))
+        # matching label on U10 left LED-pin (channel 0-7 → pins 6-13)
+        pca_pin = 6 + ch
+        ppy = p10_left_y(pca_pin)
+        wires.append(wire(P10_L_X, ppy, P10_L_X - 5, ppy, seed_suffix=f"u10-led{ch}-stub"))
+        labels.append(label(P10_L_X - 5, ppy, lname))
+
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
         f'  (uuid "{sheet_uuid}")\n'
@@ -4562,9 +4752,9 @@ def mcp_sheet() -> str:
         f'    (rev "0.6.3-r10-LED")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §7 (MCP) + §7.2 (PCA9685)")\n'
-        f'    (comment 2 "MCP 0x20 (A0=A1=A2=GND) / PCA 0x40 (A0-A5=GND), shared I²C bus")\n'
+        f'    (comment 2 "MCP 0x20 / U6 PCA 0x40 / U10 PCA 0x41 (A0=+3V3) - shared I²C bus")\n'
         f'    (comment 3 "r10: SW6-SW10 plain HX 12x12x7.3TPFT-B SMD-Tactile (C36498966)")\n'
-        f'    (comment 4 "r10: 10× SMD-0603 LEDs (LED6-LED15) auf PCA9685 LED0-LED9"))\n'
+        f'    (comment 4 "r10: 10× LEDs (LED6-LED15); U10 PCA9685 #2 -> 8 VU-Level-LEDs (blau+weiss)"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
