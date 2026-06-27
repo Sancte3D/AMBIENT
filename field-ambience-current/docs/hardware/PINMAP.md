@@ -10,7 +10,9 @@ each pin is wired, all traces, per module.
 > distillation, derived directly from the generator's `NETS` table
 > (`generate_kicad_project.py` ~line 2942) and `STM32_PIN_LOC` (~line 873).
 > If this doc and the generator ever disagree, **the generator wins** — regen
-> and re-derive. Prose context per module is in
+> and re-derive. A CI gate (`scripts/check_pinmap.py`, workflow `hw-consistency`)
+> fails the build if this pin table and the generator `NETS` disagree, so they
+> cannot silently drift. Prose context per module is in
 > [`SCHEMATIC_WALKTHROUGH.md`](SCHEMATIC_WALKTHROUGH.md); part numbers are in
 > [`BOM_MASTER.md`](../../../BOM_MASTER.md).
 
