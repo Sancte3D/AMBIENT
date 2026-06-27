@@ -1,11 +1,18 @@
 # 3D-Modell-Manifest — Field Ambience
 
-**Stand: r18.14 (2026-06-12).** STEP-Dateien liegen in
+**Stand: r18.65 (2026-06-27).** STEP-Dateien liegen in
 `field-ambience-current/kicad/libraries/field_ambience.3dshapes/`.
 Quelle: EasyEDA/LCSC-CAD-Daten, gezogen mit `easyeda2kicad --full --lcsc_id=<ID>`.
 
 > Zweck: Enclosure-/Panel-/PCB-Abstimmung in CAD. Die Z-Höhen hier sind die
 > verbindliche Quelle für ADR-0011 (Gehäuse-Dicke) und das Frontpanel-CAD.
+
+> **Vollständigkeit auf einen Blick (2026-06-27):** Jedes Bauteil hat einen
+> Footprint. 3D = **7 STEP im Repo** (Z-/Panel-kritisch, unten) + **Rest
+> KiCad-Standard-Lib-3D** (rendert automatisch) + **1 dokumentierte Lücke**
+> (HX-Modifier-Taster, Envelope unten) + **Off-Board-Bodies** (Speaker, Akku,
+> Display, Knöpfe — sitzen nicht auf der PCB, extern zu beschaffen, unten
+> gelistet). Für Enclosure-CAD reichen die Z-Höhen + Envelopes hier.
 
 ## Im Repo (Z-/Panel-kritisch)
 
@@ -36,7 +43,7 @@ easyeda2kicad --full --lcsc_id=C<ID> --output <lib-pfad>
 
 | Bauteil | Höhe (DS) | Quelle |
 |---|---|---|
-| HX 12×12×7.3 Taster (C36498966) | 7.3 mm | kein EasyEDA-3D; bei Bedarf aus DS extrudieren |
+| HX 12×12×7.3 Taster (Modifier SW6–SW10, C36498966) | 7.3 mm (Body 11.8×11.8) | **re-check 2026-06-27:** `easyeda2kicad` meldet „No 3D model" bei EasyEDA → nicht auto-ziehbar. Enclosure-CAD nutzt den Envelope **11.8×11.8×7.3 mm**. Board-STEP-Export zeigt diesen einen Taster als Footprint ohne Solid; entweder DS-Envelope nehmen oder im CAD 1× Box setzen. Footprint ist User-verifiziert → **kein PCB-Blocker** |
 | Cloth-Cone Mini-Speaker (CMS-402811-28SP primär / AS04008PS sekundär) | **11.5 mm** Treiber-Tiefe, Footprint 40 × 28.3 mm | sameskydevices.com / puiaudio.com → CAD-Download |
 | LCD-Modul ST7789 (Adafruit 5394) | 3.5 mm über Standoff | Adafruit GitHub (CAD-Repo) |
 | EC11E THT Encoder-Familie (ADR-0012, neu) | Body 7 + Schaft n. Wahl | ALPS tech.alpsalpine.com → 3D-Download je Variante; LCSC-ID nach Sourcing-Verifikation fetchen |

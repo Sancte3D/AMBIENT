@@ -1,6 +1,6 @@
 # BOM Master — Field Ambience
 
-**Stand: v0.7-r18.36 (2026-06-20).** Single Source of Truth für alle aktiv
+**Stand: v0.7-r18.65 (2026-06-27).** Single Source of Truth für alle aktiv
 verbauten Komponenten. Pro Eintrag: aktuelle Wahl, Footprint-Quelle, 3D-Quelle,
 Bestell-Link. **Footprint- und STEP-Spalten sind ab r18.36 klickbar** und
 zeigen auf die jeweilige Datei im Repo (relative Markdown-Links, funktionieren
@@ -111,7 +111,7 @@ auf GitHub und in jedem Markdown-Editor).
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) | **HX 12×12×7.3 TPFT-B** | [C36498966](https://www.lcsc.com/product-detail/C36498966.html) | [`field_ambience:SW_HX_12x12x7.3_SMD-4P`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod) (Custom) | field_ambience | Vendor-CAD (LCSC EasyEDA-Export — kein STEP im Repo) |
+| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) | **HX 12×12×7.3 TPFT-B** | [C36498966](https://www.lcsc.com/product-detail/C36498966.html) | [`field_ambience:SW_HX_12x12x7.3_SMD-4P`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod) (Custom) | field_ambience | **Kein 3D** (EasyEDA hat keins, re-check 2026-06-27) — Envelope 11,8×11,8×7,3 mm in [MANIFEST](mechanical/3d_models/MANIFEST.md); kein PCB-Blocker |
 | **SW11** Reset (Mini-SMD-Tactile, Service-Bohrung Bottom-Plate) | **XUNPU TS-1088-AR02016** | [C720477](https://www.lcsc.com/product-detail/C720477.html) | [`field_ambience:SW_TS1088_SMD`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_TS1088_SMD.kicad_mod) (EasyEDA-verifiziert) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (r18.36-Fix: vorher fälschlich „Vendor-CAD" — STEP liegt im Repo) |
 | **SW_BOOT** BOOT0 (USB-DFU-Flash, Service-Bohrung Bottom-Plate) | gleiches Teil wie SW11 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | gleicher FP wie SW11 | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (s. SW11) |
 | R_BOOT_SW 1 kΩ 0603 (BOOT0-Pull-up) | s. R_CELL | [C21190](https://www.lcsc.com/product-detail/C21190.html) | s. R_CELL | KiCad-Standard | Standard-Lib-3D |
@@ -217,3 +217,5 @@ Wer prüft was wann:
 | Hall-Sensor FP-Status doc-drift behoben | ✅ J_CELL1–5: BOM behauptete `PinHeader_1x03` als „Phase-6-Platzhalter, → SOT-23". Generator hatte aber bereits seit r18.20 final `Package_TO_SOT_SMD:SOT-23` (s. `generate_kicad_project.py:3342` `FP_NOTE`). BOM-Eintrag korrigiert. | r18.37 |
 | LCSC string-diff BOM ↔ Generator | ✅ Performed: 60 BOM-Codes vs 53 Generator-Codes. **0 echte Mismatches** — alle Diffs sind entweder false positives (Tag-Connect „TC2030"), Audit-Trail-Historie (alte falsche LCSC-IDs), oder dead code in `pi_sheet()` (LEGACY, nicht geschrieben). Re-run vor Order empfohlen. Details in `PCB_FOOTPRINT_RISK_AUDIT.md` §9. | r18.37 |
 | Mechanik-Sektion (§12) klar als post-PCB markiert | ✅ Custom-3D-Print-Files (Encoder-Knöpfe, Cell-Caps, Switch-Plate, Gehäuse) sind **nicht PCB-blockierend** — sie kommen nach Schematic/Layout-Freigabe und beeinflussen das Board nicht (keine Bohrungen / kein Pad-Pattern). §12 entsprechend annotiert | r18.36 |
+| 3D-STEP-Export Vollständigkeit (für Enclosure-CAD) | 🟡 **1 bekannte Lücke:** HX-Modifier-Taster SW6–SW10 (C36498966) hat **kein 3D-Modell** (EasyEDA hat keins, `easyeda2kicad`-re-check 2026-06-27). Envelope **11,8×11,8×7,3 mm** in [`mechanical/3d_models/MANIFEST.md`](mechanical/3d_models/MANIFEST.md) → Enclosure-Clearance abgedeckt. Alle anderen: 7× STEP-im-Repo oder KiCad-Standard-Lib-3D. **Footprint vorhanden → kein PCB-Layout-Blocker.** Off-Board-Bodies (Speaker/Akku/Display/Knöpfe) sind extern (Vendor-CAD, s. §2/§3/§5/§6). | r18.65 |
+| MECHANICAL_REQUIREMENTS §1.6 Modifier-Button-Teil korrigiert | ✅ §1.6 führte fälschlich TS-1088 (3,9×2,9, Service-Taster) statt HX 12×12×7,3 (SW6–SW10, Generator Z. 4111) → Höhe 7,3 mm statt falscher ~2 mm. Enclosure-Clearance jetzt korrekt | r18.65 |
