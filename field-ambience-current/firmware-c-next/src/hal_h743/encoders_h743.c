@@ -3,31 +3,34 @@
  *
  * Implements include/encoders.h on the STM32H743. Replaces the RP2040 1 kHz
  * polled quadrature decoder (src/hal_pico/encoders_pico.c) with **native
- * TIM2/TIM3/TIM4/TIM5 hardware-encoder mode** — the H7 timers decode
+ * TIM1/TIM2/TIM3/TIM4 hardware-encoder mode** — the H7 timers decode
  * quadrature in hardware, no firmware polling needed.
  *
- * Encoder map (all ALPS EC11E18244AU after r18.22 NRND pivot, all 4 identical):
- *   EN1 "drive"   A=PA0  B=PA1   SW=via MCP23017 GPB0 (Modifier handler)
- *   EN2 "bright"  A=PA8  B=PA9   SW=via MCP23017 GPB1
- *   EN3 "display" A=PC6  B=PC7   SW=PA10  (push)
- *   EN4 "volume"  A=PD12 B=PD13  SW=via MCP23017 GPB2
+ * Encoder map (all ALPS EC11E18244AU, all 4 identical) — MUST match the
+ * generator NETS / docs/hardware/PINMAP.md (the schematic is the truth):
+ *   EN1 "drive"   A=PA0  B=PA1   (TIM2)  SW=PE0   (STM32 GPIO)
+ *   EN2 "bright"  A=PC6  B=PC7   (TIM3)  SW=PE1   (STM32 GPIO)
+ *   EN3 "display" A=PD12 B=PD13  (TIM4)  SW=PE3   (STM32 GPIO)
+ *   EN4 "volume"  A=PA8  B=PA9   (TIM1)  SW=MCP23017 GPB5
  *
- *   (Exact pins per SPEC v0.7 §5; final pin map verified r18.24 vs DS12110.)
+ *   (r18.67 reconcile: the earlier comment had the A/B pairs rotated across
+ *    EN2/3/4 and the switches on the wrong bus. Pins per generator NETS.)
  *
  * Timer assignments (one per encoder, all 16-bit counters):
- *   TIM2  CH1/CH2 = PA0/PA1   → EN1
- *   TIM1  CH1/CH2 = PA8/PA9   → EN2  (advanced timer, 16-bit OK)
- *   TIM3  CH1/CH2 = PC6/PC7   → EN3
- *   TIM4  CH1/CH2 = PD12/PD13 → EN4
+ *   TIM2  CH1/CH2 = PA0/PA1   → EN1 drive   (AF1)
+ *   TIM3  CH1/CH2 = PC6/PC7   → EN2 bright  (AF2)
+ *   TIM4  CH1/CH2 = PD12/PD13 → EN3 display (AF2)
+ *   TIM1  CH1/CH2 = PA8/PA9   → EN4 volume  (AF1, advanced timer, 16-bit OK)
  *
  * Each timer is configured in Encoder Mode 3 (counts both edges) so 18 PPR
  * × 4 = 72 counts/rev. The per-Encoder `substeps` setting in src/encoders.c
  * (active config: 2 for smooth, 4 for detent) divides this down to the
  * "user click" rate before the velocity-acceleration tier maths runs.
  *
- * Push switches: EN3 (display) is on a dedicated STM32 GPIO (PA10) so the
- * menu wake-on-press fires without I²C round-trip. EN1/2/4 push-switches
- * are wired through the MCP23017 GPB bank — handled in mcp23017_h743.c.
+ * Push switches: EN1/EN2/EN3 (drive/bright/display) are on dedicated STM32
+ * GPIOs PE0/PE1/PE3 (GPIO/EXTI, no I²C round-trip). EN4 (volume) push is on
+ * MCP23017 GPB5 — handled in mcp23017_h743.c (the MCU encoder-switch pins
+ * were full, so volume's switch moved to the expander).
  *
  * Sampling (Step 13.3 TODO): a 1 kHz SysTick (or low-prio timer ISR) reads
  * the 4 timer counters, diffs against last sample, divides by `substeps`,
@@ -60,7 +63,7 @@ void enc_init(void) {
      *      - Input filter = ICF[3:0]=0x4 (~clk/8 → ~15 Mhz at 120 MHz core)
      *   4. Start the timers; the counter then runs autonomously and we just
      *      sample it at 1 kHz.
-     *   5. Configure PA10 (EN3 push) as input with pull-up; sample at 1 kHz
+     *   5. Configure PE0/PE1/PE3 (EN1/2/3 push) as inputs with pull-up; sample at 1 kHz
      *      with 3-of-N debounce.
      *   6. SysTick already runs at 1 kHz for menu animations — hook in the
      *      encoder-sample tick there, not a separate timer.
