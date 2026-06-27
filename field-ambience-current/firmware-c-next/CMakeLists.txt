@@ -140,9 +140,14 @@ if(FAM_TARGET STREQUAL "h743")
     # actual STM32 toolchain integration (STM32CubeH7 HAL, ARM-GCC, OpenOCD
     # flashing) is Step 13.3. Until then this branch only validates that the
     # HAL files compile syntactically; the SAI/DMA/USB/SPI wiring is TODO.
+    # The product target uses the canonical worlds module (src/worlds.c,
+    # ADR-0017). Drop the dead v2 duplicate (src/v2/worlds.c) — it defines the
+    # same worlds_get/worlds_count and would multiply-define in the executable.
+    set(V2_SOURCES_H743 ${V2_SOURCES})
+    list(REMOVE_ITEM V2_SOURCES_H743 src/v2/worlds.c)
     add_executable(field_ambience_h743
         ${DSP_SOURCES}
-        ${V2_SOURCES}
+        ${V2_SOURCES_H743}
         src/hal_h743/main_h743.c
         src/hal_h743/audio_h743.c
         src/hal_h743/encoders_h743.c
@@ -157,6 +162,12 @@ if(FAM_TARGET STREQUAL "h743")
     target_compile_definitions(field_ambience_h743 PRIVATE
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
+    # The skeleton links with the HOST compiler (no ARM toolchain yet), so the
+    # DSP sources need libm for sinf/cosf/expf/tanhf/etc. This makes the h743
+    # branch a real CI syntax+link gate (catches missing prototypes/decls)
+    # until the Step 13.3 ARM-GCC toolchain lands.
+    target_link_libraries(field_ambience_h743 m)
+
     # TODO(Step 13.3): ARM-GCC toolchain file, CubeH7 HAL sources +
     # include paths, linker script, startup file. For now this target only
     # builds if the user supplies CMAKE_TOOLCHAIN_FILE manually.
