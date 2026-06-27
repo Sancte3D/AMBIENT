@@ -1,7 +1,41 @@
-# ADR-0016: Power & Sleep Architecture — kein dedizierter On/Off-Switch
+# ADR-0016: Power & Sleep Architecture
 
-**Status:** PROPOSED
-**Date:** 2026-06-22
+**Status:** PROPOSED → **AMENDED 2026-06-27 (User: physischer Schiebeschalter als Haupt-Aus)**
+**Date:** 2026-06-22 (urspr.) / 2026-06-27 (Amendment)
+
+## Amendment 2026-06-27 — Haupt-Power-Gate per Schiebeschalter („dunkel, aber lädt")
+
+User-Entscheidung: **ein physischer Schiebeschalter als echtes Aus** — Gerät im
+Aus dunkel, **lädt aber bei eingestecktem USB weiter.** Der Schalter sitzt
+bewusst **NICHT** im Akku-Hochstrompfad, sondern auf einer **Enable-Leitung**
+(signal-level, µA).
+
+**Topologie (entschieden, single-sheet `power_tree`):**
+- Neuer **Load-Switch `U_PWR`** (TPS22918-Klasse, 5,5 V/2 A) auf dem **LDO-
+  Eingang**: `+5V_RAIL → U_PWR(VIN→VOUT) → +5V_SW → AP7361C-LDO-VIN`.
+  Gated damit die **gesamte 3V3-Domäne** (MCU + die 17,5 mA Hall-Sensoren +
+  beide PCA9685/LEDs + LCD) auf einmal. Der Class-D-Amp (an +5V) geht über
+  seinen `AMP_nSHDN`-Pulldown selbst in Shutdown → dunkel.
+- **Schiebeschalter `SW_PWR`** steuert `U_PWR.ON`: `+5V_RAIL → SW_PWR → ON`,
+  `R_PWR_PD` (100 k) zieht `ON` low (Default AUS). EN-Referenz = `+5V_RAIL`
+  (immer da, sobald USB **oder** Akku) — nicht +3V3 (das gibt's erst nach dem
+  Switch).
+- **Lader (U7 MCP73831) bleibt unberührt** — hängt am Akku/USB, nicht hinter
+  `U_PWR` → **lädt im Aus weiter.** ✓ User-Anforderung erfüllt.
+
+**Verhältnis zur ursprünglichen Variante C:** Das ist ein **Haupt-Aus**, nicht
+der Hall-only-Soft-Sleep von unten. Der Hall-Gate/STANDBY-Soft-Sleep (PE2/
+`LSW_EN`, firmware-gesteuert) kann **zusätzlich** später als Auto-Sleep-Schicht
+kommen — orthogonal. Für „echtes Aus" reicht jetzt `SW_PWR`.
+
+**Neue Teile:** `U_PWR` (Load-Switch, SOT-23-6), `SW_PWR` (Mini-Schiebeschalter
+SPST — Footprint/LCSC **NEEDS-VERIFY**, Panel-Teil), `R_PWR_PD` (100 k 0603),
+`C_PWR_SW` (10 µF Output-Cap). Alles in `power_tree_sheet`.
+
+> Der untenstehende Variante-C-Text bleibt als History/Option für den späteren
+> Firmware-Auto-Sleep stehen.
+
+---
 
 ## Kontext
 

@@ -171,7 +171,7 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 | `LCD_RES` | PC5 (33) | 5 (RES) |
 | `LCD_DC` | PC4 (32) | 6 (DC) |
 | `LCD_CS` | PA6 (30) | 7 (CS) |
-| `LCD_BLK_PWM` | PCA9685 ch12 → Q2 gate | J3 pin 8 (BLK) backlight — low-side via Q2 |
+| `LCD_BLK_PWM` | PCA9685 ch15 → Q2 gate | J3 pin 8 (BLK) backlight — low-side via Q2 |
 
 ### MCP23017 + PCA9685 + LEDs + Cells (`mcp.kicad_sch`)
 | Net | From | To |
@@ -182,7 +182,7 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 | `VOL_SW` | EN4 push | MCP23017 GPB5 |
 | 5 modifier LEDs | PCA9685 ch0..4 (via 390 Ω) | Shift=gelb, Hold=grün, Drone/Gen/Clear=weiß |
 | 10 cell LEDs | PCA9685 ch5..14 (via 390 Ω) | 2 per cell: gelb (base-hold) + grün (shift-hold) |
-| `LCD_BLK_PWM` | PCA9685 ch12 | Q2 backlight FET (→ LCD sheet) |
+| `LCD_BLK_PWM` | PCA9685 ch15 | Q2 backlight FET (→ LCD sheet) |
 | `CELL1..5_SENSE` | 5× DRV5056A4 Hall OUT | MCU ADC PC0/PC1/PA4/PB0/PB1 |
 | Hall VCC | +3V3 | 5× DRV5056A4 VCC |
 

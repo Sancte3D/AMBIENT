@@ -504,7 +504,7 @@ STM32H743 SPI1 (AF5)
    ├── DC    (PC4, GPIO) ──► J3.DC
    └── RES   (PC5, GPIO) ──► J3.RES
 
-PCA9685 ch12 (LCD_BLK_PWM) ──► Q2 Gate ──► Q2 Drain = LCD_BL_LED_K (Kathode)
+PCA9685 ch15 (LCD_BLK_PWM) ──► Q2 Gate ──► Q2 Drain = LCD_BL_LED_K (Kathode)
                                                       ▲
 LCD_BL_LED_A (Anode) ◄── +3V3                          GND
 ```
@@ -516,7 +516,7 @@ LCD_BL_LED_A (Anode) ◄── +3V3                          GND
 | LCD-Modul tot | Display schwarz — Backlight aus? Strom prüfen. Backlight an, kein Bild? SPI-Pins prüfen | Modul tauschen (steckt im Header) |
 | `Q2` Open | Backlight bleibt aus oder permanent an (je nach Fail-Mode) | FET tauschen |
 | `J3` Lötstellen | Display flackert / startet nicht | Header neu löten |
-| PCA9685 ch12 tot | Backlight dunkel, sonst funktional | PCA9685-Kanal wechseln im Layout *oder* in Firmware Notlauf-Backlight statisch |
+| PCA9685 ch15 tot | Backlight dunkel, sonst funktional | PCA9685-Kanal wechseln im Layout *oder* in Firmware Notlauf-Backlight statisch |
 
 ### Warum gerade diese Wahl?
 

@@ -65,4 +65,16 @@ uint16_t mcp_state(void);
  * Step 3 it's available so we can demonstrate the output side works too. */
 void mcp_set_xsmt(bool on);
 
+/* --- h743 HAL: raw MCP GPIO read + PCA9685 LED-driver PWM (mcp23017_h743.c) --- */
+
+/* Read GPIOA+GPIOB into *out as a 16-bit value packed (GPB<<8)|GPA — so GPB
+ * bits land at 8-15 (see MCP_BIT_MOD_* above). Returns true on I²C ACK. */
+bool mcp_read_gpio(uint16_t *out);
+
+/* PCA9685 init: 1 kHz PWM, totem-pole OUTDRV, release /OE. */
+void pca_init(void);
+
+/* PCA9685 per-channel 12-bit PWM (on/off counts). */
+void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count);
+
 #endif
