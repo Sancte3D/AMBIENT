@@ -1,4 +1,10 @@
-# Field Ambience PCB — TODO vor PCB-Layout & JLCPCB-Order
+# Field Ambience PCB — TODO (HISTORISCH / ARCHIVIERT)
+
+> ⚠️ **ARCHIVIERT 2026-06-27.** Historische Issue-Liste aus der PR-#1-Ära
+> (großteils Pre-H743: Pico, Pi Zero 2W, OLED, Choc-Hotswap, 1000µF-Elko) —
+> längst überholt. **Aktuelle Blocker:** `field-ambience-current/PCB_LAYOUT_STATUS.md`.
+> **Echte Engineer-Übersicht:** `field-ambience-current/docs/onboarding/HARDWARE_ENGINEER_START.md`.
+> Nur zur Nachvollziehbarkeit aufgehoben — nicht mehr pflegen.
 
 Stand nach PR-#1-Reviews durch ChatGPT (zwei Iterationen). Diese Liste
 trackt alle offenen Issues bevor PCB-Layout begonnen werden darf.

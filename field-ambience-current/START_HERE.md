@@ -35,11 +35,14 @@
 - `field_ambience_pcb_SPEC_v0.7.md` — komplette, aktuelle Spec (v0.7-r18, H7-Migration)
 - `kicad/` — KiCad-Projekt (Schaltplan fertig + validiert, generiert aus
   `generate_kicad_project.py`)
-- `kicad/libraries/` — eingebundene kiswitch-Footprints (Choc V2)
+- `kicad/libraries/` — Custom-Footprints (`field_ambience.pretty`) + 3D-STEPs.
+  (Cells sind seit ADR-0013 **Gateron LP Magnetic + Hall**, plate-mounted —
+  kein PCB-Switch-Footprint mehr.)
 - `kicad/datasheets/` — Datasheets der verbauten Bauteile
 - `../mechanical/coordinates/mechanical_coordinates.md` — Platzierungs-Koordinaten fürs Layout
 - `CHANGELOG.md` — Entscheidungs- und Änderungshistorie
-- `PCB_TODO.md` — detaillierter Engineering-Status
+- `PCB_LAYOUT_STATUS.md` — aktuelle Blocker · `docs/onboarding/HARDWARE_ENGINEER_START.md` — echte HW-Übersicht
+  (alter `PCB_TODO.md` → `../archive/PCB_TODO_historical.md`, nur History)
 
 ## Pre-Step-6 (archiviert)
 - `../archive/legacy_pre_native/` — die alte Pi+SuperCollider+Browser-Architektur. Inhalte sind

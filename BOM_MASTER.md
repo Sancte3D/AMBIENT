@@ -89,7 +89,12 @@ auf GitHub und in jedem Markdown-Editor).
 | **LCD-Modul — PROPOSED r18.43 / ADR-0015** **Waveshare 2.0in 240×320 ST7789** IPS-Modul. Pivot 1.9″ → 2.0″ für mehr Fläche + Animations-Headroom + native RGB565-Farbe. Gleiche ST7789-Controller-Familie, gleiches 8-Pin-SPI-Interface, gleicher Backlight-Pfad (Q2/PCA9685-Kanal 12). **UNVERIFIED — NEEDS HUMAN CHECK:** (a) Beschaffungspfad/SKU (LCSC-PN existiert evtl. nicht; Beschaffung via Waveshare/PiHut/Amazon wie 1.9″), (b) 8-Pin-Header-Reihenfolge gegen geliefertes Modul, (c) Außenmaße + Active-Area-Position gegen Bezel-Fenster. Bezel-Ausschnitt + Generator-Sheet erst ändern wenn (a)–(c) bestätigt. | Waveshare 2inch LCD Module 240×320 SPI | [Waveshare](https://www.waveshare.com/2inch-lcd-module.htm) | Modul (steckt in J3, ggf. Pin-Order-Anpassung) | — | Vendor-CAD |
 | Q2 Backlight-Driver | **2N7002,215** SOT-23 | [C8545](https://www.lcsc.com/product-detail/C8545.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 
-## 6. Encoder (ADR-0012 — 1× Push+Detent, 3× Smooth)
+## 6. Encoder (ADR-0012 — **4× Push-Encoder**, alle gleich hoch)
+
+> **r18.65:** Alle 4 sind dasselbe Push-Teil **EC11E18244AU** und alle 4
+> Push-Switches sind verdrahtet (DISPLAY=PE3, VOL=MCP-GPB5, DRIVE=PE0,
+> BRIGHT=PE1) → jeder Encoder kann eine Push-Funktion tragen. Detent-Feel:
+> Display mit Rastung, Parameter-Encoder via Firmware-Acceleration „smooth".
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
