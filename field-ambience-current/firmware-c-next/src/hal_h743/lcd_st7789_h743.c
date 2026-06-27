@@ -10,7 +10,7 @@
  *   PA6 (pin 30) = GPIO       → LCD CS
  *   PC4 (pin 32) = GPIO       → LCD DC  (data/command)
  *   PC5 (pin 33) = GPIO       → LCD RES
- *   Backlight    = MCP23017-driven via PCA9685 ch12 (LCD_BLK_PWM gates Q2)
+ *   Backlight    = PCA9685 ch15 (LCD_BLK_PWM gates Q2 2N7002) — generator truth
  *
  * Step 13.3 (TODO): STM32CubeH7 SPI1 init + DMA-driven frame flush. The
  * menu re-renders only the slot region (60-90% of the panel is static

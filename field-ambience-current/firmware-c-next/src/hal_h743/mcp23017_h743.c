@@ -30,11 +30,12 @@
 /* TODO(Step 13.3): expose i2c_h743_write(addr, buf, len) / i2c_h743_read
  * helpers backed by HAL_I2C_Master_Transmit / HAL_I2C_Master_Receive. */
 
-void mcp_init(void) {
+bool mcp_init(void) {
     /* TODO: enable I2C1 clock + GPIOB clock, configure PB6/PB7 as AF4
      * open-drain, configure PC13 as input with EXTI13 rising-edge.
      * Then run the MCP23017 register-init sequence (IODIR, GPPU, IPOL,
      * INTCON, GPINTEN, DEFVAL) — identical to the Pico impl. */
+    return true;  /* stub: assume ACK until the real I2C init lands */
 }
 
 bool mcp_read_gpio(uint16_t *out) {

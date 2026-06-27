@@ -50,11 +50,9 @@
 
 /* MCP23017 GPIO bit map (SPEC §7.2 / mcp23017_h743.c) — which expander bit is
  * which modifier button. Modifier push of EN1/2/4 also lands on GPB. */
-#define MCP_BIT_SHIFT     0   /* GPB0 */
-#define MCP_BIT_HOLD      1
-#define MCP_BIT_DRONE     2
-#define MCP_BIT_GENERATE  3
-#define MCP_BIT_CLEAR     4
+/* Modifier bit positions are defined ONCE in mcp23017.h as MCP_BIT_MOD_*
+ * (GPB0-4 = bits 8-12, because mcp_read_gpio packs (GPB<<8)|GPA). Do not
+ * redefine them here — the old local 0-4 values read GPA, not GPB (bug). */
 
 /* Menu → engine binding (ADR-0017 Phase 4, r18.58 Reddit-macro pass).
  * Menu slots are now World/Space/Atmos/Motion/Age — Tone was dropped (it
@@ -126,11 +124,11 @@ int main(void) {
         if (mcp_read_gpio(&gpio)) {
             uint16_t fell = (uint16_t)(prev_gpio & ~gpio);   /* 1→0 = press */
             uint16_t rose = (uint16_t)(~prev_gpio & gpio);   /* 0→1 = release */
-            if (fell & (1u<<MCP_BIT_SHIFT))    controls_modifier(MOD_SHIFT, true);
-            if (fell & (1u<<MCP_BIT_HOLD))     controls_modifier(MOD_HOLD, true);
-            if (fell & (1u<<MCP_BIT_DRONE))    controls_modifier(MOD_DRONE, true);
-            if (fell & (1u<<MCP_BIT_GENERATE)) controls_modifier(MOD_GENERATE, true);
-            if (fell & (1u<<MCP_BIT_CLEAR))    controls_modifier(MOD_CLEAR, true);
+            if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
+            if (fell & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, true);
+            if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
+            if (fell & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, true);
+            if (fell & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, true);
             (void)rose;
             prev_gpio = gpio;
         }
