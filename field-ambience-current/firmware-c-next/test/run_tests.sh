@@ -214,3 +214,11 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/bench_test"
 "$tmp/bench_test"
+
+# Synth engine: +28 "5th-harmonic" / Exceeder-style electro bass — bounded,
+# idle-silent, decays on release, and the +28 partial is actually present.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_harmonic_bass.c" \
+    "$src/src/dsp.c" "$src/src/harmonic_bass.c" \
+    -lm -o "$tmp/harmonic_bass_test"
+"$tmp/harmonic_bass_test"
