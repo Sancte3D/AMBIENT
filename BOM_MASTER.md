@@ -1,4 +1,9 @@
-# BOM Master — Field Ambience
+# BOM Master — Field Ambience (detailed / working view, DE)
+
+> 🏭 **Production handoff → [`field-ambience-current/PCB_BOM.md`](field-ambience-current/PCB_BOM.md)**
+> (English, **on-PCB parts only**, off-board parts excluded, no duplicates,
+> grouped by function). *This* file is the detailed working/rationale view
+> (sourcing history, off-board parts, audit-trail) — for Claude + deep dives.
 
 **Stand: v0.7-r18.65 (2026-06-27).** Single Source of Truth für alle aktiv
 verbauten Komponenten. Pro Eintrag: aktuelle Wahl, Footprint-Quelle, 3D-Quelle,
@@ -133,7 +138,7 @@ auf GitHub und in jedem Markdown-Editor).
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) | **HX 12×12×7.3 TPFT-B** | [C36498966](https://www.lcsc.com/product-detail/C36498966.html) | [`field_ambience:SW_HX_12x12x7.3_SMD-4P`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod) (Custom) | field_ambience | **Kein 3D** (EasyEDA hat keins, re-check 2026-06-27) — Envelope 11,8×11,8×7,3 mm in [MANIFEST](mechanical/3d_models/MANIFEST.md); kein PCB-Blocker |
+| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) — ⚠️ **Schaft muss ECKIG sein** (Clip-Caps dürfen sich nicht drehen); aktuelles Teil als „vertical actuator" dokumentiert → **Stem-Form VERIFY** oder 12×12-Tactile mit eckigem Post wählen | **HX 12×12×7.3 TPFT-B** | [C36498966](https://www.lcsc.com/product-detail/C36498966.html) | [`field_ambience:SW_HX_12x12x7.3_SMD-4P`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod) (Custom) | field_ambience | **Kein 3D** (EasyEDA hat keins, re-check 2026-06-27) — Envelope 11,8×11,8×7,3 mm in [MANIFEST](mechanical/3d_models/MANIFEST.md); kein PCB-Blocker |
 | **SW11** Reset (Mini-SMD-Tactile, Service-Bohrung Bottom-Plate) | **XUNPU TS-1088-AR02016** | [C720477](https://www.lcsc.com/product-detail/C720477.html) | [`field_ambience:SW_TS1088_SMD`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_TS1088_SMD.kicad_mod) (EasyEDA-verifiziert) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (r18.36-Fix: vorher fälschlich „Vendor-CAD" — STEP liegt im Repo) |
 | **SW_BOOT** BOOT0 (USB-DFU-Flash, Service-Bohrung Bottom-Plate) | gleiches Teil wie SW11 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | gleicher FP wie SW11 | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (s. SW11) |
 | R_BOOT_SW 1 kΩ 0603 (BOOT0-Pull-up) | s. R_CELL | [C21190](https://www.lcsc.com/product-detail/C21190.html) | s. R_CELL | KiCad-Standard | Standard-Lib-3D |
