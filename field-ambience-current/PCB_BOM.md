@@ -122,7 +122,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | **SW_PWR** | **MST-12D18G3** right-angle SMD slide switch (SPDT, **side-actuated** → operated from the enclosure edge); drives `U_PWR.ON` only | ✅ **C49023766** (JLC Extended) |
 | **U_PWR** | TPS22918 load-switch (ADR-0016; gates +5V_RAIL→+5V_SW = whole 3V3 domain) | C68913 (verify PN/stock) · SOT-23-6 · **not yet in the generator** — add at schematic rebuild |
 | R_PWR_PD / C_PWR_SW | 100 k / 10 µF | with U_PWR (C25803 / C15850) |
-| **SW6–SW10 footprint** | TC-1212-7.3-260G is **THT** (C2845240) | the current generator footprint is SMD (`SW_HX_…_SMD-4P`) → PCB maker uses a **THT 12×12 4-pin** footprint |
+| **SW6–SW10 footprint** | TC-1212-7.3-260G is **THT** (C2845240) | the current generator footprint is SMD (`SW_HX_…_SMD-4P`) → **use a THT 12×12 4-pin footprint; do NOT place the SMD version** (assembly would fail) |
 
 ---
 
