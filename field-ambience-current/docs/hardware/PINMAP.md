@@ -115,7 +115,7 @@ Rev-B.
 | 83 | PD2 | (free) | — | — | free |
 | 84 | PD3 | (free) | — | — | free |
 | 85 | PD4 | (free) | — | — | free |
-| 86 | PD5 | MIDI_TX | USART2_TX (AF7) | Audio | MIDI jack J9 (**DNP**, ADR-0004) |
+| 86 | PD5 | MIDI_TX | USART2_TX (AF7) | Audio | **MIDI jack J10** (3.5 mm TRS Type A, implementiert r18.67; J9 = Akku) |
 | 87 | PD6 | (free) | — | — | free |
 | 88 | PD7 | (free) | — | — | free |
 | 89 | PB3 | SWO | TRACESWO (optional) | MCU/SWD | SWD header J4 (SWO, optional) |
@@ -205,7 +205,7 @@ Each A/B has a 10 kΩ pull-up + 100 nF RC debounce; switches pull-up + tactile-t
 | `AMP_nSHDN`/`AMP_nMUTE` | MCU PB14/PB15 (+10 kΩ PD) | PAM8403 /SHDN, /MUTE |
 | speaker out | PAM8403 BTL | J6 (L+/L−), J7 (R+/R−) → 2× speaker |
 | jack-detect | J8 insertion-detect | MCP23017 (auto-mute speakers) |
-| `MIDI_TX` | MCU PD5 | J9 MIDI jack (**DNP**) |
+| `MIDI_TX` | MCU PD5 | **J10** MIDI jack (3.5 mm TRS, via 2× 220 Ω) |
 
 ### Battery / charger (`battery.kicad_sch`)
 | Net | From | To |

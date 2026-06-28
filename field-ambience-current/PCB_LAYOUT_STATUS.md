@@ -29,9 +29,9 @@
 |---|---|---|---|
 | B3 | 🟠 | KiCad-GUI-ERC | Einmal in KiCad 9 öffnen, ERC laufen lassen (kicad-cli aktuell nicht in der Umgebung verfügbar). Erwartete Warnungen / verbotene Warnungen siehe ERC_DRC_CHECKLIST.md |
 | **SCH-1** | 🟠 | **Power-Aus beim Aufbau einzeichnen** | `U_PWR`+`SW_PWR`+`R_PWR_PD`+`C_PWR_SW`. **Pin-Ebene-Drop-in-Spec in ADR-0016** (VIN/VOUT/ON/Reroute komplett) + `SW_PWR`-Footprint `field_ambience:SW_MST-12D18_SlideSwitch_RA` im Repo. ~10 min einzeichnen + ERC. (Noch nicht im alten Generator.) |
-| **SCH-2** | 🟠 | **Modifier-Button THT-Footprint zuordnen** | Teil = **TC-1212-7.3-260G (C2845240) = THT**. **Verifizierter THT-Footprint `field_ambience:SW_TC1212-7.3_THT_4P` (+ STEP) liegt jetzt im Repo** (easyeda2kicad). Beim Aufbau Symbol↔FP (4-Pin) zuordnen, **nicht** den alten SMD-FP nehmen |
+| ~~SCH-2~~ | ✅ | ~~Button SMD→THT~~ | **RESOLVED r18.68:** Generator + `jlc_bom.csv` nutzen jetzt **C2845240 (THT)** + Footprint `field_ambience:SW_TC1212-7.3_THT_4P` (Pads 1,1 = Top-Kante, 2,2 = Bottom-Kante, per HX-Konvention). Pad-Gruppierung bei GUI-ERC bestätigen |
 | ~~B-FP~~ | ✅ | ~~Footprint-Land-Pattern-Verifikation~~ | **r18.14: 0 offene Punkte** (EC11J-Blocker via Teil-Retire ADR-0012 gelöst, TS-1088-FP EasyEDA-verifiziert) — Details FP_VERIFY_LOG.md |
-| SRC | 🟡 | Komponenten-Sourcing-IDs | Fast alle Teile haben verifizierte LCSC. **Offen: nur 2× MIDI-220Ω** (`0603WAF2200T5E` PN bestätigen). Button/Slide-Switch/Header/VU-LED jetzt fixiert — s. `PCB_BOM.md` |
+| ~~SRC~~ | ✅ | ~~Sourcing-IDs~~ | **Alle 58 LCSC verifiziert, NO-LCSC-Liste leer** (r18.68). MIDI-220Ω=**C22962**, TPS22918=**C131941** (war fälschlich C68913), Button=**C2845240**, Slide=**C49023766**, Header=C124375/C124383 |
 | ~~ADR-0004~~ | ✅ | ~~MIDI-Design~~ | **RESOLVED r18.67:** MIDI-Out als 3,5-mm-TRS **J10** implementiert (Type A, 3,3 V/CA-033), im Schaltbild verdrahtet (MIDI_TX/PD5 → 2× 220 Ω → Tip/Ring) |
 | Mech | 🟠 | Mechanical Coordinates Update | `../mechanical/coordinates/mechanical_coordinates.md` reflektiert noch Pico-Ära; vor Layout-Start für STM32-LQFP-100 + neue Frontpanel-Komponenten neu fixieren |
 | ~~GATE~~ | ~~🔴~~ | ~~Phase-5-Profiling~~ | **ADR-0005: übersprungen** (2026-06-11). Layout darf vor Profiling starten; Firmware-Migration läuft parallel |

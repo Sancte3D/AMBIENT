@@ -28,7 +28,7 @@ der Hall-only-Soft-Sleep von unten. Der Hall-Gate/STANDBY-Soft-Sleep (PE2/
 `LSW_EN`, firmware-gesteuert) kann **zusätzlich** später als Auto-Sleep-Schicht
 kommen — orthogonal. Für „echtes Aus" reicht jetzt `SW_PWR`.
 
-**Neue Teile (final, gewählt):** `U_PWR` **TPS22918DBVR** SOT-23-6 (C68913) ·
+**Neue Teile (final, gewählt):** `U_PWR` **TPS22918DBVR** SOT-23-6 (C131941) ·
 `SW_PWR` **MST-12D18G3** Right-Angle SMD Slide-Switch (C49023766, FP
 `field_ambience:SW_MST-12D18_SlideSwitch_RA` im Repo) · `R_PWR_PD` 100 k 0603
 (C25803) · `C_PWR_SW` 10 µF 0805 (C15850). Alles in `power_tree_sheet`.
@@ -174,7 +174,7 @@ direkt einzeichnet. Beides funktioniert.
 | Property | Wert | Quelle |
 |---|---|---|
 | MPN | **TPS22918DBVR** | TI 1-A Single-Channel Load Switch |
-| LCSC | **C68913** (verfügbar, Stock typ. 50k+) | LCSC product detail TBD |
+| LCSC | **C131941** (verfügbar, Stock typ. 50k+) | LCSC product detail TBD |
 | Package | SOT-23-6 (DBV) | TI DS — siehe DS0008 |
 | Footprint | `Package_TO_SOT_SMD:SOT-23-6` (KiCad-Standard) | KiCad 9 lib |
 | Symbol | `Power_Switch:TPS22918DBV` (KiCad-9 lib) — **UNVERIFIED**, ggf. generic `Power_Switch:Load_Switch_Generic_6pin` oder eigener Symbol-Eintrag in `field_ambience.kicad_sym` | KiCad-Lib |
@@ -238,7 +238,7 @@ Die drei neuen Hier-Labels (`LSW_EN`, `HALL_VDD`) müssen am Top-Sheet als
 In `BOM_MASTER.md` §3 Power-Tree neue Zeile (DIRECT NACH dem AP7361A-LDO):
 
 ```markdown
-| **U9** TPS22918DBVR SOT-23-6 (Load-Switch +3V3 → HALL_VDD; ADR-0016 sleep-gate) | TI TPS22918DBVR | C68913 (LCSC) | Package_TO_SOT_SMD:SOT-23-6 | KiCad-Standard | Standard-Lib-3D |
+| **U9** TPS22918DBVR SOT-23-6 (Load-Switch +3V3 → HALL_VDD; ADR-0016 sleep-gate) | TI TPS22918DBVR | C131941 (LCSC) | Package_TO_SOT_SMD:SOT-23-6 | KiCad-Standard | Standard-Lib-3D |
 ```
 
 Plus `R_LSW_EN` (100 kΩ 0603) und `C_HALL` (1 µF X7R 0603) als reguläre

@@ -3415,7 +3415,7 @@ def stm32h743_sheet() -> str:
     symbols.append(place_symbol(lib_id="Device:R", ref="R_MIDI_TX",
         value="220R 0603 (MIDI TX series, Type-A Tip)", x=130, y=255.46, rotation=90,
         footprint="Resistor_SMD:R_0603_1608Metric",
-        extra_props={"MPN": "0603WAF2200T5E (220R 0603)", "LCSC": ""},
+        extra_props={"MPN": "0603WAF2200T5E (220R 0603)", "LCSC": "C22962"},
         seed_suffix="R_MIDI_TX", sheet_uuid_seed=sus))
     wires.append(wire(126.19, 255.46, 123, 255.46, seed_suffix="rmiditx-tx"))
     labels.append(label(123, 255.46, "MIDI_TX"))
@@ -3425,7 +3425,7 @@ def stm32h743_sheet() -> str:
     symbols.append(place_symbol(lib_id="Device:R", ref="R_MIDI_REF",
         value="220R 0603 (MIDI ref, Type-A Ring)", x=130, y=258, rotation=90,
         footprint="Resistor_SMD:R_0603_1608Metric",
-        extra_props={"MPN": "0603WAF2200T5E (220R 0603)", "LCSC": ""},
+        extra_props={"MPN": "0603WAF2200T5E (220R 0603)", "LCSC": "C22962"},
         seed_suffix="R_MIDI_REF", sheet_uuid_seed=sus))
     wires.append(wire(126.19, 258, 123, 258, seed_suffix="rmidiref-3v3"))
     symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_R_MIDI_REF", value="+3V3",
@@ -4129,7 +4129,7 @@ def mcp_sheet() -> str:
     # Or: simpler: place SW left of MCP, SW pin2 → MCP-pin, SW pin1 → GND.
     # SW at (sx, sy) — pin1 abs (sx-5.08, sy), pin2 abs (sx+5.08, sy).
     # We want pin2 at x=PIN_L_X - 5 (left of left-stub). For pin2 abs x = 90: sx = 84.92. pin1 abs x = 79.84.
-    # r10: SW6-10 sind plain 4-pin SMD-Tactile (HX 12x12x7.3TPFT-B, C36498966), KEINE integrierte LED.
+    # r18.68: SW6-10 = TC-1212-7.3-260G THT-Tactile (C2845240, eckiger Kopf fuer Caps), KEINE integrierte LED.
     #      Status-LEDs LED6-LED10 sind separate SMD-0603 unter PCA9685-Kontrolle (siehe PCA9685-Block weiter unten).
     mod_pins = [(1, "MOD_SHIFT", 6), (2, "MOD_HOLD", 7), (3, "MOD_DRONE", 8), (4, "MOD_GENERATE", 9), (5, "MOD_CLEAR", 10)]
     for mcp_pin, netname, sw_num in mod_pins:
@@ -4140,17 +4140,17 @@ def mcp_sheet() -> str:
             place_symbol(
                 lib_id="Switch:SW_Push",
                 ref=f"SW{sw_num}",
-                value=f"Modifier {netname.replace('MOD_','')} (12x12x7.3 SMD-Tactile, r10)",
+                value=f"Modifier {netname.replace('MOD_','')} (TC-1212-7.3 THT-Tactile, eckiger Kopf fuer Caps, r18.68)",
                 x=84.92,
                 y=py,
-                footprint="field_ambience:SW_HX_12x12x7.3_SMD-4P",
-                datasheet="https://www.lcsc.com/product-detail/C36498966.html",
+                footprint="field_ambience:SW_TC1212-7.3_THT_4P",
+                datasheet="https://jlcpcb.com/partdetail/C2845240",
                 extra_props={
-                    "MPN": "HX 12x12x7.3TPFT-B",
-                    "Manufacturer": "hanxia",
-                    "LCSC": "C36498966",
-                    "Package": "SMD-4P 11.8x11.8mm, vertical tactile, 7.3mm height, SPST 250gf, 100k cycles, 12V/50mA",
-                    "FP_NOTE": "Custom-Footprint libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod (User-Daten + LCSC C36498966). 4 Pads je 2.5x1.5mm auf 7mm-Pitch (X+Y); SPST: gegenüberliegende Pads sind elektrisch verbunden (1↔1, 2↔2).",
+                    "MPN": "TC-1212-7.3-260G",
+                    "Manufacturer": "HCTL",
+                    "LCSC": "C2845240",
+                    "Package": "THT 4-pin 11.8x11.8mm, square-head plunger 7.3mm (clip-on caps), SPST 2.6N, 100k cycles, 12V/50mA",
+                    "FP_NOTE": "field_ambience:SW_TC1212-7.3_THT_4P (easyeda2kicad C2845240, +STEP). 4 THT-Pads; SPST 2-Terminal: Top-Kante (y=-2.54)=Pin1, Bottom-Kante (y=+2.54)=Pin2 (per User-verifizierter HX-Konvention) — bei GUI-ERC bestaetigen.",
                 },
                 seed_suffix=f"SW{sw_num}",
                 sheet_uuid_seed=sus,
@@ -4787,7 +4787,7 @@ def mcp_sheet() -> str:
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §7 (MCP) + §7.2 (PCA9685)")\n'
         f'    (comment 2 "MCP 0x20 / U6 PCA 0x40 / U10 PCA 0x41 (A0=+3V3) - shared I²C bus")\n'
-        f'    (comment 3 "r10: SW6-SW10 plain HX 12x12x7.3TPFT-B SMD-Tactile (C36498966)")\n'
+        f'    (comment 3 "r18.68: SW6-SW10 = TC-1212-7.3-260G THT-Tactile (C2845240, square head)")\n'
         f'    (comment 4 "r10: 10× LEDs (LED6-LED15); U10 PCA9685 #2 -> 8 VU-Level-LEDs (weiss)"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
