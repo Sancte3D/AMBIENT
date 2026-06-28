@@ -42,11 +42,26 @@ auf GitHub und in jedem Markdown-Editor).
 | D3 | **SS34** Schottky-Diode | [C8678](https://www.lcsc.com/product-detail/C8678.html) | `Diode_SMD:D_SMA` | KiCad-Standard | Standard-Lib-3D |
 | Q1 | **DMG2305UX-7** P-Ch MOSFET | [C150470](https://www.lcsc.com/product-detail/C150470.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 | **U5** LDO | **AP7361C-33Y5-13** SOT-89-5 (Pinout 1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT verifiziert) | [C460397](https://www.lcsc.com/product-detail/C460397.html) | `Package_TO_SOT_SMD:SOT-89-5` | KiCad-Standard | Standard-Lib-3D |
+| **U_PWR** Power-Aus Load-Switch (ADR-0016) | **TPS22918DBVR** SOT-23-6 — gated den LDO-Eingang `+5V_RAIL → +5V_SW` (= gesamte 3V3-Domäne: MCU + Halls + LEDs + LCD). ON kommt von `SW_PWR`. Lader U7 sitzt **davor** → lädt im Aus weiter. „Dunkel, aber lädt." | [C68913](https://www.lcsc.com/product-detail/C68913.html) *(PN/Stock vor Order prüfen)* | `Package_TO_SOT_SMD:SOT-23-6` | KiCad-Standard | Standard-Lib-3D |
+| **SW_PWR** Schiebeschalter = Haupt-Aus | Mini-Slide-Switch **SPST**, Panel-montiert — schaltet **nur** `U_PWR.ON` (signal-level, µA; NICHT im Akku-Hochstrompfad) | **UNVERIFIED — NEEDS HUMAN CHECK** (Panel-Teil: Footprint + LCSC wählen) | UNVERIFIED — NEEDS HUMAN CHECK | — | Vendor-CAD |
+| **R_PWR_PD** 100 kΩ 0603 (`U_PWR.ON` Pull-Down → Default AUS) | 0603WAF1003T5E | [C25803](https://www.lcsc.com/product-detail/C25803.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **C_PWR_SW** 10 µF X5R 0805 (Output-Cap auf `+5V_SW`) | LMK212ABJ106-Klasse | [C15850](https://www.lcsc.com/product-detail/C15850.html) | `Capacitor_SMD:C_0805_2012Metric` | KiCad-Standard | Standard-Lib-3D |
 | **U7** Charger | **MCP73831T-2ACI/OT** SOT-23-5 | [C424093](https://www.lcsc.com/product-detail/C424093.html) | `Package_TO_SOT_SMD:SOT-23-5` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK** Polymer-Tantal 470 µF / 10 V Case-E 7343-43 (ESR 100 mΩ; <25 mΩ-Flachteile bei LCSC nicht lagernd — Transient-ESR liefert C_BULK2) | TPSE477K010R0100 (Kyocera AVX) | [C444831](https://www.lcsc.com/product-detail/C444831.html) | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 existiert nicht → 100µF echter Headroom statt 220µF/6.3V-Derating) | LMK325ABJ107MM-T (Taiyo Yuden) | [C2880380](https://www.lcsc.com/product-detail/C2880380.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J9** JST-PH 2.0 2-Pin (LiPo-Akku — Generator-Refdes, **nicht** J_BAT) | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN.step) |
 | LiPo-Pouch **503759** (50×37×9.4 mm, **2000 mAh ~6.6 h @ 300 mA**) — r18.21 rightsize von 5000mAh-Overkill | Generic LiPo 2000mAh JST-PH 2.0 | [PiHut 2000mAh](https://thepihut.com/products/2000mah-3-7v-lipo-battery) | — (kein PCB-FP, Bottom-Case-Slot) | — | Vendor |
+
+> **Power-Architektur / Rail-Ownership (ADR-0016, Audit #8/#9).** Damit der
+> PCB-Macher die Quellen eindeutig sieht — *eine* Quelle→System-Rail-Stelle:
+> - `VBUS_USB` (USB-C 5 V, via F1 PTC) ──┐
+> - `BAT_PLUS` (LiPo) → Boost **U8** → `+5V_BOOST` ──┤→ Power-Path **Q1** → **`+5V_RAIL`** (System-5 V; speist Amp U4 + U_PWR)
+> - **`+5V_SW`** = `+5V_RAIL` hinter **U_PWR** (geschaltet von `SW_PWR`) → LDO **U5** → **`+3V3`** (MCU, MCP, beide PCA9685, LCD, Halls)
+> - Lader **U7** hängt an `VBUS_USB`/`BAT_PLUS` **vor** U_PWR → lädt unabhängig vom Aus-Zustand.
+>
+> Die Generator-Netze heißen heute teils noch `+5V_OUT`/`+5V_RAIL` gemischt;
+> da der PCB-Macher das Schaltbild ohnehin neu zieht, ist **diese
+> Ownership-Sicht maßgeblich** (Quelle → genau eine System-Rail).
 
 ## 3. Audio-Path
 
