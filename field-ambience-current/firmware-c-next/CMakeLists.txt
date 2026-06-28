@@ -132,8 +132,12 @@ set(V2_SOURCES
     # OP-1-Field-style swappable synth-engine host (FX stay global; the V2
     # ambient stack above remains the FIELD engine, untouched).
     src/v2/synth_host.c
-    src/v2/engines/engine_acid.c        # 303-style resonant acid bass
-    src/v2/engines/engine_fm_glass.c    # DX7-style 2-op FM key/glass
+    src/v2/engines/engine_acid.c            # 303-style resonant acid bass
+    src/v2/engines/engine_fm_glass.c        # DX7-style 2-op FM key/glass
+    src/v2/engines/engine_chorus_mist.c     # Juno detuned-saw pad + chorus
+    src/v2/engines/engine_ion_storm.c       # hoover / PWM stack
+    src/v2/engines/engine_glass_orbit.c     # wavetable-style morph
+    src/v2/engines/engine_bamboo_circuit.c  # west-coast LPG pluck
 )
 
 # ---------------------------------------------------------------------------

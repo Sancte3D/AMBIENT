@@ -112,10 +112,33 @@ restoring FM brightness (centroid 217 → 708 Hz after raising the index/ratio).
 It stays a touch darker than the mastered reference; final tone is a per-encoder
 call.
 
-## Next engines
+## The remaining four engines
 
-Same workflow, one per PR, each measured against its own reference: Chorus Mist
-(detuned saw stack + chorus), Ion Storm (hoover/PWM stack), Glass Orbit
-(wavetable morph), Bamboo Circuit (west-coast LPG pluck). Then a FIELD adapter
-so the V2 ambient engine is selectable in the same host, and the SYNTH/FIELD
-mode UI.
+Same workflow — measure the reference, extract the sequence, render DRY, A/B —
+applied to the other four. Each is a distinct synthesis core, not a preset:
+
+| Engine | Reference says | Synthesis |
+|---|---|---|
+| **CHORUS MIST** | held low pad (C2), warm, slow movement | 5 detuned band-limited saws → SVF LP → 2-tap modulated **chorus** (true stereo) |
+| **ION STORM** | aggressive, wide, fast (hoover) | 2 detuned saws + 2 **PWM** pulses (saw−shifted-saw, LFO width) → LP → tanh drive + attack pitch-blip |
+| **GLASS ORBIT** | digital, highest spectral drift (wavetable morph) | one phase, **morph** crossfade sine→tri→saw→pulse swept by an LFO |
+| **BAMBOO CIRCUIT** | short woody plucks, fast decay | sine + a little FM → **LPG** (one fast-decay envelope drives cutoff AND amp together) |
+
+![Engines 3–6 dry vs reference spectrograms](reference-matching/engines_3to6_dry_vs_reference.png)
+
+Measured A/B (dry vs mastered reference) — all in the right ballpark:
+
+| Engine | centroid mean (ref/mine) | key trait (ref/mine) |
+|---|---|---|
+| Chorus Mist | 1158 / 855 Hz | chorus drift 188 / 208 ✓ |
+| Ion Storm | 1335 / 1427 Hz ✓ | aggressive, PWM motion present |
+| Glass Orbit | 1605 / 1340 Hz | morph drift 236 / 161 (movement present) |
+| Bamboo Circuit | 473 / 435 Hz ✓ | pluck sustain@150ms 0.27 / 0.35 (fast decay) |
+
+Final per-engine tone is a per-encoder/ear call; the cores and characters are
+in place. The host now swaps between all six (`synth_host_select`).
+
+## Next
+
+A FIELD adapter so the V2 ambient engine is selectable in the same host, then
+the SYNTH/FIELD mode UI + the 4-encoder → param mapping.

@@ -18,10 +18,18 @@
 /* Each engine is a const vtable exported from its own .c file. */
 extern const synth_engine_t engine_acid;
 extern const synth_engine_t engine_fm_glass;
+extern const synth_engine_t engine_chorus_mist;
+extern const synth_engine_t engine_ion_storm;
+extern const synth_engine_t engine_glass_orbit;
+extern const synth_engine_t engine_bamboo_circuit;
 
 static const synth_engine_t *const TABLE[SYNTH_COUNT] = {
-    [SYNTH_ACID]     = &engine_acid,
-    [SYNTH_FM_GLASS] = &engine_fm_glass,
+    [SYNTH_ACID]           = &engine_acid,
+    [SYNTH_FM_GLASS]       = &engine_fm_glass,
+    [SYNTH_CHORUS_MIST]    = &engine_chorus_mist,
+    [SYNTH_ION_STORM]      = &engine_ion_storm,
+    [SYNTH_GLASS_ORBIT]    = &engine_glass_orbit,
+    [SYNTH_BAMBOO_CIRCUIT] = &engine_bamboo_circuit,
 };
 
 #define HBLOCK 256

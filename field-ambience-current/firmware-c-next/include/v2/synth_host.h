@@ -17,8 +17,12 @@
  * Ion Storm, Glass Orbit, Bamboo Circuit, and a FIELD wrapper come next.)
  */
 typedef enum {
-    SYNTH_ACID = 0,     /* 303-style resonant acid bass */
-    SYNTH_FM_GLASS,     /* DX7-style 2-op FM key/glass tone */
+    SYNTH_ACID = 0,         /* 303-style resonant acid bass */
+    SYNTH_FM_GLASS,         /* DX7-style 2-op FM key/glass tone */
+    SYNTH_CHORUS_MIST,      /* Juno-style detuned saw pad + chorus */
+    SYNTH_ION_STORM,        /* Alpha-Juno / hoover-style PWM stack */
+    SYNTH_GLASS_ORBIT,      /* wavetable-style morphing tone */
+    SYNTH_BAMBOO_CIRCUIT,   /* Buchla / west-coast LPG pluck */
     SYNTH_COUNT
 } synth_id_t;
 

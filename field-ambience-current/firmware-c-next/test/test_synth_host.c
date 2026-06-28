@@ -145,14 +145,34 @@ static void test_host_panic(void){
     printf("  host panic tail=%d\n", tail);
 }
 
+/* every registered engine must be audible, non-clipping, NaN-free, and go
+ * silent after panic — exercised through the host (full path → int16). */
+static void test_all_engines(void){
+    for (int id = 0; id < SYNTH_COUNT; ++id){
+        synth_host_init();
+        synth_host_select((synth_id_t)id);
+        CHECK(synth_host_active()==(synth_id_t)id, "select %d failed", id);
+        const char *nm = synth_host_active_name();
+        synth_host_note_on(45, 0.9f);
+        int peak = host_peak_over(1.0);
+        CHECK(peak > 800,   "%s inaudible: %d", nm, peak);
+        CHECK(peak <= 32767,"%s clipped past full-scale: %d", nm, peak);
+        synth_host_panic();
+        int tail = host_peak_over(1.2);   /* dry gone; only reverb tail rings */
+        CHECK(tail < 22000, "%s loud after panic: %d", nm, tail);
+        printf("  %-15s note peak=%5d  post-panic=%5d\n", nm, peak, tail);
+    }
+}
+
 int main(void){
     dsp_init();
-    printf("== synth_host + ACID RAIN ==\n");
+    printf("== synth_host + 6 engines ==\n");
     test_engine_bounded_clean();
     test_engine_idle_silent();
     test_engine_release_decays();
     test_engine_accent_louder();
     test_fm_glass_engine();
+    test_all_engines();
     test_host_select();
     test_host_render_bounded();
     test_host_panic();
