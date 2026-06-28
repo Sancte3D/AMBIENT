@@ -44,6 +44,12 @@ Schritt.
 3. **PCB-Außenmaße + Mechanik-Koordinaten** — hängt am Gehäuse-CAD.
 4. **Gerber + CPL** Export → JLCPCB.
 
+> ⚠️ **Beim (Neu-)Aufbau des Schaltbilds 2 Dinge nicht vergessen** — sie stehen
+> in BOM + ADR, sind aber **noch nicht im Generator** (`PCB_LAYOUT_STATUS.md`
+> SCH-1/SCH-2): **(a)** Power-Aus `U_PWR`/`SW_PWR` (ADR-0016, BOM §2); **(b)** für
+> die Modifier-Buttons einen **THT**-12×12-Footprint (Teil C2845240 ist THT, der
+> Generator-FP ist noch SMD). MIDI (J10) ist schon im Schaltbild.
+
 Schritt-für-Schritt-Anleitung fürs Layout: [`KICAD_BLUEPRINT.md`](../hardware/KICAD_BLUEPRINT.md).
 
 ## Generator-Workflow
