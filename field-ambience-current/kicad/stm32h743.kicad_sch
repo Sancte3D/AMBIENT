@@ -3391,7 +3391,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF2200T5E (220R 0603)" (at 132.54 259.27 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "" (at 132.54 260.54 0)
+      (property "LCSC" "C22962" (at 132.54 260.54 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -3409,7 +3409,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "0603WAF2200T5E (220R 0603)" (at 132.54 261.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "" (at 132.54 263.08 0)
+      (property "LCSC" "C22962" (at 132.54 263.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

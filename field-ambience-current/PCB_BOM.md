@@ -95,7 +95,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | D1 | USBLC6-2SC6 USB ESD | — | SOT-23-6 | C2687116 |
 | J9 | JST-PH 2-pin battery connector | — | JST-PH | C295747 |
 | J10 | PJ-320D 3.5 mm TRS MIDI-out | — | custom FP | C431535 |
-| R_MIDI_TX, R_MIDI_REF | MIDI Type-A series | 220 Ω | 0603 | ⚠ **see flag #3** |
+| R_MIDI_TX, R_MIDI_REF | MIDI Type-A series | 220 Ω | 0603 | C22962 |
 | J3 | 1×8 2.54 mm header (LCD module plugs in — module is §C) | — | PinHeader 1×08 | C124383 (2.54 strip, cut to 1×8) — or a 1×8 female socket for a removable module |
 | J6, J7 | 1×2 2.54 mm header (speaker wires — drivers are §C) | — | PinHeader 1×02 | C124375 |
 | J4 | TC2030-IDC Tag-Connect — **footprint/pads only, no part placed** | — | TC2030 | — (no BOM line) |
@@ -114,15 +114,20 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 
 ---
 
-## B · On-PCB but **needs sourcing / not yet in generator** (flags)
+## B · Power-off block — decided, drawn at schematic build (drop-in spec in ADR-0016)
 
-| Ref | Part | Status |
+> The only parts not yet in the generated schematic. Everything else in §A is in
+> the generator + `jlc_bom.csv` (all LCSC verified — **no NO-LCSC parts left**).
+
+| Ref | Part | LCSC |
 |---|---|---|
-| R_MIDI_TX, R_MIDI_REF | 220 Ω 0603 | ⚠ **NO LCSC** (the only remaining one) — `0603WAF2200T5E`, confirm PN |
-| **SW_PWR** | **MST-12D18G3** right-angle SMD slide switch (SPDT, **side-actuated** → operated from the enclosure edge); drives `U_PWR.ON` only | ✅ **C49023766** · FP `field_ambience:SW_MST-12D18_SlideSwitch_RA` (+STEP) in repo |
-| **U_PWR** | TPS22918 load-switch (ADR-0016; gates +5V_RAIL→+5V_SW = whole 3V3 domain) | C68913 · SOT-23-6 (KiCad-standard FP). **Pin-level drop-in spec in ADR-0016** — add at schematic rebuild |
-| R_PWR_PD / C_PWR_SW | 100 k / 10 µF | with U_PWR (C25803 / C15850) |
-| **SW6–SW10 footprint** | TC-1212-7.3-260G is **THT** (C2845240) | **Verified THT footprint `field_ambience:SW_TC1212-7.3_THT_4P` (+STEP) is now in the repo.** Use it (4-pin), **not** the old SMD `SW_HX_…_SMD-4P` |
+| **U_PWR** | TPS22918 load-switch — gates `+5V_RAIL→+5V_SW` (= whole 3V3 domain) | **C131941** · SOT-23-6 |
+| **SW_PWR** | MST-12D18G3 right-angle slide switch (side-actuated, drives `U_PWR.ON`) · FP `field_ambience:SW_MST-12D18_SlideSwitch_RA` (+STEP) in repo | **C49023766** |
+| R_PWR_PD | 100 k 0603 (`U_PWR.ON` pull-down, default off) | C25803 |
+| C_PWR_SW | 10 µF 0805 (`+5V_SW` output cap) | C15850 |
+
+Pin-level wiring (VIN/VOUT/ON + the single LDO-input reroute) = **`ADR-0016`**.
+~10 min to draw + ERC.
 
 ---
 
@@ -149,9 +154,10 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
    hold). THT 12×12, 4-pin; footprint swap (SMD→THT) noted in §B.
 2. **All 4 encoders are identical** — `EN1–EN4 = ALPS EC11E18244AU` (rotary +
    push). ✅ confirmed against the schematic.
-3. **No-LCSC parts:** only the **2× 220 Ω MIDI** resistors remain — confirm
-   `0603WAF2200T5E` before a JLC order. (VU LEDs are now white/C965808, slide
-   switch = C49023766, headers sourced — all resolved.)
+3. **No-LCSC parts: NONE** — every part in the generated schematic has a
+   verified LCSC (58 unique). The MIDI 220 Ω are **C22962** (UNI-ROYAL
+   0603WAF2200T5E, JLC Basic). The off-board power-off block (§B) is the only
+   thing still to draw into the schematic.
 
 ## Return-current / layout notes (for the layout engineer — keep short)
 - One **solid GND plane** (4-layer); do **not** split analog/digital — steer
