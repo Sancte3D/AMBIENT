@@ -28,9 +28,35 @@ der Hall-only-Soft-Sleep von unten. Der Hall-Gate/STANDBY-Soft-Sleep (PE2/
 `LSW_EN`, firmware-gesteuert) kann **zusätzlich** später als Auto-Sleep-Schicht
 kommen — orthogonal. Für „echtes Aus" reicht jetzt `SW_PWR`.
 
-**Neue Teile:** `U_PWR` (Load-Switch, SOT-23-6), `SW_PWR` (Mini-Schiebeschalter
-SPST — Footprint/LCSC **NEEDS-VERIFY**, Panel-Teil), `R_PWR_PD` (100 k 0603),
-`C_PWR_SW` (10 µF Output-Cap). Alles in `power_tree_sheet`.
+**Neue Teile (final, gewählt):** `U_PWR` **TPS22918DBVR** SOT-23-6 (C68913) ·
+`SW_PWR` **MST-12D18G3** Right-Angle SMD Slide-Switch (C49023766, FP
+`field_ambience:SW_MST-12D18_SlideSwitch_RA` im Repo) · `R_PWR_PD` 100 k 0603
+(C25803) · `C_PWR_SW` 10 µF 0805 (C15850). Alles in `power_tree_sheet`.
+
+### Drop-in-Spec (Pin-Ebene — beim Schaltbild-Aufbau in ~10 min einzeichnen)
+
+**`U_PWR` = TPS22918DBVR (SOT-23-6), Pinout DS-verifiziert:**
+
+| Pin | Name | Verbindung |
+|---|---|---|
+| 1 | VIN | **`+5V_RAIL`** (der Knoten, der heute U5/LDO-VIN speist) |
+| 2 | GND | GND |
+| 3 | ON | **`PWR_ON`-Knoten** (von `SW_PWR` + `R_PWR_PD`, s.u.) |
+| 4 | NC | no-connect |
+| 5 | QOD | no-connect (interne Quick-Discharge) |
+| 6 | VOUT | **`+5V_SW`** |
+
+**Reroute:** `U5` (LDO) **VIN** von `+5V_RAIL` → **`+5V_SW`** umhängen. Das ist
+die *einzige* Änderung an einem bestehenden Netz.
+
+**`SW_PWR` (MST-12D18G3, SPDT als SPST genutzt):** Common-Pol → `PWR_ON`;
+ein Throw → `+5V_RAIL` (zweiter Throw = NC). **`R_PWR_PD`** 100 k von `PWR_ON`
+→ GND (Default AUS beim Einschalten). **`C_PWR_SW`** 10 µF von `+5V_SW` → GND.
+
+**Verhalten:** Schalter AN → `PWR_ON`=+5V_RAIL → U_PWR leitet
+`+5V_RAIL→+5V_SW→LDO→+3V3` (gesamte Logik an). Schalter AUS → `PWR_ON` low →
+`+5V_SW` tot → 3V3-Domäne dunkel. **Lader U7 hängt vor U_PWR (an VBUS/Akku) →
+lädt im Aus weiter.** Verbrauch im Aus = nur U_PWR/Boost-Quiescent.
 
 > Der untenstehende Variante-C-Text bleibt als History/Option für den späteren
 > Firmware-Auto-Sleep stehen.

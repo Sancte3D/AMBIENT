@@ -28,8 +28,8 @@
 | # | Sev | Was | Was genau zu tun |
 |---|---|---|---|
 | B3 | 🟠 | KiCad-GUI-ERC | Einmal in KiCad 9 öffnen, ERC laufen lassen (kicad-cli aktuell nicht in der Umgebung verfügbar). Erwartete Warnungen / verbotene Warnungen siehe ERC_DRC_CHECKLIST.md |
-| **SCH-1** | 🔴 | **Power-Aus NICHT im Schaltbild** | `U_PWR` (TPS22918, C68913) + `SW_PWR` (Slide-Switch, C49023766) + `R_PWR_PD` + `C_PWR_SW` sind in **BOM §2 + ADR-0016** spezifiziert, aber **noch nicht im Generator**. Beim Schaltbild-(Neu-)Aufbau einbauen (Topologie: ADR-0016). Sonst kein Aus → Akku leert sich beim Lagern |
-| **SCH-2** | 🔴 | **Modifier-Button-Footprint SMD→THT** | Finales Teil = **TC-1212-7.3-260G (C2845240) = THT**; Generator-FP ist noch `SW_HX_…_SMD-4P` (SMD). Beim Aufbau **THT-12×12-4-Pin-Footprint** nehmen, **nicht** den SMD (sonst Bestückung kaputt) |
+| **SCH-1** | 🟠 | **Power-Aus beim Aufbau einzeichnen** | `U_PWR`+`SW_PWR`+`R_PWR_PD`+`C_PWR_SW`. **Pin-Ebene-Drop-in-Spec in ADR-0016** (VIN/VOUT/ON/Reroute komplett) + `SW_PWR`-Footprint `field_ambience:SW_MST-12D18_SlideSwitch_RA` im Repo. ~10 min einzeichnen + ERC. (Noch nicht im alten Generator.) |
+| **SCH-2** | 🟠 | **Modifier-Button THT-Footprint zuordnen** | Teil = **TC-1212-7.3-260G (C2845240) = THT**. **Verifizierter THT-Footprint `field_ambience:SW_TC1212-7.3_THT_4P` (+ STEP) liegt jetzt im Repo** (easyeda2kicad). Beim Aufbau Symbol↔FP (4-Pin) zuordnen, **nicht** den alten SMD-FP nehmen |
 | ~~B-FP~~ | ✅ | ~~Footprint-Land-Pattern-Verifikation~~ | **r18.14: 0 offene Punkte** (EC11J-Blocker via Teil-Retire ADR-0012 gelöst, TS-1088-FP EasyEDA-verifiziert) — Details FP_VERIFY_LOG.md |
 | SRC | 🟡 | Komponenten-Sourcing-IDs | Fast alle Teile haben verifizierte LCSC. **Offen: nur 2× MIDI-220Ω** (`0603WAF2200T5E` PN bestätigen). Button/Slide-Switch/Header/VU-LED jetzt fixiert — s. `PCB_BOM.md` |
 | ~~ADR-0004~~ | ✅ | ~~MIDI-Design~~ | **RESOLVED r18.67:** MIDI-Out als 3,5-mm-TRS **J10** implementiert (Type A, 3,3 V/CA-033), im Schaltbild verdrahtet (MIDI_TX/PD5 → 2× 220 Ω → Tip/Ring) |

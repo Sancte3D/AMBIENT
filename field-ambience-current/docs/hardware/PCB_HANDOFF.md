@@ -80,13 +80,26 @@ These must be cleared first:
    window / encoder centers / cell grid / speaker openings must be fixed.
 4. **DRC pass** + Gerber/CPL export.
 
+### At schematic (re)build — 2 drop-ins (everything else is in the generated sheets)
+The generated `.kicad_sch` are the reference; the **production BOM is
+[`../../PCB_BOM.md`](../../PCB_BOM.md)** and the pin map is `PINMAP.md`. Two
+final decisions are in BOM/ADR but not yet in the old generated schematic — add
+them when you build the board:
+1. **Power-off block** `U_PWR`+`SW_PWR`+`R_PWR_PD`+`C_PWR_SW` — **pin-level
+   drop-in spec in `ADR-0016`** (VIN/VOUT/ON + the one LDO-input reroute). The
+   `SW_PWR` footprint (`field_ambience:SW_MST-12D18_SlideSwitch_RA`, +STEP) is in
+   the repo. ~10 min.
+2. **Modifier buttons** = THT part C2845240 → use the **verified THT footprint
+   `field_ambience:SW_TC1212-7.3_THT_4P`** (+STEP, in repo), not the old SMD one.
+
 ### Cheaper open items (not full blockers, but fix before order)
 - **Speaker connection** is bare 2-pin headers (J6/J7) + manual wire — decide if
   a JST connector + strain relief is wanted for robustness.
 - **Display** frozen at **1.9″** for this rev (verified). 2.0″ is a future Rev-B
   pending physical module verification (SKU/pin-order/dims) — `ADR-0015`.
-- **Sleep load-switch (U9, ADR-0016)** — not included; optional battery-life
-  upgrade (3 parts, 1 pin). Say the word to add it.
+- **Power-off** is decided (`U_PWR` load-switch + side `SW_PWR` slide switch,
+  `ADR-0016`) — "dark but still charges". It's a schematic-build drop-in (above),
+  not optional anymore.
 - **Datasheet hygiene** — the *parts* are correct; two repo PDFs are wrong
   variants (see `kicad/datasheets/`), fetch the right TPS61089RNR + ALPS EC11J
   datasheets before sign-off.
@@ -97,10 +110,11 @@ These must be cleared first:
 ---
 
 ## 5. Quick facts
+- **Production BOM (on-PCB only):** [`../../PCB_BOM.md`](../../PCB_BOM.md). Machine: `kicad/jlc_bom.csv`.
 - **MCU:** STM32H743VIT6, LQFP-100. ~30 GPIOs used, ~50 free (`PINMAP.md`).
-- **Power:** USB-C 5V ‖ LiPo→boost → +5V_RAIL → LDO → +3V3. Charger MCP73831.
-- **Audio:** I²S → PCM5102A DAC → PAM8403 Class-D (speakers) + PJ-320D line-out.
-- **LEDs:** 15 discrete mono via PCA9685 (Shift=gelb, Hold=grün, G/D/C=weiß; 2
-  per cell gelb+grün). No RGB.
+- **Power:** USB-C 5V ‖ LiPo→boost → +5V_RAIL → **U_PWR (power-off)** → +5V_SW → LDO → +3V3. Charger MCP73831 (charges while off).
+- **Audio:** I²S → PCM5102A DAC → PAM8403 Class-D (2 speakers) + PJ-320D line-out (J8). **MIDI-out = 3.5 mm TRS J10** (Type A, 3.3 V).
+- **LEDs:** 15 mono status via PCA9685 #1 (Shift=gelb, Hold=grün, G/D/C=weiß; 2/cell gelb+grün) + **8 white VU meter** via PCA9685 #2 (firmware-driven). No RGB.
+- **Controls:** 4× identical push-encoders (EC11E18244AU) · 5 magnetic cells (DRV5056 Hall) · 5 modifier buttons (TC-1212 THT, square-head for caps).
 - **Layer stack:** 4-layer, 1.6 mm, JLCPCB default (`ADR-0018`).
-- **JLC BOM:** 57 LCSC parts, all sourced (`jlc_bom.csv`).
+- **JLC BOM:** 57 verified LCSC parts; only **2× 220 Ω MIDI resistors** still need an LCSC PN.

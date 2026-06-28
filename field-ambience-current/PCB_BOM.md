@@ -119,10 +119,10 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | Ref | Part | Status |
 |---|---|---|
 | R_MIDI_TX, R_MIDI_REF | 220 Ω 0603 | ⚠ **NO LCSC** (the only remaining one) — `0603WAF2200T5E`, confirm PN |
-| **SW_PWR** | **MST-12D18G3** right-angle SMD slide switch (SPDT, **side-actuated** → operated from the enclosure edge); drives `U_PWR.ON` only | ✅ **C49023766** (JLC Extended) |
-| **U_PWR** | TPS22918 load-switch (ADR-0016; gates +5V_RAIL→+5V_SW = whole 3V3 domain) | C68913 (verify PN/stock) · SOT-23-6 · **not yet in the generator** — add at schematic rebuild |
+| **SW_PWR** | **MST-12D18G3** right-angle SMD slide switch (SPDT, **side-actuated** → operated from the enclosure edge); drives `U_PWR.ON` only | ✅ **C49023766** · FP `field_ambience:SW_MST-12D18_SlideSwitch_RA` (+STEP) in repo |
+| **U_PWR** | TPS22918 load-switch (ADR-0016; gates +5V_RAIL→+5V_SW = whole 3V3 domain) | C68913 · SOT-23-6 (KiCad-standard FP). **Pin-level drop-in spec in ADR-0016** — add at schematic rebuild |
 | R_PWR_PD / C_PWR_SW | 100 k / 10 µF | with U_PWR (C25803 / C15850) |
-| **SW6–SW10 footprint** | TC-1212-7.3-260G is **THT** (C2845240) | the current generator footprint is SMD (`SW_HX_…_SMD-4P`) → **use a THT 12×12 4-pin footprint; do NOT place the SMD version** (assembly would fail) |
+| **SW6–SW10 footprint** | TC-1212-7.3-260G is **THT** (C2845240) | **Verified THT footprint `field_ambience:SW_TC1212-7.3_THT_4P` (+STEP) is now in the repo.** Use it (4-pin), **not** the old SMD `SW_HX_…_SMD-4P` |
 
 ---
 
