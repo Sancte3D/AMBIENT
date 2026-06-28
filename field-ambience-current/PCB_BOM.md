@@ -66,7 +66,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | LED8, LED9, LED10 | Drone/Generate/Clear | white 0603 | 0603 | C965808 |
 | LED11Y–LED15Y (5) | cell base-hold | yellow 0603 | 0603 | C2287 |
 | LED11G–LED15G (5) | cell shift-hold | green 0603 | 0603 | C12624 |
-| LED_VU7, LED_VU8 | VU peak | white 0603 | 0603 | C965808 |
+| LED_VU1–LED_VU8 (8) | VU level meter — **all white** (was blue; uses the existing white) | white 0603 | 0603 | C965808 |
 | LED_HB | heartbeat | white 0603 | 0603 | C965808 |
 | LED_CHRG | charge status | amber 0603 | 0603 | C72041 |
 | R_LED6–15 (15), R_VU1–8 (8) | LED ballast | 390 Ω | 0603 | C23151 |
@@ -85,7 +85,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | Ref | Part | Value | Package | LCSC |
 |---|---|---|---|---|
 | **EN1–EN4 (4)** | **ALPS EC11E18244AU — ALL 4 IDENTICAL** (rotary + push, 36 detents) | — | EC11E vertical | C202365 |
-| **SW6–SW10 (5)** | HX 12×12×7.3 tactile (Shift/Hold/Drone/Generate/Clear) ⚠ **see flag #1** | — | custom FP | C36498966 |
+| **SW6–SW10 (5)** | HCTL TC-1212-7.3-260G tactile (Shift/Hold/Drone/Generate/Clear) — **square-head plunger w/ hole → clip-on caps** ✅ | — | THT 12×12, 4-pin | C2845240 |
 | SW_BOOT, SW11 (2) | TS-1088 service tactile (BOOT0 / reset) | — | custom FP | C720477 |
 
 ### Connectors + protection (on PCB)
@@ -96,8 +96,8 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | J9 | JST-PH 2-pin battery connector | — | JST-PH | C295747 |
 | J10 | PJ-320D 3.5 mm TRS MIDI-out | — | custom FP | C431535 |
 | R_MIDI_TX, R_MIDI_REF | MIDI Type-A series | 220 Ω | 0603 | ⚠ **see flag #3** |
-| J3 | 1×8 2.54 mm header (LCD module plugs in — module is §C) | — | PinHeader 1×08 | **header, source generic** |
-| J6, J7 | 1×2 2.54 mm header (speaker wires — drivers are §C) | — | PinHeader 1×02 | **header, source generic** |
+| J3 | 1×8 2.54 mm header (LCD module plugs in — module is §C) | — | PinHeader 1×08 | C124383 (2.54 strip, cut to 1×8) — or a 1×8 female socket for a removable module |
+| J6, J7 | 1×2 2.54 mm header (speaker wires — drivers are §C) | — | PinHeader 1×02 | C124375 |
 | J4 | TC2030-IDC Tag-Connect — **footprint/pads only, no part placed** | — | TC2030 | — (no BOM line) |
 
 ### Generic decoupling/bypass passives (grouped by value)
@@ -118,12 +118,11 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 
 | Ref | Part | Status |
 |---|---|---|
-| LED_VU1–LED_VU6 (6) | blue 0603 (VU level) | ⚠ **NO LCSC** — pick a verified blue 0603 (e.g. KENTO KT-0603B) |
-| R_MIDI_TX, R_MIDI_REF | 220 Ω 0603 | ⚠ **NO LCSC** — `0603WAF2200T5E`, confirm PN |
-| **SW_PWR** | SPST slide switch = main power (drives U_PWR.ON only, signal-level) | ⚠ pick part — panel-mount, footprint + LCSC TBD |
-| **U_PWR** | TPS22918 load-switch (ADR-0016, gates +5V_RAIL→+5V_SW = whole 3V3 domain) | ⚠ in BOM/ADR, **not yet in the generator** — add when schematic is rebuilt. C68913 (verify PN/stock) · SOT-23-6 |
+| R_MIDI_TX, R_MIDI_REF | 220 Ω 0603 | ⚠ **NO LCSC** (the only remaining one) — `0603WAF2200T5E`, confirm PN |
+| **SW_PWR** | **MST-12D18G3** right-angle SMD slide switch (SPDT, **side-actuated** → operated from the enclosure edge); drives `U_PWR.ON` only | ✅ **C49023766** (JLC Extended) |
+| **U_PWR** | TPS22918 load-switch (ADR-0016; gates +5V_RAIL→+5V_SW = whole 3V3 domain) | C68913 (verify PN/stock) · SOT-23-6 · **not yet in the generator** — add at schematic rebuild |
 | R_PWR_PD / C_PWR_SW | 100 k / 10 µF | with U_PWR (C25803 / C15850) |
-| J3 / J6 / J7 headers | 1×8 / 1×2 2.54 mm | pick a generic in-stock header PN |
+| **SW6–SW10 footprint** | TC-1212-7.3-260G is **THT** (C2845240) | the current generator footprint is SMD (`SW_HX_…_SMD-4P`) → PCB maker uses a **THT 12×12 4-pin** footprint |
 
 ---
 
@@ -137,21 +136,22 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | Gateron LP Magnetic Jade switch | 5 | — (plate, over Hall sensors) | not on PCB |
 | Encoder knobs | 4 | EN1–4 shafts | 3D-print |
 | Cell caps | 5 | over magnetic switches | 3D-print |
-| Modifier button caps | 5 | over SW6–10 | 3D-print, clip onto stem — **flag #1** |
+| Modifier button caps | 5 | over SW6–10 | 3D-print, clip onto the square head of C2845240 |
 | Speaker dust mesh, enclosure, screws/standoffs | — | — | mechanical |
 
 ---
 
 ## Correctness flags (rules to confirm before order)
 
-1. **Modifier buttons need a SQUARE actuator/stem** so the printed caps clip on
-   and can't rotate. The current `SW6–SW10` part (HX 12×12×7.3 / C36498966) is
-   only documented as a "vertical actuator" — **VERIFY the stem is square**, or
-   choose a 12×12 tactile with a square post. (Caps are §C.) `UNVERIFIED`.
+1. **Modifier button cap fit — RESOLVED.** `SW6–SW10 = HCTL TC-1212-7.3-260G`
+   (C2845240): **square-head plunger with a centre hole** → the printed caps
+   clip on. No anti-rotation needed (user clarified — only needs the cap to
+   hold). THT 12×12, 4-pin; footprint swap (SMD→THT) noted in §B.
 2. **All 4 encoders are identical** — `EN1–EN4 = ALPS EC11E18244AU` (rotary +
    push). ✅ confirmed against the schematic.
-3. **No-LCSC parts** (6× blue VU LED, 2× 220 Ω MIDI, slide switch) must get a
-   verified PN before a JLC order — they're listed in §B (not invented here).
+3. **No-LCSC parts:** only the **2× 220 Ω MIDI** resistors remain — confirm
+   `0603WAF2200T5E` before a JLC order. (VU LEDs are now white/C965808, slide
+   switch = C49023766, headers sourced — all resolved.)
 
 ## Return-current / layout notes (for the layout engineer — keep short)
 - One **solid GND plane** (4-layer); do **not** split analog/digital — steer

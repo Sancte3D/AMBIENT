@@ -48,7 +48,7 @@ auf GitHub und in jedem Markdown-Editor).
 | Q1 | **DMG2305UX-7** P-Ch MOSFET | [C150470](https://www.lcsc.com/product-detail/C150470.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 | **U5** LDO | **AP7361C-33Y5-13** SOT-89-5 (Pinout 1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT verifiziert) | [C460397](https://www.lcsc.com/product-detail/C460397.html) | `Package_TO_SOT_SMD:SOT-89-5` | KiCad-Standard | Standard-Lib-3D |
 | **U_PWR** Power-Aus Load-Switch (ADR-0016) | **TPS22918DBVR** SOT-23-6 — gated den LDO-Eingang `+5V_RAIL → +5V_SW` (= gesamte 3V3-Domäne: MCU + Halls + LEDs + LCD). ON kommt von `SW_PWR`. Lader U7 sitzt **davor** → lädt im Aus weiter. „Dunkel, aber lädt." | [C68913](https://www.lcsc.com/product-detail/C68913.html) *(PN/Stock vor Order prüfen)* | `Package_TO_SOT_SMD:SOT-23-6` | KiCad-Standard | Standard-Lib-3D |
-| **SW_PWR** Schiebeschalter = Haupt-Aus | Mini-Slide-Switch **SPST**, Panel-montiert — schaltet **nur** `U_PWR.ON` (signal-level, µA; NICHT im Akku-Hochstrompfad) | **UNVERIFIED — NEEDS HUMAN CHECK** (Panel-Teil: Footprint + LCSC wählen) | UNVERIFIED — NEEDS HUMAN CHECK | — | Vendor-CAD |
+| **SW_PWR** Schiebeschalter = Haupt-Aus | **MST-12D18G3** — Right-Angle SMD Slide-Switch (SPDT, **seitlich bedienbar** vom Gehäuse-Rand; ~3,5×6,5×9,1 mm). Schaltet **nur** `U_PWR.ON` (signal-level, µA) | [C49023766](https://jlcpcb.com/partdetail/C49023766) (JLC Extended) | Right-Angle SMD Slide-Switch | KiCad/Vendor | Vendor-CAD |
 | **R_PWR_PD** 100 kΩ 0603 (`U_PWR.ON` Pull-Down → Default AUS) | 0603WAF1003T5E | [C25803](https://www.lcsc.com/product-detail/C25803.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **C_PWR_SW** 10 µF X5R 0805 (Output-Cap auf `+5V_SW`) | LMK212ABJ106-Klasse | [C15850](https://www.lcsc.com/product-detail/C15850.html) | `Capacitor_SMD:C_0805_2012Metric` | KiCad-Standard | Standard-Lib-3D |
 | **U7** Charger | **MCP73831T-2ACI/OT** SOT-23-5 | [C424093](https://www.lcsc.com/product-detail/C424093.html) | `Package_TO_SOT_SMD:SOT-23-5` | KiCad-Standard | Standard-Lib-3D |
@@ -83,7 +83,7 @@ auf GitHub und in jedem Markdown-Editor).
 
 | Ref | MPN | Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **J6 / J7** 2-Pin-Lötpads | — (zwei einzelne Pads pro Speaker, manuelles Anlöten der Treiber-Litzen) | — | `Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical` (Platzhalter) | KiCad-Standard | — |
+| **J6 / J7** 1×2 2,54 mm Header (Speaker-Litzen) | B-2100S02P-A110 (1×2 2,54 mm Male) | [C124375](https://www.lcsc.com/product-detail/C124375.html) | `Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical` | KiCad-Standard | Standard-Lib-3D |
 | **SPK-L / SPK-R** Treiber **primär** | **Same Sky CMS-402811-28SP** (Cloth-Cone, 40 × 28.3 × 11.5 mm, 8 Ω, 2 W, F0 = 450 Hz, NdFeB, Löt-Eyelets) | [DigiKey 102-CMS-402811-28SP-ND](https://www.digikey.com/en/products/detail/cui-devices/CMS-402811-28SP/10821307) · [Vendor-Page](https://www.sameskydevices.com/product/audio/speakers/miniature-(10-mm~40-mm)/cms-402811-28sp) | — (kein PCB-Mount, hängt von Top-Panel) | — | [Vendor-CAD](https://www.sameskydevices.com/product/resource/cms-402811-28sp.pdf) |
 | **SPK** Treiber **sekundär** (Backup) | **PUI AS04008PS-4W-WR-R** (Treated-Paper, gleicher Footprint, F0 = 380 Hz) | [DigiKey](https://www.digikey.com/en/products/detail/pui-audio-inc/AS04008PS-4W-WR-R/1464855) | — | — | [Vendor-CAD](https://puiaudio.com/file/specs-AS04008PS-4W-WR-R.pdf) |
 
@@ -106,7 +106,7 @@ auf GitHub und in jedem Markdown-Editor).
 
 | Ref | MPN | Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **J3** 1×8 Receptacle 2.54 mm | (Generic) | (DigiKey/RS) | `Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical` | KiCad-Standard | Standard-Lib-3D |
+| **J3** 1×8 Header 2,54 mm (LCD-Modul) | 2,54-mm-Strip auf 1×8 abgelängt (B-2100S40P o. ä.) — oder 1×8 Female-Socket für steckbares Modul | [C124383](https://www.lcsc.com/product-detail/C124383.html) | `Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical` | KiCad-Standard | Standard-Lib-3D |
 | **LCD-Modul** **Waveshare 1.9in 170×320 ST7789V2** IPS-Modul (r18.22-Pivot von bare-AliExpress: gleiches Panel wie Adafruit + branded QC + Level-Shifter + dokumentiert; ~$11–13 statt Adafruit $15 / bare-AliExpress-DOA-Lotterie. **Pin-ORDER des Moduls gegen J3-Belegung verifizieren** — variiert je Vendor) | Waveshare 1.9inch LCD Module 170x320 SPI | [PiHut £11.60](https://thepihut.com/products/1-9-ips-lcd-display-module-170x320-spi) · [Waveshare](https://www.waveshare.com/1.9inch-lcd-module.htm) · [Amazon](https://www.amazon.com/Waveshare-1-9inch-Display-Resolution-Interface/dp/B0BRXXSZC5) | Modul (steckt in J3) | — | Vendor-CAD |
 | **LCD-Modul — PROPOSED r18.43 / ADR-0015** **Waveshare 2.0in 240×320 ST7789** IPS-Modul. Pivot 1.9″ → 2.0″ für mehr Fläche + Animations-Headroom + native RGB565-Farbe. Gleiche ST7789-Controller-Familie, gleiches 8-Pin-SPI-Interface, gleicher Backlight-Pfad (Q2/PCA9685-Kanal 12). **UNVERIFIED — NEEDS HUMAN CHECK:** (a) Beschaffungspfad/SKU (LCSC-PN existiert evtl. nicht; Beschaffung via Waveshare/PiHut/Amazon wie 1.9″), (b) 8-Pin-Header-Reihenfolge gegen geliefertes Modul, (c) Außenmaße + Active-Area-Position gegen Bezel-Fenster. Bezel-Ausschnitt + Generator-Sheet erst ändern wenn (a)–(c) bestätigt. | Waveshare 2inch LCD Module 240×320 SPI | [Waveshare](https://www.waveshare.com/2inch-lcd-module.htm) | Modul (steckt in J3, ggf. Pin-Order-Anpassung) | — | Vendor-CAD |
 | Q2 Backlight-Driver | **2N7002,215** SOT-23 | [C8545](https://www.lcsc.com/product-detail/C8545.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
@@ -138,7 +138,7 @@ auf GitHub und in jedem Markdown-Editor).
 
 | Ref | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) — ⚠️ **Schaft muss ECKIG sein** (Clip-Caps dürfen sich nicht drehen); aktuelles Teil als „vertical actuator" dokumentiert → **Stem-Form VERIFY** oder 12×12-Tactile mit eckigem Post wählen | **HX 12×12×7.3 TPFT-B** | [C36498966](https://www.lcsc.com/product-detail/C36498966.html) | [`field_ambience:SW_HX_12x12x7.3_SMD-4P`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_HX_12x12x7.3_SMD-4P.kicad_mod) (Custom) | field_ambience | **Kein 3D** (EasyEDA hat keins, re-check 2026-06-27) — Envelope 11,8×11,8×7,3 mm in [MANIFEST](mechanical/3d_models/MANIFEST.md); kein PCB-Blocker |
+| **SW6–SW10** Modifier (Shift / Hold / Drone / Generate / Clear — alle 5 identisch, momentary) — Cap klemmt auf den **eckigen Kopf mit Loch** oben; keine Verdreh-Sicherung nötig (User 2026-06-28) | **HCTL TC-1212-7.3-260G** (THT, 12×12×7,3 mm, eckiger Kopf) | [C2845240](https://jlcpcb.com/partdetail/C2845240) | **THT 12×12 4-Pin** — Footprint vom PCB-Macher (bisheriger `SW_HX_…_SMD-4P` war SMD) | Vendor | Vendor-CAD |
 | **SW11** Reset (Mini-SMD-Tactile, Service-Bohrung Bottom-Plate) | **XUNPU TS-1088-AR02016** | [C720477](https://www.lcsc.com/product-detail/C720477.html) | [`field_ambience:SW_TS1088_SMD`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_TS1088_SMD.kicad_mod) (EasyEDA-verifiziert) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (r18.36-Fix: vorher fälschlich „Vendor-CAD" — STEP liegt im Repo) |
 | **SW_BOOT** BOOT0 (USB-DFU-Flash, Service-Bohrung Bottom-Plate) | gleiches Teil wie SW11 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | gleicher FP wie SW11 | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (s. SW11) |
 | R_BOOT_SW 1 kΩ 0603 (BOOT0-Pull-up) | s. R_CELL | [C21190](https://www.lcsc.com/product-detail/C21190.html) | s. R_CELL | KiCad-Standard | Standard-Lib-3D |
@@ -181,8 +181,7 @@ auf GitHub und in jedem Markdown-Editor).
 
 | Funktion | MPN | LCSC/Link | Footprint | FP-Quelle | 3D |
 |---|---|---|---|---|---|
-| **VU-LEDs 6× Blau** (Pegel, LED_VU1–6) | KT-0603B (Hubei KENTO, blue 0603, Vf ~3.0V) | **NEEDS-VERIFY** — blaue 0603-LCSC vor Order fixieren (Anti-Guess, steht in der NO-LCSC-Liste von `export_jlc_bom.py`) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| **VU-LEDs 2× Weiß** (Peak, LED_VU7–8) | XL-1608UWC-04 (warm-white 0603) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | s. o. | KiCad-Standard | Standard-Lib-3D |
+| **VU-LEDs 8× Weiß** (LED_VU1–8, r18.68 — User: weiß statt blau) | XL-1608UWC-04 (warm-white 0603) — gleiche LED wie Heartbeat; **keine blaue Extra-LED nötig** | [C965808](https://www.lcsc.com/product-detail/C965808.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | VU-Vorwiderstände **390 Ω** 0603 (8×, R_VU1–8) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
 ## 10. Standard-Passives (Sortiment)
