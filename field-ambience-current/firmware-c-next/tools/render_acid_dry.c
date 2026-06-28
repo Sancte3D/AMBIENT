@@ -57,12 +57,12 @@ int main(int argc, char **argv){
     dsp_init();
     engine_acid.init();
     /* same voicing as the wet render so A/B is apples-to-apples */
-    engine_acid.set_param(SP_A, 0.30f);   /* cutoff base */
-    engine_acid.set_param(SP_B, 0.62f);   /* resonance   */
-    engine_acid.set_param(SP_C, 0.24f);   /* decay       */
-    engine_acid.set_param(SP_D, 0.45f);   /* drive       */
-    engine_acid.set_param(SP_E, 0.35f);   /* glide       */
-    engine_acid.set_param(SP_F, 0.65f);   /* env amount  */
+    engine_acid.set_param(SP_A, 0.40f);   /* cutoff base                     */
+    engine_acid.set_param(SP_B, 0.50f);   /* resonance — gentler squelch     */
+    engine_acid.set_param(SP_C, 0.22f);   /* decay                           */
+    engine_acid.set_param(SP_D, 0.40f);   /* drive                           */
+    engine_acid.set_param(SP_E, 0.35f);   /* glide                           */
+    engine_acid.set_param(SP_F, 0.55f);   /* env amount — narrower sweep      */
 
     /* deterministic event list */
     static ev_t ev[NSTEPS*2]; int ne = 0;
