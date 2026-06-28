@@ -99,8 +99,31 @@ static void test_host_select(void){
     CHECK(strcmp(synth_host_active_name(),"ACID RAIN")==0, "name=%s", synth_host_active_name());
     synth_host_select((synth_id_t)999);          /* invalid → unchanged */
     CHECK(synth_host_active()==SYNTH_ACID, "invalid select changed engine");
+    synth_host_select(SYNTH_FM_GLASS);           /* swap the sound-core */
+    CHECK(synth_host_active()==SYNTH_FM_GLASS, "select FM_GLASS failed");
+    CHECK(strcmp(synth_host_active_name(),"FM GLASS")==0, "name=%s", synth_host_active_name());
     synth_host_select(SYNTH_ACID);
-    printf("  host select: active='%s'\n", synth_host_active_name());
+    CHECK(synth_host_active()==SYNTH_ACID, "select back to ACID failed");
+    printf("  host select: ACID <-> FM GLASS ok\n");
+}
+
+/* the FM engine must be bounded, idle-silent and decay too */
+static void test_fm_glass_engine(void){
+    extern const synth_engine_t engine_fm_glass;
+    engine_fm_glass.init();
+    float peak=0.0f; int bad=0;
+    engine_fm_glass.note_on(45, 0.9f);
+    for (int s=0;s<3;++s) for (int b=0;b<SR_BLOCKS;++b){
+        clr(); engine_fm_glass.render_mix(dL,dR,sL,sR,N);
+        for (int i=0;i<N;++i){ if(isnan(dL[i])||isinf(dL[i]))++bad;
+            float a=fabsf(dL[i]); if(a>peak)peak=a; CHECK(dL[i]==dR[i],"L/R"); } }
+    CHECK(bad==0 && peak<1.2f && peak>0.05f, "fm bounded/audible: peak=%.3f bad=%d", peak, bad);
+    /* idle silent */
+    engine_fm_glass.init(); float ip=0.0f;
+    for (int b=0;b<SR_BLOCKS;++b){ clr(); engine_fm_glass.render_mix(dL,dR,sL,sR,N);
+        for (int i=0;i<N;++i){ float a=fabsf(dL[i]); if(a>ip)ip=a; } }
+    CHECK(ip==0.0f, "fm idle not silent: %.6f", ip);
+    printf("  fm_glass: held peak=%.3f, idle=%.6f, %d NaN\n", peak, ip, bad);
 }
 static void test_host_render_bounded(void){
     synth_host_init();
@@ -129,6 +152,7 @@ int main(void){
     test_engine_idle_silent();
     test_engine_release_decays();
     test_engine_accent_louder();
+    test_fm_glass_engine();
     test_host_select();
     test_host_render_bounded();
     test_host_panic();

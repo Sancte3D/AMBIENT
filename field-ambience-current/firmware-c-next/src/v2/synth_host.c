@@ -17,9 +17,11 @@
 
 /* Each engine is a const vtable exported from its own .c file. */
 extern const synth_engine_t engine_acid;
+extern const synth_engine_t engine_fm_glass;
 
 static const synth_engine_t *const TABLE[SYNTH_COUNT] = {
-    [SYNTH_ACID] = &engine_acid,
+    [SYNTH_ACID]     = &engine_acid,
+    [SYNTH_FM_GLASS] = &engine_fm_glass,
 };
 
 #define HBLOCK 256

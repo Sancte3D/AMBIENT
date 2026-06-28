@@ -85,10 +85,37 @@ cc -std=c11 -O2 -Iinclude tools/render_synth.c \
 The numeric/spectrogram comparison is generated with numpy + matplotlib against
 the reference WAV from the audio pack (host-side analysis only; not shipped).
 
+## Worked example — FM GLASS (DX7)
+
+Reference: `ambient_world_02_fm_glass_station_dx7_inspired.wav`.
+
+**Measured spec:** soft (RMS 0.114), low register (MIDI 40–45), free/melodic
+timing (23 notes), and — importantly — **very harmonic** (inharmonic/harmonic
+energy ratio 0.015), with upper harmonics emphasised. The "unmelodic" feel
+comes from non-integer FM ratios producing inharmonic sidebands.
+
+**Engine** (`src/v2/engines/engine_fm_glass.c`): 2-operator phase-modulation FM,
+`out = sin(carrier + index·sin(carrier·ratio))`, with the **ratio locked to an
+integer** so every sideband lands on the harmonic series → melodic, not
+metallic. A per-note index (brightness) envelope from peak → sustain gives the
+glassy attack while keeping upper harmonics alive; an amp ADSR rings the key
+tone; an SVF lowpass sets the tone. Params: Brightness / Ratio / Decay / Tone /
+Glide / Body.
+
+**A/B result:**
+
+![FM Glass dry vs reference spectrogram](reference-matching/fm_glass_dry_vs_reference.png)
+
+The integer-ratio fix is confirmed by measurement: the dry engine matches the
+reference's harmonicity (inharmonic ratio 0.016 vs 0.015 — both melodic) while
+restoring FM brightness (centroid 217 → 708 Hz after raising the index/ratio).
+It stays a touch darker than the mastered reference; final tone is a per-encoder
+call.
+
 ## Next engines
 
-Same workflow, one per PR, each measured against its own reference: FM Glass
-(force harmonic carrier/modulator ratios — the reference sounds unmelodic),
-Chorus Mist, Ion Storm, Glass Orbit, Bamboo Circuit. Then a FIELD adapter so
-the V2 ambient engine is selectable in the same host, and the SYNTH/FIELD mode
-UI.
+Same workflow, one per PR, each measured against its own reference: Chorus Mist
+(detuned saw stack + chorus), Ion Storm (hoover/PWM stack), Glass Orbit
+(wavetable morph), Bamboo Circuit (west-coast LPG pluck). Then a FIELD adapter
+so the V2 ambient engine is selectable in the same host, and the SYNTH/FIELD
+mode UI.

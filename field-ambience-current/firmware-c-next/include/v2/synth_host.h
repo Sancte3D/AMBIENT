@@ -18,6 +18,7 @@
  */
 typedef enum {
     SYNTH_ACID = 0,     /* 303-style resonant acid bass */
+    SYNTH_FM_GLASS,     /* DX7-style 2-op FM key/glass tone */
     SYNTH_COUNT
 } synth_id_t;
 
