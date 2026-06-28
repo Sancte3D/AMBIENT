@@ -222,3 +222,12 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/dsp.c" "$src/src/harmonic_bass.c" \
     -lm -o "$tmp/harmonic_bass_test"
 "$tmp/harmonic_bass_test"
+
+# Synth-engine HOST (OP-1-style swappable sound-core, FX global) + ACID RAIN
+# engine — engine bounded/idle/decay/accent + host select/render/panic.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_synth_host.c" \
+    "$src/src/dsp.c" "$src/src/reverb.c" "$src/src/v2/beauty_guard.c" \
+    "$src/src/v2/synth_host.c" "$src/src/v2/engines/engine_acid.c" \
+    -lm -o "$tmp/synth_host_test"
+"$tmp/synth_host_test"

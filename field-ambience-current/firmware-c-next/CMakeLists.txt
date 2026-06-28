@@ -129,6 +129,10 @@ set(V2_SOURCES
     src/v2/arp.c            # pentatonic bell arpeggio (the melodic layer)
     src/v2/beat.c          # Crystal-Castles synth drum machine
     src/v2/engine_v2.c
+    # OP-1-Field-style swappable synth-engine host (FX stay global; the V2
+    # ambient stack above remains the FIELD engine, untouched).
+    src/v2/synth_host.c
+    src/v2/engines/engine_acid.c    # 303-style resonant acid bass
 )
 
 # ---------------------------------------------------------------------------
