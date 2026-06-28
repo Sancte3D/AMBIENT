@@ -4590,15 +4590,13 @@ def mcp_sheet() -> str:
     # ========================================================================
     # r18.66 — U10 PCA9685PW #2 (I²C 0x41) → 8× Live-Level-Meter-LEDs (VU)
     # ========================================================================
-    # OP-1-Field-Stil: wenige LEDs, blau + weiss. Die Firmware rechnet RMS/Peak
-    # aus dem Audio-Buffer und treibt 8 Segmente per PWM (echtes Live-Meter, nicht
-    # nur Knopfstellung). 2. PCA9685 weil U6 voll ist (16/16). Teilt sich denselben
-    # I²C-Bus: U10-SDA/SCL haengen via LOKALE Labels I2C_SDA/I2C_SCL am selben Netz
-    # wie U6 (das Hier-Label bringt das Netz aufs Sheet). KEINE neuen MCU-Pins,
-    # KEINE Root-/PINMAP-Aenderung. Adresse 0x41: A0=+3V3, A1-A5=GND.
-    # 8 LEDs auf Channels 0-7 (Pins 6-13, links). VU1-6 blau (Pegel), VU7-8 weiss
-    # (Peak). Position der LED-Reihe im PCB = Layout-Entscheidung (TBD).
-    # Blaue LED LCSC: NEEDS-VERIFY (Anti-Guess) — landet in der NO-LCSC-Liste.
+    # OP-1-Field-Stil: wenige LEDs, alle **weiss** (r18.68 User). Die Firmware
+    # rechnet RMS/Peak aus dem Audio-Buffer und treibt 8 Segmente per PWM (echtes
+    # Live-Meter, nicht nur Knopfstellung). 2. PCA9685 weil U6 voll ist (16/16).
+    # Teilt sich denselben I²C-Bus: U10-SDA/SCL via LOKALE Labels I2C_SDA/I2C_SCL
+    # am selben Netz wie U6. KEINE neuen MCU-Pins, KEINE Root-/PINMAP-Aenderung.
+    # Adresse 0x41: A0=+3V3, A1-A5=GND. 8 LEDs auf Channels 0-7 (Pins 6-13, links),
+    # alle weiss (C965808 = wie Heartbeat). Position der Reihe im PCB = Layout-TBD.
     U10_X, U10_Y = 300.0, 120.0
     P10_L_X = U10_X - 12.7
     P10_R_X = U10_X + 12.7
@@ -4733,17 +4731,18 @@ def mcp_sheet() -> str:
     )
     # ---- 8× VU-Meter LED+R (Channels 0-7 = Pins 6-13, links). Anode +5V via 390R,
     # Kathode → PCA-Channel-Sink. Eigene Reihe (y=255), x-Position im PCB = TBD.
-    LED_BLUE = ("KT-0603B (Hubei KENTO, blue 0603, Vf ~3.0V) — LCSC NEEDS-VERIFY", "")
+    # r18.68 (User): VU-Meter ist **weiss** (gleiche LED wie Heartbeat/Status,
+    # C965808) — keine blaue Extra-LED noetig (loest das No-LCSC-Problem).
     vu_array = [
         # (pca_channel, vu_ref, sx, sy, (mpn,lcsc), descr)
-        (0, "1",  70, 255, LED_BLUE, "Level seg 1 (blau)"),
-        (1, "2",  95, 255, LED_BLUE, "Level seg 2 (blau)"),
-        (2, "3", 120, 255, LED_BLUE, "Level seg 3 (blau)"),
-        (3, "4", 145, 255, LED_BLUE, "Level seg 4 (blau)"),
-        (4, "5", 170, 255, LED_BLUE, "Level seg 5 (blau)"),
-        (5, "6", 195, 255, LED_BLUE, "Level seg 6 (blau)"),
-        (6, "7", 220, 255, LED_W,    "Peak seg 7 (weiss)"),
-        (7, "8", 245, 255, LED_W,    "Peak seg 8 (weiss)"),
+        (0, "1",  70, 255, LED_W, "Level seg 1 (weiss)"),
+        (1, "2",  95, 255, LED_W, "Level seg 2 (weiss)"),
+        (2, "3", 120, 255, LED_W, "Level seg 3 (weiss)"),
+        (3, "4", 145, 255, LED_W, "Level seg 4 (weiss)"),
+        (4, "5", 170, 255, LED_W, "Level seg 5 (weiss)"),
+        (5, "6", 195, 255, LED_W, "Level seg 6 (weiss)"),
+        (6, "7", 220, 255, LED_W, "Peak seg 7 (weiss)"),
+        (7, "8", 245, 255, LED_W, "Peak seg 8 (weiss)"),
     ]
     for ch, vref, sx, sy, (vmpn, vlcsc), vdescr in vu_array:
         lname = f"VU{vref}_K"
@@ -4789,7 +4788,7 @@ def mcp_sheet() -> str:
         f'    (comment 1 "Per SPEC v0.6 §7 (MCP) + §7.2 (PCA9685)")\n'
         f'    (comment 2 "MCP 0x20 / U6 PCA 0x40 / U10 PCA 0x41 (A0=+3V3) - shared I²C bus")\n'
         f'    (comment 3 "r10: SW6-SW10 plain HX 12x12x7.3TPFT-B SMD-Tactile (C36498966)")\n'
-        f'    (comment 4 "r10: 10× LEDs (LED6-LED15); U10 PCA9685 #2 -> 8 VU-Level-LEDs (blau+weiss)"))\n'
+        f'    (comment 4 "r10: 10× LEDs (LED6-LED15); U10 PCA9685 #2 -> 8 VU-Level-LEDs (weiss)"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
