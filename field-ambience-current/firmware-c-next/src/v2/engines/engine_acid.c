@@ -22,16 +22,16 @@
 #define SR          ((float)DSP_SAMPLE_RATE_HZ)
 #define FILT_UPDATE 16          /* control-rate cutoff refresh (samples) */
 
-enum { A_IDLE = 0, A_ATTACK, A_SUSTAIN, A_RELEASE };
+enum { A_IDLE = 0, A_ATTACK, A_DECAY, A_SUSTAIN, A_RELEASE };
 
 static struct {
     /* oscillators */
     float phase, sq_phase;
     float freq_cur, freq_tgt;
     float glide_coef;
-    /* amp envelope */
+    /* amp envelope (attack → decay → sustain while gated → release) */
     int   astate;
-    float amp, atk_inc, rel_coef;
+    float amp, atk_inc, dec_coef, sustain, rel_coef;
     /* per-note filter envelope (exp decay → the squelch) */
     float fenv, fenv_coef;
     /* resonant lowpass */
@@ -57,8 +57,10 @@ static void acid_init(void) {
     memset(&a, 0, sizeof a);
     a.freq_cur = a.freq_tgt = 110.0f;        /* A2 */
     a.glide_coef = dsp_smooth_coef(0.030f);
-    a.atk_inc    = 1.0f / (0.003f * SR);     /* 3 ms attack */
-    a.rel_coef   = dsp_smooth_coef(0.050f);  /* 50 ms release */
+    a.atk_inc    = 1.0f / (0.006f * SR);     /* 6 ms attack  */
+    a.dec_coef   = dsp_smooth_coef(0.080f);  /* 80 ms decay → sustain (the pluck) */
+    a.sustain    = 0.78f;
+    a.rel_coef   = dsp_smooth_coef(0.060f);  /* 60 ms release */
     a.base_cut   = 350.0f;
     a.env_amt    = 6000.0f;
     a.q          = 4.5f;
@@ -107,10 +109,13 @@ static void acid_render_mix(float *dL, float *dR, float *sL, float *sR, int fram
         /* portamento */
         a.freq_cur += a.glide_coef * (a.freq_tgt - a.freq_cur);
 
-        /* amp envelope (attack → sustain while gated → release) */
+        /* amp envelope: attack → decay → sustain (while gated) → release */
         if (a.astate == A_ATTACK) {
             a.amp += a.atk_inc;
-            if (a.amp >= 1.0f) { a.amp = 1.0f; a.astate = A_SUSTAIN; }
+            if (a.amp >= 1.0f) { a.amp = 1.0f; a.astate = A_DECAY; }
+        } else if (a.astate == A_DECAY) {
+            a.amp += a.dec_coef * (a.sustain - a.amp);
+            if (a.amp <= a.sustain + 1.0e-3f) { a.amp = a.sustain; a.astate = A_SUSTAIN; }
         } else if (a.astate == A_RELEASE) {
             a.amp += a.rel_coef * (0.0f - a.amp);
             if (a.amp < 1.0e-4f) { a.amp = 0.0f; a.astate = A_IDLE; }
