@@ -11,7 +11,7 @@ API — re-verify on the linked page before ordering (stock moves).
 
     python3 gen_bom_overview.py     # -> ../docs/hardware/bom_overview.html
 """
-import html, os
+import html, os, re, glob
 
 # Verified JLC SMT-assembly status (2026-06-29): code -> (library, stock)
 JLC = {
@@ -120,6 +120,76 @@ VIS = [("Touch controls","15","4 enc + 5 cells + 5 buttons + power switch"),
 
 def esc(s): return html.escape(str(s))
 
+# ---- PCB-engineer guide + schematic-sheet map (parsed live from .kicad_sch) ----
+KDIR = os.path.dirname(os.path.abspath(__file__))   # the kicad/ dir
+SHEET_INFO = {  # filename -> (title, function); order = reading order
+ "power_tree":("Power","USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±"),
+ "stm32h743":("MCU","STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)"),
+ "audio":("Audio","PCM5102A DAC (I²S) → PAM8403 Class-D amp + line-out / MIDI jacks"),
+ "mcp":("I/O & LEDs","MCP23017 + 2× PCA9685 + the 23 LEDs + buttons (largest sheet)"),
+ "encoder":("Encoders & cells","4 push-encoders (A/B/SW) + 5 Hall cells"),
+ "lcd":("Display","ST7789 1.9″ SPI + backlight FET (Q2)"),
+ "battery":("Battery & charge","LiPo JST + MCP73831 charger + power-path (charges while off)"),
+ "field_ambience":("Root / hierarchy","top sheet — ties the 7 functional sheets together"),
+}
+
+def parse_sheet(name):
+    try: t = open(os.path.join(KDIR, name + ".kicad_sch"), encoding="utf-8").read()
+    except OSError: return (0, [])
+    refs = set(r for r in re.findall(r'\(property "Reference" "([^"]+)"', t) if not r.startswith(("#", "REF")))
+    hl = sorted(set(re.findall(r'\(hierarchical_label "([^"]+)"', t)))
+    return (len(refs), hl)
+
+def sheets_html():
+    cards = []
+    for nm, (title, desc) in SHEET_INFO.items():
+        n, hl = parse_sheet(nm)
+        nets = (", ".join(hl[:10]) + (" …" if len(hl) > 10 else "")) if hl else "—"
+        cards.append(f"""<div class="scard">
+        <div class="sh"><b>{esc(title)}</b> <span class="sfile">{nm}.kicad_sch</span></div>
+        <div class="sd">{esc(desc)}</div>
+        <div class="smeta">{n} parts · {len(hl)} inter-sheet nets</div>
+        <div class="snets">{esc(nets)}</div>
+        <a class="sopen" href="../../kicad/{nm}.kicad_sch">open in KiCad ↗</a></div>""")
+    return "".join(cards)
+
+PCB_GUIDE = """
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>For the PCB engineer (Aron) — start here</h2>
+<div class="guide">
+ <p><b>The schematic is generated</b> by <code>kicad/generate_kicad_project.py</code> — that script is the source of truth. Don't hand-edit the <code>.kicad_sch</code>; change the generator and re-run. <b>There is no <code>.kicad_pcb</code> yet — the board layout is greenfield, that's your job.</b> ERC/DRC run in the KiCad 9 GUI (no kicad-cli here).</p>
+ <div class="gcols">
+  <div><b>4-layer stack (ADR-0018, locked)</b><ul>
+   <li>L1 signals+parts · <b>L2 solid GND (never cut)</b> · L3 power (+3V3/+5V) · L4 signals</li>
+   <li><b>USB-D±</b> together, equal length, over solid GND, ~90 Ω — verify on JLC's calculator</li>
+   <li><b>Class-D + boost switching away from analog audio</b>; one ground plane, no split</li>
+   <li><b>Crystal</b> &lt;3 mm to MCU + local GND; amp bulk cap &lt;5 mm from PVDD</li>
+  </ul></div>
+  <div><b>Place these first (enclosure-fixed)</b><ul>
+   <li>USB-C · both 3.5 mm jacks · display header J3</li>
+   <li>5 cells + Hall sensors under them (19 mm grid) · 5 buttons · 4 encoders</li>
+   <li>speaker headers · battery JST · then power, MCU+decoupling, audio, I/O</li>
+  </ul></div>
+ </div>
+ <p><b>Thermal:</b> no ventilation slots (~1.5–2.2 W). Give the LDO copper + thermal vias; keep the LiPo away from LDO/charger/boost.</p>
+ <p><b>Workflow → fab:</b> regenerate → open <code>field_ambience.kicad_pro</code> in KiCad 9 → ERC (0 err) → Update PCB from Schematic (F8) → place → route → DRC → export Gerber + CPL; BOM = <code>kicad/jlc_bom.csv</code> → upload to JLC.</p>
+ <p><b>Hard blockers before order:</b> ERC pass · layout + routing · PCB outline + mechanical coords (TBD) · USB impedance check · the 5 sourcing swaps above · the modifier-button decision.</p>
+</div></section>
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Schematic sheets (open in KiCad)</h2>
+<p class="note">8 generated sheets — counts + inter-sheet nets parsed from the live <code>.kicad_sch</code>. No browser preview (no kicad-cli); links open the real sheet in KiCad 9.</p>
+<div class="sheets">__SHEETS__</div></section>
+"""
+
+def files_html():
+    links = [
+      ("PCB handoff (checklist)","PCB_HANDOFF.md"),("Pin / net map","PINMAP.md"),
+      ("Schematic walkthrough","SCHEMATIC_WALKTHROUGH.md"),("Mechanical / case design","MECHANICAL_REQUIREMENTS.md"),
+      ("ERC / DRC checklist","ERC_DRC_CHECKLIST.md"),("KiCad layout blueprint","KICAD_BLUEPRINT.md"),
+      ("Layer stack (ADR-0018)","../decisions/ADR-0018-pcb-layer-stack.md"),
+      ("Schematic generator (truth)","../../kicad/generate_kicad_project.py"),
+      ("KiCad project","../../kicad/field_ambience.kicad_pro"),("JLC machine BOM (CSV)","../../kicad/jlc_bom.csv"),
+    ]
+    return "".join(f'<a class="flink" href="{esc(u)}">{esc(t)} ↗</a>' for t, u in links)
+
 def badge(code, route):
     if route == "off":
         return '<span class="b off">off-board · not soldered</span>'
@@ -155,6 +225,8 @@ def main():
       <tbody>{''.join(rows)}</tbody></table></section>""")
 
     vcards = ''.join(f'<div class="vcard"><div class="vnum">{esc(n)}</div><div class="vlbl">{esc(l)}</div><div class="vsub">{esc(s)}</div></div>' for l,n,s in VIS)
+    guide = PCB_GUIDE.replace("__SHEETS__", sheets_html())
+    files = files_html()
 
     issues = """
     <div class="issues ok"><b>✅ Sourcing issues — resolved with verified JLC-stocked parts (r18.70)</b>
@@ -194,6 +266,19 @@ def main():
  .b{{font-size:10.5px;padding:2px 7px;border-radius:20px;white-space:nowrap;font-weight:600}}
  .b.basic{{background:#10331f;color:#7ee2a8}} .b.ext{{background:#33270f;color:#f0c674}}
  .b.bad{{background:#3a1418;color:#ff9aa6}} .b.off{{background:#1b2330;color:#9ab}} .b.hand{{background:#16263a;color:#8ab4ff}} .b.warn{{background:#33270f;color:#f0c674}}
+ .note{{font-size:12px;color:var(--mut);margin:0 0 10px}}
+ .guide{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:13.5px}}
+ .guide p{{margin:8px 0}} .guide code{{background:#0c0e13;padding:1px 5px;border-radius:5px;font-size:12px}}
+ .guide b{{color:#fff}} .gcols{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:6px 0}}
+ .guide ul{{margin:5px 0 0;padding-left:18px}} .guide li{{margin:3px 0;color:var(--mut)}} .gcols b{{color:#9fe6f5}}
+ .sheets{{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}}
+ .scard{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}}
+ .sh{{font-size:14px}} .sh b{{color:#fff}} .sfile{{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mut);margin-left:6px}}
+ .sd{{font-size:12.5px;color:var(--mut);margin:5px 0}} .smeta{{font-size:11.5px;color:#9fe6f5;margin:4px 0}}
+ .snets{{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--mut);line-height:1.4;word-break:break-word}}
+ .sopen{{display:inline-block;margin-top:8px;font-size:12px;color:#8ab4ff;text-decoration:none;font-weight:600}} .sopen:hover{{text-decoration:underline}}
+ .flinks{{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}}
+ .flink{{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 13px;color:#8ab4ff;text-decoration:none;font-size:13px;font-weight:600}} .flink:hover{{border-color:#3a4250}}
  footer{{color:var(--mut);font-size:12px;margin-top:32px;border-top:1px solid var(--line);padding-top:14px}}
 </style></head><body>
 <header><h1>AMBIENT — BOM Overview</h1>
@@ -201,6 +286,7 @@ def main():
 <div class="wrap">
  <div class="visgrid">{vcards}</div>
  {issues}
+ {guide}
  <div class="legend">
    <span class="b basic">JLC Basic</span> no setup fee &nbsp;
    <span class="b ext">JLC Extended</span> small per-type fee &nbsp;
@@ -209,6 +295,9 @@ def main():
    <span class="b off">off-board</span> not soldered
  </div>
  {''.join(secs)}
+ <section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Docs &amp; files (repo)</h2>
+ <p class="note">Relative links — work when the HTML is opened from a repo clone.</p>
+ <div class="flinks">{files}</div></section>
  <footer>LCSC = JLCPCB (same group): the <code>C</code>-number is the JLC part; the link opens the LCSC product page, the badge is JLC's <i>assembly</i> status (stock checked 2026-06-29 — re-verify before ordering). Source of truth = <code>kicad/generate_kicad_project.py</code>; machine BOM for upload = <code>kicad/jlc_bom.csv</code>; regenerate this page with <code>kicad/gen_bom_overview.py</code>.</footer>
 </div></body></html>"""
 
