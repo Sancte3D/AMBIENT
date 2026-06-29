@@ -7,11 +7,13 @@
  * AND the filter cutoff together (vactrol behaviour), so brightness and level
  * fall as one — that is what makes it sound struck and physical, not synthy.
  *
- * Osc = sine + a little FM (wood↔metal) → SVF lowpass (cutoff tracks the LPG
- * envelope) → VCA (same envelope). Plucky, no sustain. dsp.h only.
+ * Osc = sine + a little FM (wood↔metal) → real Moog ladder lowpass (cutoff
+ * tracks the LPG envelope; a little resonance gives the woody "boing") → VCA
+ * (same envelope). Plucky, no sustain. dsp.h + dsp_ladder only.
  */
 #include "v2/synth_engine.h"
 #include "dsp.h"
+#include "dsp_ladder.h"
 #include <math.h>
 #include <string.h>
 
@@ -25,7 +27,7 @@ static struct {
     int   active;
     float fm_amt;               /* wood↔metal */
     float decay_s;
-    dsp_svf_t lp; int fctr;
+    dsp_ladder_t lad; int fctr; float res;
     float cut_base, cut_range;
     float level, send;
 } b;
@@ -40,10 +42,14 @@ static void bc_init(void) {
     b.decay_s  = 0.18f;          /* short pluck */
     b.cut_base = 200.0f;
     b.cut_range= 5000.0f;
-    b.level    = 0.9f;
+    b.res      = 0.40f;          /* a little ladder resonance = woody boing */
+    b.level    = 1.0f;           /* ladder loses some level; make it up */
     b.send     = 0.22f;          /* plucks love a little space */
     recalc();
-    dsp_svf_reset(&b.lp); dsp_svf_set(&b.lp, b.cut_base, 0.8f);
+    dsp_ladder_init(&b.lad, SR);
+    dsp_ladder_set_res(&b.lad, b.res);
+    dsp_ladder_set_drive(&b.lad, 1.0f);
+    dsp_ladder_set_freq(&b.lad, b.cut_base);
 }
 
 static void bc_activate(void)   { bc_init(); }
@@ -93,8 +99,8 @@ static void bc_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
 
         /* LPG: cutoff AND amp both follow b.env (filter+amp close together) */
         if ((b.fctr++ % F_UPD) == 0)
-            dsp_svf_set(&b.lp, b.cut_base + b.cut_range * b.env, 0.8f);
-        float lp  = dsp_svf_lp(&b.lp, osc);
+            dsp_ladder_set_freq(&b.lad, b.cut_base + b.cut_range * b.env);
+        float lp  = dsp_ladder_process(&b.lad, osc);
         float out = lp * b.env * b.level;
 
         dL[n] += out;          dR[n] += out;

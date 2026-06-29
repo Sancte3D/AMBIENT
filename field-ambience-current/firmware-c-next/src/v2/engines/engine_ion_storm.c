@@ -4,13 +4,15 @@
  * Reference (ambient_world_04_ion_storm_hoover): aggressive, wide, fast — the
  * hoover is a detuned stack of saws + pulse-width-modulated pulses, often with
  * a short downward pitch bend on the attack. Build: 2 detuned saws + 2 PWM
- * pulses (PWM via the saw-minus-shifted-saw trick, LFO-moved width) → SVF
- * lowpass → tanh drive. A per-note pitch blip down gives the hoover "whoom".
+ * pulses (PWM via the saw-minus-shifted-saw trick, LFO-moved width) → real
+ * Moog ladder lowpass (drive + resonance = the aggressive analog hoover body).
+ * A per-note pitch blip down gives the hoover "whoom".
  *
- * dsp.h only. Writes mono (host reverb adds the width).
+ * dsp.h + dsp_ladder only. Writes mono (host reverb adds the width).
  */
 #include "v2/synth_engine.h"
 #include "dsp.h"
+#include "dsp_ladder.h"
 #include <math.h>
 #include <string.h>
 
@@ -27,7 +29,7 @@ static struct {
     float bend, bend_coef;       /* attack pitch blip (1→0) */
     int   astate;
     float amp, atk_inc, dec_coef, sustain, rel_coef;
-    dsp_svf_t lp; int fctr; float cutoff;
+    dsp_ladder_t lad; int fctr; float cutoff; float res;
     float pwm_lfo, pwm_inc, pwm_depth;
     float detune, drive, level, send;
 } s;
@@ -48,9 +50,13 @@ static void is_init(void) {
     s.pwm_inc  = 0.8f / SR;
     s.pwm_depth= 0.35f;
     s.drive    = 1.6f;
-    s.level    = 0.5f;
+    s.res      = 0.55f;        /* ladder resonance = analog hoover body */
+    s.level    = 0.6f;
     s.send     = 0.14f;
-    dsp_svf_reset(&s.lp); dsp_svf_set(&s.lp, s.cutoff, 0.9f);
+    dsp_ladder_init(&s.lad, SR);
+    dsp_ladder_set_res(&s.lad, s.res);
+    dsp_ladder_set_drive(&s.lad, s.drive);
+    dsp_ladder_set_freq(&s.lad, s.cutoff);
     s.astate = I_IDLE;
 }
 
@@ -75,7 +81,7 @@ static void is_set_param(synth_param_t p, float v) {
                    s.r_dn = powf(2.0f,-s.detune/1200.0f);
                    s.r_up = powf(2.0f, s.detune/1200.0f);                    break; /* Detune */
         case SP_C: s.pwm_depth = v * 0.45f;                                  break; /* PWM    */
-        case SP_D: s.drive = 1.0f + v * 3.0f;                                break; /* Drive  */
+        case SP_D: s.drive = 1.0f + v * 3.0f; dsp_ladder_set_drive(&s.lad, s.drive); break; /* Drive */
         case SP_E: s.glide_coef = dsp_smooth_coef(0.008f + v * 0.15f);       break; /* Glide  */
         case SP_F: s.pwm_inc = (0.1f + v * 2.0f) / SR;                       break; /* Motion */
         default: break;
@@ -123,10 +129,9 @@ static void is_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
 
         float mix = 0.32f * (saw1 + saw2) + 0.22f * (p1 + p2);
 
-        if ((s.fctr++ % F_UPD) == 0) dsp_svf_set(&s.lp, s.cutoff, 0.9f);
-        float lp = dsp_svf_lp(&s.lp, mix);
-        float driven = tanhf(lp * s.drive);
-        float out = driven * s.amp * s.level;
+        if ((s.fctr++ % F_UPD) == 0) dsp_ladder_set_freq(&s.lad, s.cutoff);
+        float lp  = dsp_ladder_process(&s.lad, mix);   /* ladder drive = the grit */
+        float out = lp * s.amp * s.level;
         dL[n] += out;          dR[n] += out;
         sL[n] += out * s.send; sR[n] += out * s.send;
     }
