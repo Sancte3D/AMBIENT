@@ -90,7 +90,7 @@ in any Markdown editor).
 | FB1/FB2 ferrite bead | **BLM18AG601SN1D** 0603 600 Ω | [C19330](https://www.lcsc.com/product-detail/C19330.html) (**both FB1+FB2** — r18.70: dropped C84094, not in JLC assembly; C19330 is JLC Extended, 950 k stock) | `Inductor_SMD:L_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J8** line-out 3.5 mm TRS | **PJ-320D** (SHOU HAN, SMT) with insertion-detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | [`field_ambience:Jack_3.5mm_PJ-320D_SMT`](field-ambience-current/kicad/libraries/field_ambience.pretty/Jack_3.5mm_PJ-320D_SMT.kicad_mod) (EasyEDA CAD vendored r18.19) | field_ambience (custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
 | **J10** MIDI-out 3.5 mm TRS (r18.67) | **PJ-320D** (same MPN as J8) — TRS **Type A**, OUT-only, 3.3 V/CA-033 (no level shifter). MIDI_TX=PD5→R_MIDI_TX 220 Ω→Tip; +3V3→R_MIDI_REF 220 Ω→Ring; Sleeve→GND. ⚠️ **J9 = battery, J10 = MIDI** | [C431535](https://www.lcsc.com/product-detail/C431535.html) | see J8 (`field_ambience:Jack_3.5mm_PJ-320D_SMT`) | field_ambience (custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
-| **R_MIDI_TX / R_MIDI_REF** 220 Ω 0603 (2×, MIDI Type-A) | 0603WAF2200T5E | **NEEDS-VERIFY** — fix the 220 Ω LCSC before order (anti-guess, NO-LCSC list) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **R_MIDI_TX / R_MIDI_REF** 220 Ω 0603 (2×, MIDI Type-A) | 0603WAF2200T5E | [C22962](https://www.lcsc.com/product-detail/C22962.html) — **verified r18.72: JLC Basic, 1.69M stock** (NEEDS-VERIFY cleared) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
 ### Speaker (r18.18 — cloth cone primary)
 
@@ -243,9 +243,12 @@ Standard-Lib-3D.
 ## Ordering Strategy
 
 - **JLCPCB assembly (Extended OK):** everything in §1–§5, §8 (except SW_BOOT,
-  hand-place by choice), §9, §10 — all SMD with an LCSC ID.
+  hand-place by choice), §9, §10 — all SMD with an LCSC ID. **r18.72: Hall
+  sensors J_CELL1–5 (DRV5056, SOT-23, C2152902, JLC Extended 3057) moved here —
+  JLC SMT places them precisely under each cell stem (better than by hand); no
+  reason to hand-place a standard SOT-23.**
 - **Order separately via JLC, ship to the JLC address, hand-place yourself:**
-  encoders (EN1–4), Hall sensors (J_CELL1–5), speaker, Gateron switches,
+  encoders (EN1–4), speaker, Gateron switches,
   stabilizer, Adafruit display module, Tag-Connect SWD header, mesh, knobs.
 - **Never via JLC:** Gateron switches + stabilizer + mesh + custom knobs. These
   are keyboard-market parts + custom-CAD parts.

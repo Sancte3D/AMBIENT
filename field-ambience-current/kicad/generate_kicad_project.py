@@ -3392,7 +3392,7 @@ def stm32h743_sheet() -> str:
     #   Sleeve --> GND ;  DET-Pin = no_connect (MIDI nutzt keinen Insert-Detect)
     # Eigener Refdes **J10** (J9 ist der Akku-Stecker, NICHT MIDI!). Verbindung via
     # Net-Labels (MIDI_TX/MIDI_TIP/MIDI_RING) = robust, keine langen Wires.
-    # 220R-LCSC = NEEDS-VERIFY (Anti-Guess) → NO-LCSC-Liste.
+    # 220R-LCSC = C22962 — VERIFIED r18.72: JLC Basic, 1.69M stock (no setup fee).
     symbols.append(place_symbol(
         lib_id="Connector:AudioJack3_Switch", ref="J10",
         value="3.5mm TRS MIDI-Out (Type A, PJ-320 class)",
