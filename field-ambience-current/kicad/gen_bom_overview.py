@@ -31,6 +31,9 @@ JLC = {
  "C202365":("Extended",2787),"C14663":("Basic",21044139),"C46653":("Basic",1915999),
  "C45783":("Basic",1154055),"C107045":("Extended",167822),"C15849":("Basic",6889230),
  "C24539":("NONE",0),"C23253":("Basic",369149),"C23186":("Basic",3618054),
+ # r18.70 verified replacements for the 4 sourcing fixes:
+ "C23630":("Basic",1894059),"C965800":("Extended",649682),"C23742":("Extended",41420),
+ "C36498965":("Extended",19884),"C2845239":("Extended",1488),
 }
 LOW = 100   # stock below this = warn
 
@@ -59,7 +62,7 @@ G = [
    ("D2","SMAJ5.0A TVS","5 V surge clamp","C113952","jlc",False),
    ("D3","SS34 Schottky","boost rectifier","C8678","jlc",False),
    ("C_BULK","470 µF tantalum 1210","bulk reservoir","C444831","jlc",False),
-   ("C_BULK2","100 µF MLCC 1210","transient reservoir","C2880380","jlc",False),
+   ("C_BULK2","100 µF MLCC 1210","transient reservoir (r18.70: C2880380 → C23742)","C23742","jlc",False),
    ("LiPo","2000 mAh pouch 503759","the battery","https://thepihut.com/products/2000mah-3-7v-lipo-battery","off",False),
  ]),
  ("Audio", "#10b981", [
@@ -68,7 +71,7 @@ G = [
    ("J8","PJ-320D 3.5 mm line-out","audio out","C431535","jlc",True),
    ("J10","PJ-320D 3.5 mm MIDI-out","MIDI out (TRS Type A)","C431535","jlc",True),
    ("FB1","BLM18AG601 ferrite","audio supply filter","C19330","jlc",False),
-   ("FB2","BLM18AG601 ferrite","audio supply filter (use C19330 too)","C84094","jlc",False),
+   ("FB2","BLM18AG601 ferrite","audio supply filter (r18.70: C84094 → C19330)","C19330","jlc",False),
    ("J6/J7","1×2 header ×2","speaker leads","C124375","hand",False),
    ("SPK","Same Sky CMS-402811-28SP ×2","the speakers (8 Ω cloth cone)","https://www.digikey.com/en/products/detail/cui-devices/CMS-402811-28SP/10821307","off",True),
  ]),
@@ -81,14 +84,14 @@ G = [
    ("EN1-4","ALPS EC11E18244AU ×4","4 push-encoders","C202365","hand",True),
    ("Cells","Gateron Low-Profile Magnetic ×5","the 5 playable keys","https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch","off",True),
    ("Hall","DRV5056A4 ×5","reads each cell's magnet","C2152902","hand",False),
-   ("SW6-10","TC-1212-7.3 tactile ×5","modifier buttons (THT)","C2845240","hand",True),
+   ("SW6-10","TC-1212-7.3 tactile ×5","modifier buttons (THT) — ⚠ low stock, → C36498965 (square,20k) or C2845239","C2845240","hand",True),
    ("SW11/BOOT","TS-1088 tactile ×2","Reset + BOOT0 (2 service buttons)","C720477","jlc",False),
  ]),
  ("LEDs (23 visible)", "#a855f7", [
    ("LED-Y","KENTO KT-0603Y (yellow)","Shift + 5 cell base-hold LEDs","C2287","jlc",True),
    ("LED-G","KENTO KT-0603G (green)","Hold + 5 cell shift-hold LEDs","C12624","jlc",True),
    ("LED-W","XL-1608UWC (white)","Drone/Gen/Clear + 8 VU LEDs","C965808","jlc",True),
-   ("LED_CHRG","Amber 0603","charger status","C72041","jlc",True),
+   ("LED_CHRG","Orange 0603 XL-1608UOC","charger status (r18.70: C72041 was blue+EOL → C965800)","C965800","jlc",True),
    ("R_LED","390 Ω ×23","LED series resistors","C23151","jlc",False),
  ]),
  ("I/O Expander & LED Drivers", "#64748b", [
@@ -103,7 +106,7 @@ G = [
    ("C 100n","0603 X7R","decoupling (many)","C14663","jlc",False),
    ("C 1µ","0603 X5R","decoupling / VREF","C15849","jlc",False),
    ("C 10n","0603","filtering","C57112","jlc",False),
-   ("C 2.2µ VCAP","0603 X5R","PCM5102A charge pump","C24539","jlc",False),
+   ("C 2.2µ VCAP","0603 X5R 16V","PCM5102A charge pump (r18.70: C24539 → C23630)","C23630","jlc",False),
    ("C 10µ","0805 X5R","rail bulk","C15850","jlc",False),
    ("C 4.7µ / 22µ","0603/0805","local bulk","C46653","jlc",False),
    ("J4","Tag-Connect TC2030-IDC","SWD debug header","https://www.tag-connect.com/product/tc2030-idc","off",False),
@@ -154,13 +157,13 @@ def main():
     vcards = ''.join(f'<div class="vcard"><div class="vnum">{esc(n)}</div><div class="vlbl">{esc(l)}</div><div class="vsub">{esc(s)}</div></div>' for l,n,s in VIS)
 
     issues = """
-    <div class="issues"><b>⚠ Sourcing issues to fix before a JLC order</b>
+    <div class="issues ok"><b>✅ Sourcing issues — resolved with verified JLC-stocked parts (r18.70)</b>
     <ul>
-      <li><b>FB2 ferrite (C84094)</b> — not in JLC assembly → use <b>C19330</b> (FB1, same MPN) for both.</li>
-      <li><b>2.2 µF VCAP (C24539)</b> — not in JLC assembly → pick a JLC-stocked 2.2 µF 0603/0805 X5R.</li>
-      <li><b>Amber LED (C72041)</b> — stock 4 (≈out) → swap to an in-stock amber 0603.</li>
-      <li><b>100 µF 1210 C_BULK2 (C2880380)</b> — stock 1 (≈out) → swap to an in-stock 100 µF/10 V 1210.</li>
-      <li><b>TC-1212 button (C2845240)</b> — stock 30, low for 5 + spares → check stock / pick a spare.</li>
+      <li><b>FB2 ferrite</b> C84094 (not in JLC) → <b>C19330</b> for both FB1+FB2 (Murata, JLC 950k).</li>
+      <li><b>2.2 µF VCAP</b> C24539 (not in JLC) → <b>C23630</b> (16 V X5R 0603, JLC Basic 1.9M).</li>
+      <li><b>Charger LED</b> C72041 (was <i>blue + discontinued</i>, wrong part!) → <b>C965800</b> (orange 605 nm 0603, JLC 650k).</li>
+      <li><b>100 µF 1210</b> C2880380 (stock 1) → <b>C23742</b> (100 µF 10 V X5R 1210, JLC 41k).</li>
+      <li><b>Modifier button</b> C2845240 (stock 30) → ⚠ <b>decision:</b> <b>C36498965</b> (HX square head, JLC 20k — best for caps) or <b>C2845239</b> (TC-1212 round). Verify footprint + cap-fit.</li>
     </ul></div>"""
 
     doc = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -175,7 +178,8 @@ def main():
  .vcard{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}}
  .vnum{{font-size:28px;font-weight:700;line-height:1;color:#fff}} .vlbl{{font-size:13px;font-weight:600;margin-top:6px}} .vsub{{font-size:11px;color:var(--mut);margin-top:3px}}
  .issues{{background:#2a1416;border:1px solid #5b2330;border-radius:12px;padding:14px 18px;margin:18px 0 4px;font-size:13.5px}}
- .issues ul{{margin:8px 0 0;padding-left:20px}} .issues li{{margin:3px 0;color:#f3c9cf}} .issues b{{color:#fff}}
+ .issues.ok{{background:#10241a;border-color:#1f5b3a}}
+ .issues ul{{margin:8px 0 0;padding-left:20px}} .issues li{{margin:3px 0;color:#cfeede}} .issues b{{color:#fff}}
  .legend{{font-size:12px;color:var(--mut);margin:14px 0 0}} .legend .b{{margin-right:6px}}
  section{{margin-top:26px}} h2{{font-size:16px;margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid;display:flex;align-items:center;gap:9px}}
  .dot{{width:10px;height:10px;border-radius:50%;display:inline-block}}

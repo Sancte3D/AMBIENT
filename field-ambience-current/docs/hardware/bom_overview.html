@@ -10,7 +10,8 @@
  .vcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
  .vnum{font-size:28px;font-weight:700;line-height:1;color:#fff} .vlbl{font-size:13px;font-weight:600;margin-top:6px} .vsub{font-size:11px;color:var(--mut);margin-top:3px}
  .issues{background:#2a1416;border:1px solid #5b2330;border-radius:12px;padding:14px 18px;margin:18px 0 4px;font-size:13.5px}
- .issues ul{margin:8px 0 0;padding-left:20px} .issues li{margin:3px 0;color:#f3c9cf} .issues b{color:#fff}
+ .issues.ok{background:#10241a;border-color:#1f5b3a}
+ .issues ul{margin:8px 0 0;padding-left:20px} .issues li{margin:3px 0;color:#cfeede} .issues b{color:#fff}
  .legend{font-size:12px;color:var(--mut);margin:14px 0 0} .legend .b{margin-right:6px}
  section{margin-top:26px} h2{font-size:16px;margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid;display:flex;align-items:center;gap:9px}
  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -32,13 +33,13 @@
 <div class="wrap">
  <div class="visgrid"><div class="vcard"><div class="vnum">15</div><div class="vlbl">Touch controls</div><div class="vsub">4 enc + 5 cells + 5 buttons + power switch</div></div><div class="vcard"><div class="vnum">1</div><div class="vlbl">Display</div><div class="vsub">1.9″ window</div></div><div class="vcard"><div class="vnum">23</div><div class="vlbl">Indicator LEDs</div><div class="vsub">5 mod + 10 cell + 8 VU</div></div><div class="vcard"><div class="vnum">3</div><div class="vlbl">Ports</div><div class="vsub">USB-C + line-out + MIDI</div></div><div class="vcard"><div class="vnum">2</div><div class="vlbl">Speakers</div><div class="vsub">grilles</div></div><div class="vcard"><div class="vnum">—</div><div class="vlbl">Bottom</div><div class="vsub">2 pinholes + battery + 4 screws</div></div></div>
  
-    <div class="issues"><b>⚠ Sourcing issues to fix before a JLC order</b>
+    <div class="issues ok"><b>✅ Sourcing issues — resolved with verified JLC-stocked parts (r18.70)</b>
     <ul>
-      <li><b>FB2 ferrite (C84094)</b> — not in JLC assembly → use <b>C19330</b> (FB1, same MPN) for both.</li>
-      <li><b>2.2 µF VCAP (C24539)</b> — not in JLC assembly → pick a JLC-stocked 2.2 µF 0603/0805 X5R.</li>
-      <li><b>Amber LED (C72041)</b> — stock 4 (≈out) → swap to an in-stock amber 0603.</li>
-      <li><b>100 µF 1210 C_BULK2 (C2880380)</b> — stock 1 (≈out) → swap to an in-stock 100 µF/10 V 1210.</li>
-      <li><b>TC-1212 button (C2845240)</b> — stock 30, low for 5 + spares → check stock / pick a spare.</li>
+      <li><b>FB2 ferrite</b> C84094 (not in JLC) → <b>C19330</b> for both FB1+FB2 (Murata, JLC 950k).</li>
+      <li><b>2.2 µF VCAP</b> C24539 (not in JLC) → <b>C23630</b> (16 V X5R 0603, JLC Basic 1.9M).</li>
+      <li><b>Charger LED</b> C72041 (was <i>blue + discontinued</i>, wrong part!) → <b>C965800</b> (orange 605 nm 0603, JLC 650k).</li>
+      <li><b>100 µF 1210</b> C2880380 (stock 1) → <b>C23742</b> (100 µF 10 V X5R 1210, JLC 41k).</li>
+      <li><b>Modifier button</b> C2845240 (stock 30) → ⚠ <b>decision:</b> <b>C36498965</b> (HX square head, JLC 20k — best for caps) or <b>C2845239</b> (TC-1212 round). Verify footprint + cap-fit.</li>
     </ul></div>
  <div class="legend">
    <span class="b basic">JLC Basic</span> no setup fee &nbsp;
@@ -121,9 +122,9 @@
         <td class="fn">bulk reservoir</td>
         <td class="jlc"><span class="b ext">JLC Extended · 161</span></td></tr><tr class="">
         <td class="ref">C_BULK2</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C2880380.html" target="_blank" rel="noopener">100 µF MLCC 1210 ↗</a></td>
-        <td class="fn">transient reservoir</td>
-        <td class="jlc"><span class="b bad">JLC Extended · 1 ⚠</span></td></tr><tr class="">
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C23742.html" target="_blank" rel="noopener">100 µF MLCC 1210 ↗</a></td>
+        <td class="fn">transient reservoir (r18.70: C2880380 → C23742)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 41,420</span></td></tr><tr class="">
         <td class="ref">LiPo</td>
         <td class="part"><a href="https://thepihut.com/products/2000mah-3-7v-lipo-battery" target="_blank" rel="noopener">2000 mAh pouch 503759 ↗</a></td>
         <td class="fn">the battery</td>
@@ -151,9 +152,9 @@
         <td class="fn">audio supply filter</td>
         <td class="jlc"><span class="b ext">JLC Extended · 950,152</span></td></tr><tr class="">
         <td class="ref">FB2</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C84094.html" target="_blank" rel="noopener">BLM18AG601 ferrite ↗</a></td>
-        <td class="fn">audio supply filter (use C19330 too)</td>
-        <td class="jlc"><span class="b bad">✗ not in JLC assembly</span></td></tr><tr class="">
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C19330.html" target="_blank" rel="noopener">BLM18AG601 ferrite ↗</a></td>
+        <td class="fn">audio supply filter (r18.70: C84094 → C19330)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 950,152</span></td></tr><tr class="">
         <td class="ref">J6/J7</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C124375.html" target="_blank" rel="noopener">1×2 header ×2 ↗</a></td>
         <td class="fn">speaker leads</td>
@@ -192,7 +193,7 @@
         <td class="jlc"><span class="b ext">JLC Extended · 3,057</span> <span class="b hand">hand-place</span></td></tr><tr class="vis">
         <td class="ref">SW6-10</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C2845240.html" target="_blank" rel="noopener">TC-1212-7.3 tactile ×5 ↗</a><span class="eye">👁</span></td>
-        <td class="fn">modifier buttons (THT)</td>
+        <td class="fn">modifier buttons (THT) — ⚠ low stock, → C36498965 (square,20k) or C2845239</td>
         <td class="jlc"><span class="b bad">JLC Extended · 30 ⚠</span> <span class="b hand">hand-place</span></td></tr><tr class="">
         <td class="ref">SW11/BOOT</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C720477.html" target="_blank" rel="noopener">TS-1088 tactile ×2 ↗</a></td>
@@ -213,9 +214,9 @@
         <td class="fn">Drone/Gen/Clear + 8 VU LEDs</td>
         <td class="jlc"><span class="b ext">JLC Extended · 2,700,420</span></td></tr><tr class="vis">
         <td class="ref">LED_CHRG</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C72041.html" target="_blank" rel="noopener">Amber 0603 ↗</a><span class="eye">👁</span></td>
-        <td class="fn">charger status</td>
-        <td class="jlc"><span class="b bad">JLC Extended · 4 ⚠</span></td></tr><tr class="">
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C965800.html" target="_blank" rel="noopener">Orange 0603 XL-1608UOC ↗</a><span class="eye">👁</span></td>
+        <td class="fn">charger status (r18.70: C72041 was blue+EOL → C965800)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 649,682</span></td></tr><tr class="">
         <td class="ref">R_LED</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C23151.html" target="_blank" rel="noopener">390 Ω ×23 ↗</a></td>
         <td class="fn">LED series resistors</td>
@@ -261,9 +262,9 @@
         <td class="fn">filtering</td>
         <td class="jlc"><span class="b basic">JLC Basic · 2,846,393</span></td></tr><tr class="">
         <td class="ref">C 2.2µ VCAP</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C24539.html" target="_blank" rel="noopener">0603 X5R ↗</a></td>
-        <td class="fn">PCM5102A charge pump</td>
-        <td class="jlc"><span class="b bad">✗ not in JLC assembly</span></td></tr><tr class="">
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C23630.html" target="_blank" rel="noopener">0603 X5R 16V ↗</a></td>
+        <td class="fn">PCM5102A charge pump (r18.70: C24539 → C23630)</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 1,894,059</span></td></tr><tr class="">
         <td class="ref">C 10µ</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C15850.html" target="_blank" rel="noopener">0805 X5R ↗</a></td>
         <td class="fn">rail bulk</td>
