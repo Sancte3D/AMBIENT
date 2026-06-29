@@ -227,7 +227,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # engine — engine bounded/idle/decay/accent + host select/render/panic.
 "$CC" "${CFLAGS[@]}" \
     "$here/test_synth_host.c" \
-    "$src/src/dsp.c" "$src/src/reverb.c" "$src/src/v2/beauty_guard.c" \
+    "$src/src/dsp.c" "$src/src/dsp_ladder.c" "$src/src/reverb.c" "$src/src/v2/beauty_guard.c" \
     "$src/src/v2/synth_host.c" \
     "$src/src/v2/engines/engine_acid.c" "$src/src/v2/engines/engine_fm_glass.c" \
     "$src/src/v2/engines/engine_chorus_mist.c" "$src/src/v2/engines/engine_ion_storm.c" \

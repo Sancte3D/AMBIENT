@@ -12,7 +12,7 @@
  * (117 BPM), A-minor acid line, accents where the reference accents.
  *
  *   cc -std=c11 -O2 -Iinclude tools/render_acid_dry.c \
- *      src/dsp.c src/v2/engines/engine_acid.c -lm -o /tmp/render_acid_dry
+ *      src/dsp.c src/dsp_ladder.c src/v2/engines/engine_acid.c -lm -o /tmp/render_acid_dry
  *   /tmp/render_acid_dry /tmp/acid_dry.wav
  */
 #include "dsp.h"

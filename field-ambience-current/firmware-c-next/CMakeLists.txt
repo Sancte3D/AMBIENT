@@ -81,6 +81,7 @@ endif()
 # ---------------------------------------------------------------------------
 set(DSP_SOURCES
     src/dsp.c
+    src/dsp_ladder.c    # 4-pole Huovilainen Moog ladder (MIT port, real analog filter)
     src/voices.c
     src/pad.c
     src/texture.c
