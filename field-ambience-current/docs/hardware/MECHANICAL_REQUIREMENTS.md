@@ -177,6 +177,35 @@ restliche elektrische Platzierung* (ADR-0018 Routing-Regeln).
 
 ---
 
+## 3b. Thermik & Lüftung — **keine Lüftungsschlitze nötig**
+
+Gesamt-Verlustleistung ~1,5–2,2 W über das ganze Board → sehr niedrige
+Flächendichte, passiv über PCB + Gehäuse abführbar (Innentemp-Ziel < 50 °C,
+SCHEMATIC_WALKTHROUGH). Vergleichbare Geräte (OP-1 Field & Co.) sind komplett
+dicht. **Keine Schlitze** — bräche den Look + ließe Staub rein.
+
+Wärme-Budget (real):
+
+- **MCU** STM32H743 0,4–0,6 W (LQFP-100 ~1 W passiv → unkritisch, U1-Review).
+- **LDO** AP7361C ~0,5–0,6 W (5V→3,3V-Drop × MCU-Strom) → **heißester Punkt**.
+- **Charger** MCP73831 ~0,5–0,6 W **nur beim Laden** (transient).
+- **Boost** TPS61089 + L1 ~0,2–0,3 W nur im Akkubetrieb.
+
+Layout-Vorgaben statt Vents:
+
+1. **LDO**: Kupferfläche + Thermal-Vias drunter; nicht thermisch isolieren.
+2. **Charger nicht neben/unter den Akku** — Gerät lädt im Aus weiter → kein
+   Airflow im geschlossenen Gehäuse.
+3. **LiPo thermisch von LDO/Charger/Boost trennen** (Abstand). Der eigentliche
+   Punkt ist nicht „Chip überhitzt", sondern „Akku nicht mitheizen"
+   (Lebensdauer + Sicherheit). Akku sitzt ohnehin im Bottom-Case-Slot (§1.8) →
+   Hotspots oben halten.
+4. Bonus: die 4-Layer-GND/Power-Planes (ADR-0018) wirken als Wärme-Spreader.
+5. Falls je ein Hotspot zu warm wird: Thermal-Pad IC → Gehäuse-Innenwand
+   (Gehäuse als Heatsink) — dichter + eleganter als Schlitze.
+
+---
+
 ## 4. UNVERIFIED-Liste (zu klären vor PCB-Bestellung)
 
 1. **PCB-Außenmaße** — User-Entscheidung treffen
