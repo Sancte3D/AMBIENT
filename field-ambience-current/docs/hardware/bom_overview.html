@@ -1,0 +1,394 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>AMBIENT — BOM Overview</title>
+<style>
+ :root{--bg:#0f1115;--card:#171a21;--line:#262b36;--txt:#e6e9ef;--mut:#9aa4b2;}
+ *{box-sizing:border-box} body{margin:0;font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+ header{padding:26px 24px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+ header h1{margin:0 0 4px;font-size:22px} header p{margin:0;color:var(--mut);font-size:13px}
+ .wrap{max-width:1100px;margin:0 auto;padding:0 24px 60px}
+ .visgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0 6px}
+ .vcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+ .vnum{font-size:28px;font-weight:700;line-height:1;color:#fff} .vlbl{font-size:13px;font-weight:600;margin-top:6px} .vsub{font-size:11px;color:var(--mut);margin-top:3px}
+ .issues{background:#2a1416;border:1px solid #5b2330;border-radius:12px;padding:14px 18px;margin:18px 0 4px;font-size:13.5px}
+ .issues.ok{background:#10241a;border-color:#1f5b3a}
+ .issues ul{margin:8px 0 0;padding-left:20px} .issues li{margin:3px 0;color:#cfeede} .issues b{color:#fff}
+ .legend{font-size:12px;color:var(--mut);margin:14px 0 0} .legend .b{margin-right:6px}
+ section{margin-top:26px} h2{font-size:16px;margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid;display:flex;align-items:center;gap:9px}
+ .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+ table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+ th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+ th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);background:#12151b}
+ tr:last-child td{border-bottom:none}
+ td.ref{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--mut);white-space:nowrap}
+ td.part a{color:#8ab4ff;text-decoration:none;font-weight:600} td.part a:hover{text-decoration:underline}
+ td.fn{color:var(--mut);font-size:13px} td.jlc{white-space:nowrap}
+ tr.vis{background:rgba(99,102,241,.06)} .eye{margin-left:7px}
+ .b{font-size:10.5px;padding:2px 7px;border-radius:20px;white-space:nowrap;font-weight:600}
+ .b.basic{background:#10331f;color:#7ee2a8} .b.ext{background:#33270f;color:#f0c674}
+ .b.bad{background:#3a1418;color:#ff9aa6} .b.off{background:#1b2330;color:#9ab} .b.hand{background:#16263a;color:#8ab4ff} .b.warn{background:#33270f;color:#f0c674}
+ .note{font-size:12px;color:var(--mut);margin:0 0 10px}
+ .guide{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:13.5px}
+ .guide p{margin:8px 0} .guide code{background:#0c0e13;padding:1px 5px;border-radius:5px;font-size:12px}
+ .guide b{color:#fff} .gcols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:6px 0}
+ .guide ul{margin:5px 0 0;padding-left:18px} .guide li{margin:3px 0;color:var(--mut)} .gcols b{color:#9fe6f5}
+ .guide p.cells{background:#231a0c;border:1px solid #5a4416;border-radius:9px;padding:10px 14px;color:#e9d9b3} .guide p.cells code{background:#0c0e13}
+ .guide p.disp{background:#0e1f2e;border:1px solid #1f4a6b;border-radius:9px;padding:10px 14px;color:#cfe6f5} .guide p.disp code{background:#0c0e13}
+ .guide p.ready{background:#10241a;border:1px solid #1f5b3a;border-radius:9px;padding:10px 14px;color:#cfeede} .guide p.ready code{background:#0c0e13}
+ p.vals{font-size:13px;color:var(--mut);margin:10px 0 0} p.vals b{color:#e6e9ef}
+ .sheets{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+ .scard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+ .sh{font-size:14px} .sh b{color:#fff} .sfile{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mut);margin-left:6px}
+ .sd{font-size:12.5px;color:var(--mut);margin:5px 0} .smeta{font-size:11.5px;color:#9fe6f5;margin:4px 0}
+ .snets{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--mut);line-height:1.4;word-break:break-word}
+ .sopen{display:inline-block;margin-top:8px;font-size:12px;color:#8ab4ff;text-decoration:none;font-weight:600} .sopen:hover{text-decoration:underline}
+ .flinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+ .flink{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 13px;color:#8ab4ff;text-decoration:none;font-size:13px;font-weight:600} .flink:hover{border-color:#3a4250}
+ footer{color:var(--mut);font-size:12px;margin-top:32px;border-top:1px solid var(--line);padding-top:14px}
+</style></head><body>
+<header><h1>AMBIENT — BOM Overview</h1>
+<p>Every part grouped by function · click a part for its LCSC/JLC page · the <b>JLC assembly</b> badge is verified live · 👁 = visible on the enclosure</p></header>
+<div class="wrap">
+ <div class="visgrid"><div class="vcard"><div class="vnum">15</div><div class="vlbl">Touch controls</div><div class="vsub">4 enc + 5 cells + 5 buttons + power switch</div></div><div class="vcard"><div class="vnum">1</div><div class="vlbl">Display</div><div class="vsub">1.9″ window</div></div><div class="vcard"><div class="vnum">23</div><div class="vlbl">Indicator LEDs</div><div class="vsub">5 mod + 10 cell + 8 VU</div></div><div class="vcard"><div class="vnum">3</div><div class="vlbl">Ports</div><div class="vsub">USB-C + line-out + MIDI</div></div><div class="vcard"><div class="vnum">2</div><div class="vlbl">Speakers</div><div class="vsub">grilles</div></div><div class="vcard"><div class="vnum">—</div><div class="vlbl">Bottom</div><div class="vsub">2 pinholes + battery + 4 screws</div></div></div>
+ 
+    <div class="issues ok"><b>✅ Sourcing issues — resolved with verified JLC-stocked parts (r18.70)</b>
+    <ul>
+      <li><b>FB2 ferrite</b> C84094 (not in JLC) → <b>C19330</b> for both FB1+FB2 (Murata, JLC 950k).</li>
+      <li><b>2.2 µF VCAP</b> C24539 (not in JLC) → <b>C23630</b> (16 V X5R 0603, JLC Basic 1.9M).</li>
+      <li><b>Charger LED</b> C72041 (was <i>blue + discontinued</i>, wrong part!) → <b>C965800</b> (orange 605 nm 0603, JLC 650k).</li>
+      <li><b>100 µF 1210</b> C2880380 (stock 1) → <b>C23742</b> (100 µF 10 V X5R 1210, JLC 41k).</li>
+      <li><b>Modifier button</b> C2845240 (stock 30) → <b>C36498965</b> (HX B3F, square head for caps, JLC 20k, ~$0.06). ⚠ verify THT footprint/pinout before fab.</li>
+    </ul></div>
+ 
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>For the PCB engineer (Aron) — start here</h2>
+<div class="guide">
+ <p class="ready">✅ <b>The schematic is already drawn and split into 8 pages.</b> Open <code>kicad/field_ambience.kicad_pro</code> in <b>KiCad 9</b> — the 8 sheets (listed below) load with every symbol, net, value and a pre-assigned footprint. You do <b>not</b> redraw the schematic. Then: ERC → <i>Update PCB from Schematic (F8)</i> → place → route.</p>
+ <p><b>The schematic is generated</b> by <code>kicad/generate_kicad_project.py</code> — that script is the source of truth. Don't hand-edit the <code>.kicad_sch</code>; change the generator and re-run. <b>There is no <code>.kicad_pcb</code> yet — the board layout is greenfield, that's your job.</b> ERC/DRC run in the KiCad 9 GUI (no kicad-cli here).</p>
+ <div class="gcols">
+  <div><b>4-layer stack (ADR-0018, locked)</b><ul>
+   <li>L1 signals+parts · <b>L2 solid GND (never cut)</b> · L3 power (+3V3/+5V) · L4 signals</li>
+   <li><b>USB-D±</b> together, equal length, over solid GND, ~90 Ω — verify on JLC's calculator</li>
+   <li><b>Class-D + boost switching away from analog audio</b>; one ground plane, no split</li>
+   <li><b>Crystal</b> &lt;3 mm to MCU + local GND; amp bulk cap &lt;5 mm from PVDD</li>
+  </ul></div>
+  <div><b>Place these first (enclosure-fixed)</b><ul>
+   <li>USB-C · both 3.5 mm jacks · display header J3</li>
+   <li>5 cells + Hall sensors under them (19 mm grid) · 5 buttons · 4 encoders</li>
+   <li>speaker headers · battery JST · then power, MCU+decoupling, audio, I/O</li>
+  </ul></div>
+ </div>
+ <p class="cells"><b>⚠ The 5 cells are unusual — read this before placing them.</b> The Gateron magnetic switches are <b>pin-less</b> — no electrical connection to the PCB; they sit in a plate <i>above</i> the board. The PCB carries only a <b>linear Hall sensor (DRV5056, SOT-23) directly under each switch stem</b>, on the 19 mm MX grid. As the magnet in the stem moves down, the Hall sensor outputs an analog voltage → RC filter (1 k + 10 nF) → STM32 ADC (nets <code>CELL1..5_SENSE</code>) → firmware computes velocity/position. <b>So there is NO switch footprint — just 5 Hall sensors + their RC at the cell centers.</b> Switches, plate and caps are off-board hardware (ADR-0013). Same idea as a NuPhy/HE keyboard.</p>
+ <p><b>Assembly — who solders what.</b> JLC reflow-assembles every <b>SMD</b> part (the "JLC" rows in the BOM). The <b>hand-place</b> rows (THT headers + buttons, encoders, Hall sensors) and the <b>off-board</b> rows (display module, Gateron switches, speakers, battery, knobs) are fitted <b>by hand, after</b> JLC — by whoever does final assembly. So the board comes back from JLC fully SMD-populated; the modules + mechanical parts are then hand-fitted.</p>
+ <p class="disp"><b>Display = a finished module (this changes how it's attached).</b> The Waveshare 1.9″ LCD is its own PCB (ST7789 + level-shifter + backlight) — it is <b>NOT reflow-soldered to the main board.</b> Put on the main board only <b>J3, a 1×8 2.54 mm header</b>: 1 VCC · 2 GND · 3 SCK (PA5) · 4 MOSI (PA7) · 5 RES (PC5) · 6 DC (PC4) · 7 CS (PA6) · 8 BLK (backlight via Q2 / PCA9685 ch15). The module is then joined <b>by hand</b> two ways: <b>(a) socket on J3 + header on the module</b> → plug-in, nothing on the module to solder, serviceable; or <b>(b) a short 8-wire cable</b> J3↔module → lets the display sit behind the bezel window with the PCB below (most mechanical freedom). ⚠ The module's pin <i>order</i> varies by vendor — verify the real module vs J3 before fixing it. <b>Is this normal / are there better displays?</b> Yes, module-on-header is the standard, reliable choice at this scale (same as Adafruit/Waveshare-based products). The more-integrated alternative — a bare ST7789 panel + an FPC connector soldered to the main board (lower profile) — is a much bigger job (FPC connector + panel sourcing/mounting, and you'd re-add the level-shifter + backlight the module already has); not worth it here.</p>
+ <p><b>Thermal:</b> no ventilation slots (~1.5–2.2 W). Give the LDO copper + thermal vias; keep the LiPo away from LDO/charger/boost.</p>
+ <p><b>Workflow → fab:</b> regenerate → open <code>field_ambience.kicad_pro</code> in KiCad 9 → ERC (0 err) → Update PCB from Schematic (F8) → place → route → DRC → export Gerber + CPL; BOM = <code>kicad/jlc_bom.csv</code> → upload to JLC.</p>
+ <p><b>Hard blockers before order:</b> ERC pass · layout + routing · PCB outline + mechanical coords (TBD) · USB impedance check · the 5 sourcing swaps above · the modifier-button decision.</p>
+</div></section>
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Schematic sheets (open in KiCad)</h2>
+<p class="note">8 generated sheets — counts + inter-sheet nets parsed from the live <code>.kicad_sch</code>. No browser preview (no kicad-cli); links open the real sheet in KiCad 9.</p>
+<div class="sheets"><div class="scard">
+        <div class="sh"><b>Power</b> <span class="sfile">power_tree.kicad_sch</span></div>
+        <div class="sd">USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±</div>
+        <div class="smeta">25 parts · 6 inter-sheet nets</div>
+        <div class="snets">+3V3_OUT, +5V_OUT, GND_OUT, USB_DM, USB_DP, VBUS_USBC</div>
+        <a class="sopen" href="../../kicad/power_tree.kicad_sch">open in KiCad ↗</a></div><div class="scard">
+        <div class="sh"><b>MCU</b> <span class="sfile">stm32h743.kicad_sch</span></div>
+        <div class="sd">STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)</div>
+        <div class="smeta">62 parts · 27 inter-sheet nets</div>
+        <div class="snets">AMP_nMUTE, AMP_nSHDN, BAT_PLUS, BRIGHT_A, BRIGHT_B, BRIGHT_SW, DISPLAY_A, DISPLAY_B, DISPLAY_SW, DRIVE_A …</div>
+        <a class="sopen" href="../../kicad/stm32h743.kicad_sch">open in KiCad ↗</a></div><div class="scard">
+        <div class="sh"><b>Audio</b> <span class="sfile">audio.kicad_sch</span></div>
+        <div class="sd">PCM5102A DAC (I²S) → PAM8403 Class-D amp + line-out / MIDI jacks</div>
+        <div class="smeta">41 parts · 7 inter-sheet nets</div>
+        <div class="snets">AMP_nMUTE, AMP_nSHDN, I2S_BCK, I2S_DOUT, I2S_LRCK, JACK_DETECT, PCM_XSMT</div>
+        <a class="sopen" href="../../kicad/audio.kicad_sch">open in KiCad ↗</a></div><div class="scard">
+        <div class="sh"><b>I/O &amp; LEDs</b> <span class="sfile">mcp.kicad_sch</span></div>
+        <div class="sd">MCP23017 + 2× PCA9685 + the 23 LEDs + buttons (largest sheet)</div>
+        <div class="smeta">80 parts · 8 inter-sheet nets</div>
+        <div class="snets">I2C_SCL, I2C_SDA, JACK_DETECT, LCD_BLK_PWM, MCP_INT, PCM_XSMT, VBUS_USBC, VOL_SW</div>
+        <a class="sopen" href="../../kicad/mcp.kicad_sch">open in KiCad ↗</a></div><div class="scard">
+        <div class="sh"><b>Encoders &amp; cells</b> <span class="sfile">encoder.kicad_sch</span></div>
+        <div class="sd">4 push-encoders (A/B/SW) + 5 Hall cells</div>
+        <div class="smeta">36 parts · 12 inter-sheet nets</div>
+        <div class="snets">BRIGHT_A, BRIGHT_B, BRIGHT_SW, DISPLAY_A, DISPLAY_B, DISPLAY_SW, DRIVE_A, DRIVE_B, DRIVE_SW, VOL_A …</div>
+        <a class="sopen" href="../../kicad/encoder.kicad_sch">open in KiCad ↗</a></div><div class="scard">
+        <div class="sh"><b>Display</b> <span class="sfile">lcd.kicad_sch</span></div>
+        <div class="sd">ST7789 1.9″ SPI + backlight FET (Q2)</div>
+        <div class="smeta">17 parts · 6 inter-sheet nets</div>
+        <div class="snets">LCD_BLK_PWM, LCD_CS, LCD_DC, LCD_MOSI, LCD_RES, LCD_SCK</div>
+        <a class="sopen" href="../../kicad/lcd.kicad_sch">open in KiCad ↗</a></div><div class="scard">
+        <div class="sh"><b>Battery &amp; charge</b> <span class="sfile">battery.kicad_sch</span></div>
+        <div class="sd">LiPo JST + MCP73831 charger + power-path (charges while off)</div>
+        <div class="smeta">34 parts · 3 inter-sheet nets</div>
+        <div class="snets">+5V_OUT, BAT_PLUS, VBUS_USBC</div>
+        <a class="sopen" href="../../kicad/battery.kicad_sch">open in KiCad ↗</a></div><div class="scard">
+        <div class="sh"><b>Root / hierarchy</b> <span class="sfile">field_ambience.kicad_sch</span></div>
+        <div class="sd">top sheet — ties the 7 functional sheets together</div>
+        <div class="smeta">0 parts · 0 inter-sheet nets</div>
+        <div class="snets">—</div>
+        <a class="sopen" href="../../kicad/field_ambience.kicad_sch">open in KiCad ↗</a></div></div></section>
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Key connections &amp; component values</h2>
+<p class="note">Quick reference (verified from <code>PINMAP.md</code>). The full per-pin map is in the schematic + PINMAP — this is the at-a-glance version.</p>
+<table><thead><tr><th>Interface</th><th>STM32 pins</th><th>Goes to</th><th>Key values</th></tr></thead><tbody>
+<tr><td class="ref">I²S audio</td><td class="part">PE4 / PE5 / PE6</td><td class="fn">PCM5102A LRCK / BCK / DIN</td><td class="fn">—</td></tr>
+<tr><td class="ref">Cells ×5 (ADC)</td><td class="part">PC0, PC1, PA4, PB0, PB1</td><td class="fn">DRV5056 Hall OUT (under each switch)</td><td class="fn"><b>each: 1 kΩ series + 10 nF to GND</b></td></tr>
+<tr><td class="ref">LCD SPI</td><td class="part">PA5 SCK, PA7 MOSI (+CS/DC/RES)</td><td class="fn">ST7789 via J3 header</td><td class="fn">backlight via Q2 / PCA9685 ch12</td></tr>
+<tr><td class="ref">I²C</td><td class="part">PB6 SCL, PB7 SDA</td><td class="fn">MCP23017 + 2× PCA9685 (shared)</td><td class="fn"><b>4.7 kΩ pull-ups ×2</b></td></tr>
+<tr><td class="ref">USB</td><td class="part">PA11 D−, PA12 D+</td><td class="fn">USBLC6 → USB-C (J1)</td><td class="fn">90 Ω diff pair</td></tr>
+<tr><td class="ref">MIDI</td><td class="part">PD5 TX</td><td class="fn">J10 TRS jack (Type A)</td><td class="fn"><b>2× 220 Ω</b> (Tip + Ring)</td></tr>
+<tr><td class="ref">SWD debug</td><td class="part">PA13 SWDIO, PA14 SWCLK</td><td class="fn">J4 Tag-Connect TC2030</td><td class="fn">—</td></tr>
+<tr><td class="ref">Crystal</td><td class="part">OSC_IN/OUT</td><td class="fn">Y1 8 MHz (≤3 mm, local GND)</td><td class="fn"><b>2× 27 pF</b> load caps</td></tr>
+</tbody></table>
+<p class="vals"><b>Other key values:</b> LED series resistors <b>390 Ω ×23</b> · BOOT0 pull-up <b>1 kΩ</b> · power-ON pull-down <b>100 kΩ</b> · decoupling <b>100 nF per IC</b> + bulk (<b>470 µF</b> tant + <b>100 µF</b> MLCC) · power-off output cap <b>10 µF</b>. All passives are 0603 (caps up to 1210). Every value is already set in the schematic.</p></section>
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Footprints — what's ready, what you source</h2>
+<div class="guide">
+ <p>Footprints are <b>pre-assigned by the generator</b>; symbol → footprint comes through with <i>Update PCB from Schematic</i>. Status:</p>
+ <ul>
+  <li>✅ <b>In the repo</b> (<code>kicad/libraries/field_ambience.pretty/</code>, 8 custom): crystal HC-49, boost VQFN-HR, Sunlord inductor, PJ-320D 3.5 mm jack, TS-1088 service button, <b>MST-12D18 power slide switch</b>, TC-1212/HX 12×12 button (THT), + 3D STEPs.</li>
+  <li>✅ <b>KiCad-standard</b>: everything in standard packages — LQFP-100, SOT-23/89, SOIC, TSSOP, SSOP, 0603/0805/1210, pin headers, HRO USB-C.</li>
+  <li>🟢 <b>Cell switches: NO footprint needed</b> — pin-less; only the DRV5056 Hall (SOT-23, standard) is on the board under each stem.</li>
+  <li>⚠ <b>Modifier button (HX B3F, C36498965, THT):</b> verify the THT footprint — the repo <code>SW_TC1212-7.3_THT_4P</code> should fit the 12×12 4-pin THT body; if the pinout differs, generate a fresh one.</li>
+ </ul>
+ <p><b>How to get / make a footprint (for any LCSC part):</b> <code>pip install easyeda2kicad &amp;&amp; easyeda2kicad --full --lcsc_id=C36498965</code> — pulls the footprint <i>and</i> the 3D STEP straight from LCSC/EasyEDA. Otherwise build from the datasheet. The power slide switch + service buttons were made exactly this way.</p>
+</div></section>
+
+ <div class="legend">
+   <span class="b basic">JLC Basic</span> no setup fee &nbsp;
+   <span class="b ext">JLC Extended</span> small per-type fee &nbsp;
+   <span class="b bad">✗ / low</span> fix before order &nbsp;
+   <span class="b hand">hand-place</span> on-board, you place &nbsp;
+   <span class="b off">off-board</span> not soldered
+ </div>
+ <section><h2 style="border-color:#6366f1"><span class="dot" style="background:#6366f1"></span>MCU &amp; Clock</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="">
+        <td class="ref">U1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C114409.html" target="_blank" rel="noopener">STM32H743VIT6 (LQFP-100) ↗</a></td>
+        <td class="fn">the brain — 480 MHz Cortex-M7</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 392</span></td></tr><tr class="">
+        <td class="ref">Y1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C596838.html" target="_blank" rel="noopener">ABLS-8.000MHZ crystal ↗</a></td>
+        <td class="fn">8 MHz reference clock</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 1,364</span></td></tr><tr class="">
+        <td class="ref">C_HSE</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C107045.html" target="_blank" rel="noopener">27 pF C0G ×2 ↗</a></td>
+        <td class="fn">crystal load caps</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 167,822</span></td></tr></tbody></table></section><section><h2 style="border-color:#ef4444"><span class="dot" style="background:#ef4444"></span>Power</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="vis">
+        <td class="ref">J1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C165948.html" target="_blank" rel="noopener">USB-C TYPE-C-31-M-12 ↗</a><span class="eye">👁</span></td>
+        <td class="fn">charging + USB-DFU flash</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 188,935</span></td></tr><tr class="">
+        <td class="ref">U8</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C165129.html" target="_blank" rel="noopener">TPS61089 boost ↗</a></td>
+        <td class="fn">battery 3.7 V → 5 V</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 714</span></td></tr><tr class="">
+        <td class="ref">L1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C83455.html" target="_blank" rel="noopener">SWPA6045 2.2 µH ↗</a></td>
+        <td class="fn">boost inductor</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 561</span></td></tr><tr class="">
+        <td class="ref">Q1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C150470.html" target="_blank" rel="noopener">DMG2305UX P-MOSFET ↗</a></td>
+        <td class="fn">power-path switch</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 15,210</span></td></tr><tr class="">
+        <td class="ref">U5</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C460397.html" target="_blank" rel="noopener">AP7361C LDO ↗</a></td>
+        <td class="fn">5 V → 3.3 V (thermal hotspot)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 1,821</span></td></tr><tr class="">
+        <td class="ref">U_PWR</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C131941.html" target="_blank" rel="noopener">TPS22918 load switch ↗</a></td>
+        <td class="fn">the power-off — gates 3.3 V</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 44,589</span></td></tr><tr class="vis">
+        <td class="ref">SW_PWR</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C49023766.html" target="_blank" rel="noopener">MST-12D18G3 slide switch ↗</a><span class="eye">👁</span></td>
+        <td class="fn">on/off, side-actuated</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 388</span></td></tr><tr class="">
+        <td class="ref">U7</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C424093.html" target="_blank" rel="noopener">MCP73831 charger ↗</a></td>
+        <td class="fn">LiPo charger (charges when off)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 10,731</span></td></tr><tr class="">
+        <td class="ref">J9</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C295747.html" target="_blank" rel="noopener">JST-PH 2.0 (battery) ↗</a></td>
+        <td class="fn">LiPo connector</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 102,433</span></td></tr><tr class="">
+        <td class="ref">D1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C2687116.html" target="_blank" rel="noopener">USBLC6-2SC6 ↗</a></td>
+        <td class="fn">USB ESD protection</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 127,452</span></td></tr><tr class="">
+        <td class="ref">F1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C18198349.html" target="_blank" rel="noopener">PTC fuse 3 A ↗</a></td>
+        <td class="fn">USB overcurrent protection</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 26,687</span></td></tr><tr class="">
+        <td class="ref">D2</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C113952.html" target="_blank" rel="noopener">SMAJ5.0A TVS ↗</a></td>
+        <td class="fn">5 V surge clamp</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 843,167</span></td></tr><tr class="">
+        <td class="ref">D3</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C8678.html" target="_blank" rel="noopener">SS34 Schottky ↗</a></td>
+        <td class="fn">boost rectifier</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 3,338,351</span></td></tr><tr class="">
+        <td class="ref">C_BULK</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C444831.html" target="_blank" rel="noopener">470 µF tantalum 1210 ↗</a></td>
+        <td class="fn">bulk reservoir</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 161</span></td></tr><tr class="">
+        <td class="ref">C_BULK2</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C23742.html" target="_blank" rel="noopener">100 µF MLCC 1210 ↗</a></td>
+        <td class="fn">transient reservoir (r18.70: C2880380 → C23742)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 41,420</span></td></tr><tr class="">
+        <td class="ref">LiPo</td>
+        <td class="part"><a href="https://thepihut.com/products/2000mah-3-7v-lipo-battery" target="_blank" rel="noopener">2000 mAh pouch 503759 ↗</a></td>
+        <td class="fn">the battery</td>
+        <td class="jlc"><span class="b off">off-board · not soldered</span></td></tr></tbody></table></section><section><h2 style="border-color:#10b981"><span class="dot" style="background:#10b981"></span>Audio</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="">
+        <td class="ref">U3</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C107671.html" target="_blank" rel="noopener">PCM5102A DAC ↗</a></td>
+        <td class="fn">I²S → analog audio</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 2,045</span></td></tr><tr class="">
+        <td class="ref">U4</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C17337.html" target="_blank" rel="noopener">PAM8403 Class-D amp ↗</a></td>
+        <td class="fn">drives the speakers</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 3,903</span></td></tr><tr class="vis">
+        <td class="ref">J8</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C431535.html" target="_blank" rel="noopener">PJ-320D 3.5 mm line-out ↗</a><span class="eye">👁</span></td>
+        <td class="fn">audio out</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 49,905</span></td></tr><tr class="vis">
+        <td class="ref">J10</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C431535.html" target="_blank" rel="noopener">PJ-320D 3.5 mm MIDI-out ↗</a><span class="eye">👁</span></td>
+        <td class="fn">MIDI out (TRS Type A)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 49,905</span></td></tr><tr class="">
+        <td class="ref">FB1</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C19330.html" target="_blank" rel="noopener">BLM18AG601 ferrite ↗</a></td>
+        <td class="fn">audio supply filter</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 950,152</span></td></tr><tr class="">
+        <td class="ref">FB2</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C19330.html" target="_blank" rel="noopener">BLM18AG601 ferrite ↗</a></td>
+        <td class="fn">audio supply filter (r18.70: C84094 → C19330)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 950,152</span></td></tr><tr class="">
+        <td class="ref">J6/J7</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C124375.html" target="_blank" rel="noopener">1×2 header ×2 ↗</a></td>
+        <td class="fn">speaker leads</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 64,842</span> <span class="b hand">hand-place</span></td></tr><tr class="vis">
+        <td class="ref">SPK</td>
+        <td class="part"><a href="https://www.digikey.com/en/products/detail/cui-devices/CMS-402811-28SP/10821307" target="_blank" rel="noopener">Same Sky CMS-402811-28SP ×2 ↗</a><span class="eye">👁</span></td>
+        <td class="fn">the speakers (8 Ω cloth cone)</td>
+        <td class="jlc"><span class="b off">off-board · not soldered</span></td></tr></tbody></table></section><section><h2 style="border-color:#f59e0b"><span class="dot" style="background:#f59e0b"></span>Display</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="vis">
+        <td class="ref">LCD</td>
+        <td class="part"><a href="https://www.waveshare.com/1.9inch-lcd-module.htm" target="_blank" rel="noopener">Waveshare 1.9″ 170×320 ST7789 ↗</a><span class="eye">👁</span></td>
+        <td class="fn">the screen</td>
+        <td class="jlc"><span class="b off">off-board · not soldered</span></td></tr><tr class="">
+        <td class="ref">Q2</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C8545.html" target="_blank" rel="noopener">2N7002 MOSFET ↗</a></td>
+        <td class="fn">backlight PWM driver</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 421,360</span></td></tr><tr class="">
+        <td class="ref">J3</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C124383.html" target="_blank" rel="noopener">1×8 header ↗</a></td>
+        <td class="fn">plugs the LCD in</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 12,518</span> <span class="b hand">hand-place</span></td></tr></tbody></table></section><section><h2 style="border-color:#0ea5e9"><span class="dot" style="background:#0ea5e9"></span>Controls</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="vis">
+        <td class="ref">EN1-4</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C202365.html" target="_blank" rel="noopener">ALPS EC11E18244AU ×4 ↗</a><span class="eye">👁</span></td>
+        <td class="fn">4 push-encoders</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 2,787</span> <span class="b hand">hand-place</span></td></tr><tr class="vis">
+        <td class="ref">Cells</td>
+        <td class="part"><a href="https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch" target="_blank" rel="noopener">Gateron LP Magnetic ×5 ↗</a><span class="eye">👁</span></td>
+        <td class="fn">playable keys — premium Hall-magnetic (analog velocity); ~$45/pack of 35, off-board, pin-less</td>
+        <td class="jlc"><span class="b off">off-board · not soldered</span></td></tr><tr class="">
+        <td class="ref">Hall</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C2152902.html" target="_blank" rel="noopener">DRV5056A4 ×5 ↗</a></td>
+        <td class="fn">reads each cell&#x27;s magnet</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 3,057</span> <span class="b hand">hand-place</span></td></tr><tr class="vis">
+        <td class="ref">SW6-10</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C36498965.html" target="_blank" rel="noopener">HX B3F-4055 tactile ×5 ↗</a><span class="eye">👁</span></td>
+        <td class="fn">modifier buttons (THT, square head for caps) — r18.71: C2845240 (stock 30) → C36498965 (20k stock, ~$0.06); verify THT footprint/pinout</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 19,884</span> <span class="b hand">hand-place</span></td></tr><tr class="">
+        <td class="ref">SW11/BOOT</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C720477.html" target="_blank" rel="noopener">TS-1088 tactile ×2 ↗</a></td>
+        <td class="fn">Reset + BOOT0 (2 service buttons)</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 883,607</span></td></tr></tbody></table></section><section><h2 style="border-color:#a855f7"><span class="dot" style="background:#a855f7"></span>LEDs (23 visible)</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="vis">
+        <td class="ref">LED-Y</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C2287.html" target="_blank" rel="noopener">KENTO KT-0603Y (yellow) ↗</a><span class="eye">👁</span></td>
+        <td class="fn">Shift + 5 cell base-hold LEDs</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 33,177</span></td></tr><tr class="vis">
+        <td class="ref">LED-G</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C12624.html" target="_blank" rel="noopener">KENTO KT-0603G (green) ↗</a><span class="eye">👁</span></td>
+        <td class="fn">Hold + 5 cell shift-hold LEDs</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 345,193</span></td></tr><tr class="vis">
+        <td class="ref">LED-W</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C965808.html" target="_blank" rel="noopener">XL-1608UWC (white) ↗</a><span class="eye">👁</span></td>
+        <td class="fn">Drone/Gen/Clear + 8 VU LEDs</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 2,700,420</span></td></tr><tr class="vis">
+        <td class="ref">LED_CHRG</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C965800.html" target="_blank" rel="noopener">Orange 0603 XL-1608UOC ↗</a><span class="eye">👁</span></td>
+        <td class="fn">charger status (r18.70: C72041 was blue+EOL → C965800)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 649,682</span></td></tr><tr class="">
+        <td class="ref">R_LED</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C23151.html" target="_blank" rel="noopener">390 Ω ×23 ↗</a></td>
+        <td class="fn">LED series resistors</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 250,152</span></td></tr></tbody></table></section><section><h2 style="border-color:#64748b"><span class="dot" style="background:#64748b"></span>I/O Expander &amp; LED Drivers</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="">
+        <td class="ref">U2</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C506653.html" target="_blank" rel="noopener">MCP23017 GPIO expander ↗</a></td>
+        <td class="fn">extra inputs over I²C</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 3,378</span></td></tr><tr class="">
+        <td class="ref">U6</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C2678753.html" target="_blank" rel="noopener">PCA9685 PWM driver ↗</a></td>
+        <td class="fn">drives the 15 status LEDs</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 3,147</span></td></tr><tr class="">
+        <td class="ref">U10</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C2678753.html" target="_blank" rel="noopener">PCA9685 PWM driver #2 ↗</a></td>
+        <td class="fn">drives the 8 VU LEDs</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 3,147</span></td></tr></tbody></table></section><section><h2 style="border-color:#94a3b8"><span class="dot" style="background:#94a3b8"></span>Passives &amp; Service</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="">
+        <td class="ref">R 1k</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C21190.html" target="_blank" rel="noopener">0603 1% ↗</a></td>
+        <td class="fn">Hall RC, pull-ups</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 5,801,237</span></td></tr><tr class="">
+        <td class="ref">R 100k</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C25803.html" target="_blank" rel="noopener">0603 1% ↗</a></td>
+        <td class="fn">ON pull-down etc.</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 7,471,690</span></td></tr><tr class="">
+        <td class="ref">R 5.1k / 820</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C23186.html" target="_blank" rel="noopener">0603 1% ↗</a></td>
+        <td class="fn">dividers, CC</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 3,618,054</span></td></tr><tr class="">
+        <td class="ref">C 100n</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C14663.html" target="_blank" rel="noopener">0603 X7R ↗</a></td>
+        <td class="fn">decoupling (many)</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 21,044,139</span></td></tr><tr class="">
+        <td class="ref">C 1µ</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C15849.html" target="_blank" rel="noopener">0603 X5R ↗</a></td>
+        <td class="fn">decoupling / VREF</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 6,889,230</span></td></tr><tr class="">
+        <td class="ref">C 10n</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C57112.html" target="_blank" rel="noopener">0603 ↗</a></td>
+        <td class="fn">filtering</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 2,846,393</span></td></tr><tr class="">
+        <td class="ref">C 2.2µ VCAP</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C23630.html" target="_blank" rel="noopener">0603 X5R 16V ↗</a></td>
+        <td class="fn">PCM5102A charge pump (r18.70: C24539 → C23630)</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 1,894,059</span></td></tr><tr class="">
+        <td class="ref">C 10µ</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C15850.html" target="_blank" rel="noopener">0805 X5R ↗</a></td>
+        <td class="fn">rail bulk</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 5,877,645</span></td></tr><tr class="">
+        <td class="ref">C 4.7µ / 22µ</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C46653.html" target="_blank" rel="noopener">0603/0805 ↗</a></td>
+        <td class="fn">local bulk</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 1,915,999</span></td></tr><tr class="">
+        <td class="ref">J4</td>
+        <td class="part"><a href="https://www.tag-connect.com/product/tc2030-idc" target="_blank" rel="noopener">Tag-Connect TC2030-IDC ↗</a></td>
+        <td class="fn">SWD debug header</td>
+        <td class="jlc"><span class="b off">off-board · not soldered</span></td></tr></tbody></table></section>
+ <section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Docs &amp; files (repo)</h2>
+ <p class="note">Relative links — work when the HTML is opened from a repo clone.</p>
+ <div class="flinks"><a class="flink" href="PCB_HANDOFF.md">PCB handoff (checklist) ↗</a><a class="flink" href="PINMAP.md">Pin / net map ↗</a><a class="flink" href="SCHEMATIC_WALKTHROUGH.md">Schematic walkthrough ↗</a><a class="flink" href="MECHANICAL_REQUIREMENTS.md">Mechanical / case design ↗</a><a class="flink" href="ERC_DRC_CHECKLIST.md">ERC / DRC checklist ↗</a><a class="flink" href="KICAD_BLUEPRINT.md">KiCad layout blueprint ↗</a><a class="flink" href="../decisions/ADR-0018-pcb-layer-stack.md">Layer stack (ADR-0018) ↗</a><a class="flink" href="../../kicad/generate_kicad_project.py">Schematic generator (truth) ↗</a><a class="flink" href="../../kicad/field_ambience.kicad_pro">KiCad project ↗</a><a class="flink" href="../../kicad/jlc_bom.csv">JLC machine BOM (CSV) ↗</a></div></section>
+ <footer>LCSC = JLCPCB (same group): the <code>C</code>-number is the JLC part; the link opens the LCSC product page, the badge is JLC's <i>assembly</i> status (stock checked 2026-06-29 — re-verify before ordering). Source of truth = <code>kicad/generate_kicad_project.py</code>; machine BOM for upload = <code>kicad/jlc_bom.csv</code>; regenerate this page with <code>kicad/gen_bom_overview.py</code>.</footer>
+</div></body></html>

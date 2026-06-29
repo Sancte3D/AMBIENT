@@ -1641,9 +1641,11 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 67.0 74.92 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "Generic amber 0603" (at 69.54 78.73 0)
+      (property "MPN" "XL-1608UOC-06" (at 69.54 78.73 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C72041" (at 69.54 80.0 0)
+      (property "Manufacturer" "XINGLIGHT" (at 69.54 80.0 0)
+        (effects (font (size 1.27 1.27)) hide))
+      (property "LCSC" "C965800" (at 69.54 81.27 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

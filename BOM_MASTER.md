@@ -27,6 +27,19 @@ in any Markdown editor).
 
 ---
 
+> **✅ JLC assembly sourcing check (2026-06-29) — resolved.** Verified every
+> soldered part against JLC's SMT parts API. All in JLC's assembly library; the
+> 5 problem parts below are **fixed with verified JLC-stocked replacements**
+> (specs + stock confirmed via API). Browsable: [`field-ambience-current/docs/hardware/bom_overview.html`](field-ambience-current/docs/hardware/bom_overview.html).
+>
+> | Was | Problem | → Replacement (verified) | JLC |
+> |---|---|---|---|
+> | FB2 `C84094` | not in JLC assembly | **`C19330`** for both FB1+FB2 (Murata, same MPN) | Extended, 950 k |
+> | VCAP `C24539` | not in JLC assembly | **`C23630`** (2.2 µF 16 V X5R 0603) | **Basic**, 1.9 M |
+> | LED_CHRG `C72041` | **wrong part — blue + EOL** (not amber!) | **`C965800`** (XL-1608UOC-06 orange 605 nm 0603) | Extended, 650 k |
+> | C_BULK2 `C2880380` | stock ≈1 | **`C23742`** (100 µF 10 V X5R 1210) | Extended, 41 k |
+> | SW6-10 `C2845240` | stock ≈30 (too few) | **`C36498965`** (HX B3F, square head for caps, 20 k, ~$0.06) — verify THT footprint/pinout | Extended, 20 k |
+
 ## 1. MCU + Clock
 
 | Ref | MPN | LCSC/Link | Footprint | FP source | 3D |
@@ -53,7 +66,7 @@ in any Markdown editor).
 | **C_PWR_SW** 10 µF X5R 0805 (output cap on `+5V_SW`) | LMK212ABJ106 class | [C15850](https://www.lcsc.com/product-detail/C15850.html) | `Capacitor_SMD:C_0805_2012Metric` | KiCad-Standard | Standard-Lib-3D |
 | **U7** charger | **MCP73831T-2ACI/OT** SOT-23-5 | [C424093](https://www.lcsc.com/product-detail/C424093.html) | `Package_TO_SOT_SMD:SOT-23-5` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK** polymer-tantalum 470 µF / 10 V case-E 7343-43 (ESR 100 mΩ; <25 mΩ flat parts not in stock at LCSC — transient ESR is supplied by C_BULK2) | TPSE477K010R0100 (Kyocera AVX) | [C444831](https://www.lcsc.com/product-detail/C444831.html) | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | KiCad-Standard | Standard-Lib-3D |
-| **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 does not exist → 100µF of real headroom instead of 220µF/6.3V derating) | LMK325ABJ107MM-T (Taiyo Yuden) | [C2880380](https://www.lcsc.com/product-detail/C2880380.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
+| **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 does not exist → 100µF of real headroom instead of 220µF/6.3V derating) | CL32A107MPVNNNE (Samsung) — r18.70: was C2880380 (Taiyo Yuden, JLC stock ≈1) | [C23742](https://www.lcsc.com/product-detail/C23742.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J9** JST-PH 2.0 2-pin (LiPo battery — generator refdes, **not** J_BAT) | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN.step) |
 | LiPo pouch **503759** (50×37×9.4 mm, **2000 mAh ~6.6 h @ 300 mA**) — r18.21 right-sized down from 5000mAh overkill | Generic LiPo 2000mAh JST-PH 2.0 | [PiHut 2000mAh](https://thepihut.com/products/2000mah-3-7v-lipo-battery) | — (no PCB FP, bottom-case slot) | — | Vendor |
 
@@ -74,7 +87,7 @@ in any Markdown editor).
 |---|---|---|---|---|---|
 | **U3** DAC | **PCM5102APWR** TSSOP-20 | [C107671](https://www.lcsc.com/product-detail/C107671.html) | `Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 | **U4** Class-D amp | **PAM8403DR-H** SOIC-16 | [C17337](https://www.lcsc.com/product-detail/C17337.html) | `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` | KiCad-Standard | Standard-Lib-3D |
-| FB1/FB2 ferrite bead | **BLM18AG601SN1D** 0603 600 Ω | [C19330](https://www.lcsc.com/product-detail/C19330.html) (FB1) / [C84094](https://www.lcsc.com/product-detail/C84094.html) (FB2) | `Inductor_SMD:L_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| FB1/FB2 ferrite bead | **BLM18AG601SN1D** 0603 600 Ω | [C19330](https://www.lcsc.com/product-detail/C19330.html) (**both FB1+FB2** — r18.70: dropped C84094, not in JLC assembly; C19330 is JLC Extended, 950 k stock) | `Inductor_SMD:L_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J8** line-out 3.5 mm TRS | **PJ-320D** (SHOU HAN, SMT) with insertion-detect | [C431535](https://www.lcsc.com/product-detail/C431535.html) | [`field_ambience:Jack_3.5mm_PJ-320D_SMT`](field-ambience-current/kicad/libraries/field_ambience.pretty/Jack_3.5mm_PJ-320D_SMT.kicad_mod) (EasyEDA CAD vendored r18.19) | field_ambience (custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
 | **J10** MIDI-out 3.5 mm TRS (r18.67) | **PJ-320D** (same MPN as J8) — TRS **Type A**, OUT-only, 3.3 V/CA-033 (no level shifter). MIDI_TX=PD5→R_MIDI_TX 220 Ω→Tip; +3V3→R_MIDI_REF 220 Ω→Ring; Sleeve→GND. ⚠️ **J9 = battery, J10 = MIDI** | [C431535](https://www.lcsc.com/product-detail/C431535.html) | see J8 (`field_ambience:Jack_3.5mm_PJ-320D_SMT`) | field_ambience (custom) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/AUDIO-SMD_PJ-320D-1.step) |
 | **R_MIDI_TX / R_MIDI_REF** 220 Ω 0603 (2×, MIDI Type-A) | 0603WAF2200T5E | **NEEDS-VERIFY** — fix the 220 Ω LCSC before order (anti-guess, NO-LCSC list) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
@@ -138,7 +151,7 @@ in any Markdown editor).
 
 | Ref | MPN | LCSC/Link | Footprint | FP source | 3D |
 |---|---|---|---|---|---|
-| **SW6–SW10** modifier (Shift / Hold / Drone / Generate / Clear — all 5 identical, momentary) — the cap clips onto the **square head with a hole** on top; no anti-rotation needed (user 2026-06-28) | **HCTL TC-1212-7.3-260G** (THT, 12×12×7.3 mm, square head) | [C2845240](https://jlcpcb.com/partdetail/C2845240) | **THT 12×12 4-pin** — footprint from the PCB maker (the previous `SW_HX_…_SMD-4P` was SMD) | Vendor | Vendor-CAD |
+| **SW6–SW10** modifier (Shift / Hold / Drone / Generate / Clear — all 5 identical, momentary) — the cap clips onto the **square head** on top; no anti-rotation needed (user 2026-06-28) | **HX B3F-4055-Y** (THT, 11.8×11.8×7.3 mm, **square** head, ~$0.06). **r18.71: was TC-1212-7.3-260G C2845240 (JLC stock ≈30, too few)** → HX B3F (JLC 20 k stock, same 12×12 4-pin THT body, square head ideal for caps). ⚠ verify THT footprint/pinout vs the existing `SW_TC1212-7.3_THT_4P` (or make an HX-THT footprint) before fab. Alt: C2845239 (TC-1212 round). | [C36498965](https://jlcpcb.com/partdetail/C36498965) | **THT 12×12 4-pin** — verify footprint/pinout (HX B3F) | Vendor | Vendor-CAD |
 | **SW11** Reset (mini SMD tactile, service hole in bottom plate) | **XUNPU TS-1088-AR02016** | [C720477](https://www.lcsc.com/product-detail/C720477.html) | [`field_ambience:SW_TS1088_SMD`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_TS1088_SMD.kicad_mod) (EasyEDA-verified) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (r18.36 fix: previously wrongly "Vendor-CAD" — STEP is in the repo) |
 | **SW_BOOT** BOOT0 (USB-DFU flash, service hole in bottom plate) | same part as SW11 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | same FP as SW11 | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (see SW11) |
 | R_BOOT_SW 1 kΩ 0603 (BOOT0 pull-up) | see R_CELL | [C21190](https://www.lcsc.com/product-detail/C21190.html) | see R_CELL | KiCad-Standard | Standard-Lib-3D |
@@ -162,7 +175,7 @@ in any Markdown editor).
 | **Cell LEDs 5× yellow** (base-hold status) | Hubei KENTO KT-0603Y | [C2287](https://www.lcsc.com/product-detail/C2287.html) | see above | KiCad-Standard | Standard-Lib-3D |
 | **Cell LEDs 5× green** (shift-hold status) | Hubei KENTO KT-0603G | [C12624](https://www.lcsc.com/product-detail/C12624.html) | see above | KiCad-Standard | Standard-Lib-3D |
 | **LED_HB** heartbeat (warm white) | **XL-1608UWC-04** (r18.24 fix: was C965818 = XL-2012UWC **0805**, wrong package) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | see above | KiCad-Standard | Standard-Lib-3D |
-| **LED_CHRG** charger status (amber) | Generic Amber 0603 | [C72041](https://www.lcsc.com/product-detail/C72041.html) | see above | KiCad-Standard | Standard-Lib-3D |
+| **LED_CHRG** charger status (orange) | **XL-1608UOC-06** (XINGLIGHT, orange 605 nm 0603) — r18.70: was C72041, which is actually a **blue + discontinued** LED with stock ≈4 (wrong part, caught by JLC API check) | [C965800](https://www.lcsc.com/product-detail/C965800.html) | see above | KiCad-Standard | Standard-Lib-3D |
 | LED series resistors **390 Ω** 0603 (15×, on +5V anode → LED → PCA9685 sink) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
 > **Color mapping (r18.64, user spec):** Shift=yellow, Hold=green, Generate/
@@ -192,11 +205,11 @@ the generator with an LCSC number; the assortment here is for reference only:
 
 | Class | LCSC examples |
 |---|---|
-| Resistors 0603 1 % | C21190 (1 k), C25804 (10 k), C23253 (820), C23186 (5.1 k), C23146 (36 k), C23153 (39 k), C23162 (470), C23345 (22), C25803 (100 k), C25811 (200 k), C4184 (20 k), C22975 (2 k), C31850 (22 k), C72041 |
+| Resistors 0603 1 % | C21190 (1 k), C25804 (10 k), C23253 (820), C23186 (5.1 k), C23146 (36 k), C23153 (39 k), C23162 (470), C23345 (22), C25803 (100 k), C25811 (200 k), C4184 (20 k), C22975 (2 k), C31850 (22 k) |
 | Caps 0603 X7R / X5R | C14663 (100 n), C57112 (10 n), C46653 (4.7 µ X5R), C1588 (1 n), C1804 (auto-generated), C15849 (1 µ X5R), C14858 (10 n B) |
 | Caps 0805 | C15850 (10 µ X5R), C45783 (22 µ X5R) |
 | MLCC 1210 | C2880380 (100 µF/10V X5R, C_BULK2); C444831 (470µF/10V polymer-tantalum case-E, C_BULK) |
-| Caps specific | C24539 (2.2 µF VCAP); C107045 (27 pF C0G, HSE 2×); C15849 (1 µF, VREF+ & VDDA); C14663 (100 nF, VREF+ & VDDA) |
+| Caps specific | **C23630** (2.2 µF VCAP, 16 V X5R — r18.70: was C24539, not in JLC assembly); C107045 (27 pF C0G, HSE 2×); C15849 (1 µF, VREF+ & VDDA); C14663 (100 nF, VREF+ & VDDA) |
 
 All standard FPs: `Resistor_SMD:R_0603_1608Metric`, `Capacitor_SMD:C_0603_1608Metric`,
 `Capacitor_SMD:C_0805_2012Metric`, `Capacitor_SMD:C_1210_3225Metric` — all KiCad-Standard,

@@ -29,6 +29,59 @@ Adressat: PCB-Designer (Bauteilplatzierung Schritt 7 des PCB-Workflows) +
 
 ---
 
+## 1.0 External / visible components — case-design inventory
+
+Everything that appears on an **outer surface** of the enclosure — i.e. what the
+case must provide a window / cutout / hole / grille / slot for. Placement of most
+of these is **your design**; this is the *inventory*, not a layout.
+
+**Headline counts:**
+
+- **Touch controls: 15** → 4 encoders + 5 cell keys + 5 modifier buttons + 1 power switch
+- **Display: 1** window
+- **Indicator LEDs: 23** (light points needing egress) → 5 modifier + 10 cell + 8 VU-meter
+- **Ports: 3** → USB-C + line-out + MIDI
+- **Speakers: 2** grilles
+- **Bottom service: 2 pinholes + battery access + 4 screws**
+
+### TOP face (primary UI)
+
+| Component | Count | What it's for | Case needs |
+|---|---|---|---|
+| Display (Waveshare 1.9″ LCD 170×320) | 1 | the screen — worlds, params, meters | window = active area + 0.5 mm/side; must show the full active area |
+| Push-encoders (ALPS EC11) + 3D-print knobs Ø19–20 mm | 4 | global params + a push function each | 4 shaft holes; knobs sit ~10 mm above the top plate |
+| Cell keys (Gateron Low-Profile Magnetic) + 3D-print 1u caps | 5 | the playable keys (note + velocity, Hall-sensed) | 5× 14×14 mm cutouts in a switch plate, MX 19 mm pitch |
+| Modifier buttons (TC-1212 tactile) + caps | 5 | Shift / Hold / Drone / Generate / Clear | 5 button holes; caps clip onto the square head |
+| Modifier LEDs (mono) | 5 | per-button status (Shift=yellow, Hold=green, other 3 white) | 5 light points — translucent cap / lightpipe / window |
+| Cell LEDs (2 per cell: yellow + green) | 10 | cell hold-status (base / shift) | 10 light points — glow the keycap or a window per cell |
+| VU-meter LEDs (white, in a row) | 8 | live audio level (OP-1-style) | 8 light points / a light-bar window; row position = your choice |
+
+### SIDE faces (edges)
+
+| Component | Count | What it's for | Case needs |
+|---|---|---|---|
+| USB-C (J1) | 1 | charging + USB-DFU firmware flash | edge cutout for the receptacle |
+| Line-out 3.5 mm (J8) | 1 | audio out to headphones / mixer | 3.5 mm hole; opposite edge from the switching regulators |
+| MIDI-out 3.5 mm (J10) | 1 | MIDI out (TRS Type A) | 3.5 mm hole |
+| Power slide switch (SW_PWR) | 1 | on/off, side-actuated ("off but still charges") | side slot + your own slider cap that nudges the switch (mechanically decoupled) |
+| Speaker grilles | 2 | the two speakers | 2× Ø25–35 mm open area + dust mesh; ≥50 mm apart; sealed ~5 cm³ chamber behind each (critical for sound). Top or side — your choice |
+
+### BOTTOM face
+
+| Component | Count | What it's for | Case needs |
+|---|---|---|---|
+| Service pinholes | 2 | Reset (SW11) + BOOT0 (SW_BOOT), paperclip access | 2× ~Ø2 mm pinholes |
+| Battery access | 1 | LiPo pouch (52×39×10 mm) + JST disconnect | removable bottom piece or slot/door |
+| Mounting screws | 4 | hold top + bottom together | 4 corner bosses/standoffs, M3 (Ø3.2 mm) |
+| Status LED (optional) | ≤2 | power / charge indicator (heartbeat + charger) | optional lightpipe to the bottom plate |
+
+> The LED **egress method** (translucent caps vs lightpipes vs windows) is a
+> design choice — the firmware just drives the LEDs. Speaker placement (top vs
+> side) and the exact row/grid positions are also yours; the PCB puts the
+> emitters where your case wants the light/sound to exit.
+
+---
+
 ## 1. Mechanisch-fixierte Bauteile (must-place-first)
 
 Diese Bauteile **müssen** vor allen anderen platziert sein — sie sind durch das
