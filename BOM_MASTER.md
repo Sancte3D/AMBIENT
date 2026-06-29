@@ -38,7 +38,7 @@ in any Markdown editor).
 > | VCAP `C24539` | not in JLC assembly | **`C23630`** (2.2 µF 16 V X5R 0603) | **Basic**, 1.9 M |
 > | LED_CHRG `C72041` | **wrong part — blue + EOL** (not amber!) | **`C965800`** (XL-1608UOC-06 orange 605 nm 0603) | Extended, 650 k |
 > | C_BULK2 `C2880380` | stock ≈1 | **`C23742`** (100 µF 10 V X5R 1210) | Extended, 41 k |
-> | SW6-10 `C2845240` | stock ≈30 (too few) | ⚠ **decision** — `C2845239` (TC-1212 round) or `C36498965` (HX square, 20 k) — see §8, footprint/cap verify | — |
+> | SW6-10 `C2845240` | stock ≈30 (too few) | **`C36498965`** (HX B3F, square head for caps, 20 k, ~$0.06) — verify THT footprint/pinout | Extended, 20 k |
 
 ## 1. MCU + Clock
 
@@ -151,7 +151,7 @@ in any Markdown editor).
 
 | Ref | MPN | LCSC/Link | Footprint | FP source | 3D |
 |---|---|---|---|---|---|
-| **SW6–SW10** modifier (Shift / Hold / Drone / Generate / Clear — all 5 identical, momentary) — the cap clips onto the **square head with a hole** on top; no anti-rotation needed (user 2026-06-28) | **HCTL TC-1212-7.3-260G** (THT, 12×12×7.3 mm, square head). ⚠ **r18.70: C2845240 JLC stock ≈30 — too few for 5 + spares.** Verified JLC alternatives (footprint + cap-fit to verify before commit): **C36498965** (HX B3F-4055, **square** head, JLC 20 k — best for caps + stock) or **C2845239** (TC-1212-7.3-160G, same family but **round** head, JLC 1.5 k, lighter 160G). | [C2845240](https://jlcpcb.com/partdetail/C2845240) → see alternatives left | **THT 12×12 4-pin** — footprint from the PCB maker (the previous `SW_HX_…_SMD-4P` was SMD) | Vendor | Vendor-CAD |
+| **SW6–SW10** modifier (Shift / Hold / Drone / Generate / Clear — all 5 identical, momentary) — the cap clips onto the **square head** on top; no anti-rotation needed (user 2026-06-28) | **HX B3F-4055-Y** (THT, 11.8×11.8×7.3 mm, **square** head, ~$0.06). **r18.71: was TC-1212-7.3-260G C2845240 (JLC stock ≈30, too few)** → HX B3F (JLC 20 k stock, same 12×12 4-pin THT body, square head ideal for caps). ⚠ verify THT footprint/pinout vs the existing `SW_TC1212-7.3_THT_4P` (or make an HX-THT footprint) before fab. Alt: C2845239 (TC-1212 round). | [C36498965](https://jlcpcb.com/partdetail/C36498965) | **THT 12×12 4-pin** — verify footprint/pinout (HX B3F) | Vendor | Vendor-CAD |
 | **SW11** Reset (mini SMD tactile, service hole in bottom plate) | **XUNPU TS-1088-AR02016** | [C720477](https://www.lcsc.com/product-detail/C720477.html) | [`field_ambience:SW_TS1088_SMD`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_TS1088_SMD.kicad_mod) (EasyEDA-verified) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (r18.36 fix: previously wrongly "Vendor-CAD" — STEP is in the repo) |
 | **SW_BOOT** BOOT0 (USB-DFU flash, service hole in bottom plate) | same part as SW11 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | same FP as SW11 | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW-SMD_L3.9-W2.9-H2.0-LS4.8.step) (see SW11) |
 | R_BOOT_SW 1 kΩ 0603 (BOOT0 pull-up) | see R_CELL | [C21190](https://www.lcsc.com/product-detail/C21190.html) | see R_CELL | KiCad-Standard | Standard-Lib-3D |

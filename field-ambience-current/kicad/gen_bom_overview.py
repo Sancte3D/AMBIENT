@@ -82,9 +82,9 @@ G = [
  ]),
  ("Controls", "#0ea5e9", [
    ("EN1-4","ALPS EC11E18244AU ×4","4 push-encoders","C202365","hand",True),
-   ("Cells","Gateron Low-Profile Magnetic ×5","the 5 playable keys","https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch","off",True),
+   ("Cells","Gateron LP Magnetic ×5","playable keys — premium Hall-magnetic (analog velocity); ~$45/pack of 35, off-board, pin-less","https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch","off",True),
    ("Hall","DRV5056A4 ×5","reads each cell's magnet","C2152902","hand",False),
-   ("SW6-10","TC-1212-7.3 tactile ×5","modifier buttons (THT) — ⚠ low stock, → C36498965 (square,20k) or C2845239","C2845240","hand",True),
+   ("SW6-10","HX B3F-4055 tactile ×5","modifier buttons (THT, square head for caps) — r18.71: C2845240 (stock 30) → C36498965 (20k stock, ~$0.06); verify THT footprint/pinout","C36498965","hand",True),
    ("SW11/BOOT","TS-1088 tactile ×2","Reset + BOOT0 (2 service buttons)","C720477","jlc",False),
  ]),
  ("LEDs (23 visible)", "#a855f7", [
@@ -170,6 +170,7 @@ PCB_GUIDE = """
    <li>speaker headers · battery JST · then power, MCU+decoupling, audio, I/O</li>
   </ul></div>
  </div>
+ <p class="cells"><b>⚠ The 5 cells are unusual — read this before placing them.</b> The Gateron magnetic switches are <b>pin-less</b> — no electrical connection to the PCB; they sit in a plate <i>above</i> the board. The PCB carries only a <b>linear Hall sensor (DRV5056, SOT-23) directly under each switch stem</b>, on the 19 mm MX grid. As the magnet in the stem moves down, the Hall sensor outputs an analog voltage → RC filter (1 k + 10 nF) → STM32 ADC (nets <code>CELL1..5_SENSE</code>) → firmware computes velocity/position. <b>So there is NO switch footprint — just 5 Hall sensors + their RC at the cell centers.</b> Switches, plate and caps are off-board hardware (ADR-0013). Same idea as a NuPhy/HE keyboard.</p>
  <p><b>Thermal:</b> no ventilation slots (~1.5–2.2 W). Give the LDO copper + thermal vias; keep the LiPo away from LDO/charger/boost.</p>
  <p><b>Workflow → fab:</b> regenerate → open <code>field_ambience.kicad_pro</code> in KiCad 9 → ERC (0 err) → Update PCB from Schematic (F8) → place → route → DRC → export Gerber + CPL; BOM = <code>kicad/jlc_bom.csv</code> → upload to JLC.</p>
  <p><b>Hard blockers before order:</b> ERC pass · layout + routing · PCB outline + mechanical coords (TBD) · USB impedance check · the 5 sourcing swaps above · the modifier-button decision.</p>
@@ -235,7 +236,7 @@ def main():
       <li><b>2.2 µF VCAP</b> C24539 (not in JLC) → <b>C23630</b> (16 V X5R 0603, JLC Basic 1.9M).</li>
       <li><b>Charger LED</b> C72041 (was <i>blue + discontinued</i>, wrong part!) → <b>C965800</b> (orange 605 nm 0603, JLC 650k).</li>
       <li><b>100 µF 1210</b> C2880380 (stock 1) → <b>C23742</b> (100 µF 10 V X5R 1210, JLC 41k).</li>
-      <li><b>Modifier button</b> C2845240 (stock 30) → ⚠ <b>decision:</b> <b>C36498965</b> (HX square head, JLC 20k — best for caps) or <b>C2845239</b> (TC-1212 round). Verify footprint + cap-fit.</li>
+      <li><b>Modifier button</b> C2845240 (stock 30) → <b>C36498965</b> (HX B3F, square head for caps, JLC 20k, ~$0.06). ⚠ verify THT footprint/pinout before fab.</li>
     </ul></div>"""
 
     doc = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -271,6 +272,7 @@ def main():
  .guide p{{margin:8px 0}} .guide code{{background:#0c0e13;padding:1px 5px;border-radius:5px;font-size:12px}}
  .guide b{{color:#fff}} .gcols{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:6px 0}}
  .guide ul{{margin:5px 0 0;padding-left:18px}} .guide li{{margin:3px 0;color:var(--mut)}} .gcols b{{color:#9fe6f5}}
+ .guide p.cells{{background:#231a0c;border:1px solid #5a4416;border-radius:9px;padding:10px 14px;color:#e9d9b3}} .guide p.cells code{{background:#0c0e13}}
  .sheets{{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}}
  .scard{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}}
  .sh{{font-size:14px}} .sh b{{color:#fff}} .sfile{{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mut);margin-left:6px}}
