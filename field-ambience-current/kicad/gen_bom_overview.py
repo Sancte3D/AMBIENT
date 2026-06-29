@@ -172,6 +172,7 @@ PCB_GUIDE = """
   </ul></div>
  </div>
  <p class="cells"><b>⚠ The 5 cells are unusual — read this before placing them.</b> The Gateron magnetic switches are <b>pin-less</b> — no electrical connection to the PCB; they sit in a plate <i>above</i> the board. The PCB carries only a <b>linear Hall sensor (DRV5056, SOT-23) directly under each switch stem</b>, on the 19 mm MX grid. As the magnet in the stem moves down, the Hall sensor outputs an analog voltage → RC filter (1 k + 10 nF) → STM32 ADC (nets <code>CELL1..5_SENSE</code>) → firmware computes velocity/position. <b>So there is NO switch footprint — just 5 Hall sensors + their RC at the cell centers.</b> Switches, plate and caps are off-board hardware (ADR-0013). Same idea as a NuPhy/HE keyboard.</p>
+ <p class="disp"><b>The display is a module, not bare parts — how it connects.</b> The Waveshare 1.9″ LCD is its own small PCB (ST7789 + level-shifter + backlight). It joins the main board only through <b>J3, a 1×8 2.54 mm header</b>: 1 VCC · 2 GND · 3 SCK (PA5) · 4 MOSI (PA7) · 5 RES (PC5) · 6 DC (PC4) · 7 CS (PA6) · 8 BLK (backlight via Q2 / PCA9685 ch15). It is <b>not reflow-soldered with the board</b> — fit it by hand after assembly: a <b>female socket on J3 + male header on the module</b> (plug-in, serviceable) or a <b>short 8-wire cable</b> so the display can sit behind the bezel window while the main PCB is below. ⚠ The module's pin <i>order</i> varies by vendor — verify the real module against J3 before finalizing.</p>
  <p><b>Thermal:</b> no ventilation slots (~1.5–2.2 W). Give the LDO copper + thermal vias; keep the LiPo away from LDO/charger/boost.</p>
  <p><b>Workflow → fab:</b> regenerate → open <code>field_ambience.kicad_pro</code> in KiCad 9 → ERC (0 err) → Update PCB from Schematic (F8) → place → route → DRC → export Gerber + CPL; BOM = <code>kicad/jlc_bom.csv</code> → upload to JLC.</p>
  <p><b>Hard blockers before order:</b> ERC pass · layout + routing · PCB outline + mechanical coords (TBD) · USB impedance check · the 5 sourcing swaps above · the modifier-button decision.</p>
@@ -298,6 +299,7 @@ def main():
  .guide b{{color:#fff}} .gcols{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:6px 0}}
  .guide ul{{margin:5px 0 0;padding-left:18px}} .guide li{{margin:3px 0;color:var(--mut)}} .gcols b{{color:#9fe6f5}}
  .guide p.cells{{background:#231a0c;border:1px solid #5a4416;border-radius:9px;padding:10px 14px;color:#e9d9b3}} .guide p.cells code{{background:#0c0e13}}
+ .guide p.disp{{background:#0e1f2e;border:1px solid #1f4a6b;border-radius:9px;padding:10px 14px;color:#cfe6f5}} .guide p.disp code{{background:#0c0e13}}
  .guide p.ready{{background:#10241a;border:1px solid #1f5b3a;border-radius:9px;padding:10px 14px;color:#cfeede}} .guide p.ready code{{background:#0c0e13}}
  p.vals{{font-size:13px;color:var(--mut);margin:10px 0 0}} p.vals b{{color:#e6e9ef}}
  .sheets{{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}}
