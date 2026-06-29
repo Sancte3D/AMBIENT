@@ -156,6 +156,7 @@ def sheets_html():
 PCB_GUIDE = """
 <section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>For the PCB engineer (Aron) — start here</h2>
 <div class="guide">
+ <p class="ready">✅ <b>The schematic is already drawn and split into 8 pages.</b> Open <code>kicad/field_ambience.kicad_pro</code> in <b>KiCad 9</b> — the 8 sheets (listed below) load with every symbol, net, value and a pre-assigned footprint. You do <b>not</b> redraw the schematic. Then: ERC → <i>Update PCB from Schematic (F8)</i> → place → route.</p>
  <p><b>The schematic is generated</b> by <code>kicad/generate_kicad_project.py</code> — that script is the source of truth. Don't hand-edit the <code>.kicad_sch</code>; change the generator and re-run. <b>There is no <code>.kicad_pcb</code> yet — the board layout is greenfield, that's your job.</b> ERC/DRC run in the KiCad 9 GUI (no kicad-cli here).</p>
  <div class="gcols">
   <div><b>4-layer stack (ADR-0018, locked)</b><ul>
@@ -178,6 +179,30 @@ PCB_GUIDE = """
 <section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Schematic sheets (open in KiCad)</h2>
 <p class="note">8 generated sheets — counts + inter-sheet nets parsed from the live <code>.kicad_sch</code>. No browser preview (no kicad-cli); links open the real sheet in KiCad 9.</p>
 <div class="sheets">__SHEETS__</div></section>
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Key connections &amp; component values</h2>
+<p class="note">Quick reference (verified from <code>PINMAP.md</code>). The full per-pin map is in the schematic + PINMAP — this is the at-a-glance version.</p>
+<table><thead><tr><th>Interface</th><th>STM32 pins</th><th>Goes to</th><th>Key values</th></tr></thead><tbody>
+<tr><td class="ref">I²S audio</td><td class="part">PE4 / PE5 / PE6</td><td class="fn">PCM5102A LRCK / BCK / DIN</td><td class="fn">—</td></tr>
+<tr><td class="ref">Cells ×5 (ADC)</td><td class="part">PC0, PC1, PA4, PB0, PB1</td><td class="fn">DRV5056 Hall OUT (under each switch)</td><td class="fn"><b>each: 1 kΩ series + 10 nF to GND</b></td></tr>
+<tr><td class="ref">LCD SPI</td><td class="part">PA5 SCK, PA7 MOSI (+CS/DC/RES)</td><td class="fn">ST7789 via J3 header</td><td class="fn">backlight via Q2 / PCA9685 ch12</td></tr>
+<tr><td class="ref">I²C</td><td class="part">PB6 SCL, PB7 SDA</td><td class="fn">MCP23017 + 2× PCA9685 (shared)</td><td class="fn"><b>4.7 kΩ pull-ups ×2</b></td></tr>
+<tr><td class="ref">USB</td><td class="part">PA11 D−, PA12 D+</td><td class="fn">USBLC6 → USB-C (J1)</td><td class="fn">90 Ω diff pair</td></tr>
+<tr><td class="ref">MIDI</td><td class="part">PD5 TX</td><td class="fn">J10 TRS jack (Type A)</td><td class="fn"><b>2× 220 Ω</b> (Tip + Ring)</td></tr>
+<tr><td class="ref">SWD debug</td><td class="part">PA13 SWDIO, PA14 SWCLK</td><td class="fn">J4 Tag-Connect TC2030</td><td class="fn">—</td></tr>
+<tr><td class="ref">Crystal</td><td class="part">OSC_IN/OUT</td><td class="fn">Y1 8 MHz (≤3 mm, local GND)</td><td class="fn"><b>2× 27 pF</b> load caps</td></tr>
+</tbody></table>
+<p class="vals"><b>Other key values:</b> LED series resistors <b>390 Ω ×23</b> · BOOT0 pull-up <b>1 kΩ</b> · power-ON pull-down <b>100 kΩ</b> · decoupling <b>100 nF per IC</b> + bulk (<b>470 µF</b> tant + <b>100 µF</b> MLCC) · power-off output cap <b>10 µF</b>. All passives are 0603 (caps up to 1210). Every value is already set in the schematic.</p></section>
+<section><h2 style="border-color:#22d3ee"><span class="dot" style="background:#22d3ee"></span>Footprints — what's ready, what you source</h2>
+<div class="guide">
+ <p>Footprints are <b>pre-assigned by the generator</b>; symbol → footprint comes through with <i>Update PCB from Schematic</i>. Status:</p>
+ <ul>
+  <li>✅ <b>In the repo</b> (<code>kicad/libraries/field_ambience.pretty/</code>, 8 custom): crystal HC-49, boost VQFN-HR, Sunlord inductor, PJ-320D 3.5 mm jack, TS-1088 service button, <b>MST-12D18 power slide switch</b>, TC-1212/HX 12×12 button (THT), + 3D STEPs.</li>
+  <li>✅ <b>KiCad-standard</b>: everything in standard packages — LQFP-100, SOT-23/89, SOIC, TSSOP, SSOP, 0603/0805/1210, pin headers, HRO USB-C.</li>
+  <li>🟢 <b>Cell switches: NO footprint needed</b> — pin-less; only the DRV5056 Hall (SOT-23, standard) is on the board under each stem.</li>
+  <li>⚠ <b>Modifier button (HX B3F, C36498965, THT):</b> verify the THT footprint — the repo <code>SW_TC1212-7.3_THT_4P</code> should fit the 12×12 4-pin THT body; if the pinout differs, generate a fresh one.</li>
+ </ul>
+ <p><b>How to get / make a footprint (for any LCSC part):</b> <code>pip install easyeda2kicad &amp;&amp; easyeda2kicad --full --lcsc_id=C36498965</code> — pulls the footprint <i>and</i> the 3D STEP straight from LCSC/EasyEDA. Otherwise build from the datasheet. The power slide switch + service buttons were made exactly this way.</p>
+</div></section>
 """
 
 def files_html():
@@ -273,6 +298,8 @@ def main():
  .guide b{{color:#fff}} .gcols{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:6px 0}}
  .guide ul{{margin:5px 0 0;padding-left:18px}} .guide li{{margin:3px 0;color:var(--mut)}} .gcols b{{color:#9fe6f5}}
  .guide p.cells{{background:#231a0c;border:1px solid #5a4416;border-radius:9px;padding:10px 14px;color:#e9d9b3}} .guide p.cells code{{background:#0c0e13}}
+ .guide p.ready{{background:#10241a;border:1px solid #1f5b3a;border-radius:9px;padding:10px 14px;color:#cfeede}} .guide p.ready code{{background:#0c0e13}}
+ p.vals{{font-size:13px;color:var(--mut);margin:10px 0 0}} p.vals b{{color:#e6e9ef}}
  .sheets{{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}}
  .scard{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}}
  .sh{{font-size:14px}} .sh b{{color:#fff}} .sfile{{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mut);margin-left:6px}}
