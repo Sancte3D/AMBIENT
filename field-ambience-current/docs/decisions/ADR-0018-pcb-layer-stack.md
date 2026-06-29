@@ -1,7 +1,15 @@
 # ADR-0018: PCB-Layer-Stack — 4-Layer
 
-**Status:** PROPOSED
+**Status:** ACCEPTED (2026-06-29)
 **Date:** 2026-06-22
+
+> **Locked 2026-06-29.** 4-layer confirmed: a 2-layer board cannot give the
+> STM32H743 (LQFP-100) + USB-D± + Class-D/boost switching + I²S audio a
+> continuous GND reference, so EMI/USB-compliance/audio-noise would all suffer.
+> The 4-layer planes also act as heat spreaders (see the thermal note —
+> no ventilation slots needed). **One open pre-fab check:** verify the USB-D±
+> differential impedance (~90 Ω) against JLCPCB's real 4-layer stack with their
+> impedance calculator before ordering.
 
 ## Kontext
 
