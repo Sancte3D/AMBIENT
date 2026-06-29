@@ -27,6 +27,15 @@ in any Markdown editor).
 
 ---
 
+> **⚠ JLC assembly sourcing check (2026-06-29).** Verified every soldered part
+> against JLC's SMT parts API — **all are in JLC's assembly library** except the
+> 4 below (fix before order). Browsable status: [`field-ambience-current/docs/hardware/bom_overview.html`](field-ambience-current/docs/hardware/bom_overview.html).
+> - **FB2 ferrite `C84094`** — not in JLC assembly → use **`C19330`** (FB1, same MPN) for both.
+> - **2.2 µF VCAP `C24539`** — not in JLC assembly → pick a JLC-stocked 2.2 µF 0603/0805 X5R.
+> - **Amber LED `C72041`** — stock ≈4 → swap to an in-stock amber 0603.
+> - **100 µF 1210 `C2880380`** (C_BULK2) — stock ≈1 → swap to an in-stock 100 µF/10 V 1210.
+> - Low-ish: **TC-1212 button `C2845240`** stock ≈30 (need 5 + spares). Re-check at order time.
+
 ## 1. MCU + Clock
 
 | Ref | MPN | LCSC/Link | Footprint | FP source | 3D |
