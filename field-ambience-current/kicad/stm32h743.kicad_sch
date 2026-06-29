@@ -1795,7 +1795,7 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "MPN" "BLM18AG601SN1D" (at 98.54 221.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C84094" (at 98.54 223.08 0)
+      (property "LCSC" "C19330" (at 98.54 223.08 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1889,13 +1889,11 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 112.14 83.01 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "CL10A225KP8NNNC" (at 114.68 86.82000000000001 0)
+      (property "MPN" "CL10A225KO8NNNC" (at 114.68 86.82000000000001 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Manufacturer" "Samsung" (at 114.68 88.09 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C24539" (at 114.68 89.36 0)
-        (effects (font (size 1.27 1.27)) hide))
-      (property "VERIFY-STOCK" "JLC Extended 2.2uF/10V X5R 0603 — falls out-of-stock alternative LCSC-Nr. waehlen" (at 114.68 90.63000000000001 0)
+      (property "LCSC" "C23630" (at 114.68 89.36 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"
@@ -1925,13 +1923,11 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 112.14 85.55 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "CL10A225KP8NNNC" (at 114.68 89.36 0)
+      (property "MPN" "CL10A225KO8NNNC" (at 114.68 89.36 0)
         (effects (font (size 1.27 1.27)) hide))
       (property "Manufacturer" "Samsung" (at 114.68 90.63 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C24539" (at 114.68 91.89999999999999 0)
-        (effects (font (size 1.27 1.27)) hide))
-      (property "VERIFY-STOCK" "JLC Extended 2.2uF/10V X5R 0603 — falls out-of-stock alternative LCSC-Nr. waehlen" (at 114.68 93.17 0)
+      (property "LCSC" "C23630" (at 114.68 91.89999999999999 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

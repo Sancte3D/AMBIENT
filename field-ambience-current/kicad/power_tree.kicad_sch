@@ -1659,9 +1659,9 @@
         (effects (font (size 1.27 1.27)) hide))
       (property "Datasheet" "~" (at 73 63.81 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "MPN" "LMK325ABJ107MM-T (Taiyo Yuden, 100uF 10V X5R)" (at 75.54 67.62 0)
+      (property "MPN" "CL32A107MPVNNNE (Samsung, 100uF 10V X5R)" (at 75.54 67.62 0)
         (effects (font (size 1.27 1.27)) hide))
-      (property "LCSC" "C2880380" (at 75.54 68.89 0)
+      (property "LCSC" "C23742" (at 75.54 68.89 0)
         (effects (font (size 1.27 1.27)) hide))
     (instances
       (project "field_ambience"

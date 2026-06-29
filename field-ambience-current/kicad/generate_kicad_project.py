@@ -2084,7 +2084,7 @@ def power_tree_sheet() -> str:
     for cref, cx, cval, cfp, cmpn, clcsc in (
         ("C_BULK2", 73, "100uF 10V X5R 1210 (MLCC parallel zu C_BULK)",
          "Capacitor_SMD:C_1210_3225Metric",
-         "LMK325ABJ107MM-T (Taiyo Yuden, 100uF 10V X5R)", "C2880380"),
+         "CL32A107MPVNNNE (Samsung, 100uF 10V X5R)", "C23742"),  # r18.71: was C2880380 (JLC stock 1) -> C23742 (JLC 41k)
         ("C1", 80, "10uF X5R 0805 (+5V rail HF-bulk)",
          "Capacitor_SMD:C_0805_2012Metric",
          "CL21A106KAYNNNE (Samsung, 25V X5R)", "C15850"),
@@ -3086,7 +3086,7 @@ def stm32h743_sheet() -> str:
                                 value="BLM18AG601 600R@100MHz (VDDA-Filter)",
                                 x=fbx, y=fby, rotation=90,
                                 footprint="Inductor_SMD:L_0603_1608Metric",
-                                extra_props={"MPN": "BLM18AG601SN1D", "LCSC": "C84094"},
+                                extra_props={"MPN": "BLM18AG601SN1D", "LCSC": "C19330"},  # r18.71: was C84094 (not in JLC assembly) -> C19330 (same MPN, JLC Extended 950k)
                                 seed_suffix="FB2", sheet_uuid_seed=sus))
     symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_FB2", value="+3V3",
                                 x=fbx - 7.81, y=fby, rotation=90, seed_suffix="fb2-3v3", sheet_uuid_seed=sus))
@@ -3123,7 +3123,7 @@ def stm32h743_sheet() -> str:
                                     value="2.2uF X5R 0603, ESR<100mOhm (VCAP, DS12110 Tab.24)",
                                     x=xe, y=cy,
                                     footprint="Capacitor_SMD:C_0603_1608Metric",
-                                    extra_props={"MPN": "CL10A225KP8NNNC", "Manufacturer": "Samsung", "LCSC": "C24539", "VERIFY-STOCK": "JLC Extended 2.2uF/10V X5R 0603 — falls out-of-stock alternative LCSC-Nr. waehlen"},
+                                    extra_props={"MPN": "CL10A225KO8NNNC", "Manufacturer": "Samsung", "LCSC": "C23630"},  # r18.71: was C24539 (not in JLC assembly) -> C23630 (2.2uF 16V X5R 0603, JLC Basic 1.9M)
                                     seed_suffix=f"CVCAP{num}", sheet_uuid_seed=sus))
         wires.append(wire(xe, cy + 3.81, xe, cy + 6, seed_suffix=f"u1-vcap{num}-gnd"))
         symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_VCAP{num}", value="GND",
@@ -4129,7 +4129,7 @@ def mcp_sheet() -> str:
     # Or: simpler: place SW left of MCP, SW pin2 → MCP-pin, SW pin1 → GND.
     # SW at (sx, sy) — pin1 abs (sx-5.08, sy), pin2 abs (sx+5.08, sy).
     # We want pin2 at x=PIN_L_X - 5 (left of left-stub). For pin2 abs x = 90: sx = 84.92. pin1 abs x = 79.84.
-    # r18.68: SW6-10 = TC-1212-7.3-260G THT-Tactile (C2845240, eckiger Kopf fuer Caps), KEINE integrierte LED.
+    # r18.71: SW6-10 = HX B3F-4055-Y THT-Tactile (C36498965, square head for caps), KEINE integrierte LED. (was TC-1212 C2845240, JLC stock 30)
     #      Status-LEDs LED6-LED10 sind separate SMD-0603 unter PCA9685-Kontrolle (siehe PCA9685-Block weiter unten).
     mod_pins = [(1, "MOD_SHIFT", 6), (2, "MOD_HOLD", 7), (3, "MOD_DRONE", 8), (4, "MOD_GENERATE", 9), (5, "MOD_CLEAR", 10)]
     for mcp_pin, netname, sw_num in mod_pins:
@@ -4140,17 +4140,17 @@ def mcp_sheet() -> str:
             place_symbol(
                 lib_id="Switch:SW_Push",
                 ref=f"SW{sw_num}",
-                value=f"Modifier {netname.replace('MOD_','')} (TC-1212-7.3 THT-Tactile, eckiger Kopf fuer Caps, r18.68)",
+                value=f"Modifier {netname.replace('MOD_','')} (HX B3F-4055 THT-Tactile, square head for caps, r18.71)",
                 x=84.92,
                 y=py,
                 footprint="field_ambience:SW_TC1212-7.3_THT_4P",
-                datasheet="https://jlcpcb.com/partdetail/C2845240",
+                datasheet="https://jlcpcb.com/partdetail/C36498965",
                 extra_props={
-                    "MPN": "TC-1212-7.3-260G",
-                    "Manufacturer": "HCTL",
-                    "LCSC": "C2845240",
-                    "Package": "THT 4-pin 11.8x11.8mm, square-head plunger 7.3mm (clip-on caps), SPST 2.6N, 100k cycles, 12V/50mA",
-                    "FP_NOTE": "field_ambience:SW_TC1212-7.3_THT_4P (easyeda2kicad C2845240, +STEP). 4 THT-Pads; SPST 2-Terminal: Top-Kante (y=-2.54)=Pin1, Bottom-Kante (y=+2.54)=Pin2 (per User-verifizierter HX-Konvention) — bei GUI-ERC bestaetigen.",
+                    "MPN": "HX B3F-4055-Y",
+                    "Manufacturer": "HX",
+                    "LCSC": "C36498965",
+                    "Package": "THT 4-pin 11.8x11.8mm, square-head plunger 7.3mm (clip-on caps), SPST 2.5N, 100k cycles, 12V/50mA",
+                    "FP_NOTE": "r18.71: was TC-1212-7.3-260G C2845240 (JLC stock 30); -> HX B3F-4055 C36498965 (JLC 20k, square head). Footprint field_ambience:SW_TC1212-7.3_THT_4P (12x12 4-pin THT) reused -- VERIFY the HX B3F pin pattern against it at GUI-ERC, or regenerate via easyeda2kicad --full --lcsc_id=C36498965.",
                 },
                 seed_suffix=f"SW{sw_num}",
                 sheet_uuid_seed=sus,
@@ -4787,7 +4787,7 @@ def mcp_sheet() -> str:
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6 §7 (MCP) + §7.2 (PCA9685)")\n'
         f'    (comment 2 "MCP 0x20 / U6 PCA 0x40 / U10 PCA 0x41 (A0=+3V3) - shared I²C bus")\n'
-        f'    (comment 3 "r18.68: SW6-SW10 = TC-1212-7.3-260G THT-Tactile (C2845240, square head)")\n'
+        f'    (comment 3 "r18.71: SW6-SW10 = HX B3F-4055-Y THT-Tactile (C36498965, square head)")\n'
         f'    (comment 4 "r10: 10× LEDs (LED6-LED15); U10 PCA9685 #2 -> 8 VU-Level-LEDs (weiss)"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
@@ -6313,7 +6313,7 @@ def battery_sheet() -> str:
             x=U7_X - 23, y=p_stat_y,
             rotation=180,
             footprint="LED_SMD:LED_0603_1608Metric",
-            extra_props={"MPN": "Generic amber 0603", "LCSC": "C72041"},
+            extra_props={"MPN": "XL-1608UOC-06", "Manufacturer": "XINGLIGHT", "LCSC": "C965800"},  # r18.71: was C72041 (actually BLUE + discontinued!) -> C965800 (orange 605nm 0603)
             seed_suffix="LED_CHRG",
             sheet_uuid_seed=sus,
         )
