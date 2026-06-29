@@ -4,7 +4,7 @@
  * selected engine with NO FX, replaying the exact note sequence extracted from
  * each reference WAV. Debug surface for A/B; render_synth.c is the wet path.
  *
- *   cc -std=c11 -O2 -Iinclude tools/render_engine_dry.c src/dsp.c \
+ *   cc -std=c11 -O2 -Iinclude tools/render_engine_dry.c src/dsp.c src/dsp_ladder.c \
  *      src/v2/engines/engine_chorus_mist.c src/v2/engines/engine_ion_storm.c \
  *      src/v2/engines/engine_glass_orbit.c src/v2/engines/engine_bamboo_circuit.c \
  *      -lm -o /tmp/render_engine_dry
