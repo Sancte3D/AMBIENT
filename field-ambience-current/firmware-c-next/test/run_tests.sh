@@ -214,3 +214,23 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/bench_test"
 "$tmp/bench_test"
+
+# Synth engine: +28 "5th-harmonic" / Exceeder-style electro bass — bounded,
+# idle-silent, decays on release, and the +28 partial is actually present.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_harmonic_bass.c" \
+    "$src/src/dsp.c" "$src/src/harmonic_bass.c" \
+    -lm -o "$tmp/harmonic_bass_test"
+"$tmp/harmonic_bass_test"
+
+# Synth-engine HOST (OP-1-style swappable sound-core, FX global) + ACID RAIN
+# engine — engine bounded/idle/decay/accent + host select/render/panic.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_synth_host.c" \
+    "$src/src/dsp.c" "$src/src/dsp_ladder.c" "$src/src/reverb.c" "$src/src/v2/beauty_guard.c" \
+    "$src/src/v2/synth_host.c" \
+    "$src/src/v2/engines/engine_acid.c" "$src/src/v2/engines/engine_fm_glass.c" \
+    "$src/src/v2/engines/engine_chorus_mist.c" "$src/src/v2/engines/engine_ion_storm.c" \
+    "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
+    -lm -o "$tmp/synth_host_test"
+"$tmp/synth_host_test"
