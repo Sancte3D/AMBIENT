@@ -1,7 +1,31 @@
 # ADR-0013: Cell-Tasten — Low-Profile-Magnetic-Switches + lange Caps mit Stabilizern
 
-**Status:** ACCEPTED (User-Direktive, 2026-06-12) — **ersetzt den FSR-Teil von ADR-0006**
+**Status:** ⚠️ **SUPERSEDED 2026-06-30** → digital I²C cells (HiChord Batch 4+ model). The
+magnetic + Hall analog-velocity path below is no longer the chosen design. Was ACCEPTED
+2026-06-12 (replaced the FSR part of ADR-0006).
 **Date:** 2026-06-12
+
+> ## SUPERSESSION (2026-06-30) — digital cells, not magnetic+Hall
+>
+> **New decision (user direction):** the 5 cells are **plain low-profile mechanical
+> switches read digitally** through the existing **MCP23017 (U2) I²C GPIO expander** —
+> like **HiChord Batch 4+** (digital I²C buttons, no calibration). One GPIO input per
+> cell (internal pull-up), other terminal → GND.
+>
+> **Why:** HiChord's own manual confirms its chord buttons are digital ON/OFF from Batch 4+
+> (Batch 1–3 were ADC buttons needing calibration). For "cells just trigger", the magnetic +
+> Hall analog path is unnecessary cost/risk (extra 5 Hall sensors + 10 RC parts, ADC
+> calibration). **Trade-off accepted: ON/OFF only — no velocity / press-depth.** If true
+> expressive velocity is ever wanted, the magnetic + Hall path below is the reference.
+>
+> **Consequences:** removes 5× DRV5056 Hall + 10 RC passives; frees ADC pins
+> PC0/PC1/PA4/PB0/PB1; cells use the I²C bus already present. Switch becomes a Choc-
+> compatible mechanical switch (footprint from the repo `keyswitch-kicad-library`), same
+> plate + caps. **To update to match:** generator schematic, PINMAP, firmware `cells.c`.
+>
+> *(The original magnetic+Hall rationale is kept below for history / the velocity option.)*
+
+---
 
 ## Kontext (User-Anforderung)
 

@@ -137,15 +137,25 @@ in any Markdown editor).
 | **EN1 / EN2 / EN4** (r18.22 pivot: unified on the ACTIVE display encoder, because both EC11E183440C and the candidate EC11E1834403 are NRND and the whole ALPS "0-detent + push" family is phased out) | **ALPS EC11E18244AU** (= the display encoder, 36 detents/rev + push; firmware acceleration makes slow = 1 %/click, fast = ×8/click — UX-functionally identical to smooth) | [C202365](https://www.lcsc.com/product-detail/C202365.html) (~3,052 stock) | same FP as EN3 | KiCad-Standard | Standard-Lib-3D |
 | Knobs (4×) Ø 19–20 × 8–10 mm, **self 3D-printed** (r18.21 — instead of Al CNC, saves $50-200/5-pack run) | own 3D print | — | — | — | Custom-CAD (user) |
 
-## 7. Cells (ADR-0013 — low-profile magnetic + Hall)
+## 7. Cells (ADR-0013 **superseded r18.73** → digital switches via I²C, HiChord-Batch-4+ model)
+
+> **r18.73 — switched from analog magnetic + Hall to digital ON/OFF.** Per the
+> HiChord reference (Batch 4+ uses digital I²C buttons, no calibration), the 5
+> cells are now plain **low-profile mechanical switches read digitally through
+> the existing MCP23017 (U2) GPIO expander on I²C** — *not* Gateron-magnetic +
+> Hall. **Trade-off: ON/OFF only, no velocity / press-depth** (that was the whole
+> point of the magnetic+Hall path; dropped for simplicity, lower cost/risk, no
+> calibration). The **5 Hall sensors + 10 RC passives are removed**, and the **5
+> ADC pins PC0/PC1/PA4/PB0/PB1 are freed** (now available for Rev-B). Wiring per
+> cell: switch one terminal → an MCP23017 GPIO input (internal pull-up), other
+> terminal → GND. ⚠ **Follow-on (not yet done): schematic generator + PINMAP +
+> firmware `cells.c`** still carry the Hall/ADC path and must be updated to match.
 
 | Ref | MPN | Link | Footprint | FP source | 3D |
 |---|---|---|---|---|---|
-| **Switch (5×)** | **Gateron Low Profile Magnetic Jade** (pin-less, plate-mounted, 0.1–3.3 mm analog travel, 100 M cycles) | [Gateron Direct](https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch) · [NuPhy](https://nuphy.com/products/gateron-low-profile-magnetic-jade-switches) · [Ukeebs (EU)](https://ukeebs.com/products/gateron-low-profile-magnetic-jade-switch-set) | — (no PCB pin, plate cutout 14×14 mm) | — | Community-CAD (keyboard ecosystem) |
-| ~~Stabilizer~~ **(r18.21 dropped for prototype)** | Only needed with long ≥2u caps. Cell caps are self 3D-printed + **short (1u)** → no stabilizer. Saves $25-75/5-pack run + simplifies the plate | — | — | — |
-| **Hall sensor per cell (J_CELL1–5)** | **TI DRV5056A4QDBZR** (SOT-23, 3.3 V ratiometric, pin 1=VCC / 2=OUT / 3=GND, DS-verified) | [C2152902](https://www.lcsc.com/product-detail/C2152902.html) · [TI DS](https://www.ti.com/lit/ds/symlink/drv5056.pdf) | `Package_TO_SOT_SMD:SOT-23` (r18.20 final — previously a 1x3-header placeholder, audit fix) | KiCad-Standard | Standard-Lib-3D |
-| **Cell caps (5×)** **1u, self 3D-printed** (r18.21 — instead of ≥2u; no stabilizer needed) | own 3D print | — | — | — | Custom-CAD (user) |
-| Hall-sensor RC per cell: R_CELL 1 kΩ 0603 + C_CELL 10 nF 0603 | 0603WAF1001T5E / 0603B103K500NT | [C21190](https://www.lcsc.com/product-detail/C21190.html) / [C57112](https://www.lcsc.com/product-detail/C57112.html) | `Resistor_SMD:R_0603_1608Metric` / `Capacitor_SMD:C_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **Switch (5×)** | **Low-profile MECHANICAL switch, Choc-compatible** (plate-mount, 2-pin digital; e.g. Kailh Choc v1 / Gateron Low Profile 2.0). Same plate + cap ecosystem as before, just non-magnetic with electrical contacts. Exact switch = keyboard-market choice (feel/colour). | [Kailh Choc](https://www.kailhswitch.com/mechanical-keyboard-switches/low-profile-switches.html) · keyboard vendors | **Choc footprint** from repo `kicad/libraries/keyswitch-kicad-library/` — soldered pads or a **Kailh Choc hotswap socket** (serviceable) | keyswitch-kicad-library | Community-CAD (keyboard ecosystem) |
+| **Cell caps (5×)** **1u, self 3D-printed** (Choc-compatible) | own 3D print | — | — | — | Custom-CAD (user) |
+| ~~**Hall sensor DRV5056 (J_CELL1–5)** + R_CELL 1 kΩ + C_CELL 10 nF~~ **REMOVED r18.73** | replaced by the digital read via MCP23017 GPIO (no analog front-end). Frees PC0/PC1/PA4/PB0/PB1. | — | — | — | — |
 
 ## 8. Modifier Buttons + Service Buttons
 
