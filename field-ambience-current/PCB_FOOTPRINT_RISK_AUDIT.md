@@ -1,6 +1,6 @@
 # AMBIENT PCB Footprint Risk Audit
 
-**Stand:** r18.37 (2026-06-20, post-Hall-FP-doc-fix + LCSC-diff-pass)
+**Stand:** r18.73 (2026-06-30, cells → digital MCP switches; Hall path removed)
 **Scope:** Risk-based footprint classification per the AMBIENT Footprint Verification Brief. Not a full manual audit of every passive — those pass with package-match only.
 **Source of truth:** `BOM_MASTER.md` (Bestell/Lese-Sicht) + `kicad/generate_kicad_project.py` (technisch). Where this audit disagrees with the generator, the generator wins.
 **Coverage caveat:** This audit classifies risk and flags what needs to be done before layout/order. It does NOT itself perform pad-by-pad geometry comparison or 1:1 print verification — those are the targeted next actions listed in §12.
@@ -14,7 +14,7 @@ The repository is **NOT blocked by standard passive footprints**. All 0603/0805/
 The PCB is blocked by **a small number of high-risk parts that still need targeted verification**:
 
 - **POWER_CRITICAL (2):** U8 TPS61089 (VQFN-HR HotRod, custom FP — datasheet layout review not yet done) and L1 Sunlord SWPA6045 (custom FP, current path matters).
-- **MECH_CRITICAL (10):** USB-C J1, Audio Jack J8, Battery JST J_BAT, Display Header J3, Encoders EN1–EN4, Modifier Buttons SW6–SW10, Service Buttons SW11 + SW_BOOT, Hall Sensors J_CELL1–J_CELL5 (under Gateron magnets), Cell-LEDs (15× under cell-cap windows). None has a *1:1 print or CAD overlay against the enclosure recorded*.
+- **MECH_CRITICAL (10):** USB-C J1, Audio Jack J8, Battery JST J_BAT, Display Header J3, Encoders EN1–EN4, Cell Switches SW1–SW5 (digital, r18.73), Modifier Buttons SW6–SW10, Service Buttons SW11 + SW_BOOT, Cell-LEDs (15× under cell-cap windows). None has a *1:1 print or CAD overlay against the enclosure recorded*.
 - **EXACT_MODEL_SAFE electrically, MECH_CRITICAL physically (overlap):** all connectors above.
 - **PACKAGE_SAFE pinout-pending (9):** U1 STM32H743, U2 MCP23017, U3 PCM5102A, U4 PAM8403H, U5 AP7361C LDO, U6 PCA9685, U7 MCP73831, D1 USBLC6, Q1 DMG2305UX, Q2 2N7002. Symbol↔footprint pin mapping must be checked once in KiCad ERC.
 - **UNKNOWN (0):** No mystery footprints left after r18.20c phantom-fix and r18.36 dead-FP cleanup.
@@ -76,9 +76,8 @@ KiCad-Standard libraries (`Package_QFP`, `Package_SO`, `Package_TO_SOT_SMD`, `Re
 | **LCD module** | Waveshare 1.9" 170×320 ST7789V2 | – | – | Module (sits in J3) | MECH_CRITICAL | Window cutout + screen-to-bezel alignment | Module-only | YES (mech) | Per r18.22 pivot from bare AliExpress |
 | **Q2** | Backlight FET | 2N7002,215 | C8545 | `Package_TO_SOT_SMD:SOT-23` | PACKAGE_SAFE | Pin 1, G/D/S | OK pkg | No | |
 | **EN1–EN4** | Rotary encoders | ALPS EC11E18244AU | C202365 | `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Shaft height 20 mm + tab spacing + knob clearance + panel cutout, A/B/C + push-switch pins | Pkg OK per ADR-0012 r18.22 pivot | YES (mech) | All four use same MPN (NRND-pivot consolidated); confirm 3D-printed knob ID matches shaft diameter |
-| **J_CELL1–J_CELL5** | Hall sensors | TI DRV5056A4QDBZR | C2152902 | `Package_TO_SOT_SMD:SOT-23` (r18.20 final; BOM_MASTER claim "Phase-6 placeholder" was stale doc) | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Position directly under Gateron magnet, X/Y tolerance ±0.5 mm, pin order 1=VCC/2=OUT/3=GND | Pinout DS-verified r18.14b; FP final in generator since r18.20 | YES (mech only) | Magnet-to-sensor stack height critical for analog range — verify on 1:1 print |
-| **R_CELL / C_CELL** | 1 kΩ + 10 nF 0603 (5× each) | 0603WAF1001T5E / 0603B103K500NT | C21190 / C57112 | `Resistor_SMD:R_0603_1608Metric` / `Capacitor_SMD:C_0603_1608Metric` | DEFAULT_SAFE | Pkg | OK | No | RC anti-alias per Hall output |
-| **SW6–SW10** | Modifier tactiles | HX 12×12×7.3 TPFT-B | C36498966 | `field_ambience:SW_HX_12x12x7.3_SMD-4P` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Cap window cutouts in top panel, button height ≈7.3 mm | Custom FP vendored | YES (mech) | All 5 identical — Shift / Hold / Drone / Generate / Clear |
+| **SW1–SW5** | Cell tactiles (digital, r18.73) | HX B3F-4055-Y | C36498965 | `field_ambience:SW_TC1212-7.3_THT_4P` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Cap window cutouts in top panel, MX 19 mm pitch, button height ≈7.3 mm | Custom FP — **verify HX B3F THT pin pattern at GUI-ERC** | YES (mech) | Cells went digital on MCP23017 GPA0–4 (ADR-0013 superseded); same part as SW6–10. Replaces the former DRV5056A4 Hall + RC. |
+| **SW6–SW10** | Modifier tactiles | HX B3F-4055-Y | C36498965 | `field_ambience:SW_TC1212-7.3_THT_4P` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Cap window cutouts in top panel, button height ≈7.3 mm | Custom FP — verify HX B3F THT pin pattern at GUI-ERC | YES (mech) | All 5 identical — Shift / Hold / Drone / Generate / Clear; same part as the cells |
 | **SW11** | Reset tactile | XUNPU TS-1088-AR02016 | C720477 | `field_ambience:SW_TS1088_SMD` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Service hole in bottom plate aligned to button | EasyEDA-verified r18.14 | YES (mech) | Bottom-plate access hole |
 | **SW_BOOT** | BOOT0 service | (= SW11 part) | C720477 | (= SW11 FP) | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Service hole in bottom plate | OK | YES (mech) | DFU-flash access; 1 kΩ pull-up R_BOOT_SW present |
 | **R_BOOT_SW** | 1 kΩ 0603 | (= R_CELL) | C21190 | (= R_CELL) | DEFAULT_SAFE | Pkg | OK | No | |
@@ -125,7 +124,7 @@ These pass a generic KiCad ERC + a one-time human eyeball comparing symbol pin o
 
 Order roughly by tolerance pain (tight → loose):
 
-1. **J_CELL1–J_CELL5 (Hall sensors)** — position under Gateron magnetic switches. Magnet field-line geometry determines analog range, so ±0.5 mm in X/Y is the practical tolerance. (Earlier audit revision flagged the footprint itself as a blocker — that was based on stale BOM doc; the generator switched to `Package_TO_SOT_SMD:SOT-23` already in r18.20.)
+1. **SW1–SW5 (Cell switches, digital — r18.73)** — 5× PCB-mounted THT tactile switches on the MX 19 mm grid; cap windows in the top panel must align to button centres (same as the modifiers). Replaces the former Hall sensors under Gateron magnets (no more magnet-to-sensor stack-height constraint).
 2. **EN1–EN4 (Encoders)** — 20 mm shaft + knob alignment with top panel + tab spacing for through-hole mounting tabs.
 3. **SW6–SW10 (Modifier buttons)** — 5× cap windows in top panel must align to button centres.
 4. **J1 (USB-C)** — board-edge cutout, mouth alignment with side wall, shell-to-shield contact.
@@ -166,7 +165,7 @@ Only two:
 - Phantom `L_0630` name on the Sunlord inductor → fixed r18.20c to `L_Sunlord_SWPA6045`.
 - Dead `RotaryEncoder_ALPS_EC11J_SMD.kicad_mod` (left over from ADR-0012 pre-pivot) → deleted r18.36.
 
-The only "placeholder" footprint still in use is the Hall sensors (`PinHeader_1x03`); that is flagged in §6 as a layout blocker, not as UNKNOWN.
+No "placeholder" footprints remain. (The former Hall-sensor placeholder note is moot — the Hall path was removed in r18.73 when the cells went digital on the MCP23017.)
 
 ---
 

@@ -2,6 +2,12 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.73 (2026-06-30, User-Direktive):** **Cells → digitale I²C-Switches** statt
+> Gateron-Magnetic + DRV5056A4-Hall (HiChord-Batch-4+-Weg: Switch → I²C-Expander
+> → MCU). SW1–SW5 (HX B3F-4055, gleiches Bauteil wie die Modifier) auf MCP23017
+> GPA0–GPA4; 5× Hall + RC entfernt; STM32-ADC-Pins PC0/PC1/PA4/PB0/PB1 frei.
+> **Kein neues Bauteil.** ADR-0013 SUPERSEDED. BOM/PCB/HTML/Schematics aktualisiert.
+>
 > **r18.67:** MIDI-Out **reaktiviert + implementiert** als **J10** (TRS Type A, OUT-only, 3,3 V/CA-033; MIDI_TX=PD5 → 2× 220 Ω → Tip/Ring). Refdes-Kollision behoben: **J9 = Akku, J10 = MIDI**. Power-Aus: Schiebeschalter auf der **Boost-EN-Leitung** entschieden (signal-level, Laden bleibt) — **noch zu implementieren**.
 >
 > **Offen:** (a) blaue VU-LED + 220-Ω-MIDI LCSC verifizieren (NO-LCSC-Liste), (b) Firmware: Level-Meter (U10-I²C) + MIDI-UART (PD5) + Encoder-Push-Mapping, (c) Power-Schiebeschalter im Generator umsetzen, (d) GUI-ERC board-weit (Blocker B3), (e) Doc-Sweep J_BAT→J9 in Restdocs.
@@ -118,9 +124,10 @@ product build.
 
 | Item | State |
 |---|---|
-| Gateron LP Magnetic + DRV5056A4 Hall plan (ADR-0013) | ✅ |
-| `cells.c` velocity state machine | ✅ |
-| Pressure/aftertouch from `cells_position()` | ⏳ idea, dropped — function exists, no engine reads it |
+| **Cells → digital I²C switches (r18.73, ADR-0013 SUPERSEDED)** | ✅ SW1–SW5 (HX B3F-4055, C36498965) on MCP23017 GPA0–GPA4, HiChord-Batch-4+ pattern. Removed 5× DRV5056A4 Hall + RC; freed PC0/PC1/PA4/PB0/PB1. No new part (same switch as modifiers). |
+| ~~Gateron LP Magnetic + DRV5056A4 Hall plan (ADR-0013)~~ | ⛔ superseded r18.73 — Hall kept as documented option only if expressive press-depth/velocity is wanted later |
+| `cells.c` velocity state machine | ✅ host-tested; with digital cells it degrades to on/off trigger (full-press position). FW engine read-path unchanged (bench already synthesizes positions from digital buttons). ⏳ optional cleanup later |
+| Pressure/aftertouch from `cells_position()` | ⛔ N/A with digital cells — needs the Hall variant (ADR-0013) |
 | Modifier set Shift / Hold / Drone / Generate (auto-play) / Clear | ⏳ specified, not implemented in world engine |
 
 ### HAL
@@ -135,7 +142,8 @@ product build.
 
 | Item | State |
 |---|---|
-| `BOM_MASTER.md` | ✅ r18.37 — FP links clickable, Hall doc-drift fixed |
+| `BOM_MASTER.md` | ✅ r18.73 — §7 cells now digital MCP switches (Hall path removed); FP links clickable |
+| **Cells digital-switch change (r18.73)** | ✅ generator (mcp_sheet SW1–5 on GPA0–4 + STM32 ADC pins freed), schematics regenerated, jlc_bom.csv (56 LCSC parts), Aron `bom_overview.html`, BOM_MASTER/PCB_BOM/PINMAP/KICAD_BLUEPRINT/SCHEMATIC_WALKTHROUGH/MECHANICAL_REQUIREMENTS/ADR-0013 all updated |
 | `field-ambience-current/PCB_FOOTPRINT_RISK_AUDIT.md` (risk-based per user brief) | ✅ r18.37 |
 | 6 custom KiCad footprints in `field_ambience.pretty/` | ✅ all actively referenced |
 | 7 STEP models in `field_ambience.3dshapes/` | ✅ |

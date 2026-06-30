@@ -69,7 +69,7 @@ ist der einzige große Block vor Gate 2.
 ### BOM-Sourcing — 10 / 10 ✅
 - ✅ Alle Haupt-ICs + Passives + Caps + LEDs haben verifizierte in-Stock-LCSC-IDs (r18.20b: C_HSE C107045, C_BULK C444831, C_BULK2 C2880380, LED gelb C2287 + grün C12624)
 - ✅ 2 Engineering-Flags gelöst: 220µF/10V/1210 existiert nicht → 100µF/10V; Polymer-<25mΩ bei LCSC nicht lagernd → C444831 100mΩ + paralleler MLCC dominiert Transient-ESR
-- ✅ Hand-Assembly-Teile (Speaker, Gateron-Switches, Stabilizer, Mesh, Knöpfe, Display, Tag-Connect) haben Vendor-Quellen + Links in BOM_MASTER
+- ✅ Hand-Assembly-Teile (Speaker, Mesh, Knöpfe, Display, Tag-Connect) haben Vendor-Quellen + Links in BOM_MASTER (r18.73: Gateron-Switches/Stabilizer entfallen — Cells jetzt on-board Tactile)
 - Haltebedingung: kritischer Pin-Count/Package immer Produktseiten-verifiziert (USB-C-Lektion r18.19)
 
 ### PCB Layout — 0 / 10
@@ -85,10 +85,10 @@ ist der einzige große Block vor Gate 2.
 - ✅ r18.16: `mechanical_coordinates.md` echt — Outline 252×102, alle X/Y/Z, Power-/Audio-Insel im 17-mm-Y-Streifen, Speaker-Treiber-Zone-Höhen-Constraint, geometrisch validiert (Python-Sanity-Check, 0 Konflikte)
 - ⏳ Fehlend für 10: Enclosure-CAD (FreeCAD/Fusion-Modell), physisches Mockup, Knopf-CAD
 
-### Cell-Mechanik (Piano-Feel) — 8 / 10
-- ✅ Architektur final (ADR-0013): Gateron-LP-Magnetic + Hall-Sensor, Velocity = Banddurchlaufzeit, lange Caps + LP-Stabilizer (Spacebar-Prinzip)
-- ✅ Schematic (r18.14) + Sensor-Pinout DS-verifiziert (DRV5056 C2152902)
-- ✅ Velocity-Modell IMPLEMENTIERT (r18.15): `cells.{h,c}` + Engine-Pfad + 25-Check-Test + Sim-Spiegelung
+### Cell-Mechanik (digital) — 8 / 10
+- ✅ Architektur final (r18.73, ADR-0013 abgelöst): **digitale Tactile-Switches am MCP23017** (HiChord-Batch-4+-Weg), gleiches Bauteil wie die Modifier (HX B3F-4055, C36498965). On/off-Trigger, kein Magnet-Z-Abgleich, keine ADC-Kalibrierung.
+- ✅ Schematic (r18.73): SW1–SW5 auf GPA0–GPA4, kein neues Bauteil; Hall-Pfad + RC entfernt; PC0/PC1/PA4/PB0/PB1 frei
+- ✅ Velocity-Modell-Code (`cells.{h,c}`) bleibt host-getestet; mit digitalen Cells = on/off-Trigger. Echte Velocity nur mit Hall-Variante (ADR-0013, dokumentierte Option)
 - ⏳ Fehlend für 10: Plate-Cutout-CAD, Magnet-/Abstands-Messung am Muster, Velocity-Curve-Feintuning auf realer Hardware
 
 ### Speaker-Cover (Dust-Mesh) — 7 / 10

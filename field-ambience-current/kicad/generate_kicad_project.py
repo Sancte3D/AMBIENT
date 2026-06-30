@@ -2973,17 +2973,19 @@ def stm32h743_sheet() -> str:
         72: ("SWDIO", False, ""),
         76: ("SWCLK", False, ""),
         89: ("SWO", False, ""),
-        # r18.9 (ADR-0006) / r18.14 (ADR-0013): Cell-Velocity-Sense — lineare
-        # Hall-Sensoren (unter Gateron-LP-Magnetic-Switches) an ADC-faehigen
-        # Pins. INP-Kanal-Zuordnung verifiziert Phase 4 gegen DS12110 Table 8
-        # ANA-Spalte (PC0/PC1/PA4/PB0/PB1 sind Standard-ADC12-Pins).
-        # Pins/Nets UNVERAENDERT gegenueber FSR-Design — nur die Quelle der
-        # Analogspannung wechselt (FSR-Teiler -> Hall-OUT + Serien-RC).
-        15: ("CELL1_SENSE", False, ""),
-        16: ("CELL2_SENSE", False, ""),
-        28: ("CELL3_SENSE", False, ""),
-        34: ("CELL4_SENSE", False, ""),
-        35: ("CELL5_SENSE", False, ""),
+        # r18.73 (ADR-0013 SUPERSEDED): Cells are now DIGITAL on/off switches on
+        # the MCP23017 I/O-expander (HiChord Batch 4+ pattern: switch -> I2C GPIO
+        # expander -> MCU), NOT analog Hall-Velocity-Sense at the STM32 ADC.
+        # The 5 former CELLn_SENSE ADC pins (PC0/PC1/PA4/PB0/PB1) are freed and
+        # parked as NC reserves (still ADC12-capable -> Rev-B option if a future
+        # analog/expressive cell variant is wanted). Cell wiring lives in
+        # mcp_sheet() on GPA0-GPA4. No new component: the MCP23017 (U2) and the
+        # HX B3F-4055 switch are both already in the verified BOM.
+        15: ("NC_PC0_ADC_RSVD", False, ""),
+        16: ("NC_PC1_ADC_RSVD", False, ""),
+        28: ("NC_PA4_ADC_RSVD", False, ""),
+        34: ("NC_PB0_ADC_RSVD", False, ""),
+        35: ("NC_PB1_ADC_RSVD", False, ""),
         12: ("HSE_IN", False, ""),
         13: ("HSE_OUT", False, ""),
         14: ("NRST", False, ""),
@@ -3321,69 +3323,26 @@ def stm32h743_sheet() -> str:
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_LEDHB", value="GND",
                                 x=sx, y=sy + 10, seed_suffix="ledhb-gnd", sheet_uuid_seed=sus))
 
-    # ---- r18.14 (ADR-0013, ersetzt FSR aus ADR-0006): 5x Hall-Velocity-Sense.
-    # Cells werden Low-Profile-MAGNETIC-Switches (Gateron LP Magnetic Jade
-    # Klasse, HiChord-artiges Tastengefuehl, lange Caps + LP-Stabilizer).
-    # Der Switch selbst ist pin-los — auf dem PCB sitzt pro Cell ein linearer
-    # Hall-Sensor unter dem Magnet-Stem: Position analog -> Velocity = dPos/dt.
-    # ADC-Interface UNVERAENDERT (PC0/PC1/PA4/PB0/PB1, Labels CELLn_SENSE).
-    # Pro Cell: DRV5056A4 SOT-23 (VCC/OUT/GND) + R 1k Serien-RC mit dem
-    # bestehenden 10nF (fc ~ 16kHz) vor dem ADC.
-    # r18.20: Footprint von 1x3-Header-Platzhalter auf echtes SOT-23 umgestellt
-    # (Audit-HIGH-Fix). 3-Pin-Symbol Conn_01x03 Pin 1/2/3 -> SOT-23 Pad 1/2/3
-    # = DRV5056 VCC/OUT/GND (TI-DS Table 4-1, r18.14 verifiziert). Site-Wiring
-    # Pin1->+3V3, Pin2->CELLn_SENSE, Pin3->GND matched 1:1.
-    for ci in range(5):
-        jx = 100.0 + ci * 24.0
-        jy = 262.0
-        symbols.append(place_symbol(lib_id="Connector:Conn_01x03", ref=f"J_CELL{ci+1}",
-                                    value=f"DRV5056A4 Hall Cell {ci+1} SOT-23 (Velocity, ADR-0013)",
-                                    x=jx, y=jy,
-                                    footprint="Package_TO_SOT_SMD:SOT-23",
-                                    extra_props={
-                                        "MPN": "DRV5056A4QDBZR (TI, SOT-23, 3.3V ratiometrisch, unipolar, 0.6V@B=0, magnet temp comp)",
-                                        "Manufacturer": "Texas Instruments",
-                                        "LCSC": "C2152902",
-                                        "Datasheet": "https://www.ti.com/lit/ds/symlink/drv5056.pdf",
-                                        "PINOUT-VERIFIED": "TI DRV5056 DS Table 4-1 (r18.14): SOT-23 Pin 1=VCC, Pin 2=OUT, Pin 3=GND. Symbol-Conn_01x03-Pin 1/2/3 -> SOT-23-Pad 1/2/3 = VCC/OUT/GND. Site-Wiring 1=+3V3 / 2=CELLn_SENSE / 3=GND matched 1:1.",
-                                        "FP_NOTE": "r18.20: SOT-23 final (Package_TO_SOT_SMD:SOT-23, KiCad-Standard). Vorher 1x3-Header-Platzhalter (Audit-Fix). JLC-bestueckbar (Extended). Pin-1-Marker im GUI gegen TI-DS Pin Configuration pruefen.",
-                                        "Mechanik": "Sensor sitzt unter dem Magnet-Stem des Gateron-LP-Magnetic-Switch (plate-mounted, ADR-0013). Lange Caps (>=2u): LP-Stabilizer links/rechts wie Spacebar.",
-                                    },
-                                    seed_suffix=f"JCELL{ci}", sheet_uuid_seed=sus))
-        # Pin1 (oben, jy-2.54) -> +3V3
-        wires.append(wire(jx - 5.08, jy - 2.54, jx - 9.08, jy - 2.54, seed_suffix=f"jcell{ci}-3v3"))
-        symbols.append(place_symbol(lib_id="Power:+3V3", ref=f"#PWR_JCELL{ci}", value="+3V3",
-                                    x=jx - 9.08, y=jy - 2.54, rotation=90,
-                                    seed_suffix=f"jcell{ci}-3v3", sheet_uuid_seed=sus))
-        # Pin2 (mitte, jy) -> R_CELL 1k Serie -> Knoten K -> Label CELLn_SENSE
-        # R horizontal (rotation=90): Pins bei sym_x +/- 3.81
-        rx = jx - 12.89
-        kx, ky = jx - 16.70, jy
-        wires.append(wire(jx - 5.08, jy, rx + 3.81, jy, seed_suffix=f"jcell{ci}-k"))
-        symbols.append(place_symbol(lib_id="Device:R", ref=f"R_CELL{ci+1}",
-                                    value="1k 0603 (Hall-OUT Serien-R, RC mit C_CELL)",
-                                    x=rx, y=jy, rotation=90,
-                                    footprint="Resistor_SMD:R_0603_1608Metric",
-                                    extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
-                                    seed_suffix=f"RCELL{ci}", sheet_uuid_seed=sus))
-        labels.append(label(kx, ky, f"CELL{ci+1}_SENSE"))
-        junctions.append(junction(kx, ky))
-        # Pin3 (unten, jy+2.54) -> GND
-        wires.append(wire(jx - 5.08, jy + 2.54, jx - 7.5, jy + 2.54, seed_suffix=f"jcell{ci}-gnd"))
-        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_JCELL{ci}G", value="GND",
-                                    x=jx - 7.5, y=jy + 2.54, rotation=90,
-                                    seed_suffix=f"jcell{ci}-gnd", sheet_uuid_seed=sus))
-        # C_CELL 10nF am Knoten K -> GND (RC-Filter, fc ~ 16kHz mit 1k)
-        wires.append(wire(rx - 3.81, ky, kx, ky, seed_suffix=f"ccell{ci}-rail"))
-        symbols.append(place_symbol(lib_id="Device:C", ref=f"C_CELL{ci+1}",
-                                    value="10nF X7R 0603 (RC-Filter mit R_CELL 1k)",
-                                    x=kx, y=ky + 3.81,
-                                    footprint="Capacitor_SMD:C_0603_1608Metric",
-                                    extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
-                                    seed_suffix=f"CCELL{ci}", sheet_uuid_seed=sus))
-        wires.append(wire(kx, ky + 7.62, kx, ky + 10, seed_suffix=f"ccell{ci}-gnd"))
-        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_CCELL{ci}", value="GND",
-                                    x=kx, y=ky + 10, seed_suffix=f"ccell{ci}-gnd", sheet_uuid_seed=sus))
+    # ---- r18.73 (ADR-0013 SUPERSEDED — User-Direktive 2026-06-30, HiChord-
+    # Batch-4+-Referenz): die 5 Cells sind jetzt DIGITALE on/off-Switches am
+    # MCP23017-I/O-Expander (Switch -> I2C GPIO-Expander -> MCU), NICHT mehr
+    # analoge Hall-Velocity-Sensoren am STM32-ADC.
+    #
+    #   ENTFERNT aus diesem (STM32-)Sheet: 5x DRV5056A4 Hall-Sensor (J_CELL1..5),
+    #   5x R_CELL 1k Serien-R, 5x C_CELL 10nF RC-Filter. Die 5 ADC-Pins
+    #   (PC0/PC1/PA4/PB0/PB1) sind oben in der Pin-Tabelle als NC-Reserve geparkt.
+    #
+    #   NEU (siehe mcp_sheet): SW1..SW5 als Tactile-Switches auf GPA0-GPA4 des
+    #   MCP23017 — identische Verschaltung wie die 5 Modifier-Switches SW6-SW10
+    #   (Pin -> GND, MCP-interner Pull-Up, IRQ-on-change). KEIN neues Bauteil:
+    #   MCP23017 (U2) und der HX-B3F-4055-Tactile-Switch stehen bereits verifiziert
+    #   in der BOM. Damit ist die SPEC-v0.6-§7-"10 Switches"-Topologie wieder
+    #   vollstaendig (5 Cells + 5 Modifier am Expander).
+    #
+    #   Grund (User): Gateron Magnetic + Hall ist nur fuer echte Druck-/Velocity-
+    #   Expressivitaet noetig; fuer reines Triggern der Cells ist der digitale
+    #   HiChord-4+-Weg billiger und risikoarmer (kein Magnet-Z-Abgleich, keine
+    #   ADC-Kalibrierung, keine Keyboard-Markt-Beschaffung).
 
     # ---- MIDI-Out (J10) — ENTSCHIEDEN r18.67 (ADR-0004 / User): TRS **Type A**,
     # OUT-only, 3.3V direkt (MIDI-Spec CA-033, kein Level-Shifter). Verschaltung:
@@ -4110,19 +4069,46 @@ def mcp_sheet() -> str:
     labels.append(label(147, p19_y, "NC_INTB"))
 
     # ---- Switches SW1-SW5 (Cells) auf GPA0-GPA4 (pins 21-25). Rechts vom MCP.
-    # Each switch: pin1 → MCP-GPIO, pin2 → GND. SW_Push pin1 (-5.08, 0), pin2 (+5.08, 0).
-    # Wir wollen SW horizontal: pin1 (left) connects to MCP, pin2 (right) to GND.
-    # SW center @ (sx, sy), sym placed so pin1 abs at x=PIN_R_X + 30 (right of MCP signal labels).
-    # For pin1 abs x = 165: sx = 165 + 5.08 = 170.08. pin2 abs x = 175.16.
-    # ---- r18.9 (ADR-0006): Cells sind KEINE MCP-Switches mehr. Die 5 Cell-
-    # Inputs sind jetzt FSR-Velocity-Pads am STM32-ADC (stm32h743_sheet,
-    # Netze CELL1..5_SENSE an PC0/PC1/PA4/PB0/PB1). Die Kailh-Choc-Hotswap-
-    # Sockets + Stabilizer entfallen aus der BOM. GPA0-4 frei (NC, Rev-B-
-    # Reserve).
-    for mcp_pin in (21, 22, 23, 24, 25):
+    # r18.73 (ADR-0013 SUPERSEDED, User 2026-06-30): die 5 Cells sind jetzt
+    # DIGITALE Tactile-Switches am Expander (HiChord-Batch-4+-Weg), nicht mehr
+    # Hall-Sensoren am STM32-ADC. GPA0-GPA4 waren bereits als Reserve frei —
+    # hier kommen jetzt SW1-SW5 drauf, exakt wie die Modifier SW6-SW10.
+    # Verschaltung: Switch pin -> MCP-GPIO (CELLn_BTN) auf der einen Seite,
+    # anderer Pin -> GND. Idle = HIGH (MCP-interner Pull-Up aktiviert per FW),
+    # gedrueckt = LOW; IRQ-on-change via INTA. Gleicher verifizierter Switch wie
+    # die Modifier (HX B3F-4055-Y, C36498965). SW horizontal auf der rechten
+    # Seite (klar von Adress-/RESET-/INTA-Bereich bei x=147..162, y=113..127).
+    #   stub PIN_R_X -> 170 ; label CELLn_BTN @ x=150 ; SW center x=175.08
+    #   (pin1 abs 170.0 = Netz, pin2 abs 180.16 -> GND @ 183).
+    cell_pins = [(21, "CELL1_BTN", 1), (22, "CELL2_BTN", 2), (23, "CELL3_BTN", 3),
+                 (24, "CELL4_BTN", 4), (25, "CELL5_BTN", 5)]
+    for mcp_pin, netname, sw_num in cell_pins:
         py = mcp_right_pin_y(mcp_pin)
-        wires.append(wire(PIN_R_X, py, 145, py, seed_suffix=f"u2-cell-stub-{mcp_pin}"))
-        labels.append(label(145, py, f"NC_GPA{mcp_pin - 21}"))
+        wires.append(wire(PIN_R_X, py, 170, py, seed_suffix=f"u2-cell-stub-{mcp_pin}"))
+        labels.append(label(150, py, netname))
+        symbols.append(
+            place_symbol(
+                lib_id="Switch:SW_Push",
+                ref=f"SW{sw_num}",
+                value=f"Cell {sw_num} digital trigger (HX B3F-4055 THT-Tactile, square head for caps, r18.73)",
+                x=175.08,
+                y=py,
+                footprint="field_ambience:SW_TC1212-7.3_THT_4P",
+                datasheet="https://jlcpcb.com/partdetail/C36498965",
+                extra_props={
+                    "MPN": "HX B3F-4055-Y",
+                    "Manufacturer": "HX",
+                    "LCSC": "C36498965",
+                    "Package": "THT 4-pin 11.8x11.8mm, square-head plunger 7.3mm (clip-on caps), SPST 2.5N, 100k cycles, 12V/50mA",
+                    "FP_NOTE": "r18.73: Cell digital-switch (ADR-0013 superseded). Same verified part as modifier SW6-SW10. Footprint field_ambience:SW_TC1212-7.3_THT_4P (12x12 4-pin THT) reused -- VERIFY the HX B3F pin pattern against it at GUI-ERC, or regenerate via easyeda2kicad --full --lcsc_id=C36498965.",
+                },
+                seed_suffix=f"SW{sw_num}",
+                sheet_uuid_seed=sus,
+            )
+        )
+        # SW pin2 abs (180.16, py) → GND
+        wires.append(wire(180.16, py, 183, py, seed_suffix=f"sw{sw_num}-to-gnd"))
+        attach_gnd(183, py, f"SW{sw_num}")
 
     # ---- Switches SW6-SW10 (Modifier) auf GPB0-GPB4 (pins 1-5). Links vom MCP.
     # SW_Push reversed: pin2 (right) connects to MCP via pin1 to GND.

@@ -484,11 +484,9 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
-| ~~SW1-SW5~~ ✂ r18.9 | ~~Kailh Choc V2 Hot-Swap Socket~~ — r18.9: FSR-Pads; **r18.14 (ADR-0013): Cells sind jetzt Gateron-LP-MAGNETIC-Switches (pin-los, plate-mounted) + Hall-Sensor auf PCB** | — | **Ja** (Switches + LP-Stabilizer: Keyboard-Markt, z.B. Gateron direkt) |
-| **J_CELL1-5** (r18.14) | **TI DRV5056A4QDBZR** (SOT-23, 3.3V ratiometrisch). Pinout DS-verifiziert: 1=VCC / 2=OUT / 3=GND. Bridge-Site bleibt als 1×3-Header bis Phase 6 (dann SOT-23-FP), Pin-Mapping ist 1:1. | **C2152902** | JLC Extended — JLC-bestückbar |
-| **R_CELL1-5 / C_CELL1-5** (r18.14) | 5× **1 kΩ** 0603 (Hall-OUT-Serien-R) + 5× 10 nF X7R 0603 → RC fc≈16 kHz vor ADC | C21190 / C57112 | JLC-bestückt |
-| **STAB_CELL** (r18.14, ADR-0013) | **LP-Stabilizer** für Cell-Caps ≥ 2u (Spacebar-Prinzip: Switch mittig, Stabilizer links/rechts). Gateron-LP-Klasse | — (Keyboard-Markt) | **Ja**, mit Switches zusammen beschaffen |
-| **SW6-SW10** (r10) | **12×12×7.3 mm momentary tactile, plain (Modifier-Buttons Shift/Hold/Drone/Generate/Clear)**. HX 12x12x7.3TPFT-B. **Alle 5 identisch, momentary — Latch-Zustand zeigen die LEDs (§7.2), kein Rast-Schalter** | **C36498966** (JLC Extended) | JLC-bestückt mit Custom-FP `field_ambience:SW_HX_12x12x7.3_SMD-4P` (ADR r18.6) |
+| **SW1-SW5** (r18.73, ADR-0013 abgelöst) | **HX B3F-4055-Y THT-Tactile — Cell-Trigger, DIGITAL** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`, Pin → GND, MCP-Pull-Up + IRQ). **Gleiches Bauteil wie SW6–SW10.** HiChord-Batch-4+-Weg (Switch → I²C-Expander → MCU). Ersetzt Gateron-Magnetic + DRV5056A4-Hall + RC. | **C36498965** (JLC) | JLC-bestückt/hand-place mit Custom-FP `field_ambience:SW_TC1212-7.3_THT_4P` |
+| ~~J_CELL1-5 / R_CELL / C_CELL~~ ✂ r18.73 | ~~DRV5056A4-Hall + 1 kΩ/10 nF RC vor ADC~~ — entfernt, Cells sind jetzt digital (siehe SW1–SW5). STM32-ADC-Pins PC0/PC1/PA4/PB0/PB1 frei (Rev-B-Reserve). Hall bleibt dokumentierte Option für expressive Velocity-Variante (ADR-0013). | — | — |
+| **SW6-SW10** (r18.71) | **HX B3F-4055-Y THT-Tactile, Modifier-Buttons (Shift/Hold/Drone/Generate/Clear)** auf MCP23017 GPB0–GPB4. Square-Head für Clip-on-Caps. **Alle momentary — Latch-Zustand zeigen die LEDs (§7.2).** Gleiches Bauteil wie die Cells. | **C36498965** (JLC) | JLC-bestückt mit Custom-FP `field_ambience:SW_TC1212-7.3_THT_4P` |
 | SW11 | Reset Tactile SMD (XUNPU TS-1088-AR02016, FP `field_ambience:SW_TS1088_SMD` EasyEDA-verifiziert r18.14) | C720477 | JLC-bestückt |
 | ~~SW12~~ ✂ r18 | ~~BOOTSEL Tactile~~ — **entfernt:** war Pico-spezifisch | — | — |
 | **SW_BOOT** (r18.10) | **Mini-SMD-Tactile für BOOT0 (USB-DFU-Flash, ADR-0009)**. **r18.14: MPN korrigiert — C720477 ist XUNPU TS-1088-AR02016** (nicht TS-1185A-C-A); FP auf EasyEDA-verifiziertes `field_ambience:SW_TS1088_SMD` | **C720477** | **NEU r18.10: ohne SW_BOOT wäre USB-DFU-Flash nicht möglich** |
@@ -711,57 +709,35 @@ PB14/PB15-Hinweis: diese Pins haben als „additional function" auch OTG_HS_DM/D
 keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 (Datasheet S. 67-68).
 
-### 5.6a Cell-Velocity-Sense (NEU r18.9, ADR-0006)
+### 5.6a Cells — digitale I²C-Switches (r18.73, ADR-0013 ABGELÖST)
 
-| Pin | Port | ADC-Channel (DS12110-bestätigt) | Net |
+> **r18.73 (User-Direktive 2026-06-30, HiChord-Batch-4+):** Die Cells sind jetzt
+> **digitale on/off-Tactile-Switches am MCP23017** (Switch → I²C-GPIO-Expander →
+> MCU), NICHT mehr Gateron-Magnetic + DRV5056A4-Hall am STM32-ADC.
+
+| Cell | Switch | MCP23017-Pin | Net |
 |---|---|---|---|
-| 15 | PC0 | ADC123_INP10 | CELL1_SENSE |
-| 16 | PC1 | ADC123_INP11 | CELL2_SENSE |
-| 28 | PA4 | ADC12_INP18 | CELL3_SENSE |
-| 34 | PB0 | ADC12_INP9 | CELL4_SENSE |
-| 35 | PB1 | ADC12_INP5 | CELL5_SENSE |
+| Cell 1 | SW1 | GPA0 (Pin 21) | CELL1_BTN |
+| Cell 2 | SW2 | GPA1 (Pin 22) | CELL2_BTN |
+| Cell 3 | SW3 | GPA2 (Pin 23) | CELL3_BTN |
+| Cell 4 | SW4 | GPA3 (Pin 24) | CELL4_BTN |
+| Cell 5 | SW5 | GPA4 (Pin 25) | CELL5_BTN |
 
-**ADC-Channel-Hinweis (r18.24 — DS-bestätigt):** Alle 5 Channels liegen auf
-**ADC1** (INP5, INP9, INP10, INP11, INP18) → ein einzelner ADC1 kann alle fünf
-Cells sequenziell (Scan-Mode) abtasten, kein Multi-ADC nötig. PC0/PC1 sind
-zusätzlich auf ADC3 erreichbar (für künftiges Dual-Simultaneous-Sampling).
-**Verifikation r18.24:** PA4=ADC12_INP18, PB0=ADC12_INP9, PB1=ADC12_INP5 sind
-**verbatim aus DS12110 (STM32H743xI, Additional-Functions-Tabelle)** bestätigt;
-PC0=ADC123_INP10 via ST-Community + DS; PC1=ADC123_INP11 folgt der PCx-Sequenz.
-Audit-Punkt 4 geschlossen.
+Beschaltung pro Cell: ein Switch-Pin → MCP-GPIO (`CELLn_BTN`), anderer Pin → GND.
+MCP-interner Pull-Up aktiv (idle = HIGH, gedrückt = LOW), IRQ-on-change über die
+gemeinsame INTA-Leitung (`MCP_INT`). Bauteil: **HX B3F-4055-Y (C36498965)** —
+dasselbe wie die Modifier SW6–SW10; `field_ambience:SW_TC1212-7.3_THT_4P`.
 
-Beschaltung pro Cell (**r18.14, ADR-0013** — ersetzt FSR-Teiler aus r18.9):
-linearer Hall-Sensor (J_CELLn 1×3-Site: +3V3/OUT/GND; DRV5056A4-Kandidat,
-SS49E-Klasse für Prototyp) unter dem Magnet-Stem des Gateron-LP-Magnetic-
-Switch. OUT → 1 kΩ Serien-R → Knoten (10 nF → GND, RC fc≈16 kHz) → ADC-Pin.
-Stem-Position = analoge Spannung; **Velocity = dPos/dt** beim Durchgang der
-Trigger-Zone (Firmware), Aftertouch/Trigger-Punkt später als reine
-Firmware-Features möglich. Pins + Netze sind identisch zum FSR-Design.
-ADC-INP-Kanal-Nummern werden in Phase 4 beim ADC-Init gegen DS12110 Table 8
-(ANA-Spalte) verifiziert. Die Cells hängen damit NICHT mehr am MCP23017 —
-GPA0-4 sind frei (Rev-B-Reserve).
+**Entfernt ggü. dem Hall-Stand:** 5× DRV5056A4 (J_CELL1–5), 5× R_CELL 1 kΩ,
+5× C_CELL 10 nF. Die STM32-ADC-Pins **PC0/PC1/PA4/PB0/PB1 sind freigegeben**
+(NC-Reserve, ADC12-fähig → Rev-B-Option für eine spätere analoge/expressive
+Cell-Variante). Damit ist die SPEC-v0.6-§7-„10 Switches"-Topologie wieder
+vollständig (5 Cells + 5 Modifier am Expander).
 
-**Velocity-Modell (Firmware, ADR-0013 — implementiert r18.15):** Der ADC-Wert
-wird auf eine normierte Stem-Position `pos` ∈ [0,1] skaliert (0 = Ruhe, 1 =
-Bottom-Out). Die Velocity entsteht aus der **Zeit, in der der Stem das
-Velocity-Band durchquert** — exakt wie bei einer echten Hall-Keybed:
-
-| Konstante | Wert | Bedeutung |
-|---|---|---|
-| `CELL_VEL_BAND_LO` | 0.15 | Start der Velocity-Zeitmessung |
-| `CELL_VEL_BAND_HI` | 0.55 | Trigger-Punkt — Note-On feuert hier |
-| `CELL_POS_RELEASE` | 0.30 | Note-Off bei Rückzug darunter (Hysterese) |
-| `CELL_T_FAST_MS` | 6 ms | Banddurchlauf ≤ → Velocity 1.0 |
-| `CELL_T_SLOW_MS` | 70 ms | Banddurchlauf ≥ → Velocity 0.0 |
-| `CELL_AMP_MIN/MAX` | 0.05 … 0.22 | Velocity → Voice-Peak-Amplitude |
-| `CELL_AMP_GAMMA` | 0.8 | Kurve (<1 spreizt das leise Ende) |
-
-Quelle der Wahrheit: `firmware-c-next/include/cells.h` + `src/cells.c`
-(host-getestet, `test/test_cells.c`), in die Engine eingebunden über
-`engine_cell_sample(cell, pos, now_ms)`. Dieselben Konstanten sind im
-Web-Sim (`tools/display_sim.html`) gespiegelt (sichtbare Velocity-Anzeige).
-Aftertouch und ein einstellbarer Trigger-Punkt sind später reine
-Firmware-Erweiterungen (analoge Kurve liegt vor).
+**Firmware-Hinweis:** `firmware-c-next/include/cells.h` + `src/cells.c`
+(host-getestet) bleiben als Velocity-State-Machine bestehen; mit digitalen Cells
+degradiert das auf on/off-Trigger (Voll-Press-Position). Echte Velocity/
+Aftertouch braucht die Hall-Variante (ADR-0013, dort dokumentiert).
 
 ### 5.7 USB-OTG-FS (built-in, kein externer PHY)
 

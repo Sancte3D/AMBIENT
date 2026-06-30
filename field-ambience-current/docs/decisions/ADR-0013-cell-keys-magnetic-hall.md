@@ -1,7 +1,28 @@
 # ADR-0013: Cell-Tasten — Low-Profile-Magnetic-Switches + lange Caps mit Stabilizern
 
-**Status:** ACCEPTED (User-Direktive, 2026-06-12) — **ersetzt den FSR-Teil von ADR-0006**
-**Date:** 2026-06-12
+**Status:** ⛔ **SUPERSEDED (User-Direktive, 2026-06-30, r18.73)** — Cells sind
+jetzt **digitale on/off-Switches am MCP23017-I²C-Expander** (HiChord-Batch-4+-Weg:
+Switch → I²C-GPIO-Expander → MCU), **nicht** mehr Gateron-Magnetic + DRV5056A4-Hall.
+War: ACCEPTED (2026-06-12), ersetzte den FSR-Teil von ADR-0006.
+**Date:** 2026-06-12 (superseded 2026-06-30)
+
+> **Supersede-Begründung (User, 2026-06-30):** HiChord macht es sehr
+> wahrscheinlich nicht mit Gateron-Magnetic-Switches + Hall-Sensoren. Laut
+> offizieller HiChord-Doku nutzt Batch 4+ **digitale I²C-Buttons** (keine
+> Kalibrierung). Für reines **Triggern** der Cells reicht das digitale Modell:
+> 5 Switches → I²C-GPIO-Expander (hier: das bereits verbaute MCP23017 U2,
+> GPA0–GPA4) → MCU. Hall + Magnet wäre nur nötig, wenn die Cells **expressiv**
+> (Drucktiefe/Anschlagsdynamik) sein sollen — das ist hier bewusst zurückgestellt
+> („unnötiges Risiko"). **Umsetzung (r18.73):** entfernt 5× DRV5056A4 (J_CELL1–5),
+> 5× R_CELL 1 kΩ, 5× C_CELL 10 nF; STM32-ADC-Pins PC0/PC1/PA4/PB0/PB1 freigegeben
+> (Rev-B-Reserve); SW1–SW5 (HX B3F-4055-Y, C36498965 — gleiches Bauteil wie die
+> Modifier SW6–SW10) auf GPA0–GPA4. **Kein neues Bauteil.** Stellt die
+> ursprüngliche SPEC-v0.6-§7-„10 Switches"-Topologie wieder her. Hall bleibt
+> unten als dokumentierte Option für eine spätere expressive Cell-Variante.
+>
+> Dieses ADR bleibt als Referenz für den **Hall-Pfad** erhalten (falls
+> Velocity/Aftertouch später doch gewünscht ist). Der unten beschriebene Stand
+> ist NICHT der aktuelle PCB-Stand.
 
 ## Kontext (User-Anforderung)
 

@@ -1,7 +1,7 @@
 # PCB Production BOM — Field Ambience
 
 **On-PCB parts only.** Everything here is soldered to the board. Off-board parts
-(battery cell, speaker drivers, display module, magnetic switches, knobs/caps,
+(battery cell, speaker drivers, display module, knobs/caps,
 enclosure) are in **§C** and are **NOT** part of the board assembly.
 
 > Source of truth = the schematic (`kicad/generate_kicad_project.py`). Machine
@@ -74,18 +74,18 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | R_BLK_PD, R_SLED, R_BOOT0/_SW, R_NRST | misc pulls | 5.1k/820/1k/10k | 0603 | C23186/C23253/C21190/C25804 |
 | C_PCA_VDD(_HF), C_PCA2_VDD(_HF) | PCA decoupling | 10 µF / 100 nF | 0603/0805 | C15850 / C14663 |
 
-### Cells — Hall sensors (the magnetic switches in §C sit above these)
-| Ref | Part | Value | Package | LCSC |
-|---|---|---|---|---|
-| J_CELL1–5 (5) | DRV5056A4 linear Hall | — | SOT-23 | C2152902 |
-| R_CELL1–5 (5) | Hall RC series | 1 k | 0603 | C21190 |
-| C_CELL1–5 (5) | Hall RC filter | 10 nF | 0603 | C57112 |
+### Cells — digital switches on the MCP23017 (r18.73, ADR-0013 superseded)
+The cells are now plain tactile switches on the I²C expander (HiChord Batch 4+
+pattern: switch → I²C GPIO-expander → MCU), **not** Hall sensors at the STM32 ADC.
+The 5× DRV5056A4 + R_CELL/C_CELL RC are removed; PC0/PC1/PA4/PB0/PB1 are freed.
+The cell switches are listed with the buttons below (SW1–SW5).
 
 ### Buttons & encoders (THT/SMD, **on the PCB**)
 | Ref | Part | Value | Package | LCSC |
 |---|---|---|---|---|
 | **EN1–EN4 (4)** | **ALPS EC11E18244AU — ALL 4 IDENTICAL** (rotary + push, 36 detents) | — | EC11E vertical | C202365 |
-| **SW6–SW10 (5)** | HCTL TC-1212-7.3-260G tactile (Shift/Hold/Drone/Generate/Clear) — **square-head plunger w/ hole → clip-on caps** ✅ | — | THT 12×12, 4-pin | C2845240 |
+| **SW1–SW5 (5)** | **HX B3F-4055-Y tactile — CELL trigger keys** (digital on/off via MCP23017 GPA0–GPA4; r18.73) — **square-head plunger → clip-on caps** ✅ | — | THT 12×12, 4-pin | C36498965 |
+| **SW6–SW10 (5)** | **HX B3F-4055-Y tactile** (Shift/Hold/Drone/Generate/Clear) — same part as the cells; **square-head plunger → clip-on caps** ✅ (r18.71: was TC-1212-7.3 C2845240) | — | THT 12×12, 4-pin | C36498965 |
 | SW_BOOT, SW11 (2) | TS-1088 service tactile (BOOT0 / reset) | — | custom FP | C720477 |
 
 ### Connectors + protection (on PCB)
@@ -138,10 +138,9 @@ Pin-level wiring (VIN/VOUT/ON + the single LDO-input reroute) = **`ADR-0016`**.
 | LiPo cell 2000 mAh (503759) | 1 | J9 | bottom-case slot |
 | Speaker driver CMS-402811-28SP | 2 | J6 / J7 | 40 mm, cloth-cone (PUI AS04008PS = backup) |
 | LCD module Waveshare 1.9″ ST7789 | 1 | J3 | plug-in module |
-| Gateron LP Magnetic Jade switch | 5 | — (plate, over Hall sensors) | not on PCB |
 | Encoder knobs | 4 | EN1–4 shafts | 3D-print |
-| Cell caps | 5 | over magnetic switches | 3D-print |
-| Modifier button caps | 5 | over SW6–10 | 3D-print, clip onto the square head of C2845240 |
+| Cell caps | 5 | over SW1–5 (on-board switches) | 3D-print, clip onto the square head of C36498965 |
+| Modifier button caps | 5 | over SW6–10 | 3D-print, clip onto the square head of C36498965 |
 | Speaker dust mesh, enclosure, screws/standoffs | — | — | mechanical |
 
 ---

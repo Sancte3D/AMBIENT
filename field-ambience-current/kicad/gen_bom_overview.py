@@ -82,9 +82,8 @@ G = [
  ]),
  ("Controls", "#0ea5e9", [
    ("EN1-4","ALPS EC11E18244AU ×4","4 push-encoders","C202365","hand",True),
-   ("Cells","Gateron LP Magnetic ×5","playable keys — premium Hall-magnetic (analog velocity); ~$45/pack of 35, off-board, pin-less","https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch","off",True),
-   ("Hall","DRV5056A4 ×5","reads each cell's magnet — SOT-23, JLC places it (precise, under each stem)","C2152902","jlc",False),
-   ("SW6-10","HX B3F-4055 tactile ×5","modifier buttons (THT, square head for caps) — r18.71: C2845240 (stock 30) → C36498965 (20k stock, ~$0.06); verify THT footprint/pinout","C36498965","hand",True),
+   ("SW1-5","HX B3F-4055 tactile ×5","cell trigger keys — DIGITAL on/off via MCP23017 (HiChord Batch 4+ pattern: switch→I²C expander→MCU). THT, square head for 3D-printed caps (r18.73, ADR-0013 superseded)","C36498965","hand",True),
+   ("SW6-10","HX B3F-4055 tactile ×5","modifier buttons (THT, square head for caps) — same part as the cells; r18.71: C2845240 (stock 30) → C36498965 (20k stock, ~$0.06); verify THT footprint/pinout","C36498965","hand",True),
    ("SW11/BOOT","TS-1088 tactile ×2","Reset + BOOT0 (2 service buttons)","C720477","jlc",False),
  ]),
  ("LEDs (23 visible)", "#a855f7", [
@@ -100,7 +99,7 @@ G = [
    ("U10","PCA9685 PWM driver #2","drives the 8 VU LEDs","C2678753","jlc",False),
  ]),
  ("Passives & Service", "#94a3b8", [
-   ("R 1k","0603 1%","Hall RC, pull-ups","C21190","jlc",False),
+   ("R 1k","0603 1%","BOOT0 / charger-status series","C21190","jlc",False),
    ("R 100k","0603 1%","ON pull-down etc.","C25803","jlc",False),
    ("R 5.1k / 820","0603 1%","dividers, CC","C23186","jlc",False),
    ("C 100n","0603 X7R","decoupling (many)","C14663","jlc",False),
@@ -126,8 +125,8 @@ SHEET_INFO = {  # filename -> (title, function); order = reading order
  "power_tree":("Power","USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±"),
  "stm32h743":("MCU","STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)"),
  "audio":("Audio","PCM5102A DAC (I²S) → PAM8403 Class-D amp + line-out / MIDI jacks"),
- "mcp":("I/O & LEDs","MCP23017 + 2× PCA9685 + the 23 LEDs + buttons (largest sheet)"),
- "encoder":("Encoders & cells","4 push-encoders (A/B/SW) + 5 Hall cells"),
+ "mcp":("I/O & LEDs","MCP23017 + 2× PCA9685 + the 23 LEDs + 10 buttons (5 cells + 5 modifiers, all digital on the expander) (largest sheet)"),
+ "encoder":("Encoders","4 push-encoders (A/B/SW)"),
  "lcd":("Display","ST7789 1.9″ SPI + backlight FET (Q2)"),
  "battery":("Battery & charge","LiPo JST + MCP73831 charger + power-path (charges while off)"),
  "field_ambience":("Root / hierarchy","top sheet — ties the 7 functional sheets together"),
@@ -167,12 +166,12 @@ PCB_GUIDE = """
   </ul></div>
   <div><b>Place these first (enclosure-fixed)</b><ul>
    <li>USB-C · both 3.5 mm jacks · display header J3</li>
-   <li>5 cells + Hall sensors under them (19 mm grid) · 5 buttons · 4 encoders</li>
+   <li>5 cell switches (19 mm grid) · 5 modifier buttons · 4 encoders</li>
    <li>speaker headers · battery JST · then power, MCU+decoupling, audio, I/O</li>
   </ul></div>
  </div>
- <p class="cells"><b>⚠ The 5 cells are unusual — read this before placing them.</b> The Gateron magnetic switches are <b>pin-less</b> — no electrical connection to the PCB; they sit in a plate <i>above</i> the board. The PCB carries only a <b>linear Hall sensor (DRV5056, SOT-23) directly under each switch stem</b>, on the 19 mm MX grid. As the magnet in the stem moves down, the Hall sensor outputs an analog voltage → RC filter (1 k + 10 nF) → STM32 ADC (nets <code>CELL1..5_SENSE</code>) → firmware computes velocity/position. <b>So there is NO switch footprint — just 5 Hall sensors + their RC at the cell centers.</b> Switches, plate and caps are off-board hardware (ADR-0013). Same idea as a NuPhy/HE keyboard.</p>
- <p><b>Assembly — who solders what.</b> JLC reflow-assembles every <b>SMD</b> part (the "JLC" rows in the BOM). The <b>hand-place</b> rows (THT headers + buttons, encoders, Hall sensors) and the <b>off-board</b> rows (display module, Gateron switches, speakers, battery, knobs) are fitted <b>by hand, after</b> JLC — by whoever does final assembly. So the board comes back from JLC fully SMD-populated; the modules + mechanical parts are then hand-fitted.</p>
+ <p class="cells"><b>✅ The 5 cells are now plain digital switches — read this before placing them (r18.73, ADR-0013 superseded).</b> The cells changed from Gateron-magnetic + Hall-sensor (analog velocity) to <b>ordinary THT tactile switches on the board</b> — the same <b>HX B3F-4055 (C36498965)</b> part as the 5 modifier buttons. Each cell switch is wired one pin → an <b>MCP23017 GPIO (GPA0–GPA4, nets <code>CELL1..5_BTN</code>)</b>, the other pin → GND; the MCP's internal pull-up makes idle = HIGH, pressed = LOW, with one shared INT line — exactly the <b>HiChord Batch 4+ topology (switch → I²C GPIO-expander → MCU)</b>. <b>So now there IS a real switch footprint at each cell center</b> (the 12×12 4-pin THT body, on the 19 mm grid), and there is <b>no Hall sensor, no RC filter, and no STM32 ADC pin used</b> for cells anymore (PC0/PC1/PA4/PB0/PB1 are freed as Rev-B reserves). Caps are 3D-printed and clip onto the square switch head. Trade-off: you lose analog press-depth/velocity — fine for triggering; Hall would only be needed for genuine expressive depth (see ADR-0013).</p>
+ <p><b>Assembly — who solders what.</b> JLC reflow-assembles every <b>SMD</b> part (the "JLC" rows in the BOM). The <b>hand-place</b> rows (THT headers + buttons incl. the 10 cell/modifier switches, encoders) and the <b>off-board</b> rows (display module, speakers, battery, knobs) are fitted <b>by hand, after</b> JLC — by whoever does final assembly. So the board comes back from JLC fully SMD-populated; the modules + mechanical parts are then hand-fitted.</p>
  <p class="disp"><b>Display = a finished module (this changes how it's attached).</b> The Waveshare 1.9″ LCD is its own PCB (ST7789 + level-shifter + backlight) — it is <b>NOT reflow-soldered to the main board.</b> Put on the main board only <b>J3, a 1×8 2.54 mm header</b>: 1 VCC · 2 GND · 3 SCK (PA5) · 4 MOSI (PA7) · 5 RES (PC5) · 6 DC (PC4) · 7 CS (PA6) · 8 BLK (backlight via Q2 / PCA9685 ch15). The module is then joined <b>by hand</b> two ways: <b>(a) socket on J3 + header on the module</b> → plug-in, nothing on the module to solder, serviceable; or <b>(b) a short 8-wire cable</b> J3↔module → lets the display sit behind the bezel window with the PCB below (most mechanical freedom). ⚠ The module's pin <i>order</i> varies by vendor — verify the real module vs J3 before fixing it. <b>Is this normal / are there better displays?</b> Yes, module-on-header is the standard, reliable choice at this scale (same as Adafruit/Waveshare-based products). The more-integrated alternative — a bare ST7789 panel + an FPC connector soldered to the main board (lower profile) — is a much bigger job (FPC connector + panel sourcing/mounting, and you'd re-add the level-shifter + backlight the module already has); not worth it here.</p>
  <p><b>Thermal:</b> no ventilation slots (~1.5–2.2 W). Give the LDO copper + thermal vias; keep the LiPo away from LDO/charger/boost.</p>
  <p><b>Workflow → fab:</b> regenerate → open <code>field_ambience.kicad_pro</code> in KiCad 9 → ERC (0 err) → Update PCB from Schematic (F8) → place → route → DRC → export Gerber + CPL; BOM = <code>kicad/jlc_bom.csv</code> → upload to JLC.</p>
@@ -186,7 +185,7 @@ PCB_GUIDE = """
 <p class="note">Quick reference (verified from <code>PINMAP.md</code>). The full per-pin map is in the schematic + PINMAP — this is the at-a-glance version.</p>
 <table><thead><tr><th>Interface</th><th>STM32 pins</th><th>Goes to</th><th>Key values</th></tr></thead><tbody>
 <tr><td class="ref">I²S audio</td><td class="part">PE4 / PE5 / PE6</td><td class="fn">PCM5102A LRCK / BCK / DIN</td><td class="fn">—</td></tr>
-<tr><td class="ref">Cells ×5 (ADC)</td><td class="part">PC0, PC1, PA4, PB0, PB1</td><td class="fn">DRV5056 Hall OUT (under each switch)</td><td class="fn"><b>each: 1 kΩ series + 10 nF to GND</b></td></tr>
+<tr><td class="ref">Cells ×5 (digital)</td><td class="part">MCP23017 GPA0–GPA4</td><td class="fn">SW1–SW5 tactile → <code>CELL1..5_BTN</code> (other pin GND)</td><td class="fn"><b>MCP internal pull-up; INT shared</b> (PC0/PC1/PA4/PB0/PB1 now free)</td></tr>
 <tr><td class="ref">LCD SPI</td><td class="part">PA5 SCK, PA7 MOSI (+CS/DC/RES)</td><td class="fn">ST7789 via J3 header</td><td class="fn">backlight via Q2 / PCA9685 ch12</td></tr>
 <tr><td class="ref">I²C</td><td class="part">PB6 SCL, PB7 SDA</td><td class="fn">MCP23017 + 2× PCA9685 (shared)</td><td class="fn"><b>4.7 kΩ pull-ups ×2</b></td></tr>
 <tr><td class="ref">USB</td><td class="part">PA11 D−, PA12 D+</td><td class="fn">USBLC6 → USB-C (J1)</td><td class="fn">90 Ω diff pair</td></tr>
@@ -201,8 +200,7 @@ PCB_GUIDE = """
  <ul>
   <li>✅ <b>In the repo</b> (<code>kicad/libraries/field_ambience.pretty/</code>, 8 custom): crystal HC-49, boost VQFN-HR, Sunlord inductor, PJ-320D 3.5 mm jack, TS-1088 service button, <b>MST-12D18 power slide switch</b>, TC-1212/HX 12×12 button (THT), + 3D STEPs.</li>
   <li>✅ <b>KiCad-standard</b>: everything in standard packages — LQFP-100, SOT-23/89, SOIC, TSSOP, SSOP, 0603/0805/1210, pin headers, HRO USB-C.</li>
-  <li>🟢 <b>Cell switches: NO footprint needed</b> — pin-less; only the DRV5056 Hall (SOT-23, standard) is on the board under each stem.</li>
-  <li>⚠ <b>Modifier button (HX B3F, C36498965, THT):</b> verify the THT footprint — the repo <code>SW_TC1212-7.3_THT_4P</code> should fit the 12×12 4-pin THT body; if the pinout differs, generate a fresh one.</li>
+  <li>⚠ <b>Cell + modifier buttons (10× HX B3F, C36498965, THT):</b> cells are now real on-board switches (r18.73) using the same part as the modifiers — verify the THT footprint <code>SW_TC1212-7.3_THT_4P</code> fits the 12×12 4-pin THT body of the HX B3F; if the pinout differs, generate a fresh one (<code>easyeda2kicad --full --lcsc_id=C36498965</code>).</li>
  </ul>
  <p><b>How to get / make a footprint (for any LCSC part):</b> <code>pip install easyeda2kicad &amp;&amp; easyeda2kicad --full --lcsc_id=C36498965</code> — pulls the footprint <i>and</i> the 3D STEP straight from LCSC/EasyEDA. Otherwise build from the datasheet. The power slide switch + service buttons were made exactly this way.</p>
 </div></section>

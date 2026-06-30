@@ -16,7 +16,7 @@ und die r9/r10/r14/r15-Pico-Ära-Sektionen.
 |---|---|
 | ADR-0011 | Z-Stack-Up, 8 mm Top-Komponenten-Zone, 19.6 mm Außenhöhe ohne Knöpfe |
 | ADR-0012 | Encoder = EC11E THT, alle 4 gleiche Höhe, Knopf Ø 19–20 × 8–10 mm |
-| ADR-0013 | Cell-Switches Gateron LP Magnetic, Hall-Sensor PCB-seitig, lange Caps + LP-Stabilizer |
+| ADR-0013 (abgelöst r18.73) | Cell-Switches jetzt digital (HX B3F-4055 THT auf MCP23017); Hall/Gateron nur noch dokumentierte Option |
 | ADR-0007 | Speaker = Dust-Mesh-Aussparung (Saati Acoustex), kein sichtbares Lochmuster |
 | ADR-0008 | LED-XOR (Cell-LEDs gelb/grün, Modifier Shift=grün/Hold=gelb/Drone/Generate/Clear=weiß) |
 | `mechanical/3d_models/MANIFEST.md` | Body-Höhen aller Z-/Panel-kritischen Teile (STEP-Modelle) |
@@ -140,24 +140,24 @@ gleiche X, **Y = 66 mm**, SMD 0603, Light-Pipe Ø 1.5 mm im Frontpanel.
 **Frontpanel-Aussparungen**: 12.5 × 12.5 mm pro Switch + Ø-2-mm-Bohrung pro
 Modifier-LED.
 
-### 3.4 Cell-Reihe (5× Gateron LP Magnetic Hot-Swap Site, ADR-0013)
+### 3.4 Cell-Reihe (5× HX B3F-4055 THT-Tactile, digital — r18.73, ADR-0013 abgelöst)
 
-5 identische Cell-Sites, Pitch 22 mm Mitte-zu-Mitte (LP-Switch-Body ~14 × 14
-mm + Stem-Cross-Mount; Pitch erlaubt 2u-Caps **ohne** Stabilizer auf den
-äußeren Cells und 2u-Caps **mit** LP-Stabilizer auf längeren Cells in einer
-späteren Geschmacks-Iteration). Reihe zentriert unter der Modifier-Reihe.
+5 identische Cell-Switches **direkt auf dem PCB** (THT 4-Pin, Body 11,8 × 11,8 ×
+7,3 mm, Square-Head für Clip-on-Caps) — **kein Hall-Sensor, kein Hot-Swap-Site,
+keine separate Plate mehr**. Digital on/off auf MCP23017 GPA0–GPA4 (SW1–SW5).
+X/Y-Raster unverändert (Reihe zentriert unter der Modifier-Reihe).
 
 | Ref | X (mm) | Y (mm) | Cap (Plan) |
 |---|---|---|---|
-| Cell 1 | **82**  | **26** | 2u-LP, Center-Pin = Switch, ±9.525 mm Stab-Stems |
-| Cell 2 | **104** | **26** | 2u-LP |
-| Cell 3 | **126** | **26** | 2u-LP |
-| Cell 4 | **148** | **26** | 2u-LP |
-| Cell 5 | **170** | **26** | 2u-LP |
+| Cell 1 (SW1) | **82**  | **26** | 3D-Druck-Cap, clippt auf Square-Head |
+| Cell 2 (SW2) | **104** | **26** | dito |
+| Cell 3 (SW3) | **126** | **26** | dito |
+| Cell 4 (SW4) | **148** | **26** | dito |
+| Cell 5 (SW5) | **170** | **26** | dito |
 
-**Hall-Sensor pro Cell (J_CELL1–5, DRV5056A4 SOT-23, ADR-0013)**: sitzt
-direkt unter dem Magnet-Stem in PCB-Mitte des Cell-Footprints. Pinout
-SOT-23: 1=VCC / 2=OUT / 3=GND (TI-DS r18.14-verifiziert).
+Switch-Bauteil = HX B3F-4055-Y (C36498965), Footprint
+`field_ambience:SW_TC1212-7.3_THT_4P` — **gleiches Teil wie die Modifier
+SW6–SW10**. Pin-Pattern beim GUI-ERC gegen das HX-B3F-Datenblatt prüfen.
 
 **Cell-LED-Reihe** (LED11–LED20, 2 LEDs pro Cell, gelb + grün, XOR pro ADR-0008):
 
@@ -171,9 +171,10 @@ SOT-23: 1=VCC / 2=OUT / 3=GND (TI-DS r18.14-verifiziert).
 
 (8 mm Pitch innerhalb des Pärchens; 4 mm Innenabstand am Cell-Center.)
 
-**Frontpanel-Aussparungen**: Per Cell ein 14 × 14 mm Switch-Cutout (Gateron-LP-
-Standard, in Phase 6 gegen Schalter-Drawing final verifizieren) + Ø-2-mm-Bohrung
-pro LED, Light-Pipe-Stab Ø 1.5 mm.
+**Frontpanel-Aussparungen**: Per Cell eine Cap-Fensteröffnung passend zur
+3D-gedruckten Cell-Cap (Square-Head-Plunger ~7,3 mm hoch; exakte Fenstergröße
+folgt aus dem Cap-Design — *UNVERIFIED, beim Cap-CAD final festlegen*) +
+Ø-2-mm-Bohrung pro LED, Light-Pipe-Stab Ø 1.5 mm.
 
 ### 3.5 USB-C-Stecker J1 (TYPE-C-31-M-17, C283540)
 
@@ -422,8 +423,8 @@ Sonderbehandlung mehr.
 |---|---|
 | Finale Außenmaße (Gehäuse-Höhe ggf. ±2 mm) | Industrial Design |
 | Knopf-Material + exakte Knopf-CAD (Ø 19 oder 20 mm) | Industrial Design |
-| Cell-Cap-Profil (2u vs eigener Custom-Cap) | Industrial Design + Muster-Test |
-| Gateron-LP-Switch-Cutout exakt 14×14 mm vs Datenblatt | Phase 6 gegen Switch-Drawing prüfen |
+| Cell-Cap-Profil (Custom-Cap auf HX-B3F-Square-Head) | Industrial Design + Muster-Test |
+| HX B3F-4055 THT-Pin-Pattern vs Footprint (Cells + Modifier) | GUI-ERC gegen Datenblatt prüfen |
 | LP-Stabilizer-Notwendigkeit bei 2u in dieser Pitch | Erfahrungswert nach Muster-Druck |
 | Plate-Material (Aluminium vs ABS-Spritzguss) | Mockup-Bau |
 | Mesh-Lieferant (Saati Acoustex T-Klasse vs Alternative) | ADR-0007 follow-up |

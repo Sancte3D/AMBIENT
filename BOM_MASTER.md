@@ -60,7 +60,7 @@ in any Markdown editor).
 | D3 | **SS34** Schottky diode | [C8678](https://www.lcsc.com/product-detail/C8678.html) | `Diode_SMD:D_SMA` | KiCad-Standard | Standard-Lib-3D |
 | Q1 | **DMG2305UX-7** P-Ch MOSFET | [C150470](https://www.lcsc.com/product-detail/C150470.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 | **U5** LDO | **AP7361C-33Y5-13** SOT-89-5 (pinout 1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT verified) | [C460397](https://www.lcsc.com/product-detail/C460397.html) | `Package_TO_SOT_SMD:SOT-89-5` | KiCad-Standard | Standard-Lib-3D |
-| **U_PWR** power-off load switch (ADR-0016) | **TPS22918DBVR** SOT-23-6 — gates the LDO input `+5V_RAIL → +5V_SW` (= the whole 3V3 domain: MCU + Halls + LEDs + LCD). ON comes from `SW_PWR`. Charger U7 sits **ahead** of it → keeps charging when off. "Dark, but charging." | [C131941](https://www.lcsc.com/product-detail/C131941.html) *(check PN/stock before order)* | `Package_TO_SOT_SMD:SOT-23-6` | KiCad-Standard | Standard-Lib-3D |
+| **U_PWR** power-off load switch (ADR-0016) | **TPS22918DBVR** SOT-23-6 — gates the LDO input `+5V_RAIL → +5V_SW` (= the whole 3V3 domain: MCU + MCP + LEDs + LCD). ON comes from `SW_PWR`. Charger U7 sits **ahead** of it → keeps charging when off. "Dark, but charging." | [C131941](https://www.lcsc.com/product-detail/C131941.html) *(check PN/stock before order)* | `Package_TO_SOT_SMD:SOT-23-6` | KiCad-Standard | Standard-Lib-3D |
 | **SW_PWR** slide switch = main power-off | **MST-12D18G3** (SHOU HAN) — right-angle SMD slide switch (SPDT, **side-actuated** from the enclosure edge; ~3.5×6.5×9.1 mm; **has tab mounting pegs** = through-board mechanical anchors, not just solder pads). Switches **only** `U_PWR.ON` (signal level, µA). 10 k cycles / 100 mA @ 12 V — ample for a power switch. **Mechanical requirements (for robustness):** (1) decouple actuation — the enclosure's own slider cap takes the user's force, the switch lever is only gently engaged; (2) the footprint **must** include the tab-peg NPTH holes + board-edge placement; (3) optional enclosure rib capturing the switch body. Upgrade options if more robustness wanted: DPDT **MST-12D18G4** ([C49023767](https://www.lcsc.com/product-detail/C49023767.html)) or a C&K JS-series right-angle J-bend. | [C49023766](https://jlcpcb.com/partdetail/C49023766) (JLC Extended) | [`field_ambience:SW_MST-12D18_SlideSwitch_RA`](field-ambience-current/kicad/libraries/field_ambience.pretty/SW_MST-12D18_SlideSwitch_RA.kicad_mod) — **vendored**: 3 SMD pads (2.5 mm pitch, SPDT) + 2 thru-hole peg anchors. ⚠️ verify pad pitch + peg positions against the MST-12D18G3 datasheet before fab (footprint-hygiene, not a blocker) | field_ambience | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW_MST-12D18_SlideSwitch_RA.step) |
 | **R_PWR_PD** 100 kΩ 0603 (`U_PWR.ON` pull-down → default OFF) | 0603WAF1003T5E | [C25803](https://www.lcsc.com/product-detail/C25803.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 | **C_PWR_SW** 10 µF X5R 0805 (output cap on `+5V_SW`) | LMK212ABJ106 class | [C15850](https://www.lcsc.com/product-detail/C15850.html) | `Capacitor_SMD:C_0805_2012Metric` | KiCad-Standard | Standard-Lib-3D |
@@ -74,7 +74,7 @@ in any Markdown editor).
 > maker sees the sources unambiguously — *one* source→system-rail place each:
 > - `VBUS_USB` (USB-C 5 V, via F1 PTC) ──┐
 > - `BAT_PLUS` (LiPo) → boost **U8** → `+5V_BOOST` ──┤→ power-path **Q1** → **`+5V_RAIL`** (system 5 V; feeds amp U4 + U_PWR)
-> - **`+5V_SW`** = `+5V_RAIL` behind **U_PWR** (switched by `SW_PWR`) → LDO **U5** → **`+3V3`** (MCU, MCP, both PCA9685, LCD, Halls)
+> - **`+5V_SW`** = `+5V_RAIL` behind **U_PWR** (switched by `SW_PWR`) → LDO **U5** → **`+3V3`** (MCU, MCP, both PCA9685, LCD)
 > - Charger **U7** hangs off `VBUS_USB`/`BAT_PLUS` **ahead of** U_PWR → charges independently of the off state.
 >
 > The generator nets are today still partly mixed `+5V_OUT`/`+5V_RAIL`; since
@@ -137,15 +137,26 @@ in any Markdown editor).
 | **EN1 / EN2 / EN4** (r18.22 pivot: unified on the ACTIVE display encoder, because both EC11E183440C and the candidate EC11E1834403 are NRND and the whole ALPS "0-detent + push" family is phased out) | **ALPS EC11E18244AU** (= the display encoder, 36 detents/rev + push; firmware acceleration makes slow = 1 %/click, fast = ×8/click — UX-functionally identical to smooth) | [C202365](https://www.lcsc.com/product-detail/C202365.html) (~3,052 stock) | same FP as EN3 | KiCad-Standard | Standard-Lib-3D |
 | Knobs (4×) Ø 19–20 × 8–10 mm, **self 3D-printed** (r18.21 — instead of Al CNC, saves $50-200/5-pack run) | own 3D print | — | — | — | Custom-CAD (user) |
 
-## 7. Cells (ADR-0013 — low-profile magnetic + Hall)
+## 7. Cells (ADR-0013 **SUPERSEDED r18.73** — digital switches on the MCP23017)
 
-| Ref | MPN | Link | Footprint | FP source | 3D |
+> **r18.73 (User direction 2026-06-30, HiChord Batch 4+ reference):** the 5 cells
+> changed from Gateron-magnetic + DRV5056A4 Hall (analog velocity into the STM32
+> ADC) to **plain digital on/off tactile switches on the MCP23017 I²C expander** —
+> the HiChord Batch 4+ topology *switch → I²C GPIO-expander → MCU*. **No new part:**
+> the same HX B3F-4055 switch as the modifier buttons, on the already-free expander
+> pins GPA0–GPA4 (nets `CELL1..5_BTN`). **Removed from the board:** 5× DRV5056A4
+> Hall sensors (J_CELL1–5), 5× R_CELL 1 kΩ, 5× C_CELL 10 nF; the 5 STM32 ADC pins
+> (PC0/PC1/PA4/PB0/PB1) are freed as Rev-B reserves. This restores the original
+> SPEC v0.6 §7 "10 switches" topology (5 cells + 5 modifiers on the expander).
+> Hall stays documented as the option **only if** true press-depth/velocity is
+> wanted later — see ADR-0013. Trade-off: digital cells are on/off only (no
+> analog velocity), which is fine for triggering and removes the magnet-Z
+> alignment, ADC calibration, and keyboard-market procurement risk.
+
+| Ref | MPN | LCSC/Link | Footprint | FP source | 3D |
 |---|---|---|---|---|---|
-| **Switch (5×)** | **Gateron Low Profile Magnetic Jade** (pin-less, plate-mounted, 0.1–3.3 mm analog travel, 100 M cycles) | [Gateron Direct](https://www.gateron.com/products/gateron-low-profile-magnetic-jade-switch) · [NuPhy](https://nuphy.com/products/gateron-low-profile-magnetic-jade-switches) · [Ukeebs (EU)](https://ukeebs.com/products/gateron-low-profile-magnetic-jade-switch-set) | — (no PCB pin, plate cutout 14×14 mm) | — | Community-CAD (keyboard ecosystem) |
-| ~~Stabilizer~~ **(r18.21 dropped for prototype)** | Only needed with long ≥2u caps. Cell caps are self 3D-printed + **short (1u)** → no stabilizer. Saves $25-75/5-pack run + simplifies the plate | — | — | — |
-| **Hall sensor per cell (J_CELL1–5)** | **TI DRV5056A4QDBZR** (SOT-23, 3.3 V ratiometric, pin 1=VCC / 2=OUT / 3=GND, DS-verified) | [C2152902](https://www.lcsc.com/product-detail/C2152902.html) · [TI DS](https://www.ti.com/lit/ds/symlink/drv5056.pdf) | `Package_TO_SOT_SMD:SOT-23` (r18.20 final — previously a 1x3-header placeholder, audit fix) | KiCad-Standard | Standard-Lib-3D |
-| **Cell caps (5×)** **1u, self 3D-printed** (r18.21 — instead of ≥2u; no stabilizer needed) | own 3D print | — | — | — | Custom-CAD (user) |
-| Hall-sensor RC per cell: R_CELL 1 kΩ 0603 + C_CELL 10 nF 0603 | 0603WAF1001T5E / 0603B103K500NT | [C21190](https://www.lcsc.com/product-detail/C21190.html) / [C57112](https://www.lcsc.com/product-detail/C57112.html) | `Resistor_SMD:R_0603_1608Metric` / `Capacitor_SMD:C_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+| **Cell switch (SW1–SW5, 5×)** | **HX B3F-4055-Y** tactile (THT 4-pin 11.8×11.8 mm, 7.3 mm square-head plunger for clip-on caps, SPST 2.5 N, 100 k cycles). One pin → MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), other → GND; MCP internal pull-up, shared INT. **Same part as modifier SW6–SW10.** | [C36498965](https://www.lcsc.com/product-detail/C36498965.html) · [JLC](https://jlcpcb.com/partdetail/C36498965) | `field_ambience:SW_TC1212-7.3_THT_4P` (12×12 4-pin THT — verify HX B3F pin pattern at GUI-ERC) | repo custom | envelope in MANIFEST (no STEP) |
+| **Cell caps (5×) 1u, self 3D-printed** (clip onto the square switch head) | own 3D print | — | — | — | Custom-CAD (user) |
 
 ## 8. Modifier Buttons + Service Buttons
 
@@ -235,7 +246,7 @@ Standard-Lib-3D.
 | 4× mounting hardware M2.5 | (standard hex standoff 3 mm) | RS / Reichelt | post-PCB |
 | Encoder knobs (4×) Ø 19–20 × 8–10 mm | **self 3D-printed** (r18.21) | user | post-PCB |
 | Cell caps (5×, 1u) | **self 3D-printed** (r18.21) | user | post-PCB |
-| Plate for magnetic switches | TBD-CAD | industrial design | post-PCB |
+| Plate for cell + modifier switches | TBD-CAD | industrial design | post-PCB |
 | **Power slider cap** (orange, engages SW_PWR) | bears the user's actuation force so the SMD switch only gets a gentle nudge (see SW_PWR §2) | TBD-CAD | post-PCB |
 
 ---
@@ -243,15 +254,15 @@ Standard-Lib-3D.
 ## Ordering Strategy
 
 - **JLCPCB assembly (Extended OK):** everything in §1–§5, §8 (except SW_BOOT,
-  hand-place by choice), §9, §10 — all SMD with an LCSC ID. **r18.72: Hall
-  sensors J_CELL1–5 (DRV5056, SOT-23, C2152902, JLC Extended 3057) moved here —
-  JLC SMT places them precisely under each cell stem (better than by hand); no
-  reason to hand-place a standard SOT-23.**
+  hand-place by choice), §9, §10 — all SMD with an LCSC ID. **r18.73: the cells
+  are now the same THT tactile switch as the modifiers (SW1–SW10, HX B3F-4055,
+  C36498965) — order with JLC, hand-place after reflow like the modifier buttons.
+  The DRV5056A4 Hall sensors are removed.**
 - **Order separately via JLC, ship to the JLC address, hand-place yourself:**
-  encoders (EN1–4), speaker, Gateron switches,
-  stabilizer, Adafruit display module, Tag-Connect SWD header, mesh, knobs.
-- **Never via JLC:** Gateron switches + stabilizer + mesh + custom knobs. These
-  are keyboard-market parts + custom-CAD parts.
+  encoders (EN1–4), the 10 cell/modifier tactile switches (SW1–SW10),
+  speaker, Adafruit display module, Tag-Connect SWD header, mesh, knobs.
+- **Never via JLC:** mesh + custom 3D-printed knobs/caps. These are custom-CAD
+  parts.
 
 ## Verification Audit Trail
 
@@ -262,7 +273,8 @@ Who checks what, when:
 | All footprints checked | ✅ **6 custom** in [`field_ambience.pretty/`](field-ambience-current/kicad/libraries/field_ambience.pretty/) — all actively referenced (Y1, J8, L1, U8, SW6-10, SW11/SW_BOOT); the rest KiCad-Standard. No orphans | [`field-ambience-current/FP_VERIFY_LOG.md`](field-ambience-current/FP_VERIFY_LOG.md) |
 | 3D STEPs for Z-/panel-critical parts | ✅ **7 of them** in [`field_ambience.3dshapes/`](field-ambience-current/kicad/libraries/field_ambience.3dshapes/) (U1, Y1, U8, L1, J9 battery, J8, SW11/SW_BOOT). USB-C receptacle uses the KiCad-Standard STEP (no custom STEP needed). Z-height table per STEP (for enclosure CAD): [`mechanical/3d_models/MANIFEST.md`](mechanical/3d_models/MANIFEST.md) | r18.36 |
 | Mechanical X/Y/Z + height constraints | ✅ Python-validated, 0 conflicts | `mechanical/coordinates/mechanical_coordinates.md` |
-| DRV5056 pinout DS-confirmed | ✅ TI DS table 4-1 | r18.14b |
+| ~~DRV5056 pinout DS-confirmed~~ | ⛔ **SUPERSEDED r18.73** — Hall path removed; cells are now digital switches on the MCP23017 (see §7) | r18.14b → r18.73 |
+| Cells → digital I²C switches | ✅ SW1–SW5 (HX B3F-4055, C36498965) on MCP23017 GPA0–GPA4, same verified part as modifiers; no new component, DRV5056A4 + RC removed; PC0/PC1/PA4/PB0/PB1 freed. Restores SPEC v0.6 §7 "10 switches". | r18.73 |
 | AP7361C pinout user-confirmed | ✅ Diodes DS | r18.6 |
 | TPS61089 pin 11 = SW + thermal | ✅ TI DS | r18.7 |
 | Speaker diaphragm (cloth vs paper) | ✅ cloth cone primary | r18.18 |
@@ -271,7 +283,7 @@ Who checks what, when:
 | Speaker value in schematic | ✅ `value="CMS-402811-28SP Cloth-Cone 8R 2W"` (J6/J7). Previously stale "PUI AS04008PS 4R 4W" — wrong impedance + wrong driver | r18.19 |
 | SW_BOOT MPN correct | ✅ TS-1088-AR02016 (was wrongly TS-1185A) | r18.14 |
 | CAD files clickably linked + 3D-column consistency | ✅ all 7 STEPs + 6 actively used custom footprints entered as relative Markdown links; J1 USB-C ("STEP in repo" → "Standard-Lib-3D") and SW11/SW_BOOT ("Vendor-CAD" → "STEP in repo") corrected; unreferenced orphan footprint `RotaryEncoder_ALPS_EC11J_SMD` deleted. **The PCB path is therefore schematic/layout-ready — no open CAD TODOs for PCB** | r18.36 |
-| Hall-sensor FP-status doc drift fixed | ✅ J_CELL1–5: the BOM claimed `PinHeader_1x03` as a "phase-6 placeholder, → SOT-23". But the generator had already had `Package_TO_SOT_SMD:SOT-23` final since r18.20 (see `generate_kicad_project.py:3342` `FP_NOTE`). BOM entry corrected. | r18.37 |
+| ~~Hall-sensor FP-status doc drift fixed~~ | ⛔ **SUPERSEDED r18.73** — J_CELL1–5 Hall sensors no longer on the board (cells went digital, see §7). | r18.37 → r18.73 |
 | LCSC string diff BOM ↔ generator | ✅ performed: 60 BOM codes vs 53 generator codes. **0 real mismatches** — all diffs are either false positives (Tag-Connect "TC2030"), audit-trail history (old wrong LCSC IDs), or dead code in `pi_sheet()` (LEGACY, not written). Re-run before order recommended. Details in `PCB_FOOTPRINT_RISK_AUDIT.md` §9. | r18.37 |
 | Mechanics section (§12) clearly marked post-PCB | ✅ custom 3D-print files (encoder knobs, cell caps, switch plate, enclosure) are **not PCB-blocking** — they come after schematic/layout sign-off and do not affect the board (no holes / no pad pattern). §12 annotated accordingly | r18.36 |
 | 3D STEP export completeness (for enclosure CAD) | 🟡 **1 known gap:** HX modifier buttons SW6–SW10 (C36498966) have **no 3D model** (EasyEDA has none, `easyeda2kicad` re-check 2026-06-27). Envelope **11.8×11.8×7.3 mm** in [`mechanical/3d_models/MANIFEST.md`](mechanical/3d_models/MANIFEST.md) → enclosure clearance covered. All others: 7× STEP-in-repo or KiCad-Standard-Lib-3D. **Footprint present → not a PCB layout blocker.** Off-board bodies (speaker/battery/display/knobs) are external (Vendor-CAD, see §2/§3/§5/§6). | r18.65 |

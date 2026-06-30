@@ -44,8 +44,8 @@ Rev-B.
 | 12 | PH0 | HSE_IN | OSC_IN | MCU | Crystal Y1 in (+ 22 pF load cap) |
 | 13 | PH1 | HSE_OUT | OSC_OUT | MCU | Crystal Y1 out (+ 22 pF load cap) |
 | 14 | NRST | NRST | dedicated reset | MCU | SW11 reset button + 10 kΩ PU + 100 nF |
-| 15 | PC0 | CELL1_SENSE | ADC123_INP10 | MCP/Cells | Hall sensor CELL1 OUT (via 1 k RC) |
-| 16 | PC1 | CELL2_SENSE | ADC123_INP11 | MCP/Cells | Hall sensor CELL2 OUT |
+| 15 | PC0 | NC_PC0_ADC_RSVD | ADC123_INP10 | — | free (r18.73: cells went digital on MCP23017; ADC pin freed, Rev-B reserve) |
+| 16 | PC1 | NC_PC1_ADC_RSVD | ADC123_INP11 | — | free (r18.73 reserve) |
 | 17 | PC2_C | (free) | analog | — | free |
 | 18 | PC3_C | (free) | analog | — | free |
 | 19 | VSSA | GND | analog ground | Power | GND (single-star) |
@@ -57,14 +57,14 @@ Rev-B.
 | 25 | PA3 | BAT_SENSE | ADC1_INP15 | Battery | LiPo+ via 100k:100k divider |
 | 26 | VSS | GND | dedicated | Power | GND |
 | 27 | VDD | +3V3 | dedicated | Power | +3V3 + decoupling |
-| 28 | PA4 | CELL3_SENSE | ADC12_INP18 | MCP/Cells | Hall sensor CELL3 OUT |
+| 28 | PA4 | NC_PA4_ADC_RSVD | ADC12_INP18 | — | free (r18.73 reserve) |
 | 29 | PA5 | LCD_SCK | SPI1_SCK (AF5) | LCD | J3 header pin 3 (SCL) |
 | 30 | PA6 | LCD_CS | GPIO | LCD | J3 header pin 7 (CS) |
 | 31 | PA7 | LCD_MOSI | SPI1_MOSI (AF5) | LCD | J3 header pin 4 (SDA) |
 | 32 | PC4 | LCD_DC | GPIO | LCD | J3 header pin 6 (DC) |
 | 33 | PC5 | LCD_RES | GPIO | LCD | J3 header pin 5 (RES) |
-| 34 | PB0 | CELL4_SENSE | ADC12_INP9 | MCP/Cells | Hall sensor CELL4 OUT |
-| 35 | PB1 | CELL5_SENSE | ADC12_INP5 | MCP/Cells | Hall sensor CELL5 OUT |
+| 34 | PB0 | NC_PB0_ADC_RSVD | ADC12_INP9 | — | free (r18.73 reserve) |
+| 35 | PB1 | NC_PB1_ADC_RSVD | ADC12_INP5 | — | free (r18.73 reserve) |
 | 36 | PB2 | (free) | BOOT1 / GPIO | — | free |
 | 37 | PE7 | (free) | TIM1_ETR | — | free |
 | 38 | PE8 | (free) | TIM1_CH1N | — | free |
@@ -151,7 +151,7 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 |---|---|---|
 | `+5V_USB` | USB-C VBUS → F1 polyfuse | Q1 power-path source |
 | `+5V_RAIL` | Q1 drain (USB) ‖ TPS61089 boost (battery) via D3 | PAM8403 PVDD, AP7361A LDO IN |
-| `+3V3` | AP7361A-33ER LDO OUT | MCU VDD×5+VBAT, MCP23017, PCA9685, PCM5102A, LCD module, encoders' pull-ups, Hall sensors |
+| `+3V3` | AP7361A-33ER LDO OUT | MCU VDD×5+VBAT, MCP23017, PCA9685, PCM5102A, LCD module, encoders' pull-ups |
 | `VDDA` | +3V3 via FB1 ferrite | MCU pin 21 (+ 1 µF‖100 nF) |
 | `BAT_PLUS` (LiPo+) | J_BAT / charger | TPS61089 VIN, BAT_SENSE divider, MCP73831 VBAT |
 | `GND` | star point | everything |
@@ -180,13 +180,12 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 |---|---|---|
 | `I2C_SCL`/`I2C_SDA` | MCU PB6/PB7 (+4.7 kΩ PU) | MCP23017 + PCA9685 (shared bus) |
 | `MCP_INT` | MCP23017 INTA | MCU PC13 |
+| `CELL1..5_BTN` | MCP23017 GPA0..4 (PU) | 5 cell tactile switches SW1..5 (digital triggers, r18.73) → GND |
 | modifier buttons SW6..10 | MCP23017 GPB0..4 (PU) | 5 tactile buttons (Shift/Hold/Drone/Generate/Clear) |
 | `VOL_SW` | EN4 push | MCP23017 GPB5 |
 | 5 modifier LEDs | PCA9685 ch0..4 (via 390 Ω) | Shift=gelb, Hold=grün, Drone/Gen/Clear=weiß |
 | 10 cell LEDs | PCA9685 ch5..14 (via 390 Ω) | 2 per cell: gelb (base-hold) + grün (shift-hold) |
 | `LCD_BLK_PWM` | PCA9685 ch15 | Q2 backlight FET (→ LCD sheet) |
-| `CELL1..5_SENSE` | 5× DRV5056A4 Hall OUT | MCU ADC PC0/PC1/PA4/PB0/PB1 |
-| Hall VCC | +3V3 | 5× DRV5056A4 VCC |
 
 ### Encoders (`encoder.kicad_sch`)
 | Encoder | A pin | B pin | Switch |

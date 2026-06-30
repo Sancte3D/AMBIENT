@@ -3,6 +3,16 @@
 **Status:** PROPOSED → **AMENDED 2026-06-27 (User: physischer Schiebeschalter als Haupt-Aus)**
 **Date:** 2026-06-22 (urspr.) / 2026-06-27 (Amendment)
 
+> **Amendment 2026-06-30 (r18.73 — Cells digital, ADR-0013 abgelöst):** Die unten
+> dominierende Prämisse „die 5 Hall-Sensoren (~17,5 mA) sind der echte Idle-
+> Stromfresser" **gilt nicht mehr** — die Hall-Sensoren wurden entfernt, die Cells
+> sind jetzt digitale Switches am MCP23017. Damit entfällt die Begründung für
+> einen **dedizierten Hall-Load-Switch (`U9`/`HALL_VDD`, Variante C unten)**; das
+> ist obsolet. **Unverändert gültig** bleibt der **Haupt-Aus-Schiebeschalter
+> (`SW_PWR` + Load-Switch `U_PWR`)** aus dem Amendment 2026-06-27 — er gated die
+> gesamte 3V3-Domäne (MCU + MCP + 2× PCA9685/LEDs + LCD), Lader davor. Wo unten
+> „Halls" als 3V3-Last steht: ersatzlos streichen; der Rest der Last-Liste bleibt.
+
 ## Amendment 2026-06-27 — Haupt-Power-Gate per Schiebeschalter („dunkel, aber lädt")
 
 User-Entscheidung: **ein physischer Schiebeschalter als echtes Aus** — Gerät im

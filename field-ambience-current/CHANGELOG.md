@@ -10,6 +10,34 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.73 (2026-06-30) — Cells → digitale I²C-Switches (ADR-0013 SUPERSEDED)
+
+User: „mach lieber das, austauschen … HiChord macht es sehr wahrscheinlich nicht
+mit Gateron Magnetic Switches + Hall-Sensoren. … Mach die Cells erstmal digital
+wie HiChord Batch 4+. Mechanische Switches, Caps/Plate, I2C Expander."
+
+### 🔄 Cells: Hall/ADC → digitale Switches am MCP23017
+
+- **Entfernt** (STM32-Sheet): 5× DRV5056A4 Hall-Sensor (J_CELL1–5, C2152902),
+  5× R_CELL 1 kΩ (C21190), 5× C_CELL 10 nF (C57112). STM32-ADC-Pins
+  PC0/PC1/PA4/PB0/PB1 → NC-Reserve (Rev-B).
+- **Neu** (mcp-Sheet): SW1–SW5 Tactile-Switches auf MCP23017 GPA0–GPA4
+  (Netze `CELL1..5_BTN`, Pin → GND, MCP-interner Pull-Up + IRQ-on-change),
+  exakt wie die Modifier SW6–SW10. **Gleiches Bauteil:** HX B3F-4055-Y
+  (C36498965). **Kein neues Bauteil** — MCP23017 + Switch standen bereits
+  verifiziert in der BOM.
+- HiChord-Batch-4+-Topologie (Switch → I²C-GPIO-Expander → MCU). Stellt die
+  ursprüngliche SPEC-v0.6-§7-„10 Switches"-Topologie wieder her (5 Cells +
+  5 Modifier am Expander).
+- Hall + Magnet bleibt als dokumentierte Option (ADR-0013) nur falls echte
+  Drucktiefe/Velocity später gewünscht ist.
+- Aktualisiert: Generator + regenerierte `.kicad_sch`, `jlc_bom.csv`,
+  `docs/hardware/bom_overview.html` (Aron), `BOM_MASTER.md`, `PCB_BOM.md`,
+  `PINMAP.md`, `KICAD_BLUEPRINT.md`, `SCHEMATIC_WALKTHROUGH.md`,
+  `MECHANICAL_REQUIREMENTS.md`, `ADR-0013`, `PROJECT_STATUS.md`.
+
+---
+
 ## v0.7-r18.30 (2026-06-15) — leds.c + Menü-Encoder + MIDI deferred
 
 User: „vielleicht brauchen wir gar kein MIDI? Rest ausbauen."

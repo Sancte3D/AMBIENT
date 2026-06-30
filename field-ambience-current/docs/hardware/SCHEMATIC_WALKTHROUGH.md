@@ -35,7 +35,7 @@ Wenn du das hier von oben nach unten liest, weißt du am Ende:
 | 1 | `power_tree.kicad_sch` | `make_power_tree_sheet()` ~Z. 1887 | USB-C → Polyfuse → Bulk-Caps → +3V3-Rail, Boost-Konverter für Speakers, Akku-Eingang |
 | 2 | `stm32h743.kicad_sch` | `make_stm32h743_sheet()` ~Z. 3424 | MCU + HSE-Crystal + Reset + BOOT + Decoupling + VCAP + VDDA |
 | 3 | `lcd.kicad_sch` | `make_lcd_sheet()` ~Z. 3533 | ST7789-Modul-Header J3 + Backlight-FET Q2 + lokale Caps |
-| 4 | `mcp.kicad_sch` | `make_mcp_sheet()` ~Z. 4560 | MCP23017 (16 I/O over I²C) + PCA9685 (16 PWM für LEDs) + 5 Hall-Sensoren + 10 Buttons + 10 LEDs |
+| 4 | `mcp.kicad_sch` | `make_mcp_sheet()` ~Z. 4560 | MCP23017 (16 I/O over I²C) + PCA9685 (16 PWM für LEDs) + 10 Buttons (5 Cells SW1–5 + 5 Modifier SW6–10, alle digital am Expander) + 10 LEDs |
 | 5 | `encoder.kicad_sch` | `make_encoder_sheet()` ~Z. 4845 | 4 EC11-Encoder mit Push + RC-Filter |
 | 6 | `audio.kicad_sch` | `make_audio_sheet()` ~Z. 4878 | PCM5102A I²S-DAC + PAM8403 Class-D-Amp + Speaker-Header + 3.5-mm-Line-Out + (DNP) MIDI-Out |
 | 7 | `battery.kicad_sch` | `make_battery_sheet()` ~Z. 5956+ | MCP73831 Lade-IC + Akku-JST + Power-Path-Switching (USB ↔ Akku) + Bat-Sense-Divider |
@@ -84,7 +84,7 @@ pfeile = bidirektional (I²C/SPI command + status).
         │  ◄── I²S ────► PCM5102A ─► Line-Out (J8) ││
         │                          └─► PAM8403 ─► SP
         │  ◄── I²C ────► MCP23017 ─► 10× Buttons   ││
-        │                          └─► Hall × 5    ││
+        │                  (5 Cells + 5 Modifier)  ││
         │  ◄── I²C ────► PCA9685 ──► 10× LEDs      ││
         │                          └─► Q2 BL-FET   ││
         │  ◄── TIM-QEI ─► 4× EC11 Encoder          ││
@@ -104,7 +104,7 @@ Drei Geschwindigkeits-Tiers im Signal:
    ungebrochener GND-Plane drunter (ADR-0018).
 2. **Mittel (100 kHz – 1 MHz):** I²C (100 kHz Fast, beide Slaves auf einem
    Bus), PCA9685-PWM-Träger, ADC-Sampling.
-3. **Langsam:** Encoder-Quadratur (≤1 kHz), Button-Polling, Hall-DC.
+3. **Langsam:** Encoder-Quadratur (≤1 kHz), Button-Polling (Cells + Modifier über MCP23017).
 
 ---
 
@@ -169,11 +169,13 @@ USB-D+/D− gehen durch `D1` zum MCU (USB-OTG-FS für Firmware-Updates per DFU).
 
 ### Sleep-Architektur (ADR-0016 — geplant)
 
-Geplante Hardware-Erweiterung in diesem Sheet:
-- `U9` TPS22918DBVR Load-Switch (SOT-23-6) gated den 3V3-Pfad zu den 5
-  Hall-Sensoren (HALL_VDD-Net) — diese ziehen ~17,5 mA und sind im Sleep der
-  echte Stromfresser, nicht der MCU. Mit Load-Switch fallen wir auf <100 µA
-  Idle. Siehe [ADR-0016](../decisions/ADR-0016-power-sleep-architecture.md).
+Geplante Hardware-Erweiterung (ADR-0016, in BOM_MASTER als `U_PWR` TPS22918):
+- Der Load-Switch gated den gesamten 3V3-Pfad (`+5V_RAIL → +5V_SW` → LDO →
+  +3V3: MCU + MCP + 2× PCA9685 + LCD) hinter dem Power-Schiebeschalter
+  `SW_PWR`. Der Lade-Pfad (U7) sitzt davor → lädt weiter im Aus-Zustand.
+  (Hinweis r18.73: die früheren 5 Hall-Sensoren — der ehemalige Sleep-
+  Stromfresser ~17,5 mA — entfallen, Cells sind jetzt digital am MCP23017.)
+  Siehe [ADR-0016](../decisions/ADR-0016-power-sleep-architecture.md).
 
 ---
 
@@ -360,16 +362,17 @@ nachreichen. Der MCU spricht beide über *einen* I²C-Bus (`I2C_SCL`/`I2C_SDA`,
 | `R20` | 10 kΩ 0603 | MCP23017 `INTA` Open-Drain Pull-Up (Interrupt-Pin zum MCU) | 0603 |
 | `C5` | 100 nF X7R 0603 | MCP23017 VDD-Decoupling | 0603 |
 | `C5b` | 10 nF X7R 0603 | MCP23017 VDD-HF-Decoupling (Pärchen-Strategie für saubere I²C-Edges) | 0603 |
-| `D_CELL1..5` | Cell-LEDs (5×) — PCA9685-getrieben | Visualisiert Cell-Velocity (Brightness ∝ Anschlag) | LED 0603 / 0805 — *UNVERIFIED: konkrete PN noch zu finalen* |
+| `D_CELL1..5` | Cell-LEDs (5×) — PCA9685-getrieben | Visualisiert Cell-Status (Press/Hold) | LED 0603 / 0805 — *UNVERIFIED: konkrete PN noch zu finalen* |
 | `D_MOD1..5` | Modifier-LEDs (gelb, rot, weiß, grün) — PCA9685-getrieben | Status der 5 Modifier-Buttons (Hold/Drone/Shift/Generate/Clear) | LED 0603 — siehe BOM §"Modifier-LEDs" |
-| `SW1..10` | XUNPU TS-1088-AR02016 Mini-Tact (10×) | Modifier-Buttons (Top-Reihe) + Reserve | `field_ambience:SW_TS1088_SMD` (Custom, EasyEDA-verifiziert) |
-| `HALL1..5` | DRV5056A4 (5×) Linear-Hall (ratiometric) | Cell-Velocity-Pickup — misst Magnetfeld-Verschiebung beim Tap (ADR-0013) | `Package_TO_SOT_SMD:SOT-23` |
+| `SW1..5` | HX B3F-4055-Y THT-Tactile (5×) | **Cell-Trigger digital** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), r18.73 — ADR-0013 abgelöst | `field_ambience:SW_TC1212-7.3_THT_4P` (Custom) |
+| `SW6..10` | HX B3F-4055-Y THT-Tactile (5×) | Modifier-Buttons auf MCP23017 GPB0–GPB4 (gleiches Bauteil wie die Cells) | `field_ambience:SW_TC1212-7.3_THT_4P` (Custom) |
 
 ### Wie es fließt
 
 ```
 STM32H743 I²C1 (PB6/PB7 AF4) ──┬──► U2 MCP23017 (Addr 0x20)
-                               │       └──► 10× Modifier-Buttons (Pull-Up + Pin)
+                               │       └──► 5× Cell-Switches SW1–5 (GPA0–4, Pull-Up + Pin → GND)
+                               │       └──► 5× Modifier-Buttons SW6–10 (GPB0–4, Pull-Up + Pin)
                                │       └──► AMP_SHDN_N + AMP_MUTE_N (Audio-Mute)
                                │       └──► PCM_XSMT (DAC-Mute, GPA5)
                                │       └──► J8 Insertion-Detect
@@ -379,20 +382,19 @@ STM32H743 I²C1 (PB6/PB7 AF4) ──┬──► U2 MCP23017 (Addr 0x20)
                                        └──► 10× LED-Kanäle (Konstant-Strom über 0603-Widerstände)
                                        └──► Backlight-FET (Q2-Gate) auf Kanal 12
 
-HALL1..5 (DRV5056A4) ──► Analog-Out ──► STM32H743 ADC (CELL1..5_SENSE)
-   ▲
-   └── VDD = HALL_VDD (gegated durch U9, ADR-0016) — im Sleep aus
+Cells (r18.73, ADR-0013 abgelöst): SW1..5 → MCP23017 GPA0..4 → I²C → MCU.
+Rein digital (on/off), MCP-interner Pull-Up + IRQ-on-change über INTA.
+Keine Hall-Sensoren, kein STM32-ADC-Pfad mehr (PC0/PC1/PA4/PB0/PB1 frei).
 ```
 
 ### Was kaputt geht wenn …
 
 | Bauteil stirbt | Symptom | Fix |
 |---|---|---|
-| `U2` MCP23017 | Alle 10 Buttons tot, Speaker bleibt unmuted, Insertion-Detect tot — aber DSP läuft weiter | I²C-Pull-Ups + Power + Adresse prüfen |
+| `U2` MCP23017 | Alle 10 Buttons (5 Cells + 5 Modifier) tot, Speaker bleibt unmuted, Insertion-Detect tot — aber DSP läuft weiter | I²C-Pull-Ups + Power + Adresse prüfen |
 | `U6` PCA9685 | Alle LEDs aus, Backlight dunkel (FET-Gate floated) — Gerät spielt aber Sound | wie oben |
 | `R4`/`R5` Pull-Ups | I²C-Bus floated → beide Chips antworten nicht → 1× Reset hilft nicht, Layout-Fehler | Pull-Up nachrüsten / Wert prüfen |
-| 1× Hall-Sensor | Diese eine Cell reagiert nicht auf Tap; andere 4 funktionieren | Sensor ersetzen; ADC-Eingang gegen Magnet-Drift testen |
-| `U9` Load-Switch (ADR-0016) hängt | HALL_VDD nicht da → alle 5 Cells tot | Load-Switch-Enable-Signal vom MCU prüfen, `LSW_EN` Pin |
+| 1× Cell-Switch SW1–5 | Diese eine Cell triggert nicht; andere 4 funktionieren | Switch + Lötstelle prüfen; MCP-GPA-Pin gegen GND messen |
 
 ### Warum gerade diese Wahl?
 
@@ -402,11 +404,14 @@ HALL1..5 (DRV5056A4) ──► Analog-Out ──► STM32H743 ADC (CELL1..5_SENS
 - **PCA9685 statt PWM aus dem MCU**: 16 echte PWM-Kanäle parallel (12-Bit
   Auflösung, 1500 Hz Refresh) ohne MCU-Last. Der MCU hat zwar TIM-Kanäle
   satt, aber die sind für Encoder-Quadratur reserviert.
-- **DRV5056A4 statt Reed-Switches / FSR-Pads**: ratiometric Hall liefert
-  *kontinuierliche* Position → echte Anschlagsgeschwindigkeit (Velocity), nicht
-  nur On/Off. Macht das musikalische Spiel "anschlagsdynamisch" — ADR-0013.
-- **TS-1088-AR02016 Mini-Tact**: kleinster vernünftiger SMD-Taster, JLC-fertig,
-  ~3 mm hoch — passt in flaches Gehäuse.
+- **Digitale Cell-Switches statt DRV5056A4-Hall (r18.73, ADR-0013 abgelöst)**:
+  HiChord-Batch-4+-Weg — Switch → I²C-Expander → MCU. On/Off reicht zum Triggern;
+  spart Magnet-Z-Abgleich, ADC-Kalibrierung und Keyboard-Markt-Beschaffung. Kein
+  neues Bauteil: gleicher HX-B3F-4055-Taster wie die Modifier, auf den ohnehin
+  freien GPA0–GPA4. Analoge Velocity/Aftertouch wäre nur mit Hall nötig — bleibt
+  als Option dokumentiert (ADR-0013).
+- **HX B3F-4055-Y THT-Tactile**: gemeinsamer Cell- + Modifier-Taster, Square-Head
+  für Clip-on-3D-Druck-Caps, 100 k Zyklen, JLC-gelistet (C36498965).
 
 ---
 
