@@ -9,8 +9,9 @@ JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/BOM/CPL existieren.
 > Gebühr pro Teil" war zu hoch angesetzt. JLCPCB (a) hat die Feeder-Gebühr Ende
 > 2025 auf $1.50 gesenkt und (b) stuft unsere großen ICs (STM32H743, PCM5102A,
 > PAM8403, PCA9685, AP7361C, Crystal) als **„Extended (Preferred)" = gebührenfrei**
-> ein. Real zahlen nur 3 plain-Extended-Teile (MCP23017, MCP73831, DRV5056A4)
-> je $1.50 → **~$4.50 Feeder-Gebühr für den ganzen Run**, nicht ~$96.
+> ein. Real zahlen nur 2 plain-Extended-Teile (MCP23017, MCP73831)
+> je $1.50 → **~$3.00 Feeder-Gebühr für den ganzen Run**, nicht ~$96.
+> (r18.73: DRV5056A4 entfällt — Cells sind jetzt digitale Switches am MCP23017.)
 
 ## 1. JLCPCB-Anteil (5 Boards, vollbestückt SMD)
 
@@ -30,7 +31,7 @@ JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/BOM/CPL existieren.
 | Teil | pro Gerät | × 5 | Quelle |
 |---|---|---|---|
 | 4× ALPS EC11E18244AU (alle 4 gleich, r18.22 NRND-Pivot) | ~$5 | $25 | LCSC C202365 (~3.052 Stock, active) |
-| 5× Gateron LP Magnetic Jade | ~$4 | $20 | Gateron/NuPhy/Ukeebs |
+| ~~5× Gateron LP Magnetic Jade~~ | **$0** | **$0** | **gestrichen r18.73 — Cells sind jetzt SMD/THT-Tactile auf dem Board (SW1–5, in der SMD-BOM)** |
 | ~~Stabilizer~~ | **$0** | **$0** | **gestrichen (1u-Caps, r18.21)** |
 | 4× Encoder-Knöpfe | **$0** | **$0** | **selbst 3D-gedruckt** |
 | 5× Cell-Caps | **$0** | **$0** | **selbst 3D-gedruckt (1u)** |
@@ -40,13 +41,13 @@ JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/BOM/CPL existieren.
 | Tag-Connect TC2030-IDC (Tool, **einmalig**) | — | $15 | Tag-Connect |
 | Dust-Mesh-Sticker | ~$1 | $5 | AliExpress |
 | M2.5 Standoffs + Schrauben | ~$1 | $5 | Reichelt |
-| **Hand-Supply-Zwischensumme** | | **~$185** | inkl. einmaligem $15-Tool |
+| **Hand-Supply-Zwischensumme** | | **~$165** | inkl. einmaligem $15-Tool (r18.73: −$20 Gateron, Cells jetzt on-board) |
 
 ## 3. SMD-BOM pro Board (~$18)
 
 STM32H743 ~$8.78 · TPS61089 ~$0.80 · PCM5102A ~$1.11 · PAM8403 ~$0.44 ·
 PCA9685 ~$3.33 · MCP23017 ~$1.79 · AP7361C ~$0.34 · MCP73831 ~$0.81 ·
-5× DRV5056A4 ~$2.90 · C_BULK Polymer ~$0.60 · 100µF MLCC ~$0.30 ·
+10× HX B3F-4055 Cell/Modifier-Switches (C36498965) ~$0.60 · C_BULK Polymer ~$0.60 · 100µF MLCC ~$0.30 ·
 17× LEDs ~$0.40 · USB-C ~$0.15 · Crystal ~$0.27 · 2× Klinke ~$0.50 ·
 ~120 Passives ~$3 · Rest ~$1 → **~$27** (Mengenrabatt ×5 drückt auf ~$18).
 
@@ -82,7 +83,8 @@ Mit SLS-Gehäuse + etwas Puffer: **~$490–560 / ~$98–112 pro Stück**.
 
 Vorher (erste Schätzung): ~$750. Jetzt: **~$440–560**. Der Rest ist
 hauptsächlich der STM32H743 (Kern, gebührenfrei „Preferred", nicht ersetzbar
-ohne Audio-Risiko) + die Magnetic-Switches.
+ohne Audio-Risiko). (r18.73: die teuren Gateron-Magnetic-Switches entfallen —
+Cells sind jetzt günstige Tactile-Switches am MCP23017.)
 
 > **r18.22-Korrektur:** Die r18.21-„bare ST7789V"-Senkung war zu aggressiv.
 > Display ist jetzt Waveshare (~$11 statt $3 bare statt $15 Adafruit) — gleiche

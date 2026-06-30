@@ -50,8 +50,8 @@ of these is **your design**; this is the *inventory*, not a layout.
 |---|---|---|---|
 | Display (Waveshare 1.9″ LCD 170×320) | 1 | the screen — worlds, params, meters | window = active area + 0.5 mm/side; must show the full active area |
 | Push-encoders (ALPS EC11) + 3D-print knobs Ø19–20 mm | 4 | global params + a push function each | 4 shaft holes; knobs sit ~10 mm above the top plate |
-| Cell keys (Gateron Low-Profile Magnetic) + 3D-print 1u caps | 5 | the playable keys (note + velocity, Hall-sensed) | 5× 14×14 mm cutouts in a switch plate, MX 19 mm pitch |
-| Modifier buttons (TC-1212 tactile) + caps | 5 | Shift / Hold / Drone / Generate / Clear | 5 button holes; caps clip onto the square head |
+| Cell keys (HX B3F-4055 THT tactile, digital) + 3D-print 1u caps | 5 | the playable keys (digital on/off trigger; r18.73, ADR-0013 superseded) | 5 PCB-mounted switches, MX 19 mm pitch; caps clip onto the square head |
+| Modifier buttons (HX B3F-4055 tactile, same part) + caps | 5 | Shift / Hold / Drone / Generate / Clear | 5 button holes; caps clip onto the square head |
 | Modifier LEDs (mono) | 5 | per-button status (Shift=yellow, Hold=green, other 3 white) | 5 light points — translucent cap / lightpipe / window |
 | Cell LEDs (2 per cell: yellow + green) | 10 | cell hold-status (base / shift) | 10 light points — glow the keycap or a window per cell |
 | VU-meter LEDs (white, in a row) | 8 | live audio level (OP-1-style) | 8 light points / a light-bar window; row position = your choice |
@@ -133,17 +133,21 @@ Gehäuse oder die Bedienflächen positionell fest.
 | Anordnung 4× nebeneinander | Bündel oben oder seitlich, je nach Gehäuse-Konzept | User-Entscheidung |
 | Mounting | Through-Hole, 5,1 mm hohe Lötseite — PCB-Underside-Clearance | Datasheet |
 
-### 1.5 Cell-Switches × 5 `Cell 1..5` (Gateron Low Profile Magnetic Jade)
+### 1.5 Cell-Switches × 5 `SW1..SW5` (HX B3F-4055-Y THT-Tactile)
+
+> **r18.73 (ADR-0013 abgelöst):** Cells sind jetzt **digitale THT-Tactile-Switches**
+> auf dem MCP23017 (HiChord-Batch-4+-Weg) — **dasselbe Bauteil wie die Modifier
+> SW6–SW10** (HX B3F-4055-Y, C36498965). Damit entfallen die Gateron-Magnetic-
+> Switches, die separate Switch-Plate und die DRV5056A4-Hall-Sensoren. Die Cells
+> sind **PCB-mounted**, nicht mehr Plate-mounted; Maße = §1.6.
 
 | Maß | Wert | Quelle |
 |---|---|---|
-| Switch-Plate-Cutout | 14 × 14 mm pro Switch | BOM §7 (Gateron-Standard MX-Footprint) |
-| Switch-Höhe über Plate | ~6,5 mm | Gateron-LP-Spec |
-| Magnet-Stem-Hub | 0,1 – 3,3 mm analog | Gateron-LP-Magnetic |
-| Hall-Sensor-Position | DRV5056A4 (SOT-23) **direkt unter dem Magnet-Stem auf PCB-Unterseite** (oder Top, je nach Stack-Up) | ADR-0013 + Generator-Kommentar Z. 3350 |
-| Pitch zwischen Cells | 19 mm (Standard-MX-Spacing) | Gateron-LP |
-| Plate-Mounted, NICHT PCB-Mounted | bedeutet: Cells sitzen auf einer separaten Plate über dem PCB; Hall sieht den Magnet durch's PCB | ADR-0013 |
-| Plate-Material | 3D-gedruckte Plate ODER 1,5 mm FR-4 Plate (Stretch-Goal) | TBD |
+| Switch-Body (LxBxH) | **11,8 × 11,8 × 7,3 mm** (Square-Head-Plunger oben) | wie §1.6 (gleiches Bauteil) |
+| Höhe über PCB | **7,3 mm** (Plunger-Spitze) → Top-Plate-Clearance | Datasheet |
+| Pitch zwischen Cells | 19 mm (Standard-MX-Spacing) | Industrial-Design |
+| Mounting | **PCB-mounted, 4-Pin THT** (kein Plate mehr nötig) | Generator (mcp_sheet, GPA0–GPA4) |
+| Cap | 3D-Druck-Cap clippt auf den Square-Head (wie Modifier) | ADR-0013 / §1.6 |
 
 ### 1.6 Modifier-Buttons × 5 `SW6..SW10` (HX 12×12×7.3TPFT-B)
 
@@ -203,7 +207,7 @@ restliche elektrische Platzierung* (ADR-0018 Routing-Regeln).
 1. **Display `J3`** — Top-Center oder Top-Edge je nach Gehäuse-Konzept
 2. **USB-C `J1`** — Kante (links oder rechts)
 3. **3.5 mm Jack `J8`** — andere Kante als `J1`, weg von Switching-Reglern
-4. **5 Cells (Switch-Plate-Cutouts + Hall-Sensoren drunter)** — Mittelbereich,
+4. **5 Cell-Switches SW1–5 (PCB-mounted THT-Tactile, digital)** — Mittelbereich,
    Standard-MX-Pitch 19 mm
 5. **5 Modifier-Buttons + 5 Modifier-LEDs** — Top-Plate-Pattern
 6. **4 Encoder** — Top-Plate-Reihe

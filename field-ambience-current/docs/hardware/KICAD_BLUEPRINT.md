@@ -117,7 +117,7 @@ Parts + order links: `BOM_MASTER.md`.
    │  ├─ I²C1 ──┬──► MCP23017 (U2) ──► 10 buttons (5 cell + 5 modifier) + jack-detect
    │  │         └──► PCA9685 (U6) ──► 15 LEDs + LCD backlight FET (Q2)
    │  ├─ TIM1/2/3/4 QEI ──► 4 encoders (EN1-EN4)
-   │  ├─ ADC ──► 5 Hall sensors (J_CELL1-5, under magnetic cells) + BAT_SENSE
+   │  ├─ ADC ──► BAT_SENSE (cells are digital on the MCP23017 now — r18.73)
    │  ├─ USART2 ──► MIDI TX (J9, DNP for now)
    │  └─ USB-OTG-FS (PA11/PA12) + SWD (J4 Tag-Connect)
    └────────────────────────────────────────────────────────────────────┘
@@ -143,7 +143,7 @@ Parts + order links: `BOM_MASTER.md`.
 | DISPLAY_A/B | 59/60 | PD12/PD13 | EN3 (TIM4) |
 | VOL_A/B | 67/68 | PA8/PA9 | EN4 (TIM1) |
 | DRIVE/BRIGHT/DISPLAY_SW | 97/98/2 | PE0/PE1/PE3 | encoder push switches (EN4_SW on MCP GPB5) |
-| CELL1..5_SENSE | 15/16/28/34/35 | PC0/PC1/PA4/PB0/PB1 | Hall sensor OUT (ADC) |
+| CELL1..5_BTN | MCP23017 GPA0–4 | (over I²C) | 5 cell tactile switches SW1–5 → GND (r18.73; PC0/PC1/PA4/PB0/PB1 now free) |
 | BAT_SENSE | 25 | PA3 | 100k/100k divider off battery (ADC) |
 | AMP_nSHDN | 53 | PB14 | PAM8403 /SHDN (10 kΩ pull-down) |
 | AMP_nMUTE | 54 | PB15 | PAM8403 /MUTE (10 kΩ pull-down) |
@@ -167,7 +167,7 @@ VSSA(19)→GND, VCAP1/2 (48,73)→2.2 µF each to GND.
 | BAT_SENSE divider | 100 kΩ + 100 kΩ 0603 | halves battery V into ADC range |
 | BOOT0 pull-down | 1 kΩ 0603 | boots to flash, button overrides |
 | AMP /SHDN, /MUTE pull-downs | 10 kΩ 0603 | amp boots OFF + muted (pop-free) |
-| Hall RC (per cell, 5×) | 1 kΩ + 10 nF 0603 | anti-alias on each Hall OUT |
+| ~~Hall RC (per cell)~~ | — | removed r18.73 — cells are digital switches on the MCP23017 |
 | HSE load caps | 2× 27 pF C0G 0603 | crystal |
 | VDD decoupling (per pin) | 4.7 µF 0805 + 100 nF 0603 | 1 pair per VDD pin |
 | VDDA filter | ferrite BLM18AG601 + 1 µF + 100 nF | analog isolation |
@@ -195,9 +195,8 @@ them. To confirm:
 | L1 inductor | `field_ambience:L_Sunlord_SWPA6045` | custom |
 | Y1 crystal | `field_ambience:Crystal_HC49-US-SMD_ABLS` | custom |
 | J8 audio jack | `field_ambience:Jack_3.5mm_PJ-320D_SMT` | custom |
-| SW6-10 modifiers | `field_ambience:SW_HX_12x12x7.3_SMD-4P` | custom |
+| SW1-5 cells + SW6-10 modifiers | `field_ambience:SW_TC1212-7.3_THT_4P` | custom (HX B3F-4055, C36498965) |
 | SW11/SW_BOOT | `field_ambience:SW_TS1088_SMD` | custom |
-| J_CELL1-5 Hall | `Package_TO_SOT_SMD:SOT-23` | KiCad std |
 | J1 USB-C | `Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12` | KiCad std |
 
 Full table: `BOM_MASTER.md` and `PCB_FOOTPRINT_RISK_AUDIT.md`. The audit also
@@ -254,8 +253,8 @@ Place in this order — group by sub-circuit, keep loops short:
 
 1. **Fixed/mechanical first** (these are constrained by the enclosure — see
    `PCB_FOOTPRINT_RISK_AUDIT.md §6` + `mechanical/coordinates/`):
-   USB-C (board edge), audio jack (board edge), LCD header, the 5 cells +
-   their Hall sensors directly under each magnet, 5 modifier buttons, 4
+   USB-C (board edge), audio jack (board edge), LCD header, the 5 cell switches
+   (SW1–5) on the 19 mm grid, 5 modifier buttons (SW6–10), 4
    encoders, battery connector, mounting holes.
 2. **Power section**: USB-C → F1 → TPS61089 + L1 + bulk caps. Keep the boost
    loop (U8 ↔ L1 ↔ C_OUT) as tight as possible — this is the #1 power rule

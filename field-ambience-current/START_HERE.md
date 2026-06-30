@@ -36,8 +36,8 @@
 - `kicad/` — KiCad-Projekt (Schaltplan fertig + validiert, generiert aus
   `generate_kicad_project.py`)
 - `kicad/libraries/` — Custom-Footprints (`field_ambience.pretty`) + 3D-STEPs.
-  (Cells sind seit ADR-0013 **Gateron LP Magnetic + Hall**, plate-mounted —
-  kein PCB-Switch-Footprint mehr.)
+  (Cells sind seit r18.73 **digitale THT-Tactile-Switches** auf dem MCP23017
+  — gleiches Bauteil wie die Modifier; ADR-0013 Gateron-Magnetic+Hall abgelöst.)
 - `kicad/datasheets/` — Datasheets der verbauten Bauteile
 - `../mechanical/coordinates/mechanical_coordinates.md` — Platzierungs-Koordinaten fürs Layout
 - `CHANGELOG.md` — Entscheidungs- und Änderungshistorie
