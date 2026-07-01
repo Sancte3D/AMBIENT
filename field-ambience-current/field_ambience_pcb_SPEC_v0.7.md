@@ -484,8 +484,9 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
-| **SW1-SW5** (r18.74, ADR-0013 abgelöst) | **Kailh Choc V1/V2 Hot-Swap-Socket — Cell-Trigger, DIGITAL, echter Keyswitch** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`, Pin → GND, MCP-Pull-Up + IRQ). HiChord-Batch-4+-Weg (Switch → I²C-Expander → MCU), aber **NICHT dasselbe Bauteil wie SW6–SW10** (r18.73 hatte das fälschlich gleichgesetzt — UX-Fix r18.74: Cells brauchen echtes Tastatur-Gefühl, ~3mm Hub). Ersetzt Gateron-Magnetic + DRV5056A4-Hall + RC. | ⚠ **UNVERIFIED — Socket hat keine saubere Hersteller-/LCSC-PN**, Keyboard-Markt (Chosfox/Kailh/Mechkeys). Der Switch der reinklickt: reales Beispiel **C400229** (Kailh Choc V1 rot/linear) | Hand-place mit vendored FP `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` (MIT, community-verifiziert) |
+| **SW1-SW5** (r18.75, ADR-0013 abgelöst) | **Kailh Choc V1, CPG135001D01 — Cell-Trigger, DIGITAL, echter Keyswitch, direkt gelötet** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`, Pin → GND, MCP-Pull-Up + IRQ). HiChord-Batch-4+-Weg (Switch → I²C-Expander → MCU), aber **NICHT dasselbe Bauteil wie SW6–SW10** (r18.73 hatte das fälschlich gleichgesetzt — UX-Fix r18.74/75: Cells brauchen echtes Tastatur-Gefühl, ~3mm Hub). 2 THT-Pins, kein Hotswap-Socket (r18.74 versucht, aber unverifizierte Teilenummer → r18.75 vereinfacht). Ersetzt Gateron-Magnetic + DRV5056A4-Hall + RC. | **C400229** — verifiziert real, ⚠ 0 Lagerbestand zum Prüfzeitpunkt (Nachbestellung üblich) | FP `field_ambience:SW_KailhChoc_CPG1350_THT_2P`, von LCSC/EasyEDA gezogen inkl. 3D-STEP |
 | ~~SW1-SW5 = HX B3F-4055 (r18.73)~~ | ⛔ **SUPERSEDED r18.74** — machte die Cells ununterscheidbar von den Modifier-Knöpfen (User-UX-Korrektur). Siehe oben. | — |
+| ~~SW1-SW5 = Kailh-Choc-Hotswap-Socket (r18.74)~~ | ⛔ **SUPERSEDED r18.75** — Socket hatte keine saubere Hersteller-/LCSC-Teilenummer + brauchte Klein-SMD-Handlöttechnik (User-Nachfrage). Direct-Solder ersetzt es. | — |
 | ~~J_CELL1-5 / R_CELL / C_CELL~~ ✂ r18.73 | ~~DRV5056A4-Hall + 1 kΩ/10 nF RC vor ADC~~ — entfernt, Cells sind jetzt digital (siehe SW1–SW5). STM32-ADC-Pins PC0/PC1/PA4/PB0/PB1 frei (Rev-B-Reserve). Hall bleibt dokumentierte Option für expressive Velocity-Variante (ADR-0013). | — | — |
 | **SW6-SW10** (r18.71) | **HX B3F-4055-Y THT-Tactile, Modifier-Buttons (Shift/Hold/Drone/Generate/Clear)** auf MCP23017 GPB0–GPB4. Square-Head für Clip-on-Caps. **Alle momentary — Latch-Zustand zeigen die LEDs (§7.2).** Gleiches Bauteil wie die Cells. | **C36498965** (JLC) | JLC-bestückt mit Custom-FP `field_ambience:SW_TC1212-7.3_THT_4P` |
 | SW11 | Reset Tactile SMD (XUNPU TS-1088-AR02016, FP `field_ambience:SW_TS1088_SMD` EasyEDA-verifiziert r18.14) | C720477 | JLC-bestückt |
@@ -496,13 +497,15 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | **EN1/EN2/EN4** (r18.14, ADR-0012) | **ALPS EC11E183440C** — 18 Puls, **OHNE Detent**, mit Push (Firmware nutzt nur A/B), Shaft 20 mm — selbe Bauform wie EN3 → **alle 4 gleich hoch** | **C370986** | JLC Extended (ALPS Original, in stock) — THT-Handbestückung im Prototyp |
 | ~~EN1-EN4 alt~~ ✂ r18.14 | ~~EC11J1525402 SMD (C209762)~~ — **retired:** NRND + 3D-verifiziert 24.5 mm hoch (zu hoch, Kick75-Ziel) + Half-Step-Detent-Mismatch (ADR-0012) | — | — |
 
-**Footprint-Hinweis (v0.7)**: Choc-V2-Hotswap-Footprints (SW1-5 Cells) sind
-NICHT in der KiCad-Standard-Library. Benötigt die **kiswitch keyswitch-kicad-library**
-(KiCad → Plugin & Content Manager → Libraries → "Keyswitch Kicad Library").
-Footprint-Referenz: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_2.00u`
-(2u Cells + Stabilizer). **Name verifiziert gegen kiswitch v2.4** — existiert.
-V1V2 (statt V2-spezifisch) gewählt, weil es V1+V2 Alignment-Löcher bohrt →
-Hot-Swap nimmt jede Choc-Generation.
+**Footprint-Hinweis (r18.75, SW1-5 Cells)**: der Cell-Footprint ist NICHT aus
+der KiCad-Standard-Library, sondern projekteigen vendored:
+`field_ambience:SW_KailhChoc_CPG1350_THT_2P` — direkt von LCSC/EasyEDA für
+**C400229** gezogen (`easyeda2kicad --full --lcsc_id=C400229`), inkl. echtem
+3D-STEP. Direct-Solder THT (kein Hotswap-Socket, kein Stabilizer — 1u-Caps,
+r18.21). (Historie: eine frühere Choc-V2-Hotswap-Idee mit 2u-Caps + Stabilizer
+aus der `keyswitch-kicad-library` wurde schon vor ADR-0013 verworfen; r18.74
+versuchte kurz einen 1u-Hotswap-Socket aus derselben Library, aber der hatte
+keine saubere Teilenummer — r18.75 ist der aktuelle, verifizierte Stand.)
 
 **Footprint-Hinweis r10 (SW6-10)**: SW6-10 sind ab r10 **plain 4-pin
 SMD-Tactile** (HX 12x12x7.3TPFT-B, C36498966). Footprint:
@@ -710,7 +713,7 @@ PB14/PB15-Hinweis: diese Pins haben als „additional function" auch OTG_HS_DM/D
 keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 (Datasheet S. 67-68).
 
-### 5.6a Cells — digitale I²C-Switches, echter Keyswitch (r18.74, ADR-0013 ABGELÖST)
+### 5.6a Cells — digitale I²C-Switches, echter Keyswitch, direkt gelötet (r18.75, ADR-0013 ABGELÖST)
 
 > **r18.73 (User-Direktive 2026-06-30, HiChord-Batch-4+):** Die Cells wurden
 > **digitale on/off-Switches am MCP23017** (Switch → I²C-GPIO-Expander → MCU),
@@ -719,11 +722,18 @@ keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 > **r18.74 (User-UX-Korrektur 2026-07-01):** r18.73 hatte die Cells auf
 > **dasselbe kleine THT-Tactile wie die Modifier** (HX B3F-4055) gesetzt — das
 > machte die spielbaren Cells ununterscheidbar von simplen Modifier-Knöpfen und
-> zerstörte das "Tastatur/Keyboard"-Spielgefühl. **Fix:** Cells bleiben
-> elektrisch digital (identische Netze/Pins/Pull-Up/IRQ), bekommen aber einen
-> **echten Kailh-Choc-Keyswitch über Hot-Swap-Socket** (~3 mm echter Hub,
-> Switch klickt rein, kein Löten, tauschbar) — die "Plain Choc V2"-Option aus
-> ADR-0013s eigener Vergleichstabelle.
+> zerstörte das "Tastatur/Keyboard"-Spielgefühl. Cells bekamen einen echten
+> Kailh-Choc-Keyswitch über Hot-Swap-Socket zurück — die "Plain Choc V2"-Option
+> aus ADR-0013s eigener Vergleichstabelle.
+>
+> **r18.75 (User-Nachfrage "wie wird das gelötet?"):** der Hot-Swap-Socket aus
+> r18.74 hatte **keine saubere Hersteller-/LCSC-Teilenummer** und hätte eine
+> nicht offensichtliche Klein-SMD-Handlöttechnik gebraucht. **Fix:** Cells
+> bleiben elektrisch digital (identische Netze/Pins/Pull-Up/IRQ), der Kailh-
+> Choc-V1-Switch (**CPG135001D01**) wird jetzt **direkt auf die Platine
+> gelötet** — 2 THT-Beinchen, gleiche Löttechnik wie jeder andere Button hier.
+> Kein Socket mehr, dafür Switch fest verlötet (nicht mehr tauschbar).
+> Footprint + 3D-STEP direkt von LCSC/EasyEDA für C400229 gezogen.
 
 | Cell | Switch | MCP23017-Pin | Net |
 |---|---|---|---|
@@ -735,13 +745,12 @@ keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 
 Beschaltung pro Cell: ein Switch-Pin → MCP-GPIO (`CELLn_BTN`), anderer Pin → GND.
 MCP-interner Pull-Up aktiv (idle = HIGH, gedrückt = LOW), IRQ-on-change über die
-gemeinsame INTA-Leitung (`MCP_INT`). Bauteil: **Kailh Choc V1 (CPG1350) / V2
-(CPG1353) Hot-Swap-Socket** — NICHT dasselbe Bauteil wie die Modifier SW6–SW10
-(bewusster Unterschied); Footprint
-`Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u`
-(vendored, MIT, community-verifiziert). Der Socket selbst hat **keine saubere
-Hersteller-/LCSC-Teilenummer** (Keyboard-Markt-Ware); der Switch, der reinklickt,
-hat ein verifiziertes reales Beispiel bei LCSC **C400229** (Choc V1 rot/linear).
+gemeinsame INTA-Leitung (`MCP_INT`). Bauteil: **Kailh Choc V1, CPG135001D01**
+(rot/linear) — direkt gelötet, NICHT dasselbe Bauteil wie die Modifier SW6–SW10
+(bewusster Unterschied); Footprint `field_ambience:SW_KailhChoc_CPG1350_THT_2P`,
+direkt von LCSC/EasyEDA für **C400229** gezogen (`easyeda2kicad --full
+--lcsc_id=C400229`), inkl. echtem 3D-STEP — verifizierte, reale Listung
+(⚠ 0 Lagerbestand zum Prüfzeitpunkt, Nachbestellung üblich).
 
 **Entfernt ggü. dem Hall-Stand:** 5× DRV5056A4 (J_CELL1–5), 5× R_CELL 1 kΩ,
 5× C_CELL 10 nF. Die STM32-ADC-Pins **PC0/PC1/PA4/PB0/PB1 sind freigegeben**

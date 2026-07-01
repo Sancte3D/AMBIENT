@@ -2,15 +2,21 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.75 (2026-07-01, User-Nachfrage "wie wird das gelötet?"):** der r18.74-
+> Hot-Swap-Socket hatte keine saubere Hersteller-/LCSC-Teilenummer und hätte
+> eine nicht offensichtliche Klein-SMD-Handlöttechnik gebraucht. **Fix:** SW1–5
+> jetzt **Kailh Choc V1 (CPG135001D01) direkt gelötet** — 2 THT-Beinchen,
+> gleiche Technik wie jeder andere Button hier. Footprint + 3D-STEP direkt von
+> LCSC/EasyEDA für **C400229** gezogen (verifiziert real, ⚠ 0 Lagerbestand zum
+> Prüfzeitpunkt). Kein Socket mehr, Switch jetzt fest verlötet (nicht mehr
+> tauschbar). Elektrisch unverändert seit r18.73/74. BOM/PCB/HTML/Schematics
+> aktualisiert.
+>
 > **r18.74 (2026-07-01, User-UX-Korrektur):** r18.73 hatte die Cells auf
 > dasselbe kleine HX-B3F-Tactile wie die Modifier gesetzt — machte die
 > spielbaren Cells ununterscheidbar von simplen Modifier-Knöpfen, zerstörte
-> das "Tastatur"-Gefühl. **Fix:** SW1–SW5 jetzt **Kailh Choc V1/V2 Hot-Swap-
-> Socket** (echter ~3mm Keyswitch, klickt rein, kein Löten) — elektrisch
-> unverändert digital am MCP23017 GPA0–GPA4. Footprint vendored + community-
-> verifiziert (`keyswitch-kicad-library`, MIT). Socket-Sourcing UNVERIFIED
-> (kein sauberer Hersteller-/LCSC-PN, Keyboard-Markt-Ware). Modifier SW6–SW10
-> bleiben unverändert HX B3F-4055. BOM/PCB/HTML/Schematics aktualisiert.
+> das "Tastatur"-Gefühl. Cells bekamen einen Kailh Choc Hot-Swap-Socket für
+> echtes Keyswitch-Gefühl zurück (~3mm Hub) — später in r18.75 vereinfacht.
 >
 > **r18.73 (2026-06-30, User-Direktive):** **Cells → digitale I²C-Switches** statt
 > Gateron-Magnetic + DRV5056A4-Hall (HiChord-Batch-4+-Weg: Switch → I²C-Expander
@@ -133,7 +139,7 @@ product build.
 
 | Item | State |
 |---|---|
-| **Cells → digital I²C switches, real keyswitch feel (r18.74, ADR-0013 SUPERSEDED)** | ✅ SW1–SW5 on MCP23017 GPA0–GPA4, HiChord-Batch-4+ pattern. Removed 5× DRV5056A4 Hall + RC; freed PC0/PC1/PA4/PB0/PB1. r18.73 first put cells on the same small HX B3F tactile as the modifiers (killed the keyboard-key UX) — r18.74 corrected to a **Kailh Choc V1/V2 hot-swap socket** (real ~3mm keyswitch travel, vendored community footprint, socket sourcing flagged UNVERIFIED). |
+| **Cells → digital I²C switches, real keyswitch feel, direct-solder (r18.75, ADR-0013 SUPERSEDED)** | ✅ SW1–SW5 on MCP23017 GPA0–GPA4, HiChord-Batch-4+ pattern. Removed 5× DRV5056A4 Hall + RC; freed PC0/PC1/PA4/PB0/PB1. r18.73 first put cells on the same small HX B3F tactile as the modifiers (killed the keyboard-key UX) — r18.74 tried a Kailh Choc hot-swap socket (unverified sourcing, fiddly hand-soldering) — r18.75 simplified to **direct-solder Kailh Choc V1 (CPG135001D01, LCSC C400229)**, footprint + 3D STEP pulled straight from LCSC/EasyEDA, real verified part, plain THT soldering. |
 | ~~Gateron LP Magnetic + DRV5056A4 Hall plan (ADR-0013)~~ | ⛔ superseded r18.73 — Hall kept as documented option only if expressive press-depth/velocity is wanted later |
 | `cells.c` velocity state machine | ✅ host-tested; with digital cells it degrades to on/off trigger (full-press position). FW engine read-path unchanged (bench already synthesizes positions from digital buttons). ⏳ optional cleanup later |
 | Pressure/aftertouch from `cells_position()` | ⛔ N/A with digital cells — needs the Hall variant (ADR-0013) |
@@ -151,8 +157,8 @@ product build.
 
 | Item | State |
 |---|---|
-| `BOM_MASTER.md` | ✅ r18.74 — §7 cells digital on MCP + real Kailh Choc hot-swap keyswitch (Hall path removed); FP links clickable |
-| **Cells digital-switch change (r18.73) + keyswitch-feel correction (r18.74)** | ✅ generator (mcp_sheet SW1–5 on GPA0–4 + STM32 ADC pins freed; r18.74 footprint swapped to `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u`), schematics regenerated, jlc_bom.csv, Aron `bom_overview.html`, BOM_MASTER/PCB_BOM/PINMAP/KICAD_BLUEPRINT/SCHEMATIC_WALKTHROUGH/MECHANICAL_REQUIREMENTS/PCB_FOOTPRINT_RISK_AUDIT/mechanical_coordinates/ADR-0013 all updated |
+| `BOM_MASTER.md` | ✅ r18.75 — §7 cells digital on MCP + real Kailh Choc V1 keyswitch, direct-solder (Hall path removed); FP links clickable |
+| **Cells digital-switch change (r18.73) + keyswitch-feel correction (r18.74) + direct-solder simplification (r18.75)** | ✅ generator (mcp_sheet SW1–5 on GPA0–4 + STM32 ADC pins freed; r18.75 footprint = `field_ambience:SW_KailhChoc_CPG1350_THT_2P`, pulled from LCSC/EasyEDA for C400229, vendored with 3D STEP), schematics regenerated, jlc_bom.csv, Aron `bom_overview.html`, BOM_MASTER/PCB_BOM/PINMAP/KICAD_BLUEPRINT/SCHEMATIC_WALKTHROUGH/MECHANICAL_REQUIREMENTS/PCB_FOOTPRINT_RISK_AUDIT/mechanical_coordinates/ADR-0013 all updated |
 | `field-ambience-current/PCB_FOOTPRINT_RISK_AUDIT.md` (risk-based per user brief) | ✅ r18.37 |
 | 6 custom KiCad footprints in `field_ambience.pretty/` | ✅ all actively referenced |
 | 7 STEP models in `field_ambience.3dshapes/` | ✅ |

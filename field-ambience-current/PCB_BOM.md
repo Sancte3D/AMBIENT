@@ -1,7 +1,7 @@
 # PCB Production BOM — Field Ambience
 
 **On-PCB parts only.** Everything here is soldered to the board. Off-board parts
-(battery cell, speaker drivers, display module, cell keyswitches/knobs/caps,
+(battery cell, speaker drivers, display module, knobs/caps,
 enclosure) are in **§C** and are **NOT** part of the board assembly.
 
 > Source of truth = the schematic (`kicad/generate_kicad_project.py`). Machine
@@ -74,20 +74,23 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | R_BLK_PD, R_SLED, R_BOOT0/_SW, R_NRST | misc pulls | 5.1k/820/1k/10k | 0603 | C23186/C23253/C21190/C25804 |
 | C_PCA_VDD(_HF), C_PCA2_VDD(_HF) | PCA decoupling | 10 µF / 100 nF | 0603/0805 | C15850 / C14663 |
 
-### Cells — digital on MCP23017, real keyswitch (r18.74, ADR-0013 superseded)
+### Cells — digital on MCP23017, real keyswitch, direct-solder (r18.75, ADR-0013 superseded)
 The cells are electrically digital on the I²C expander (HiChord Batch 4+ pattern:
 switch → I²C GPIO-expander → MCU), **not** Hall sensors at the STM32 ADC — same
-as r18.73. But r18.73 had also put them on the same small tactile button as the
-modifiers, which killed the "keyboard key" feel; **r18.74 fixes that**: the cells
-now use a **Kailh Choc V1/V2 hot-swap socket** (the on-PCB part below, SW1–SW5) —
-the real Choc switch clicks into it (off-board, not soldered, see §C). The 5×
-DRV5056A4 + R_CELL/C_CELL RC stay removed; PC0/PC1/PA4/PB0/PB1 stay freed.
+as r18.73. r18.73 had also put them on the same small tactile button as the
+modifiers, which killed the "keyboard key" feel; r18.74 fixed that with a Kailh
+Choc hot-swap socket, but that socket had no clean part number and needed fiddly
+small-SMD hand-soldering. **r18.75 simplifies further**: the Kailh Choc V1
+switch (CPG135001D01) is now **directly soldered to the board** (the on-PCB
+part below, SW1–SW5) — 2 THT legs, same soldering technique as everything else
+here, no hot-swap socket, switch now permanent. The 5× DRV5056A4 + R_CELL/C_CELL
+RC stay removed; PC0/PC1/PA4/PB0/PB1 stay freed.
 
 ### Buttons & encoders (THT/SMD, **on the PCB**)
 | Ref | Part | Value | Package | LCSC |
 |---|---|---|---|---|
 | **EN1–EN4 (4)** | **ALPS EC11E18244AU — ALL 4 IDENTICAL** (rotary + push, 36 detents) | — | EC11E vertical | C202365 |
-| **SW1–SW5 (5)** | **Kailh Choc V1/V2 hot-swap socket — CELL trigger keys** (digital on/off via MCP23017 GPA0–GPA4; r18.74) — real Choc switch clicks in, ~3 mm travel | — | `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` | ⚠ **UNVERIFIED — no clean MPN**, keyboard-market (Chosfox/Kailh/Mechkeys) |
+| **SW1–SW5 (5)** | **Kailh Choc V1, CPG135001D01 — CELL trigger keys, direct-solder** (digital on/off via MCP23017 GPA0–GPA4; r18.75) — real ~3 mm keyswitch travel, 2 THT legs + 3 unplated locator holes | — | `field_ambience:SW_KailhChoc_CPG1350_THT_2P` (pulled from LCSC/EasyEDA) | C400229 — verified, ⚠ 0 stock at time of writing |
 | **SW6–SW10 (5)** | **HX B3F-4055-Y tactile** (Shift/Hold/Drone/Generate/Clear) — **square-head plunger → clip-on caps** ✅ (r18.71: was TC-1212-7.3 C2845240) | — | THT 12×12, 4-pin | C36498965 |
 | SW_BOOT, SW11 (2) | TS-1088 service tactile (BOOT0 / reset) | — | custom FP | C720477 |
 
@@ -142,8 +145,7 @@ Pin-level wiring (VIN/VOUT/ON + the single LDO-input reroute) = **`ADR-0016`**.
 | Speaker driver CMS-402811-28SP | 2 | J6 / J7 | 40 mm, cloth-cone (PUI AS04008PS = backup) |
 | LCD module Waveshare 1.9″ ST7789 | 1 | J3 | plug-in module |
 | Encoder knobs | 4 | EN1–4 shafts | 3D-print |
-| Kailh Choc switch (V1 or V2, pick one) | 5 | clicks into SW1–5 sockets, not soldered | keyboard-market or LCSC C400229 (Choc V1 red/linear, one verified example) — feel/color is industrial-design choice |
-| Cell caps | 5 | clip onto the Choc switch stem (SW1–5) | 3D-print — V1 (~3.4mm) and V2 (~5mm) stems differ, match the cap to the chosen switch |
+| Cell caps | 5 | clip onto the Choc switch stem (SW1–5, now soldered on-PCB — see §B) | 3D-print, matched to the Choc V1 stem |
 | Modifier button caps | 5 | over SW6–10 | 3D-print, clip onto the square head of C36498965 |
 | Speaker dust mesh, enclosure, screws/standoffs | — | — | mechanical |
 
