@@ -24,6 +24,23 @@ War: ACCEPTED (2026-06-12), ersetzte den FSR-Teil von ADR-0006.
 > Velocity/Aftertouch später doch gewünscht ist). Der unten beschriebene Stand
 > ist NICHT der aktuelle PCB-Stand.
 
+> **Korrektur r18.74 (User-UX-Feedback, 2026-07-01):** r18.73 hatte SW1–SW5 auf
+> **dasselbe Bauteil wie die Modifier SW6–SW10** gesetzt (HX B3F-4055-Y THT-
+> Tactile). Der User wies zu Recht darauf hin, dass das die spielbaren Cells
+> ununterscheidbar von simplen Modifier-Knöpfen macht und das "Tastatur/
+> Keyboard"-Spielgefühl zerstört. **Fix (r18.74):** Cells bleiben elektrisch
+> identisch digital (gleiche Netze/Pins/Pull-Up/IRQ), bekommen aber einen
+> **echten Kailh-Choc-Keyswitch über Hot-Swap-Socket** zurück (~3 mm echter
+> Hub) — exakt die **„Plain Choc V2"-Option**, die in der Vergleichstabelle
+> unten (Kontext-Abschnitt) bereits als Alternative aufgeführt war, nur ohne
+> Velocity. Footprint community-verifiziert + bereits vendored
+> (`keyswitch-kicad-library`, MIT, in `fp-lib-table`); der Hot-Swap-Socket
+> selbst hat **keine saubere Hersteller-/LCSC-Teilenummer** (Keyboard-Markt-
+> Ware, wie ursprünglich die Gateron-Switches). Modifier SW6–SW10 bleiben das
+> kleine HX-B3F-Tactile — bewusster UX-Unterschied (Cells = Keyboard-Feel,
+> Modifier = simples Tactile). Details: `BOM_MASTER.md` §7,
+> `MECHANICAL_REQUIREMENTS.md` §1.5, `PCB_FOOTPRINT_RISK_AUDIT.md`.
+
 ## Kontext (User-Anforderung)
 
 > „wir verwenden gerade so touch cells oder so, ich wollte aber welche wie bei

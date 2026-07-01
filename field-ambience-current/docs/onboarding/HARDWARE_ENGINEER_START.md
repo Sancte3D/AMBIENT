@@ -23,8 +23,8 @@ Schritt.
 | Level-Meter | **PCA9685 U10 @ 0x41** (gleicher I²C-Bus) → 8 VU-LEDs (6 blau + 2 weiß), firmware-getrieben | 8 LED | [BOM §9](../../../BOM_MASTER.md) · [ADR-0020](../decisions/ADR-0020-level-meter.md) |
 | Display | Waveshare 1.9″ ST7789 (Steckmodul, 8-Pin J3) | 1 | [BOM §5](../../../BOM_MASTER.md) |
 | **Encoder** | **4× ALPS EC11E18244AU — alle Push-Encoder.** Alle 4 Push-Switches verdrahtet: DISPLAY (PE3), VOL (MCP-GPB5), DRIVE (PE0), BRIGHT (PE1) | 4 | [BOM §6](../../../BOM_MASTER.md) · [ADR-0012](../decisions/ADR-0012-encoder-strategy.md) |
-| Cells | 5× HX B3F-4055 THT-Tactile (SW1–5), **digital** auf MCP23017 GPA0–4 (r18.73, ADR-0013 abgelöst) | 5 | [BOM §7](../../../BOM_MASTER.md) |
-| Buttons | 5× HX B3F-4055 Modifier (SW6–10, gleiches Bauteil wie Cells) + 2× TS-1088 Service (Reset/BOOT) | 7 | [BOM §8](../../../BOM_MASTER.md) |
+| Cells | 5× Kailh Choc V1/V2 Hot-Swap-Socket (SW1–5), **digital** auf MCP23017 GPA0–4, echter Keyswitch (~3mm Hub) (r18.74, ADR-0013 abgelöst) | 5 | [BOM §7](../../../BOM_MASTER.md) |
+| Buttons | 5× HX B3F-4055 Modifier (SW6–10, bewusst kleineres/simpleres Gefühl als die Cells) + 2× TS-1088 Service (Reset/BOOT) | 7 | [BOM §8](../../../BOM_MASTER.md) |
 
 > Footprints **komplett** (6 Custom + Rest KiCad-Standard, keine Leichen). 3D
 > für Enclosure-CAD: 7 STEP im Repo + Rest Standard-Lib + **1 dokumentierte

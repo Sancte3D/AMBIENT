@@ -195,7 +195,8 @@ them. To confirm:
 | L1 inductor | `field_ambience:L_Sunlord_SWPA6045` | custom |
 | Y1 crystal | `field_ambience:Crystal_HC49-US-SMD_ABLS` | custom |
 | J8 audio jack | `field_ambience:Jack_3.5mm_PJ-320D_SMT` | custom |
-| SW1-5 cells + SW6-10 modifiers | `field_ambience:SW_TC1212-7.3_THT_4P` | custom (HX B3F-4055, C36498965) |
+| SW1-5 cells (real keyswitch, r18.74) | `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` | vendored, MIT (`keyswitch-kicad-library`) — socket sourcing UNVERIFIED, no clean MPN |
+| SW6-10 modifiers | `field_ambience:SW_TC1212-7.3_THT_4P` | custom (HX B3F-4055, C36498965) |
 | SW11/SW_BOOT | `field_ambience:SW_TS1088_SMD` | custom |
 | J1 USB-C | `Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12` | KiCad std |
 

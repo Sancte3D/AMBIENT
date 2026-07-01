@@ -4069,15 +4069,22 @@ def mcp_sheet() -> str:
     labels.append(label(147, p19_y, "NC_INTB"))
 
     # ---- Switches SW1-SW5 (Cells) auf GPA0-GPA4 (pins 21-25). Rechts vom MCP.
-    # r18.73 (ADR-0013 SUPERSEDED, User 2026-06-30): die 5 Cells sind jetzt
-    # DIGITALE Tactile-Switches am Expander (HiChord-Batch-4+-Weg), nicht mehr
-    # Hall-Sensoren am STM32-ADC. GPA0-GPA4 waren bereits als Reserve frei —
-    # hier kommen jetzt SW1-SW5 drauf, exakt wie die Modifier SW6-SW10.
-    # Verschaltung: Switch pin -> MCP-GPIO (CELLn_BTN) auf der einen Seite,
-    # anderer Pin -> GND. Idle = HIGH (MCP-interner Pull-Up aktiviert per FW),
-    # gedrueckt = LOW; IRQ-on-change via INTA. Gleicher verifizierter Switch wie
-    # die Modifier (HX B3F-4055-Y, C36498965). SW horizontal auf der rechten
-    # Seite (klar von Adress-/RESET-/INTA-Bereich bei x=147..162, y=113..127).
+    # r18.74 (User-UX-Korrektur 2026-07-01): r18.73 hatte die Cells auf den
+    # GLEICHEN kleinen THT-Tactile wie die Modifier gesetzt (HX B3F-4055) --
+    # das macht die spielbaren Cells ununterscheidbar von simplen Modifier-
+    # Knoepfen und zerstoert das "Tastatur/Keyboard"-Spielgefuehl. Fix: Cells
+    # bleiben ELEKTRISCH digital (on/off am MCP23017, keine Aenderung an Netzen
+    # / Pins / Pull-Up / IRQ ggue. r18.73), bekommen aber wieder einen ECHTEN
+    # Keyboard-Switch zurueck -- Kailh-Choc-Hotswap (V1 CPG1350 / V2 CPG1353),
+    # exakt die "Plain Choc V2"-Option aus ADR-0013s eigener Vergleichstabelle
+    # (mechanisches Tastengefuehl UEBER GPIO, nur ohne Velocity). Footprint ist
+    # community-verifiziert + bereits im Repo vendored (MIT,
+    # keyswitch-kicad-library, in fp-lib-table registriert) -- Plated-Variante
+    # fuer die mechanische Dauerbelastung eines Musikinstruments (viele Presses).
+    # Der Hotswap-SOCKET selbst hat KEINE saubere Hersteller-/LCSC-Teilenummer
+    # (Keyboard-Markt-Ware, wie zuvor Gateron) -- UNVERIFIED, siehe FP_NOTE.
+    # Verschaltung UNVERAENDERT ggue. r18.73: Switch-Pin -> MCP-GPIO (CELLn_BTN),
+    # anderer Pin -> GND. Idle = HIGH (MCP-Pull-Up), gedrueckt = LOW, IRQ via INTA.
     #   stub PIN_R_X -> 170 ; label CELLn_BTN @ x=150 ; SW center x=175.08
     #   (pin1 abs 170.0 = Netz, pin2 abs 180.16 -> GND @ 183).
     cell_pins = [(21, "CELL1_BTN", 1), (22, "CELL2_BTN", 2), (23, "CELL3_BTN", 3),
@@ -4090,17 +4097,19 @@ def mcp_sheet() -> str:
             place_symbol(
                 lib_id="Switch:SW_Push",
                 ref=f"SW{sw_num}",
-                value=f"Cell {sw_num} digital trigger (HX B3F-4055 THT-Tactile, square head for caps, r18.73)",
+                value=f"Cell {sw_num} digital trigger (Kailh Choc V1/V2 hotswap, real keyswitch feel, r18.74)",
                 x=175.08,
                 y=py,
-                footprint="field_ambience:SW_TC1212-7.3_THT_4P",
-                datasheet="https://jlcpcb.com/partdetail/C36498965",
+                footprint="Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u",
+                datasheet="https://cdn-shop.adafruit.com/product-files/5113/CHOC+keyswitch_Kailh-CPG135001D01_C400229.pdf",
                 extra_props={
-                    "MPN": "HX B3F-4055-Y",
-                    "Manufacturer": "HX",
-                    "LCSC": "C36498965",
-                    "Package": "THT 4-pin 11.8x11.8mm, square-head plunger 7.3mm (clip-on caps), SPST 2.5N, 100k cycles, 12V/50mA",
-                    "FP_NOTE": "r18.73: Cell digital-switch (ADR-0013 superseded). Same verified part as modifier SW6-SW10. Footprint field_ambience:SW_TC1212-7.3_THT_4P (12x12 4-pin THT) reused -- VERIFY the HX B3F pin pattern against it at GUI-ERC, or regenerate via easyeda2kicad --full --lcsc_id=C36498965.",
+                    "MPN": "Kailh Choc V1 (CPG1350-series) / V2 (CPG1353-series) -- socket accepts either",
+                    "Manufacturer": "Kailh (Dongguan Kaihua Electronics)",
+                    "LCSC (switch example, verified in-stock)": "C400229 (CPG135001D01, Choc V1 red/linear) -- other Choc V1/V2 colors (linear/tactile/clicky) work identically electrically; feel/color is an industrial-design choice, not a schematic decision",
+                    "Package": "Hotswap: switch NOT soldered, clicks into an SMD socket on the PCB; ~3mm real keyswitch travel, 15x15mm switch body footprint",
+                    "SOCKET-SOURCING": "UNVERIFIED -- NEEDS HUMAN CHECK: the hotswap socket clip itself has no clean manufacturer/LCSC part number found (keyboard-market item, e.g. Chosfox 'Kailh Choc PG1350 Hot Swap Socket' ~$1.45/10pcs, or Kailh direct / Mechkeys / kbdfans -- same hand-supply sourcing category the original Gateron switches were in). Confirm a specific vendor listing before order.",
+                    "FP_NOTE": "Footprint Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u -- MIT-licensed, vendored in kicad/libraries/keyswitch-kicad-library/, already registered in fp-lib-table. Community-verified (widely used in shipped mechanical-keyboard PCBs), NOT independently re-verified against Kailh's mechanical drawing by this project -- cross-check pad pitch + mounting-hole positions before order.",
+                    "STEM-NOTE": "Choc V1 and V2 use different keycap stems (V1 proprietary blade ~3.4mm, V2 revised ~5mm) -- pick ONE version and match the 3D-printed cap stem interface to it; this is an industrial-design decision, not a PCB decision.",
                 },
                 seed_suffix=f"SW{sw_num}",
                 sheet_uuid_seed=sus,

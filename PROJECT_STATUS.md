@@ -2,11 +2,20 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.74 (2026-07-01, User-UX-Korrektur):** r18.73 hatte die Cells auf
+> dasselbe kleine HX-B3F-Tactile wie die Modifier gesetzt — machte die
+> spielbaren Cells ununterscheidbar von simplen Modifier-Knöpfen, zerstörte
+> das "Tastatur"-Gefühl. **Fix:** SW1–SW5 jetzt **Kailh Choc V1/V2 Hot-Swap-
+> Socket** (echter ~3mm Keyswitch, klickt rein, kein Löten) — elektrisch
+> unverändert digital am MCP23017 GPA0–GPA4. Footprint vendored + community-
+> verifiziert (`keyswitch-kicad-library`, MIT). Socket-Sourcing UNVERIFIED
+> (kein sauberer Hersteller-/LCSC-PN, Keyboard-Markt-Ware). Modifier SW6–SW10
+> bleiben unverändert HX B3F-4055. BOM/PCB/HTML/Schematics aktualisiert.
+>
 > **r18.73 (2026-06-30, User-Direktive):** **Cells → digitale I²C-Switches** statt
 > Gateron-Magnetic + DRV5056A4-Hall (HiChord-Batch-4+-Weg: Switch → I²C-Expander
-> → MCU). SW1–SW5 (HX B3F-4055, gleiches Bauteil wie die Modifier) auf MCP23017
-> GPA0–GPA4; 5× Hall + RC entfernt; STM32-ADC-Pins PC0/PC1/PA4/PB0/PB1 frei.
-> **Kein neues Bauteil.** ADR-0013 SUPERSEDED. BOM/PCB/HTML/Schematics aktualisiert.
+> → MCU); 5× Hall + RC entfernt; STM32-ADC-Pins PC0/PC1/PA4/PB0/PB1 frei.
+> ADR-0013 SUPERSEDED.
 >
 > **r18.67:** MIDI-Out **reaktiviert + implementiert** als **J10** (TRS Type A, OUT-only, 3,3 V/CA-033; MIDI_TX=PD5 → 2× 220 Ω → Tip/Ring). Refdes-Kollision behoben: **J9 = Akku, J10 = MIDI**. Power-Aus: Schiebeschalter auf der **Boost-EN-Leitung** entschieden (signal-level, Laden bleibt) — **noch zu implementieren**.
 >
@@ -124,7 +133,7 @@ product build.
 
 | Item | State |
 |---|---|
-| **Cells → digital I²C switches (r18.73, ADR-0013 SUPERSEDED)** | ✅ SW1–SW5 (HX B3F-4055, C36498965) on MCP23017 GPA0–GPA4, HiChord-Batch-4+ pattern. Removed 5× DRV5056A4 Hall + RC; freed PC0/PC1/PA4/PB0/PB1. No new part (same switch as modifiers). |
+| **Cells → digital I²C switches, real keyswitch feel (r18.74, ADR-0013 SUPERSEDED)** | ✅ SW1–SW5 on MCP23017 GPA0–GPA4, HiChord-Batch-4+ pattern. Removed 5× DRV5056A4 Hall + RC; freed PC0/PC1/PA4/PB0/PB1. r18.73 first put cells on the same small HX B3F tactile as the modifiers (killed the keyboard-key UX) — r18.74 corrected to a **Kailh Choc V1/V2 hot-swap socket** (real ~3mm keyswitch travel, vendored community footprint, socket sourcing flagged UNVERIFIED). |
 | ~~Gateron LP Magnetic + DRV5056A4 Hall plan (ADR-0013)~~ | ⛔ superseded r18.73 — Hall kept as documented option only if expressive press-depth/velocity is wanted later |
 | `cells.c` velocity state machine | ✅ host-tested; with digital cells it degrades to on/off trigger (full-press position). FW engine read-path unchanged (bench already synthesizes positions from digital buttons). ⏳ optional cleanup later |
 | Pressure/aftertouch from `cells_position()` | ⛔ N/A with digital cells — needs the Hall variant (ADR-0013) |
@@ -142,8 +151,8 @@ product build.
 
 | Item | State |
 |---|---|
-| `BOM_MASTER.md` | ✅ r18.73 — §7 cells now digital MCP switches (Hall path removed); FP links clickable |
-| **Cells digital-switch change (r18.73)** | ✅ generator (mcp_sheet SW1–5 on GPA0–4 + STM32 ADC pins freed), schematics regenerated, jlc_bom.csv (56 LCSC parts), Aron `bom_overview.html`, BOM_MASTER/PCB_BOM/PINMAP/KICAD_BLUEPRINT/SCHEMATIC_WALKTHROUGH/MECHANICAL_REQUIREMENTS/ADR-0013 all updated |
+| `BOM_MASTER.md` | ✅ r18.74 — §7 cells digital on MCP + real Kailh Choc hot-swap keyswitch (Hall path removed); FP links clickable |
+| **Cells digital-switch change (r18.73) + keyswitch-feel correction (r18.74)** | ✅ generator (mcp_sheet SW1–5 on GPA0–4 + STM32 ADC pins freed; r18.74 footprint swapped to `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u`), schematics regenerated, jlc_bom.csv, Aron `bom_overview.html`, BOM_MASTER/PCB_BOM/PINMAP/KICAD_BLUEPRINT/SCHEMATIC_WALKTHROUGH/MECHANICAL_REQUIREMENTS/PCB_FOOTPRINT_RISK_AUDIT/mechanical_coordinates/ADR-0013 all updated |
 | `field-ambience-current/PCB_FOOTPRINT_RISK_AUDIT.md` (risk-based per user brief) | ✅ r18.37 |
 | 6 custom KiCad footprints in `field_ambience.pretty/` | ✅ all actively referenced |
 | 7 STEP models in `field_ambience.3dshapes/` | ✅ |
