@@ -158,10 +158,10 @@ Gehäuse oder die Bedienflächen positionell fest.
 | Switch-Envelope (LxB) | **15 × 15 mm** (Kailh-Choc-Standard) | Kailh-Herstellerangabe (mehrfach bestätigt in öffentlichen Quellen) |
 | Hub (Travel) | **~3 mm** echter mechanischer Hub (Choc-Klasse) | Kailh-Choc-Spec |
 | Stem | V1 ~3,4 mm (proprietär) | Kailh-Herstellerangabe — Cap-Stem-Interface danach designen |
-| Pitch zwischen Cells | 19 mm (Standard-MX-Spacing) | Industrial-Design |
+| Pitch zwischen Cells | 19 mm aktuell — **⚠ OFFEN für Aron:** User will später 2–3 cm lange Caps; das kollidiert bei dieser Teilung mit dem Nachbar-Cell wenn links-rechts orientiert (siehe `mechanical_coordinates.md` §3.4 für die zwei Lösungswege + verfügbaren Platz) | Industrial-Design / PCB-Layout (Aron) |
 | Mounting | **Direkt-Lötung, THT** — 2 elektrische Pins + 3 unbestückte Mechanik-Loecher (Switch-eigene Pegs geben seitliche Stabilität ohne Plate); **Plate optional** für mehr Steifigkeit bei häufigem Spielen | Generator (mcp_sheet, GPA0–GPA4); Footprint `field_ambience:SW_KailhChoc_CPG1350_THT_2P` |
-| Cap | 3D-Druck-Cap clippt auf den Choc-V1-Stem | Custom-CAD (User) |
-| Switch-Sourcing | LCSC **C400229** (CPG135001D01, rot/linear) — reale, verifizierte Listung. ⚠ 0 Lagerbestand zum Zeitpunkt der Prüfung (Nachbestellung üblich); JLC-Seite verlangt eine Sonder-Fixture für ihre automatisierte Bestückung — Handlöten der 2 Beinchen braucht keine | Feel/Farbe (andere Choc-V1-Varianten) = Industrial-Design-Entscheidung |
+| Cap | 3D-Druck-Cap clippt auf den Choc-V1-Stem (Ziel: 2–3 cm lang, s.o.) | Custom-CAD (User) |
+| Switch-Sourcing | LCSC **C400229** (CPG135001D01, rot/linear) — reale, verifizierte Listung. ⚠ **r18.78: alle 3 Choc-V1-Farben bei LCSC aktuell 0 Lagerbestand** (auch C400230 braun/tactile, C400231 weiß/klicky — alle real, nur temporär ausverkauft). Kein Blocker: Switch wird handgelötet (nicht JLC-SMT-Linie), daher nicht auf LCSC-Bestand angewiesen — jede Choc-V1-Farbe von jedem Vendor (Kailh direkt, KBDfans, NovelKeys, AliExpress) passt in denselben Footprint | Feel/Farbe = freie Wahl, keine Schematic-Einschränkung |
 
 ### 1.6 Modifier-Buttons × 5 `SW6..SW10` (HX 12×12×7.3TPFT-B)
 

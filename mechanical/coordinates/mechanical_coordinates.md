@@ -170,6 +170,24 @@ Spielen). X/Y-Raster unverändert (Reihe zentriert unter der Modifier-Reihe).
 | Cell 4 (SW4) | **148** | **26** | dito |
 | Cell 5 (SW5) | **170** | **26** | dito |
 
+> **⚠ OFFEN für Aron (PCB-Layout, User-Wunsch 2026-07-01): Cell-Caps sollen
+> später 2–3 cm lang werden** (≈1.1u–1.6u, kein Stabilizer nötig — deutlich
+> unter der ~38 mm/2u-Schwelle, ab der Boards typischerweise stabilisieren).
+> **Aber:** bei 20–30 mm Cap-Breite **links-rechts** kollidiert der Cap mit
+> dem Nachbar-Cell bei der aktuellen 19 mm-Teilung (schon bei 20 mm Berührung,
+> bei 30 mm ~11 mm Überlappung). Zwei Wege, beide real machbar, User will das
+> **Aron beim eigentlichen Layout entscheiden lassen** (nicht vorher fixiert):
+> 1. **Teilung vergrößern** (19 mm → ~22–32 mm je nach finaler Cap-Breite) —
+>    verbreitert die Cell-Reihe (5× Teilung), PCB-Outline (252 mm Breite) hat
+>    dafür Puffer, aber `mechanical_coordinates.md` §3.4-Koordinaten + Outline
+>    müssten neu gerechnet werden.
+> 2. **Cap stattdessen vorne-hinten (Y) verlängern** statt links-rechts —
+>    Teilung/Board-Breite bleiben unverändert. Verfügbarer Platz aktuell: **ca.
+>    26 mm bis zur Frontkante** (Cell-Y=26, PCB-Kante Y=0, abzüglich Bezel) und
+>    **ca. 32 mm bis zur Modifier-Reihe** (Modifier-Y=58) — reicht rechnerisch
+>    für 20–30 mm, finale Bezel-/Gehäuse-Clearance aber erst mit echtem
+>    Cap-Design + Gehäuse-CAD verifizieren.
+
 Footprint = `field_ambience:SW_KailhChoc_CPG1350_THT_2P` — direkt von
 LCSC/EasyEDA für **C400229** (Kailh CPG135001D01, rot/linear) gezogen via
 `easyeda2kicad --full --lcsc_id=C400229`, inkl. echtem 3D-STEP-Modell. Exakt
