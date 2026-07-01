@@ -2,6 +2,20 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.78 (2026-07-01, Cell-Switch-Sourcing + Cap-Länge):** User fragte, ob
+> andere Kailh-Choc-Farben gehen (das Schematic-Beispiel C400229 zeigte
+> "Not available now") und ob 2–3 cm lange Cell-Caps später ein Problem sind.
+> **Sourcing:** alle 3 Choc-V1-Farben bei LCSC aktuell 0 Lagerbestand
+> (C400229/C400230/C400231, alle real verifiziert) — kein Blocker, da
+> handgelötet, nicht auf LCSC-Bestand angewiesen; jede Farbe/jeder Vendor
+> passt in denselben Footprint. **Cap-Länge:** 2–3 cm braucht keinen
+> Stabilizer (weit unter der 2u/~38mm-Schwelle), kollidiert aber mit dem
+> Nachbar-Cell bei der aktuellen 19mm-Teilung, wenn links-rechts orientiert.
+> User: Aron entscheidet das beim eigentlichen PCB-Layout — als offener Punkt
+> dokumentiert (zwei Lösungswege + verfügbarer Platz), nicht vorher fixiert.
+> Details: `mechanical_coordinates.md` §3.4, `MECHANICAL_REQUIREMENTS.md`,
+> `BOM_MASTER.md` §7.
+>
 > **r18.76 (2026-07-01, BOM/Funktionalitäts-Audit):** User bat um einen
 > Check von BOM + Geräte-Funktionalität. Ergebnisse:
 > - **BOM-Fix (real, behoben):** J3 (LCD-Header) und J6/J7 (Speaker-Header)

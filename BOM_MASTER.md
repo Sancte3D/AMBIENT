@@ -173,8 +173,29 @@ in any Markdown editor).
 
 | Ref | MPN | LCSC/Link | Footprint | FP source | 3D |
 |---|---|---|---|---|---|
-| **Cell switch (SW1–SW5, 5×)** | **Kailh Choc V1, CPG135001D01** (red/linear) — direct-solder THT, 2 electrical pins + 3 unplated mechanical locator holes (switch's own pegs give lateral stability without a plate). One pin → MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), other → GND; MCP internal pull-up, shared INT. Other Choc V1 colors (tactile/clicky) share the same footprint — feel/color is industrial-design choice. [Datasheet](https://cdn-shop.adafruit.com/product-files/5113/CHOC+keyswitch_Kailh-CPG135001D01_C400229.pdf) | [C400229](https://www.lcsc.com/product-detail/C400229.html) — real, verified listing. ⚠ 0 stock at time of writing (restocks common); JLC notes their automated PCBA needs a custom fixture for this THT part — hand-soldering the 2 legs needs neither. | `field_ambience:SW_KailhChoc_CPG1350_THT_2P` — pulled directly from LCSC/EasyEDA via `easyeda2kicad --full --lcsc_id=C400229` | repo custom, sourced from the part's own manufacturer listing (not a third-party library) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW_KailhChoc_CPG1350_THT_2P.step) |
-| **Cell caps (5×) 1u, self 3D-printed** (clip onto the Choc V1 switch stem) | own 3D print | — | — | — | Custom-CAD (user) |
+| **Cell switch (SW1–SW5, 5×)** | **Kailh Choc V1, CPG135001D01** (red/linear) — direct-solder THT, 2 electrical pins + 3 unplated mechanical locator holes (switch's own pegs give lateral stability without a plate). One pin → MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), other → GND; MCP internal pull-up, shared INT. **Any Choc V1 color works — same footprint** (see r18.78 sourcing note below). [Datasheet](https://cdn-shop.adafruit.com/product-files/5113/CHOC+keyswitch_Kailh-CPG135001D01_C400229.pdf) | [C400229](https://www.lcsc.com/product-detail/C400229.html) — real, verified listing. ⚠ 0 stock at time of writing (restocks common); JLC notes their automated PCBA needs a custom fixture for this THT part — hand-soldering the 2 legs needs neither. | `field_ambience:SW_KailhChoc_CPG1350_THT_2P` — pulled directly from LCSC/EasyEDA via `easyeda2kicad --full --lcsc_id=C400229` | repo custom, sourced from the part's own manufacturer listing (not a third-party library) | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/SW_KailhChoc_CPG1350_THT_2P.step) |
+| **Cell caps (5×), self 3D-printed** (clip onto the Choc V1 switch stem) | own 3D print | — | — | — | Custom-CAD (user) |
+
+> **r18.78 sourcing note (User, 2026-07-01):** all three Kailh Choc V1 colors
+> at LCSC are currently **0 stock**: red/linear [C400229](https://www.lcsc.com/product-detail/C400229.html),
+> brown/tactile [C400230](https://www.lcsc.com/product-detail/C400230.html),
+> white/clicky [C400231](https://www.lcsc.com/product-detail/C400231.html) —
+> all real, verified, just temporarily out of stock (checked live 2026-07-01).
+> **This is not a blocker:** since the switch is hand-soldered (not part of
+> JLC's automated SMT pass), it doesn't need to come from LCSC at all — any
+> Kailh Choc V1 switch (any color/feel, any vendor: Kailh direct, KBDfans,
+> NovelKeys, AliExpress) uses the identical 2-pin THT footprint. Feel/color
+> is a free choice, not a schematic constraint.
+>
+> **r18.78 open item for Aron (PCB layout):** user wants cell caps **2–3 cm
+> long** eventually. No stabilizer needed at that length (well under the
+> ~38 mm/2u stabilizer threshold), but a 20–30 mm-wide cap on the current
+> 19 mm cell pitch collides with the neighboring cell if oriented left-right.
+> Two ways to resolve (widen the pitch, or elongate the cap front-to-back
+> instead — ~26 mm clearance to the front edge and ~32 mm to the modifier
+> row are available for that) — deliberately left open for Aron to decide
+> during actual layout, not fixed here. Details: `mechanical_coordinates.md`
+> §3.4.
 
 ## 8. Modifier Buttons + Service Buttons
 

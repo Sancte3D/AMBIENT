@@ -90,7 +90,7 @@ RC stay removed; PC0/PC1/PA4/PB0/PB1 stay freed.
 | Ref | Part | Value | Package | LCSC |
 |---|---|---|---|---|
 | **EN1–EN4 (4)** | **ALPS EC11E18244AU — ALL 4 IDENTICAL** (rotary + push, 36 detents) | — | EC11E vertical | C202365 |
-| **SW1–SW5 (5)** | **Kailh Choc V1, CPG135001D01 — CELL trigger keys, direct-solder** (digital on/off via MCP23017 GPA0–GPA4; r18.75) — real ~3 mm keyswitch travel, 2 THT legs + 3 unplated locator holes | — | `field_ambience:SW_KailhChoc_CPG1350_THT_2P` (pulled from LCSC/EasyEDA) | C400229 — verified, ⚠ 0 stock at time of writing |
+| **SW1–SW5 (5)** | **Kailh Choc V1, CPG135001D01 — CELL trigger keys, direct-solder** (digital on/off via MCP23017 GPA0–GPA4; r18.75) — real ~3 mm keyswitch travel, 2 THT legs + 3 unplated locator holes. Any Choc V1 color works (same footprint) — see r18.78 note | — | `field_ambience:SW_KailhChoc_CPG1350_THT_2P` (pulled from LCSC/EasyEDA) | C400229 — verified, ⚠ 0 stock (all 3 colors: C400229/C400230/C400231 — hand-soldered, not JLC-restricted) |
 | **SW6–SW10 (5)** | **HX B3F-4055-Y tactile** (Shift/Hold/Drone/Generate/Clear) — **square-head plunger → clip-on caps** ✅ (r18.71: was TC-1212-7.3 C2845240) | — | THT 12×12, 4-pin | C36498965 |
 | SW_BOOT, SW11 (2) | TS-1088 service tactile (BOOT0 / reset) | — | custom FP | C720477 |
 
