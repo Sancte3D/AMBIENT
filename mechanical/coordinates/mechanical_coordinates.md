@@ -16,7 +16,7 @@ und die r9/r10/r14/r15-Pico-Ära-Sektionen.
 |---|---|
 | ADR-0011 | Z-Stack-Up, 8 mm Top-Komponenten-Zone, 19.6 mm Außenhöhe ohne Knöpfe |
 | ADR-0012 | Encoder = EC11E THT, alle 4 gleiche Höhe, Knopf Ø 19–20 × 8–10 mm |
-| ADR-0013 (abgelöst r18.73/74) | Cell-Switches jetzt digital am MCP23017, aber echter Kailh-Choc-Hotswap-Keyswitch (nicht das kleine Modifier-Tactile); Hall/Gateron nur noch dokumentierte Option |
+| ADR-0013 (abgelöst r18.73/74/75) | Cell-Switches jetzt digital am MCP23017, mit echtem Kailh-Choc-V1-Keyswitch direkt gelötet (nicht das kleine Modifier-Tactile, kein Hotswap-Socket); Hall/Gateron nur noch dokumentierte Option |
 | ADR-0007 | Speaker = Dust-Mesh-Aussparung (Saati Acoustex), kein sichtbares Lochmuster |
 | ADR-0008 | LED-XOR (Cell-LEDs gelb/grün, Modifier Shift=grün/Hold=gelb/Drone/Generate/Clear=weiß) |
 | `mechanical/3d_models/MANIFEST.md` | Body-Höhen aller Z-/Panel-kritischen Teile (STEP-Modelle) |
@@ -140,38 +140,46 @@ gleiche X, **Y = 66 mm**, SMD 0603, Light-Pipe Ø 1.5 mm im Frontpanel.
 **Frontpanel-Aussparungen**: 12.5 × 12.5 mm pro Switch + Ø-2-mm-Bohrung pro
 Modifier-LED.
 
-### 3.4 Cell-Reihe (5× Kailh Choc V1/V2 Hot-Swap, digital — r18.74, ADR-0013 abgelöst)
+### 3.4 Cell-Reihe (5× Kailh Choc V1, direkt gelötet — r18.75, ADR-0013 abgelöst)
 
 > **r18.73 → r18.74 (User-UX-Korrektur):** r18.73 hatte die Cells auf dasselbe
 > kleine THT-Tactile wie die Modifier gesetzt — fühlte sich dann identisch zu
-> einem simplen Modifier-Knopf an, kein "Tastatur"-Gefühl mehr. **r18.74:**
-> Cells bleiben elektrisch digital (gleiche Netze GPA0–GPA4), bekommen aber
-> einen **echten Kailh-Choc-Keyswitch über Hotswap-Socket** zurück (~3mm
-> Hub, klickt von vorne rein, kein Löten des Switches, tauschbar).
+> einem simplen Modifier-Knopf an, kein "Tastatur"-Gefühl mehr. r18.74 gab
+> ihnen einen echten Kailh-Choc-Keyswitch über Hotswap-Socket zurück.
+>
+> **r18.75 (User-Nachfrage "wie wird das gelötet?"):** der Hotswap-Socket aus
+> r18.74 hatte keine saubere Hersteller-/LCSC-Teilenummer und hätte eine nicht
+> offensichtliche Klein-SMD-Handlöttechnik gebraucht. **Fix:** Kailh-Choc-V1-
+> Switch (CPG135001D01) jetzt **direkt auf die Platine gelötet** — 2
+> THT-Beinchen durch 2 Löcher, von hinten verlötet, exakt dieselbe Technik wie
+> jeder andere Button hier. Kein Socket mehr, dafür Switch fest verlötet
+> (nicht mehr tauschbar).
 
-5 identische Cell-Sites, **Hotswap-Socket SMD auf dem PCB gelötet** (15×15 mm
-Switch-Envelope, Kailh-Choc-Standard) — kein Hall-Sensor mehr, aber (anders als
-r18.73) auch keine kleine Tactile-Taste mehr; stattdessen ein echter,
-tauschbarer Keyboard-Switch. Plate optional (Choc-Hotswap-Builds sind oft
-plateless). X/Y-Raster unverändert (Reihe zentriert unter der Modifier-Reihe).
+5 identische Cell-Sites, **direkt gelötet** (15×15 mm Switch-Envelope, Kailh-
+Choc-Standard, 2 elektrische THT-Pins + 3 unbestückte Mechanik-Löcher für die
+Locator-Pegs des Switch-Gehäuses — seitliche Stabilität ohne Plate). Kein
+Hall-Sensor mehr, kein Hotswap-Socket mehr; stattdessen ein echter, fest
+verlöteter Keyboard-Switch. Plate optional (für mehr Steifigkeit bei häufigem
+Spielen). X/Y-Raster unverändert (Reihe zentriert unter der Modifier-Reihe).
 
 | Ref | X (mm) | Y (mm) | Cap (Plan) |
 |---|---|---|---|
-| Cell 1 (SW1) | **82**  | **26** | 3D-Druck-Cap, clippt auf Choc-Stem |
+| Cell 1 (SW1) | **82**  | **26** | 3D-Druck-Cap, clippt auf Choc-V1-Stem |
 | Cell 2 (SW2) | **104** | **26** | dito |
 | Cell 3 (SW3) | **126** | **26** | dito |
 | Cell 4 (SW4) | **148** | **26** | dito |
 | Cell 5 (SW5) | **170** | **26** | dito |
 
-Footprint = `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u`
-— vendored (MIT, `keyswitch-kicad-library`), community-verified, akzeptiert
-sowohl Choc V1 (CPG1350) als auch V2 (CPG1353). **Der Hotswap-Socket selbst hat
-keine saubere Hersteller-/LCSC-Teilenummer** — Keyboard-Markt-Ware (z.B.
-Chosfox "Kailh Choc PG1350 Hot Swap Socket" ~$1.45/10 Stk) — vor Bestellung
-konkreten Vendor-Listing + Footprint-Maße gegen Kailh-Zeichnung verifizieren.
-Der Switch, der reinklickt (nicht gelötet): reales verifiziertes Beispiel Kailh
-Choc V1 rot/linear, LCSC **C400229**. V1-Stem (~3,4mm) ≠ V2-Stem (~5mm) — eine
-Version konsistent wählen und den 3D-Cap-Stem danach designen.
+Footprint = `field_ambience:SW_KailhChoc_CPG1350_THT_2P` — direkt von
+LCSC/EasyEDA für **C400229** (Kailh CPG135001D01, rot/linear) gezogen via
+`easyeda2kicad --full --lcsc_id=C400229`, inkl. echtem 3D-STEP-Modell. Exakt
+der Weg, den dieses Repo für alle Custom-Footprints vorschreibt (siehe
+TS-1088, MST-12D18, PJ-320D) — nicht aus einer Keyboard-Hobby-Bibliothek,
+sondern direkt vom Hersteller-Listing. ⚠ LCSC zeigt 0 Lagerbestand zum
+Prüfzeitpunkt (Nachbestellung üblich); JLC verlangt für ihre automatisierte
+Bestückung eine Sonder-Fixture für dieses THT-Teil — Handlöten der 2 Beinchen
+braucht keine. Andere Choc-V1-Farbvarianten (tactile/clicky) teilen sich
+denselben Footprint — Feel/Farbe ist Industrial-Design-Entscheidung.
 
 **Cell-LED-Reihe** (LED11–LED20, 2 LEDs pro Cell, gelb + grün, XOR pro ADR-0008):
 
@@ -439,7 +447,7 @@ Sonderbehandlung mehr.
 | Knopf-Material + exakte Knopf-CAD (Ø 19 oder 20 mm) | Industrial Design |
 | Cell-Cap-Profil (Custom-Cap auf HX-B3F-Square-Head) | Industrial Design + Muster-Test |
 | HX B3F-4055 THT-Pin-Pattern vs Footprint (Modifier SW6–10) | GUI-ERC gegen Datenblatt prüfen |
-| Kailh-Choc-Hotswap-Socket (Cells SW1–5): kein Hersteller-/LCSC-PN gefunden | Konkretes Vendor-Listing + Footprint-Maße gegen Kailh-Zeichnung verifizieren vor Bestellung |
+Kailh-Choc-V1-Direct-Solder (Cells SW1–5, C400229): 0 Lagerbestand + JLC-Fixture-Hinweis | Handlöten braucht keine Fixture; Lagerbestand vor Bestellung erneut prüfen (Nachbestellung üblich) |
 | LP-Stabilizer-Notwendigkeit bei 2u in dieser Pitch | Erfahrungswert nach Muster-Druck |
 | Plate-Material (Aluminium vs ABS-Spritzguss) | Mockup-Bau |
 | Mesh-Lieferant (Saati Acoustex T-Klasse vs Alternative) | ADR-0007 follow-up |

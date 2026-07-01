@@ -10,6 +10,50 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.75 (2026-07-01) — Cells: direkt gelöteter Kailh-Choc-V1 statt Hotswap-Socket
+
+User: „This is wrong. How is this meant to be soldered onto a pcb? maybe we can
+just directly solder the kalih choc on the pcb? because i don't know how this
+would work."
+
+### 🔄 Cells: Hotswap-Socket → Direct-Solder (r18.74 → r18.75)
+
+- Der r18.74-Plan (Kailh-Choc-V1/V2-Hotswap-Socket) hatte zwei echte Probleme:
+  (1) der Socket selbst hatte **keine saubere Hersteller-/LCSC-Teilenummer**
+  (Keyboard-Markt-Ware), (2) er hätte eine **nicht offensichtliche Klein-SMD-
+  Handlöttechnik** gebraucht (2 winzige SMD-Pads von hinten löten, Switch klickt
+  separat von vorne rein) — der User fragte zu Recht nach, wie das überhaupt
+  gehen soll.
+- **Fix:** der Kailh-Choc-**V1**-Switch (**CPG135001D01**, LCSC **C400229**,
+  rot/linear) wird jetzt **direkt auf die Platine gelötet** — 2 THT-Beinchen
+  durch 2 Löcher, von hinten verlötet, **exakt dieselbe Technik wie jeder
+  andere Button/Connector in diesem Design**. Kein Socket mehr, keine
+  Spezialtechnik.
+- Footprint + 3D-STEP-Modell direkt von LCSC/EasyEDA für dieses exakte Teil
+  gezogen: `easyeda2kicad --full --lcsc_id=C400229` — genau der Weg, den
+  dieses Repo bereits für alle anderen Custom-Footprints vorschreibt (TS-1088,
+  MST-12D18, PJ-320D). Vendored als `field_ambience:SW_KailhChoc_CPG1350_THT_2P`
+  + zugehöriges STEP. Nicht aus einer Keyboard-Hobby-Bibliothek — direkt vom
+  Hersteller-Listing.
+- 2 elektrische THT-Pins + 3 unbestückte Mechanik-Löcher (die eigenen
+  Locator-Pegs des Switch-Gehäuses geben seitliche Stabilität ohne Plate).
+- **Trade-off:** der Switch ist jetzt fest verlötet, nicht mehr tauschbar wie
+  beim Hotswap-Ansatz — eingetauscht gegen Löt-Einfachheit und ein wirklich
+  verifiziertes Bauteil statt eines unverifizierten Zwischenteils.
+- Elektrisch **unverändert** seit r18.73/74: `CELL1..5_BTN` auf MCP23017
+  GPA0–GPA4, Pull-Up, IRQ — nur das physische Bauteil + Footprint ändern sich.
+- Modifier-Buttons SW6–SW10 bleiben unverändert (HX B3F-4055).
+- Aktualisiert: Generator (nur SW1–5-Block + neu vendorte Footprint/STEP-Dateien
+  in `field_ambience.pretty`/`field_ambience.3dshapes`), regenerierte
+  Schematics/BOM/Aron-HTML, `BOM_MASTER.md` §7, `PCB_BOM.md`, `PINMAP.md`,
+  `KICAD_BLUEPRINT.md`, `SCHEMATIC_WALKTHROUGH.md`,
+  `MECHANICAL_REQUIREMENTS.md` §1.5, `PCB_FOOTPRINT_RISK_AUDIT.md`
+  (UNKNOWN-Zähler zurück auf 0), `mechanical_coordinates.md` §3.4, `ADR-0013`,
+  `field_ambience_pcb_SPEC_v0.7.md` §5.6a, `PROJECT_STATUS.md`,
+  `COST_ESTIMATE.md`, `MANUFACTURING_START.md`.
+
+---
+
 ## v0.7-r18.74 (2026-07-01) — Cells: echter Kailh-Choc-Keyswitch statt Modifier-Tactile (UX-Fix)
 
 User: „die 5 cells hast du in der html stehen als normale tactile switches,

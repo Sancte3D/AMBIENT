@@ -35,7 +35,7 @@ Wenn du das hier von oben nach unten liest, weißt du am Ende:
 | 1 | `power_tree.kicad_sch` | `make_power_tree_sheet()` ~Z. 1887 | USB-C → Polyfuse → Bulk-Caps → +3V3-Rail, Boost-Konverter für Speakers, Akku-Eingang |
 | 2 | `stm32h743.kicad_sch` | `make_stm32h743_sheet()` ~Z. 3424 | MCU + HSE-Crystal + Reset + BOOT + Decoupling + VCAP + VDDA |
 | 3 | `lcd.kicad_sch` | `make_lcd_sheet()` ~Z. 3533 | ST7789-Modul-Header J3 + Backlight-FET Q2 + lokale Caps |
-| 4 | `mcp.kicad_sch` | `make_mcp_sheet()` ~Z. 4560 | MCP23017 (16 I/O over I²C) + PCA9685 (16 PWM für LEDs) + 10 Buttons (5 Cells SW1–5 auf Kailh-Choc-Hotswap + 5 Modifier SW6–10 auf HX-B3F-Tactile, alle digital am Expander) + 10 LEDs |
+| 4 | `mcp.kicad_sch` | `make_mcp_sheet()` ~Z. 4560 | MCP23017 (16 I/O over I²C) + PCA9685 (16 PWM für LEDs) + 10 Buttons (5 Cells SW1–5 auf Kailh-Choc-V1 direkt-gelötet + 5 Modifier SW6–10 auf HX-B3F-Tactile, alle digital am Expander) + 10 LEDs |
 | 5 | `encoder.kicad_sch` | `make_encoder_sheet()` ~Z. 4845 | 4 EC11-Encoder mit Push + RC-Filter |
 | 6 | `audio.kicad_sch` | `make_audio_sheet()` ~Z. 4878 | PCM5102A I²S-DAC + PAM8403 Class-D-Amp + Speaker-Header + 3.5-mm-Line-Out + (DNP) MIDI-Out |
 | 7 | `battery.kicad_sch` | `make_battery_sheet()` ~Z. 5956+ | MCP73831 Lade-IC + Akku-JST + Power-Path-Switching (USB ↔ Akku) + Bat-Sense-Divider |
@@ -364,7 +364,7 @@ nachreichen. Der MCU spricht beide über *einen* I²C-Bus (`I2C_SCL`/`I2C_SDA`,
 | `C5b` | 10 nF X7R 0603 | MCP23017 VDD-HF-Decoupling (Pärchen-Strategie für saubere I²C-Edges) | 0603 |
 | `D_CELL1..5` | Cell-LEDs (5×) — PCA9685-getrieben | Visualisiert Cell-Status (Press/Hold) | LED 0603 / 0805 — *UNVERIFIED: konkrete PN noch zu finalen* |
 | `D_MOD1..5` | Modifier-LEDs (gelb, rot, weiß, grün) — PCA9685-getrieben | Status der 5 Modifier-Buttons (Hold/Drone/Shift/Generate/Clear) | LED 0603 — siehe BOM §"Modifier-LEDs" |
-| `SW1..5` | Kailh Choc V1/V2 Hot-Swap-Socket (5×) | **Cell-Trigger digital, echter Keyswitch** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), r18.74 — ADR-0013 abgelöst, r18.73-UX-Fix (nicht mehr dasselbe Teil wie die Modifier) | `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` (vendored, MIT) |
+| `SW1..5` | Kailh Choc V1 CPG135001D01, direkt gelötet (5×) | **Cell-Trigger digital, echter Keyswitch** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), r18.75 — ADR-0013 abgelöst, r18.73-UX-Fix (nicht mehr dasselbe Teil wie die Modifier), r18.74-Hotswap-Socket vereinfacht zu Direct-Solder | `field_ambience:SW_KailhChoc_CPG1350_THT_2P` (von LCSC/EasyEDA gezogen für C400229) |
 | `SW6..10` | HX B3F-4055-Y THT-Tactile (5×) | Modifier-Buttons auf MCP23017 GPB0–GPB4 (bewusst kleineres/simpleres Gefühl als die Cells) | `field_ambience:SW_TC1212-7.3_THT_4P` (Custom) |
 
 ### Wie es fließt
@@ -382,11 +382,13 @@ STM32H743 I²C1 (PB6/PB7 AF4) ──┬──► U2 MCP23017 (Addr 0x20)
                                        └──► 10× LED-Kanäle (Konstant-Strom über 0603-Widerstände)
                                        └──► Backlight-FET (Q2-Gate) auf Kanal 12
 
-Cells (r18.74, ADR-0013 abgelöst): SW1..5 (Kailh-Choc-Hotswap) → MCP23017
-GPA0..4 → I²C → MCU. Rein digital (on/off), MCP-interner Pull-Up +
+Cells (r18.75, ADR-0013 abgelöst): SW1..5 (Kailh-Choc-V1, direkt gelötet) →
+MCP23017 GPA0..4 → I²C → MCU. Rein digital (on/off), MCP-interner Pull-Up +
 IRQ-on-change über INTA. Keine Hall-Sensoren, kein STM32-ADC-Pfad mehr
 (PC0/PC1/PA4/PB0/PB1 frei). Echter Keyswitch (~3mm Hub), nicht das kleine
-Modifier-Tactile — bewusster UX-Unterschied (r18.73-Fix).
+Modifier-Tactile — bewusster UX-Unterschied (r18.73-Fix). Kein Hotswap-Socket
+mehr (r18.74 → r18.75): Switch fest verlötet, gleiche THT-Löttechnik wie
+jeder andere Button hier.
 ```
 
 ### Was kaputt geht wenn …
@@ -396,7 +398,7 @@ Modifier-Tactile — bewusster UX-Unterschied (r18.73-Fix).
 | `U2` MCP23017 | Alle 10 Buttons (5 Cells + 5 Modifier) tot, Speaker bleibt unmuted, Insertion-Detect tot — aber DSP läuft weiter | I²C-Pull-Ups + Power + Adresse prüfen |
 | `U6` PCA9685 | Alle LEDs aus, Backlight dunkel (FET-Gate floated) — Gerät spielt aber Sound | wie oben |
 | `R4`/`R5` Pull-Ups | I²C-Bus floated → beide Chips antworten nicht → 1× Reset hilft nicht, Layout-Fehler | Pull-Up nachrüsten / Wert prüfen |
-| 1× Cell-Switch SW1–5 | Diese eine Cell triggert nicht; andere 4 funktionieren | Choc-Switch im Hotswap-Socket prüfen/tauschen (kein Löten nötig); MCP-GPA-Pin gegen GND messen |
+| 1× Cell-Switch SW1–5 | Diese eine Cell triggert nicht; andere 4 funktionieren | Lötstelle des Switches prüfen (fest verlötet, ggf. nachlöten/tauschen); MCP-GPA-Pin gegen GND messen |
 
 ### Warum gerade diese Wahl?
 
@@ -410,12 +412,19 @@ Modifier-Tactile — bewusster UX-Unterschied (r18.73-Fix).
   HiChord-Batch-4+-Weg — Switch → I²C-Expander → MCU. On/Off reicht zum Triggern;
   spart Magnet-Z-Abgleich, ADC-Kalibrierung. Analoge Velocity/Aftertouch wäre nur
   mit Hall nötig — bleibt als Option dokumentiert (ADR-0013).
-- **Kailh-Choc-Hotswap statt HX-B3F-Tactile für die Cells (r18.74, User-UX-Fix)**:
+- **Kailh-Choc statt HX-B3F-Tactile für die Cells (r18.74, User-UX-Fix)**:
   r18.73 hatte die Cells auf denselben kleinen Taster wie die Modifier gesetzt —
   fühlte sich dann identisch zu einem simplen Modifier-Knopf an und zerstörte das
-  "Tastatur"-Spielgefühl. Fix: echter Kailh-Choc-Keyswitch (~3mm Hub) über
-  Hotswap-Socket, elektrisch unverändert digital. Bewusster Unterschied: Cells =
-  Keyboard-Feel, Modifier = simples Tactile.
+  "Tastatur"-Spielgefühl. Fix: echter Kailh-Choc-Keyswitch (~3mm Hub), elektrisch
+  unverändert digital. Bewusster Unterschied: Cells = Keyboard-Feel, Modifier =
+  simples Tactile.
+- **Direkt-Lötung statt Hotswap-Socket (r18.75, User-Nachfrage)**: der r18.74-
+  Hotswap-Socket hatte keine saubere Hersteller-/LCSC-Teilenummer und brauchte
+  eine nicht offensichtliche Klein-SMD-Handlöttechnik. Fix: Kailh-Choc-V1-Switch
+  (CPG135001D01, LCSC C400229) direkt auf die Platine gelötet — 2 THT-Beinchen,
+  gleiche Technik wie jeder andere Button hier. Kein Socket mehr, dafür Switch
+  fest verlötet statt tauschbar. Footprint + STEP direkt von LCSC/EasyEDA für
+  dieses Teil gezogen (`easyeda2kicad --full --lcsc_id=C400229`).
 - **HX B3F-4055-Y THT-Tactile**: nur noch die Modifier-Taster, Square-Head für
   Clip-on-3D-Druck-Caps, 100 k Zyklen, JLC-gelistet (C36498965).
 

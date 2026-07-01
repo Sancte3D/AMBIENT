@@ -49,8 +49,8 @@ JLC assembly considerations (when we get to gate 7):
 - BOM CSV from KiCad (LCSC field is the primary key)
 - CPL: position, rotation, side
 - Some parts are Basic (no setup fee), most are Extended (setup fee — minimize unique part count)
-- Custom-footprint parts (the HX 12×12 button) need pad checks
-- Vendored kiswitch hotswap sockets are hand-installed by user (DNP for JLC, deliver loose)
+- Custom-footprint parts (the HX 12×12 button, the Kailh Choc cell keyswitch) need pad checks
+- Cell keyswitches (SW1–5, Kailh Choc V1, C400229) and modifier buttons (SW6–10, HX B3F) are THT — hand-placed/soldered after JLC's SMD reflow pass, not part of the automated SMT population (r18.75; direct-solder, no hot-swap socket anymore)
 
 ## When you'd come back to this file
 

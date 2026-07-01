@@ -35,10 +35,11 @@
 - `field_ambience_pcb_SPEC_v0.7.md` — komplette, aktuelle Spec (v0.7-r18, H7-Migration)
 - `kicad/` — KiCad-Projekt (Schaltplan fertig + validiert, generiert aus
   `generate_kicad_project.py`)
-- `kicad/libraries/` — Custom-Footprints (`field_ambience.pretty`) + 3D-STEPs;
-  auch `keyswitch-kicad-library` (vendored, MIT) für die Kailh-Choc-Hotswap-FPs.
-  (Cells sind seit r18.73 **digital am MCP23017**; seit r18.74 mit einem
-  **echten Kailh-Choc-Hotswap-Keyswitch** statt des kleinen Modifier-Tactile
+- `kicad/libraries/` — Custom-Footprints (`field_ambience.pretty`, inkl. der
+  Kailh-Choc-V1-Cell-Keyswitch-FP von LCSC/EasyEDA) + 3D-STEPs.
+  (Cells sind seit r18.73 **digital am MCP23017**; seit r18.75 mit einem
+  **echten Kailh-Choc-V1-Keyswitch, direkt gelötet** (kein Hotswap-Socket
+  mehr, r18.74 hatte einen versucht) statt des kleinen Modifier-Tactile
   — bewusster UX-Unterschied. ADR-0013 Gateron-Magnetic+Hall abgelöst.)
 - `kicad/datasheets/` — Datasheets der verbauten Bauteile
 - `../mechanical/coordinates/mechanical_coordinates.md` — Platzierungs-Koordinaten fürs Layout

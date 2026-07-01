@@ -180,7 +180,7 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 |---|---|---|
 | `I2C_SCL`/`I2C_SDA` | MCU PB6/PB7 (+4.7 kΩ PU) | MCP23017 + PCA9685 (shared bus) |
 | `MCP_INT` | MCP23017 INTA | MCU PC13 |
-| `CELL1..5_BTN` | MCP23017 GPA0..4 (PU) | 5 cell keyswitches SW1..5 (Kailh Choc hot-swap, digital triggers, r18.74) → GND |
+| `CELL1..5_BTN` | MCP23017 GPA0..4 (PU) | 5 cell keyswitches SW1..5 (Kailh Choc V1, direct-solder THT, digital triggers, r18.75) → GND |
 | modifier buttons SW6..10 | MCP23017 GPB0..4 (PU) | 5 tactile buttons (Shift/Hold/Drone/Generate/Clear) |
 | `VOL_SW` | EN4 push | MCP23017 GPB5 |
 | 5 modifier LEDs | PCA9685 ch0..4 (via 390 Ω) | Shift=gelb, Hold=grün, Drone/Gen/Clear=weiß |

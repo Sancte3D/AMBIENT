@@ -4075,16 +4075,26 @@ def mcp_sheet() -> str:
     # Knoepfen und zerstoert das "Tastatur/Keyboard"-Spielgefuehl. Fix: Cells
     # bleiben ELEKTRISCH digital (on/off am MCP23017, keine Aenderung an Netzen
     # / Pins / Pull-Up / IRQ ggue. r18.73), bekommen aber wieder einen ECHTEN
-    # Keyboard-Switch zurueck -- Kailh-Choc-Hotswap (V1 CPG1350 / V2 CPG1353),
-    # exakt die "Plain Choc V2"-Option aus ADR-0013s eigener Vergleichstabelle
-    # (mechanisches Tastengefuehl UEBER GPIO, nur ohne Velocity). Footprint ist
-    # community-verifiziert + bereits im Repo vendored (MIT,
-    # keyswitch-kicad-library, in fp-lib-table registriert) -- Plated-Variante
-    # fuer die mechanische Dauerbelastung eines Musikinstruments (viele Presses).
-    # Der Hotswap-SOCKET selbst hat KEINE saubere Hersteller-/LCSC-Teilenummer
-    # (Keyboard-Markt-Ware, wie zuvor Gateron) -- UNVERIFIED, siehe FP_NOTE.
-    # Verschaltung UNVERAENDERT ggue. r18.73: Switch-Pin -> MCP-GPIO (CELLn_BTN),
-    # anderer Pin -> GND. Idle = HIGH (MCP-Pull-Up), gedrueckt = LOW, IRQ via INTA.
+    # Keyboard-Switch zurueck.
+    # r18.75 (User-Nachfrage "wie soll das geloetet werden?"): der r18.74-Plan
+    # (Kailh-Choc-Hotswap-SOCKET) haette einen unverifizierten Keyboard-Markt-
+    # Teil erfordert, der als winziges 2-Pad-SMD von Hand angeloetet werden
+    # muesste -- nicht offensichtlich, wie der User zurecht anmerkte. Einfacher
+    # + sauberer: der Kailh-Choc-V1-Switch selbst wird DIREKT auf die Platine
+    # geloetet (2 THT-Beinchen durch 2 Loecher, von hinten geloetet -- exakt
+    # dieselbe simple THT-Technik wie bei allen anderen Buttons/Connectors in
+    # diesem Design). Kein Hotswap mehr (Switch ist fest verloetet, nicht
+    # tauschbar), dafuer kein unverifiziertes Zwischenteil und keine Spezial-
+    # Loettechnik. Footprint + 3D-STEP direkt von LCSC/EasyEDA fuer C400229
+    # (Kailh CPG135001D01, Choc V1 rot/linear) gezogen -- exakt der Weg, den
+    # dieses Repo fuer alle Custom-Footprints vorschreibt (siehe andere
+    # field_ambience.pretty-Teile: TS-1088, MST-12D18, PJ-320D). Vendored als
+    # field_ambience:SW_KailhChoc_CPG1350_THT_2P + zugehoeriges STEP-Modell.
+    # 2 THT-Pads (elektrisch) + 3 unbestueckte Mechanik-Loecher (Loesch-Pegs
+    # des Switch-Gehaeuses fuer seitliche Stabilitaet ohne Plate).
+    # Verschaltung UNVERAENDERT ggue. r18.73/74: Switch-Pin -> MCP-GPIO
+    # (CELLn_BTN), anderer Pin -> GND. Idle = HIGH (MCP-Pull-Up), gedrueckt =
+    # LOW, IRQ via INTA.
     #   stub PIN_R_X -> 170 ; label CELLn_BTN @ x=150 ; SW center x=175.08
     #   (pin1 abs 170.0 = Netz, pin2 abs 180.16 -> GND @ 183).
     cell_pins = [(21, "CELL1_BTN", 1), (22, "CELL2_BTN", 2), (23, "CELL3_BTN", 3),
@@ -4097,19 +4107,20 @@ def mcp_sheet() -> str:
             place_symbol(
                 lib_id="Switch:SW_Push",
                 ref=f"SW{sw_num}",
-                value=f"Cell {sw_num} digital trigger (Kailh Choc V1/V2 hotswap, real keyswitch feel, r18.74)",
+                value=f"Cell {sw_num} digital trigger (Kailh Choc V1 CPG1350, direct-solder THT, real keyswitch feel, r18.75)",
                 x=175.08,
                 y=py,
-                footprint="Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u",
+                footprint="field_ambience:SW_KailhChoc_CPG1350_THT_2P",
                 datasheet="https://cdn-shop.adafruit.com/product-files/5113/CHOC+keyswitch_Kailh-CPG135001D01_C400229.pdf",
                 extra_props={
-                    "MPN": "Kailh Choc V1 (CPG1350-series) / V2 (CPG1353-series) -- socket accepts either",
+                    "MPN": "CPG135001D01 (Kailh Choc V1, red/linear)",
                     "Manufacturer": "Kailh (Dongguan Kaihua Electronics)",
-                    "LCSC (switch example, verified in-stock)": "C400229 (CPG135001D01, Choc V1 red/linear) -- other Choc V1/V2 colors (linear/tactile/clicky) work identically electrically; feel/color is an industrial-design choice, not a schematic decision",
-                    "Package": "Hotswap: switch NOT soldered, clicks into an SMD socket on the PCB; ~3mm real keyswitch travel, 15x15mm switch body footprint",
-                    "SOCKET-SOURCING": "UNVERIFIED -- NEEDS HUMAN CHECK: the hotswap socket clip itself has no clean manufacturer/LCSC part number found (keyboard-market item, e.g. Chosfox 'Kailh Choc PG1350 Hot Swap Socket' ~$1.45/10pcs, or Kailh direct / Mechkeys / kbdfans -- same hand-supply sourcing category the original Gateron switches were in). Confirm a specific vendor listing before order.",
-                    "FP_NOTE": "Footprint Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u -- MIT-licensed, vendored in kicad/libraries/keyswitch-kicad-library/, already registered in fp-lib-table. Community-verified (widely used in shipped mechanical-keyboard PCBs), NOT independently re-verified against Kailh's mechanical drawing by this project -- cross-check pad pitch + mounting-hole positions before order.",
-                    "STEM-NOTE": "Choc V1 and V2 use different keycap stems (V1 proprietary blade ~3.4mm, V2 revised ~5mm) -- pick ONE version and match the 3D-printed cap stem interface to it; this is an industrial-design decision, not a PCB decision.",
+                    "LCSC": "C400229",
+                    "Package": "Direct-solder THT, 2 electrical pins + 3 unplated mechanical locator holes (switch's own pegs give lateral stability without a plate); ~3mm real keyswitch travel, 15x15mm switch body",
+                    "COLOR-NOTE": "Other Choc V1 colors (tactile/clicky) share the same 2-pin THT footprint -- feel/color is an industrial-design choice, not a schematic decision.",
+                    "SOURCING-NOTE": "C400229 is a verified real LCSC listing. JLCPCB's own page notes 'Plugin' (THT) mounting and that their automated PCBA wave-solder process needs a custom assembly fixture for this part -- that requirement is only for JLC's automated line; hand-soldering (2 legs through 2 holes, like every other THT part here) needs no fixture.",
+                    "FP_NOTE": "field_ambience:SW_KailhChoc_CPG1350_THT_2P -- pulled directly from LCSC/EasyEDA for C400229 via easyeda2kicad (this repo's own documented method for custom footprints), including a real 3D STEP. Not from a third-party keyboard-hobbyist library -- sourced straight from the part's own manufacturer listing.",
+                    "TRADE-OFF": "r18.75 (was r18.74 Kailh-Choc-hotswap-socket): switch is now permanently soldered, not swappable -- traded for assembly simplicity (plain THT solder, same technique as every other button/connector here) and dropping an unverified keyboard-market socket part.",
                 },
                 seed_suffix=f"SW{sw_num}",
                 sheet_uuid_seed=sus,

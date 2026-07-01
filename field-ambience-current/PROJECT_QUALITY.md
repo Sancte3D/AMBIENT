@@ -20,7 +20,7 @@
 | **PCB Layout** | 0 / 10 | — (existiert nicht) |
 | **DRC / Manufacturing** | 0 / 10 | — (Layout-abhängig) |
 | **Mechanical / Enclosure** | 9 / 10 | ↑ (r18.16: `mechanical_coordinates.md` echt + geometrisch validiert, Power-Insel verortet, Speaker-Höhen-Constraint) |
-| **Cell-Mechanik (digital, echter Keyswitch)** | 8 / 10 | ↑ (r18.74: Kailh-Choc-Hotswap statt Modifier-Tactile, UX-Fix; offen: Socket-Vendor-Verify, optionales Plate-CAD) |
+| **Cell-Mechanik (digital, echter Keyswitch)** | 9 / 10 | ↑ (r18.75: Kailh-Choc-V1 direkt gelötet statt Hotswap-Socket — reale LCSC-Teilenummer + FP/STEP von EasyEDA, kein unverifiziertes Zwischenteil; offen: 0-Lagerbestand erneut prüfen, optionales Plate-CAD) |
 | **Speaker-Cover (Dust-Mesh)** | 7 / 10 | ↑ (r18.18: Membran-Upgrade Cloth-Cone CMS-402811-28SP primär; Papier-PUI demoted zur Zweitquelle) |
 | **LED-Logik (Cell + Modifier)** | 10 / 10 | ✅ (Schematic + Sim + ADR komplett) |
 | **Doku / Onboarding** | 10 / 10 | ✅ (r18.13: alle Cross-Refs konsistent nach Phase-2-Moves) |
@@ -85,12 +85,12 @@ ist der einzige große Block vor Gate 2.
 - ✅ r18.16: `mechanical_coordinates.md` echt — Outline 252×102, alle X/Y/Z, Power-/Audio-Insel im 17-mm-Y-Streifen, Speaker-Treiber-Zone-Höhen-Constraint, geometrisch validiert (Python-Sanity-Check, 0 Konflikte)
 - ⏳ Fehlend für 10: Enclosure-CAD (FreeCAD/Fusion-Modell), physisches Mockup, Knopf-CAD
 
-### Cell-Mechanik (digital, echter Keyswitch) — 8 / 10
-- ✅ Architektur final (r18.74, ADR-0013 abgelöst): **digital am MCP23017** (HiChord-Batch-4+-Weg), aber mit **echtem Kailh-Choc-Keyswitch über Hot-Swap-Socket** (~3mm Hub) — r18.73 hatte hier fälschlich dasselbe Bauteil wie die Modifier verbaut (HX B3F-4055), was das Keyboard-Spielgefühl zerstörte; r18.74 korrigiert das (User-UX-Feedback). On/off-Trigger, kein Magnet-Z-Abgleich, keine ADC-Kalibrierung.
-- ✅ Schematic (r18.74): SW1–SW5 auf GPA0–GPA4 mit Footprint `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` (vendored, MIT, community-verifiziert); Hall-Pfad + RC entfernt; PC0/PC1/PA4/PB0/PB1 frei
-- ⚠ Hot-Swap-Socket-Sourcing UNVERIFIED — kein sauberer Hersteller-/LCSC-PN gefunden (Keyboard-Markt-Ware). Der Choc-Switch, der reinklickt: ein reales verifiziertes Beispiel bei LCSC C400229.
+### Cell-Mechanik (digital, echter Keyswitch) — 9 / 10
+- ✅ Architektur final (r18.75, ADR-0013 abgelöst): **digital am MCP23017** (HiChord-Batch-4+-Weg), mit **echtem Kailh-Choc-V1-Keyswitch, direkt gelötet** (~3mm Hub) — r18.73 hatte hier fälschlich dasselbe Bauteil wie die Modifier verbaut (HX B3F-4055), was das Keyboard-Spielgefühl zerstörte; r18.74 korrigierte das mit einem Hotswap-Socket, r18.75 vereinfachte auf Direct-Solder (User-Nachfrage "wie wird das gelötet?"). On/off-Trigger, kein Magnet-Z-Abgleich, keine ADC-Kalibrierung.
+- ✅ Schematic (r18.75): SW1–SW5 auf GPA0–GPA4 mit Footprint `field_ambience:SW_KailhChoc_CPG1350_THT_2P` (direkt von LCSC/EasyEDA für C400229 gezogen, inkl. 3D-STEP); Hall-Pfad + RC entfernt; PC0/PC1/PA4/PB0/PB1 frei
+- ✅ Sourcing verifiziert: LCSC **C400229** (Kailh CPG135001D01) ist ein reales, echtes Listing — kein unverifiziertes Zwischenteil mehr wie der r18.74-Hotswap-Socket. ⚠ 0 Lagerbestand zum Prüfzeitpunkt (Nachbestellung üblich); JLC verlangt für automatisierte Bestückung eine Sonder-Fixture — Handlöten braucht keine.
 - ✅ Velocity-Modell-Code (`cells.{h,c}`) bleibt host-getestet; mit digitalen Cells = on/off-Trigger. Echte Velocity nur mit Hall-Variante (ADR-0013, dokumentierte Option)
-- ⏳ Fehlend für 10: konkretes Socket-Vendor-Listing + Footprint-Maße gegen Kailh-Zeichnung verifizieren, optionales Plate-CAD, Cap-Stem-Design (V1 vs V2 wählen)
+- ⏳ Fehlend für 10: Lagerbestand C400229 vor Bestellung erneut prüfen (0 zum Prüfzeitpunkt), optionales Plate-CAD, Cap-Stem-Design auf Choc-V1-Stem
 
 ### Speaker-Cover (Dust-Mesh) — 7 / 10
 - ✅ Material fix (r18.17): Saati Acoustex 020–032 (transparent ~25–32 g/m²), PSA-Konvertierung via Marian Inc.; AliExpress-Sticker für Prototyp

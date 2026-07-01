@@ -33,13 +33,25 @@ War: ACCEPTED (2026-06-12), ersetzte den FSR-Teil von ADR-0006.
 > **echten Kailh-Choc-Keyswitch über Hot-Swap-Socket** zurück (~3 mm echter
 > Hub) — exakt die **„Plain Choc V2"-Option**, die in der Vergleichstabelle
 > unten (Kontext-Abschnitt) bereits als Alternative aufgeführt war, nur ohne
-> Velocity. Footprint community-verifiziert + bereits vendored
-> (`keyswitch-kicad-library`, MIT, in `fp-lib-table`); der Hot-Swap-Socket
-> selbst hat **keine saubere Hersteller-/LCSC-Teilenummer** (Keyboard-Markt-
-> Ware, wie ursprünglich die Gateron-Switches). Modifier SW6–SW10 bleiben das
-> kleine HX-B3F-Tactile — bewusster UX-Unterschied (Cells = Keyboard-Feel,
-> Modifier = simples Tactile). Details: `BOM_MASTER.md` §7,
-> `MECHANICAL_REQUIREMENTS.md` §1.5, `PCB_FOOTPRINT_RISK_AUDIT.md`.
+> Velocity.
+>
+> **Korrektur r18.75 (User-Nachfrage, 2026-07-01 — "wie wird das gelötet?"):**
+> der Hot-Swap-Socket aus r18.74 hatte **keine saubere Hersteller-/LCSC-
+> Teilenummer** und hätte eine nicht offensichtliche Klein-SMD-Handlöttechnik
+> gebraucht — der User fragte zu Recht nach, wie das überhaupt gelötet werden
+> soll. **Fix (r18.75):** der Kailh-Choc-V1-Switch (**CPG135001D01**, LCSC
+> **C400229**, verifiziert real) wird jetzt **direkt auf die Platine gelötet**
+> — 2 THT-Beinchen durch 2 Löcher, von hinten verlötet, exakt dieselbe Technik
+> wie bei jedem anderen Button/Connector in diesem Design. Kein Socket mehr,
+> keine Spezialtechnik — dafür ist der Switch jetzt fest verlötet (nicht mehr
+> tauschbar). Footprint + 3D-STEP direkt von LCSC/EasyEDA für dieses exakte
+> Teil gezogen (`easyeda2kicad --full --lcsc_id=C400229`), vendored als
+> `field_ambience:SW_KailhChoc_CPG1350_THT_2P` — der Weg, den dieses Repo für
+> alle Custom-Footprints vorschreibt, nicht aus einer Keyboard-Hobby-Library.
+> Modifier SW6–SW10 bleiben das kleine HX-B3F-Tactile — bewusster UX-
+> Unterschied (Cells = Keyboard-Feel, Modifier = simples Tactile). Details:
+> `BOM_MASTER.md` §7, `MECHANICAL_REQUIREMENTS.md` §1.5,
+> `PCB_FOOTPRINT_RISK_AUDIT.md`.
 
 ## Kontext (User-Anforderung)
 

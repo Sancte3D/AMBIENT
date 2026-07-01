@@ -1,6 +1,6 @@
 # AMBIENT PCB Footprint Risk Audit
 
-**Stand:** r18.74 (2026-07-01, cells → digital MCP wiring kept, real Kailh Choc keyswitch feel restored; Hall path removed)
+**Stand:** r18.75 (2026-07-01, cells → digital MCP wiring kept, real Kailh Choc V1 keyswitch feel, direct-solder THT instead of an unverified hot-swap socket; Hall path removed)
 **Scope:** Risk-based footprint classification per the AMBIENT Footprint Verification Brief. Not a full manual audit of every passive — those pass with package-match only.
 **Source of truth:** `BOM_MASTER.md` (Bestell/Lese-Sicht) + `kicad/generate_kicad_project.py` (technisch). Where this audit disagrees with the generator, the generator wins.
 **Coverage caveat:** This audit classifies risk and flags what needs to be done before layout/order. It does NOT itself perform pad-by-pad geometry comparison or 1:1 print verification — those are the targeted next actions listed in §12.
@@ -14,16 +14,15 @@ The repository is **NOT blocked by standard passive footprints**. All 0603/0805/
 The PCB is blocked by **a small number of high-risk parts that still need targeted verification**:
 
 - **POWER_CRITICAL (2):** U8 TPS61089 (VQFN-HR HotRod, custom FP — datasheet layout review not yet done) and L1 Sunlord SWPA6045 (custom FP, current path matters).
-- **MECH_CRITICAL (10):** USB-C J1, Audio Jack J8, Battery JST J_BAT, Display Header J3, Encoders EN1–EN4, Cell Keyswitches SW1–SW5 (Kailh Choc hot-swap, digital, r18.74), Modifier Buttons SW6–SW10, Service Buttons SW11 + SW_BOOT, Cell-LEDs (15× under cell-cap windows). None has a *1:1 print or CAD overlay against the enclosure recorded*.
+- **MECH_CRITICAL (10):** USB-C J1, Audio Jack J8, Battery JST J_BAT, Display Header J3, Encoders EN1–EN4, Cell Keyswitches SW1–SW5 (Kailh Choc V1, direct-solder, digital, r18.75), Modifier Buttons SW6–SW10, Service Buttons SW11 + SW_BOOT, Cell-LEDs (15× under cell-cap windows). None has a *1:1 print or CAD overlay against the enclosure recorded*.
 - **EXACT_MODEL_SAFE electrically, MECH_CRITICAL physically (overlap):** all connectors above.
 - **PACKAGE_SAFE pinout-pending (9):** U1 STM32H743, U2 MCP23017, U3 PCM5102A, U4 PAM8403H, U5 AP7361C LDO, U6 PCA9685, U7 MCP73831, D1 USBLC6, Q1 DMG2305UX, Q2 2N7002. Symbol↔footprint pin mapping must be checked once in KiCad ERC.
-- **UNKNOWN (1, reopened r18.74):** SW1–SW5 Kailh Choc hot-swap socket — the
-  socket itself has no clean manufacturer/LCSC part number found anywhere
-  (keyboard-market item). The footprint is a community-verified vendored
-  library (MIT), not independently re-checked by this project against Kailh's
-  own mechanical drawing. Confirm a real vendor listing + cross-check pad
-  pitch/hole positions before order. (Previously 0 after r18.20c/r18.36
-  cleanup — this is a new, honestly-flagged exception, not a regression.)
+- **UNKNOWN (0):** r18.74 briefly reopened this at 1 (a Kailh Choc hot-swap
+  socket with no clean manufacturer/LCSC part number). **r18.75 closed it**:
+  switched to direct-solder Kailh Choc V1 (CPG135001D01, LCSC C400229) — a
+  real, verified part with a footprint + 3D STEP pulled straight from
+  LCSC/EasyEDA (`easyeda2kicad --full --lcsc_id=C400229`), same method as
+  this repo's other custom footprints. See SW1–SW5 row below.
 
 **Bottom line:** The next step is not a full-footprint audit of everything. It is (a) one datasheet layout pass on TPS61089, (b) a 1:1-print pass against enclosure for the ten mech-critical parts, and (c) one ERC + symbol-pin check on the nine package-safe ICs. After that the project is layout-ready.
 
@@ -82,7 +81,7 @@ KiCad-Standard libraries (`Package_QFP`, `Package_SO`, `Package_TO_SOT_SMD`, `Re
 | **LCD module** | Waveshare 1.9" 170×320 ST7789V2 | – | – | Module (sits in J3) | MECH_CRITICAL | Window cutout + screen-to-bezel alignment | Module-only | YES (mech) | Per r18.22 pivot from bare AliExpress |
 | **Q2** | Backlight FET | 2N7002,215 | C8545 | `Package_TO_SOT_SMD:SOT-23` | PACKAGE_SAFE | Pin 1, G/D/S | OK pkg | No | |
 | **EN1–EN4** | Rotary encoders | ALPS EC11E18244AU | C202365 | `Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Shaft height 20 mm + tab spacing + knob clearance + panel cutout, A/B/C + push-switch pins | Pkg OK per ADR-0012 r18.22 pivot | YES (mech) | All four use same MPN (NRND-pivot consolidated); confirm 3D-printed knob ID matches shaft diameter |
-| **SW1–SW5** | Cell keyswitch hot-swap sockets (digital, r18.74) | Kailh Choc V1/V2 (CPG1350/CPG1353) hot-swap socket | ⚠ **UNVERIFIED — no clean MPN/LCSC**, keyboard-market (Chosfox/Kailh/Mechkeys) | `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` | UNKNOWN + **MECH_CRITICAL** | Cap window/plate cutouts in top panel, MX 19 mm pitch, 15×15 mm switch envelope, ~3 mm real travel | Footprint vendored + community-verified (MIT, `keyswitch-kicad-library`), NOT independently re-checked against Kailh's mechanical drawing by this project | YES (mech) | Cells went digital on MCP23017 GPA0–4 (ADR-0013 superseded, r18.73); r18.74 gave them back a real keyswitch feel (distinct from SW6–10) after a UX correction. Replaces the former DRV5056A4 Hall + RC. The switch that clicks in (not soldered) has a verified real example at LCSC C400229. |
+| **SW1–SW5** | Cell keyswitches, direct-solder (digital, r18.75) | Kailh Choc V1, CPG135001D01 | [C400229](https://www.lcsc.com/product-detail/C400229.html) — verified real listing; ⚠ 0 stock at time of writing (restocks common) | `field_ambience:SW_KailhChoc_CPG1350_THT_2P` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Cap window/optional plate cutouts in top panel, MX 19 mm pitch, 15×15 mm switch envelope, ~3 mm real travel, 2 THT pins + 3 unplated locator holes | Footprint + 3D STEP pulled directly from LCSC/EasyEDA for this exact part via `easyeda2kicad` — sourced from the manufacturer's own listing, same method as this repo's other custom footprints (TS-1088, MST-12D18, PJ-320D) | YES (mech) | Cells went digital on MCP23017 GPA0–4 (ADR-0013 superseded, r18.73); r18.74 tried a hot-swap socket (had no clean part number, needed fiddly hand-soldering); r18.75 simplified to direct-solder — same THT technique as every other button here, switch now permanent instead of swappable. Replaces the former DRV5056A4 Hall + RC. |
 | **SW6–SW10** | Modifier tactiles | HX B3F-4055-Y | C36498965 | `field_ambience:SW_TC1212-7.3_THT_4P` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Cap window cutouts in top panel, button height ≈7.3 mm | Custom FP — verify HX B3F THT pin pattern at GUI-ERC | YES (mech) | All 5 identical — Shift / Hold / Drone / Generate / Clear; same part as the cells |
 | **SW11** | Reset tactile | XUNPU TS-1088-AR02016 | C720477 | `field_ambience:SW_TS1088_SMD` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Service hole in bottom plate aligned to button | EasyEDA-verified r18.14 | YES (mech) | Bottom-plate access hole |
 | **SW_BOOT** | BOOT0 service | (= SW11 part) | C720477 | (= SW11 FP) | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Service hole in bottom plate | OK | YES (mech) | DFU-flash access; 1 kΩ pull-up R_BOOT_SW present |
@@ -130,7 +129,7 @@ These pass a generic KiCad ERC + a one-time human eyeball comparing symbol pin o
 
 Order roughly by tolerance pain (tight → loose):
 
-1. **SW1–SW5 (Cell keyswitches, digital — r18.74)** — 5× Kailh Choc hot-swap sockets on the MX 19 mm grid; the real switch clicks in from the front (15×15 mm envelope, ~3 mm travel), cap windows/optional plate cutouts in the top panel must align to switch centres. Replaces the former Hall sensors under Gateron magnets (no more magnet-to-sensor stack-height constraint) — and replaces r18.73's small tactile button (which had made the cells feel identical to the modifiers).
+1. **SW1–SW5 (Cell keyswitches, digital, direct-solder — r18.75)** — 5× Kailh Choc V1 switches directly soldered on the MX 19 mm grid (15×15 mm envelope, ~3 mm travel), cap windows/optional plate cutouts in the top panel must align to switch centres. Replaces the former Hall sensors under Gateron magnets (no more magnet-to-sensor stack-height constraint) — and replaces r18.73's small tactile button (which had made the cells feel identical to the modifiers) and r18.74's hot-swap socket (unverified sourcing).
 2. **EN1–EN4 (Encoders)** — 20 mm shaft + knob alignment with top panel + tab spacing for through-hole mounting tabs.
 3. **SW6–SW10 (Modifier buttons)** — 5× cap windows in top panel must align to button centres.
 4. **J1 (USB-C)** — board-edge cutout, mouth alignment with side wall, shell-to-shield contact.
@@ -167,9 +166,10 @@ Only two:
 
 ## 8. Missing or Ambiguous Footprints (UNKNOWN)
 
-**None as of r18.36.** Two historic UNKNOWNs were closed:
+**None as of r18.75.** Three historic UNKNOWNs were closed:
 - Phantom `L_0630` name on the Sunlord inductor → fixed r18.20c to `L_Sunlord_SWPA6045`.
 - Dead `RotaryEncoder_ALPS_EC11J_SMD.kicad_mod` (left over from ADR-0012 pre-pivot) → deleted r18.36.
+- Cell keyswitch hot-swap socket (r18.74, no clean manufacturer/LCSC part number) → closed r18.75 by switching to a direct-solder Kailh Choc V1 (C400229) with a footprint sourced straight from LCSC/EasyEDA.
 
 No "placeholder" footprints remain. (The former Hall-sensor placeholder note is moot — the Hall path was removed in r18.73 when the cells went digital on the MCP23017.)
 
@@ -250,7 +250,7 @@ In priority order:
 
 ### Before sending to JLC (mech + paperwork)
 
-- [ ] 1:1 print of full PCB outline + cutouts vs enclosure / bottom case for the 10 MECH_CRITICAL parts. Cell hot-swap socket positions vs the real Kailh Choc switch centres get an extra pass with a digital caliper (no more Hall/magnet — r18.74).
+- [ ] 1:1 print of full PCB outline + cutouts vs enclosure / bottom case for the 10 MECH_CRITICAL parts. Cell keyswitch (Kailh Choc V1, direct-solder) positions get an extra pass with a digital caliper (no more Hall/magnet — r18.73/75).
 - [ ] Bring up actually-shipped Waveshare 1.9" LCD module and verify pin order on J3.
 - [ ] Generate BOM + CPL, load into JLC, walk through assembly preview screen-by-screen looking for flipped pin-1 markers and missing footprints (esp. the 6 custom ones).
 - [ ] Re-check JLC stock the day of order, especially C444831.
