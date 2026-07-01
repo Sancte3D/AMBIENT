@@ -61,7 +61,7 @@ KiCad-Standard libraries (`Package_QFP`, `Package_SO`, `Package_TO_SOT_SMD`, `Re
 | **F1** | PTC fuse | 1812L300/16GR | C18198349 | `Fuse:Fuse_1812_4532Metric` | DEFAULT_SAFE | Package | OK | No | 3 A trip |
 | **D2** | TVS | SMAJ5.0A | C113952 | `Diode_SMD:D_SMA` | DEFAULT_SAFE | Package + polarity mark | OK | No | |
 | **U8** | Boost converter | TPS61089RNR | C165129 | `field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` | **POWER_CRITICAL** | Pad geom incl exposed thermal, pin 1, SW/VIN/VOUT/FB/EN/BOOT, datasheet layout, current loops, L1+C_OUT placement | Pin 11 = SW + thermal verified r18.7; **layout not yet drawn** | **YES** | TI datasheet SLVSD38C §10 recommended layout MUST be followed for HotRod package |
-| **L1** | Boost inductor | SWPA6045S2R2MT 2.2 µH | C83455 | `field_ambience:L_Sunlord_SWPA6045` | POWER_CRITICAL | Footprint dimensions vs datasheet, current rating ≥3 A, placement next to U8 pin 11 | OK pkg post-r18.20c phantom fix; placement still open | YES (layout) | Saturation Isat 4.5 A, Irms 4.3 A — confirmed adequate for 5 V/1 A boost |
+| **L1** | Boost inductor | SWPA6045S2R2NT 2.2 µH (r18.77: was SWPA6045S2R2MT — that MPN doesn't exist per Sunlord's own datasheet) | C36500 (r18.77: was C83455, a dead link) | `field_ambience:L_Sunlord_SWPA6045` | POWER_CRITICAL | Footprint dimensions vs datasheet, current rating ≥3 A, placement next to U8 pin 11 | OK pkg post-r18.20c phantom fix; placement still open | YES (layout) | Verified against Sunlord's official SWPA6045S datasheet (Item 12 table): Isat 6.75 A max / 7.40 A typ, Irms 4.60 A max / 5.00 A typ (r18.77 corrected — previous "4.5A/4.3A" figures here did not match any datasheet row) — confirmed adequate for 5 V/1 A boost |
 | **D3** | Schottky | SS34 | C8678 | `Diode_SMD:D_SMA` | DEFAULT_SAFE | Package + polarity | OK | No | If used as boost rectifier check VR/IF; if TVS-style protection treat as default |
 | **Q1** | P-Ch load switch | DMG2305UX-7 | C150470 | `Package_TO_SOT_SMD:SOT-23` | PACKAGE_SAFE | Pin 1, S/D/G mapping | OK pkg | No | Verify in ERC against symbol |
 | **U5** | 3.3 V LDO | AP7361C-33Y5-13 | C460397 | `Package_TO_SOT_SMD:SOT-89-5` | PACKAGE_SAFE (close to POWER_CRITICAL) | Pin 1 (1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT) + thermal pad copper for >500 mA loads | Pinout DS-verified r18.6 | No | Diodes DS confirmed; ensure GND tab has copper area |
@@ -154,9 +154,9 @@ Only two:
 - L1 (SWPA6045) must sit immediately next to SW pin with thick polygon.
 - Recommend GND pour on inner layer right under U8 + L1.
 
-### L1 Sunlord SWPA6045S2R2MT
+### L1 Sunlord SWPA6045S2R2NT (r18.77: corrected from the nonexistent "...MT" MPN)
 - Custom FP from EasyEDA (r18.20c phantom-name fix). Pad geometry should match Sunlord drawing — **not yet 1:1 verified against the PDF**.
-- Saturation Isat 4.5 A is fine for 5 V/1 A boost (peak ≈1.5 A).
+- Saturation Isat 6.75 A max / 7.40 A typ (r18.77: corrected from a fabricated "4.5 A" figure that didn't match any datasheet row) is fine for 5 V/1 A boost (peak ≈1.5 A).
 
 ### Soft-power-critical (mentioned for completeness, not flagged blocking):
 - U7 MCP73831 charger: thermal pad-less SOT-23-5, but at 500 mA charge it's marginal — recommend ~50 mm² copper polygon on VBAT trace.

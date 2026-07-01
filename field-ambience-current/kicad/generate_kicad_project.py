@@ -6482,11 +6482,11 @@ def battery_sheet() -> str:
         place_symbol(
             lib_id="Device:L",
             ref="L1",
-            value="2.2uH 5A Shielded 0630 (TPS61089 Boost Inductor)",
+            value="2.2uH Wire-Wound SMD 6.0x6.0x4.5mm (TPS61089 Boost Inductor)",
             x=140, y=75,
             rotation=0,
             footprint="field_ambience:L_Sunlord_SWPA6045",
-            extra_props={"MPN": "SWPA6045S2R2MT", "LCSC": "C83455"},
+            extra_props={"MPN": "SWPA6045S2R2NT", "LCSC": "C36500", "FP_NOTE": "r18.77: corrected from SWPA6045S2R2MT/C83455 (both wrong -- MT suffix does not exist for 2.2uH per Sunlord's own datasheet, only NT; C83455 was a dead LCSC listing). Verified against Sunlord's official SWPA6045S series datasheet (Item 12 table): 2.2uH, DCR 18mOhm max, Isat 7.40A typ, Irms 5.00A typ, tolerance N=+-30%. LCSC C36500 cross-checked live via JLCPCB catalog."},
             seed_suffix="L1",
             sheet_uuid_seed=sus,
         )

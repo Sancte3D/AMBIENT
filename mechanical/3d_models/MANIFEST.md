@@ -24,7 +24,7 @@ Quelle: EasyEDA/LCSC-CAD-Daten, gezogen mit `easyeda2kicad --full --lcsc_id=<ID>
 | C114409 | STM32H743VIT6 LQFP-100 | `LQFP-100_L14.0-W14.0-H1.4-LS16.0-P0.50.step` | 1.4 mm |
 | C720477 | SW_BOOT Taster (**r18.14: MPN korrigiert** — XUNPU TS-1088-AR02016, nicht TS-1185A) | `SW-SMD_L3.9-W2.9-H2.0-LS4.8.step` | 2.0 mm |
 | C596838 | ABLS-8.000MHZ-B4-T Crystal HC-49/US-SMD | `CRYSTAL-SMD_L11.4-W4.7-LS12.7.step` | 4.2 mm |
-| C150470 | SWPA6045S2R2MT Boost-Inductor | `IND-SMD_L6.0-W6.0-H4.5.step` | 4.5 mm |
+| C36500 | SWPA6045S2R2NT Boost-Inductor (r18.77: this row had the wrong LCSC code, C150470 = Q1 MOSFET not L1; and the wrong MPN suffix, "...MT" doesn't exist for 2.2µH) | `IND-SMD_L6.0-W6.0-H4.5.step` | 4.5 mm |
 | C431535 | PJ-320D 3.5mm-Klinke (Line-Out, Panel-Cutout!) | `AUDIO-SMD_PJ-320D-1.step` | 5.0 mm |
 | C295747 | JST-PH S2B-PH-SM4-TB (Battery) | `CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN.step` | 6.0 mm |
 | C165129 | TPS61089RNR Boost VQFN-HR-11 | `VQFN-HR_L2.5-W2.0-H1.0-P0.50.step` | 1.0 mm |

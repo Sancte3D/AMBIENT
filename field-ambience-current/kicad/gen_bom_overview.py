@@ -50,7 +50,7 @@ G = [
  ("Power", "#ef4444", [
    ("J1","USB-C TYPE-C-31-M-12","charging + USB-DFU flash","C165948","jlc",True),
    ("U8","TPS61089 boost","battery 3.7 V → 5 V","C165129","jlc",False),
-   ("L1","SWPA6045 2.2 µH","boost inductor","C83455","jlc",False),
+   ("L1","SWPA6045S2R2NT 2.2 µH","boost inductor (r18.77: corrected from C83455, a dead link -- and SWPA6045S2R2MT, which does not exist; real part is C36500)","C36500","jlc",False),
    ("Q1","DMG2305UX P-MOSFET","power-path switch","C150470","jlc",False),
    ("U5","AP7361C LDO","5 V → 3.3 V (thermal hotspot)","C460397","jlc",False),
    ("U_PWR","TPS22918 load switch","the power-off — gates 3.3 V","C131941","jlc",False),
