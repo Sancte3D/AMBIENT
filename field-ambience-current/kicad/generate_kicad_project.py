@@ -3452,8 +3452,8 @@ def lcd_sheet() -> str:
                                 x=JX, y=JY,
                                 footprint="Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical",
                                 extra_props={
-                                    "MPN": "TBD (LCD-Modul separat: Adafruit 5394-Klasse / ER-TFT019)",
-                                    "LCSC": "TBD (Modul, separat bestellen)",
+                                    "MPN": "1x8 2.54mm pin header (the on-board connector; the LCD module itself plugs in separately, off-board, see §C / BOM_MASTER §5)",
+                                    "LCSC": "C124383",
                                     "FP_NOTE": "Standard 2.54mm 1x8-Header (PinHeader_1x08_P2.54mm_Vertical, KiCad-Standard, JEDEC). Adafruit 5394-Pinraster auf 2.54mm — passt 1:1.",
                                 },
                                 seed_suffix="J3", sheet_uuid_seed=sus))
@@ -5815,10 +5815,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Connector:Conn_01x02",
             ref="J6",
-            value="Speaker L (Same Sky CMS-402811-28SP, Cloth-Cone, 8R 2W)",
+            value="Speaker L header (2-pin, to Same Sky CMS-402811-28SP driver -- off-board, not soldered)",
             x=j6_x, y=j6_y,
             footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
-            extra_props={"MPN": "Same Sky CMS-402811-28SP (Cloth-Cone primaer; PUI AS04008PS-4W-WR-R sekundaer)", "LCSC": "TBD (kein LCSC-Stock fuer 40mm-Treiber; DigiKey 102-CMS-402811-28SP-ND)", "Notes": "Treiber haengt vom Top-Panel (Top-Firing, ADR-0007/ADR-0011), kein PCB-Mount. J6/J7 sind nur 2-Pin-Loetpads; Draht zum Treiber-Eyelet manuell. r18.18: Cloth-Cone-Wechsel."},
+            extra_props={"MPN": "1x2 2.54mm pin header (the on-board connector)", "LCSC": "C124375", "Notes": "Treiber (Same Sky CMS-402811-28SP, Cloth-Cone primaer; PUI AS04008PS-4W-WR-R sekundaer) haengt vom Top-Panel (Top-Firing, ADR-0007/ADR-0011), kein PCB-Mount, kein LCSC-Stock fuer den 40mm-Treiber selbst (DigiKey 102-CMS-402811-28SP-ND). J6/J7 sind nur 2-Pin-Loetpads; Draht zum Treiber-Eyelet manuell. r18.18: Cloth-Cone-Wechsel."},
             seed_suffix="J6",
             sheet_uuid_seed=sus,
         )
@@ -5834,10 +5834,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Connector:Conn_01x02",
             ref="J7",
-            value="Speaker R (Same Sky CMS-402811-28SP, Cloth-Cone, 8R 2W)",
+            value="Speaker R header (2-pin, to Same Sky CMS-402811-28SP driver -- off-board, not soldered)",
             x=j7_x, y=j7_y,
             footprint="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
-            extra_props={"MPN": "Same Sky CMS-402811-28SP (Cloth-Cone primaer; PUI AS04008PS-4W-WR-R sekundaer)", "LCSC": "TBD (kein LCSC-Stock fuer 40mm-Treiber; DigiKey 102-CMS-402811-28SP-ND)", "Notes": "Treiber haengt vom Top-Panel (Top-Firing, ADR-0007/ADR-0011), kein PCB-Mount. J6/J7 sind nur 2-Pin-Loetpads; Draht zum Treiber-Eyelet manuell. r18.18: Cloth-Cone-Wechsel."},
+            extra_props={"MPN": "1x2 2.54mm pin header (the on-board connector)", "LCSC": "C124375", "Notes": "Treiber (Same Sky CMS-402811-28SP, Cloth-Cone primaer; PUI AS04008PS-4W-WR-R sekundaer) haengt vom Top-Panel (Top-Firing, ADR-0007/ADR-0011), kein PCB-Mount, kein LCSC-Stock fuer den 40mm-Treiber selbst (DigiKey 102-CMS-402811-28SP-ND). J6/J7 sind nur 2-Pin-Loetpads; Draht zum Treiber-Eyelet manuell. r18.18: Cloth-Cone-Wechsel."},
             seed_suffix="J7",
             sheet_uuid_seed=sus,
         )
