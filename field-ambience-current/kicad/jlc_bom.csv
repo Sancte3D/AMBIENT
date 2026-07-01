@@ -3,6 +3,8 @@ CC0603JRNPO9BN270,"C_HSE1,C_HSE2",Capacitor_SMD:C_0603_1608Metric,C107045
 PCM5102APWR,U3,Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm,C107671
 SMAJ5.0A,D2,Diode_SMD:D_SMA,C113952
 STM32H743VIT6,U1,Package_QFP:LQFP-100_14x14mm_P0.5mm,C114409
+1x2 2.54mm pin header (the on-board connector),"J6,J7",Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,C124375
+"1x8 2.54mm pin header (the on-board connector; the LCD module itself plugs in separately, off-board, see §C / BOM_MASTER §5)",J3,Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical,C124383
 "KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V)","LED7,LED11G,LED12G,LED13G,LED14G,LED15G",LED_SMD:LED_0603_1608Metric,C12624
 "CC0603KRX7R9BB104 (Yageo, 50V X7R)","C2,C5,C6c,C7b,C8b,C10,C11,C12,C13,C14,C15,C16,C17,C_BAT_HF,C_BOOST_HF,C_BOOT,C_CPVDD_HF,C_LDOO,C_NRST,C_PCA2_VDD_HF,C_PCA_VDD_HF,C_VDD1B,C_VDD2B,C_VDD3B,C_VDD4B,C_VDD5B,C_VDDA2,C_VREF2",Capacitor_SMD:C_0603_1608Metric,C14663
 DMG2305UX-7,Q1,Package_TO_SOT_SMD:SOT-23,C150470
@@ -54,5 +56,3 @@ SS34,D3,Diode_SMD:D_SMA,C8678
 XL-1608UOC-06,LED_CHRG,LED_SMD:LED_0603_1608Metric,C965800
 XL-1608UWC-04,"LED8,LED9,LED10,LED_HB,LED_VU1,LED_VU2,LED_VU3,LED_VU4,LED_VU5,LED_VU6,LED_VU7,LED_VU8",LED_SMD:LED_0603_1608Metric,C965808
 TC2030-IDC,J4,Connector_PinHeader_1.27mm:PinHeader_1x03_P1.27mm_Vertical,TBD
-TBD (LCD-Modul separat: Adafruit 5394-Klasse / ER-TFT019),J3,Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical,"TBD (Modul, separat bestellen)"
-Same Sky CMS-402811-28SP (Cloth-Cone primaer; PUI AS04008PS-4W-WR-R sekundaer),"J6,J7",Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,TBD (kein LCSC-Stock fuer 40mm-Treiber; DigiKey 102-CMS-402811-28SP-ND)

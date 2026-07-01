@@ -2,6 +2,31 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.76 (2026-07-01, BOM/Funktionalitäts-Audit):** User bat um einen
+> Check von BOM + Geräte-Funktionalität. Ergebnisse:
+> - **BOM-Fix (real, behoben):** J3 (LCD-Header) und J6/J7 (Speaker-Header)
+>   hatten im Generator Platzhalter-`"TBD"` im LCSC-Feld, obwohl `BOM_MASTER.md`
+>   längst die echten Codes dokumentierte (**C124383** für J3, **C124375** für
+>   J6/J7) — Doku↔Generator-Drift. Generator jetzt synchronisiert; `jlc_bom.csv`
+>   hat jetzt 0 verbliebene `TBD`-Zeilen außer dem bereits geprüften
+>   Tag-Connect-J4 (echtes „kein LCSC", r18.37 bereits auditiert).
+> - **BOM sonst sauber:** keine doppelten Referenzdesignatoren (201 eindeutige
+>   Instanzen über alle Sheets), CSV parst fehlerfrei trotz eingebetteter
+>   Kommata, Generator-Output deterministisch über mehrere Läufe verifiziert.
+> - **Firmware-Funktionalitätslücke gefunden (⚠ NICHT behoben, nur dokumentiert):**
+>   `src/hal_h743/main_h743.c` hat noch einen TODO-Stub, der die Cells über
+>   analoge Hall-ADCs liest (`adc_read_norm(c)`) — das passt nicht mehr zur
+>   Hardware seit r18.73 (Cells sind jetzt digitale MCP23017-GPIO-Buttons,
+>   kein Hall-Sensor mehr, die ADC-Pins sind freigegeben/unbeschaltet). Der
+>   Pico-Bench (`main_pico.c`) hat den korrekten digitalen Pattern schon
+>   längst implementiert und getestet (liest MCP-GPIO-Edges direkt, ruft
+>   `engine_note_on/off` auf, umgeht die alte Velocity-State-Machine
+>   komplett) — das ist die Vorlage für den H743-Fix. `mcp23017.h` selbst ist
+>   bereits korrekt (GPA0-4 = CELL1..5, dokumentiert genau wie das Schematic).
+>   Ohne diesen Fix würden die Cells auf echter H743-Hardware nicht
+>   funktionieren, wenn der TODO wörtlich implementiert wird. War schon vorher
+>   als "⏳ optional cleanup later" in §3 vermerkt — hiermit konkretisiert.
+>
 > **r18.75 (2026-07-01, User-Nachfrage "wie wird das gelötet?"):** der r18.74-
 > Hot-Swap-Socket hatte keine saubere Hersteller-/LCSC-Teilenummer und hätte
 > eine nicht offensichtliche Klein-SMD-Handlöttechnik gebraucht. **Fix:** SW1–5
@@ -150,7 +175,7 @@ product build.
 | Target | State |
 |---|---|
 | `src/hal_pico/` (Pico 2 SDK, bench-only) | ✅ display_hw_test builds + runs |
-| `src/hal_h743/` (STM32H743, product) | 🟡 skeleton compiles syntactically; CubeH7 toolchain integration is the final step |
+| `src/hal_h743/` (STM32H743, product) | 🟡 skeleton compiles syntactically; CubeH7 toolchain integration is the final step. ⚠ r18.76-Audit: `main_h743.c`'s cell-read TODO still describes the retired Hall-ADC path (`adc_read_norm`) — needs porting to the digital MCP-GPIO-edge pattern already proven in `hal_pico/main_pico.c` (mirrors the modifier-button code 2 lines above it in the same loop) |
 | `tools/display_hw_test.c` (deliverable for "test on Pico") | ✅ |
 
 ### PCB / BOM
