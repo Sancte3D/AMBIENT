@@ -10,6 +10,44 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.77 (2026-07-01) — L1-Boost-Inductor: toter LCSC-Link + nicht existente MPN gefunden + behoben
+
+User klickte auf L1 in der Aron-BOM-HTML ("SWPA6045 2.2µH") — die LCSC-Seite
+existierte nicht.
+
+### 🔄 L1: SWPA6045S2R2MT/C83455 → SWPA6045S2R2NT/C36500
+
+- **C83455 404t** — nie ein echtes Listing, trotz einer r18.20c-Notiz die es
+  fälschlich als "✓ Extended verifiziert" führte.
+- **Die MPN war auch falsch:** `SWPA6045S2R2MT` existiert laut Sunlords
+  eigenem Datenblatt (Item 2, Produkt-ID-Schema) gar nicht — die
+  "M"-Toleranz-Endung (±20%) gibt es nur ab 4,3 µH aufwärts; 2,2 µH gibt es
+  nur mit "N"-Endung (±30%). Der r18.37-BOM↔Generator-String-Diff-Audit
+  hatte das nicht gefunden, weil BOM_MASTER und Generator **denselben**
+  falschen Code trugen — ein Konsistenz-Check zwischen zwei Dokumenten fängt
+  keinen Fehler, der in beiden identisch falsch ist.
+- **Echtes, verifiziertes Teil:** SWPA6045S2R2NT, LCSC **C36500** — live via
+  JLCPCB-Katalog geprüft und gegen jeden Wert in Sunlords offiziellem
+  SWPA6045S-Datenblatt (Item 12, Elektrische Charakteristiken) abgeglichen:
+  2,2 µH, DCR 18 mΩ max, Isat 6,75 A max / 7,40 A typ, Irms 4,60 A max /
+  5,00 A typ.
+- **Bonus-Fund:** der `value`-String im Schematic beschrieb noch ein
+  **komplett anderes, älteres Bauteil** — "Sumida CDR63B-2R2" im "0630"-
+  Gehäuse (6,0×3,0mm) — ein Relikt aus einer früheren Design-Iteration,
+  bevor auf das Sunlord SWPA6045S (6,0×6,0×4,5mm) gewechselt wurde. Auch in
+  `PCB_FOOTPRINT_RISK_AUDIT.md` steckte ein fabrizierter "Isat 4,5A"-Wert,
+  der zu keiner Datenblatt-Zeile passte — korrigiert auf die echten Werte.
+  `ADR-0011` (Gehäuse-Z-Budget) hatte fälschlich 3,0mm Bauhöhe (Sumida-Ära)
+  statt der echten 4,5mm (Sunlord) — der Encoder (19mm) dominiert das
+  Z-Budget trotzdem weiterhin, keine Kaskaden-Auswirkung.
+- Aktualisiert: Generator (Footprint-Value-String + MPN + LCSC + FP_NOTE),
+  regenerierte Schematics/BOM/Aron-HTML, `BOM_MASTER.md`, `PCB_BOM.md`,
+  `field_ambience_pcb_SPEC_v0.7.md`, `PCB_FOOTPRINT_RISK_AUDIT.md`,
+  `mechanical/3d_models/MANIFEST.md` (hatte zusätzlich Q1s LCSC-Code statt
+  L1s eigenem), `ADR-0011-enclosure-thickness.md`.
+
+---
+
 ## v0.7-r18.75 (2026-07-01) — Cells: direkt gelöteter Kailh-Choc-V1 statt Hotswap-Socket
 
 User: „This is wrong. How is this meant to be soldered onto a pcb? maybe we can

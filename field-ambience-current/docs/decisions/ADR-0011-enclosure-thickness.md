@@ -22,7 +22,7 @@ Bisher in `../../mechanical/coordinates/mechanical_coordinates.md` ohne harte Z-
 | **Cloth-Cone Speaker (CMS-402811-28SP primär, AS04008PS sekundär)** | **11.5 mm Treiber-Tiefe** (r18.17b-Korrektur; Footprint 40×28.3, beide Treiber identisch) | Same Sky/PUI Datasheets |
 | **HC-49/US-SMD Crystal Y1** | **4.2 mm** | ABRACON ABLS Drawing |
 | **LCD-Modul ST7789 (Adafruit 5394)** | **3.5 mm** (über Header-Standoff) | Adafruit Drawing |
-| **L1 Boost-Inductor 0630** | **3.0 mm** | SWPA6045S2R2MT |
+| **L1 Boost-Inductor** | **4.5 mm** (r18.77: korrigiert — die alten "0630"/3.0mm-Werte gehörten zu einem älteren Sumida-CDR63B-2R2-Teil aus einer früheren Design-Iteration; das tatsächlich verbaute Sunlord SWPA6045S ist 6.0×6.0×4.5mm laut eigenem Datenblatt, konsistent mit dem bereits genutzten STEP `IND-SMD_L6.0-W6.0-H4.5.step`) | SWPA6045S2R2NT Datasheet (Sunlord, Item 5 "Shape and Dimensions") |
 | **D2 SMAJ5.0A SMA Diode** | **2.3 mm** | SMA-Standard |
 | **MCU LQFP-100 / TSSOPs / SOIC** | **1.0–2.0 mm** | JEDEC-Standard |
 | **R/C 0603 + LEDs 0603** | **0.45–0.95 mm** | Standard SMD |

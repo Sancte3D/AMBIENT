@@ -24,7 +24,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | Ref | Part | Value | Package | LCSC |
 |---|---|---|---|---|
 | U8 | TPS61089RNR boost | — | VQFN-11 | C165129 |
-| L1 | SWPA6045 inductor | 2.2 µH | 6×6 | C83455 |
+| L1 | SWPA6045S2R2NT inductor (r18.77: was C83455, a dead link; MPN was also wrong — 2.2µH only exists as "NT" not "MT" suffix) | 2.2 µH | 6×6 | C36500 |
 | D3 | SS34 Schottky | — | SMA | C8678 |
 | U5 | AP7361C-33Y5 LDO | 3.3 V | SOT-89-5 | C460397 |
 | U7 | MCP73831 charger | 500 mA | SOT-23-5 | C424093 |
