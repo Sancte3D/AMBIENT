@@ -50,8 +50,8 @@ of these is **your design**; this is the *inventory*, not a layout.
 |---|---|---|---|
 | Display (Waveshare 1.9″ LCD 170×320) | 1 | the screen — worlds, params, meters | window = active area + 0.5 mm/side; must show the full active area |
 | Push-encoders (ALPS EC11) + 3D-print knobs Ø19–20 mm | 4 | global params + a push function each | 4 shaft holes; knobs sit ~10 mm above the top plate |
-| Cell keys (HX B3F-4055 THT tactile, digital) + 3D-print 1u caps | 5 | the playable keys (digital on/off trigger; r18.73, ADR-0013 superseded) | 5 PCB-mounted switches, MX 19 mm pitch; caps clip onto the square head |
-| Modifier buttons (HX B3F-4055 tactile, same part) + caps | 5 | Shift / Hold / Drone / Generate / Clear | 5 button holes; caps clip onto the square head |
+| Cell keys (Kailh Choc V1/V2 hot-swap, real keyswitch, digital trigger) + 3D-print caps | 5 | the playable keys (digital on/off; r18.74, ADR-0013 superseded — real ~3mm keyswitch travel, distinct feel from the modifier buttons) | 5 keyswitches, 19 mm pitch; ~15×15 mm switch envelope each; caps clip onto the Choc stem (V1 or V2, pick one) |
+| Modifier buttons (HX B3F-4055 tactile) + caps | 5 | Shift / Hold / Drone / Generate / Clear — deliberately a smaller/plainer feel than the cells | 5 button holes; caps clip onto the square head |
 | Modifier LEDs (mono) | 5 | per-button status (Shift=yellow, Hold=green, other 3 white) | 5 light points — translucent cap / lightpipe / window |
 | Cell LEDs (2 per cell: yellow + green) | 10 | cell hold-status (base / shift) | 10 light points — glow the keycap or a window per cell |
 | VU-meter LEDs (white, in a row) | 8 | live audio level (OP-1-style) | 8 light points / a light-bar window; row position = your choice |
@@ -133,21 +133,30 @@ Gehäuse oder die Bedienflächen positionell fest.
 | Anordnung 4× nebeneinander | Bündel oben oder seitlich, je nach Gehäuse-Konzept | User-Entscheidung |
 | Mounting | Through-Hole, 5,1 mm hohe Lötseite — PCB-Underside-Clearance | Datasheet |
 
-### 1.5 Cell-Switches × 5 `SW1..SW5` (HX B3F-4055-Y THT-Tactile)
+### 1.5 Cell-Switches × 5 `SW1..SW5` (Kailh Choc V1/V2 Hot-Swap, ADR-0013 abgelöst)
 
-> **r18.73 (ADR-0013 abgelöst):** Cells sind jetzt **digitale THT-Tactile-Switches**
-> auf dem MCP23017 (HiChord-Batch-4+-Weg) — **dasselbe Bauteil wie die Modifier
-> SW6–SW10** (HX B3F-4055-Y, C36498965). Damit entfallen die Gateron-Magnetic-
-> Switches, die separate Switch-Plate und die DRV5056A4-Hall-Sensoren. Die Cells
-> sind **PCB-mounted**, nicht mehr Plate-mounted; Maße = §1.6.
+> **r18.73 (ADR-0013 abgelöst):** Cells wurden digital am MCP23017 (HiChord-
+> Batch-4+-Weg). **r18.74 (User-UX-Korrektur):** r18.73 hatte die Cells auf
+> **dasselbe kleine THT-Tactile wie die Modifier** gesetzt (HX B3F-4055) — das
+> macht die spielbaren Cells ununterscheidbar von simplen Modifier-Knöpfen und
+> zerstört das "Tastatur/Keyboard"-Spielgefühl. **Fix:** Cells bleiben
+> elektrisch digital (gleiche Netze/Pins wie r18.73), bekommen aber einen
+> **echten Kailh-Choc-Keyswitch über Hot-Swap-Socket** zurück — ~3 mm echter
+> Hub, Switch steckt/klickt in den Socket (kein Löten des Switches), tauschbar.
+> Footprint community-verifiziert + bereits vendored (`keyswitch-kicad-library`,
+> MIT, in `fp-lib-table`). Der Socket selbst hat **keine saubere Hersteller-/
+> LCSC-Teilenummer** — Keyboard-Markt-Ware (wie zuvor Gateron).
 
 | Maß | Wert | Quelle |
 |---|---|---|
-| Switch-Body (LxBxH) | **11,8 × 11,8 × 7,3 mm** (Square-Head-Plunger oben) | wie §1.6 (gleiches Bauteil) |
-| Höhe über PCB | **7,3 mm** (Plunger-Spitze) → Top-Plate-Clearance | Datasheet |
+| Switch-Envelope (LxB) | **15 × 15 mm** (Kailh-Choc-Standard, V1 und V2 identisch) | Kailh-Herstellerangabe (mehrfach bestätigt in öffentlichen Quellen) |
+| Hub (Travel) | **~3 mm** echter mechanischer Hub (Choc-Klasse) | Kailh-Choc-Spec |
+| Stem | V1 ~3,4 mm (proprietär) **≠** V2 ~5 mm — **eine Version wählen**, Cap-Stem-Interface danach designen | Kailh-Herstellerangabe |
 | Pitch zwischen Cells | 19 mm (Standard-MX-Spacing) | Industrial-Design |
-| Mounting | **PCB-mounted, 4-Pin THT** (kein Plate mehr nötig) | Generator (mcp_sheet, GPA0–GPA4) |
-| Cap | 3D-Druck-Cap clippt auf den Square-Head (wie Modifier) | ADR-0013 / §1.6 |
+| Mounting | **Hot-Swap-Socket PCB-seitig (SMD, gelötet)**, Switch selbst steckt von vorne durch — **Plate optional** (Choc-Hotswap-Builds sind oft "plateless", ein Plate gibt aber mehr Steifigkeit bei häufigem Spielen) | Generator (mcp_sheet, GPA0–GPA4); Footprint `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` |
+| Cap | 3D-Druck-Cap clippt auf den Choc-Stem (V1 oder V2, konsistent wählen) | Custom-CAD (User) |
+| Socket-Sourcing | ⚠ **UNVERIFIED — NEEDS HUMAN CHECK**: keine saubere Hersteller-/LCSC-Nummer gefunden; Keyboard-Markt (z.B. Chosfox "Kailh Choc PG1350 Hot Swap Socket" ~$1.45/10 Stk, auch Kailh direkt/Mechkeys) | vor Bestellung konkreten Vendor-Listing verifizieren |
+| Switch-Sourcing (steckt in den Socket) | Ein verifiziertes reales Beispiel: Kailh Choc V1 rot/linear, LCSC **C400229** (CPG135001D01), Datasheet vorhanden | Feel/Farbe = Industrial-Design-Entscheidung |
 
 ### 1.6 Modifier-Buttons × 5 `SW6..SW10` (HX 12×12×7.3TPFT-B)
 
@@ -207,8 +216,8 @@ restliche elektrische Platzierung* (ADR-0018 Routing-Regeln).
 1. **Display `J3`** — Top-Center oder Top-Edge je nach Gehäuse-Konzept
 2. **USB-C `J1`** — Kante (links oder rechts)
 3. **3.5 mm Jack `J8`** — andere Kante als `J1`, weg von Switching-Reglern
-4. **5 Cell-Switches SW1–5 (PCB-mounted THT-Tactile, digital)** — Mittelbereich,
-   Standard-MX-Pitch 19 mm
+4. **5 Cell-Switches SW1–5 (Kailh-Choc-Hot-Swap-Socket, digital)** — Mittelbereich,
+   Standard-MX-Pitch 19 mm, optional Plate darüber
 5. **5 Modifier-Buttons + 5 Modifier-LEDs** — Top-Plate-Pattern
 6. **4 Encoder** — Top-Plate-Reihe
 7. **Speaker-Header × 2** — Flanken, Schallaustritt-Gehäuse-Öffnungen drüber

@@ -31,23 +31,24 @@ JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/BOM/CPL existieren.
 | Teil | pro Gerät | × 5 | Quelle |
 |---|---|---|---|
 | 4× ALPS EC11E18244AU (alle 4 gleich, r18.22 NRND-Pivot) | ~$5 | $25 | LCSC C202365 (~3.052 Stock, active) |
-| ~~5× Gateron LP Magnetic Jade~~ | **$0** | **$0** | **gestrichen r18.73 — Cells sind jetzt SMD/THT-Tactile auf dem Board (SW1–5, in der SMD-BOM)** |
 | ~~Stabilizer~~ | **$0** | **$0** | **gestrichen (1u-Caps, r18.21)** |
 | 4× Encoder-Knöpfe | **$0** | **$0** | **selbst 3D-gedruckt** |
 | 5× Cell-Caps | **$0** | **$0** | **selbst 3D-gedruckt (1u)** |
+| 5× Kailh-Choc-Hotswap-Socket (r18.74 — ⚠ Marktpreis-Schätzung, keine feste Quote) | ~$1 | $5 | Chosfox ~$1.45/10 Stk (oder Kailh direkt/Mechkeys) — **UNVERIFIED, kein sauberer Hersteller-PN** |
+| 5× Kailh-Choc-Switch (klickt in den Socket, r18.74 — Farbe/Feel = Wahl) | ~$2 | $10 | Keyboard-Markt oder LCSC C400229 (rot/linear, ein verifiziertes Beispiel) |
 | 2× CMS-Speaker | ~$6 | $30 | DigiKey |
 | 1× **Waveshare 1.9in ST7789V2**-Display (r18.22 von bare-AliExpress; QC + Level-Shifter) | ~$12 | $60 | PiHut £11.60 / Waveshare direkt |
 | 1× **2000 mAh** LiPo | ~$8 | $40 | (war 5000 mAh ~$60) |
 | Tag-Connect TC2030-IDC (Tool, **einmalig**) | — | $15 | Tag-Connect |
 | Dust-Mesh-Sticker | ~$1 | $5 | AliExpress |
 | M2.5 Standoffs + Schrauben | ~$1 | $5 | Reichelt |
-| **Hand-Supply-Zwischensumme** | | **~$165** | inkl. einmaligem $15-Tool (r18.73: −$20 Gateron, Cells jetzt on-board) |
+| **Hand-Supply-Zwischensumme** | | **~$180** | inkl. einmaligem $15-Tool (r18.73 strich Gateron -$20; r18.74 UX-Fix bringt ~$15 Choc-Hotswap+Switch zurück, kein Stabilizer nötig) |
 
 ## 3. SMD-BOM pro Board (~$18)
 
 STM32H743 ~$8.78 · TPS61089 ~$0.80 · PCM5102A ~$1.11 · PAM8403 ~$0.44 ·
 PCA9685 ~$3.33 · MCP23017 ~$1.79 · AP7361C ~$0.34 · MCP73831 ~$0.81 ·
-10× HX B3F-4055 Cell/Modifier-Switches (C36498965) ~$0.60 · C_BULK Polymer ~$0.60 · 100µF MLCC ~$0.30 ·
+5× HX B3F-4055 Modifier-Switches (C36498965) ~$0.30 · 5× Kailh-Choc-Hotswap-Socket (hand-supply, nicht SMD-BOM) — siehe §2 · C_BULK Polymer ~$0.60 · 100µF MLCC ~$0.30 ·
 17× LEDs ~$0.40 · USB-C ~$0.15 · Crystal ~$0.27 · 2× Klinke ~$0.50 ·
 ~120 Passives ~$3 · Rest ~$1 → **~$27** (Mengenrabatt ×5 drückt auf ~$18).
 
@@ -83,8 +84,10 @@ Mit SLS-Gehäuse + etwas Puffer: **~$490–560 / ~$98–112 pro Stück**.
 
 Vorher (erste Schätzung): ~$750. Jetzt: **~$440–560**. Der Rest ist
 hauptsächlich der STM32H743 (Kern, gebührenfrei „Preferred", nicht ersetzbar
-ohne Audio-Risiko). (r18.73: die teuren Gateron-Magnetic-Switches entfallen —
-Cells sind jetzt günstige Tactile-Switches am MCP23017.)
+ohne Audio-Risiko). (r18.73 strich die teuren Gateron-Magnetic-Switches;
+r18.74 UX-Fix bringt einen günstigeren Kailh-Choc-Hotswap-Keyswitch zurück
+— echtes Tastengefühl für einen Bruchteil der Gateron-Kosten, elektrisch
+weiterhin digital am MCP23017.)
 
 > **r18.22-Korrektur:** Die r18.21-„bare ST7789V"-Senkung war zu aggressiv.
 > Display ist jetzt Waveshare (~$11 statt $3 bare statt $15 Adafruit) — gleiche

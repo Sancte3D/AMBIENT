@@ -10,6 +10,45 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.74 (2026-07-01) — Cells: echter Kailh-Choc-Keyswitch statt Modifier-Tactile (UX-Fix)
+
+User: „die 5 cells hast du in der html stehen als normale tactile switches,
+aber es wäre ja besser wenn es trotzdem so tastatur keyboard dinger sind und
+nicht wie die modifier, auch einfach tactile buttons.. das macht das ux kaputt"
+
+### 🔄 Cells: HX-B3F-Tactile → Kailh-Choc-Hotswap (elektrisch unverändert)
+
+- r18.73 hatte SW1–SW5 auf **dasselbe Bauteil wie die Modifier SW6–SW10**
+  gesetzt (HX B3F-4055-Y THT-Tactile) — das machte die spielbaren Cells
+  ununterscheidbar von simplen Modifier-Knöpfen, kein "Tastatur"-Gefühl mehr.
+- **Fix:** Cells bleiben elektrisch digital (identische Netze `CELL1..5_BTN`
+  auf MCP23017 GPA0–GPA4, Pull-Up, IRQ), bekommen aber einen **echten Kailh-
+  Choc-V1/V2-Keyswitch über Hot-Swap-Socket** zurück — ~3 mm echter
+  mechanischer Hub, Switch klickt von vorne rein (kein Löten), tauschbar.
+  Genau die „Plain Choc V2"-Option aus ADR-0013s eigener Vergleichstabelle.
+- Footprint: `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u`
+  — bereits vendored im Repo (MIT, `keyswitch-kicad-library`), bereits in
+  `fp-lib-table` registriert, community-verifiziert (verbreitet in
+  produktiven mechanischen-Tastatur-PCBs). **Nicht** unabhängig gegen Kailhs
+  eigene Maßzeichnung re-verifiziert — Pad-Pitch/Bohrungen vor Bestellung
+  gegenchecken.
+- **Der Hot-Swap-Socket selbst hat keine saubere Hersteller-/LCSC-Teilenummer**
+  — Keyboard-Markt-Ware (z. B. Chosfox "Kailh Choc PG1350 Hot Swap Socket"
+  ~$1.45/10 Stk, auch Kailh direkt/Mechkeys), offen als
+  `UNVERIFIED — NEEDS HUMAN CHECK` markiert statt geraten.
+- Der Choc-Switch, der reinklickt (nicht gelötet): ein reales, verifiziertes
+  Beispiel bei LCSC **C400229** (Kailh CPG135001D01, rot/linear) — Farbe/
+  Feel/V1-vs-V2 ist Industrial-Design-Entscheidung, keine Schematic-Frage.
+- Modifier SW6–SW10 bleiben **unverändert** HX-B3F-4055 — bewusster
+  UX-Unterschied (Cells = echtes Keyboard-Feel, Modifier = simples Tactile).
+- Aktualisiert: Generator (nur SW1–5-Block), regenerierte Schematics/BOM/
+  Aron-HTML, `BOM_MASTER.md` §7, `PCB_BOM.md`, `PINMAP.md`, `KICAD_BLUEPRINT.md`,
+  `SCHEMATIC_WALKTHROUGH.md`, `MECHANICAL_REQUIREMENTS.md` §1.5,
+  `PCB_FOOTPRINT_RISK_AUDIT.md`, `mechanical_coordinates.md` §3.4, `ADR-0013`,
+  `PROJECT_STATUS.md`, `COST_ESTIMATE.md`.
+
+---
+
 ## v0.7-r18.73 (2026-06-30) — Cells → digitale I²C-Switches (ADR-0013 SUPERSEDED)
 
 User: „mach lieber das, austauschen … HiChord macht es sehr wahrscheinlich nicht

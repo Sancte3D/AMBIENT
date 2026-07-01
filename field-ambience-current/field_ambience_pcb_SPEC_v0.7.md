@@ -484,7 +484,8 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 
 | Ref | Part | JLCPCB Status | Du lieferst |
 |---|---|---|---|
-| **SW1-SW5** (r18.73, ADR-0013 abgelöst) | **HX B3F-4055-Y THT-Tactile — Cell-Trigger, DIGITAL** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`, Pin → GND, MCP-Pull-Up + IRQ). **Gleiches Bauteil wie SW6–SW10.** HiChord-Batch-4+-Weg (Switch → I²C-Expander → MCU). Ersetzt Gateron-Magnetic + DRV5056A4-Hall + RC. | **C36498965** (JLC) | JLC-bestückt/hand-place mit Custom-FP `field_ambience:SW_TC1212-7.3_THT_4P` |
+| **SW1-SW5** (r18.74, ADR-0013 abgelöst) | **Kailh Choc V1/V2 Hot-Swap-Socket — Cell-Trigger, DIGITAL, echter Keyswitch** auf MCP23017 GPA0–GPA4 (`CELL1..5_BTN`, Pin → GND, MCP-Pull-Up + IRQ). HiChord-Batch-4+-Weg (Switch → I²C-Expander → MCU), aber **NICHT dasselbe Bauteil wie SW6–SW10** (r18.73 hatte das fälschlich gleichgesetzt — UX-Fix r18.74: Cells brauchen echtes Tastatur-Gefühl, ~3mm Hub). Ersetzt Gateron-Magnetic + DRV5056A4-Hall + RC. | ⚠ **UNVERIFIED — Socket hat keine saubere Hersteller-/LCSC-PN**, Keyboard-Markt (Chosfox/Kailh/Mechkeys). Der Switch der reinklickt: reales Beispiel **C400229** (Kailh Choc V1 rot/linear) | Hand-place mit vendored FP `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` (MIT, community-verifiziert) |
+| ~~SW1-SW5 = HX B3F-4055 (r18.73)~~ | ⛔ **SUPERSEDED r18.74** — machte die Cells ununterscheidbar von den Modifier-Knöpfen (User-UX-Korrektur). Siehe oben. | — |
 | ~~J_CELL1-5 / R_CELL / C_CELL~~ ✂ r18.73 | ~~DRV5056A4-Hall + 1 kΩ/10 nF RC vor ADC~~ — entfernt, Cells sind jetzt digital (siehe SW1–SW5). STM32-ADC-Pins PC0/PC1/PA4/PB0/PB1 frei (Rev-B-Reserve). Hall bleibt dokumentierte Option für expressive Velocity-Variante (ADR-0013). | — | — |
 | **SW6-SW10** (r18.71) | **HX B3F-4055-Y THT-Tactile, Modifier-Buttons (Shift/Hold/Drone/Generate/Clear)** auf MCP23017 GPB0–GPB4. Square-Head für Clip-on-Caps. **Alle momentary — Latch-Zustand zeigen die LEDs (§7.2).** Gleiches Bauteil wie die Cells. | **C36498965** (JLC) | JLC-bestückt mit Custom-FP `field_ambience:SW_TC1212-7.3_THT_4P` |
 | SW11 | Reset Tactile SMD (XUNPU TS-1088-AR02016, FP `field_ambience:SW_TS1088_SMD` EasyEDA-verifiziert r18.14) | C720477 | JLC-bestückt |
@@ -709,11 +710,20 @@ PB14/PB15-Hinweis: diese Pins haben als „additional function" auch OTG_HS_DM/D
 keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 (Datasheet S. 67-68).
 
-### 5.6a Cells — digitale I²C-Switches (r18.73, ADR-0013 ABGELÖST)
+### 5.6a Cells — digitale I²C-Switches, echter Keyswitch (r18.74, ADR-0013 ABGELÖST)
 
-> **r18.73 (User-Direktive 2026-06-30, HiChord-Batch-4+):** Die Cells sind jetzt
-> **digitale on/off-Tactile-Switches am MCP23017** (Switch → I²C-GPIO-Expander →
-> MCU), NICHT mehr Gateron-Magnetic + DRV5056A4-Hall am STM32-ADC.
+> **r18.73 (User-Direktive 2026-06-30, HiChord-Batch-4+):** Die Cells wurden
+> **digitale on/off-Switches am MCP23017** (Switch → I²C-GPIO-Expander → MCU),
+> NICHT mehr Gateron-Magnetic + DRV5056A4-Hall am STM32-ADC.
+>
+> **r18.74 (User-UX-Korrektur 2026-07-01):** r18.73 hatte die Cells auf
+> **dasselbe kleine THT-Tactile wie die Modifier** (HX B3F-4055) gesetzt — das
+> machte die spielbaren Cells ununterscheidbar von simplen Modifier-Knöpfen und
+> zerstörte das "Tastatur/Keyboard"-Spielgefühl. **Fix:** Cells bleiben
+> elektrisch digital (identische Netze/Pins/Pull-Up/IRQ), bekommen aber einen
+> **echten Kailh-Choc-Keyswitch über Hot-Swap-Socket** (~3 mm echter Hub,
+> Switch klickt rein, kein Löten, tauschbar) — die "Plain Choc V2"-Option aus
+> ADR-0013s eigener Vergleichstabelle.
 
 | Cell | Switch | MCP23017-Pin | Net |
 |---|---|---|---|
@@ -725,14 +735,20 @@ keinen externen ULPI-PHY — also sind PB14/PB15 frei als GPIO verwendbar
 
 Beschaltung pro Cell: ein Switch-Pin → MCP-GPIO (`CELLn_BTN`), anderer Pin → GND.
 MCP-interner Pull-Up aktiv (idle = HIGH, gedrückt = LOW), IRQ-on-change über die
-gemeinsame INTA-Leitung (`MCP_INT`). Bauteil: **HX B3F-4055-Y (C36498965)** —
-dasselbe wie die Modifier SW6–SW10; `field_ambience:SW_TC1212-7.3_THT_4P`.
+gemeinsame INTA-Leitung (`MCP_INT`). Bauteil: **Kailh Choc V1 (CPG1350) / V2
+(CPG1353) Hot-Swap-Socket** — NICHT dasselbe Bauteil wie die Modifier SW6–SW10
+(bewusster Unterschied); Footprint
+`Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u`
+(vendored, MIT, community-verifiziert). Der Socket selbst hat **keine saubere
+Hersteller-/LCSC-Teilenummer** (Keyboard-Markt-Ware); der Switch, der reinklickt,
+hat ein verifiziertes reales Beispiel bei LCSC **C400229** (Choc V1 rot/linear).
 
 **Entfernt ggü. dem Hall-Stand:** 5× DRV5056A4 (J_CELL1–5), 5× R_CELL 1 kΩ,
 5× C_CELL 10 nF. Die STM32-ADC-Pins **PC0/PC1/PA4/PB0/PB1 sind freigegeben**
 (NC-Reserve, ADC12-fähig → Rev-B-Option für eine spätere analoge/expressive
 Cell-Variante). Damit ist die SPEC-v0.6-§7-„10 Switches"-Topologie wieder
-vollständig (5 Cells + 5 Modifier am Expander).
+vollständig (5 Cells + 5 Modifier am Expander) — die Cells fühlen sich aber
+bewusst wie echte Tasten an, nicht wie die Modifier-Knöpfe.
 
 **Firmware-Hinweis:** `firmware-c-next/include/cells.h` + `src/cells.c`
 (host-getestet) bleiben als Velocity-State-Machine bestehen; mit digitalen Cells

@@ -16,7 +16,7 @@ und die r9/r10/r14/r15-Pico-Ära-Sektionen.
 |---|---|
 | ADR-0011 | Z-Stack-Up, 8 mm Top-Komponenten-Zone, 19.6 mm Außenhöhe ohne Knöpfe |
 | ADR-0012 | Encoder = EC11E THT, alle 4 gleiche Höhe, Knopf Ø 19–20 × 8–10 mm |
-| ADR-0013 (abgelöst r18.73) | Cell-Switches jetzt digital (HX B3F-4055 THT auf MCP23017); Hall/Gateron nur noch dokumentierte Option |
+| ADR-0013 (abgelöst r18.73/74) | Cell-Switches jetzt digital am MCP23017, aber echter Kailh-Choc-Hotswap-Keyswitch (nicht das kleine Modifier-Tactile); Hall/Gateron nur noch dokumentierte Option |
 | ADR-0007 | Speaker = Dust-Mesh-Aussparung (Saati Acoustex), kein sichtbares Lochmuster |
 | ADR-0008 | LED-XOR (Cell-LEDs gelb/grün, Modifier Shift=grün/Hold=gelb/Drone/Generate/Clear=weiß) |
 | `mechanical/3d_models/MANIFEST.md` | Body-Höhen aller Z-/Panel-kritischen Teile (STEP-Modelle) |
@@ -140,24 +140,38 @@ gleiche X, **Y = 66 mm**, SMD 0603, Light-Pipe Ø 1.5 mm im Frontpanel.
 **Frontpanel-Aussparungen**: 12.5 × 12.5 mm pro Switch + Ø-2-mm-Bohrung pro
 Modifier-LED.
 
-### 3.4 Cell-Reihe (5× HX B3F-4055 THT-Tactile, digital — r18.73, ADR-0013 abgelöst)
+### 3.4 Cell-Reihe (5× Kailh Choc V1/V2 Hot-Swap, digital — r18.74, ADR-0013 abgelöst)
 
-5 identische Cell-Switches **direkt auf dem PCB** (THT 4-Pin, Body 11,8 × 11,8 ×
-7,3 mm, Square-Head für Clip-on-Caps) — **kein Hall-Sensor, kein Hot-Swap-Site,
-keine separate Plate mehr**. Digital on/off auf MCP23017 GPA0–GPA4 (SW1–SW5).
-X/Y-Raster unverändert (Reihe zentriert unter der Modifier-Reihe).
+> **r18.73 → r18.74 (User-UX-Korrektur):** r18.73 hatte die Cells auf dasselbe
+> kleine THT-Tactile wie die Modifier gesetzt — fühlte sich dann identisch zu
+> einem simplen Modifier-Knopf an, kein "Tastatur"-Gefühl mehr. **r18.74:**
+> Cells bleiben elektrisch digital (gleiche Netze GPA0–GPA4), bekommen aber
+> einen **echten Kailh-Choc-Keyswitch über Hotswap-Socket** zurück (~3mm
+> Hub, klickt von vorne rein, kein Löten des Switches, tauschbar).
+
+5 identische Cell-Sites, **Hotswap-Socket SMD auf dem PCB gelötet** (15×15 mm
+Switch-Envelope, Kailh-Choc-Standard) — kein Hall-Sensor mehr, aber (anders als
+r18.73) auch keine kleine Tactile-Taste mehr; stattdessen ein echter,
+tauschbarer Keyboard-Switch. Plate optional (Choc-Hotswap-Builds sind oft
+plateless). X/Y-Raster unverändert (Reihe zentriert unter der Modifier-Reihe).
 
 | Ref | X (mm) | Y (mm) | Cap (Plan) |
 |---|---|---|---|
-| Cell 1 (SW1) | **82**  | **26** | 3D-Druck-Cap, clippt auf Square-Head |
+| Cell 1 (SW1) | **82**  | **26** | 3D-Druck-Cap, clippt auf Choc-Stem |
 | Cell 2 (SW2) | **104** | **26** | dito |
 | Cell 3 (SW3) | **126** | **26** | dito |
 | Cell 4 (SW4) | **148** | **26** | dito |
 | Cell 5 (SW5) | **170** | **26** | dito |
 
-Switch-Bauteil = HX B3F-4055-Y (C36498965), Footprint
-`field_ambience:SW_TC1212-7.3_THT_4P` — **gleiches Teil wie die Modifier
-SW6–SW10**. Pin-Pattern beim GUI-ERC gegen das HX-B3F-Datenblatt prüfen.
+Footprint = `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u`
+— vendored (MIT, `keyswitch-kicad-library`), community-verified, akzeptiert
+sowohl Choc V1 (CPG1350) als auch V2 (CPG1353). **Der Hotswap-Socket selbst hat
+keine saubere Hersteller-/LCSC-Teilenummer** — Keyboard-Markt-Ware (z.B.
+Chosfox "Kailh Choc PG1350 Hot Swap Socket" ~$1.45/10 Stk) — vor Bestellung
+konkreten Vendor-Listing + Footprint-Maße gegen Kailh-Zeichnung verifizieren.
+Der Switch, der reinklickt (nicht gelötet): reales verifiziertes Beispiel Kailh
+Choc V1 rot/linear, LCSC **C400229**. V1-Stem (~3,4mm) ≠ V2-Stem (~5mm) — eine
+Version konsistent wählen und den 3D-Cap-Stem danach designen.
 
 **Cell-LED-Reihe** (LED11–LED20, 2 LEDs pro Cell, gelb + grün, XOR pro ADR-0008):
 
@@ -424,7 +438,8 @@ Sonderbehandlung mehr.
 | Finale Außenmaße (Gehäuse-Höhe ggf. ±2 mm) | Industrial Design |
 | Knopf-Material + exakte Knopf-CAD (Ø 19 oder 20 mm) | Industrial Design |
 | Cell-Cap-Profil (Custom-Cap auf HX-B3F-Square-Head) | Industrial Design + Muster-Test |
-| HX B3F-4055 THT-Pin-Pattern vs Footprint (Cells + Modifier) | GUI-ERC gegen Datenblatt prüfen |
+| HX B3F-4055 THT-Pin-Pattern vs Footprint (Modifier SW6–10) | GUI-ERC gegen Datenblatt prüfen |
+| Kailh-Choc-Hotswap-Socket (Cells SW1–5): kein Hersteller-/LCSC-PN gefunden | Konkretes Vendor-Listing + Footprint-Maße gegen Kailh-Zeichnung verifizieren vor Bestellung |
 | LP-Stabilizer-Notwendigkeit bei 2u in dieser Pitch | Erfahrungswert nach Muster-Druck |
 | Plate-Material (Aluminium vs ABS-Spritzguss) | Mockup-Bau |
 | Mesh-Lieferant (Saati Acoustex T-Klasse vs Alternative) | ADR-0007 follow-up |

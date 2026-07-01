@@ -137,26 +137,36 @@ in any Markdown editor).
 | **EN1 / EN2 / EN4** (r18.22 pivot: unified on the ACTIVE display encoder, because both EC11E183440C and the candidate EC11E1834403 are NRND and the whole ALPS "0-detent + push" family is phased out) | **ALPS EC11E18244AU** (= the display encoder, 36 detents/rev + push; firmware acceleration makes slow = 1 %/click, fast = ×8/click — UX-functionally identical to smooth) | [C202365](https://www.lcsc.com/product-detail/C202365.html) (~3,052 stock) | same FP as EN3 | KiCad-Standard | Standard-Lib-3D |
 | Knobs (4×) Ø 19–20 × 8–10 mm, **self 3D-printed** (r18.21 — instead of Al CNC, saves $50-200/5-pack run) | own 3D print | — | — | — | Custom-CAD (user) |
 
-## 7. Cells (ADR-0013 **SUPERSEDED r18.73** — digital switches on the MCP23017)
+## 7. Cells (ADR-0013 **SUPERSEDED r18.74** — digital Kailh Choc hot-swap keyswitches)
 
 > **r18.73 (User direction 2026-06-30, HiChord Batch 4+ reference):** the 5 cells
 > changed from Gateron-magnetic + DRV5056A4 Hall (analog velocity into the STM32
-> ADC) to **plain digital on/off tactile switches on the MCP23017 I²C expander** —
-> the HiChord Batch 4+ topology *switch → I²C GPIO-expander → MCU*. **No new part:**
-> the same HX B3F-4055 switch as the modifier buttons, on the already-free expander
-> pins GPA0–GPA4 (nets `CELL1..5_BTN`). **Removed from the board:** 5× DRV5056A4
-> Hall sensors (J_CELL1–5), 5× R_CELL 1 kΩ, 5× C_CELL 10 nF; the 5 STM32 ADC pins
-> (PC0/PC1/PA4/PB0/PB1) are freed as Rev-B reserves. This restores the original
-> SPEC v0.6 §7 "10 switches" topology (5 cells + 5 modifiers on the expander).
+> ADC) to a **plain digital on/off switch on the MCP23017 I²C expander** — the
+> HiChord Batch 4+ topology *switch → I²C GPIO-expander → MCU*. **Removed from
+> the board:** 5× DRV5056A4 Hall sensors (J_CELL1–5), 5× R_CELL 1 kΩ, 5× C_CELL
+> 10 nF; the 5 STM32 ADC pins (PC0/PC1/PA4/PB0/PB1) are freed as Rev-B reserves.
+>
+> **r18.74 (User UX correction 2026-07-01):** r18.73 had put the cells on the
+> **same small HX B3F-4055 tactile button as the modifiers** — that makes the
+> playable cells feel identical to a plain modifier button and kills the
+> "these are keyboard keys" UX. **Fixed:** cells stay electrically digital
+> (same nets/pins/pull-up/IRQ as r18.73), but now use a **Kailh Choc V1/V2
+> hot-swap socket** — the real Kailh Choc keyswitch (~3 mm genuine travel)
+> clicks into it, no soldering of the switch itself, swappable if one dies.
+> Footprint is community-verified + already vendored in this repo (MIT,
+> `kicad/libraries/keyswitch-kicad-library/`, registered in `fp-lib-table`).
+> The socket itself has **no clean manufacturer/LCSC part number** — it is a
+> keyboard-market item (same sourcing category the original Gateron switches
+> were in). Modifier buttons SW6–SW10 stay the small HX B3F tactile — this is
+> the deliberate UX split (cells feel like keys, modifiers feel like buttons).
 > Hall stays documented as the option **only if** true press-depth/velocity is
-> wanted later — see ADR-0013. Trade-off: digital cells are on/off only (no
-> analog velocity), which is fine for triggering and removes the magnet-Z
-> alignment, ADC calibration, and keyboard-market procurement risk.
+> wanted later — see ADR-0013.
 
 | Ref | MPN | LCSC/Link | Footprint | FP source | 3D |
 |---|---|---|---|---|---|
-| **Cell switch (SW1–SW5, 5×)** | **HX B3F-4055-Y** tactile (THT 4-pin 11.8×11.8 mm, 7.3 mm square-head plunger for clip-on caps, SPST 2.5 N, 100 k cycles). One pin → MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), other → GND; MCP internal pull-up, shared INT. **Same part as modifier SW6–SW10.** | [C36498965](https://www.lcsc.com/product-detail/C36498965.html) · [JLC](https://jlcpcb.com/partdetail/C36498965) | `field_ambience:SW_TC1212-7.3_THT_4P` (12×12 4-pin THT — verify HX B3F pin pattern at GUI-ERC) | repo custom | envelope in MANIFEST (no STEP) |
-| **Cell caps (5×) 1u, self 3D-printed** (clip onto the square switch head) | own 3D print | — | — | — | Custom-CAD (user) |
+| **Cell switch socket (SW1–SW5, 5×)** | **Kailh Choc V1 (CPG1350-series) / V2 (CPG1353-series) hot-swap socket** — accepts either version. One pin → MCP23017 GPA0–GPA4 (`CELL1..5_BTN`), other → GND; MCP internal pull-up, shared INT. Same electrical topology as the modifiers, different physical switch class. | ⚠ **UNVERIFIED — NEEDS HUMAN CHECK**: no clean manufacturer/LCSC part number found. Keyboard-market item, e.g. [Chosfox "Kailh Choc PG1350 Hot Swap Socket"](https://chosfox.com/products/kailh-choc-switch-1350-hot-swap-sockets) (~$1.45/10pcs), also Kailh direct / Mechkeys / kbdfans | `Switch_Keyboard_Hotswap_Kailh:SW_Hotswap_Kailh_Choc_V1V2_Plated_1.00u` | vendored (MIT, `keyswitch-kicad-library`, community-verified, not independently re-checked against Kailh's drawing) | — |
+| **Cell switch (the part that clicks in), 5×** — user's choice of feel (linear/tactile/clicky) and V1 vs V2, industrial-design decision | e.g. Kailh Choc V1 red/linear, verified real + in stock | [C400229](https://www.lcsc.com/product-detail/C400229.html) (CPG135001D01) — [datasheet](https://cdn-shop.adafruit.com/product-files/5113/CHOC+keyswitch_Kailh-CPG135001D01_C400229.pdf) | — (clicks into the socket, not soldered) | — | — |
+| **Cell caps (5×) 1u, self 3D-printed** (clip onto the switch stem — V1 and V2 stems differ, ~3.4 mm vs ~5 mm, pick one and match the cap) | own 3D print | — | — | — | Custom-CAD (user) |
 
 ## 8. Modifier Buttons + Service Buttons
 
@@ -246,7 +256,7 @@ Standard-Lib-3D.
 | 4× mounting hardware M2.5 | (standard hex standoff 3 mm) | RS / Reichelt | post-PCB |
 | Encoder knobs (4×) Ø 19–20 × 8–10 mm | **self 3D-printed** (r18.21) | user | post-PCB |
 | Cell caps (5×, 1u) | **self 3D-printed** (r18.21) | user | post-PCB |
-| Plate for cell + modifier switches | TBD-CAD | industrial design | post-PCB |
+| Plate for cell switches (optional, r18.74) | Choc hot-swap builds are often plateless (switch has its own alignment), but a plate adds rigidity for a frequently-pressed instrument — TBD-CAD | industrial design | post-PCB |
 | **Power slider cap** (orange, engages SW_PWR) | bears the user's actuation force so the SMD switch only gets a gentle nudge (see SW_PWR §2) | TBD-CAD | post-PCB |
 
 ---
@@ -254,13 +264,17 @@ Standard-Lib-3D.
 ## Ordering Strategy
 
 - **JLCPCB assembly (Extended OK):** everything in §1–§5, §8 (except SW_BOOT,
-  hand-place by choice), §9, §10 — all SMD with an LCSC ID. **r18.73: the cells
-  are now the same THT tactile switch as the modifiers (SW1–SW10, HX B3F-4055,
-  C36498965) — order with JLC, hand-place after reflow like the modifier buttons.
-  The DRV5056A4 Hall sensors are removed.**
-- **Order separately via JLC, ship to the JLC address, hand-place yourself:**
-  encoders (EN1–4), the 10 cell/modifier tactile switches (SW1–SW10),
-  speaker, Adafruit display module, Tag-Connect SWD header, mesh, knobs.
+  hand-place by choice), §9, §10 — all SMD with an LCSC ID. **r18.74: the
+  DRV5056A4 Hall sensors are removed. The 5 cell hot-swap SOCKETS (SW1–SW5) are
+  NOT LCSC-listed** (keyboard-market item, see §7) — order separately, hand-place.
+  The 5 modifier buttons (SW6–SW10, HX B3F-4055, C36498965) stay JLC-orderable,
+  hand-place after reflow.
+- **Order separately, ship to the JLC address (or your own), hand-place yourself:**
+  encoders (EN1–4), the 5 modifier tactile switches (SW6–10), the 5 cell
+  hot-swap sockets (SW1–5, keyboard-market — Chosfox/Kailh direct/Mechkeys),
+  the 5 Kailh Choc switches that click into those sockets (keyboard-market,
+  or LCSC C400229 for one verified example), speaker, Adafruit display module,
+  Tag-Connect SWD header, mesh, knobs.
 - **Never via JLC:** mesh + custom 3D-printed knobs/caps. These are custom-CAD
   parts.
 
@@ -274,7 +288,8 @@ Who checks what, when:
 | 3D STEPs for Z-/panel-critical parts | ✅ **7 of them** in [`field_ambience.3dshapes/`](field-ambience-current/kicad/libraries/field_ambience.3dshapes/) (U1, Y1, U8, L1, J9 battery, J8, SW11/SW_BOOT). USB-C receptacle uses the KiCad-Standard STEP (no custom STEP needed). Z-height table per STEP (for enclosure CAD): [`mechanical/3d_models/MANIFEST.md`](mechanical/3d_models/MANIFEST.md) | r18.36 |
 | Mechanical X/Y/Z + height constraints | ✅ Python-validated, 0 conflicts | `mechanical/coordinates/mechanical_coordinates.md` |
 | ~~DRV5056 pinout DS-confirmed~~ | ⛔ **SUPERSEDED r18.73** — Hall path removed; cells are now digital switches on the MCP23017 (see §7) | r18.14b → r18.73 |
-| Cells → digital I²C switches | ✅ SW1–SW5 (HX B3F-4055, C36498965) on MCP23017 GPA0–GPA4, same verified part as modifiers; no new component, DRV5056A4 + RC removed; PC0/PC1/PA4/PB0/PB1 freed. Restores SPEC v0.6 §7 "10 switches". | r18.73 |
+| Cells → digital I²C switches | ✅ SW1–SW5 on MCP23017 GPA0–GPA4; DRV5056A4 + RC removed; PC0/PC1/PA4/PB0/PB1 freed. Restores SPEC v0.6 §7 "10 switches". | r18.73 |
+| Cells → real keyswitch feel (UX correction) | ✅ r18.73 had put cells on the same small HX B3F tactile as the modifiers — made cells feel identical to a plain button. Corrected: SW1–SW5 now Kailh Choc V1/V2 hot-swap socket (vendored footprint, community-verified). Socket itself flagged UNVERIFIED — NEEDS HUMAN CHECK (no clean MPN). Electrical topology unchanged. Modifiers (SW6–10) unchanged. | r18.74 |
 | AP7361C pinout user-confirmed | ✅ Diodes DS | r18.6 |
 | TPS61089 pin 11 = SW + thermal | ✅ TI DS | r18.7 |
 | Speaker diaphragm (cloth vs paper) | ✅ cloth cone primary | r18.18 |
