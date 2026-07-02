@@ -150,7 +150,8 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 | Net | Source | Sinks |
 |---|---|---|
 | `+5V_USB` | USB-C VBUS → F1 polyfuse | D3B (SS34) Anode — Dioden-OR in den +5V-Rail (r18.79; Q1-Power-Path entfernt) |
-| `+5V_RAIL` | Dioden-OR (r18.79): USB via F1→D3B ‖ TPS61089-Boost (4,97 V) via D3 | PAM8403 PVDD, AP7361C LDO IN |
+| `+5V_RAIL` | Dioden-OR (r18.79): USB via F1→D3B ‖ TPS61089-Boost (4,97 V) via D3 | PAM8403 PVDD (UNgeschaltet), U_PWR VIN, SW_PWR Throw A, LED-Anoden (globales +5V-Flag, r18.81) |
+| `+5V_SW` | **U_PWR TPS22918** (r18.81, ADR-0016): +5V_RAIL → VOUT, geschaltet von SW_PWR via `PWR_ON` (R_PWR_PD 100k = Default AUS) | AP7361C LDO IN (= gesamte 3V3-Domäne: MCU, MCP, 2× PCA9685, LCD) |
 | `+3V3` | AP7361C-33 LDO OUT (r18.79: Doku-Drift „AP7361A-33ER“ korrigiert — BOM/Schematic haben AP7361C-33Y5-13) | MCU VDD×5+VBAT, MCP23017, PCA9685, PCM5102A, LCD module, encoders' pull-ups |
 | `VDDA` | +3V3 via FB1 ferrite | MCU pin 21 (+ 1 µF‖100 nF) |
 | `BAT_PLUS` (LiPo+) | J_BAT / charger | TPS61089 VIN, BAT_SENSE divider, MCP73831 VBAT |

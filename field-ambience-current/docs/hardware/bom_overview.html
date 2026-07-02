@@ -89,7 +89,7 @@
 <div class="sheets"><div class="scard">
         <div class="sh"><b>Power</b> <span class="sfile">power_tree.kicad_sch</span></div>
         <div class="sd">USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±</div>
-        <div class="smeta">26 parts · 6 inter-sheet nets</div>
+        <div class="smeta">31 parts · 6 inter-sheet nets</div>
         <div class="snets">+3V3_OUT, +5V_OUT, GND_OUT, USB_DM, USB_DP, VBUS_USBC</div>
         <a class="sopen" href="../../kicad/power_tree.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>MCU</b> <span class="sfile">stm32h743.kicad_sch</span></div>
@@ -199,11 +199,11 @@
         <td class="jlc"><span class="b ext">JLC Extended · 1,821</span></td></tr><tr class="">
         <td class="ref">U_PWR</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C131941.html" target="_blank" rel="noopener">TPS22918 load switch ↗</a></td>
-        <td class="fn">the power-off — gates 3.3 V</td>
+        <td class="fn">the power-off — gates the whole 3V3 domain (r18.81: ADR-0016 block is now actually drawn in the schematic — it was decided but missing; QOD→VOUT for active discharge, CT floats per TI DS; C131941 live-verified, 42k stock)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 44,589</span></td></tr><tr class="vis">
         <td class="ref">SW_PWR</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C49023766.html" target="_blank" rel="noopener">MST-12D18G3 slide switch ↗</a><span class="eye">👁</span></td>
-        <td class="fn">on/off, side-actuated</td>
+        <td class="fn">on/off — r18.81: side-mounting on a HORIZONTAL pcb datasheet-verified: body lies flat, stem sticks out horizontally 3 mm past the body at z ≈ 2.3–3.8 mm above the board, 2 mm travel → place at board edge, slot in the enclosure side wall. Footprint matches the official MSK12D land pattern exactly. ⚠ terminal mapping (common = middle) assumed per SPDT convention — buzz out before fab; wrong-case is fail-safe (won&#x27;t power on)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 388</span></td></tr><tr class="">
         <td class="ref">U7</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C424093.html" target="_blank" rel="noopener">MCP73831 charger ↗</a></td>
@@ -227,7 +227,7 @@
         <td class="jlc"><span class="b ext">JLC Extended · 843,167</span></td></tr><tr class="">
         <td class="ref">C_BULK</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C444831.html" target="_blank" rel="noopener">470 µF tantalum 1210 ↗</a></td>
-        <td class="fn">bulk reservoir</td>
+        <td class="fn">bulk reservoir (r18.81: the +5V rail now carries the global +5V flag — before, the amp + all 23 LED anodes sat on an unpowered &#x27;+5V&#x27; island net)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 161</span></td></tr><tr class="">
         <td class="ref">C_BULK2</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C23742.html" target="_blank" rel="noopener">100 µF MLCC 1210 ↗</a></td>

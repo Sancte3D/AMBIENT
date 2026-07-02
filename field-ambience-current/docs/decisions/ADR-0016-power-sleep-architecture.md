@@ -1,6 +1,6 @@
 # ADR-0016: Power & Sleep Architecture
 
-**Status:** PROPOSED → **AMENDED 2026-06-27 (User: physischer Schiebeschalter als Haupt-Aus)**
+**Status:** PROPOSED → AMENDED 2026-06-27 → **IMPLEMENTED r18.81 (2026-07-02): U_PWR + SW_PWR + R_PWR_PD + C_PWR_SW (+ C_UPWR_IN VIN-Bypass per TI-DS) sind jetzt im power_tree-Schematic verdrahtet; +5V_RAIL traegt das globale +5V-Flag.**
 **Date:** 2026-06-22 (urspr.) / 2026-06-27 (Amendment)
 
 > **Amendment 2026-06-30 (r18.73 — Cells digital, ADR-0013 abgelöst):** Die unten
@@ -52,8 +52,8 @@ kommen — orthogonal. Für „echtes Aus" reicht jetzt `SW_PWR`.
 | 1 | VIN | **`+5V_RAIL`** (der Knoten, der heute U5/LDO-VIN speist) |
 | 2 | GND | GND |
 | 3 | ON | **`PWR_ON`-Knoten** (von `SW_PWR` + `R_PWR_PD`, s.u.) |
-| 4 | NC | no-connect |
-| 5 | QOD | no-connect (interne Quick-Discharge) |
+| 4 | CT | ~~NC~~ **r18.81-Korrektur (TI SLVSD76C):** Pin 4 heisst **CT** (Slew-Rate-Cap); floaten ist DS-erlaubt (= schnellster Anstieg) — floatet im Schematic (no_connect-Pin), optionaler CT-Cap = Soft-Start nachruestbar |
+| 5 | QOD | ~~no-connect (interne Quick-Discharge)~~ **r18.81-Korrektur:** floaten wuerde die Quick-Discharge laut DS DEAKTIVIEREN — QOD ist deshalb **an VOUT gebunden** (DS-Option 2, interner R entlaedt +5V_SW im Aus aktiv) |
 | 6 | VOUT | **`+5V_SW`** |
 
 **Reroute:** `U5` (LDO) **VIN** von `+5V_RAIL` → **`+5V_SW`** umhängen. Das ist

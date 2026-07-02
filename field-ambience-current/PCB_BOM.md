@@ -38,6 +38,9 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | R_COMP / C_COMP | boost loop comp — fc ≈ 8 kHz ≤ fRHPZ/5 per TI DS eq. 17/18 (r18.80: was 22 k / 1 nF = fc ≈ 87 kHz **above** the RHP zero → oscillation under load) | 6.2 k / 10 nF | 0603 | C4260 / C57112 |
 | C_BOOT / C_BOOST_OUT(×3) / C_BOOST_HF | boost caps (r18.80: output bulk now **3× 22 µF** per TI DS §9.2.2.7 “typically three 22 µF”; was 1×, and the 470 µF bulk sits behind D3 where the control loop can't see it) | 100 nF / 3× 22 µF / 100 nF | 0603/0805 | C14663 / C45783 / C14663 |
 | C_LDO_IN / C_LDO_OUT | LDO caps | 4.7 µF | 0603 | C46653 |
+| **U_PWR** | TPS22918 load switch — **r18.81: ADR-0016 power-off now actually in the schematic** (+5V_RAIL → +5V_SW → LDO; charger stays ahead of it = "dark, but charging"; QOD tied to VOUT = active discharge; CT floats per TI DS) | 5.5 V / 2 A | SOT-23-6 | C131941 |
+| **SW_PWR** | MST-12D18G3 side-actuated slide switch on `U_PWR.ON` — r18.81: mounting **datasheet-verified for a horizontal PCB**: body sits flat, stem sticks out horizontally 3 mm past the body (z ≈ 2.3–3.8 mm above board), place at board edge, slot in enclosure side wall; travel 2 mm. ⚠ terminal mapping (common = middle pad) assumed per SPDT convention — buzz out before fab (fail-safe if wrong: unit just won't switch on) | 12 V / 100 mA | RA SMD + 2 pegs | C49023766 |
+| R_PWR_PD / C_UPWR_IN / C_PWR_SW | PWR_ON pull-down (default OFF) / TPS22918 VIN bypass / +5V_SW output cap | 100 k / 1 µF / 10 µF | 0603/0603/0805 | C25803 / C15849 / C15850 |
 | R21 / R_CHRG | charger PROG / status | 2 k / 1 k | 0603 | C22975 / C21190 |
 | R_BAT_DIV_TOP/BOT, R_VBUS_SENSE, R_VBUS_PD | battery/VBUS sense | 100 k / 10 k / 100 k | 0603 | C25804 / C25803 |
 | C_BAT_IN / C_BAT_HF / C_BAT_FILT | battery caps (r18.80: C45783 ist 22 µF CL21A226MAQNNNE — alte 4.7-µF-Angabe war falsch) | 22 µF / 100 nF / 10 nF | 0603/0805 | C45783 / C14663 / C57112 |
