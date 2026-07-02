@@ -1480,19 +1480,19 @@ def _rotary_encoder_switch_lib_symbol() -> str:
       (symbol "Encoder:Rotary_Encoder_Switch_1_1"
         (pin passive line (at -5.08 5.08 0) (length 2.54)
           (name "A" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27)))))
+          (number "A" (effects (font (size 1.27 1.27)))))
         (pin passive line (at -5.08 0 0) (length 2.54)
           (name "B" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27)))))
+          (number "B" (effects (font (size 1.27 1.27)))))
         (pin passive line (at -5.08 -5.08 0) (length 2.54)
           (name "C" (effects (font (size 1.27 1.27))))
-          (number "3" (effects (font (size 1.27 1.27)))))
+          (number "C" (effects (font (size 1.27 1.27)))))
         (pin passive line (at 5.08 2.54 180) (length 2.54)
           (name "SW1" (effects (font (size 1.27 1.27))))
-          (number "4" (effects (font (size 1.27 1.27)))))
+          (number "S1" (effects (font (size 1.27 1.27)))))
         (pin passive line (at 5.08 -2.54 180) (length 2.54)
           (name "SW2" (effects (font (size 1.27 1.27))))
-          (number "5" (effects (font (size 1.27 1.27)))))))
+          (number "S2" (effects (font (size 1.27 1.27)))))))
 """.strip()
 
 
@@ -1718,16 +1718,29 @@ def _conn_02xN_lib_symbol(n: int) -> str:
 
 
 def _audiojack_lib_symbol() -> str:
-    """3.5mm TRS stereo jack with insertion-detect switch (PJ-320 class).
+    """3.5mm TRS stereo jack with insertion-detect switch (PJ-320D, SHOU HAN).
 
-    Pins:
-      T   (1) Tip    = Left audio out
-      R   (2) Ring   = Right audio out
-      S   (3) Sleeve = GND
-      DET (4) detect switch contact — shorts to S(GND) when NO plug,
-              opens on insertion. With an MCP23017 pull-up: idle=LOW,
-              inserted=HIGH. (Firmware can invert if the chosen jack's
-              switch polarity differs.)
+    r18.82 AUDIT-FIX (KRITISCH): Pin-NUMMERN gegen das PJ-320D-Datenblatt
+    (LCSC-PDF 50aca6c1..., Zeichnung S. 1: P.C.B-LAYOUT mit Pads D/C/B/A +
+    Schaltbild OA/OD/OC/OB) korrigiert. Der vendored Footprint mappt
+    Pad 1=A, 2=D, 3=C, 4=B (Pad-Pitch 3,0/4,0 mm und Ø1,0-Locator @7,0 mm
+    stimmen exakt mit der Zeichnung ueberein). Funktional laut Schaltbild:
+    A=Sleeve (Koerperkontakt, ohne Feder), D=Ring, C=Tip-Switch (DETECT,
+    ruht ohne Stecker am Tip-Kontakt), B=Tip. Die alte Nummerierung
+    (T=1, R=2, S=3, DET=4) haette gelegt: Audio-L auf den SLEEVE (=Barrel!),
+    GND auf den Detect-Kontakt, JACK_DETECT auf den TIP → Line-Out/MIDI-Out
+    beide falsch verdrahtet. Neu: T=4(B), R=2(D), S=1(A), DET=3(C).
+
+    Pins (Name → Pad):
+      T   (Pad 4 = B) Tip    = Left audio out
+      R   (Pad 2 = D) Ring   = Right audio out
+      S   (Pad 1 = A) Sleeve = GND
+      DET (Pad 3 = C) detect switch contact — ruht ohne Stecker am TIP-
+              Kontakt (nicht an S!): mit S(GND)-beschaltetem Netz + MCP-
+              Pull-up: idle = ueber R_LO_L/DAC-Ausgang schwach definiert →
+              Firmware-Auswertung siehe audio_sheet-Kommentar; Polaritaet
+              beim Bring-up pruefen (Datenblatt-Schaltbild: C-B normally
+              closed, oeffnet beim Einstecken).
     """
     return r"""
     (symbol "Connector:AudioJack3_Switch" (in_bom yes) (on_board yes)
@@ -1741,16 +1754,16 @@ def _audiojack_lib_symbol() -> str:
       (symbol "Connector:AudioJack3_Switch_1_1"
         (pin passive line (at 7.62 2.54 180) (length 2.54)
           (name "T" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27)))))
+          (number "4" (effects (font (size 1.27 1.27)))))
         (pin passive line (at 7.62 0 180) (length 2.54)
           (name "R" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))
         (pin passive line (at 7.62 -2.54 180) (length 2.54)
           (name "S" (effects (font (size 1.27 1.27))))
-          (number "3" (effects (font (size 1.27 1.27)))))
+          (number "1" (effects (font (size 1.27 1.27)))))
         (pin passive line (at -7.62 0 0) (length 2.54)
           (name "DET" (effects (font (size 1.27 1.27))))
-          (number "4" (effects (font (size 1.27 1.27)))))))
+          (number "3" (effects (font (size 1.27 1.27)))))))
 """.strip()
 
 
@@ -3270,7 +3283,10 @@ def stm32h743_sheet() -> str:
             labels.append(label(x, ye, net, rotation=90))
 
     # ---- Power-Pins: VSS→GND, VDD/VBAT→+3V3 (SPEC §5.10)
-    VSS_PINS = [10, 26, 49, 74]
+    # r18.82: Pin 99 ergaenzt — DS12110 Fig. 5 (LQFP100): VSS = 10/26/49/74/99.
+    # Vorher fehlte 99 in der Liste und war nur ZUFAELLIG geerdet (der alte
+    # horizontale VSSA-Stub lief ueber seinen Anker). Jetzt expliziter Stub.
+    VSS_PINS = [10, 26, 49, 74, 99]
     VDD_PINS = [11, 27, 50, 75, 100]
     for num in VSS_PINS:
         x, y, orient = pa(num)
@@ -3303,10 +3319,16 @@ def stm32h743_sheet() -> str:
                                         x=x, y=ye, rotation=180, seed_suffix=f"u1-vdd{num}", sheet_uuid_seed=sus))
 
     # ---- VSSA (19) → GND, VREF+ (20) → VDDA-Netz, VDDA (21) → Ferrit-Filter
+    # r18.82: VSSA liegt im SYMBOL auf der Unterseiten-Pin-Zeile — der
+    # fruehere HORIZONTALE Stub lief entlang dieser Zeile und beruehrte dabei
+    # den VSS-Pin-99-Anker (Zufalls-Erdung: gleiches GND-Netz, aber implizit
+    # und fragil). Jetzt senkrechter Stub nach unten wie alle anderen
+    # Unterseiten-Pins. (Netzzuordnung Pin 19 = VSSA gegen DS12110 Fig. 5
+    # verifiziert; die Symbol-Seite ist reine Grafik.)
     x19, y19, _ = pa(19)
-    wires.append(wire(x19, y19, x19 - 5, y19, seed_suffix="u1-vssa"))
+    wires.append(wire(x19, y19, x19, y19 + 4.0, seed_suffix="u1-vssa"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_U1_VSSA", value="GND",
-                                x=x19 - 5, y=y19, rotation=90, seed_suffix="u1-vssa", sheet_uuid_seed=sus))
+                                x=x19, y=y19 + 4.0, seed_suffix="u1-vssa", sheet_uuid_seed=sus))
     # VREF+ (20): an VDDA_3V3 + DEDIZIERTES lokales Decoupling am Pin (r18.24,
     # Audit-Punkt 5). ST DS12110 / AN: VREF+ braucht 1µF + 100nF nah am Pin für
     # rauscharmen ADC-Ref. Für die Hall-Velocity (ratiometrisch gegen denselben
@@ -6242,9 +6264,47 @@ def audio_sheet() -> str:
     # S (sleeve) @ (182.62, 154.54) → GND
     wires.append(wire(182.62, 154.54, 186, 154.54, seed_suffix="j8s-gnd"))
     attach_gnd(186, 154.54, "J8_S", rot=270)
-    # DET (4) @ (j8_x-7.62, j8_y) = (167.38, 152) → JACK_DETECT hier-output to MCP GPA6
-    wires.append(wire(167.38, 152, 162, 152, seed_suffix="j8-det"))
-    hlabels.append(hier_label(162, 152, "JACK_DETECT", shape="output", rotation=0))
+    # DET @ (j8_x-7.62, j8_y) = (167.38, 152) → R_DET 10k → JACK_DETECT (MCP GPA6)
+    # r18.82: Das PJ-320D-Datenblatt-Schaltbild zeigt den Detect-Kontakt (C)
+    # ruht ohne Stecker am TIP-Kontakt (B) — NICHT am Sleeve! Unplugged haengt
+    # DET also am DAC-L-Ausgang (ground-centered, ±~3 Vpk bei Vollaussteuerung):
+    # ohne Serien-R wuerde die MCP-Eingangs-Clamp die negativen Halbwellen
+    # ueber 22R kurzschliessen (>100 mA Injection + hoerbare Verzerrung am
+    # SPEAKER, weil derselbe DAC-Knoten den Amp speist). R_DET 10k begrenzt
+    # den Clamp-Strom auf <300 µA; C_DET 1µF filtert Audio-AC vom GPA6-Knoten
+    # (fc ~16 Hz mit 10k||100k-int-Pullup) → kein Interrupt-Geflacker.
+    # Pegel: unplugged ≈ 0,3 V (LOW, int. 100k-Pullup vs 10k zum ~0-V-DAC-DC),
+    # plugged = 3,3 V (HIGH). Firmware: HIGH = Klinke drin → Speaker muten.
+    wires.append(wire(167.38, 152, 153.81, 152, seed_suffix="j8-det"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_DET_J8",
+            value="10k 0603 (jack-detect series, clamp-current limit; r18.82)",
+            x=150, y=152, rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
+            seed_suffix="RDETJ8",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(146.19, 152, 143, 152, seed_suffix="rdet-to-hier"))
+    hlabels.append(hier_label(143, 152, "JACK_DETECT", shape="output", rotation=0))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_DET_J8",
+            value="1uF X5R 0603 (jack-detect AC filter; r18.82)",
+            x=145, y=155.81,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            seed_suffix="CDETJ8",
+            sheet_uuid_seed=sus,
+        )
+    )
+    junctions.append(junction(145, 152))
+    wires.append(wire(145, 159.62, 145, 161, seed_suffix="cdet-gnd"))
+    attach_gnd(145, 161, "CDETJ8", rot=270)
 
     body = (
         f'(kicad_sch (version {KICAD_VERSION_TAG}) {GENERATOR}\n'
@@ -6668,6 +6728,26 @@ def battery_sheet() -> str:
     p_vdd_y = U7_Y  # 80
     wires.append(wire(U7_X + 7.62, p_vdd_y, U7_X + 14, p_vdd_y, seed_suffix="u7-vdd"))
     hlabels.append(hier_label(U7_X + 14, p_vdd_y, "VBUS_USBC", shape="input", rotation=0))
+    # r18.82: C_CHG_IN 4.7µF am Charger-VDD — Microchip DS20001984 (Typical
+    # Application, S. 1): 4.7µF an VIN/VDD. Fehlte bisher komplett (der
+    # VBUS_USBC-Knoten hatte keinerlei lokale Kapazitaet). Platzierung links
+    # unten (Label-Match VBUS_USBC), Layout: nah an U7-Pin-4.
+    wires.append(wire(56, 87, 56, 89, seed_suffix="cchgin-label-stub"))
+    labels.append(label(56, 87, "VBUS_USBC"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_CHG_IN",
+            value="4.7uF X5R 0603 (MCP73831 VDD input cap, DS20001984 Typ.App; r18.82)",
+            x=56, y=92.81,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "GRM188R61A475KE15D", "LCSC": "C46653"},
+            seed_suffix="C_CHG_IN",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(56, 96.62, 56, 98.5, seed_suffix="cchgin-gnd"))
+    attach_gnd(56, 98.5, "C_CHG_IN", rotation=0)
 
     # ---- U7 VBAT (Pin 3, right, y=75) → BAT_PLUS hier-output (zur Pico via root_sheet)
     p_vbat_y = U7_Y - 5.08  # 74.92
