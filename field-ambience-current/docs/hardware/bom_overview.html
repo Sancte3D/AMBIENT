@@ -119,7 +119,7 @@
         <a class="sopen" href="../../kicad/lcd.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Battery &amp; charge</b> <span class="sfile">battery.kicad_sch</span></div>
         <div class="sd">LiPo JST + MCP73831 charger + power-path (charges while off)</div>
-        <div class="smeta">32 parts · 3 inter-sheet nets</div>
+        <div class="smeta">34 parts · 3 inter-sheet nets</div>
         <div class="snets">+5V_OUT, BAT_PLUS, VBUS_USBC</div>
         <a class="sopen" href="../../kicad/battery.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Root / hierarchy</b> <span class="sfile">field_ambience.kicad_sch</span></div>
@@ -183,7 +183,7 @@
         <td class="jlc"><span class="b ext">JLC Extended · 188,935</span></td></tr><tr class="">
         <td class="ref">U8</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C165129.html" target="_blank" rel="noopener">TPS61089 boost ↗</a></td>
-        <td class="fn">battery 3.7 V → 5 V</td>
+        <td class="fn">battery 3.7 V → 5 V (r18.80: loop comp fixed per TI eq. 17/18 — R_COMP 22k→6.2k, C_COMP 1n→10n, output caps 1×22µ→3×22µ; old values put the crossover ABOVE the RHP zero → oscillation under load)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 714</span></td></tr><tr class="">
         <td class="ref">L1</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C36500.html" target="_blank" rel="noopener">SWPA6045S2R2NT 2.2 µH ↗</a></td>
@@ -373,10 +373,18 @@
         <td class="part"><a href="https://www.lcsc.com/product-detail/C15850.html" target="_blank" rel="noopener">0805 X5R ↗</a></td>
         <td class="fn">rail bulk</td>
         <td class="jlc"><span class="b basic">JLC Basic · 5,877,645</span></td></tr><tr class="">
-        <td class="ref">C 4.7µ / 22µ</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C46653.html" target="_blank" rel="noopener">0603/0805 ↗</a></td>
-        <td class="fn">local bulk</td>
+        <td class="ref">C 22µ ×11</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C45783.html" target="_blank" rel="noopener">0805 X5R 25V ↗</a></td>
+        <td class="fn">boost output ×3 (r18.80, TI: “typically three 22 µF”) + amp/VDD bulk</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 1,154,055</span></td></tr><tr class="">
+        <td class="ref">C 4.7µ</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C46653.html" target="_blank" rel="noopener">0603 X5R ↗</a></td>
+        <td class="fn">LDO in/out bulk</td>
         <td class="jlc"><span class="b basic">JLC Basic · 1,915,999</span></td></tr><tr class="">
+        <td class="ref">R 6.2k</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C4260.html" target="_blank" rel="noopener">0603 1% ↗</a></td>
+        <td class="fn">boost loop compensation (r18.80, was 22k — see U8)</td>
+        <td class="jlc"><span class="b basic">JLC Basic · 219,359</span></td></tr><tr class="">
         <td class="ref">J4</td>
         <td class="part"><a href="https://www.tag-connect.com/product/tc2030-idc" target="_blank" rel="noopener">Tag-Connect TC2030-IDC ↗</a></td>
         <td class="fn">SWD debug header</td>

@@ -36,6 +36,8 @@ JLC = {
  "C36498965":("Extended",19884),"C2845239":("Extended",1488),
  # r18.77/79 verified additions (JLCPCB parts search, 2026-07-01):
  "C36500":("Extended",5235),"C25809":("Basic",70974),"C22890":("Basic",2534),
+ # r18.80 verified addition (JLCPCB part page, 2026-07-02):
+ "C4260":("Basic",219359),
 }
 LOW = 100   # stock below this = warn
 
@@ -51,7 +53,7 @@ G = [
  ]),
  ("Power", "#ef4444", [
    ("J1","USB-C TYPE-C-31-M-12","charging + USB-DFU flash","C165948","jlc",True),
-   ("U8","TPS61089 boost","battery 3.7 V → 5 V","C165129","jlc",False),
+   ("U8","TPS61089 boost","battery 3.7 V → 5 V (r18.80: loop comp fixed per TI eq. 17/18 — R_COMP 22k→6.2k, C_COMP 1n→10n, output caps 1×22µ→3×22µ; old values put the crossover ABOVE the RHP zero → oscillation under load)","C165129","jlc",False),
    ("L1","SWPA6045S2R2NT 2.2 µH","boost inductor (r18.77: corrected from C83455, a dead link -- and SWPA6045S2R2MT, which does not exist; real part is C36500)","C36500","jlc",False),
    ("D3/D3B","SS34 Schottky ×2","diode-OR power mux: boost→rail + USB(post-fuse)→rail (r18.79 — replaces the Q1 P-FET power-path, which back-fed the boost into VBUS/the charger and bypassed the fuse)","C8678","jlc",False),
    ("U5","AP7361C LDO","5 V → 3.3 V (thermal hotspot)","C460397","jlc",False),
@@ -108,7 +110,9 @@ G = [
    ("C 10n","0603","filtering","C57112","jlc",False),
    ("C 2.2µ VCAP","0603 X5R 16V","PCM5102A charge pump (r18.70: C24539 → C23630)","C23630","jlc",False),
    ("C 10µ","0805 X5R","rail bulk","C15850","jlc",False),
-   ("C 4.7µ / 22µ","0603/0805","local bulk","C46653","jlc",False),
+   ("C 22µ ×11","0805 X5R 25V","boost output ×3 (r18.80, TI: “typically three 22 µF”) + amp/VDD bulk","C45783","jlc",False),
+   ("C 4.7µ","0603 X5R","LDO in/out bulk","C46653","jlc",False),
+   ("R 6.2k","0603 1%","boost loop compensation (r18.80, was 22k — see U8)","C4260","jlc",False),
    ("J4","Tag-Connect TC2030-IDC","SWD debug header","https://www.tag-connect.com/product/tc2030-idc","off",False),
  ]),
 ]

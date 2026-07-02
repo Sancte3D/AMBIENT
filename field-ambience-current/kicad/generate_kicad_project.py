@@ -554,7 +554,12 @@ def _stm32h743_lib_symbol() -> str:
     ST-CubeMX-Daten) und gegen SPEC v0.7 §5 / DS12110 Rev 5 Table 8 doppelt
     verifiziert: alle 52 in der SPEC belegten Zuordnungen stimmen überein."""
     out = []
-    out.append('    (symbol "STM32H743VIT6" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)')
+    # r18.80 AUDIT-FIX (KRITISCH): lib_symbols-Name MUSS die Library-Nickname
+    # tragen ("MCU:STM32H743VIT6") — die platzierte Instanz referenziert
+    # lib_id "MCU:STM32H743VIT6", und KiCad matcht exakt gegen den
+    # lib_symbols-Eintrag. Ohne Prefix konnte KiCad das MCU-Symbol nicht
+    # aufloesen (U1 ohne Pins, kein Netlist-Export fuer den gesamten MCU).
+    out.append('    (symbol "MCU:STM32H743VIT6" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)')
     out.append('      (property "Reference" "U" (at 0 0 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Value" "STM32H743VIT6" (at 0 -2.54 0) (effects (font (size 1.27 1.27)) hide))')
     out.append('      (symbol "STM32H743VIT6_0_1"')
@@ -2314,21 +2319,29 @@ def power_tree_sheet() -> str:
     #
     # EN ist immer-an: EN-Pin direkt an IN-Pin gebrueckt (Diodes-DS: "tie EN to
     # IN if always-on" — typische Anwendungsschaltung).
-    LDO_X, LDO_Y = 120.0, 80.0
-    PIN_EN_Y  = LDO_Y - 2.54    # Pin 1 EN
-    PIN_IN_Y  = LDO_Y + 2.54    # Pin 4 IN  (KORRIGIERT: jetzt unten links)
-    PIN_OUT_Y = LDO_Y - 2.54    # Pin 5 OUT
-    # +5V-Rail droppt zur IN-Hoehe runter
-    junctions.append(junction(110, RAIL_Y))
-    wires.append(wire(110, RAIL_Y, 110, PIN_IN_Y, seed_suffix="ldo-drop"))
-    wires.append(wire(110, PIN_IN_Y, LDO_X - 8.89, PIN_IN_Y, seed_suffix="ldo-in"))
-    junctions.append(junction(110, PIN_IN_Y))
-    # EN-Pin → IN-Pin (always-on); auf Hoehe PIN_EN_Y nach links bis x=104, dann
-    # vertikal hoch zur Hoehe PIN_IN_Y, dort auf den IN-Wire einfaedeln.
-    wires.append(wire(LDO_X - 8.89, PIN_EN_Y, 104, PIN_EN_Y, seed_suffix="ldo-en-left"))
-    wires.append(wire(104, PIN_EN_Y, 104, PIN_IN_Y, seed_suffix="ldo-en-up"))
-    wires.append(wire(104, PIN_IN_Y, 110, PIN_IN_Y, seed_suffix="ldo-en-into-in"))
-    junctions.append(junction(104, PIN_IN_Y))
+    #
+    # r18.80 AUDIT-FIX (KRITISCH): Der LDO-Block sass vorher bei (120, 80) mit
+    # Rail-Drop x=110 — mitten im USB-Daten-Korridor. Geometrische Folgen im
+    # KiCad-Netlist: U5-EN-Pin (111.11, 77.46) lag AUF dem USB_DP-Wire, U5-IN-
+    # Pin (111.11, 82.54) AUF dem USB_DM-Wire, und der Drop x=110 ueberlappte
+    # den D1-VBUS-Wire → USB D+ UND D- waren hart mit +5V kurzgeschlossen
+    # (USB tot, H7-PHY-Gefahr). Block deshalb nach (130, 130) verlegt, Rail-
+    # Tap bei x=120 (kreuzt dort nichts: D+/D-/GND-Bus enden alle bei x<=115).
+    LDO_X, LDO_Y = 130.0, 130.0
+    PIN_EN_Y  = LDO_Y - 2.54    # Pin 1 EN  (127.46)
+    PIN_IN_Y  = LDO_Y + 2.54    # Pin 4 IN  (132.54)
+    PIN_OUT_Y = LDO_Y - 2.54    # Pin 5 OUT (127.46)
+    LDO_DROP_X = 120.0
+    # Rail-Verlaengerung (115,60)→(120,60), dann Drop zur IN-Hoehe
+    wires.append(wire(115, RAIL_Y, LDO_DROP_X, RAIL_Y, seed_suffix="ldo-rail-ext"))
+    wires.append(wire(LDO_DROP_X, RAIL_Y, LDO_DROP_X, PIN_IN_Y, seed_suffix="ldo-drop"))
+    wires.append(wire(LDO_DROP_X, PIN_IN_Y, LDO_X - 8.89, PIN_IN_Y, seed_suffix="ldo-in"))
+    # EN-Pin → IN-Pin (always-on); auf Hoehe PIN_EN_Y nach links bis x=114, dann
+    # vertikal runter zur Hoehe PIN_IN_Y, dort auf den IN-Wire einfaedeln.
+    wires.append(wire(LDO_X - 8.89, PIN_EN_Y, 114, PIN_EN_Y, seed_suffix="ldo-en-left"))
+    wires.append(wire(114, PIN_EN_Y, 114, PIN_IN_Y, seed_suffix="ldo-en-up"))
+    wires.append(wire(114, PIN_IN_Y, LDO_DROP_X, PIN_IN_Y, seed_suffix="ldo-en-into-in"))
+    junctions.append(junction(LDO_DROP_X, PIN_IN_Y))
     symbols.append(place_symbol(lib_id="Regulator_Linear:AP7361C", ref="U5",
                                 value="AP7361C-33 1A LDO (+5V->+3V3, SOT-89-5)",
                                 x=LDO_X, y=LDO_Y,
@@ -2349,38 +2362,40 @@ def power_tree_sheet() -> str:
                                 x=LDO_X, y=LDO_Y + 11, seed_suffix="ldo-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
     # Cin 4.7µF Keramik am IN-Knoten (Diodes-DS: ≥1µF, empfohlen 4.7µF)
+    # r18.80: x=106→116 mitgezogen (Tap auf den en-into-in-Wire 114→120)
     symbols.append(place_symbol(lib_id="Device:C", ref="C_LDO_IN",
                                 value="4.7uF X5R 0603 10V (LDO Cin, DS empfohlen)",
-                                x=106, y=PIN_IN_Y + 3.81,
+                                x=116, y=PIN_IN_Y + 3.81,
                                 footprint="Capacitor_SMD:C_0603_1608Metric",
                                 extra_props={"MPN": "GRM188R61A475KE15D", "LCSC": "C46653"},
                                 seed_suffix="CLDOIN", sheet_uuid_seed="sheet_power_tree"))
-    wires.append(wire(106, PIN_IN_Y, 106, PIN_IN_Y + 3.81 - 3.81, seed_suffix="cldoin-top"))
-    junctions.append(junction(106, PIN_IN_Y))
-    wires.append(wire(106, PIN_IN_Y + 3.81 + 3.81, 106, PIN_IN_Y + 10, seed_suffix="cldoin-gnd"))
+    wires.append(wire(116, PIN_IN_Y, 116, PIN_IN_Y + 3.81 - 3.81, seed_suffix="cldoin-top"))
+    junctions.append(junction(116, PIN_IN_Y))
+    wires.append(wire(116, PIN_IN_Y + 3.81 + 3.81, 116, PIN_IN_Y + 10, seed_suffix="cldoin-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_CLDOIN", value="GND",
-                                x=106, y=PIN_IN_Y + 10, seed_suffix="cldoin-gnd",
+                                x=116, y=PIN_IN_Y + 10, seed_suffix="cldoin-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
     # OUT (Pin 5, rechts oben) → +3V3-Flag + Cout + hier_label
-    wires.append(wire(LDO_X + 8.89, PIN_OUT_Y, 140, PIN_OUT_Y, seed_suffix="ldo-out"))
+    # r18.80: alle OUT-seitigen x um +10 (Block liegt jetzt bei LDO_X=130)
+    wires.append(wire(LDO_X + 8.89, PIN_OUT_Y, 150, PIN_OUT_Y, seed_suffix="ldo-out"))
     symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_LDO3V3", value="+3V3",
-                                x=132, y=PIN_OUT_Y, rotation=270, seed_suffix="ldo-3v3",
+                                x=142, y=PIN_OUT_Y, rotation=270, seed_suffix="ldo-3v3",
                                 sheet_uuid_seed="sheet_power_tree"))
-    junctions.append(junction(132, PIN_OUT_Y))
+    junctions.append(junction(142, PIN_OUT_Y))
     # Cout 4.7µF Keramik (Diodes-DS: ≥2.2µF, empfohlen 4.7µF; mit ESR-stabil)
     symbols.append(place_symbol(lib_id="Device:C", ref="C_LDO_OUT",
                                 value="4.7uF X5R 0603 10V (LDO Cout, DS empfohlen)",
-                                x=136, y=PIN_OUT_Y + 3.81,
+                                x=146, y=PIN_OUT_Y + 3.81,
                                 footprint="Capacitor_SMD:C_0603_1608Metric",
                                 extra_props={"MPN": "GRM188R61A475KE15D", "LCSC": "C46653"},
                                 seed_suffix="CLDOOUT", sheet_uuid_seed="sheet_power_tree"))
-    wires.append(wire(136, PIN_OUT_Y, 136, PIN_OUT_Y + 3.81 - 3.81, seed_suffix="cldoout-top"))
-    junctions.append(junction(136, PIN_OUT_Y))
-    wires.append(wire(136, PIN_OUT_Y + 3.81 + 3.81, 136, PIN_OUT_Y + 10, seed_suffix="cldoout-gnd"))
+    wires.append(wire(146, PIN_OUT_Y, 146, PIN_OUT_Y + 3.81 - 3.81, seed_suffix="cldoout-top"))
+    junctions.append(junction(146, PIN_OUT_Y))
+    wires.append(wire(146, PIN_OUT_Y + 3.81 + 3.81, 146, PIN_OUT_Y + 10, seed_suffix="cldoout-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_CLDOOUT", value="GND",
-                                x=136, y=PIN_OUT_Y + 10, seed_suffix="cldoout-gnd",
+                                x=146, y=PIN_OUT_Y + 10, seed_suffix="cldoout-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
-    hlabels.append(hier_label(140, PIN_OUT_Y, "+3V3_OUT", shape="output", rotation=180))
+    hlabels.append(hier_label(150, PIN_OUT_Y, "+3V3_OUT", shape="output", rotation=180))
 
     hlabels.append(hier_label(115, RAIL_Y, "+5V_OUT", shape="output", rotation=0))
     wires.append(wire(110, RAIL_Y, 115, RAIL_Y, seed_suffix="rail-to-hlbl"))
@@ -2560,7 +2575,7 @@ def pico_sheet() -> str:  # LEGACY r18: nicht mehr geschrieben (s. legacy_pico2/
             x=135,
             y=c_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
             seed_suffix="C3",
             sheet_uuid_seed=sus,
         )
@@ -3104,14 +3119,26 @@ def stm32h743_sheet() -> str:
         symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_CVREF{i+1}", value="GND",
                                     x=vcx, y=y20 + 10, seed_suffix=f"cvref{i}-gnd", sheet_uuid_seed=sus))
     x21, y21, _ = pa(21)
-    wires.append(wire(x21, y21, x21 - 5, y21, seed_suffix="u1-vdda"))
-    labels.append(label(x21 - 5, y21, "VDDA_3V3"))
+    # r18.80 AUDIT-FIX (KRITISCH): der VDDA-Stub lief vorher HORIZONTAL
+    # (x21-5, y21) — d.h. entlang der oberen Pin-Zeile, exakt DURCH den
+    # VDD-Pin-100-Anker bei (145.08, 61.42) → VDDA_3V3 war direkt mit VDD
+    # (+3V3) verkupfert und der komplette FB2-Ferrit-Filter ueberbrueckt
+    # (ADC-Referenz haengt am digitalen Rail). Pin 21 ist ein OBERSEITEN-Pin
+    # (orient 270) → Stub jetzt wie bei allen Top-Pins senkrecht NACH OBEN.
+    wires.append(wire(x21, y21, x21, y21 - 5, seed_suffix="u1-vdda"))
+    labels.append(label(x21, y21 - 5, "VDDA_3V3", rotation=90))
 
     # VDDA-Filter-Gruppe (links unten, frei): +3V3 → FB → VDDA_3V3; 1µF + 100nF an VDDA_3V3
     fbx, fby = 96.0, 218.0
+    # r18.80 AUDIT-FIX (KRITISCH): FB2 stand auf rotation=90 (Pins vertikal bei
+    # (96, 214.19)/(96, 221.81)), die Anschluss-Wires laufen aber horizontal
+    # zu (fbx±3.81, fby) → beide FB2-Pins schwebten frei, VDDA_3V3 haette
+    # KEINE Versorgung ueber den Filter gehabt. Ferrite_Bead-Lib-Pins liegen
+    # horizontal (±3.81, 0) — wie FB1 im Audio-Sheet (dort rot=180, ok) →
+    # rotation=0.
     symbols.append(place_symbol(lib_id="Device:Ferrite_Bead", ref="FB2",
                                 value="BLM18AG601 600R@100MHz (VDDA-Filter)",
-                                x=fbx, y=fby, rotation=90,
+                                x=fbx, y=fby, rotation=0,
                                 footprint="Inductor_SMD:L_0603_1608Metric",
                                 extra_props={"MPN": "BLM18AG601SN1D", "LCSC": "C19330"},  # r18.71: was C84094 (not in JLC assembly) -> C19330 (same MPN, JLC Extended 950k)
                                 seed_suffix="FB2", sheet_uuid_seed=sus))
@@ -3156,12 +3183,17 @@ def stm32h743_sheet() -> str:
         symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_VCAP{num}", value="GND",
                                     x=xe, y=cy + 6, seed_suffix=f"u1-vcap{num}-gnd", sheet_uuid_seed=sus))
 
-    # ---- VDD-Decoupling-Bank: 5× (4.7 µF + 100 nF) — Platzierung am Pin ist
+    # ---- VDD-Decoupling-Bank: 5× (22 µF + 100 nF) — Platzierung am Pin ist
     # Layout-Aufgabe; im Schematic als Bank an +3V3/GND (SPEC §5.10).
+    # r18.80 AUDIT-FIX (Metadaten): die Zeile behauptete "4.7uF /
+    # CL21A475KQFNNNE" mit LCSC C45783 — C45783 ist aber laut JLC-Live-Seite
+    # CL21A226MAQNNNE = 22µF 25V X5R 0805 (JLC bestueckt nach C-Nummer!).
+    # 22µF Bulk pro VDD-Gruppe ist elektrisch unkritisch (mehr Bulk, gleiche
+    # Bauform) und haelt die Teileliste bei einem einzigen 0805-Bulk-Typ.
     bx, by = 96.0, 238.0
     for i in range(5):
         for j, (val, mpn, lcsc, fp) in enumerate([
-            ("4.7uF X5R 0805 10V (VDD bulk)", "CL21A475KQFNNNE", "C45783", "Capacitor_SMD:C_0805_2012Metric"),
+            ("22uF X5R 0805 25V (VDD bulk; r18.80: C45783=CL21A226MAQNNNE, 4.7uF-Angabe war falsch)", "CL21A226MAQNNNE", "C45783", "Capacitor_SMD:C_0805_2012Metric"),
             ("100nF X7R 0603 (VDD HF)", "CC0603KRX7R9BB104", "C14663", "Capacitor_SMD:C_0603_1608Metric"),
         ]):
             cx = bx + i * 12 + j * 5
@@ -3265,7 +3297,21 @@ def stm32h743_sheet() -> str:
                                              "FP_NOTE": "Mini-SMD-Tactile (kleinere Bauform als HX 12x12), nur fuer Service-Use bei Flash. r18.14: MPN korrigiert (war TS-1185A-C-A — C720477 ist XUNPU TS-1088-AR02016) + FP auf EasyEDA-verifiziertes Land-Pattern (3.9x2.9, P4.45) gewechselt; TL3342-FP passte nicht."},
                                 seed_suffix="SWBOOT", sheet_uuid_seed=sus))
     # SW_Push pin1 (-5.08, 0) → BOOT0_PIN-Rail, pin2 (+5.08, 0) → R_BOOT_SW → +3V3
-    wires.append(wire(bsx - 5.08, bsy, box_, bsy, seed_suffix="swboot-to-boot0"))
+    #
+    # r18.80 AUDIT-FIX (KRITISCH, 2 Fehler in diesem Block):
+    # (a) Der alte swboot-to-boot0-Wire lief von Pin 1 (80.92) horizontal bis
+    #     x=100 und damit DURCH den Pin-2-Anker (91.08, 184) → der Taster war
+    #     dauerhaft ueberbrueckt.
+    # (b) Das +3V3-Flag sass bei (bsx+14, bsy) = (100, 184) — exakt auf dem
+    #     BOOT0_PIN-Label-/Rail-Punkt → +3V3 war DIREKT (ohne Taster, ohne 1k)
+    #     mit BOOT0 verkupfert.
+    #     Folge von (a) wie (b): BOOT0 permanent HIGH → H7 startet IMMER in
+    #     den System-Bootloader, nie in die Firmware ("totes Board").
+    # Fix: Pin-1-Pfad laeuft unten herum (y=190) am Pin-2-Anker vorbei zur
+    # BOOT0-Rail; +3V3-Flag haengt jetzt oben an R_BOOT_SW-Pin-2 (98.81, 180).
+    wires.append(wire(bsx - 5.08, bsy, bsx - 5.08, bsy + 6, seed_suffix="swboot-to-boot0-down"))
+    wires.append(wire(bsx - 5.08, bsy + 6, box_, bsy + 6, seed_suffix="swboot-to-boot0"))
+    wires.append(wire(box_, bsy + 6, box_, bsy, seed_suffix="swboot-to-boot0-up"))
     symbols.append(place_symbol(lib_id="Device:R", ref="R_BOOT_SW",
                                 value="1k 0603 (BOOT0-SW Strombegrenzung)",
                                 x=bsx + 9, y=bsy, rotation=90,
@@ -3273,9 +3319,9 @@ def stm32h743_sheet() -> str:
                                 extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
                                 seed_suffix="RBOOTSW", sheet_uuid_seed=sus))
     wires.append(wire(bsx + 5.08, bsy, bsx + 9 - 3.81, bsy, seed_suffix="swboot-to-r"))
-    wires.append(wire(bsx + 9 + 3.81, bsy, bsx + 14, bsy, seed_suffix="r-to-3v3"))
+    wires.append(wire(bsx + 9 + 3.81, bsy, bsx + 9 + 3.81, bsy - 4, seed_suffix="r-to-3v3"))
     symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_SWBOOT", value="+3V3",
-                                x=bsx + 14, y=bsy, rotation=90, seed_suffix="swboot-3v3",
+                                x=bsx + 9 + 3.81, y=bsy - 4, rotation=0, seed_suffix="swboot-3v3",
                                 sheet_uuid_seed=sus))
 
     # ---- SWD J4 (3-Pin 1.27mm, bestehend aus v0.6): SWCLK / GND / SWDIO (§5.8)
@@ -3286,12 +3332,17 @@ def stm32h743_sheet() -> str:
                                 footprint="Connector_PinHeader_1.27mm:PinHeader_1x03_P1.27mm_Vertical",
                                 extra_props={"MPN": "TC2030-IDC", "LCSC": "TBD"},
                                 seed_suffix="J4", sheet_uuid_seed=sus))
+    # r18.80 AUDIT-FIX (KRITISCH): die Stubs liefen vorher nach LINKS zu
+    # (jx-5.08, ...) — die Custom-Lib Conn_01x03 hat ihre Pins aber RECHTS
+    # bei lokal (+3.81, ±2.54/0) → alle 3 SWD-Pins schwebten frei (Board
+    # waere nicht programmierbar/debugbar gewesen). Stubs jetzt rechtsseitig
+    # exakt an den Pin-Ankern (jx+3.81, ...).
     for off, net in ((-2.54, "SWCLK"), (2.54, "SWDIO")):
-        wires.append(wire(jx - 5.08, jy + off, jx - 9, jy + off, seed_suffix=f"j4-{net}"))
-        labels.append(label(jx - 9, jy + off, net))
-    wires.append(wire(jx - 5.08, jy, jx - 9, jy, seed_suffix="j4-gnd"))
+        wires.append(wire(jx + 3.81, jy + off, jx + 9, jy + off, seed_suffix=f"j4-{net}"))
+        labels.append(label(jx + 9, jy + off, net))
+    wires.append(wire(jx + 3.81, jy, jx + 9, jy, seed_suffix="j4-gnd"))
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_J4", value="GND",
-                                x=jx - 9, y=jy, rotation=90, seed_suffix="j4-gnd", sheet_uuid_seed=sus))
+                                x=jx + 9, y=jy, rotation=270, seed_suffix="j4-gnd", sheet_uuid_seed=sus))
 
     # ---- BAT_SENSE: BAT_PLUS → 100k/100k + 10nF → PA3 (SPEC §5.6, wie r12)
     bsx, bsy = 196.0, 226.0
@@ -3471,10 +3522,17 @@ def lcd_sheet() -> str:
     labels: list[str] = []
     hlabels: list[str] = []
 
-    JX, JY = 140.0, 100.0   # J3 Conn_01x08, Pin 1 oben; Pins links (x-3.81? generisch)
+    # r18.80 AUDIT-FIX (KRITISCH): J3 war mit der Annahme "Pins links bei
+    # x-5.08" (KiCad-Standard-Lib) verdrahtet — die Custom-Lib Conn_01x08
+    # dieses Generators hat ihre Pins aber RECHTS bei lokal (+3.81, angle 180)
+    # → ALLE 8 LCD-Pins (GND, VCC, SPI, Backlight) schwebten frei; das Display
+    # waere komplett unverbunden gewesen. Fix: J3 um 180° gedreht (Pins zeigen
+    # dann nach links bei JX-3.81), jpy() an die gespiegelte Pin-Reihenfolge
+    # angepasst (rot=180: Pin 1 unten bei JY+8.89, Pin 8 oben bei JY-8.89).
+    JX, JY = 140.0, 100.0   # J3 Conn_01x08
     symbols.append(place_symbol(lib_id="Connector:Conn_01x08", ref="J3",
                                 value="LCD 1.9in ST7789 320x170 SPI-Header (8-pin)",
-                                x=JX, y=JY,
+                                x=JX, y=JY, rotation=180,
                                 footprint="Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical",
                                 extra_props={
                                     "MPN": "1x8 2.54mm pin header (the on-board connector; the LCD module itself plugs in separately, off-board, see §C / BOM_MASTER §5)",
@@ -3482,11 +3540,13 @@ def lcd_sheet() -> str:
                                     "FP_NOTE": "Standard 2.54mm 1x8-Header (PinHeader_1x08_P2.54mm_Vertical, KiCad-Standard, JEDEC). Adafruit 5394-Pinraster auf 2.54mm — passt 1:1.",
                                 },
                                 seed_suffix="J3", sheet_uuid_seed=sus))
-    # Conn_01xN: Pin k at local (-5.08? ) — wie oled_sheet: Pins links, y = top + (k-1)*2.54
-    # _conn_01xN_lib_symbol: pin at (-5.08, ...) → abs x = JX-5.08.
-    PINX = JX - 5.08
+    # _conn_01xN_lib_symbol: Pin k lokal (+3.81, 8.89-(k-1)*2.54, angle 180).
+    # Mit rotation=180: abs Pin-Anker (JX-3.81, JY+8.89-(k-1)*2.54)... beachte
+    # Y-DOWN: abs_y = sy + py_local → Pin 1 bei (136.19, 108.89), Pin 8 bei
+    # (136.19, 91.11). Pins zeigen nach LINKS → Verdrahtung linksseitig ok.
+    PINX = JX - 3.81
     def jpy(k: int) -> float:
-        return JY + (k - 1) * 2.54 - (8 - 1) * 2.54 / 2  # zentriert
+        return JY + 8.89 - (k - 1) * 2.54
 
     # Pin 1 GND
     wires.append(wire(PINX, jpy(1), PINX - 5, jpy(1), seed_suffix="j3-gnd"))
@@ -3497,9 +3557,11 @@ def lcd_sheet() -> str:
     symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_J3_VCC", value="+3V3",
                                 x=PINX - 5, y=jpy(2), rotation=90, seed_suffix="j3-vcc", sheet_uuid_seed=sus))
     cbx = PINX - 14
-    labels.append(label(cbx + 2, jpy(2), "+3V3"))
+    # r18.80: das fruehere freischwebende "+3V3"-Label bei (cbx+2, jpy(2)) ist
+    # ENTFERNT — es lag auf keinem Wire (dangling); die Caps haengen ueber ihre
+    # eigenen +3V3-Flags am Netz, der VCC-Pin ueber sein Flag.
     for k, (ref, val, mpn, lcsc, fp) in enumerate([
-        ("C6b", "10uF X5R 0805 (LCD VCC bulk)", "CL21A106KOQNNNE", "C15850", "Capacitor_SMD:C_0805_2012Metric"),
+        ("C6b", "10uF X5R 0805 (LCD VCC bulk)", "CL21A106KAYNNNE", "C15850", "Capacitor_SMD:C_0805_2012Metric"),
         ("C6c", "100nF X7R 0603 (LCD VCC HF)", "CC0603KRX7R9BB104", "C14663", "Capacitor_SMD:C_0603_1608Metric"),
     ]):
         cx = cbx - k * 6
@@ -3658,7 +3720,7 @@ def oled_sheet() -> str:  # LEGACY r18: nicht mehr geschrieben (durch lcd_sheet 
             x=c6b_x,
             y=c6b_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
             seed_suffix="C6b",
             sheet_uuid_seed=sus,
         )
@@ -3831,6 +3893,7 @@ def mcp_sheet() -> str:
     junctions: list[str] = []
     labels: list[str] = []
     hlabels: list[str] = []
+    ncs: list[str] = []
 
     # U2 MCP23017 @ (130, 110). Body x=119.84..140.16, y=93.49..126.51.
     # Pin local anchor x = ±12.7 (Symbol-Body bei ±10.16, Pin-Länge 2.54).
@@ -3928,12 +3991,14 @@ def mcp_sheet() -> str:
         )
     )
     # C5 = 100nF lokal
-    # Device:C pin1 (top, +3V3) at sy-3.81. → sy = p9_y + 3.81.
-    # Wir wollen C5 darunter (sy = p9_y + 3.81 in Y-DOWN heißt visuell unter dem Pin)... aber das überlappt
-    # mit dem VDD Power-Flag bei (113, p9_y). Besser: C5 weiter links bei x=108, sy=p9_y+3.81.
-    # Actually: VDD-Flag liegt bei x=113 rotation=90, sein Pin endet bei (113, p9_y). Es zeigt nach LINKS visuell.
-    # C5 setze ich bei (108, p9_y+3.81). Pin1 abs (108, p9_y), pin2 abs (108, p9_y + 7.62).
-    c5_x, c5_y = 108, p9_y + 3.81
+    # r18.80 AUDIT-FIX (KRITISCH): C5 sass bei x=108 — sein GND-Pin (Pitch
+    # 7.62mm) landete damit EXAKT auf dem SCL-Wire (Pin 9 VDD und Pin 12 SCL
+    # liegen genau 3 Rasterzeilen = 7.62mm auseinander): (108, p12_y) lag auf
+    # dem r5-to-scl-Wire (104→113) → I2C_SCL war hart auf GND kurzgeschlossen
+    # (kompletter I²C-Bus tot: U2 + U6 + U10). C5/C5b deshalb nach x=93/88
+    # verschoben — links der Pull-Up-Spalten (R5 x=104, R4 x=99), dort kreuzt
+    # der GND-Drop keinerlei I²C-Wires.
+    c5_x, c5_y = 93, p9_y + 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:C",
@@ -3947,14 +4012,16 @@ def mcp_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # C5 pin1 (108, p9_y) connects to VDD stub. Need to extend stub from x=113 to x=108.
-    wires.append(wire(108, p9_y, 113, p9_y, seed_suffix="vdd-to-c5"))
+    # VDD-Wire von x=88 (C5b) bis x=113 (Flag) durchgezogen; C5-Pin1 (93, p9_y)
+    # und R5-Pin1 (104, p9_y) tappen das Wire-Innere → Junctions.
+    wires.append(wire(88, p9_y, 113, p9_y, seed_suffix="vdd-to-c5"))
     junctions.append(junction(113, p9_y))
-    wires.append(wire(108, p9_y + 7.62, 108, p9_y + 10, seed_suffix="c5-to-gnd"))
-    attach_gnd(108, p9_y + 10, "C5")
+    junctions.append(junction(93, p9_y))
+    wires.append(wire(93, p9_y + 7.62, 93, p9_y + 10, seed_suffix="c5-to-gnd"))
+    attach_gnd(93, p9_y + 10, "C5")
 
     # C5b = 10nF lokal
-    c5b_x, c5b_y = 103, c5_y
+    c5b_x, c5b_y = 88, c5_y
     symbols.append(
         place_symbol(
             lib_id="Device:C",
@@ -3968,10 +4035,8 @@ def mcp_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(103, p9_y, 108, p9_y, seed_suffix="c5-to-c5b"))
-    junctions.append(junction(108, p9_y))
-    wires.append(wire(103, c5b_y + 3.81, 103, c5b_y + 6.19, seed_suffix="c5b-to-gnd"))
-    attach_gnd(103, c5b_y + 6.19, "C5b")
+    wires.append(wire(88, c5b_y + 3.81, 88, c5b_y + 6.19, seed_suffix="c5b-to-gnd"))
+    attach_gnd(88, c5b_y + 6.19, "C5b")
 
     # ---- SCL (Pin 12) → I2C_SCL + R5 4.7k pull-up
     p12_y = mcp_left_pin_y(12)
@@ -4010,6 +4075,8 @@ def mcp_sheet() -> str:
     junctions.append(junction(113, p12_y))
     wires.append(wire(104, r5_y - 3.81, 104, r5_y - 6.19, seed_suffix="r5-to-3v3"))
     labels.append(label(104, r5_y - 6.19, "+3V3"))
+    # r18.80: R5-Pin1 (104, p9_y) liegt auf dem durchgezogenen VDD-Wire → Junction
+    junctions.append(junction(104, p9_y))
 
     r4_y = p13_y - 3.81
     symbols.append(
@@ -4389,7 +4456,7 @@ def mcp_sheet() -> str:
             x=158,
             y=p28_y + 5,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNG-class", "LCSC": "C15850"},
+            extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
             seed_suffix="C_PCA_VDD",
             sheet_uuid_seed=sus,
         )
@@ -4420,7 +4487,7 @@ def mcp_sheet() -> str:
             x=164,
             y=p28_y + 5,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10B104KO8NNNC-class", "LCSC": "C14663"},
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="C_PCA_VDD_HF",
             sheet_uuid_seed=sus,
         )
@@ -4698,7 +4765,7 @@ def mcp_sheet() -> str:
         place_symbol(lib_id="Device:C", ref="C_PCA2_VDD",
                      value="10uF X5R 0805 (PCA2 VDD bulk)",
                      x=cx1, y=vdd10 + 5, footprint="Capacitor_SMD:C_0805_2012Metric",
-                     extra_props={"MPN": "CL21A106KOQNNNG-class", "LCSC": "C15850"},
+                     extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
                      seed_suffix="C_PCA2_VDD", sheet_uuid_seed=sus)
     )
     wires.append(wire(cx1, vdd10 + 5 - 3.81, cx1, vdd10, seed_suffix="c-pca2-vdd-top"))
@@ -4715,7 +4782,7 @@ def mcp_sheet() -> str:
         place_symbol(lib_id="Device:C", ref="C_PCA2_VDD_HF",
                      value="100nF X7R 0603 (PCA2 VDD HF)",
                      x=cx2, y=vdd10 + 5, footprint="Capacitor_SMD:C_0603_1608Metric",
-                     extra_props={"MPN": "CL10B104KO8NNNC-class", "LCSC": "C14663"},
+                     extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
                      seed_suffix="C_PCA2_VDD_HF", sheet_uuid_seed=sus)
     )
     wires.append(wire(cx2, vdd10 + 5 - 3.81, cx2, vdd10, seed_suffix="c-pca2-vddhf-top"))
@@ -4760,6 +4827,13 @@ def mcp_sheet() -> str:
                      x=P10_R_X + 14, y=oe10, rotation=90,
                      seed_suffix="r-oe2-3v3", sheet_uuid_seed=sus)
     )
+    # ---- r18.80: LED8..LED15 (Pins 15-22, rechts) sind bei U10 UNBENUTZT
+    # (nur Kanaele 0-7 = VU-Meter belegt) → explizite No-Connect-Marker
+    # (AI_READY_SCHEMATIC_STANDARD: explicit no-connects; vorher schwebten
+    # die 8 Pins ohne Markierung → ERC-unclean).
+    for nc_pin in range(15, 23):
+        ncs.append(no_connect(P10_R_X, p10_right_y(nc_pin)))
+
     # ---- 8× VU-Meter LED+R (Channels 0-7 = Pins 6-13, links). Anode +5V via 390R,
     # Kathode → PCA-Channel-Sink. Eigene Reihe (y=255), x-Position im PCB = TBD.
     # r18.68 (User): VU-Meter ist **weiss** (gleiche LED wie Heartbeat/Status,
@@ -4828,6 +4902,7 @@ def mcp_sheet() -> str:
         + "".join(junctions)
         + "".join(labels)
         + "".join(hlabels)
+        + "".join(ncs)
         + f'  (sheet_instances\n    (path "/" (page "4")))\n'
         ")\n"
     )
@@ -5219,7 +5294,7 @@ def audio_sheet() -> str:
             value="10uF X5R 0805 (CPVDD bulk)",
             x=cb_x, y=cb_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
             seed_suffix="CCPVDD_BULK",
             sheet_uuid_seed=sus,
         )
@@ -5347,7 +5422,7 @@ def audio_sheet() -> str:
             value="10uF X5R 0805 (AVDD bulk)",
             x=80, y=c7a_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
             seed_suffix="C7a",
             sheet_uuid_seed=sus,
         )
@@ -5445,23 +5520,29 @@ def audio_sheet() -> str:
 
     # ---- Pin 18 LDOO → NC (per datasheet: leave open, optional 0.1µF for stability)
     # We add a 100nF cap for stability per TI ref design
+    # r18.80 AUDIT-FIX (KRITISCH): C_LDOO hing vorher nach UNTEN (rot=0,
+    # sy=p18_y+3.81) — sein GND-Pin (117, p18_y+7.62) landete damit EXAKT auf
+    # dem I2S_LRCK-Wire (Pin-15-Zeile, 7.62mm = 3 Rasterzeilen unter Pin 18)
+    # → LRCK war hart auf GND kurzgeschlossen (kein Wordclock, Audio tot,
+    # MCU-I2S-Treiber gegen GND). Cap deshalb nach OBEN geklappt (rot=180,
+    # GND oberhalb) — dort ist frei (Pin 18/19/20-Stubs enden bei x<=115.7).
     p18_y = u3_right(18)
     wires.append(wire(U3_RX, p18_y, 117, p18_y, seed_suffix="u3-ldoo-stub"))
-    cldoo_y = p18_y + 3.81
+    cldoo_y = p18_y - 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C_LDOO",
             value="100nF X7R 0603 (LDOO stability)",
-            x=117, y=cldoo_y,
+            x=117, y=cldoo_y, rotation=180,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="CLDOO",
             sheet_uuid_seed=sus,
         )
     )
-    wires.append(wire(117, cldoo_y + 3.81, 117, cldoo_y + 6, seed_suffix="cldoo-gnd"))
-    attach_gnd(117, cldoo_y + 6, "CLDOO", rot=270)
+    wires.append(wire(117, cldoo_y - 3.81, 117, cldoo_y - 6, seed_suffix="cldoo-gnd"))
+    attach_gnd(117, cldoo_y - 6, "CLDOO", rot=180)
 
     # ---- Pin 19 DGND → GND
     p19_y = u3_right(19)
@@ -5483,28 +5564,34 @@ def audio_sheet() -> str:
     )
     junctions.append(junction(U3_RX + 3, p20_y))
     # C8a bulk + C8b HF decoupling
-    c8a_y = p20_y + 3.81
+    # r18.80 AUDIT-FIX (KRITISCH): C8a/C8b hingen vorher nach UNTEN — ihre
+    # GND-Pins (120/124, p20_y+7.62) landeten damit EXAKT auf dem XSMT-Wire
+    # (Pin-17-Zeile, 3 Rasterzeilen = 7.62mm unter Pin 20) → PCM_XSMT war hart
+    # auf GND kurzgeschlossen (DAC permanent gemutet, MCP23017-GPA5 gegen GND).
+    # Caps deshalb nach OBEN geklappt (rot=180, GND oberhalb) — dort ist frei
+    # (Pin 20 ist der oberste rechte Pin, U3-Body endet bei y=86.03).
+    c8a_y = p20_y - 3.81
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C8a",
             value="10uF X5R 0805 (DVDD bulk)",
-            x=120, y=c8a_y,
+            x=120, y=c8a_y, rotation=180,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "CL21A106KOQNNNE", "LCSC": "C15850"},
+            extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
             seed_suffix="C8a",
             sheet_uuid_seed=sus,
         )
     )
     wires.append(wire(U3_RX + 3, p20_y, 120, p20_y, seed_suffix="dvdd-to-c8a"))
-    wires.append(wire(120, c8a_y + 3.81, 120, c8a_y + 6, seed_suffix="c8a-gnd"))
-    attach_gnd(120, c8a_y + 6, "C8a", rot=270)
+    wires.append(wire(120, c8a_y - 3.81, 120, c8a_y - 6, seed_suffix="c8a-gnd"))
+    attach_gnd(120, c8a_y - 6, "C8a", rot=180)
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C8b",
             value="100nF X7R 0603 (DVDD HF)",
-            x=124, y=c8a_y,
+            x=124, y=c8a_y, rotation=180,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="C8b",
@@ -5513,8 +5600,8 @@ def audio_sheet() -> str:
     )
     wires.append(wire(124, p20_y, 120, p20_y, seed_suffix="c8a-to-c8b"))
     junctions.append(junction(120, p20_y))
-    wires.append(wire(124, c8a_y + 3.81, 124, c8a_y + 6, seed_suffix="c8b-gnd"))
-    attach_gnd(124, c8a_y + 6, "C8b", rot=270)
+    wires.append(wire(124, c8a_y - 3.81, 124, c8a_y - 6, seed_suffix="c8b-gnd"))
+    attach_gnd(124, c8a_y - 6, "C8b", rot=180)
 
     # ====================================================================
     # U4 PAM8403H @ (160, 130). Body x=149.84..170.16, y=121.11..138.89.
@@ -6408,18 +6495,16 @@ def battery_sheet() -> str:
             value="22uF X5R 0805 (Battery-Input Bulk)",
             x=75, y=90,
             footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "GRM21BR61E226ME44", "LCSC": "C45783"},
+            extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
             seed_suffix="C_BAT_IN",
             sheet_uuid_seed=sus,
         )
     )
-    # BAT_PLUS-bus runs horizontally at y=86.19 from x=70 to x=130 (to U8-VIN later)
-    wires.append(wire(75, 86.19, 75, 80, seed_suffix="c-bat-in-top-up"))
-    wires.append(wire(70, 80, 90, 80, seed_suffix="bat-bus-from-j9"))  # but J9-pin1 is at y=78.73
-    # Reroute: BAT_PLUS-net via label. Just attach a label at C_BAT_IN top + at J9 + at U7-VBAT + at U8-VIN.
-    # Cleaner via name-matching with "BAT_PLUS" label everywhere.
-    # Remove the misplaced wire
-    wires.pop()  # remove "bat-bus-from-j9"
+    # BAT_PLUS-Netz via Label-Matching (BAT_PLUS-Label an C_BAT_IN-Top, J9,
+    # U7-VBAT, U8-VIN). r18.80: der fruehere vertikale Rest-Stub
+    # (75,86.19)→(75,80) aus dem verworfenen Bus-Ansatz ist ENTFERNT — er
+    # endete blind 3mm neben dem U7-VSS-GND-Flag (Kurzschluss-Falle bei
+    # spaeteren Layout-Aenderungen).
     wires.append(wire(75, 86.19, 79, 86.19, seed_suffix="c-bat-in-top-stub"))
     hlabels.append(hier_label(79, 86.19, "BAT_PLUS", shape="output", rotation=0))
     # C_BAT_IN bottom → GND
@@ -6434,7 +6519,7 @@ def battery_sheet() -> str:
             value="100nF X7R 0603 (Battery-Input HF)",
             x=82, y=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10B104KO8NNNC", "LCSC": "C14663"},
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="C_BAT_HF",
             sheet_uuid_seed=sus,
         )
@@ -6500,7 +6585,9 @@ def battery_sheet() -> str:
     # ---- U8 SW (Pin 11, right) → L1 + R_FSW + C_BOOT shared switch-node
     # Label "U8_SW_NODE" auf SW-Pin, gleicher Label-Name an L1-Bottom, R_FSW-pin2, C_BOOT-pin2.
     wires.append(wire(U8_RX, sw_y, 156, sw_y, seed_suffix="u8-sw-stub"))
-    labels.append(label(154, sw_y, "U8_SW_NODE"))
+    # r18.80: Label NICHT bei x=154 — dort kreuzt der vertikale boot-up-Wire
+    # die SW-Zeile; ein Label am Kreuzungspunkt haette BOOT+SW verschmolzen
+    # (C_BOOT wirkungslos). Das Netz wird vom Label bei (141, sw_y) benannt.
 
     # L1 above U8 at (140, 75) vertical. pin1 top (140, 71.19) → BAT_PLUS, pin2 bottom (140, 78.81) → U8_SW_NODE.
     symbols.append(
@@ -6522,6 +6609,10 @@ def battery_sheet() -> str:
     wires.append(wire(140, sw_y, 156, sw_y, seed_suffix="l1-to-sw-h"))
     junctions.append(junction(140, sw_y))
     # Place a second "U8_SW_NODE" label at L1-Bottom-Wire-Path to confirm net
+    # r18.80: das fruehere dritte Label bei (154, sw_y) ist ENTFERNT — es sass
+    # exakt auf dem Kreuzungspunkt mit dem vertikalen boot-up-Wire (x=154) und
+    # haette in KiCad BOOT- und SW-Netz verschmolzen (C_BOOT kurzgeschlossen,
+    # High-Side-Gate-Treiber ohne Bootstrap → Boost startet nicht).
     labels.append(label(141, sw_y, "U8_SW_NODE"))
 
     # ---- U8 VIN (Pin 9, right) → BAT_PLUS hier-output
@@ -6547,7 +6638,7 @@ def battery_sheet() -> str:
             x=158, y=(boot_y + sw_y) / 2,  # midpoint between BOOT and SW
             rotation=0,  # vertical
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10B104KO8NNNC", "LCSC": "C14663"},
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="C_BOOT",
             sheet_uuid_seed=sus,
         )
@@ -6569,7 +6660,7 @@ def battery_sheet() -> str:
             x=158, y=80,
             rotation=90,  # horizontal: pin1 left (154.19, 80), pin2 right (161.81, 80)
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10B104KO8NNNC", "LCSC": "C14663"},
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="C_BOOT",
             sheet_uuid_seed=sus,
         )
@@ -6680,17 +6771,26 @@ def battery_sheet() -> str:
     attach_gnd(170, r24_sy + 6, "R24", rotation=0)
 
     # ---- U8 COMP (Pin 4, left) → R_COMP + C_COMP series → GND (Type-II compensation)
+    # r18.80 AUDIT-FIX (KRITISCH, Loop-Stabilitaet): war 22k/1nF — nach TI
+    # SLVSD38C Gl. 17 ergab das fc ≈ 87 kHz und laege damit UEBER der
+    # RHP-Nullstelle selbst (fRHPZ ≈ 47 kHz @VIN 3,0V/2A, Gl. 15) statt unter
+    # fRHPZ/5 ≈ 9,5 kHz → Loop-Oszillation unter Last bei leerem Akku.
+    # Neu nach Gl. 17/18 (VREF 1,212V, GEA 190µS, Rsense 0,08Ω, CO_eff ≈ 36µF
+    # aus 3×22µF @5V-Bias): R5 = 6,2k → fc ≈ 8 kHz; C5 = RO·CO/2R5 ≈ 7,2nF
+    # → 10nF (naechster im Repo verifizierter Wert; Zero 2,6 kHz ≈ fc/3, gleiche
+    # Ratio wie TI-Referenzdesign 9V/2A: 17,4k/4,7nF, mit dem diese Formeln
+    # gegengerechnet wurden). C6 nach Gl. 19 < 10pF → entfaellt (Datenblatt).
     wires.append(wire(U8_LX, comp_y, 124, comp_y, seed_suffix="u8-comp-stub"))
     # R_COMP at (118, comp_y) horizontal rotation=90. pin1 (114.19, comp_y), pin2 (121.81, comp_y)
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_COMP",
-            value="22k 0603 (TPS61089 loop-compensation)",
+            value="6.2k 0603 1% (TPS61089 loop-comp, fc~8kHz<=fRHPZ/5; r18.80 war 22k=fc 87kHz>fRHPZ!)",
             x=118, y=comp_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2202T5E", "LCSC": "C31850"},
+            extra_props={"MPN": "0603WAF6201T5E", "LCSC": "C4260"},
             seed_suffix="R_COMP",
             sheet_uuid_seed=sus,
         )
@@ -6702,11 +6802,11 @@ def battery_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_COMP",
-            value="1nF X7R 0603 (TPS61089 loop-compensation series)",
+            value="10nF X7R 0603 (TPS61089 loop-comp series, DS Gl.18; r18.80 war 1nF)",
             x=108, y=comp_y,
             rotation=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10B102KB8NNNC", "LCSC": "C1588"},
+            extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
             seed_suffix="C_COMP",
             sheet_uuid_seed=sus,
         )
@@ -6761,26 +6861,33 @@ def battery_sheet() -> str:
     # when the symbol was inherited from the older RNSR variant.
 
     # ====================================================================
-    # BOOST_OUT bus → C_BOOST_OUT (22µF) + C_BOOST_HF (100nF) + D3 → +5V_OUT
+    # BOOST_OUT bus → 3× C_BOOST_OUT (22µF) + C_BOOST_HF (100nF) + D3 → +5V_OUT
+    # r18.80 AUDIT-FIX: war 1× 22µF — TI SLVSD38C §9.2.2.7: "typically three
+    # 22-µF ceramic output capacitors"; die EC-Tabelle spezifiziert Soft-Start
+    # sogar mit COUT(effective)=47µF. Ein einzelner 22µF-0805 hat bei 5V-Bias
+    # nur noch ~12µF effektiv → Ripple ~150mV UND zu wenig CO fuer die
+    # Kompensation. Der 470µF-Bulk liegt HINTER D3 und hilft dem Regelknoten
+    # nicht. Jetzt 3× C45783 → CO_eff ≈ 36µF, Ripple ~50mV (Gl. 9).
     # ====================================================================
     # C_BOOST_OUT 22µF vertical at (180, 105). Connected via BOOST_OUT label-match.
     # pin1 top (180, 101.19), pin2 bottom (180, 108.81). Top → BOOST_OUT, bottom → GND.
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C_BOOST_OUT",
-            value="22uF X5R 0805 (Boost-Output Bulk)",
-            x=180, y=105,
-            footprint="Capacitor_SMD:C_0805_2012Metric",
-            extra_props={"MPN": "GRM21BR61E226ME44", "LCSC": "C45783"},
-            seed_suffix="C_BOOST_OUT",
-            sheet_uuid_seed=sus,
+    for cbo_ref, cbo_x in (("C_BOOST_OUT", 180), ("C_BOOST_OUT2", 164), ("C_BOOST_OUT3", 172)):
+        symbols.append(
+            place_symbol(
+                lib_id="Device:C",
+                ref=cbo_ref,
+                value="22uF X5R 0805 (Boost-Output Bulk, 3x parallel per TI DS §9.2.2.7)",
+                x=cbo_x, y=105,
+                footprint="Capacitor_SMD:C_0805_2012Metric",
+                extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
+                seed_suffix=cbo_ref,
+                sheet_uuid_seed=sus,
+            )
         )
-    )
-    wires.append(wire(180, 101.19, 180, 98, seed_suffix="c-boost-out-top"))
-    labels.append(label(180, 98, "BOOST_OUT"))
-    wires.append(wire(180, 108.81, 180, 111, seed_suffix="c-boost-out-gnd"))
-    attach_gnd(180, 111, "C_BOOST_OUT", rotation=0)
+        wires.append(wire(cbo_x, 101.19, cbo_x, 98, seed_suffix=f"{cbo_ref.lower()}-top"))
+        labels.append(label(cbo_x, 98, "BOOST_OUT"))
+        wires.append(wire(cbo_x, 108.81, cbo_x, 111, seed_suffix=f"{cbo_ref.lower()}-gnd"))
+        attach_gnd(cbo_x, 111, cbo_ref, rotation=0)
 
     # C_BOOST_HF 100nF vertical at (188, 105). Same topology.
     symbols.append(
@@ -6790,7 +6897,7 @@ def battery_sheet() -> str:
             value="100nF X7R 0603 (Boost-Output HF)",
             x=188, y=105,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10B104KO8NNNC", "LCSC": "C14663"},
+            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
             seed_suffix="C_BOOST_HF",
             sheet_uuid_seed=sus,
         )

@@ -221,7 +221,7 @@ Q1-Logik: USB-C-VBUS HIGH = Q1 leitet (Bypass-Boost), Battery lädt parallel
 | BAT1 | LiPo 3.7V **2000mAh** Pouch 503759 (9.4×37×50mm) — **r18.21 rightsize von 5000mAh** (Overkill; 2000mAh ~6.6h @ 300mA) | nicht JLC | du lieferst | Energiespeicher, JST PH 2.0 2-pin |
 | J9 | JST PH 2.0 2-pin Battery-Connector vertical SMD | C2845240-Klasse | JLC Basic | Battery-Anschluss, polarisiert |
 | U7 | **MCP73831T-2ACI/OT** (Microchip, SOT-23-5) | C424093 | Basic | LiPo Single-Cell Charger, Ladestrom programmierbar via R_PROG (R21 = 2 kΩ → 500 mA charge) |
-| U8 | **TPS61089RNR** (TI, VQFN-11 HotRod 2×2.5mm + Thermal Pad) | C165129 | Extended | Boost-Converter LiPo→5V, bis 2A @ 5V Out. Programmable Fsw via R_FSW (360k → **~440 kHz** per TI-DS Gl. 3; r18.79: die alte r12-B11-Angabe „1.21 MHz“ war falsch gerechnet — 440 kHz ist ok, weit über Audioband). r12-B11: Wechsel von RNSR auf RNR-Variante wegen JLC-Stock-Verfügbarkeit. Benötigt 5 zusätzliche externe Bauteile: C_VCC 1µF (interne LDO-Decoupling), R_FSW 360k (Fsw-Set), **R_ILIM 174k** (ILIM = 1,03e6/R per DS Gl. 4 → 5,92 A typ ≤ L1-Isat-min 6,75 A; r18.79: war 20k = 51,5 A ≈ kein Limit!), C_BOOT 100nF (high-side gate driver bootstrap zwischen BOOT und SW), R_COMP 22k + C_COMP 1nF (Type-II loop-compensation). **FB-Teiler r18.79: R23 121k / R24 39k → VOUT 4,97 V** (war 200k/39k = 7,43 V — hätte PAM8403/TPS22918 zerstört; VREF 1,212 V). |
+| U8 | **TPS61089RNR** (TI, VQFN-11 HotRod 2×2.5mm + Thermal Pad) | C165129 | Extended | Boost-Converter LiPo→5V, bis 2A @ 5V Out. Programmable Fsw via R_FSW (360k → **~440 kHz** per TI-DS Gl. 3; r18.79: die alte r12-B11-Angabe „1.21 MHz“ war falsch gerechnet — 440 kHz ist ok, weit über Audioband). r12-B11: Wechsel von RNSR auf RNR-Variante wegen JLC-Stock-Verfügbarkeit. Benötigt 5 zusätzliche externe Bauteile: C_VCC 1µF (interne LDO-Decoupling), R_FSW 360k (Fsw-Set), **R_ILIM 174k** (ILIM = 1,03e6/R per DS Gl. 4 → 5,92 A typ ≤ L1-Isat-min 6,75 A; r18.79: war 20k = 51,5 A ≈ kein Limit!), C_BOOT 100nF (high-side gate driver bootstrap zwischen BOOT und SW), **R_COMP 6,2k + C_COMP 10nF** (Type-II loop-compensation nach DS Gl. 17/18: fc ≈ 8 kHz ≤ fRHPZ/5 ≈ 9,5 kHz @VIN 3,0 V/2 A; r18.80: war 22k/1nF = fc ≈ 87 kHz ÜBER der RHP-Nullstelle → Oszillation unter Last). **FB-Teiler r18.79: R23 121k / R24 39k → VOUT 4,97 V** (war 200k/39k = 7,43 V — hätte PAM8403/TPS22918 zerstört; VREF 1,212 V). |
 | ~~Q1 DMG2305UX P-MOSFET~~ | ⛔ **ENTFERNT r18.79 (Elektrik-Audit)** — Power-Path speiste Boost-5V zurück auf VBUS (Body-Diode + Gate an GND) und überbrückte F1. Ersetzt durch Dioden-OR: USB → F1 → **D3B** (SS34, C8678) → Rail ‖ Boost → D3 → Rail. | — | — | — |
 | L1 | **2.2 µH Wire-Wound SMD 6.0×6.0×4.5mm** (Sunlord SWPA6045S2R2NT — r18.77: fixed. War fälschlich als "Sumida CDR63B-2R2 0630" beschrieben, ein anderer Hersteller/Case aus einer früheren Design-Iteration; die "MT"-Endung + LCSC C83455 existierten beide nicht real, siehe BOM_MASTER-Audit) | C36500 | Extended | TPS61089 Boost-Inductor |
 | D3 | **SS34 Schottky 40V 3A** (DO-214AC/SMA) | C8678 | Basic | Boost-Output-Diode-Reverse-Schutz (optional bei TPS61089-Synchronous, aber sicherheitshalber) |
@@ -230,7 +230,7 @@ Q1-Logik: USB-C-VBUS HIGH = Q1 leitet (Bypass-Boost), Battery lädt parallel
 | R23, R24 | TPS61089 Feedback-Divider (R23=200kΩ, R24=39kΩ → Vout=5.0V) | Generic | Basic | Vout-Set für TPS61089 |
 | C_BAT_IN | 22 µF X5R 0805 (Battery-Input bulk) | Generic | Basic | LiPo-Cap-Reservoir für Boost-Inrush |
 | C_BAT_HF | 100 nF X7R 0603 (Battery HF) | Generic | Basic | HF-Decoupling am Charger |
-| C_BOOST_OUT | 22 µF X5R 0805 (Boost-Output) | Generic | Basic | Output-Filter für TPS61089 |
+| C_BOOST_OUT ×3 | 3× 22 µF X5R 0805 (Boost-Output, CL21A226MAQNNNE C45783) | Samsung | Basic | Output-Filter für TPS61089 — r18.80: 3× parallel per TI DS §9.2.2.7 („typically three 22 µF“; EC-Tabelle rechnet Soft-Start mit COUT_eff 47 µF). CO_eff ≈ 36 µF @5-V-Bias; der 470-µF-Bulk liegt HINTER D3 und zählt für den Regelknoten nicht. |
 | C_BOOST_HF | 100 nF X7R 0603 (Boost HF) | Generic | Basic | HF an Boost-Output |
 | LED_CHRG | 0603 Amber (Charging-Indikator) | Generic | Basic | direkt vom MCP73831 STAT-Pin (Open-Drain LOW=charging) via 1kΩ |
 | LED_FULL | 0603 Green (Charge-Complete-Indikator) | optional | — | gleicher STAT-Pin alternativ überwacht via Pico-GPIO |
@@ -460,7 +460,7 @@ PCM5102A = **C107671** (war C9900003814, existiert nicht), PAM8403H =
 | **R_BOOT0** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: BOOT0 Pull-Down → System-Loader nur via DFU/Reset** |
 | **R_NRST** | **10 kΩ 0603** | **0603** | Generic | **Basic** | **NEU v0.7: NRST Pull-Up zu +3V3** |
 | **C_NRST** | **100 nF X7R 0603** | **0603** | Generic | **Basic** | **NEU v0.7: NRST Debounce-Cap** |
-| **C_VDD\*** | **7× (4.7 µF X5R 0805 + 100 nF X7R 0603), 1 Set pro VDD-Pin** | **0805 + 0603** | Generic | **Basic** | **NEU v0.7: H743 Decoupling. STM AN3318 §6 Empfehlung. Direkt am Pin platzieren.** |
+| **C_VDD\*** | **5× (22 µF X5R 0805 + 100 nF X7R 0603), 1 Set pro VDD-Pin** (r18.80: LCSC C45783 ist CL21A226MAQNNNE = 22 µF, nicht 4,7 µF — Beschriftung korrigiert, C-Nummer/Footprint unverändert; mehr Bulk unkritisch) | **0805 + 0603** | Samsung/Yageo | **Basic** | **NEU v0.7: H743 Decoupling. STM AN3318 §6 Empfehlung. Direkt am Pin platzieren.** |
 | **C_VCAP1, C_VCAP2** | **2× 2.2 µF X5R 0603** | **0603** | Generic | **Basic** | **NEU v0.7: Interner SMPS Bulk-Caps (LDO-Bypass-Mode, kein externer Core-LDO nötig)** |
 | **C_VDDA, FB_VDDA** | **1 µF X5R 0603 + 100 nF X7R 0603 + Ferrit BLM18AG601** | **0603** | Generic | **Basic** | **NEU v0.7: VDDA Analog-Filter** |
 | U2 | MCP23017-E/SS | SSOP-28 | C506653 | Extended, ~$1.62 | verifizieren via `lcsc`-Skill |
@@ -832,7 +832,7 @@ unbrauchbar (Tonhöhen-Drift hörbar bei Drone-Voices über Minuten).
 | 48 | VCAP1 | 2.2 µF X5R 0603 zu VSS (interner SMPS Bulk) |
 | 73 | VCAP2 | 2.2 µF X5R 0603 zu VSS (interner SMPS Bulk) |
 
-Decoupling: pro VDD-Pin (5 Stück) ein 4.7 µF X5R 0805 + ein 100 nF X7R 0603
+Decoupling: pro VDD-Pin (5 Stück) ein 22 µF X5R 0805 (C45783; r18.80: Wert-Text korrigiert) + ein 100 nF X7R 0603
 Bulk-Cap, möglichst nah am Pin platziert. Ferrit-Bead BLM18AG601 (LCSC C84094)
 in der VDDA-Versorgung zur Trennung Analog-Digital. Power-Sequenz: keine
 explizite Reihenfolge nötig — H7 hat keinen VDDA-Sequencing-Constraint

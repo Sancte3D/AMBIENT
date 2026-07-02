@@ -35,12 +35,12 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | C_BULK2 | MLCC | 100 µF/10 V | 1210 | C23742 (r18.79 doc-sync: table still said C2880380, generator/jlc_bom have C23742 since r18.70) |
 | R23 / R24 | boost FB divider → 4.97 V (r18.79: was 200k = **7.4 V!**, VREF 1.212 V per TI DS) | 121 k / 39 k | 0603 | C25809 / C23153 |
 | R_FSW / R_ILIM | boost set: Fsw ~440 kHz / ILIM 5.9 A (r18.79: R_ILIM was 20k = 51 A, i.e. no limit) | 360 k / 174 k | 0603 | C23146 / C22890 |
-| R_COMP / C_COMP | boost comp | 22 k / 1 nF | 0603 | C31850 / C1588 |
-| C_BOOT / C_BOOST_OUT / C_BOOST_HF | boost caps | 100 nF / 4.7 µF / 100 nF | 0603/0805 | C14663 / C45783 / C14663 |
+| R_COMP / C_COMP | boost loop comp — fc ≈ 8 kHz ≤ fRHPZ/5 per TI DS eq. 17/18 (r18.80: was 22 k / 1 nF = fc ≈ 87 kHz **above** the RHP zero → oscillation under load) | 6.2 k / 10 nF | 0603 | C4260 / C57112 |
+| C_BOOT / C_BOOST_OUT(×3) / C_BOOST_HF | boost caps (r18.80: output bulk now **3× 22 µF** per TI DS §9.2.2.7 “typically three 22 µF”; was 1×, and the 470 µF bulk sits behind D3 where the control loop can't see it) | 100 nF / 3× 22 µF / 100 nF | 0603/0805 | C14663 / C45783 / C14663 |
 | C_LDO_IN / C_LDO_OUT | LDO caps | 4.7 µF | 0603 | C46653 |
 | R21 / R_CHRG | charger PROG / status | 2 k / 1 k | 0603 | C22975 / C21190 |
 | R_BAT_DIV_TOP/BOT, R_VBUS_SENSE, R_VBUS_PD | battery/VBUS sense | 100 k / 10 k / 100 k | 0603 | C25804 / C25803 |
-| C_BAT_IN / C_BAT_HF / C_BAT_FILT | battery caps | 4.7 µF / 100 nF / 10 nF | 0603/0805 | C45783 / C14663 / C57112 |
+| C_BAT_IN / C_BAT_HF / C_BAT_FILT | battery caps (r18.80: C45783 ist 22 µF CL21A226MAQNNNE — alte 4.7-µF-Angabe war falsch) | 22 µF / 100 nF / 10 nF | 0603/0805 | C45783 / C14663 / C57112 |
 
 ### Audio
 | Ref | Part | Value | Package | LCSC |
@@ -111,8 +111,8 @@ RC stay removed; PC0/PC1/PA4/PB0/PB1 stay freed.
 |---|---|---|---|
 | 100 nF X7R | 0603 | ~20 (C_VDD*B, C_*_HF, …) | C14663 |
 | 1 µF X5R | 0603 | ~10 (C_VCC, C_VDDA1, C_VREF*, …) | C15849 |
-| 10 µF X5R | 0805 | ~9 (C_VDD*A, C9, C_BAT_IN, …) | C45783 |
-| 4.7 µF X5R | 0805 | C1, C6b, C7a, C8a, C_PCA*, C_CPVDD_BULK | C15850 |
+| 22 µF X5R 25 V | 0805 | 11 (C_VDD*A, C9, C_BAT_IN, C_BOOST_OUT×3, C_PVDDR) — r18.80: C45783 = CL21A226MAQNNNE 22 µF; frühere 4.7/10-µF-Angaben waren falsch | C45783 |
+| 10 µF X5R 25 V | 0805 | C1, C6b, C7a, C8a, C_PCA*, C_CPVDD_BULK — r18.80: C15850 = CL21A106KAYNNNE 10 µF (alte 4.7-µF-Angabe war falsch) | C15850 |
 | 2.2 µF (VCAP) | 0603 | C_VCAP1, C_VCAP2 | C23630 (r18.79 doc-sync: was C24539, not in JLC assembly — fixed r18.70 in generator) |
 | 22 R | 0603 | (audio/series where used) | C23345 |
 | 4.7 k / 5.1 k | 0603 | R4/R5 (I²C pulls) · R2/R3 | C23162 / C23186 |
