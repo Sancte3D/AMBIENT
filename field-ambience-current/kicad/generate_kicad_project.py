@@ -1875,11 +1875,12 @@ def pin_abs(sym_x: float, sym_y: float, local_x: float, local_y: float, rotation
 # ----------------------------------------------------------------------------
 # Sheet 1 — Power Tree
 # Komponenten + Verdrahtung lt. SPEC v0.6 §1, §3:
-#   USB-C(VBUS) -> F1 (polyfuse 3A/6A) -> C_BULK (1000µF) -> +5V Rail
-#   USB-C(D±)   -> D1 (USBLC6-2SC6 ESD)   -> Pico USB (hier-label to other sheet)
+#   USB-C(VBUS) -> F1 (polyfuse 3A/6A) -> D3B (SS34, r18.79 Dioden-OR) -> +5V Rail
+#   (Akku-Pfad: battery_sheet U8-Boost 4,97V -> D3 -> gleicher +5V_OUT-Rail)
+#   USB-C(D±)   -> D1 (USBLC6-2SC6 ESD)   -> USB hier-label to stm32 sheet
 #   USB-C(CC1)  -> R2 (5.1k)              -> GND
 #   USB-C(CC2)  -> R3 (5.1k)              -> GND
-#   +5V         -> D2 (SMAJ5.0A TVS)      -> GND
+#   VBUS_FUSED  -> D2 (SMAJ5.0A TVS, pre-D3B) -> GND
 # ----------------------------------------------------------------------------
 
 
@@ -2022,15 +2023,39 @@ def power_tree_sheet() -> str:
     hlabels.append(hier_label(30.48, RAIL_Y - 6, "VBUS_USBC", shape="output", rotation=90))
     junctions.append(junction(30.48, RAIL_Y))
 
-    # ---- F1 pin2 → Rail nach rechts (48.81 → 110)
-    # CBULK an der Rail @ (65, sy), D2 TVS @ (55, sy)
+    # ---- F1 pin2 → D3B (Dioden-OR, r18.79) → Rail nach rechts (48.81 → 110)
+    # r18.79 AUDIT-FIX: D3B (2. SS34) NEU in Serie hinter F1. Vorher exportierte
+    # power_tree den Rail DIREKT hinter F1 → die Boost-5V (battery_sheet, via
+    # D3 auf demselben +5V_OUT-Netz) floss rueckwaerts durch F1 auf den
+    # USB-C-VBUS (Polyfuse leitet bidirektional) → Lader U7 speiste sich aus
+    # dem eigenen Boost (Selbstladeschleife), USB-Detect dauerhaft HIGH, 5V am
+    # offenen Stecker. D3B blockt das; Q1/R22 (die den Fuse zusaetzlich
+    # ueberbrueckten) sind im battery_sheet entfernt. Topologie jetzt:
+    #   USB: VBUS → F1 → [D2 TVS klemmt pre-Diode] → D3B → +5V-Rail
+    #   Akku: BAT → U8 Boost (4,97V) → D3 → +5V-Rail
+    # CBULK an der Rail @ (65, sy) [post-D3B], D2 TVS @ (55, sy) [pre-D3B]
     # C1 (10µF) @ x=80, C2 (100nF) @ x=86 = +5V-Rail HF-Bypass (SPEC §3).
-    # Rail-x-Positionen mit Junctions: 48.81, 55, 65, 80, 86, 110
-    rail_xs = [48.81, 55, 65, 80, 86, 110]
-    for xa, xb in zip(rail_xs, rail_xs[1:]):
+    wires.append(wire(48.81, RAIL_Y, 55, RAIL_Y, seed_suffix="rail-48.81-55"))
+    junctions.append(junction(55, RAIL_Y))
+    # D3B: Anode links (Richtung F1/USB), Kathode rechts (Richtung Rail).
+    # Device:D_Schottky rotation=180: pin1 K abs (sx+3.81), pin2 A abs (sx-3.81).
+    symbols.append(
+        place_symbol(
+            lib_id="Device:D_Schottky",
+            ref="D3B",
+            value="SS34 40V 3A Schottky (USB-Pfad Dioden-OR, r18.79 ersetzt Q1-Power-Path)",
+            x=60, y=RAIL_Y,
+            rotation=180,
+            footprint="Diode_SMD:D_SMA",
+            extra_props={"MPN": "SS34", "LCSC": "C8678"},
+            seed_suffix="D3B",
+        )
+    )
+    wires.append(wire(55, RAIL_Y, 56.19, RAIL_Y, seed_suffix="rail-55-d3b"))
+    wires.append(wire(63.81, RAIL_Y, 65, RAIL_Y, seed_suffix="d3b-rail-65"))
+    for xa, xb in zip([65, 80, 86], [80, 86, 110]):
         wires.append(wire(xa, RAIL_Y, xb, RAIL_Y, seed_suffix=f"rail-{xa}-{xb}"))
-    # Junctions an allen Stützen außer Endpunkten
-    for x in rail_xs[1:-1]:
+    for x in (65, 80, 86):
         junctions.append(junction(x, RAIL_Y))
 
     # ---- C_BULK 470µF Polymer-Alu (low-profile) + C_BULK2 220µF MLCC parallel
@@ -2374,7 +2399,7 @@ def power_tree_sheet() -> str:
         f'    (rev "0.7")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC v0.6.3 §1 + §3")\n'
-        f'    (comment 2 "USB-C → F1(3A/6A) → C_BULK(470µF Polymer + 220µF MLCC) → +5V rail")\n'
+        f'    (comment 2 "USB-C → F1(3A/6A) → D3B SS34 (r18.79 Dioden-OR) → +5V rail (C_BULK 470µF Polymer + 100µF MLCC)")\n'
         f'    (comment 3 "USB-C VBUS/GND-Pin-Belegung per USB Type-C Spec Rev 2.1 (v0.6.3 fix)")\n'
         f'    (comment 4 "ESD: USBLC6-2SC6 on D+/D-; TVS: SMAJ5.0A on +5V"))\n'
         "  (lib_symbols\n"
@@ -6211,7 +6236,7 @@ def pi_sheet() -> str:
 # Components per SPEC §2.2:
 #   U7 MCP73831 LiPo-Charger (500mA via R21=2kΩ)
 #   U8 TPS61089 Boost LiPo→5V (FB-Divider R23/R24)
-#   Q1 DMG2305UX P-MOS Power-Path-Selector
+#   (Q1 Power-Path r18.79 ENTFERNT -- Backfeed-Bug; ersetzt durch Dioden-OR D3/D3B)
 #   L1 2.2µH, D3 SS34, J9 JST-PH-2P, R21-R24, 4× Caps, LED_CHRG + R_CHRG
 #
 # Hier-I/O:
@@ -6340,7 +6365,7 @@ def battery_sheet() -> str:
         )
     )
 
-    # ---- U7 VDD (Pin 4, right, y=80) → VBUS_USBC hier-input (matches Q1-S + sheet-edge)
+    # ---- U7 VDD (Pin 4, right, y=80) → VBUS_USBC hier-input (pre-fuse USB-Detect/Charger-Netz)
     p_vdd_y = U7_Y  # 80
     wires.append(wire(U7_X + 7.62, p_vdd_y, U7_X + 14, p_vdd_y, seed_suffix="u7-vdd"))
     hlabels.append(hier_label(U7_X + 14, p_vdd_y, "VBUS_USBC", shape="input", rotation=0))
@@ -6565,7 +6590,7 @@ def battery_sheet() -> str:
         place_symbol(
             lib_id="Device:R",
             ref="R_FSW",
-            value="360k 0603 1% (TPS61089 Fsw-Set ~1.21MHz, r12-B11)",
+            value="360k 0603 1% (TPS61089 Fsw ~440kHz per DS Gl.3 @VIN3.7/VOUT5; r18.79: r12-B11-Behauptung 1.21MHz war falsch, 440kHz ist ok — weit ueber Audioband, weniger Schaltverluste)",
             x=118, y=fsw_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
@@ -6608,15 +6633,21 @@ def battery_sheet() -> str:
     # pin2 bottom (170, 78.81) → R24 pin1 top + FB-tap label BOOST_FB
     # WICHTIG: KEINE durchgehende Wire vertikal über R23+R24 — würde Divider kurzschließen!
     r23_sy = 75
+    # r18.79 AUDIT-FIX: R23 war 200k — mit VREF 1,212 V (TI SLVSD38C EC-Tabelle)
+    # und R24 39k ergibt VOUT = 1,212 × (1 + R23/R24). 200k/39k = 7,43 V (!!) —
+    # haette den PAM8403 (5,5 V abs max) und den geplanten TPS22918 (5,5 V max)
+    # zerstoert. 121k/39k → 4,97 V. (Exakt 5,00 V braeuchte 122k — kein
+    # verifizierbarer LCSC-Bestand; 121k = C25809, 71k Stock, −0,6 % ist die
+    # sichere Richtung.) Formel: Datenblatt Gl. 5, R1 = (VOUT−VREF)×R2/VREF.
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R23",
-            value="200k 0603 (TPS61089 FB-Divider Top, Vout=5V target)",
+            value="121k 0603 1% (TPS61089 FB-Divider Top, Vout=4.97V @ VREF 1.212V; r18.79 war 200k=7.4V!)",
             x=170, y=r23_sy,
             rotation=0,  # vertical
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2003T5E", "LCSC": "C25811"},
+            extra_props={"MPN": "0603WAF1213T5E", "LCSC": "C25809"},
             seed_suffix="R23",
             sheet_uuid_seed=sus,
         )
@@ -6692,7 +6723,14 @@ def battery_sheet() -> str:
     wires.append(wire(U8_LX, vout_y, 124, vout_y, seed_suffix="u8-vout-stub"))
     labels.append(label(124, vout_y, "BOOST_OUT"))
 
-    # ---- U8 ILIM (Pin 8, right) → R_ILIM 20k → GND (sets ~4A peak inductor current)
+    # ---- U8 ILIM (Pin 8, right) → R_ILIM 174k → GND
+    # r18.79 AUDIT-FIX: war 20k mit Kommentar "~4A peak" — laut TI-Datenblatt
+    # SLVSD38C Gl. 4 gilt ILIM = 1.030.000 / R_ILIM. 20k haette 51,5 A ergeben
+    # (= Stromlimit faktisch abgeschaltet, Induktor haette vor dem Limit
+    # gesaettigt). 174k → ILIM 5,92 A typ / 5,12 A min (Datenblatt: Worst-Case
+    # bis 0,8 A unter Rechenwert) / ~6,7 A max — liegt UNTER L1-Isat-min 6,75 A
+    # (SWPA6045S2R2NT) und UEBER dem Worst-Case-Spitzenstrom ~4,7 A
+    # (VIN 3,0 V, VOUT 5 V, 2 A Last, η 0,85, Ripple @440 kHz, L −20%).
     wires.append(wire(U8_RX, ilim_y, 156, ilim_y, seed_suffix="u8-ilim-stub"))
     # R_ILIM at (160, ilim_y+4) vertical rotation=0. pin1 (160, ilim_y+0.19), pin2 (160, ilim_y+7.81)
     # Cleaner: horizontal at (160, ilim_y)
@@ -6700,11 +6738,11 @@ def battery_sheet() -> str:
         place_symbol(
             lib_id="Device:R",
             ref="R_ILIM",
-            value="20k 0603 1% (TPS61089 current-limit ~4A peak)",
+            value="174k 0603 1% (TPS61089 ILIM=1.03e6/R: 5.92A typ, <= L1 Isat-min 6.75A; r18.79 war 20k=51A!)",
             x=160, y=ilim_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
+            extra_props={"MPN": "0603WAF1743T5E", "LCSC": "C22890"},
             seed_suffix="R_ILIM",
             sheet_uuid_seed=sus,
         )
@@ -6785,59 +6823,29 @@ def battery_sheet() -> str:
     hlabels.append(hier_label(210, 96, "+5V_OUT", shape="output", rotation=0))
 
     # ====================================================================
-    # Q1 DMG2305UX P-MOS Power-Path @ (210, 70). 3-Pin SOT-23.
-    # Pin layout (from _dmg2305ux_lib_symbol): 1=G(-7.62,0), 2=S(+7.62,+2.54), 3=D(+7.62,-2.54).
-    # SPEC: S=VBUS_USBC, D=+5V_OUT, G=R22→GND (Default-OFF pull-down).
+    # r18.79 AUDIT-FIX: Q1 (DMG2305UX P-MOS Power-Path) + R22 ENTFERNT.
+    # Der alte Aufbau (S=VBUS_USBC pre-fuse, D=+5V_OUT, G=R22→GND) hatte zwei
+    # fatale Fehler:
+    #  1. Backfeed: ohne USB liegt die Boost-5V am Rail; Q1-Body-Diode
+    #     (Anode=D, Kathode=S beim P-FET) leitet Rail→VBUS, Gate liegt auf
+    #     GND → Vgs=−4,3V → Q1 schaltet voll durch → Rail speist VBUS_USBC.
+    #     Der Lader U7 (VDD=VBUS_USBC) laedt dann den Akku aus dessen eigenem
+    #     Boost = Energieschleife (Akku entlaedt sich mit ~1,5× Ladestrom
+    #     selbst), USB-Detect (MCP GPA7) meldet dauerhaft "USB da", und 5V
+    #     stehen am offenen USB-C-Stecker. Zusaetzlich leitet auch F1
+    #     (Polyfuse, bidirektional) Rail→VBUS, da power_tree den Rail direkt
+    #     hinter F1 exportiert.
+    #  2. Fuse-Bypass: Q1 verband PRE-fuse-VBUS mit dem POST-fuse-Rail —
+    #     Laststrom floss an F1 vorbei, Kurzschlussschutz ausgehebelt.
+    # ERSATZ: Dioden-OR. Boost → D3 (bestand schon) → +5V_OUT; USB → D3B
+    # (neue zweite SS34, power_tree, hinter F1) → +5V_OUT. Kein Bauteil ohne
+    # verifizierten LCSC-Code noetig (SS34 = C8678, bereits in der BOM).
+    # Kosten: ~0,35V Drop im USB-Pfad (Rail ~4,6V an USB) — LDO (braucht
+    # >3,6V) und PAM8403 (2,5–5,5V) unkritisch.
     # ====================================================================
-    Q1_X, Q1_Y = 210.0, 70.0
-    symbols.append(
-        place_symbol(
-            lib_id="Transistor_FET:DMG2305UX",
-            ref="Q1",
-            value="DMG2305UX P-MOS SOT-23 (USB-C Power-Path-Switch)",
-            x=Q1_X, y=Q1_Y,
-            footprint="Package_TO_SOT_SMD:SOT-23",
-            datasheet="https://www.diodes.com/assets/Datasheets/DMG2305UX.pdf",
-            extra_props={"MPN": "DMG2305UX-7", "LCSC": "C150470"},
-            seed_suffix="Q1",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # Q1 G (Pin 1, left, abs (Q1_X-7.62, Q1_Y))
-    q1_g_x = Q1_X - 7.62
-    wires.append(wire(q1_g_x, Q1_Y, q1_g_x - 5, Q1_Y, seed_suffix="q1-g-stub"))
-    # R22 (10k pull-down G to GND) at (q1_g_x-9, Q1_Y) rotation=90 horizontal
-    symbols.append(
-        place_symbol(
-            lib_id="Device:R",
-            ref="R22",
-            value="10k 0603 (Q1 Gate Pull-Down, Default-OFF)",
-            x=q1_g_x - 9, y=Q1_Y,
-            rotation=90,
-            footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
-            seed_suffix="R22",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # R22 pin1 (q1_g_x-12.81, Q1_Y) → GND
-    wires.append(wire(q1_g_x - 12.81, Q1_Y, q1_g_x - 16, Q1_Y, seed_suffix="r22-to-gnd"))
-    attach_gnd(q1_g_x - 16, Q1_Y, "R22", rotation=90)
-    # R22 pin2 (q1_g_x-5.19, Q1_Y) connects to G-stub at (q1_g_x-5, Q1_Y) — close enough but add bridging wire
-    wires.append(wire(q1_g_x - 5.19, Q1_Y, q1_g_x - 5, Q1_Y, seed_suffix="r22-to-g"))
-
-    # Q1 S (Pin 2, abs Y inverted vs Symbol-local: local +2.54 → abs Q1_Y - 2.54) → VBUS_USBC
-    q1_s_y = Q1_Y - 2.54  # 67.46
-    wires.append(wire(Q1_X + 7.62, q1_s_y, Q1_X + 14, q1_s_y, seed_suffix="q1-s-stub"))
-    hlabels.append(hier_label(Q1_X + 14, q1_s_y, "VBUS_USBC", shape="input", rotation=180))
-
-    # Q1 D (Pin 3, local -2.54 → abs Q1_Y + 2.54) → +5V_OUT hier-output (USB-Pfad to system rail)
-    q1_d_y = Q1_Y + 2.54  # 72.54
-    wires.append(wire(Q1_X + 7.62, q1_d_y, Q1_X + 14, q1_d_y, seed_suffix="q1-d-stub"))
-    hlabels.append(hier_label(Q1_X + 14, q1_d_y, "+5V_OUT", shape="output", rotation=0))
 
     # ====================================================================
-    # Hier-Labels für externe Nets sind inline an U7/U8/Q1/J9/C_BAT_IN platziert
+    # Hier-Labels für externe Nets sind inline an U7/U8/D3/J9/C_BAT_IN platziert
     # (Same-Name-Match mit root_sheet's Sheet-Pins). Keine separaten Edge-Labels
     # nötig — KiCad merged alle gleichnamigen hier-labels innerhalb des Sheets.
     # ====================================================================

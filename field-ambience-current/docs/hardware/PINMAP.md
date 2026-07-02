@@ -149,9 +149,9 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 ### Power tree (`power_tree.kicad_sch` + `battery.kicad_sch`)
 | Net | Source | Sinks |
 |---|---|---|
-| `+5V_USB` | USB-C VBUS → F1 polyfuse | Q1 power-path source |
-| `+5V_RAIL` | Q1 drain (USB) ‖ TPS61089 boost (battery) via D3 | PAM8403 PVDD, AP7361A LDO IN |
-| `+3V3` | AP7361A-33ER LDO OUT | MCU VDD×5+VBAT, MCP23017, PCA9685, PCM5102A, LCD module, encoders' pull-ups |
+| `+5V_USB` | USB-C VBUS → F1 polyfuse | D3B (SS34) Anode — Dioden-OR in den +5V-Rail (r18.79; Q1-Power-Path entfernt) |
+| `+5V_RAIL` | Dioden-OR (r18.79): USB via F1→D3B ‖ TPS61089-Boost (4,97 V) via D3 | PAM8403 PVDD, AP7361C LDO IN |
+| `+3V3` | AP7361C-33 LDO OUT (r18.79: Doku-Drift „AP7361A-33ER“ korrigiert — BOM/Schematic haben AP7361C-33Y5-13) | MCU VDD×5+VBAT, MCP23017, PCA9685, PCM5102A, LCD module, encoders' pull-ups |
 | `VDDA` | +3V3 via FB1 ferrite | MCU pin 21 (+ 1 µF‖100 nF) |
 | `BAT_PLUS` (LiPo+) | J_BAT / charger | TPS61089 VIN, BAT_SENSE divider, MCP73831 VBAT |
 | `GND` | star point | everything |
@@ -209,9 +209,9 @@ Each A/B has a 10 kΩ pull-up + 100 nF RC debounce; switches pull-up + tactile-t
 ### Battery / charger (`battery.kicad_sch`)
 | Net | From | To |
 |---|---|---|
-| USB VBUS | J1 | MCP73831 VIN + Q1 power-path |
+| USB VBUS | J1 | MCP73831 VIN (pre-fuse) + F1→D3B→+5V_RAIL (r18.79) |
 | charge | MCP73831 VBAT (R21=2k → 500 mA) | LiPo+ |
-| boost | TPS61089 (L1 + R23/R24 FB) → D3 | +5V_RAIL |
+| boost | TPS61089 (L1 + FB-Teiler R23 121k / R24 39k → 4,97 V; R_ILIM 174k → 5,9 A; Fsw ~440 kHz, r18.79) → D3 | +5V_RAIL |
 | `BAT_SENSE` | LiPo+ via 100k:100k | MCU PA3 (ADC) |
 
 ---
