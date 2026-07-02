@@ -10,6 +10,91 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.80 (2026-07-02) — Geometrisches Pin-Level-ERC: 8 Kupfer-Fehler + Boost-Loop-Instabilität behoben
+
+User: „Any other logical issues or something that will ruin the pcb?" — Antwort: ja, mehrere.
+Methode: headless geometrisches ERC (Python) über alle 7 Sheets — jeder Pin-Anker
+gegen jedes Wire-Segment, Label-Anker gegen Kreuzungspunkte, Union-Find-Netzbau,
+Hier-Label↔Root-Sheet-Pin-Namensabgleich. Jeder Fund im Generator-Quelltext verifiziert.
+
+### KRITISCH — Kurzschlüsse (Pin-/Label-Anker exakt auf fremden Wires)
+
+1. **power_tree: USB D+ UND D− hart auf +5V** — der U5-LDO-Block (120,80) sass im
+   USB-Daten-Korridor: EN-Pin (111.11, 77.46) lag AUF dem USB_DP-Wire, IN-Pin
+   (111.11, 82.54) AUF dem USB_DM-Wire, Rail-Drop x=110 überlappte den D1-VBUS-Wire.
+   → USB tot, H7-USB-PHY-Gefahr. Fix: LDO-Block nach (130,130), Rail-Tap x=120.
+2. **mcp: I2C_SCL hart auf GND** — C5 (U2-VDD-100nF) hing 7,62 mm nach unten;
+   Pin 9 (VDD) und Pin 12 (SCL) liegen exakt 3 Rasterzeilen = 7,62 mm auseinander →
+   C5-GND-Pin (108, 121.43) sass AUF dem SCL-Wire. → kompletter I²C-Bus tot
+   (U2 + U6 + U10 = alle Switches, alle LEDs). Fix: C5/C5b nach x=93/88.
+3. **audio: PCM_XSMT hart auf GND** — C8a/C8b-GND-Pins (120/124, 96.19) sassen AUF
+   dem XSMT-Wire (Pin 17, gleiche 7,62-mm-Falle wie #2). → DAC permanent gemutet.
+   Fix: Caps nach oben geklappt (rot=180, GND oberhalb).
+4. **audio: I2S_LRCK hart auf GND** — C_LDOO-GND-Pin (117, 101.27) sass AUF dem
+   LRCK-Wire (Pin 15, dieselbe Falle). → kein Wordclock, Audio tot. Fix: hochgeklappt.
+5. **stm32: BOOT0 permanent HIGH (2 Fehler)** — (a) +3V3-Flag sass bei (100,184) =
+   exakt der BOOT0-Rail-Punkt → +3V3 direkt auf BOOT0; (b) der SW_BOOT-Pin-1-Wire
+   lief DURCH den Pin-2-Anker → Taster dauerhaft überbrückt. → H7 bootet IMMER in
+   den ROM-Bootloader, nie in die Firmware („totes Board"). Fix: Pfad unten herum,
+   +3V3-Flag oben an R_BOOT_SW.
+6. **stm32: VDDA mit VDD verkupfert** — der VDDA-Pin-21-Stub lief horizontal DURCH
+   den VDD-Pin-100-Anker (145.08, 61.42) → FB2-Filter überbrückt. Fix: Stub senkrecht
+   nach oben (wie alle Top-Pins).
+7. **battery: C_BOOT kurzgeschlossen (Label-Falle)** — das U8_SW_NODE-Label bei
+   (154, 83.65) sass exakt auf der Kreuzung SW-Wire × boot-up-Wire → KiCad hätte
+   BOOT- und SW-Netz verschmolzen → kein Bootstrap, Boost startet nicht. Fix: Label
+   entfernt (Netz benennt das Label bei x=141).
+
+### KRITISCH — Unterbrechungen
+
+8. **lcd: J3 komplett unverbunden (alle 8 Pins)** — Verdrahtung nahm KiCad-Standard-
+   Pins links (−5.08) an; die Custom-Lib Conn_01x08 hat Pins RECHTS (+3.81/180°).
+   → GND, VCC, SPI, Backlight: alles floatend. Fix: J3 rot=180 + jpy()/PINX neu.
+9. **stm32: J4 SWD-Header alle 3 Pins floatend** — gleiche −5.08-Annahme. → Board
+   nicht flash-/debugbar. Fix: Stubs rechtsseitig an die echten Pin-Anker.
+10. **stm32: FB2 beidseitig floatend** — rotation=90 (Pins vertikal), Wires horizontal.
+    → VDDA ohne Versorgung über den Filter (nur der Zufalls-Kurzschluss #6 versorgte
+    sie). Fix: rotation=0.
+11. **stm32: lib_symbols-Name „STM32H743VIT6" ohne „MCU:"-Prefix** — die Instanz
+    referenziert `MCU:STM32H743VIT6`, KiCad matcht exakt → U1 wäre in KiCad ein
+    unaufgelöstes Symbol (keine Pins, kein Netlist-Export). Fix: Prefix ergänzt.
+
+### KRITISCH — Boost-Regelkreis (TPS61089, TI SLVSD38C nachgerechnet)
+
+12. **R_COMP 22k / C_COMP 1nF → 6,2k / 10nF; C_BOOST_OUT 1× → 3× 22 µF.**
+    Gl. 15/17/18 mit VREF 1,212 V, GEA 190 µS, Rsense 0,08 Ω: fRHPZ ≈ 47 kHz
+    (VIN 3,0 V, 2 A) → fc-Limit fRHPZ/5 ≈ 9,5 kHz. Alt: fc ≈ 87 kHz — ÜBER der
+    RHP-Nullstelle → Loop-Oszillation unter Last bei leerem Akku. Neu: fc ≈ 8 kHz.
+    Formeln gegen TIs eigenes 9-V/2-A-Referenzdesign validiert (reproduziert exakt
+    deren 17,4k/4,7nF). Output-Caps: TI „typically three 22 µF", EC-Tabelle rechnet
+    Soft-Start mit 47 µF effektiv; 1× 22 µF-0805 hat bei 5-V-Bias nur ~12 µF eff.
+    (Ripple wäre ~150 mV); der 470-µF-Bulk liegt HINTER D3 → Regelknoten sieht ihn
+    nicht. Neu: 3× C45783 → CO_eff ≈ 36 µF, Ripple ~50 mV. **Neues Teil: R 6,2k
+    0603 1% = C4260 (0603WAF6201T5E, JLC Basic, 219k Stock — live verifiziert).**
+
+### Metadaten / Hygiene (JLC bestückt nach C-Nummer — Werte-Text log)
+
+- **C45783 = CL21A226MAQNNNE 22 µF 25 V** (live verifiziert): STM32-VDD-Bank und
+  C_BAT_IN behaupteten „4,7 µF CL21A475KQFNNNE" — falsch beschriftet (bestückt
+  worden wäre 22 µF; elektrisch unkritisch, Doku/BOM-Texte korrigiert).
+- **C15850 = CL21A106KAYNNNE 10 µF 25 V** (live verifiziert): 8× MPN-Suffix
+  „KOQNNNE" (16-V-Variante) korrigiert.
+- **C14663 = CC0603KRX7R9BB104** (live verifiziert): 5× falscher MPN
+  „CL10B104KO8NNNC" (+2× „-class"-Pseudo-MPNs) vereinheitlicht.
+- mcp: U10 LED8–15 (Pins 15–22, unbenutzt) mit expliziten No-Connect-Markern.
+- battery: Rest-Stub (75,86.19)→(75,80) aus verworfenem Bus-Ansatz entfernt.
+- lcd: freischwebendes „+3V3"-Label entfernt.
+
+### Verifikation
+
+- Geometrisches ERC: **0 Fehler auf allen 7 Sheets** (vorher: 22 Fehler/kritische
+  Merges). Hier-Label↔Root-Sheet-Pin: alle Namen matchen. Generator deterministisch
+  (2 Läufe, identische MD5). `jlc_bom.csv`: 56 unique Parts, 202 Placements.
+- kicad-cli 7.0.11 kann das v9-Format der Sheets nicht laden (Distro-Limit) —
+  ERC-/GUI-Pass in KiCad 9 bleibt Human-TODO wie gehabt.
+
+---
+
 ## v0.7-r18.79 (2026-07-01) — Elektrik-Audit: 3 kritische Power-Fehler behoben
 
 User: „Überprüfe nochmal BOM und PCB components und connections. Nicht

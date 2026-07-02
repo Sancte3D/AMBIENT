@@ -2,6 +2,28 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.80 (2026-07-02, geometrisches Pin-Level-ERC über alle 7 Sheets):**
+> 12 Fehler gefunden + behoben, davon 7 Kupfer-Kurzschlüsse und 4 komplette
+> Unterbrechungen — jede „totes Board"-Klasse: **USB D+/D− auf +5V** (U5-LDO-Block
+> sass im USB-Korridor → verlegt); **I2C_SCL auf GND** (C5-GND-Pin exakt auf dem
+> SCL-Wire — die 7,62-mm-Pitch-Falle, VDD- und SCL-Pin liegen genau 3 Zeilen
+> auseinander → C5/C5b verschoben); **PCM_XSMT auf GND** + **I2S_LRCK auf GND**
+> (gleiche Falle im Audio-Sheet → Caps hochgeklappt); **BOOT0 permanent HIGH**
+> (+3V3-Flag auf dem BOOT0-Punkt UND SW_BOOT-Wire durch den Pin-2-Anker → H7
+> hätte nie Firmware gebootet); **VDDA↔VDD-Kurzschluss** (Pin-21-Stub durch
+> Pin-100-Anker) bei gleichzeitig **beidseitig floatendem FB2** (rot=90);
+> **C_BOOT-Bootstrap kurzgeschlossen** (Label auf Wire-Kreuzung); **LCD-J3 alle
+> 8 Pins floatend** + **SWD-J4 alle 3 Pins floatend** (Custom-Lib-Pins rechts,
+> Verdrahtung nahm KiCad-Standard links an); **MCU-lib_symbols ohne „MCU:"-Prefix**
+> (KiCad hätte U1 nicht aufgelöst). Dazu **Boost-Loop-Fix nach TI-Datenblatt**:
+> R_COMP 22k→6,2k (C4260 neu, live verifiziert), C_COMP 1nF→10nF, C_BOOST_OUT
+> 1×→3× 22 µF — alte Werte legten den Crossover ÜBER die RHP-Nullstelle
+> (Oszillation unter Last). MPN-Hygiene: C45783=22µF/C15850=10µF-Verwechslung
+> in VDD-Bank + Doku korrigiert, 15 MPN↔LCSC-Mismatches vereinheitlicht (JLC
+> bestückt nach C-Nummer). Geometrisches ERC jetzt **0 Fehler auf allen Sheets**;
+> Hier-Pins↔Root matchen; Generator deterministisch. KiCad-9-GUI-ERC (Aron)
+> bleibt finaler Gate. Details: CHANGELOG r18.80.
+>
 > **r18.79 (2026-07-01, Elektrik-Audit BOM+Verbindungen):** 3 kritische Fehler im
 > Power-Design gefunden + behoben (alle gegen das TI-TPS61089-Datenblatt
 > verifiziert): (1) **Boost-FB-Teiler ergab 7,43 V statt 5 V** (R23 200k→121k,

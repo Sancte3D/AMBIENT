@@ -40,7 +40,7 @@ Rev-B.
 | 8 | PC14 | (free) | OSC32_IN | — | free (no 32 kHz crystal) |
 | 9 | PC15 | (free) | OSC32_OUT | — | free |
 | 10 | VSS | GND | dedicated | Power | GND |
-| 11 | VDD | +3V3 | dedicated | Power | +3V3 + 4.7 µF‖100 nF local |
+| 11 | VDD | +3V3 | dedicated | Power | +3V3 + 22 µF‖100 nF local (r18.80: C45783 = 22 µF) |
 | 12 | PH0 | HSE_IN | OSC_IN | MCU | Crystal Y1 in (+ 22 pF load cap) |
 | 13 | PH1 | HSE_OUT | OSC_OUT | MCU | Crystal Y1 out (+ 22 pF load cap) |
 | 14 | NRST | NRST | dedicated reset | MCU | SW11 reset button + 10 kΩ PU + 100 nF |

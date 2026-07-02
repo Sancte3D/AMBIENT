@@ -1140,7 +1140,7 @@
         (pin passive line (at -7.62 0 0) (length 2.54)
           (name "DET" (effects (font (size 1.27 1.27))))
           (number "4" (effects (font (size 1.27 1.27)))))))
-    (symbol "STM32H743VIT6" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)
+    (symbol "MCU:STM32H743VIT6" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)
       (property "Reference" "U" (at 0 0 0) (effects (font (size 1.27 1.27))))
       (property "Value" "STM32H743VIT6" (at 0 -2.54 0) (effects (font (size 1.27 1.27)) hide))
       (symbol "STM32H743VIT6_0_1"
