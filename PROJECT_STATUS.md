@@ -2,6 +2,23 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.81 (2026-07-02, User-Frage „side on/off switch — mountable auf horizontaler PCB?"):**
+> **Ja — datenblatt-verifiziert:** MST-12D18G3 liegt flach auf der PCB, der
+> Schiebe-Stem ragt HORIZONTAL 3 mm über die Body-Kante (z ≈ 2,3–3,8 mm über
+> Board), Travel 2 mm → am Board-Rand platzieren, Slot in der Gehäuse-
+> Seitenwand; vendored Footprint = exakt das offizielle MSK12D-Land-Pattern.
+> Die Frage deckte zwei kritische Lücken auf: (1) **der beschlossene
+> ADR-0016-Power-Off-Block (U_PWR TPS22918 + SW_PWR + R_PWR_PD + C_PWR_SW)
+> war NIE im Schematic** — das Board hätte keinen Ein/Aus gehabt → jetzt in
+> power_tree verdrahtet (+5V_RAIL → U_PWR → +5V_SW → LDO; Lader davor =
+> „dunkel, aber lädt"; QOD→VOUT aktive Entladung, CT floatet per TI-DS);
+> (2) **das globale „+5V"-Netz war eine quellenlose Insel** (keinerlei Brücke
+> zur Diode-OR-Rail auf irgendeinem Sheet) — PAM8403 + alle 23 LED-Anoden
+> wären stromlos gewesen → Rail trägt jetzt das +5V-Flag. Netz-Trace 11/11 ✓,
+> ERC 0 Fehler, jlc_bom 58 Parts/207 Placements. OFFEN für Aron: SW_PWR-
+> Terminal-Belegung (Common=Mitte angenommen) vor Fab durchpiepen; Falsch-Fall
+> fail-safe. Details: CHANGELOG r18.81.
+>
 > **r18.80 (2026-07-02, geometrisches Pin-Level-ERC über alle 7 Sheets):**
 > 12 Fehler gefunden + behoben, davon 7 Kupfer-Kurzschlüsse und 4 komplette
 > Unterbrechungen — jede „totes Board"-Klasse: **USB D+/D− auf +5V** (U5-LDO-Block

@@ -10,6 +10,66 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.81 (2026-07-02) — Power-Off-Block (ADR-0016) endlich im Schematic + „+5V"-Netz-Brücke + SW_PWR-Seitenmontage verifiziert
+
+User (mit Foto vom Schalter-Render): „What about the side button on off switch.
+I don't think the one we have works. the pcb will be a normal pcb, not vertical,
+but horizontal … is the on off switch mount actually mountable that way, that I
+can use the on off switch from the side?"
+
+### 1. SW_PWR-Seitenmontage: JA — gegen das Original-Datenblatt verifiziert
+
+MST-12D18G3-Datenblatt (SHOU HAN, via LCSC-PDF, Zeichnung S. 1 gerendert):
+Body liegt FLACH auf der (horizontalen) PCB (3 SMD-Beine + 2 Locator-Pegs in
+Ø0,9-Bohrungen), der Schiebe-Stem (1,5×1,5 mm) ragt **HORIZONTAL** 3 mm über
+die Body-Kante — gegenüber der Pin-Seite, Oberkante 0,2 mm unter Body-Top
+(Body 4,0 mm) → Stem-Fenster z ≈ 2,3–3,8 mm über der PCB-Oberfläche; Travel
+2 mm ±0,2 bei 200 gf lateral. **Am Board-Rand platzieren, Stem durch einen
+Slot in der Gehäuse-Seitenwand — genau die gewünschte Seitenbedienung.** Der
+vendored Footprint stimmt EXAKT mit dem offiziellen Land-Pattern MSK12D
+überein (3 Pads 1,2 @ 2,5 mm Pitch; Löcher Ø0,9 @ 6,8 mm; Versatz 3,2 mm =
+2,1 + 2,2/2). Das 3D-Render (User-Foto) schwebt nur beliebig orientiert im
+Viewer — daher der „zeigt der nicht nach oben?"-Eindruck. OFFEN (UNVERIFIED —
+NEEDS HUMAN CHECK): Terminal-Belegung Common=Mittelpad ist 1P2T-Konvention,
+das DB labelt die Pins nicht → vor Fab durchpiepen (Falsch-Fall fail-safe:
+Gerät ginge nur nicht an, R_PWR_PD hält PWR_ON low).
+
+### 2. KRITISCH gefunden: der beschlossene Power-Off-Block war NIE im Schematic
+
+ADR-0016 (User-Entscheidung 2026-06-27, inkl. Pin-Level-Drop-in-Spec) war
+dokumentiert, HTML/BOM_MASTER listeten U_PWR/SW_PWR — aber weder Generator
+noch jlc_bom.csv enthielten sie: das Board hätte KEINEN Ein/Aus-Schalter
+gehabt. r18.81 zeichnet den Block in power_tree ein:
+`+5V_RAIL → U_PWR (TPS22918, C131941 live verifiziert) → +5V_SW → LDO-VIN`;
+`SW_PWR`-Common → `PWR_ON` = U_PWR.ON, Throw A → +5V-Rail, `R_PWR_PD` 100k
+→ Default AUS; `C_UPWR_IN` 1µF (TI-DS Pin-1-Note), `C_PWR_SW` 10µF auf
++5V_SW. Lader U7 hängt VOR dem Switch → „dunkel, aber lädt". ADR-Korrekturen
+gegen TI SLVSD76C (Pinout-Seite gerendert): Pin 4 heißt CT (nicht „NC";
+floaten DS-erlaubt = schnellster Anstieg, CT-Cap = optionaler Soft-Start);
+QOD floaten würde die Quick-Discharge DEAKTIVIEREN → QOD an VOUT gebunden
+(DS-Option 2, aktive Entladung im Aus). Neue Lib-Symbole
+Power_Switch:TPS22918 + Switch:SW_SPDT.
+
+### 3. KRITISCH gefunden: globales „+5V"-Netz war eine quellenlose Insel
+
+Auf KEINEM Sheet existierte eine Brücke zwischen dem +5V_OUT-Hier-Netz (der
+realen Diode-OR-Rail) und dem globalen „+5V"-Netz der Power-Symbole. Folge im
+Netlist: PAM8403-PVDD/VDD (Audio), alle 23 LED-Anoden (mcp) und LED_CHRG
+(battery) hingen an einem Netz OHNE Quelle — Amp und sämtliche LEDs wären tot
+gewesen. Fix: die Rail trägt jetzt das globale +5V-Flag (Brücke bei (118,60));
+per ADR-0016 bleibt +5V bewusst UNgeschaltet (Amp geht über AMP_nSHDN-Pulldown
+aus, LED-Treiber sitzen in der geschalteten 3V3-Domäne → dunkel im Aus).
+
+### Verifikation
+
+Geometrisches ERC: 0 Fehler auf allen 7 Sheets. Netz-Trace (Union-Find inkl.
+globaler Power-Netze): VIN=Rail ✓, VOUT=+5V_SW=LDO-IN/EN=QOD ✓, +5V_SW≠Rail ✓,
+COM=ON ✓, ThrowA=Rail ✓, ThrowB isoliert ✓, R_PWR_PD/Caps korrekt ✓, Rail=+5V
+global ✓ (11/11). Generator deterministisch; jlc_bom.csv 58 Parts / 207
+Placements (+C131941, +C49023766). Host-Tests grün.
+
+---
+
 ## v0.7-r18.80 (2026-07-02) — Geometrisches Pin-Level-ERC: 8 Kupfer-Fehler + Boost-Loop-Instabilität behoben
 
 User: „Any other logical issues or something that will ruin the pcb?" — Antwort: ja, mehrere.

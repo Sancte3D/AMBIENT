@@ -1754,6 +1754,96 @@ def _audiojack_lib_symbol() -> str:
 """.strip()
 
 
+def _tps22918_lib_symbol() -> str:
+    """TPS22918DBVR High-Side-Load-Switch, SOT-23-6 (TI) — r18.81 / ADR-0016.
+
+    OFFIZIELLES PINOUT (TI-Datenblatt SLVSD76C, Section 5 "Pin Configuration
+    and Functions", DBV Top View — Seite als PNG gerendert und gelesen):
+
+        Pin 1 = VIN  (input; "Place ceramic bypass capacitor(s)... and GND")
+        Pin 2 = GND
+        Pin 3 = ON   (active high, "Do not leave floating")
+        Pin 4 = CT   (slew-rate control, "Can be left floating" → no_connect;
+                      optionaler CT-Cap = Soft-Start, bei Bedarf nachruesten)
+        Pin 5 = QOD  (Quick Output Discharge — DS-Option 2: "Tying QOD
+                      directly to VOUT and using the internal resistor")
+        Pin 6 = VOUT
+
+    HINWEIS: ADR-0016 nannte Pin 4 "NC" und Pin 5 "no-connect (interne
+    Quick-Discharge)" — beides leicht daneben: Pin 4 heisst CT (floaten
+    erlaubt = schnellster Anstieg), und QOD FLOATEN würde die Quick-Discharge
+    DEAKTIVIEREN. Fuer die ADR-Intention (definiertes Aus, LCD/3V3-Domäne
+    entlädt aktiv) wird QOD extern an VOUT gebunden.
+    """
+    out = []
+    out.append('    (symbol "Power_Switch:TPS22918" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)')
+    out.append('      (property "Reference" "U" (at 0 6.35 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "TPS22918" (at 0 -8.89 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Power_Switch:TPS22918_0_1"')
+    out.append('        (rectangle (start -6.35 5.08) (end 6.35 -6.35) (stroke (width 0.254) (type default)) (fill (type background)))')
+    out.append('      )')
+    out.append('      (symbol "Power_Switch:TPS22918_1_1"')
+    out.append('        (pin power_in line (at -8.89 2.54 0) (length 2.54)')
+    out.append('          (name "VIN" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "1" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin input line (at -8.89 -2.54 0) (length 2.54)')
+    out.append('          (name "ON" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "3" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin power_out line (at 8.89 2.54 180) (length 2.54)')
+    out.append('          (name "VOUT" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "6" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin no_connect line (at 8.89 0 180) (length 2.54)')
+    out.append('          (name "CT" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "4" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin passive line (at 8.89 -2.54 180) (length 2.54)')
+    out.append('          (name "QOD" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "5" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin power_in line (at 0 -8.89 90) (length 2.54)')
+    out.append('          (name "GND" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "2" (effects (font (size 1.27 1.27)))))')
+    out.append('      )')
+    out.append('    )')
+    return "\n".join(out)
+
+
+def _sw_spdt_lib_symbol() -> str:
+    """SPDT-Schiebeschalter (SW_PWR MST-12D18G3) — r18.81 / ADR-0016.
+
+    Pin-Nummern = Footprint-Pads des field_ambience:SW_MST-12D18_SlideSwitch_RA
+    (3 Pads @ 2,5 mm Pitch): 2 = MITTE. Als Common wird die Mitte angenommen —
+    Standard-Konvention bei 1P2T-Schiebeschaltern (Schleifer verbindet Mitte
+    mit jeweils einem Aussenpad).
+    UNVERIFIED — NEEDS HUMAN CHECK: das SHOU-HAN-Datenblatt (LCSC
+    8888d0ec4d46a4f060de0c433f52f277.pdf) bemasst nur Mechanik/Land-Pattern
+    und labelt die Terminals NICHT; vor Fab am physischen Teil durchpiepen
+    (Mitte↔Aussen in beiden Schaltstellungen).
+    """
+    out = []
+    out.append('    (symbol "Switch:SW_SPDT" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)')
+    out.append('      (property "Reference" "SW" (at 0 4.318 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "SW_SPDT" (at 0 -5.08 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Switch:SW_SPDT_0_1"')
+    out.append('        (circle (center -2.032 0) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))')
+    out.append('        (polyline (pts (xy -1.524 0.254) (xy 1.524 2.286)) (stroke (width 0) (type default)) (fill (type none)))')
+    out.append('        (circle (center 2.032 2.54) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))')
+    out.append('        (circle (center 2.032 -2.54) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))')
+    out.append('      )')
+    out.append('      (symbol "Switch:SW_SPDT_1_1"')
+    out.append('        (pin passive line (at 5.08 2.54 180) (length 2.54)')
+    out.append('          (name "A" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "1" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin passive line (at -5.08 0 0) (length 2.54)')
+    out.append('          (name "COM" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "2" (effects (font (size 1.27 1.27)))))')
+    out.append('        (pin passive line (at 5.08 -2.54 180) (length 2.54)')
+    out.append('          (name "B" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "3" (effects (font (size 1.27 1.27)))))')
+    out.append('      )')
+    out.append('    )')
+    return "\n".join(out)
+
+
+
 LIB_SYMBOLS = (
     LIB_SYMBOLS
     + "\n" + _pico2_lib_symbol()
@@ -1778,6 +1868,9 @@ LIB_SYMBOLS = (
     + "\n" + _ap7361c_lib_symbol()
     + "\n" + _nmos_sot23_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(8)
+    # r18.81 (ADR-0016 Power-Off-Block):
+    + "\n" + _tps22918_lib_symbol()
+    + "\n" + _sw_spdt_lib_symbol()
 )
 
 
@@ -2332,12 +2425,131 @@ def power_tree_sheet() -> str:
     PIN_IN_Y  = LDO_Y + 2.54    # Pin 4 IN  (132.54)
     PIN_OUT_Y = LDO_Y - 2.54    # Pin 5 OUT (127.46)
     LDO_DROP_X = 120.0
-    # Rail-Verlaengerung (115,60)→(120,60), dann Drop zur IN-Hoehe
+    # ================================================================
+    # r18.81 — ADR-0016 Power-Off-Block (war beschlossen, aber NIE im
+    # Schematic): U_PWR TPS22918 Load-Switch zwischen +5V-Rail und LDO-VIN,
+    # SW_PWR MST-12D18G3 Schiebeschalter auf U_PWR.ON, R_PWR_PD 100k
+    # Default-AUS, C_PWR_SW 10µF auf +5V_SW. Lader U7 haengt VOR dem Switch
+    # (an VBUS/Akku) → "dunkel, aber laedt".
+    #
+    # Dazu r18.81 KRITISCH: die Rail bekommt hier das GLOBALE Power-Flag
+    # "+5V" — bislang existierte auf KEINEM Sheet eine Bruecke zwischen dem
+    # +5V_OUT-Hier-Netz (Rail) und dem globalen "+5V"-Netz der Power-Symbole
+    # (PAM8403-PVDD/VDD, 23 LED-Anoden, LED_CHRG): das "+5V"-Netz war eine
+    # quellenlose Insel — Amp und saemtliche LEDs ohne Versorgung.
+    # ================================================================
+    # Rail-Verlaengerung (115,60)→(120,60); +5V-Flag bruecke bei (118,60)
     wires.append(wire(115, RAIL_Y, LDO_DROP_X, RAIL_Y, seed_suffix="ldo-rail-ext"))
-    wires.append(wire(LDO_DROP_X, RAIL_Y, LDO_DROP_X, PIN_IN_Y, seed_suffix="ldo-drop"))
+    symbols.append(place_symbol(lib_id="Power:+5V", ref="#PWR_RAIL5V", value="+5V",
+                                x=118, y=RAIL_Y, seed_suffix="rail-5v-flag",
+                                sheet_uuid_seed="sheet_power_tree"))
+    junctions.append(junction(118, RAIL_Y))
+    # Drop zur U_PWR-VIN-Hoehe (Pin 1 @ (123.11, 102.46) fuer U_PWR @ (132,105))
+    UPWR_X, UPWR_Y = 132.0, 105.0
+    UPWR_VIN_Y  = UPWR_Y - 2.54   # 102.46
+    UPWR_ON_Y   = UPWR_Y + 2.54   # 107.54
+    wires.append(wire(LDO_DROP_X, RAIL_Y, LDO_DROP_X, UPWR_VIN_Y, seed_suffix="ldo-drop"))
+    wires.append(wire(LDO_DROP_X, UPWR_VIN_Y, UPWR_X - 8.89, UPWR_VIN_Y, seed_suffix="upwr-vin"))
+    symbols.append(place_symbol(lib_id="Power_Switch:TPS22918", ref="U_PWR",
+                                value="TPS22918DBVR load switch (+5V_RAIL -> +5V_SW, ADR-0016 Haupt-Aus)",
+                                x=UPWR_X, y=UPWR_Y,
+                                footprint="Package_TO_SOT_SMD:SOT-23-6",
+                                datasheet="https://www.ti.com/lit/ds/symlink/tps22918.pdf",
+                                extra_props={
+                                    "MPN": "TPS22918DBVR",
+                                    "Manufacturer": "Texas Instruments",
+                                    "LCSC": "C131941",
+                                    "PIN_SOURCE": "TI SLVSD76C Section 5 (DBV Top View, PNG-gerendert): 1=VIN, 2=GND, 3=ON, 4=CT, 5=QOD, 6=VOUT",
+                                    "NOTE": "5,5V/2A/53mOhm. CT floatet (DS: 'Can be left floating' = schnellster Anstieg; optionaler CT-Cap = Soft-Start). QOD an VOUT gebunden (DS-Option 2: interne R_PD entlaedt +5V_SW im Aus aktiv). C131941 live verifiziert 2026-07-02 (42k Stock).",
+                                },
+                                seed_suffix="U_PWR", sheet_uuid_seed="sheet_power_tree"))
+    # VIN-Bypass 1µF (TI-DS: "Place ceramic bypass capacitor(s) between this
+    # pin and GND") am VIN-Knoten — links der Drop-Saeule (x=116), damit weder
+    # Cap-Body noch GND-Zweig den ON-Wire (y=107.54) kreuzt.
+    wires.append(wire(116, UPWR_VIN_Y, LDO_DROP_X, UPWR_VIN_Y, seed_suffix="upwr-vin-ext"))
+    symbols.append(place_symbol(lib_id="Device:C", ref="C_UPWR_IN",
+                                value="1uF X5R 0603 (TPS22918 VIN bypass, DS Pin-1-Note)",
+                                x=116, y=UPWR_VIN_Y - 3.81, rotation=180,
+                                footprint="Capacitor_SMD:C_0603_1608Metric",
+                                extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+                                seed_suffix="C_UPWR_IN", sheet_uuid_seed="sheet_power_tree"))
+    junctions.append(junction(LDO_DROP_X, UPWR_VIN_Y))
+    wires.append(wire(116, UPWR_VIN_Y - 7.62, 116, UPWR_VIN_Y - 9.54, seed_suffix="c-upwr-in-gnd"))
+    symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_C_UPWR_IN", value="GND",
+                                x=116, y=UPWR_VIN_Y - 9.54, rotation=180, seed_suffix="c-upwr-in-gnd",
+                                sheet_uuid_seed="sheet_power_tree"))
+    # U_PWR GND (Pin 2, unten)
+    wires.append(wire(UPWR_X, UPWR_Y + 8.89, UPWR_X, UPWR_Y + 11, seed_suffix="upwr-gnd"))
+    symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_U_PWR", value="GND",
+                                x=UPWR_X, y=UPWR_Y + 11, seed_suffix="upwr-gnd",
+                                sheet_uuid_seed="sheet_power_tree"))
+    # VOUT (Pin 6) → "+5V_SW"-Netz + C_PWR_SW 10µF; QOD (Pin 5) → VOUT (aktive
+    # Entladung im Aus, DS-Option 2). CT (Pin 4) = no_connect-Pin (floatet).
+    wires.append(wire(UPWR_X + 8.89, UPWR_VIN_Y, 150, UPWR_VIN_Y, seed_suffix="upwr-vout"))
+    labels.append(label(146, UPWR_VIN_Y, "+5V_SW"))
+    wires.append(wire(UPWR_X + 8.89, UPWR_ON_Y, 150, UPWR_ON_Y, seed_suffix="upwr-qod"))
+    wires.append(wire(150, UPWR_ON_Y, 150, UPWR_VIN_Y, seed_suffix="upwr-qod-up"))
+    # C_PWR_SW nach OBEN geklappt (rot=180, GND oberhalb) — haengend haette
+    # sein Body/GND-Zweig den QOD-Wire (y=107.54) gekreuzt (die r18.80-Falle).
+    symbols.append(place_symbol(lib_id="Device:C", ref="C_PWR_SW",
+                                value="10uF X5R 0805 (+5V_SW output cap, ADR-0016)",
+                                x=144, y=UPWR_VIN_Y - 3.81, rotation=180,
+                                footprint="Capacitor_SMD:C_0805_2012Metric",
+                                extra_props={"MPN": "CL21A106KAYNNNE", "LCSC": "C15850"},
+                                seed_suffix="C_PWR_SW", sheet_uuid_seed="sheet_power_tree"))
+    junctions.append(junction(144, UPWR_VIN_Y))
+    wires.append(wire(144, UPWR_VIN_Y - 7.62, 144, UPWR_VIN_Y - 9.54, seed_suffix="c-pwr-sw-gnd"))
+    symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_C_PWR_SW", value="GND",
+                                x=144, y=UPWR_VIN_Y - 9.54, rotation=180, seed_suffix="c-pwr-sw-gnd",
+                                sheet_uuid_seed="sheet_power_tree"))
+    # ON (Pin 3) ← PWR_ON-Netz (Label-Match zu SW_PWR/R_PWR_PD)
+    wires.append(wire(UPWR_X - 8.89, UPWR_ON_Y, 118, UPWR_ON_Y, seed_suffix="upwr-on"))
+    labels.append(label(118, UPWR_ON_Y, "PWR_ON"))
+    # SW_PWR MST-12D18G3: COM (Pad 2, Mitte) → PWR_ON; Throw A (Pad 1) →
+    # +5V-Rail; Throw B (Pad 3) → NC-Label. Side-actuated am Board-Rand:
+    # Datenblatt-verifiziert (LCSC-PDF, Zeichnung S.1): Stem 1,5×1,5 mm ragt
+    # HORIZONTAL 3 mm ueber den Body hinaus (gegenueber der Pin-Seite),
+    # Oberkante 0,2 mm unter Body-Top (Body 4,0 mm hoch) → Stem-Fenster
+    # z ≈ 2,3–3,8 mm ueber PCB-Oberflaeche; Travel 2 mm ±0,2, 200 gf lateral.
+    SWP_X, SWP_Y = 108.0, 118.0
+    symbols.append(place_symbol(lib_id="Switch:SW_SPDT", ref="SW_PWR",
+                                value="MST-12D18G3 slide switch (Haupt-Aus, side-actuated, ADR-0016)",
+                                x=SWP_X, y=SWP_Y,
+                                footprint="field_ambience:SW_MST-12D18_SlideSwitch_RA",
+                                datasheet="https://datasheet.lcsc.com/datasheet/pdf/8888d0ec4d46a4f060de0c433f52f277.pdf",
+                                extra_props={
+                                    "MPN": "MST-12D18G3",
+                                    "Manufacturer": "SHOU HAN",
+                                    "LCSC": "C49023766",
+                                    "FP_NOTE": "r18.81 GEGEN DATENBLATT VERIFIZIERT: Land-Pattern MSK12D = 3 Pads 1,2 mm @ 2,5 mm Pitch + 2 Loecher Ø0,9 @ 6,8 mm, Pad-Mitte 3,2 mm (=2,1+2,2/2) von der Lochlinie — vendored Footprint stimmt exakt. Body flach auf der (horizontalen) PCB, Stem parallel zur PCB 3 mm ueber Body-Kante → am Board-Rand platzieren, Stem durch Slot in der Gehaeuse-Seitenwand.",
+                                    "PIN_NOTE": "UNVERIFIED — NEEDS HUMAN CHECK: Common = MITTELPAD angenommen (1P2T-Schiebeschalter-Konvention); das SHOU-HAN-DB labelt die Terminals nicht — vor Fab am Teil durchpiepen. Falsch-Fall waere fail-safe: Geraet liesse sich nur nicht einschalten (PWR_ON floatet nie: 100k-PD).",
+                                },
+                                seed_suffix="SW_PWR", sheet_uuid_seed="sheet_power_tree"))
+    # COM (Pad 2, links am Symbol) → PWR_ON + R_PWR_PD 100k → GND
+    wires.append(wire(SWP_X - 5.08, SWP_Y, 100, SWP_Y, seed_suffix="swpwr-com"))
+    labels.append(label(100, SWP_Y, "PWR_ON"))
+    symbols.append(place_symbol(lib_id="Device:R", ref="R_PWR_PD",
+                                value="100k 0603 (PWR_ON pull-down, Default AUS)",
+                                x=100, y=SWP_Y + 3.81,
+                                footprint="Resistor_SMD:R_0603_1608Metric",
+                                extra_props={"MPN": "0603WAF1003T5E", "LCSC": "C25803"},
+                                seed_suffix="R_PWR_PD", sheet_uuid_seed="sheet_power_tree"))
+    wires.append(wire(100, SWP_Y + 7.62, 100, SWP_Y + 10.5, seed_suffix="r-pwr-pd-gnd"))
+    symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_R_PWR_PD", value="GND",
+                                x=100, y=SWP_Y + 10.5, seed_suffix="r-pwr-pd-gnd",
+                                sheet_uuid_seed="sheet_power_tree"))
+    # Throw A (Pad 1) → +5V-Rail (globales Flag); Throw B (Pad 3) → NC-Label
+    wires.append(wire(SWP_X + 5.08, SWP_Y - 2.54, 117, SWP_Y - 2.54, seed_suffix="swpwr-throw-a"))
+    symbols.append(place_symbol(lib_id="Power:+5V", ref="#PWR_SWPWR", value="+5V",
+                                x=117, y=SWP_Y - 2.54, rotation=270, seed_suffix="swpwr-5v",
+                                sheet_uuid_seed="sheet_power_tree"))
+    wires.append(wire(SWP_X + 5.08, SWP_Y + 2.54, 117, SWP_Y + 2.54, seed_suffix="swpwr-throw-b"))
+    labels.append(label(117, SWP_Y + 2.54, "NC_SW_PWR_B"))
+    # ---- LDO-VIN haengt jetzt am geschalteten Netz: "+5V_SW"-Label statt Drop
     wires.append(wire(LDO_DROP_X, PIN_IN_Y, LDO_X - 8.89, PIN_IN_Y, seed_suffix="ldo-in"))
-    # EN-Pin → IN-Pin (always-on); auf Hoehe PIN_EN_Y nach links bis x=114, dann
-    # vertikal runter zur Hoehe PIN_IN_Y, dort auf den IN-Wire einfaedeln.
+    labels.append(label(LDO_DROP_X, PIN_IN_Y, "+5V_SW"))
+    # EN-Pin → IN-Pin (always-on relativ zu +5V_SW); auf Hoehe PIN_EN_Y nach
+    # links bis x=114, dann vertikal runter zur Hoehe PIN_IN_Y einfaedeln.
     wires.append(wire(LDO_X - 8.89, PIN_EN_Y, 114, PIN_EN_Y, seed_suffix="ldo-en-left"))
     wires.append(wire(114, PIN_EN_Y, 114, PIN_IN_Y, seed_suffix="ldo-en-up"))
     wires.append(wire(114, PIN_IN_Y, LDO_DROP_X, PIN_IN_Y, seed_suffix="ldo-en-into-in"))
