@@ -59,7 +59,7 @@ G = [
    ("U5","AP7361C LDO","5 V → 3.3 V (thermal hotspot)","C460397","jlc",False),
    ("U_PWR","TPS22918 load switch","the power-off — gates the whole 3V3 domain (r18.81: ADR-0016 block is now actually drawn in the schematic — it was decided but missing; QOD→VOUT for active discharge, CT floats per TI DS; C131941 live-verified, 42k stock)","C131941","jlc",False),
    ("SW_PWR","MST-12D18G3 slide switch","on/off — r18.81: side-mounting on a HORIZONTAL pcb datasheet-verified: body lies flat, stem sticks out horizontally 3 mm past the body at z ≈ 2.3–3.8 mm above the board, 2 mm travel → place at board edge, slot in the enclosure side wall. Footprint matches the official MSK12D land pattern exactly. ⚠ terminal mapping (common = middle) assumed per SPDT convention — buzz out before fab; wrong-case is fail-safe (won't power on)","C49023766","jlc",True),
-   ("U7","MCP73831 charger","LiPo charger (charges when off)","C424093","jlc",False),
+   ("U7","MCP73831 charger","LiPo charger (charges when off; r18.82: pinout DS-verified + missing 4.7µF VDD input cap added per DS typical application)","C424093","jlc",False),
    ("J9","JST-PH 2.0 (battery)","LiPo connector","C295747","jlc",False),
    ("D1","USBLC6-2SC6","USB ESD protection","C2687116","jlc",False),
    ("F1","PTC fuse 3 A","USB overcurrent protection","C18198349","jlc",False),
@@ -71,8 +71,8 @@ G = [
  ("Audio", "#10b981", [
    ("U3","PCM5102A DAC","I²S → analog audio","C107671","jlc",False),
    ("U4","PAM8403 Class-D amp","drives the speakers","C17337","jlc",False),
-   ("J8","PJ-320D 3.5 mm line-out","audio out","C431535","jlc",True),
-   ("J10","PJ-320D 3.5 mm MIDI-out","MIDI out (TRS Type A)","C431535","jlc",True),
+   ("J8","PJ-320D 3.5 mm line-out","audio out (r18.82: pad map fixed against the SHOU HAN datasheet — pads are 1=sleeve, 2=ring, 3=detect, 4=tip; the old map put LEFT AUDIO on the grounded barrel and the detect line on the tip. Footprint pad pitch + locator holes verified = drawing. Added R_DET 10k + C_DET 1µF: the detect contact rests on the TIP when unplugged, so the MCP input needed clamp-current protection from the DAC’s ±3V swings)","C431535","jlc",True),
+   ("J10","PJ-320D 3.5 mm MIDI-out","MIDI out (TRS Type A) — same r18.82 pad-map fix as J8","C431535","jlc",True),
    ("FB1","BLM18AG601 ferrite","audio supply filter","C19330","jlc",False),
    ("FB2","BLM18AG601 ferrite","audio supply filter (r18.70: C84094 → C19330)","C19330","jlc",False),
    ("J6/J7","1×2 header ×2","speaker leads","C124375","hand",False),
@@ -84,7 +84,7 @@ G = [
    ("J3","1×8 header","plugs the LCD in","C124383","hand",False),
  ]),
  ("Controls", "#0ea5e9", [
-   ("EN1-4","ALPS EC11E18244AU ×4","4 push-encoders","C202365","hand",True),
+   ("EN1-4","ALPS EC11E18244AU ×4","4 push-encoders (r18.82: symbol pin numbers fixed to the KiCad footprint’s LETTERED pads A/B/C/S1/S2 — with the old numeric pins 1-5 NOTHING would have connected: all 4 encoders had zero joined pads in the netlist)","C202365","hand",True),
    ("SW1-5","Kailh Choc V1 CPG135001D01 ×5, direct-solder","cell trigger keys — real keyswitch feel (~3mm travel), DIGITAL on/off via MCP23017 (switch→I²C expander→MCU). Solders straight to the board (2 THT legs, hand-placed like the modifiers), same technique as any other button here (r18.75 — was a hot-swap socket in r18.74, simplified: the socket had no clean part number and needed fiddly small-SMD hand-soldering; direct-solder is plain THT, at the cost of the switch no longer being swappable). ⚠ LCSC shows 0 stock at time of writing + JLC notes their automated line needs a custom fixture for this part — hand-soldering the 2 legs needs neither.","C400229","hand",True),
    ("SW6-10","HX B3F-4055 tactile ×5","modifier buttons (THT, square head for caps) — same part as the cells; r18.71: C2845240 (stock 30) → C36498965 (20k stock, ~$0.06); verify THT footprint/pinout","C36498965","hand",True),
    ("SW11/BOOT","TS-1088 tactile ×2","Reset + BOOT0 (2 service buttons)","C720477","jlc",False),

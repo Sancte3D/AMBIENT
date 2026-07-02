@@ -10,6 +10,72 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.82 (2026-07-02) — Datenblatt-Verifikation aller restlichen Komponenten: 2 kritische Pad-Mapping-Fehler + 2 Lücken
+
+User: „All the other components are right? check datasheets." — systematischer
+Abgleich jedes verbleibenden ICs/Bauteils gegen das Original-Datenblatt
+(Microchip DS20001952, NXP PCA9685 Rev.4, Microchip DS20001984, ST USBLC6-2,
+ST DS12110 Fig. 5, Abracon/LCSC, SHOU HAN PJ-320D + HX B3F-4055) UND jedes
+Symbol-Pin↔Footprint-Pad-Paars (KiCad matcht Pin-Nummer gegen Pad-Namen als
+STRING — die r18.82-Fehlerklasse).
+
+### KRITISCH — Pad-Mapping (Symbol-Pin-Nummer ≠ Footprint-Pad-Name)
+
+1. **EN1–EN4 Encoder: ALLE 4 komplett unverbunden.** Der offizielle
+   KiCad-Footprint `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` hat
+   BENANNTE Pads **A / B / C / S1 / S2** (+MP) — das Custom-Symbol nutzte
+   numerische Pins 1–5. String-Match ⇒ kein einziger Encoder-Pin haette im
+   Netlist ein Pad gehabt. Fix: Pin-Nummern → A/B/C/S1/S2 (Pad-Geometrie
+   gegen den GitLab-Footprint verifiziert: A(0,0), C(0,2.5)=Common-Mitte,
+   B(0,5) = ALPS-Terminal-Reihenfolge A-C-B ✓).
+2. **J8/J10 PJ-320D: Pad-Map falsch — Audio-L lag auf dem BARREL.** Das
+   SHOU-HAN-Datenblatt (P.C.B-Layout + Schaltbild) ordnet zu: Pad 1=A=Sleeve,
+   2=D=Ring, 3=C=Tip-Switch (DETECT), 4=B=Tip. Das Symbol mappte T=1, R=2,
+   S=3, DET=4 ⇒ links Audio auf dem (geerdeten) Sleeve-Barrel, GND auf dem
+   Detect-Kontakt, JACK_DETECT auf dem Tip — Line-Out UND MIDI-Out falsch.
+   Fix: T=4, R=2, S=1, DET=3. Vendored-Footprint-Geometrie verifiziert
+   (Pad-Pitch 3,0/4,0 mm, Locator Ø1,0 @ 7,0 mm = Zeichnung exakt) —
+   **TODO B0b damit geschlossen.**
+3. **Folge-Fix aus #2:** laut Datenblatt ruht der Detect-Kontakt OHNE Stecker
+   am TIP (nicht am Sleeve) → MCP-GPA6 hinge unplugged direkt am DAC-L-Ausgang
+   (±3 Vpk): die Eingangs-Clamp haette die negativen Halbwellen ueber 22R
+   kurzgeschlossen (>100 mA Injection + Verzerrung am Speaker). Neu:
+   **R_DET_J8 10k** (Clamp-Strom < 300 µA) + **C_DET_J8 1 µF** (Audio-AC-
+   Filter, fc ≈ 16 Hz). Pegel: unplugged ≈ 0,3 V LOW / plugged 3,3 V HIGH.
+
+### Lücken (Datenblatt-Anforderungen)
+
+4. **MCP73831: 4,7-µF-VDD-Eingangskondensator fehlte** (DS20001984 Typical
+   Application) — der VBUS_USBC-Knoten hatte keinerlei lokale Kapazitaet.
+   Neu: C_CHG_IN 4,7 µF (C46653). Pinout 1=STAT/2=VSS/3=VBAT/4=VDD/5=PROG ✓
+   verifiziert; R21 2k → 500 mA = exakt die DS-Beispielschaltung ✓.
+5. **STM32 VSS-Pin 99 war nur ZUFAELLIG geerdet** (der alte horizontale
+   VSSA-Stub lief ueber seinen Anker). DS12110 Fig. 5: VSS = 10/26/49/74/**99**.
+   Neu: expliziter Stub; VSSA-Stub senkrecht wie alle Unterseiten-Pins.
+
+### Verifiziert OHNE Befund (gegen Original-Datenblätter)
+
+- **MCP23017-E/SS**: SSOP-Pinout = SOIC/SPDIP (DS20001952 S. 1) — Generator ✓.
+- **PCA9685PW**: TSSOP28 Tabelle 3 — alle 28 Pins ✓ (U6 + U10).
+- **USBLC6-2SC6**: 1/6=I/O1, 3/4=I/O2, 5=VBUS, 2=GND ✓ Up/Downstream-Paarung ✓.
+- **STM32H743 LQFP100**: komplette Pin-Map gegen DS12110 Fig. 5 ✓ (VBAT 6,
+  VDD 11/27/50/75/100, VSSA 19, VREF+ 20, VDDA 21, VCAP 48/73, BOOT0 94).
+- **ABLS-8.000MHZ-B4-T**: CL = 18 pF (live) → 27-pF-Load-Caps korrekt ✓.
+- **D2 SMAJ5.0A**: Kathode→Rail, Anode→GND ✓. **USB-C**: Symbol-Pins A1…B12/S1
+  = KiCad-Footprint-Pads ✓. **HX B3F-4055 (SW6–10)**: interne Paarung
+  ①-② / ③-④ (Reihen) = Footprint-Pad-Paarung ✓; Lochreihenabstand 5,08 vs
+  DS 5,00 — von Ø1,5-Drill absorbiert (Layout-Nicety fuer Aron).
+- Bereits frueher DS-verifiziert: TPS61089, TPS22918, MST-12D18G3, AP7361C,
+  PCM5102A, PAM8403H, L1 SWPA6045, Kailh Choc, TS-1088.
+
+### Verifikation
+
+ERC 0 Fehler auf allen 7 Sheets; Generator deterministisch; jlc_bom.csv
+58 Parts / 210 Placements (+R_DET_J8, C_DET_J8, C_CHG_IN); Host-Tests
+352298 Checks, 0 Failures.
+
+---
+
 ## v0.7-r18.81 (2026-07-02) — Power-Off-Block (ADR-0016) endlich im Schematic + „+5V"-Netz-Brücke + SW_PWR-Seitenmontage verifiziert
 
 User (mit Foto vom Schalter-Render): „What about the side button on off switch.

@@ -2,6 +2,22 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.82 (2026-07-02, User: „All the other components right? check datasheets"):**
+> Systematischer Datenblatt-Abgleich aller restlichen Komponenten + jedes
+> Symbol↔Footprint-Pad-Paars. **2 kritische Pad-Mapping-Fehler:** (1) alle
+> 4 Encoder waren KOMPLETT unverbunden — der offizielle KiCad-EC11E-Footprint
+> hat BENANNTE Pads A/B/C/S1/S2, das Symbol nutzte 1–5 (KiCad matcht Strings)
+> → Pin-Nummern korrigiert; (2) PJ-320D-Jacks (Line-Out + MIDI): Pad-Map
+> falsch — Audio-L lag auf dem geerdeten Sleeve-Barrel, JACK_DETECT auf dem
+> Tip → korrigiert (S=1/A, R=2/D, DET=3/C, T=4/B, gegen SHOU-HAN-Zeichnung;
+> TODO B0b geschlossen) + R_DET 10k/C_DET 1µF ergänzt (Detect ruht unplugged
+> am TIP = DAC-Ausgang → Clamp-Schutz nötig). **2 Lücken:** MCP73831 ohne
+> DS-gefordertem 4,7-µF-VDD-Cap (→ C_CHG_IN); STM32-VSS-Pin 99 nur zufällig
+> geerdet (→ explizit, DS12110 Fig. 5). **Ohne Befund verifiziert:** MCP23017-
+> SSOP, PCA9685 (beide), USBLC6, komplette H743-LQFP100-Map, Crystal CL18pF→
+> 27pF-Caps, TVS-Polarität, USB-C-Pads, HX-B3F-Paarung. ERC 0 Fehler, 58
+> Parts/210 Placements, Tests grün. Details: CHANGELOG r18.82.
+>
 > **r18.81 (2026-07-02, User-Frage „side on/off switch — mountable auf horizontaler PCB?"):**
 > **Ja — datenblatt-verifiziert:** MST-12D18G3 liegt flach auf der PCB, der
 > Schiebe-Stem ragt HORIZONTAL 3 mm über die Body-Kante (z ≈ 2,3–3,8 mm über
