@@ -10,6 +10,74 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.79 (2026-07-01) — Elektrik-Audit: 3 kritische Power-Fehler behoben
+
+User: „Überprüfe nochmal BOM und PCB components und connections. Nicht
+mechanik. Schaue dass keine kritischen fehler existieren."
+
+Systematischer Elektrik-Review: Hier-Label↔Root-Pin-Matching, Root-Verdrahtung
+(Union-Find über Wire-Endpunkte + Label-Merge), hängende Netze, Refdes-
+Dubletten, I²C-Adressen, Pull-ups, Boost-Schaltung gegen das TI-Datenblatt
+(SLVSD38C, Formeln von den gerenderten PDF-Seiten abgelesen, nicht geraten).
+
+### 🔴 Fund 1 — Boost-FB-Teiler: Rail wäre 7,43 V statt 5 V gewesen
+
+- R23/R24 = 200k/39k, VREF laut TI-EC-Tabelle **1,212 V** → VOUT = 1,212 ×
+  (1+200/39) = **7,43 V**. PAM8403 (abs max 5,5 V) und der geplante TPS22918
+  (5,5 V) wären beim ersten Einschalten zerstört worden, AP7361C (6 V max)
+  überfahren.
+- **Fix:** R23 = **121k** (0603WAF1213T5E, **C25809**, 71k Stock, live
+  verifiziert) → VOUT = **4,97 V**. (122k für exakt 5,00 V hat keinen
+  verifizierbaren LCSC-Bestand; −0,6 % ist die sichere Richtung.)
+
+### 🔴 Fund 2 — R_ILIM 20k = 51,5 A Stromlimit (faktisch keins)
+
+- TI Gl. 4: ILIM = 1.030.000/R_ILIM. Der Generator-Kommentar behauptete
+  „20k → ~4 A“ — real wären es **51,5 A**; der Induktor (Isat min 6,75 A)
+  hätte im Fehlerfall ungebremst gesättigt.
+- **Fix:** R_ILIM = **174k** (0603WAF1743T5E, **C22890**, live verifiziert)
+  → 5,92 A typ / 5,12 A min (≥ Worst-Case-Peak ~4,7 A) / ~6,7 A max
+  (≤ Isat-min 6,75 A).
+
+### 🔴 Fund 3 — Q1-Power-Path: Backfeed + Fuse-Bypass
+
+- Alt: Q1 P-FET S=VBUS (pre-fuse), D=+5V-Rail, G→GND — UND power_tree
+  exportierte den Rail direkt hinter F1. Ohne USB: Boost-5V → Q1-Body-Diode
+  (und parallel durch F1, Polyfuses leiten bidirektional) → VBUS ≈ 4,3 V →
+  Gate-Vgs −4,3 V → Q1 voll leitend → **Lader U7 (VDD=VBUS) lädt den Akku aus
+  dessen eigenem Boost** (Selbstentladeschleife ~1,5× Ladestrom), USB-Detect
+  (MCP GPA7) dauerhaft HIGH, 5 V am offenen USB-C-Stecker. Mit USB: Laststrom
+  lief über Q1 **an F1 vorbei** (pre-fuse→post-fuse) — Kurzschlussschutz
+  ausgehebelt.
+- **Fix:** Q1 + R22 entfernt; **Dioden-OR**: USB → F1 → [D2-TVS pre-Diode] →
+  **D3B** (2. SS34, gleicher Code C8678) → Rail ‖ Boost → D3 → Rail. Kein
+  neues/unverifiziertes Bauteil; Kosten ~0,35 V Drop im USB-Pfad (Rail ~4,6 V
+  an USB — LDO braucht >3,6 V, PAM8403 2,5–5,5 V: unkritisch).
+
+### 🟡 Kleinere Funde
+
+- R_FSW 360k = **~440 kHz** (TI Gl. 3), nicht „1,21 MHz“ wie seit r12-B11
+  kommentiert — 440 kHz ist zulässig (200 kHz–2,2 MHz) und weit über dem
+  Audioband; Widerstand bleibt, Kommentare/Doku korrigiert.
+- FSW-Widerstand hängt korrekt am SW-Node — TI-DS sagt ausdrücklich
+  „resistor between this pin and the SW pin" (mein anfänglicher
+  GND-Verdacht war falsch — per Datenblatt geklärt, nicht geraten).
+- PINMAP: „AP7361A-33ER“ → AP7361C-33 (Doku-Drift); PCB_BOM-Restdrift auf
+  r18.70-Stand gezogen (C_BULK2 C23742, LED_CHRG C965800, VCAP C23630).
+- Root-Sheet: `+3V3_OUT`/`GND_OUT`-Sheet-Pins hängen unverdrahtet (Rails
+  laufen über globale Power-Symbole — kosmetisch, ERC-Hinweis für Aron).
+
+### ✅ Ohne Befund verifiziert
+
+Hier-Labels ↔ Root-Pins vollständig; Root-Verdrahtung verbindet alle
+Partner-Pins; 0 Refdes-Dubletten (200 Instanzen); I²C 0x20/0x40/0x41
+kollisionsfrei (U10-A0 an +3V3 nachgemessen); BOOT0 10k-Pull-down + 1k-Serie
+korrekt; NRST 10k+100nF; CC1/CC2 je eigener 5,1k; VCAP 2×2,2 µF; USBLC6-
+Verdrahtung; MCP_INT→PC13; PCM5102A-Konfigpins + Charge-Pump-Caps;
+Cell-/Modifier-/Encoder-Netze. KiCad-GUI-ERC bleibt finaler Gate (Aron).
+
+---
+
 ## v0.7-r18.77 (2026-07-01) — L1-Boost-Inductor: toter LCSC-Link + nicht existente MPN gefunden + behoben
 
 User klickte auf L1 in der Aron-BOM-HTML ("SWPA6045 2.2µH") — die LCSC-Seite

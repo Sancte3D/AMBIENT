@@ -34,6 +34,8 @@ JLC = {
  # r18.70 verified replacements for the 4 sourcing fixes:
  "C23630":("Basic",1894059),"C965800":("Extended",649682),"C23742":("Extended",41420),
  "C36498965":("Extended",19884),"C2845239":("Extended",1488),
+ # r18.77/79 verified additions (JLCPCB parts search, 2026-07-01):
+ "C36500":("Extended",5235),"C25809":("Basic",70974),"C22890":("Basic",2534),
 }
 LOW = 100   # stock below this = warn
 
@@ -51,7 +53,7 @@ G = [
    ("J1","USB-C TYPE-C-31-M-12","charging + USB-DFU flash","C165948","jlc",True),
    ("U8","TPS61089 boost","battery 3.7 V → 5 V","C165129","jlc",False),
    ("L1","SWPA6045S2R2NT 2.2 µH","boost inductor (r18.77: corrected from C83455, a dead link -- and SWPA6045S2R2MT, which does not exist; real part is C36500)","C36500","jlc",False),
-   ("Q1","DMG2305UX P-MOSFET","power-path switch","C150470","jlc",False),
+   ("D3/D3B","SS34 Schottky ×2","diode-OR power mux: boost→rail + USB(post-fuse)→rail (r18.79 — replaces the Q1 P-FET power-path, which back-fed the boost into VBUS/the charger and bypassed the fuse)","C8678","jlc",False),
    ("U5","AP7361C LDO","5 V → 3.3 V (thermal hotspot)","C460397","jlc",False),
    ("U_PWR","TPS22918 load switch","the power-off — gates 3.3 V","C131941","jlc",False),
    ("SW_PWR","MST-12D18G3 slide switch","on/off, side-actuated","C49023766","jlc",True),
@@ -60,7 +62,6 @@ G = [
    ("D1","USBLC6-2SC6","USB ESD protection","C2687116","jlc",False),
    ("F1","PTC fuse 3 A","USB overcurrent protection","C18198349","jlc",False),
    ("D2","SMAJ5.0A TVS","5 V surge clamp","C113952","jlc",False),
-   ("D3","SS34 Schottky","boost rectifier","C8678","jlc",False),
    ("C_BULK","470 µF tantalum 1210","bulk reservoir","C444831","jlc",False),
    ("C_BULK2","100 µF MLCC 1210","transient reservoir (r18.70: C2880380 → C23742)","C23742","jlc",False),
    ("LiPo","2000 mAh pouch 503759","the battery","https://thepihut.com/products/2000mah-3-7v-lipo-battery","off",False),

@@ -28,13 +28,13 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | D3 | SS34 Schottky | — | SMA | C8678 |
 | U5 | AP7361C-33Y5 LDO | 3.3 V | SOT-89-5 | C460397 |
 | U7 | MCP73831 charger | 500 mA | SOT-23-5 | C424093 |
-| Q1 | DMG2305UX P-MOS (power-path) | — | SOT-23 | C150470 |
+| D3B | SS34 Schottky — USB-Pfad Dioden-OR (r18.79, ersetzt Q1-Power-Path: Backfeed-/Fuse-Bypass-Bug) | — | SMA | C8678 |
 | D2 | SMAJ5.0A TVS | — | SMA | C113952 |
 | F1 | 1812L300 PTC fuse | 3 A | 1812 | C18198349 |
 | C_BULK | Polymer-tantalum | 470 µF/10 V | Case-E | C444831 |
-| C_BULK2 | MLCC | 100 µF/10 V | 1210 | C2880380 |
-| R23 / R24 | boost FB divider | 200 k / 39 k | 0603 | C25811 / C23153 |
-| R_FSW / R_ILIM | boost set | 360 k / 20 k | 0603 | C23146 / C4184 |
+| C_BULK2 | MLCC | 100 µF/10 V | 1210 | C23742 (r18.79 doc-sync: table still said C2880380, generator/jlc_bom have C23742 since r18.70) |
+| R23 / R24 | boost FB divider → 4.97 V (r18.79: was 200k = **7.4 V!**, VREF 1.212 V per TI DS) | 121 k / 39 k | 0603 | C25809 / C23153 |
+| R_FSW / R_ILIM | boost set: Fsw ~440 kHz / ILIM 5.9 A (r18.79: R_ILIM was 20k = 51 A, i.e. no limit) | 360 k / 174 k | 0603 | C23146 / C22890 |
 | R_COMP / C_COMP | boost comp | 22 k / 1 nF | 0603 | C31850 / C1588 |
 | C_BOOT / C_BOOST_OUT / C_BOOST_HF | boost caps | 100 nF / 4.7 µF / 100 nF | 0603/0805 | C14663 / C45783 / C14663 |
 | C_LDO_IN / C_LDO_OUT | LDO caps | 4.7 µF | 0603 | C46653 |
@@ -68,7 +68,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | LED11G–LED15G (5) | cell shift-hold | green 0603 | 0603 | C12624 |
 | LED_VU1–LED_VU8 (8) | VU level meter — **all white** (was blue; uses the existing white) | white 0603 | 0603 | C965808 |
 | LED_HB | heartbeat | white 0603 | 0603 | C965808 |
-| LED_CHRG | charge status | amber 0603 | 0603 | C72041 |
+| LED_CHRG | charge status | orange 0603 | 0603 | C965800 (r18.79 doc-sync: was C72041, blue+EOL — fixed r18.70 in generator) |
 | R_LED6–15 (15), R_VU1–8 (8) | LED ballast | 390 Ω | 0603 | C23151 |
 | R_OE, R_OE2 | PCA /OE pull-up | 10 k | 0603 | C25804 |
 | R_BLK_PD, R_SLED, R_BOOT0/_SW, R_NRST | misc pulls | 5.1k/820/1k/10k | 0603 | C23186/C23253/C21190/C25804 |
@@ -113,10 +113,10 @@ RC stay removed; PC0/PC1/PA4/PB0/PB1 stay freed.
 | 1 µF X5R | 0603 | ~10 (C_VCC, C_VDDA1, C_VREF*, …) | C15849 |
 | 10 µF X5R | 0805 | ~9 (C_VDD*A, C9, C_BAT_IN, …) | C45783 |
 | 4.7 µF X5R | 0805 | C1, C6b, C7a, C8a, C_PCA*, C_CPVDD_BULK | C15850 |
-| 2.2 µF (VCAP) | 0603 | C_VCAP1, C_VCAP2 | C24539 |
+| 2.2 µF (VCAP) | 0603 | C_VCAP1, C_VCAP2 | C23630 (r18.79 doc-sync: was C24539, not in JLC assembly — fixed r18.70 in generator) |
 | 22 R | 0603 | (audio/series where used) | C23345 |
 | 4.7 k / 5.1 k | 0603 | R4/R5 (I²C pulls) · R2/R3 | C23162 / C23186 |
-| 10 k (generic) | 0603 | R6–R18, R20, R22 | C25804 |
+| 10 k (generic) | 0603 | R6–R18, R20 (R22 entfernt r18.79 mit Q1) | C25804 |
 
 ---
 

@@ -2,6 +2,19 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.79 (2026-07-01, Elektrik-Audit BOM+Verbindungen):** 3 kritische Fehler im
+> Power-Design gefunden + behoben (alle gegen das TI-TPS61089-Datenblatt
+> verifiziert): (1) **Boost-FB-Teiler ergab 7,43 V statt 5 V** (R23 200k→121k,
+> C25809) — hätte Amp + Load-Switch zerstört; (2) **R_ILIM 20k = 51 A ≈ kein
+> Stromlimit** (→174k, C22890, 5,9 A ≤ L1-Isat); (3) **Q1-Power-Path-Backfeed**:
+> Boost speiste VBUS/Lader rückwärts (Selbstladeschleife, Akku-Drain, USB-Detect
+> dauerhaft HIGH) + Q1 überbrückte die Sicherung → Q1/R22 entfernt, Dioden-OR
+> mit 2. SS34 (D3B, C8678). Plus Doku-Fixes: Fsw real ~440 kHz (nicht 1,21 MHz),
+> PINMAP AP7361A→C, PCB_BOM-Restdrift (C_BULK2/LED_CHRG/VCAP auf r18.70-Stand).
+> Strukturell verifiziert: Hier-Pins↔Root-Wiring vollständig, 0 Refdes-Dubletten,
+> I²C 0x20/0x40/0x41 kollisionsfrei, BOOT0/CC/FSW korrekt. ERC in KiCad (Aron)
+> bleibt als finaler Gate.
+>
 > **r18.78 (2026-07-01, Cell-Switch-Sourcing + Cap-Länge):** User fragte, ob
 > andere Kailh-Choc-Farben gehen (das Schematic-Beispiel C400229 zeigte
 > "Not available now") und ob 2–3 cm lange Cell-Caps später ein Problem sind.
