@@ -10,6 +10,63 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.83 (2026-07-02) — Firmware↔Hardware-Konsistenz-Audit: Cells-Gap geschlossen, Pin-Maps verifiziert
+
+User: „Will everything work as intended with the firmware and software?"
+
+### Verifiziert KONSISTENT (Firmware-HAL-Claims vs. Schematic-Netze)
+
+Jede Pin-Behauptung der H743-HAL-Dateien gegen die Generator-NETS-Tabelle
+(= Schematic-Wahrheit) geprueft — ALLE stimmen:
+- **SAI1**: PE4/PE5/PE6 (Pins 3/4/5) = I2S_LRCK/BCK/DOUT → PCM5102A 15/13/14 ✓
+- **LCD SPI1**: PA5/PA7/PA6/PC4/PC5 (29/31/30/32/33) = SCK/MOSI/CS/DC/RES ✓;
+  Backlight = PCA-Kanal 15 (leds.h ✓, lcd_h743 ✓)
+- **I²C1**: PB6/PB7 (92/93) + MCP_INT PC13 (7) ✓; Adressen 0x20/0x40/0x41 ✓
+- **Encoder**: TIM2 PA0/PA1 (22/23), TIM3 PC6/PC7 (63/64), TIM4 PD12/PD13
+  (59/60), TIM1 PA8/PA9 (67/68); Pushes PE0/PE1/PE3 (97/98/2) + MCP GPB5 ✓
+- **Amp**: PB14/PB15 (53/54) = AMP_nSHDN/nMUTE ✓ — Boot-Pop-Sequenz passt zu
+  den Hardware-Pulldowns (Amp+DAC starten stumm, Firmware hebt an) ✓
+- **MIDI**: PD5 (86) USART2_TX ✓ · **BAT_SENSE**: PA3 (25) ✓
+- **MCP-Bitmap** (mcp23017.h): Cells GPA0-4, XSMT GPA5, JACK GPA6,
+  Modifier GPB0-4 = exakt die mcp_sheet-Verdrahtung ✓
+- **Jack-Detect-Polaritaet**: Firmware-Annahme (Bit HIGH = plugged) = die
+  r18.82-korrigierte Hardware-Topologie ✓
+
+### GESCHLOSSEN: der r18.76-Firmware-Gap (Cells auf H743)
+
+main_h743.c enthielt noch den stalen Hall-ADC-TODO-Block („adc_read_norm/
+cells_update") — seit r18.73 gibt es keine Hall-Sensoren mehr. Haette man den
+TODO wie beschrieben implementiert, waeren die Cells auf echter Hardware tot
+gewesen. Jetzt: digitaler MCP-Edge-Pfad (GPA0-4, aktiv-LOW) wie in der
+bench-erprobten Pico-Implementierung, geroutet durch die host-getestete
+controls.c-Statemachine (feste Tap-Velocity 0.12 wie Pico). Dazu: Jack-Detect-
+Routing-Block (GPA6 → nur PAM8403 muten, NICHT audio_mute() — das wuerde den
+Line-Out toeten); stale Kommentare fixiert („J9 DNP" → J10-Hardware ist
+bestueckt; Generator-Docstrings: MIDI-Buchse „fehlt" → existiert seit r18.67,
+Backlight „Kanal 12" → 15). H743-Target kompiliert + linkt ✓.
+
+### OFFEN (ehrlicher Stand — was noch NICHT auf Hardware laeuft)
+
+1. **Step 13.3 (der grosse bekannte Schritt):** main_h743 ist ein bewusstes
+   Skeleton — STM32CubeH7-Integration fehlt (Clock-Config 480 MHz + PLL3,
+   SAI1+DMA-Pump, SPI1-, I²C1-, USART2-, GPIO-Primitiven, HAL_GetTick,
+   Generative-Bar-Timer, Menu-Flush-Rate-Limit). Die gesamte LOGIK darueber
+   ist host-getestet (352298 Checks) und auf dem Pico-Bench-Target real
+   verifiziert; es fehlt die H7-Peripherie-Anbindung, keine Logik.
+2. **VU-Meter (U10 @ 0x41, 8 LEDs, Hardware seit r18.66): keine Firmware.**
+   pca_set_pwm kennt nur ein Device; es fehlen adressierbare PCA-API,
+   Engine-Level-Tap und VU-Renderer. Bis dahin bleiben die 8 LEDs dunkel
+   (PCA bootet aus — kein Fehlverhalten, Feature fehlt). Eigener Schritt.
+3. **MIDI-TX firmware-seitig deferred** (ADR-0004 r18.30) — Hardware komplett,
+   Reaktivierung = 1 Zeile + USART2-Init aus Step 13.3.
+
+### Verifikation
+
+Host-Tests 352298 Checks / 0 Failures; field_ambience_h743-Target baut+linkt;
+Schematics byte-identisch (nur Python-Docstrings geaendert).
+
+---
+
 ## v0.7-r18.82 (2026-07-02) — Datenblatt-Verifikation aller restlichen Komponenten: 2 kritische Pad-Mapping-Fehler + 2 Lücken
 
 User: „All the other components are right? check datasheets." — systematischer
