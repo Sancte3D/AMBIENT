@@ -10,6 +10,59 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.84 (2026-07-02) — Must-have-Check: /OE-Fehler (alle LEDs tot), Mounting-Holes, Testpunkte + neue Kostenschätzung
+
+User: „are we missing any must have pcb components?" + neue JLC-Kostenschätzung.
+
+### KRITISCH: beide PCA9685-/OE-Pins hatten Pull-UP ohne Treiber
+
+R_OE (U6) und R_OE2 (U10) zogen /OE auf +3V3 — mit dem Kommentar „Firmware
+zieht /OE LOW nach PWM-Init". Es gab aber KEIN Netz, ueber das die Firmware
+das haette tun koennen (kein MCU-/MCP-Pin an /OE). /OE waere permanent HIGH
+geblieben → **alle 15 Status-LEDs, das LCD-Backlight und die 8 VU-LEDs fuer
+immer aus** (Backlight aus = LCD unlesbar). Fix: beide auf **Pull-DOWN** —
+Ausgaenge immer enabled; Boot-Dark garantiert der Chip selbst (NXP-DS
+Tabelle 7: LEDn_OFF_H[4] „full OFF" Default = 1* fuer jeden Kanal, gegen
+das Original-PDF verifiziert). Firmware-Kommentare (pca_init) angepasst —
+es gibt nichts mehr zu sequenzieren.
+
+### Fehlende Must-haves ergaenzt
+
+- **4× Mounting-Holes H1–H4** (M2.5, Bohrung 2,7 mm, plattiert, GND) — in
+  der mech. Spec §6 laengst definiert ((12,6)/(240,6)/(12,96)/(240,96)),
+  aber NIE im Schematic → jetzt als DNP-Symbole mit Footprint
+  MountingHole_2.7mm_M2.5_Pad (FP_NOTE: KiCad-Pad 5,4 mm vs Spec 6 mm —
+  Layout-Entscheidung Aron).
+- **7 Testpunkte** (AI_READY-Standard verlangt TP_*): TP_5V, TP_3V3,
+  TP_5VSW, TP_VBUS, TP_GND1/2 (power_tree) + TP_BAT (battery),
+  TestPoint_Pad_D1.5mm, alle DNP (kein BOM-Eintrag).
+- Beides ist bestueckungsfrei → jlc_bom.csv unveraendert 58 Parts /
+  210 Placements (Exporter: 11 DNP-Skips korrekt).
+
+### Sonst fehlt nichts Zwingendes — geprueft und fuer ok befunden
+
+USB (Fuse+TVS+ESD+CC) ✓ · Lade-/Power-Pfad inkl. Ein/Aus ✓ (seit r18.81) ·
+NRST/BOOT0-Beschaltung ✓ · VCAP ✓ · HSE+Loads ✓ · I²C-Pull-ups ✓ ·
+Status-LED ✓ · Backlight-Treiber ✓ · SWD ✓ · Jack-Schutz ✓ (r18.82).
+Bewusst NICHT auf der PCB (kein Fehler): Akku-Schutz-PCM (muss im
+LiPo-Pouch sitzen — Kaufhinweis in COST_ESTIMATE §2), Fiducials (fuegt
+JLC beim Panelisieren hinzu), MIDI-IN (nur OUT per ADR-0004).
+
+### Neue Kostenschätzung (COST_ESTIMATE.md komplett neu, Preise live)
+
+5er-Run: **~$92/Geraet** (JLC ~$48 + Hand-Supply ~$44) — WENN die Outline
+auf ≤250 mm gekuerzt wird (JLC-Economic-Limit 250×250; aktuell 252×102 →
+sonst Standard-PCBA: ~$102/Geraet). SMD-BOM ~$24.50/Board (live: STM32
+$8.68, 2×PCA9685 $5.86, Tantal $1.78, MCP23017 $1.62, PCM5102A $0.99 …).
+Stock-Warnung: C444831 (Tantal) nur ~121 St. LCSC. 10er-Run ~$75–85/Geraet.
+
+### Verifikation
+
+ERC 0 Fehler alle Sheets; Generator deterministisch; jlc_bom unveraendert;
+Host-Tests 352298/0.
+
+---
+
 ## v0.7-r18.83 (2026-07-02) — Firmware↔Hardware-Konsistenz-Audit: Cells-Gap geschlossen, Pin-Maps verifiziert
 
 User: „Will everything work as intended with the firmware and software?"

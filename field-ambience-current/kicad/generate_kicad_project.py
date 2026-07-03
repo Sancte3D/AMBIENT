@@ -1767,6 +1767,45 @@ def _audiojack_lib_symbol() -> str:
 """.strip()
 
 
+def _mounting_hole_lib_symbol() -> str:
+    """Plattiertes Mounting-Hole mit GND-Pad (r18.84 — mech. Spec §6:
+    4x M2.5, Bohrung 2,7 mm, Pad O 6 mm, plattiert; Positionen MH1-MH4 =
+    (12,6)/(240,6)/(12,96)/(240,96) auf der 252x102-Outline)."""
+    out = []
+    out.append('    (symbol "Mechanical:MountingHole_Pad" (pin_names (offset 0) hide) (in_bom no) (on_board yes)')
+    out.append('      (property "Reference" "H" (at 0 5.08 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "MountingHole_Pad" (at 0 -3.81 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Mechanical:MountingHole_Pad_0_1"')
+    out.append('        (circle (center 0 1.27) (radius 1.27) (stroke (width 0.508) (type default)) (fill (type none)))')
+    out.append('      )')
+    out.append('      (symbol "Mechanical:MountingHole_Pad_1_1"')
+    out.append('        (pin passive line (at 0 -2.54 90) (length 2.54)')
+    out.append('          (name "1" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "1" (effects (font (size 1.27 1.27)))))')
+    out.append('      )')
+    out.append('    )')
+    return "\n".join(out)
+
+
+def _testpoint_lib_symbol() -> str:
+    """Testpunkt (r18.84 — AI_READY_SCHEMATIC_STANDARD: TP_* Test-/Debug-
+    Zugang fuer Schluessel-Netze; SMD-Pad D1.5mm, nichts zu bestuecken)."""
+    out = []
+    out.append('    (symbol "Connector:TestPoint" (pin_names (offset 0) hide) (in_bom no) (on_board yes)')
+    out.append('      (property "Reference" "TP" (at 0 5.08 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "TestPoint" (at 0 -3.81 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Connector:TestPoint_0_1"')
+    out.append('        (circle (center 0 1.27) (radius 0.762) (stroke (width 0.254) (type default)) (fill (type none)))')
+    out.append('      )')
+    out.append('      (symbol "Connector:TestPoint_1_1"')
+    out.append('        (pin passive line (at 0 -2.54 90) (length 2.54)')
+    out.append('          (name "1" (effects (font (size 1.27 1.27))))')
+    out.append('          (number "1" (effects (font (size 1.27 1.27)))))')
+    out.append('      )')
+    out.append('    )')
+    return "\n".join(out)
+
+
 def _tps22918_lib_symbol() -> str:
     """TPS22918DBVR High-Side-Load-Switch, SOT-23-6 (TI) — r18.81 / ADR-0016.
 
@@ -1884,6 +1923,9 @@ LIB_SYMBOLS = (
     # r18.81 (ADR-0016 Power-Off-Block):
     + "\n" + _tps22918_lib_symbol()
     + "\n" + _sw_spdt_lib_symbol()
+    # r18.84 (Mounting-Holes + Testpunkte):
+    + "\n" + _mounting_hole_lib_symbol()
+    + "\n" + _testpoint_lib_symbol()
 )
 
 
@@ -2621,6 +2663,59 @@ def power_tree_sheet() -> str:
                                 x=146, y=PIN_OUT_Y + 10, seed_suffix="cldoout-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
     hlabels.append(hier_label(150, PIN_OUT_Y, "+3V3_OUT", shape="output", rotation=180))
+
+    # ================================================================
+    # r18.84 — Testpunkte (AI_READY_SCHEMATIC_STANDARD: TP_* fuer
+    # Schluessel-Netze) + 4x Mounting-Holes (mech. Spec §6: M2.5, Bohrung
+    # 2,7 mm, plattiert, GND; Layout-Positionen (12,6)/(240,6)/(12,96)/
+    # (240,96) auf der 252x102-Outline). Alles DNP = nichts zu bestuecken,
+    # taucht nicht im JLC-BOM auf; Footprints landen beim Update-PCB.
+    # KiCad-Standard-MH-Pad ist 5,4 mm — mech. Spec sagt O 6 mm: Aron zieht
+    # das Pad im Layout auf 6 mm auf oder belaesst den Standard (FP_NOTE).
+    # ================================================================
+    _tp_defs = [
+        ("TP_5V",    35.0, ("Power:+5V", 0)),
+        ("TP_3V3",   45.0, ("Power:+3V3", 0)),
+        ("TP_5VSW",  55.0, ("label", "+5V_SW")),
+        ("TP_VBUS",  65.0, ("label", "VBUS_USBC")),
+        ("TP_GND1",  75.0, ("Power:GND", 1)),
+        ("TP_GND2",  85.0, ("Power:GND", 1)),
+    ]
+    for tp_ref, tp_x, tp_net in _tp_defs:
+        symbols.append(place_symbol(
+            lib_id="Connector:TestPoint", ref=tp_ref, value="TestPoint (r18.84)",
+            x=tp_x, y=150.0,
+            footprint="TestPoint:TestPoint_Pad_D1.5mm",
+            extra_props={"DNP": "true (Testpad, nichts zu bestuecken)"},
+            seed_suffix=tp_ref, sheet_uuid_seed="sheet_power_tree"))
+        if tp_net[0] == "label":
+            wires.append(wire(tp_x, 152.54, tp_x, 155.0, seed_suffix=f"{tp_ref}-wire"))
+            labels.append(label(tp_x, 155.0, tp_net[1]))
+        elif tp_net[1] == 1:  # GND below
+            wires.append(wire(tp_x, 152.54, tp_x, 155.0, seed_suffix=f"{tp_ref}-wire"))
+            symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_{tp_ref}", value="GND",
+                                        x=tp_x, y=155.0, seed_suffix=f"{tp_ref}-gnd",
+                                        sheet_uuid_seed="sheet_power_tree"))
+        else:  # power flag below, pointing down->up? place flag at wire end
+            wires.append(wire(tp_x, 152.54, tp_x, 155.0, seed_suffix=f"{tp_ref}-wire"))
+            symbols.append(place_symbol(lib_id=tp_net[0], ref=f"#PWR_{tp_ref}",
+                                        value=tp_net[0].split(":")[1],
+                                        x=tp_x, y=155.0, rotation=180,
+                                        seed_suffix=f"{tp_ref}-flag",
+                                        sheet_uuid_seed="sheet_power_tree"))
+    for mh_ref, mh_x in (("H1", 35.0), ("H2", 45.0), ("H3", 55.0), ("H4", 65.0)):
+        symbols.append(place_symbol(
+            lib_id="Mechanical:MountingHole_Pad", ref=mh_ref,
+            value="M2.5 plated mounting hole (r18.84, mech. Spec §6)",
+            x=mh_x, y=165.0,
+            footprint="MountingHole:MountingHole_2.7mm_M2.5_Pad",
+            extra_props={"DNP": "true (Bohrung, nichts zu bestuecken)",
+                         "FP_NOTE": "KiCad-Standard-Pad 5,4 mm vs mech. Spec O 6 mm — im Layout auf 6 mm aufziehen oder Standard belassen. Position laut mech. Spec: H1(12,6) H2(240,6) H3(12,96) H4(240,96)."},
+            seed_suffix=mh_ref, sheet_uuid_seed="sheet_power_tree"))
+        wires.append(wire(mh_x, 167.54, mh_x, 170.0, seed_suffix=f"{mh_ref}-wire"))
+        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_{mh_ref}", value="GND",
+                                    x=mh_x, y=170.0, seed_suffix=f"{mh_ref}-gnd",
+                                    sheet_uuid_seed="sheet_power_tree"))
 
     hlabels.append(hier_label(115, RAIL_Y, "+5V_OUT", shape="output", rotation=0))
     wires.append(wire(110, RAIL_Y, 115, RAIL_Y, seed_suffix="rail-to-hlbl"))
@@ -4772,8 +4867,15 @@ def mcp_sheet() -> str:
         )
     )
 
-    # ---- ~OE (Pin 23, right, active LOW) → R_OE 10kΩ pull-up zu +3V3.
-    # Default disabled (HIGH = LEDs off). Firmware zieht /OE LOW erst nach PWM-Init.
+    # ---- ~OE (Pin 23, right, active LOW) → R_OE 10kΩ PULL-DOWN zu GND.
+    # r18.84 AUDIT-FIX (KRITISCH): war Pull-UP zu +3V3 mit dem Kommentar
+    # "Firmware zieht /OE LOW erst nach PWM-Init" — aber es gab KEINEN Pin,
+    # der /OE haette treiben koennen (kein MCU-/MCP-Netz dran). /OE waere
+    # permanent HIGH geblieben → alle 15 Status-LEDs + Backlight fuer immer
+    # aus. Fix: Pull-DOWN (Ausgaenge immer enabled). Boot-Dark ist trotzdem
+    # garantiert: NXP-DS Tabelle 7 — LEDn_OFF_H[4] ("LEDn full OFF")
+    # Default = 1* fuer JEDEN Kanal, d.h. der Chip bootet mit allen Kanaelen
+    # im FULL-OFF-Zustand (kein Sink → LED dunkel), unabhaengig von /OE.
     # R_OE rotation=90 horizontal: pin1 abs (sx-3.81), pin2 abs (sx+3.81).
     # Wire MUSS exakt am Pin enden, sonst dangling.
     p23_y = pca_right_pin_y(23)
@@ -4782,7 +4884,7 @@ def mcp_sheet() -> str:
         place_symbol(
             lib_id="Device:R",
             ref="R_OE",
-            value="10k 0603 (PCA9685 /OE pull-up, r7)",
+            value="10k 0603 (PCA9685 /OE pull-DOWN, r18.84 — war Pull-up ohne Treiber = LEDs nie an; Boot-Dark per DS-Default LEDn_FULL_OFF)",
             x=156,
             y=p23_y,
             rotation=90,
@@ -4792,16 +4894,16 @@ def mcp_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # R_OE pin2 (159.81, p23_y) → +3V3
+    # R_OE pin2 (159.81, p23_y) → GND (r18.84: Pull-down statt Pull-up)
     wires.append(wire(159.81, p23_y, 163, p23_y, seed_suffix="r-oe-to-3v3"))
     symbols.append(
         place_symbol(
-            lib_id="Power:+3V3",
+            lib_id="Power:GND",
             ref="#PWR_R_OE",
-            value="+3V3",
+            value="GND",
             x=163,
             y=p23_y,
-            rotation=90,
+            rotation=270,
             seed_suffix="r-oe-3v3",
             sheet_uuid_seed=sus,
         )
@@ -5046,12 +5148,14 @@ def mcp_sheet() -> str:
                      x=P10_R_X + 7, y=ext10, rotation=270,
                      seed_suffix="u10-extclk-gnd", sheet_uuid_seed=sus)
     )
-    # ---- ~OE (Pin 23, right, active LOW) → R_OE2 10k pull-up zu +3V3 (default off)
+    # ---- ~OE (Pin 23, right, active LOW) → R_OE2 10k PULL-DOWN zu GND
+    # (r18.84: gleicher Fix wie U6-R_OE — Pull-up ohne Treiber haette die
+    # 8 VU-LEDs dauerhaft disabled; Boot-Dark per DS-Default LEDn_FULL_OFF)
     oe10 = p10_right_y(23)
     wires.append(wire(P10_R_X, oe10, P10_R_X + 3.19, oe10, seed_suffix="u10-oe-stub"))
     symbols.append(
         place_symbol(lib_id="Device:R", ref="R_OE2",
-                     value="10k 0603 (PCA9685 #2 /OE pull-up)",
+                     value="10k 0603 (PCA9685 #2 /OE pull-DOWN, r18.84 — war Pull-up ohne Treiber)",
                      x=P10_R_X + 7, y=oe10, rotation=90,
                      footprint="Resistor_SMD:R_0603_1608Metric",
                      extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
@@ -5059,8 +5163,8 @@ def mcp_sheet() -> str:
     )
     wires.append(wire(P10_R_X + 10.81, oe10, P10_R_X + 14, oe10, seed_suffix="r-oe2-to-3v3"))
     symbols.append(
-        place_symbol(lib_id="Power:+3V3", ref="#PWR_R_OE2", value="+3V3",
-                     x=P10_R_X + 14, y=oe10, rotation=90,
+        place_symbol(lib_id="Power:GND", ref="#PWR_R_OE2", value="GND",
+                     x=P10_R_X + 14, y=oe10, rotation=270,
                      seed_suffix="r-oe2-3v3", sheet_uuid_seed=sus)
     )
     # ---- r18.80: LED8..LED15 (Pins 15-22, rechts) sind bei U10 UNBENUTZT
@@ -6804,6 +6908,16 @@ def battery_sheet() -> str:
     # C_BAT_IN bottom → GND
     wires.append(wire(75, 93.81, 75, 96, seed_suffix="c-bat-in-gnd"))
     attach_gnd(75, 96, "C_BAT_IN", rotation=0)
+
+    # r18.84: TP_BAT Testpunkt am BAT_PLUS-Netz (Label-Match)
+    symbols.append(place_symbol(
+        lib_id="Connector:TestPoint", ref="TP_BAT", value="TestPoint (r18.84)",
+        x=62, y=95,
+        footprint="TestPoint:TestPoint_Pad_D1.5mm",
+        extra_props={"DNP": "true (Testpad, nichts zu bestuecken)"},
+        seed_suffix="TP_BAT", sheet_uuid_seed=sus))
+    wires.append(wire(62, 97.54, 62, 100, seed_suffix="tp-bat-wire"))
+    hlabels.append(hier_label(62, 100, "BAT_PLUS", shape="output", rotation=90))
 
     # C_BAT_HF at (82, 90) vertical
     symbols.append(

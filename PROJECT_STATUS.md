@@ -2,6 +2,20 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.84 (2026-07-02, User: „missing must-have components? + neue JLC-Kostenschätzung"):**
+> **KRITISCH gefunden: beide PCA9685-/OE-Pins hatten Pull-up ohne jeden
+> Treiber** — /OE permanent HIGH = alle 15 Status-LEDs + Backlight + 8
+> VU-LEDs für immer aus → Pull-DOWN (Boot-Dark garantiert der Chip: NXP-DS
+> Tab. 7, LEDn_FULL_OFF Default=1, PDF-verifiziert). **Ergänzt:** 4×
+> M2.5-Mounting-Holes (mech. Spec §6, fehlten im Schematic) + 7 Testpunkte
+> (TP_5V/3V3/5VSW/VBUS/GND×2/BAT) — alles DNP, BOM unverändert 58/210.
+> Sonst keine fehlenden Must-haves (USB-Schutz, Power-Pfad, NRST/BOOT0,
+> VCAP, HSE, Pull-ups, SWD ✓; Akku-Schutz gehört ins LiPo-Pouch — Kaufnote).
+> **COST_ESTIMATE.md neu (Preise live):** 5er-Run ~$92/Gerät (~$48 JLC +
+> ~$44 Hand) — ⚠ Outline 252 mm liegt 2 mm über JLCs Economic-Limit
+> (250×250): ums Kürzen bitten oder Standard-PCBA ~$102/Gerät. Stock-Watch:
+> Tantal C444831 nur ~121 St. Details: CHANGELOG r18.84.
+>
 > **r18.83 (2026-07-02, User: „Will everything work with the firmware/software?"):**
 > Firmware↔Hardware-Konsistenz-Audit. **Alle H743-HAL-Pin-Claims = Schematic**
 > (SAI PE4/5/6, LCD SPI1 + Backlight-Ch15, I²C PB6/7+PC13, alle 4 Encoder-
