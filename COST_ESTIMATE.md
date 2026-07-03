@@ -1,113 +1,88 @@
 # Cost Estimate — Field Ambience
 
-**Stand: v0.7-r18.22 (2026-06-14).** Ehrliche Kostenschätzung für einen
-**5-Geräte-Prototyp-Run** über JLCPCB-PCBA + Hand-Supply-Teile, mit den
-r18.21-Kostensenkungen. Erfahrungsbasiert ±20 % — die exakte Zahl liefert das
-JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/BOM/CPL existieren.
+**Stand: v0.7-r18.84 (2026-07-02).** Ehrliche Kostenschätzung für einen
+**5-Geräte-Prototyp-Run** über JLCPCB-PCBA + Hand-Supply-Teile. Preise der
+teuren Positionen am 2026-07-02 **live von den LCSC-Produktseiten geholt**
+(10+-Staffel); Rest gebändert. ±20 % — die exakte Zahl liefert das
+JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/CPL existieren.
+BOM-Basis: `kicad/jlc_bom.csv` r18.84 = **58 unique LCSC-Parts,
+210 Placements** (davon ~17 THT-Hand: 10 Switches, 4 Encoder, 3 Header).
 
-> **Wichtige Korrektur ggü. der ersten Schätzung:** Die „$3-Extended-Setup-
-> Gebühr pro Teil" war zu hoch angesetzt. JLCPCB (a) hat die Feeder-Gebühr Ende
-> 2025 auf $1.50 gesenkt und (b) stuft unsere großen ICs (STM32H743, PCM5102A,
-> PAM8403, PCA9685, AP7361C, Crystal) als **„Extended (Preferred)" = gebührenfrei**
-> ein. Real zahlen nur 2 plain-Extended-Teile (MCP23017, MCP73831)
-> je $1.50 → **~$3.00 Feeder-Gebühr für den ganzen Run**, nicht ~$96.
-> (r18.73: DRV5056A4 entfällt — Cells sind jetzt digitale Switches am MCP23017.)
+> ⚠️ **Assembly-Größenlimit (NEU r18.84, für Aron):** Die PCB-Outline ist
+> **252 × 102 mm** — JLCs *Economic*-PCBA endet bei **250 × 250 mm**. 2 mm
+> drüber ⇒ Zwangsupgrade auf *Standard*-PCBA (Setup ~$25 statt $8, teurerer
+> Stencil). **Outline um ≥2 mm auf ≤250 mm kürzen spart ~$40–60 pro Run** —
+> beim Layout prüfen, ob die 4-mm-Bezel das hergibt (mech. Spec §1 hat
+> 4 mm Bezel je Seite; 1 mm opfern reicht).
 
-## 1. JLCPCB-Anteil (5 Boards, vollbestückt SMD)
+## 1. JLCPCB-Anteil (5 Boards, SMD vollbestückt)
 
-| Posten | Schätzung (5er-Run) | Notiz |
-|---|---|---|
-| PCB-Fab 4-Layer 252×102 mm, 1.6 mm | ~$45 | 257 cm², 4-Lagen |
-| Stencil (framed) | ~$8 | SMT-Pflicht |
-| PCBA-Setup | ~$8 | pro Design |
-| Feeder-Gebühr | ~$4.50 | nur 3 plain-Extended-Teile |
-| Placement (Joints) | ~$5 | ~600 Joints × 5 × $0.0017 |
-| SMD-BOM-Teile (×5) | ~$90 | ~$18/Board, siehe §3 |
-| Versand DHL EU | ~$30 | typisch |
-| **JLC-Zwischensumme** | **~$190** | **~$38/Board** |
+| Posten | Economic (≤250 mm) | Standard (252 mm) | Notiz |
+|---|---|---|---|
+| PCB-Fab 4-Layer 252×102, 1.6 mm, ×5 | ~$50 | ~$50 | 2.57 dm²/Board |
+| Stencil | ~$8 | ~$38 | |
+| PCBA-Setup | ~$8 | ~$25 | pro Design |
+| Feeder/Extended-Gebühren | ~$8–15 | ~$8–15 | Große ICs sind „Extended (Preferred)“ = gebührenfrei (r18.22-Erkenntnis); plain-Extended: MCP23017, MCP73831, TPS22918, MST-12D18G3, PJ-320D, JST, Polyfuse u. a. à $1.50 |
+| Placement (~660 SMD-Joints × 5) | ~$6 | ~$6 | $0.0017/Joint |
+| SMD-BOM-Teile ×5 (§3) | ~$125 | ~$125 | ~$24.5/Board + Attrition |
+| Versand DHL EU | ~$30–40 | ~$30–40 | 5× 252-mm-Boards sind sperrig |
+| **JLC-Zwischensumme** | **~$240** | **~$290** | **~$48 bzw. ~$58/Board** |
 
-## 2. Hand-Supply-Anteil (separat, mit r18.21-Kostensenkung)
+## 2. Hand-Supply (separat)
 
 | Teil | pro Gerät | × 5 | Quelle |
 |---|---|---|---|
-| 4× ALPS EC11E18244AU (alle 4 gleich, r18.22 NRND-Pivot) | ~$5 | $25 | LCSC C202365 (~3.052 Stock, active) |
-| ~~Stabilizer~~ | **$0** | **$0** | **gestrichen (1u-Caps, r18.21)** |
-| 4× Encoder-Knöpfe | **$0** | **$0** | **selbst 3D-gedruckt** |
-| 5× Cell-Caps | **$0** | **$0** | **selbst 3D-gedruckt (1u)** |
-| 2× CMS-Speaker | ~$6 | $30 | DigiKey |
-| 1× **Waveshare 1.9in ST7789V2**-Display (r18.22 von bare-AliExpress; QC + Level-Shifter) | ~$12 | $60 | PiHut £11.60 / Waveshare direkt |
-| 1× **2000 mAh** LiPo | ~$8 | $40 | (war 5000 mAh ~$60) |
-| Tag-Connect TC2030-IDC (Tool, **einmalig**) | — | $15 | Tag-Connect |
-| Dust-Mesh-Sticker | ~$1 | $5 | AliExpress |
-| M2.5 Standoffs + Schrauben | ~$1 | $5 | Reichelt |
-| **Hand-Supply-Zwischensumme** | | **~$165** | inkl. einmaligem $15-Tool (r18.73 strich Gateron -$20; r18.75: Cell-Switch ist jetzt direkt-gelötetes THT in §3, nicht mehr hier — siehe unten) |
-> **r18.75:** die 5× Kailh-Choc-V1-Switches (CPG135001D01, LCSC C400229)
-> sind jetzt direkt auf die Platine gelötet, nicht mehr ein separater
-> Hotswap-Socket + Klick-Switch — siehe §3 SMD-BOM.
+| 4× ALPS EC11E18244AU (THT, hand) | ~$7.60 | $38 | LCSC C202365, **$1.91 @10+ live 2026-07-02** (2.5k Stock) |
+| 5× Kailh Choc V1 CPG135001D01 (THT, hand) | ~$5 | $25 | LCSC C400229 = 0 Stock → Kailh-Händler/AliExpress ~$1/St. |
+| 5× HX B3F-4055 Modifier (THT, hand) | ~$0.30 | $2 | C36498965 (kann alternativ JLC-THT) |
+| 2× CMS-402811-28SP Speaker | ~$6 | $30 | DigiKey |
+| Waveshare 1.9" ST7789 | ~$12 | $60 | PiHut/Waveshare |
+| 2000 mAh LiPo (mit Schutz-PCM!) | ~$8 | $40 | PiHut — **beim Kauf prüfen: Pouch MUSS eigenes Protection-PCM haben** (MCP73831 hat keins; Boost hat keinen UVLO-Schutz für den Akku) |
+| Dust-Mesh + M2.5-Schrauben/Standoffs | ~$2 | $10 | AliExpress/Reichelt |
+| Tag-Connect TC2030-IDC (Tool, einmalig) | — | $15 | Tag-Connect |
+| **Hand-Supply-Zwischensumme** | **~$41** | **~$220** | |
 
-## 3. SMD-BOM pro Board (~$18)
+## 3. SMD-BOM pro Board — ~$24.50 (Preise @10+, live 2026-07-02 wo fett)
 
-STM32H743 ~$8.78 · TPS61089 ~$0.80 · PCM5102A ~$1.11 · PAM8403 ~$0.44 ·
-PCA9685 ~$3.33 · MCP23017 ~$1.79 · AP7361C ~$0.34 · MCP73831 ~$0.81 ·
-5× HX B3F-4055 Modifier-Switches (C36498965) ~$0.30 · 5× Kailh Choc V1 cell keyswitches, direct-solder (CPG135001D01, LCSC C400229, r18.75) ~$2 (⚠ market estimate — no confirmed unit quote yet) · C_BULK Polymer ~$0.60 · 100µF MLCC ~$0.30 ·
-17× LEDs ~$0.40 · USB-C ~$0.15 · Crystal ~$0.27 · 2× Klinke ~$0.50 ·
-~120 Passives ~$3 · Rest ~$1 → **~$29** (Mengenrabatt ×5 drückt auf ~$19).
+**STM32H743VIT6 $8.68** · **2× PCA9685 $5.86** · **C_BULK Tantal 470µ $1.78** ·
+**MCP23017 $1.62** · **PCM5102A $0.99** · **MCP73831 $0.70** ·
+**TPS61089 $0.50** · PAM8403 ~$0.44 · TPS22918 $0.25 (live r18.81) ·
+L1 SWPA6045 ~$0.25 · C_BULK2 ~$0.25 · AP7361C ~$0.20 · USBLC6 ~$0.20 ·
+**USB-C $0.17** · Polyfuse ~$0.15 · Crystal ~$0.12 · 2× PJ-320D ~$0.24 ·
+JST ~$0.10 · MST-12D18G3 $0.08 (live r18.81) · 2× SS34 + TVS ~$0.16 ·
+2× TS-1088 ~$0.04 · 2N7002 ~$0.01 · 24× LED ~$0.60 · 3× Header ~$0.35 ·
+~120 R/C-Passives ~$0.60
 
-## 4. Gehäuse
+Kostentreiber-Ranking: STM32 (35 %), 2× PCA9685 (24 %), Tantal-Bulk (7 %),
+MCP23017 (7 %). Die 4 Encoder ($7.60, THT-hand) sind der größte
+Nicht-JLC-Posten pro Gerät.
 
-Für 5 Prototypen **3D-gedruckt** statt Spritzguss-Tool (4-stellig):
-- **SLS PA12** (JLC3DP / Shapeways): ~$25–35/Gehäuse (Top + Bottom)
-- **FDM** (selbst, PETG): ~$3–8 Material/Gehäuse
-- → $15–175 für 5, je nach Verfahren. Annahme **FDM selbst: ~$30 für 5**.
+## 4. Summen
 
-## 5. Gesamt
+| | 5er-Run | pro Gerät |
+|---|---|---|
+| JLC (Economic-Fall, Outline ≤250 mm) | ~$240 | ~$48 |
+| JLC (Standard-Fall, 252 mm) | ~$290 | ~$58 |
+| Hand-Supply | ~$220 | ~$41–44 |
+| **Gesamt (Economic)** | **~$460** | **~$92** |
+| **Gesamt (Standard)** | **~$510** | **~$102** |
 
-| Block | 5 Geräte |
-|---|---|
-| JLCPCB (Fab + PCBA + SMD-BOM + Versand) | ~$190 |
-| Hand-Supply (r18.22: Waveshare-Display statt bare) | ~$225 |
-| Gehäuse (FDM selbst) | ~$30 |
-| **GESAMT** | **~$445** |
-| **pro Stück** | **~$89** |
+10er-Run: PCB ~$75, Gebühren identisch, Teile ~×2 → grob **~$75–85/Gerät**.
 
-Mit SLS-Gehäuse + etwas Puffer: **~$490–560 / ~$98–112 pro Stück**.
+## 5. Stock-Warnungen (live 2026-07-02)
 
-## 6. Was die r18.21-Kostensenkung gebracht hat
+- **C444831 (Tantal 470 µF): nur 121 St. LCSC / 161 JLC** — für 5–10 Boards
+  ok, aber VOR dem Order-Klick prüfen; Alternative in BOM_MASTER §2.
+- **C114409 (STM32H743VIT6): LCSC 6 St., JLC-Assembly ~392** — über
+  JLC-Assembly bestücken lassen (nicht LCSC-Einzelkauf).
+- **C400229 (Choc): 0 Stock** — extern beschaffen (jede Choc-V1-Farbe passt).
+- C165129 (TPS61089): 2.1k ✓ · C2678753 (PCA9685): 1.4k ✓ ·
+  C202365 (EC11): 2.5k ✓.
 
-| Maßnahme | Ersparnis (5er-Run) |
-|---|---|
-| Display Adafruit → **Waveshare** (r18.22 von bare zurück) | ~$15 |
-| Knöpfe + Cell-Caps selbst 3D-drucken | ~$50–200 |
-| Stabilizer gestrichen (1u-Caps) | ~$25–75 |
-| Akku 5000 → 2000 mAh | ~$20 |
-| Encoder vereinheitlicht (r18.22: keine NRND-Variante mehr, gleicher Stückpreis) | 0 (Sicherheit) |
-| **Summe** | **~$110–310** |
+## 6. Historie
 
-Vorher (erste Schätzung): ~$750. Jetzt: **~$440–560**. Der Rest ist
-hauptsächlich der STM32H743 (Kern, gebührenfrei „Preferred", nicht ersetzbar
-ohne Audio-Risiko). (r18.73 strich die teuren Gateron-Magnetic-Switches;
-r18.74 versuchte kurz einen Hotswap-Socket, r18.75 vereinfachte auf direkt
-gelötete Kailh-Choc-V1-Switches (C400229) — echtes Tastengefühl für einen
-Bruchteil der Gateron-Kosten, elektrisch weiterhin digital am MCP23017,
-ohne unverifiziertes Zwischenteil.)
-
-> **r18.22-Korrektur:** Die r18.21-„bare ST7789V"-Senkung war zu aggressiv.
-> Display ist jetzt Waveshare (~$11 statt $3 bare statt $15 Adafruit) — gleiche
-> Panel-Qualität wie Adafruit + branded QC + Level-Shifter. $4 Ersparnis statt
-> $12, dafür kein DOA-Risiko. Und alle 4 Encoder sind jetzt das gleiche active
-> ALPS-Teil (statt 3× NRND + 1× active) — Sicherheits-Pivot, kein Mehrpreis.
-
-## 7. Weitere Spar-Optionen (nicht umgesetzt — Trade-Off)
-
-- **STM32H750VBT6** statt H743: ~$2.35 statt $8.78 (–$32/5er-Run), ABER nur
-  128 KB Flash → externes QSPI-Flash + XIP-Boot = Firmware-Re-Architektur.
-  **Nicht empfohlen** — Audio-Engine-Risiko.
-- **TP4056** statt MCP73831-Charger: $0.19 statt $0.81, aber auch Extended +
-  Footprint-Wechsel. ~$3/5er-Run — Rework lohnt nicht bei 5 Stück.
-- **Größerer Mengen-Run** (z. B. 30 statt 5): PCB-Fab + Setup amortisieren sich,
-  pro-Stück-Kosten fallen Richtung ~$55–65.
-
-## Exakte Zahl
-
-Sobald das `.kicad_pcb` existiert → Gerber + BOM-CSV + CPL exportieren → ins
-JLCPCB-Quote-Tool hochladen = echte Zahl. Bis dahin gilt obige Schätzung.
+- r18.22: Erststand ($38/Board JLC, $18 SMD-BOM). r18.84 ersetzt: +U10-PCA
+  (+$2.93), +Power-Off-Block (+$0.35), +Dioden-OR/3×22µ/Comp (+$0.15),
+  Cells auf direkt-gelötete Choc (LCSC-Anteil 0), Encoder von „~$5“ auf
+  live $7.60/Gerät, STM32 live $8.68, plus Economic-vs-Standard-Split
+  wegen der 252-mm-Outline.

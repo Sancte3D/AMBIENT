@@ -13,9 +13,11 @@
  *   PB7 (pin 93) = I2C1_SDA (AF4) — 4.7 kΩ pull-up to +3V3
  *   PC13 (pin 7) = MCP_INT (EXTI) — wake on button press
  *
- * The PCA9685 needs separate PWM-frequency-init (~1 kHz, well above audible)
- * and an /OE pin-pull-up that the firmware drives LOW after PWM is configured
- * (so all LEDs come up dark and don't flash at boot).
+ * The PCA9685 needs separate PWM-frequency-init (~1 kHz, well above audible).
+ * r18.84: /OE is hardwired LOW (pull-down) on the PCB — the old pull-up
+ * design had NO net for firmware to drive it (LEDs could never enable).
+ * Boot-dark is guaranteed by the chip itself: NXP DS Table 7, LEDn_FULL_OFF
+ * defaults to 1 for every channel — nothing for firmware to sequence.
  *
  * Step 13.3 (TODO): STM32CubeH7 I²C1 init at 400 kHz Fast Mode + EXTI13
  * interrupt for MCP_INT. The existing src/hal_pico/mcp23017_pico.c register
@@ -51,8 +53,9 @@ void mcp_set_xsmt(bool enable) {
 
 void pca_init(void) {
     /* TODO: I2C init sequence for PCA9685: MODE1 sleep → set PRESCALE for
-     * ~1 kHz → MODE1 wake → MODE2 OUTDRV totem-pole → release /OE (drive
-     * the gate transistor LOW). */
+     * ~1 kHz → MODE1 wake → MODE2 OUTDRV totem-pole. (/OE ist seit r18.84
+     * hardware-seitig LOW gepullt — nichts zu treiben; Kanaele booten per
+     * DS-Default LEDn_FULL_OFF dunkel.) */
 }
 
 void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count) {
