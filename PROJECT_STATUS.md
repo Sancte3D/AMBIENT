@@ -2,6 +2,20 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.83 (2026-07-02, User: „Will everything work with the firmware/software?"):**
+> Firmware↔Hardware-Konsistenz-Audit. **Alle H743-HAL-Pin-Claims = Schematic**
+> (SAI PE4/5/6, LCD SPI1 + Backlight-Ch15, I²C PB6/7+PC13, alle 4 Encoder-
+> TIM-Paare, AMP PB14/15, MIDI PD5, BAT_SENSE PA3, MCP-Bitmap, Jack-Detect-
+> Polaritaet). **Geschlossen: der r18.76-Gap** — main_h743 trug noch den
+> stalen Hall-ADC-TODO fuer die Cells → jetzt digitaler MCP-Edge-Pfad
+> (wie Pico-Bench, durch host-getestete controls.c) + Jack-Detect-Routing
+> (nur Amp muten, Line-Out bleibt live) + stale Kommentare fixiert. **Ehrlich
+> offen:** (1) Step 13.3 = CubeH7-Peripherie-Bring-up (Clocks/SAI-DMA/SPI/
+> I²C/USART/GPIO) — Logik ist host-getestet + Pico-verifiziert, H7-Anbindung
+> fehlt; (2) VU-Meter U10@0x41: keinerlei Firmware (8 LEDs bleiben dunkel,
+> eigener Schritt); (3) MIDI-TX deferred per ADR-0004 (Hardware komplett).
+> H743-Target baut+linkt, 352298 Test-Checks gruen. Details: CHANGELOG r18.83.
+>
 > **r18.82 (2026-07-02, User: „All the other components right? check datasheets"):**
 > Systematischer Datenblatt-Abgleich aller restlichen Komponenten + jedes
 > Symbol↔Footprint-Pad-Paars. **2 kritische Pad-Mapping-Fehler:** (1) alle

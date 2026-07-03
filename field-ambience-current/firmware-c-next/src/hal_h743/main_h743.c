@@ -17,9 +17,17 @@
  *        engine_init()     — reverb buffers, voice pools, generative state
  *        audio_init()      — SAI1+DMA pump live, /SHDN+/MUTE+XSMT sequence
  *        audio_set_renderer(engine_render);
- *   5. Main loop: drain enc_pop_event() → menu.c, drain MCP int → buttons
- *      → cell hold-latch + modifier toggles, advance SysTick-driven
+ *   5. Main loop: drain enc_pop_event() → menu.c, drain MCP int → cells
+ *      (digital, GPA0-4) + modifiers (GPB0-4) + jack-detect (GPA6)
+ *      → hold-latch/modifier toggles, advance SysTick-driven
  *      generative bar timer if engine_set_generative(true,…).
+ *
+ * OFFEN (r18.82-Audit, eigener Arbeitsschritt): der 2. PCA9685 (U10 @ 0x41,
+ * 8 VU-Meter-LEDs, Hardware seit r18.66) hat noch KEINE Firmware-Anbindung —
+ * weder eine adressierbare pca-API (pca_set_pwm kennt nur ein Device) noch
+ * einen Level-Tap aus engine_render noch einen VU-Renderer. Bis dahin
+ * bleiben die 8 VU-LEDs schlicht dunkel (PCA9685 bootet mit allen Kanaelen
+ * aus — kein Fehlverhalten, nur Feature fehlt).
  *
  * Hold-latch logic (ADR-0008 r2 to implement here):
  *   Per cell: bool hold_base[5], hold_shift[5].
@@ -42,7 +50,6 @@
 #include "mcp23017.h"
 #include "oled.h"
 #include "midi.h"
-#include "cells.h"       /* Hall velocity model (ADR-0013) */
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
@@ -53,6 +60,10 @@
 /* Modifier bit positions are defined ONCE in mcp23017.h as MCP_BIT_MOD_*
  * (GPB0-4 = bits 8-12, because mcp_read_gpio packs (GPB<<8)|GPA). Do not
  * redefine them here — the old local 0-4 values read GPA, not GPB (bug). */
+
+/* Cells sind seit r18.73 DIGITAL (MCP23017 GPA0-4) — feste Tap-Velocity wie
+ * im Pico-HAL (CELL_VOICE_AMP 0.12 dort; controls.c skaliert identisch). */
+#define CELL_TAP_AMP 0.12f
 
 /* Menu → engine binding (ADR-0017 Phase 4, r18.58 Reddit-macro pass).
  * Menu slots are now World/Space/Atmos/Motion/Age — Tone was dropped (it
@@ -73,9 +84,10 @@ int main(void) {
     oled_init();
     mcp_init();
     enc_init();
-    /* midi_tx_init();  -- DEFERRED r18.30 (ADR-0004). J9 DNP für 5er-Run.
-     * Hardware-Pfad PD5 → USART2 bleibt reserviert; bei Reaktivierung nur
-     * diese Zeile einkommentieren + Buchse/220Ω auf PCB bestücken. */
+    /* midi_tx_init();  -- Firmware-seitig DEFERRED r18.30 (ADR-0004).
+     * r18.82-Doku-Fix: die HARDWARE ist komplett bestueckt (J10 PJ-320D +
+     * 2x 220R seit r18.67; frueher stand hier faelschlich "J9 DNP" — J9 ist
+     * der Akku-JST). Bei Reaktivierung nur diese Zeile einkommentieren. */
     dsp_init();
     brain_init();
     engine_init();
@@ -94,7 +106,6 @@ int main(void) {
     }
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     params_init();            /* encoder param values → engine defaults */
-    cells_init();             /* Hall velocity model */
     leds_init();              /* 16-ch PWM render */
     audio_init();
     audio_set_renderer(engine_render);
@@ -119,25 +130,51 @@ int main(void) {
             }
         }
 
-        /* --- 2. MCP23017 buttons → modifiers + cell taps --- */
+        /* --- 2. MCP23017 → cells + modifiers + jack-detect ---
+         * r18.82: Der alte Abschnitt 3 ("Cell Hall ADCs → velocity") war seit
+         * r18.73 stale — die Cells sind DIGITALE Switches am MCP23017
+         * (GPA0-4, aktiv-LOW mit internem Pull-up), keine Hall-ADCs mehr
+         * (adc_read_norm/cells_update existieren fuer die Cells nicht mehr;
+         * PC0/PC1/PA4/PB0/PB1 sind NC-Reserven). Gleicher Edge-Pfad wie die
+         * bench-erprobte Pico-Implementierung (src/hal_pico/main_pico.c),
+         * hier durch die host-getestete controls.c-Statemachine geroutet. */
         uint16_t gpio;
         if (mcp_read_gpio(&gpio)) {
             uint16_t fell = (uint16_t)(prev_gpio & ~gpio);   /* 1→0 = press */
             uint16_t rose = (uint16_t)(~prev_gpio & gpio);   /* 0→1 = release */
+
+            /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL). */
+            for (uint8_t c = 0; c < 5; ++c) {
+                uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
+                if (fell & m) controls_cell_press(c, CELL_TAP_AMP);
+                if (rose & m) controls_cell_release(c);
+            }
+
+            /* Modifier GPB0-4 (bits 8-12). */
             if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
             if (fell & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, true);
             if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
             if (fell & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, true);
             if (fell & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, true);
-            (void)rose;
+
+            /* Jack-Detect GPA6 (r18.82-Hardware: PJ-320D-Switch oeffnet beim
+             * Einstecken → mit R_DET 10k/C_DET 1µF + MCP-Pull-up liest der
+             * Pin unplugged ≈ 0,3 V = LOW, plugged = HIGH). Design (ADR/v0.7):
+             * Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW),
+             * Line-Out bleibt live — NICHT audio_mute() rufen (das wuerde
+             * auch XSMT ziehen und den Line-Out toeten). */
+            {
+                uint16_t jm = (uint16_t)(1u << MCP_BIT_JACK);
+                if ((fell | rose) & jm) {
+                    bool plugged = (gpio & jm) != 0;
+                    (void)plugged;
+                    /* TODO(13.3): PB15 (AMP_nMUTE) = plugged ? LOW : HIGH
+                     * (+ ~50 ms Debounce ueber den 1-kHz-SysTick). */
+                }
+            }
+
             prev_gpio = gpio;
         }
-
-        /* --- 3. Cell Hall ADCs → velocity → controls --- */
-        /* TODO(13.3): for each cell c: float pos = adc_read_norm(c);
-         *   cell_event_t ce = cells_update(c, pos, HAL_GetTick());
-         *   if (ce.kind == CELL_EVENT_PRESS)   controls_cell_press(c, ce.amp);
-         *   if (ce.kind == CELL_EVENT_RELEASE) controls_cell_release(c);     */
 
         /* --- 4. Generative bar timer (SysTick-driven) → engine_generative_advance() --- */
 

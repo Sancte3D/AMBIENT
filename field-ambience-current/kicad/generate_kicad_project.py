@@ -3161,9 +3161,10 @@ def stm32h743_sheet() -> str:
       - SWD J4 (3-Pin, bestehend) auf PA13/PA14/GND (§5.8)
       - BAT_SENSE-Teiler 100k/100k + 10 nF an PA3 (§5.6, aus pico_sheet)
       - STATUS_LED an PD8 (§5.6)
-      - MIDI_TX (PD5) nur als Netz: 🔴 TRS-Buchse fehlt im Design
-        (PCB_TODO B-MIDI) — Buchse + Serien-R nach MIDI-1.0-3V3-Spec
-        sind in SPEC §4 noch nicht spezifiziert.
+      - MIDI-Out KOMPLETT im Design (r18.82-Doku-Fix — dieser Docstring war
+        stale): J10 PJ-320D + R_MIDI_TX/R_MIDI_REF 220R (C22962) sind seit
+        r18.67 verdrahtet (TRS Type A, 3,3V per MMA CA-033). Firmware-seitig
+        ist MIDI-TX deferred (ADR-0004 r18.30), Hardware ist bestueckt.
     """
     sheet_uuid = det_uuid("sheet_stm32")
     sus = "sheet_stm32"
@@ -3744,7 +3745,8 @@ def lcd_sheet() -> str:
     die SPEC bekommt dazu eine r18.5-Fußnote.
 
     Backlight: BLK (Header-Pin 8) über Q2 2N7002 Low-Side, Gate an
-    PCA9685-Kanal 12 (mcp_sheet, Net LCD_BLK_PWM), 100k Gate-Pulldown
+    PCA9685-Kanal 15 (mcp_sheet, Net LCD_BLK_PWM; r18.82-Doku-Fix: war als
+    Kanal 12 beschrieben — r18.9 verschob Backlight auf Kanal 15), 100k Gate-Pulldown
     (Default: Backlight aus bis I²C-Init — §12.5-Boot-Default macht die
     Firmware über PCA9685-Init).
     """
