@@ -10,6 +10,38 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.87 (2026-07-04) — LEDs reduziert: nur Cell- + Modifier-LEDs (VU-Meter + Heartbeat raus) + neue Audio-Renders
+
+User: „we only keep LEDs above cells and above modifier buttons.. I don't
+need the other leds and functions."
+
+- **Schematic (Generator):** U10 PCA9685 #2 (0x41) + LED_VU1–8 + R_VU1–8 +
+  R_OE2 + C_PCA2_VDD/_HF komplett entfernt (mcp_sheet); LED_HB + R_SLED
+  (STATUS_LED/Heartbeat) entfernt, **PD8 = NC-Reserve** (stm32h743_sheet).
+  I²C-Bus traegt wieder nur U2 (0x20) + U6 (0x40). Geometrisches ERC: 0
+  Fehler, Warn-Baseline unveraendert.
+- **BLEIBT: LED_CHRG** (orange, MCP73831-STAT-hardware-getrieben) — mit dem
+  ADR-0016-Power-Off laedt das Geraet im AUS-Zustand (keine Firmware laeuft);
+  die STAT-LED ist das einzige „laedt"-Feedback. Auf Zuruf streichbar.
+- **BOM:** 57 unique Parts / **188 Placements** (−22). SMD-BOM/Board
+  $24.50 → ~$21.30; 5er-Run neu ~$89 (Economic) / ~$99 (Standard) pro
+  Geraet. jlc_bom.csv + bom_overview.html + BOM_MASTER + PCB_BOM +
+  COST_ESTIMATE + PCB_HANDOFF + Onboarding aktualisiert; **ADR-0020 =
+  SUPERSEDED**.
+- **Firmware:** vu.{h,c} + test_vu.c geloescht, pca2_*/PCA2_I2C_ADDR-API
+  raus, engine_render_peak()-Tap raus (Render-Loop wieder ohne Peak-
+  Messung), main_h743-VU-Block raus. U6-LED-Pfad (leds.c, 16 Kanaele inkl.
+  Backlight) unveraendert. Host-Suite **24 Suiten / 0 Failures**; h743
+  cross-baut (152,9 KB Flash).
+- **Audio-Renders neu** (User: „render new audio samples"): beide Demos mit
+  der AKTUELLEN Engine frisch gerendert und nach `demos/audio/` gelegt —
+  `field_ambience_master_tape.flac` (8:20, Sechs-Saetze-Mastertape aus
+  render_wav.c, Peak −6,7 dBFS) + `field_ambience_performance.flac`
+  (5:00, dichte Session aus render_performance.c, Peak −4,7 dBFS).
+  flac -t verifiziert; README-Zeile aktualisiert.
+
+---
+
 ## v0.7-r18.86 (2026-07-04) — Firmware: Step 13.3 CubeH7-Bring-up — H743 baut als echte Firmware (.elf/.bin)
 
 User: „Now let's properly build our firmware engine." — Teil 2: die

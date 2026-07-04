@@ -89,17 +89,16 @@ G = [
    ("SW6-10","HX B3F-4055 tactile ×5","modifier buttons (THT, square head for caps) — same part as the cells; r18.71: C2845240 (stock 30) → C36498965 (20k stock, ~$0.06); verify THT footprint/pinout","C36498965","hand",True),
    ("SW11/BOOT","TS-1088 tactile ×2","Reset + BOOT0 (2 service buttons)","C720477","jlc",False),
  ]),
- ("LEDs (23 visible)", "#a855f7", [
+ ("LEDs (16 visible)", "#a855f7", [
    ("LED-Y","KENTO KT-0603Y (yellow)","Shift + 5 cell base-hold LEDs","C2287","jlc",True),
    ("LED-G","KENTO KT-0603G (green)","Hold + 5 cell shift-hold LEDs","C12624","jlc",True),
-   ("LED-W","XL-1608UWC (white)","Drone/Gen/Clear + 8 VU LEDs","C965808","jlc",True),
+   ("LED-W","XL-1608UWC (white)","Drone/Gen/Clear modifier LEDs (r18.87: VU row + heartbeat removed — only cell + modifier LEDs remain)","C965808","jlc",True),
    ("LED_CHRG","Orange 0603 XL-1608UOC","charger status (r18.70: C72041 was blue+EOL → C965800)","C965800","jlc",True),
-   ("R_LED","390 Ω ×23","LED series resistors","C23151","jlc",False),
+   ("R_LED","390 Ω ×15","LED series resistors","C23151","jlc",False),
  ]),
  ("I/O Expander & LED Drivers", "#64748b", [
    ("U2","MCP23017 GPIO expander","extra inputs over I²C","C506653","jlc",False),
-   ("U6","PCA9685 PWM driver","drives the 15 status LEDs","C2678753","jlc",False),
-   ("U10","PCA9685 PWM driver #2","drives the 8 VU LEDs","C2678753","jlc",False),
+   ("U6","PCA9685 PWM driver","drives the 15 cell/modifier LEDs + LCD backlight (U10/VU removed r18.87)","C2678753","jlc",False),
  ]),
  ("Passives & Service", "#94a3b8", [
    ("R 1k","0603 1%","BOOT0 / charger-status series","C21190","jlc",False),
@@ -118,7 +117,7 @@ G = [
 ]
 
 VIS = [("Touch controls","15","4 enc + 5 cells + 5 buttons + power switch"),
-       ("Display","1","1.9″ window"),("Indicator LEDs","23","5 mod + 10 cell + 8 VU"),
+       ("Display","1","1.9″ window"),("Indicator LEDs","15","5 mod + 10 cell"),
        ("Ports","3","USB-C + line-out + MIDI"),("Speakers","2","grilles"),
        ("Bottom","—","2 pinholes + battery + 4 screws")]
 

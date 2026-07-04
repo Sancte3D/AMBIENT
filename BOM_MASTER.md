@@ -116,7 +116,6 @@ in any Markdown editor).
 |---|---|---|---|---|---|
 | **U2** GPIO expander | **MCP23017-E/SS** SSOP-28 | [C506653](https://www.lcsc.com/product-detail/C506653.html) | `Package_SO:SSOP-28_5.3x10.2mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 | **U6** PWM LED driver | **PCA9685PW,118** TSSOP-28 (16 channels: 5 modifier + 10 cell + 1 backlight, exactly 16/16) | [C2678753](https://www.lcsc.com/product-detail/C2678753.html) | `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
-| **U10** PWM LED driver #2 | **PCA9685PW,118** TSSOP-28 (r18.66 — level meter: 8 VU LEDs on ch 0-7. I²C **0x41** (A0=+3V3), same bus as U6/MCP. Decoupling 10µF+100nF, /OE pull-up R_OE2 10k) | [C2678753](https://www.lcsc.com/product-detail/C2678753.html) | `Package_SO:TSSOP-28_4.4x9.7mm_P0.65mm` | KiCad-Standard | Standard-Lib-3D |
 
 ## 5. Display
 
@@ -227,7 +226,6 @@ in any Markdown editor).
 | **Modifier LEDs Drone / Generate / Clear (3× white)** | XL-1608UWC-04 (warm white 0603) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | see above | KiCad-Standard | Standard-Lib-3D |
 | **Cell LEDs 5× yellow** (base-hold status) | Hubei KENTO KT-0603Y | [C2287](https://www.lcsc.com/product-detail/C2287.html) | see above | KiCad-Standard | Standard-Lib-3D |
 | **Cell LEDs 5× green** (shift-hold status) | Hubei KENTO KT-0603G | [C12624](https://www.lcsc.com/product-detail/C12624.html) | see above | KiCad-Standard | Standard-Lib-3D |
-| **LED_HB** heartbeat (warm white) | **XL-1608UWC-04** (r18.24 fix: was C965818 = XL-2012UWC **0805**, wrong package) | [C965808](https://www.lcsc.com/product-detail/C965808.html) | see above | KiCad-Standard | Standard-Lib-3D |
 | **LED_CHRG** charger status (orange) | **XL-1608UOC-06** (XINGLIGHT, orange 605 nm 0603) — r18.70: was C72041, which is actually a **blue + discontinued** LED with stock ≈4 (wrong part, caught by JLC API check) | [C965800](https://www.lcsc.com/product-detail/C965800.html) | see above | KiCad-Standard | Standard-Lib-3D |
 | LED series resistors **390 Ω** 0603 (15×, on +5V anode → LED → PCA9685 sink) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
 
@@ -237,19 +235,15 @@ in any Markdown editor).
 > base-hold=yellow, shift-hold=green). `firmware-c-next/src/leds.c` is adapted to
 > the user spec.
 
-### Live level meter (VU — r18.66, OP-1-Field style)
+### Live level meter (VU) — REMOVED r18.87
 
-> **8 small LEDs in a row as a live level indicator** (like the dB swing in
-> After Effects during playback). Driven by **U10** (2nd PCA9685, §4) on
-> channels 0-7; each with one 390 Ω series resistor on +5V anode → U10 sink. The
-> firmware computes RMS/peak from the audio buffer and drives the segments via
-> PWM (a real meter, not just a knob position). **Row position on the PCB =
-> layout TBD.**
-
-| Function | MPN | LCSC/Link | Footprint | FP source | 3D |
-|---|---|---|---|---|---|
-| **VU LEDs 8× white** (LED_VU1–8, r18.68 — user: white instead of blue) | XL-1608UWC-04 (warm-white 0603) — same LED as the heartbeat; **no separate blue LED needed** | [C965808](https://www.lcsc.com/product-detail/C965808.html) | `LED_SMD:LED_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
-| VU series resistors **390 Ω** 0603 (8×, R_VU1–8) | 0603WAF3900T5E | [C23151](https://www.lcsc.com/product-detail/C23151.html) | `Resistor_SMD:R_0603_1608Metric` | KiCad-Standard | Standard-Lib-3D |
+> **r18.87 (user):** only the LEDs above the cells and above the modifier
+> buttons remain. The 8-LED live level meter (U10 = 2nd PCA9685 @ 0x41,
+> LED_VU1–8, R_VU1–8, R_OE2, C_PCA2_VDD/_HF — r18.66/r18.68/r18.84/r18.85)
+> and the PD8 heartbeat LED (LED_HB + R_SLED 820 Ω) are deleted from the
+> schematic, BOM and firmware. LED_CHRG stays: with the ADR-0016 power-off
+> scheme the device charges while switched OFF (no firmware running), so the
+> hardware-driven MCP73831-STAT LED is the only charge feedback.
 
 ## 10. Standard Passives (assortment)
 
@@ -258,7 +252,7 @@ the generator with an LCSC number; the assortment here is for reference only:
 
 | Class | LCSC examples |
 |---|---|
-| Resistors 0603 1 % | C21190 (1 k), C25804 (10 k), C23253 (820), C23186 (5.1 k), C23146 (36 k), C23153 (39 k), C23162 (470), C23345 (22), C25803 (100 k), C25811 (200 k), C4184 (20 k), C22975 (2 k), C31850 (22 k) |
+| Resistors 0603 1 % | C21190 (1 k), C25804 (10 k), C23186 (5.1 k), C23146 (36 k), C23153 (39 k), C23162 (470), C23345 (22), C25803 (100 k), C25811 (200 k), C4184 (20 k), C22975 (2 k), C31850 (22 k) |
 | Caps 0603 X7R / X5R | C14663 (100 n), C57112 (10 n), C46653 (4.7 µ X5R), C1588 (1 n), C1804 (auto-generated), C15849 (1 µ X5R), C14858 (10 n B) |
 | Caps 0805 | C15850 (10 µ X5R), C45783 (22 µ X5R) |
 | MLCC 1210 | C2880380 (100 µF/10V X5R, C_BULK2); C444831 (470µF/10V polymer-tantalum case-E, C_BULK) |

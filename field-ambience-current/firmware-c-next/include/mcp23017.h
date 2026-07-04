@@ -82,10 +82,4 @@ void pca_init(void);
 /* PCA9685 per-channel 12-bit PWM (on/off counts). */
 void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count);
 
-/* r18.85 — second PCA9685 (U10 @ 0x41, A0=+3V3): 8-channel VU meter row
- * (hardware r18.66). Same register protocol as U6, different address. */
-#define PCA2_I2C_ADDR     0x41
-void pca2_init(void);
-void pca2_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count);
-
 #endif

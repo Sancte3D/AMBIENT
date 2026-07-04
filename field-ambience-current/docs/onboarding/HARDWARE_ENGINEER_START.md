@@ -20,7 +20,6 @@ Schritt.
 | Power | USB-C, LiPo→Boost (TPS61089), LDO (AP7361C), Charger (MCP73831) | — | [BOM §2](../../../BOM_MASTER.md) |
 | Audio | PCM5102A DAC → PAM8403 Amp → 2 Speaker + PJ-320D Line-out | 2 Spk | [BOM §3](../../../BOM_MASTER.md) |
 | I/O + LED | MCP23017 (GPIO) + PCA9685 U6 (PWM) → 15 Mono-Status-LEDs | 15 LED | [BOM §4/§9](../../../BOM_MASTER.md) |
-| Level-Meter | **PCA9685 U10 @ 0x41** (gleicher I²C-Bus) → 8 VU-LEDs (6 blau + 2 weiß), firmware-getrieben | 8 LED | [BOM §9](../../../BOM_MASTER.md) · [ADR-0020](../decisions/ADR-0020-level-meter.md) |
 | Display | Waveshare 1.9″ ST7789 (Steckmodul, 8-Pin J3) | 1 | [BOM §5](../../../BOM_MASTER.md) |
 | **Encoder** | **4× ALPS EC11E18244AU — alle Push-Encoder.** Alle 4 Push-Switches verdrahtet: DISPLAY (PE3), VOL (MCP-GPB5), DRIVE (PE0), BRIGHT (PE1) | 4 | [BOM §6](../../../BOM_MASTER.md) · [ADR-0012](../decisions/ADR-0012-encoder-strategy.md) |
 | Cells | 5× Kailh Choc V1, direkt gelötet (SW1–5, CPG135001D01, LCSC C400229), **digital** auf MCP23017 GPA0–4, echter Keyswitch (~3mm Hub) (r18.75, ADR-0013 abgelöst) | 5 | [BOM §7](../../../BOM_MASTER.md) |

@@ -1,6 +1,9 @@
 # ADR-0020: Live-Level-Meter — 8 LEDs via 2. PCA9685 (U10)
 
-**Status:** ACCEPTED (User-Direktive, 2026-06-27)
+**Status:** SUPERSEDED (User-Direktive 2026-07-04, r18.87 — VU-Meter komplett
+entfernt: nur die LEDs ueber den Cells und ueber den Modifier-Buttons bleiben.
+U10 + LED_VU1-8 + R_VU1-8 + R_OE2 + Decoupling sind aus Schematic, BOM und
+Firmware geloescht.)
 **Date:** 2026-06-27
 
 ## Kontext

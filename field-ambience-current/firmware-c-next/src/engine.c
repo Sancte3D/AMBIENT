@@ -65,10 +65,6 @@ static void refresh_bass(void) {
 
 #define BLOCK     AUDIO_BUFFER_FRAMES
 
-/* r18.85: last-block output peak (0..1, post-limiter) for the VU meter.
- * Written once per render block from the audio context, read by the UI. */
-static volatile float s_render_peak = 0.0f;
-
 static float dryL [BLOCK];
 static float dryR [BLOCK];
 static float sendL[BLOCK];
@@ -391,25 +387,14 @@ void engine_render(int16_t *buf, int frames) {
      * reference drive (1.10). Peaks roll into the tanh knee, even harmonics
      * appear, makeup-gain implicit (×0.78 inside). */
     tape_saturation_process(outL, outR, frames);
-    float blk_peak = 0.0f;
     for (int n = 0; n < frames; ++n) {
         /* soft_limit is now a safety net for the rare residual peak above
          * 0.75 — saturation usually already keeps us in range. */
         float yL = soft_limit(outL[n]);
         float yR = soft_limit(outR[n]);
-        float aL = yL < 0.0f ? -yL : yL;
-        float aR = yR < 0.0f ? -yR : yR;
-        if (aL > blk_peak) blk_peak = aL;
-        if (aR > blk_peak) blk_peak = aR;
         buf[n * 2 + 0] = (int16_t)(yL * 32767.0f);
         buf[n * 2 + 1] = (int16_t)(yR * 32767.0f);
     }
-    /* VU tap (r18.85): block peak of the FINAL limited output — exactly what
-     * hits the DAC. Single aligned float store, safe from the DMA-IRQ render
-     * context; the UI loop reads it at ~60 Hz via engine_render_peak(). */
-    s_render_peak = blk_peak;
 }
-
-float engine_render_peak(void) { return s_render_peak; }
 
 int engine_active_voices(void) { return pad_active_count(); }

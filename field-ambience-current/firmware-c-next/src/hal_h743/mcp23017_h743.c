@@ -152,10 +152,10 @@ bool mcp_init(void) {
     /* Prime cached state + drain any pending change. */
     (void)mcp_service();
 
-    /* Both LED drivers share the bus — bring them up here so main() has a
-     * single "expander + LEDs ready" point, same as the Pico path. */
+    /* The LED driver shares the bus — bring it up here so main() has a
+     * single "expander + LEDs ready" point, same as the Pico path.
+     * (r18.87: U10/pca2 removed — U6 is the only PCA9685.) */
     pca_init();
-    pca2_init();
     return true;
 }
 
@@ -218,12 +218,8 @@ static void pca_dev_set_pwm(uint8_t addr7, uint8_t ch,
 }
 
 void pca_init(void)  { pca_dev_init(0x40); }
-void pca2_init(void) { pca_dev_init(PCA2_I2C_ADDR); }
 
 void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count) {
     pca_dev_set_pwm(0x40, channel, on_count, off_count);
 }
 
-void pca2_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count) {
-    pca_dev_set_pwm(PCA2_I2C_ADDR, channel, on_count, off_count);
-}
