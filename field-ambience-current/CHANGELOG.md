@@ -10,6 +10,29 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.85 (2026-07-02) — Firmware: VU-Meter komplett (Engine-Tap → 8-Segment-Ballistik → U10-API)
+
+User: „Now let's properly build our firmware engine." — Teil 1, host-testbar
+zuerst (Repo-Regel): die r18.83 als offen dokumentierte VU-Luecke ist zu.
+
+- **Engine-Tap:** `engine_render_peak()` — Block-Peak des FINALEN limitierten
+  Outputs (exakt das DAC-Signal), einzelner volatiler Float-Store aus dem
+  Render-Kontext, beliebig pollbar.
+- **Neues Modul `vu.{h,c}`** (hardware-unabhaengig): 8 Segmente
+  (−36/−30/−24/−18/−12/−6 Level + −3/−0,5 Peak, dBFS), Instant-Attack,
+  30 dB/s wall-clock Release, 900 ms Peak-Hold (OP-1-Field-Style Dot),
+  PWM-interpoliertes Bar-Ende, White-Duty passend zu leds.c.
+- **Neue Test-Suite `test_vu.c`** (44 Checks): Thresholds, Attack/Decay-
+  Timing, Floor-Clamp, Peak-Hold ueber Decay + Release, Boundary-
+  Interpolation unter gehaltenem Dot, Over-FS-Clamp, End-to-End mit echtem
+  `engine_render()` (Stille vs. gehaltene Note).
+- **HAL-API:** `PCA2_I2C_ADDR 0x41` + `pca2_init/pca2_set_pwm` in
+  mcp23017.h; h743-Stubs (Transport = Step 13.3, ein gemeinsamer
+  pca_write(addr,…)-Helper); main_h743 tickt das Meter im 60-Hz-LED-Block.
+- Host-Suite gruen (352298 Checks gesamt), `field_ambience_h743` baut+linkt.
+
+---
+
 ## v0.7-r18.84 (2026-07-02) — Must-have-Check: /OE-Fehler (alle LEDs tot), Mounting-Holes, Testpunkte + neue Kostenschätzung
 
 User: „are we missing any must have pcb components?" + neue JLC-Kostenschätzung.
