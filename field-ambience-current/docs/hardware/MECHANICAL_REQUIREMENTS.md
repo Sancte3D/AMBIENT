@@ -63,7 +63,7 @@ of these is **your design**; this is the *inventory*, not a layout.
 | USB-C (J1) | 1 | charging + USB-DFU firmware flash | edge cutout for the receptacle |
 | Line-out 3.5 mm (J8) | 1 | audio out to headphones / mixer | 3.5 mm hole; opposite edge from the switching regulators |
 | MIDI-out 3.5 mm (J10) | 1 | MIDI out (TRS Type A) | 3.5 mm hole |
-| Power slide switch (SW_PWR) | 1 | on/off, side-actuated ("off but still charges") | side slot + your own slider cap that nudges the switch (mechanically decoupled) |
+| Power slide switch (SW_PWR) | 1 | on/off, side-actuated ("off but still charges") | side slot + your own slider cap, same-axis sliding (cap takes the force). ⚠ r18.85: ALPS SSSS811101 — body only 1.4 mm tall, stem window z ≈ 0–1.4 mm above PCB → slot + cap finger must reach near board level (old MST was 2.3–3.8 mm) |
 | Speaker grilles | 2 | the two speakers | 2× Ø25–35 mm open area + dust mesh; ≥50 mm apart; sealed ~5 cm³ chamber behind each (critical for sound). Top or side — your choice |
 
 ### BOTTOM face

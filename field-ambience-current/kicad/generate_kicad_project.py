@@ -1859,16 +1859,18 @@ def _tps22918_lib_symbol() -> str:
 
 
 def _sw_spdt_lib_symbol() -> str:
-    """SPDT-Schiebeschalter (SW_PWR MST-12D18G3) — r18.81 / ADR-0016.
+    """SPDT slide switch (SW_PWR ALPS SSSS811101) — r18.85 / ADR-0016.
 
-    Pin-Nummern = Footprint-Pads des field_ambience:SW_MST-12D18_SlideSwitch_RA
-    (3 Pads @ 2,5 mm Pitch): 2 = MITTE. Als Common wird die Mitte angenommen —
-    Standard-Konvention bei 1P2T-Schiebeschaltern (Schleifer verbindet Mitte
-    mit jeweils einem Aussenpad).
-    UNVERIFIED — NEEDS HUMAN CHECK: das SHOU-HAN-Datenblatt (LCSC
-    8888d0ec4d46a4f060de0c433f52f277.pdf) bemasst nur Mechanik/Land-Pattern
-    und labelt die Terminals NICHT; vor Fab am physischen Teil durchpiepen
-    (Mitte↔Aussen in beiden Schaltstellungen).
+    Pin numbers = footprint pads of field_ambience:SW_ALPS-SSSS811101_SlideSwitch_SMD
+    (3 signal pads, asymmetric 3.0/1.5 mm spacing): pin 2 = COMMON. Unlike the
+    previous MST-12D18G3 (terminals unlabeled in its datasheet), the ALPS
+    datasheet's circuit diagram DOES label the common: C = terminal (2) — the
+    moving contact bridges C to (1) or (3). Verified from the official ALPS
+    SSSS811101 catalog page (wmsc.lcsc.com .../1808041445_ALPSALPINE-
+    SSSS811101_C109335.pdf, p.3 "Circuit Diagram"). A quick continuity check on
+    the physical part before fab is still cheap insurance.
+    Footprint pads 4-7 = ground-frame terminals (not in this 3-pin symbol; they
+    solder-anchor the metal frame — optionally tie to GND in layout for EMC).
     """
     out = []
     out.append('    (symbol "Switch:SW_SPDT" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)')
@@ -2483,7 +2485,7 @@ def power_tree_sheet() -> str:
     # ================================================================
     # r18.81 — ADR-0016 Power-Off-Block (war beschlossen, aber NIE im
     # Schematic): U_PWR TPS22918 Load-Switch zwischen +5V-Rail und LDO-VIN,
-    # SW_PWR MST-12D18G3 Schiebeschalter auf U_PWR.ON, R_PWR_PD 100k
+    # SW_PWR ALPS SSSS811101 Schiebeschalter auf U_PWR.ON, R_PWR_PD 100k
     # Default-AUS, C_PWR_SW 10µF auf +5V_SW. Lader U7 haengt VOR dem Switch
     # (an VBUS/Akku) → "dunkel, aber laedt".
     #
@@ -2560,24 +2562,28 @@ def power_tree_sheet() -> str:
     # ON (Pin 3) ← PWR_ON-Netz (Label-Match zu SW_PWR/R_PWR_PD)
     wires.append(wire(UPWR_X - 8.89, UPWR_ON_Y, 118, UPWR_ON_Y, seed_suffix="upwr-on"))
     labels.append(label(118, UPWR_ON_Y, "PWR_ON"))
-    # SW_PWR MST-12D18G3: COM (Pad 2, Mitte) → PWR_ON; Throw A (Pad 1) →
-    # +5V-Rail; Throw B (Pad 3) → NC-Label. Side-actuated am Board-Rand:
-    # Datenblatt-verifiziert (LCSC-PDF, Zeichnung S.1): Stem 1,5×1,5 mm ragt
-    # HORIZONTAL 3 mm ueber den Body hinaus (gegenueber der Pin-Seite),
-    # Oberkante 0,2 mm unter Body-Top (Body 4,0 mm hoch) → Stem-Fenster
-    # z ≈ 2,3–3,8 mm ueber PCB-Oberflaeche; Travel 2 mm ±0,2, 200 gf lateral.
+    # SW_PWR ALPS SSSS811101 (r18.85 — premium/TE-grade swap, was MST-12D18G3):
+    # COM (Pad 2) → PWR_ON; Throw A (Pad 1) → +5V-Rail; Throw B (Pad 3) → NC.
+    # Side-actuated am Board-Rand, Datenblatt-verifiziert (ALPS-Katalogblatt,
+    # wmsc.lcsc.com/.../1808041445_ALPSALPINE-SSSS811101_C109335.pdf):
+    # "Actuator directions: Horizontal" — Knopf (1,1 mm dick) ragt seitlich aus
+    # dem Body, Travel 1,5 mm, Betaetigungskraft 1,5 N, Body nur 1,4 mm hoch →
+    # Stem-Fenster z ≈ 0–1,4 mm ueber PCB-Oberflaeche (VIEL flacher als der
+    # alte MST mit 2,3–3,8 mm — Gehaeuse-Slot + Slider-Cap muessen tief
+    # greifen). 10k Zyklen, 0,3 A 5 V (Enable-Signal = uA), Reflow (JLC).
     SWP_X, SWP_Y = 108.0, 118.0
     symbols.append(place_symbol(lib_id="Switch:SW_SPDT", ref="SW_PWR",
-                                value="MST-12D18G3 slide switch (Haupt-Aus, side-actuated, ADR-0016)",
+                                value="ALPS SSSS811101 slide switch (main power-off, side-actuated, ADR-0016)",
                                 x=SWP_X, y=SWP_Y,
-                                footprint="field_ambience:SW_MST-12D18_SlideSwitch_RA",
-                                datasheet="https://datasheet.lcsc.com/datasheet/pdf/8888d0ec4d46a4f060de0c433f52f277.pdf",
+                                footprint="field_ambience:SW_ALPS-SSSS811101_SlideSwitch_SMD",
+                                datasheet="https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/1808041445_ALPSALPINE-SSSS811101_C109335.pdf",
                                 extra_props={
-                                    "MPN": "MST-12D18G3",
-                                    "Manufacturer": "SHOU HAN",
-                                    "LCSC": "C49023766",
-                                    "FP_NOTE": "r18.81 GEGEN DATENBLATT VERIFIZIERT: Land-Pattern MSK12D = 3 Pads 1,2 mm @ 2,5 mm Pitch + 2 Loecher Ø0,9 @ 6,8 mm, Pad-Mitte 3,2 mm (=2,1+2,2/2) von der Lochlinie — vendored Footprint stimmt exakt. Body flach auf der (horizontalen) PCB, Stem parallel zur PCB 3 mm ueber Body-Kante → am Board-Rand platzieren, Stem durch Slot in der Gehaeuse-Seitenwand.",
-                                    "PIN_NOTE": "UNVERIFIED — NEEDS HUMAN CHECK: Common = MITTELPAD angenommen (1P2T-Schiebeschalter-Konvention); das SHOU-HAN-DB labelt die Terminals nicht — vor Fab am Teil durchpiepen. Falsch-Fall waere fail-safe: Geraet liesse sich nur nicht einschalten (PWR_ON floatet nie: 100k-PD).",
+                                    "MPN": "SSSS811101",
+                                    "Manufacturer": "ALPS ALPINE",
+                                    "LCSC": "C109335",
+                                    "FP_NOTE": "r18.85 GEGEN DATENBLATT VERIFIZIERT (ALPS Land Dimensions, S.3): 3 Signal-Pads 0,7 mm breit @ asymm. 3,0/1,5 mm Teilung + 4 Ground-Frame-Pads 0,8x1,0 @ +-3,65 mm (innere Kante 6,3 mm) + 2 Locator-Loecher O0,9 @ 3,0 mm — vendored Footprint (easyeda2kicad C109335) stimmt exakt. Body flach auf der PCB, Aktuator HORIZONTAL seitlich raus -> Board-Rand, Slot in der Gehaeuse-Seitenwand (z nahe PCB-Level!). Ground-Pads 4-7 sind nicht im 3-Pin-Symbol: loeten verankert den Metallrahmen; optional im Layout auf GND legen (EMC).",
+                                    "PIN_NOTE": "Common = Terminal 2 — im ALPS-Schaltbild GELABELT (C), anders als beim frueheren MST (unlabeled). Kurzer Durchpiep-Check am physischen Teil vor Fab bleibt guenstige Absicherung; Falsch-Fall fail-safe (100k-PD haelt PWR_ON low).",
+                                    "PREV_PART": "MST-12D18G3 (SHOU HAN, C49023766) — Budget-Fallback; Footprint SW_MST-12D18_SlideSwitch_RA bleibt vendored im Repo.",
                                 },
                                 seed_suffix="SW_PWR", sheet_uuid_seed="sheet_power_tree"))
     # COM (Pad 2, links am Symbol) → PWR_ON + R_PWR_PD 100k → GND
@@ -4511,7 +4517,7 @@ def mcp_sheet() -> str:
     # Loettechnik. Footprint + 3D-STEP direkt von LCSC/EasyEDA fuer C400229
     # (Kailh CPG135001D01, Choc V1 rot/linear) gezogen -- exakt der Weg, den
     # dieses Repo fuer alle Custom-Footprints vorschreibt (siehe andere
-    # field_ambience.pretty-Teile: TS-1088, MST-12D18, PJ-320D). Vendored als
+    # field_ambience.pretty-Teile: TS-1088, ALPS SSSS811101 (+MST-12D18 fallback), PJ-320D). Vendored als
     # field_ambience:SW_KailhChoc_CPG1350_THT_2P + zugehoeriges STEP-Modell.
     # 2 THT-Pads (elektrisch) + 3 unbestueckte Mechanik-Loecher (Loesch-Pegs
     # des Switch-Gehaeuses fuer seitliche Stabilitaet ohne Plate).
