@@ -25,6 +25,7 @@
 #include "worlds.h"
 #include "generative.h"
 #include "cells.h"
+#include "pluck.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -48,14 +49,13 @@ static float active_freq[MAX_SOURCES];
 static bool gen_on = false;
 #define SPARK_COUNT      2
 #define SPARK_SRC0       14              /* sources 14/15 — see MAX_SOURCES */
-#define SPARK_RING_MS    3000u
 #define GEN_TICK_BAR_MS  8000u
 static bool     gen_timing_valid = false;
 static uint32_t gen_next_bar_ms  = 0;
 static uint32_t gen_tick_rng     = 0x5EEDBA55u;
 static struct {
-    bool     on_pending, ringing;
-    uint32_t on_ms, off_ms;
+    bool     on_pending;
+    uint32_t on_ms;
     float    hz, amp;
 } spark[SPARK_COUNT];
 
@@ -102,6 +102,16 @@ static const float SMOOTH_COEF = 0.05f;       /* per-block, ~120 ms time-const *
 #define DC_R 0.995f                           /* one-pole HP, ≈35 Hz at 44.1 k */
 static float dc_x1L, dc_y1L, dc_x1R, dc_y1R;
 static float master_vol_cur, master_vol_tgt;
+
+/* r18.89 — master DRIVE stage. The DRIVE encoder used to reach only the
+ * reverb-input saturation, so on a dry-ish patch the knob did almost
+ * nothing. Now it drives the WHOLE mix through an asymmetric soft
+ * saturator (dsp_drive_shape: tanh with a bias skew → even harmonics)
+ * with small-signal makeup, placed BEFORE the DC blocker (the bias makes
+ * a touch of DC — the blocker eats it) and before the tape stage, so
+ * drive pushes INTO the tape knee like a real chain. 0 = bit-transparent
+ * bypass. */
+static float drive_cur, drive_tgt;
 
 static inline float soft_limit(float x) {
     const float k = 0.75f;                    /* clean below this */
@@ -168,6 +178,8 @@ void engine_init(void) {
      * volume knob bound yet — keeps headphones from being slammed). */
     dc_x1L = dc_y1L = dc_x1R = dc_y1R = 0.0f;
     master_vol_cur = master_vol_tgt = 0.6f;
+    drive_cur = drive_tgt = 0.0f;
+    pluck_init();                    /* r18.89 sparkle plucks */
 
     /* Boot world 0 (Tokyo) — align the harmonic identity with the displayed
      * world so the first cell tap already plays in A-major, not the bare
@@ -236,6 +248,7 @@ void engine_set_reverb_drive(float v) { reverb_set_drive(dsp_clampf(v, 0.0f, 1.0
 void engine_set_wet_amp(float v)      { wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_set_drive(float v)        { drive_tgt       = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_brightness(float hz)  { pad_set_brightness(hz); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1.0f)); }
@@ -265,6 +278,7 @@ void engine_set_age(float v) {
      * v=0.30 lands near the dreamy_warm reference (hiss 0.005, drive 1.10). */
     tape_set_hiss_amount(v * 0.015f);
     tape_set_saturation_drive(1.0f + v * 0.40f);
+    tape_set_crackle(v);             /* r18.89: vinyl ticks join the macro */
 }
 
 /* Echo macro — single setter, internally maps to time + feedback + wet +
@@ -357,10 +371,8 @@ static float gen_rand01(void) {
 }
 
 static void spark_silence_all(void) {
-    for (int i = 0; i < SPARK_COUNT; ++i) {
-        if (spark[i].ringing) engine_note_off((uint8_t)(SPARK_SRC0 + i));
-        spark[i].on_pending = spark[i].ringing = false;
-    }
+    /* Plucks self-decay in ~3 s — just cancel anything not yet fired. */
+    for (int i = 0; i < SPARK_COUNT; ++i) spark[i].on_pending = false;
 }
 
 void engine_set_generative(bool on, int program) {
@@ -383,15 +395,6 @@ int engine_generative_advance(void) {
 }
 
 void engine_generative_tick(uint32_t now_ms) {
-    /* Sparkle note-offs run unconditionally — a ringing note must release
-     * on schedule even if the bed was just disabled or the user grabbed a
-     * cell mid-ring. */
-    for (int i = 0; i < SPARK_COUNT; ++i) {
-        if (spark[i].ringing && (int32_t)(now_ms - spark[i].off_ms) >= 0) {
-            engine_note_off((uint8_t)(SPARK_SRC0 + i));
-            spark[i].ringing = false;
-        }
-    }
     if (!gen_on) return;
 
     if (any_user_note()) {
@@ -420,7 +423,7 @@ void engine_generative_tick(uint32_t now_ms) {
             static const float POS_HI[SPARK_COUNT] = { 0.55f, 0.85f };
             static const float PROB[SPARK_COUNT]   = { 0.75f, 0.40f };
             for (int i = 0; i < SPARK_COUNT && n > 1; ++i) {
-                if (spark[i].ringing || gen_rand01() >= PROB[i]) continue;
+                if (gen_rand01() >= PROB[i]) continue;
                 int tone = chord[1 + (int)(gen_rand01() * (float)(n - 1)) % (n - 1)];
                 spark[i].hz  = dsp_midi_to_hz((float)(tone + 12));
                 spark[i].amp = 0.05f + gen_rand01() * 0.03f;
@@ -434,11 +437,12 @@ void engine_generative_tick(uint32_t now_ms) {
 
     for (int i = 0; i < SPARK_COUNT; ++i) {
         if (spark[i].on_pending && (int32_t)(now_ms - spark[i].on_ms) >= 0) {
-            engine_note_on((uint8_t)(SPARK_SRC0 + i), spark[i].hz, spark[i].amp);
+            /* r18.89: sparkles are Karplus-Strong PLUCKS now, not pad
+             * voices — a second instrument colour over the bed (bell/koto
+             * blooming into the reverb) instead of "more pad". Plucks
+             * self-decay (~3 s T60), so no note-off bookkeeping. */
+            pluck_note(spark[i].hz, spark[i].amp * 2.2f);
             spark[i].on_pending = false;
-            spark[i].ringing    = true;
-            spark[i].off_ms     = now_ms + SPARK_RING_MS +
-                                  (uint32_t)(gen_rand01() * 1200.0f);
         }
     }
 }
@@ -462,6 +466,7 @@ void engine_render(int16_t *buf, int frames) {
     ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
     bass_render_mix(dryL, dryR, sendL, sendR, frames);
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
+    pluck_render_mix(dryL, dryR, sendL, sendR, frames);  /* r18.89 sparkles */
 
     /* Echo sits AFTER all generators but BEFORE the reverb so the delay
      * picks up the whole mix; send_amount=0.40 routes a copy of the
@@ -478,6 +483,9 @@ void engine_render(int16_t *buf, int frames) {
      * we don't want the reverb to amplify the noise floor. */
     tape_hiss_render_add(dryL, dryR, frames);
 
+    /* r18.89: vinyl crackle (AGE macro) — dry bus only, like the hiss. */
+    tape_crackle_render_add(dryL, dryR, frames);
+
     /* Reverb writes (does not add) wet from send. */
     reverb_render(sendL, sendR, wetL, wetR, frames);
 
@@ -485,15 +493,34 @@ void engine_render(int16_t *buf, int frames) {
      * (block call); then soft-limit safety net → int16. Two-pass keeps
      * the saturation block-call cheap (one loop body, one tanh call/sample). */
     master_vol_cur += SMOOTH_COEF * (master_vol_tgt - master_vol_cur);
+    drive_cur      += SMOOTH_COEF * (drive_tgt      - drive_cur);
     const float wa = wet_amp_cur;
     const float mv = master_vol_cur;
+
+    /* r18.89 master drive (per block: curve params + makeup are constant
+     * inside a 5.8 ms block; the amount itself is smoothed above). */
+    const bool  drv_on   = drive_cur > 1.0e-3f;
+    const float drv_g    = 1.0f + 3.5f * drive_cur;          /* 1 .. 4.5  */
+    const float drv_bias = 0.28f * drive_cur;                /* asymmetry */
+    const float drv_mk   = dsp_drive_makeup(drv_g, drv_bias);
+    const float drv_mix  = drive_cur < 0.25f ? drive_cur * 4.0f : 1.0f;
 
     static float outL[BLOCK], outR[BLOCK];
     for (int n = 0; n < frames; ++n) {
         float L = dryL[n] + wetL[n] * wa;
         float R = dryR[n] + wetR[n] * wa;
 
-        /* one-pole DC blocker per channel: y = x - x1 + R·y1 */
+        if (drv_on) {
+            /* dry/wet fade over the first quarter of the knob so tiny
+             * settings colour instead of switch. */
+            float dL = dsp_drive_shape(L, drv_g, drv_bias) * drv_mk;
+            float dR = dsp_drive_shape(R, drv_g, drv_bias) * drv_mk;
+            L += drv_mix * (dL - L);
+            R += drv_mix * (dR - R);
+        }
+
+        /* one-pole DC blocker per channel: y = x - x1 + R·y1 (also eats the
+         * small DC offset the drive bias introduces) */
         float yL = L - dc_x1L + DC_R * dc_y1L; dc_x1L = L; dc_y1L = yL;
         float yR = R - dc_x1R + DC_R * dc_y1R; dc_x1R = R; dc_y1R = yR;
 

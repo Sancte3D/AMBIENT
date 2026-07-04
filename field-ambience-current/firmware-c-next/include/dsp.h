@@ -15,6 +15,7 @@
  */
 
 #include <stdint.h>
+#include <math.h>     /* tanhf in the r18.89 drive-shaper inlines */
 
 #define DSP_SAMPLE_RATE_HZ 44100
 
@@ -95,6 +96,50 @@ static inline float dsp_tri(float phase_turns) {
     float p = phase_turns - (float)(int)phase_turns;
     if (p < 0.0f) p += 1.0f;
     return 4.0f * (p < 0.5f ? (0.25f - p) : (p - 0.75f)) ;  /* +1→−1→+1 */
+}
+
+/* --- r18.89 noise + drive primitives ---------------------------------------
+ * Concepts studied from SuperCollider's PinkNoise/Dust/Crackle UGens and the
+ * standard DSP literature (Kellet pink filter, logistic-map chaos, waveshaper
+ * saturation); implementations written fresh for this engine — fixed-seed
+ * LCGs so every host test stays bit-reproducible. */
+
+/* Pink (1/f) noise — Paul Kellet's "economy" 3-pole filter over white noise.
+ * ≈ ±0.6 peak output; -3 dB/oct within ±0.5 dB across the audible band,
+ * which is what makes it sound "flat" to the ear where white sounds hissy
+ * and brown sounds muddy. */
+typedef struct { uint32_t lcg; float b0, b1, b2; } dsp_pink_t;
+void  dsp_pink_seed(dsp_pink_t *p, uint32_t seed);
+float dsp_pink(dsp_pink_t *p);
+
+/* Dust — random unipolar impulses, `density` expected impulses per second
+ * (SuperCollider Dust concept). Returns 0 almost always; on a hit returns a
+ * random amplitude in (0..1]. Feed a resonator/BP for vinyl ticks, rain, …*/
+typedef struct { uint32_t lcg; float thresh; } dsp_dust_t;
+void  dsp_dust_seed(dsp_dust_t *d, uint32_t seed);
+void  dsp_dust_set_density(dsp_dust_t *d, float per_second);
+float dsp_dust(dsp_dust_t *d);
+
+/* Crackle — chaotic logistic map x' = param·x·(1−x), param 1.0..1.99
+ * (SuperCollider Crackle concept). Output roughly ±1, gets noisier/denser
+ * toward 1.99. Nice as a very quiet fire/vinyl base layer. */
+typedef struct { float y1, y2; float param; } dsp_crackle_t;
+void  dsp_crackle_init(dsp_crackle_t *c, float param);
+float dsp_crackle(dsp_crackle_t *c);
+
+/* Asymmetric soft saturator for the master DRIVE stage.
+ *   y = tanh(g·x + bias) − tanh(bias)
+ * The bias term skews the transfer curve → even harmonics (tube-ish warmth);
+ * subtracting tanh(bias) re-centres it so silence stays silence. Small-signal
+ * gain is g·(1−tanh²(bias)) — divide by dsp_drive_makeup() to keep perceived
+ * level steady while the harmonics build. */
+static inline float dsp_drive_shape(float x, float g, float bias) {
+    return tanhf(g * x + bias) - tanhf(bias);
+}
+static inline float dsp_drive_makeup(float g, float bias) {
+    float t = tanhf(bias);
+    float small_gain = g * (1.0f - t * t);
+    return small_gain > 1.0f ? 1.0f / small_gain : 1.0f;
 }
 
 #endif

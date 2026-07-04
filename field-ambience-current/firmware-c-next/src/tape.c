@@ -7,6 +7,7 @@
  */
 
 #include "tape.h"
+#include "dsp.h"
 #include <math.h>
 #include <stdint.h>
 
@@ -25,6 +26,17 @@ static inline float hn(uint32_t *r) {
 
 static float sat_drive = 1.10f;          /* subtle warmth */
 
+/* --- r18.89: vinyl crackle — dust impulses ringing a resonant bandpass ----
+ * Learned from the SC Dust→Ringz vinyl-noise idiom: sparse random impulses
+ * excite a high-Q bandpass around 2.6 kHz → each hit becomes a tiny damped
+ * "tick" instead of a click. Plus an ULTRA-quiet chaotic crackle base
+ * (logistic map) underneath, so the ticks sit on a faint fry rather than
+ * digital silence. Both scale with the AGE macro (engine_set_age). */
+static dsp_dust_t    crackle_dust[2];
+static dsp_svf_t     crackle_bp[2];
+static dsp_crackle_t crackle_base;
+static float         crackle_amp = 0.0f;   /* 0 = off (default) */
+
 /* --- API ---------------------------------------------------------------- */
 
 void tape_init(void) {
@@ -32,6 +44,14 @@ void tape_init(void) {
     hr_R      = 0xDEADBEEFu;
     hiss_amp  = 0.005f;
     sat_drive = 1.10f;
+    dsp_dust_seed(&crackle_dust[0], 0x7EA7A61Eu);
+    dsp_dust_seed(&crackle_dust[1], 0x51DEB00Bu);      /* decorrelated L/R */
+    for (int c = 0; c < 2; ++c) {
+        dsp_svf_reset(&crackle_bp[c]);
+        dsp_svf_set(&crackle_bp[c], 2600.0f, 2.2f);    /* ticky, not clicky */
+    }
+    dsp_crackle_init(&crackle_base, 1.85f);
+    crackle_amp = 0.0f;
 }
 
 void tape_set_hiss_amount(float amp) {
@@ -46,12 +66,33 @@ void tape_set_saturation_drive(float d) {
     sat_drive = d;
 }
 
+void tape_set_crackle(float v01) {
+    if (v01 < 0.0f) v01 = 0.0f;
+    if (v01 > 1.0f) v01 = 1.0f;
+    /* density 0..~9 ticks/s per channel; level curve squared so the low end
+     * of AGE stays nearly clean and the top is clearly "old record". */
+    dsp_dust_set_density(&crackle_dust[0], v01 * 9.0f);
+    dsp_dust_set_density(&crackle_dust[1], v01 * 7.0f);
+    crackle_amp = v01 * v01 * 0.055f;
+}
+
 void tape_hiss_render_add(float *L, float *R, int frames) {
     if (hiss_amp <= 0.0f) return;
     const float a = hiss_amp;
     for (int i = 0; i < frames; ++i) {
         L[i] += hn(&hr_L) * a;
         R[i] += hn(&hr_R) * a;
+    }
+}
+
+void tape_crackle_render_add(float *L, float *R, int frames) {
+    if (crackle_amp <= 0.0f) return;
+    for (int i = 0; i < frames; ++i) {
+        float base = dsp_crackle(&crackle_base) * 0.06f;   /* faint fry bed */
+        L[i] += (dsp_svf_bp(&crackle_bp[0], dsp_dust(&crackle_dust[0])) + base)
+                * crackle_amp;
+        R[i] += (dsp_svf_bp(&crackle_bp[1], dsp_dust(&crackle_dust[1])) + base)
+                * crackle_amp;
     }
 }
 

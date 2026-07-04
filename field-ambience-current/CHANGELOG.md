@@ -10,6 +10,58 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.89 (2026-07-04) — Sound-Engine-Ausbau: Master-Drive, Noise-Primitiven, Vinyl-Crackle, Karplus-Strong-Plucks
+
+User: „Baue sound engine aus. Also auch die synthesizer und noise und andere
+sounds wie drive brightness etc. Bedien dich als supercollider libraries und
+anderen gelungenen open source projekten. Klau nicht, sondern lerne daraus."
+
+Konzepte studiert aus SuperColliders PinkNoise/Dust/Crackle/Pluck-UGens, dem
+Kellet-Pink-Filter und dem Karplus-Strong-Paper (CMJ 1983) — alle
+Implementierungen frisch fuer diese Engine geschrieben (fixe LCG-Seeds,
+bit-reproduzierbare Host-Tests).
+
+- **Neue DSP-Primitiven (dsp.{h,c}):** `dsp_pink` (1/f-Rauschen, Kellet-
+  3-Pol-Economy), `dsp_dust` (zufaellige Impulse, Dichte in Hz),
+  `dsp_crackle` (chaotische Rekurrenz |y1·p−y2−0.05|; erste Version nutzte
+  die logistische Map — die KONVERGIERT bei p<3, vom Test gefangen),
+  `dsp_drive_shape/_makeup` (asymmetrischer tanh-Sättiger: Bias → gerade
+  Harmonische, Kleinsignal-Makeup).
+- **Master-DRIVE-Stage (engine.c):** Der DRIVE-Encoder erreichte bisher NUR
+  die Reverb-Eingangs-Saettigung — auf trockenen Sounds praktisch unhoerbar.
+  Jetzt faehrt er den GESAMTEN Mix durch den asymmetrischen Sättiger (vor
+  DC-Blocker + Tape-Stufe, 0 = bit-transparent, Dry/Wet-Fade im ersten
+  Knopf-Viertel, Kleinsignal-Makeup: Farbe statt Lautstaerke). Reverb-Drive
+  laeuft geslavt ~halben Knopf hinterher (params.c).
+- **Vinyl-Crackle (tape.c, AGE-Makro):** Dust-Impulse klingeln durch einen
+  2,6-kHz-Resonator (Q 2,2) + ultraleises Chaos-Fry-Bett darunter; Pegel
+  age² (unten fast clean, oben deutlich „alte Platte"). Haengt mit Hiss +
+  Saettigung am selben AGE-Regler.
+- **Texture:** Breath-Band bekommt 35 % Pink-Anteil (Brown allein verliert
+  rechts vom Sweep-Zentrum zu viel Praesenz; Weiss zischte) — praesenter,
+  nicht lauter.
+- **Karplus-Strong-Plucks (neu: pluck.{h,c}):** Die Generative-„Sparkles"
+  waren Pad-Voices — gleiche Farbe wie das Bed, klang nach „mehr Pad".
+  Jetzt: 2 KS-Stimmen (fraktionale Delay-Line mit Lin-Interpolation →
+  Pitch exakt; T60 3,2 s pitch-unabhaengig; gedaempfter Noise-Burst als
+  Anregung; ±0.35 Pan, Reverb-Send 0,5) — Glocken/Koto-Farbe ueber dem Bed.
+  Selbst-abklingend, kein Note-Off-Bookkeeping mehr im Tick; Pad-Sources
+  14/15 wieder frei. Bugfix waehrend der Entwicklung: Schreibkopf startete
+  bei 0 und ueberschrieb den Burst, bevor der Lesekopf ihn erreichte (Test
+  fing die Stille).
+- **Neues Demo `demos/audio/field_ambience_autoplay.flac`** (3:00): der
+  Passiv-Modus pur — GENERATE an, Haende weg (Tokyo, AGE 0,45, DRIVE 0,30);
+  neues Tool tools/render_autoplay.c rendert exakt den Device-Pfad
+  (engine_generative_tick). Peak −11,4 dBFS, flac -t ok.
+- **Tests:** neue Suite test_sound_upgrades.c (Pink-Statistik inkl.
+  1/f-Proxy, Dust-Dichte, Crackle-Chaos, Shaper-Transparenz/Makeup/Bounds,
+  Pluck-Pitch per AUTOKORRELATION bei der Soll-Periode + T60-Retire,
+  Engine-Drive „Farbe statt Lautstaerke", Crackle-Level). test_generative_
+  tick.c auf Pluck-Observability umgestellt. **26 Suiten, 0 Failures**;
+  h743 cross-baut (156,9 KB Flash, D1 47,9 %).
+
+---
+
 ## v0.7-r18.88 (2026-07-04) — Sound-Logik-Audit: 5 Musik-Bugs gefixt + Generative-AUTOPLAY
 
 User: „Untersuche die sound logik. finde kritische logische musikfehler.

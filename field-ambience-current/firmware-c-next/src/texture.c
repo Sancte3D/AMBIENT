@@ -28,6 +28,11 @@ typedef struct {
 } brown_t;
 
 static brown_t   brown[2];           /* L, R independent streams */
+/* r18.89: pink (1/f) noise blended into the breath band. Brown through a
+ * bandpass loses too much presence right of the centre; mixing ~35 % pink
+ * (which is spectrally flat to the ear) keeps the breath audible when the
+ * sweep sits high, without the hissiness plain white had. */
+static dsp_pink_t pink[2];
 static dsp_svf_t rumbleLP[2];        /* lowpass 220 Hz   */
 static dsp_svf_t breathBP[2];        /* bandpass 600 Hz, swept */
 static dsp_svf_t warmLP[2];          /* lowpass 4500 Hz  */
@@ -67,6 +72,8 @@ void texture_init(void) {
         dsp_svf_reset(&airHP[c]);    dsp_svf_set(&airHP[c],    3000.0f, 0.707f);
     }
     airN[0].lcg = 0xBEEFFACEu; airN[1].lcg = 0xFACECAFEu;   /* decorrelated */
+    dsp_pink_seed(&pink[0], 0x600DCAFEu);
+    dsp_pink_seed(&pink[1], 0xBADD10DEu);
     sweep_phase = 0.0f;
     breath_phase = 0.0f;
     breath_gain = 0.5f;
@@ -109,11 +116,12 @@ void texture_render_mix(float *dry_L, float *dry_R,
 
         for (int c = 0; c < 2; ++c) {
             float nz = brown_next(&brown[c]);
+            float breath_src = 0.65f * nz + 0.35f * dsp_pink(&pink[c]) * 1.6f;
             /* Tier A #4 — body weight dropped 0.35 → 0.10: removes the
              * "Brumm" the user heard at amount ≥ 0.12, keeps a hint of low
              * warmth so the bed isn't only breath. */
             float rumble = dsp_svf_lp(&rumbleLP[c], nz) * 0.10f;
-            float breath = dsp_svf_bp(&breathBP[c], nz) * breath_gain;
+            float breath = dsp_svf_bp(&breathBP[c], breath_src) * breath_gain;
             float warm   = dsp_svf_lp(&warmLP[c], rumble + breath);
             /* Tier A #5 — air band, parallel (NOT through warmLP). */
             float air    = dsp_svf_hp(&airHP[c], air_white(&airN[c])) * 0.18f;

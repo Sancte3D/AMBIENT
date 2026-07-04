@@ -36,6 +36,12 @@ void tape_set_saturation_drive(float drive);
 /* Add decorrelated white-noise hiss into L/R. */
 void tape_hiss_render_add(float *L, float *R, int frames);
 
+/* r18.89 — vinyl crackle intensity 0..1 (0 = off, the boot default). Driven
+ * by the AGE macro together with hiss + saturation: sparse dust ticks through
+ * a 2.6 kHz resonator + a faint chaotic fry bed. */
+void tape_set_crackle(float v01);
+void tape_crackle_render_add(float *L, float *R, int frames);
+
 /* Apply tanh-saturation in place. */
 void tape_saturation_process(float *L, float *R, int frames);
 

@@ -21,6 +21,7 @@
 #include "engine.h"
 #include "brain.h"
 #include "generative.h"
+#include "pluck.h"   /* r18.89: sparkles are KS plucks now */
 #include "dsp.h"
 
 static int checks = 0, fails = 0;
@@ -65,15 +66,15 @@ int main(void) {
         CHECK(d >= 1 && d <= 7, "degree in range (%d)", d);
         int v = engine_active_voices();
         if (v > max_voices) max_voices = v;
-        if (v >= 2) sparkle_seen = 1;           /* bed + at least one sparkle */
+        if (pluck_active_count() > 0) sparkle_seen = 1;   /* r18.89: plucks */
         if ((step & 63) == 0) {
             int p = render_ms(16 * 64);
             CHECK(p <= 32767, "bounded");
         }
         if (fails > 10) break;                  /* don't spam */
     }
-    CHECK(sparkle_seen, "sparkle chord tones actually played (max voices %d)", max_voices);
-    CHECK(max_voices <= 4, "voice budget respected: bed + 2 sparkles max (%d)", max_voices);
+    CHECK(sparkle_seen, "sparkle PLUCKS actually played");
+    CHECK(max_voices <= 1, "pad pool carries only the bed now (%d)", max_voices);
 
     /* ---- 3. User override incl. SHIFT-octave source (the r18.88 fix) ---- */
     engine_note_on(11, dsp_midi_to_hz(76.0f), 0.12f);   /* shift source 9..13 */
@@ -95,8 +96,9 @@ int main(void) {
           voices_with_user);
     render_ms(10000);                                   /* drain sparkle tails */
     CHECK(engine_active_voices() == 2,
-          "user note + sustained bed remain, sparkles gone (have %d)",
-          engine_active_voices());
+          "user note + sustained bed remain (have %d)", engine_active_voices());
+    CHECK(pluck_active_count() == 0, "plucks self-decayed under the user (%d)",
+          pluck_active_count());
 
     /* ---- 4. Release → bed movement resumes promptly ----
      * Drain the user note's release tail FIRST (no ticks), so the resume
@@ -110,7 +112,7 @@ int main(void) {
     for (int step = 0; step < 2500; ++step) {           /* 40 s simulated */
         now += 16;
         engine_generative_tick(now);
-        if (engine_active_voices() >= 2) { resumed = 1; break; }
+        if (pluck_active_count() > 0) { resumed = 1; break; }
         if ((step & 127) == 0) render_ms(16 * 128);
     }
     CHECK(resumed, "autoplay (sparkles) resumes after the user lets go");
@@ -120,6 +122,8 @@ int main(void) {
     render_ms(12000);
     CHECK(engine_active_voices() == 0, "all gen voices gone after disable (%d)",
           engine_active_voices());
+    CHECK(pluck_active_count() == 0, "plucks rang out after disable (%d)",
+          pluck_active_count());
 
     printf("%d checks, %d failures\n", checks, fails);
     return fails ? 1 : 0;

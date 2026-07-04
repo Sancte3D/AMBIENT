@@ -2,6 +2,19 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.89 (2026-07-04, Sound-Engine-Ausbau — „lerne von SuperCollider"):**
+> Neue DSP-Primitiven (Pink/Dust/Crackle/Drive-Shaper, Konzepte aus SC-UGens
+> studiert, frisch implementiert). **DRIVE ist jetzt eine echte Master-
+> Saettigungsstufe** (vorher nur Reverb-Eingang — auf trockenen Sounds fast
+> unhoerbar); AGE bringt zusaetzlich **Vinyl-Crackle** (Dust→2,6-kHz-
+> Resonator + Chaos-Fry); Texture-Breath mit Pink-Anteil; **Generative-
+> Sparkles sind Karplus-Strong-PLUCKS** (eigene Glocken/Koto-Farbe ueber dem
+> Bed, exakte fraktionale Stimmung, selbst-abklingend). Neues 3-min-Demo
+> field_ambience_autoplay.flac (reiner Passiv-Modus, Device-Pfad). Neue
+> Suite test_sound_upgrades.c (Pluck-Pitch per Autokorrelation, 1/f-Proxy,
+> Shaper-Makeup …); 26 Suiten / 0 Failures; h743 cross-baut. Details:
+> CHANGELOG r18.89.
+>
 > **r18.88 (2026-07-04, Sound-Logik-Audit + Generative-Autoplay):** 5 echte
 > Musik-Logikfehler gefunden + gefixt: (1) Generative lief ueber gehaltene
 > SHIFT-Noten (any_cell_held sah Sources 9–13 nicht), (2) Momentary-Tap
