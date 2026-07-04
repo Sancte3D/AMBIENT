@@ -10,6 +10,67 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.88 (2026-07-04) — Sound-Logik-Audit: 5 Musik-Bugs gefixt + Generative-AUTOPLAY
+
+User: „Untersuche die sound logik. finde kritische logische musikfehler.
+fixe sie, verbessere sound und algorithmen, bass, drone, generate."
+
+### Kritische Logikfehler (alle gefixt, alle host-getestet)
+
+1. **Generative spielte ueber gehaltene Shift-Noten** — `any_cell_held()`
+   prueft nur Sources 0–4; die Shift-Oktave-Latches liegen auf 9–13
+   (ADR-0008 SHIFT_SRC). Bed+Sparkles liefen also ueber das Live-Spiel.
+   → `any_user_note()` prueft 0–4 UND 9–13 (Bed-Source 8 + Sparkles 14/15
+   bewusst ausgenommen).
+2. **Momentary-Tap toetete gelatchte Voice** — Tap auf eine Zelle teilt
+   ihre Pad-Source mit dem Latch-Zweig. War die Zelle gelatcht (Hold
+   inzwischen aus), schoss das Release-note_off die gehaltene Voice ab,
+   waehrend das Latch-Bit true blieb (State-Desync bis zum Clear).
+   → Release prueft jetzt, ob die Source gelatcht ist, und laesst sie dann
+   klingen (der Tap war ein Re-Bloom).
+3. **GENERATE = bis zu 8 s Stille nach dem Druecken** und dann nur 1 Note
+   pro 8 s — kein „passiv Musik generieren". → komplett neues AUTOPLAY
+   (unten).
+4. **World-/Key-Wechsel liess gelatchte Noten in der ALTEN Tonart klingen**
+   — Clash mit neuem Drone-Root und Bed bis zum Clear. → neues
+   `controls_refresh_held_pitches()` (merkt sich die Latch-Velocity,
+   re-pitcht alle Latches aus dem aktuellen Brain-State); main_h743 ruft
+   es nach `engine_set_world()`.
+5. **Bass-Sustain ignorierte Depth-Aenderungen** — `bass_note()` bei
+   klingendem Bass refresht `amp`, aber nichts bewegte `env` dahin;
+   Aenderung erst nach komplettem Release hoerbar. → Sustain driftet mit
+   der Release-Zeitkonstante Richtung Ziel (musikalisches An-/Abschwellen).
+
+Dazu Doku-Fix generative.c: die FIXED-Progression 3 {1,6,3,7} spielt
+bewusst die 7. Stufe (Leitton-Akkord) — der alte Kommentar behauptete,
+Stufe 7 werde nie gevoict (stimmt nur fuer den Markov-Pfad).
+
+### Generative-AUTOPLAY (engine_generative_tick, ersetzt den Bar-Timer)
+
+Original-Intention (User): GENERATE druecken → das Geraet spielt von sich
+aus Musik. Jetzt:
+- **Erste Bed-Note sofort** beim ersten Tick nach dem Einschalten,
+- **humanisierte Bars** (8 s ±10 % pro Bar, LCG — nie metronomisch),
+- **0–2 „Sparkle"-Akkordtoene pro Bar** (nie der Root, +1 Oktave, leise
+  0.05–0.08, ~3–4 s Ring, Sources 14/15, humanisierte Positionen bei
+  25–55 % / 60–85 % des Bars) — das Bed atmet als echte Musik,
+- Live-Spiel unterbricht: keine neuen Bed-/Sparkle-Noten solange
+  irgendeine User-Note klingt (Base ODER Shift); klingende Sparkles
+  releasen normal; nach dem Loslassen resumed das Bed beim naechsten Tick
+  (nicht bis zu 8 s spaeter). Das Bed selbst haelt unterm Spiel aus
+  (Ambient-Bett, gleiche Semantik wie zuvor).
+- Alles haengt nur an now_ms → host-testbar; `engine_generative_advance()`
+  bleibt als manuelle Step-API fuer die Offline-Renderer.
+
+**Neue Suite `test_generative_tick.c` (7629 Checks):** Sofort-Note,
+120-s-Simulation (Degree-Range, Voice-Budget ≤ Bed+2, Audio bounded),
+Shift-Suppression (Fix 1 direkt), Resume nach Release, sauberes Disable.
+test_controls.c erweitert: Latch ueberlebt Momentary-Release-Tail (Fix 2),
+Key-Wechsel-Re-Pitch ohne Voice-Leak (Fix 4). Host-Suite: **25 Suiten,
+0 Failures**; h743 cross-baut (159,5 KB Flash).
+
+---
+
 ## v0.7-r18.87 (2026-07-04) — LEDs reduziert: nur Cell- + Modifier-LEDs (VU-Meter + Heartbeat raus) + neue Audio-Renders
 
 User: „we only keep LEDs above cells and above modifier buttons.. I don't

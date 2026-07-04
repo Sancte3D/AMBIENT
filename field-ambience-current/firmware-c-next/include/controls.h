@@ -72,4 +72,9 @@ bool controls_hold_base (uint8_t cell);
 bool controls_hold_shift(uint8_t cell);
 bool controls_modifier_active(mod_id_t mod);
 
+/* r18.88: re-pitch all latched voices from the current brain key/mode/vibe
+ * at their remembered latch velocity. Call after a world/key change so held
+ * notes follow the new harmony instead of clashing with the new drone/bed. */
+void controls_refresh_held_pitches(void);
+
 #endif

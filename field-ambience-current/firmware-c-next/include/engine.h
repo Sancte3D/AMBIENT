@@ -87,10 +87,20 @@ void engine_set_pad_voice(int voice_idx);
 void engine_set_generative(bool on, int program);
 
 /* Advance the generative bed one step: pick the next degree, sound its chord
- * root as a pad voice (a reserved source), and let the bass follow. Call from
- * the bar timer. Returns the new degree (1..6) or -1 when generative is off.
- * No-op while any cell is held — live playing overrides the bed. */
+ * root as a pad voice (a reserved source), and let the bass follow. Returns
+ * the new degree (1..7) or -1 when generative is off. No-op while any USER
+ * note is held (cells 0..4 or shift octaves 9..13) — live playing overrides
+ * the bed. Manual step API for offline renderers/tests; the device uses
+ * engine_generative_tick(). */
 int engine_generative_advance(void);
+
+/* r18.88 — generative AUTOPLAY. Call frequently from the UI loop (any rate
+ * ≥ ~20 Hz); all timing derives from now_ms. Plays the bed by itself:
+ * immediate first note after enabling, humanized ±10 % bars (base 8 s),
+ * plus 0-2 quiet chord-tone "sparkles" an octave up per bar (sources 14/15,
+ * ~3 s ring). While the user holds any note, no new bed/sparkle notes start;
+ * the bed resumes on the tick after release. */
+void engine_generative_tick(uint32_t now_ms);
 
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */

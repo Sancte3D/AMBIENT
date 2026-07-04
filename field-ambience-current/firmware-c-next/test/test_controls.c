@@ -133,6 +133,14 @@ int main(void) {
     controls_cell_release(2);
     CHECK(engine_active_voices() == 10,
           "momentary re-tap on a held cell didn't add/lose voices: %d", engine_active_voices());
+    /* r18.88 AUDIT-FIX regression check: the release above used to
+     * note_off the shared source and silently kill the LATCHED voice (the
+     * latch bit stayed true = state desync). It only showed after the
+     * release tail — so drain several seconds and recount. */
+    (void)peak_over(6.0f);
+    CHECK(engine_active_voices() == 10,
+          "latched voice SURVIVES the momentary release tail (r18.88): %d",
+          engine_active_voices());
 
     /* ---- 10. Clear nukes everything cleanly ------------------------------- */
     controls_modifier(MOD_CLEAR, true);
@@ -143,6 +151,19 @@ int main(void) {
     /* Engine voices fall to 0 after the release tails decay (~release_s).
      * We don't wait the full tail; just check no NEW notes are sounding. */
     CHECK(engine_active_voices() <= 10, "no spurious add after Clear");
+
+    /* ---- 11. r18.88: key/world change re-pitches latched voices ---------- */
+    controls_init(); engine_init();
+    controls_modifier(MOD_HOLD, true);
+    controls_cell_press(1, 0.15f);
+    CHECK(controls_hold_base(1), "cell 1 latched for the key-change test");
+    engine_set_key(69);                       /* move the whole world to A */
+    controls_refresh_held_pitches();
+    CHECK(controls_hold_base(1), "latch bit survives the re-pitch");
+    CHECK(engine_active_voices() == 1,
+          "re-pitch re-blooms the SAME source, no voice leak: %d",
+          engine_active_voices());
+    CHECK(peak_over(0.6f) > 800, "re-pitched latched voice audible");
 
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");

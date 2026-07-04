@@ -61,6 +61,15 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/controls_test"
 "$tmp/controls_test"
 
+# r18.88: generative autoplay (engine_generative_tick — bed + sparkle melody)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_generative_tick.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    -lm -o "$tmp/generative_tick_test"
+"$tmp/generative_tick_test"
+
 # Encoder → engine parameter bindings + acceleration (params.c)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_params.c" \
