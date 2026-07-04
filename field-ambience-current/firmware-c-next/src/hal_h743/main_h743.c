@@ -45,11 +45,6 @@
  * im Pico-HAL (CELL_VOICE_AMP 0.12 dort; controls.c skaliert identisch). */
 #define CELL_TAP_AMP 0.12f
 
-/* Generative-bed bar period. Same cadence as the render_wav.c master tape
- * (Cathedral section steps the bed every 8 s) — one chord-root move per
- * 8-second bar keeps the bed glacial, ambient, never sequencer-ish. */
-#define GEN_BAR_MS 8000u
-
 /* Jack-detect debounce (mechanical TRS contact bounce ≪ 50 ms). */
 #define JACK_DEBOUNCE_MS 50u
 
@@ -58,7 +53,10 @@
  * duplicated the Brightness encoder) and Drums was dropped (adaptive drums
  * is its own can of worms; we ship sound, not timing). Synchronous from
  * menu_rotate/menu_push, never from the audio thread. */
-static void hal_set_world      (int   idx) { engine_set_world(idx); }
+/* r18.88: after a world change, re-pitch latched voices so held notes
+ * follow the new key instead of clashing with the new drone/bed. */
+static void hal_set_world      (int   idx) { engine_set_world(idx);
+                                             controls_refresh_held_pitches(); }
 static void hal_set_space      (float v)   { engine_set_space(v); }
 static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
 static void hal_set_motion     (float v)   { engine_set_motion(v); }
@@ -130,8 +128,7 @@ int main(void) {
     uint8_t  jack_pending  = 0xFF;
     uint32_t jack_edge_ms  = 0;
 
-    /* Generative bar timer + UI frame pacing. */
-    uint32_t next_bar_ms   = HAL_GetTick() + GEN_BAR_MS;
+    /* UI frame pacing. */
     uint32_t last_frame_ms = 0;
     bool     ui_dirty      = true;     /* draw the first frame immediately */
 
@@ -218,15 +215,11 @@ int main(void) {
             jack_pending = 0xFF;
         }
 
-        /* --- 4. Generative bar timer → engine_generative_advance() ---
-         * advance() self-gates: no-op unless MOD_GENERATE latched the bed
-         * on (engine_set_generative via controls.c), and live cells always
-         * override. Free-running phase — the bar grid doesn't reset on
-         * toggle, which is fine for an ambient bed (no downbeat to miss). */
-        if ((int32_t)(now - next_bar_ms) >= 0) {
-            (void)engine_generative_advance();
-            next_bar_ms += GEN_BAR_MS;
-        }
+        /* --- 4. Generative autoplay (r18.88) — self-gating: silent until
+         * MOD_GENERATE latches the bed on (controls.c), immediate first
+         * note, humanized bars + chord-tone sparkles, live playing always
+         * overrides. All timing inside engine_generative_tick(). */
+        engine_generative_tick(now);
 
         /* --- 5. LED render @ ~60 Hz: state → PCA9685 (U6) → I²C --- */
         {

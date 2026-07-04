@@ -121,6 +121,15 @@ static float env_step(env_state_t *st, float *env, float amp,
             *env += atkInc;
             if (*env >= amp) { *env = amp; *st = ENV_SUSTAIN; }
             break;
+        case ENV_SUSTAIN:
+            /* r18.88 AUDIT-FIX: sustain used to hold the OLD level forever —
+             * a bass_note() while sounding refreshes `amp` from the current
+             * depth, but nothing moved env toward it, so a depth change (or
+             * a bed retrigger at new depth) was inaudible until the next
+             * full release. Drift toward amp with the release time constant
+             * (both directions — swells and settles musically). */
+            *env += relCoef * (amp - *env);
+            break;
         case ENV_RELEASE:
             *env -= relCoef * *env;
             if (*env <= SILENCE_EPS) { *env = 0.0f; *st = ENV_IDLE; }

@@ -2,8 +2,11 @@
  * Generative progression sequencer — Step 12b #4.
  *
  * Ported from the webapp PROGRESSIONS / DEGREE_TRANSITIONS / nextDegreeMarkov /
- * wchoose. Degrees are 1-indexed; the Markov result is clamped to 1..6 (degree
- * 7 has zero weight everywhere and is never voiced, matching the webapp).
+ * wchoose. Degrees are 1-indexed. The MARKOV result is clamped to 1..6 (degree
+ * 7 has zero weight in every transition row, matching the webapp); the FIXED
+ * programs may return 7 — progression 3 {1,6,3,7} deliberately walks the
+ * leading-tone chord, and brain_chord() voices degree 7 fine (r18.88 doc fix:
+ * the old comment claimed 7 was never voiced).
  */
 
 #include "generative.h"

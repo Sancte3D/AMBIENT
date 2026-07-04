@@ -43,8 +43,21 @@
 #define GEN_VOICE_AMP 0.10f
 static float active_freq[MAX_SOURCES];
 
-/* Generative-bed state. */
+/* Generative-bed state. Sparkle melody scheduler (r18.88): sources 14/15,
+ * see the autoplay block above engine_generative_tick(). */
 static bool gen_on = false;
+#define SPARK_COUNT      2
+#define SPARK_SRC0       14              /* sources 14/15 — see MAX_SOURCES */
+#define SPARK_RING_MS    3000u
+#define GEN_TICK_BAR_MS  8000u
+static bool     gen_timing_valid = false;
+static uint32_t gen_next_bar_ms  = 0;
+static uint32_t gen_tick_rng     = 0x5EEDBA55u;
+static struct {
+    bool     on_pending, ringing;
+    uint32_t on_ms, off_ms;
+    float    hz, amp;
+} spark[SPARK_COUNT];
 
 /* Lowest currently-held frequency, or 0 if nothing is held. */
 static float lowest_held(void) {
@@ -148,6 +161,8 @@ void engine_init(void) {
     generative_init();
     cells_init();                    /* ADR-0013 cell-velocity state */
     gen_on = false;
+    gen_timing_valid = false;        /* r18.88 autoplay scheduler reset */
+    memset(spark, 0, sizeof spark);
 
     /* Master stage: DC-block cleared, moderate default volume (no on-device
      * volume knob bound yet — keeps headphones from being slammed). */
@@ -306,24 +321,126 @@ void engine_set_pad_voice(int voice_idx) {
     pad_set_voice_mix(MIX[voice_idx]);
 }
 
-static bool any_cell_held(void) {
-    for (int i = 0; i < 5; ++i) if (active_freq[i] > 0.0f) return true;
+/* r18.88 AUDIT-FIX: this used to check only cells 0..4 — the Shift-octave
+ * latch voices live on sources 9..13 (ADR-0008 r2, controls.c SHIFT_SRC),
+ * so the generative bed kept playing OVER the user's held shift notes.
+ * "User is playing" = any cell source, base or shift octave. The bed's own
+ * voice (8) and the sparkle sources (14/15) are deliberately excluded. */
+static bool any_user_note(void) {
+    for (int i = 0; i < 5; ++i)  if (active_freq[i] > 0.0f) return true;
+    for (int i = 9; i < 14; ++i) if (active_freq[i] > 0.0f) return true;
     return false;
+}
+
+/* --- Generative autoplay (r18.88) -----------------------------------------
+ * The GENERATE modifier was always meant to make the instrument PLAY BY
+ * ITSELF (passive mode = music without hands). The old wiring gave one
+ * chord-root swell per fixed 8 s bar, with up to 8 s of silence after
+ * enabling. engine_generative_tick() replaces the caller-side bar timer:
+ *
+ *   - the FIRST bed note sounds on the first tick after enabling (no wait),
+ *   - bar length is humanized (±10 % per bar, LCG — never metronomic),
+ *   - each bar scatters 0-2 "sparkle" chord tones an octave up (sources
+ *     14/15, ~3 s ring, quiet), so the bed breathes as actual music,
+ *   - live playing still overrides everything: while any user note is held
+ *     (base or shift) no new bed/sparkle notes start; ringing sparkles are
+ *     still released on schedule. When the user lets go, the bed resumes on
+ *     the next tick.
+ *
+ * All timing derives from the passed now_ms — hardware-independent and
+ * host-testable. The old engine_generative_advance() stays as the manual
+ * step API (offline renderers, tests). State lives up by gen_on. */
+
+static float gen_rand01(void) {
+    gen_tick_rng = gen_tick_rng * 1664525u + 1013904223u;
+    return (float)(gen_tick_rng >> 8) / 16777216.0f;
+}
+
+static void spark_silence_all(void) {
+    for (int i = 0; i < SPARK_COUNT; ++i) {
+        if (spark[i].ringing) engine_note_off((uint8_t)(SPARK_SRC0 + i));
+        spark[i].on_pending = spark[i].ringing = false;
+    }
 }
 
 void engine_set_generative(bool on, int program) {
     generative_set_program(program);
+    if (on && !gen_on) gen_timing_valid = false;   /* first tick plays NOW */
     gen_on = on;
-    if (!on) engine_note_off(GEN_SOURCE);   /* release the bed voice */
+    if (!on) {
+        engine_note_off(GEN_SOURCE);    /* release the bed voice */
+        spark_silence_all();
+    }
 }
 
 int engine_generative_advance(void) {
     if (!gen_on) return -1;
-    if (any_cell_held()) return -1;          /* live playing overrides the bed */
-    int deg  = generative_next_degree();     /* 1..6 */
+    if (any_user_note()) return -1;          /* live playing overrides the bed */
+    int deg  = generative_next_degree();     /* 1..7 (fixed prog 3 uses the 7th) */
     int midi = brain_cell_root(deg - 1);     /* root of that degree's voiced chord */
     engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi), GEN_VOICE_AMP);
     return deg;
+}
+
+void engine_generative_tick(uint32_t now_ms) {
+    /* Sparkle note-offs run unconditionally — a ringing note must release
+     * on schedule even if the bed was just disabled or the user grabbed a
+     * cell mid-ring. */
+    for (int i = 0; i < SPARK_COUNT; ++i) {
+        if (spark[i].ringing && (int32_t)(now_ms - spark[i].off_ms) >= 0) {
+            engine_note_off((uint8_t)(SPARK_SRC0 + i));
+            spark[i].ringing = false;
+        }
+    }
+    if (!gen_on) return;
+
+    if (any_user_note()) {
+        /* Player takes over: drop scheduled note-ons and re-arm the bar so
+         * the bed resumes promptly (not up to 8 s late) after release. */
+        for (int i = 0; i < SPARK_COUNT; ++i) spark[i].on_pending = false;
+        gen_timing_valid = false;
+        return;
+    }
+
+    if (!gen_timing_valid) {           /* just enabled / just released */
+        gen_next_bar_ms  = now_ms;     /* fire the bar immediately */
+        gen_timing_valid = true;
+    }
+
+    if ((int32_t)(now_ms - gen_next_bar_ms) >= 0) {
+        int deg = engine_generative_advance();
+        /* Humanized bar: 90..110 % of the base length. */
+        uint32_t bar = GEN_TICK_BAR_MS * (uint32_t)(90 + (int)(gen_rand01() * 21.0f)) / 100u;
+        if (deg > 0) {
+            /* Scatter chord-tone sparkles inside this bar: an upper chord
+             * tone (never the root), +1 octave, quiet, ~3 s ring. */
+            int chord[BRAIN_MAX_CHORD];
+            int n = brain_chord(deg, chord, BRAIN_MAX_CHORD);
+            static const float POS_LO[SPARK_COUNT] = { 0.25f, 0.60f };
+            static const float POS_HI[SPARK_COUNT] = { 0.55f, 0.85f };
+            static const float PROB[SPARK_COUNT]   = { 0.75f, 0.40f };
+            for (int i = 0; i < SPARK_COUNT && n > 1; ++i) {
+                if (spark[i].ringing || gen_rand01() >= PROB[i]) continue;
+                int tone = chord[1 + (int)(gen_rand01() * (float)(n - 1)) % (n - 1)];
+                spark[i].hz  = dsp_midi_to_hz((float)(tone + 12));
+                spark[i].amp = 0.05f + gen_rand01() * 0.03f;
+                spark[i].on_ms = now_ms + (uint32_t)((POS_LO[i] +
+                                  gen_rand01() * (POS_HI[i] - POS_LO[i])) * (float)bar);
+                spark[i].on_pending = true;
+            }
+        }
+        gen_next_bar_ms = now_ms + bar;
+    }
+
+    for (int i = 0; i < SPARK_COUNT; ++i) {
+        if (spark[i].on_pending && (int32_t)(now_ms - spark[i].on_ms) >= 0) {
+            engine_note_on((uint8_t)(SPARK_SRC0 + i), spark[i].hz, spark[i].amp);
+            spark[i].on_pending = false;
+            spark[i].ringing    = true;
+            spark[i].off_ms     = now_ms + SPARK_RING_MS +
+                                  (uint32_t)(gen_rand01() * 1200.0f);
+        }
+    }
 }
 
 void engine_render(int16_t *buf, int frames) {

@@ -2,6 +2,22 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.88 (2026-07-04, Sound-Logik-Audit + Generative-Autoplay):** 5 echte
+> Musik-Logikfehler gefunden + gefixt: (1) Generative lief ueber gehaltene
+> SHIFT-Noten (any_cell_held sah Sources 9–13 nicht), (2) Momentary-Tap
+> toetete beim Release die gelatchte Voice derselben Zelle (State-Desync),
+> (3) GENERATE brauchte bis zu 8 s fuer die erste Note, (4) World-Wechsel
+> liess Latches in der alten Tonart weiterklingen (Clash mit Drone/Bed) →
+> controls_refresh_held_pitches(), (5) Bass-Sustain ignorierte Depth-
+> Aenderungen. **NEU: echtes Autoplay** — engine_generative_tick():
+> Sofort-Note beim Einschalten, humanisierte 8-s-Bars (±10 %), 0–2 leise
+> Akkordton-„Sparkles" (+1 Okt, Sources 14/15) pro Bar, Live-Spiel
+> unterbricht sauber und resumed sofort nach Loslassen. Neue Test-Suite
+> (7629 Checks); 25 Suiten / 0 Failures; h743 cross-baut. Speicherfrage:
+> nicht 512 KB gesamt, sondern 1 MB in Domaenen — aktuell ~35 % frei;
+> Erweiterung ginge per QSPI-PSRAM (~$1.5, PB2+PE7–10 laut Pin-Tabelle
+> frei), ist aber derzeit nicht noetig. Details: CHANGELOG r18.88.
+>
 > **r18.87 (2026-07-04, User: „only keep LEDs above cells + modifiers" + neue Audio-Renders):**
 > **VU-Meter (U10 + 8 LEDs) und Heartbeat-LED (PD8) komplett entfernt** —
 > Schematic (Generator), BOM (57 Parts / 188 Placements, −22; ~$89/Geraet
