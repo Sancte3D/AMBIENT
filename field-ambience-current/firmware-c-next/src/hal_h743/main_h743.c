@@ -1,43 +1,25 @@
 /*
- * main_h743.c — STM32H743 product firmware entry point (skeleton).
+ * main_h743.c — STM32H743 product firmware entry point (r18.86, Step 13.3 —
+ * the boot TODOs are now real code; vendor startup/linker/clock live in
+ * this directory + vendor/).
  *
- * Boot sequence (Step 13.3 TODO):
- *   1. SystemClock_Config: HSE 8 MHz → PLL1 → 480 MHz core / 240 MHz AHB /
- *      120 MHz APB; PLL3 → 11.2896 MHz for SAI1 (jitter-free 44.1 kHz).
- *   2. Enable I/D cache (cm7_dcache_invalidate_by_addr around DMA buffers).
- *   3. SysTick at 1 kHz (for menu animation tick + encoder sample tick +
- *      hold-latch button debounce).
- *   4. Init power-up sequence in order:
- *        oled_init()       — LCD splash
- *        mcp_init()        — I²C bus, MCP23017 + PCA9685 (LEDs all dark)
- *        enc_init()        — 4 encoder timers + push GPIO
- *        midi_tx_init()    — USART2 ready, idle
- *        dsp_init()        — sine LUT
- *        brain_init()      — default C ionian / warm
- *        engine_init()     — reverb buffers, voice pools, generative state
- *        audio_init()      — SAI1+DMA pump live, /SHDN+/MUTE+XSMT sequence
- *        audio_set_renderer(engine_render);
- *   5. Main loop: drain enc_pop_event() → menu.c, drain MCP int → cells
- *      (digital, GPA0-4) + modifiers (GPB0-4) + jack-detect (GPA6)
- *      → hold-latch/modifier toggles, advance SysTick-driven
- *      generative bar timer if engine_set_generative(true,…).
+ * Boot sequence:
+ *   1. I/D caches on, HAL_Init (SysTick 1 kHz), SystemClock_Config:
+ *      HSE 8 MHz → PLL1 → 480 MHz core / 240 MHz AHB / 120 MHz APB;
+ *      PLL3 → 11.289609 MHz SAI1 kernel (jitter-free 44.1 kHz).
+ *   2. Init order below: LCD splash → I²C expander/LED drivers (dark) →
+ *      encoders → DSP/brain/engine → menu/controls/params/leds/vu →
+ *      audio (SAI1+DMA pump live, SPEC §8.3 /SHDN → /MUTE → XSMT).
+ *   3. Main loop routes hardware events into the host-tested logic
+ *      (controls.c / params.c / menu.c) — no gameplay logic lives here.
  *
  * r18.85: VU-Meter ist angebunden — engine_render_peak() (Block-Peak des
  * finalen limitierten Outputs) → vu.c (host-getestete Ballistik: Instant-
  * Attack, 30 dB/s Release, 900 ms Peak-Hold, 8 Segmente −36…−0,5 dBFS) →
- * pca2_set_pwm() (U10 @ 0x41). Der I²C-Transport selbst ist Step 13.3.
+ * pca2_set_pwm() (U10 @ 0x41).
  *
- * Hold-latch logic (ADR-0008 r2 to implement here):
- *   Per cell: bool hold_base[5], hold_shift[5].
- *   Hold-modifier latched + cell tap → toggle hold_<shift?>[cell].
- *   On press: if hold_base toggled on → engine_note_on(cell, root);
- *             if hold_shift toggled on → engine_note_on(cell+9, root+12);
- *             if hold_base/shift toggled off → engine_note_off(...).
- *   Clear modifier → reset all 10 bits + engine_note_off(0..4) + (9..13).
- *
- * This file does not contain the actual STM32 startup vector table or
- * SystemInit — those live in vendor-provided files (CubeH7 + linker script)
- * that Step 13.3 will add.
+ * Hold-latch logic (ADR-0008 r2) lives in controls.c (host-tested); this
+ * loop only feeds it press/release edges from the MCP23017.
  */
 
 #include "engine.h"
@@ -47,12 +29,14 @@
 #include "encoders.h"
 #include "mcp23017.h"
 #include "oled.h"
+#include "oled_color.h"  /* accent crossfade tick (world → screen tint) */
 #include "midi.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
 #include "vu.h"          /* r18.85: engine peak → 8-seg VU (U10 @ 0x41) */
 #include "menu.h"        /* menu state machine */
+#include "h743_hal.h"    /* SystemClock_Config, enc_set_ext_push */
 
 /* MCP23017 GPIO bit map (SPEC §7.2 / mcp23017_h743.c) — which expander bit is
  * which modifier button. Modifier push of EN1/2/4 also lands on GPB. */
@@ -63,6 +47,14 @@
 /* Cells sind seit r18.73 DIGITAL (MCP23017 GPA0-4) — feste Tap-Velocity wie
  * im Pico-HAL (CELL_VOICE_AMP 0.12 dort; controls.c skaliert identisch). */
 #define CELL_TAP_AMP 0.12f
+
+/* Generative-bed bar period. Same cadence as the render_wav.c master tape
+ * (Cathedral section steps the bed every 8 s) — one chord-root move per
+ * 8-second bar keeps the bed glacial, ambient, never sequencer-ish. */
+#define GEN_BAR_MS 8000u
+
+/* Jack-detect debounce (mechanical TRS contact bounce ≪ 50 ms). */
+#define JACK_DEBOUNCE_MS 50u
 
 /* Menu → engine binding (ADR-0017 Phase 4, r18.58 Reddit-macro pass).
  * Menu slots are now World/Space/Atmos/Motion/Age — Tone was dropped (it
@@ -77,16 +69,39 @@ static void hal_set_age        (float v)   { engine_set_age(v); }
 static void hal_set_echo       (float v)   { engine_set_echo(v); }
 static void hal_set_blur       (float v)   { engine_set_blur(v); }
 
+/* Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW), Line-Out
+ * bleibt live — NICHT audio_mute() rufen (das wuerde auch XSMT ziehen und
+ * den Line-Out toeten). Design: ADR / v0.7. */
+static void apply_amp_mute_for_jack(bool plugged) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15,
+                      plugged ? GPIO_PIN_RESET : GPIO_PIN_SET);
+}
+
+/* DTCM/D2 DSP-buffer regions (stm32h743_flash.ld): the startup file zeroes
+ * only the main .bss, so these must be zeroed here before ANY engine code
+ * runs — C globals rely on zero-init. */
+extern uint32_t _sdtcm_bss, _edtcm_bss, _sd2_bss, _ed2_bss;
+
 int main(void) {
-    /* TODO(Step 13.3): SystemClock_Config(); HAL_Init(); SysTick at 1 kHz. */
+    /* Zero the out-of-.bss DSP regions first (see linker script). */
+    for (uint32_t *p = &_sdtcm_bss; p < &_edtcm_bss; ++p) *p = 0u;
+    for (uint32_t *p = &_sd2_bss;   p < &_ed2_bss;   ++p) *p = 0u;
+
+    /* Cortex-M7 caches next (the 480 MHz core is crippled without them),
+     * then the HAL time base, then the real clock tree. */
+    SCB_EnableICache();
+    SCB_EnableDCache();
+    HAL_Init();                       /* SysTick 1 kHz + NVIC grouping */
+    SystemClock_Config();             /* 480 MHz core, PLL3 → SAI 44.1 kHz */
 
     oled_init();
     mcp_init();
     enc_init();
-    /* midi_tx_init();  -- Firmware-seitig DEFERRED r18.30 (ADR-0004).
+    /* midi_hw_init();  -- Firmware-seitig DEFERRED r18.30 (ADR-0004).
      * r18.82-Doku-Fix: die HARDWARE ist komplett bestueckt (J10 PJ-320D +
      * 2x 220R seit r18.67; frueher stand hier faelschlich "J9 DNP" — J9 ist
-     * der Akku-JST). Bei Reaktivierung nur diese Zeile einkommentieren. */
+     * der Akku-JST). Bei Reaktivierung nur diese Zeile einkommentieren
+     * (Treiber ist fertig: midi_uart_h743.c, USART2/PD5). */
     dsp_init();
     brain_init();
     engine_init();
@@ -110,36 +125,54 @@ int main(void) {
     audio_init();
     audio_set_renderer(engine_render);
 
+    /* Initial jack state (mcp_init primed the cache): plugged at boot →
+     * speaker amp stays muted from the first un-mute onwards. */
+    uint16_t prev_gpio = mcp_state();
+    apply_amp_mute_for_jack((prev_gpio & (1u << MCP_BIT_JACK)) != 0);
+
+    /* Jack-detect debounce state (0xFF = nothing pending). */
+    uint8_t  jack_pending  = 0xFF;
+    uint32_t jack_edge_ms  = 0;
+
+    /* Generative bar timer + UI frame pacing. */
+    uint32_t next_bar_ms   = HAL_GetTick() + GEN_BAR_MS;
+    uint32_t last_frame_ms = 0;
+    bool     ui_dirty      = true;     /* draw the first frame immediately */
+
     /* Main loop. All gameplay LOGIC is hardware-independent (controls.c /
-     * params.c / cells.c, host-tested) — this loop only ROUTES hardware
-     * events into it. The TODOs are the HAL reads, not logic. */
-    uint16_t prev_gpio = 0xFFFF;          /* MCP pull-ups → idle high */
+     * params.c / menu.c, host-tested) — this loop only ROUTES hardware
+     * events into it. */
     for (;;) {
+        uint32_t now = HAL_GetTick();
+
         /* --- 1. Encoder rotate/push → params + menu --- */
         enc_event_t ev;
         while (enc_pop_event(&ev)) {
-            uint32_t now = 0; /* TODO(13.3): HAL_GetTick() */
             if (ev.kind == ENC_EVENT_ROTATE) {
                 if (ev.id == PARAM_ENC_DISPLAY) {
                     menu_rotate(ev.value);              /* DISPLAY-Encoder: Menü-Navigation */
+                    ui_dirty = true;
                 } else {
                     params_encoder(ev.id, ev.value, now);   /* DRIVE/BRIGHT/VOLUME */
                 }
             } else if (ev.kind == ENC_EVENT_PUSH && ev.value) {
-                if (ev.id == PARAM_ENC_DISPLAY) menu_push(); /* DISPLAY-Push: Menü-Enter */
+                if (ev.id == PARAM_ENC_DISPLAY) {
+                    menu_push();                        /* DISPLAY-Push: Menü-Enter */
+                    ui_dirty = true;
+                }
             }
         }
 
-        /* --- 2. MCP23017 → cells + modifiers + jack-detect ---
-         * r18.82: Der alte Abschnitt 3 ("Cell Hall ADCs → velocity") war seit
-         * r18.73 stale — die Cells sind DIGITALE Switches am MCP23017
-         * (GPA0-4, aktiv-LOW mit internem Pull-up), keine Hall-ADCs mehr
-         * (adc_read_norm/cells_update existieren fuer die Cells nicht mehr;
-         * PC0/PC1/PA4/PB0/PB1 sind NC-Reserven). Gleicher Edge-Pfad wie die
-         * bench-erprobte Pico-Implementierung (src/hal_pico/main_pico.c),
-         * hier durch die host-getestete controls.c-Statemachine geroutet. */
-        uint16_t gpio;
-        if (mcp_read_gpio(&gpio)) {
+        /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
+         * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
+         * reads both ports (auto-clears the MCP interrupt). No polling —
+         * the I²C bus stays free for the 60 Hz LED/VU writes.
+         * r18.82: Cells sind DIGITALE Switches (GPA0-4, aktiv-LOW mit
+         * Pull-up), keine Hall-ADCs mehr. Gleicher Edge-Pfad wie die
+         * bench-erprobte Pico-Implementierung, geroutet durch die host-
+         * getestete controls.c-Statemachine. */
+        if (mcp_irq_pending()) {
+            uint16_t gpio = mcp_service();
             uint16_t fell = (uint16_t)(prev_gpio & ~gpio);   /* 1→0 = press */
             uint16_t rose = (uint16_t)(~prev_gpio & gpio);   /* 0→1 = release */
 
@@ -157,31 +190,51 @@ int main(void) {
             if (fell & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, true);
             if (fell & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, true);
 
+            /* EN4 (volume) push lives on GPB5 — feed the level into the
+             * encoder layer so enc_pushed(4)/PUSH events stay uniform. */
+            {
+                uint16_t em = (uint16_t)(1u << MCP_BIT_ENC4_SW);
+                if ((fell | rose) & em)
+                    enc_set_ext_push(4, (gpio & em) == 0);   /* active-low */
+            }
+
             /* Jack-Detect GPA6 (r18.82-Hardware: PJ-320D-Switch oeffnet beim
              * Einstecken → mit R_DET 10k/C_DET 1µF + MCP-Pull-up liest der
-             * Pin unplugged ≈ 0,3 V = LOW, plugged = HIGH). Design (ADR/v0.7):
-             * Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW),
-             * Line-Out bleibt live — NICHT audio_mute() rufen (das wuerde
-             * auch XSMT ziehen und den Line-Out toeten). */
+             * Pin unplugged ≈ 0,3 V = LOW, plugged = HIGH). Edge → arm the
+             * debounce; applied below once stable for JACK_DEBOUNCE_MS. */
             {
                 uint16_t jm = (uint16_t)(1u << MCP_BIT_JACK);
                 if ((fell | rose) & jm) {
-                    bool plugged = (gpio & jm) != 0;
-                    (void)plugged;
-                    /* TODO(13.3): PB15 (AMP_nMUTE) = plugged ? LOW : HIGH
-                     * (+ ~50 ms Debounce ueber den 1-kHz-SysTick). */
+                    jack_pending = (gpio & jm) ? 1 : 0;
+                    jack_edge_ms = now;
                 }
             }
 
             prev_gpio = gpio;
         }
 
-        /* --- 4. Generative bar timer (SysTick-driven) → engine_generative_advance() --- */
+        /* --- 3. Jack debounce settle → PAM8403 /MUTE --- */
+        if (jack_pending != 0xFF &&
+            (uint32_t)(now - jack_edge_ms) >= JACK_DEBOUNCE_MS) {
+            /* Still at the level that armed the debounce? (A bounce mid-
+             * window re-armed it above, so reaching here means stable.) */
+            apply_amp_mute_for_jack(jack_pending == 1);
+            jack_pending = 0xFF;
+        }
 
-        /* --- 5. LED render @ ~60 Hz: state → 16 PCA9685 channels → I²C --- */
+        /* --- 4. Generative bar timer → engine_generative_advance() ---
+         * advance() self-gates: no-op unless MOD_GENERATE latched the bed
+         * on (engine_set_generative via controls.c), and live cells always
+         * override. Free-running phase — the bar grid doesn't reset on
+         * toggle, which is fine for an ambient bed (no downbeat to miss). */
+        if ((int32_t)(now - next_bar_ms) >= 0) {
+            (void)engine_generative_advance();
+            next_bar_ms += GEN_BAR_MS;
+        }
+
+        /* --- 5. LED + VU render @ ~60 Hz: state → 2× PCA9685 → I²C --- */
         {
             static uint32_t last_ms = 0;
-            uint32_t now = 0;             /* TODO(13.3): HAL_GetTick() */
             uint16_t dt = (uint16_t)(now - last_ms);
             if (dt >= 16) {                /* 60 Hz tick */
                 uint16_t pwm[LED_CH_COUNT];
@@ -198,7 +251,21 @@ int main(void) {
             }
         }
 
-        /* --- 6. Menu refresh @ ~30 fps: menu_render() + oled_show() --- */
-        /* TODO(13.3): rate-limit + framebuffer flush. */
+        /* --- 6. Menu refresh, rate-limited to ~30 fps ---
+         * Redraw only when the menu was touched or the accent crossfade is
+         * still moving — oled_show() streams the full frame (~29 ms at
+         * 30 MHz SPI), so idle frames are deliberately skipped. Audio is
+         * IRQ-fed and can't glitch while the CPU blocks here. */
+        if (ui_dirty && (uint32_t)(now - last_frame_ms) >= 33) {
+            bool accent_moving = oled_accent_tick(now) != 0;
+            menu_render();
+            oled_show();
+            ui_dirty      = accent_moving;
+            last_frame_ms = now;
+        }
+
+        /* --- 7. MIDI Out pump (no-op until midi_hw_init() is re-enabled,
+         * ADR-0004). Never blocks. --- */
+        midi_hw_pump();
     }
 }

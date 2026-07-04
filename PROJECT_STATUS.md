@@ -2,6 +2,25 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.86 (2026-07-04, Firmware-Engine Teil 2 — Step 13.3 CubeH7-Bring-up):**
+> **Die H743-Firmware ist jetzt eine echte, cross-kompilierte Firmware** —
+> `cmake -DFAM_TARGET=h743` baut mit arm-none-eabi-gcc ein flashbares
+> `.elf/.bin/.hex` (156 KB Flash, Vektoren @0x08000000). Neu: vendored
+> CubeH7 HAL v1.11.6 + CMSIS (`src/hal_h743/vendor/`, BSD-3), Startup/
+> Linker-Script/Toolchain-File, `SystemClock_Config` (HSE 8 MHz → PLL1
+> 480 MHz VOS0; PLL3 fraktional → SAI-Kernel 11,289609 MHz = exakt
+> 44,1 kHz), und ALLE sechs HAL-Treiber real: I²C1 @≈400 kHz (MCP23017 +
+> 2× PCA9685, EXTI PC13), SAI1-A + DMA1-Circular-Pump mit D-Cache-Clean +
+> SPEC-§8.3-Pop-Suppression, SPI1 @30 MHz ST7789 (Pico-Init-Sequenz 1:1),
+> TIM1/2/3/4-Hardware-Encoder-Mode + 1-kHz-SysTick-Sampling (EN4-Push via
+> MCP GPB5), USART2-MIDI 31250 Baud (Treiber fertig, Aktivierung weiter
+> per ADR-0004 deferred), Main-Loop komplett (INT-getriebener MCP-Pfad,
+> Jack-Detect-Debounce → nur Amp-Mute, 8-s-Generative-Bar, 60-Hz-LED/VU,
+> 30-fps-Menu-Flush). RAM-Split im Linker-Script, da .bss (~630 KB) >
+> AXI-SRAM: pad→DTCM, echo+blur→D2, Rest+DMA-Puffer→D1 (main() nullt die
+> Extra-Regionen). Host-Tests unveraendert gruen (25 Suiten, 0 Failures).
+> Naechster Schritt: Flash auf echter Hardware (Step 13.4/13.5 Bench).
+>
 > **r18.85 (2026-07-02, Firmware-Engine Teil 1 — VU-Meter):** Die r18.83-
 > Luecke ist zu: `engine_render_peak()`-Tap (Block-Peak des finalen
 > limitierten Outputs) → neues host-getestetes Modul `vu.c` (8 Segmente

@@ -41,6 +41,10 @@
 #define MCP_BIT_MOD_DRONE    10
 #define MCP_BIT_MOD_GENERATE 11
 #define MCP_BIT_MOD_CLEAR    12
+/* H7 board only (r18.83): EN4 (volume) push sits on GPB5 because all four
+ * TIM-encoder GPIO pairs used up the free port pins. The main loop feeds
+ * the level into enc_set_ext_push(4, …). Pico bench: unused. */
+#define MCP_BIT_ENC4_SW      13
 
 /* Initialise I²C1 on GP2/GP3 at 400 kHz, configure the MCP23017 for the
  * Field Ambience pin map (cells + modifier inputs with pull-ups, XSMT
