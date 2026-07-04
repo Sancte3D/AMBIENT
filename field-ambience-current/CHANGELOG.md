@@ -10,6 +10,51 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.86 (2026-07-04) — Firmware: Step 13.3 CubeH7-Bring-up — H743 baut als echte Firmware (.elf/.bin)
+
+User: „Now let's properly build our firmware engine." — Teil 2: die
+H7-Hardware-Anbindung. Alle sechs `src/hal_h743/`-Skeletons sind jetzt
+reale Treiber; `cmake -DFAM_TARGET=h743` cross-kompiliert mit
+arm-none-eabi-gcc ein flashbares Image (156 KB Flash / 2 MB, Vektoren
+@0x08000000; `.bin`/`.hex`/`.map` + Size-Report als Post-Build).
+
+- **Vendored ST-Code** (`src/hal_h743/vendor/`, BSD-3): CubeH7 HAL
+  **v1.11.6** (26 Module-Sources, nur enabled Module) + CMSIS-Core 5.9 +
+  CMSIS-Device-H7 (startup_stm32h743xx.s, system_stm32h7xx.c).
+- **Build-Infrastruktur:** `cmake/arm-none-eabi-m7.cmake` (Cortex-M7,
+  FPv5-D16 hard-float, newlib-nano + nosys, gc-sections; auto-selektiert
+  fuer FAM_TARGET=h743), `stm32h743_flash.ld`, `stm32h7xx_hal_conf.h`
+  (14 Module), `stm32h7xx_it.c` (SysTick→HAL_IncTick+enc_tick_1khz,
+  DMA1_Stream0→SAI, EXTI15_10→MCP-INTA).
+- **Clock-Tree** (`system_clock_h743.c`, RM0433/DS12110): HSE 8 MHz →
+  PLL1 M1/N120/P2 = 480 MHz VOS0/LDO, AHB 240/APB 120; PLL3 M2/N70/
+  FRACN4588/P25 = 11,289609 MHz SAI-Kernel → FS exakt 44,1 kHz (+0,8 ppm).
+- **Treiber real statt Skeleton:** I²C1 PB6/7 (MCP23017-Init wie Pico,
+  GPPUB inkl. GPB5; beide PCA9685 via gemeinsamem Dev-Helper; EXTI PC13);
+  SAI1-A Master-TX I²S 16-in-32-Slots + DMA1-Circular-Ping-Pong in D1
+  (SCB_CleanDCache pro Halb-Refill, SPEC-§8.3-Unmute-Sequenz); SPI1
+  @30 MHz (120-MHz-Kernel /4, Pico bench-proven 32) ST7789-Init 1:1 vom
+  Pico-Treiber, geteilte `oled_grey565_lut()`; TIM2/3/4/1 Encoder-Mode
+  TI12 (×4, IC-Filter 0x4) + 1-kHz-Diff mit Pico-Substeps {2,2,4,2},
+  Pushes PE0/1/3 3-of-N-debounced, **EN4-Push via MCP GPB5**
+  (`MCP_BIT_ENC4_SW` neu, Main-Loop → `enc_set_ext_push`); USART2 PD5
+  31250 Baud (120e6/31250 = 3840 exakt), `midi_hw_init/midi_hw_pump`
+  gemaess midi.h-Contract — **Aktivierung bleibt per ADR-0004 deferred**.
+- **Main-Loop komplett** (alle 13.3-TODOs raus): Caches→HAL_Init→Clocks;
+  INT-getriebener MCP-Pfad (`mcp_irq_pending`/`mcp_service` statt
+  I²C-Polling); Jack-Detect 50-ms-Debounce → NUR PB15/Amp-Mute (Line-Out
+  bleibt live); Generative-Bar-Timer 8 s (Kadenz = render_wav-Mastertape);
+  60-Hz-LED+VU-Block; Menu-Flush dirty-gated @~30 fps mit Accent-Tick.
+- **RAM-Split** (Linker-Script, ADR-0015 D3): .bss gesamt ~630 KB >
+  512-KB-AXI → per Objekt-Datei gesteert: `pad.c`→**DTCM** (100 KB,
+  CPU-only, 0-wait), `echo.c`+`blur.c`→**D2** (283/288 KB), Rest + DMA-
+  Puffer→**D1** (243/512 KB). Startup nullt nur .bss → `main()` nullt
+  die zwei Extra-Regionen zuerst. Stack-Guard-Assert bleibt.
+- Host-Suite unveraendert gruen (25 Suiten, 0 Failures, inkl. 352298-
+  Check-Lauf); host/pico-Targets unberuehrt.
+
+---
+
 ## v0.7-r18.85 (2026-07-02) — Firmware: VU-Meter komplett (Engine-Tap → 8-Segment-Ballistik → U10-API)
 
 User: „Now let's properly build our firmware engine." — Teil 1, host-testbar

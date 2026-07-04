@@ -66,6 +66,17 @@ if(FAM_TARGET STREQUAL "pico")
     endif()
 endif()
 
+# h743 target: real cross-compile since Step 13.3 (the HAL files include the
+# vendored CubeH7 headers, so a host compiler can no longer build them — the
+# host syntax gate is now `test/run_tests.sh` + FAM_TARGET=host). Auto-select
+# the ARM toolchain unless the caller already supplied one; must happen
+# BEFORE project() (same rule as the Pico SDK, NB2).
+if(FAM_TARGET STREQUAL "h743" AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/arm-none-eabi-m7.cmake"
+        CACHE FILEPATH "ARM cross-toolchain (auto-selected for FAM_TARGET=h743)")
+endif()
+
 project(field_ambience_native C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
@@ -146,20 +157,31 @@ set(V2_SOURCES
 # Target-specific build dispatch.
 # ---------------------------------------------------------------------------
 if(FAM_TARGET STREQUAL "h743")
-    message(STATUS "Field Ambience: STM32H743 product target (skeleton)")
-    # Step 13.2 (this commit) lays the file structure and CMake stub. The
-    # actual STM32 toolchain integration (STM32CubeH7 HAL, ARM-GCC, OpenOCD
-    # flashing) is Step 13.3. Until then this branch only validates that the
-    # HAL files compile syntactically; the SAI/DMA/USB/SPI wiring is TODO.
+    message(STATUS "Field Ambience: STM32H743 product target (ARM cross-build)")
+    # Step 13.3: full CubeH7 bring-up. Vendored ST HAL + CMSIS live in
+    # src/hal_h743/vendor/ (see vendor/STM32H7xx_HAL_Driver/LICENSE.md, BSD-3);
+    # startup vector table + SystemInit come from the CMSIS device template,
+    # the clock tree + IRQ handlers + linker script are ours.
     # The product target uses the canonical worlds module (src/worlds.c,
     # ADR-0017). Drop the dead v2 duplicate (src/v2/worlds.c) — it defines the
     # same worlds_get/worlds_count and would multiply-define in the executable.
     set(V2_SOURCES_H743 ${V2_SOURCES})
     list(REMOVE_ITEM V2_SOURCES_H743 src/v2/worlds.c)
+
+    set(H743_VENDOR ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_h743/vendor)
+    # Only the HAL modules enabled in stm32h7xx_hal_conf.h were vendored, so
+    # the glob is exactly the wanted set (disabled stragglers compile empty).
+    file(GLOB H743_HAL_SOURCES ${H743_VENDOR}/STM32H7xx_HAL_Driver/Src/*.c)
+
     add_executable(field_ambience_h743
         ${DSP_SOURCES}
         ${V2_SOURCES_H743}
+        ${H743_HAL_SOURCES}
+        ${H743_VENDOR}/CMSIS/Device/ST/STM32H7xx/Source/system_stm32h7xx.c
+        ${H743_VENDOR}/CMSIS/Device/ST/STM32H7xx/Source/startup_stm32h743xx.s
         src/hal_h743/main_h743.c
+        src/hal_h743/system_clock_h743.c
+        src/hal_h743/stm32h7xx_it.c
         src/hal_h743/audio_h743.c
         src/hal_h743/encoders_h743.c
         src/hal_h743/lcd_st7789_h743.c
@@ -168,20 +190,36 @@ if(FAM_TARGET STREQUAL "h743")
     )
     target_include_directories(field_ambience_h743 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/hal
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hal_h743        # stm32h7xx_hal_conf.h
+        ${H743_VENDOR}/CMSIS/Include
+        ${H743_VENDOR}/CMSIS/Device/ST/STM32H7xx/Include
+        ${H743_VENDOR}/STM32H7xx_HAL_Driver/Inc
     )
     target_compile_definitions(field_ambience_h743 PRIVATE
+        STM32H743xx
+        USE_HAL_DRIVER
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
-    # The skeleton links with the HOST compiler (no ARM toolchain yet), so the
-    # DSP sources need libm for sinf/cosf/expf/tanhf/etc. This makes the h743
-    # branch a real CI syntax+link gate (catches missing prototypes/decls)
-    # until the Step 13.3 ARM-GCC toolchain lands.
+    # Quiet the vendored HAL only — our own code keeps full warnings.
+    set_source_files_properties(${H743_HAL_SOURCES} PROPERTIES
+        COMPILE_OPTIONS "-w")
+    target_link_options(field_ambience_h743 PRIVATE
+        -T${CMAKE_CURRENT_SOURCE_DIR}/src/hal_h743/stm32h743_flash.ld
+        -Wl,-Map=$<TARGET_FILE_DIR:field_ambience_h743>/field_ambience_h743.map
+        -Wl,--print-memory-usage
+    )
     target_link_libraries(field_ambience_h743 m)
 
-    # TODO(Step 13.3): ARM-GCC toolchain file, CubeH7 HAL sources +
-    # include paths, linker script, startup file. For now this target only
-    # builds if the user supplies CMAKE_TOOLCHAIN_FILE manually.
+    # Flashable artefacts: .bin (ST-LINK/dfu-util @ 0x08000000) + .hex.
+    add_custom_command(TARGET field_ambience_h743 POST_BUILD
+        COMMAND ${CMAKE_OBJCOPY} -O binary
+                $<TARGET_FILE:field_ambience_h743>
+                $<TARGET_FILE_DIR:field_ambience_h743>/field_ambience_h743.bin
+        COMMAND ${CMAKE_OBJCOPY} -O ihex
+                $<TARGET_FILE:field_ambience_h743>
+                $<TARGET_FILE_DIR:field_ambience_h743>/field_ambience_h743.hex
+        COMMAND ${CMAKE_SIZE} $<TARGET_FILE:field_ambience_h743>
+        COMMENT "objcopy → .bin/.hex + size report")
 
 elseif(FAM_TARGET STREQUAL "pico")
     message(STATUS "Field Ambience: Pico-2 bench-tool target")
