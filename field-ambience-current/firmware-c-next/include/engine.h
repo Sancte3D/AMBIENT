@@ -96,6 +96,11 @@ int engine_generative_advance(void);
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */
 void engine_render(int16_t *buf, int frames);
 
+/* r18.85 (VU meter): peak |sample| (0..1) of the most recently rendered
+ * block, measured on the FINAL limited output — exactly what hits the DAC.
+ * Single volatile float; safe to poll from the UI loop at any rate. */
+float engine_render_peak(void);
+
 /* Pass-through for main.c's OLED stat line. */
 int engine_active_voices(void);
 

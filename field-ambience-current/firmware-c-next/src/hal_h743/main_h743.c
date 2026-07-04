@@ -22,12 +22,10 @@
  *      → hold-latch/modifier toggles, advance SysTick-driven
  *      generative bar timer if engine_set_generative(true,…).
  *
- * OFFEN (r18.82-Audit, eigener Arbeitsschritt): der 2. PCA9685 (U10 @ 0x41,
- * 8 VU-Meter-LEDs, Hardware seit r18.66) hat noch KEINE Firmware-Anbindung —
- * weder eine adressierbare pca-API (pca_set_pwm kennt nur ein Device) noch
- * einen Level-Tap aus engine_render noch einen VU-Renderer. Bis dahin
- * bleiben die 8 VU-LEDs schlicht dunkel (PCA9685 bootet mit allen Kanaelen
- * aus — kein Fehlverhalten, nur Feature fehlt).
+ * r18.85: VU-Meter ist angebunden — engine_render_peak() (Block-Peak des
+ * finalen limitierten Outputs) → vu.c (host-getestete Ballistik: Instant-
+ * Attack, 30 dB/s Release, 900 ms Peak-Hold, 8 Segmente −36…−0,5 dBFS) →
+ * pca2_set_pwm() (U10 @ 0x41). Der I²C-Transport selbst ist Step 13.3.
  *
  * Hold-latch logic (ADR-0008 r2 to implement here):
  *   Per cell: bool hold_base[5], hold_shift[5].
@@ -53,6 +51,7 @@
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
+#include "vu.h"          /* r18.85: engine peak → 8-seg VU (U10 @ 0x41) */
 #include "menu.h"        /* menu state machine */
 
 /* MCP23017 GPIO bit map (SPEC §7.2 / mcp23017_h743.c) — which expander bit is
@@ -107,6 +106,7 @@ int main(void) {
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     params_init();            /* encoder param values → engine defaults */
     leds_init();              /* 16-ch PWM render */
+    vu_init();                /* r18.85: 8-seg VU meter (U10) */
     audio_init();
     audio_set_renderer(engine_render);
 
@@ -188,6 +188,12 @@ int main(void) {
                 leds_render(now, dt, pwm);
                 for (uint8_t ch = 0; ch < LED_CH_COUNT; ++ch)
                     pca_set_pwm(ch, 0, pwm[ch]);   /* on_count=0, off_count=duty */
+                /* r18.85: VU meter — engine block peak → 8 segments → U10 */
+                uint16_t vu[VU_CH_COUNT];
+                vu_update(engine_render_peak(), now);
+                vu_render(vu);
+                for (uint8_t ch = 0; ch < VU_CH_COUNT; ++ch)
+                    pca2_set_pwm(ch, 0, vu[ch]);
                 last_ms = now;
             }
         }

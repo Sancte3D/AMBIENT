@@ -2,6 +2,15 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.85 (2026-07-02, Firmware-Engine Teil 1 — VU-Meter):** Die r18.83-
+> Luecke ist zu: `engine_render_peak()`-Tap (Block-Peak des finalen
+> limitierten Outputs) → neues host-getestetes Modul `vu.c` (8 Segmente
+> −36…−0,5 dBFS, Instant-Attack, 30 dB/s Release, 900 ms Peak-Hold-Dot,
+> interpoliertes Bar-Ende) → `pca2_*`-API fuer U10 @ 0x41 → 60-Hz-Tick in
+> main_h743. Neue Suite test_vu.c (44 Checks) inkl. End-to-End gegen den
+> echten Engine-Render. Naechster Schritt: **Step 13.3** (CubeH7-Bring-up:
+> Clocks/SAI-DMA/SPI/I²C/USART/TIM — dann macht die H7-Firmware real Sound).
+>
 > **r18.84 (2026-07-02, User: „missing must-have components? + neue JLC-Kostenschätzung"):**
 > **KRITISCH gefunden: beide PCA9685-/OE-Pins hatten Pull-up ohne jeden
 > Treiber** — /OE permanent HIGH = alle 15 Status-LEDs + Backlight + 8

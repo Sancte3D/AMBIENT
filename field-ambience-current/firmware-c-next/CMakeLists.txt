@@ -101,6 +101,7 @@ set(DSP_SOURCES
     src/controls.c      # ADR-0008 r2: hold-latch + modifier state machine
     src/params.c        # encoder → engine parameter bindings + acceleration
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
+    src/vu.c            # r18.85: engine peak → 8-segment VU meter (U10)
     src/oled_draw.c
     src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)
     src/baked_font.c

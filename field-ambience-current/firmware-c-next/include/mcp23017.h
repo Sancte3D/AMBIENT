@@ -71,10 +71,17 @@ void mcp_set_xsmt(bool on);
  * bits land at 8-15 (see MCP_BIT_MOD_* above). Returns true on I²C ACK. */
 bool mcp_read_gpio(uint16_t *out);
 
-/* PCA9685 init: 1 kHz PWM, totem-pole OUTDRV, release /OE. */
+/* PCA9685 init: 1 kHz PWM, totem-pole OUTDRV. (/OE is hardwired LOW since
+ * r18.84 — nothing to release; channels boot dark per DS LEDn_FULL_OFF.) */
 void pca_init(void);
 
 /* PCA9685 per-channel 12-bit PWM (on/off counts). */
 void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count);
+
+/* r18.85 — second PCA9685 (U10 @ 0x41, A0=+3V3): 8-channel VU meter row
+ * (hardware r18.66). Same register protocol as U6, different address. */
+#define PCA2_I2C_ADDR     0x41
+void pca2_init(void);
+void pca2_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count);
 
 #endif

@@ -62,3 +62,14 @@ void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count) {
     /* TODO: write LEDn_ON_L/H, LEDn_OFF_L/H over I2C. */
     (void)channel; (void)on_count; (void)off_count;
 }
+
+/* r18.85 — U10 (PCA2 @ 0x41): identical register protocol, second address.
+ * Step 13.3 implements both via one shared pca_write(addr, ...) helper. */
+void pca2_init(void) {
+    /* TODO(Step 13.3): same init sequence as pca_init(), addr 0x41. */
+}
+
+void pca2_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count) {
+    /* TODO(Step 13.3): same LEDn register write, addr 0x41. */
+    (void)channel; (void)on_count; (void)off_count;
+}
