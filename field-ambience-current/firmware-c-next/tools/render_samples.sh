@@ -14,7 +14,7 @@ bin="$(dirname "$out")/.render_samples_bin"
     "$root/src/dsp.c" "$root/src/pad.c" "$root/src/texture.c" \
     "$root/src/bass.c" "$root/src/drone.c" "$root/src/reverb.c" \
     "$root/src/reverb_presets.c" "$root/src/brain.c" \
-    "$root/src/generative.c" "$root/src/engine.c" \
+    "$root/src/generative.c" "$root/src/engine.c" "$root/src/pluck.c" \
     -lm -o "$bin"
 "$bin" "$out"
 rm -f "$bin"

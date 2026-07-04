@@ -45,10 +45,14 @@ void params_init(void) {
         s_acc[i].last_ms = 0; s_acc[i].first = 1;
     }
     /* Match engine_init() defaults so the readout is truthful at boot. */
-    s_drive  = 0.15f;   /* engine reverb-drive default */
+    s_drive  = 0.15f;   /* gentle warmth by default */
     s_bright = 0.0f;    /* pad brightness offset default */
     s_volume = 0.60f;   /* engine master-volume default */
-    engine_set_reverb_drive(s_drive);
+    /* r18.89: DRIVE = master drive stage + a slaved touch of reverb-input
+     * drive (the space growls along, ~half a knob behind). Before this the
+     * encoder ONLY drove the reverb input — nearly inaudible on dry sounds. */
+    engine_set_drive(s_drive);
+    engine_set_reverb_drive(0.10f + 0.45f * s_drive);
     engine_set_brightness(s_bright);
     engine_set_master_volume(s_volume);
 }
@@ -62,7 +66,8 @@ void params_encoder(uint8_t enc_id, int delta, uint32_t now_ms) {
     switch (enc_id) {
         case PARAM_ENC_DRIVE:
             s_drive = clampf(s_drive + dir * ticks * 0.01f, 0.0f, 1.0f);
-            engine_set_reverb_drive(s_drive);
+            engine_set_drive(s_drive);
+            engine_set_reverb_drive(0.10f + 0.45f * s_drive);
             break;
         case PARAM_ENC_BRIGHT:
             s_bright = clampf(s_bright + dir * ticks * BRIGHT_STEP_HZ,

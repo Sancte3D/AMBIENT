@@ -100,6 +100,7 @@ set(DSP_SOURCES
     src/tape.c          # ADR-0017 Phase 3: hiss + warm-tanh saturation (master)
     src/echo.c          # Reddit Echo macro: tape-style stereo delay
     src/blur.c          # Reddit Blur macro: granular cloud
+    src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
     src/bass.c
     src/reverb.c
     src/reverb_presets.c

@@ -20,7 +20,7 @@ yet — **not orderable**.
 | **What we know about the parts** (datasheets, verifications) | [`field-ambience-current/docs/component_reviews/`](field-ambience-current/docs/component_reviews/) | 2 reviews complete, ~20 open |
 | **What's blocking manufacturing** | [`field-ambience-current/PCB_LAYOUT_STATUS.md`](field-ambience-current/PCB_LAYOUT_STATUS.md) | honest, updated every revision |
 | **How decisions were made** | [`field-ambience-current/docs/decisions/`](field-ambience-current/docs/decisions/) | 20 ADRs (rejected ones marked SUPERSEDED) |
-| **Render samples to listen to** | [`demos/audio/`](demos/audio/) | 2 FLAC, re-rendered r18.87 from the current engine: 8-min master tape + 5-min performance |
+| **Render samples to listen to** | [`demos/audio/`](demos/audio/) | 3 FLAC: 8-min master tape, 5-min performance, 3-min GENERATE autoplay (r18.89 plucks/crackle/drive) |
 | **Full project map / what to open first per role** | [`PROJECT_MAP.md`](PROJECT_MAP.md) | role-based |
 
 ## Who you are, what to read first

@@ -48,6 +48,11 @@ void engine_set_reverb_drive(float drive_0_1);
 void engine_set_wet_amp(float wet_0_1);
 void engine_set_send(float send_0_1);          /* pad reverb send */
 void engine_set_master_volume(float vol_0_1);  /* master level (VOLUME encoder) */
+/* r18.89 — master DRIVE 0..1. 0 = bit-transparent. Drives the whole mix
+ * through an asymmetric soft saturator (even harmonics, small-signal makeup)
+ * ahead of the tape stage — the DRIVE encoder finally shapes the SOUND, not
+ * just the reverb input. */
+void engine_set_drive(float drive_0_1);
 void engine_set_brightness(float hz);          /* pass-through to pad */
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-0017) */
@@ -97,9 +102,10 @@ int engine_generative_advance(void);
 /* r18.88 — generative AUTOPLAY. Call frequently from the UI loop (any rate
  * ≥ ~20 Hz); all timing derives from now_ms. Plays the bed by itself:
  * immediate first note after enabling, humanized ±10 % bars (base 8 s),
- * plus 0-2 quiet chord-tone "sparkles" an octave up per bar (sources 14/15,
- * ~3 s ring). While the user holds any note, no new bed/sparkle notes start;
- * the bed resumes on the tick after release. */
+ * plus 0-2 quiet chord-tone "sparkles" an octave up per bar (r18.89:
+ * Karplus-Strong PLUCKS — see pluck.h — that self-decay in ~3 s). While the
+ * user holds any note, no new bed/sparkle notes start; the bed resumes on
+ * the tick after release. */
 void engine_generative_tick(uint32_t now_ms);
 
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
