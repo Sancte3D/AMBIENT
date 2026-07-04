@@ -13,10 +13,8 @@
  *   3. Main loop routes hardware events into the host-tested logic
  *      (controls.c / params.c / menu.c) — no gameplay logic lives here.
  *
- * r18.85: VU-Meter ist angebunden — engine_render_peak() (Block-Peak des
- * finalen limitierten Outputs) → vu.c (host-getestete Ballistik: Instant-
- * Attack, 30 dB/s Release, 900 ms Peak-Hold, 8 Segmente −36…−0,5 dBFS) →
- * pca2_set_pwm() (U10 @ 0x41).
+ * r18.87 (User): VU-Meter komplett entfernt (U10 + vu.c + pca2-API) — nur
+ * die Cell- und Modifier-LEDs auf U6 bleiben.
  *
  * Hold-latch logic (ADR-0008 r2) lives in controls.c (host-tested); this
  * loop only feeds it press/release edges from the MCP23017.
@@ -34,7 +32,6 @@
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
-#include "vu.h"          /* r18.85: engine peak → 8-seg VU (U10 @ 0x41) */
 #include "menu.h"        /* menu state machine */
 #include "h743_hal.h"    /* SystemClock_Config, enc_set_ext_push */
 
@@ -121,7 +118,6 @@ int main(void) {
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     params_init();            /* encoder param values → engine defaults */
     leds_init();              /* 16-ch PWM render */
-    vu_init();                /* r18.85: 8-seg VU meter (U10) */
     audio_init();
     audio_set_renderer(engine_render);
 
@@ -232,7 +228,7 @@ int main(void) {
             next_bar_ms += GEN_BAR_MS;
         }
 
-        /* --- 5. LED + VU render @ ~60 Hz: state → 2× PCA9685 → I²C --- */
+        /* --- 5. LED render @ ~60 Hz: state → PCA9685 (U6) → I²C --- */
         {
             static uint32_t last_ms = 0;
             uint16_t dt = (uint16_t)(now - last_ms);
@@ -241,12 +237,6 @@ int main(void) {
                 leds_render(now, dt, pwm);
                 for (uint8_t ch = 0; ch < LED_CH_COUNT; ++ch)
                     pca_set_pwm(ch, 0, pwm[ch]);   /* on_count=0, off_count=duty */
-                /* r18.85: VU meter — engine block peak → 8 segments → U10 */
-                uint16_t vu[VU_CH_COUNT];
-                vu_update(engine_render_peak(), now);
-                vu_render(vu);
-                for (uint8_t ch = 0; ch < VU_CH_COUNT; ++ch)
-                    pca2_set_pwm(ch, 0, vu[ch]);
                 last_ms = now;
             }
         }

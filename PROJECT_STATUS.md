@@ -2,6 +2,18 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.87 (2026-07-04, User: „only keep LEDs above cells + modifiers" + neue Audio-Renders):**
+> **VU-Meter (U10 + 8 LEDs) und Heartbeat-LED (PD8) komplett entfernt** —
+> Schematic (Generator), BOM (57 Parts / 188 Placements, −22; ~$89/Geraet
+> Economic), Docs (ADR-0020 SUPERSEDED) und Firmware (vu.c + pca2-API +
+> engine_render_peak raus; 24 Suiten gruen, h743 cross-baut). Es bleiben:
+> 10 Cell-LEDs + 5 Modifier-LEDs an U6 (+ Backlight ch15). **LED_CHRG
+> bewusst behalten** (laedt im AUS-Zustand — hardware-getriebenes STAT-
+> Feedback, ADR-0016); auf Zuruf streichbar. **demos/audio/ neu gerendert**
+> mit aktueller Engine: master_tape (8:20) + performance (5:00), FLAC-
+> verifiziert. Speaker (J6/J7) + Display (J3) sind Steck-/Loet-Header —
+> Module sitzen off-board im Gehaeuse (ADR-0007/0011).
+>
 > **r18.86 (2026-07-04, Firmware-Engine Teil 2 — Step 13.3 CubeH7-Bring-up):**
 > **Die H743-Firmware ist jetzt eine echte, cross-kompilierte Firmware** —
 > `cmake -DFAM_TARGET=h743` baut mit arm-none-eabi-gcc ein flashbares

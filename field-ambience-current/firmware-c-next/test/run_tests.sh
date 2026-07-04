@@ -81,16 +81,6 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/leds_test"
 "$tmp/leds_test"
 
-# r18.85: VU meter (engine peak tap → 8-segment level meter, U10 hardware)
-"$CC" "${CFLAGS[@]}" \
-    "$here/test_vu.c" \
-    "$src/src/vu.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
-    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
-    -lm -o "$tmp/vu_test"
-"$tmp/vu_test"
-
 # Step 8: famSubBass + famDeepBass + dsp_svf highpass / dsp_tri
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bass.c" \

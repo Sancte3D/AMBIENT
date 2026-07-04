@@ -1,12 +1,14 @@
 # Cost Estimate — Field Ambience
 
-**Stand: v0.7-r18.84 (2026-07-02).** Ehrliche Kostenschätzung für einen
+**Stand: v0.7-r18.87 (2026-07-04).** Ehrliche Kostenschätzung für einen
 **5-Geräte-Prototyp-Run** über JLCPCB-PCBA + Hand-Supply-Teile. Preise der
 teuren Positionen am 2026-07-02 **live von den LCSC-Produktseiten geholt**
 (10+-Staffel); Rest gebändert. ±20 % — die exakte Zahl liefert das
 JLCPCB-Quote-Tool, sobald `.kicad_pcb` + Gerber/CPL existieren.
-BOM-Basis: `kicad/jlc_bom.csv` r18.84 = **58 unique LCSC-Parts,
-210 Placements** (davon ~17 THT-Hand: 10 Switches, 4 Encoder, 3 Header).
+BOM-Basis: `kicad/jlc_bom.csv` r18.87 = **57 unique LCSC-Parts,
+188 Placements** (davon ~17 THT-Hand: 10 Switches, 4 Encoder, 3 Header).
+r18.87: U10-PCA9685 + 8 VU-LEDs + Heartbeat-LED entfernt (−22 Placements,
+−~$3.20 SMD-BOM/Board).
 
 > ⚠️ **Assembly-Größenlimit (NEU r18.84, für Aron):** Die PCB-Outline ist
 > **252 × 102 mm** — JLCs *Economic*-PCBA endet bei **250 × 250 mm**. 2 mm
@@ -23,10 +25,10 @@ BOM-Basis: `kicad/jlc_bom.csv` r18.84 = **58 unique LCSC-Parts,
 | Stencil | ~$8 | ~$38 | |
 | PCBA-Setup | ~$8 | ~$25 | pro Design |
 | Feeder/Extended-Gebühren | ~$8–15 | ~$8–15 | Große ICs sind „Extended (Preferred)“ = gebührenfrei (r18.22-Erkenntnis); plain-Extended: MCP23017, MCP73831, TPS22918, MST-12D18G3, PJ-320D, JST, Polyfuse u. a. à $1.50 |
-| Placement (~660 SMD-Joints × 5) | ~$6 | ~$6 | $0.0017/Joint |
-| SMD-BOM-Teile ×5 (§3) | ~$125 | ~$125 | ~$24.5/Board + Attrition |
+| Placement (~610 SMD-Joints × 5) | ~$5 | ~$5 | $0.0017/Joint |
+| SMD-BOM-Teile ×5 (§3) | ~$110 | ~$110 | ~$21.3/Board + Attrition |
 | Versand DHL EU | ~$30–40 | ~$30–40 | 5× 252-mm-Boards sind sperrig |
-| **JLC-Zwischensumme** | **~$240** | **~$290** | **~$48 bzw. ~$58/Board** |
+| **JLC-Zwischensumme** | **~$225** | **~$275** | **~$45 bzw. ~$55/Board** |
 
 ## 2. Hand-Supply (separat)
 
@@ -42,32 +44,32 @@ BOM-Basis: `kicad/jlc_bom.csv` r18.84 = **58 unique LCSC-Parts,
 | Tag-Connect TC2030-IDC (Tool, einmalig) | — | $15 | Tag-Connect |
 | **Hand-Supply-Zwischensumme** | **~$41** | **~$220** | |
 
-## 3. SMD-BOM pro Board — ~$24.50 (Preise @10+, live 2026-07-02 wo fett)
+## 3. SMD-BOM pro Board — ~$21.30 (Preise @10+, live 2026-07-02 wo fett)
 
-**STM32H743VIT6 $8.68** · **2× PCA9685 $5.86** · **C_BULK Tantal 470µ $1.78** ·
+**STM32H743VIT6 $8.68** · **PCA9685 $2.93 (r18.87: nur noch U6)** · **C_BULK Tantal 470µ $1.78** ·
 **MCP23017 $1.62** · **PCM5102A $0.99** · **MCP73831 $0.70** ·
 **TPS61089 $0.50** · PAM8403 ~$0.44 · TPS22918 $0.25 (live r18.81) ·
 L1 SWPA6045 ~$0.25 · C_BULK2 ~$0.25 · AP7361C ~$0.20 · USBLC6 ~$0.20 ·
 **USB-C $0.17** · Polyfuse ~$0.15 · Crystal ~$0.12 · 2× PJ-320D ~$0.24 ·
 JST ~$0.10 · MST-12D18G3 $0.08 (live r18.81) · 2× SS34 + TVS ~$0.16 ·
-2× TS-1088 ~$0.04 · 2N7002 ~$0.01 · 24× LED ~$0.60 · 3× Header ~$0.35 ·
-~120 R/C-Passives ~$0.60
+2× TS-1088 ~$0.04 · 2N7002 ~$0.01 · 16× LED ~$0.40 · 3× Header ~$0.35 ·
+~110 R/C-Passives ~$0.55
 
-Kostentreiber-Ranking: STM32 (35 %), 2× PCA9685 (24 %), Tantal-Bulk (7 %),
-MCP23017 (7 %). Die 4 Encoder ($7.60, THT-hand) sind der größte
+Kostentreiber-Ranking: STM32 (41 %), PCA9685 (14 %), Tantal-Bulk (8 %),
+MCP23017 (8 %). Die 4 Encoder ($7.60, THT-hand) sind der größte
 Nicht-JLC-Posten pro Gerät.
 
 ## 4. Summen
 
 | | 5er-Run | pro Gerät |
 |---|---|---|
-| JLC (Economic-Fall, Outline ≤250 mm) | ~$240 | ~$48 |
-| JLC (Standard-Fall, 252 mm) | ~$290 | ~$58 |
+| JLC (Economic-Fall, Outline ≤250 mm) | ~$225 | ~$45 |
+| JLC (Standard-Fall, 252 mm) | ~$275 | ~$55 |
 | Hand-Supply | ~$220 | ~$41–44 |
-| **Gesamt (Economic)** | **~$460** | **~$92** |
-| **Gesamt (Standard)** | **~$510** | **~$102** |
+| **Gesamt (Economic)** | **~$445** | **~$89** |
+| **Gesamt (Standard)** | **~$495** | **~$99** |
 
-10er-Run: PCB ~$75, Gebühren identisch, Teile ~×2 → grob **~$75–85/Gerät**.
+10er-Run: PCB ~$75, Gebühren identisch, Teile ~×2 → grob **~$72–82/Gerät**.
 
 ## 5. Stock-Warnungen (live 2026-07-02)
 
@@ -81,6 +83,9 @@ Nicht-JLC-Posten pro Gerät.
 
 ## 6. Historie
 
+- r18.87: U10-PCA9685 + 8 VU-LEDs + R_VU + R_OE2 + 2 Caps + Heartbeat-LED
+  entfernt (User: nur Cell-/Modifier-LEDs bleiben) → SMD-BOM $24.50 → ~$21.30,
+  57 Parts / 188 Placements.
 - r18.22: Erststand ($38/Board JLC, $18 SMD-BOM). r18.84 ersetzt: +U10-PCA
   (+$2.93), +Power-Off-Block (+$0.35), +Dioden-OR/3×22µ/Comp (+$0.15),
   Cells auf direkt-gelötete Choc (LCSC-Anteil 0), Encoder von „~$5“ auf

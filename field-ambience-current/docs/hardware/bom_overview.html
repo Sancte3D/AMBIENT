@@ -48,7 +48,7 @@
 <header><h1>AMBIENT — BOM Overview</h1>
 <p>Every part grouped by function · click a part for its LCSC/JLC page · the <b>JLC assembly</b> badge is verified live · 👁 = visible on the enclosure</p></header>
 <div class="wrap">
- <div class="visgrid"><div class="vcard"><div class="vnum">15</div><div class="vlbl">Touch controls</div><div class="vsub">4 enc + 5 cells + 5 buttons + power switch</div></div><div class="vcard"><div class="vnum">1</div><div class="vlbl">Display</div><div class="vsub">1.9″ window</div></div><div class="vcard"><div class="vnum">23</div><div class="vlbl">Indicator LEDs</div><div class="vsub">5 mod + 10 cell + 8 VU</div></div><div class="vcard"><div class="vnum">3</div><div class="vlbl">Ports</div><div class="vsub">USB-C + line-out + MIDI</div></div><div class="vcard"><div class="vnum">2</div><div class="vlbl">Speakers</div><div class="vsub">grilles</div></div><div class="vcard"><div class="vnum">—</div><div class="vlbl">Bottom</div><div class="vsub">2 pinholes + battery + 4 screws</div></div></div>
+ <div class="visgrid"><div class="vcard"><div class="vnum">15</div><div class="vlbl">Touch controls</div><div class="vsub">4 enc + 5 cells + 5 buttons + power switch</div></div><div class="vcard"><div class="vnum">1</div><div class="vlbl">Display</div><div class="vsub">1.9″ window</div></div><div class="vcard"><div class="vnum">15</div><div class="vlbl">Indicator LEDs</div><div class="vsub">5 mod + 10 cell</div></div><div class="vcard"><div class="vnum">3</div><div class="vlbl">Ports</div><div class="vsub">USB-C + line-out + MIDI</div></div><div class="vcard"><div class="vnum">2</div><div class="vlbl">Speakers</div><div class="vsub">grilles</div></div><div class="vcard"><div class="vnum">—</div><div class="vlbl">Bottom</div><div class="vsub">2 pinholes + battery + 4 screws</div></div></div>
  
     <div class="issues ok"><b>✅ Sourcing issues — resolved with verified JLC-stocked parts (r18.70)</b>
     <ul>
@@ -94,7 +94,7 @@
         <a class="sopen" href="../../kicad/power_tree.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>MCU</b> <span class="sfile">stm32h743.kicad_sch</span></div>
         <div class="sd">STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)</div>
-        <div class="smeta">49 parts · 27 inter-sheet nets</div>
+        <div class="smeta">47 parts · 27 inter-sheet nets</div>
         <div class="snets">AMP_nMUTE, AMP_nSHDN, BAT_PLUS, BRIGHT_A, BRIGHT_B, BRIGHT_SW, DISPLAY_A, DISPLAY_B, DISPLAY_SW, DRIVE_A …</div>
         <a class="sopen" href="../../kicad/stm32h743.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Audio</b> <span class="sfile">audio.kicad_sch</span></div>
@@ -104,7 +104,7 @@
         <a class="sopen" href="../../kicad/audio.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>I/O &amp; LEDs</b> <span class="sfile">mcp.kicad_sch</span></div>
         <div class="sd">MCP23017 + 2× PCA9685 + the 23 LEDs + 10 buttons (5 cells on direct-solder Kailh Choc + 5 tactile modifiers, all digital on the expander) (largest sheet)</div>
-        <div class="smeta">87 parts · 8 inter-sheet nets</div>
+        <div class="smeta">67 parts · 8 inter-sheet nets</div>
         <div class="snets">I2C_SCL, I2C_SDA, JACK_DETECT, LCD_BLK_PWM, MCP_INT, PCM_XSMT, VBUS_USBC, VOL_SW</div>
         <a class="sopen" href="../../kicad/mcp.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Encoders</b> <span class="sfile">encoder.kicad_sch</span></div>
@@ -302,7 +302,7 @@
         <td class="ref">SW11/BOOT</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C720477.html" target="_blank" rel="noopener">TS-1088 tactile ×2 ↗</a></td>
         <td class="fn">Reset + BOOT0 (2 service buttons)</td>
-        <td class="jlc"><span class="b basic">JLC Basic · 883,607</span></td></tr></tbody></table></section><section><h2 style="border-color:#a855f7"><span class="dot" style="background:#a855f7"></span>LEDs (23 visible)</h2>
+        <td class="jlc"><span class="b basic">JLC Basic · 883,607</span></td></tr></tbody></table></section><section><h2 style="border-color:#a855f7"><span class="dot" style="background:#a855f7"></span>LEDs (16 visible)</h2>
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
       <tbody><tr class="vis">
         <td class="ref">LED-Y</td>
@@ -315,14 +315,14 @@
         <td class="jlc"><span class="b ext">JLC Extended · 345,193</span></td></tr><tr class="vis">
         <td class="ref">LED-W</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C965808.html" target="_blank" rel="noopener">XL-1608UWC (white) ↗</a><span class="eye">👁</span></td>
-        <td class="fn">Drone/Gen/Clear + 8 VU LEDs</td>
+        <td class="fn">Drone/Gen/Clear modifier LEDs (r18.87: VU row + heartbeat removed — only cell + modifier LEDs remain)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 2,700,420</span></td></tr><tr class="vis">
         <td class="ref">LED_CHRG</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C965800.html" target="_blank" rel="noopener">Orange 0603 XL-1608UOC ↗</a><span class="eye">👁</span></td>
         <td class="fn">charger status (r18.70: C72041 was blue+EOL → C965800)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 649,682</span></td></tr><tr class="">
         <td class="ref">R_LED</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C23151.html" target="_blank" rel="noopener">390 Ω ×23 ↗</a></td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C23151.html" target="_blank" rel="noopener">390 Ω ×15 ↗</a></td>
         <td class="fn">LED series resistors</td>
         <td class="jlc"><span class="b basic">JLC Basic · 250,152</span></td></tr></tbody></table></section><section><h2 style="border-color:#64748b"><span class="dot" style="background:#64748b"></span>I/O Expander &amp; LED Drivers</h2>
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
@@ -333,11 +333,7 @@
         <td class="jlc"><span class="b ext">JLC Extended · 3,378</span></td></tr><tr class="">
         <td class="ref">U6</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C2678753.html" target="_blank" rel="noopener">PCA9685 PWM driver ↗</a></td>
-        <td class="fn">drives the 15 status LEDs</td>
-        <td class="jlc"><span class="b ext">JLC Extended · 3,147</span></td></tr><tr class="">
-        <td class="ref">U10</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C2678753.html" target="_blank" rel="noopener">PCA9685 PWM driver #2 ↗</a></td>
-        <td class="fn">drives the 8 VU LEDs</td>
+        <td class="fn">drives the 15 cell/modifier LEDs + LCD backlight (U10/VU removed r18.87)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 3,147</span></td></tr></tbody></table></section><section><h2 style="border-color:#94a3b8"><span class="dot" style="background:#94a3b8"></span>Passives &amp; Service</h2>
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
       <tbody><tr class="">

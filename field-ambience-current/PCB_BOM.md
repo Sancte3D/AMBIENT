@@ -64,19 +64,16 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 |---|---|---|---|---|
 | U2 | MCP23017 (I²C 0x20) | — | SSOP-28 | C506653 |
 | U6 | PCA9685 #1 (I²C 0x40, status LEDs) | — | TSSOP-28 | C2678753 |
-| U10 | PCA9685 #2 (I²C 0x41, VU meter) | — | TSSOP-28 | C2678753 |
 | Q2 | 2N7002 LCD-backlight FET | — | SOT-23 | C8545 |
 | LED6 | Shift indicator | yellow 0603 | 0603 | C2287 |
 | LED7 | Hold indicator | green 0603 | 0603 | C12624 |
 | LED8, LED9, LED10 | Drone/Generate/Clear | white 0603 | 0603 | C965808 |
 | LED11Y–LED15Y (5) | cell base-hold | yellow 0603 | 0603 | C2287 |
 | LED11G–LED15G (5) | cell shift-hold | green 0603 | 0603 | C12624 |
-| LED_VU1–LED_VU8 (8) | VU level meter — **all white** (was blue; uses the existing white) | white 0603 | 0603 | C965808 |
-| LED_HB | heartbeat | white 0603 | 0603 | C965808 |
 | LED_CHRG | charge status | orange 0603 | 0603 | C965800 (r18.79 doc-sync: was C72041, blue+EOL — fixed r18.70 in generator) |
-| R_LED6–15 (15), R_VU1–8 (8) | LED ballast | 390 Ω | 0603 | C23151 |
+| R_LED6–15 (15) | LED ballast | 390 Ω | 0603 | C23151 |
 | R_OE, R_OE2 | PCA /OE pull-up | 10 k | 0603 | C25804 |
-| R_BLK_PD, R_SLED, R_BOOT0/_SW, R_NRST | misc pulls | 5.1k/820/1k/10k | 0603 | C23186/C23253/C21190/C25804 |
+| R_BLK_PD, R_BOOT0/_SW, R_NRST | misc pulls | 5.1k/1k/10k | 0603 | C23186/C21190/C25804 |
 | C_PCA_VDD(_HF), C_PCA2_VDD(_HF) | PCA decoupling | 10 µF / 100 nF | 0603/0805 | C15850 / C14663 |
 
 ### Cells — digital on MCP23017, real keyswitch, direct-solder (r18.75, ADR-0013 superseded)
