@@ -10,6 +10,40 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.96 (2026-07-05) — AmbientComposer: Zustände über Minuten, nur Wahrscheinlichkeiten (Atmoscapia/Eno-Prinzip)
+
+User-Brief (via ChatGPT-Analyse von Atmoscapia): „Wir brauchen einen
+echten Ambient Composer ueber der Sound Engine — State → Harmony →
+Voice Roles → Event Probability → Sound Engine. Nicht random note →
+synth." Prinzip rekonstruiert (Atmoscapia publiziert keinen Code — der
+Punkt IST das Prinzip), fuer unser Geraet gebaut.
+
+Ehrliche Einordnung: unser Layer-Stack entsprach dem Atmoscapia-Diagramm
+bereits (Drone/Pad-Bett/Texture/Melodie/Atmosphere → LFO-Drift → FX →
+Master). Gefehlt hat exakt die oberste Box.
+
+- **NEU composer.{h,c}:** Zustandsmaschine CALM → OPEN → DEEP → EMPTY →
+  RETURN, je 40–80 s (fixe Seeds, humanisiert). Jeder State ist NUR eine
+  Tabelle: mel_density (×), rest_add (+), high_p (+24-Antwort), bed_amp
+  (×), bass_depth (Ziel). Pures Modul, kein Engine-Call, kein Audio-Pfad.
+- **Engine-Anbindung (nur Autoplay):** Noten-Wahrscheinlichkeit × density
+  (Cap 0.95), Pausen-Phrasen 30 % + rest_add (5–85 %), Bed-Amp skaliert,
+  Bass-Fundament folgt pro Bar (glidet ueber den r18.88-Sustain-Drift —
+  kein Zipper). **HIGH RESPONSE** als EIGENE antwortende Stimme: der Ton
+  klingt +1 Okt., die Melodielinie fuehrt am Basiston weiter — die
+  Leap-Regel der Grammatik bleibt hart (erste Version verletzte sie,
+  vom 206-Bar-Audit gefangen).
+- **EMPTY ist nicht Stille:** Bett haelt bei 0.6×, Texture/Atmos laufen —
+  der angehaltene Atem, der RETURN warm macht.
+- **Tests:** 15-min-Simulation — alle 5 States besucht, OPEN singt
+  zeitnormiert > 2× dichter als EMPTY; Resume-Fenster in §4 auf 152 s
+  (muss einen State-Wechsel ueberspannen — EMPTY kann 80 s schweigen).
+  **26 Suiten / 0 Failures**; h743 167,0 KB.
+- Autoplay-Demo auf **5:00 verlaengert** (ein voller Composer-Zyklus
+  hoerbar) und neu gerendert. SOUND_WORLD §6b mit der State-Tabelle.
+
+---
+
 ## v0.7-r18.95 (2026-07-05) — Spielsession-Simulator: ein Mensch am Geraet, als Audio
 
 User: „spiel mal ab drone + die cells abwechselnd, aender paar sachen im

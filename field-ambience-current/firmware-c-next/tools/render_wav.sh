@@ -15,7 +15,7 @@ CC="${CC:-cc}"
     "$root/src/dsp.c" "$root/src/pad.c" "$root/src/padsynth.c" "$root/src/texture.c" \
     "$root/src/bass.c" "$root/src/drone.c" "$root/src/reverb.c" \
     "$root/src/reverb_presets.c" "$root/src/brain.c" \
-    "$root/src/generative.c" "$root/src/engine.c" "$root/src/body.c" "$root/src/pluck.c" \
+    "$root/src/generative.c" "$root/src/engine.c" "$root/src/body.c" "$root/src/composer.c" "$root/src/pluck.c" \
     -lm -o "$(dirname "$out")/.render_wav_bin"
 "$(dirname "$out")/.render_wav_bin" "$out"
 rm -f "$(dirname "$out")/.render_wav_bin"

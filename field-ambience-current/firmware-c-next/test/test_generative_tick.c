@@ -22,6 +22,7 @@
 #include "brain.h"
 #include "generative.h"
 #include "pluck.h"   /* r18.89: sparkles are KS plucks now */
+#include "composer.h" /* r18.96: top-level intent states */
 #include "dsp.h"
 
 static int checks = 0, fails = 0;
@@ -109,7 +110,9 @@ int main(void) {
     CHECK(engine_active_voices() == 1, "only the bed left after the user tail (%d)",
           engine_active_voices());
     int resumed = 0;                                    /* sparkles restart? */
-    for (int step = 0; step < 2500; ++step) {           /* 40 s simulated */
+    for (int step = 0; step < 9500; ++step) {           /* 152 s simulated —
+        * r18.96: the composer may sit in EMPTY (rests 75 %) right here;
+        * the window must span a state change so the resume is observable */
         now += 16;
         engine_generative_tick(now);
         if (pluck_active_count() > 0) { resumed = 1; break; }
@@ -168,6 +171,40 @@ int main(void) {
         CHECK(engine_generative_dejavu_count() >= 3,
               "deja-vu replays whole phrases (%d in ~206 bars)",
               engine_generative_dejavu_count());
+        engine_set_generative(false, -1);
+    }
+
+    /* ---- 7. r18.96 composer: states cycle, density follows intent ----
+     * Simulate ~15 min of autoplay and attribute every melody note to the
+     * composer state it was born in. All five states must be visited
+     * (cycle ≈ 5 × 40–80 s), and OPEN must sing clearly denser than
+     * EMPTY (notes per minute, time-normalized) — the whole point of a
+     * composer that only re-weights probabilities. */
+    {
+        engine_init();
+        engine_set_generative(true, -1);
+        int    seen[COMPOSER_STATE_COUNT] = { 0 };
+        double ms_in[COMPOSER_STATE_COUNT] = { 0 };
+        int    notes_in[COMPOSER_STATE_COUNT] = { 0 };
+        int    prev_notes = 0;
+        uint32_t t = 500000;
+        for (int step = 0; step < 3600; ++step) {       /* 900 s @ 250 ms */
+            t += 250;
+            engine_generative_tick(t);
+            composer_state_t st = composer_state();
+            seen[st] = 1;
+            ms_in[st] += 250.0;
+            int c = engine_generative_melody_count();
+            if (c != prev_notes) { notes_in[st] += c - prev_notes; prev_notes = c; }
+            if ((step & 255) == 0) render_ms(400);
+        }
+        for (int k = 0; k < COMPOSER_STATE_COUNT; ++k)
+            CHECK(seen[k], "composer visits state %d", k);
+        double d_open  = ms_in[COMPOSER_OPEN]  > 0 ? notes_in[COMPOSER_OPEN]  / ms_in[COMPOSER_OPEN]  : 0;
+        double d_empty = ms_in[COMPOSER_EMPTY] > 0 ? notes_in[COMPOSER_EMPTY] / ms_in[COMPOSER_EMPTY] : 1e9;
+        CHECK(d_open > d_empty * 2.0,
+              "OPEN sings denser than EMPTY (%.5f vs %.5f notes/ms)",
+              d_open, d_empty);
         engine_set_generative(false, -1);
     }
 

@@ -28,6 +28,7 @@
 #include "pluck.h"
 #include "padsynth.h"
 #include "body.h"
+#include "composer.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -203,6 +204,7 @@ void engine_init(void) {
     cells_init();                    /* ADR-0013 cell-velocity state */
     gen_on = false;
     gen_timing_valid = false;        /* r18.88 autoplay scheduler reset */
+    composer_init();                 /* r18.96 top-level intent reset   */
     memset(spark, 0, sizeof spark);
     mel_last_midi = 0; mel_phrase_bars = 0;
     mel_phrase_rest = false; mel_phrase_open = false;
@@ -442,7 +444,8 @@ int engine_generative_advance(void) {
     if (any_user_note()) return -1;          /* live playing overrides the bed */
     int deg  = generative_next_degree();     /* 1..7 (fixed prog 3 uses the 7th) */
     int midi = brain_cell_root(deg - 1);     /* root of that degree's voiced chord */
-    engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi), GEN_VOICE_AMP);
+    engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi),
+                   GEN_VOICE_AMP * composer_params()->bed_amp);
     return deg;
 }
 
@@ -452,6 +455,10 @@ int engine_generative_dejavu_count(void)     { return mel_dejavu_count; }
 
 void engine_generative_tick(uint32_t now_ms) {
     if (!gen_on) return;
+    /* r18.96 — the COMPOSER above the grammar (Atmoscapia/Eno principle:
+     * a slow top-level intent that only re-weights probabilities; see
+     * composer.h). Ticks on the same clock as everything else. */
+    composer_tick(now_ms);
 
     if (any_user_note()) {
         /* Player takes over: drop scheduled note-ons and re-arm the bar so
@@ -467,6 +474,9 @@ void engine_generative_tick(uint32_t now_ms) {
     }
 
     if ((int32_t)(now_ms - gen_next_bar_ms) >= 0) {
+        /* per-bar: let the bass fundament follow the composer's state
+         * (the r18.88 sustain drift glides it — no steps, no zipper). */
+        bass_set_depth(composer_params()->bass_depth);
         int deg = engine_generative_advance();
         /* Humanized bar: 90..110 % of the base length. */
         uint32_t bar = GEN_TICK_BAR_MS * (uint32_t)(90 + (int)(gen_rand01() * 21.0f)) / 100u;
@@ -497,7 +507,12 @@ void engine_generative_tick(uint32_t now_ms) {
                 }
                 mel_cur_len = 0;
                 mel_phrase_bars = 2 + (int)(gen_rand01() * 3.0f);   /* 2..4 */
-                mel_phrase_rest = gen_rand01() < 0.30f;
+                {
+                    float p_rest = 0.30f + composer_params()->rest_add;
+                    if (p_rest < 0.05f) p_rest = 0.05f;
+                    if (p_rest > 0.85f) p_rest = 0.85f;
+                    mel_phrase_rest = gen_rand01() < p_rest;
+                }
                 mel_phrase_open = true;
                 /* déjà-vu decision (never on a rest phrase) */
                 mel_replay = (!mel_phrase_rest && mel_hist_len >= 2 &&
@@ -509,7 +524,9 @@ void engine_generative_tick(uint32_t now_ms) {
             }
             --mel_phrase_bars;
             if (!mel_phrase_rest &&
-                gen_rand01() < (mel_phrase_open ? 0.85f : 0.55f)) {
+                gen_rand01() < dsp_clampf((mel_phrase_open ? 0.85f : 0.55f)
+                                          * composer_params()->mel_density,
+                                          0.0f, 0.95f)) {
                 int chord[BRAIN_MAX_CHORD];
                 int n = brain_chord(deg, chord, BRAIN_MAX_CHORD);
                 if (n > 1) {
@@ -564,7 +581,17 @@ free_choice:
                         while (mel_last_midi - tone > 7 && tone + 12 <= 96)
                             tone += 12;
                     }
-                    spark[0].hz  = dsp_midi_to_hz((float)tone);
+                    /* r18.96 HIGH RESPONSE: rarely (composer-gated) the
+                     * tone SOUNDS an octave higher — OPEN's signature, an
+                     * event everywhere else. It is a separate answering
+                     * voice: the melodic LINE (mel_last_midi, the phrase
+                     * memory) keeps the base tone, so voice-leading stays
+                     * stepwise and the leap rule holds. */
+                    int play_tone = tone;
+                    if (tone + 12 <= 94 &&
+                        gen_rand01() < composer_params()->high_p)
+                        play_tone = tone + 12;
+                    spark[0].hz  = dsp_midi_to_hz((float)play_tone);
                     spark[0].amp = mel_phrase_open
                                  ? 0.075f
                                  : 0.05f + gen_rand01() * 0.015f;
@@ -572,7 +599,7 @@ free_choice:
                         (uint32_t)((0.20f + gen_rand01() * 0.40f) * (float)bar);
                     spark[0].on_pending = true;
                     if (!mel_phrase_open && gen_rand01() < 0.18f) {
-                        spark[1].hz  = dsp_midi_to_hz((float)(tone - 12));
+                        spark[1].hz  = dsp_midi_to_hz((float)(play_tone - 12));
                         spark[1].amp = spark[0].amp * 0.7f;
                         spark[1].on_ms = spark[0].on_ms +
                                          (uint32_t)(0.15f * (float)bar);

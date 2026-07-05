@@ -26,7 +26,7 @@
 
 #define SR     44100
 #define BLOCK  256
-#define TOTAL  180                  /* 3 min */
+#define TOTAL  300                  /* 5 min — one full composer cycle */
 
 static void put_u32(FILE *f, uint32_t v) { fputc(v & 0xff, f); fputc((v >> 8) & 0xff, f); fputc((v >> 16) & 0xff, f); fputc((v >> 24) & 0xff, f); }
 static void put_u16(FILE *f, uint16_t v) { fputc(v & 0xff, f); fputc((v >> 8) & 0xff, f); }
