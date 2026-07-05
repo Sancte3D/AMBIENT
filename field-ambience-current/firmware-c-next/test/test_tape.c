@@ -35,8 +35,11 @@ int main(void) {
     for (int i = 0; i < N; ++i) nonzero += (L[i] != 0.0f) | (R[i] != 0.0f);
     CHECK(nonzero == 0, "hiss amp=0 produced %d non-zero samples", nonzero);
 
-    /* 1b: default hiss amp produces signal and L/R are decorrelated. */
+    /* 1b: default hiss amp produces signal and L/R are decorrelated.
+     * r18.92: hiss DUCKS with the program follower — feed a full program
+     * level first so this measures the un-ducked reference level. */
     tape_init();   /* reset seeds */
+    tape_set_program_level(1.0f);
     memset(L, 0, sizeof L); memset(R, 0, sizeof R);
     tape_hiss_render_add(L, R, N);
     int identical = 0;
@@ -48,6 +51,18 @@ int main(void) {
     /* default amp 0.005 → ~rms 0.0029 (uniform white noise rms = amp/sqrt(3)) */
     CHECK(rms > 0.001f && rms < 0.010f,
           "hiss rms out of expected band: %g", (double)rms);
+
+    /* 1c: r18.92 ducking — in silence the same hiss must sit ≈ −10.5 dB
+     * below the program-present level (floor 0.30), never at zero. */
+    tape_init();
+    memset(L, 0, sizeof L); memset(R, 0, sizeof R);
+    tape_hiss_render_add(L, R, N);          /* duck_env = 0 → floor gain */
+    double sumsq_q = 0;
+    for (int i = 0; i < N; ++i) sumsq_q += (double)L[i] * L[i];
+    float rms_q = (float)sqrt(sumsq_q / N);
+    CHECK(rms_q > 0.0002f && rms_q < rms * 0.45f,
+          "silence hiss not ducked to the floor: %g vs %g", (double)rms_q,
+          (double)rms);
 
     /* 2: small-signal linearity of saturation: input 0.01 → output ≈ 0.01*1.10*0.78 = 0.00858 */
     for (int i = 0; i < N; ++i) { L[i] = 0.01f; R[i] = 0.01f; }

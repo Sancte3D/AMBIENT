@@ -17,6 +17,29 @@ static uint32_t hr_L = 0xC0FFEE11u;
 static uint32_t hr_R = 0xDEADBEEFu;
 static float    hiss_amp = 0.005f;       /* ≈ −46 dBFS default */
 
+/* r18.92 program-follower ducking (user: constant floor too present).
+ * Real tape hiss sits UNDER program material; in silence a good machine
+ * reads as quiet, not as a hiss demo. engine_render feeds the dry-bus
+ * block peak in; hiss follows it fast up (~1 block) and slow down
+ * (~600 ms), floored so the character never fully disappears. */
+static float duck_env  = 0.0f;
+#define DUCK_DOWN_COEF 0.010f            /* per block ≈ 600 ms release   */
+#define DUCK_REF       0.02f             /* program peak for full level  */
+#define HISS_FLOOR     0.30f             /* −10.5 dB in silence          */
+#define CRACKLE_FLOOR  0.50f             /*  −6.0 dB in silence          */
+
+void tape_set_program_level(float block_peak) {
+    if (block_peak < 0.0f) block_peak = 0.0f;
+    if (block_peak > duck_env) duck_env = block_peak;          /* fast up */
+    else duck_env += DUCK_DOWN_COEF * (block_peak - duck_env); /* slow dn */
+}
+
+static inline float duck_gain(float floor_gain) {
+    float d = duck_env * (1.0f / DUCK_REF);
+    if (d > 1.0f) d = 1.0f;
+    return floor_gain + (1.0f - floor_gain) * d;
+}
+
 static inline float hn(uint32_t *r) {
     *r = (*r) * 1664525u + 1013904223u;
     return (float)((int32_t)*r) * (1.0f / 2147483648.0f);
@@ -52,6 +75,7 @@ void tape_init(void) {
     }
     dsp_crackle_init(&crackle_base, 1.85f);
     crackle_amp = 0.0f;
+    duck_env    = 0.0f;
 }
 
 void tape_set_hiss_amount(float amp) {
@@ -78,7 +102,7 @@ void tape_set_crackle(float v01) {
 
 void tape_hiss_render_add(float *L, float *R, int frames) {
     if (hiss_amp <= 0.0f) return;
-    const float a = hiss_amp;
+    const float a = hiss_amp * duck_gain(HISS_FLOOR);
     for (int i = 0; i < frames; ++i) {
         L[i] += hn(&hr_L) * a;
         R[i] += hn(&hr_R) * a;
@@ -87,12 +111,13 @@ void tape_hiss_render_add(float *L, float *R, int frames) {
 
 void tape_crackle_render_add(float *L, float *R, int frames) {
     if (crackle_amp <= 0.0f) return;
+    const float g = duck_gain(CRACKLE_FLOOR);
     for (int i = 0; i < frames; ++i) {
         float base = dsp_crackle(&crackle_base) * 0.06f;   /* faint fry bed */
         L[i] += (dsp_svf_bp(&crackle_bp[0], dsp_dust(&crackle_dust[0])) + base)
-                * crackle_amp;
+                * crackle_amp * g;
         R[i] += (dsp_svf_bp(&crackle_bp[1], dsp_dust(&crackle_dust[1])) + base)
-                * crackle_amp;
+                * crackle_amp * g;
     }
 }
 

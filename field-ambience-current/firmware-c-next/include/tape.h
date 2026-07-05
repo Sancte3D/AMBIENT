@@ -42,6 +42,11 @@ void tape_hiss_render_add(float *L, float *R, int frames);
 void tape_set_crackle(float v01);
 void tape_crackle_render_add(float *L, float *R, int frames);
 
+/* r18.92 — feed the dry-bus block peak so hiss/crackle DUCK in silence
+ * (fast attack, ~600 ms release, floored at −10.5/−6 dB). Call once per
+ * rendered block, before tape_hiss_render_add. */
+void tape_set_program_level(float block_peak);
+
 /* Apply tanh-saturation in place. */
 void tape_saturation_process(float *L, float *R, int frames);
 

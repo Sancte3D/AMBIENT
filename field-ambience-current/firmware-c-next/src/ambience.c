@@ -145,8 +145,10 @@ static void rain_reset(void) {
     }
     dsp_svf_reset(&rain_bg_bpL);
     dsp_svf_reset(&rain_bg_bpR);
-    dsp_svf_set(&rain_bg_bpL, 2500.0f, 1.4f);
-    dsp_svf_set(&rain_bg_bpR, 2700.0f, 1.4f);   /* slight L/R offset */
+    /* r18.92: 2.5 kHz was the phone-speaker sizzle zone — drop the shh a
+     * fifth darker and softer-Q so it reads as distance, not dirt. */
+    dsp_svf_set(&rain_bg_bpL, 1900.0f, 1.2f);
+    dsp_svf_set(&rain_bg_bpR, 2050.0f, 1.2f);   /* slight L/R offset */
     rain_pink_b0L = rain_pink_b1L = rain_pink_b2L = 0.0f;
     rain_pink_b0R = rain_pink_b1R = rain_pink_b2R = 0.0f;
     rain_until_next = (int)(SR * 0.04f);
@@ -156,8 +158,8 @@ static inline void rain_tick(float *outL, float *outR) {
     /* background sshhh */
     float pL = rain_pink(&rain_pink_b0L, &rain_pink_b1L, &rain_pink_b2L);
     float pR = rain_pink(&rain_pink_b0R, &rain_pink_b1R, &rain_pink_b2R);
-    float bgL = dsp_svf_bp(&rain_bg_bpL, pL) * 0.7f;
-    float bgR = dsp_svf_bp(&rain_bg_bpR, pR) * 0.7f;
+    float bgL = dsp_svf_bp(&rain_bg_bpL, pL) * 0.45f;
+    float bgR = dsp_svf_bp(&rain_bg_bpR, pR) * 0.45f;
 
     /* schedule a new drop */
     if (--rain_until_next <= 0) {
@@ -188,8 +190,8 @@ static inline void rain_tick(float *outL, float *outR) {
         if (rain_drops[d].env < 0.001f) rain_drops[d].active = 0;
     }
 
-    *outL += bgL + dropL * 0.45f;
-    *outR += bgR + dropR * 0.45f;
+    *outL += bgL + dropL * 0.36f;
+    *outR += bgR + dropR * 0.36f;
 }
 
 /* ===========================================================================
@@ -336,8 +338,8 @@ static inline void vinyl_tick(float *outL, float *outR) {
     vy_rumL = vy_rumL * 0.9985f + vy_white() * 0.0008f;
     vy_rumR = vy_rumR * 0.9985f + vy_white() * 0.0008f;
 
-    *outL += crL * 0.35f + pop * 0.55f + vy_rumL * 1.5f;
-    *outR += crR * 0.35f - pop * 0.55f + vy_rumR * 1.5f;
+    *outL += crL * 0.22f + pop * 0.45f + vy_rumL * 1.5f;
+    *outR += crR * 0.22f - pop * 0.45f + vy_rumR * 1.5f;
 }
 
 /* ===========================================================================
@@ -379,6 +381,13 @@ void ambience_render_mix(float *dry_L, float *dry_R,
     const int do_waves = (world_i == WORLD_COAST);
     const int do_vinyl = (world_i == WORLD_HOURS);
 
+    /* r18.92 (user: "Grundrauschen zu praesent/zu dirty"): the macro used
+     * to apply LINEARLY — ATMOS 0.35 already put a constant −36 dBFS noise
+     * carpet under everything. Square-law with a 0.85 ceiling: the lower
+     * half of the knob is a whisper (0.35 → −49 dBFS), full knob keeps its
+     * drama. The atmosphere must sit BEHIND the music, never beside it. */
+    const float lvl = level_cur * level_cur * 0.85f;
+
     for (int n = 0; n < frames; ++n) {
         float L = 0.0f, R = 0.0f;
         wind_tick(&L, &R);
@@ -386,8 +395,8 @@ void ambience_render_mix(float *dry_L, float *dry_R,
         if (do_waves) waves_tick(&L, &R);
         if (do_vinyl) vinyl_tick(&L, &R);
 
-        float outL = L * level_cur;
-        float outR = R * level_cur;
+        float outL = L * lvl;
+        float outR = R * lvl;
         dry_L[n]  += outL;
         dry_R[n]  += outR;
         send_L[n] += outL * send_amount;

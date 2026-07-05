@@ -124,7 +124,7 @@ void texture_render_mix(float *dry_L, float *dry_R,
             float breath = dsp_svf_bp(&breathBP[c], breath_src) * breath_gain;
             float warm   = dsp_svf_lp(&warmLP[c], rumble + breath);
             /* Tier A #5 — air band, parallel (NOT through warmLP). */
-            float air    = dsp_svf_hp(&airHP[c], air_white(&airN[c])) * 0.18f;
+            float air    = dsp_svf_hp(&airHP[c], air_white(&airN[c])) * 0.13f;
             float out    = (warm + air) * amp_cur;
 
             if (c == 0) { dry_L[n] += out; send_L[n] += out * send_amount; }

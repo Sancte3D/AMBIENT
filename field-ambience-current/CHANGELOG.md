@@ -10,6 +10,56 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.92 (2026-07-05) — Grundrauschen-Fix (gemessen: −11,5 dB) + Battery-ADC + SHIFT-Backlight
+
+User: „wir haben so ein grund rausch ton der immer bisschen zu praesent
+war … zu dirty oder zu laut" + „baue die restlichen sachen aus".
+
+### Rausch-Forensik (Idle-Floor pro Verursacher gemessen, dBFS-RMS)
+
+| Quelle | vorher | nachher |
+|---|---|---|
+| Engine-Defaults idle | −56,6 | **−67,3** |
+| Atmosphere 0.35 allein | −36,6 | **−48,9** |
+| Demo-Makros (tex+age+atm) | −35,9 | **−47,4** |
+
+**Hauptverursacher: die Atmosphere-Schicht** — der ATMOS-Makro wirkte
+LINEAR, 0.35 legte einen konstanten −36-dBFS-Teppich unter alles (auf
+Handy-Lautsprechern klar als Dauerrauschen hoerbar). Sekundaer: der
+Tape-Hiss lief auch bei absoluter Stille konstant (−56 dBFS).
+
+### Fixes
+
+- **ambience.c: quadratische Pegelkurve** (lvl = v²·0.85) — die untere
+  Knopfhaelfte ist ein Fluestern, oben bleibt Drama. Dazu „zu dirty"
+  entschaerft: Rain-„sshhh" von 2,5 kHz (Handy-Zischzone) auf 1,9/2,05 kHz
+  runter, Q 1,4→1,2, Pegel 0,7→0,45; Drops 0,45→0,36; Vinyl-Dauer-Crackle
+  0,35→0,22, Pops 0,55→0,45.
+- **tape.c: Programm-Follower-Ducking** — engine_render fuettert den
+  Dry-Bus-Block-Peak; Hiss + Vinyl-Crackle folgen schnell nach oben,
+  ~600 ms nach unten, Floor −10,5 dB (Hiss) / −6 dB (Crackle). Echte
+  Bandmaschinen rauschen UNTER Musik, nicht als Solo-Demo in der Stille.
+- texture.c: Air-Band 0,18→0,13 (leicht dunkler).
+- **Regression-Test** (test_sound_upgrades §9): Idle-Floor Defaults
+  < −60 dBFS, Demo-Makro-Floor < −44 dBFS; test_tape prueft das Ducking
+  explizit (Stille ≈ Floor-Gain, nie null).
+
+### Rest-Ausbau (die letzten unverdrahteten Device-Enden)
+
+- **NEU adc_h743.c:** BAT_SENSE PA3 = ADC12_INP15, 16-bit, Kalibrierung,
+  810,5-Zyklen-Sampling (100k‖100k-Quelle + 10-nF-Reservoir), CLKP-Kernel.
+  VBAT = 2×V(PA3).
+- **main_h743:** 1-Hz-Battery-Poll → battery_pct_from_voltage → Menu-Glyph;
+  **USB-Detect via MCP GPA7** (neu MCP_BIT_VBUS, Schematic-verifiziert:
+  10k-Serie + 100k-Pulldown an VBUS_USBC) → Lade-Glyph. **SHIFT +
+  DISPLAY-Encoder = Backlight** (5 %/Detent, 10–100 %, Boot 70 %) — die
+  SPEC-Transient-Overlay-Regel, bisher nie verdrahtet.
+
+26 Suiten / 0 Failures; h743 cross-baut (161,9 KB). Autoplay-Demo mit dem
+sauberen Floor neu gerendert.
+
+---
+
 ## v0.7-r18.91 (2026-07-05) — HALL-Reverb (Figur-8-Tank) + KRITISCH: LIQUID-Tail-Bug + Kohärenz-Audit
 
 User: „finde ein reverb der schon richtig gut ist und lass dich inspirieren

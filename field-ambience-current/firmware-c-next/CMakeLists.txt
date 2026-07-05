@@ -187,6 +187,7 @@ if(FAM_TARGET STREQUAL "h743")
         src/hal_h743/lcd_st7789_h743.c
         src/hal_h743/mcp23017_h743.c
         src/hal_h743/midi_uart_h743.c
+        src/hal_h743/adc_h743.c
     )
     target_include_directories(field_ambience_h743 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

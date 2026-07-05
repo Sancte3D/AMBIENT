@@ -2,6 +2,17 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.92 (2026-07-05, User: „Grundrauschen zu praesent/zu dirty" + Rest-Ausbau):**
+> Rausch-Forensik ergab: **ATMOS wirkte linear → konstanter −36-dBFS-
+> Teppich bei 0.35** (Hauptverursacher), plus Dauer-Hiss in Stille. Fixes:
+> quadratische Ambience-Kurve + Rain/Vinyl dunkler+leiser, **Programm-
+> Follower-Ducking** fuer Hiss/Crackle (Floor −10,5/−6 dB), Air-Trim.
+> **Gemessen: Demo-Floor −35,9 → −47,4 dBFS**, Idle −56,6 → −67,3; als
+> Regression-Test verankert. Rest-Ausbau: **adc_h743** (BAT_SENSE PA3,
+> 16-bit, kalibriert) + 1-Hz-Battery-Poll + USB-Detect (GPA7,
+> MCP_BIT_VBUS) → Menu-Glyphs; **SHIFT+DISPLAY = Backlight** (10–100 %).
+> 26 Suiten / 0 Failures; h743 161,9 KB; Demo neu. Details: CHANGELOG r18.92.
+>
 > **r18.91 (2026-07-05, HALL-Reverb + kritischer LIQUID-Fund):** A/B-Messung
 > deckte auf: **der LIQUID-Hall hatte seit r18.42 keinen Tail** (Comb-
 > Leserichtung falsch — Loop 6–10 Samples statt ~1200; tail@1s = 0.000).
