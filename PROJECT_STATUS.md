@@ -2,6 +2,13 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.95 (2026-07-05, „spiel mal wie ein echter Mensch"):** Neuer
+> Session-Simulator (tools/render_session.c): 4:10-Performance durch die
+> echten Geraetepfade (controls.c-Statemachine, params_encoder-Detents mit
+> Acceleration, Menue-Detent-Folgen, Weltwechsel wie hal_set_world), Timing
+> humanisiert mit fixen Seeds, GENERATE unbenutzt. Ergebnis:
+> demos/audio/field_ambience_played_session.flac. Details: CHANGELOG r18.95.
+>
 > **r18.94 (2026-07-05, „Dann modal body"):** Die Plucks laufen jetzt durch
 > einen **Modalresonator mit festen Welt-Materialien** (Rings/Elements/
 > STK-Konzept, frisch gebaut): Tokyo Holz, Coast Glas, Drive dunkles
