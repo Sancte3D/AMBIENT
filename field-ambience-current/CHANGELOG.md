@@ -10,6 +10,48 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.94 (2026-07-05) — Modal Body: die Plucks bekommen einen Instrumentenkörper (Rings/Elements/STK-Konzept)
+
+User: „Dann modal body." — Fortsetzung der Engine-DNA-Reihe.
+
+### NEU body.{h,c} — Modalresonator hinter der Pluck-Stimme
+
+**Konzept studiert aus Mutable Rings/Elements + STK-Modal-Modellen**
+(frisch implementiert, kein Code uebernommen): ein Instrument ist nie nur
+die Saite — die Saite treibt einen KOERPER mit FESTEN Resonanzmoden. Die
+Note variiert, der Koerper nicht; genau diese feste Faerbung macht eine
+Gitarre auf jedem Bund nach DIESER Gitarre klingen. Rings' tiefere
+Lektion: die Moden-FREQUENZVERHAELTNISSE sind das Material, die
+Moden-DECAYS sind Groesse und Daempfung.
+
+- Bank aus bis zu 8 parallelen 2-Pol-Resonatoren (y = 2R·cosθ·y1 − R²·y2
+  + g(x − x2); Zero-Paar haelt DC/Nyquist auf null), Gain-normiert via
+  (1−R), Pole hart < 1 → stabil per Konstruktion.
+- **Vier eigene Materialien, eins pro Welt:** Tokyo = warmes Holz (dicht-
+  inharmonische Ratios 1/1.47/2.09/…, T60 0,8→0,2 s), Coast = Glas
+  (gestreckte Ratios 1/2.32/4.25/…, laengster Ring), Drive = dunkles
+  Metall (tief geclusterte Moden), Hours = Filz/Papier (4 schnell
+  sterbende Moden — weicher Thump).
+- Stereo: rechte Moden +0,7 % — „vor dem Instrument, nicht im Mono-
+  Lautsprecher". Wet 0,38, amount 0 = bit-exakter Bypass.
+- **Nur die Melodie-Stimme bekommt den Koerper** (Pluck-Bus → body →
+  dry + Hall-Send); das PADsynth-Bett bleibt clean — ein Koerper pro
+  Instrument, kein Koerper auf dem Raum.
+- CPU ≤ ~100 Ops/Sample, kein Heap, feste States.
+
+### Tests (§11) + Zahlen
+
+Impuls-KLINGT-Beweis (Ring-Energie nach dem Impuls > 0, faellt monoton),
+**Goertzel on-mode (180 Hz Holz) vs. between-modes (220 Hz) > 5×** —
+gemessen am Ring, nicht am Dry-Impuls (der hat Flat-Spektrum und wusch
+die Ratio aus; vom Test gefangen), Material-Unterschied zwischen Welten,
+bit-exakter Bypass, 5 s Full-Scale-Noise bounded. **26 Suiten /
+0 Failures**; h743 166,1 KB Flash, D1 83,6 %. Autoplay-Demo mit Koerper
+neu gerendert; SOUND_WORLD §3 aktualisiert (Pluck = KS-Saite →
+Modalkoerper pro Welt).
+
+---
+
 ## v0.7-r18.93 (2026-07-05) — PADsynth-Bett (Nasca-Modell) + Marbles-Déjà-vu: die Engine-DNA-Runde
 
 User: „Studiere die Open-Source-Goldminen (Nasca, Gillet, …) — nicht

@@ -27,7 +27,7 @@ Preset-Pack-Klang.
 | Stimme | Modul | Rolle | Register |
 |---|---|---|---|
 | **Pad-Bett** | pad.c + padsynth.c (Spektraltisch, Nasca-Modell) | der Raum, die Harmonie | ~MIDI 50–78 |
-| **Pluck-Melodie** | pluck.c (Karplus-Strong) | die Erzählstimme über dem Bett | ~MIDI 64–90 |
+| **Pluck-Melodie** | pluck.c + body.c (KS-Saite → Modalkörper pro Welt) | die Erzählstimme über dem Bett | ~MIDI 64–90 |
 | **Bass-Fundament** | bass.c (Sub + Deep) | Boden, folgt der tiefsten Note | −1/−2 Okt. unter Root |
 
 Dazu Nicht-Ton-Schichten: texture.c (Brown+Pink-Atem), ambience.c
