@@ -39,7 +39,7 @@
 #include <string.h>
 
 #ifndef FAM_REVERB_MODE
-#define FAM_REVERB_MODE 1               /* 0 = Freeverb (legacy), 1 = LIQUID */
+#define FAM_REVERB_MODE 2   /* 0 = Freeverb (legacy), 1 = LIQUID, 2 = HALL */
 #endif
 
 #define STEREO_SPREAD   23
@@ -63,8 +63,10 @@ static inline float drive_shape(float x, float pre, float post) {
 /* =========================================================================
  * Common: classic Freeverb 44.1 kHz delay lengths reused by both modes.
  * ========================================================================= */
+#if FAM_REVERB_MODE != 2
 static const int COMB_LEN[8] = { 1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617 };
 static const int AP_LEN  [4] = {  556,  441,  341,  225 };
+#endif
 
 #if FAM_REVERB_MODE == 0
 /* ===== Legacy Freeverb (static delays) ===================================== */
@@ -125,8 +127,8 @@ void reverb_render(const float *inL, const float *inR,
     }
 }
 
-#else
-/* ===== LIQUID modulated FDN + diffusion (default, mode 1) =================
+#elif FAM_REVERB_MODE == 1
+/* ===== LIQUID modulated FDN + diffusion (mode 1) =================
  *
  * The differences from Freeverb that matter audibly:
  *   1. Each comb reads at a FRACTIONAL position pos − lfo·depth (linear
@@ -199,12 +201,17 @@ static void channel_init(channel_t *c, int spread) {
                    0.20f + 0.05f * (float)i, LQ_DIFF_MOD, 0.62f);
 }
 
-/* Modulated comb: fractional read at (pos − lfo·depth) with linear interp. */
+/* Modulated comb: fractional read `size − mod` samples back (linear interp).
+ * r18.91 BUG FIX: this used to read at pos − mod, which is a sample only
+ * `mod` (≈6–10) samples OLD — the feedback loop was 6–10 samples long
+ * instead of ~1200, so the LIQUID tail collapsed instantly (measured:
+ * tail RMS 0.000 at 1 s even at size 0.9). The mode-2 HALL replaces this
+ * topology as default; the fix keeps the legacy mode honest for A/B. */
 static inline float mcomb_process(mcomb_t *c, float in, float fb, float damp) {
     c->lfo += c->lfo_inc; if (c->lfo >= 1.0f) c->lfo -= 1.0f;
     float mod = (0.5f + 0.5f * sinf(c->lfo * 6.2831853f)) * c->depth;
-    float rp  = (float)c->pos - mod;
-    while (rp < 0.0f) rp += (float)c->size;
+    float rp  = (float)c->pos + 1.0f + mod;            /* age = size − mod */
+    while (rp >= (float)c->size) rp -= (float)c->size;
     int   i0 = (int)rp;
     int   i1 = (i0 + 1) % c->size;
     float fr = rp - (float)i0;
@@ -279,6 +286,206 @@ void reverb_render(const float *inL, const float *inR,
         float xr = drive_shape(inR[n], pre, post);
         outL[n] = channel_process(&L, xl, fb, damp);
         outR[n] = channel_process(&R, xr, fb, damp);
+    }
+}
+
+#else
+/* ===== HALL — cross-coupled figure-8 tank (default, mode 2, r18.91) =======
+ *
+ * Topology learned from Jon Dattorro's 1997 "Effect Design Part 1" plate
+ * (the published Lexicon-school reference; topology + published paper, no
+ * code copied). Why this beats the LIQUID mode for OUR identity:
+ *
+ *   1. ONE ROOM, not two. LIQUID ran two fully independent channels with a
+ *      sample spread — decorrelated, but never a shared space. The Dattorro
+ *      tank is a single figure-8: branch A feeds branch B and vice versa,
+ *      and BOTH ears tap BOTH branches → the tail images as one deep room
+ *      behind the instrument (the "cinematic" depth the SOUND_WORLD asks
+ *      for), not as width glued onto a mono wash.
+ *   2. Diffusion FIRST (4 series input allpasses after a bandwidth lowpass)
+ *      → a note dissolves into the room without discrete early echoes.
+ *   3. Two slowly MODULATED tank allpasses keep the modes moving so the
+ *      tail never rings metallic — same job as LIQUID's 16 comb LFOs at a
+ *      fraction of the cost. Rates are OUR drift language (0.101/0.127 Hz,
+ *      incommensurate), not the paper's ~1 Hz wobble.
+ *
+ * All lengths are this project's own: the paper's 29.761 kHz relations
+ * scaled to 44.1 kHz and nudged to nearby coprime values, tap positions
+ * re-picked by the same rule. Memory ≈ 136 KB (< LIQUID's 166 KB); CPU
+ * ≈ half of LIQUID (2 fractional reads/sample instead of 28). */
+
+#define HALL_PRE_DELAY  1060            /* ≈ 24 ms                        */
+#define HALL_MOD_DEPTH  12.0f           /* tank-AP excursion (samples)    */
+
+/* series input diffusers: {length, gain} */
+static const int   HDIF_LEN[4] = { 211, 157, 563, 409 };
+static const float HDIF_G  [4] = { 0.75f, 0.75f, 0.625f, 0.625f };
+
+/* tank line lengths (samples) — branch A / branch B */
+#define HA_MAP  997                     /* modulated AP, g = -0.70        */
+#define HA_D1   6599
+#define HA_AP   2663
+#define HA_D2   5507
+#define HB_MAP  1343
+#define HB_D1   6247
+#define HB_AP   3931
+#define HB_D2   4683
+
+typedef struct { float buf[600]; int size, pos; float g; } hap_t;   /* diffusers */
+
+typedef struct {
+    /* branch memory */
+    float map[1400]; int map_size, map_pos;        /* modulated allpass  */
+    float d1[6700];  int d1_size,  d1_pos;
+    float ap[4000];  int ap_size,  ap_pos;
+    float d2[5600];  int d2_size,  d2_pos;
+    float lp;                                       /* damping state      */
+    float lfo, lfo_inc;
+} hbranch_t;
+
+static struct {
+    float pre[HALL_PRE_DELAY]; int pre_pos;
+    float bw_lp;                                    /* input bandwidth    */
+    hap_t dif[4];
+    hbranch_t A, B;
+    float fbA, fbB;                                 /* cross-couple state */
+} H;
+
+/* fixed integer output taps (samples into each line, < line length) */
+static const int TAP_B_D1a = 397,  TAP_B_D1b = 5320, TAP_B_AP = 1770,
+                 TAP_B_D2  = 2946, TAP_A_D1  = 2831, TAP_A_AP = 496,
+                 TAP_A_D2  = 1213;
+static const int TAP_A_D1a = 523,  TAP_A_D1b = 5479, TAP_A_APx = 1926,
+                 TAP_A_D2x = 3547, TAP_B_D1x = 2643, TAP_B_APx = 350,
+                 TAP_B_D2x = 1081;
+
+static inline float hap_process(hap_t *a, float x) {
+    float y = a->buf[a->pos];
+    float v = x - a->g * y;                 /* lattice allpass            */
+    a->buf[a->pos] = v;
+    if (++a->pos >= a->size) a->pos = 0;
+    return y + a->g * v;
+}
+
+static inline float hdelay_tap(const float *buf, int size, int pos, int tap) {
+    int i = pos - tap; if (i < 0) i += size;
+    return buf[i];
+}
+
+static void hbranch_init(hbranch_t *b, int map_size, int d1, int ap, int d2,
+                         float lfo_hz, float lfo_phase) {
+    memset(b, 0, sizeof *b);
+    b->map_size = map_size; b->d1_size = d1; b->ap_size = ap; b->d2_size = d2;
+    b->lfo = lfo_phase;
+    b->lfo_inc = lfo_hz / (float)DSP_SAMPLE_RATE_HZ;
+}
+
+/* one branch step: in → modulated AP → d1 →(tap for fb: LP → decay)→ AP → d2.
+ * Returns the OTHER branch's next feedback (this branch's d2 tail × decay). */
+static inline float hbranch_process(hbranch_t *b, float x,
+                                    float decay, float damp) {
+    /* modulated allpass (g = -0.70): fractional read, our drift rates */
+    b->lfo += b->lfo_inc; if (b->lfo >= 1.0f) b->lfo -= 1.0f;
+    float mod = (0.5f + 0.5f * dsp_sin(b->lfo)) * HALL_MOD_DEPTH;
+    float rp  = (float)b->map_pos - 1.0f - mod;
+    while (rp < 0.0f) rp += (float)b->map_size;
+    int   i0 = (int)rp, i1 = i0 + 1; if (i1 >= b->map_size) i1 = 0;
+    float fr = rp - (float)i0;
+    float my = b->map[i0] + fr * (b->map[i1] - b->map[i0]);
+    const float mg = -0.70f;
+    float mv = x - mg * my;
+    b->map[b->map_pos] = mv;
+    if (++b->map_pos >= b->map_size) b->map_pos = 0;
+    float v = my + mg * mv;
+
+    /* long delay 1 */
+    float d1y = b->d1[b->d1_pos];
+    b->d1[b->d1_pos] = v;
+    if (++b->d1_pos >= b->d1_size) b->d1_pos = 0;
+
+    /* damping lowpass + decay into the second half */
+    b->lp += (1.0f - damp) * (d1y - b->lp);
+    float w = b->lp * decay;
+
+    /* plain allpass (g = 0.50) */
+    float ay = b->ap[b->ap_pos];
+    const float ag = 0.50f;
+    float av = w - ag * ay;
+    b->ap[b->ap_pos] = av;
+    if (++b->ap_pos >= b->ap_size) b->ap_pos = 0;
+    float u = ay + ag * av;
+
+    /* long delay 2 → feedback for the other branch */
+    float d2y = b->d2[b->d2_pos];
+    b->d2[b->d2_pos] = u;
+    if (++b->d2_pos >= b->d2_size) b->d2_pos = 0;
+    return d2y * decay;
+}
+
+void reverb_init(void) {
+    memset(&H, 0, sizeof H);
+    for (int i = 0; i < 4; ++i) {
+        H.dif[i].size = HDIF_LEN[i]; H.dif[i].pos = 0; H.dif[i].g = HDIF_G[i];
+        memset(H.dif[i].buf, 0, sizeof H.dif[i].buf);
+    }
+    hbranch_init(&H.A, HA_MAP, HA_D1, HA_AP, HA_D2, 0.101f, 0.00f);
+    hbranch_init(&H.B, HB_MAP, HB_D1, HB_AP, HB_D2, 0.127f, 0.41f);
+    feedback_cur = feedback_tgt = OFFSET_ROOM + SCALE_ROOM * 0.7f;
+    dampval_cur  = dampval_tgt  = SCALE_DAMP  * 0.3f;
+    pre_cur = pre_tgt = 1.0f;  post_cur = post_tgt = 1.0f;
+    ctl_coef = 0.05f;
+}
+
+void reverb_render(const float *inL, const float *inR,
+                   float *outL,       float *outR, int frames) {
+    feedback_cur += ctl_coef * (feedback_tgt - feedback_cur);
+    dampval_cur  += ctl_coef * (dampval_tgt  - dampval_cur);
+    pre_cur      += ctl_coef * (pre_tgt      - pre_cur);
+    post_cur     += ctl_coef * (post_tgt     - post_cur);
+    /* map the legacy feedback/damp ranges onto tank decay / damping:
+     * feedback 0.70..0.98 → decay 0.58..0.97; dampval 0..0.4 → damp 0..0.62 */
+    const float decay = dsp_clampf(0.58f + (feedback_cur - OFFSET_ROOM) *
+                                   (0.39f / SCALE_ROOM), 0.0f, 0.97f);
+    const float damp  = dsp_clampf(dampval_cur * (0.62f / SCALE_DAMP), 0.0f, 0.95f);
+    const float bw    = 1.0f - 0.05f - damp * 0.20f;   /* input bandwidth  */
+    const float pre = pre_cur, post = post_cur;
+
+    for (int n = 0; n < frames; ++n) {
+        /* mono drive-shaped sum into the tank (stereo comes from the taps) */
+        float x = drive_shape(0.5f * (inL[n] + inR[n]), pre, post) * 0.30f;
+
+        /* pre-delay */
+        float pd = H.pre[H.pre_pos];
+        H.pre[H.pre_pos] = x;
+        if (++H.pre_pos >= HALL_PRE_DELAY) H.pre_pos = 0;
+
+        /* input bandwidth + series diffusion */
+        H.bw_lp += bw * (pd - H.bw_lp);
+        float d = H.bw_lp;
+        for (int i = 0; i < 4; ++i) d = hap_process(&H.dif[i], d);
+
+        /* figure-8 tank: each branch is fed by the other's tail */
+        float nfbA = hbranch_process(&H.A, d + H.fbB, decay, damp);
+        float nfbB = hbranch_process(&H.B, d + H.fbA, decay, damp);
+        H.fbA = nfbA; H.fbB = nfbB;
+
+        /* distributed stereo taps — both ears hear both branches */
+        float yl = hdelay_tap(H.B.d1, H.B.d1_size, H.B.d1_pos, TAP_B_D1a)
+                 + hdelay_tap(H.B.d1, H.B.d1_size, H.B.d1_pos, TAP_B_D1b)
+                 - hdelay_tap(H.B.ap, H.B.ap_size, H.B.ap_pos, TAP_B_AP)
+                 + hdelay_tap(H.B.d2, H.B.d2_size, H.B.d2_pos, TAP_B_D2)
+                 - hdelay_tap(H.A.d1, H.A.d1_size, H.A.d1_pos, TAP_A_D1)
+                 - hdelay_tap(H.A.ap, H.A.ap_size, H.A.ap_pos, TAP_A_AP)
+                 - hdelay_tap(H.A.d2, H.A.d2_size, H.A.d2_pos, TAP_A_D2);
+        float yr = hdelay_tap(H.A.d1, H.A.d1_size, H.A.d1_pos, TAP_A_D1a)
+                 + hdelay_tap(H.A.d1, H.A.d1_size, H.A.d1_pos, TAP_A_D1b)
+                 - hdelay_tap(H.A.ap, H.A.ap_size, H.A.ap_pos, TAP_A_APx)
+                 + hdelay_tap(H.A.d2, H.A.d2_size, H.A.d2_pos, TAP_A_D2x)
+                 - hdelay_tap(H.B.d1, H.B.d1_size, H.B.d1_pos, TAP_B_D1x)
+                 - hdelay_tap(H.B.ap, H.B.ap_size, H.B.ap_pos, TAP_B_APx)
+                 - hdelay_tap(H.B.d2, H.B.d2_size, H.B.d2_pos, TAP_B_D2x);
+        outL[n] = yl * 0.9f;
+        outR[n] = yr * 0.9f;
     }
 }
 

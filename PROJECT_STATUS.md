@@ -2,6 +2,18 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.91 (2026-07-05, HALL-Reverb + kritischer LIQUID-Fund):** A/B-Messung
+> deckte auf: **der LIQUID-Hall hatte seit r18.42 keinen Tail** (Comb-
+> Leserichtung falsch — Loop 6–10 Samples statt ~1200; tail@1s = 0.000).
+> Neuer Default **HALL**: kreuzgekoppelter Figur-8-Tank nach Dattorro-
+> Topologie (gelernt, nicht kopiert; eigene 44,1-kHz-Laengen, Drift-
+> Modulation 0,101/0,127 Hz). EIN Raum statt zwei Mono-Hallen (xcorr 0.01),
+> T60 4,5 s @ size 0.5 / ~15 s @ 0.9, weniger RAM (−30 KB) und ~halbe CPU.
+> Legacy-Bug zusaetzlich gefixt. **Kohärenz-Audit** als Test: Sub-Floor
+> ≥ 28 Hz ueber alle Welten×Vibes×Stufen, Melodie ueber Pluck-Floor,
+> Hall monoton mit SPACE. 26 Suiten / 0 Failures; h743 baut; Autoplay-Demo
+> neu. Details: CHANGELOG r18.91.
+>
 > **r18.90 (2026-07-05, Sound-World-Runde unter Elite-Audio-Kontrakt):**
 > **docs/SOUND_WORLD.md** = bindende Klang-Verfassung (Identitaet, Verbote,
 > Melodie-Grammatik mit harten Zahlen, Makro-Regeln). Code dazu: Pad-
