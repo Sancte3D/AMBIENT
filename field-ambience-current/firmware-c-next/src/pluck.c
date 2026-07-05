@@ -10,7 +10,6 @@
 #define SR        ((float)DSP_SAMPLE_RATE_HZ)
 #define BUF_LEN   1024                 /* > SR/PLUCK_MIN_HZ = 735 @44.1k */
 #define T60_S     3.2f                 /* ring time, pitch-independent   */
-#define DAMP      0.42f                /* averaging-LP blend: 0=bright   */
 #define VERB_SEND 0.50f                /* plucks bloom into the hall     */
 #define ENV_EPS   2.5e-4f              /* ≈ −72 dBFS → voice retires     */
 
@@ -27,6 +26,7 @@ typedef struct {
 } pluck_voice_t;
 
 static pluck_voice_t v[PLUCK_VOICES];
+static float    s_damp = 0.42f;   /* averaging-LP blend: 0=bright (macro) */
 static int      next_voice;
 static uint32_t age_counter;
 static uint32_t burst_rng = 0x9E3779B9u;
@@ -48,6 +48,13 @@ void pluck_init(void) {
     next_voice  = 0;
     age_counter = 0;
     burst_rng   = 0x9E3779B9u;
+    s_damp      = 0.42f;
+}
+
+void pluck_set_damp(float damp) {
+    if (damp < 0.0f) damp = 0.0f;
+    if (damp > 0.9f) damp = 0.9f;
+    s_damp = damp;
 }
 
 void pluck_note(float freq_hz, float amp) {
@@ -117,7 +124,7 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             float y  = p->buf[r0] + fr * (p->buf[r1] - p->buf[r0]);
 
             /* Damped feedback: averaging lowpass + T60 loop gain. */
-            float fb = p->rho * ((1.0f - DAMP) * y + DAMP * p->y_prev);
+            float fb = p->rho * ((1.0f - s_damp) * y + s_damp * p->y_prev);
             p->y_prev = y;
             p->buf[p->widx] = fb;
             if (++p->widx >= BUF_LEN) p->widx = 0;

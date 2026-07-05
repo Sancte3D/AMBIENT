@@ -108,6 +108,11 @@ int engine_generative_advance(void);
  * the tick after release. */
 void engine_generative_tick(uint32_t now_ms);
 
+/* r18.90 melody-grammar observability (tests + a future UI readout):
+ * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
+int engine_generative_last_melody_midi(void);
+int engine_generative_melody_count(void);
+
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */
 void engine_render(int16_t *buf, int frames);

@@ -125,6 +125,49 @@ int main(void) {
     CHECK(pluck_active_count() == 0, "plucks rang out after disable (%d)",
           pluck_active_count());
 
+    /* ---- 6. r18.90 melody GRAMMAR: composes, not randomizes ----
+     * Simulate ~200 bars with coarse 250 ms ticks (no audio needed to make
+     * scheduling decisions; render occasionally to keep envelopes moving)
+     * and audit the tone sequence via the observability getters against
+     * SOUND_WORLD.md §6: register bounds, stepwise voice-leading,
+     * repetitions present, rests present. */
+    {
+        engine_init();
+        engine_set_generative(true, -1);
+        int prev_count = 0, prev_midi = 0;
+        int notes = 0, reps = 0, big_leaps = 0, small_steps = 0;
+        int lo = 999, hi = 0;
+        uint32_t t = 100000;
+        for (int step = 0; step < 6600; ++step) {       /* ~1650 s ≈ 206 bars */
+            t += 250;
+            engine_generative_tick(t);
+            int c = engine_generative_melody_count();
+            if (c != prev_count) {
+                int m = engine_generative_last_melody_midi();
+                if (m < lo) lo = m;
+                if (m > hi) hi = m;
+                if (prev_midi != 0) {
+                    int d = m > prev_midi ? m - prev_midi : prev_midi - m;
+                    if (d == 0)  ++reps;
+                    if (d > 12)  ++big_leaps;
+                    if (d >= 1 && d <= 4) ++small_steps;
+                }
+                prev_midi  = m;
+                prev_count = c;
+                ++notes;
+            }
+            if ((step & 255) == 0) render_ms(300);
+        }
+        CHECK(notes >= 40, "melody actually sings (%d notes in ~206 bars)", notes);
+        CHECK(notes <= 190, "melody leaves space — rests exist (%d notes)", notes);
+        CHECK(lo >= 52 && hi <= 98, "register inside the voiced band (%d..%d)", lo, hi);
+        CHECK(big_leaps == 0, "no leap beyond an octave (%d)", big_leaps);
+        CHECK(reps >= 3, "repetition happens — it's a motif, not a walk (%d)", reps);
+        CHECK(small_steps >= notes / 5,
+              "stepwise motion dominates (%d small of %d)", small_steps, notes);
+        engine_set_generative(false, -1);
+    }
+
     printf("%d checks, %d failures\n", checks, fails);
     return fails ? 1 : 0;
 }

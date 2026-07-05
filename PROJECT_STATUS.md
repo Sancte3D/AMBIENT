@@ -2,6 +2,17 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.90 (2026-07-05, Sound-World-Runde unter Elite-Audio-Kontrakt):**
+> **docs/SOUND_WORLD.md** = bindende Klang-Verfassung (Identitaet, Verbote,
+> Melodie-Grammatik mit harten Zahlen, Makro-Regeln). Code dazu: Pad-
+> **Ensemble-Drift** (Juno-Prinzip: ±1,8-Cent-Wobble statt statischem
+> Detune, an MOTION), **Melodie-Grammatik** im Autoplay (Phrasen, Pausen,
+> Wiederholung, Schrittbewegung, Oktav-Faltung — komponiert statt
+> wuerfelt; statistisch getestet ueber 206 Bars), **BRIGHTNESS als
+> 3-Ziel-Makro** (Pad + Hall-Daempfung + Pluck-Daempfung), **FTZ** auf dem
+> M7 (Denormal-CPU-Spikes in leisen Tails abgedichtet). 26 Suiten /
+> 0 Failures; h743 baut; Autoplay-Demo neu. Details: CHANGELOG r18.90.
+>
 > **r18.89 (2026-07-04, Sound-Engine-Ausbau — „lerne von SuperCollider"):**
 > Neue DSP-Primitiven (Pink/Dust/Crackle/Drive-Shaper, Konzepte aus SC-UGens
 > studiert, frisch implementiert). **DRIVE ist jetzt eine echte Master-

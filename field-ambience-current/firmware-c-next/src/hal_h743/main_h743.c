@@ -82,6 +82,16 @@ int main(void) {
     for (uint32_t *p = &_sdtcm_bss; p < &_edtcm_bss; ++p) *p = 0u;
     for (uint32_t *p = &_sd2_bss;   p < &_ed2_bss;   ++p) *p = 0u;
 
+    /* Denormal protection (r18.90): flush-to-zero on the M7 FPU. Reverb,
+     * echo and pluck feedback tails decay THROUGH the denormal range; on
+     * ARMv7-M denormal arithmetic takes a slow support path — a classic
+     * embedded-audio CPU spike exactly when the instrument goes quiet.
+     * FZ in FPSCR covers thread mode; FPDSCR seeds the FPSCR on exception
+     * entry (the audio render runs in the DMA IRQ). Host tests are by
+     * definition unaffected (this is device-only code). */
+    __set_FPSCR(__get_FPSCR() | (1u << 24));            /* FZ, thread   */
+    FPU->FPDSCR |= (1u << 24);                          /* FZ, handlers */
+
     /* Cortex-M7 caches next (the 480 MHz core is crippled without them),
      * then the HAL time base, then the real clock tree. */
     SCB_EnableICache();
