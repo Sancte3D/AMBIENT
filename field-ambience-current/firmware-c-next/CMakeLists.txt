@@ -101,6 +101,7 @@ set(DSP_SOURCES
     src/echo.c          # Reddit Echo macro: tape-style stereo delay
     src/blur.c          # Reddit Blur macro: granular cloud
     src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
+    src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/bass.c
     src/reverb.c
     src/reverb_presets.c

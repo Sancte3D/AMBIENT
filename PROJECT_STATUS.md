@@ -2,6 +2,19 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.93 (2026-07-05, Engine-DNA-Runde — PADsynth + Marbles):** Users
+> Studienliste befolgt, #1 zuerst: **das Pad-Bett ist jetzt ein PADsynth-
+> Spektraltisch** (Nasca-Modell frisch implementiert: Gauss-verbreiterte
+> Harmonische, Zufallsphasen, eigene Radix-2-IFFT, 16k-Tisch, perfekt
+> loopend, 4 Welt-Timbre-Profile; pad.c-Core-Swap mit Legacy-Fallback —
+> Envelopes/Filter/Makros/Drift identisch, CPU faellt massiv). Dazu
+> **Marbles-Déjà-vu**: die Melodie-Grammatik erinnert sich an die letzte
+> Phrase und replayt sie (40 %, 1 Note variiert, re-fitted auf die
+> aktuelle Harmonie). Spektral hart getestet (Goertzel on/off-harmonic
+> >10×, Loop-Naht, Determinismus); 26 Suiten / 0 Failures; h743 D1 82 %.
+> Roadmap ehrlich: Rings-Body, Clouds, Signalsmith-Diffusion, Airwindows
+> = eigene Runden. Details: CHANGELOG r18.93.
+>
 > **r18.92 (2026-07-05, User: „Grundrauschen zu praesent/zu dirty" + Rest-Ausbau):**
 > Rausch-Forensik ergab: **ATMOS wirkte linear → konstanter −36-dBFS-
 > Teppich bei 0.35** (Hauptverursacher), plus Dauer-Hiss in Stille. Fixes:

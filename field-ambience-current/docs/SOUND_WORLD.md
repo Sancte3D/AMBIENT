@@ -26,7 +26,7 @@ Preset-Pack-Klang.
 
 | Stimme | Modul | Rolle | Register |
 |---|---|---|---|
-| **Pad-Bett** | pad.c (2×5 Osz + SVF + Haas) | der Raum, die Harmonie | ~MIDI 50–78 |
+| **Pad-Bett** | pad.c + padsynth.c (Spektraltisch, Nasca-Modell) | der Raum, die Harmonie | ~MIDI 50–78 |
 | **Pluck-Melodie** | pluck.c (Karplus-Strong) | die Erzählstimme über dem Bett | ~MIDI 64–90 |
 | **Bass-Fundament** | bass.c (Sub + Deep) | Boden, folgt der tiefsten Note | −1/−2 Okt. unter Root |
 
@@ -65,6 +65,7 @@ Zufall ist IMMER eingesperrt in diese Regeln (engine.c Tick):
 | Wiederholung | 35 % (erwünscht!) |
 | Schrittweite | nächster Akkordton (85 %), zweitnächster (15 %) |
 | Oktav-Antwort | 18 %, gleicher Ton −12, nie neue Tonklasse |
+| Déjà-vu | 40 % der Phrasen = Replay der letzten (1 Note variiert 30 %), re-fitted auf aktuelle Harmonie |
 | Dynamik | Phrasen-Opener leicht lauter (0.075 vs 0.05–0.065) |
 | Timing | 20–60 % der Bar, humanisiert |
 
@@ -108,6 +109,7 @@ Test (Statistik/Autokorrelation, nicht nur „läuft").
 
 Von Legenden **Prinzipien** extrahieren (Juno = Phasen-Drift; OP-1 =
 begrenzte, immer musikalische Makros; Eno = Random-Walk statt Zufall;
-Lexicon = Hall als Instrument) — nie Schaltungen, Samples oder
-Markenklänge nachbauen. Jede Übernahme wird im Code-Kommentar als
+Lexicon/Dattorro = Hall als Instrument; **Nasca/PADsynth = Partialtöne
+als Rauschbänder, nicht als Linien; Gillet/Marbles = Zufall, der sich
+erinnern kann**) — nie Schaltungen, Samples oder Markenklänge nachbauen. Jede Übernahme wird im Code-Kommentar als
 „Prinzip X, gelernt aus Y, hier neu interpretiert als Z" dokumentiert.

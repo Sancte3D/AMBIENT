@@ -165,6 +165,9 @@ int main(void) {
         CHECK(reps >= 3, "repetition happens — it's a motif, not a walk (%d)", reps);
         CHECK(small_steps >= notes / 5,
               "stepwise motion dominates (%d small of %d)", small_steps, notes);
+        CHECK(engine_generative_dejavu_count() >= 3,
+              "deja-vu replays whole phrases (%d in ~206 bars)",
+              engine_generative_dejavu_count());
         engine_set_generative(false, -1);
     }
 

@@ -12,7 +12,7 @@ CC="${CC:-cc}"
 
 "$CC" -std=c11 -O2 -Wall -I"$root/include" \
     "$here/render_wav.c" \
-    "$root/src/dsp.c" "$root/src/pad.c" "$root/src/texture.c" \
+    "$root/src/dsp.c" "$root/src/pad.c" "$root/src/padsynth.c" "$root/src/texture.c" \
     "$root/src/bass.c" "$root/src/drone.c" "$root/src/reverb.c" \
     "$root/src/reverb_presets.c" "$root/src/brain.c" \
     "$root/src/generative.c" "$root/src/engine.c" "$root/src/pluck.c" \

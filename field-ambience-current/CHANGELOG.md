@@ -10,6 +10,63 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.93 (2026-07-05) — PADsynth-Bett (Nasca-Modell) + Marbles-Déjà-vu: die Engine-DNA-Runde
+
+User: „Studiere die Open-Source-Goldminen (Nasca, Gillet, …) — nicht
+kopieren, Modelle und musikalische Entscheidungen extrahieren."
+Reihenfolge des Users befolgt: #1 PADsynth, dann Marbles.
+
+### NEU padsynth.{h,c} — das Bett ist jetzt ein Spektraltisch
+
+**Modell studiert: Paul Nascas PADsynth** (ZynAddSubFX; vom Autor mit
+Public-Domain-Beispielcode dokumentiert). Die Erkenntnis: Breite und
+Leben kommen nicht von gestapelten verstimmten Oszillatoren, sondern
+davon, dass **jeder Partialton ein schmales RAUSCHBAND ist statt einer
+Linie**. Implementierung frisch fuer unser Geraet: Harmonische als
+Gauss-Buckel ins Spektrum gemalt (Bandbreite 45 Cent, waechst mit h^1.2),
+Zufallsphasen pro Bin, eigene iterative Radix-2-IFFT (16384er-Tisch,
+perfekt loopend per Konstruktion, Loop-Naht per Test == gewoehnlicher
+Sample-Schritt). **Eigene Welt-Profile** (Tokyo warm/odd-glow, Coast
+glasig, Drive dunkel, Hours staubig-even); Tisch wird bei Weltwechsel in
+wenigen ms neu gebaut (UI-Pfad, nie Audio-IRQ).
+
+**pad.c-Core-Swap (FAM_PAD_CORE, Default 1):** die 10-polyBLEP-Osz pro
+Voice werden durch 2 interpolierte Tisch-Reads ersetzt (Haupt + leise
+Sub-Oktave) — Envelopes, SVF, Brightness/Motion-Makros, Ensemble-Drift
+(moduliert jetzt die Leserate), Haas + Panning identisch. voiceMix
+mappt auf Filter-Tilt. Legacy-Core bleibt als Mode 0 (A/B/Not-Revert).
+CPU des Betts faellt massiv (2 Reads statt 10 Oszillatoren + Wrap).
+
+### Marbles-Konzept: Déjà-vu-Phrasen (Melodie erinnert sich)
+
+Gelernt aus Mutable Marbles: ein Zufallssequenzer wird MUSIK, wenn er
+beschliessen kann, dasselbe nochmal zu sagen. Die Grammatik merkt sich
+die letzte abgeschlossene Phrase als Tonkontur; neue Phrasen replayen
+sie mit p=0.40 (eine Note variiert mit p=0.30), **re-fitted auf den
+AKTUELLEN Akkord** (naechster Akkordton) — das Motiv ueberlebt
+Stufenwechsel, die Harmonie atmet. Getter engine_generative_dejavu_count.
+
+### Tests + Zahlen
+
+- test_sound_upgrades §10: Tisch deterministisch/normiert (RMS 0,22),
+  Loop-Naht-Check, **Goertzel on-harmonic vs. between-harmonic > 10×**
+  (der Kern des Modells, hart geprueft), Welt-Profile distinkt +
+  bit-reproduzierbar. Grammatik-Test: Déjà-vu ≥ 3 in ~206 Bars;
+  Intervall-/Register-/Pausen-Regeln weiter gruen.
+- **26 Suiten / 0 Failures** — auch alle bestehenden Pad-Verhaltens-
+  Checks bestehen mit dem neuen Core unveraendert.
+- h743: 164,1 KB Flash; D1 82 % (Tisch 64 KB + IFFT-Scratch 128 KB).
+- Autoplay-Demo mit dem neuen Bett neu gerendert.
+
+### Ehrliche Roadmap (bewusst NICHT in dieser Runde)
+
+Rings/Elements-Resonanzkoerper (Modal-Body hinter dem Pluck), Clouds-
+Konzepte fuer blur.c, Signalsmith-Householder-Diffusion als HALL-
+Vergleich, Airwindows-Charakterschicht — je eine eigene, hoertest-
+pflichtige Runde. Tides-Slow-Modulation teilweise durch Drift abgedeckt.
+
+---
+
 ## v0.7-r18.92 (2026-07-05) — Grundrauschen-Fix (gemessen: −11,5 dB) + Battery-ADC + SHIFT-Backlight
 
 User: „wir haben so ein grund rausch ton der immer bisschen zu praesent
