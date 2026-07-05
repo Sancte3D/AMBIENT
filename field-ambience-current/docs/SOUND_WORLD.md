@@ -72,6 +72,26 @@ Zufall ist IMMER eingesperrt in diese Regeln (engine.c Tick):
 **Verboten:** Arpeggiator-Muster, chromatische Töne, Intervalle > Oktave,
 mehr als ein neuer Ton pro Bar, Melodie während der User spielt.
 
+### 6b. Composer-Ebene (r18.96 — Atmoscapia/Eno-Prinzip)
+
+Über der Grammatik läuft ein Composer, der über Minuten Zustände wechselt
+und dabei **nur Wahrscheinlichkeiten** ändert — nie Noten setzt, nie den
+Audio-Pfad berührt. Zyklus CALM → OPEN → DEEP → EMPTY → RETURN, je
+40–80 s (humanisiert):
+
+| State | mel_density | rest_add | high_p | bed_amp | bass_depth |
+|---|---|---|---|---|---|
+| CALM   | 0.70 | +0.10 | 0.04 | 1.00 | 0.50 |
+| OPEN   | 1.30 | −0.10 | 0.15 | 1.05 | 0.40 |
+| DEEP   | 0.45 | +0.20 | 0.02 | 0.90 | 0.85 |
+| EMPTY  | 0.15 | +0.45 | 0.00 | 0.60 | 0.30 |
+| RETURN | 1.00 |  0.00 | 0.08 | 1.00 | 0.55 |
+
+Der High-Response (+1 Okt.) ist eine EIGENE antwortende Stimme — die
+Melodielinie führt am Basiston weiter (Leap-Regel bleibt hart). EMPTY ist
+nicht Stille: das Bett hält bei 0.6×, Texture/Atmos unberührt — der
+angehaltene Atem, der RETURN warm macht.
+
 ## 7. Raum & Imperfektion
 
 - Ein Hall für alles (Sends 0.35–0.55) — der Raum ist Teil des Instruments,

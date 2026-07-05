@@ -2,6 +2,15 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.96 (2026-07-05, AmbientComposer — Atmoscapia/Eno-Prinzip):** Neue
+> oberste Ebene ueber der Grammatik: **composer.c**, Zustandszyklus
+> CALM→OPEN→DEEP→EMPTY→RETURN (40–80 s je State), jeder State aendert
+> NUR Wahrscheinlichkeiten (Melodie-Dichte, Pausen, seltene +1-Okt.-
+> Antworten als eigene Stimme, Bed-Amp, Bass-Tiefe). 15-min-Test: alle
+> States besucht, OPEN > 2× dichter als EMPTY. Autoplay-Demo jetzt 5:00
+> (ein voller Zyklus). 26 Suiten / 0 Failures; h743 baut. Details:
+> CHANGELOG r18.96.
+>
 > **r18.95 (2026-07-05, „spiel mal wie ein echter Mensch"):** Neuer
 > Session-Simulator (tools/render_session.c): 4:10-Performance durch die
 > echten Geraetepfade (controls.c-Statemachine, params_encoder-Detents mit
