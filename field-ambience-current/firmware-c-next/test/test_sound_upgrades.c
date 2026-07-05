@@ -19,6 +19,7 @@
 #include "tape.h"
 #include "reverb.h"
 #include "padsynth.h"
+#include "body.h"
 #include "engine.h"
 #include "brain.h"
 
@@ -376,6 +377,84 @@ int main(void) {
         padsynth_build(0, 0);
         CHECK(fabsf(padsynth_table()[1234] - t0_probe) < 1e-9f,
               "same world+seed reproduces bit-identically");
+    }
+
+    /* ---- 11. r18.94 modal body ----
+     * (a) amount 0 = bit-exact bypass; (b) an impulse RINGS: the body adds
+     * a decaying tail where the dry input has none; (c) the ring sits AT
+     * the material's mode frequencies (Goertzel on-mode vs between-modes);
+     * (d) worlds are distinct materials; (e) noise abuse stays bounded. */
+    {
+        enum { BN = 256 };
+        float L[BN], R[BN];
+
+        body_init(); body_set_amount(0.0f);
+        for (int i = 0; i < BN; ++i) { L[i] = (i == 0) ? 1.0f : 0.0f; R[i] = L[i]; }
+        body_process(L, R, BN);
+        CHECK(L[0] == 1.0f && L[1] == 0.0f && L[100] == 0.0f,
+              "amount 0 is a bit-exact bypass");
+
+        /* impulse response capture, world 0, default wet */
+        enum { IRN = 44100 };
+        static float ir[IRN];
+        body_init();
+        for (int b = 0; b < IRN / BN; ++b) {
+            for (int i = 0; i < BN; ++i) { L[i] = (b == 0 && i == 0) ? 1.0f : 0.0f; R[i] = L[i]; }
+            body_process(L, R, BN);
+            for (int i = 0; i < BN; ++i) ir[b * BN + i] = L[i];
+        }
+        double e_early = 0, e_late = 0;
+        for (int i = SR * 3 / 100; i < SR * 30 / 100; ++i) e_early += (double)ir[i] * ir[i];
+        for (int i = SR * 30 / 100; i < SR * 60 / 100; ++i) e_late  += (double)ir[i] * ir[i];
+        CHECK(e_early > 1e-7, "body rings after the impulse (%.3g)", e_early);
+        CHECK(e_late < e_early, "ring decays (%.3g -> %.3g)", e_early, e_late);
+        int finite_ok = 1;
+        for (int i = 0; i < IRN; ++i) if (!isfinite(ir[i])) finite_ok = 0;
+        CHECK(finite_ok, "impulse response finite");
+
+        /* Goertzel: world-0 wood mode at 180 Hz vs between-modes 220 Hz */
+        {
+            double won = 2.0 * M_PI * 180.0 / 44100.0;
+            double wof = 2.0 * M_PI * 220.0 / 44100.0;
+            double s0 = 0, s1 = 0, q0 = 0, q1 = 0;
+            /* skip the dry impulse itself (flat spectrum — it feeds both
+             * bins equally and washes the ratio out); measure the RING. */
+            for (int i = 200; i < IRN; ++i) {
+                double v0 = ir[i] + 2.0 * cos(won) * s0 - s1; s1 = s0; s0 = v0;
+                double v1 = ir[i] + 2.0 * cos(wof) * q0 - q1; q1 = q0; q0 = v1;
+            }
+            double on  = s0 * s0 + s1 * s1 - 2.0 * cos(won) * s0 * s1;
+            double off = q0 * q0 + q1 * q1 - 2.0 * cos(wof) * q0 * q1;
+            CHECK(on > off * 5.0, "ring sits on the wood modes (on/off %.1f)",
+                  on / (off + 1e-12));
+        }
+
+        /* worlds are distinct materials: compare early IR samples */
+        static float ir1[2048];
+        body_init(); body_set_world(1);
+        for (int b = 0; b < 8; ++b) {
+            for (int i = 0; i < BN; ++i) { L[i] = (b == 0 && i == 0) ? 1.0f : 0.0f; R[i] = L[i]; }
+            body_process(L, R, BN);
+            for (int i = 0; i < BN; ++i) ir1[b * BN + i] = L[i];
+        }
+        double dsum = 0;
+        for (int i = 0; i < 2048; ++i) dsum += fabs((double)ir1[i] - ir[i]);
+        CHECK(dsum > 1e-3, "materials differ across worlds (%g)", dsum);
+
+        /* stability under noise abuse */
+        body_init();
+        unsigned rr = 99; float pk = 0;
+        for (int b = 0; b < (SR * 5) / BN; ++b) {
+            for (int i = 0; i < BN; ++i) {
+                rr = rr * 1664525u + 1013904223u;
+                L[i] = R[i] = ((int)rr) / 2147483648.0f;
+            }
+            body_process(L, R, BN);
+            for (int i = 0; i < BN; ++i) {
+                float a = fabsf(L[i]); if (a > pk) pk = a;
+            }
+        }
+        CHECK(isfinite(pk) && pk < 8.0f, "bounded under 5 s full-scale noise (%f)", pk);
     }
 
     printf("%d checks, %d failures\n", checks, fails);

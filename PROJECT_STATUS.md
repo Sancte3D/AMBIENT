@@ -2,6 +2,15 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.94 (2026-07-05, „Dann modal body"):** Die Plucks laufen jetzt durch
+> einen **Modalresonator mit festen Welt-Materialien** (Rings/Elements/
+> STK-Konzept, frisch gebaut): Tokyo Holz, Coast Glas, Drive dunkles
+> Metall, Hours Filz — die Saite variiert, der Koerper nicht (body.c,
+> 8× 2-Pol-Moden, Stereo +0,7 %, wet 0,38, Bypass bit-exakt, nur auf dem
+> Pluck-Bus — das Bett bleibt clean). Beweis per Impuls-Ring + Goertzel
+> on/off-mode > 5×; 26 Suiten / 0 Failures; h743 D1 83,6 %; Demo neu.
+> Details: CHANGELOG r18.94.
+>
 > **r18.93 (2026-07-05, Engine-DNA-Runde — PADsynth + Marbles):** Users
 > Studienliste befolgt, #1 zuerst: **das Pad-Bett ist jetzt ein PADsynth-
 > Spektraltisch** (Nasca-Modell frisch implementiert: Gauss-verbreiterte

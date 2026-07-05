@@ -27,6 +27,7 @@
 #include "cells.h"
 #include "pluck.h"
 #include "padsynth.h"
+#include "body.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -216,6 +217,7 @@ void engine_init(void) {
     master_vol_cur = master_vol_tgt = 0.6f;
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
+    body_init();                     /* r18.94 modal body (per-world material) */
 
     /* Boot world 0 (Tokyo) — align the harmonic identity with the displayed
      * world so the first cell tap already plays in A-major, not the bare
@@ -308,6 +310,7 @@ void engine_set_world(int idx) {
      * the audio IRQ; the pad keeps reading the old table until the final
      * copy, and the world-change re-bloom masks the swap. */
     padsynth_build(idx, 0);
+    body_set_world(idx);             /* r18.94: the pluck's resonant material */
     const world_t *w = worlds_get(idx);
     engine_set_key ((int)w->key_midi);   /* brain key + drone root          */
     engine_set_mode((int)w->mode);       /* brain mode + reverb recompute   */
@@ -616,7 +619,26 @@ void engine_render(int16_t *buf, int frames) {
     ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
     bass_render_mix(dryL, dryR, sendL, sendR, frames);
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
-    pluck_render_mix(dryL, dryR, sendL, sendR, frames);  /* r18.89 sparkles */
+    /* r18.94: plucks render onto their own bus, run through the MODAL
+     * BODY (fixed per-world resonances — the string varies, the body does
+     * not; Rings/Elements concept, see body.h), then join dry + hall send.
+     * Only the melody voice gets a body: the bed stays clean. */
+    {
+        static float plkL[BLOCK], plkR[BLOCK];
+        static float plkJL[BLOCK], plkJR[BLOCK];   /* pluck's own send: unused */
+        memset(plkL, 0, sizeof(float) * (size_t)frames);
+        memset(plkR, 0, sizeof(float) * (size_t)frames);
+        memset(plkJL, 0, sizeof(float) * (size_t)frames);
+        memset(plkJR, 0, sizeof(float) * (size_t)frames);
+        pluck_render_mix(plkL, plkR, plkJL, plkJR, frames);
+        body_process(plkL, plkR, frames);
+        for (int n = 0; n < frames; ++n) {
+            dryL[n]  += plkL[n];
+            dryR[n]  += plkR[n];
+            sendL[n] += plkL[n] * 0.5f;            /* pluck VERB_SEND kept */
+            sendR[n] += plkR[n] * 0.5f;
+        }
+    }
 
     /* Echo sits AFTER all generators but BEFORE the reverb so the delay
      * picks up the whole mix; send_amount=0.40 routes a copy of the
