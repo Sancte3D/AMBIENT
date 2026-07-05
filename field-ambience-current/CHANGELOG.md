@@ -10,6 +10,27 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.95 (2026-07-05) — Spielsession-Simulator: ein Mensch am Geraet, als Audio
+
+User: „spiel mal ab drone + die cells abwechselnd, aender paar sachen im
+menue wie ein echter mensch — generate wuerde er nicht benutzen."
+
+**NEU tools/render_session.c:** ~4:10-Performance durch die ECHTEN
+Geraetepfade — Cells/Modifier via controls.c (Hold-Latch-Statemachine),
+DRIVE/BRIGHT als echte params_encoder-Detents (inkl. Acceleration),
+Menue-Aenderungen als 2–5-%-Detent-Folgen 90–160 ms auseinander (exakt
+menu_rotate im Edit-Mode), Weltwechsel wie hal_set_world (engine_set_world
++ controls_refresh_held_pitches). GENERATE unberuehrt. Timing humanisiert
+(fixe Seeds: Taps ±120 ms, Velocities 0,10–0,16, Detent-Gaps 70–160 ms) —
+deterministisch reproduzierbar. Dramaturgie: Bett+Atmos → DRONE → langsame
+Cells → SPACE oeffnet mitten in der Phrase → HOLD-Akkord + Taps drueber →
+Brightness-Dip → CLEAR → After Hours + AGE (Vinyl) + ECHO → letzte Note,
+DRONE aus, langer Tail. 104 Events, Peak −12,4 dBFS.
+**demos/audio/field_ambience_played_session.flac** (25 MB, flac -t ok);
+README-Zeile auf 4 FLAC.
+
+---
+
 ## v0.7-r18.94 (2026-07-05) — Modal Body: die Plucks bekommen einen Instrumentenkörper (Rings/Elements/STK-Konzept)
 
 User: „Dann modal body." — Fortsetzung der Engine-DNA-Reihe.
