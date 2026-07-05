@@ -330,7 +330,7 @@ void engine_set_age(float v) {
     v = dsp_clampf(v, 0.0f, 1.0f);
     /* user 0..1 → hiss 0..0.015 (≈ -36 dBFS at max) + sat drive 1.0..1.40.
      * v=0.30 lands near the dreamy_warm reference (hiss 0.005, drive 1.10). */
-    tape_set_hiss_amount(v * 0.015f);
+    tape_set_hiss_amount(0.0012f + v * v * 0.005f);   /* r18.97: square, quiet */
     tape_set_saturation_drive(1.0f + v * 0.40f);
     tape_set_crackle(v);             /* r18.89: vinyl ticks join the macro */
 }

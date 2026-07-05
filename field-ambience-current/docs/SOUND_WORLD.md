@@ -20,7 +20,9 @@ Meditations-Musik-Generik · AI-Ambient-Brei · Horror-Drones · Random-Noten-
 Suppe · Dauer-Shimmer · Supersaw-Billigpads · offensichtliches LFO-Wobble ·
 „endless rain + pad" · grelle Digital-Bells · Fake-Booms · matschige
 Low-Mids · Sub-Bass-Übermaß · Granular-Artefakte ohne Absicht ·
-Preset-Pack-Klang.
+Preset-Pack-Klang · **stationäres Dauerrauschen als „Atmosphäre"**
+(r18.97: Wind/Wellen/Regen sind EREIGNISSE mit Flauten und Pausen —
+gefiltertes Rauschen, das nie aufhört, ist ein Teppich, kein Wetter).
 
 ## 3. Instrumentierung (drei Stimmen, nicht zwanzig)
 

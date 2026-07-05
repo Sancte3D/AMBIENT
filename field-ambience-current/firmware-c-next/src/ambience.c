@@ -41,15 +41,35 @@ static float level_cur = 0.0f, level_tgt = 0.0f;
 
 /* ===========================================================================
  * Wind — universal, runs for every world.
+ *
+ * r18.97 (user: "echter simulierter Wind wäre 100x geiler — nicht als
+ * Rauschen, sondern als realistischer Sound"): the old wind never stopped —
+ * a 0.40 gust floor meant a constant band-passed noise carpet under every
+ * world. Real wind is intermittent. Three perceptual cues (principles from
+ * the standard procedural-audio treatment of wind — Farnell's "Designing
+ * Sound" analysis — studied and reinvented, no code copied):
+ *   1. GUSTS with asymmetric slew: intensity glides up fast (~1.5 s) and
+ *      dies slowly (~4 s), separated by long, nearly silent lulls;
+ *   2. the spectral centre RISES with intensity — strong wind is brighter;
+ *   3. strong gusts grow narrow WHISTLES (wires/edges resonating) that
+ *      wander slowly in pitch.
+ * The squared gate makes lulls truly quiet — the silence between gusts is
+ * what makes it read as weather instead of noise.
  * =========================================================================== */
 
 static uint32_t wnd_rng_L = 0xACE12345u, wnd_rng_R = 0x7B19F88Au;
 static dsp_svf_t wnd_bpL, wnd_bpR;
+static dsp_svf_t wnd_whL, wnd_whR;          /* gust whistles (high-Q) */
 static float wnd_lfo = 0.0f;
 static float wnd_pink_L_b0 = 0, wnd_pink_L_b1 = 0, wnd_pink_L_b2 = 0;
 static float wnd_pink_R_b0 = 0, wnd_pink_R_b1 = 0, wnd_pink_R_b2 = 0;
-static float wnd_gust_env  = 0.5f;
+static float wnd_gust_env  = 0.10f;         /* glides toward wnd_gust_tgt */
+static float wnd_gust_tgt  = 0.60f;
 static int   wnd_gust_until = 0;
+static float wnd_wh_fc  = 700.0f;           /* whistle centre, wanders */
+static float wnd_wh_tgt = 700.0f;
+static int      wnd_wh_until = 0;           /* counted in control ticks */
+static uint32_t wnd_ctrl = 0;               /* ÷16 control-rate divider */
 
 static inline float wnd_white(uint32_t *r) {
     *r = (*r) * 1664525u + 1013904223u;
@@ -68,9 +88,17 @@ static inline float wnd_pink(uint32_t *rng, float *b0, float *b1, float *b2) {
 static void wind_reset(void) {
     dsp_svf_reset(&wnd_bpL);
     dsp_svf_reset(&wnd_bpR);
+    dsp_svf_reset(&wnd_whL);
+    dsp_svf_reset(&wnd_whR);
     wnd_lfo        = 0.0f;
-    wnd_gust_env   = 0.5f;
-    wnd_gust_until = (int)(SR * 5.0f);
+    /* Boot INTO a rising gust so the layer is audible right away; the
+     * first scheduled retarget (3 s in) may then drop into a lull. */
+    wnd_gust_env   = 0.10f;
+    wnd_gust_tgt   = 0.60f;
+    wnd_gust_until = (int)(SR * 3.0f);
+    wnd_wh_fc = wnd_wh_tgt = 700.0f;
+    wnd_wh_until   = 0;
+    wnd_ctrl       = 0;
     wnd_pink_L_b0 = wnd_pink_L_b1 = wnd_pink_L_b2 = 0.0f;
     wnd_pink_R_b0 = wnd_pink_R_b1 = wnd_pink_R_b2 = 0.0f;
 }
@@ -78,25 +106,58 @@ static void wind_reset(void) {
 /* Add one sample of wind to the (outL, outR) accumulators. Caller owns the
  * level + send routing. */
 static inline void wind_tick(float *outL, float *outR) {
-    wnd_lfo += (1.0f / 14.0f) / SR;
-    if (wnd_lfo >= 1.0f) wnd_lfo -= 1.0f;
-    float s = dsp_sin(wnd_lfo);
-    float centre = 625.0f + s * 275.0f;
-    dsp_svf_set(&wnd_bpL, centre,         2.5f);
-    dsp_svf_set(&wnd_bpR, centre * 1.07f, 2.5f);
-
+    /* Gust scheduler: pick a new intensity target every 3..9 s. 35 % of
+     * the picks are LULLS (0.03..0.23) — real wind spends much of its
+     * time nearly silent, and that silence is what sells the gusts. */
     if (--wnd_gust_until <= 0) {
-        wnd_gust_env   = 0.85f + (wnd_white(&wnd_rng_L) * 0.5f + 0.5f) * 0.5f;
-        float rrange   = (wnd_white(&wnd_rng_R) * 0.5f + 0.5f) * 4.0f;
-        wnd_gust_until = (int)(SR * (4.0f + rrange));
+        float r = wnd_white(&wnd_rng_L) * 0.5f + 0.5f;
+        if (r < 0.35f)
+            wnd_gust_tgt = 0.03f + r * (0.20f / 0.35f);
+        else
+            wnd_gust_tgt = 0.45f + (r - 0.35f) * (0.60f / 0.65f);
+        float rr = wnd_white(&wnd_rng_R) * 0.5f + 0.5f;
+        wnd_gust_until = (int)(SR * (3.0f + rr * 6.0f));
     }
-    wnd_gust_env *= 0.99996f;
-    float gust = 0.40f + wnd_gust_env * 0.6f;
+    /* Asymmetric glide: rise ~1.5 s, fall ~4 s — wind builds faster
+     * than it dies. */
+    float coef = (wnd_gust_tgt > wnd_gust_env) ? 1.5e-5f : 5.7e-6f;
+    wnd_gust_env += coef * (wnd_gust_tgt - wnd_gust_env);
+    /* Squared gate: lulls are ~silent, gusts keep their drama. The tiny
+     * floor keeps the layer from switching hard in/out. */
+    float gust = wnd_gust_env * wnd_gust_env + 0.015f;
+
+    /* Control-rate (÷16) filter moves: the body centre follows the slow
+     * 14 s sweep AND the gust intensity (cue 2); the whistle wanders. */
+    if ((wnd_ctrl++ & 15u) == 0) {
+        wnd_lfo += 16.0f * (1.0f / 14.0f) / SR;
+        if (wnd_lfo >= 1.0f) wnd_lfo -= 1.0f;
+        float s = dsp_sin(wnd_lfo);
+        float centre = 450.0f + s * 180.0f + wnd_gust_env * 500.0f;
+        dsp_svf_set(&wnd_bpL, centre,         1.8f);
+        dsp_svf_set(&wnd_bpR, centre * 1.07f, 1.8f);
+
+        if (--wnd_wh_until <= 0) {
+            wnd_wh_tgt   = 400.0f + (wnd_white(&wnd_rng_R) * 0.5f + 0.5f) * 700.0f;
+            wnd_wh_until = (int)((SR / 16.0f) * 10.0f);
+        }
+        wnd_wh_fc += 0.002f * (wnd_wh_tgt - wnd_wh_fc);
+        dsp_svf_set(&wnd_whL, wnd_wh_fc,          18.0f);
+        dsp_svf_set(&wnd_whR, wnd_wh_fc * 1.013f, 18.0f);
+    }
 
     float pL = wnd_pink(&wnd_rng_L, &wnd_pink_L_b0, &wnd_pink_L_b1, &wnd_pink_L_b2);
     float pR = wnd_pink(&wnd_rng_R, &wnd_pink_R_b0, &wnd_pink_R_b1, &wnd_pink_R_b2);
-    *outL += dsp_svf_bp(&wnd_bpL, pL) * gust;
-    *outR += dsp_svf_bp(&wnd_bpR, pR) * gust;
+    float L = dsp_svf_bp(&wnd_bpL, pL) * gust;
+    float R = dsp_svf_bp(&wnd_bpR, pR) * gust;
+
+    /* Whistle only in strong gusts — the "singing wires" cue (3). */
+    if (wnd_gust_env > 0.6f) {
+        float wg = (wnd_gust_env - 0.6f) * 0.38f;
+        L += dsp_svf_bp(&wnd_whL, pL) * wg;
+        R += dsp_svf_bp(&wnd_whR, pR) * wg;
+    }
+    *outL += L;
+    *outR += R;
 }
 
 /* ===========================================================================
@@ -158,8 +219,11 @@ static inline void rain_tick(float *outL, float *outR) {
     /* background sshhh */
     float pL = rain_pink(&rain_pink_b0L, &rain_pink_b1L, &rain_pink_b2L);
     float pR = rain_pink(&rain_pink_b0R, &rain_pink_b1R, &rain_pink_b2R);
-    float bgL = dsp_svf_bp(&rain_bg_bpL, pL) * 0.45f;
-    float bgR = dsp_svf_bp(&rain_bg_bpR, pR) * 0.45f;
+    /* r18.97: the bg shh was the loudest stationary noise left after the
+     * hiss/PADsynth fixes — the DROPS carry the rain image, the wash only
+     * glues them. 0.45 → 0.18. */
+    float bgL = dsp_svf_bp(&rain_bg_bpL, pL) * 0.18f;
+    float bgR = dsp_svf_bp(&rain_bg_bpR, pR) * 0.18f;
 
     /* schedule a new drop */
     if (--rain_until_next <= 0) {
@@ -195,28 +259,36 @@ static inline void rain_tick(float *outL, float *outR) {
 }
 
 /* ===========================================================================
- * Waves (Phase 2c) — Crystal Coast only.
+ * Waves (Phase 2c, rebuilt r18.97) — Crystal Coast only.
  *
- * Real surf has an ASYMMETRIC envelope — fast crest (1.2..2 s build), longer
- * wash-out (5..9 s decay), then a 1..4 s gap. Two layers:
- *   - body : brown noise → LP 400 Hz, modulated by the envelope
- *   - splash: pink noise → BP at 2.5/2.7 kHz, gated by the *crest* portion
- *             (env > 0.75)
- *
- * Earlier symmetric-sine versions sounded like LFO-tremolo on noise. The
- * scheduler-driven version reads as water.
+ * The old version was an envelope on filtered noise — it pulsed, but it
+ * didn't read as WATER. Three cues make surf real (principles from field
+ * recordings + the procedural-audio literature, reinvented here):
+ *   1. the BODY brightens as the wave builds: LP cutoff follows the
+ *      envelope 150 → 420 Hz (a swell is dull far off, present up close);
+ *   2. the WASH darkens as the water recedes: after the break, the splash
+ *      band-pass centre FALLS 2.6 kHz → 500 Hz across the decay — the
+ *      signature "shhh → shhoo" of water draining through sand;
+ *   3. the BREAK throws SPRAY: a short (0.35 s) burst of granular dust
+ *      pings through a 3 kHz resonator right at the attack→decay corner,
+ *      like droplets on rock.
+ * The envelope gate is SQUARED so the gaps between waves are properly
+ * quiet. Asymmetric timing stays: 1.2..2 s build, 5..9 s wash, 1..4 s gap.
  * =========================================================================== */
 
 static uint32_t  wv_rng = 0xBADCAFE1u;
 static float     wv_brnL = 0.0f, wv_brnR = 0.0f;
 static float     wv_pink_b0L = 0, wv_pink_b1L = 0, wv_pink_b2L = 0;
 static float     wv_pink_b0R = 0, wv_pink_b1R = 0, wv_pink_b2R = 0;
-static dsp_svf_t wv_lp, wv_splashL, wv_splashR;
+static dsp_svf_t wv_lpL, wv_lpR, wv_splashL, wv_splashR;
+static dsp_svf_t wv_sprayL, wv_sprayR;
 static int       wv_state = 0;           /* 0 idle, 1 attack, 2 decay */
 static int       wv_until_next = 0;
 static int       wv_phase_samples = 0;
 static int       wv_phase_len = 1;
 static float     wv_env = 0.0f;
+static int       wv_spray_left = 0;      /* samples of spray remaining */
+static uint32_t  wv_ctrl = 0;            /* ÷16 control-rate divider */
 
 static inline float wv_white(void) {
     wv_rng = wv_rng * 1664525u + 1013904223u;
@@ -232,9 +304,12 @@ static inline float wv_pink(float *b0, float *b1, float *b2) {
 }
 
 static void waves_reset(void) {
-    dsp_svf_reset(&wv_lp);       dsp_svf_set(&wv_lp,        400.0f, 0.7f);
-    dsp_svf_reset(&wv_splashL);  dsp_svf_set(&wv_splashL, 2500.0f, 1.6f);
-    dsp_svf_reset(&wv_splashR);  dsp_svf_set(&wv_splashR, 2700.0f, 1.6f);
+    dsp_svf_reset(&wv_lpL);      dsp_svf_set(&wv_lpL,      150.0f, 0.7f);
+    dsp_svf_reset(&wv_lpR);      dsp_svf_set(&wv_lpR,      150.0f, 0.7f);
+    dsp_svf_reset(&wv_splashL);  dsp_svf_set(&wv_splashL, 2600.0f, 1.4f);
+    dsp_svf_reset(&wv_splashR);  dsp_svf_set(&wv_splashR, 2810.0f, 1.4f);
+    dsp_svf_reset(&wv_sprayL);   dsp_svf_set(&wv_sprayL,  3000.0f, 2.0f);
+    dsp_svf_reset(&wv_sprayR);   dsp_svf_set(&wv_sprayR,  3240.0f, 2.0f);
     wv_brnL = wv_brnR = 0.0f;
     wv_pink_b0L = wv_pink_b1L = wv_pink_b2L = 0.0f;
     wv_pink_b0R = wv_pink_b1R = wv_pink_b2R = 0.0f;
@@ -242,6 +317,8 @@ static void waves_reset(void) {
     wv_phase_samples = 0;
     wv_phase_len = 1;
     wv_env = 0.0f;
+    wv_spray_left = 0;
+    wv_ctrl = 0;
     wv_until_next = (int)(SR * 2.0f);
 }
 
@@ -257,6 +334,7 @@ static inline void waves_tick(float *outL, float *outR) {
         if (++wv_phase_samples >= wv_phase_len) {
             wv_state = 2; wv_phase_samples = 0;
             wv_phase_len = (int)(SR * (5.0f + (wv_white() * 0.5f + 0.5f) * 4.0f));
+            wv_spray_left = (int)(SR * 0.35f);   /* the break throws spray */
         }
     } else {
         wv_env = 1.0f - (float)wv_phase_samples / (float)wv_phase_len;
@@ -266,21 +344,49 @@ static inline void waves_tick(float *outL, float *outR) {
         }
     }
 
-    /* body: brown-noise LP @ 400 Hz, envelope-modulated */
+    /* Control-rate (÷16) filter moves — cues 1 and 2. */
+    if ((wv_ctrl++ & 15u) == 0) {
+        float body_fc = 150.0f + wv_env * 270.0f;
+        dsp_svf_set(&wv_lpL, body_fc, 0.7f);
+        dsp_svf_set(&wv_lpR, body_fc, 0.7f);
+        float rec     = (wv_state == 2) ? wv_env : 1.0f;  /* receding water */
+        float wash_fc = 500.0f + rec * 2100.0f;
+        dsp_svf_set(&wv_splashL, wash_fc,         1.4f);
+        dsp_svf_set(&wv_splashR, wash_fc * 1.08f, 1.4f);
+    }
+
+    /* body: brown noise → env-following LP, SQUARED gate (quiet gaps) */
+    float gate = wv_env * wv_env;
     wv_brnL = wv_brnL * 0.998f + wv_white() * 0.02f;
     wv_brnR = wv_brnR * 0.998f + wv_white() * 0.02f;
-    float bodyL = dsp_svf_lp(&wv_lp, wv_brnL) * wv_env;
-    float bodyR = dsp_svf_lp(&wv_lp, wv_brnR) * wv_env;
+    float bodyL = dsp_svf_lp(&wv_lpL, wv_brnL) * gate;
+    float bodyR = dsp_svf_lp(&wv_lpR, wv_brnR) * gate;
 
-    /* splash: HF pink-BP at the crest only */
-    float crest = (wv_env > 0.75f) ? (wv_env - 0.75f) * 4.0f : 0.0f;
+    /* wash: crest-gated on the way up, receding wash on the way down */
+    float wash = (wv_state == 2)
+                   ? gate * 0.55f
+                   : ((wv_env > 0.8f) ? (wv_env - 0.8f) * 2.4f : 0.0f);
     float pL = wv_pink(&wv_pink_b0L, &wv_pink_b1L, &wv_pink_b2L);
     float pR = wv_pink(&wv_pink_b0R, &wv_pink_b1R, &wv_pink_b2R);
-    float splashL = dsp_svf_bp(&wv_splashL, pL) * crest;
-    float splashR = dsp_svf_bp(&wv_splashR, pR) * crest;
+    float splashL = dsp_svf_bp(&wv_splashL, pL) * wash;
+    float splashR = dsp_svf_bp(&wv_splashR, pR) * wash;
 
-    *outL += bodyL * 1.8f + splashL * 0.35f;
-    *outR += bodyR * 1.8f + splashR * 0.35f;
+    /* spray: granular dust burst at the break (~130 grains/s, 0.35 s,
+     * linear fade-out so the resonator never cuts off mid-ring) */
+    float sprayL = 0.0f, sprayR = 0.0f;
+    if (wv_spray_left > 0) {
+        --wv_spray_left;
+        float a  = (float)wv_spray_left * (1.0f / (SR * 0.35f));
+        float dL = ((wv_white() * 0.5f + 0.5f) < 130.0f / SR) ? wv_white() * 2.0f : 0.0f;
+        float dR = ((wv_white() * 0.5f + 0.5f) < 130.0f / SR) ? wv_white() * 2.0f : 0.0f;
+        sprayL = dsp_svf_bp(&wv_sprayL, dL) * a;
+        sprayR = dsp_svf_bp(&wv_sprayR, dR) * a;
+    }
+
+    /* body 1.35 (was 1.8): the env-following LP passes more energy at the
+     * crest than the old fixed 400 Hz LP — 1.8 peaked past full scale */
+    *outL += bodyL * 1.35f + splashL * 0.5f + sprayL * 0.6f;
+    *outR += bodyR * 1.35f + splashR * 0.5f + sprayR * 0.6f;
 }
 
 /* ===========================================================================

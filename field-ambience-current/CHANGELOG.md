@@ -10,6 +10,54 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.97 (2026-07-05) — Rauschteppich getötet (per Messung) + Wind/Wellen als realistische Sounds
+
+User: „irgendwas ist da so hardcore am rauschen durchgehend, alles andere
+stirbt deshalb … wenn ueberhaupt waere echter simulierter Wind 100x geiler
+und so Wellen Wasser — nicht als Rauschen, sondern als realistischer Sound."
+
+**Forensik statt Raten** (Banded-RMS pro Quelle waehrend Musik + FFT-Valley-
+Floor-Analyse auf f32-Dumps). Drei Taeter, in dieser Reihenfolge gefunden:
+
+1. **Tape-Hiss unter Programm (der Haupttaeter):** Das r18.92-Ducking
+   oeffnet den Hiss VOLL sobald Musik spielt — der alte Default 0.005 lag
+   dann nur ~23 dB unter der Musik: ein flacher, weisser Floor 500 Hz–12 kHz
+   im Spektrum. Default **0.005 → 0.0012**, AGE-Kurve **linear → quadratisch**
+   (`0.0012 + v²·0.005`). Test-Band in test_tape §1b/1c nachgezogen.
+2. **PADsynth-Band-Overlap:** bw_scale 1.2 liess die Gauss-Bandbreite
+   (~2.9·h^1.2 Hz) ab Harmonischer ~20 die konstanten 110-Hz-Abstaende
+   ueberlappen → das Bett trug selbst ein Rauschband. **NH 48 → 24,
+   bw 45 → 30 Cent, bw_scale 1.2 → 1.0** + Gauss-Rolloff der Amplituden.
+3. **Rain-Shh:** lautester stationaerer Rest — **0.45 → 0.18** (die DROPS
+   tragen das Regenbild, der Wash klebt sie nur zusammen).
+
+Messung (gleiches Werkzeug vorher/nachher): Ton-zu-Rausch-Abstand des
+stationaeren Betts **47.7 dB → ~105 dB** (Valley-Floor jetzt am
+16-bit-Quantisierungsboden); Atmos-Beitrag waehrend Musik im Mittelband
+nicht mehr messbar (−35.6 vs −35.7 dBFS ohne).
+
+**Wind neu (ambience.c):** kein Dauerteppich mehr (alter Gust-Floor 0.40!).
+Drei Cues aus der Procedural-Audio-Lehre (Farnell-Analyse — Prinzip
+gelernt, neu gebaut): (1) **Boeen mit asymmetrischem Slew** — ~1.5 s
+Anstieg, ~4 s Abklingen, dazwischen echte **Flauten** (35 % der Ziele sind
+0.03–0.23); Gate QUADRIERT, Flaute ≈ still. (2) Spektralzentrum steigt
+mit Intensitaet (450→950 Hz). (3) In starken Boeen **Pfeifen**: Q-18-
+Resonatoren, wandern 400–1100 Hz (τ≈10 s), nur ueber env 0.6. Filter-
+Moves auf Control-Rate (÷16).
+
+**Wellen neu:** (1) Body-LP folgt dem Schwell **150 → 420 Hz** (fern dumpf,
+nah praesent), (2) nach dem Brechen faellt das Splash-Band **2.6 kHz →
+500 Hz** ueber den Decay — das „shhh → shhoo" von ablaufendem Wasser im
+Sand, (3) der Break wirft **Gischt**: 0.35-s-Burst koerniger Dust-Pings
+durch 3-kHz-Resonator genau an der Attack→Decay-Ecke. Gate quadriert,
+Body-Gain 1.8 → 1.35 (Crest clippte sonst; vom Test gefangen).
+
+Tests: 26 Suiten / 0 Failures (test_tape-Baender nachgezogen, test_ambience
+§7-Peak-Bound haelt); h743 clean (167,9 KB Flash). Beide Demos neu
+gerendert (autoplay 5:00 + played_session 4:10).
+
+---
+
 ## v0.7-r18.96 (2026-07-05) — AmbientComposer: Zustände über Minuten, nur Wahrscheinlichkeiten (Atmoscapia/Eno-Prinzip)
 
 User-Brief (via ChatGPT-Analyse von Atmoscapia): „Wir brauchen einen
