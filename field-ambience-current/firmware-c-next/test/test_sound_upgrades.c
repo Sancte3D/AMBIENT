@@ -287,6 +287,36 @@ int main(void) {
         CHECK(t2[2] > 1e-4, "big hall actually sustains at 2 s (%.6f)", t2[2]);
     }
 
+    /* ---- 9. r18.92 noise-floor regression (user: "Grundrauschen zu
+     * praesent") ---- idle floor with engine defaults must stay a whisper
+     * (hiss ducks in silence), and even the full demo macro setting
+     * (texture 0.2 + age 0.45 + atmos 0.35) must stay under -44 dBFS. */
+    {
+        int16_t b[512];
+        double acc; long cnt;
+        engine_init();
+        for (int i = 0; i < 300; ++i) engine_render(b, 256);
+        acc = 0; cnt = 0;
+        for (int i = 0; i < 400; ++i) {
+            engine_render(b, 256);
+            for (int k = 0; k < 512; ++k) { acc += (double)b[k] * b[k]; ++cnt; }
+        }
+        double floor_db = 20.0 * log10(sqrt(acc / cnt) / 32767.0 + 1e-12);
+        CHECK(floor_db < -60.0, "idle default floor is a whisper (%.1f dBFS)",
+              floor_db);
+        engine_set_texture(0.20f); engine_set_age(0.45f);
+        engine_set_atmosphere(0.35f);
+        for (int i = 0; i < 300; ++i) engine_render(b, 256);
+        acc = 0; cnt = 0;
+        for (int i = 0; i < 400; ++i) {
+            engine_render(b, 256);
+            for (int k = 0; k < 512; ++k) { acc += (double)b[k] * b[k]; ++cnt; }
+        }
+        floor_db = 20.0 * log10(sqrt(acc / cnt) / 32767.0 + 1e-12);
+        CHECK(floor_db < -44.0 && floor_db > -70.0,
+              "demo-macro floor sits behind the music (%.1f dBFS)", floor_db);
+    }
+
     printf("%d checks, %d failures\n", checks, fails);
     return fails ? 1 : 0;
 }

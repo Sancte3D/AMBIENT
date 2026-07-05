@@ -574,7 +574,18 @@ void engine_render(int16_t *buf, int frames) {
     blur_render_mix(dryL, dryR, sendL, sendR, frames, 0.50f);
 
     /* Tape character (ADR-0017 Phase 3): subtle hiss into the DRY bus only —
-     * we don't want the reverb to amplify the noise floor. */
+     * we don't want the reverb to amplify the noise floor. r18.92: feed the
+     * program follower first so hiss/crackle duck when the music breathes. */
+    {
+        float pk = 0.0f;
+        for (int n = 0; n < frames; ++n) {
+            float a = dryL[n] < 0.0f ? -dryL[n] : dryL[n];
+            float b = dryR[n] < 0.0f ? -dryR[n] : dryR[n];
+            if (a > pk) pk = a;
+            if (b > pk) pk = b;
+        }
+        tape_set_program_level(pk);
+    }
     tape_hiss_render_add(dryL, dryR, frames);
 
     /* r18.89: vinyl crackle (AGE macro) — dry bus only, like the hiss. */

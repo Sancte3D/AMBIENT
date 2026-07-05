@@ -8,7 +8,7 @@
  *   GPA0-4 : CELL1..5  (input, pull-up, IRQ on change; pressed = logic 0)
  *   GPA5   : PCM_XSMT  (output; HIGH = PCM5102A un-muted)
  *   GPA6   : JACK_DETECT (input; with-plug pulls HIGH, no-plug pulls LOW)
- *   GPA7   : reserve
+ *   GPA7   : USB-C VBUS detect (10k series + 100k pull-down, r12)
  *   GPB0-4 : MOD_SHIFT, MOD_HOLD, MOD_DRONE, MOD_GENERATE, MOD_CLEAR
  *   INTA   : mirrored (covers both ports), active-low, to Pico GP22
  *
@@ -36,6 +36,7 @@
 #define MCP_BIT_CELL5     4
 #define MCP_BIT_XSMT      5
 #define MCP_BIT_JACK      6
+#define MCP_BIT_VBUS      7   /* HIGH = USB-C power present */
 #define MCP_BIT_MOD_SHIFT     8
 #define MCP_BIT_MOD_HOLD      9
 #define MCP_BIT_MOD_DRONE    10

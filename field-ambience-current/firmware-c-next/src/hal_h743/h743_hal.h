@@ -40,6 +40,12 @@ bool h743_i2c_rd_reg(uint8_t addr7, uint8_t reg, uint8_t *out);
 extern SAI_HandleTypeDef h743_hsai1a;      /* audio_h743.c   */
 extern DMA_HandleTypeDef h743_hdma_sai;    /* audio_h743.c   */
 
+/* --- BAT_SENSE ADC (adc_h743.c): PA3 = ADC12_INP15, 100k/100k divider.
+ * bat_adc_read_volts returns VBAT in volts (blocking ~250 us, UI loop
+ * only — never the audio path). ------------------------------------------ */
+bool  bat_adc_init(void);
+float bat_adc_read_volts(void);
+
 /* --- 1 kHz encoder/push service, called from SysTick_Handler ----------- */
 void enc_tick_1khz(void);
 

@@ -33,6 +33,7 @@
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
 #include "menu.h"        /* menu state machine */
+#include "battery.h"     /* r18.92: BAT_SENSE ADC -> % + USB glyph */
 #include "h743_hal.h"    /* SystemClock_Config, enc_set_ext_push */
 
 /* MCP23017 GPIO bit map (SPEC §7.2 / mcp23017_h743.c) — which expander bit is
@@ -126,6 +127,8 @@ int main(void) {
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     params_init();            /* encoder param values → engine defaults */
     leds_init();              /* 16-ch PWM render */
+    leds_set_backlight((uint16_t)(LED_PWM_MAX * 70 / 100));   /* 70 % boot */
+    bat_adc_init();           /* r18.92: BAT_SENSE (PA3) — battery UI */
     audio_init();
     audio_set_renderer(engine_render);
 
@@ -148,13 +151,24 @@ int main(void) {
     for (;;) {
         uint32_t now = HAL_GetTick();
 
-        /* --- 1. Encoder rotate/push → params + menu --- */
+        /* --- 1. Encoder rotate/push → params + menu ---
+         * r18.92: SHIFT + DISPLAY = backlight (SPEC transient overlay rule
+         * — a hardware modifier, not a menu row). 5 %/detent, 10..100 %. */
+        static int backlight_pct = 70;
         enc_event_t ev;
         while (enc_pop_event(&ev)) {
             if (ev.kind == ENC_EVENT_ROTATE) {
                 if (ev.id == PARAM_ENC_DISPLAY) {
-                    menu_rotate(ev.value);              /* DISPLAY-Encoder: Menü-Navigation */
-                    ui_dirty = true;
+                    if (controls_modifier_active(MOD_SHIFT)) {
+                        backlight_pct += ev.value * 5;
+                        if (backlight_pct < 10)  backlight_pct = 10;
+                        if (backlight_pct > 100) backlight_pct = 100;
+                        leds_set_backlight((uint16_t)(LED_PWM_MAX *
+                                                      backlight_pct / 100));
+                    } else {
+                        menu_rotate(ev.value);          /* DISPLAY: Menü   */
+                        ui_dirty = true;
+                    }
                 } else {
                     params_encoder(ev.id, ev.value, now);   /* DRIVE/BRIGHT/VOLUME */
                 }
@@ -257,7 +271,24 @@ int main(void) {
             last_frame_ms = now;
         }
 
-        /* --- 7. MIDI Out pump (no-op until midi_hw_init() is re-enabled,
+        /* --- 7. Battery + USB-power poll @ 1 Hz (r18.92): BAT_SENSE ADC →
+         * piecewise LiPo curve → menu battery glyph; GPA7 = VBUS detect. */
+        {
+            static uint32_t last_bat_ms = 0;
+            if ((uint32_t)(now - last_bat_ms) >= 1000u) {
+                last_bat_ms = now;
+                float v = bat_adc_read_volts();
+                int pct = battery_pct_from_voltage(v);
+                bool usb = (mcp_state() & (1u << MCP_BIT_VBUS)) != 0;
+                if (pct != battery_pct() || usb != battery_usb_present()) {
+                    battery_set_pct(pct);
+                    battery_set_usb_present(usb);
+                    ui_dirty = true;                 /* refresh the glyph */
+                }
+            }
+        }
+
+        /* --- 8. MIDI Out pump (no-op until midi_hw_init() is re-enabled,
          * ADR-0004). Never blocks. --- */
         midi_hw_pump();
     }
