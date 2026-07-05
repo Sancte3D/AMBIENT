@@ -17,6 +17,7 @@
 #include "dsp.h"
 #include "pluck.h"
 #include "tape.h"
+#include "reverb.h"
 #include "engine.h"
 #include "brain.h"
 
@@ -220,6 +221,70 @@ int main(void) {
         CHECK(pk > 0.001f && pk < 0.30f,
               "age=1 crackle present but quiet (peak %f)", pk);
         CHECK(nz > SR / 10, "ticks ring through the resonator (%d nz)", nz);
+    }
+
+    /* ---- 8. r18.91 coherence audit: registers + hall ----
+     * "Alles muss aufeinander abgestimmt sein": (a) the bass sub layer
+     * (lowest/4) must stay ABOVE the master DC blocker corner (~35 Hz →
+     * floor 28 Hz with margin) for EVERY world x degree x vibe — no
+     * energy wasted below the system's own highpass, no forbidden
+     * sub-bass mud; (b) melody register (56..96, +12 played) must stay
+     * above the pluck delay-line floor; (c) the HALL tail must grow
+     * MONOTONICALLY with SPACE and never blow up. */
+    {
+        for (int w = 0; w < 4; ++w) {
+            engine_init(); engine_set_world(w);
+            for (int vibe = 0; vibe < 4; ++vibe) {
+                brain_set_vibe(vibe);
+                for (int deg = 1; deg <= 7; ++deg) {
+                    int root = brain_cell_root(deg - 1);
+                    float sub = dsp_midi_to_hz((float)root) * 0.25f;
+                    CHECK(sub >= 28.0f,
+                          "sub floor: world %d vibe %d deg %d root %d -> %.1f Hz",
+                          w, vibe, deg, root, sub);
+                    CHECK(root + 12 >= 56 && dsp_midi_to_hz(56.0f) > PLUCK_MIN_HZ,
+                          "melody register above pluck floor (root %d)", root);
+                }
+            }
+        }
+        /* hall monotonicity: burst -> tail RMS at 2 s for three sizes */
+        double t2[3]; float sizes[3] = { 0.3f, 0.6f, 0.9f };
+        for (int k = 0; k < 3; ++k) {
+            reverb_init(); reverb_set(sizes[k], 0.3f); reverb_set_drive(0.15f);
+            enum { N = 256 };
+            static float il[N], ir[N], ol[N], or_[N];
+            for (int b = 0; b < 200; ++b) {           /* settle smoothing */
+                for (int i = 0; i < N; ++i) il[i] = ir[i] = 0;
+                reverb_render(il, ir, ol, or_, N);
+            }
+            unsigned r = 777;
+            double acc = 0; long cnt = 0;
+            for (int b = 0; b < (SR * 4) / N; ++b) {
+                for (int i = 0; i < N; ++i) {
+                    if (b * N + i < SR / 2) {
+                        r = r * 1664525u + 1013904223u;
+                        il[i] = ((int)r) / 2147483648.0f * 0.3f;
+                        r = r * 1664525u + 1013904223u;
+                        ir[i] = ((int)r) / 2147483648.0f * 0.3f;
+                    } else il[i] = ir[i] = 0;
+                }
+                reverb_render(il, ir, ol, or_, N);
+                int t0 = b * N;
+                for (int i = 0; i < N; ++i) {
+                    int t = t0 + i;
+                    CHECK(isfinite(ol[i]) && fabsf(ol[i]) < 4.0f, "hall bounded");
+                    if (t >= 2 * SR && t < 3 * SR) {
+                        acc += (double)ol[i] * ol[i] + (double)or_[i] * or_[i];
+                        ++cnt;
+                    }
+                }
+                if (fails > 40) break;
+            }
+            t2[k] = sqrt(acc / (double)(cnt ? cnt : 1));
+        }
+        CHECK(t2[0] < t2[1] && t2[1] < t2[2],
+              "hall tail grows with SPACE (%.5f %.5f %.5f)", t2[0], t2[1], t2[2]);
+        CHECK(t2[2] > 1e-4, "big hall actually sustains at 2 s (%.6f)", t2[2]);
     }
 
     printf("%d checks, %d failures\n", checks, fails);

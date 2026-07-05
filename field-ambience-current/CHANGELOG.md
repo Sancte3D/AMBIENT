@@ -10,6 +10,54 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.91 (2026-07-05) — HALL-Reverb (Figur-8-Tank) + KRITISCH: LIQUID-Tail-Bug + Kohärenz-Audit
+
+User: „finde ein reverb der schon richtig gut ist und lass dich inspirieren
+… stelle sicher dass überall die timings und tonlagen stimmen."
+
+### KRITISCHER FUND: der LIQUID-Hall hatte seit r18.42 KEINEN Tail
+
+Die A/B-Messung (Noise-Burst → Tail-RMS) zeigte: LIQUID tail@1s = 0.00000
+selbst bei size 0.9. Ursache: die modulierten Combs lasen bei `pos − mod`
+— das ist ein erst `mod` (≈6–10) Samples ALTES Sample, nicht `size − mod`.
+Die Feedback-Schleife war 6–10 Samples lang statt ~1200 → der „Hall" war
+nur Diffusor-Schimmer, der sofort kollabierte. Deshalb klangen die Demos
+flach. Fix im Legacy-Mode (Leserichtung `pos + 1 + mod`, age = size − mod;
+nach Fix: echter Tail messbar) — und als Default ersetzt durch:
+
+### NEU: HALL — kreuzgekoppelter Figur-8-Tank (FAM_REVERB_MODE 2, Default)
+
+Topologie gelernt aus Jon Dattorros 1997er „Effect Design Part 1"-Plate
+(Lexicon-Schule; publiziertes Paper, kein Code kopiert). Eigene Längen
+(29,761-kHz-Relationen auf 44,1 kHz skaliert, auf teilerfremde Werte
+geschoben, Tap-Positionen neu gewählt); Tank-Modulation auf UNSERE
+Drift-Sprache verlangsamt (0,101/0,127 Hz statt ~1 Hz Paper-Wobble).
+
+- Pre-Delay 24 ms → Bandwidth-LP → 4 Serien-Diffusor-APs (0.75/0.625)
+  → Tank: 2 Zweige, jeder speist den anderen (Figur-8) — mod-AP (g −0.70,
+  ±12 Samples) → Delay → Damping-LP → Decay → AP (0.50) → Delay.
+- BEIDE Ohren tappen BEIDE Zweige (je 7 verteilte Taps) → EIN tiefer Raum
+  hinter dem Instrument statt zwei dekorrelierter Mono-Hallen
+  (Kreuzkorrelation gemessen: 0.01).
+- Gemessen: size 0.5 → T60 ≈ 4,5 s; size 0.9 → ~15 s (kinoartig lang,
+  Decay-Cap 0.97); Pegel size-stabil (wet 0.138→0.148 statt 0.17→0.33).
+- Speicher ~136 KB (< LIQUID 166 KB, D1 jetzt 44,4 %), CPU ≈ halbiert
+  (2 fraktionale Reads/Sample statt 28). API unveraendert — Presets/
+  Space-Makro wirken weiter.
+
+### Kohärenz-Audit („alles aufeinander abgestimmt")
+
+Neuer Test-Abschnitt (test_sound_upgrades §8): (a) Sub-Bass-Floor
+(lowest/4) ≥ 28 Hz fuer ALLE 4 Welten × 4 Vibes × 7 Stufen — nichts
+verhungert unter dem 35-Hz-Master-DC-Block, kein verbotener Sub-Matsch;
+(b) Melodie-Register (56–96) liegt ueber dem Pluck-Delay-Line-Floor;
+(c) Hall-Tail waechst MONOTON mit SPACE und bleibt bounded. Alles gruen.
+
+26 Suiten / 0 Failures; h743 cross-baut (157,5 KB Flash, D1 44,4 %).
+Autoplay-Demo mit dem neuen Raum neu gerendert (Peak −12,2 dBFS).
+
+---
+
 ## v0.7-r18.90 (2026-07-05) — Sound-World-Runde: Ensemble-Drift, Melodie-Grammatik, Brightness-Makro, FTZ + SOUND_WORLD.md
 
 User-Kontrakt: Elite-Embedded-Audio-Rolle — Prinzipien aus Legenden
