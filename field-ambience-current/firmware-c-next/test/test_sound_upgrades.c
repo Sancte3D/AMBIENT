@@ -18,6 +18,7 @@
 #include "pluck.h"
 #include "tape.h"
 #include "reverb.h"
+#include "padsynth.h"
 #include "engine.h"
 #include "brain.h"
 
@@ -27,6 +28,9 @@ static int checks = 0, fails = 0;
     fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } } while (0)
 
 #define SR 44100
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 int main(void) {
     printf("== r18.89 sound upgrades (noise/drive/pluck/crackle) ==\n");
@@ -315,6 +319,63 @@ int main(void) {
         floor_db = 20.0 * log10(sqrt(acc / cnt) / 32767.0 + 1e-12);
         CHECK(floor_db < -44.0 && floor_db > -70.0,
               "demo-macro floor sits behind the music (%.1f dBFS)", floor_db);
+    }
+
+    /* ---- 10. r18.93 PADsynth bed table ----
+     * (a) the table is deterministic, finite, non-silent, normalized;
+     * (b) it is PERIODIC by construction — the seam between the last and
+     *     first sample must look like any other adjacent-sample step;
+     * (c) the energy sits AT the harmonics of PADSYNTH_F0: Goertzel power
+     *     on-harmonic must dominate between-harmonics by an order of
+     *     magnitude (that's the whole point of the spectral model). */
+    {
+        padsynth_build(0, 0);
+        CHECK(padsynth_ready(), "table built");
+        const float *t = padsynth_table();
+        double acc = 0; float pk = 0;
+        float max_step = 0;
+        for (int i = 0; i < PADSYNTH_N; ++i) {
+            CHECK(isfinite(t[i]), "table finite");
+            acc += (double)t[i] * t[i];
+            float a = fabsf(t[i]); if (a > pk) pk = a;
+            float d = fabsf(t[(i + 1) & (PADSYNTH_N - 1)] - t[i]);
+            if (d > max_step) max_step = d;
+            if (fails > 5) break;
+        }
+        float rms = (float)sqrt(acc / PADSYNTH_N);
+        CHECK(fabsf(rms - 0.22f) < 0.01f, "normalized rms (%f)", rms);
+        CHECK(pk < 1.5f, "table bounded (peak %f)", pk);
+        float seam = fabsf(t[0] - t[PADSYNTH_N - 1]);
+        CHECK(seam <= max_step + 1e-6f,
+              "loop seam is an ordinary step (%g vs max %g)", seam, max_step);
+
+        /* Goertzel power at harmonic k of the table fundamental
+         * (bin = k * F0 / (SR/N)) vs halfway between harmonics. */
+        double on = 0, off = 0;
+        for (int k = 1; k <= 6; ++k) {
+            double won = 2.0 * M_PI * (PADSYNTH_F0 * k) / 44100.0;
+            double wof = 2.0 * M_PI * (PADSYNTH_F0 * (k + 0.5f)) / 44100.0;
+            double s0 = 0, s1 = 0, q0 = 0, q1 = 0;
+            for (int i = 0; i < PADSYNTH_N; ++i) {
+                double v0 = t[i] + 2.0 * cos(won) * s0 - s1;
+                s1 = s0; s0 = v0;
+                double v1 = t[i] + 2.0 * cos(wof) * q0 - q1;
+                q1 = q0; q0 = v1;
+            }
+            on  += s0 * s0 + s1 * s1 - 2.0 * cos(won) * s0 * s1;
+            off += q0 * q0 + q1 * q1 - 2.0 * cos(wof) * q0 * q1;
+        }
+        CHECK(on > off * 10.0,
+              "energy sits on the harmonics (on/off %.1f)", on / (off + 1e-9));
+
+        /* worlds differ: same seed, different profile → different tables */
+        float t0_probe = t[1234];
+        padsynth_build(2, 0);
+        CHECK(fabsf(padsynth_table()[1234] - t0_probe) > 1e-9f,
+              "world profiles produce distinct tables");
+        padsynth_build(0, 0);
+        CHECK(fabsf(padsynth_table()[1234] - t0_probe) < 1e-9f,
+              "same world+seed reproduces bit-identically");
     }
 
     printf("%d checks, %d failures\n", checks, fails);

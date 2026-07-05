@@ -112,6 +112,8 @@ void engine_generative_tick(uint32_t now_ms);
  * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
 int engine_generative_last_melody_midi(void);
 int engine_generative_melody_count(void);
+/* r18.93: phrases replayed by the déjà-vu memory (Marbles concept). */
+int engine_generative_dejavu_count(void);
 
 /* The renderer audio.c registers via audio_set_renderer(). Writes `frames`
  * interleaved stereo int16 samples (L,R,L,R,…). Audio-context safe. */

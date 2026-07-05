@@ -25,7 +25,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_pad.c" \
     "$src/src/dsp.c" \
-    "$src/src/pad.c" \
+    "$src/src/pad.c" "$src/src/padsynth.c" \
     -lm -o "$tmp/pad_test"
 "$tmp/pad_test"
 
@@ -55,7 +55,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_controls.c" \
     "$src/src/controls.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/pluck.c" \
     -lm -o "$tmp/controls_test"
@@ -65,7 +65,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_sound_upgrades.c" \
     "$src/src/pluck.c" "$src/src/tape.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
     -lm -o "$tmp/sound_upgrades_test"
@@ -74,7 +74,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # r18.88: generative autoplay (engine_generative_tick — bed + sparkle melody)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_generative_tick.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/pluck.c" \
     -lm -o "$tmp/generative_tick_test"
@@ -84,7 +84,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_params.c" \
     "$src/src/params.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/pluck.c" \
     -lm -o "$tmp/params_test"
@@ -94,7 +94,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_leds.c" \
     "$src/src/leds.c" "$src/src/controls.c" \
-    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/pluck.c" \
     -lm -o "$tmp/leds_test"
@@ -192,7 +192,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_reverb_engine.c" \
     "$src/src/dsp.c" \
-    "$src/src/pad.c" \
+    "$src/src/pad.c" "$src/src/padsynth.c" \
     "$src/src/reverb.c" \
     "$src/src/texture.c" \
     "$src/src/ambience.c" \

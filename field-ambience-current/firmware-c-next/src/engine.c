@@ -26,6 +26,7 @@
 #include "generative.h"
 #include "cells.h"
 #include "pluck.h"
+#include "padsynth.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -66,6 +67,18 @@ static int  mel_phrase_bars = 0;      /* bars left in current phrase   */
 static bool mel_phrase_rest = false;  /* whole phrase is silence       */
 static bool mel_phrase_open = false;  /* next note opens the phrase    */
 static int  mel_note_count  = 0;      /* scheduled melody notes (tests/UI) */
+
+/* r18.93 — déjà-vu phrase memory (concept studied from Mutable Marbles:
+ * a random sequencer becomes MUSIC when it can decide to say the same
+ * thing again). The last completed phrase is remembered as a tone
+ * contour; a new phrase replays it with p=0.40 (one note varied with
+ * p=0.30), re-fitted to the CURRENT chord so harmony changes never
+ * clash — the motif survives, the harmony breathes. */
+#define MEL_PHRASE_MAX 6
+static int  mel_hist[MEL_PHRASE_MAX]; static int mel_hist_len = 0;
+static int  mel_cur [MEL_PHRASE_MAX]; static int mel_cur_len  = 0;
+static int  mel_replay = 0, mel_replay_idx = 0, mel_vary_slot = -1;
+static int  mel_dejavu_count = 0;     /* replayed phrases (tests/UI)   */
 
 /* Lowest currently-held frequency, or 0 if nothing is held. */
 static float lowest_held(void) {
@@ -193,6 +206,9 @@ void engine_init(void) {
     mel_last_midi = 0; mel_phrase_bars = 0;
     mel_phrase_rest = false; mel_phrase_open = false;
     mel_note_count = 0;
+    mel_hist_len = mel_cur_len = 0;
+    mel_replay = 0; mel_replay_idx = 0; mel_vary_slot = -1;
+    mel_dejavu_count = 0;
 
     /* Master stage: DC-block cleared, moderate default volume (no on-device
      * volume knob bound yet — keeps headphones from being slammed). */
@@ -287,6 +303,11 @@ void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1
  * vibe preset table. Values live in worlds.c (audition-derived). */
 void engine_set_world(int idx) {
     ambience_set_world(idx);
+    /* r18.93: (re)build the PADsynth bed table for the world's timbre
+     * profile. Blocking a few ms — worlds change from the UI loop, never
+     * the audio IRQ; the pad keeps reading the old table until the final
+     * copy, and the world-change re-bloom masks the swap. */
+    padsynth_build(idx, 0);
     const world_t *w = worlds_get(idx);
     engine_set_key ((int)w->key_midi);   /* brain key + drone root          */
     engine_set_mode((int)w->mode);       /* brain mode + reverb recompute   */
@@ -424,6 +445,7 @@ int engine_generative_advance(void) {
 
 int engine_generative_last_melody_midi(void) { return mel_last_midi; }
 int engine_generative_melody_count(void)     { return mel_note_count; }
+int engine_generative_dejavu_count(void)     { return mel_dejavu_count; }
 
 void engine_generative_tick(uint32_t now_ms) {
     if (!gen_on) return;
@@ -465,9 +487,22 @@ void engine_generative_tick(uint32_t now_ms) {
              *     same tone an octave DOWN a beat later — call & answer,
              *     never a new pitch class. */
             if (mel_phrase_bars <= 0) {
+                /* phrase boundary: archive the finished contour first */
+                if (mel_cur_len >= 2) {
+                    for (int i = 0; i < mel_cur_len; ++i) mel_hist[i] = mel_cur[i];
+                    mel_hist_len = mel_cur_len;
+                }
+                mel_cur_len = 0;
                 mel_phrase_bars = 2 + (int)(gen_rand01() * 3.0f);   /* 2..4 */
                 mel_phrase_rest = gen_rand01() < 0.30f;
                 mel_phrase_open = true;
+                /* déjà-vu decision (never on a rest phrase) */
+                mel_replay = (!mel_phrase_rest && mel_hist_len >= 2 &&
+                              gen_rand01() < 0.40f);
+                mel_replay_idx = 0;
+                mel_vary_slot  = (mel_replay && gen_rand01() < 0.30f)
+                               ? (int)(gen_rand01() * (float)mel_hist_len) : -1;
+                if (mel_replay) ++mel_dejavu_count;
             }
             --mel_phrase_bars;
             if (!mel_phrase_rest &&
@@ -476,7 +511,27 @@ void engine_generative_tick(uint32_t now_ms) {
                 int n = brain_chord(deg, chord, BRAIN_MAX_CHORD);
                 if (n > 1) {
                     int tone;
-                    if (mel_last_midi == 0) {
+                    if (mel_replay && mel_replay_idx < mel_hist_len) {
+                        /* déjà-vu: re-fit the remembered tone to the CURRENT
+                         * chord (nearest upper chord tone to the stored one;
+                         * the varied slot falls through to a free choice). */
+                        int want = mel_hist[mel_replay_idx];
+                        if (mel_replay_idx == mel_vary_slot) {
+                            mel_replay_idx++;
+                            goto free_choice;
+                        }
+                        mel_replay_idx++;
+                        int best = chord[n / 2] + 12, bd = 999;
+                        for (int i = 1; i < n; ++i) {
+                            for (int oct = 0; oct <= 24; oct += 12) {
+                                int c = chord[i] + oct;
+                                int d = c > want ? c - want : want - c;
+                                if (d < bd) { best = c; bd = d; }
+                            }
+                        }
+                        tone = best;
+                    } else if (mel_last_midi == 0) {
+free_choice:
                         tone = chord[n / 2] + 12;         /* mid register in */
                     } else if (gen_rand01() < 0.35f) {
                         tone = mel_last_midi;             /* repeat — allowed */
@@ -523,6 +578,7 @@ void engine_generative_tick(uint32_t now_ms) {
                     mel_last_midi   = tone;
                     mel_phrase_open = false;
                     ++mel_note_count;
+                    if (mel_cur_len < MEL_PHRASE_MAX) mel_cur[mel_cur_len++] = tone;
                 }
             }
         }

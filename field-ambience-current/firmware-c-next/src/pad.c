@@ -15,6 +15,18 @@
 
 #include "pad.h"
 #include "dsp.h"
+#include "padsynth.h"
+
+/* r18.93 — oscillator core selector. 0 = legacy 10-osc polyBLEP stack,
+ * 1 = PADsynth spectral-table reads (default). The envelopes, SVF,
+ * brightness/motion macros, ensemble drift, Haas and panning are IDENTICAL
+ * in both cores — only the tone source changes. Why the swap: the stack
+ * makes width from static detune (beating); the PADsynth table IS a living
+ * band per partial (Nasca model, see padsynth.h) — wider, deeper, and one
+ * table read replaces 10 oscillators (CPU drops hard). */
+#ifndef FAM_PAD_CORE
+#define FAM_PAD_CORE 1
+#endif
 #include <math.h>
 #include <string.h>
 
@@ -172,6 +184,20 @@ static void side_setup(pad_side_t *s, float base_freq, int sign, float voice_pan
     s->wobInc   = ((sign > 0) ? 0.087f : 0.061f) / SR;
     if (!keep_phase) s->wobPhase = (sign > 0) ? 0.5f : 0.13f;
 
+#if FAM_PAD_CORE == 1
+    /* PADsynth core: phase[0] = main read head, phase[1] = sub-octave body
+     * (rate ×0.5). Units are TABLE SAMPLES here, not turns. Deterministic
+     * scattered start positions decorrelate voices/sides without rand(). */
+    if (!keep_phase) {
+        s->phase[0] = (float)(((int)(base_freq * 7.31f) * (sign > 0 ? 131 : 197))
+                              & (PADSYNTH_N - 1));
+        s->phase[1] = (float)(((int)(base_freq * 3.17f) * (sign > 0 ? 89 : 61))
+                              & (PADSYNTH_N - 1));
+    }
+    s->inc[0] = f / PADSYNTH_F0;
+    s->inc[1] = s->inc[0] * 0.5f;
+#endif
+
     if (!keep_phase) dsp_svf_reset(&s->svf);
     s->cutoffBase  = cutoff_base;
     s->cutoffMod   = 500.0f;
@@ -200,6 +226,11 @@ static void side_setup(pad_side_t *s, float base_freq, int sign, float voice_pan
 }
 
 void pad_note_on(uint8_t source, float freq_hz, float amp) {
+#if FAM_PAD_CORE == 1
+    /* Standalone safety (bench tools / isolated tests drive pad.c without
+     * the engine): make sure a table exists before the first voice. */
+    if (!padsynth_ready()) padsynth_build(0, 0);
+#endif
     int i = find_source(source);
     bool keep_phase = (i >= 0);                 /* re-trigger: glide, don't click */
     if (i < 0) i = alloc_slot();
@@ -267,6 +298,11 @@ static void side_control(pad_side_t *s) {
                  + lfo  * s->cutoffMod * 0.5f * motion_depth
                  + s->fenv * s->cutoffMod * s->fenvAmount
                  + bright_cur;
+#if FAM_PAD_CORE == 1
+    /* voiceMix morphs saw→pulse in the legacy core; here the same knob
+     * opens the filter instead (strings/brass = brighter bed). */
+    cutoff += pulsew_cur * 500.0f;
+#endif
     dsp_svf_set(&s->svf, dsp_clampf(cutoff, 80.0f, 8000.0f), 0.18f * 12.0f);
 
     /* r18.90 ensemble motion: wobble the side's detune ±1.8 cents (scaled
@@ -279,10 +315,15 @@ static void side_control(pad_side_t *s) {
         float cents = s->det_base
                     + dsp_sin(s->wobPhase) * 1.8f * motion_depth;
         float f = s->f0 * (1.0f + cents * 5.7762e-4f);
+#if FAM_PAD_CORE == 1
+        s->inc[0] = f / PADSYNTH_F0;                 /* table samples/sample */
+        s->inc[1] = s->inc[0] * 0.5f;
+#else
         const float mul[OSC_N] = { OSC_MUL_BASE[0], s->det_mul2,
                                    OSC_MUL_BASE[2], OSC_MUL_BASE[3],
                                    s->det_mul2 };
         for (int k = 0; k < OSC_N; ++k) s->inc[k] = f * mul[k] / SR;
+#endif
     }
 }
 
@@ -330,6 +371,23 @@ static void render_block_float(float *outL, float *outR, int frames) {
                 pad_side_t *s = &v->side[sd];
                 if (ctl) side_control(s);
 
+#if FAM_PAD_CORE == 1
+                /* PADsynth core: main read + quiet sub-octave body. The
+                 * ensemble/chorus lives IN the table; the per-side drift
+                 * (side_control) slowly slides the read rate. voiceMix
+                 * (saw↔pulse morph in the legacy core) maps to a gentle
+                 * brightness tilt via pulsew_cur below — same knob, same
+                 * direction, no second table needed. */
+                float sig = (padsynth_read(s->phase[0])
+                           + 0.4f * padsynth_read(s->phase[1])) * 0.9f;
+                s->phase[0] += s->inc[0];
+                if (s->phase[0] >= (float)PADSYNTH_N)
+                    s->phase[0] -= (float)PADSYNTH_N;
+                s->phase[1] += s->inc[1];
+                if (s->phase[1] >= (float)PADSYNTH_N)
+                    s->phase[1] -= (float)PADSYNTH_N;
+                {
+#else
                 /* oscillator stack: 0,1,2 = saws (×1, ×freqMul, ×0.5);
                  * 3,4 = squares (×1, ×freqMul). Saw and pulse halves are
                  * crossfaded by the smoothed global timbre weights. */
@@ -343,6 +401,7 @@ static void render_block_float(float *outL, float *outR, int frames) {
                 for (int k = 0; k < OSC_N; ++k) {
                     s->phase[k] += s->inc[k];
                     if (s->phase[k] >= 1.0f) s->phase[k] -= 1.0f;
+#endif
                 }
 
                 float lp = dsp_svf_lp(&s->svf, sig);
