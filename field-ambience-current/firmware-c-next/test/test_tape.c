@@ -48,8 +48,10 @@ int main(void) {
     double sumsq = 0;
     for (int i = 0; i < N; ++i) sumsq += (double)L[i] * L[i];
     float rms = (float)sqrt(sumsq / N);
-    /* default amp 0.005 → ~rms 0.0029 (uniform white noise rms = amp/sqrt(3)) */
-    CHECK(rms > 0.001f && rms < 0.010f,
+    /* r18.97 default amp 0.0012 → ~rms 0.0007 (uniform white rms = amp/√3;
+     * measured 0.00072). The old 0.005 default was the audible noise
+     * carpet — ducking opened it fully whenever music played. */
+    CHECK(rms > 0.0003f && rms < 0.0025f,
           "hiss rms out of expected band: %g", (double)rms);
 
     /* 1c: r18.92 ducking — in silence the same hiss must sit ≈ −10.5 dB
@@ -60,7 +62,7 @@ int main(void) {
     double sumsq_q = 0;
     for (int i = 0; i < N; ++i) sumsq_q += (double)L[i] * L[i];
     float rms_q = (float)sqrt(sumsq_q / N);
-    CHECK(rms_q > 0.0002f && rms_q < rms * 0.45f,
+    CHECK(rms_q > 0.0001f && rms_q < rms * 0.45f,
           "silence hiss not ducked to the floor: %g vs %g", (double)rms_q,
           (double)rms);
 

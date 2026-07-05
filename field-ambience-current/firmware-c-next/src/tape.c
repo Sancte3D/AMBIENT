@@ -15,7 +15,13 @@
 
 static uint32_t hr_L = 0xC0FFEE11u;
 static uint32_t hr_R = 0xDEADBEEFu;
-static float    hiss_amp = 0.005f;       /* ≈ −46 dBFS default */
+/* r18.97 (user: "hardcore am rauschen, alles stirbt"): the old default
+ * 0.005 sat only ~23 dB under the music once the r18.92 ducking opened
+ * under program — a constant white carpet. Spectral forensics: the
+ * valley floor between the bed's partials was FLAT at the hiss level
+ * from 500 Hz to 12 kHz. New default −63 dBFS full-scale; AGE raises it
+ * with a square curve (character detail, never a carpet). */
+static float    hiss_amp = 0.0012f;
 
 /* r18.92 program-follower ducking (user: constant floor too present).
  * Real tape hiss sits UNDER program material; in silence a good machine
@@ -65,7 +71,7 @@ static float         crackle_amp = 0.0f;   /* 0 = off (default) */
 void tape_init(void) {
     hr_L      = 0xC0FFEE11u;
     hr_R      = 0xDEADBEEFu;
-    hiss_amp  = 0.005f;
+    hiss_amp  = 0.0012f;
     sat_drive = 1.10f;
     dsp_dust_seed(&crackle_dust[0], 0x7EA7A61Eu);
     dsp_dust_seed(&crackle_dust[1], 0x51DEB00Bu);      /* decorrelated L/R */

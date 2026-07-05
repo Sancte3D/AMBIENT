@@ -2,6 +2,18 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.97 (2026-07-05, „hardcore am rauschen" — Rauschteppich getötet +
+> realistischer Wind/Wellen):** Per Forensik (Banded-RMS + FFT-Valley-
+> Floor) drei Taeter gefunden: Tape-Hiss-Default 0.005 → 0.0012 (Ducking
+> oeffnete ihn voll unter Musik; AGE-Kurve jetzt quadratisch), PADsynth-
+> Band-Overlap (NH 24, bw 30 Cent linear), Rain-Shh 0.45 → 0.18. Ton-zu-
+> Rausch des Betts 47.7 → ~105 dB (Quantisierungsboden). Wind neu: Boeen
+> mit asymmetrischem Slew + echten Flauten (Gate quadriert), Helligkeit
+> folgt Intensitaet, Pfeif-Resonatoren nur in starken Boeen. Wellen neu:
+> Body-LP folgt Schwell 150→420 Hz, Splash faellt 2.6 k→500 Hz beim
+> Ablaufen, Gischt-Burst am Break. 26 Suiten / 0 Failures; h743 baut;
+> beide Demos neu. Details: CHANGELOG r18.97.
+>
 > **r18.96 (2026-07-05, AmbientComposer — Atmoscapia/Eno-Prinzip):** Neue
 > oberste Ebene ueber der Grammatik: **composer.c**, Zustandszyklus
 > CALM→OPEN→DEEP→EMPTY→RETURN (40–80 s je State), jeder State aendert

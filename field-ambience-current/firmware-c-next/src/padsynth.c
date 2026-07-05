@@ -9,7 +9,7 @@
 
 #define SR      ((float)DSP_SAMPLE_RATE_HZ)
 #define N       PADSYNTH_N
-#define NH      48                       /* harmonics drawn into the table */
+#define NH      24                       /* harmonics drawn into the table */
 
 /* Table + complex FFT scratch. Both land in this module's .bss → RAM_D1. */
 static float s_table[N];
@@ -107,18 +107,26 @@ void padsynth_build(int world_idx, uint32_t seed) {
     memset(s_im, 0, sizeof s_im);
 
     /* Draw each harmonic as a Gaussian bump of bins (the Nasca model).
-     * Bandwidth: ~45 cents at h=1, growing slightly super-linearly with
-     * the harmonic number (bwscale 1.2) — high partials shimmer wider,
-     * which is where the "ensemble breathing" lives. */
+     * r18.97 NOISE-CARPET FIX (user: "irgendwas rauscht hardcore
+     * durchgehend"): the first tuning used 48 harmonics with bandwidth
+     * growing at h^1.2 — the spacing between harmonics stays f0 while the
+     * bands widen, so above h≈20 (~2 kHz) the Gaussians fully OVERLAP and
+     * the spectrum degenerates into one continuous noise band. That WAS
+     * the carpet, baked into the bed itself. Now: bandwidth grows only
+     * LINEARLY (bands never merge below h≈58), 30 cents base, 24
+     * harmonics, plus a soft Gaussian comb-off above h≈10 — the lower
+     * partials keep the living ensemble breath, the top stays TONE, not
+     * noise. */
     const float f0        = PADSYNTH_F0;
-    const float bw_cents  = 45.0f;
-    const float bw_scale  = 1.2f;
+    const float bw_cents  = 30.0f;
+    const float bw_scale  = 1.0f;
     const float bin_hz    = SR / (float)N;
 
     for (int h = 1; h <= NH; ++h) {
         float fh = f0 * (float)h;
         if (fh > SR * 0.42f) break;                    /* leave HF headroom */
-        float amp   = harmonic_amp(world_idx, h);
+        float amp   = harmonic_amp(world_idx, h)
+                    * expf(-((float)h / 12.0f) * ((float)h / 12.0f));
         float bw_hz = (powf(2.0f, bw_cents / 1200.0f) - 1.0f)
                     * f0 * powf((float)h, bw_scale);
         if (bw_hz < bin_hz) bw_hz = bin_hz;            /* ≥ one bin wide    */
