@@ -40,6 +40,18 @@ typedef struct {
     float phase[OSC_N];     /* turns [0,1) */
     float inc[OSC_N];       /* per-sample increment = f·mul / SR */
 
+    /* r18.90 ensemble motion ("breathing detune"). Why the Juno ensemble
+     * reads as alive: the movement is PHASE DRIFT between near-unison
+     * layers (BBD chorus), not a big static detune — static beating is
+     * exactly what makes stacked-saw pads sound like a preset. Principle
+     * transferred, not the circuit: each side's detune wobbles ±~1.8 cents
+     * on its own sub-0.1 Hz LFO, so the beat rate itself slowly changes.
+     * Scaled by the Motion macro (motion_depth) — one emotional knob. */
+    float f0;               /* undetuned base freq (Hz)              */
+    float det_base;         /* static detune (cents, signed)         */
+    float det_mul2;         /* 2nd-saw ratio (1.003 / 0.997)         */
+    float wobPhase, wobInc; /* per-side drift LFO (turns)            */
+
     dsp_svf_t svf;
     float cutoffBase, cutoffMod, fenvAmount;
     float lfoPhase, lfoInc;
@@ -151,6 +163,15 @@ static void side_setup(pad_side_t *s, float base_freq, int sign, float voice_pan
         s->inc[k]  = f * mul[k] / SR;
     }
 
+    /* r18.90 ensemble motion state. Wobble rates deliberately different per
+     * side (0.061/0.087 Hz) and NOT harmonically related to the filter LFO
+     * — the drift never settles into a cycle the ear can lock onto. */
+    s->f0       = base_freq;
+    s->det_base = (float)sign * detune_cents;
+    s->det_mul2 = freq_mul;
+    s->wobInc   = ((sign > 0) ? 0.087f : 0.061f) / SR;
+    if (!keep_phase) s->wobPhase = (sign > 0) ? 0.5f : 0.13f;
+
     if (!keep_phase) dsp_svf_reset(&s->svf);
     s->cutoffBase  = cutoff_base;
     s->cutoffMod   = 500.0f;
@@ -247,6 +268,22 @@ static void side_control(pad_side_t *s) {
                  + s->fenv * s->cutoffMod * s->fenvAmount
                  + bright_cur;
     dsp_svf_set(&s->svf, dsp_clampf(cutoff, 80.0f, 8000.0f), 0.18f * 12.0f);
+
+    /* r18.90 ensemble motion: wobble the side's detune ±1.8 cents (scaled
+     * by the Motion macro) and re-derive the oscillator increments. Small-
+     * angle 2^(c/1200) ≈ 1 + c·5.7762e-4 — exact to <0.01 cent here, no
+     * powf at control rate. */
+    s->wobPhase += s->wobInc * (float)CTL_DECIMATE;
+    if (s->wobPhase >= 1.0f) s->wobPhase -= 1.0f;
+    {
+        float cents = s->det_base
+                    + dsp_sin(s->wobPhase) * 1.8f * motion_depth;
+        float f = s->f0 * (1.0f + cents * 5.7762e-4f);
+        const float mul[OSC_N] = { OSC_MUL_BASE[0], s->det_mul2,
+                                   OSC_MUL_BASE[2], OSC_MUL_BASE[3],
+                                   s->det_mul2 };
+        for (int k = 0; k < OSC_N; ++k) s->inc[k] = f * mul[k] / SR;
+    }
 }
 
 /* Raw stereo float render — no master soft-clip, no int16 conversion. The

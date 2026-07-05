@@ -10,6 +10,43 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.90 (2026-07-05) — Sound-World-Runde: Ensemble-Drift, Melodie-Grammatik, Brightness-Makro, FTZ + SOUND_WORLD.md
+
+User-Kontrakt: Elite-Embedded-Audio-Rolle — Prinzipien aus Legenden
+extrahieren, koharente Klangwelt bauen, brutal ehrlich reviewen.
+
+- **NEU `docs/SOUND_WORLD.md`** — die klangliche Verfassung (Identitaet,
+  verbotene Ergebnisse, 3-Stimmen-Regel, Harmonie-/Bewegungs-/Melodie-
+  Sprache mit harten Zahlen, Makro-Regeln, Echtzeit-Verfassung). Bindend
+  wie der AI_READY-Standard fuer die Hardware.
+- **Pad-Ensemble-Drift (pad.c):** Juno-Prinzip uebertragen (Lebendigkeit =
+  Phasen-Drift zwischen Fast-Unisono-Schichten, nicht statisches Detune):
+  Detune wobbelt ±1,8 Cent auf 0,061/0,087-Hz-LFOs pro Seite (inkommensurabel
+  zu den Filter-LFOs), skaliert vom MOTION-Makro. Small-Angle-Naeherung,
+  kein powf at control-rate.
+- **Melodie-GRAMMATIK (engine.c Tick):** die r18.89-Sparkles wuerfelten
+  uniform — huebsch pro Event, aber Randomisierung, keine Komposition.
+  Jetzt: Phrasen 2–4 Bars, 30 % Pausen-Phrasen, max. 1 Ton/Bar (Opener
+  85 %/55 %), 35 % Wiederholung, sonst naechster Akkordton (15 % zweit-
+  naechster), Oktav-Faltung gegen Leaps nach Stufenwechseln (Band 56–96),
+  Opener-Akzent, 18 % Oktav-Antwort (gleicher Ton −12). Observability:
+  engine_generative_last_melody_midi()/_melody_count().
+- **BRIGHTNESS ist ein Makro:** Pad-Cutoff (wie gehabt) + Hall-Daempfungs-
+  Trim (dunkel = stumpferer Tail) + Pluck-Daempfung (neu
+  pluck_set_damp()). Bei 0 exakt der bench-getunte Referenzklang.
+- **FTZ auf dem H7 (main_h743.c):** FPSCR- und FPDSCR-FZ-Bit gesetzt —
+  Reverb/Echo/Pluck-Tails dekaien durch den Denormal-Bereich; auf ARMv7-M
+  nimmt Denormal-Arithmetik den langsamen Support-Pfad = CPU-Spike genau
+  dann, wenn das Instrument leise wird. Klassiker, jetzt abgedichtet.
+- **Tests:** test_generative_tick §6 auditiert die Grammatik statistisch
+  ueber ~206 simulierte Bars (Register, keine Leaps > Oktave, Wieder-
+  holungen vorhanden, Pausen vorhanden, Schrittbewegung dominiert) — fing
+  waehrend der Entwicklung einen realen Leap-Bug nach Stufenwechseln
+  (→ Oktav-Faltung). **26 Suiten, 0 Failures**; h743 cross-baut (158,1 KB).
+- Autoplay-Demo neu gerendert (Grammatik + Ensemble-Drift hoerbar).
+
+---
+
 ## v0.7-r18.89 (2026-07-04) — Sound-Engine-Ausbau: Master-Drive, Noise-Primitiven, Vinyl-Crackle, Karplus-Strong-Plucks
 
 User: „Baue sound engine aus. Also auch die synthesizer und noise und andere

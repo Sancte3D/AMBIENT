@@ -59,6 +59,14 @@ static struct {
     float    hz, amp;
 } spark[SPARK_COUNT];
 
+/* r18.90 melody grammar state (see the tick). Session-persistent voice
+ * leading: the next phrase starts near where the last one ended. */
+static int  mel_last_midi   = 0;      /* 0 = nothing sung yet          */
+static int  mel_phrase_bars = 0;      /* bars left in current phrase   */
+static bool mel_phrase_rest = false;  /* whole phrase is silence       */
+static bool mel_phrase_open = false;  /* next note opens the phrase    */
+static int  mel_note_count  = 0;      /* scheduled melody notes (tests/UI) */
+
 /* Lowest currently-held frequency, or 0 if nothing is held. */
 static float lowest_held(void) {
     float lo = 0.0f;
@@ -89,6 +97,15 @@ static float send_amount_cur, send_amount_tgt;
 static float wet_amp_cur,     wet_amp_tgt;
 static float reverb_size, reverb_damp;        /* cached, so the two setters
                                                   can change one independently */
+/* r18.90: BRIGHTNESS is a macro, not a filter knob — it also tilts the
+ * hall damping (dark = duller tail) and the pluck damping. This trim rides
+ * ON TOP of the preset/manual damp so preset changes keep working. */
+static float bright_damp_trim = 0.0f;
+
+static void reverb_apply(void) {
+    reverb_set(reverb_size,
+               dsp_clampf(reverb_damp + bright_damp_trim, 0.0f, 1.0f));
+}
 static const float SMOOTH_COEF = 0.05f;       /* per-block, ~120 ms time-const */
 
 /* Master stage (fixes the listening-test "earrape / brummt"):
@@ -135,7 +152,7 @@ static void recompute_reverb_from_presets(void) {
                                                  musical_space, musical_mood);
     reverb_size = s.size;
     reverb_damp = s.damp;
-    reverb_set(reverb_size, reverb_damp);
+    reverb_apply();
     reverb_set_drive(s.drive);
     wet_amp_tgt = s.wet_amp;        /* still smoothed per block in render */
 }
@@ -173,6 +190,9 @@ void engine_init(void) {
     gen_on = false;
     gen_timing_valid = false;        /* r18.88 autoplay scheduler reset */
     memset(spark, 0, sizeof spark);
+    mel_last_midi = 0; mel_phrase_bars = 0;
+    mel_phrase_rest = false; mel_phrase_open = false;
+    mel_note_count = 0;
 
     /* Master stage: DC-block cleared, moderate default volume (no on-device
      * volume knob bound yet — keeps headphones from being slammed). */
@@ -238,18 +258,26 @@ bool engine_cell_sample(uint8_t cell, float pos_0_1, uint32_t now_ms) {
 
 void engine_set_reverb_size(float v) {
     reverb_size = dsp_clampf(v, 0.0f, 1.0f);
-    reverb_set(reverb_size, reverb_damp);
+    reverb_apply();
 }
 void engine_set_reverb_damp(float v) {
     reverb_damp = dsp_clampf(v, 0.0f, 1.0f);
-    reverb_set(reverb_size, reverb_damp);
+    reverb_apply();
 }
 void engine_set_reverb_drive(float v) { reverb_set_drive(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_wet_amp(float v)      { wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_drive(float v)        { drive_tgt       = dsp_clampf(v, 0.0f, 1.0f); }
-void engine_set_brightness(float hz)  { pad_set_brightness(hz); }
+/* r18.90 macro: one emotional dimension, three destinations. hz is the
+ * legacy pad-cutoff offset (-600..+800); the hall and the plucks follow.
+ * At hz=0 all trims are exactly 0 — the bench-tuned default is untouched. */
+void engine_set_brightness(float hz)  {
+    pad_set_brightness(hz);
+    bright_damp_trim = dsp_clampf(-hz * (0.18f / 800.0f), -0.135f, 0.18f);
+    reverb_apply();
+    pluck_set_damp(dsp_clampf(0.42f - hz * (0.12f / 800.0f), 0.28f, 0.55f));
+}
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1.0f)); }
 /* World change applies BOTH the texture layer (ambience) AND the harmonic
@@ -394,6 +422,9 @@ int engine_generative_advance(void) {
     return deg;
 }
 
+int engine_generative_last_melody_midi(void) { return mel_last_midi; }
+int engine_generative_melody_count(void)     { return mel_note_count; }
+
 void engine_generative_tick(uint32_t now_ms) {
     if (!gen_on) return;
 
@@ -415,21 +446,84 @@ void engine_generative_tick(uint32_t now_ms) {
         /* Humanized bar: 90..110 % of the base length. */
         uint32_t bar = GEN_TICK_BAR_MS * (uint32_t)(90 + (int)(gen_rand01() * 21.0f)) / 100u;
         if (deg > 0) {
-            /* Scatter chord-tone sparkles inside this bar: an upper chord
-             * tone (never the root), +1 octave, quiet, ~3 s ring. */
-            int chord[BRAIN_MAX_CHORD];
-            int n = brain_chord(deg, chord, BRAIN_MAX_CHORD);
-            static const float POS_LO[SPARK_COUNT] = { 0.25f, 0.60f };
-            static const float POS_HI[SPARK_COUNT] = { 0.55f, 0.85f };
-            static const float PROB[SPARK_COUNT]   = { 0.75f, 0.40f };
-            for (int i = 0; i < SPARK_COUNT && n > 1; ++i) {
-                if (gen_rand01() >= PROB[i]) continue;
-                int tone = chord[1 + (int)(gen_rand01() * (float)(n - 1)) % (n - 1)];
-                spark[i].hz  = dsp_midi_to_hz((float)(tone + 12));
-                spark[i].amp = 0.05f + gen_rand01() * 0.03f;
-                spark[i].on_ms = now_ms + (uint32_t)((POS_LO[i] +
-                                  gen_rand01() * (POS_HI[i] - POS_LO[i])) * (float)bar);
-                spark[i].on_pending = true;
+            /* --- Melody grammar (r18.90) ---------------------------------
+             * The r18.89 sparkles picked uniform-random chord tones at
+             * uniform-random times: pretty per-event, but it RANDOMIZES —
+             * it never composes. Replaced by a phrase grammar (rules per
+             * SOUND_WORLD.md §6):
+             *   - PHRASES of 2-4 bars; 30 % of phrases are whole-phrase
+             *     RESTS (silence is part of the composition);
+             *   - at most ONE melody tone per bar (openers 85 %, inner
+             *     bars 55 % — sparse, breathing);
+             *   - tone choice is VOICE-LED: 35 % repeat the previous tone
+             *     (repetition is desirable), else the NEAREST upper chord
+             *     tone to the last one (stepwise motion; 15 % take the
+             *     second-nearest for variety). Register: voiced chord +12
+             *     (≈ MIDI 64..90), leaps bounded by construction;
+             *   - phrase openers are slightly louder (a breath accent);
+             *   - occasionally (18 %) the second pluck voice answers the
+             *     same tone an octave DOWN a beat later — call & answer,
+             *     never a new pitch class. */
+            if (mel_phrase_bars <= 0) {
+                mel_phrase_bars = 2 + (int)(gen_rand01() * 3.0f);   /* 2..4 */
+                mel_phrase_rest = gen_rand01() < 0.30f;
+                mel_phrase_open = true;
+            }
+            --mel_phrase_bars;
+            if (!mel_phrase_rest &&
+                gen_rand01() < (mel_phrase_open ? 0.85f : 0.55f)) {
+                int chord[BRAIN_MAX_CHORD];
+                int n = brain_chord(deg, chord, BRAIN_MAX_CHORD);
+                if (n > 1) {
+                    int tone;
+                    if (mel_last_midi == 0) {
+                        tone = chord[n / 2] + 12;         /* mid register in */
+                    } else if (gen_rand01() < 0.35f) {
+                        tone = mel_last_midi;             /* repeat — allowed */
+                    } else {
+                        /* nearest / 2nd-nearest upper chord tone to last */
+                        int best = -1, second = -1, bd = 999, sd = 999;
+                        for (int i = 1; i < n; ++i) {
+                            int c = chord[i] + 12;
+                            int d = c > mel_last_midi ? c - mel_last_midi
+                                                      : mel_last_midi - c;
+                            if (d == 0) continue;         /* repeat handled */
+                            if (d < bd)      { second = best; sd = bd; best = c; bd = d; }
+                            else if (d < sd) { second = c; sd = d; }
+                        }
+                        tone = (second >= 0 && gen_rand01() < 0.15f) ? second
+                             : (best >= 0 ? best : chord[n / 2] + 12);
+                    }
+                    /* Octave-fold toward the previous tone: after a DEGREE
+                     * change the new chord's voicing can sit far away, so
+                     * even the "nearest" candidate may leap. Folding by
+                     * octaves keeps the pitch CLASS (still a chord tone)
+                     * while enforcing the small-interval rule; the 56..96
+                     * band keeps the voice in its register. */
+                    if (mel_last_midi != 0) {
+                        while (tone - mel_last_midi > 7 && tone - 12 >= 56)
+                            tone -= 12;
+                        while (mel_last_midi - tone > 7 && tone + 12 <= 96)
+                            tone += 12;
+                    }
+                    spark[0].hz  = dsp_midi_to_hz((float)tone);
+                    spark[0].amp = mel_phrase_open
+                                 ? 0.075f
+                                 : 0.05f + gen_rand01() * 0.015f;
+                    spark[0].on_ms = now_ms +
+                        (uint32_t)((0.20f + gen_rand01() * 0.40f) * (float)bar);
+                    spark[0].on_pending = true;
+                    if (!mel_phrase_open && gen_rand01() < 0.18f) {
+                        spark[1].hz  = dsp_midi_to_hz((float)(tone - 12));
+                        spark[1].amp = spark[0].amp * 0.7f;
+                        spark[1].on_ms = spark[0].on_ms +
+                                         (uint32_t)(0.15f * (float)bar);
+                        spark[1].on_pending = true;
+                    }
+                    mel_last_midi   = tone;
+                    mel_phrase_open = false;
+                    ++mel_note_count;
+                }
             }
         }
         gen_next_bar_ms = now_ms + bar;

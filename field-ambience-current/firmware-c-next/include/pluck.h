@@ -38,6 +38,10 @@ void pluck_note(float freq_hz, float amp);
 /* Voices still audibly ringing (energy above ~-72 dBFS). */
 int pluck_active_count(void);
 
+/* r18.90 — loop-filter damping 0..0.9 (0.42 default). Driven by the
+ * BRIGHTNESS macro: dark = softer, rounder plucks; bright = glassier. */
+void pluck_set_damp(float damp);
+
 /* Mix into the engine's dry + reverb-send accumulators. Stereo: voice 0
  * sits slightly left, voice 1 slightly right (alternating round-robin →
  * call-answer movement). */
