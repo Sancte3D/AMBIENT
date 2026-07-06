@@ -79,7 +79,7 @@ int main(void) {
      * one (staggered entries at 0.40/0.62/0.81 of their periods), so the
      * pad pool grows past the single bed voice but never past bed + 3. */
     CHECK(max_voices >= 2, "Eno loops actually joined the bed (%d)", max_voices);
-    CHECK(max_voices <= 4, "pad pool = bed + 3 Eno loops max (%d)", max_voices);
+    CHECK(max_voices <= 5, "pad pool = bed + 3 Eno loops + melody max (%d)", max_voices);
 
     /* ---- 3. User override incl. SHIFT-octave source (the r18.88 fix) ---- */
     engine_note_on(11, dsp_midi_to_hz(76.0f), 0.12f);   /* shift source 9..13 */

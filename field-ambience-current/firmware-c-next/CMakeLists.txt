@@ -106,6 +106,7 @@ set(DSP_SOURCES
     src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/body.c          # r18.94: modal resonant body for the plucks (Rings concept)
     src/composer.c      # r18.96: ambient composer state machine (probabilities only)
+    src/harmony.c       # r19.0: harmonic safety core (pitch worlds, mutation, collision filter)
     src/bass.c
     src/reverb.c
     src/reverb_presets.c

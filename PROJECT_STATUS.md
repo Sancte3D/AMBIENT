@@ -2,6 +2,19 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r19.0 (2026-07-06, Harmonic Safety Core — Composer-Kern NEU):** Nach
+> Users Research-Brief (Pitch-Worlds, Voice-Leading, Roughness-Psychoakustik)
+> den Kern neu geschrieben statt getweakt. **NEU harmony.c**: Pitch-World
+> (Pentatonik-Core ohne Halbton/Tritonus + Color-Note nur hoch) → Register-
+> Regeln → Common-Tone-Mutation (≥3 gemeinsam, ≤2 Stimmen bewegen sich,
+> Freeze) → Collision-Filter (Halbton/Tritonus/tiefe 2nds verboten) → lange
+> Melodie (4–16 s Töne, echte Stille) → Wahrscheinlichkeit zuletzt. Engine
+> umgebaut: Bett = Zustands-Bass (reinterpretiert statt neu würfeln), Eno-
+> Loops tragen Zustandsstimmen, Melodie = lange Voice + VOICE-Anschlag,
+> Blendwave-Timbre-Walk. **Gemessen: 80.000 gleichzeitige Intervalle, 0 %
+> Halbtöne, 0 % Tritoni.** NEU test_harmony.c; 26 Suiten / 0 Failures; h743
+> 182,2 KB; beide Demos neu. Details: CHANGELOG r19.0.
+>
 > **r18.99 (2026-07-06, Sonicware/Eno-Durchbruch):** Liven Ambient Ø +
 > Reich/Eno-Loops studiert (Produktseite + teropa/loop). Drei fehlende
 > Bausteine gebaut: **shimmer.c** (Oktav-Regeneration um den Hall,

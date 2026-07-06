@@ -40,13 +40,29 @@ Dazu Nicht-Ton-Schichten: texture.c (Brown+Pink-Atem), ambience.c
 (Welt-Atmosphäre), tape.c (Hiss + Sättigung + Vinyl-Crackle), drone.c
 (Tonart-Pedal). **Keine neue Stimme ohne Streichung einer alten.**
 
-## 4. Harmonische Sprache
+## 4. Harmonische Sprache — HARMONIC SAFETY CORE (r19.0, bindend)
 
-- 6 Kirchenmodi, 4 Akkordfamilien (add9/maj7/min11/sus2) — brain.c ist die
-  einzige Quelle von Tonhöhen. **Kein Modul erfindet eigene Skalen.**
-- Harmoniewechsel sind LANGSAM: 8-s-Bars ±10 %, Markov-gewichtete
-  Stufenübergänge (generative.c) — nie mehr als eine Stufe pro Bar.
-- Voice-Centering um MIDI 64 — alles bleibt im warmen Mittenband.
+Der Autoplay-Composer denkt NICHT in Chord Progressions, sondern in einer
+**Pitch World** mit einem Sicherheitskern (harmony.c). Reihenfolge ist
+Gesetz — **Quality Gate zuerst, Randomness zuletzt**:
+
+1. **PITCH WORLD:** Pentatonik-CORE (Dur `C D E G A` · Moll `D F G A C`) —
+   strukturell KEIN Halbton, KEIN Tritonus im Set. + EINE Color-Note
+   (maj7 / 9) **nur oberhalb C4**.
+2. **REGISTER:** unter C3 nur Root/Quinte/Oktave; Terzen im Mittenband;
+   2nds/9ths/Color nur hoch. Bass 38–49 · Stimmen 55–79 · Melodie 62–86.
+3. **MUTATION statt Neu-Würfeln:** ein Zustandswechsel behält **≥3
+   gemeinsame Pitch-Classes und bewegt ≤2 Stimmen**; gemeinsame Töne
+   bleiben auf DERSELBEN Tonhöhe (parsimonious voice leading).
+4. **COLLISION-FILTER vor jedem Melodie-Ton:** gegen jede klingende Stimme
+   Halbton (1/11) + Tritonus (6) verboten, tiefe 2nds verboten → next-best.
+5. Wahrscheinlichkeit ganz zuletzt.
+
+**Verboten:** einen Akkord komplett neu würfeln · einen Halbton oder
+Tritonus zwischen gleichzeitig klingenden Stimmen · Color-Note tief · dichte
+Cluster unter C3. Messlatte: 0 % Halbtöne / 0 % Tritoni zwischen sounding
+voices (r19.0 über 80 000 Intervalle bestätigt). brain.c bleibt für die
+Live-Cell-Tonhöhen; **kein Modul erfindet eigene Skalen.**
 
 ## 5. Bewegungs-Sprache (Motion)
 
@@ -58,20 +74,26 @@ Dazu Nicht-Ton-Schichten: texture.c (Brown+Pink-Atem), ambience.c
 - Zufall nur als Random-Walk mit Zeitkonstante (Drone-Drift τ=18 s), nie
   als Sample-und-Halt-Springen.
 
-## 6. Melodie-Grammatik (generative Stimme)
+## 6. Melodie-Grammatik (die lange generative Stimme, r19.0)
 
-Zufall ist IMMER eingesperrt in diese Regeln (engine.c Tick):
+EINE lange Voice (kein Arpeggiator), gespeist aus dem Safety Core (§4).
+Zufall ist IMMER eingesperrt in diese Regeln (engine.c Tick + harmony.c):
 
 | Regel | Wert |
 |---|---|
-| Phrasenlänge | 2–4 Bars |
-| Pausen-Phrasen | 30 % (Stille ist Komposition) |
-| Noten pro Bar | max. 1 (Opener 85 %, sonst 55 %) |
-| Tonvorrat | obere Akkordtöne der aktuellen Stufe, +1 Okt. |
-| Wiederholung | 35 % (erwünscht!) |
-| Schrittweite | nächster Akkordton (85 %), zweitnächster (15 %) |
-| Oktav-Antwort | 18 %, gleicher Ton −12, nie neue Tonklasse |
-| Déjà-vu | 40 % der Phrasen = Replay der letzten (1 Note variiert 30 %), re-fitted auf aktuelle Harmonie |
+| Tonlänge | 4–16 s pro Note |
+| Stille | 1–8 s, + Atem 3–8 s nach jeder Phrase (Stille ist Komposition) |
+| Phrasenlänge | 2–5 Noten |
+| Tonvorrat | Pitch World §1 im Melodie-Register 62–86 |
+| Bewegung | repeat > Schritt > Quart/Quint > Sext/Oktave > Color (Tabelle) |
+| Kein Leap | > Oktave (per Register + Oktav-Fold) |
+| Collision | jeder Ton gegen alle klingenden Stimmen gefiltert (§4.4) |
+| Déjà-vu | 35 % Replay der letzten Phrase, jeder Ton erneut durch World + Filter |
+| Onset | zusätzlicher VOICE-Anschlag (String/Glass) vor dem Pad-Swell |
+
+**Blendwave (Liven Ambient Ø, gelernt):** ein gehaltener Ton lebt durch
+korrelierten Timbre-Walk (Pad-Brightness-Tilt, kleine Schritte alle 400 ms)
+— „same note, evolve timbre", nicht durch neue Events.
 | Dynamik | Phrasen-Opener leicht lauter (0.075 vs 0.05–0.065) |
 | Timing | 20–60 % der Bar, humanisiert |
 
