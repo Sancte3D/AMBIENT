@@ -234,8 +234,8 @@
         <td class="fn">transient reservoir (r18.70: C2880380 → C23742)</td>
         <td class="jlc"><span class="b ext">JLC Extended · 41,420</span></td></tr><tr class="">
         <td class="ref">LiPo</td>
-        <td class="part"><a href="https://thepihut.com/products/2000mah-3-7v-lipo-battery" target="_blank" rel="noopener">2000 mAh pouch 503759 ↗</a></td>
-        <td class="fn">the battery</td>
+        <td class="part"><a href="https://www.adafruit.com/product/2011" target="_blank" rel="noopener">2000 mAh JST-PH — DE: Adafruit 2011 ↗</a></td>
+        <td class="fn">the battery (r19.4: DE-sourceable via Mouser/DigiKey/BerryBase; 2000 mAh, integrated PCM, RoHS-2, UN38.3 report. Note: 7 mm vs the 5 mm 503759 reference = +2 mm; verify plug polarity vs J9 pin 1 = BAT_PLUS before first insert. See docs/SOURCING_COMPLIANCE.md §2)</td>
         <td class="jlc"><span class="b off">off-board · not soldered</span></td></tr></tbody></table></section><section><h2 style="border-color:#10b981"><span class="dot" style="background:#10b981"></span>Audio</h2>
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
       <tbody><tr class="">
@@ -274,8 +274,8 @@
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
       <tbody><tr class="vis">
         <td class="ref">LCD</td>
-        <td class="part"><a href="https://www.waveshare.com/1.9inch-lcd-module.htm" target="_blank" rel="noopener">Waveshare 1.9″ 170×320 ST7789 ↗</a><span class="eye">👁</span></td>
-        <td class="fn">the screen</td>
+        <td class="part"><a href="https://eckstein-shop.de/WaveShare-19inch-LCD-Display-Module-170320-IPS-262K-Colors-SPI-Interface-EN" target="_blank" rel="noopener">Waveshare 1.9″ 170×320 ST7789V2 — DE: Eckstein 13,95 € ↗</a><span class="eye">👁</span></td>
+        <td class="fn">the screen (r19.4: fixed DE source Eckstein Shop; exp-tech/BerryBase/Amazon.de alt. Module pin order differs from J3 → always wire via the 8-conductor cable, never a straight header. See docs/SOURCING_COMPLIANCE.md §1)</td>
         <td class="jlc"><span class="b off">off-board · not soldered</span></td></tr><tr class="">
         <td class="ref">Q2</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C8545.html" target="_blank" rel="noopener">2N7002 MOSFET ↗</a></td>
@@ -293,7 +293,7 @@
         <td class="jlc"><span class="b ext">JLC Extended · 2,787</span> <span class="b hand">hand-place</span></td></tr><tr class="vis">
         <td class="ref">SW1-5</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C400229.html" target="_blank" rel="noopener">Kailh Choc V1 CPG135001D01 ×5, direct-solder ↗</a><span class="eye">👁</span></td>
-        <td class="fn">cell trigger keys — real keyswitch feel (~3mm travel), DIGITAL on/off via MCP23017 (switch→I²C expander→MCU). Solders straight to the board (2 THT legs, hand-placed like the modifiers), same technique as any other button here (r18.75 — was a hot-swap socket in r18.74, simplified: the socket had no clean part number and needed fiddly small-SMD hand-soldering; direct-solder is plain THT, at the cost of the switch no longer being swappable). ⚠ LCSC shows 0 stock at time of writing + JLC notes their automated line needs a custom fixture for this part — hand-soldering the 2 legs needs neither.</td>
+        <td class="fn">cell trigger keys — real keyswitch feel (~3mm travel), DIGITAL on/off via MCP23017 (switch→I²C expander→MCU). Solders straight to the board (2 THT legs, hand-placed like the modifiers), same technique as any other button here (r18.75 — was a hot-swap socket in r18.74, simplified: the socket had no clean part number and needed fiddly small-SMD hand-soldering; direct-solder is plain THT, at the cost of the switch no longer being swappable). ⚠ LCSC C400229 often 0 stock — irrelevant, it is hand-soldered anyway. r19.4: fixed DE source keycapsss.com (any Kailh Choc V1 / PG1350 fits the footprint; pick a TACTILE variant, Choc Brown, for the keyswitch feel); EU alt 42keebs.eu/splitkb. Request Kailh&#x27;s RoHS declaration for the file. See docs/SOURCING_COMPLIANCE.md §1.</td>
         <td class="jlc"><span class="b warn">JLC ? verify</span></td></tr><tr class="vis">
         <td class="ref">SW6-10</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C36498965.html" target="_blank" rel="noopener">HX B3F-4055 tactile ×5 ↗</a><span class="eye">👁</span></td>

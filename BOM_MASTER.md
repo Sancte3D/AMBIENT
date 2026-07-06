@@ -71,7 +71,7 @@ in any Markdown editor).
 | **C_BULK** polymer-tantalum 470 µF / 10 V case-E 7343-43 (ESR 100 mΩ; <25 mΩ flat parts not in stock at LCSC — transient ESR is supplied by C_BULK2) | TPSE477K010R0100 (Kyocera AVX) | [C444831](https://www.lcsc.com/product-detail/C444831.html) | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | KiCad-Standard | Standard-Lib-3D |
 | **C_BULK2** MLCC **100 µF / 10 V** 1210 (parallel; 220µF/10V/1210 does not exist → 100µF of real headroom instead of 220µF/6.3V derating) | CL32A107MPVNNNE (Samsung) — r18.70: was C2880380 (Taiyo Yuden, JLC stock ≈1) | [C23742](https://www.lcsc.com/product-detail/C23742.html) | `Capacitor_SMD:C_1210_3225Metric` | KiCad-Standard | Standard-Lib-3D |
 | **J9** JST-PH 2.0 2-pin (LiPo battery — generator refdes, **not** J_BAT) | **S2B-PH-SM4-TB(LF)(SN)** | [C295747](https://www.lcsc.com/product-detail/C295747.html) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | KiCad-Standard | [STEP](field-ambience-current/kicad/libraries/field_ambience.3dshapes/CONN-SMD_P2.00_S2B-PH-SM4-TB-LF-SN.step) |
-| LiPo pouch **503759** (50×37×9.4 mm, **2000 mAh ~6.6 h @ 300 mA**) — r18.21 right-sized down from 5000mAh overkill | Generic LiPo 2000mAh JST-PH 2.0 | [PiHut 2000mAh](https://thepihut.com/products/2000mah-3-7v-lipo-battery) | — (no PCB FP, bottom-case slot) | — | Vendor |
+| LiPo **2000 mAh JST-PH** (~6.6 h @ 300 mA) — r18.21 right-sized down from 5000mAh. **r19.4: DE-Quelle = Adafruit 2011** (60×36×**7 mm**, integriertes PCM, RoHS-2, UN38.3-Report) via Mouser/DigiKey/BerryBase. ⚠ 7 mm = **+2 mm** vs 5-mm-503759-Referenz (Arons Layout); **Steckerpolung vs J9 Pin 1 = BAT_PLUS** vor dem ersten Einstecken per Multimeter prüfen. Details → `field-ambience-current/docs/SOURCING_COMPLIANCE.md §2`. PiHut-503759 (5 mm) bleibt Alternative, liefert aber nicht nach DE. | LiPo 2000mAh JST-PH 2.0 mit PCM | [Adafruit 2011](https://www.adafruit.com/product/2011) · Mouser/DigiKey/BerryBase | — (no PCB FP, bottom-case slot) | — | Vendor |
 
 > **Power architecture / rail ownership (ADR-0016, audit #8/#9).** So the PCB
 > maker sees the sources unambiguously — *one* source→system-rail place each:
@@ -122,7 +122,7 @@ in any Markdown editor).
 | Ref | MPN | Link | Footprint | FP source | 3D |
 |---|---|---|---|---|---|
 | **J3** 1×8 header 2.54 mm (LCD module) | 2.54 mm strip cut to 1×8 (B-2100S40P or similar) — or 1×8 female socket for a pluggable module | [C124383](https://www.lcsc.com/product-detail/C124383.html) | `Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical` | KiCad-Standard | Standard-Lib-3D |
-| **LCD module** **Waveshare 1.9in 170×320 ST7789V2** IPS module (r18.22 pivot from bare AliExpress: same panel as Adafruit + branded QC + level shifter + documented; ~$11–13 instead of Adafruit $15 / bare-AliExpress DOA lottery. **Verify the module's pin ORDER against the J3 pinout** — varies by vendor) | Waveshare 1.9inch LCD Module 170x320 SPI | [PiHut £11.60](https://thepihut.com/products/1-9-ips-lcd-display-module-170x320-spi) · [Waveshare](https://www.waveshare.com/1.9inch-lcd-module.htm) · [Amazon](https://www.amazon.com/Waveshare-1-9inch-Display-Resolution-Interface/dp/B0BRXXSZC5) | Module (plugs into J3) | — | Vendor-CAD |
+| **LCD module** **Waveshare 1.9in 170×320 ST7789V2** IPS module (r18.22 pivot from bare AliExpress: same panel as Adafruit + branded QC + level shifter + documented. **r19.4: DE-Quelle = Eckstein Shop 13,95 €** (exp-tech/BerryBase/Amazon.de alt). **Pin-Order weicht von J3 ab → immer per 8-Draht-Kabel** mappen, nie Steck-Header. Details → `field-ambience-current/docs/SOURCING_COMPLIANCE.md §1`) | Waveshare 1.9inch LCD Module 170x320 SPI | [Eckstein 13,95 €](https://eckstein-shop.de/WaveShare-19inch-LCD-Display-Module-170320-IPS-262K-Colors-SPI-Interface-EN) · [Waveshare](https://www.waveshare.com/1.9inch-lcd-module.htm) · exp-tech/BerryBase | Module (Kabel an J3) | — | Vendor-CAD |
 | **LCD module — PROPOSED r18.43 / ADR-0015** **Waveshare 2.0in 240×320 ST7789** IPS module. Pivot 1.9″ → 2.0″ for more area + animation headroom + native RGB565 color. Same ST7789 controller family, same 8-pin SPI interface, same backlight path (Q2/PCA9685 channel 12). **UNVERIFIED — NEEDS HUMAN CHECK:** (a) sourcing path/SKU (LCSC PN may not exist; source via Waveshare/PiHut/Amazon like the 1.9″), (b) 8-pin header order against the delivered module, (c) outer dimensions + active-area position against the bezel window. Don't change the bezel cutout + generator sheet until (a)–(c) are confirmed. | Waveshare 2inch LCD Module 240×320 SPI | [Waveshare](https://www.waveshare.com/2inch-lcd-module.htm) | Module (plugs into J3, possible pin-order adaptation) | — | Vendor-CAD |
 | Q2 backlight driver | **2N7002,215** SOT-23 | [C8545](https://www.lcsc.com/product-detail/C8545.html) | `Package_TO_SOT_SMD:SOT-23` | KiCad-Standard | Standard-Lib-3D |
 
@@ -188,6 +188,11 @@ in any Markdown editor).
 > Kailh Choc V1 switch (any color/feel, any vendor: Kailh direct, KBDfans,
 > NovelKeys, AliExpress) uses the identical 2-pin THT footprint. Feel/color
 > is a free choice, not a schematic constraint.
+>
+> **r19.4 fixed DE source:** [keycapsss.com](https://keycapsss.com) (1–3 day
+> DE delivery), EU alt 42keebs.eu / splitkb.com. Pick a **tactile** variant
+> (Choc Brown) for the keyboard-key feel. For the compliance file, request
+> Kailh's RoHS manufacturer declaration. See `docs/SOURCING_COMPLIANCE.md §1`.
 >
 > **r18.78 open item for Aron (PCB layout):** user wants cell caps **2–3 cm
 > long** eventually. No stabilizer needed at that length (well under the

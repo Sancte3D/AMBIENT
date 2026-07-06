@@ -66,7 +66,7 @@ G = [
    ("D2","SMAJ5.0A TVS","5 V surge clamp","C113952","jlc",False),
    ("C_BULK","470 µF tantalum 1210","bulk reservoir (r18.81: the +5V rail now carries the global +5V flag — before, the amp + all 23 LED anodes sat on an unpowered '+5V' island net)","C444831","jlc",False),
    ("C_BULK2","100 µF MLCC 1210","transient reservoir (r18.70: C2880380 → C23742)","C23742","jlc",False),
-   ("LiPo","2000 mAh pouch 503759","the battery","https://thepihut.com/products/2000mah-3-7v-lipo-battery","off",False),
+   ("LiPo","2000 mAh JST-PH — DE: Adafruit 2011","the battery (r19.4: DE-sourceable via Mouser/DigiKey/BerryBase; 2000 mAh, integrated PCM, RoHS-2, UN38.3 report. Note: 7 mm vs the 5 mm 503759 reference = +2 mm; verify plug polarity vs J9 pin 1 = BAT_PLUS before first insert. See docs/SOURCING_COMPLIANCE.md §2)","https://www.adafruit.com/product/2011","off",False),
  ]),
  ("Audio", "#10b981", [
    ("U3","PCM5102A DAC","I²S → analog audio","C107671","jlc",False),
@@ -79,13 +79,13 @@ G = [
    ("SPK","Same Sky CMS-402811-28SP ×2","the speakers (8 Ω cloth cone)","https://www.digikey.com/en/products/detail/cui-devices/CMS-402811-28SP/10821307","off",True),
  ]),
  ("Display", "#f59e0b", [
-   ("LCD","Waveshare 1.9″ 170×320 ST7789","the screen","https://www.waveshare.com/1.9inch-lcd-module.htm","off",True),
+   ("LCD","Waveshare 1.9″ 170×320 ST7789V2 — DE: Eckstein 13,95 €","the screen (r19.4: fixed DE source Eckstein Shop; exp-tech/BerryBase/Amazon.de alt. Module pin order differs from J3 → always wire via the 8-conductor cable, never a straight header. See docs/SOURCING_COMPLIANCE.md §1)","https://eckstein-shop.de/WaveShare-19inch-LCD-Display-Module-170320-IPS-262K-Colors-SPI-Interface-EN","off",True),
    ("Q2","2N7002 MOSFET","backlight PWM driver","C8545","jlc",False),
    ("J3","1×8 header","plugs the LCD in","C124383","hand",False),
  ]),
  ("Controls", "#0ea5e9", [
    ("EN1-4","ALPS EC11E18244AU ×4","4 push-encoders (r18.82: symbol pin numbers fixed to the KiCad footprint’s LETTERED pads A/B/C/S1/S2 — with the old numeric pins 1-5 NOTHING would have connected: all 4 encoders had zero joined pads in the netlist)","C202365","hand",True),
-   ("SW1-5","Kailh Choc V1 CPG135001D01 ×5, direct-solder","cell trigger keys — real keyswitch feel (~3mm travel), DIGITAL on/off via MCP23017 (switch→I²C expander→MCU). Solders straight to the board (2 THT legs, hand-placed like the modifiers), same technique as any other button here (r18.75 — was a hot-swap socket in r18.74, simplified: the socket had no clean part number and needed fiddly small-SMD hand-soldering; direct-solder is plain THT, at the cost of the switch no longer being swappable). ⚠ LCSC shows 0 stock at time of writing + JLC notes their automated line needs a custom fixture for this part — hand-soldering the 2 legs needs neither.","C400229","hand",True),
+   ("SW1-5","Kailh Choc V1 CPG135001D01 ×5, direct-solder","cell trigger keys — real keyswitch feel (~3mm travel), DIGITAL on/off via MCP23017 (switch→I²C expander→MCU). Solders straight to the board (2 THT legs, hand-placed like the modifiers), same technique as any other button here (r18.75 — was a hot-swap socket in r18.74, simplified: the socket had no clean part number and needed fiddly small-SMD hand-soldering; direct-solder is plain THT, at the cost of the switch no longer being swappable). ⚠ LCSC C400229 often 0 stock — irrelevant, it is hand-soldered anyway. r19.4: fixed DE source keycapsss.com (any Kailh Choc V1 / PG1350 fits the footprint; pick a TACTILE variant, Choc Brown, for the keyswitch feel); EU alt 42keebs.eu/splitkb. Request Kailh's RoHS declaration for the file. See docs/SOURCING_COMPLIANCE.md §1.","C400229","hand",True),
    ("SW6-10","HX B3F-4055 tactile ×5","modifier buttons (THT, square head for caps) — same part as the cells; r18.71: C2845240 (stock 30) → C36498965 (20k stock, ~$0.06); verify THT footprint/pinout","C36498965","hand",True),
    ("SW11/BOOT","TS-1088 tactile ×2","Reset + BOOT0 (2 service buttons)","C720477","jlc",False),
  ]),
