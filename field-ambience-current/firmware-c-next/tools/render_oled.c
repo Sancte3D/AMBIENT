@@ -29,6 +29,7 @@
 static void noop_world (int v)   { (void)v; }
 static void noop_key   (int v)   { (void)v; }
 static void noop_voice (int v)   { (void)v; }
+static void noop_tuning(int v)   { (void)v; }
 static void noop_space (float v) { (void)v; }
 static void noop_shim  (float v) { (void)v; }
 static void noop_atmos (float v) { (void)v; }
@@ -79,7 +80,7 @@ int main(int argc, char **argv) {
     const char *dir = (argc > 1) ? argv[1] : ".";
 
     menu_callbacks_t cb = {
-        .set_world = noop_world,   .set_key = noop_key, .set_voice = noop_voice,
+        .set_world = noop_world,   .set_key = noop_key, .set_tuning = noop_tuning, .set_voice = noop_voice,
         .set_space = noop_space,   .set_shimmer = noop_shim,
         .set_atmosphere = noop_atmos,
         .set_motion = noop_motion, .set_age = noop_age,
@@ -94,8 +95,8 @@ int main(int argc, char **argv) {
 
     /* One BROWSE frame per parameter. */
     static const char *NAMES[MP_COUNT] = {
-        "01_world","02_key","03_voice","04_space","05_shimmer","06_atmos",
-        "07_motion","08_age","09_echo","10_blur"
+        "01_world","02_key","03_tuning","04_voice","05_space","06_shimmer",
+        "07_atmos","08_motion","09_age","10_echo","11_blur"
     };
     for (int p = 0; p < MP_COUNT; ++p) {
         to_param((menu_param_t)p);

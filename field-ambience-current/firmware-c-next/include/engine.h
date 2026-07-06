@@ -88,6 +88,11 @@ void engine_set_key_pc(int pc_0_11);
  * strikes the voice (attack in front of the swell); sparkles follow. */
 void engine_set_voice(int voice_idx);
 
+/* r19.6 — instrument tuning: 0 = equal temperament (bench reference),
+ * 1 = just intonation (5-limit pure ratios anchored to the key — the
+ * Sonicware Ø "harmonies without beating"). Applies to all tonal voices. */
+void engine_set_tuning(int just);
+
 /* Step 12b #2 — drone toggle (DRONE modifier). Blooms a sustained root pad
  * in/out; it follows engine_set_key live with portamento. */
 void engine_set_drone(bool on);

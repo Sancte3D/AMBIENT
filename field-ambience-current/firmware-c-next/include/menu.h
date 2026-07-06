@@ -53,6 +53,7 @@ typedef enum {
 typedef enum {
     MP_WORLD = 0,
     MP_KEY,        /* r18.98: tonic pitch class 0..11 (world default on world change) */
+    MP_TUNING,     /* r19.6: 0 Equal / 1 Just (user-global) */
     MP_VOICE,      /* r18.98: melody voice 0 PAD / 1 STRING / 2 GLASS (user-global) */
     MP_SPACE,
     MP_SHIMMER,    /* r18.99: octave-up hall regeneration (the halo)   */
@@ -77,6 +78,7 @@ typedef enum {
 typedef struct {
     void (*set_world)      (int idx);                /* 0..MENU_WORLD_COUNT-1 */
     void (*set_key)        (int pc);                 /* tonic pitch class 0..11 */
+    void (*set_tuning)     (int just);               /* 0 Equal / 1 Just (r19.6) */
     void (*set_voice)      (int idx);                /* 0 PAD / 1 STRING / 2 GLASS */
     void (*set_space)      (float v01);              /* reverb / hall amount  */
     void (*set_shimmer)    (float v01);              /* octave-up halo (r18.99) */

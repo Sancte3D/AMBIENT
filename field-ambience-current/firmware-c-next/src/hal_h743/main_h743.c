@@ -63,6 +63,7 @@ static void hal_set_world      (int   idx) { engine_set_world(idx);
 static void hal_set_key        (int   pc)  { engine_set_key_pc(pc);
                                              controls_refresh_held_pitches(); }
 static void hal_set_voice      (int   idx) { engine_set_voice(idx); }
+static void hal_set_tuning     (int   just){ engine_set_tuning(just); }
 static void hal_set_space      (float v)   { engine_set_space(v); }
 static void hal_set_shimmer    (float v)   { engine_set_shimmer(v); }
 static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
@@ -122,6 +123,7 @@ int main(void) {
         menu_callbacks_t cb = {
             .set_world      = hal_set_world,
             .set_key        = hal_set_key,
+            .set_tuning     = hal_set_tuning,
             .set_voice      = hal_set_voice,
             .set_space      = hal_set_space,
             .set_shimmer    = hal_set_shimmer,

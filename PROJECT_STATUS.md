@@ -2,6 +2,14 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r19.6 (2026-07-06, Just Intonation):** Letzte 🟡 aus dem Audit: **NEU
+> tuning.c + Menü-Slot Tuning** (Equal/Just). Just = 5-Limit-Just-Intonation
+> an die KEY-Tonika verankert (Quinte 3:2, Terz 5:4 …) → gehaltene Harmonie
+> ohne Schweben (Sonicware Ø v1.5). Equal = bit-exakt ET (Referenz bleibt).
+> Alle tonalen Stimmen durch dieselbe Stimmung. Test: Beat-Beweis ET 0.9 Hz
+> vs JI 0.000 Hz. 26 Suiten +test_tuning / 0 Failures; h743 183,4 KB;
+> Session-Demo in Just. Details: CHANGELOG r19.6.
+>
 > **r19.5 (2026-07-06, Blendwave ausgebaut):** Gehaltene Pad-Töne wandern
 > jetzt spektral (Sonicware-„undulating"-Prinzip). RAM-sicher als Filter-
 > Morph statt 2. Tisch (D1/D2 bei 96 %): **Spektral-Animator in pad.c** —

@@ -16,6 +16,7 @@
 
 #include "drone.h"
 #include "dsp.h"
+#include "tuning.h"
 #include <math.h>
 #include <string.h>
 
@@ -111,7 +112,7 @@ void drone_init(void) {
         side[s].ddelay = (int)((s == 0 ? 0.008f : 0.012f) * SR);
         pan_gains(s == 0 ? -0.2f : 0.2f, &side[s].panL, &side[s].panR);
     }
-    freq_cur = freq_tgt = dsp_midi_to_hz(60.0f);   /* C4 until set */
+    freq_cur = freq_tgt = tuning_hz(60.0f);   /* C4 until set */
     glide_coef = ctl_coef(GLIDE_S);
     drift_cents = 0.0f;
     breath_phase = 0.0f;
@@ -128,7 +129,7 @@ void drone_init(void) {
 void drone_set_root_midi(int midi) {
     if (midi < 0)   midi = 0;
     if (midi > 127) midi = 127;
-    freq_tgt = dsp_midi_to_hz((float)midi);
+    freq_tgt = tuning_hz((float)midi);
     if (state == ENV_IDLE) freq_cur = freq_tgt;    /* snap while silent */
 }
 

@@ -64,6 +64,14 @@ Cluster unter C3. Messlatte: 0 % Halbtöne / 0 % Tritoni zwischen sounding
 voices (r19.0 über 80 000 Intervalle bestätigt). brain.c bleibt für die
 Live-Cell-Tonhöhen; **kein Modul erfindet eigene Skalen.**
 
+**Stimmung (r19.6, tuning.c — Menü-Slot Tuning):** *Equal* = gleichstufig
+(bench-Referenz, Default). *Just* = 5-Limit-Just-Intonation, an die KEY-
+Tonika verankert (Quinte 3:2, Terz 5:4, Sexte 5:3 …) — die Partialtöne
+gehaltener Töne fallen exakt zusammen, die stehende Harmonie rastet ohne
+Schweben ein (Sonicware Ø v1.5 „harmonies without beating"). ALLE tonalen
+Stimmen laufen durch dieselbe Stimmung — Mischen von ET und JI schwebt
+schlimmer als beides. Ideal für unser Gerät: ein tonales Zentrum, langsam.
+
 ## 5. Bewegungs-Sprache (Motion)
 
 - Bewegung = **Drift, nie Wobble**: alle LFOs < 0,15 Hz, Raten pro Seite/
