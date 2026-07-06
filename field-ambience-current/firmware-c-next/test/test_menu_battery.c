@@ -19,10 +19,12 @@ static int g_checks = 0, g_fails = 0;
  * callbacks here. Tone + Drums dropped in r18.58 — Tone duplicated the
  * Brightness encoder, Drums needs an adaptive-drums engine we don't have.) */
 static struct {
-    int   world;
+    int   world, key, voice;
     float space, atmos, motion, age, echo, blur;
 } st;
 static void cb_world (int v)   { st.world  = v; }
+static void cb_key   (int v)   { st.key    = v; }
+static void cb_voice (int v)   { st.voice  = v; }
 static void cb_space (float v) { st.space  = v; }
 static void cb_atmos (float v) { st.atmos  = v; }
 static void cb_motion(float v) { st.motion = v; }
@@ -32,7 +34,12 @@ static void cb_blur  (float v) { st.blur   = v; }
 
 static void init(void) {
     memset(&st, 0, sizeof st);
-    menu_callbacks_t cb = { cb_world, cb_space, cb_atmos, cb_motion, cb_age, cb_echo, cb_blur };
+    menu_callbacks_t cb = {
+        .set_world = cb_world,   .set_key  = cb_key,  .set_voice = cb_voice,
+        .set_space = cb_space,   .set_atmosphere = cb_atmos,
+        .set_motion = cb_motion, .set_age = cb_age,
+        .set_echo = cb_echo,     .set_blur = cb_blur,
+    };
     menu_init(&cb);
 }
 
@@ -126,7 +133,7 @@ static void test_motion_and_age_macros(void) {
 static void test_browse_nav_ignores_accel(void) {
     init();
     menu_rotate(+5);
-    CHECK(menu_current() == MP_SPACE, "browse should advance 1 slot on +5, got %d", menu_current());
+    CHECK(menu_current() == MP_KEY, "browse should advance 1 slot on +5, got %d", menu_current());
     menu_rotate(-3);
     CHECK(menu_current() == MP_WORLD, "browse should retreat 1 slot on -3, got %d", menu_current());
 }
@@ -185,9 +192,57 @@ static void test_bfont_width(void) {
     CHECK(font_hn_label.ascent > 0 && font_hn_value.ascent > 0, "fonts not initialised");
 }
 
+/* r18.98 — KEY (12 pitch classes, world default on world change) and VOICE
+ * (Pad/String/Glass, a player's global choice that world changes keep). */
+static void test_key_and_voice_slots(void) {
+    init();
+    /* KEY sits right after WORLD, boots on Tokyo's tonic A */
+    menu_rotate(1);
+    CHECK(menu_current() == MP_KEY, "slot 1 should be KEY (got %d)", menu_current());
+    CHECK(menu_value_count(MP_KEY) == 12, "KEY has 12 options");
+    CHECK(strcmp(menu_current_value_text(), "A") == 0,
+          "boot key is Tokyo's A: got %s", menu_current_value_text());
+    menu_push();
+    menu_rotate(1);                       /* A -> A# */
+    CHECK(st.key == 10, "set_key not fired with A#=10 (got %d)", st.key);
+    CHECK(strcmp(menu_current_value_text(), "A#") == 0, "value text follows");
+    menu_rotate(-2);                      /* wrap check runs later; back to G# */
+    CHECK(st.key == 8, "key steps down (got %d)", st.key);
+    menu_push();
+
+    /* VOICE: 3 options, defaults to Pad, fires the callback */
+    menu_rotate(1);
+    CHECK(menu_current() == MP_VOICE, "slot 2 should be VOICE (got %d)", menu_current());
+    CHECK(menu_value_count(MP_VOICE) == 3, "VOICE has 3 options");
+    CHECK(strcmp(menu_current_value_text(), "Pad") == 0,
+          "default voice is Pad: got %s", menu_current_value_text());
+    menu_push();
+    menu_rotate(1);
+    CHECK(st.voice == 1, "set_voice String (got %d)", st.voice);
+    menu_rotate(1);
+    CHECK(st.voice == 2 &&
+          strcmp(menu_current_value_text(), "Glass") == 0, "set_voice Glass");
+    menu_push();
+
+    /* world change: KEY snaps to the new world's tonic, VOICE stays */
+    menu_rotate(-1);                      /* browse moves ONE slot per event
+                                           * (accel-ignore rule) */
+    menu_rotate(-1);
+    CHECK(menu_current() == MP_WORLD, "back on WORLD (got %d)", menu_current());
+    menu_push();
+    menu_rotate(1);                       /* -> Crystal Coast (D major) */
+    CHECK(st.key == 2, "world change pushes the new tonic D=2 (got %d)", st.key);
+    CHECK(st.voice == 2, "world change must NOT reset the voice (got %d)", st.voice);
+    menu_push();
+    menu_rotate(1);                       /* -> KEY slot */
+    CHECK(strcmp(menu_current_value_text(), "D") == 0,
+          "KEY slot shows the world tonic: got %s", menu_current_value_text());
+}
+
 int main(void) {
     printf("== menu (world model) / battery ==\n");
     test_bfont_width();
+    test_key_and_voice_slots();
     test_browse_navigates_through_all_params();
     test_push_toggles_mode();
     test_edit_world_cycles_4_and_loads_preset();

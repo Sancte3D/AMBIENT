@@ -69,6 +69,7 @@ typedef enum {
     EV_CELL_DN, EV_CELL_UP, EV_MOD,
     EV_SPACE, EV_ATMOS, EV_AGE, EV_ECHO, EV_TEXTURE,
     EV_WORLD, EV_ENC,
+    EV_VOICE, EV_KEY,          /* r18.98: menu VOICE + KEY slots */
 } ev_type_t;
 
 typedef struct { uint32_t ms; ev_type_t t; int a; float f; } ev_t;
@@ -149,7 +150,10 @@ static void build_score(void) {
     tap(46500, 2, 3500);
     tap(53000, 0, 3000);
 
-    /* III. a chord is latched, playing over it, light dips */
+    /* III. a chord is latched, playing over it, light dips.
+     * r18.98: the player flips VOICE to STRING first — the short taps that
+     * follow get a plucked attack in front of the pad swell. */
+    ev(59000, EV_VOICE, 1, 0);
     ev(60000, EV_MOD, MOD_HOLD, 0);
     latch_tap(61000, 0);
     latch_tap(62400, 3);
@@ -170,11 +174,18 @@ static void build_score(void) {
     tap(132000, 3, 4500);
     menu_turn(140000, EV_ECHO, 0.0f, 0.35f, 0.05f);
     tap(144500, 0, 3500);
+    /* r18.98: After Hours gets the GLASS voice — FM chimes over the dark
+     * C-minor bed instead of the string. */
+    ev(149000, EV_VOICE, 2, 0);
     tap(152000, 2, 4000);
     tap(162000, 4, 4800);
 
-    /* V. wide space, last word, lights out */
+    /* V. wide space, a modulation, last word, lights out.
+     * r18.98: the player turns KEY two detents up (C → D) before the final
+     * phrase — a real modulation, held notes re-pitch with it. */
     menu_turn(172000, EV_SPACE, 0.72f, 0.86f, 0.02f);
+    ev(175800, EV_KEY, 1, 0);
+    ev(175960, EV_KEY, 2, 0);
     tap(178000, 1, 5000);
     ev(188000, EV_MOD, MOD_DRONE, 0);             /* drone released */
 
@@ -209,6 +220,9 @@ int main(int argc, char **argv) {
                 case EV_ECHO:    engine_set_echo(e->f);                    break;
                 case EV_TEXTURE: engine_set_texture(e->f);                 break;
                 case EV_WORLD:   engine_set_world(e->a);
+                                 controls_refresh_held_pitches();          break;
+                case EV_VOICE:   engine_set_voice(e->a);                   break;
+                case EV_KEY:     engine_set_key_pc(e->a);
                                  controls_refresh_held_pitches();          break;
                 case EV_ENC:     params_encoder((uint8_t)e->a,
                                                 (int)e->f, now_ms);        break;

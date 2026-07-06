@@ -58,6 +58,11 @@
  * follow the new key instead of clashing with the new drone/bed. */
 static void hal_set_world      (int   idx) { engine_set_world(idx);
                                              controls_refresh_held_pitches(); }
+/* r18.98: KEY follows the same rule — future notes + drone re-key, held
+ * latched notes re-pitch so they never clash with the new tonic. */
+static void hal_set_key        (int   pc)  { engine_set_key_pc(pc);
+                                             controls_refresh_held_pitches(); }
+static void hal_set_voice      (int   idx) { engine_set_voice(idx); }
 static void hal_set_space      (float v)   { engine_set_space(v); }
 static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
 static void hal_set_motion     (float v)   { engine_set_motion(v); }
@@ -115,6 +120,8 @@ int main(void) {
         /* ADR-0017 Phase 4 + r18.58 Reddit-macro menu */
         menu_callbacks_t cb = {
             .set_world      = hal_set_world,
+            .set_key        = hal_set_key,
+            .set_voice      = hal_set_voice,
             .set_space      = hal_set_space,
             .set_atmosphere = hal_set_atmosphere,
             .set_motion     = hal_set_motion,

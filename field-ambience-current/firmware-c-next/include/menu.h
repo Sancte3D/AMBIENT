@@ -52,6 +52,8 @@ typedef enum {
 /* Parameter slots, in the order shown in the bottom pill row. */
 typedef enum {
     MP_WORLD = 0,
+    MP_KEY,        /* r18.98: tonic pitch class 0..11 (world default on world change) */
+    MP_VOICE,      /* r18.98: melody voice 0 PAD / 1 STRING / 2 GLASS (user-global) */
     MP_SPACE,
     MP_ATMOS,
     MP_MOTION,
@@ -73,6 +75,8 @@ typedef enum {
  * display-only build (the Pico bench tool, the preview renderer). */
 typedef struct {
     void (*set_world)      (int idx);                /* 0..MENU_WORLD_COUNT-1 */
+    void (*set_key)        (int pc);                 /* tonic pitch class 0..11 */
+    void (*set_voice)      (int idx);                /* 0 PAD / 1 STRING / 2 GLASS */
     void (*set_space)      (float v01);              /* reverb / hall amount  */
     void (*set_atmosphere) (float v01);              /* ambience layer level  */
     void (*set_motion)     (float v01);              /* pad LFO depth         */

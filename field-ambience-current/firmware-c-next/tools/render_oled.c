@@ -27,6 +27,8 @@
 /* Engine setters are no-ops for the preview — the menu fires them but we just
  * want pixels. */
 static void noop_world (int v)   { (void)v; }
+static void noop_key   (int v)   { (void)v; }
+static void noop_voice (int v)   { (void)v; }
 static void noop_space (float v) { (void)v; }
 static void noop_atmos (float v) { (void)v; }
 static void noop_motion(float v) { (void)v; }
@@ -76,7 +78,10 @@ int main(int argc, char **argv) {
     const char *dir = (argc > 1) ? argv[1] : ".";
 
     menu_callbacks_t cb = {
-        noop_world, noop_space, noop_atmos, noop_motion, noop_age, noop_echo, noop_blur
+        .set_world = noop_world,   .set_key = noop_key, .set_voice = noop_voice,
+        .set_space = noop_space,   .set_atmosphere = noop_atmos,
+        .set_motion = noop_motion, .set_age = noop_age,
+        .set_echo = noop_echo,     .set_blur = noop_blur,
     };
     menu_init(&cb);
 
@@ -87,7 +92,8 @@ int main(int argc, char **argv) {
 
     /* One BROWSE frame per parameter. */
     static const char *NAMES[MP_COUNT] = {
-        "01_world","02_space","03_atmos","04_motion","05_age","06_echo","07_blur"
+        "01_world","02_key","03_voice","04_space","05_atmos","06_motion",
+        "07_age","08_echo","09_blur"
     };
     for (int p = 0; p < MP_COUNT; ++p) {
         to_param((menu_param_t)p);

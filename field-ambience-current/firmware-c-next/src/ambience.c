@@ -390,24 +390,29 @@ static inline void waves_tick(float *outL, float *outR) {
 }
 
 /* ===========================================================================
- * Vinyl (Phase 2d) — After Hours only.
+ * Vinyl (Phase 2d, rebuilt r18.98) — After Hours only.
  *
- * Three sub-layers:
- *   • crackle: white noise minus its own slow LP (cheap hi-pass) — the
- *              continuous "surface noise" of an LP record
- *   • pops:    sparse short noise bursts, env decays at 0.975 per sample
- *              (~50 ms half-life), scheduled every ~0.02..0.08 s
- *   • rumble:  brown-noise integrator (very LP'd) — distant city through
- *              walls / sub-rumble of a tonearm
+ * r18.98 (user: "am Ende höre ich noch so starkes Rauschen"): the old
+ * "crackle" was CONTINUOUS hi-passed white noise at 0.22 — a stationary
+ * −56 dBFS HF carpet whenever ATMOS was up in After Hours, fully exposed
+ * the moment the music faded (measured at the end of the played-session
+ * demo). A real record between the pops is nearly SILENT — its surface
+ * noise is dense tiny TICK EVENTS, not a noise bed. Constitution §2.
  *
- * R-channel pop is sign-inverted vs L → wider stereo.
+ * Three sub-layers now:
+ *   • ticks:  ~10..50/s single-grain ticks, τ ≈ 1 ms, random side
+ *   • pops:   sparse louder bursts, ~50 ms half-life (unchanged)
+ *   • rumble: brown-noise integrator — distant city through walls
  * =========================================================================== */
 
 static uint32_t vy_rng = 0xC0DEFEEDu;
-static float    vy_lpL = 0.0f, vy_lpR = 0.0f;
 static float    vy_rumL = 0.0f, vy_rumR = 0.0f;
 static int      vy_until_pop = 0;
 static float    vy_pop_env = 0.0f;
+static int      vy_until_tick = 0;
+static float    vy_tick_env = 0.0f;
+static float    vy_tick_sign = 1.0f;
+static int      vy_tick_side = 0;
 
 static inline float vy_white(void) {
     vy_rng = vy_rng * 1664525u + 1013904223u;
@@ -415,19 +420,30 @@ static inline float vy_white(void) {
 }
 
 static void vinyl_reset(void) {
-    vy_lpL = vy_lpR = 0.0f;
     vy_rumL = vy_rumR = 0.0f;
     vy_until_pop = 800;
     vy_pop_env = 0.0f;
+    vy_until_tick = 400;
+    vy_tick_env = 0.0f;
+    vy_tick_sign = 1.0f;
+    vy_tick_side = 0;
 }
 
 static inline void vinyl_tick(float *outL, float *outR) {
-    float wL = vy_white(), wR = vy_white();
-    /* hi-pass crackle: subtract slow LP from raw white */
-    vy_lpL += 0.30f * (wL - vy_lpL);
-    vy_lpR += 0.30f * (wR - vy_lpR);
-    float crL = wL - vy_lpL;
-    float crR = wR - vy_lpR;
+    /* surface ticks: schedule 20..90 ms apart, each a ~1 ms grain */
+    if (--vy_until_tick <= 0) {
+        vy_tick_env   = 0.25f + (vy_white() * 0.5f + 0.5f) * 0.75f;
+        vy_tick_sign  = (vy_white() > 0.0f) ? 1.0f : -1.0f;
+        vy_tick_side  = (vy_white() > 0.0f);
+        vy_until_tick = (int)(SR * 0.020f) +
+                        (int)((vy_white() * 0.5f + 0.5f) * SR * 0.070f);
+    }
+    float tickL = 0.0f, tickR = 0.0f;
+    if (vy_tick_env > 0.002f) {
+        float t = vy_white() * vy_tick_env * vy_tick_sign;
+        vy_tick_env *= 0.90f;                 /* τ ≈ 1 ms — a tick, not hiss */
+        if (vy_tick_side) tickR = t; else tickL = t;
+    }
 
     /* sparse sharp pops */
     if (--vy_until_pop <= 0) {
@@ -444,8 +460,8 @@ static inline void vinyl_tick(float *outL, float *outR) {
     vy_rumL = vy_rumL * 0.9985f + vy_white() * 0.0008f;
     vy_rumR = vy_rumR * 0.9985f + vy_white() * 0.0008f;
 
-    *outL += crL * 0.22f + pop * 0.45f + vy_rumL * 1.5f;
-    *outR += crR * 0.22f - pop * 0.45f + vy_rumR * 1.5f;
+    *outL += tickL * 0.6f + pop * 0.45f + vy_rumL * 1.5f;
+    *outR += tickR * 0.6f - pop * 0.45f + vy_rumR * 1.5f;
 }
 
 /* ===========================================================================
