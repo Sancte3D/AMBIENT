@@ -2,6 +2,14 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r19.5 (2026-07-06, Blendwave ausgebaut):** Gehaltene Pad-Töne wandern
+> jetzt spektral (Sonicware-„undulating"-Prinzip). RAM-sicher als Filter-
+> Morph statt 2. Tisch (D1/D2 bei 96 %): **Spektral-Animator in pad.c** —
+> pro Voice korrelierter Walk treibt einen wandernden Formant, die 2 Seiten
+> gegenläufig gespiegelt (Yin/Yang), an MOTION gekoppelt, bei 0 bit-exakt
+> aus. Test §14: Centroid-Bewegung CV 0.06→0.17 (×2.8). 26 Suiten / 0
+> Failures; h743 182,5 KB; Demos neu. Details: CHANGELOG r19.5.
+>
 > **r19.0 (2026-07-06, Harmonic Safety Core — Composer-Kern NEU):** Nach
 > Users Research-Brief (Pitch-Worlds, Voice-Leading, Roughness-Psychoakustik)
 > den Kern neu geschrieben statt getweakt. **NEU harmony.c**: Pitch-World

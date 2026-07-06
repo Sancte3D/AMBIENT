@@ -10,6 +10,35 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.5 (2026-07-06) — Blendwave ausgebaut: gehaltene Töne wandern spektral (Yin/Yang-Formant)
+
+User: „bau das aus" — die 🟡-Blendwave-Tiefe aus dem Ehrlichkeits-Audit
+(gehaltene Töne sollen wirklich WANDERN, nicht nur leicht atmen).
+
+Prinzip aus der Sonicware Liven Ambient Ø („undulating tones" durch
+Morphen durch Harmonische-Tische), RAM-sicher neu gebaut. Ein echter
+zweiter 64-KB-Tisch ging nicht (RAM_D1 96 %, D2 96 %; RAM_D3 hätte gepasst,
+aber Domänen-/Cache-Risiko unverifizierbar → CLAUDE.md „nicht raten").
+Stattdessen der Morph im **Filter-Bereich**:
+
+- **NEU Spektral-Animator in pad.c:** pro Voice ein korrelierter Random-
+  Walk `spec_w` (kleine persistente Schritte, ~1 s/Ziel, glidet), der einen
+  **wandernden Formant-Bandpass** über die Partial-Zone 220–1550 Hz treibt.
+  Die zwei internen Seiten lesen ihn **gespiegelt** (Seite 0 = w, Seite 1 =
+  1−w) → die Oszillatoren morphen **gegenläufig** (Yin/Yang), was zusätzlich
+  das Stereobild spektral schimmern lässt.
+- **An MOTION gekoppelt** (gleiche emotionale Richtung „lebendiger"); bei
+  MOTION 0 **bit-exakt aus** — der Referenzklang bleibt unangetastet.
+- Kosten: 1 SVF + ein paar Floats pro Seite (DTCM 90.3 → 90.9 %); D1
+  unverändert. Fixe Seeds → reproduzierbar.
+- **Test §14:** gehaltener 110-Hz-Ton, 6-Sonden-Filterbank → Spektral-
+  Centroid pro 1,5-s-Fenster; zeitliche CV **0.06 (aus) → 0.17 (an)** =
+  ×2.8 mehr Bewegung, aus bleibt near-static.
+
+26 Suiten / 0 Failures; h743 clean (182,5 KB Flash); beide Demos neu.
+
+---
+
 ## v0.7-r19.0 (2026-07-06) — Harmonic Safety Core: der Composer-Kern neu geschrieben (Pitch-World → Register → Mutation → Collision-Filter → lange Melodie → Wahrscheinlichkeit zuletzt)
 
 User-Brief (nach Research über r/ambientmusic, r/musictheory, Plomp/Levelt-

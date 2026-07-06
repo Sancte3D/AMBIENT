@@ -68,6 +68,14 @@ typedef struct {
     float cutoffBase, cutoffMod, fenvAmount;
     float lfoPhase, lfoInc;
 
+    /* r19.5 Blendwave spectral animator: a gentle wandering formant that
+     * emphasises a slowly moving harmonic region, so a HELD tone morphs
+     * ("same note, evolve timbre" — the Sonicware Ø principle). The centre
+     * is driven by the VOICE's spec_w walk, mirrored between the two sides
+     * (w vs 1-w) → the two internal oscillators morph in OPPOSITE directions
+     * (Yin/Yang), which also makes the stereo image shimmer spectrally. */
+    dsp_svf_t animBP;
+
     /* filter envelope (control rate): attack 0→1, then decay→sustain */
     float fenv, fenvAtkInc, fenvDecCoef, fenvSustain;
     int   fenvStage;        /* 0 attack, 1 decayed */
@@ -88,6 +96,14 @@ typedef struct {
     float       atkInc;     /* per-sample linear attack step */
     float       relCoef;    /* per-sample exponential release coef */
     env_state_t state;
+
+    /* r19.5 spectral animator walk (per voice; both sides read it mirrored).
+     * A CORRELATED random walk 0..1 — small persistent steps (20,21,23,26…
+     * never 20,97,4), the "undulating" motion the Ø gets from morphing
+     * through harmonic tables. Fixed-seeded → reproducible in host tests. */
+    float       spec_w, spec_tgt;
+    uint32_t    spec_rng;
+    int         spec_ctr;
 } pad_voice_t;
 
 static pad_voice_t voices[PAD_MAX];
@@ -96,6 +112,17 @@ static float bright_target;         /* brightness offset target (Hz) */
 static float bright_cur;            /* smoothed brightness */
 static float bright_coef;           /* per-control-block smoothing coef */
 static float motion_depth = 1.0f;   /* LFO-depth multiplier (Motion macro) */
+static float spec_depth   = 0.0f;   /* r19.5 spectral-animator depth (Motion) */
+
+/* r19.5 animator constants. The formant wanders across the bed's living
+ * partials (≈ f0·2 .. f0·14, 220..1550 Hz); moderate Q so it colours the
+ * timbre without whistling; gentle gain so it MORPHS, never dominates.
+ * SPEC_STEP control ticks ≈ how often a new walk target is picked. */
+#define SPEC_LO      220.0f
+#define SPEC_HI      1550.0f
+#define SPEC_Q       2.2f
+#define SPEC_GAIN    0.55f
+#define SPEC_STEP    170               /* ~1.0 s between targets @ SR/16 */
 
 /* Oscillator layout per side: 0,1,2 = saws (×1, ×freqMul, ×0.5),
  * 3,4 = squares (×1, ×freqMul). Frequency multipliers below; the second-saw
@@ -126,7 +153,13 @@ void pad_init(void) {
 }
 
 void pad_set_brightness(float hz) { bright_target = hz; }
-void pad_set_motion(float d)      { motion_depth = dsp_clampf(d, 0.0f, 2.0f); }
+void pad_set_motion(float d)      {
+    motion_depth = dsp_clampf(d, 0.0f, 2.0f);
+    /* r19.5: MOTION also drives the spectral animator (same emotional
+     * direction — "more alive"). 0 = OFF and bit-exact (the reference
+     * sound is untouched when MOTION is centred at 0). */
+    spec_depth   = dsp_clampf(d, 0.0f, 1.0f);
+}
 
 /* Global pad-voice timbre. 0 = warm (pure saw), ~0.6 = strings, ~1.2 = brass
  * (matches the webapp PAD_VOICE_MIXES). Smoothed across all voices. */
@@ -198,7 +231,7 @@ static void side_setup(pad_side_t *s, float base_freq, int sign, float voice_pan
     s->inc[1] = s->inc[0] * 0.5f;
 #endif
 
-    if (!keep_phase) dsp_svf_reset(&s->svf);
+    if (!keep_phase) { dsp_svf_reset(&s->svf); dsp_svf_reset(&s->animBP); }
     s->cutoffBase  = cutoff_base;
     s->cutoffMod   = 500.0f;
     /* Filter envelope amount: 0 for cell taps (webapp cellOn explicitly
@@ -251,7 +284,15 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     v->used   = true;
     v->source = source;
     v->amp    = dsp_clampf(amp, 0.0f, 1.0f);
-    if (!keep_phase) v->env = 0.0001f;
+    if (!keep_phase) {
+        v->env = 0.0001f;
+        /* r19.5 spectral walk: start mid-band, seed per source so voices
+         * don't wander in lockstep (fixed seed → reproducible). */
+        v->spec_w   = 0.5f;
+        v->spec_tgt = 0.5f;
+        v->spec_rng = 0x5A17E0B1u + (uint32_t)source * 2654435761u;
+        v->spec_ctr = 1;
+    }
     v->atkInc = v->amp / (PAD_ATTACK_S * SR);
     v->relCoef = dsp_smooth_coef(PAD_RELEASE_S / 3.0f);
     v->state  = ENV_ATTACK;
@@ -278,9 +319,33 @@ void pad_all_off(void) {
             voices[i].state = ENV_RELEASE;
 }
 
+/* r19.5: advance the voice's spectral walk once per control block. A new
+ * target is chosen every SPEC_STEP ticks; spec_w glides toward it slowly
+ * (correlated walk, never a jump). Returns nothing — sides read v->spec_w. */
+static void voice_spec_update(pad_voice_t *v) {
+    if (--v->spec_ctr <= 0) {
+        v->spec_rng = v->spec_rng * 1664525u + 1013904223u;
+        float r = (float)(v->spec_rng >> 8) / 16777216.0f;   /* 0..1 */
+        /* small correlated step from the current position, bounded 0..1 */
+        v->spec_tgt = v->spec_w + (r - 0.5f) * 0.7f;
+        if (v->spec_tgt < 0.05f) v->spec_tgt = 0.05f;
+        if (v->spec_tgt > 0.95f) v->spec_tgt = 0.95f;
+        v->spec_ctr = SPEC_STEP;
+    }
+    /* glide ~ per control block: reaches the target over a few seconds */
+    v->spec_w += 0.012f * (v->spec_tgt - v->spec_w);
+}
+
+/* Map a 0..1 walk position to a formant centre (log-spaced across the
+ * living-partial band). Side 1 passes (1-w) → the two sides morph in
+ * OPPOSITE directions (Yin/Yang). */
+static inline float spec_centre(float w) {
+    return SPEC_LO * powf(SPEC_HI / SPEC_LO, w);
+}
+
 /* Control-rate update for one side: advance LFO + filter env, recompute the
- * lowpass cutoff. Called every CTL_DECIMATE samples. */
-static void side_control(pad_side_t *s) {
+ * lowpass cutoff + the animator formant. Called every CTL_DECIMATE samples. */
+static void side_control(pad_side_t *s, float anim_fc) {
     /* LFO */
     s->lfoPhase += s->lfoInc * (float)CTL_DECIMATE;
     if (s->lfoPhase >= 1.0f) s->lfoPhase -= 1.0f;
@@ -304,6 +369,10 @@ static void side_control(pad_side_t *s) {
     cutoff += pulsew_cur * 500.0f;
 #endif
     dsp_svf_set(&s->svf, dsp_clampf(cutoff, 80.0f, 8000.0f), 0.18f * 12.0f);
+
+    /* r19.5 animator formant (bandpass; the wandering emphasis). Centre is
+     * the voice's mirrored walk position, passed in by the caller. */
+    dsp_svf_set(&s->animBP, dsp_clampf(anim_fc, 120.0f, 6000.0f), SPEC_Q);
 
     /* r18.90 ensemble motion: wobble the side's detune ±1.8 cents (scaled
      * by the Motion macro) and re-derive the oscillator increments. Small-
@@ -366,10 +435,14 @@ static void render_block_float(float *outL, float *outR, int frames) {
             }
             if (!v->used) continue;
 
+            if (ctl && spec_depth > 1.0e-4f) voice_spec_update(v);
+
             float vL = 0.0f, vR = 0.0f;
             for (int sd = 0; sd < 2; ++sd) {
                 pad_side_t *s = &v->side[sd];
-                if (ctl) side_control(s);
+                /* mirrored walk: side 0 uses w, side 1 uses 1-w (Yin/Yang) */
+                if (ctl) side_control(s, spec_centre(sd == 0 ? v->spec_w
+                                                             : 1.0f - v->spec_w));
 
 #if FAM_PAD_CORE == 1
                 /* PADsynth core: main read + quiet sub-octave body. The
@@ -380,6 +453,11 @@ static void render_block_float(float *outL, float *outR, int frames) {
                  * direction, no second table needed. */
                 float sig = (padsynth_read(s->phase[0])
                            + 0.4f * padsynth_read(s->phase[1])) * 0.9f;
+                /* r19.5 Blendwave: add the wandering formant emphasis. As
+                 * the centre walks, different partials get lifted → the
+                 * held tone MORPHS. Depth from MOTION; 0 = untouched. */
+                if (spec_depth > 1.0e-4f)
+                    sig += spec_depth * SPEC_GAIN * dsp_svf_bp(&s->animBP, sig);
                 s->phase[0] += s->inc[0];
                 if (s->phase[0] >= (float)PADSYNTH_N)
                     s->phase[0] -= (float)PADSYNTH_N;

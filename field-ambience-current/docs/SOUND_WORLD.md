@@ -91,9 +91,14 @@ Zufall ist IMMER eingesperrt in diese Regeln (engine.c Tick + harmony.c):
 | Déjà-vu | 35 % Replay der letzten Phrase, jeder Ton erneut durch World + Filter |
 | Onset | zusätzlicher VOICE-Anschlag (String/Glass) vor dem Pad-Swell |
 
-**Blendwave (Liven Ambient Ø, gelernt):** ein gehaltener Ton lebt durch
-korrelierten Timbre-Walk (Pad-Brightness-Tilt, kleine Schritte alle 400 ms)
-— „same note, evolve timbre", nicht durch neue Events.
+**Blendwave (Liven Ambient Ø, gelernt — r19.5 ausgebaut):** ein gehaltener
+Ton lebt durch spektrale Bewegung, nicht durch neue Events. Zwei Ebenen:
+(1) globaler Brightness-Walk (Pad-Tilt, alle 400 ms); (2) **pro Stimme ein
+wandernder Formant** (korrelierter Walk über die Partial-Zone 220–1550 Hz),
+die zwei internen Oszillatoren **gegenläufig gespiegelt** (w vs 1−w =
+Yin/Yang) → der Ton morpht UND das Stereobild schimmert spektral. Tiefe an
+MOTION, bei 0 bit-exakt aus. Belegt: Spektral-Centroid-Bewegung ×2.8
+(host-getestet, CV 0.06 → 0.17).
 | Dynamik | Phrasen-Opener leicht lauter (0.075 vs 0.05–0.065) |
 | Timing | 20–60 % der Bar, humanisiert |
 
