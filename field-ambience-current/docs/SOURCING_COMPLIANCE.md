@@ -38,6 +38,22 @@ SMD-BOM ~**$21,30/Board** (@10+). Status **🟢** — das ist der Teil, den man
 > pin-/footprint-kompatiblen Ersatz suchen und **gegen Datenblatt
 > verifizieren** (CLAUDE.md-Regel), nicht blind tauschen.
 
+**Kailh-Choc-Notiz (r19.3):** LCSC C400229 ist oft 0 Stock — egal, die
+Zelle ist als **direkt gelöteter THT-Schalter** eh Hand-Montage. Jeder
+**Kailh Choc V1 (PG1350-Familie)** passt mechanisch auf den Footprint
+`SW_KailhChoc_CPG1350_THT_2P`; für den „Tastatur-Tasten"-Griff eine
+**taktile** Variante (Choc Brown) wählen. Feste DE-Quelle:
+**keycapsss.com** (1–3 Tage DE-Lieferung), EU-Alternativen 42keebs.eu /
+splitkb.com. Für die RoHS-Akte die **Kailh-Herstellererklärung** anfordern
+(Hobby-Shops liefern selten ein eigenes Zertifikat).
+
+**Display-Notiz (r19.3):** Feste Quelle **Eckstein Shop (DE), 13,95 €** —
+exakt das ST7789V2-170×320-Modul, das der Schaltplan referenziert
+(exp-tech / BerryBase / Amazon.de als Alternativen). Die **Modul-Pin-Order
+weicht von J3 ab** (J3 = VCC/GND/SCK/MOSI/RES/DC/CS/BLK) → **immer per
+8-Draht-Kabel Draht-für-Draht mappen** (Design-Option (b), schon
+vorgesehen), nie als Steck-Header. Mechanische Maße = Arons Layout.
+
 ### Off-Board / Handteile — hier liegen Kosten UND Doku-Pflicht
 Diese Teile kommen NICHT von JLC, werden von Hand montiert, und für den
 **Verkauf** brauchen die energie-/akkuführenden die Sicherheitsdoks.
@@ -45,10 +61,10 @@ Diese Teile kommen NICHT von JLC, werden von Hand montiert, und für den
 | Teil | Quelle | ~$/St | Doks fürs Inverkehrbringen | Status |
 |---|---|---|---|---|
 | 4× ALPS EC11-Encoder | LCSC C202365 | 1,91 | RoHS | 🟢 |
-| 5× Kailh Choc V1 | Kailh/Ali | ~1 | RoHS | 🟡 LCSC 0 Stock → feste Bezugsquelle fixieren |
+| 5× Kailh Choc V1 (PG1350) | **keycapsss.com (DE)** / 42keebs.eu / splitkb | ~1 | RoHS (Kailh-Herstellererklärung anfordern) | 🟢 s. Notiz |
 | 5× HX B3F Modifier | LCSC C36498965 | 0,06 | RoHS | 🟢 |
 | 2× Speaker CMS-402811-28SP | DigiKey | 3 | RoHS | 🟢 |
-| Display 1.9″ ST7789 (Waveshare) | Waveshare/BerryBase | 12 | RoHS; Modul-Pinout je Vendor prüfen | 🟡 |
+| Display Waveshare 1.9″ ST7789V2 | **Eckstein (DE) 13,95 €** / exp-tech / BerryBase | 14 | RoHS (Waveshare); **immer per 8-Draht-Kabel** an J3 | 🟢 s. Notiz |
 | **LiPo 2000 mAh** | **s. §2** | 8 | **UN38.3 + IEC62133 + PCM + RoHS** | 🟡 s. §2 |
 | USB-Netzteil (Beipack, optional) | zertifiziert kaufen | — | **muss selbst CE/LVD tragen** | 🟡 fertig-zert. wählen, nie selbst bauen |
 | Schrauben/Mesh/Standoffs | Reichelt/Ali | 2 | — | 🟢 |
@@ -180,6 +196,8 @@ da sind. Tut man nicht.
 - [x] Akku-Polarität Board-Seite verifiziert — **J9 Pin 1 / Pad 1 = Plus** (r19.2)
 - [ ] Bench-Check: Adafruit-Steckerpolung mit Multimeter (wenn Akku da ist)
 - [ ] Akku-7-mm-Fit → Arons PCB-/Gehäuse-Layout (kein Schaltungs-Blocker)
-- [ ] Kailh-Choc + Display feste Bezugsquelle fixieren
+- [x] Kailh-Choc feste Quelle: **keycapsss.com (DE)**, taktil (r19.3)
+- [x] Display feste Quelle: **Eckstein (DE) 13,95 €**, per Kabel an J3 (r19.3)
+- [ ] Kailh- + Waveshare-RoHS-Herstellererklärungen in die Akte legen
 - [ ] EMV-Pre-Compliance planen (nach 5er-Prototyp)
 - [ ] Kampagnen-Video + Demo-Seite
