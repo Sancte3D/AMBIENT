@@ -31,6 +31,7 @@
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
+#include "harmony.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -69,40 +70,47 @@ static uint8_t  eno_on[ENO_LOOPS];
 static int      eno_timing_valid;
 #define ENO_SRC(i) ((uint8_t)(5 + (i)))
 
-/* Generative-bed state. Sparkle melody scheduler (r18.88): sources 14/15,
- * see the autoplay block above engine_generative_tick(). */
-static bool gen_on = false;
-#define SPARK_COUNT      2
-#define SPARK_SRC0       14              /* sources 14/15 — see MAX_SOURCES */
-#define GEN_TICK_BAR_MS  8000u
+/* Generative state (r19.0: rebuilt on the HARMONIC SAFETY CORE, see
+ * harmony.h — pitch world → register rules → state mutation → collision
+ * filter → long melody → probability LAST). The old per-bar chord walk +
+ * sparkle scheduler is gone: the bed follows the harmonic STATE, the
+ * melody is one LONG voice with real silences. */
+static bool     gen_on = false;
 static bool     gen_timing_valid = false;
-static uint32_t gen_next_bar_ms  = 0;
 static uint32_t gen_tick_rng     = 0x5EEDBA55u;
-static struct {
-    bool     on_pending;
-    uint32_t on_ms;
-    float    hz, amp;
-} spark[SPARK_COUNT];
+static int      gen_state_seen   = -1;   /* bed re-strikes on state change */
 
-/* r18.90 melody grammar state (see the tick). Session-persistent voice
- * leading: the next phrase starts near where the last one ended. */
-static int  mel_last_midi   = 0;      /* 0 = nothing sung yet          */
-static int  mel_phrase_bars = 0;      /* bars left in current phrase   */
-static bool mel_phrase_rest = false;  /* whole phrase is silence       */
-static bool mel_phrase_open = false;  /* next note opens the phrase    */
-static int  mel_note_count  = 0;      /* scheduled melody notes (tests/UI) */
+/* Long melody voice: pad source 15 sustains 4-16 s, the selected VOICE
+ * (string/glass) strikes the onset. */
+#define MEL_SRC 15
+static uint32_t mel_next_ms;          /* next decision time              */
+static uint32_t mel_off_ms;           /* scheduled note-off              */
+static int      mel_sounding;
+static int      mel_phrase_left;      /* notes left in current phrase    */
+static int      mel_last_midi;        /* voice-leading memory (0 = none) */
+static int      mel_note_count;       /* observability (tests/UI)        */
 
-/* r18.93 — déjà-vu phrase memory (concept studied from Mutable Marbles:
- * a random sequencer becomes MUSIC when it can decide to say the same
- * thing again). The last completed phrase is remembered as a tone
- * contour; a new phrase replays it with p=0.40 (one note varied with
- * p=0.30), re-fitted to the CURRENT chord so harmony changes never
- * clash — the motif survives, the harmony breathes. */
+/* déjà-vu phrase memory (Marbles concept, kept from r18.93): the last
+ * completed phrase replays with p=0.35 — but EVERY remembered tone must
+ * still pass the current pitch world + collision filter, else the picker
+ * falls through to a fresh safe choice. The motif survives, the safety
+ * rules always win. */
 #define MEL_PHRASE_MAX 6
-static int  mel_hist[MEL_PHRASE_MAX]; static int mel_hist_len = 0;
-static int  mel_cur [MEL_PHRASE_MAX]; static int mel_cur_len  = 0;
-static int  mel_replay = 0, mel_replay_idx = 0, mel_vary_slot = -1;
-static int  mel_dejavu_count = 0;     /* replayed phrases (tests/UI)   */
+static int mel_hist[MEL_PHRASE_MAX]; static int mel_hist_len = 0;
+static int mel_cur [MEL_PHRASE_MAX]; static int mel_cur_len  = 0;
+static int mel_replay = 0, mel_replay_idx = 0;
+static int mel_dejavu_count = 0;
+
+/* sounding-note registry for the collision filter (0 = silent) */
+static int snd_bed_midi = 0;
+static int snd_eno_midi[ENO_LOOPS];
+
+/* r19.0 spectral undulation (Blendwave principle from the Liven Ambient
+ * Ø study): a held tone must LIVE. Correlated random walk on the pad's
+ * brightness tilt — small persistent steps, never a jump — so the bed
+ * undulates without a single new note event. */
+static float    vmix_walk = 0.0f;
+static uint32_t vmix_next_ms = 0;
 
 /* Lowest currently-held frequency, or 0 if nothing is held. */
 static float lowest_held(void) {
@@ -229,13 +237,16 @@ void engine_init(void) {
     gen_on = false;
     gen_timing_valid = false;        /* r18.88 autoplay scheduler reset */
     composer_init();                 /* r18.96 top-level intent reset   */
-    memset(spark, 0, sizeof spark);
-    mel_last_midi = 0; mel_phrase_bars = 0;
-    mel_phrase_rest = false; mel_phrase_open = false;
-    mel_note_count = 0;
+    harmony_init();                  /* r19.0 harmonic safety core */
+    gen_state_seen = -1;
+    mel_next_ms = 0; mel_off_ms = 0; mel_sounding = 0;
+    mel_phrase_left = 0; mel_last_midi = 0; mel_note_count = 0;
     mel_hist_len = mel_cur_len = 0;
-    mel_replay = 0; mel_replay_idx = 0; mel_vary_slot = -1;
+    mel_replay = 0; mel_replay_idx = 0;
     mel_dejavu_count = 0;
+    snd_bed_midi = 0;
+    memset(snd_eno_midi, 0, sizeof snd_eno_midi);
+    vmix_walk = 0.0f; vmix_next_ms = 0;
 
     /* Master stage: DC-block cleared, moderate default volume (no on-device
      * volume knob bound yet — keeps headphones from being slammed). */
@@ -418,11 +429,19 @@ void engine_set_blur(float v) {
  * — matches the "sound darf nicht konkurrieren" rule for global params.
  * Also keeps the harmonic brain's view of mode/vibe in sync so cells played
  * after the change pick up the new harmony. */
+/* r19.0: the harmony core needs TONALITY, not the full mode. Dorian /
+ * phrygian / aeolian read as minor pitch worlds; ionian / lydian /
+ * mixolydian as major. */
+static int mode_is_minor(int mode_idx) {
+    return mode_idx == 1 || mode_idx == 2 || mode_idx == 5;
+}
+
 void engine_set_mode(int mode_idx) {
     if (mode_idx < 0)               mode_idx = 0;
     if (mode_idx >= RP_MODE_COUNT)  mode_idx = RP_MODE_COUNT - 1;
     musical_mode = mode_idx;
     brain_set_mode(mode_idx);
+    harmony_set_world(brain_get_key(), mode_is_minor(mode_idx));   /* r19.0 */
     recompute_reverb_from_presets();
 }
 void engine_set_vibe(int vibe_idx) {
@@ -452,6 +471,7 @@ void engine_set_key_pc(int pc) {
 
 void engine_set_key(int tonic_midi) {
     brain_set_key(tonic_midi);
+    harmony_set_world(tonic_midi, mode_is_minor(musical_mode));    /* r19.0 */
     drone_set_root_midi(tonic_midi);   /* glides live if the drone is sounding */
 }
 void engine_set_drone(bool on) { drone_enable(on); }
@@ -499,34 +519,38 @@ static float gen_rand01(void) {
     return (float)(gen_tick_rng >> 8) / 16777216.0f;
 }
 
-static void spark_silence_all(void) {
-    /* Plucks self-decay in ~3 s — just cancel anything not yet fired. */
-    for (int i = 0; i < SPARK_COUNT; ++i) spark[i].on_pending = false;
-}
-
 void engine_set_generative(bool on, int program) {
     generative_set_program(program);
     if (on && !gen_on) gen_timing_valid = false;   /* first tick plays NOW */
     gen_on = on;
     if (!on) {
         engine_note_off(GEN_SOURCE);    /* release the bed voice */
-        spark_silence_all();
+        snd_bed_midi = 0;
+        engine_note_off((uint8_t)MEL_SRC);   /* r19.0: melody voice too */
+        mel_sounding = 0;
         for (int i = 0; i < ENO_LOOPS; ++i) {   /* r18.99: loops out too */
             if (eno_on[i]) engine_note_off(ENO_SRC(i));
             eno_on[i] = 0;
+            snd_eno_midi[i] = 0;
         }
         eno_timing_valid = 0;
     }
 }
 
+/* r19.0: manual step = one harmonic-state MUTATION (≥3 common pitch
+ * classes, ≤2 voices move — harmony.c enforces the contract). The pad
+ * bed voice sits an octave over the bass register; bass.c derives the
+ * low fundament from it (lowest_held). Returns state index + 1 (1..4). */
 int engine_generative_advance(void) {
     if (!gen_on) return -1;
     if (any_user_note()) return -1;          /* live playing overrides the bed */
-    int deg  = generative_next_degree();     /* 1..7 (fixed prog 3 uses the 7th) */
-    int midi = brain_cell_root(deg - 1);     /* root of that degree's voiced chord */
+    harmony_advance();
+    int midi = harmony_bass_midi() + 12;
+    snd_bed_midi = midi;
+    gen_state_seen = harmony_state_changes();
     engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi),
                    GEN_VOICE_AMP * composer_params()->bed_amp);
-    return deg;
+    return harmony_state_index() + 1;
 }
 
 int engine_generative_last_melody_midi(void) { return mel_last_midi; }
@@ -541,16 +565,21 @@ void engine_generative_tick(uint32_t now_ms) {
     composer_tick(now_ms);
 
     if (any_user_note()) {
-        /* Player takes over: drop scheduled note-ons and re-arm the bar so
-         * the bed resumes promptly (not up to 8 s late) after release. */
-        for (int i = 0; i < SPARK_COUNT; ++i) spark[i].on_pending = false;
+        /* Player takes over: freeze everything and re-arm so the piece
+         * resumes promptly after release. */
         gen_timing_valid = false;
         return;
     }
 
     if (!gen_timing_valid) {           /* just enabled / just released */
-        gen_next_bar_ms  = now_ms;     /* fire the bar immediately */
         gen_timing_valid = true;
+        gen_state_seen = -1;           /* strike the bed on THIS tick   */
+        mel_next_ms = now_ms + 1500u + (uint32_t)(gen_rand01() * 2500.0f);
+        if (mel_sounding && (int32_t)(now_ms - mel_off_ms) >= 0) {
+            engine_note_off((uint8_t)MEL_SRC);   /* stale note from before
+                                                  * a long user hold      */
+            mel_sounding = 0;
+        }
     }
 
     /* --- r18.99 ENO LOOPS (see the block comment at the top) ------------
@@ -571,18 +600,23 @@ void engine_generative_tick(uint32_t now_ms) {
         if (eno_on[i] && (int32_t)(now_ms - eno_off_ms[i]) >= 0) {
             engine_note_off(ENO_SRC(i));
             eno_on[i] = 0;
+            snd_eno_midi[i] = 0;
         }
         if ((int32_t)(now_ms - eno_next_ms[i]) >= 0) {
-            int chord[4];
-            int nch = brain_chord(generative_current_degree(), chord, 4);
-            if (nch > 0) {
-                int midi = chord[i < nch ? i : nch - 1];
+            /* r19.0: each loop owns ONE voice of the harmonic STATE (the
+             * voiced, collision-safe upper harmony) — the recombination
+             * always lands inside the pitch world. */
+            int hv[HARMONY_VOICES];
+            harmony_voices(hv, HARMONY_VOICES);
+            {
+                int midi = hv[i];
                 while (midi > 74) midi -= 12;    /* keep the choir mid-low */
                 while (midi < 50) midi += 12;
                 if (eno_on[i]) engine_note_off(ENO_SRC(i));
                 engine_note_on(ENO_SRC(i), dsp_midi_to_hz((float)midi),
                                ENO_AMP[i] * composer_params()->bed_amp);
-                eno_on[i]     = 1;
+                eno_on[i]       = 1;
+                snd_eno_midi[i] = midi;
                 eno_off_ms[i] = now_ms + (uint32_t)(ENO_PERIOD_MS[i] * 0.62f);
             }
             /* phase NEVER resets — the drift is the composition. The while
@@ -593,158 +627,110 @@ void engine_generative_tick(uint32_t now_ms) {
         }
     }
 
-    if ((int32_t)(now_ms - gen_next_bar_ms) >= 0) {
-        /* per-bar: let the bass fundament follow the composer's state
-         * (the r18.88 sustain drift glides it — no steps, no zipper). */
-        bass_set_depth(composer_params()->bass_depth);
-        int deg = engine_generative_advance();
-        /* Humanized bar: 90..110 % of the base length. */
-        uint32_t bar = GEN_TICK_BAR_MS * (uint32_t)(90 + (int)(gen_rand01() * 21.0f)) / 100u;
-        if (deg > 0) {
-            /* --- Melody grammar (r18.90) ---------------------------------
-             * The r18.89 sparkles picked uniform-random chord tones at
-             * uniform-random times: pretty per-event, but it RANDOMIZES —
-             * it never composes. Replaced by a phrase grammar (rules per
-             * SOUND_WORLD.md §6):
-             *   - PHRASES of 2-4 bars; 30 % of phrases are whole-phrase
-             *     RESTS (silence is part of the composition);
-             *   - at most ONE melody tone per bar (openers 85 %, inner
-             *     bars 55 % — sparse, breathing);
-             *   - tone choice is VOICE-LED: 35 % repeat the previous tone
-             *     (repetition is desirable), else the NEAREST upper chord
-             *     tone to the last one (stepwise motion; 15 % take the
-             *     second-nearest for variety). Register: voiced chord +12
-             *     (≈ MIDI 64..90), leaps bounded by construction;
-             *   - phrase openers are slightly louder (a breath accent);
-             *   - occasionally (18 %) the second pluck voice answers the
-             *     same tone an octave DOWN a beat later — call & answer,
-             *     never a new pitch class. */
-            if (mel_phrase_bars <= 0) {
-                /* phrase boundary: archive the finished contour first */
-                if (mel_cur_len >= 2) {
-                    for (int i = 0; i < mel_cur_len; ++i) mel_hist[i] = mel_cur[i];
-                    mel_hist_len = mel_cur_len;
-                }
-                mel_cur_len = 0;
-                mel_phrase_bars = 2 + (int)(gen_rand01() * 3.0f);   /* 2..4 */
-                {
-                    float p_rest = 0.30f + composer_params()->rest_add;
-                    if (p_rest < 0.05f) p_rest = 0.05f;
-                    if (p_rest > 0.85f) p_rest = 0.85f;
-                    mel_phrase_rest = gen_rand01() < p_rest;
-                }
-                mel_phrase_open = true;
-                /* déjà-vu decision (never on a rest phrase) */
-                mel_replay = (!mel_phrase_rest && mel_hist_len >= 2 &&
-                              gen_rand01() < 0.40f);
-                mel_replay_idx = 0;
-                mel_vary_slot  = (mel_replay && gen_rand01() < 0.30f)
-                               ? (int)(gen_rand01() * (float)mel_hist_len) : -1;
-                if (mel_replay) ++mel_dejavu_count;
-            }
-            --mel_phrase_bars;
-            if (!mel_phrase_rest &&
-                gen_rand01() < dsp_clampf((mel_phrase_open ? 0.85f : 0.55f)
-                                          * composer_params()->mel_density,
-                                          0.0f, 0.95f)) {
-                int chord[BRAIN_MAX_CHORD];
-                int n = brain_chord(deg, chord, BRAIN_MAX_CHORD);
-                if (n > 1) {
-                    int tone;
-                    if (mel_replay && mel_replay_idx < mel_hist_len) {
-                        /* déjà-vu: re-fit the remembered tone to the CURRENT
-                         * chord (nearest upper chord tone to the stored one;
-                         * the varied slot falls through to a free choice). */
-                        int want = mel_hist[mel_replay_idx];
-                        if (mel_replay_idx == mel_vary_slot) {
-                            mel_replay_idx++;
-                            goto free_choice;
-                        }
-                        mel_replay_idx++;
-                        int best = chord[n / 2] + 12, bd = 999;
-                        for (int i = 1; i < n; ++i) {
-                            for (int oct = 0; oct <= 24; oct += 12) {
-                                int c = chord[i] + oct;
-                                int d = c > want ? c - want : want - c;
-                                if (d < bd) { best = c; bd = d; }
-                            }
-                        }
-                        tone = best;
-                    } else if (mel_last_midi == 0) {
-free_choice:
-                        tone = chord[n / 2] + 12;         /* mid register in */
-                    } else if (gen_rand01() < 0.35f) {
-                        tone = mel_last_midi;             /* repeat — allowed */
-                    } else {
-                        /* nearest / 2nd-nearest upper chord tone to last */
-                        int best = -1, second = -1, bd = 999, sd = 999;
-                        for (int i = 1; i < n; ++i) {
-                            int c = chord[i] + 12;
-                            int d = c > mel_last_midi ? c - mel_last_midi
-                                                      : mel_last_midi - c;
-                            if (d == 0) continue;         /* repeat handled */
-                            if (d < bd)      { second = best; sd = bd; best = c; bd = d; }
-                            else if (d < sd) { second = c; sd = d; }
-                        }
-                        tone = (second >= 0 && gen_rand01() < 0.15f) ? second
-                             : (best >= 0 ? best : chord[n / 2] + 12);
-                    }
-                    /* Octave-fold toward the previous tone: after a DEGREE
-                     * change the new chord's voicing can sit far away, so
-                     * even the "nearest" candidate may leap. Folding by
-                     * octaves keeps the pitch CLASS (still a chord tone)
-                     * while enforcing the small-interval rule; the 56..96
-                     * band keeps the voice in its register. */
-                    if (mel_last_midi != 0) {
-                        while (tone - mel_last_midi > 7 && tone - 12 >= 56)
-                            tone -= 12;
-                        while (mel_last_midi - tone > 7 && tone + 12 <= 96)
-                            tone += 12;
-                    }
-                    /* r18.96 HIGH RESPONSE: rarely (composer-gated) the
-                     * tone SOUNDS an octave higher — OPEN's signature, an
-                     * event everywhere else. It is a separate answering
-                     * voice: the melodic LINE (mel_last_midi, the phrase
-                     * memory) keeps the base tone, so voice-leading stays
-                     * stepwise and the leap rule holds. */
-                    int play_tone = tone;
-                    if (tone + 12 <= 94 &&
-                        gen_rand01() < composer_params()->high_p)
-                        play_tone = tone + 12;
-                    spark[0].hz  = dsp_midi_to_hz((float)play_tone);
-                    spark[0].amp = mel_phrase_open
-                                 ? 0.075f
-                                 : 0.05f + gen_rand01() * 0.015f;
-                    spark[0].on_ms = now_ms +
-                        (uint32_t)((0.20f + gen_rand01() * 0.40f) * (float)bar);
-                    spark[0].on_pending = true;
-                    if (!mel_phrase_open && gen_rand01() < 0.18f) {
-                        spark[1].hz  = dsp_midi_to_hz((float)(play_tone - 12));
-                        spark[1].amp = spark[0].amp * 0.7f;
-                        spark[1].on_ms = spark[0].on_ms +
-                                         (uint32_t)(0.15f * (float)bar);
-                        spark[1].on_pending = true;
-                    }
-                    mel_last_midi   = tone;
-                    mel_phrase_open = false;
-                    ++mel_note_count;
-                    if (mel_cur_len < MEL_PHRASE_MAX) mel_cur[mel_cur_len++] = tone;
-                }
-            }
-        }
-        gen_next_bar_ms = now_ms + bar;
+    /* --- r19.0 HARMONIC STATE (harmony.h) -------------------------------
+     * The state machine dwells 24-48 s, then MUTATES: ≥3 common pitch
+     * classes, ≤2 voices move, common tones frozen at pitch. The bed
+     * re-sounds only when the state actually changed — held notes get
+     * REINTERPRETED by the new bass, not re-struck (the user's research
+     * brief: "Wir sollten Akkorde nicht auswählen, sondern den nächsten
+     * harmonischen Zustand aus dem vorherigen mutieren"). */
+    harmony_tick(now_ms);
+    bass_set_depth(composer_params()->bass_depth);
+    if (harmony_state_changes() != gen_state_seen) {
+        gen_state_seen = harmony_state_changes();
+        int midi = harmony_bass_midi() + 12;   /* pad bed over the bass reg;
+                                                * bass.c derives the low
+                                                * fundament via lowest_held */
+        snd_bed_midi = midi;
+        engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi),
+                       GEN_VOICE_AMP * composer_params()->bed_amp);
     }
 
-    for (int i = 0; i < SPARK_COUNT; ++i) {
-        if (spark[i].on_pending && (int32_t)(now_ms - spark[i].on_ms) >= 0) {
-            /* r18.89: sparkles are Karplus-Strong PLUCKS now, not pad
-             * voices — a second instrument colour over the bed (bell/koto
-             * blooming into the reverb) instead of "more pad". Plucks
-             * self-decay (~3 s T60), so no note-off bookkeeping.
-             * r18.98: VOICE=GLASS swaps the string for the FM glass. */
-            melody_strike(spark[i].hz, spark[i].amp * 2.2f);
-            spark[i].on_pending = false;
+    /* --- r19.0 LONG MELODY VOICE -----------------------------------------
+     * One voice. Long tones (4-16 s), real silences (1-8 s, stretched by
+     * the composer's rest_add), phrases of 2-5 notes with a longer breath
+     * after each phrase. EVERY tone runs the full safety chain in
+     * harmony_melody_next: pitch world → register mask → interval table →
+     * collision filter against everything sustaining → next-best
+     * fallback. Probability is the LAST stage, not the first. The onset
+     * is doubled by the selected VOICE strike (string/glass) so the tone
+     * has an attack in front of the pad swell — not an arpeggiator, a
+     * slow cinematic line. */
+    if (mel_sounding && (int32_t)(now_ms - mel_off_ms) >= 0) {
+        engine_note_off((uint8_t)MEL_SRC);
+        mel_sounding = 0;
+        float rest = 1.0f + gen_rand01() * 7.0f;              /* 1-8 s   */
+        rest *= 1.0f + composer_params()->rest_add * 2.0f;    /* composer */
+        if (mel_phrase_left <= 0)
+            rest += 3.0f + gen_rand01() * 5.0f;               /* breath  */
+        mel_next_ms = now_ms + (uint32_t)(rest * 1000.0f);
+    }
+    if (!mel_sounding && (int32_t)(now_ms - mel_next_ms) >= 0) {
+        if (mel_phrase_left <= 0) {
+            if (mel_cur_len >= 2) {              /* archive the phrase   */
+                for (int i = 0; i < mel_cur_len; ++i) mel_hist[i] = mel_cur[i];
+                mel_hist_len = mel_cur_len;
+            }
+            mel_cur_len = 0;
+            mel_phrase_left = 2 + (int)(gen_rand01() * 4.0f);   /* 2..5  */
+            mel_replay = (mel_hist_len >= 2 && gen_rand01() < 0.35f);
+            mel_replay_idx = 0;
+            if (mel_replay) ++mel_dejavu_count;
+            /* mel_last_midi is NOT reset: the new phrase steps off from
+             * where the old one ended, so voice-leading survives the
+             * breath (a reset caused over-octave leaps between phrases —
+             * caught by the grammar audit). */
         }
+        if (gen_rand01() < dsp_clampf(0.80f * composer_params()->mel_density,
+                                      0.05f, 0.95f)) {
+            /* everything currently sustaining, for the collision filter */
+            int sus[2 + ENO_LOOPS]; int nsus = 0;
+            if (snd_bed_midi) sus[nsus++] = snd_bed_midi;
+            for (int i = 0; i < ENO_LOOPS; ++i)
+                if (snd_eno_midi[i]) sus[nsus++] = snd_eno_midi[i];
+
+            int tone = -1;
+            if (mel_replay && mel_replay_idx < mel_hist_len) {
+                int want = mel_hist[mel_replay_idx++];
+                if (harmony_in_world(want) &&
+                    harmony_collision_ok(want, sus, nsus))
+                    tone = want;                 /* the motif survives   */
+            }
+            if (tone < 0)
+                tone = harmony_melody_next(mel_last_midi, sus, nsus,
+                                           0.05f + composer_params()->high_p);
+            if (tone > 0) {
+                float hz  = dsp_midi_to_hz((float)tone);
+                float amp = 0.062f + gen_rand01() * 0.014f;
+                engine_note_on((uint8_t)MEL_SRC, hz, amp);
+                melody_strike(hz, amp * 2.0f);   /* articulate the onset */
+                mel_sounding  = 1;
+                mel_last_midi = tone;
+                ++mel_note_count;
+                if (mel_cur_len < MEL_PHRASE_MAX) mel_cur[mel_cur_len++] = tone;
+                --mel_phrase_left;
+                mel_off_ms = now_ms + 4000u +
+                             (uint32_t)(gen_rand01() * 12000.0f);   /* 4-16 s */
+            } else {
+                /* nothing SAFE right now — silence is the correct note */
+                mel_next_ms = now_ms + 2000u +
+                              (uint32_t)(gen_rand01() * 3000.0f);
+            }
+        } else {
+            mel_next_ms = now_ms + 2000u + (uint32_t)(gen_rand01() * 4000.0f);
+        }
+    }
+
+    /* --- r19.0 spectral undulation (Blendwave principle) ------------------
+     * "Same note, evolve timbre": every 400 ms the pad brightness tilt
+     * takes one small CORRELATED step (bounded random walk: 20 21 23 26,
+     * never 20 97 4) — the bed undulates without new events. */
+    if ((int32_t)(now_ms - vmix_next_ms) >= 0) {
+        vmix_walk += (gen_rand01() - 0.5f) * 0.10f;
+        if (vmix_walk < -0.30f) vmix_walk = -0.30f;
+        if (vmix_walk >  0.50f) vmix_walk =  0.50f;
+        pad_set_voice_mix(0.45f + vmix_walk);
+        vmix_next_ms = now_ms + 400u;
     }
 }
 

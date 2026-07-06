@@ -653,7 +653,7 @@ int main(void) {
                 for (int k = 0; k < 30; ++k) engine_render(eb, 256);
         }
         CHECK(maxv >= 2, "Eno loops joined the bed (max voices %d)", maxv);
-        CHECK(maxv <= 4, "never more than bed + 3 loops (max %d)", maxv);
+        CHECK(maxv <= 5, "never more than bed + 3 loops + melody (max %d)", maxv);
         engine_set_generative(false, -1);
         for (int k = 0; k < 2500; ++k) engine_render(eb, 256);   /* ~14.5 s */
         CHECK(engine_active_voices() == 0,

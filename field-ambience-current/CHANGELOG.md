@@ -10,6 +10,67 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.0 (2026-07-06) — Harmonic Safety Core: der Composer-Kern neu geschrieben (Pitch-World → Register → Mutation → Collision-Filter → lange Melodie → Wahrscheinlichkeit zuletzt)
+
+User-Brief (nach Research über r/ambientmusic, r/musictheory, Plomp/Levelt-
+& Sethares-Roughness, Tymoczko-Voice-Leading, Liven Ambient Ø): „Wir denken
+zu sehr in Chord Progressions. Wir brauchen ein harmonic safety system.
+Nicht ‚wähle Scale → generiere Chords → random notes'. Quality Gate zuerst,
+Randomness zuletzt. Schreib den Composer-Kern NEU, nicht Parameter tweaken."
+Ehrliche Einordnung des Users bestätigt: unser altes Denken war genau der
+Grund, warum die Soundscapes trotz Reverb/Dorian nach „creepy AI ambient"
+klangen — wir haben Leben durch NEUE Events erzeugt statt einen bestehenden
+Zustand innerlich zu bewegen.
+
+**NEU harmony.{h,c} — der harmonische Sicherheitskern** (Prinzipien
+gelernt, frisch gebaut). Die Pipeline, in dieser Reihenfolge:
+
+1. **PITCH WORLD statt Akkorde:** eine Welt besitzt einen Pentatonik-CORE
+   (Dur: C D E G A · Moll: D F G A C — strukturell KEIN Halbton, KEIN
+   Tritonus im Set, die zwei aggressivsten Clash-Klassen sind aus dem
+   Tonmaterial entfernt) + EINE Color-Note (maj7 bzw. 9), die nur oberhalb
+   C4 erlaubt ist.
+2. **REGISTER-Regeln:** Bass 38–49 (unter C3 nur Root/Quinte/Oktave),
+   Stimmen 55–79 (wide voicing), Melodie 62–86; 2nds/9ths/Color nur hoch.
+3. **COMMON-TONE-MUTATION statt Neu-Würfeln:** 4 kuratierte Zustände;
+   ein Wechsel behält **≥3 gemeinsame Pitch-Classes und bewegt ≤2 Stimmen**,
+   gemeinsame Töne bleiben auf DERSELBEN Tonhöhe (parsimonious voice
+   leading, Tymoczko). Meist reinterpretiert nur der Bass die Töne.
+4. **COLLISION-FILTER vor jedem Melodie-Ton:** gegen JEDE klingende Stimme
+   Halbton (1/11) + Tritonus (6) verboten, 2nds unter C4 verboten; ein
+   verworfener Ton fällt auf den nächstbesten (next-best) durch.
+5. **Lange MELODIE-Stimme:** Töne 4–16 s, Stille 1–8 s (+ Atem nach jeder
+   Phrase), Phrasen 2–5 Noten; Bewegung per Tabelle (repeat > Schritt >
+   Quart/Quint > Sext/Oktave > Color). Kein Arpeggiator.
+6. **Wahrscheinlichkeit GANZ zuletzt** — nach dem Quality Gate.
+
+**Engine-Umbau (engine.c, kein Tweak):** Der alte Per-Bar-Chord-Walk +
+Sparkle-Scheduler ist raus. Bett = Bass des harmonischen Zustands (re-
+strikt nur bei echtem Zustandswechsel — gehaltene Töne werden vom neuen
+Bass REINTERPRETIERT, nicht neu angeschlagen). Die drei Eno-Loops
+(r18.99) tragen jetzt je EINE Stimme des Zustands (collision-safe). Die
+Melodie ist die lange Voice auf Source 15 + VOICE-Anschlag (String/Glass)
+am Onset. Déjà-vu bleibt (Marbles), aber jeder erinnerte Ton muss erneut
+durch World + Collision-Filter. **Blendwave-Prinzip (Liven Ambient Ø):**
+korrelierter Random-Walk auf dem Pad-Brightness-Tilt alle 400 ms — „same
+note, evolve timbre", der bestehende Zustand lebt ohne neue Events.
+engine_set_mode/key syncen die Welt (Dorian/Phrygian/Aeolian → Moll-Welt).
+
+**Messung (der eigentliche Beweis):** Der Kern wie in der Engine getrieben
+(Bett + 4 Stimmen sustainen, Melodie pickt darüber), 16.000 Picks über
+beide Welten × 4 Tonarten = **80.000 gleichzeitige Intervalle: 0,00 %
+Halbtöne, 0,00 % Tritoni.** Konsonanz dominiert (Quart/Quint 33 %,
+Terzen 30 %, Oktaven 19 %), 0 Silences.
+
+**Tests:** NEU test_harmony.c (Pitch-World halbton-/tritonusfrei, Mutation
+≥3 common / ≤2 moved + Common-Tone-Freeze, Register-Bänder, Collision-
+Filter, 600 Melodie-Picks alle safe + kein Leap > Oktave + Wiederholung,
+Dur-Welt). test_generative_tick auf die lange Melodiestimme + Chor
+angepasst. **26 Suiten / 0 Failures**; h743 clean (182,2 KB Flash). Beide
+Demos neu gerendert.
+
+---
+
 ## v0.7-r18.99 (2026-07-06) — Der Sonicware/Eno-Durchbruch: SHIMMER + Tape-WOW/FLUTTER + Eno-Loops
 
 User-Brief: teropa/loop (Reich "It's Gonna Rain" + Eno "Music for
