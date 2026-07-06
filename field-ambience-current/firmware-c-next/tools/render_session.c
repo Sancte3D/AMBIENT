@@ -70,6 +70,7 @@ typedef enum {
     EV_SPACE, EV_ATMOS, EV_AGE, EV_ECHO, EV_TEXTURE,
     EV_WORLD, EV_ENC,
     EV_VOICE, EV_KEY,          /* r18.98: menu VOICE + KEY slots */
+    EV_SHIM,                   /* r18.99: SHIMMER menu slot */
 } ev_type_t;
 
 typedef struct { uint32_t ms; ev_type_t t; int a; float f; } ev_t;
@@ -136,6 +137,7 @@ static int ev_cmp(const void *a, const void *b) {
 static void build_score(void) {
     /* I. awakening (Tokyo is the boot world) */
     ev(500,  EV_TEXTURE, 0, 0.20f);
+    ev(800,  EV_SHIM, 0, 0.12f);                  /* Tokyo preset halo */
     menu_turn(2000, EV_ATMOS, 0.0f, 0.30f, 0.05f);
     ev(6000, EV_MOD, MOD_DRONE, 0);              /* pedal blooms (6 s attack) */
 
@@ -184,6 +186,7 @@ static void build_score(void) {
      * r18.98: the player turns KEY two detents up (C → D) before the final
      * phrase — a real modulation, held notes re-pitch with it. */
     menu_turn(172000, EV_SPACE, 0.72f, 0.86f, 0.02f);
+    menu_turn(174000, EV_SHIM, 0.12f, 0.34f, 0.02f);  /* halo blooms for the end */
     ev(175800, EV_KEY, 1, 0);
     ev(175960, EV_KEY, 2, 0);
     tap(178000, 1, 5000);
@@ -224,6 +227,7 @@ int main(int argc, char **argv) {
                 case EV_VOICE:   engine_set_voice(e->a);                   break;
                 case EV_KEY:     engine_set_key_pc(e->a);
                                  controls_refresh_held_pitches();          break;
+                case EV_SHIM:    engine_set_shimmer(e->f);                 break;
                 case EV_ENC:     params_encoder((uint8_t)e->a,
                                                 (int)e->f, now_ms);        break;
             }

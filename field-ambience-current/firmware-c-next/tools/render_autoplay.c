@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
 
     engine_set_world(0);            /* Tokyo — night, rain */
     engine_set_space(0.62f);
+    engine_set_shimmer(0.15f);      /* r18.99: the halo — Sonicware principle */
     engine_set_atmosphere(0.35f);
     engine_set_motion(0.55f);
     engine_set_age(0.45f);          /* hiss + vinyl crackle + sat (r18.89) */

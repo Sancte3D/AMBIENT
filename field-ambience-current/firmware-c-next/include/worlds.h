@@ -34,6 +34,7 @@ typedef struct {
     uint8_t     age_pct;           /* Tape-Hiss + Saturation (Reddit Age)     */
     uint8_t     echo_pct;          /* Tape-style stereo delay (Reddit Echo)   */
     uint8_t     blur_pct;          /* Granular cloud / smear (Reddit Blur)    */
+    uint8_t     shimmer_pct;       /* r18.99: octave-up hall regeneration      */
     /* Musical identity (harmonic brain). On world change the engine applies
      * key + mode + vibe so each world sounds harmonically distinct, not just
      * texturally. Values from the tools/render_worlds.c audition. */

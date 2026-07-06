@@ -2,6 +2,16 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.99 (2026-07-06, Sonicware/Eno-Durchbruch):** Liven Ambient Ø +
+> Reich/Eno-Loops studiert (Produktseite + teropa/loop). Drei fehlende
+> Bausteine gebaut: **shimmer.c** (Oktav-Regeneration um den Hall,
+> Dual-Tap-Doppler, Menü-Slot SHIMMER + Welt-Presets, 0 = bit-exakt aus),
+> **Tape-WOW/FLUTTER** (Master-Pitch-Instabilität, AGE², Bypass exakt),
+> **Eno-Loops** (3 Ein-Noten-Loops, inkommensurable 13.7/21.3/33.1 s,
+> Akkordglieder der aktuellen Harmonie, Phase resettet nie — das Bett
+> ist jetzt ein rekombinierenderChor). 26 Suiten / 0 Failures; h743
+> 176,2 KB; beide Demos neu. Details: CHANGELOG r18.99.
+>
 > **r18.98 (2026-07-06, End-Rauschen + „das Instrument kann nicht genug"):**
 > Das Rest-Rauschen am Session-Ende war die After-Hours-**Vinyl-Ambience**
 > (kontinuierliches HP-Weißrauschen 0.22 = stationärer −56-dB-Teppich,

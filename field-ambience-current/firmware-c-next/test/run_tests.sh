@@ -57,14 +57,14 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/controls.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/controls_test"
 "$tmp/controls_test"
 
 # r18.89: sound upgrades — noise primitives, drive shaper, KS pluck, crackle
 "$CC" "${CFLAGS[@]}" \
     "$here/test_sound_upgrades.c" \
-    "$src/src/pluck.c" "$src/src/glass.c" "$src/src/tape.c" \
+    "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" "$src/src/tape.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" \
@@ -76,7 +76,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$here/test_generative_tick.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/generative_tick_test"
 "$tmp/generative_tick_test"
 
@@ -86,7 +86,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/params.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/params_test"
 "$tmp/params_test"
 
@@ -96,7 +96,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/leds.c" "$src/src/controls.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/leds_test"
 "$tmp/leds_test"
 
@@ -206,7 +206,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/worlds.c" \
     "$src/src/generative.c" \
     "$src/src/cells.c" \
-    "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" \
+    "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"
 

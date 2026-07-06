@@ -17,6 +17,7 @@
 #include "dsp.h"
 #include "pluck.h"
 #include "glass.h"
+#include "shimmer.h"
 #include "tape.h"
 #include "reverb.h"
 #include "padsynth.h"
@@ -537,6 +538,126 @@ int main(void) {
         engine_set_key_pc(6);  CHECK(brain_get_key() == 54, "pc 6 -> F#3 54 (%d)", brain_get_key());
         engine_set_key_pc(0);  CHECK(brain_get_key() == 60, "pc 0 -> C4 60 (%d)",  brain_get_key());
         engine_set_key_pc(-3); CHECK(brain_get_key() == 57, "pc wraps below (%d)", brain_get_key());
+    }
+
+    /* ---- 13. r18.99 SHIMMER + WOW/FLUTTER + ENO LOOPS ----
+     * (a) shimmer module: feed a pure 220 Hz sine, the return must be
+     *     dominated by 440 Hz (one octave up) — Goertzel 440 vs 220;
+     *     amount 0 adds NOTHING (bit-exact bypass);
+     * (b) tape wow: depth 0 = bit-exact pass-through; depth 1 modulates
+     *     the pitch of a 1 kHz sine (zero-crossing period variance > 0)
+     *     while staying bounded;
+     * (c) Eno loops: in autoplay the pad pool grows beyond the single bed
+     *     voice (loops join one by one) and never exceeds bed + 3;
+     *     disabling generative releases them all. */
+    {
+        enum { SB = 256 };
+        static float sL[SB], sR[SB], oL[SB], oR[SB];
+        static float ret[44100];
+        shimmer_init();
+        shimmer_set_amount(1.0f);
+        long pos = 0; float phase = 0.0f;
+        for (int b = 0; b < 44100 / SB; ++b) {
+            for (int i = 0; i < SB; ++i) {
+                sL[i] = sR[i] = sinf(2.0f * (float)M_PI * phase) * 0.3f;
+                phase += 220.0f / 44100.0f; if (phase >= 1.0f) phase -= 1.0f;
+                oL[i] = oR[i] = 0.0f;
+            }
+            shimmer_feed_add(oL, oR, SB);       /* read previous content */
+            shimmer_capture(sL, sR, SB);        /* then feed the sine    */
+            for (int i = 0; i < SB && pos < 44100; ++i) ret[pos++] = oL[i];
+        }
+        double e220 = 0, e440 = 0;
+        {
+            double w220 = 2.0 * M_PI * 220.0 / 44100.0;
+            double w440 = 2.0 * M_PI * 440.0 / 44100.0;
+            double s0 = 0, s1 = 0, v;
+            for (long i = 22050; i < 44100; ++i) {           /* settled half */
+                v = ret[i] + 2.0 * cos(w220) * s0 - s1; s1 = s0; s0 = v; }
+            e220 = s0 * s0 + s1 * s1 - 2.0 * cos(w220) * s0 * s1;
+            s0 = s1 = 0;
+            for (long i = 22050; i < 44100; ++i) {
+                v = ret[i] + 2.0 * cos(w440) * s0 - s1; s1 = s0; s0 = v; }
+            e440 = s0 * s0 + s1 * s1 - 2.0 * cos(w440) * s0 * s1;
+        }
+        CHECK(e440 > e220 * 3.0,
+              "shimmer return is the octave UP (440/220 = %.2f)",
+              e440 / (e220 + 1e-12));
+
+        shimmer_init();
+        shimmer_set_amount(0.0f);
+        for (int i = 0; i < SB; ++i) { oL[i] = 0.123f; oR[i] = -0.5f; }
+        shimmer_feed_add(oL, oR, SB);
+        CHECK(oL[0] == 0.123f && oR[7] == -0.5f, "shimmer 0 is bit-exact off");
+
+        /* (b) wow */
+        tape_init();
+        tape_set_wow_depth(0.0f);
+        static float wL[8192], wR[8192], refL[8192];
+        float ph2 = 0.0f;
+        for (int i = 0; i < 8192; ++i) {
+            wL[i] = wR[i] = sinf(2.0f * (float)M_PI * ph2) * 0.4f;
+            refL[i] = wL[i];
+            ph2 += 1000.0f / 44100.0f; if (ph2 >= 1.0f) ph2 -= 1.0f;
+        }
+        tape_wow_process(wL, wR, 8192);
+        int same = 1;
+        for (int i = 0; i < 8192; ++i) if (wL[i] != refL[i]) { same = 0; break; }
+        CHECK(same, "wow depth 0 is bit-exact pass-through");
+
+        tape_init();
+        tape_set_wow_depth(1.0f);
+        /* run ~3 s of sine through in blocks, collect zero-cross periods */
+        double periods[4096]; int np = 0;
+        float prev = 0.0f; long idx = 0; long last_up = -1;
+        ph2 = 0.0f;
+        float pkw = 0.0f;
+        for (int b = 0; b < (3 * 44100) / SB; ++b) {
+            for (int i = 0; i < SB; ++i) {
+                wL[i] = wR[i] = sinf(2.0f * (float)M_PI * ph2) * 0.4f;
+                ph2 += 1000.0f / 44100.0f; if (ph2 >= 1.0f) ph2 -= 1.0f;
+            }
+            tape_wow_process(wL, wR, SB);
+            for (int i = 0; i < SB; ++i) {
+                float a = fabsf(wL[i]); if (a > pkw) pkw = a;
+                if (prev <= 0.0f && wL[i] > 0.0f && idx > 44100 / 2) {
+                    if (last_up >= 0 && np < 4096)
+                        periods[np++] = (double)(idx - last_up);
+                    last_up = idx;
+                }
+                prev = wL[i]; ++idx;
+            }
+        }
+        CHECK(pkw < 0.5f, "wow bounded (peak %f)", pkw);
+        double mean = 0; for (int i = 0; i < np; ++i) mean += periods[i];
+        mean /= (np > 0 ? np : 1);
+        double var = 0; for (int i = 0; i < np; ++i)
+            var += (periods[i] - mean) * (periods[i] - mean);
+        var /= (np > 0 ? np : 1);
+        CHECK(np > 1000 && var > 0.01,
+              "wow modulates pitch (n=%d, period var %.4f)", np, var);
+
+        /* (c) Eno loops join the bed */
+        engine_init();
+        engine_set_generative(true, -1);
+        uint32_t t = 42000;
+        engine_generative_tick(t);
+        int16_t eb[512];
+        int maxv = 0;
+        for (int step = 0; step < 4000; ++step) {            /* 64 s */
+            t += 16;
+            engine_generative_tick(t);
+            int v = engine_active_voices();
+            if (v > maxv) maxv = v;
+            if ((step & 255) == 0)
+                for (int k = 0; k < 30; ++k) engine_render(eb, 256);
+        }
+        CHECK(maxv >= 2, "Eno loops joined the bed (max voices %d)", maxv);
+        CHECK(maxv <= 4, "never more than bed + 3 loops (max %d)", maxv);
+        engine_set_generative(false, -1);
+        for (int k = 0; k < 2500; ++k) engine_render(eb, 256);   /* ~14.5 s */
+        CHECK(engine_active_voices() == 0,
+              "loops released on disable (%d)", engine_active_voices());
     }
 
     printf("%d checks, %d failures\n", checks, fails);

@@ -68,6 +68,83 @@ static float         crackle_amp = 0.0f;   /* 0 = off (default) */
 
 /* --- API ---------------------------------------------------------------- */
 
+/* --- r18.99: WOW & FLUTTER — tape pitch instability -----------------------
+ * PRINCIPLE from lofi-tape practice (and the Liven-Ambient-style lofi
+ * ambient sound the device is chasing): a real tape transport never holds
+ * pitch. Two components, reinvented here:
+ *   WOW     ~0.35 Hz, the slow drunken drift (motor / capstan),
+ *   FLUTTER ~6.1 Hz, the fast tiny shiver (guide rollers).
+ * Implemented as a modulated fractional-delay read on the MASTER bus —
+ * the whole mix (reverb tail included) breathes like a recording of the
+ * performance, which is exactly the lofi illusion. Depth rides the AGE
+ * macro (square curve). depth 0 = true bypass, bit-exact reference; the
+ * engage crossfades over one block so the 24 ms base delay never clicks. */
+
+#define WOW_N     4096
+#define WOW_MASK  (WOW_N - 1)
+#define WOW_BASE  1058.0f            /* 24 ms centre delay               */
+#define WOW_AMP   40.0f              /* ±0.9 ms at full depth → ~0.2 %   */
+#define FLT_AMP   1.2f               /* flutter ±27 µs → ~0.10 %         */
+
+static float wow_rbL[WOW_N], wow_rbR[WOW_N];
+static int   wow_wr;
+static float wow_ph, flt_ph;         /* LFO phases (turns)               */
+static float wow_rate = 0.35f;       /* wanders slightly — no metronome  */
+static float wow_depth_cur, wow_depth_tgt;
+static int   wow_engaged;            /* 0 = bypass (reference-exact)     */
+static uint32_t wow_rng = 0x7A9E77A9u;
+
+void tape_set_wow_depth(float v01) {
+    if (v01 < 0.0f) v01 = 0.0f;
+    if (v01 > 1.0f) v01 = 1.0f;
+    wow_depth_tgt = v01;
+}
+
+void tape_wow_process(float *L, float *R, int frames) {
+    wow_depth_cur += 0.05f * (wow_depth_tgt - wow_depth_cur);
+    if (!wow_engaged && wow_depth_tgt < 1.0e-4f) return;    /* bit-exact */
+
+    /* engage: fill the ring with the incoming block, crossfade dry→read
+     * across this block, then run normally. Disengage mirrors it. */
+    int engaging   = !wow_engaged;
+    int releasing  = wow_engaged && wow_depth_tgt < 1.0e-4f &&
+                     wow_depth_cur < 1.5e-3f;
+    if (engaging) wow_engaged = 1;
+
+    for (int n = 0; n < frames; ++n) {
+        wow_rbL[wow_wr] = L[n];
+        wow_rbR[wow_wr] = R[n];
+        wow_wr = (wow_wr + 1) & WOW_MASK;
+
+        /* wow rate itself drifts ±15 % (random walk) — real motors do */
+        wow_rng = wow_rng * 1664525u + 1013904223u;
+        wow_rate += ((float)((int32_t)wow_rng) * (1.0f / 2147483648.0f)) * 2.0e-6f;
+        if (wow_rate < 0.30f) wow_rate = 0.30f;
+        if (wow_rate > 0.42f) wow_rate = 0.42f;
+
+        wow_ph += wow_rate / 44100.0f;  if (wow_ph >= 1.0f) wow_ph -= 1.0f;
+        flt_ph += 6.1f     / 44100.0f;  if (flt_ph >= 1.0f) flt_ph -= 1.0f;
+
+        float dev   = dsp_sin(wow_ph) * WOW_AMP + dsp_sin(flt_ph) * FLT_AMP;
+        float delay = WOW_BASE + dev * wow_depth_cur;
+
+        float pos = (float)wow_wr - 1.0f - delay;
+        int   i0  = (int)pos;
+        float fr  = pos - (float)i0;
+        int   a   = i0 & WOW_MASK;
+        int   b   = (i0 + 1) & WOW_MASK;
+        float yL  = wow_rbL[a] + fr * (wow_rbL[b] - wow_rbL[a]);
+        float yR  = wow_rbR[a] + fr * (wow_rbR[b] - wow_rbR[a]);
+
+        float mix = 1.0f;
+        if (engaging)  mix = (float)n / (float)frames;          /* dry→wet */
+        if (releasing) mix = 1.0f - (float)n / (float)frames;   /* wet→dry */
+        L[n] += mix * (yL - L[n]);
+        R[n] += mix * (yR - R[n]);
+    }
+    if (releasing) wow_engaged = 0;
+}
+
 void tape_init(void) {
     hr_L      = 0xC0FFEE11u;
     hr_R      = 0xDEADBEEFu;
@@ -82,6 +159,10 @@ void tape_init(void) {
     dsp_crackle_init(&crackle_base, 1.85f);
     crackle_amp = 0.0f;
     duck_env    = 0.0f;
+    for (int i = 0; i < WOW_N; ++i) wow_rbL[i] = wow_rbR[i] = 0.0f;
+    wow_wr = 0; wow_ph = flt_ph = 0.0f; wow_rate = 0.35f;
+    wow_depth_cur = wow_depth_tgt = 0.0f; wow_engaged = 0;
+    wow_rng = 0x7A9E77A9u;
 }
 
 void tape_set_hiss_amount(float amp) {

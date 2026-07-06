@@ -55,6 +55,7 @@ typedef enum {
     MP_KEY,        /* r18.98: tonic pitch class 0..11 (world default on world change) */
     MP_VOICE,      /* r18.98: melody voice 0 PAD / 1 STRING / 2 GLASS (user-global) */
     MP_SPACE,
+    MP_SHIMMER,    /* r18.99: octave-up hall regeneration (the halo)   */
     MP_ATMOS,
     MP_MOTION,
     MP_AGE,
@@ -78,6 +79,7 @@ typedef struct {
     void (*set_key)        (int pc);                 /* tonic pitch class 0..11 */
     void (*set_voice)      (int idx);                /* 0 PAD / 1 STRING / 2 GLASS */
     void (*set_space)      (float v01);              /* reverb / hall amount  */
+    void (*set_shimmer)    (float v01);              /* octave-up halo (r18.99) */
     void (*set_atmosphere) (float v01);              /* ambience layer level  */
     void (*set_motion)     (float v01);              /* pad LFO depth         */
     void (*set_age)        (float v01);              /* tape hiss + sat       */

@@ -33,6 +33,7 @@ static int           world_i = 0;
 static int           key_pc  = 0;         /* tonic pitch class 0..11 (r18.98) */
 static int           voice_i = 0;         /* 0 PAD / 1 STRING / 2 GLASS       */
 static int           space   = 42;        /* % 0..100 */
+static int           shim    = 12;        /* r18.99 shimmer halo %            */
 static int           atmos   = 35;
 static int           motion  = 40;
 static int           age     = 30;
@@ -62,6 +63,7 @@ static void apply_current(void) {
         case MP_KEY:    if (cb.set_key)        cb.set_key  (key_pc);             break;
         case MP_VOICE:  if (cb.set_voice)      cb.set_voice(voice_i);            break;
         case MP_SPACE:  if (cb.set_space)      cb.set_space (space  / 100.0f);   break;
+        case MP_SHIMMER:if (cb.set_shimmer)    cb.set_shimmer(shim  / 100.0f);   break;
         case MP_ATMOS:  if (cb.set_atmosphere) cb.set_atmosphere(atmos / 100.0f);break;
         case MP_MOTION: if (cb.set_motion)     cb.set_motion(motion / 100.0f);   break;
         case MP_AGE:    if (cb.set_age)        cb.set_age   (age    / 100.0f);   break;
@@ -78,6 +80,7 @@ static void load_world_preset(void) {
     key_pc = (int)w->key_midi % 12;    /* world identity includes its key;
                                         * VOICE stays — a player's choice   */
     space  = w->space_pct;
+    shim   = w->shimmer_pct;
     atmos  = w->atmos_pct;
     motion = w->motion_pct;
     age    = w->age_pct;
@@ -86,6 +89,7 @@ static void load_world_preset(void) {
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_space)      cb.set_space     (space  / 100.0f);
+    if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
     if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
     if (cb.set_motion)     cb.set_motion    (motion / 100.0f);
     if (cb.set_age)        cb.set_age       (age    / 100.0f);
@@ -104,6 +108,7 @@ void menu_init(const menu_callbacks_t *cbs) {
         key_pc = (int)w->key_midi % 12;
         voice_i = 0;
         space  = w->space_pct;
+        shim   = w->shimmer_pct;
         atmos  = w->atmos_pct;
         motion = w->motion_pct;
         age    = w->age_pct;
@@ -126,7 +131,8 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "World","Key","Voice","Space","Atmosphere","Motion","Age","Echo","Blur"
+        "World","Key","Voice","Space","Shimmer","Atmosphere","Motion","Age",
+        "Echo","Blur"
     };
     return LABELS[cur];
 }
@@ -143,6 +149,7 @@ int menu_value_index(menu_param_t p) {
 int menu_value_int(menu_param_t p) {
     switch (p) {
         case MP_SPACE:  return space;
+        case MP_SHIMMER:return shim;
         case MP_ATMOS:  return atmos;
         case MP_MOTION: return motion;
         case MP_AGE:    return age;
@@ -170,6 +177,7 @@ const char *menu_current_value_text(void) {
         case MP_KEY:    return KEY_NAMES[key_pc];
         case MP_VOICE:  return VOICE_NAMES[voice_i];
         case MP_SPACE:  snprintf(buf, sizeof buf, "%d%%", space);  return buf;
+        case MP_SHIMMER:snprintf(buf, sizeof buf, "%d%%", shim);   return buf;
         case MP_ATMOS:  snprintf(buf, sizeof buf, "%d%%", atmos);  return buf;
         case MP_MOTION: snprintf(buf, sizeof buf, "%d%%", motion); return buf;
         case MP_AGE:    snprintf(buf, sizeof buf, "%d%%", age);    return buf;
@@ -203,6 +211,7 @@ void menu_rotate(int delta) {
         case MP_KEY:    key_pc  = wrapi(key_pc  + delta, 12); break;
         case MP_VOICE:  voice_i = wrapi(voice_i + delta, 3);  break;
         case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
+        case MP_SHIMMER:shim   = clampi(shim   + delta, 0, 100); break;
         case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;
         case MP_MOTION: motion = clampi(motion + delta, 0, 100); break;
         case MP_AGE:    age    = clampi(age    + delta, 0, 100); break;
