@@ -75,7 +75,11 @@ int main(void) {
         if (fails > 10) break;                  /* don't spam */
     }
     CHECK(sparkle_seen, "sparkle PLUCKS actually played");
-    CHECK(max_voices <= 1, "pad pool carries only the bed now (%d)", max_voices);
+    /* r18.99: the bed is a CHOIR now — the three Eno loops join one by
+     * one (staggered entries at 0.40/0.62/0.81 of their periods), so the
+     * pad pool grows past the single bed voice but never past bed + 3. */
+    CHECK(max_voices >= 2, "Eno loops actually joined the bed (%d)", max_voices);
+    CHECK(max_voices <= 4, "pad pool = bed + 3 Eno loops max (%d)", max_voices);
 
     /* ---- 3. User override incl. SHIFT-octave source (the r18.88 fix) ---- */
     engine_note_on(11, dsp_midi_to_hz(76.0f), 0.12f);   /* shift source 9..13 */
@@ -93,11 +97,13 @@ int main(void) {
      * the BED deliberately keeps sustaining underneath (it's an ambient bed
      * — same semantics as the old advance() gate), so after the sparkle
      * tails exactly two voices remain: user note + sustained bed. */
-    CHECK(voices_with_user <= 4, "no new gen notes while user holds (max %d)",
+    CHECK(voices_with_user <= 6, "no new gen notes while user holds (max %d)",
           voices_with_user);
     render_ms(10000);                                   /* drain sparkle tails */
-    CHECK(engine_active_voices() == 2,
-          "user note + sustained bed remain (have %d)", engine_active_voices());
+    /* r18.99: user + bed + up to 3 sustaining Eno loops (loops freeze while
+     * the user plays — they neither retrigger nor release under a hold). */
+    CHECK(engine_active_voices() >= 2 && engine_active_voices() <= 5,
+          "user note + bed choir remain (have %d)", engine_active_voices());
     CHECK(pluck_active_count() == 0, "plucks self-decayed under the user (%d)",
           pluck_active_count());
 
@@ -107,7 +113,8 @@ int main(void) {
      * old note still fading out. */
     engine_note_off(11);
     render_ms(10000);
-    CHECK(engine_active_voices() == 1, "only the bed left after the user tail (%d)",
+    CHECK(engine_active_voices() >= 1 && engine_active_voices() <= 4,
+          "only the bed choir left after the user tail (%d)",
           engine_active_voices());
     int resumed = 0;                                    /* sparkles restart? */
     for (int step = 0; step < 9500; ++step) {           /* 152 s simulated —

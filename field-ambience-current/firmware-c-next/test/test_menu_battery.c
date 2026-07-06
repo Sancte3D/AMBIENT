@@ -20,12 +20,13 @@ static int g_checks = 0, g_fails = 0;
  * Brightness encoder, Drums needs an adaptive-drums engine we don't have.) */
 static struct {
     int   world, key, voice;
-    float space, atmos, motion, age, echo, blur;
+    float space, shim, atmos, motion, age, echo, blur;
 } st;
 static void cb_world (int v)   { st.world  = v; }
 static void cb_key   (int v)   { st.key    = v; }
 static void cb_voice (int v)   { st.voice  = v; }
 static void cb_space (float v) { st.space  = v; }
+static void cb_shim  (float v) { st.shim   = v; }
 static void cb_atmos (float v) { st.atmos  = v; }
 static void cb_motion(float v) { st.motion = v; }
 static void cb_age   (float v) { st.age    = v; }
@@ -36,7 +37,8 @@ static void init(void) {
     memset(&st, 0, sizeof st);
     menu_callbacks_t cb = {
         .set_world = cb_world,   .set_key  = cb_key,  .set_voice = cb_voice,
-        .set_space = cb_space,   .set_atmosphere = cb_atmos,
+        .set_space = cb_space,   .set_shimmer = cb_shim,
+        .set_atmosphere = cb_atmos,
         .set_motion = cb_motion, .set_age = cb_age,
         .set_echo = cb_echo,     .set_blur = cb_blur,
     };

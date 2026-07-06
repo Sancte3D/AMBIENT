@@ -64,6 +64,7 @@ static void hal_set_key        (int   pc)  { engine_set_key_pc(pc);
                                              controls_refresh_held_pitches(); }
 static void hal_set_voice      (int   idx) { engine_set_voice(idx); }
 static void hal_set_space      (float v)   { engine_set_space(v); }
+static void hal_set_shimmer    (float v)   { engine_set_shimmer(v); }
 static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
 static void hal_set_motion     (float v)   { engine_set_motion(v); }
 static void hal_set_age        (float v)   { engine_set_age(v); }
@@ -123,6 +124,7 @@ int main(void) {
             .set_key        = hal_set_key,
             .set_voice      = hal_set_voice,
             .set_space      = hal_set_space,
+            .set_shimmer    = hal_set_shimmer,
             .set_atmosphere = hal_set_atmosphere,
             .set_motion     = hal_set_motion,
             .set_age        = hal_set_age,

@@ -50,4 +50,10 @@ void tape_set_program_level(float block_peak);
 /* Apply tanh-saturation in place. */
 void tape_saturation_process(float *L, float *R, int frames);
 
+/* r18.99 — WOW & FLUTTER: tape pitch instability on the master bus.
+ * Depth 0..1 (AGE macro drives it, square curve). depth 0 = true bypass
+ * (bit-exact reference); engage/release crossfades over one block. */
+void tape_set_wow_depth(float v01);
+void tape_wow_process(float *L, float *R, int frames);
+
 #endif

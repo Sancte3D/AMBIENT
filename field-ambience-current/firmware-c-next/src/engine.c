@@ -27,6 +27,7 @@
 #include "cells.h"
 #include "pluck.h"
 #include "glass.h"
+#include "shimmer.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -48,6 +49,25 @@
 #define GEN_VOICE_AMP 0.10f
 static float active_freq[MAX_SOURCES];
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
+
+/* r18.99 ENO LOOPS — the Music-for-Airports principle (studied via the
+ * teropa "loop" essay on Reich's It's Gonna Rain and Eno's airport loops;
+ * technique reconstructed, nothing to copy): several long loops, ONE note
+ * per loop, with INCOMMENSURATE periods that never re-align — the bed
+ * stops being one held chord root and becomes a slowly recombining choir.
+ * Three loops on pad sources 5..7, periods chosen pairwise non-multiple
+ * (13.7 / 21.3 / 33.1 s — no common divisor within hours). Each cycle the
+ * loop re-picks ITS chord member (root/third/fifth) from the CURRENT
+ * harmony, so the recombination always lands inside the key. Autoplay
+ * only — a playing human owns the bed. */
+#define ENO_LOOPS 3
+static const uint32_t ENO_PERIOD_MS[ENO_LOOPS] = { 13700u, 21300u, 33100u };
+static const float    ENO_AMP[ENO_LOOPS]       = { 0.050f, 0.044f, 0.038f };
+static uint32_t eno_next_ms[ENO_LOOPS];
+static uint32_t eno_off_ms[ENO_LOOPS];
+static uint8_t  eno_on[ENO_LOOPS];
+static int      eno_timing_valid;
+#define ENO_SRC(i) ((uint8_t)(5 + (i)))
 
 /* Generative-bed state. Sparkle melody scheduler (r18.88): sources 14/15,
  * see the autoplay block above engine_generative_tick(). */
@@ -88,6 +108,8 @@ static int  mel_dejavu_count = 0;     /* replayed phrases (tests/UI)   */
 static float lowest_held(void) {
     float lo = 0.0f;
     for (int i = 0; i < MAX_SOURCES; ++i) {
+        if (i >= 5 && i <= 7) continue;   /* r18.99: Eno loops are colour,
+                                           * not fundament — bass ignores them */
         float f = active_freq[i];
         if (f > 0.0f && (lo == 0.0f || f < lo)) lo = f;
     }
@@ -222,6 +244,11 @@ void engine_init(void) {
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
     glass_init();                    /* r18.98 FM glass voice */
+    shimmer_init();                  /* r18.99 octave-up hall regeneration */
+    memset(eno_next_ms, 0, sizeof eno_next_ms);
+    memset(eno_off_ms,  0, sizeof eno_off_ms);
+    memset(eno_on,      0, sizeof eno_on);
+    eno_timing_valid = 0;
     melody_voice = 0;                /* PAD — the bench-tuned reference */
     body_init();                     /* r18.94 modal body (per-world material) */
 
@@ -363,6 +390,14 @@ void engine_set_age(float v) {
     tape_set_hiss_amount(0.0012f + v * v * 0.005f);   /* r18.97: square, quiet */
     tape_set_saturation_drive(1.0f + v * 0.40f);
     tape_set_crackle(v);             /* r18.89: vinyl ticks join the macro */
+    /* r18.99: age also un-steadies the transport — square curve again, so
+     * the reference band (v ≤ 0.3) barely moves and old tape gets drunk. */
+    tape_set_wow_depth(v * v);
+}
+
+/* r18.99 SHIMMER macro (menu slot). Pure pass-through to the module. */
+void engine_set_shimmer(float v) {
+    shimmer_set_amount(dsp_clampf(v, 0.0f, 1.0f));
 }
 
 /* Echo macro — single setter, internally maps to time + feedback + wet +
@@ -476,6 +511,11 @@ void engine_set_generative(bool on, int program) {
     if (!on) {
         engine_note_off(GEN_SOURCE);    /* release the bed voice */
         spark_silence_all();
+        for (int i = 0; i < ENO_LOOPS; ++i) {   /* r18.99: loops out too */
+            if (eno_on[i]) engine_note_off(ENO_SRC(i));
+            eno_on[i] = 0;
+        }
+        eno_timing_valid = 0;
     }
 }
 
@@ -511,6 +551,46 @@ void engine_generative_tick(uint32_t now_ms) {
     if (!gen_timing_valid) {           /* just enabled / just released */
         gen_next_bar_ms  = now_ms;     /* fire the bar immediately */
         gen_timing_valid = true;
+    }
+
+    /* --- r18.99 ENO LOOPS (see the block comment at the top) ------------
+     * Three one-note tape loops with incommensurate periods. Staggered
+     * first entries (0.4 / 0.62 / 0.81 of a period) so the choir fades in
+     * voice by voice instead of striking a chord. Each cycle: release the
+     * old tone, sound THIS loop's chord member of the CURRENT harmony,
+     * hold for 62 % of the period, rest for the remainder — the gaps are
+     * where the recombination shows. */
+    if (!eno_timing_valid) {
+        eno_next_ms[0] = now_ms + (uint32_t)(ENO_PERIOD_MS[0] * 0.40f);
+        eno_next_ms[1] = now_ms + (uint32_t)(ENO_PERIOD_MS[1] * 0.62f);
+        eno_next_ms[2] = now_ms + (uint32_t)(ENO_PERIOD_MS[2] * 0.81f);
+        for (int i = 0; i < ENO_LOOPS; ++i) { eno_on[i] = 0; eno_off_ms[i] = 0; }
+        eno_timing_valid = 1;
+    }
+    for (int i = 0; i < ENO_LOOPS; ++i) {
+        if (eno_on[i] && (int32_t)(now_ms - eno_off_ms[i]) >= 0) {
+            engine_note_off(ENO_SRC(i));
+            eno_on[i] = 0;
+        }
+        if ((int32_t)(now_ms - eno_next_ms[i]) >= 0) {
+            int chord[4];
+            int nch = brain_chord(generative_current_degree(), chord, 4);
+            if (nch > 0) {
+                int midi = chord[i < nch ? i : nch - 1];
+                while (midi > 74) midi -= 12;    /* keep the choir mid-low */
+                while (midi < 50) midi += 12;
+                if (eno_on[i]) engine_note_off(ENO_SRC(i));
+                engine_note_on(ENO_SRC(i), dsp_midi_to_hz((float)midi),
+                               ENO_AMP[i] * composer_params()->bed_amp);
+                eno_on[i]     = 1;
+                eno_off_ms[i] = now_ms + (uint32_t)(ENO_PERIOD_MS[i] * 0.62f);
+            }
+            /* phase NEVER resets — the drift is the composition. The while
+             * catches up after a long user hold (ticks pause under a
+             * playing human) without machine-gunning retriggers. */
+            while ((int32_t)(now_ms - eno_next_ms[i]) >= 0)
+                eno_next_ms[i] += ENO_PERIOD_MS[i];
+        }
     }
 
     if ((int32_t)(now_ms - gen_next_bar_ms) >= 0) {
@@ -738,8 +818,13 @@ void engine_render(int16_t *buf, int frames) {
     /* r18.89: vinyl crackle (AGE macro) — dry bus only, like the hiss. */
     tape_crackle_render_add(dryL, dryR, frames);
 
-    /* Reverb writes (does not add) wet from send. */
+    /* Reverb writes (does not add) wet from send. r18.99: the shimmer
+     * loop wraps it — last block's wet, one octave up and darkened,
+     * re-enters the send; each pass climbs and dies (Sonicware/Eno
+     * shimmer principle, see shimmer.h). */
+    shimmer_feed_add(sendL, sendR, frames);
     reverb_render(sendL, sendR, wetL, wetR, frames);
+    shimmer_capture(wetL, wetR, frames);
 
     /* Master: sum + DC-block + volume → outL/outR; then tanh warmth
      * (block call); then soft-limit safety net → int16. Two-pass keeps
@@ -779,6 +864,11 @@ void engine_render(int16_t *buf, int frames) {
         outL[n] = yL * mv;
         outR[n] = yR * mv;
     }
+    /* r18.99 WOW & FLUTTER: the whole mix (hall tail included) breathes
+     * like a tape recording of the performance. AGE drives the depth;
+     * depth 0 is bit-exact bypass. Before the saturation — pitch wobble
+     * happens on the tape, the head saturation after it. */
+    tape_wow_process(outL, outR, frames);
     /* Warm tanh saturation — "tape" colour. Always-on at the dreamy_warm
      * reference drive (1.10). Peaks roll into the tanh knee, even harmonics
      * appear, makeup-gain implicit (×0.78 inside). */

@@ -59,7 +59,8 @@ void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-
 void engine_set_motion(float amount_0_1);      /* Pad LFO depth (perform macro) */
 void engine_set_age(float amount_0_1);         /* tape hiss + saturation combo */
 void engine_set_echo(float amount_0_1);        /* tape-style stereo delay macro */
-void engine_set_blur(float amount_0_1);        /* granular cloud / smear macro */
+void engine_set_blur(float amount_0_1);       /* granular cloud / smear macro */
+void engine_set_shimmer(float amount_0_1);     /* r18.99: octave-up hall regeneration */
 void engine_set_bass_depth(float depth_0_1);   /* famSubBass/DeepBass depth */
 void engine_set_world(int world_idx);          /* pick ambience generator (ADR-0017) */
 

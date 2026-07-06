@@ -10,6 +10,59 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.99 (2026-07-06) — Der Sonicware/Eno-Durchbruch: SHIMMER + Tape-WOW/FLUTTER + Eno-Loops
+
+User-Brief: teropa/loop (Reich "It's Gonna Rain" + Eno "Music for
+Airports") und Sonicware Liven Ambient Ø studieren — „unser Gerät ist
+erst krass wenn es klingt wie Sonicware Ambient … es muss alles in unser
+Gerät passen wie es aktuell konzipiert ist."
+
+Quellen-Extrakt (Produktseite + Loop-Essay; Reddit/YouTube waren
+bot-geblockt): Ambient Ø = 4 ROLLEN-Layer (Drone/Pad/Atmos/Noise — haben
+wir strukturell schon) + **pro Layer Reverb- UND SHIMMER-Send** + Lofi.
+Reich: 2 identische Loops, leicht verschiedene Geschwindigkeit. Eno: 7
+Loops, EINE Note pro Loop, **inkommensurable Längen** — „they simply
+don't reconfigure the same way again."
+
+Drei fehlende Bausteine, alle drei gebaut:
+
+- **NEU shimmer.c — Oktav-Regeneration um den Hall** (Sonicware/Eno-
+  Prinzip, frisch implementiert): Dual-Tap-Doppler-Shifter (+12 st,
+  leistungskomplementäre Sinus-Fenster) liest das Hall-WET, dunkelt ab
+  (LP 4.3 kHz + HP 180 Hz) und speist es zurück in den Send — jede Runde
+  klettert eine Oktave und stirbt (Loop-Gain-Cap 0.55, quadratische
+  Kurve). **Menü 9 → 10 Slots: SHIMMER** nach Space, Welt-Presets
+  Tokyo 12 · Coast 22 · Drive 6 · Hours 16 %. 0 = bit-exakt aus
+  (Verfassung: kein Dauer-Shimmer). Bugs auf dem Weg (vom Goertzel-Test
+  gefangen): Dreieck-Crossfade schmierte die Oktave in Seitenbänder
+  (→ sin²-Fenster), und der Read-Head lief blockintern nur 1× (wr stand
+  still → base = wr + n). Endmessung: E(440)/E(220) ≈ 4600 bei 220-Hz-
+  Sinus-Input.
+- **NEU tape.c WOW & FLUTTER**: moduliertes Fractional-Delay auf dem
+  MASTER (vor der Sättigung — das Wobbeln passiert auf dem Band, der
+  Kopf sättigt danach): Wow ~0.35 Hz (Rate driftet ±15 % random-walk)
+  ±0.9 ms + Flutter 6.1 Hz ±27 µs. Tiefe = AGE² — Referenzband bleibt
+  fast starr, altes Band wird betrunken. Depth 0 = bit-exakter Bypass,
+  Engage/Release crossfaden über einen Block. Test: Zero-Crossing-
+  Perioden-Varianz > 0 bei depth 1, bit-exakt bei 0.
+- **NEU Eno-Loops im Bett (engine.c)**: 3 Ein-Noten-Loops auf Pad-
+  Sources 5–7 mit inkommensurablen Perioden **13.7 / 21.3 / 33.1 s**,
+  gestaffelte Ersteinsätze (0.40/0.62/0.81 der Periode), 62 % Duty
+  (die Lücken zeigen die Rekombination). Jeder Zyklus greift SEIN
+  Akkordglied (Root/Terz/Quinte via brain_chord) der AKTUELLEN Harmonie
+  — die Drift rekombiniert, die Tonalität bleibt. Phase resettet NIE.
+  Bass ignoriert die Loops (lowest_held überspringt 5–7 — Fundament
+  folgt der Harmonie, nicht der Farbe). Nur Autoplay; User-Hold friert
+  Retrigger ein (Catch-up ohne Maschinengewehr danach).
+
+Session nutzt alles: Shimmer-Preset ab Start, Halo blüht im Finale
+(12 → 34 %), AGE 0.5 bringt hörbares Wow im After-Hours-Teil. Autoplay
+mit Shimmer 15 %. Tests: §13 (Shimmer-Oktave, Wow-Varianz/Bypass,
+Eno-Chor 2..4 Stimmen, Release bei Disable) + test_generative_tick auf
+Chor-Semantik. **26 Suiten / 0 Failures**; h743 clean (176,2 KB Flash).
+
+---
+
 ## v0.7-r18.98 (2026-07-06) — End-Rauschen (Vinyl-Teppich) getötet + VOICE (String/Glass-FM) + KEY im Menü
 
 User: „in der played session höre ich am ende noch so starkes rauschen …
