@@ -71,6 +71,7 @@ typedef enum {
     EV_WORLD, EV_ENC,
     EV_VOICE, EV_KEY,          /* r18.98: menu VOICE + KEY slots */
     EV_SHIM,                   /* r18.99: SHIMMER menu slot */
+    EV_TUNING,                 /* r19.6: Equal/Just */
 } ev_type_t;
 
 typedef struct { uint32_t ms; ev_type_t t; int a; float f; } ev_t;
@@ -138,6 +139,9 @@ static void build_score(void) {
     /* I. awakening (Tokyo is the boot world) */
     ev(500,  EV_TEXTURE, 0, 0.20f);
     ev(800,  EV_SHIM, 0, 0.12f);                  /* Tokyo preset halo */
+    ev(900,  EV_TUNING, 1, 0);                    /* Just intonation — the
+                                                   * sustained harmony locks,
+                                                   * no beating (Ø v1.5) */
     menu_turn(2000, EV_ATMOS, 0.0f, 0.30f, 0.05f);
     ev(6000, EV_MOD, MOD_DRONE, 0);              /* pedal blooms (6 s attack) */
 
@@ -228,6 +232,7 @@ int main(int argc, char **argv) {
                 case EV_KEY:     engine_set_key_pc(e->a);
                                  controls_refresh_held_pitches();          break;
                 case EV_SHIM:    engine_set_shimmer(e->f);                 break;
+                case EV_TUNING:  engine_set_tuning(e->a);                  break;
                 case EV_ENC:     params_encoder((uint8_t)e->a,
                                                 (int)e->f, now_ms);        break;
             }

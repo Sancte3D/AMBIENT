@@ -31,6 +31,7 @@ static menu_param_t  cur     = MP_WORLD;
 static menu_mode_t   mode    = MENU_BROWSE;
 static int           world_i = 0;
 static int           key_pc  = 0;         /* tonic pitch class 0..11 (r18.98) */
+static int           tuning_i = 0;        /* 0 Equal / 1 Just (r19.6)          */
 static int           voice_i = 0;         /* 0 PAD / 1 STRING / 2 GLASS       */
 static int           space   = 42;        /* % 0..100 */
 static int           shim    = 12;        /* r18.99 shimmer halo %            */
@@ -44,6 +45,7 @@ static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
 static const char * const VOICE_NAMES[3] = { "Pad", "String", "Glass" };
+static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -61,6 +63,7 @@ static void apply_current(void) {
     switch (cur) {
         case MP_WORLD:  if (cb.set_world)      cb.set_world(world_i);            break;
         case MP_KEY:    if (cb.set_key)        cb.set_key  (key_pc);             break;
+        case MP_TUNING: if (cb.set_tuning)     cb.set_tuning(tuning_i);          break;
         case MP_VOICE:  if (cb.set_voice)      cb.set_voice(voice_i);            break;
         case MP_SPACE:  if (cb.set_space)      cb.set_space (space  / 100.0f);   break;
         case MP_SHIMMER:if (cb.set_shimmer)    cb.set_shimmer(shim  / 100.0f);   break;
@@ -131,8 +134,8 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
-        "World","Key","Voice","Space","Shimmer","Atmosphere","Motion","Age",
-        "Echo","Blur"
+        "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
+        "Age","Echo","Blur"
     };
     return LABELS[cur];
 }
@@ -141,6 +144,7 @@ int menu_value_index(menu_param_t p) {
     switch (p) {
         case MP_WORLD: return world_i;
         case MP_KEY:   return key_pc;
+        case MP_TUNING:return tuning_i;
         case MP_VOICE: return voice_i;
         default: return 0;
     }
@@ -165,6 +169,7 @@ int menu_value_count(menu_param_t p) {
     switch (p) {
         case MP_WORLD: return worlds_count();
         case MP_KEY:   return 12;
+        case MP_TUNING:return 2;
         case MP_VOICE: return 3;
         default:       return 0;   /* SPACE / ATMOS / MOTION / AGE = % */
     }
@@ -175,6 +180,7 @@ const char *menu_current_value_text(void) {
     switch (cur) {
         case MP_WORLD:  return worlds_get(world_i)->name;
         case MP_KEY:    return KEY_NAMES[key_pc];
+        case MP_TUNING: return TUNING_NAMES[tuning_i];
         case MP_VOICE:  return VOICE_NAMES[voice_i];
         case MP_SPACE:  snprintf(buf, sizeof buf, "%d%%", space);  return buf;
         case MP_SHIMMER:snprintf(buf, sizeof buf, "%d%%", shim);   return buf;
@@ -209,6 +215,7 @@ void menu_rotate(int delta) {
             load_world_preset();        /* selecting a world loads its preset */
             return;                     /* preset push covers the callbacks   */
         case MP_KEY:    key_pc  = wrapi(key_pc  + delta, 12); break;
+        case MP_TUNING: tuning_i = wrapi(tuning_i + delta, 2); break;
         case MP_VOICE:  voice_i = wrapi(voice_i + delta, 3);  break;
         case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
         case MP_SHIMMER:shim   = clampi(shim   + delta, 0, 100); break;

@@ -32,6 +32,7 @@
 #include "body.h"
 #include "composer.h"
 #include "harmony.h"
+#include "tuning.h"
 #include "dsp.h"
 #include "audio.h"                    /* AUDIO_BUFFER_FRAMES */
 #include <math.h>
@@ -334,7 +335,7 @@ bool engine_cell_sample(uint8_t cell, float pos_0_1, uint32_t now_ms) {
     cell_event_t ev = cells_update(cell, pos_0_1, now_ms);
     if (ev.kind == CELL_EVENT_PRESS) {
         int midi = brain_cell_root(ev.cell);
-        engine_note_on(ev.cell, dsp_midi_to_hz((float)midi), ev.amp);
+        engine_note_on(ev.cell, tuning_hz((float)midi), ev.amp);
         return true;
     }
     if (ev.kind == CELL_EVENT_RELEASE) {
@@ -472,9 +473,13 @@ void engine_set_key_pc(int pc) {
 void engine_set_key(int tonic_midi) {
     brain_set_key(tonic_midi);
     harmony_set_world(tonic_midi, mode_is_minor(musical_mode));    /* r19.0 */
+    tuning_set_key(tonic_midi);        /* r19.6 anchor just intonation      */
     drone_set_root_midi(tonic_midi);   /* glides live if the drone is sounding */
 }
 void engine_set_drone(bool on) { drone_enable(on); }
+
+/* r19.6 — tuning: 0 = equal temperament (reference), 1 = just intonation. */
+void engine_set_tuning(int just) { tuning_set_mode(just); }
 
 /* PAD_VOICE_MIXES from the webapp: warm / strings / brass. */
 void engine_set_pad_voice(int voice_idx) {
@@ -548,7 +553,7 @@ int engine_generative_advance(void) {
     int midi = harmony_bass_midi() + 12;
     snd_bed_midi = midi;
     gen_state_seen = harmony_state_changes();
-    engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi),
+    engine_note_on((uint8_t)GEN_SOURCE, tuning_hz((float)midi),
                    GEN_VOICE_AMP * composer_params()->bed_amp);
     return harmony_state_index() + 1;
 }
@@ -613,7 +618,7 @@ void engine_generative_tick(uint32_t now_ms) {
                 while (midi > 74) midi -= 12;    /* keep the choir mid-low */
                 while (midi < 50) midi += 12;
                 if (eno_on[i]) engine_note_off(ENO_SRC(i));
-                engine_note_on(ENO_SRC(i), dsp_midi_to_hz((float)midi),
+                engine_note_on(ENO_SRC(i), tuning_hz((float)midi),
                                ENO_AMP[i] * composer_params()->bed_amp);
                 eno_on[i]       = 1;
                 snd_eno_midi[i] = midi;
@@ -642,7 +647,7 @@ void engine_generative_tick(uint32_t now_ms) {
                                                 * bass.c derives the low
                                                 * fundament via lowest_held */
         snd_bed_midi = midi;
-        engine_note_on((uint8_t)GEN_SOURCE, dsp_midi_to_hz((float)midi),
+        engine_note_on((uint8_t)GEN_SOURCE, tuning_hz((float)midi),
                        GEN_VOICE_AMP * composer_params()->bed_amp);
     }
 
@@ -700,7 +705,7 @@ void engine_generative_tick(uint32_t now_ms) {
                 tone = harmony_melody_next(mel_last_midi, sus, nsus,
                                            0.05f + composer_params()->high_p);
             if (tone > 0) {
-                float hz  = dsp_midi_to_hz((float)tone);
+                float hz  = tuning_hz((float)tone);
                 float amp = 0.062f + gen_rand01() * 0.014f;
                 engine_note_on((uint8_t)MEL_SRC, hz, amp);
                 melody_strike(hz, amp * 2.0f);   /* articulate the onset */

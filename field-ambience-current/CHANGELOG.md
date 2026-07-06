@@ -10,6 +10,36 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.6 (2026-07-06) — Just Intonation: „harmonies without beating" (Sonicware Ø v1.5-Prinzip)
+
+User „ja" auf den Vorschlag, die letzte 🟡-Sache aus dem Audit anzugehen:
+reine Stimmung für die stehende Harmonie.
+
+**NEU tuning.c + Menü-Slot „Tuning" (Equal / Just, 10 → 11 Slots):**
+- **Equal** (Default): gleichstufig, **bit-exakt** = dsp_midi_to_hz. Der
+  bench-getunte Referenzklang bleibt unangetastet.
+- **Just**: 5-Limit-Just-Intonation, an die KEY-Tonika verankert (Tonika
+  behält ET-Frequenz → Konzertstimmung bleibt; alles andere ist reines
+  Verhältnis: Quinte 3:2, Terz 5:4, Sexte 5:3, Oktave 2:1 …). Für reine
+  Intervalle fallen die Partialtöne exakt zusammen → die gehaltene Harmonie
+  rastet ohne Schweben ein (Sonicware Ø v1.5 „harmonies without beating").
+- **ALLE tonalen Stimmen** laufen durch dieselbe Stimmung (Bett, Eno-Loops,
+  Melodie, Cells, Drone) — ET+JI mischen würde schlimmer schweben als
+  beides. Ideal für unser Konzept: ein tonales Zentrum, langsam bewegt.
+
+Prinzip aus der Ambient Ø v1.5 gelernt, nicht kopiert; die JI-Ratio-Tabelle
+und die Tonika-Verankerung sind unsere Umsetzung.
+
+**Test §test_tuning:** Equal bit-exakt über midi 40–90; Just liefert exakt
+3/2, 4/3, 5/4, 5/3, 2/1 und die Oktav-runter-Fälle; **Beat-Beweis**: die
+ET-Quinte schwebt (3·f vs 2·1.5f ≈ 0.9 Hz), die JI-Quinte ist beat-frei
+(0.000 Hz). Menü-Test um den Tuning-Slot erweitert.
+
+26 Suiten (+test_tuning) / 0 Failures; h743 clean (183,4 KB Flash);
+Session-Demo läuft jetzt in Just, Autoplay neu.
+
+---
+
 ## v0.7-r19.5 (2026-07-06) — Blendwave ausgebaut: gehaltene Töne wandern spektral (Yin/Yang-Formant)
 
 User: „bau das aus" — die 🟡-Blendwave-Tiefe aus dem Ehrlichkeits-Audit

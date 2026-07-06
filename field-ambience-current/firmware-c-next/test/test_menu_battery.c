@@ -19,11 +19,12 @@ static int g_checks = 0, g_fails = 0;
  * callbacks here. Tone + Drums dropped in r18.58 — Tone duplicated the
  * Brightness encoder, Drums needs an adaptive-drums engine we don't have.) */
 static struct {
-    int   world, key, voice;
+    int   world, key, tuning, voice;
     float space, shim, atmos, motion, age, echo, blur;
 } st;
 static void cb_world (int v)   { st.world  = v; }
 static void cb_key   (int v)   { st.key    = v; }
+static void cb_tuning(int v)   { st.tuning = v; }
 static void cb_voice (int v)   { st.voice  = v; }
 static void cb_space (float v) { st.space  = v; }
 static void cb_shim  (float v) { st.shim   = v; }
@@ -36,7 +37,8 @@ static void cb_blur  (float v) { st.blur   = v; }
 static void init(void) {
     memset(&st, 0, sizeof st);
     menu_callbacks_t cb = {
-        .set_world = cb_world,   .set_key  = cb_key,  .set_voice = cb_voice,
+        .set_world = cb_world,   .set_key  = cb_key,  .set_tuning = cb_tuning,
+        .set_voice = cb_voice,
         .set_space = cb_space,   .set_shimmer = cb_shim,
         .set_atmosphere = cb_atmos,
         .set_motion = cb_motion, .set_age = cb_age,
@@ -212,9 +214,21 @@ static void test_key_and_voice_slots(void) {
     CHECK(st.key == 8, "key steps down (got %d)", st.key);
     menu_push();
 
-    /* VOICE: 3 options, defaults to Pad, fires the callback */
+    /* TUNING (r19.6): slot 2, 2 options, defaults to Equal */
     menu_rotate(1);
-    CHECK(menu_current() == MP_VOICE, "slot 2 should be VOICE (got %d)", menu_current());
+    CHECK(menu_current() == MP_TUNING, "slot 2 should be TUNING (got %d)", menu_current());
+    CHECK(menu_value_count(MP_TUNING) == 2, "TUNING has 2 options");
+    CHECK(strcmp(menu_current_value_text(), "Equal") == 0,
+          "default tuning is Equal: got %s", menu_current_value_text());
+    menu_push();
+    menu_rotate(1);
+    CHECK(st.tuning == 1 && strcmp(menu_current_value_text(), "Just") == 0,
+          "set_tuning Just (got %d)", st.tuning);
+    menu_push();
+
+    /* VOICE: slot 3, 3 options, defaults to Pad, fires the callback */
+    menu_rotate(1);
+    CHECK(menu_current() == MP_VOICE, "slot 3 should be VOICE (got %d)", menu_current());
     CHECK(menu_value_count(MP_VOICE) == 3, "VOICE has 3 options");
     CHECK(strcmp(menu_current_value_text(), "Pad") == 0,
           "default voice is Pad: got %s", menu_current_value_text());
@@ -226,10 +240,9 @@ static void test_key_and_voice_slots(void) {
           strcmp(menu_current_value_text(), "Glass") == 0, "set_voice Glass");
     menu_push();
 
-    /* world change: KEY snaps to the new world's tonic, VOICE stays */
-    menu_rotate(-1);                      /* browse moves ONE slot per event
-                                           * (accel-ignore rule) */
-    menu_rotate(-1);
+    /* world change: KEY snaps to the new world's tonic, VOICE stays.
+     * VOICE is slot 3 now → three single-step retreats back to WORLD. */
+    menu_rotate(-1); menu_rotate(-1); menu_rotate(-1);
     CHECK(menu_current() == MP_WORLD, "back on WORLD (got %d)", menu_current());
     menu_push();
     menu_rotate(1);                       /* -> Crystal Coast (D major) */

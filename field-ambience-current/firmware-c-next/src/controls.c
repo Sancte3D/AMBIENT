@@ -11,6 +11,7 @@
 #include "engine.h"
 #include "brain.h"
 #include "dsp.h"
+#include "tuning.h"
 
 #define SHIFT_SRC(c) ((uint8_t)((c) + 9))   /* shift-octave pad source */
 
@@ -69,8 +70,8 @@ void controls_modifier(mod_id_t mod, bool pressed) {
 void controls_cell_press(uint8_t cell, float velocity_amp) {
     if (cell >= CTRL_CELL_COUNT) return;
     int   root = brain_cell_root(cell);
-    float hz   = dsp_midi_to_hz((float)root);
-    float hz_s = dsp_midi_to_hz((float)(root + 12));
+    float hz   = tuning_hz((float)root);
+    float hz_s = tuning_hz((float)(root + 12));
 
     if (s_mod[MOD_HOLD]) {
         /* Latching: toggle the branch the Shift state selects. The OTHER
@@ -126,9 +127,9 @@ void controls_refresh_held_pitches(void) {
         if (!s_hold_base[c] && !s_hold_shift[c]) continue;
         int root = brain_cell_root(c);
         if (s_hold_base[c])
-            engine_note_on(c, dsp_midi_to_hz((float)root), s_amp_base[c]);
+            engine_note_on(c, tuning_hz((float)root), s_amp_base[c]);
         if (s_hold_shift[c])
-            engine_note_on(SHIFT_SRC(c), dsp_midi_to_hz((float)(root + 12)),
+            engine_note_on(SHIFT_SRC(c), tuning_hz((float)(root + 12)),
                            s_amp_shift[c]);
     }
 }
