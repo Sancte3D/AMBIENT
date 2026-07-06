@@ -66,16 +66,22 @@ Diese Teile kommen NICHT von JLC, werden von Hand montiert, und für den
 BerryBase. Das ist das „grünes-Licht"-Profil: alle Doks liegen bei,
 **Polarität linienweit konsistent** → einmal prüfen, ewig nachbestellbar.
 
-Zwei offene 🟡-Checks, bevor grün:
-1. **Polarität** — Adafruit warnt selbst *„other brands may have reverse
-   polarity"*. Gegen J9-Pad-1 (Fab-Zeichnung) + mit Multimeter an der
-   Zelle bestätigen, bevor sie das erste Mal eingesteckt wird.
-   `UNVERIFIED — NEEDS HUMAN CHECK`: ob eure J9-Polung = Adafruit-Polung.
-2. **Dicke +2 mm** — 7 mm statt 5 mm. Passt rechnerisch in die 7-mm-Over-
-   PCB-Ebene (ADR-0011), aber mit null Reserve → gegen
-   `mechanical_coordinates` prüfen. Falls zu eng: 503759-Zelle (5 mm) mit
-   eigenem UN38.3-Report + PCB von DE/EU-Distributor, Doks+Polung pro Teil
-   einzeln verifizieren.
+**Polarität — Board-Seite verifiziert 🟢** (r19.2, aus dem Schaltplan
+getract): J9 `Conn_01x02` Pin 1 = `BAT_PLUS` (+), Pin 2 = `GND`. Beweis:
+Symbol-Pin 1 (3.81, +1.27) → nach Y-Spiegelung Schaltplan-Punkt
+(53.81, 78.73) → Wire → `BAT_PLUS`-Label (60, 78.73); Pin 2 → (53.81,
+81.27) → GND. Damit ist **Footprint-Pad 1 = Plus**. Topologie komplett:
+`BAT_PLUS` erreicht MCP73831-VBAT, TPS61089-VIN (Boost) und den
+BAT_SENSE-Teiler; GND sauber.
+
+Rest — nur noch am physischen Teil (kein File-Thema mehr):
+1. 🟡 **Bench-Check**: mit Multimeter bestätigen, dass Adafruits Stecker
+   beim Einstecken **+ auf Pad 1** liefert (Adafruit warnt: *„other brands
+   may have reverse polarity"*). Adafruit-Polung linienweit konsistent →
+   einmal messen, dann fix. Erledigt wenn der Akku physisch da ist.
+2. **Dicke +2 mm** (7 mm statt 5 mm) → an Arons PCB-/Gehäuse-Layout
+   delegiert, kein Blocker für die Schaltung. Falls zu eng: 503759-Zelle
+   (5 mm) mit eigenem UN38.3-Report + PCM, Doks+Polung pro Teil verifizieren.
 
 **Kein PCB-/R_PROG-Change nötig** — nur die BOM-Zeile (Link/MPN).
 
@@ -171,8 +177,9 @@ da sind. Tut man nicht.
 ---
 
 ## 6. Nächste Schritte
-- [ ] Akku-Polarität J9-Pin-1 gegen Fab-Zeichnung + Multimeter (🟡→🟢)
-- [ ] Akku-7-mm-Fit gegen `mechanical_coordinates` (🟡→🟢)
+- [x] Akku-Polarität Board-Seite verifiziert — **J9 Pin 1 / Pad 1 = Plus** (r19.2)
+- [ ] Bench-Check: Adafruit-Steckerpolung mit Multimeter (wenn Akku da ist)
+- [ ] Akku-7-mm-Fit → Arons PCB-/Gehäuse-Layout (kein Schaltungs-Blocker)
 - [ ] Kailh-Choc + Display feste Bezugsquelle fixieren
 - [ ] EMV-Pre-Compliance planen (nach 5er-Prototyp)
 - [ ] Kampagnen-Video + Demo-Seite
