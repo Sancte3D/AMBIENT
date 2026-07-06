@@ -21,6 +21,7 @@
 #include "tape.h"
 #include "reverb.h"
 #include "padsynth.h"
+#include "pad.h"
 #include "body.h"
 #include "engine.h"
 #include "brain.h"
@@ -658,6 +659,62 @@ int main(void) {
         for (int k = 0; k < 2500; ++k) engine_render(eb, 256);   /* ~14.5 s */
         CHECK(engine_active_voices() == 0,
               "loops released on disable (%d)", engine_active_voices());
+    }
+
+    /* ---- 14. r19.5 Blendwave spectral animator ----
+     * A held pad tone must MORPH when MOTION is up (the wandering formant
+     * sweeps across the partials → the SPECTRAL CENTROID drifts) and stay
+     * near-static at MOTION 0 (reference sound untouched). Metric: an
+     * in-band 6-probe Goertzel filterbank → centroid per 1.5 s window over
+     * 20 windows; the temporal CV of the centroid is the "how much does the
+     * timbre wander" number. Uses a low 110 Hz note so many partials sit in
+     * the animator band 220..1550 Hz. Calibrated: OFF CV ~0.06, ON ~0.17. */
+    {
+        enum { WN = 66150, BQ = 256, NW = 20 };   /* 1.5 s windows */
+        static float dl[BQ], dr[BQ], sl[BQ], sr[BQ];
+        const double probe[6] = { 250, 400, 600, 850, 1100, 1400 };
+        double cv[2];
+        for (int mode = 0; mode < 2; ++mode) {
+            pad_init();
+            if (!padsynth_ready()) padsynth_build(0, 0);
+            pad_set_motion(mode ? 1.0f : 0.0f);
+            pad_note_on(8, 110.0f, 0.9f);
+            for (int b = 0; b < 44100 / BQ; ++b) {          /* settle 1 s */
+                for (int i = 0; i < BQ; ++i) dl[i]=dr[i]=sl[i]=sr[i]=0.0f;
+                pad_render_mix(dl, dr, sl, sr, BQ, 0.0f);
+            }
+            double cent[NW];
+            for (int win = 0; win < NW; ++win) {
+                double s0[6] = {0}, s1[6] = {0};
+                for (int b = 0; b < WN / BQ; ++b) {
+                    for (int i = 0; i < BQ; ++i) dl[i]=dr[i]=sl[i]=sr[i]=0.0f;
+                    pad_render_mix(dl, dr, sl, sr, BQ, 0.0f);
+                    for (int k = 0; k < 6; ++k) {
+                        double w = 2.0*M_PI*probe[k]/44100.0, v;
+                        for (int i = 0; i < BQ; ++i) {
+                            v = dl[i] + 2.0*cos(w)*s0[k] - s1[k];
+                            s1[k] = s0[k]; s0[k] = v;
+                        }
+                    }
+                }
+                double num = 0, den = 0;
+                for (int k = 0; k < 6; ++k) {
+                    double w = 2.0*M_PI*probe[k]/44100.0;
+                    double Pk = s0[k]*s0[k] + s1[k]*s1[k] - 2.0*cos(w)*s0[k]*s1[k];
+                    num += probe[k] * Pk; den += Pk;
+                }
+                cent[win] = den > 0 ? num / den : 0.0;
+            }
+            double mean = 0; for (int i=0;i<NW;++i) mean += cent[i]; mean /= NW;
+            double var  = 0; for (int i=0;i<NW;++i) var += (cent[i]-mean)*(cent[i]-mean);
+            var /= NW;
+            cv[mode] = mean > 0 ? sqrt(var) / mean : 0.0;
+        }
+        CHECK(cv[1] > cv[0] * 1.8,
+              "MOTION animates the held tone's spectrum (centroid CV on %.4f vs off %.4f)",
+              cv[1], cv[0]);
+        CHECK(cv[0] < 0.13,
+              "MOTION 0 leaves the bed near-static (centroid CV %.4f)", cv[0]);
     }
 
     printf("%d checks, %d failures\n", checks, fails);
