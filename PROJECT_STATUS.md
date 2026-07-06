@@ -2,6 +2,20 @@
 
 **Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
 
+> **r18.98 (2026-07-06, End-Rauschen + „das Instrument kann nicht genug"):**
+> Das Rest-Rauschen am Session-Ende war die After-Hours-**Vinyl-Ambience**
+> (kontinuierliches HP-Weißrauschen 0.22 = stationärer −56-dB-Teppich,
+> von r18.97 übersehen) → als Tick-EVENTS neu gebaut (>8 k −56.5 → −68.5
+> dBFS). Dazu Spielbarkeit: **NEU glass.c** (2-op-FM-Glass, Chowning/DX7-
+> Prinzip, inharmonisches Ratio 3.5307, Index schneller als Amplitude),
+> **Menü 7 → 9 Slots**: KEY (12 Tonarten, Welt-Tonika beim Weltwechsel,
+> Latch-Noten re-pitchen) + VOICE (Pad/String/Glass — Cell-Press schlägt
+> die Melodiestimme an, Sparkles folgen; Pad = Referenz unverändert).
+> V2-„andere Synths" (6 Engines in src/v2/engines/) bleiben verworfen —
+> FM-Glass-Prinzip daraus neu geboren. Session-Demo nutzt VOICE + KEY-
+> Modulation. 26 Suiten / 0 Failures; h743 169,7 KB. Details: CHANGELOG
+> r18.98.
+>
 > **r18.97 (2026-07-05, „hardcore am rauschen" — Rauschteppich getötet +
 > realistischer Wind/Wellen):** Per Forensik (Banded-RMS + FFT-Valley-
 > Floor) drei Taeter gefunden: Tape-Hiss-Default 0.005 → 0.0012 (Ducking

@@ -78,6 +78,15 @@ void engine_set_mood(float mood_0_1);          /* darkness↔brightness macro */
  * pitch ("global follows, held notes freeze" rule). */
 void engine_set_key(int tonic_midi);
 
+/* r18.98 — menu KEY slot speaks pitch class (0=C..11=B); anchored into the
+ * world-tonic register MIDI 54..65 so key changes transpose, never jump. */
+void engine_set_key_pc(int pc_0_11);
+
+/* r18.98 — melody VOICE: 0 = PAD (reference: cells swell, sparkles are KS
+ * strings), 1 = STRING, 2 = GLASS (2-op FM). With 1/2 every cell press also
+ * strikes the voice (attack in front of the swell); sparkles follow. */
+void engine_set_voice(int voice_idx);
+
 /* Step 12b #2 — drone toggle (DRONE modifier). Blooms a sustained root pad
  * in/out; it follows engine_set_key live with portamento. */
 void engine_set_drone(bool on);

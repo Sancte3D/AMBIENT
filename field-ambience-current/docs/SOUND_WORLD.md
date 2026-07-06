@@ -29,8 +29,12 @@ gefiltertes Rauschen, das nie aufhört, ist ein Teppich, kein Wetter).
 | Stimme | Modul | Rolle | Register |
 |---|---|---|---|
 | **Pad-Bett** | pad.c + padsynth.c (Spektraltisch, Nasca-Modell) | der Raum, die Harmonie | ~MIDI 50–78 |
-| **Pluck-Melodie** | pluck.c + body.c (KS-Saite → Modalkörper pro Welt) | die Erzählstimme über dem Bett | ~MIDI 64–90 |
+| **Melodie** | pluck.c (KS-Saite) **oder** glass.c (2-op-FM, r18.98) → body.c (Modalkörper pro Welt) | die Erzählstimme über dem Bett — VOICE-Slot wählt String/Glass; bei String/Glass schlägt auch jeder Cell-Press sie an | ~MIDI 64–90 |
 | **Bass-Fundament** | bass.c (Sub + Deep) | Boden, folgt der tiefsten Note | −1/−2 Okt. unter Root |
+
+VOICE ist eine WAHL, kein Layer: eine Melodiestimme klingt zur Zeit
+(Pad-Default = Referenzklang, Cells rein als Swell). KEY (12 Tonarten im
+Menü, r18.98) transponiert im Register MIDI 54–65 — nie Oktavsprünge.
 
 Dazu Nicht-Ton-Schichten: texture.c (Brown+Pink-Atem), ambience.c
 (Welt-Atmosphäre), tape.c (Hiss + Sättigung + Vinyl-Crackle), drone.c

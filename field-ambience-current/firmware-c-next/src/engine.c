@@ -26,6 +26,7 @@
 #include "generative.h"
 #include "cells.h"
 #include "pluck.h"
+#include "glass.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -46,6 +47,7 @@
 #define GEN_SOURCE    8           /* reserved pad-voice source for the bed */
 #define GEN_VOICE_AMP 0.10f
 static float active_freq[MAX_SOURCES];
+static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
 /* Generative-bed state. Sparkle melody scheduler (r18.88): sources 14/15,
  * see the autoplay block above engine_generative_tick(). */
@@ -219,6 +221,8 @@ void engine_init(void) {
     master_vol_cur = master_vol_tgt = 0.6f;
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
+    glass_init();                    /* r18.98 FM glass voice */
+    melody_voice = 0;                /* PAD — the bench-tuned reference */
     body_init();                     /* r18.94 modal body (per-world material) */
 
     /* Boot world 0 (Tokyo) — align the harmonic identity with the displayed
@@ -226,6 +230,25 @@ void engine_init(void) {
      * C-ionian default. Sets brain key/mode/vibe + ambience world + reverb
      * preset; produces no sound (no notes held). */
     engine_set_world(0);
+}
+
+/* r18.98 VOICE — the melody-instrument selector (user: "das Instrument
+ * kann nicht genug"). 0 = PAD (reference sound, cells swell as before),
+ * 1 = STRING, 2 = GLASS: every cell press ADDITIONALLY strikes the chosen
+ * melody voice, so playing gets an articulate attack in front of the pad
+ * swell — piano-into-pad feel. The generative sparkles follow the same
+ * choice (GLASS replaces the KS string; PAD keeps the string — the bed
+ * needs SOME second colour, that was the whole r18.89 point). */
+void engine_set_voice(int voice_idx) {
+    if (voice_idx < 0) voice_idx = 0;
+    if (voice_idx > 2) voice_idx = 2;
+    melody_voice = voice_idx;
+}
+
+/* Fire the selected melody voice (used by cell presses + sparkles). */
+static void melody_strike(float freq_hz, float amp) {
+    if (melody_voice == 2) glass_note(freq_hz, amp);
+    else                   pluck_note(freq_hz, amp);
 }
 
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
@@ -246,6 +269,13 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     amp     *= 1.0f + amp_jitter;
     pad_note_on(source, freq_hz, amp);
     if (source < MAX_SOURCES) active_freq[source] = freq_hz;
+    /* r18.98 VOICE: cell sources (base 0..4 + shift 9..13) also strike the
+     * selected melody voice — an articulate attack in front of the pad
+     * swell. The generative bed (8) and sparkles (14/15) are excluded:
+     * the bed must stay a bed. Amp is scaled to sit like the sparkles. */
+    if (melody_voice != 0 &&
+        (source <= 4 || (source >= 9 && source <= 13)))
+        melody_strike(freq_hz, dsp_clampf(amp * 1.4f, 0.0f, 0.30f));
     refresh_bass();
 }
 void engine_note_off(uint8_t source) {
@@ -375,6 +405,16 @@ void engine_set_mood(float v) {
     musical_mood = dsp_clampf(v, 0.0f, 1.0f);
     recompute_reverb_from_presets();
 }
+/* r18.98 KEY as a menu slot: the menu speaks PITCH CLASS (0=C..11=B); the
+ * engine anchors it in the register the four world tonics live in
+ * (F#3..F4, MIDI 54..65) so a key change transposes, never jumps octaves:
+ * pc 6..11 → 54..59, pc 0..5 → 60..65. Tokyo A=57, Coast D=62,
+ * Drive F#=54, Hours C=60 all round-trip exactly. */
+void engine_set_key_pc(int pc) {
+    pc %= 12; if (pc < 0) pc += 12;
+    engine_set_key(pc >= 6 ? 48 + pc : 60 + pc);
+}
+
 void engine_set_key(int tonic_midi) {
     brain_set_key(tonic_midi);
     drone_set_root_midi(tonic_midi);   /* glides live if the drone is sounding */
@@ -620,8 +660,9 @@ free_choice:
             /* r18.89: sparkles are Karplus-Strong PLUCKS now, not pad
              * voices — a second instrument colour over the bed (bell/koto
              * blooming into the reverb) instead of "more pad". Plucks
-             * self-decay (~3 s T60), so no note-off bookkeeping. */
-            pluck_note(spark[i].hz, spark[i].amp * 2.2f);
+             * self-decay (~3 s T60), so no note-off bookkeeping.
+             * r18.98: VOICE=GLASS swaps the string for the FM glass. */
+            melody_strike(spark[i].hz, spark[i].amp * 2.2f);
             spark[i].on_pending = false;
         }
     }
@@ -658,6 +699,7 @@ void engine_render(int16_t *buf, int frames) {
         memset(plkJL, 0, sizeof(float) * (size_t)frames);
         memset(plkJR, 0, sizeof(float) * (size_t)frames);
         pluck_render_mix(plkL, plkR, plkJL, plkJR, frames);
+        glass_render_mix(plkL, plkR, plkJL, plkJR, frames);   /* r18.98 */
         body_process(plkL, plkR, frames);
         for (int n = 0; n < frames; ++n) {
             dryL[n]  += plkL[n];

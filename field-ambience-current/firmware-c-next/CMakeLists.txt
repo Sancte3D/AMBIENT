@@ -101,6 +101,7 @@ set(DSP_SOURCES
     src/echo.c          # Reddit Echo macro: tape-style stereo delay
     src/blur.c          # Reddit Blur macro: granular cloud
     src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
+    src/glass.c         # r18.98: 2-op FM glass melody voice (VOICE menu)
     src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/body.c          # r18.94: modal resonant body for the plucks (Rings concept)
     src/composer.c      # r18.96: ambient composer state machine (probabilities only)

@@ -16,6 +16,7 @@
 #include <math.h>
 #include "dsp.h"
 #include "pluck.h"
+#include "glass.h"
 #include "tape.h"
 #include "reverb.h"
 #include "padsynth.h"
@@ -455,6 +456,87 @@ int main(void) {
             }
         }
         CHECK(isfinite(pk) && pk < 8.0f, "bounded under 5 s full-scale noise (%f)", pk);
+    }
+
+    /* ---- 12. r18.98 FM glass voice + engine VOICE dispatch + KEY pc ----
+     * (a) a strike sounds, is bounded, and SELF-DECAYS to silence;
+     * (b) the FM spectrum is INHARMONIC while the strike is bright: the
+     *     first upper sideband (1 + ratio-1 = 2.5307 f) carries real energy
+     *     in the first 200 ms and nearly none in the late ring (the index
+     *     envelope is the strike — that asymmetry IS the glass);
+     * (c) engine_set_voice routes cell presses: 2 → glass, 1 → string,
+     *     0 → neither (reference sound untouched);
+     * (d) engine_set_key_pc anchors pitch classes into MIDI 54..65 and
+     *     round-trips all four world tonics. */
+    {
+        enum { GN = 512 };
+        static float gL[GN], gR[GN], gsL[GN], gsR[GN];
+        static float early[8820], late[8820];   /* 200 ms windows */
+        glass_init();
+        glass_note(220.0f, 0.25f);
+        CHECK(glass_active_count() == 1, "glass voice active after strike");
+        float pk = 0; long n_early = 0, n_late = 0; long pos = 0;
+        for (int b = 0; b < (5 * 44100) / GN; ++b) {
+            for (int i = 0; i < GN; ++i) gL[i] = gR[i] = gsL[i] = gsR[i] = 0.0f;
+            glass_render_mix(gL, gR, gsL, gsR, GN);
+            for (int i = 0; i < GN; ++i) {
+                float a = fabsf(gL[i]); if (a > pk) pk = a;
+                if (pos < 8820)                          early[n_early++] = gL[i];
+                if (pos >= 44100 && pos < 44100 + 8820)  late [n_late++]  = gL[i];
+                ++pos;
+            }
+        }
+        CHECK(pk > 0.02f && pk < 1.0f, "glass strike audible + bounded (%f)", pk);
+        CHECK(glass_active_count() == 0, "glass self-decayed inside 5 s (%d)",
+              glass_active_count());
+
+        /* Goertzel at f and at the 2.5307 f sideband, early vs late */
+        double e_f = 0, e_sb = 0, l_f = 0, l_sb = 0;
+        {
+            double wf  = 2.0 * M_PI * 220.0 / 44100.0;
+            double wsb = 2.0 * M_PI * (220.0 * 2.5307) / 44100.0;
+            double s0, s1, v;
+            #define GOE(buf, cnt, w, out) do { s0 = s1 = 0; \
+                for (long i = 0; i < (cnt); ++i) { \
+                    v = (buf)[i] + 2.0 * cos(w) * s0 - s1; s1 = s0; s0 = v; } \
+                out = s0 * s0 + s1 * s1 - 2.0 * cos(w) * s0 * s1; } while (0)
+            GOE(early, n_early, wf,  e_f);
+            GOE(early, n_early, wsb, e_sb);
+            GOE(late,  n_late,  wf,  l_f);
+            GOE(late,  n_late,  wsb, l_sb);
+            #undef GOE
+        }
+        CHECK(e_sb > e_f * 0.15,
+              "strike is inharmonic-bright (sb/f %.3f)", e_sb / (e_f + 1e-12));
+        CHECK(l_sb < l_f * 0.05,
+              "ring is nearly pure (sb/f %.4f)", l_sb / (l_f + 1e-12));
+
+        /* (c) engine dispatch */
+        engine_init();
+        engine_set_voice(2);
+        engine_note_on(0, 220.0f, 0.12f);
+        CHECK(glass_active_count() > 0, "VOICE=GLASS strikes on a cell press");
+        CHECK(pluck_active_count() == 0, "no string when GLASS is chosen");
+        engine_note_off(0);
+        { int16_t b[512]; for (int i = 0; i < 1200; ++i) engine_render(b, 256); }
+        engine_set_voice(1);
+        engine_note_on(1, 330.0f, 0.12f);
+        CHECK(pluck_active_count() > 0, "VOICE=STRING strikes on a cell press");
+        engine_note_off(1);
+        { int16_t b[512]; for (int i = 0; i < 1200; ++i) engine_render(b, 256); }
+        engine_set_voice(0);
+        int g0 = glass_active_count(), p0 = pluck_active_count();
+        engine_note_on(2, 440.0f, 0.12f);
+        CHECK(glass_active_count() == g0 && pluck_active_count() == p0,
+              "VOICE=PAD leaves the reference sound untouched");
+        engine_note_off(2);
+
+        /* (d) KEY pitch-class anchor: all four world tonics round-trip */
+        engine_set_key_pc(9);  CHECK(brain_get_key() == 57, "pc 9 -> A3 57 (%d)",  brain_get_key());
+        engine_set_key_pc(2);  CHECK(brain_get_key() == 62, "pc 2 -> D4 62 (%d)",  brain_get_key());
+        engine_set_key_pc(6);  CHECK(brain_get_key() == 54, "pc 6 -> F#3 54 (%d)", brain_get_key());
+        engine_set_key_pc(0);  CHECK(brain_get_key() == 60, "pc 0 -> C4 60 (%d)",  brain_get_key());
+        engine_set_key_pc(-3); CHECK(brain_get_key() == 57, "pc wraps below (%d)", brain_get_key());
     }
 
     printf("%d checks, %d failures\n", checks, fails);

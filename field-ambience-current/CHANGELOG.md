@@ -10,6 +10,65 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r18.98 (2026-07-06) — End-Rauschen (Vinyl-Teppich) getötet + VOICE (String/Glass-FM) + KEY im Menü
+
+User: „in der played session höre ich am ende noch so starkes rauschen …
+außerdem: sind die anderen synths gebaut? … das instrument kann nicht
+genug, es ist zu langweilig — vielleicht oscillator oder LFO oder pitch
+controls?"
+
+**1. Das End-Rauschen, per Messung gefunden:** Banded-Profil über die
+Session zeigt ab 116 s (Weltwechsel → After Hours) einen STATIONÄREN
+HF-Floor (−56 dBFS >8 kHz), der beim Ausklingen voll freiliegt. Isolation:
+Welt 3 + ATMOS 0.30 = −56 dB, ohne ATMOS −83 dB → Täter ist die
+**Vinyl-Ambience „crackle"**: kontinuierliches HP-Weißrauschen bei 0.22 —
+exakt der Teppich, den §2 der Verfassung seit r18.97 verbietet (r18.97
+hatte Wind/Wellen/Regen gefixt, Vinyl übersehen). **Rebuild als EVENTS:**
+dichte kleine Ticks (~10..50/s, τ≈1 ms, zufällige Seite/Polarität) + die
+sparsamen Pops + Rumble. Gemessen: 3–8 k −60.6 → −69.9, >8 k −56.5 →
+−68.5 dBFS; das Session-Ende fällt von −46 auf −55 dBFS Gesamt-Floor und
+klingt nach Platte, nicht nach Hiss.
+
+**2. Ehrliche Antwort auf „andere Synths":** `src/v2/engines/` enthält 6
+Engines (acid, fm_glass, chorus_mist, ion_storm, glass_orbit,
+bamboo_circuit) aus der V2-Richtung, die der User verworfen hat („Horror",
+„Crystal Castles") — nie verdrahtet, keine Demos. Statt sie zu reanimieren:
+das BESTE Konzept daraus (FM-Glass) als Prinzip neu gebaut, im Rahmen der
+Verfassung.
+
+**3. NEU glass.c — 2-op-FM-GLASS-Stimme** (Chowning/DX7-Tine-Prinzip,
+frisch implementiert): Sinus-Carrier phasenmoduliert bei inharmonischem
+Ratio 3.5307 (Sidebands ZWISCHEN den Harmonischen = Glas/Glocke), Index-
+Hüllkurve (~130 ms) viel schneller als Amplitude (~2.5 s T60) — der helle
+komplexe Anschlag, der in fast reinen Ring ausklingt, IST die Metall-
+Illusion. Velocity → Index (leise = warmer Chime, hart = gläserner Clang).
+Läuft durch denselben Melodie-Bus + Modalkörper wie die KS-Saite.
+
+**4. NEU Menü-Slots (7 → 9):**
+- **KEY** (nach World): 12 Tonarten als Notennamen, Weltwechsel snappt auf
+  die Welt-Tonika (Tokyo A · Coast D · Drive F# · Hours C), verankert in
+  MIDI 54–65 (`engine_set_key_pc`) — Transposition, nie Oktavsprung.
+  Gehaltene Latch-Noten re-pitchen mit (hal_set_key →
+  controls_refresh_held_pitches).
+- **VOICE**: Pad · String · Glass. Bei String/Glass schlägt jeder
+  Cell-Press ZUSÄTZLICH die Melodiestimme an — artikulierter Attack vor
+  dem Pad-Swell (Piano-in-Pad-Gefühl). Die generativen Sparkles folgen
+  derselben Wahl. Default Pad = der bench-getunte Referenzklang, unberührt.
+  Weltwechsel resettet VOICE nicht (Spieler-Entscheidung).
+
+**5. Session-Demo nutzt die neuen Controls** (Antwort auf „langweilig"):
+VOICE→String vor den kurzen Taps (1:00), VOICE→Glass im After-Hours-Teil
+(2:29), KEY-Modulation C→D (zwei Detents) vor der Schlussphrase (2:56).
+
+Tests: test_sound_upgrades §12 (Glass klingt/begrenzt/self-decay,
+Anschlag inharmonisch-hell vs. Ring fast rein per Goertzel, Engine-
+Dispatch pro VOICE, KEY-pc-Mapping inkl. Wrap), Menü-Tests für beide
+Slots (Snap bei Weltwechsel, VOICE bleibt). **26 Suiten / 0 Failures**;
+h743 clean (169,7 KB Flash). played_session neu gerendert; autoplay
+bit-identisch (VOICE-Default ändert nichts — beabsichtigt).
+
+---
+
 ## v0.7-r18.97 (2026-07-05) — Rauschteppich getötet (per Messung) + Wind/Wellen als realistische Sounds
 
 User: „irgendwas ist da so hardcore am rauschen durchgehend, alles andere
