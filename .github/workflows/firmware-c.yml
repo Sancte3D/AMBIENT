@@ -146,25 +146,28 @@ jobs:
           path: field-ambience-current/firmware-c-next/build/display_hw_test.uf2
           if-no-files-found: error
 
-  # --- STM32H743 product target: syntax + link gate -----------------------
-  # The product MCU is STM32H743 (ADR-0002). The full ARM-GCC/CubeH7 build is
-  # Step 13.3 (not yet), but the HAL skeleton compiles + links with the HOST
-  # compiler (CMakeLists FAM_TARGET=h743 branch). This job builds that, so
-  # prototype/declaration regressions in src/hal_h743/** are caught in CI
-  # instead of staying green while the product target silently breaks.
-  h743-syntax-next:
-    name: STM32H743 syntax+link (skeleton, host gcc)
+  # --- STM32H743 product target: real ARM cross-build gate ----------------
+  # The product MCU is STM32H743 (ADR-0002). Since r18.86 the h743 target is a
+  # real ARM-GCC/CubeH7 cross-build (not a host-gcc skeleton), so this job
+  # installs the ARM toolchain and cross-compiles + links the flashable image.
+  # Catches prototype/declaration/HAL regressions in src/hal_h743/** in CI.
+  # (Fixed r19.14: the old job installed no ARM toolchain and assumed host gcc
+  # — it had been failing at cmake-configure since the r18.86 HAL reorg.)
+  h743-crossbuild-next:
+    name: STM32H743 ARM cross-build (firmware-c-next)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install build tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cmake build-essential
-      - name: Build h743 skeleton (FAM_TARGET=h743)
+          sudo apt-get install -y -qq gcc-arm-none-eabi cmake build-essential
+      - name: Cross-build h743 (FAM_TARGET=h743)
         working-directory: field-ambience-current/firmware-c-next
         run: |
           mkdir -p build-h743 && cd build-h743
+          # CMakeLists auto-selects cmake/arm-none-eabi-m7.cmake for h743.
           cmake .. -DFAM_TARGET=h743
           make -j"$(nproc)"
-          test -f field_ambience_h743 && echo "h743 skeleton linked OK"
+          test -f field_ambience_h743 && echo "h743 cross-build linked OK"
+          arm-none-eabi-size field_ambience_h743
