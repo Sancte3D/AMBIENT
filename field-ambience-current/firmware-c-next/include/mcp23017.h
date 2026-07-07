@@ -83,4 +83,11 @@ void pca_init(void);
 /* PCA9685 per-channel 12-bit PWM (on/off counts). */
 void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count);
 
+/* PCA9685 bulk update: all 16 channels in ONE auto-incremented I²C write
+ * (MODE1.AI is set in pca_init). `duty[ch]` = 12-bit OFF count (on_count = 0);
+ * duty 0 → LEDn_FULL_OFF for exact dark. Replaces 16 separate transactions —
+ * one edge burst per LED frame instead of sixteen (REALTIME_AUDIO_RULES.md
+ * §9: keep periodic bus traffic short so it can't couple into the audio). */
+void pca_set_all_pwm(const uint16_t duty[16]);
+
 #endif

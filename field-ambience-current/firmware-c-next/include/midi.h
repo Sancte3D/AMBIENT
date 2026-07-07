@@ -55,6 +55,12 @@ int midi_pending(void);
  * by midi_init.) Lets the UI flag a problem rather than silently glitch. */
 bool midi_overflowed(void);
 
+/* Pure freq/amp → MIDI conversion (host-tested), used by the engine note tap.
+ * midi_note_from_hz returns 0..127 or -1 for silence; midi_vel_from_amp
+ * returns 1..127 (never 0 = a sounding note is never a note-off). */
+int     midi_note_from_hz(float hz);
+uint8_t midi_vel_from_amp(float amp);
+
 /* --- Device-only hardware layer (midi_pio.c, Pico SDK build) ----------------
  * Not compiled by the host tests. midi_hw_init sets up the PIO-UART on GP21 at
  * 31250 baud; midi_hw_pump drains the FIFO into the PIO TX FIFO and must be

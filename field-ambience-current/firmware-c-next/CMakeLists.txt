@@ -128,6 +128,7 @@ set(DSP_SOURCES
     src/battery.c
     src/menu.c
     src/worlds.c        # ADR-0017 Phase 1: world descriptors as a real module
+    src/audio_profiler.c # r19.11 (P0.1): render deadline profiler (host-tested)
 )
 
 # ---------------------------------------------------------------------------
@@ -195,6 +196,8 @@ if(FAM_TARGET STREQUAL "h743")
         src/hal_h743/mcp23017_h743.c
         src/hal_h743/midi_uart_h743.c
         src/hal_h743/adc_h743.c
+        src/hal_h743/qspi_psram_h743.c   # r19.14 (ADR-0022): QSPI PSRAM (bench-pending)
+        src/hal_h743/diag_h743.c         # r19.14: first-power-on diagnostics screen
     )
     target_include_directories(field_ambience_h743 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

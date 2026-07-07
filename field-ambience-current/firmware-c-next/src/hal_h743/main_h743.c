@@ -24,6 +24,8 @@
 #include "brain.h"
 #include "dsp.h"
 #include "audio.h"
+#include "diag.h"
+#include "psram.h"
 #include "encoders.h"
 #include "mcp23017.h"
 #include "oled.h"
@@ -80,6 +82,35 @@ static void apply_amp_mute_for_jack(bool plugged) {
                       plugged ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
+/* --- MIDI note tap (r19.14) ---------------------------------------------
+ * Mirror the PLAYED cell notes (base sources 0..4, shift 9..13) to MIDI out.
+ * The generative bed/drone/sparkle/melody sources are intentionally NOT
+ * forwarded — MIDI out represents what the PLAYER performs, not the autoplay.
+ * Runs at control rate (engine note path, not the audio ISR), so the FIFO
+ * enqueue is safe. One note tracked per source for a correct note-off. */
+static int8_t s_midi_src_note[16];
+static bool midi_src_is_played(uint8_t s) { return s <= 4 || (s >= 9 && s <= 13); }
+
+static void midi_note_tap(int on, uint8_t source, float freq_hz, float amp) {
+    if (on < 0) {                                  /* engine_all_off */
+        midi_send_all_notes_off();
+        for (int i = 0; i < 16; ++i) s_midi_src_note[i] = -1;
+        return;
+    }
+    if (source >= 16 || !midi_src_is_played(source)) return;
+    if (on) {
+        int note = midi_note_from_hz(freq_hz);
+        if (note < 0) return;
+        if (s_midi_src_note[source] >= 0)          /* retrigger: off the old */
+            midi_send_note_off((uint8_t)s_midi_src_note[source]);
+        midi_send_note_on((uint8_t)note, midi_vel_from_amp(amp));
+        s_midi_src_note[source] = (int8_t)note;
+    } else if (s_midi_src_note[source] >= 0) {
+        midi_send_note_off((uint8_t)s_midi_src_note[source]);
+        s_midi_src_note[source] = -1;
+    }
+}
+
 /* DTCM/D2 DSP-buffer regions (stm32h743_flash.ld): the startup file zeroes
  * only the main .bss, so these must be zeroed here before ANY engine code
  * runs — C globals rely on zero-init. */
@@ -110,14 +141,17 @@ int main(void) {
     oled_init();
     mcp_init();
     enc_init();
-    /* midi_hw_init();  -- Firmware-seitig DEFERRED r18.30 (ADR-0004).
-     * r18.82-Doku-Fix: die HARDWARE ist komplett bestueckt (J10 PJ-320D +
-     * 2x 220R seit r18.67; frueher stand hier faelschlich "J9 DNP" — J9 ist
-     * der Akku-JST). Bei Reaktivierung nur diese Zeile einkommentieren
-     * (Treiber ist fertig: midi_uart_h743.c, USART2/PD5). */
+    /* MIDI Out activated (r19.14): message core + USART2/PD5 driver both
+     * complete since r18.86; the note tap below mirrors played cells to J10
+     * (PJ-320D TRS Type A + 2x 220R). ⚠ On real hardware, verify the TRS-A
+     * vs -B wiring against the receiver before relying on it (BRING_UP). */
+    midi_init();
+    midi_hw_init();
     dsp_init();
     brain_init();
     engine_init();
+    for (int i = 0; i < 16; ++i) s_midi_src_note[i] = -1;
+    engine_set_note_hook(midi_note_tap);   /* played cells → MIDI out */
     {
         /* ADR-0017 Phase 4 + r18.58 Reddit-macro menu */
         menu_callbacks_t cb = {
@@ -142,6 +176,31 @@ int main(void) {
     bat_adc_init();           /* r18.92: BAT_SENSE (PA3) — battery UI */
     audio_init();
     audio_set_renderer(engine_render);
+
+    /* --- Bring-up diagnostics (r19.14): hold CELL1 at power-on to enter a
+     * live readout (profiler load/WCET/misses/clips, battery, voices) + a
+     * QSPI-PSRAM self-test on CELL2. A bench instrument, not a play mode — it
+     * never returns (power-cycle to exit). Drives a heavy scene so the load%
+     * is meaningful. CELL bits are active-low (MCP pull-ups). */
+    if (!(mcp_state() & (1u << MCP_BIT_CELL1))) {
+        engine_set_world(0);
+        engine_set_drone(true);
+        engine_set_generative(true, 0);
+        engine_set_reverb_size(1.0f); engine_set_echo(1.0f);
+        engine_set_blur(1.0f);        engine_set_shimmer(1.0f);
+        int psram_pass = 0, psram_ran = 0;
+        for (;;) {
+            uint32_t now = HAL_GetTick();
+            engine_generative_tick(now);
+            if (!psram_ran && !(mcp_state() & (1u << MCP_BIT_CELL2))) {
+                psram_ran  = 1;
+                psram_pass = (psram_init() && psram_selftest()) ? 1 : 0;
+            }
+            diag_draw(psram_pass, psram_ran);
+            oled_show();
+            HAL_Delay(120);
+        }
+    }
 
     /* Initial jack state (mcp_init primed the cache): plugged at boot →
      * speaker amp stays muted from the first un-mute onwards. */
@@ -263,21 +322,23 @@ int main(void) {
             if (dt >= 16) {                /* 60 Hz tick */
                 uint16_t pwm[LED_CH_COUNT];
                 leds_render(now, dt, pwm);
-                for (uint8_t ch = 0; ch < LED_CH_COUNT; ++ch)
-                    pca_set_pwm(ch, 0, pwm[ch]);   /* on_count=0, off_count=duty */
+                pca_set_all_pwm(pwm);      /* one auto-inc I²C burst, not 16 */
                 last_ms = now;
             }
         }
 
         /* --- 6. Menu refresh, rate-limited to ~30 fps ---
          * Redraw only when the menu was touched or the accent crossfade is
-         * still moving — oled_show() streams the full frame (~29 ms at
-         * 30 MHz SPI), so idle frames are deliberately skipped. Audio is
-         * IRQ-fed and can't glitch while the CPU blocks here. */
-        if (ui_dirty && (uint32_t)(now - last_frame_ms) >= 33) {
+         * still moving. oled_show_async() kicks a background SPI-DMA row
+         * pipeline and returns immediately, so the ~29 ms panel write no
+         * longer stalls the main loop (inputs/generative stay responsive).
+         * The !oled_flush_busy() guard means we never rewrite the framebuffer
+         * while the DMA is still reading it (r19.12). */
+        if (ui_dirty && !oled_flush_busy() &&
+            (uint32_t)(now - last_frame_ms) >= 33) {
             bool accent_moving = oled_accent_tick(now) != 0;
             menu_render();
-            oled_show();
+            oled_show_async();
             ui_dirty      = accent_moving;
             last_frame_ms = now;
         }

@@ -106,6 +106,32 @@ static void test_overflow_drops_whole_messages_and_latches(void) {
     CHECK(!midi_overflowed(), "overflow not cleared by midi_init");
 }
 
+/* r19.14 — freq/amp → MIDI conversion (the engine note tap uses these). */
+static void test_hz_to_note(void) {
+    CHECK(midi_note_from_hz(440.0f) == 69, "A4 440Hz != 69");
+    CHECK(midi_note_from_hz(261.63f) == 60, "C4 261.63Hz != 60");
+    CHECK(midi_note_from_hz(880.0f) == 81, "A5 880Hz != 81");
+    CHECK(midi_note_from_hz(27.5f) == 21, "A0 27.5Hz != 21");
+    CHECK(midi_note_from_hz(0.0f) == -1, "silence != -1");
+    CHECK(midi_note_from_hz(-5.0f) == -1, "negative != -1");
+    /* clamps into 0..127 for extreme inputs */
+    CHECK(midi_note_from_hz(1.0f) >= 0, "very low freq underflowed");
+    CHECK(midi_note_from_hz(40000.0f) == 127, "very high freq not clamped");
+    /* nearest-note rounding: 445 Hz still snaps to A4 */
+    CHECK(midi_note_from_hz(445.0f) == 69, "445Hz should round to A4");
+    printf("  hz->note: 440->69, 261.63->60, 880->81, clamp+silence ok\n");
+}
+
+static void test_amp_to_vel(void) {
+    CHECK(midi_vel_from_amp(1.0f) == 127, "full amp != 127");
+    CHECK(midi_vel_from_amp(0.0f) == 1, "zero amp must floor to 1 (not note-off)");
+    CHECK(midi_vel_from_amp(-1.0f) == 1, "negative amp must floor to 1");
+    CHECK(midi_vel_from_amp(0.5f) >= 63 && midi_vel_from_amp(0.5f) <= 64,
+          "half amp ~= 64");
+    CHECK(midi_vel_from_amp(2.0f) == 127, "over-unity amp not clamped");
+    printf("  amp->vel: 1.0->127, 0.0->1 (floor), 0.5->~64, clamp ok\n");
+}
+
 int main(void) {
     printf("== midi (step12b #6) ==\n");
     test_note_on_off_bytes();
@@ -114,6 +140,8 @@ int main(void) {
     test_all_notes_off();
     test_fifo_order();
     test_overflow_drops_whole_messages_and_latches();
+    test_hz_to_note();
+    test_amp_to_vel();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);
     if (g_fails) { printf("RESULT: FAIL\n"); return 1; }

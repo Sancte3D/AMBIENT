@@ -66,4 +66,10 @@ void audio_set_test_amp(float amp_0_1);
 typedef void (*audio_render_fn)(int16_t *buf, int frames);
 void audio_set_renderer(audio_render_fn fn);
 
+/* Live render-deadline stats (P0.1), updated every DMA refill. NULL on
+ * targets without the profiler. See audio_profiler.h for the fields; use it
+ * for a debug/menu readout or a bring-up soak check (BRING_UP.md stage 10). */
+struct audio_profiler; /* fwd — full type in audio_profiler.h */
+const struct audio_profiler *audio_profiler_state(void);
+
 #endif

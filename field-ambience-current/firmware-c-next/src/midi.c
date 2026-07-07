@@ -16,6 +16,7 @@
 
 #include "midi.h"
 #include <string.h>
+#include <math.h>
 
 #define FIFO_SIZE 512                  /* power of two; 170 queued 3-byte msgs */
 #define FIFO_MASK (FIFO_SIZE - 1)
@@ -75,3 +76,25 @@ int midi_pending(void) {
 }
 
 bool midi_overflowed(void) { return overflow; }
+
+/* --- pure freq/amp → MIDI conversion (host-tested; used by the engine tap) - */
+
+/* Nearest equal-tempered MIDI note for a frequency (A4=69=440 Hz), clamped to
+ * the valid 0..127 range. 0 Hz / silence maps to -1 (no note). */
+int midi_note_from_hz(float hz) {
+    if (hz <= 0.0f) return -1;
+    int n = (int)lrintf(69.0f + 12.0f * log2f(hz / 440.0f));
+    if (n < 0)   n = 0;
+    if (n > 127) n = 127;
+    return n;
+}
+
+/* Linear amp (0..1) → MIDI velocity 1..127. A sounding note is never velocity
+ * 0 (that would read as note-off), so the floor is 1. */
+uint8_t midi_vel_from_amp(float amp) {
+    if (amp <= 0.0f) return 1;
+    int v = (int)lrintf(amp * 127.0f);
+    if (v < 1)   v = 1;
+    if (v > 127) v = 127;
+    return (uint8_t)v;
+}

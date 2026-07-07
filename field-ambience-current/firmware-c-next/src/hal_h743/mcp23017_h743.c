@@ -223,3 +223,27 @@ void pca_set_pwm(uint8_t channel, uint16_t on_count, uint16_t off_count) {
     pca_dev_set_pwm(0x40, channel, on_count, off_count);
 }
 
+/* All 16 channels in one auto-incremented burst: address LED0_ON_L, then
+ * 16×4 = 64 register bytes (ON_L, ON_H, OFF_L, OFF_H per channel). MODE1.AI
+ * (set in pca_dev_init) walks the register pointer, so the whole LED frame is
+ * a single I²C transaction instead of sixteen. */
+void pca_set_all_pwm(const uint16_t duty[16]) {
+    uint8_t b[1 + 16 * 4];
+    b[0] = PCA_LED0_ON_L;
+    for (uint8_t ch = 0; ch < 16; ++ch) {
+        uint16_t off = duty[ch];
+        uint8_t *r = &b[1 + 4u * ch];
+        r[0] = 0x00;                       /* ON_L  = 0 */
+        r[1] = 0x00;                       /* ON_H  = 0 */
+        if (off == 0) {                    /* exact dark: LEDn_FULL_OFF */
+            r[2] = 0x00;
+            r[3] = 0x10;                   /* OFF_H bit4 = FULL_OFF */
+        } else {
+            if (off > 4095) off = 4095;
+            r[2] = (uint8_t)(off & 0xFF);
+            r[3] = (uint8_t)((off >> 8) & 0x0F);
+        }
+    }
+    h743_i2c_wr(0x40, b, sizeof b);
+}
+

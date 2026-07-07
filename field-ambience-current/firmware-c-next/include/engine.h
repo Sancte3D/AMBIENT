@@ -31,6 +31,14 @@ void engine_note_on(uint8_t source, float freq_hz, float amp);
 void engine_note_off(uint8_t source);
 void engine_all_off(void);
 
+/* Note-event tap for MIDI out (or any observer). `on` = 1 note-on, 0 note-off,
+ * -1 all-off. Called from the control-rate note path (not the audio ISR), so
+ * the sink may enqueue freely. NULL (default) = no tap. The product wires this
+ * to MIDI in main_h743; the freq→note/velocity mapping uses midi_note_from_hz.
+ * Kept as a hook so the engine keeps no link dependency on midi.c. */
+typedef void (*engine_note_hook_t)(int on, uint8_t source, float freq_hz, float amp);
+void engine_set_note_hook(engine_note_hook_t h);
+
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
  * for cell `cell` (0..4) at `now_ms`. The cell-velocity model (cells.c) turns
  * the position stream into note events: a PRESS sounds that cell's chord root

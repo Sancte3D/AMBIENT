@@ -30,6 +30,12 @@ void DMA1_Stream0_IRQHandler(void) {
     HAL_DMA_IRQHandler(&h743_hdma_sai);
 }
 
+/* ---- SPI1-TX DMA (DMA2 Stream 3): async LCD framebuffer flush. TxCplt lands
+ * in lcd_st7789_h743.c and advances the row pipeline. ---- */
+void DMA2_Stream3_IRQHandler(void) {
+    HAL_DMA_IRQHandler(&h743_hdma_spi1_tx);
+}
+
 /* ---- MCP23017 INTA on PC13 (falling edge, R20 pull-up). The GPIO EXTI
  * callback lives in mcp23017_h743.c. ---- */
 void EXTI15_10_IRQHandler(void) {

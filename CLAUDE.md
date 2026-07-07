@@ -11,6 +11,15 @@ Auto-loaded into every session. Keep concise; this is binding guidance, not docs
 - Firmware lives in `field-ambience-current/firmware-c-next/`. Host tests:
   `./test/run_tests.sh`. Pico-2 bench build target = `pico` (display_hw_test).
 
+## BINDING RULE — Realtime Audio
+
+Any change reachable from `engine_render()` (the DMA-IRQ audio hot path)
+follows **`field-ambience-current/docs/hardware/REALTIME_AUDIO_RULES.md`**:
+no heap/blocking/unbounded calls in the hot path (the `test/lint_hotpath.sh`
+gate enforces this and hard-fails the suite), ramp every live parameter (no
+sample discontinuities), keep FTZ + DMA cache-clean intact, never stop/restart
+the audio pump, and keep hot buffers internal — **never** in QSPI-PSRAM.
+
 ## BINDING RULE — AI-Ready PCB Schematic Standard
 
 When creating, reviewing, or modifying ANY PCB schematic (i.e. editing the

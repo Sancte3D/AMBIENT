@@ -84,6 +84,16 @@ Line-out testen.
 - **Erwartung: Display zeigt das Menü** (World-Slot). Schwarz? → SPI/J3-
   **Pin-Order** (per Kabel Draht-für-Draht, s. Sourcing-Doc), Backlight (Q2/
   LCD_BLK_PWM), 3V3 am Modul.
+- **Async-DMA-Flush validieren (r19.12):** `oled_show_async()` streamt den
+  Framebuffer per SPI1-TX-DMA (DMA2_Stream3, Prio 6) zeilen-pipelined, damit
+  der Main-Loop während der ~29 ms nicht mehr blockiert. **Bench-Check:** Bild
+  sauber/vollständig, kein Tearing/Sparkle/versetzte Zeilen, kein
+  abgeschnittenes letztes Byte (CS-High im TxCplt). **Wenn es zickt**
+  (Zeilen-Re-Enable-Glitch, CS-Timing): Fallback = im Refresh-Block von
+  `main_h743.c` `oled_show_async()` → `oled_show()` (blocking, bewährt)
+  tauschen — eine Zeile, sonst identisch. Alternativ Zeilen zu Chunks bündeln
+  (weniger DMA-Re-Enables). Der Konverter (`oled_convert_row`) ist
+  host-getestet; nur DMA-/Panel-Timing ist hier offen.
 
 ## Stufe 6 — I²C-Bus
 - I²C-Scan: **0x20** (MCP23017) + **0x40** (PCA9685 U6) müssen ACKen.
@@ -114,6 +124,14 @@ Line-out testen.
 - **Dauerlauf** ein paar Minuten: Temperatur (LDO/Boost), Stabilität, in
   Stille keine CPU-/Audio-Spikes (FTZ ist an — sollte sauber sein).
 - Line-out + Speaker gegen die Host-Demos gegenhören.
+- **WCET-/Block-Size-Sweep (P0.2):** das Worst-Case-Szenario aus
+  `test/test_blocksize_sweep.c` (Drone + alle FX max + Trigger-Storm) auf dem
+  Board fahren und pro Blockgröße (512→256→128→64) `audio_profiler_state()`
+  auslesen: **`max_cycles`, `deadline_miss_count`, `clip_count`**. Gate
+  (REALTIME_AUDIO_RULES §1): `peak_load < 0,60`, `deadline_miss_count == 0`.
+  Host-seitig ist die Szene bereits als **stabil + bounded + 0 % Clipping bei
+  jeder Blockgröße** verifiziert — offen ist nur die echte Zyklenzahl. Erst
+  wenn 128 (oder 64) die Deadline hält, `AUDIO_BUFFER_FRAMES` senken.
 
 ---
 
