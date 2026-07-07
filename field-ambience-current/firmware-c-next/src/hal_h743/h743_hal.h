@@ -37,8 +37,9 @@ bool h743_i2c_wr_reg(uint8_t addr7, uint8_t reg, uint8_t val);
 bool h743_i2c_rd_reg(uint8_t addr7, uint8_t reg, uint8_t *out);
 
 /* --- handles referenced from stm32h7xx_it.c ---------------------------- */
-extern SAI_HandleTypeDef h743_hsai1a;      /* audio_h743.c   */
-extern DMA_HandleTypeDef h743_hdma_sai;    /* audio_h743.c   */
+extern SAI_HandleTypeDef h743_hsai1a;        /* audio_h743.c        */
+extern DMA_HandleTypeDef h743_hdma_sai;      /* audio_h743.c        */
+extern DMA_HandleTypeDef h743_hdma_spi1_tx;  /* lcd_st7789_h743.c   */
 
 /* --- BAT_SENSE ADC (adc_h743.c): PA3 = ADC12_INP15, 100k/100k divider.
  * bat_adc_read_volts returns VBAT in volts (blocking ~250 us, UI loop

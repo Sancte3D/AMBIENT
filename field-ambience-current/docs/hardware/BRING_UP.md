@@ -84,6 +84,16 @@ Line-out testen.
 - **Erwartung: Display zeigt das Menü** (World-Slot). Schwarz? → SPI/J3-
   **Pin-Order** (per Kabel Draht-für-Draht, s. Sourcing-Doc), Backlight (Q2/
   LCD_BLK_PWM), 3V3 am Modul.
+- **Async-DMA-Flush validieren (r19.12):** `oled_show_async()` streamt den
+  Framebuffer per SPI1-TX-DMA (DMA2_Stream3, Prio 6) zeilen-pipelined, damit
+  der Main-Loop während der ~29 ms nicht mehr blockiert. **Bench-Check:** Bild
+  sauber/vollständig, kein Tearing/Sparkle/versetzte Zeilen, kein
+  abgeschnittenes letztes Byte (CS-High im TxCplt). **Wenn es zickt**
+  (Zeilen-Re-Enable-Glitch, CS-Timing): Fallback = im Refresh-Block von
+  `main_h743.c` `oled_show_async()` → `oled_show()` (blocking, bewährt)
+  tauschen — eine Zeile, sonst identisch. Alternativ Zeilen zu Chunks bündeln
+  (weniger DMA-Re-Enables). Der Konverter (`oled_convert_row`) ist
+  host-getestet; nur DMA-/Panel-Timing ist hier offen.
 
 ## Stufe 6 — I²C-Bus
 - I²C-Scan: **0x20** (MCP23017) + **0x40** (PCA9685 U6) müssen ACKen.

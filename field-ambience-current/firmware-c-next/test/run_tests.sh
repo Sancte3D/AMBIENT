@@ -280,3 +280,11 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # r19.11: hot-path lint gate — no allocation / blocking calls reachable from
 # the audio render call graph (REALTIME_AUDIO_RULES.md). Hard-fails the suite.
 "$here/lint_hotpath.sh" "$src"
+
+# r19.12: shared 4-bit-grey -> RGB565 row converter (blocking + async DMA
+# panel drivers use this one verified function).
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_oled_convert.c" \
+    "$src/src/oled_draw.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/oled_convert_test"
+"$tmp/oled_convert_test"

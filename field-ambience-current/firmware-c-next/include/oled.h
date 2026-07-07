@@ -60,8 +60,26 @@ void oled_fill(uint8_t gs);
  * Later steps will extend the font. */
 void oled_text(int x, int y, const char *s, uint8_t gs);
 
-/* Stream the framebuffer to the panel (column + row window then RAM write). */
+/* Stream the framebuffer to the panel (column + row window then RAM write).
+ * Blocking — the proven path; used for init/clear-GRAM and as the async
+ * fallback. */
 void oled_show(void);
+
+/* Convert one framebuffer row to RGB565 (MS byte first) via the accent LUT.
+ * `out` holds OLED_WIDTH*2 bytes. Pure — shared by the blocking + async
+ * drivers; host-tested. */
+void oled_convert_row(int y, const uint16_t *lut565, uint8_t *out);
+
+/* Non-blocking flush (h743 SPI-DMA): kicks a background row-pipelined transfer
+ * of the whole framebuffer and returns immediately, freeing the main loop
+ * during the ~29 ms panel write (REALTIME_AUDIO_RULES §8). Skips silently if a
+ * flush is already in flight. On targets without DMA this falls back to the
+ * blocking oled_show(). */
+void oled_show_async(void);
+
+/* True while an async flush is streaming — the caller must NOT redraw the
+ * framebuffer until this clears (the DMA/ISR is reading it). */
+int  oled_flush_busy(void);
 
 /* --- Step 12b #7: lower-level draw primitives (used by the menu) ----------
  * All write to the in-RAM framebuffer; they don't push to the panel. Bounds

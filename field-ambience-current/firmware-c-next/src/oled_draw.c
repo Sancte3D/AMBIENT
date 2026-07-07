@@ -19,6 +19,24 @@ extern const uint8_t *font_glyph(char c);
 
 const uint8_t *oled_framebuffer(void) { return fb; }
 
+/* Convert one framebuffer row (OLED_WIDTH 4-bit grey pixels, 2 px/byte, high
+ * nibble = left) to OLED_WIDTH RGB565 pixels, MS byte first, using the
+ * accent LUT. `out` must hold OLED_WIDTH*2 bytes. Pure — no SPI — so the
+ * panel drivers (blocking + async DMA) share one verified converter and the
+ * host suite can check the pixel math. */
+void oled_convert_row(int y, const uint16_t *lut565, uint8_t *out) {
+    if ((unsigned)y >= OLED_HEIGHT) return;
+    const uint8_t *row = fb + (size_t)y * (OLED_WIDTH / 2);
+    uint8_t *o = out;
+    for (int x = 0; x < OLED_WIDTH; x += 2) {
+        uint8_t b = *row++;
+        uint16_t hp = lut565[b >> 4];       /* even x = high nibble (left) */
+        uint16_t lp = lut565[b & 0x0F];     /* odd  x = low  nibble        */
+        *o++ = (uint8_t)(hp >> 8); *o++ = (uint8_t)hp;
+        *o++ = (uint8_t)(lp >> 8); *o++ = (uint8_t)lp;
+    }
+}
+
 void oled_fill(uint8_t gs) {
     uint8_t b = (uint8_t)(((gs & 0x0F) << 4) | (gs & 0x0F));
     memset(fb, b, sizeof fb);

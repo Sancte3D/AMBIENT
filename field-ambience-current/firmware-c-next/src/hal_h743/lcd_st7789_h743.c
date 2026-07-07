@@ -46,6 +46,20 @@
 
 static SPI_HandleTypeDef s_hspi1;
 
+/* SPI1-TX DMA (async framebuffer flush). Global so the DMA2_Stream3 IRQ in
+ * stm32h7xx_it.c can dispatch into it. */
+DMA_HandleTypeDef h743_hdma_spi1_tx;
+
+/* Async flush state (row-pipelined): two line buffers ping-pong — DMA streams
+ * one row while the CPU converts the next. 32-byte aligned in D1 (.bss) so the
+ * D-cache clean before each DMA hits exact lines. `s_flush_active` is the
+ * busy flag; the ISR walks s_flush_row 0..OLED_HEIGHT. */
+__attribute__((aligned(32))) static uint8_t s_line[2][OLED_WIDTH * 2];
+static volatile int s_flush_active = 0;
+static volatile int s_flush_row    = 0;
+static int          s_flush_buf    = 0;
+static const uint16_t *s_flush_lut = 0;
+
 /* --- low-level CS/DC-managed command + bulk data --- */
 
 static inline void lcd_cs(bool low) {
@@ -113,6 +127,29 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *h) {
     g.Speed     = GPIO_SPEED_FREQ_HIGH;         /* 30 MHz edges */
     g.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOA, &g);
+
+    /* SPI1-TX DMA for the async framebuffer flush: DMA2 Stream 3, request
+     * SPI1_TX, memory→peripheral, 8-bit, normal (one row per kick). Priority
+     * below audio's DMA (medium vs high) so an audio refill always wins. */
+    __HAL_RCC_DMA2_CLK_ENABLE();
+    h743_hdma_spi1_tx.Instance                 = DMA2_Stream3;
+    h743_hdma_spi1_tx.Init.Request             = DMA_REQUEST_SPI1_TX;
+    h743_hdma_spi1_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+    h743_hdma_spi1_tx.Init.PeriphInc           = DMA_PINC_DISABLE;
+    h743_hdma_spi1_tx.Init.MemInc              = DMA_MINC_ENABLE;
+    h743_hdma_spi1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    h743_hdma_spi1_tx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
+    h743_hdma_spi1_tx.Init.Mode                = DMA_NORMAL;
+    h743_hdma_spi1_tx.Init.Priority            = DMA_PRIORITY_MEDIUM;
+    h743_hdma_spi1_tx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+    h743_hdma_spi1_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_HALFFULL;
+    h743_hdma_spi1_tx.Init.MemBurst            = DMA_MBURST_SINGLE;
+    h743_hdma_spi1_tx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
+    if (HAL_DMA_Init(&h743_hdma_spi1_tx) != HAL_OK) Error_Handler();
+    __HAL_LINKDMA(h, hdmatx, h743_hdma_spi1_tx);
+
+    HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 }
 
 void oled_init(void) {
@@ -163,12 +200,8 @@ void oled_init(void) {
     run_init_sequence();
 }
 
-/* Address-window the full visible area, then stream the framebuffer converting
- * each 4-bit grey pixel to RGB565 a row at a time (640 B per row → 170 rows).
- * Same loop as the Pico driver; only the SPI primitive differs. */
-void oled_show(void) {
-    const uint8_t *fb = oled_framebuffer();
-
+/* Address-window the full visible area and issue RAMWR (leaves CS high). */
+static void set_full_window(void) {
     uint16_t xs = OLED_LCD_X_OFFSET, xe = OLED_LCD_X_OFFSET + OLED_WIDTH  - 1;
     uint16_t ys = OLED_LCD_Y_OFFSET, ye = OLED_LCD_Y_OFFSET + OLED_HEIGHT - 1;
     cmd(ST_CASET); { const uint8_t d[4] = { (uint8_t)(xs >> 8), (uint8_t)xs,
@@ -176,22 +209,71 @@ void oled_show(void) {
     cmd(ST_RASET); { const uint8_t d[4] = { (uint8_t)(ys >> 8), (uint8_t)ys,
                                             (uint8_t)(ye >> 8), (uint8_t)ye }; data(d, 4); }
     cmd(ST_RAMWR);
+}
 
-    const uint16_t *grey565 = oled_grey565_lut();   /* accent-tinted, shared */
-    static uint8_t line[OLED_WIDTH * 2];   /* one row of RGB565, byte-swapped */
+/* Blocking full-frame flush (the proven path — used for init/clear-GRAM and as
+ * the async fallback). Converts + streams a row at a time via the shared
+ * oled_convert_row(). */
+void oled_show(void) {
+    /* If an async flush is mid-flight, let it finish so we don't interleave
+     * two RAMWR streams on the bus. */
+    while (s_flush_active) { /* spin — completes in the DMA ISR */ }
+
+    set_full_window();
+    const uint16_t *lut = oled_grey565_lut();   /* accent-tinted, shared */
     lcd_dc(true);
     lcd_cs(true);
     for (int y = 0; y < OLED_HEIGHT; ++y) {
-        const uint8_t *row = fb + (size_t)y * (OLED_WIDTH / 2);
-        uint8_t *o = line;
-        for (int x = 0; x < OLED_WIDTH; x += 2) {
-            uint8_t b = *row++;
-            uint16_t hp = grey565[b >> 4];      /* even x = high nibble (left) */
-            uint16_t lp = grey565[b & 0x0F];    /* odd  x = low  nibble        */
-            *o++ = (uint8_t)(hp >> 8); *o++ = (uint8_t)hp;   /* MS byte first */
-            *o++ = (uint8_t)(lp >> 8); *o++ = (uint8_t)lp;
-        }
-        spi_tx(line, (uint16_t)sizeof line);
+        oled_convert_row(y, lut, s_line[0]);
+        spi_tx(s_line[0], (uint16_t)sizeof s_line[0]);
     }
     lcd_cs(false);
+}
+
+/* --- Async SPI-DMA flush: free the main loop during the ~29 ms panel write. --
+ * set_full_window() (small blocking cmds), then hold CS low / DC high and DMA
+ * the pixel rows back-to-back. Each TxCplt fires the NEXT row's conversion +
+ * DMA from the ISR (DMA2_Stream3, priority 6 — below audio's 5). The caller
+ * must not touch the framebuffer while oled_flush_busy() is true. */
+int oled_flush_busy(void) { return s_flush_active; }
+
+static void kick_row_dma(int buf) {
+    /* CPU wrote the line through the D-cache — clean it so the DMA reads the
+     * fresh bytes from SRAM (same discipline as the audio TX buffer). */
+    SCB_CleanDCache_by_Addr((uint32_t *)s_line[buf], (int32_t)sizeof s_line[buf]);
+    if (HAL_SPI_Transmit_DMA(&s_hspi1, s_line[buf],
+                             (uint16_t)sizeof s_line[buf]) != HAL_OK)
+        Error_Handler();
+}
+
+void oled_show_async(void) {
+    if (s_flush_active) return;                 /* one flush in flight — skip */
+
+    s_flush_lut = oled_grey565_lut();
+    set_full_window();
+    lcd_dc(true);
+    lcd_cs(true);
+
+    s_flush_active = 1;
+    s_flush_buf    = 0;
+    oled_convert_row(0, s_flush_lut, s_line[0]);
+    s_flush_row    = 1;                          /* next row to convert */
+    kick_row_dma(0);
+}
+
+/* SPI1 TX-DMA complete: emitted from HAL via the DMA2_Stream3 IRQ. Advance the
+ * row pipeline; on the last row raise CS and clear the busy flag. */
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *h) {
+    if (h->Instance != SPI1 || !s_flush_active) return;
+
+    if (s_flush_row >= OLED_HEIGHT) {           /* last row shifted out */
+        lcd_cs(false);
+        s_flush_active = 0;
+        return;
+    }
+    int nb = s_flush_buf ^ 1;                    /* convert into the idle buffer */
+    oled_convert_row(s_flush_row, s_flush_lut, s_line[nb]);
+    s_flush_buf = nb;
+    s_flush_row++;
+    kick_row_dma(nb);
 }

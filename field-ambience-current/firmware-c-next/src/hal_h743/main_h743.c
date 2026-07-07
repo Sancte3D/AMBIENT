@@ -270,13 +270,16 @@ int main(void) {
 
         /* --- 6. Menu refresh, rate-limited to ~30 fps ---
          * Redraw only when the menu was touched or the accent crossfade is
-         * still moving — oled_show() streams the full frame (~29 ms at
-         * 30 MHz SPI), so idle frames are deliberately skipped. Audio is
-         * IRQ-fed and can't glitch while the CPU blocks here. */
-        if (ui_dirty && (uint32_t)(now - last_frame_ms) >= 33) {
+         * still moving. oled_show_async() kicks a background SPI-DMA row
+         * pipeline and returns immediately, so the ~29 ms panel write no
+         * longer stalls the main loop (inputs/generative stay responsive).
+         * The !oled_flush_busy() guard means we never rewrite the framebuffer
+         * while the DMA is still reading it (r19.12). */
+        if (ui_dirty && !oled_flush_busy() &&
+            (uint32_t)(now - last_frame_ms) >= 33) {
             bool accent_moving = oled_accent_tick(now) != 0;
             menu_render();
-            oled_show();
+            oled_show_async();
             ui_dirty      = accent_moving;
             last_frame_ms = now;
         }
