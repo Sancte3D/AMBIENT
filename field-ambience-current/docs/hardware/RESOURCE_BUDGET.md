@@ -67,6 +67,13 @@ Wenn ein Feature RAM braucht, gibt es effektiv **~180–250 KB** zu holen:
 Damit wäre Platz für z. B. einen echten Zweittisch-Blendwave, ein größeres
 Clouds-Granular oder mehr Stimmen.
 
+### Externe Erweiterung: QSPI-PSRAM (die große Tür)
+Für **Megabyte** statt Kilobyte gibt es die echte Lösung: **8 MB QSPI-PSRAM**
+(APS6404L, LCSC C5333729, JLC-Economic, ~$2,94, 6 freie Pins), memory-mapped
+→ CPU liest wie internen RAM. Ermöglicht Sample-Playback, Convolution-Reverb
+mit echten IRs, großes Granular. **Board-Änderung** → muss vor Arons Layout
+rein. Voll verifizierte Integration: **`ADR-0022`**.
+
 ## Regel
 - RAM-Umbauten (`.bss` zwischen Domänen schieben, D3/ITCM belegen, Scratch
   überlagern) sind **cache-heikel und host-untestbar** → **erst wenn ein
