@@ -1,6 +1,39 @@
 # PROJECT STATUS
 
-**Updated: 2026-06-27 (r18.66 — Live-Level-Meter: 2. PCA9685 U10 @ 0x41 → 8 VU-LEDs (6 blau + 2 weiß), firmware-driven; 4× Push-Encoder bestätigt; Doku verschlankt (1 Engineer-Übersicht, PCB_TODO archiviert); pinmap + JLC BOM export + handoff; LED revert; 1.9in freeze)**
+**Updated: 2026-07-07 (r19.14 — QSPI-PSRAM (Schaltplan + Firmware), Realtime-Audio-Härtung, Async-Display, MIDI-Aktivierung, Bring-up-Diagnose)**
+
+> **r19.7–r19.14 (2026-07-07) — Härtung + Board-Erweiterung + Produkt-Reife-Check.**
+> Ein langer Session-Bogen. **Ehrliches Gesamtbild zuerst:** Design + Firmware
+> sind sehr reif und komplett host-/cross-build-verifiziert — **aber nichts ist
+> je auf echter Hardware gelaufen.** Es gibt keinen Prototyp. Der ganze
+> Hardware-Validierungs-Block (CPU-WCET, Audio-Timing, Async-Display, PSRAM,
+> Boost, Pop-Sequenz) hängt am **ersten Board + Bring-up** — kein Software-Task.
+> Grob: Design/Firmware ~90 %, Produkt ~40 %.
+>
+> Was in diesem Bogen dazukam:
+> - **QSPI-PSRAM 8 MB (ADR-0022):** APS6404L C5333729 auf QUADSPI BK2 in den
+>   Generator emittiert (Pinout datenblatt-verifiziert gg. AP Memory Rev 2.1),
+>   PINMAP/BOM nachgezogen (r19.10, **PR #122**). Firmware: register-level
+>   QUADSPI-Treiber + Self-Test (r19.14, **bench-pending**).
+> - **Realtime-Audio-Härtung (r19.11):** DWT-Deadline-Profiler (host-getestet),
+>   Hot-Path-Lint-Gate (`test/lint_hotpath.sh`, hard-fail), PCA9685-Bulk-Write,
+>   `REALTIME_AUDIO_RULES.md` (bindend via CLAUDE.md).
+> - **Async-Display (r19.12):** SPI1-TX-DMA row-pipeline (`oled_show_async`) —
+>   der 29-ms-Panel-Write blockiert den Main-Loop nicht mehr (Control-Latenz).
+>   Blocking-Pfad bleibt als Fallback. **DMA-/Panel-Timing bench-pending.**
+> - **Block-Size-Sweep-Harness (r19.13):** Worst-Case-Szene durch die echte
+>   Engine bei 512/256/128/64 — stabil + bounded + 0 % Clipping bei jeder
+>   Größe verifiziert; die WCET-Zahlen liest man auf Silizium per Profiler.
+> - **MIDI Out aktiviert (r19.14):** gespielte Cells → J10 TRS (Note-Hook +
+>   host-getestete freq→note/vel-Helfer). Generative bleibt bewusst außen vor.
+> - **Bring-up-Diagnose (r19.14):** CELL1-Halten beim Power-on → Live-Readout
+>   (Profiler-Load/WCET/Misses/Clips, Batterie, Voices) + PSRAM-Self-Test.
+> - **PR-Split:** #122 = reiner Schaltplan/PSRAM · **#123** = Firmware
+>   (r19.11–r19.14). Firmware `main` cross-baut (FLASH ~10 %, kein Overflow),
+>   Host-Suite grün (+audio_profiler / oled_convert / blocksize_sweep / midi).
+>
+> **r18.66-Stand unten ist historisch** — §3–5-Tabellen sind vor-r19 und nicht
+> mehr zeilengenau; verlässlich ist dieser Banner + CHANGELOG r19.x.**
 
 > **r19.6 (2026-07-06, Just Intonation):** Letzte 🟡 aus dem Audit: **NEU
 > tuning.c + Menü-Slot Tuning** (Equal/Just). Just = 5-Limit-Just-Intonation
