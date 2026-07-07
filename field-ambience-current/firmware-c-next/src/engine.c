@@ -50,6 +50,12 @@
 #define GEN_SOURCE    8           /* reserved pad-voice source for the bed */
 #define GEN_VOICE_AMP 0.10f
 static float active_freq[MAX_SOURCES];
+
+/* Optional note-event tap (MIDI out lives behind this so the engine keeps no
+ * link dependency on midi.c — the product wires it in main_h743). on: 1=on,
+ * 0=off, -1=all-off. */
+static engine_note_hook_t s_note_hook = 0;
+void engine_set_note_hook(engine_note_hook_t h) { s_note_hook = h; }
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
 /* r18.99 ENO LOOPS — the Music-for-Airports principle (studied via the
@@ -306,6 +312,7 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     float amp_jitter   = humanize_rand_unit() * 0.003f;
     freq_hz *= 1.0f + pitch_jitter;                    /* 2^(jit) ≈ 1+jit at tiny jit */
     amp     *= 1.0f + amp_jitter;
+    if (s_note_hook) s_note_hook(1, source, freq_hz, amp);
     pad_note_on(source, freq_hz, amp);
     if (source < MAX_SOURCES) active_freq[source] = freq_hz;
     /* r18.98 VOICE: cell sources (base 0..4 + shift 9..13) also strike the
@@ -318,11 +325,14 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     refresh_bass();
 }
 void engine_note_off(uint8_t source) {
+    if (s_note_hook && source < MAX_SOURCES)
+        s_note_hook(0, source, active_freq[source], 0.0f);
     pad_note_off(source);
     if (source < MAX_SOURCES) active_freq[source] = 0.0f;
     refresh_bass();
 }
 void engine_all_off(void) {
+    if (s_note_hook) s_note_hook(-1, 0, 0.0f, 0.0f);   /* all-off sentinel */
     pad_all_off();
     memset(active_freq, 0, sizeof active_freq);
     bass_release();
