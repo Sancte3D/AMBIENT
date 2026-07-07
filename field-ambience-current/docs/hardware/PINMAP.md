@@ -84,7 +84,7 @@ Rev-B.
 | 52 | PB13 | (free) | — | — | free |
 | 53 | PB14 | AMP_nSHDN | GPIO (active-low) | Audio | PAM8403 `/SHDN` + 10 kΩ PD |
 | 54 | PB15 | AMP_nMUTE | GPIO (active-low) | Audio | PAM8403 `/MUTE` + 10 kΩ PD |
-| 55 | PD8 | STATUS_LED | GPIO | MCP | heartbeat LED `LED_HB` (via 390 Ω) |
+| 55 | PD8 | NC_PD8_RSVD | GPIO | — | free (r18.87: STATUS_LED/heartbeat removed; Rev-B reserve) |
 | 56 | PD9 | (free) | USART3_RX | — | free |
 | 57 | PD10 | (free) | — | — | free |
 | 58 | PD11 | (free) | — | — | free |
