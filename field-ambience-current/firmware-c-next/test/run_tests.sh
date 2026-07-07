@@ -288,3 +288,15 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/oled_draw.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/oled_convert_test"
 "$tmp/oled_convert_test"
+
+# r19.13: worst-case block-size sweep (P0.2) — drone + all FX maxed + trigger
+# storm through the real engine at 512/256/128/64 frames; gates on stable +
+# bounded + not-railing at every size. Host cost is a relative proxy; the same
+# scene flashed on H743 reads audio_profiler_state() for the real WCET sweep.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_blocksize_sweep.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" "$src/src/audio_profiler.c" \
+    -lm -o "$tmp/bsweep_test"
+"$tmp/bsweep_test"
