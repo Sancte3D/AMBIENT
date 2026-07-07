@@ -1,7 +1,9 @@
 # ADR-0022: QSPI-PSRAM Speichererweiterung (8 MB, memory-mapped)
 
-**Status:** PROPOSED (2026-07-07) — Entscheidung + verifizierte Integration
-gelockt; Generator-Emit + ERC ist der Folge-Schritt.
+**Status:** IMPLEMENTED (2026-07-07, r19.10) — im Generator emittiert (U9 +
+Decoupling + 6 QSPI-Nets an PB2/PC11/PE7–10), PINMAP/BOM nachgezogen. ERC in
+der KiCad-GUI durch Aron ist der letzte Schritt (kicad-cli 7.0.11 in dieser
+Umgebung kann den generierten Schaltplan nicht laden — siehe „Verifikation").
 **Date:** 2026-07-07
 
 ## Kontext
@@ -40,28 +42,40 @@ QUADSPI **Bank 2** — die freien PE7–PE10 sind die BK2-IO-Pins, kontinuierlic
 | Signal | MCU-Pin | QUADSPI-Funktion | frei? |
 |---|---|---|---|
 | `QSPI_CLK` | **PB2** | QUADSPI_CLK (AF9) | ✅ |
-| `QSPI_NCS` | **PC11** (Pin 80) | QUADSPI_BK2_NCS (AF9) | ✅ |
+| `QSPI_NCS` | **PC11** (Pin 79) | QUADSPI_BK2_NCS (AF9) | ✅ |
 | `QSPI_IO0` | **PE7** | QUADSPI_BK2_IO0 (AF10) | ✅ |
 | `QSPI_IO1` | **PE8** | QUADSPI_BK2_IO1 (AF10) | ✅ |
 | `QSPI_IO2` | **PE9** | QUADSPI_BK2_IO2 (AF10) | ✅ |
 | `QSPI_IO3` | **PE10** | QUADSPI_BK2_IO3 (AF10) | ✅ |
 
-> DS12110-bestätigt: PC11 = QUADSPI_BK2_NCS (Pin 80), PE7 = QUADSPI_BK2_IO0,
+> DS12110-bestätigt: PC11 = QUADSPI_BK2_NCS (LQFP100 Pin 79; Pin 80 = PC12),
+> PE7 = QUADSPI_BK2_IO0,
 > QUADSPI_CLK auf PB2. Die genauen **AF-Nummern** sind Firmware-Sache (GPIO
 > AFR), nicht Schaltplan — beim QSPI-Init final gegen DS12110 setzen.
 
 ### Footprint / Symbol
-Wie bei allen Custom-Parts im Repo (TS-1088, MST-12D18, Kailh):
-**`easyeda2kicad --full --lcsc_id=C5333729`** ziehen → verifizierter Symbol +
-Footprint + 3D-STEP direkt von LCSC/EasyEDA. Alternativ Standard
-`Package_SO:SOIC-8_3.9x4.9mm_P1.27mm`.
-`UNVERIFIED — NEEDS HUMAN CHECK`: exakten SOP-8-Pinout (Pin 1 CE#, JEDEC-
-Serial-Memory-Standard: 1=CE#, 2=SIO1, 3=SIO2, 4=VSS, 5=SIO0, 6=SCLK,
-7=SIO3, 8=VCC) + Pin-1-Orientierung beim Pull gegen das AP-Memory-Datenblatt
-bestätigen, bevor Fab.
+**Pinout VERIFIZIERT** gegen das AP-Memory-Datenblatt *APM SPI 3V PSRAM
+Rev. 2.1 (25 Oct 2019)*, §3.1 „Package Types SOP/USON, Top view":
+
+```
+/CE        1 ── 8  VDD
+SO/SIO[1]  2 ── 7  SIO[3]
+SIO[2]     3 ── 6  SCLK
+VSS        4 ── 5  SI/SIO[0]
+```
+
+→ Symbol im Generator: 1=CE · 2=SIO1 · 3=SIO2 · 4=VSS · 5=SIO0 · 6=SCLK ·
+7=SIO3 · 8=VDD — **1:1-Match** (Pin 8 im Datenblatt heißt VDD, nicht VCC —
+r19.10 im Symbol nachgezogen).
+
+**Footprint:** SOP-8L(150) = 3,9 mm Body / 1,27 mm Pitch = der KiCad-Standard
+`Package_SO:SOIC-8_3.9x4.9mm_P1.27mm` (Standard-SOIC-Pad-Nummerierung 1–8,
+deckt sich mit der Datenblatt-Top-View). Dimensionally korrekt.
+**Belt-and-suspenders vor Fab** (Repo-Methode wie TS-1088/MST-12D18/Kailh):
+`easyeda2kicad --full --lcsc_id=C5333729` → exaktes LCSC-Land-Pattern + 3D-STEP.
 
 ### Entkopplung
-`100 nF` (0603) direkt an VCC/VSS + `10 µF` Bulk in der Nähe (PSRAM zieht bei
+`100 nF` (0603) direkt an VDD/VSS + `10 µF` Bulk in der Nähe (PSRAM zieht bei
 133-MHz-Burst kurzzeitig Strom). Beide an +3V3.
 
 ### Nets (AI_READY-konform, keine Slashes/Spaces, konsistent)
@@ -90,9 +104,29 @@ bestätigen, bevor Fab.
 3. MPU-Region für den QSPI-Adressraum (cacheable, normal memory).
 4. Große Puffer (Sample/IR/Wavetable) dorthin, heiße Puffer intern lassen.
 
-## Nächster Schritt
-Generator-Emit (`generate_kicad_project.py`): PSRAM-Symbol (SOP-8) auf der
-MCU-Seite (oder eigenem `memory`-Sheet) + Decoupling + die 6 QSPI-Labels an
-PB2/PC11/PE7–10, dann `kicad-cli erc` = 0 neue Fehler. PINMAP + BOM +
-`RESOURCE_BUDGET` nachziehen. **Erst dann** ist es auf dem Board, das Aron
-routet.
+## Umgesetzt (r19.10)
+Im Generator (`generate_kicad_project.py`, Sheet `stm32h743`) emittiert:
+- **Symbol** `Memory_RAM:APS6404L` (SOP-8, 8 Pins, JEDEC-Serial-Pinout
+  1=CE#·2=SIO1·3=SIO2·4=VSS·5=SIO0·6=SCLK·7=SIO3·8=VCC).
+- **U9** APS6404L-3SQR-SN, FP `Package_SO:SOIC-8_3.9x4.9mm_P1.27mm`,
+  LCSC C5333729, mit `FP_NOTE` = `UNVERIFIED — NEEDS HUMAN CHECK` (FP via
+  `easyeda2kicad --full --lcsc_id=C5333729` ziehen + Pin-1 gegen AP-Memory-DB).
+- **6 QSPI-Nets** an den MCU-Pins PB2(36)/PC11(79)/PE7–10(37–40) →
+  `QSPI_CLK`/`QSPI_NCS`/`QSPI_IO0–3` (per Local-Label, beidseitig).
+- **Decoupling** `C_QSPI` 100 nF (C14663) + `C_QSPI2` 10 µF (C15850), beide an
+  +3V3/GND; U9 VCC→+3V3, VSS→GND.
+- **PINMAP** (Pins nicht mehr frei), **BOM** (U9 + 2 Cs) nachgezogen.
+
+## Verifikation
+`kicad-cli` 7.0.11 in dieser Umgebung kann den generierten Schaltplan **nicht
+laden** (`Failed to load schematic file` — auch am unveränderten Baseline, per
+`git stash` bestätigt; Parser-Inkompatibilität, nicht durch diese Änderung
+verursacht) und hat kein `sch erc`-Subkommando. Daher **Text-Level-Check** des
+emittierten `stm32h743.kicad_sch` statt CLI-ERC:
+- jedes der 6 QSPI-Netze erscheint genau **2×** (MCU-Stub + U9-Pin),
+- jeder U9-Signalpin ist per Wire an das passende Label geführt
+  (CE→NCS, SCLK→CLK, SIO0–3→IO0–3), VCC→+3V3, VSS→GND,
+- U9/C_QSPI/C_QSPI2 + Symbole emittieren mit voller Metadata.
+
+**Offen für Aron:** finaler **ERC in der KiCad-GUI** (v7+) + verifizierten
+Footprint ziehen, bevor Fab. **Erst dann** ist es sicher auf dem Board.

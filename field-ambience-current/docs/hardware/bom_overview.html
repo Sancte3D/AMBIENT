@@ -94,7 +94,7 @@
         <a class="sopen" href="../../kicad/power_tree.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>MCU</b> <span class="sfile">stm32h743.kicad_sch</span></div>
         <div class="sd">STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)</div>
-        <div class="smeta">47 parts · 27 inter-sheet nets</div>
+        <div class="smeta">50 parts · 27 inter-sheet nets</div>
         <div class="snets">AMP_nMUTE, AMP_nSHDN, BAT_PLUS, BRIGHT_A, BRIGHT_B, BRIGHT_SW, DISPLAY_A, DISPLAY_B, DISPLAY_SW, DRIVE_A …</div>
         <a class="sopen" href="../../kicad/stm32h743.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Audio</b> <span class="sfile">audio.kicad_sch</span></div>
@@ -174,7 +174,13 @@
         <td class="ref">C_HSE</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C107045.html" target="_blank" rel="noopener">27 pF C0G ×2 ↗</a></td>
         <td class="fn">crystal load caps</td>
-        <td class="jlc"><span class="b ext">JLC Extended · 167,822</span></td></tr></tbody></table></section><section><h2 style="border-color:#ef4444"><span class="dot" style="background:#ef4444"></span>Power</h2>
+        <td class="jlc"><span class="b ext">JLC Extended · 167,822</span></td></tr></tbody></table></section><section><h2 style="border-color:#8b5cf6"><span class="dot" style="background:#8b5cf6"></span>Memory</h2>
+      <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
+      <tbody><tr class="">
+        <td class="ref">U9</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C5333729.html" target="_blank" rel="noopener">APS6404L-3SQR-SN (SOP-8, 8 MB QSPI PSRAM) ↗</a></td>
+        <td class="fn">external RAM over QUADSPI BK2 — memory-mapped expansion for sample playback / convolution IRs / big granular / multi-table Blendwave (r19.10, ADR-0022). LCSC C5333729, ~$2.94, JLC-Economic assemblable (verify live before order). Pinout VERIFIED vs the AP Memory datasheet Rev 2.1 (1=/CE 2=SIO1 3=SIO2 4=VSS 5=SIO0 6=SCLK 7=SIO3 8=VDD); footprint SOIC-8_3.9x4.9_P1.27 matches SOP-8L(150) — pull the exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C5333729 as a final check. Decoupling: C_QSPI 100nF + C_QSPI2 10µF.</td>
+        <td class="jlc"><span class="b warn">JLC ? verify</span></td></tr></tbody></table></section><section><h2 style="border-color:#ef4444"><span class="dot" style="background:#ef4444"></span>Power</h2>
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
       <tbody><tr class="vis">
         <td class="ref">J1</td>
