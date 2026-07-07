@@ -24,6 +24,8 @@
 #include "brain.h"
 #include "dsp.h"
 #include "audio.h"
+#include "diag.h"
+#include "psram.h"
 #include "encoders.h"
 #include "mcp23017.h"
 #include "oled.h"
@@ -174,6 +176,31 @@ int main(void) {
     bat_adc_init();           /* r18.92: BAT_SENSE (PA3) — battery UI */
     audio_init();
     audio_set_renderer(engine_render);
+
+    /* --- Bring-up diagnostics (r19.14): hold CELL1 at power-on to enter a
+     * live readout (profiler load/WCET/misses/clips, battery, voices) + a
+     * QSPI-PSRAM self-test on CELL2. A bench instrument, not a play mode — it
+     * never returns (power-cycle to exit). Drives a heavy scene so the load%
+     * is meaningful. CELL bits are active-low (MCP pull-ups). */
+    if (!(mcp_state() & (1u << MCP_BIT_CELL1))) {
+        engine_set_world(0);
+        engine_set_drone(true);
+        engine_set_generative(true, 0);
+        engine_set_reverb_size(1.0f); engine_set_echo(1.0f);
+        engine_set_blur(1.0f);        engine_set_shimmer(1.0f);
+        int psram_pass = 0, psram_ran = 0;
+        for (;;) {
+            uint32_t now = HAL_GetTick();
+            engine_generative_tick(now);
+            if (!psram_ran && !(mcp_state() & (1u << MCP_BIT_CELL2))) {
+                psram_ran  = 1;
+                psram_pass = (psram_init() && psram_selftest()) ? 1 : 0;
+            }
+            diag_draw(psram_pass, psram_ran);
+            oled_show();
+            HAL_Delay(120);
+        }
+    }
 
     /* Initial jack state (mcp_init primed the cache): plugged at boot →
      * speaker amp stays muted from the first un-mute onwards. */

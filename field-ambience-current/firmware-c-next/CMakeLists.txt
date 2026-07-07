@@ -196,6 +196,8 @@ if(FAM_TARGET STREQUAL "h743")
         src/hal_h743/mcp23017_h743.c
         src/hal_h743/midi_uart_h743.c
         src/hal_h743/adc_h743.c
+        src/hal_h743/qspi_psram_h743.c   # r19.14 (ADR-0022): QSPI PSRAM (bench-pending)
+        src/hal_h743/diag_h743.c         # r19.14: first-power-on diagnostics screen
     )
     target_include_directories(field_ambience_h743 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
