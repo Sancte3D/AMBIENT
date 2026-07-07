@@ -128,6 +128,7 @@ set(DSP_SOURCES
     src/battery.c
     src/menu.c
     src/worlds.c        # ADR-0017 Phase 1: world descriptors as a real module
+    src/audio_profiler.c # r19.11 (P0.1): render deadline profiler (host-tested)
 )
 
 # ---------------------------------------------------------------------------

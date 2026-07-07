@@ -263,8 +263,7 @@ int main(void) {
             if (dt >= 16) {                /* 60 Hz tick */
                 uint16_t pwm[LED_CH_COUNT];
                 leds_render(now, dt, pwm);
-                for (uint8_t ch = 0; ch < LED_CH_COUNT; ++ch)
-                    pca_set_pwm(ch, 0, pwm[ch]);   /* on_count=0, off_count=duty */
+                pca_set_all_pwm(pwm);      /* one auto-inc I²C burst, not 16 */
                 last_ms = now;
             }
         }

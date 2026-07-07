@@ -268,3 +268,15 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
     -lm -o "$tmp/synth_host_test"
 "$tmp/synth_host_test"
+
+# r19.11: real-time render deadline profiler (pure accounting — deadline
+# budget, worst-case cycles, miss counter, CYCCNT wrap, clip meter).
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_audio_profiler.c" \
+    "$src/src/audio_profiler.c" \
+    -lm -o "$tmp/audio_profiler_test"
+"$tmp/audio_profiler_test"
+
+# r19.11: hot-path lint gate — no allocation / blocking calls reachable from
+# the audio render call graph (REALTIME_AUDIO_RULES.md). Hard-fails the suite.
+"$here/lint_hotpath.sh" "$src"

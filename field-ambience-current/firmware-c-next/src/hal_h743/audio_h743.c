@@ -25,6 +25,7 @@
  */
 
 #include "audio.h"
+#include "audio_profiler.h"
 #include "h743_hal.h"
 #include "mcp23017.h"
 #include <string.h>
@@ -42,6 +43,20 @@ static float s_test_phase = 0.0f;
  * (AXI) per the linker script; 32-byte aligned for exact cache-line ops. */
 __attribute__((aligned(32)))
 static int16_t s_buffer[AUDIO_BUFFER_FRAMES * 2 * AUDIO_NUM_BUFFERS];
+
+/* Real-time render profiler (P0.1). Fed DWT->CYCCNT snapshots around the
+ * render inside the DMA IRQ; the accounting lives in audio_profiler.c and is
+ * host-tested. audio_profiler_state() exposes it for a debug/menu readout. */
+static audio_profiler_t s_prof;
+
+/* Enable the Cortex-M7 cycle counter (DWT->CYCCNT) once, before the pump. */
+static void dwt_cyccnt_enable(void) {
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL  |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+const audio_profiler_t *audio_profiler_state(void) { return &s_prof; }
 
 /* ---- test-sine fallback (identical contract to the Pico pump) ---- */
 static void fill_test_sine(int16_t *block, int frames) {
@@ -62,8 +77,11 @@ static void fill_test_sine(int16_t *block, int frames) {
 
 static void fill_half(int half) {
     int16_t *block = &s_buffer[half * AUDIO_BUFFER_FRAMES * 2];
+    audio_profiler_begin(&s_prof, DWT->CYCCNT, AUDIO_BUFFER_FRAMES);
     if (s_renderer) s_renderer(block, AUDIO_BUFFER_FRAMES);
     else            fill_test_sine(block, AUDIO_BUFFER_FRAMES);
+    audio_profiler_end(&s_prof, DWT->CYCCNT);
+    audio_profiler_scan_clips(&s_prof, block, AUDIO_BUFFER_FRAMES);
     /* CPU wrote through the D-cache — clean the lines so the DMA (which
      * reads straight from AXI SRAM) sees the fresh samples. Address and
      * size are 32-byte aligned by construction. */
@@ -117,6 +135,11 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef *h) {
 /* ---- Public API (include/audio.h) ---- */
 
 void audio_init(void) {
+    /* Render deadline profiler: enable the cycle counter + clear stats before
+     * the pump starts. SystemCoreClock = 480 MHz after clock init. */
+    dwt_cyccnt_enable();
+    audio_profiler_reset(&s_prof, SystemCoreClock, AUDIO_SAMPLE_RATE_HZ);
+
     /* Amp control pins LOW first (they already are, via R_SHDN_PD/R_MUTE_PD
      * — drive them explicitly anyway before anything clocks). */
     __HAL_RCC_GPIOB_CLK_ENABLE();
