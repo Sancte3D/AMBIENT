@@ -65,11 +65,11 @@ Rev-B.
 | 33 | PC5 | LCD_RES | GPIO | LCD | J3 header pin 5 (RES) |
 | 34 | PB0 | NC_PB0_ADC_RSVD | ADC12_INP9 | — | free (r18.73 reserve) |
 | 35 | PB1 | NC_PB1_ADC_RSVD | ADC12_INP5 | — | free (r18.73 reserve) |
-| 36 | PB2 | (free) | BOOT1 / GPIO | — | free |
-| 37 | PE7 | (free) | TIM1_ETR | — | free |
-| 38 | PE8 | (free) | TIM1_CH1N | — | free |
-| 39 | PE9 | (free) | TIM1_CH1 | — | free |
-| 40 | PE10 | (free) | — | — | free |
+| 36 | PB2 | QSPI_CLK | QUADSPI_CLK (AF9) | PSRAM | U9 `SCLK` (pin 6) — ADR-0022 |
+| 37 | PE7 | QSPI_IO0 | QUADSPI_BK2_IO0 (AF10) | PSRAM | U9 `SIO0` (pin 5) — ADR-0022 |
+| 38 | PE8 | QSPI_IO1 | QUADSPI_BK2_IO1 (AF10) | PSRAM | U9 `SIO1` (pin 2) — ADR-0022 |
+| 39 | PE9 | QSPI_IO2 | QUADSPI_BK2_IO2 (AF10) | PSRAM | U9 `SIO2` (pin 3) — ADR-0022 |
+| 40 | PE10 | QSPI_IO3 | QUADSPI_BK2_IO3 (AF10) | PSRAM | U9 `SIO3` (pin 7) — ADR-0022 |
 | 41 | PE11 | (free) | TIM1_CH2 | — | free |
 | 42 | PE12 | (free) | — | — | free |
 | 43 | PE13 | (free) | TIM1_CH3 | — | free |
@@ -108,7 +108,7 @@ Rev-B.
 | 76 | PA14 | SWCLK | JTCK/SWCLK | MCU/SWD | SWD header J4 pin 2 |
 | 77 | PA15 | (free) | JTDI / TIM2_CH1 | — | free |
 | 78 | PC10 | (free) | — | — | free |
-| 79 | PC11 | (free) | — | — | free |
+| 79 | PC11 | QSPI_NCS | QUADSPI_BK2_NCS (AF9) | PSRAM | U9 `CE#` (pin 1) — ADR-0022 |
 | 80 | PC12 | (free) | — | — | free |
 | 81 | PD0 | (free) | — | — | free |
 | 82 | PD1 | (free) | — | — | free |
@@ -165,6 +165,10 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 | `BOOT0_PIN` | MCU pin 94 | SW_BOOT + 10 kΩ PD(GND) |
 | `SWDIO`/`SWCLK`/`SWO` | MCU PA13/PA14/PB3 | SWD header J4 (Tag-Connect TC2030) |
 | `USB_DM`/`USB_DP` | MCU PA11/PA12 | USBLC6-2SC6 → USB-C D−/D+ |
+| `QSPI_CLK` | MCU PB2 | U9 `SCLK` (pin 6) — QUADSPI BK2, ADR-0022 |
+| `QSPI_NCS` | MCU PC11 | U9 `CE#` (pin 1) — QUADSPI BK2 |
+| `QSPI_IO0`/`IO1`/`IO2`/`IO3` | MCU PE7/PE8/PE9/PE10 | U9 `SIO0/SIO1/SIO2/SIO3` (pins 5/2/3/7) |
+| U9 `VCC`/`VSS` | +3V3 / GND | +100 nF (C_QSPI) + 10 µF (C_QSPI2) decoupling |
 
 ### LCD (`lcd.kicad_sch`)
 | Net | MCU pin | J3 header pin |
@@ -219,11 +223,14 @@ Each A/B has a 10 kΩ pull-up + 100 nF RC debounce; switches pull-up + tactile-t
 
 ## 3. Free pins (verified, available for Rev-B / extensions)
 
-PE2(1)*, PC14(8), PC15(9), PC2_C(17), PC3_C(18), PA2(24), PB2(36),
-PE7–PE15(37–45), PB10(46), PB11(47), PB12(51), PB13(52), PD9(56), PD10(57),
+PE2(1)*, PC14(8), PC15(9), PC2_C(17), PC3_C(18), PA2(24),
+PE11–PE15(41–45), PB10(46), PB11(47), PB12(51), PB13(52), PD9(56), PD10(57),
 PD11(58), PD14(61), PD15(62), PC8(65), PC9(66), PA10(69), PA15(77),
-PC10–PC12(78–80), PD0–PD4(81–85), PD6(87), PD7(88), PB4(90), PB5(91),
+PC10(78), PC12(80), PD0–PD4(81–85), PD6(87), PD7(88), PB4(90), PB5(91),
 PB8(95), PB9(96).
+
+> **Not free (r19.10, ADR-0022):** PB2(36), PE7–PE10(37–40), PC11(79) now
+> carry the QSPI-PSRAM bus (`QSPI_CLK`/`QSPI_IO0-3`/`QSPI_NCS`, QUADSPI BK2).
 
 > *PE2 is the candidate for `LSW_EN` **if** the ADR-0016 sleep load-switch is
 > added (currently not). **PA8/PA9 are NOT free** — they're VOL_A/VOL_B.

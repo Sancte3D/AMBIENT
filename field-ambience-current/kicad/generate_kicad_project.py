@@ -1898,8 +1898,59 @@ def _sw_spdt_lib_symbol() -> str:
 
 
 
+def _psram_lib_symbol() -> str:
+    """APS6404L-3SQR-SN — 8 MB QSPI PSRAM, SOP-8 (LCSC C5333729, ADR-0022).
+    Pinout VERIFIED against the AP Memory datasheet Rev. 2.1 (Oct 2019),
+    §3.1 "Package Types SOP/USON, Top view":
+        /CE 1 - 8 VDD ; SO/SIO[1] 2 - 7 SIO[3] ; SIO[2] 3 - 6 SCLK ;
+        VSS 4 - 5 SI/SIO[0]
+    Footprint dims: SOP-8L(150) = 3.9 mm body / 1.27 mm pitch = the generic
+    Package_SO:SOIC-8_3.9x4.9mm_P1.27mm (standard SOIC pad numbering 1-8).
+    Belt-and-suspenders before fab: pull the exact LCSC land pattern via
+    `easyeda2kicad --full --lcsc_id=C5333729`.
+    Pin 1: CE   (/CE — chip select, active-low)
+    Pin 2: SIO1 (SO/SIO[1])
+    Pin 3: SIO2 (SIO[2] / WP# in SPI mode)
+    Pin 4: VSS  (ground)
+    Pin 5: SIO0 (SI/SIO[0])
+    Pin 6: SCLK (serial clock)
+    Pin 7: SIO3 (SIO[3] / HOLD# in SPI mode)
+    Pin 8: VDD  (2.7-3.6 V)
+    """
+    pins = [
+        (1, "CE",   "input",         -7.62,  5.08),
+        (6, "SCLK", "input",         -7.62,  2.54),
+        (5, "SIO0", "bidirectional", -7.62,  0.0),
+        (2, "SIO1", "bidirectional", -7.62, -2.54),
+        (8, "VDD",  "power_in",       7.62,  5.08),
+        (4, "VSS",  "power_in",       7.62,  2.54),
+        (3, "SIO2", "bidirectional",  7.62,  0.0),
+        (7, "SIO3", "bidirectional",  7.62, -2.54),
+    ]
+    out = ['    (symbol "Memory_RAM:APS6404L" (in_bom yes) (on_board yes)']
+    out.append('      (property "Reference" "U" (at 0 8.89 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "APS6404L-3SQR-SN" (at 0 -8.89 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "https://www.lcsc.com/product-detail/C5333729.html" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Memory_RAM:APS6404L_0_1"')
+    out.append('        (rectangle (start -5.08 7.62) (end 5.08 -7.62)')
+    out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
+    out.append('      (symbol "Memory_RAM:APS6404L_1_1"')
+    for num, name, ptype, px, py in pins:
+        rot = 0 if px < 0 else 180
+        out.append(
+            f'        (pin {ptype} line (at {px} {py:.3f} {rot}) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    out.append('        )')
+    out.append('      )')
+    return "\n".join(out)
+
+
 LIB_SYMBOLS = (
     LIB_SYMBOLS
+    + "\n" + _psram_lib_symbol()          # r19.10 (ADR-0022): QSPI PSRAM
     + "\n" + _pico2_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(16)
     + "\n" + _mcp23017_lib_symbol()
@@ -3359,6 +3410,15 @@ def stm32h743_sheet() -> str:
         13: ("HSE_OUT", False, ""),
         14: ("NRST", False, ""),
         94: ("BOOT0_PIN", False, ""),
+        # r19.10 (ADR-0022): QSPI PSRAM on QUADSPI Bank 2 (all 6 pins were free,
+        # DS12110-verified). U9 (APS6404L) lives on this sheet — nets connect
+        # by local label name. AF numbers (firmware AFR) set at QSPI init.
+        36: ("QSPI_CLK", False, ""),   # PB2  = QUADSPI_CLK
+        79: ("QSPI_NCS", False, ""),   # PC11 = QUADSPI_BK2_NCS
+        37: ("QSPI_IO0", False, ""),   # PE7  = QUADSPI_BK2_IO0
+        38: ("QSPI_IO1", False, ""),   # PE8  = QUADSPI_BK2_IO1
+        39: ("QSPI_IO2", False, ""),   # PE9  = QUADSPI_BK2_IO2
+        40: ("QSPI_IO3", False, ""),   # PE10 = QUADSPI_BK2_IO3
     }
     STUB = 5.0
     for num, (net, is_hier, shape) in sorted(NETS.items()):
@@ -3798,6 +3858,62 @@ def stm32h743_sheet() -> str:
         f'  (text "SWO (PB3): optionaler Trace-Pin, bewusst nur Label (ERC-Info erwartet)." (at 100 252 0)\n'
         f'    (effects (font (size 1.27 1.27)) (justify left bottom))\n'
         f'    (uuid "{det_uuid("txt-swo")}"))\n'
+    )
+
+    # ---- U9 QSPI PSRAM (r19.10, ADR-0022): APS6404L 8 MB on QUADSPI BK2.
+    # The 6 signal nets connect to the MCU pins above by local-label NAME
+    # (same sheet → no routing needed here; Aron routes the board). VCC/VSS
+    # via global power symbols. Placed in free canvas at lower-left.
+    px9, py9 = 60.0, 210.0
+    symbols.append(place_symbol(
+        lib_id="Memory_RAM:APS6404L", ref="U9",
+        value="APS6404L-3SQR-SN (8MB QSPI PSRAM)",
+        x=px9, y=py9,
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+        datasheet="https://www.lcsc.com/product-detail/C5333729.html",
+        extra_props={"MPN": "APS6404L-3SQR-SN", "LCSC": "C5333729",
+                     "FP_NOTE": "SOP-8L(150) = 3.9mm body / 1.27mm pitch. ADR-0022. Pinout VERIFIED vs AP Memory datasheet Rev 2.1 (2019): 1=/CE 2=SO/SIO1 3=SIO2 4=VSS 5=SI/SIO0 6=SCLK 7=SIO3 8=VDD. FP dims match generic SOIC-8_3.9x4.9_P1.27 (std pad numbering). Belt+suspenders: pull exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C5333729 before fab."},
+        seed_suffix="U9", sheet_uuid_seed=sus))
+    for (lx, ly, net) in [(-7.62, 5.08, "QSPI_NCS"), (-7.62, 2.54, "QSPI_CLK"),
+                          (-7.62, 0.0, "QSPI_IO0"), (-7.62, -2.54, "QSPI_IO1"),
+                          (7.62, 0.0, "QSPI_IO2"), (7.62, -2.54, "QSPI_IO3")]:
+        x, y = pin_abs(px9, py9, lx, ly, 0)
+        if lx < 0:
+            xe = x - 3.0
+            wires.append(wire(x, y, xe, y, seed_suffix=f"u9-{net}"))
+            labels.append(label(xe, y, net))
+        else:
+            xe = x + 3.0
+            wires.append(wire(x, y, xe, y, seed_suffix=f"u9-{net}"))
+            labels.append(label(xe, y, net, rotation=180))
+    # VCC (pin 8) → +3V3 power symbol; VSS (pin 4) → GND power symbol
+    xv, yv = pin_abs(px9, py9, 7.62, 5.08, 0)
+    wires.append(wire(xv, yv, xv + 5.0, yv, seed_suffix="u9-vcc"))
+    symbols.append(place_symbol(lib_id="Power:+3V3", ref="#PWR_U9V",
+        value="+3V3", x=xv + 5.0, y=yv, seed_suffix="u9-vcc", sheet_uuid_seed=sus))
+    xg, yg = pin_abs(px9, py9, 7.62, 2.54, 0)
+    wires.append(wire(xg, yg, xg + 5.0, yg, seed_suffix="u9-vss"))
+    symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_U9G",
+        value="GND", x=xg + 5.0, y=yg, seed_suffix="u9-gnd", sheet_uuid_seed=sus))
+    # Decoupling: C_QSPI 100nF + C_QSPI2 10uF, +3V3 (top) to GND (bottom).
+    for (cref, cval, cfp, cmpn, clcsc, cx) in [
+        ("C_QSPI",  "100nF X7R 0603 (PSRAM VCC decoupling)", "Capacitor_SMD:C_0603_1608Metric", "CC0603KRX7R9BB104", "C14663", 82.0),
+        ("C_QSPI2", "10uF X5R 0805 (PSRAM VCC bulk)",        "Capacitor_SMD:C_0805_2012Metric", "CL21A106KAYNNNE",   "C15850", 88.0)]:
+        cy = 210.0
+        symbols.append(place_symbol(lib_id="Device:C", ref=cref, value=cval,
+            x=cx, y=cy, footprint=cfp, extra_props={"MPN": cmpn, "LCSC": clcsc},
+            seed_suffix=cref, sheet_uuid_seed=sus))
+        # Device:C: pin1 (0,+3.81)→abs(cx, cy-3.81) top; pin2 (0,-3.81)→abs(cx, cy+3.81) bottom
+        wires.append(wire(cx, cy - 3.81, cx, cy - 6.0, seed_suffix=f"{cref}-3v3"))
+        symbols.append(place_symbol(lib_id="Power:+3V3", ref=f"#PWR_{cref}V",
+            value="+3V3", x=cx, y=cy - 6.0, seed_suffix=f"{cref}-3v3", sheet_uuid_seed=sus))
+        wires.append(wire(cx, cy + 3.81, cx, cy + 6.0, seed_suffix=f"{cref}-gnd"))
+        symbols.append(place_symbol(lib_id="Power:GND", ref=f"#PWR_{cref}G",
+            value="GND", x=cx, y=cy + 6.0, seed_suffix=f"{cref}-gnd", sheet_uuid_seed=sus))
+    texts.append(
+        f'  (text "U9 QSPI PSRAM 8MB (APS6404L, ADR-0022): QUADSPI BK2 -- CLK=PB2, NCS=PC11, IO0-3=PE7-10. Nets connect by label name." (at 40 226 0)\n'
+        f'    (effects (font (size 1.27 1.27)) (justify left bottom))\n'
+        f'    (uuid "{det_uuid("txt-qspi")}"))\n'
     )
 
     # ---- Unbelegte GPIOs: no_connect (Reserve, SPEC §5 „~50 GPIOs frei")
