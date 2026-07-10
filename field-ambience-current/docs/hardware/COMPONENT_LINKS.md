@@ -45,6 +45,7 @@ page). Regenerate: this list is derived from `kicad/jlc_bom.csv` + `kicad/*.kica
 | U6 | PCA9685PW | [C2678753](https://www.lcsc.com/product-detail/C2678753.html) | [PDF](https://www.nxp.com/docs/en/data-sheet/PCA9685.pdf) |
 | D1 | USBLC6-2SC6 | [C2687116](https://www.lcsc.com/product-detail/C2687116.html) | — |
 | J9 | S2B-PH-SM4-TB(LF)(SN) | [C295747](https://www.lcsc.com/product-detail/C295747.html) | — |
+| U9 | APS6404L-3SQN-SN | [C3028887](https://www.lcsc.com/product-detail/C3028887.html) | [PDF](https://www.lcsc.com/product-detail/C3028887.html) |
 | SW6,SW7,SW8,SW9,SW10 | HX B3F-4055-Y | [C36498965](https://www.lcsc.com/product-detail/C36498965.html) | [PDF](https://jlcpcb.com/partdetail/C36498965) |
 | L1 | SWPA6045S2R2NT | [C36500](https://www.lcsc.com/product-detail/C36500.html) | — |
 | SW1,SW2,SW3,SW4,SW5 | CPG135001D01 | [C400229](https://www.lcsc.com/product-detail/C400229.html) | [PDF](https://cdn-shop.adafruit.com/product-files/5113/CHOC+keyswitch_Kailh-CPG135001D01_C400229.pdf) |
@@ -57,7 +58,6 @@ page). Regenerate: this list is derived from `kicad/jlc_bom.csv` + `kicad/*.kica
 | U5 | AP7361C-33Y5-13 | [C460397](https://www.lcsc.com/product-detail/C460397.html) | [PDF](https://www.mouser.de/datasheet/3/175/1/AP7361.pdf) |
 | C_CHG_IN,C_LDO_IN,C_LDO_OUT | GRM188R61A475KE15D | [C46653](https://www.lcsc.com/product-detail/C46653.html) | — |
 | U2 | MCP23017-E/SS | [C506653](https://www.lcsc.com/product-detail/C506653.html) | [PDF](https://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf) |
-| U9 | APS6404L-3SQR-SN | [C5333729](https://www.lcsc.com/product-detail/C5333729.html) | [PDF](https://www.lcsc.com/product-detail/C5333729.html) |
 | C5b,C_BAT_FILT,C_COMP | 0603B103K500NT | [C57112](https://www.lcsc.com/product-detail/C57112.html) | — |
 | Y1 | ABLS-8.000MHZ-B4-T | [C596838](https://www.lcsc.com/product-detail/C596838.html) | [PDF](https://abracon.com/Resonators/ABLS.pdf) |
 | SW_BOOT | TS-1088-AR02016 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | — |

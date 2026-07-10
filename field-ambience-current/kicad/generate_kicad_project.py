@@ -1899,7 +1899,7 @@ def _sw_spdt_lib_symbol() -> str:
 
 
 def _psram_lib_symbol() -> str:
-    """APS6404L-3SQR-SN — 8 MB QSPI PSRAM, SOP-8 (LCSC C5333729, ADR-0022).
+    """APS6404L-3SQN-SN — 8 MB QSPI PSRAM, SOP-8 (LCSC C3028887, ADR-0022).
     Pinout VERIFIED against the AP Memory datasheet Rev. 2.1 (Oct 2019),
     §3.1 "Package Types SOP/USON, Top view":
         /CE 1 - 8 VDD ; SO/SIO[1] 2 - 7 SIO[3] ; SIO[2] 3 - 6 SCLK ;
@@ -1907,7 +1907,7 @@ def _psram_lib_symbol() -> str:
     Footprint dims: SOP-8L(150) = 3.9 mm body / 1.27 mm pitch = the generic
     Package_SO:SOIC-8_3.9x4.9mm_P1.27mm (standard SOIC pad numbering 1-8).
     Belt-and-suspenders before fab: pull the exact LCSC land pattern via
-    `easyeda2kicad --full --lcsc_id=C5333729`.
+    `easyeda2kicad --full --lcsc_id=C3028887`.
     Pin 1: CE   (/CE — chip select, active-low)
     Pin 2: SIO1 (SO/SIO[1])
     Pin 3: SIO2 (SIO[2] / WP# in SPI mode)
@@ -1929,9 +1929,9 @@ def _psram_lib_symbol() -> str:
     ]
     out = ['    (symbol "Memory_RAM:APS6404L" (in_bom yes) (on_board yes)']
     out.append('      (property "Reference" "U" (at 0 8.89 0) (effects (font (size 1.27 1.27))))')
-    out.append('      (property "Value" "APS6404L-3SQR-SN" (at 0 -8.89 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "APS6404L-3SQN-SN" (at 0 -8.89 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (property "Datasheet" "https://www.lcsc.com/product-detail/C5333729.html" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "https://www.lcsc.com/product-detail/C3028887.html" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
     out.append('      (symbol "Memory_RAM:APS6404L_0_1"')
     out.append('        (rectangle (start -5.08 7.62) (end 5.08 -7.62)')
     out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
@@ -3867,12 +3867,12 @@ def stm32h743_sheet() -> str:
     px9, py9 = 60.0, 210.0
     symbols.append(place_symbol(
         lib_id="Memory_RAM:APS6404L", ref="U9",
-        value="APS6404L-3SQR-SN (8MB QSPI PSRAM)",
+        value="APS6404L-3SQN-SN (8MB QSPI PSRAM)",
         x=px9, y=py9,
         footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
-        datasheet="https://www.lcsc.com/product-detail/C5333729.html",
-        extra_props={"MPN": "APS6404L-3SQR-SN", "LCSC": "C5333729",
-                     "FP_NOTE": "SOP-8L(150) = 3.9mm body / 1.27mm pitch. ADR-0022. Pinout VERIFIED vs AP Memory datasheet Rev 2.1 (2019): 1=/CE 2=SO/SIO1 3=SIO2 4=VSS 5=SI/SIO0 6=SCLK 7=SIO3 8=VDD. FP dims match generic SOIC-8_3.9x4.9_P1.27 (std pad numbering). Belt+suspenders: pull exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C5333729 before fab."},
+        datasheet="https://www.lcsc.com/product-detail/C3028887.html",
+        extra_props={"MPN": "APS6404L-3SQN-SN", "LCSC": "C3028887",
+                     "FP_NOTE": "SOP-8L(150) = 3.9mm body / 1.27mm pitch. ADR-0022. Pinout VERIFIED vs AP Memory datasheet Rev 2.1 (2019): 1=/CE 2=SO/SIO1 3=SIO2 4=VSS 5=SI/SIO0 6=SCLK 7=SIO3 8=VDD. FP dims match generic SOIC-8_3.9x4.9_P1.27 (std pad numbering). Belt+suspenders: pull exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C3028887 before fab."},
         seed_suffix="U9", sheet_uuid_seed=sus))
     for (lx, ly, net) in [(-7.62, 5.08, "QSPI_NCS"), (-7.62, 2.54, "QSPI_CLK"),
                           (-7.62, 0.0, "QSPI_IO0"), (-7.62, -2.54, "QSPI_IO1"),

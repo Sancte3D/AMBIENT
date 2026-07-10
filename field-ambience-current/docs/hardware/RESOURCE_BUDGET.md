@@ -69,7 +69,7 @@ Clouds-Granular oder mehr Stimmen.
 
 ### Externe Erweiterung: QSPI-PSRAM (die große Tür)
 Für **Megabyte** statt Kilobyte gibt es die echte Lösung: **8 MB QSPI-PSRAM**
-(APS6404L, LCSC C5333729, JLC-Economic, ~$2,94, 6 freie Pins), memory-mapped
+(APS6404L, LCSC C3028887, JLC-Economic, ~$2,94, 6 freie Pins), memory-mapped
 → CPU liest wie internen RAM. Ermöglicht Sample-Playback, Convolution-Reverb
 mit echten IRs, großes Granular. **Board-Änderung** → muss vor Arons Layout
 rein. Voll verifizierte Integration: **`ADR-0022`**.

@@ -52,7 +52,7 @@ G = [
    ("C_HSE","27 pF C0G ×2","crystal load caps","C107045","jlc",False),
  ]),
  ("Memory", "#8b5cf6", [
-   ("U9","APS6404L-3SQR-SN (SOP-8, 8 MB QSPI PSRAM)","external RAM over QUADSPI BK2 — memory-mapped expansion for sample playback / convolution IRs / big granular / multi-table Blendwave (r19.10, ADR-0022). LCSC C5333729, ~$2.94, JLC-Economic assemblable (verify live before order). Pinout VERIFIED vs the AP Memory datasheet Rev 2.1 (1=/CE 2=SIO1 3=SIO2 4=VSS 5=SIO0 6=SCLK 7=SIO3 8=VDD); footprint SOIC-8_3.9x4.9_P1.27 matches SOP-8L(150) — pull the exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C5333729 as a final check. Decoupling: C_QSPI 100nF + C_QSPI2 10µF.","C5333729","jlc",False),
+   ("U9","APS6404L-3SQN-SN (SOP-8, 8 MB QSPI PSRAM)","external RAM over QUADSPI BK2 — memory-mapped expansion for sample playback / convolution IRs / big granular / multi-table Blendwave (r19.10, ADR-0022). LCSC C3028887 (r19.15: swapped from C5333729/3SQR-SN which went OUT OF STOCK; 3SQN-SN = same 3V family, 2.7-3.6V, same SOP-8 pinout; LCSC 432 in stock @ $3.09/100, JLC Economic+Standard, checked live 2026-07-07). Pinout VERIFIED vs the AP Memory datasheet Rev 2.1 (1=/CE 2=SIO1 3=SIO2 4=VSS 5=SIO0 6=SCLK 7=SIO3 8=VDD); footprint SOIC-8_3.9x4.9_P1.27 matches SOP-8L(150) — pull the exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C3028887 as a final check. Decoupling: C_QSPI 100nF + C_QSPI2 10µF.","C3028887","jlc",False),
  ]),
  ("Power", "#ef4444", [
    ("J1","USB-C TYPE-C-31-M-12","charging + USB-DFU flash","C165948","jlc",True),

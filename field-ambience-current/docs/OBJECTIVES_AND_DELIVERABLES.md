@@ -77,7 +77,7 @@ Grounded in `kicad/jlc_bom.csv` (regenerated from the schematic generator).
 | Ref | Part | Role | LCSC | Check |
 |---|---|---|---|---|
 | U1 | STM32H743VIT6 (LQFP-100) | MCU, 480 MHz Cortex-M7 | C114409 | ⚠️ |
-| U9 | APS6404L-3SQR-SN | 8 MB QSPI-PSRAM (ADR-0022) | C5333729 | ⚠️ footprint |
+| U9 | APS6404L-3SQN-SN | 8 MB QSPI-PSRAM (ADR-0022) | C3028887 | ⚠️ footprint |
 | Y1 | ABLS-8.000MHZ crystal | 8 MHz reference | C596838 | ⚠️ |
 
 ### Power

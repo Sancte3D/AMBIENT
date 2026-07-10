@@ -27,10 +27,10 @@ nachträglich = Respin.
 ### Teil (verifiziert)
 | Feld | Wert |
 |---|---|
-| MPN | **APS6404L-3SQR-SN** (AP Memory) |
-| LCSC | **C5333729** |
+| MPN | **APS6404L-3SQN-SN** (AP Memory) |
+| LCSC | **C3028887** (r19.15: was C5333729/3SQR-SN — went OUT OF STOCK at LCSC/JLC; 3SQN-SN = gleiche 3V-Familie 2,7–3,6 V, gleicher SOP-8-Pinout, LCSC 432 Stk. + JLC Economic+Standard, live geprüft 2026-07-07) |
 | JLC-Typ | bestückbar auf **Economic**-Linie (kein Standard-Zwang), MSL 3 |
-| Preis / Stock | ~$2,94, auf Lager (LCSC, 2026-07) |
+| Preis / Stock | $4,52@1 / $3,09@100 — 432 Stk. LCSC, „ships now" (live geprüft 2026-07-07) |
 | Kapazität | 64 Mbit = **8 MB** |
 | Package | **SOP-8 (150 mil)** |
 | Spannung | 2,7–3,6 V (→ an +3V3) |
@@ -72,7 +72,7 @@ r19.10 im Symbol nachgezogen).
 `Package_SO:SOIC-8_3.9x4.9mm_P1.27mm` (Standard-SOIC-Pad-Nummerierung 1–8,
 deckt sich mit der Datenblatt-Top-View). Dimensionally korrekt.
 **Belt-and-suspenders vor Fab** (Repo-Methode wie TS-1088/MST-12D18/Kailh):
-`easyeda2kicad --full --lcsc_id=C5333729` → exaktes LCSC-Land-Pattern + 3D-STEP.
+`easyeda2kicad --full --lcsc_id=C3028887` → exaktes LCSC-Land-Pattern + 3D-STEP.
 
 ### Entkopplung
 `100 nF` (0603) direkt an VDD/VSS + `10 µF` Bulk in der Nähe (PSRAM zieht bei
@@ -108,9 +108,9 @@ deckt sich mit der Datenblatt-Top-View). Dimensionally korrekt.
 Im Generator (`generate_kicad_project.py`, Sheet `stm32h743`) emittiert:
 - **Symbol** `Memory_RAM:APS6404L` (SOP-8, 8 Pins, JEDEC-Serial-Pinout
   1=CE#·2=SIO1·3=SIO2·4=VSS·5=SIO0·6=SCLK·7=SIO3·8=VCC).
-- **U9** APS6404L-3SQR-SN, FP `Package_SO:SOIC-8_3.9x4.9mm_P1.27mm`,
-  LCSC C5333729, mit `FP_NOTE` = `UNVERIFIED — NEEDS HUMAN CHECK` (FP via
-  `easyeda2kicad --full --lcsc_id=C5333729` ziehen + Pin-1 gegen AP-Memory-DB).
+- **U9** APS6404L-3SQN-SN, FP `Package_SO:SOIC-8_3.9x4.9mm_P1.27mm`,
+  LCSC C3028887, mit `FP_NOTE` = `UNVERIFIED — NEEDS HUMAN CHECK` (FP via
+  `easyeda2kicad --full --lcsc_id=C3028887` ziehen + Pin-1 gegen AP-Memory-DB).
 - **6 QSPI-Nets** an den MCU-Pins PB2(36)/PC11(79)/PE7–10(37–40) →
   `QSPI_CLK`/`QSPI_NCS`/`QSPI_IO0–3` (per Local-Label, beidseitig).
 - **Decoupling** `C_QSPI` 100 nF (C14663) + `C_QSPI2` 10 µF (C15850), beide an
