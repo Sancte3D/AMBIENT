@@ -39,6 +39,24 @@ void engine_all_off(void);
 typedef void (*engine_note_hook_t)(int on, uint8_t source, float freq_hz, float amp);
 void engine_set_note_hook(engine_note_hook_t h);
 
+/* r19.16 — SYNTH mode: swappable V2 sound-cores behind the ambient engine.
+ * mode 0 = ambient (default identity); 1..N = a V2 core rendered through the
+ * registered backend. The engine has NO link dependency on src/v2 — the
+ * product main (or a test) registers the backend, so all existing host-test
+ * link lines stay untouched. Switching crossfades ~15 ms; played cells drive
+ * the active core (mono), the generative bed never does. Without a backend,
+ * engine_set_synth(>0) is a no-op and the device stays ambient. */
+typedef struct {
+    void (*select)   (int id);                 /* 0-based V2 core id       */
+    void (*note_on)  (int midi, float vel01);
+    void (*note_off) (void);
+    void (*panic)    (void);
+    void (*render)   (int16_t *buf, int frames);   /* interleaved stereo   */
+} engine_synth_backend_t;
+void engine_set_synth_backend(const engine_synth_backend_t *be);
+void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */
+int  engine_synth(void);
+
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
  * for cell `cell` (0..4) at `now_ms`. The cell-velocity model (cells.c) turns
  * the position stream into note events: a PRESS sounds that cell's chord root

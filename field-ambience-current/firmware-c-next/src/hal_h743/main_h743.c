@@ -21,6 +21,7 @@
  */
 
 #include "engine.h"
+#include "v2/synth_host.h"
 #include "brain.h"
 #include "dsp.h"
 #include "audio.h"
@@ -73,6 +74,18 @@ static void hal_set_motion     (float v)   { engine_set_motion(v); }
 static void hal_set_age        (float v)   { engine_set_age(v); }
 static void hal_set_echo       (float v)   { engine_set_echo(v); }
 static void hal_set_blur       (float v)   { engine_set_blur(v); }
+static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
+
+/* r19.16 — V2 sound-core backend: thin adapters so the engine keeps no link
+ * dependency on src/v2 (host tests link engine.c without it). */
+static void be_select  (int id)              { synth_host_select((synth_id_t)id); }
+static void be_note_on (int midi, float vel) { synth_host_note_on(midi, vel); }
+static void be_note_off(void)                { synth_host_note_off(); }
+static void be_panic   (void)                { synth_host_panic(); }
+static void be_render  (int16_t *b, int n)   { synth_host_render(b, n); }
+static const engine_synth_backend_t s_v2_backend = {
+    be_select, be_note_on, be_note_off, be_panic, be_render
+};
 
 /* Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW), Line-Out
  * bleibt live — NICHT audio_mute() rufen (das wuerde auch XSMT ziehen und
@@ -152,6 +165,8 @@ int main(void) {
     engine_init();
     for (int i = 0; i < 16; ++i) s_midi_src_note[i] = -1;
     engine_set_note_hook(midi_note_tap);   /* played cells → MIDI out */
+    synth_host_init();
+    engine_set_synth_backend(&s_v2_backend);   /* r19.16: SYNTH menu slot live */
     {
         /* ADR-0017 Phase 4 + r18.58 Reddit-macro menu */
         menu_callbacks_t cb = {
@@ -166,6 +181,7 @@ int main(void) {
             .set_age        = hal_set_age,
             .set_echo       = hal_set_echo,
             .set_blur       = hal_set_blur,
+            .set_synth      = hal_set_synth,
         };
         menu_init(&cb);
     }

@@ -62,6 +62,7 @@ typedef enum {
     MP_AGE,
     MP_ECHO,
     MP_BLUR,
+    MP_SYNTH,     /* r19.16: sound-core 0 Ambient / 1..6 V2 synth (user-global) */
     MP_COUNT
 } menu_param_t;
 
@@ -87,6 +88,7 @@ typedef struct {
     void (*set_age)        (float v01);              /* tape hiss + sat       */
     void (*set_echo)       (float v01);              /* tape-style delay      */
     void (*set_blur)       (float v01);              /* granular cloud        */
+    void (*set_synth)      (int idx);                /* r19.16: 0 Ambient / 1..6 V2 core */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

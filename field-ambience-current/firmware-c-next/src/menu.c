@@ -40,12 +40,16 @@ static int           motion  = 40;
 static int           age     = 30;
 static int           echo    = 35;
 static int           blur    = 15;
+static int           synth_i = 0;         /* r19.16: 0 Ambient, player-global */
 
 static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
 static const char * const VOICE_NAMES[3] = { "Pad", "String", "Glass" };
 static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
+static const char * const SYNTH_NAMES[7] = {
+    "Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"
+};
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -72,6 +76,7 @@ static void apply_current(void) {
         case MP_AGE:    if (cb.set_age)        cb.set_age   (age    / 100.0f);   break;
         case MP_ECHO:   if (cb.set_echo)       cb.set_echo  (echo   / 100.0f);   break;
         case MP_BLUR:   if (cb.set_blur)       cb.set_blur  (blur   / 100.0f);   break;
+        case MP_SYNTH:  if (cb.set_synth)      cb.set_synth(synth_i);            break;
         default: break;
     }
 }
@@ -135,7 +140,7 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
-        "Age","Echo","Blur"
+        "Age","Echo","Blur","Synth"
     };
     return LABELS[cur];
 }
@@ -146,6 +151,7 @@ int menu_value_index(menu_param_t p) {
         case MP_KEY:   return key_pc;
         case MP_TUNING:return tuning_i;
         case MP_VOICE: return voice_i;
+        case MP_SYNTH: return synth_i;
         default: return 0;
     }
 }
@@ -171,6 +177,7 @@ int menu_value_count(menu_param_t p) {
         case MP_KEY:   return 12;
         case MP_TUNING:return 2;
         case MP_VOICE: return 3;
+        case MP_SYNTH: return 7;
         default:       return 0;   /* SPACE / ATMOS / MOTION / AGE = % */
     }
 }
@@ -182,6 +189,7 @@ const char *menu_current_value_text(void) {
         case MP_KEY:    return KEY_NAMES[key_pc];
         case MP_TUNING: return TUNING_NAMES[tuning_i];
         case MP_VOICE:  return VOICE_NAMES[voice_i];
+        case MP_SYNTH:  return SYNTH_NAMES[synth_i];
         case MP_SPACE:  snprintf(buf, sizeof buf, "%d%%", space);  return buf;
         case MP_SHIMMER:snprintf(buf, sizeof buf, "%d%%", shim);   return buf;
         case MP_ATMOS:  snprintf(buf, sizeof buf, "%d%%", atmos);  return buf;
@@ -217,6 +225,7 @@ void menu_rotate(int delta) {
         case MP_KEY:    key_pc  = wrapi(key_pc  + delta, 12); break;
         case MP_TUNING: tuning_i = wrapi(tuning_i + delta, 2); break;
         case MP_VOICE:  voice_i = wrapi(voice_i + delta, 3);  break;
+        case MP_SYNTH:  synth_i = wrapi(synth_i + delta, 7);  break;
         case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
         case MP_SHIMMER:shim   = clampi(shim   + delta, 0, 100); break;
         case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;

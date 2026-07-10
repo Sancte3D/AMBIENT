@@ -1,7 +1,7 @@
 # Resource Budget — STM32H743VIT6
 
 Wie viel Flash / RAM / CPU der Sound frisst und **was noch reinpasst**.
-Zahlen aus dem realen h743-Cross-Build (Stand r19.6). Bei jeder neuen
+Zahlen aus dem realen h743-Cross-Build (Stand r19.16 — V2-SYNTH-Modus gelinkt). Bei jeder neuen
 Sound-Idee hier zuerst schauen.
 
 > Regenerieren: `cmake --build <build> ` liest das Size-Report am Ende aus;
@@ -10,9 +10,9 @@ Sound-Idee hier zuerst schauen.
 ## Regionen (gemessen)
 | Region | Belegt | Größe | % | Verdikt |
 |---|---|---|---|---|
-| FLASH | 183 KB | 2 MB | 8,7 % | 🟢 massig |
+| FLASH | 227 KB | 2 MB | 11,1 % | 🟢 massig |
 | DTCMRAM | 119 KB | 128 KB | 90,9 % | 🟡 knapp |
-| RAM_D1 (AXI) | 504 KB | 512 KB | 96,2 % | 🔴 fast voll |
+| RAM_D1 (AXI) | 510 KB | 512 KB | **99,7 %** | 🔴 VOLL (r19.16: V2-Synth-Busse +16,5 KB — D1 ausgereizt; jede neue Puffer-Idee braucht den Rückgewinn-Pfad oder das PSRAM) |
 | RAM_D2 | 283 KB | 288 KB | 95,9 % | 🔴 fast voll |
 | RAM_D3 | 0 KB | 64 KB | 0 % | ⚪ **brach** |
 | ITCMRAM | 0 KB | 64 KB | 0 % | ⚪ **brach** |

@@ -300,3 +300,17 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" "$src/src/audio_profiler.c" \
     -lm -o "$tmp/bsweep_test"
 "$tmp/bsweep_test"
+
+# r19.16: SYNTH mode through the DEVICE path — V2 sound-cores behind the
+# engine backend: no-op without backend, click-free 15ms crossfade, all six
+# cores playable via the cell path, bounded, decays, ambient restores.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_synth_device.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
+    "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    "$src/src/dsp_ladder.c" "$src/src/v2/beauty_guard.c" "$src/src/v2/synth_host.c" \
+    "$src/src/v2/engines/engine_acid.c" "$src/src/v2/engines/engine_fm_glass.c" "$src/src/v2/engines/engine_chorus_mist.c" \
+    "$src/src/v2/engines/engine_ion_storm.c" "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
+    -lm -o "$tmp/synth_device_test"
+"$tmp/synth_device_test"

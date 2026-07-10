@@ -56,6 +56,10 @@ static float active_freq[MAX_SOURCES];
  * 0=off, -1=all-off. */
 static engine_note_hook_t s_note_hook = 0;
 void engine_set_note_hook(engine_note_hook_t h) { s_note_hook = h; }
+
+/* r19.16 SYNTH-mode state (logic lives beside engine_render below). */
+static const engine_synth_backend_t *s_synth_be = 0;
+static volatile int s_synth_tgt = 0;       /* set at control rate            */
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
 /* r18.99 ENO LOOPS — the Music-for-Airports principle (studied via the
@@ -313,6 +317,17 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     freq_hz *= 1.0f + pitch_jitter;                    /* 2^(jit) ≈ 1+jit at tiny jit */
     amp     *= 1.0f + amp_jitter;
     if (s_note_hook) s_note_hook(1, source, freq_hz, amp);
+    /* r19.16 SYNTH mode: played cells drive the V2 sound-core instead of the
+     * pad. Generative/drone sources never reach V2 (it's a played mono synth). */
+    if (s_synth_tgt > 0 && s_synth_be &&
+        (source <= 4 || (source >= 9 && source <= 13))) {
+        int n = (int)lrintf(69.0f + 12.0f * log2f(freq_hz / 440.0f));
+        if (n < 0)   n = 0;
+        if (n > 127) n = 127;
+        s_synth_be->note_on(n, dsp_clampf(amp, 0.0f, 1.0f));
+        if (source < MAX_SOURCES) active_freq[source] = freq_hz;
+        return;
+    }
     pad_note_on(source, freq_hz, amp);
     if (source < MAX_SOURCES) active_freq[source] = freq_hz;
     /* r18.98 VOICE: cell sources (base 0..4 + shift 9..13) also strike the
@@ -327,12 +342,19 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
 void engine_note_off(uint8_t source) {
     if (s_note_hook && source < MAX_SOURCES)
         s_note_hook(0, source, active_freq[source], 0.0f);
+    if (s_synth_tgt > 0 && s_synth_be &&
+        (source <= 4 || (source >= 9 && source <= 13))) {
+        s_synth_be->note_off();                        /* V2 core is mono */
+        if (source < MAX_SOURCES) active_freq[source] = 0.0f;
+        return;
+    }
     pad_note_off(source);
     if (source < MAX_SOURCES) active_freq[source] = 0.0f;
     refresh_bass();
 }
 void engine_all_off(void) {
     if (s_note_hook) s_note_hook(-1, 0, 0.0f, 0.0f);   /* all-off sentinel */
+    if (s_synth_tgt > 0 && s_synth_be) s_synth_be->panic();
     pad_all_off();
     memset(active_freq, 0, sizeof active_freq);
     bass_release();
@@ -749,7 +771,7 @@ void engine_generative_tick(uint32_t now_ms) {
     }
 }
 
-void engine_render(int16_t *buf, int frames) {
+static void render_ambient(int16_t *buf, int frames) {
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
     if (frames > BLOCK) frames = BLOCK;
 
@@ -881,6 +903,93 @@ void engine_render(int16_t *buf, int frames) {
         float yR = soft_limit(outR[n]);
         buf[n * 2 + 0] = (int16_t)(yL * 32767.0f);
         buf[n * 2 + 1] = (int16_t)(yR * 32767.0f);
+    }
+}
+
+/* ===== r19.16 — SYNTH mode: V2 sound-cores behind the ambient engine =====
+ *
+ * mode 0 = the ambient engine (identity, default). 1..SYNTH-count = a V2
+ * sound-core rendered by the backend (synth_host, registered by the product
+ * main — the engine keeps NO link dependency on src/v2, so every existing
+ * host test still links). Switching crossfades ~15 ms equal-power between
+ * the two rendered paths (REALTIME_AUDIO_RULES §4: algorithm changes need a
+ * crossfade, never a hard swap). During the fade both paths render (bounded,
+ * a handful of blocks); in steady state only the active one runs. */
+#define SYNTH_XFADE_SAMPLES 662            /* ~15 ms at 44.1 kHz */
+
+static int  s_synth_cur   = 0;             /* what the render currently is   */
+static int  s_xfade_pos   = -1;            /* -1 = no fade in progress       */
+static int16_t s_v2buf[BLOCK * 2];         /* V2 render scratch (interleaved) */
+
+void engine_set_synth_backend(const engine_synth_backend_t *be) { s_synth_be = be; }
+
+void engine_set_synth(int idx) {
+    if (idx < 0) idx = 0;
+    if (idx > 0 && !s_synth_be) return;    /* no backend (bench/host) = ambient only */
+    if (idx == s_synth_tgt) return;
+    if (idx > 0) {
+        s_synth_be->select(idx - 1);       /* control rate — safe             */
+        s_synth_be->panic();
+        engine_all_off();                  /* V1 tails decay during fade-out  */
+    } else {
+        /* Back to ambient: V2 shares the single reverb.c tank and set its
+         * own params — restore V1's cached musical reverb (size/damp/drive/
+         * wet) so the ambient identity returns exactly as the user left it. */
+        recompute_reverb_from_presets();
+    }
+    s_synth_tgt = idx;                     /* render picks the fade up        */
+}
+
+int engine_synth(void) { return s_synth_tgt; }
+
+void engine_render(int16_t *buf, int frames) {
+    if (frames > BLOCK) frames = BLOCK;
+
+    int tgt = s_synth_tgt;
+    if (tgt != s_synth_cur && s_xfade_pos < 0) s_xfade_pos = 0;
+
+    const bool need_v1 = (s_synth_cur == 0) || (tgt == 0);
+    const bool need_v2 = (s_synth_cur >  0) || (tgt >  0);
+
+    if (!need_v2) { render_ambient(buf, frames); return; }
+    if (!need_v1 && s_xfade_pos < 0 && s_synth_be) {
+        s_synth_be->render(buf, frames);
+        return;
+    }
+
+    /* fade (or v2↔v2 switch, which select() already made seamless) */
+    render_ambient(buf, frames);
+    if (s_synth_be) s_synth_be->render(s_v2buf, frames);
+    else            memset(s_v2buf, 0, (size_t)frames * 2 * sizeof(int16_t));
+
+    for (int n = 0; n < frames; ++n) {
+        float t = 1.0f;                              /* 0 = v1, 1 = v2 side  */
+        if (s_xfade_pos >= 0) {
+            float p = (float)(s_xfade_pos + n) / (float)SYNTH_XFADE_SAMPLES;
+            if (p > 1.0f) p = 1.0f;
+            t = (tgt > 0) ? p : 1.0f - p;            /* fade toward target   */
+        } else {
+            t = (s_synth_cur > 0) ? 1.0f : 0.0f;
+        }
+        /* linear complementary blend (a+b=1). Both paths are already
+         * soft-limited, and at 15 ms the centre dip of a linear fade is
+         * inaudible — no per-sample sqrt in the hot path. */
+        float a = 1.0f - t, b = t;
+        int L = (int)(a * (float)buf[2*n]   + b * (float)s_v2buf[2*n]);
+        int R = (int)(a * (float)buf[2*n+1] + b * (float)s_v2buf[2*n+1]);
+        if (L >  32767) L =  32767;
+        if (L < -32768) L = -32768;
+        if (R >  32767) R =  32767;
+        if (R < -32768) R = -32768;
+        buf[2*n]   = (int16_t)L;
+        buf[2*n+1] = (int16_t)R;
+    }
+    if (s_xfade_pos >= 0) {
+        s_xfade_pos += frames;
+        if (s_xfade_pos >= SYNTH_XFADE_SAMPLES) {
+            s_synth_cur = tgt;
+            s_xfade_pos = -1;
+        }
     }
 }
 
