@@ -11,10 +11,19 @@
 #define N       PADSYNTH_N
 #define NH      24                       /* harmonics drawn into the table */
 
-/* Table + complex FFT scratch. Both land in this module's .bss → RAM_D1. */
+/* Table + FFT scratch, this module's .bss → RAM_D1.
+ *
+ * r19.17 D1-RECLAIM: the output is REAL, and the spectrum we build is
+ * Hermitian by construction — so the classic real-IFFT trick applies: an
+ * N-point real inverse transform computed with one N/2-point COMPLEX IFFT
+ * (even/odd interleave, textbook Cooley-Tukey identity; same math, same
+ * table up to float rounding). Scratch drops from 2×N floats (128 KB) to
+ * 2×(N/2+1) (64 KB). s_table is still written ONLY in the final pass, so
+ * live audio keeps reading the old table during a world-change rebuild. */
+#define NHALF (N / 2)
 static float s_table[N];
-static float s_re[N];
-static float s_im[N];
+static float s_xr[NHALF + 1];   /* X[0..N/2] half-spectrum, then Z (in place) */
+static float s_xi[NHALF + 1];
 static int   s_ready = 0;
 
 /* --- deterministic RNG (fixed seed per build → reproducible tests) ------ */
@@ -103,8 +112,8 @@ void padsynth_build(int world_idx, uint32_t seed) {
     if (world_idx > 3) world_idx = 3;
     s_rng = seed ? seed : (0xBED0000u + (uint32_t)world_idx);
 
-    memset(s_re, 0, sizeof s_re);
-    memset(s_im, 0, sizeof s_im);
+    memset(s_xr, 0, sizeof s_xr);
+    memset(s_xi, 0, sizeof s_xi);
 
     /* Draw each harmonic as a Gaussian bump of bins (the Nasca model).
      * r18.97 NOISE-CARPET FIX (user: "irgendwas rauscht hardcore
@@ -141,28 +150,74 @@ void padsynth_build(int world_idx, uint32_t seed) {
             /* random phase per contribution — THE ingredient that turns a
              * line spectrum into a living band */
             float ph = rnd01() * 6.28318530717959f;
-            s_re[b] += g * cosf(ph);
-            s_im[b] += g * sinf(ph);
+            s_xr[b] += g * cosf(ph);
+            s_xi[b] += g * sinf(ph);
         }
     }
 
-    /* Hermitian symmetry → real time-domain signal after the IFFT. */
-    for (int b = 1; b < N / 2; ++b) {
-        s_re[N - b] =  s_re[b];
-        s_im[N - b] = -s_im[b];
-    }
-    s_re[0] = s_im[0] = 0.0f;                          /* no DC             */
-    s_im[N / 2] = 0.0f;
+    /* Half-spectrum boundary bins (the mirror X[N-b] = conj(X[b]) is now
+     * IMPLICIT in the even/odd recombination below — never materialised). */
+    s_xr[0] = s_xi[0] = 0.0f;                          /* no DC             */
+    s_xr[NHALF] = s_xi[NHALF] = 0.0f;                  /* Nyquist           */
 
-    ifft_complex(s_re, s_im, N);
+    /* Real IFFT via one N/2-point complex IFFT (even/odd split):
+     *   E[k] = (X[k] + X[k+N/2]) / 2,   O[k] = (X[k] - X[k+N/2])/2 · W^{+k}
+     *   Z[k] = E[k] + j·O[k],  z = IDFT_{N/2}(Z),  x[2m]+j·x[2m+1] = z[m]
+     * with X[k+N/2] = conj(X[N/2-k]) from Hermitian symmetry. Processed in
+     * conjugate PAIRS (k, N/2-k) so Z overwrites X in place. */
+    {
+        const float w = 6.28318530717959f / (float)N;
+        /* k = 0 (uses X[0] and X[N/2], both real slots) */
+        {
+            float e_r = 0.5f * (s_xr[0] + s_xr[NHALF]);
+            float e_i = 0.5f * (s_xi[0] + s_xi[NHALF]);
+            float o_r = 0.5f * (s_xr[0] - s_xr[NHALF]);
+            float o_i = 0.5f * (s_xi[0] - s_xi[NHALF]);
+            s_xr[0] = e_r - o_i;                       /* Z = E + jO        */
+            s_xi[0] = e_i + o_r;
+        }
+        for (int k = 1; k <= NHALF / 2; ++k) {
+            int   km = NHALF - k;                      /* the pair partner  */
+            float ar = s_xr[k],  ai = s_xi[k];         /* X[k]              */
+            float br = s_xr[km], bi = s_xi[km];        /* X[N/2-k]          */
+            float tw_r = cosf(w * (float)k), tw_i = sinf(w * (float)k);
+
+            /* Z[k]: X[k+N/2] = conj(X[N/2-k]) = (br, -bi) */
+            float e_r = 0.5f * (ar + br), e_i = 0.5f * (ai - bi);
+            float d_r = 0.5f * (ar - br), d_i = 0.5f * (ai + bi);
+            float o_r = d_r * tw_r - d_i * tw_i;       /* D · W^{+k}        */
+            float o_i = d_r * tw_i + d_i * tw_r;
+            float zk_r = e_r - o_i, zk_i = e_i + o_r;  /* E + jO            */
+
+            float zm_r = zk_r, zm_i = zk_i;
+            if (k != km) {
+                /* Z[N/2-k]: X[(N/2-k)+N/2] = conj(X[k]) = (ar, -ai);
+                 * twiddle W^{+(N/2-k)} = -conj(W^{+k}) = (-tw_r, tw_i) */
+                float E_r = 0.5f * (br + ar), E_i = 0.5f * (bi - ai);
+                float D_r = 0.5f * (br - ar), D_i = 0.5f * (bi + ai);
+                float O_r = -(D_r * tw_r) - D_i * tw_i;
+                float O_i =  D_r * tw_i  - D_i * tw_r;
+                zm_r = E_r - O_i; zm_i = E_i + O_r;
+            }
+            s_xr[k]  = zk_r; s_xi[k]  = zk_i;
+            s_xr[km] = zm_r; s_xi[km] = zm_i;
+        }
+    }
+
+    ifft_complex(s_xr, s_xi, NHALF);   /* z[m]: re = x[2m], im = x[2m+1]   */
 
     /* Normalise to a known RMS so pad voice levels stay world-independent
-     * (target 0.22 ≈ the old saw-stack body after its filter). */
+     * (target 0.22 ≈ the old saw-stack body after its filter). Σx² over the
+     * full table = Σ(zre²+zim²) over the half-length z. */
     double acc = 0.0;
-    for (int i = 0; i < N; ++i) acc += (double)s_re[i] * s_re[i];
+    for (int m = 0; m < NHALF; ++m)
+        acc += (double)s_xr[m] * s_xr[m] + (double)s_xi[m] * s_xi[m];
     float rms  = (float)sqrt(acc / (double)N);
     float gain = rms > 1e-9f ? 0.22f / rms : 0.0f;
-    for (int i = 0; i < N; ++i) s_table[i] = s_re[i] * gain;
+    for (int m = 0; m < NHALF; ++m) {                  /* single final pass */
+        s_table[2 * m]     = s_xr[m] * gain;
+        s_table[2 * m + 1] = s_xi[m] * gain;
+    }
 
     s_ready = 1;
 }
