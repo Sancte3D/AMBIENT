@@ -112,7 +112,7 @@ them when you build the board:
 ## 5. Quick facts
 - **Production BOM (on-PCB only):** [`../../PCB_BOM.md`](../../PCB_BOM.md). Machine: `kicad/jlc_bom.csv`.
 - **MCU:** STM32H743VIT6, LQFP-100. ~30 GPIOs used, ~50 free (`PINMAP.md`).
-- **Power:** USB-C 5V ‖ LiPo→boost → +5V_RAIL → **U_PWR (power-off)** → +5V_SW → LDO → +3V3. Charger MCP73831 (charges while off).
+- **Power (r19.18, ADR-0023):** USB-C→F1→VBUS_FUSED→**BQ24074** (DPPM) → VSYS → boost → D3 → +5V_RAIL → **U_PWR (power-off)** → +5V_SW → LDO → +3V3. Boost-EN = PWR_ON (slide switch kills it). Charger charges while off; battery behind F2 PTC.
 - **Audio:** I²S → PCM5102A DAC → PAM8403 Class-D (2 speakers) + PJ-320D line-out (J8). **MIDI-out = 3.5 mm TRS J10** (Type A, 3.3 V).
 - **LEDs:** 15 mono status via PCA9685 (Shift=gelb, Hold=grün, G/D/C=weiß; 2/cell gelb+grün). r18.87: VU-Meter-Reihe (PCA9685 #2) + Heartbeat-LED entfernt — nur Cell- + Modifier-LEDs. No RGB.
 - **Controls:** 4× identical push-encoders (EC11E18244AU) · 5 cell keyswitches (Kailh Choc V1 CPG135001D01, direct-solder THT, LCSC C400229, real ~3mm travel, r18.75) + 5 modifier buttons (HX B3F-4055 THT tactile, C36498965, square-head for caps) — both digital on the MCP23017 I²C expander, deliberately different feel (r18.73/74/75, ADR-0013 superseded; was Gateron-magnetic + DRV5056 Hall).

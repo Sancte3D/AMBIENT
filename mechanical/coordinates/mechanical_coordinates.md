@@ -328,7 +328,7 @@ liegt die LiPo-Pouch-Batterie.
 
 | Element | Lage / Maß | Notiz |
 |---|---|---|
-| Battery LiPo (5000 mAh) | Pouch 50 × 60 × 9 mm „9050060" | Liegt im rechten Hälfte des Bottom-Case unter PCB |
+| Battery LiPo (**2000 mAh**, SPEC §4 BAT1: Pouch 503759, 9.4 × 37 × 50 mm) | Reservierter Bauraum 50 × 60 × 9 mm (Pouch liegt mit Luft darin) | Liegt in rechter Hälfte des Bottom-Case unter PCB. r19.18: Kapazität an SPEC angeglichen (5000 mAh war Pi-Ära-Leiche). **Nur Zellen MIT Schutz-PCB** (ADR-0023) |
 | Battery-Y-Bereich | Y = 30 … 90 mm | Außerhalb der Speaker-Kammern (§5) |
 | Battery-X-Bereich | X = 190 … 250 mm | Unter Boost-/Power-Cluster, nahe J_BAT |
 | Battery-Anschluss | 100-mm-JST-PH-Kabel zu J_BAT (§3.10) | |

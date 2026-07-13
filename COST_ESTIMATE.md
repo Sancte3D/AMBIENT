@@ -24,7 +24,7 @@ r18.87: U10-PCA9685 + 8 VU-LEDs + Heartbeat-LED entfernt (−22 Placements,
 | PCB-Fab 4-Layer 252×102, 1.6 mm, ×5 | ~$50 | ~$50 | 2.57 dm²/Board |
 | Stencil | ~$8 | ~$38 | |
 | PCBA-Setup | ~$8 | ~$25 | pro Design |
-| Feeder/Extended-Gebühren | ~$8–15 | ~$8–15 | Große ICs sind „Extended (Preferred)“ = gebührenfrei (r18.22-Erkenntnis); plain-Extended: MCP23017, MCP73831, TPS22918, MST-12D18G3, PJ-320D, JST, Polyfuse u. a. à $1.50 |
+| Feeder/Extended-Gebühren | ~$8–15 | ~$8–15 | Große ICs sind „Extended (Preferred)“ = gebührenfrei (r18.22-Erkenntnis); plain-Extended: MCP23017, BQ24074, TPS22918, MST-12D18G3, PJ-320D, JST, Polyfuse u. a. à $1.50 |
 | Placement (~610 SMD-Joints × 5) | ~$5 | ~$5 | $0.0017/Joint |
 | SMD-BOM-Teile ×5 (§3) | ~$110 | ~$110 | ~$21.3/Board + Attrition |
 | Versand DHL EU | ~$30–40 | ~$30–40 | 5× 252-mm-Boards sind sperrig |
@@ -39,7 +39,7 @@ r18.87: U10-PCA9685 + 8 VU-LEDs + Heartbeat-LED entfernt (−22 Placements,
 | 5× HX B3F-4055 Modifier (THT, hand) | ~$0.30 | $2 | C36498965 (kann alternativ JLC-THT) |
 | 2× CMS-402811-28SP Speaker | ~$6 | $30 | DigiKey |
 | Waveshare 1.9" ST7789 | ~$12 | $60 | PiHut/Waveshare |
-| 2000 mAh LiPo (mit Schutz-PCM!) | ~$8 | $40 | PiHut — **beim Kauf prüfen: Pouch MUSS eigenes Protection-PCM haben** (MCP73831 hat keins; Boost hat keinen UVLO-Schutz für den Akku) |
+| 2000 mAh LiPo (mit Schutz-PCM!) | ~$8 | $40 | PiHut — **beim Kauf prüfen: Pouch MUSS eigenes Protection-PCM haben** (BQ24074 hat Charge-Timer + TS, aber KEINEN Discharge-/UVLO-Schutz; F2-PTC ist nur Hard-Short-Backup — ADR-0023) |
 | Dust-Mesh + M2.5-Schrauben/Standoffs | ~$2 | $10 | AliExpress/Reichelt |
 | Tag-Connect TC2030-IDC (Tool, einmalig) | — | $15 | Tag-Connect |
 | **Hand-Supply-Zwischensumme** | **~$41** | **~$220** | |
@@ -47,7 +47,7 @@ r18.87: U10-PCA9685 + 8 VU-LEDs + Heartbeat-LED entfernt (−22 Placements,
 ## 3. SMD-BOM pro Board — ~$21.30 (Preise @10+, live 2026-07-02 wo fett)
 
 **STM32H743VIT6 $8.68** · **PCA9685 $2.93 (r18.87: nur noch U6)** · **C_BULK Tantal 470µ $1.78** ·
-**MCP23017 $1.62** · **PCM5102A $0.99** · **MCP73831 $0.70** ·
+**MCP23017 $1.62** · **PCM5102A $0.99** · **BQ24074 $2.24** ·
 **TPS61089 $0.50** · PAM8403 ~$0.44 · TPS22918 $0.25 (live r18.81) ·
 L1 SWPA6045 ~$0.25 · C_BULK2 ~$0.25 · AP7361C ~$0.20 · USBLC6 ~$0.20 ·
 **USB-C $0.17** · Polyfuse ~$0.15 · Crystal ~$0.12 · 2× PJ-320D ~$0.24 ·

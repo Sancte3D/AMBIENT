@@ -17,7 +17,7 @@ Schritt.
 | Modul | Kernteile | Anz. | Detail |
 |---|---|---|---|
 | MCU + Clock | STM32H743VIT6 + 8 MHz Crystal | — | [BOM §1](../../../BOM_MASTER.md) |
-| Power | USB-C, LiPo→Boost (TPS61089), LDO (AP7361C), Charger (MCP73831) | — | [BOM §2](../../../BOM_MASTER.md) |
+| Power | USB-C, BQ24074 Power-Path (r19.18, ADR-0023), Boost (TPS61089), LDO (AP7361C) | — | [BOM §2](../../../BOM_MASTER.md) |
 | Audio | PCM5102A DAC → PAM8403 Amp → 2 Speaker + PJ-320D Line-out | 2 Spk | [BOM §3](../../../BOM_MASTER.md) |
 | I/O + LED | MCP23017 (GPIO) + PCA9685 U6 (PWM) → 15 Mono-Status-LEDs | 15 LED | [BOM §4/§9](../../../BOM_MASTER.md) |
 | Display | Waveshare 1.9″ ST7789 (Steckmodul, 8-Pin J3) | 1 | [BOM §5](../../../BOM_MASTER.md) |

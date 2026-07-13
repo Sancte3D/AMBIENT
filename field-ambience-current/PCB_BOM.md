@@ -27,8 +27,8 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | L1 | SWPA6045S2R2NT inductor (r18.77: was C83455, a dead link; MPN was also wrong — 2.2µH only exists as "NT" not "MT" suffix) | 2.2 µH | 6×6 | C36500 |
 | D3 | SS34 Schottky | — | SMA | C8678 |
 | U5 | AP7361C-33Y5 LDO | 3.3 V | SOT-89-5 | C460397 |
-| U7 | MCP73831 charger | 500 mA | SOT-23-5 | C424093 |
-| D3B | SS34 Schottky — USB-Pfad Dioden-OR (r18.79, ersetzt Q1-Power-Path: Backfeed-/Fuse-Bypass-Bug) | — | SMA | C8678 |
+| U7 | BQ24074RGTR power-path charger (r19.18, ADR-0023; ICHG 0,89 A / IIN 1,34 A) | 1,5 A max | VQFN-16 3×3 | C54313 |
+| F2 | SMD1812P260TF/16 PTC — Batterie-Hard-Short-Backup (r19.18; D3B/Dioden-OR entfernt) | 2,6 A hold / 5 A trip | 1812 | C438899 |
 | D2 | SMAJ5.0A TVS | — | SMA | C113952 |
 | F1 | 1812L300 PTC fuse | 3 A | 1812 | C18198349 |
 | C_BULK | Polymer-tantalum | 470 µF/10 V | Case-E | C444831 |
@@ -42,7 +42,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | **SW_PWR** | MST-12D18G3 side-actuated slide switch on `U_PWR.ON` — r18.81: mounting **datasheet-verified for a horizontal PCB**: body sits flat, stem sticks out horizontally 3 mm past the body (z ≈ 2.3–3.8 mm above board), place at board edge, slot in enclosure side wall; travel 2 mm. ⚠ terminal mapping (common = middle pad) assumed per SPDT convention — buzz out before fab (fail-safe if wrong: unit just won't switch on) | 12 V / 100 mA | RA SMD + 2 pegs | C49023766 |
 | R_PWR_PD / C_UPWR_IN / C_PWR_SW | PWR_ON pull-down (default OFF) / TPS22918 VIN bypass / +5V_SW output cap | 100 k / 1 µF / 10 µF | 0603/0603/0805 | C25803 / C15849 / C15850 |
 | R_DET_J8 / C_DET_J8 | jack-detect series + AC filter (r18.82: PJ-320D detect contact rests on the TIP when unplugged = DAC output — series R limits MCP input-clamp current to <300 µA, cap kills audio AC on GPA6; unplugged ≈ 0.3 V LOW, plugged 3.3 V HIGH) | 10 k / 1 µF | 0603 | C25804 / C15849 |
-| C_CHG_IN | MCP73831 VDD input cap (r18.82 — DS20001984 typical application; the VBUS_USBC node had no local capacitance at all) | 4.7 µF | 0603 | C46653 |
+| C_CHG_IN | BQ24074 IN bypass (r19.18 — TI DS 1–10 µF, am VBUS_FUSED-Knoten) | 4.7 µF | 0603 | C46653 |
 | R21 / R_CHRG | charger PROG / status | 2 k / 1 k | 0603 | C22975 / C21190 |
 | R_BAT_DIV_TOP/BOT, R_VBUS_SENSE, R_VBUS_PD | battery/VBUS sense | 100 k / 10 k / 100 k | 0603 | C25804 / C25803 |
 | C_BAT_IN / C_BAT_HF / C_BAT_FILT | battery caps (r18.80: C45783 ist 22 µF CL21A226MAQNNNE — alte 4.7-µF-Angabe war falsch) | 22 µF / 100 nF / 10 nF | 0603/0805 | C45783 / C14663 / C57112 |

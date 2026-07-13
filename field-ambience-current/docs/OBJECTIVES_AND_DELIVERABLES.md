@@ -86,9 +86,10 @@ Grounded in `kicad/jlc_bom.csv` (regenerated from the schematic generator).
 | U8 | TPS61089 boost | battery 3.7 V → 5 V | C165129 | ⚠️ |
 | U5 | AP7361C-33 LDO | 5 V → 3.3 V | C460397 | ⚠️ |
 | U_PWR | TPS22918 load switch | power-off gate (ADR-0016) | C131941 | ⚠️ |
-| U7 | MCP73831 | LiPo charger | C424093 | ⚠️ |
+| U7 | BQ24074RGTR | Li-Ion power-path charger, DPPM (r19.18, ADR-0023) | C54313 | ⚠️ |
 | L1 | SWPA6045S2R2NT 2.2 µH | boost inductor | C36500 | ⚠️ |
-| D3/D3B | SS34 ×2 | diode-OR power mux | C8678 | ⚠️ |
+| D3 | SS34 | boost-output series diode (rail isolation; D3B removed r19.18) | C8678 | ⚠️ |
+| F2 | SMD1812P260TF/16 PTC 2.6 A | battery hard-short backup (r19.18, ADR-0023) | C438899 | ⚠️ |
 | D1 | USBLC6-2SC6 | USB ESD | C2687116 | ⚠️ |
 | D2 | SMAJ5.0A | 5 V TVS | C113952 | ⚠️ |
 | F1 | 1812L300 PTC 3 A | USB fuse | C18198349 | ⚠️ |

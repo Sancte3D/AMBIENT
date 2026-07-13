@@ -16,7 +16,7 @@ The PCB is blocked by **a small number of high-risk parts that still need target
 - **POWER_CRITICAL (2):** U8 TPS61089 (VQFN-HR HotRod, custom FP — datasheet layout review not yet done) and L1 Sunlord SWPA6045 (custom FP, current path matters).
 - **MECH_CRITICAL (10):** USB-C J1, Audio Jack J8, Battery JST J_BAT, Display Header J3, Encoders EN1–EN4, Cell Keyswitches SW1–SW5 (Kailh Choc V1, direct-solder, digital, r18.75), Modifier Buttons SW6–SW10, Service Buttons SW11 + SW_BOOT, Cell-LEDs (15× under cell-cap windows). None has a *1:1 print or CAD overlay against the enclosure recorded*.
 - **EXACT_MODEL_SAFE electrically, MECH_CRITICAL physically (overlap):** all connectors above.
-- **PACKAGE_SAFE pinout-pending (9):** U1 STM32H743, U2 MCP23017, U3 PCM5102A, U4 PAM8403H, U5 AP7361C LDO, U6 PCA9685, U7 MCP73831, D1 USBLC6, Q2 2N7002. Symbol↔footprint pin mapping must be checked once in KiCad ERC. (Q1 removed r18.79 — replaced by diode-OR D3/D3B.)
+- **PACKAGE_SAFE pinout-pending (9):** U1 STM32H743, U2 MCP23017, U3 PCM5102A, U4 PAM8403H, U5 AP7361C LDO, U6 PCA9685, U7 BQ24074 (r19.18: pin map verified against TI SLUS810N + JLC land pattern, ERC double-check remains cheap), D1 USBLC6, Q2 2N7002. Symbol↔footprint pin mapping must be checked once in KiCad ERC. (Q1 removed r18.79; diode-OR D3B removed r19.18 — single-source rail per ADR-0023.)
 - **UNKNOWN (0):** r18.74 briefly reopened this at 1 (a Kailh Choc hot-swap
   socket with no clean manufacturer/LCSC part number). **r18.75 closed it**:
   switched to direct-solder Kailh Choc V1 (CPG135001D01, LCSC C400229) — a
@@ -63,9 +63,9 @@ KiCad-Standard libraries (`Package_QFP`, `Package_SO`, `Package_TO_SOT_SMD`, `Re
 | **U8** | Boost converter | TPS61089RNR | C165129 | `field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` | **POWER_CRITICAL** | Pad geom incl exposed thermal, pin 1, SW/VIN/VOUT/FB/EN/BOOT, datasheet layout, current loops, L1+C_OUT placement | Pin 11 = SW + thermal verified r18.7; **layout not yet drawn** | **YES** | TI datasheet SLVSD38C §10 recommended layout MUST be followed for HotRod package |
 | **L1** | Boost inductor | SWPA6045S2R2NT 2.2 µH (r18.77: was SWPA6045S2R2MT — that MPN doesn't exist per Sunlord's own datasheet) | C36500 (r18.77: was C83455, a dead link) | `field_ambience:L_Sunlord_SWPA6045` | POWER_CRITICAL | Footprint dimensions vs datasheet, current rating ≥3 A, placement next to U8 pin 11 | OK pkg post-r18.20c phantom fix; placement still open | YES (layout) | Verified against Sunlord's official SWPA6045S datasheet (Item 12 table): Isat 6.75 A max / 7.40 A typ, Irms 4.60 A max / 5.00 A typ (r18.77 corrected — previous "4.5A/4.3A" figures here did not match any datasheet row) — confirmed adequate for 5 V/1 A boost |
 | **D3** | Schottky | SS34 | C8678 | `Diode_SMD:D_SMA` | DEFAULT_SAFE | Package + polarity | OK | No | If used as boost rectifier check VR/IF; if TVS-style protection treat as default |
-| **D3B** | USB-path diode-OR Schottky (r18.79, replaces Q1 power-path — back-feed + fuse-bypass bug) | SS34 | C8678 | `Diode_SMD:D_SMA` | DEFAULT_SAFE | Package + polarity (anode → F1 side) | OK | No | Same part/code as D3, qty 2 |
+| **F2** | Battery-path PTC (r19.18, ADR-0023 — replaces the removed D3B diode-OR row) | SMD1812P260TF/16 | C438899 | `Fuse:Fuse_1812_4532Metric` | DEFAULT_SAFE | 1812 standard footprint | OK | No | 2.6 A hold / 5 A trip / 16 V |
 | **U5** | 3.3 V LDO | AP7361C-33Y5-13 | C460397 | `Package_TO_SOT_SMD:SOT-89-5` | PACKAGE_SAFE (close to POWER_CRITICAL) | Pin 1 (1=EN, 2=GND, 3=ADJ, 4=IN, 5=OUT) + thermal pad copper for >500 mA loads | Pinout DS-verified r18.6 | No | Diodes DS confirmed; ensure GND tab has copper area |
-| **U7** | LiPo charger | MCP73831T-2ACI/OT | C424093 | `Package_TO_SOT_SMD:SOT-23-5` | PACKAGE_SAFE + POWER-adjacent | Pin map VDD/VBAT/VSS/PROG/STAT + R_PROG sets I_chg | OK pkg | No | Choose R_PROG for desired charge current (default 500 mA → R = 2 kΩ) |
+| **U7** | Li-Ion power-path charger (r19.18, ADR-0023) | BQ24074RGTR | C54313 | `Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` | PACKAGE_SAFE + POWER-adjacent | Pin map per TI SLUS810N Table 7-1 ('74 column); footprint matched against JLC/EasyEDA land pattern for C54313 (pitch 0.5, EP 1.7×1.7) | OK pkg | No | ICHG 0.89 A (R_ISET 1k), IIN 1.34 A (R_ILIM_IN 1.2k); EP must tie to VSS |
 | **C_BULK** | Polymer tantal 470 µF/10 V | TPSE477K010R0100 (Kyocera) | C444831 | `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` | DEFAULT_SAFE | Pkg + polarity, but **polarised** | OK | No | Case-E 7.3×4.3 mm, ESR 100 mΩ |
 | **C_BULK2** | MLCC 100 µF/10 V 1210 | LMK325ABJ107MM-T | C2880380 | `Capacitor_SMD:C_1210_3225Metric` | DEFAULT_SAFE | Pkg | OK | No | Parallel to C_BULK to handle transient ESR |
 | **J_BAT** | JST-PH 2-pin SMT | S2B-PH-SM4-TB(LF)(SN) | C295747 | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Orientation vs LiPo pouch slot in bottom case | Electrical OK | YES (mech) | Bottom-case slot per ADR-0011 (LiPo 503759, 2000 mAh) |
@@ -116,7 +116,7 @@ These pass a generic KiCad ERC + a one-time human eyeball comparing symbol pin o
 - **U4 PAM8403H** — SOIC-16, BTL outputs OUTL±/OUTR±.
 - **U5 AP7361C** — SOT-89-5, non-standard pin order 1=EN/2=GND/3=ADJ/4=IN/5=OUT (DS-verified r18.6, easy to wire wrong).
 - **U6 PCA9685** — TSSOP-28, 16 LED outputs + I²C address.
-- **U7 MCP73831** — SOT-23-5, PROG pin sets I_chg.
+- **U7 BQ24074** — VQFN-16 3×3 EP; ISET/ILIM/TS resistors set charge/input current (r19.18).
 - **D1 USBLC6-2SC6** — SOT-23-6, D± routing.
 - ~~Q1 DMG2305UX~~ — removed r18.79 (diode-OR replaces the power-path).
 - **Q2 2N7002** — SOT-23 N-Ch.
@@ -159,7 +159,7 @@ Only two:
 - Saturation Isat 6.75 A max / 7.40 A typ (r18.77: corrected from a fabricated "4.5 A" figure that didn't match any datasheet row) is fine for 5 V/1 A boost (peak ≈1.5 A).
 
 ### Soft-power-critical (mentioned for completeness, not flagged blocking):
-- U7 MCP73831 charger: thermal pad-less SOT-23-5, but at 500 mA charge it's marginal — recommend ~50 mm² copper polygon on VBAT trace.
+- U7 BQ24074 charger: QFN-16 exposed pad MUST be soldered to a VSS copper pour with thermal vias (linear power path dissipates ~0.7 W worst case while charging).
 - U5 AP7361C LDO: same — copper for the GND tab (pin 2) to act as heatsink at the typical 100-300 mA loads here.
 
 ---

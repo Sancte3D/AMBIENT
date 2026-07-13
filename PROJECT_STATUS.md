@@ -1,6 +1,29 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-07 (r19.14 — QSPI-PSRAM (Schaltplan + Firmware), Realtime-Audio-Härtung, Async-Display, MIDI-Aktivierung, Bring-up-Diagnose)**
+**Updated: 2026-07-13 (r19.18 — BQ24074-Power-Path-Redesign: alle P0 des externen Hardware-Audits gefixt, ADR-0023)**
+
+> **r19.15–r19.18 (2026-07-08…13) — Audit-Reaktion + Sound-Vollausbau.**
+> - **r19.18 (ADR-0023, DER Blocker vor Fab):** Externes Hardware-Audit
+>   („DO NOT FABRICATE") — alle P0 bestaetigt und behoben. **BQ24074
+>   (C54313)** ersetzt MCP73831+Dioden-OR: USB→F1→VBUS_FUSED→BQ-IN,
+>   OUT=VSYS→Boost→D3→+5V (einzige Quelle), BAT←F2-PTC (C438899)←J9.
+>   Boost-EN=PWR_ON (Aus = µA statt always-on), LED_CHRG an VBUS_FUSED,
+>   Bulk hinter dem Boost, ICHG 0,89 A / IIN 1,34 A per TI-Formeln.
+>   Netzliste: 157 Netze / 0 floating; JLC-BOM ohne TBD (J4→DNP-Pads);
+>   J8 = LINE OUT; mechanical 2000 mAh. Alle Teile live-verifiziert
+>   (Stock + JLC-Assembly). Details: CHANGELOG r19.18 + ADR-0023.
+> - **r19.17:** PADsynth-FFT-Scratch halbiert (Real-IFFT) — RAM_D1
+>   99,7 % → **87,2 %** (echter Headroom zurueck).
+> - **r19.16:** SYNTH-Menue-Slot — die 6 V2-Sound-Cores (Acid, FM Glass,
+>   Mist, Storm, Orbit, Bamboo) sind on-device spielbar: Engine-Backend-
+>   Vtable, 15-ms-Crossfade (klickfrei, test-belegt), Cell-Note-Routing.
+>   Hot-Path-Lint deckt jetzt 23 Module ab. +test_synth_device (24 Checks).
+> - **r19.15:** PSRAM out-of-stock-Trap: C5333729 tot, in-stock „SQN"-
+>   Variante waere **1,8 V** gewesen (Board-Killer) → APS6404L-**3**SQN-SN
+>   (C3028887, 2,7–3,6 V) ueberall getauscht, Pinout gegen Primaer-PDF.
+> - Deliverables an Aron: englisches BOM-PDF (alle Links klickbar),
+>   netlist.txt (155→157 Netze), DOUBLE_CHECK_LIST.
+
 
 > **r19.7–r19.14 (2026-07-07) — Härtung + Board-Erweiterung + Produkt-Reife-Check.**
 > Ein langer Session-Bogen. **Ehrliches Gesamtbild zuerst:** Design + Firmware

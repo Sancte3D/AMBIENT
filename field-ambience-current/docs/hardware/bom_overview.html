@@ -89,8 +89,8 @@
 <div class="sheets"><div class="scard">
         <div class="sh"><b>Power</b> <span class="sfile">power_tree.kicad_sch</span></div>
         <div class="sd">USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±</div>
-        <div class="smeta">43 parts · 6 inter-sheet nets</div>
-        <div class="snets">+3V3_OUT, +5V_OUT, GND_OUT, USB_DM, USB_DP, VBUS_USBC</div>
+        <div class="smeta">42 parts · 9 inter-sheet nets</div>
+        <div class="snets">+3V3_OUT, +5V_OUT, GND_OUT, PWR_ON, USB_DM, USB_DP, VBUS_FUSED, VBUS_USBC, VSYS</div>
         <a class="sopen" href="../../kicad/power_tree.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>MCU</b> <span class="sfile">stm32h743.kicad_sch</span></div>
         <div class="sd">STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)</div>
@@ -119,8 +119,8 @@
         <a class="sopen" href="../../kicad/lcd.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Battery &amp; charge</b> <span class="sfile">battery.kicad_sch</span></div>
         <div class="sd">LiPo JST + MCP73831 charger + power-path (charges while off)</div>
-        <div class="smeta">38 parts · 3 inter-sheet nets</div>
-        <div class="snets">+5V_OUT, BAT_PLUS, VBUS_USBC</div>
+        <div class="smeta">43 parts · 5 inter-sheet nets</div>
+        <div class="snets">+5V_OUT, BAT_PLUS, PWR_ON, VBUS_FUSED, VSYS</div>
         <a class="sopen" href="../../kicad/battery.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Root / hierarchy</b> <span class="sfile">field_ambience.kicad_sch</span></div>
         <div class="sd">top sheet — ties the 7 functional sheets together</div>

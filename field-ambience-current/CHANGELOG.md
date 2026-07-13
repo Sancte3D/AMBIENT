@@ -10,6 +10,37 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.18 (2026-07-13) — BQ24074-Power-Path: alle P0 des externen Hardware-Audits gefixt (ADR-0023)
+
+Externes statisches Audit (Verdikt „DO NOT FABRICATE") — alle pruefbaren
+Befunde gegen die selbst-extrahierte Netzliste bestaetigt, dann komplett
+behoben. **Schaltplan-Redesign der Stromversorgung:**
+
+- **U7 = BQ24074RGTR** (C54313, live-verifiziert: 1.074 Stk., JLC
+  Economic+Standard) ersetzt MCP73831 + D3B-Dioden-OR. Topologie:
+  USB→F1→`VBUS_FUSED`→BQ-IN; BQ-OUT=`VSYS`→TPS61089→D3→+5V-Rail (einzige
+  Quelle); BQ-BAT←**F2 PTC** (SMD1812P260TF/16, C438899)←J9.
+- Dimensionierung per TI SLUS810N: ICHG 0,89 A (R_ISET 1k C21190), IIN-MAX
+  1,34 A (R_ILIM_IN 1,2k **C114605**, YAGEO — 1,1k/1,2k UNI-ROYAL bei LCSC
+  out-of-stock), ITERM/TMR = NC-Default (10 % / 5 h), TS = 10k fest,
+  EN2=VSYS/EN1=GND (ILIM-Modus), CE_N=GND. EP→VSS.
+- **Boost-EN = PWR_ON** (Audit P0-3): der Schiebeschalter toetet jetzt auch
+  den Boost (<3 µA Shutdown). SW_PWR-Pull-Quelle von der Rail auf **VSYS**
+  verlegt (Henne-Ei-Deadlock vermieden). LED_CHRG von +5V auf VBUS_FUSED
+  (P0-2). Bulk (~580 µF) liegt jetzt hinter dem Boost — USB-Hot-Plug sieht
+  nur noch 4,7 µF (P0-6).
+- Neue Netze `VBUS_FUSED`/`VSYS`/`PWR_ON` durch power_tree↔root↔battery
+  gezogen; +5V_OUT am power_tree jetzt input (Rail wird von Sheet 7 gespeist).
+- Footprint QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm gegen JLC/EasyEDA-
+  Landpattern fuer C54313 abgeglichen (Pitch/Pads/EP identisch).
+- **Validierung:** geometrischer Netzlisten-Extractor ueber alle 7 Sheets:
+  157 Netze, 620 Pins, **0 floating**; check_pinmap gruen; JLC-BOM ohne
+  „TBD"-Zeilen (J4 = DNP-Debug-Pads, Ex-MPN „TC2030-IDC" war das falsche
+  Teil). J8 explizit **LINE OUT**; mechanical_coordinates 5000→2000 mAh.
+- Doku: **ADR-0023** (Rechnungen + Verifikations-Trail), SCHEMATIC_WALKTHROUGH
+  §1/§7 neu, PINMAP-Power-Tabellen, BRING_UP-Sollwerte (TP_VSYS!), BOM_MASTER/
+  PCB_BOM/COST/SOURCING/OBJECTIVES/COMPONENT_LINKS nachgezogen.
+
 ## v0.7-r19.6 (2026-07-06) — Just Intonation: „harmonies without beating" (Sonicware Ø v1.5-Prinzip)
 
 User „ja" auf den Vorschlag, die letzte 🟡-Sache aus dem Audit anzugehen:

@@ -148,7 +148,7 @@ USB-C 5V/3A ────► USB-C  ──┬──► F1 (3A/6A) ──► 1000�
 
 **Was sich gegenüber v0.6 NICHT geändert hat:** Gehäuse-Form, USB-C-Stecker,
 PCM5102A DAC, PAM8403 Amp, ST7789 LCD, MCP23017 + PCA9685, alle EC11-Encoder,
-alle Choc-V2-Cells, Battery-Path (MCP73831 + TPS61089 + P-MOSFET), USB-ESD-
+alle Choc-V2-Cells, Battery-Path (r19.18: BQ24074-Power-Path + TPS61089, ADR-0023), USB-ESD-
 Schutz (USBLC6), Polyfuse F1, Bulk-Cap 1000 µF.
 
 ---
@@ -193,7 +193,7 @@ Falls in Sourcing-Pass kein Premium-Equivalent JLC-stockable: bleibt C165948
 
 ## 2.2. Battery & Power-Path (NEU r9, 2026-05-31)
 
-**Was**: Tragbarer Betrieb — 5000 mAh LiPo + Charger + Boost + Power-Path-Selector.
+**Was**: Tragbarer Betrieb — 2000 mAh LiPo + BQ24074-Power-Path-Charger + Boost (r19.18, ADR-0023).
 USB-C lädt; ohne USB-C läuft das Gerät aus dem Akku. Worst-Case-Runtime
 ~1.5 h bei voller Lautstärke, ~10 h typical (ambient Hörlautstärke).
 
@@ -202,7 +202,7 @@ USB-C lädt; ohne USB-C läuft das Gerät aus dem Akku. Worst-Case-Runtime
 ```
 USB-C (5V/3A) ──► F1 (3A/6A) ──┬──► Q1 (P-MOSFET) ──► +5V-Rail ──► alle Verbraucher
                                │                          ▲
-                               └──► U7 MCP73831 ──► BAT1  │
+                               └──► U7 BQ24074 (IN→OUT=VSYS→Boost; BAT←F2←BAT1)  │
                                     (Charger 500mA)   │   │
                                                        ▼  │
                                                    U8 TPS61089
@@ -220,25 +220,26 @@ Q1-Logik: USB-C-VBUS HIGH = Q1 leitet (Bypass-Boost), Battery lädt parallel
 |---|---|---|---|---|
 | BAT1 | LiPo 3.7V **2000mAh** Pouch 503759 (9.4×37×50mm) — **r18.21 rightsize von 5000mAh** (Overkill; 2000mAh ~6.6h @ 300mA) | nicht JLC | du lieferst | Energiespeicher, JST PH 2.0 2-pin |
 | J9 | JST PH 2.0 2-pin Battery-Connector vertical SMD | C2845240-Klasse | JLC Basic | Battery-Anschluss, polarisiert |
-| U7 | **MCP73831T-2ACI/OT** (Microchip, SOT-23-5) | C424093 | Basic | LiPo Single-Cell Charger, Ladestrom programmierbar via R_PROG (R21 = 2 kΩ → 500 mA charge) |
+| U7 | **BQ24074RGTR** (TI, VQFN-16 3×3) — r19.18, ADR-0023 | C54313 | Extended | 1,5-A-Power-Path-Charger mit DPPM. ICHG 0,89 A (R_ISET 1k), IIN 1,34 A (R_ILIM_IN 1,2k), TS 10k fest, ITERM/TMR NC-Default |
 | U8 | **TPS61089RNR** (TI, VQFN-11 HotRod 2×2.5mm + Thermal Pad) | C165129 | Extended | Boost-Converter LiPo→5V, bis 2A @ 5V Out. Programmable Fsw via R_FSW (360k → **~440 kHz** per TI-DS Gl. 3; r18.79: die alte r12-B11-Angabe „1.21 MHz“ war falsch gerechnet — 440 kHz ist ok, weit über Audioband). r12-B11: Wechsel von RNSR auf RNR-Variante wegen JLC-Stock-Verfügbarkeit. Benötigt 5 zusätzliche externe Bauteile: C_VCC 1µF (interne LDO-Decoupling), R_FSW 360k (Fsw-Set), **R_ILIM 174k** (ILIM = 1,03e6/R per DS Gl. 4 → 5,92 A typ ≤ L1-Isat-min 6,75 A; r18.79: war 20k = 51,5 A ≈ kein Limit!), C_BOOT 100nF (high-side gate driver bootstrap zwischen BOOT und SW), **R_COMP 6,2k + C_COMP 10nF** (Type-II loop-compensation nach DS Gl. 17/18: fc ≈ 8 kHz ≤ fRHPZ/5 ≈ 9,5 kHz @VIN 3,0 V/2 A; r18.80: war 22k/1nF = fc ≈ 87 kHz ÜBER der RHP-Nullstelle → Oszillation unter Last). **FB-Teiler r18.79: R23 121k / R24 39k → VOUT 4,97 V** (war 200k/39k = 7,43 V — hätte PAM8403/TPS22918 zerstört; VREF 1,212 V). |
 | ~~Q1 DMG2305UX P-MOSFET~~ | ⛔ **ENTFERNT r18.79 (Elektrik-Audit)** — Power-Path speiste Boost-5V zurück auf VBUS (Body-Diode + Gate an GND) und überbrückte F1. Ersetzt durch Dioden-OR: USB → F1 → **D3B** (SS34, C8678) → Rail ‖ Boost → D3 → Rail. | — | — | — |
 | L1 | **2.2 µH Wire-Wound SMD 6.0×6.0×4.5mm** (Sunlord SWPA6045S2R2NT — r18.77: fixed. War fälschlich als "Sumida CDR63B-2R2 0630" beschrieben, ein anderer Hersteller/Case aus einer früheren Design-Iteration; die "MT"-Endung + LCSC C83455 existierten beide nicht real, siehe BOM_MASTER-Audit) | C36500 | Extended | TPS61089 Boost-Inductor |
 | D3 | **SS34 Schottky 40V 3A** (DO-214AC/SMA) | C8678 | Basic | Boost-Output-Diode-Reverse-Schutz (optional bei TPS61089-Synchronous, aber sicherheitshalber) |
-| R21 | 2 kΩ 0603 (MCP73831 R_PROG → 500 mA Ladestrom) | Generic | Basic | I_CHARGE = 1000 / R_PROG |
+| R_ISET / R_ILIM_IN / R_TS | 1 kΩ / 1,2 kΩ (C114605) / 10 kΩ 0603 (r19.18) | Generic/YAGEO | Basic/Extended | ICHG = 890/R_ISET; IIN-MAX = 1610/R_ILIM_IN; TS fest (kein Pack-NTC) |
+| F2 | SMD1812P260TF/16 PTC 2,6 A/5 A (r19.18) | PTTC | C438899 Extended | Batterie-Hard-Short-Backup im BAT+-Pfad |
 | R22 | 10 kΩ 0603 (Q1 Gate Pull-Down) | Generic | Basic | Default-OFF wenn USB-C-VBUS unbestimmt |
 | R23, R24 | TPS61089 Feedback-Divider (R23=200kΩ, R24=39kΩ → Vout=5.0V) | Generic | Basic | Vout-Set für TPS61089 |
 | C_BAT_IN | 22 µF X5R 0805 (Battery-Input bulk) | Generic | Basic | LiPo-Cap-Reservoir für Boost-Inrush |
 | C_BAT_HF | 100 nF X7R 0603 (Battery HF) | Generic | Basic | HF-Decoupling am Charger |
 | C_BOOST_OUT ×3 | 3× 22 µF X5R 0805 (Boost-Output, CL21A226MAQNNNE C45783) | Samsung | Basic | Output-Filter für TPS61089 — r18.80: 3× parallel per TI DS §9.2.2.7 („typically three 22 µF“; EC-Tabelle rechnet Soft-Start mit COUT_eff 47 µF). CO_eff ≈ 36 µF @5-V-Bias; der 470-µF-Bulk liegt HINTER D3 und zählt für den Regelknoten nicht. |
 | C_BOOST_HF | 100 nF X7R 0603 (Boost HF) | Generic | Basic | HF an Boost-Output |
-| LED_CHRG | 0603 Amber (Charging-Indikator) | Generic | Basic | direkt vom MCP73831 STAT-Pin (Open-Drain LOW=charging) via 1kΩ |
+| LED_CHRG | 0603 Amber (Charging-Indikator) | Generic | Basic | VBUS_FUSED → LED → 1 kΩ → BQ24074-CHG (open-drain LOW=charging) — leuchtet nur bei USB+laden (r19.18) |
 | LED_FULL | 0603 Green (Charge-Complete-Indikator) | optional | — | gleicher STAT-Pin alternativ überwacht via Pico-GPIO |
 | R_CHRG | 1 kΩ 0603 (LED_CHRG Series) | Generic | Basic | — |
 
 ### Power-Budget revidiert für Battery-Betrieb
 
-| Szenario | I @ 5V | I @ 3.7V (von Akku, ÷ 0.85 Boost-Effizienz) | Runtime aus 5000 mAh @ 3.7V |
+| Szenario | I @ 5V | I @ 3.7V (von Akku, ÷ 0.85 Boost-Effizienz) | Runtime aus 5000 mAh @ 3.7V (**r19.18: BAT1 = 2000 mAh → Werte × 0,4**) |
 |---|---|---|---|
 | Idle (Display an, kein Audio) | 250 mA | ~395 mA | ~12.5 h |
 | Typical Ambient | 500 mA | ~795 mA | ~6.3 h |
@@ -550,7 +551,7 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 | **R_LED6-R_LED10** | **390 Ω 0603 (Modifier-LED-Series, je 1× pro LED, dimensioniert für Vf≈2.1 V @ 5 mA @ +5 V Rail: (5-2.1)/5mA = 580 Ω, aber PCA9685-Output sinkt nach +5V → wir nutzen den IC als open-drain Sink mit 5 V Pull-Up am LED-Anoden-Bein; 390 Ω für ~7.5 mA Peak)** | **5 NEU r7** |
 | **R_LED11-R_LED15** | **390 Ω 0603 (Cell-HOLD-LED-Series, je 1× pro Cell-LED, identische Dimensionierung wie R_LED6-10)** | **5 NEU r10** |
 | **R_OE** | **10 kΩ 0603 (PCA9685 /OE pull-up zu +3V3, default-disabled bis Firmware enabled)** | **1 NEU r7** |
-| **R_BAT_DIV_TOP, R_BAT_DIV_BOT** (r12) | **2× 100 kΩ 0603 (Battery-Voltage-Spannungsteiler 2:1 für GP26/ADC0). VBAT 0..4.2 V → 0..2.1 V am ADC. Drain ~21 µA continuous — irrelevant vs. 5000 mAh.** | **2 NEU r12** |
+| **R_BAT_DIV_TOP, R_BAT_DIV_BOT** (r12) | **2× 100 kΩ 0603 (Battery-Voltage-Spannungsteiler 2:1 für GP26/ADC0). VBAT 0..4.2 V → 0..2.1 V am ADC. Drain ~21 µA continuous — irrelevant vs. 2000 mAh.** | **2 NEU r12** |
 | **C_BAT_FILT** (r12) | **10 nF X7R 0603 (ADC-Filter am GP26, S/H-Spike-Glättung)** | **1 NEU r12** |
 | **R_VBUS_SENSE** (r12) | **10 kΩ 0603 (Series VBUS → MCP-GPA7, ESD-Limit)** | **1 NEU r12** |
 | **R_VBUS_PD** (r12) | **100 kΩ 0603 (Pull-Down GPA7 → GND, sichert LOW bei Battery-Mode)** | **1 NEU r12** |
@@ -571,7 +572,7 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 | **LED6-LED10** (r10) | **SMD 0603 Modifier-Status-LEDs, warm-weiß XL-1608UWC-04 (C965808 Extended). Vf≈3.0 V @ 5 mA. Position: über jedem Modifier-Switch (Y=60). PCA9685 LED0-LED4** | **5 NEU r10** |
 | **LED11-LED15** (r10) | **SMD 0603 Cell-HOLD-Status-LEDs, identisch zu LED6-LED10 (XL-1608UWC-04 C965808). Position: über jeder Cell (Y=88) zwischen Cell-Cap-Top und OLED-Bottom. PCA9685 LED5-LED9** | **5 NEU r10** |
 
-**Total: ~95 SMT-Komponenten** (r7: +9, r9-Battery: +14, r10: +15 (10 LEDs + 5 R), r12: +5 (1 R_LED_STATUS + 2 R_BAT_DIV + 1 C_BAT_FILT + 1 R_VBUS_SENSE + 1 R_VBUS_PD − 1 R19) net +5) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 plain SMD-Tactile (HX 12x12x7.3TPFT-B, JLC-assembled), **+ BAT1 LiPo 5000 mAh user-supplied**. **r12: GP26 ADC0 frei für BAT_SENSE, STATUS_LED auf PCA9685 LED10, USB-VBUS-Detect via MCP GPA7 — Battery-Mode-Logik vollständig hardware-instrumentiert.**
+**Total: ~95 SMT-Komponenten** (r7: +9, r9-Battery: +14, r10: +15 (10 LEDs + 5 R), r12: +5 (1 R_LED_STATUS + 2 R_BAT_DIV + 1 C_BAT_FILT + 1 R_VBUS_SENSE + 1 R_VBUS_PD − 1 R19) net +5) + OLED, 5× Choc V2 Hot-Swap-Sockets (Cells), 5× Stabilizer, 5× 12×12×7.3 plain SMD-Tactile (HX 12x12x7.3TPFT-B, JLC-assembled), **+ BAT1 LiPo 2000 mAh user-supplied (r18.21/r19.18)**. **r12: GP26 ADC0 frei für BAT_SENSE, STATUS_LED auf PCA9685 LED10, USB-VBUS-Detect via MCP GPA7 — Battery-Mode-Logik vollständig hardware-instrumentiert.**
 
 ---
 
@@ -1606,7 +1607,7 @@ existierende GPIO-Pfade (AMP /SHDN, /MUTE, PCM XSMT, PCA9685 /OE). Boost-
 Converter TPS61089 (r9) bleibt aktiv — wir schalten den nicht ab, weil
 sein EN-Pin nicht mit dem Pico verdrahtet ist (r9-Schaltung). Resultierender
 Sleep-Drain: ~5-8 mA (Pico WFE + TPS61089 quiescent + MCP23017 input-mode).
-Bei 5000 mAh ≈ 25-40 Tage Sleep-Lifetime — akzeptabel für Performance-Gerät.
+Bei 2000 mAh ≈ 10–16 Tage Sleep-Lifetime — akzeptabel für Performance-Gerät. (r19.18: im harten AUS via SW_PWR ist der Drain nur noch µA — Wochen bis Monate.)
 
 **Optional r13 (Future)**: TPS61089-EN-Pin auf Pico-GPIO oder MCP-GPIO legen
 für echten Zero-Drain-Sleep (<100 µA). Erfordert Re-Spin des Battery-Sheets,
