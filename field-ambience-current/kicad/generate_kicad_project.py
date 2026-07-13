@@ -1330,6 +1330,66 @@ def _bq24074_lib_symbol() -> str:
     return "\n".join(out)
 
 
+def _tpa6132a2_lib_symbol() -> str:
+    """TPA6132A2RTER — 25mW DirectPath Stereo-Kopfhoererverstaerker,
+    WQFN-16 RTE (3x3mm, 0.5mm Pitch, EP 1.68). r19.19 (ADR-0024).
+
+    Pin-Map VERIFIED gegen TI SLOS597B (Juli 2017), Pin Functions Tabelle:
+      1=INL- 2=INL+ 3=INR+ 4=INR- 5=OUTR 6=G0 7=G1 8=HPVSS 9=CPN 10=PGND
+      11=CPP 12=HPVDD 13=EN 14=VDD 15=SGND 16=OUTL 17=EP (GND oder floatend)
+    Gain via G0/G1 (Table 1): LL=-6dB LH(G1)=+3dB HL(G0)=0dB HH=+6dB.
+    EN: high=an (VIH 1.3V), low=Shutdown (0.7-1.2µA).
+    DirectPath: interne Ladungspumpe (CPP/CPN-Flying-Cap + HPVSS-Cap)
+    erzeugt die negative Rail — Ausgaenge ground-zentriert, KEINE
+    Auskoppel-Elkos. HPVDD NIE an VDD anschliessen (DS-WARNING).
+    """
+    pins_left = [
+        (1,  "INL-", "input", 10.16),
+        (2,  "INL+", "input",  7.62),
+        (3,  "INR+", "input",  5.08),
+        (4,  "INR-", "input",  2.54),
+        (13, "EN",   "input",  0.0),
+        (6,  "G0",   "input", -2.54),
+        (7,  "G1",   "input", -5.08),
+    ]
+    pins_right = [
+        (16, "OUTL",  "output",   10.16),
+        (5,  "OUTR",  "output",    7.62),
+        (14, "VDD",   "power_in",  5.08),
+        (12, "HPVDD", "passive",   2.54),
+        (11, "CPP",   "passive",   0.0),
+        (9,  "CPN",   "passive",  -2.54),
+        (8,  "HPVSS", "passive",  -5.08),
+        (15, "SGND",  "power_in", -7.62),
+        (10, "PGND",  "power_in", -10.16),
+        (17, "EP",    "passive",  -12.70),
+    ]
+    out = ['    (symbol "Audio:TPA6132A2" (in_bom yes) (on_board yes)']
+    out.append('      (property "Reference" "U" (at 0 13.97 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "TPA6132A2RTER" (at 0 -16.51 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "https://www.ti.com/lit/ds/symlink/tpa6132a2.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Audio:TPA6132A2_0_1"')
+    out.append('        (rectangle (start -7.62 12.7) (end 7.62 -14.605)')
+    out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
+    out.append('      (symbol "Audio:TPA6132A2_1_1"')
+    for num, name, ptype, py in pins_left:
+        out.append(
+            f'        (pin {ptype} line (at -10.16 {py:.3f} 0) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    for num, name, ptype, py in pins_right:
+        out.append(
+            f'        (pin {ptype} line (at 10.16 {py:.3f} 180) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    out.append('        )')
+    out.append('      )')
+    return "\n".join(out)
+
+
 def _tps61089_lib_symbol() -> str:
     """TPS61089RNR — Boost Converter LiPo→5V, VQFN-11 HotRod 2×2.5mm + Thermal Pad.
     Per TI Datasheet SLVSD38C Table 6-1 (LCSC C165129):
@@ -1977,6 +2037,7 @@ LIB_SYMBOLS = (
     + "\n" + _mcp23017_lib_symbol()
     + "\n" + _pca9685pw_lib_symbol()
     + "\n" + _bq24074_lib_symbol()       # r19.18 (ADR-0023): Power-Path-Charger
+    + "\n" + _tpa6132a2_lib_symbol()     # r19.19 (ADR-0024): Kopfhoererverstaerker
     + "\n" + _tps61089_lib_symbol()
     + "\n" + _dmg2305ux_lib_symbol()
     + "\n" + _inductor_lib_symbol()
@@ -6241,21 +6302,221 @@ def audio_sheet() -> str:
     labels.append(label(207, 131.27, "SPK_R-"))
 
     # ====================================================================
-    # LINE-OUT / KOPFHÖRER (v0.7) — passiver Tap an PCM5102A VOUTL/R, VOR
-    # dem PAM8403. PCM5102A-Output ist ground-centered (kein DC-Offset durch
-    # interne Charge-Pump) → keine Koppel-Caps nötig, nur Serien-R zum Schutz.
-    # J8 TRS-Buchse mit Detect-Switch: Einstecken → JACK_DETECT → MCP GPA6
-    # → Firmware mutet NUR den PAM8403 (Speaker), Line-Out bleibt live.
-    # Damit wird der tiefe Charakter über externe Boxen/Kopfhörer hörbar
-    # (40mm-Onboard-Speaker können den 30-60Hz SubBass nicht).
+    # PHONES / LINE-OUT (r19.19, ADR-0024) — U11 TPA6132A2 DirectPath-
+    # Kopfhoererverstaerker zwischen PCM5102A und J8. Vorher hing die Buchse
+    # passiv am DAC (Line-only; 16-32Ω-Kopfhoerer ausserhalb der PCM5102A-
+    # Spec ≥1kΩ). Jetzt: echter Kopfhoerer-Betrieb UND Line-Out aus einem
+    # niederohmigen Ausgang. User-Anforderung: "Kopfhoerer muss rein".
+    #   PCM_VOUTL/R → C_HP_IN* 1µF → U11 (Gain -6dB) → R_LO_* 22Ω → J8 T/R
+    # Gain -6dB (G0=G1=GND, DS Table 1): 2.1Vrms DAC-Full-Scale → ~1.05Vrms
+    # = sauberer Consumer-Line-Pegel UND sichere Kopfhoerer-Lautstaerke
+    # (Acoustic-Shock-Design, DS §7.3.3 "constant maximum output power").
+    # EN = AMP_nSHDN (wie PAM8403; R_SHDN_PD haelt beide im Boot/Aus in
+    # Shutdown, TPA-Shutdown-Iq 0.7-1.2µA). Jack-Detect-Mute betrifft nur
+    # den Speaker-Amp (AMP_nMUTE) — Kopfhoerer bleiben live.
+    # J8-Detect ruht am TIP (= U11-OUTL): DC 0V ob an oder aus (Shutdown-
+    # Zout ~20Ω, DS) → Detect-Logik unveraendert (R_DET/C_DET r18.82).
     # ====================================================================
-    # R_LO_L 22Ω series an VOUTL (Tap vom PCM_VOUTL-Netz)
+    U11_X, U11_Y = 130.0, 180.0
+    U11_LX, U11_RX = U11_X - 10.16, U11_X + 10.16  # 119.84 / 140.16
+    symbols.append(
+        place_symbol(
+            lib_id="Audio:TPA6132A2",
+            ref="U11",
+            value="TPA6132A2RTER (DirectPath HP-Amp, Gain -6dB, EN=AMP_nSHDN)",
+            x=U11_X, y=U11_Y,
+            footprint="Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm",
+            datasheet="https://www.ti.com/lit/ds/symlink/tpa6132a2.pdf",
+            extra_props={
+                "MPN": "TPA6132A2RTER",
+                "Manufacturer": "Texas Instruments",
+                "LCSC": "C69901",
+                "Package": "WQFN-16 RTE0016 (3x3mm, 0.5mm Pitch, EP)",
+                "PIN_SOURCE": "TI SLOS597B (Jul 2017) Pin Functions: 1=INL- 2=INL+ 3=INR+ 4=INR- 5=OUTR 6=G0 7=G1 8=HPVSS 9=CPN 10=PGND 11=CPP 12=HPVDD 13=EN 14=VDD 15=SGND 16=OUTL, EP=GND. Gain-Table: G0=G1=GND -> -6dB.",
+                "FP_NOTE": "KiCad QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm — gegen JLC/EasyEDA-Landpattern C69901 geprueft (Pads 0.28x0.8 @0.5mm, EP 1.6x1.6, Pin-1 links oben CCW) + TI RTE0016C-Outline (EP-Metall 1.68±0.07): kompatibel.",
+                "NOTE": "r19.19 live-verifiziert: LCSC C69901, 370 Stk., $1.35@1, JLC Economic+Standard. HPVDD (Pin 12) NIE an VDD (TI-DS-WARNING — interne Ladungspumpen-Rail). SGND als eigene Leitung zum J8-Sleeve fuehren (DS Pin-15-Note). Layout: C_HP_VDD + C_HPVDD <5mm an Pins 14/12.",
+            },
+            seed_suffix="U11",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # Pin-Y abs (Y-DOWN): links INL- 169.84 | INL+ 172.38 | INR+ 174.92 |
+    # INR- 177.46 | EN 180.0 | G0 182.54 | G1 185.08; rechts OUTL 169.84 |
+    # OUTR 172.38 | VDD 174.92 | HPVDD 177.46 | CPP 180.0 | CPN 182.54 |
+    # HPVSS 185.08 | SGND 187.62 | PGND 190.16 | EP 192.70
+    u11_inlm_y, u11_inlp_y, u11_inrp_y, u11_inrm_y = 169.84, 172.38, 174.92, 177.46
+    u11_en_y, u11_g0_y, u11_g1_y = 180.0, 182.54, 185.08
+    u11_outl_y, u11_outr_y, u11_vdd_y, u11_hpvdd_y = 169.84, 172.38, 174.92, 177.46
+    u11_cpp_y, u11_cpn_y, u11_hpvss_y = 180.0, 182.54, 185.08
+    u11_sgnd_y, u11_pgnd_y, u11_ep_y = 187.62, 190.16, 192.70
+
+    # ---- Eingaenge: PCM_VOUTL/R → C_HP_INL/R 1µF → INL-/INR- (single-ended
+    # per DS: Signal auf die invertierenden Eingaenge, +Eingaenge an GND).
+    # CIN 1µF: fc = 1/(2π·RIN·CIN) — RIN steigt bei -6dB ueber die 13.2k des
+    # +6dB-Falls, fc liegt damit sicher unter 15 Hz (DS Gl. 3/4).
+    for cref, cy, srclbl in (("C_HP_INL", u11_inlm_y, "PCM_VOUTL"),
+                             ("C_HP_INR", u11_inrm_y, "PCM_VOUTR")):
+        symbols.append(
+            place_symbol(
+                lib_id="Device:C",
+                ref=cref,
+                value="1uF X5R 0603 (TPA6132A2 input coupling, DS §8.2.1.2.1)",
+                x=114, y=cy, rotation=90,
+                footprint="Capacitor_SMD:C_0603_1608Metric",
+                extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+                seed_suffix=cref,
+                sheet_uuid_seed=sus,
+            )
+        )
+        # C rot=90 horizontal: pin1 (110.19, cy), pin2 (117.81, cy)
+        wires.append(wire(117.81, cy, U11_LX, cy, seed_suffix=f"{cref.lower()}-to-u11"))
+        wires.append(wire(110.19, cy, 107, cy, seed_suffix=f"{cref.lower()}-to-src"))
+        labels.append(label(107, cy, srclbl))
+    # INL+ / INR+ → GND (DS: "connect INL+ and INR+ to ground" fuer SE)
+    wires.append(wire(U11_LX, u11_inlp_y, 116, u11_inlp_y, seed_suffix="u11-inlp"))
+    attach_gnd(116, u11_inlp_y, "U11_INLP", rot=90)
+    wires.append(wire(U11_LX, u11_inrp_y, 116, u11_inrp_y, seed_suffix="u11-inrp"))
+    attach_gnd(116, u11_inrp_y, "U11_INRP", rot=90)
+
+    # ---- EN ← AMP_nSHDN (gleicher hier-Input wie PAM8403-SHDN; boot-safe
+    # low via R_SHDN_PD, MCU zieht nach Power-Sequencing high)
+    wires.append(wire(U11_LX, u11_en_y, 107, u11_en_y, seed_suffix="u11-en"))
+    hlabels.append(hier_label(107, u11_en_y, "AMP_nSHDN", shape="input", rotation=0))
+
+    # ---- G0 + G1 → GND = Gain -6dB (DS Table 1)
+    wires.append(wire(U11_LX, u11_g0_y, 116, u11_g0_y, seed_suffix="u11-g0"))
+    attach_gnd(116, u11_g0_y, "U11_G0", rot=90)
+    wires.append(wire(U11_LX, u11_g1_y, 116, u11_g1_y, seed_suffix="u11-g1"))
+    attach_gnd(116, u11_g1_y, "U11_G1", rot=90)
+
+    # ---- Ausgaenge → HP_OUTL/R-Netze (weiter unten an R_LO_L/R)
+    wires.append(wire(U11_RX, u11_outl_y, 146, u11_outl_y, seed_suffix="u11-outl"))
+    labels.append(label(146, u11_outl_y, "HP_OUTL"))
+    wires.append(wire(U11_RX, u11_outr_y, 146, u11_outr_y, seed_suffix="u11-outr"))
+    labels.append(label(146, u11_outr_y, "HP_OUTR"))
+
+    # ---- VDD → +5V (ungeschaltete Rail wie PAM8403; im Aus haelt EN=low
+    # den Amp bei 0.7-1.2µA). C_HP_VDD 2.2µF als Label-freies Standalone-
+    # Decoupling direkt am Netz (+5V-Flag oben, GND unten) — Layout <5mm.
+    wires.append(wire(U11_RX, u11_vdd_y, 146, u11_vdd_y, seed_suffix="u11-vdd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_U11_VDD",
+            value="+5V",
+            x=146, y=u11_vdd_y, rotation=270,
+            seed_suffix="u11-vdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_HP_VDD",
+            value="2.2uF X5R 0603 (TPA6132A2 VDD decoupling <5mm, TI DS §9)",
+            x=108, y=192,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A225KP8NNNC", "LCSC": "C1607"},
+            seed_suffix="C_HP_VDD",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # C vertikal: pin1 (108,188.19) → +5V-Flag; pin2 (108,195.81) → GND
+    wires.append(wire(108, 188.19, 108, 186.5, seed_suffix="c-hp-vdd-top"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_C_HP_VDD",
+            value="+5V",
+            x=108, y=186.5,
+            seed_suffix="c-hp-vdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(108, 195.81, 108, 197.5, seed_suffix="c-hp-vdd-gnd"))
+    attach_gnd(108, 197.5, "C_HP_VDD", rot=270)
+
+    # ---- HPVDD (12) → NUR 2.2µF nach GND (TI-WARNING: nie an VDD!)
+    wires.append(wire(U11_RX, u11_hpvdd_y, 146, u11_hpvdd_y, seed_suffix="u11-hpvdd"))
+    labels.append(label(146, u11_hpvdd_y, "HP_HPVDD"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_HPVDD",
+            value="2.2uF X5R 0603 (TPA6132A2 HPVDD — interner Bias, NIE an VDD; DS §9)",
+            x=166, y=181.27,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A225KP8NNNC", "LCSC": "C1607"},
+            seed_suffix="C_HPVDD",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(166, 177.46, 166, 176, seed_suffix="c-hpvdd-top"))
+    labels.append(label(166, 176, "HP_HPVDD"))
+    wires.append(wire(166, 185.08, 166, 187, seed_suffix="c-hpvdd-gnd"))
+    attach_gnd(166, 187, "C_HPVDD", rot=270)
+
+    # ---- Ladungspumpe: C_FLY_HP 1µF zwischen CPP und CPN (DS §8.2.1.2.2)
+    wires.append(wire(U11_RX, u11_cpp_y, 146, u11_cpp_y, seed_suffix="u11-cpp"))
+    labels.append(label(146, u11_cpp_y, "HP_CPP"))
+    wires.append(wire(U11_RX, u11_cpn_y, 146, u11_cpn_y, seed_suffix="u11-cpn"))
+    labels.append(label(146, u11_cpn_y, "HP_CPN"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_FLY_HP",
+            value="1uF X5R 0603 (TPA6132A2 charge-pump flying cap CPP-CPN)",
+            x=172, y=181.27,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            seed_suffix="C_FLY_HP",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(172, 177.46, 172, 176, seed_suffix="c-fly-hp-top"))
+    labels.append(label(172, 176, "HP_CPP"))
+    wires.append(wire(172, 185.08, 172, 187, seed_suffix="c-fly-hp-bot"))
+    labels.append(label(172, 187, "HP_CPN"))
+
+    # ---- HPVSS (8): negative Rail der Ladungspumpe → 1µF nach GND
+    # (DS: HPVSS-Cap >= Flying-Cap)
+    wires.append(wire(U11_RX, u11_hpvss_y, 146, u11_hpvss_y, seed_suffix="u11-hpvss"))
+    labels.append(label(146, u11_hpvss_y, "HP_HPVSS"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_HPVSS",
+            value="1uF X5R 0603 (TPA6132A2 HPVSS — negative Charge-Pump-Rail; DS: >= C_FLY)",
+            x=178, y=181.27,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            seed_suffix="C_HPVSS",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(178, 177.46, 178, 176, seed_suffix="c-hpvss-top"))
+    labels.append(label(178, 176, "HP_HPVSS"))
+    wires.append(wire(178, 185.08, 178, 187, seed_suffix="c-hpvss-gnd"))
+    attach_gnd(178, 187, "C_HPVSS", rot=270)
+
+    # ---- SGND (15, Referenz — Layout: eigene Leitung zum J8-Sleeve),
+    # PGND (10) und EP (17) → GND
+    wires.append(wire(U11_RX, u11_sgnd_y, 146, u11_sgnd_y, seed_suffix="u11-sgnd"))
+    attach_gnd(146, u11_sgnd_y, "U11_SGND", rot=270)
+    wires.append(wire(U11_RX, u11_pgnd_y, 146, u11_pgnd_y, seed_suffix="u11-pgnd"))
+    attach_gnd(146, u11_pgnd_y, "U11_PGND", rot=270)
+    wires.append(wire(U11_RX, u11_ep_y, 146, u11_ep_y, seed_suffix="u11-ep"))
+    attach_gnd(146, u11_ep_y, "U11_EP", rot=270)
+
+    # ---- R_LO_L/R 22Ω Serie: jetzt HINTER dem HP-Amp (Kabel-Entkopplung /
+    # ESD; TPA hat eigenen Kurzschluss-Schutz). In 32Ω: -4.6dB zusaetzlich —
+    # mit -6dB-Gain immer noch >100dB SPL an typischen Kopfhoerern.
     lo_y = 150.0
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_LO_L",
-            value="22R 0603 (line-out L series/protect)",
+            value="22R 0603 (phones/line-out L series — Kabel/ESD-Entkopplung)",
             x=160, y=lo_y, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "0603WAF220JT5E", "LCSC": "C23345"},
@@ -6263,16 +6524,16 @@ def audio_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # R rot=90: pin1 abs (156.19, lo_y) ← PCM_VOUTL label, pin2 abs (163.81, lo_y) → jack T
+    # R rot=90: pin1 abs (156.19, lo_y) ← HP_OUTL label, pin2 abs (163.81, lo_y) → jack T
     wires.append(wire(156.19, lo_y, 152, lo_y, seed_suffix="rlol-to-voutl"))
-    labels.append(label(152, lo_y, "PCM_VOUTL"))
+    labels.append(label(152, lo_y, "HP_OUTL"))
 
     lo_y2 = lo_y + 6
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_LO_R",
-            value="22R 0603 (line-out R series/protect)",
+            value="22R 0603 (phones/line-out R series — Kabel/ESD-Entkopplung)",
             x=160, y=lo_y2, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "0603WAF220JT5E", "LCSC": "C23345"},
@@ -6281,7 +6542,7 @@ def audio_sheet() -> str:
         )
     )
     wires.append(wire(156.19, lo_y2, 152, lo_y2, seed_suffix="rlor-to-voutr"))
-    labels.append(label(152, lo_y2, "PCM_VOUTR"))
+    labels.append(label(152, lo_y2, "HP_OUTR"))
 
     # J8 TRS jack @ (175, 152). Pins: T(1) @ (182.62,149.46), R(2) @ (182.62,152),
     # S(3) @ (182.62,154.54), DET(4) @ (167.38,152).
@@ -6290,17 +6551,17 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Connector:AudioJack3_Switch",
             ref="J8",
-            value="3.5mm TRS LINE OUT (PJ-320 class, w/ detect)",
+            value="3.5mm TRS PHONES / LINE OUT (PJ-320 class, w/ detect)",
             x=j8_x, y=j8_y,
             footprint="field_ambience:Jack_3.5mm_PJ-320D_SMT",
             # v0.8: C2884109 existierte nicht in der JLC-Teile-DB → ersetzt durch
             # PJ-320D (C431535, SMD 3.5mm TRS mit Schaltkontakt, lagernd). Footprint
             # gegen PJ-320D-Pads im GUI verifizieren (TODO B0b) + Detect-Polarität.
-            # r19.18 (Audit): explizit LINE OUT — Pegel ueber Serien-R fuer
-            # Line-Eingaenge dimensioniert, KEIN Kopfhoerer-Treiber (32Ω-Last
-            # wird leise/unspezifiziert; Gehaeuse-Beschriftung: "LINE OUT").
+            # r19.19 (ADR-0024): jetzt PHONES/LINE OUT — U11 TPA6132A2 treibt die
+            # Buchse niederohmig (Kopfhoerer 16Ω+ UND Line-Eingaenge). Beim
+            # Einstecken muten nur die Speaker (AMP_nMUTE), die Buchse bleibt an.
             extra_props={"MPN": "PJ-320D (3.5mm TRS w/ switch)", "LCSC": "C431535",
-                         "PANEL_LABEL": "LINE OUT"},
+                         "PANEL_LABEL": "PHONES / LINE OUT"},
             seed_suffix="J8",
             sheet_uuid_seed=sus,
         )
@@ -6317,14 +6578,13 @@ def audio_sheet() -> str:
     attach_gnd(186, 154.54, "J8_S", rot=270)
     # DET @ (j8_x-7.62, j8_y) = (167.38, 152) → R_DET 10k → JACK_DETECT (MCP GPA6)
     # r18.82: Das PJ-320D-Datenblatt-Schaltbild zeigt den Detect-Kontakt (C)
-    # ruht ohne Stecker am TIP-Kontakt (B) — NICHT am Sleeve! Unplugged haengt
-    # DET also am DAC-L-Ausgang (ground-centered, ±~3 Vpk bei Vollaussteuerung):
-    # ohne Serien-R wuerde die MCP-Eingangs-Clamp die negativen Halbwellen
-    # ueber 22R kurzschliessen (>100 mA Injection + hoerbare Verzerrung am
-    # SPEAKER, weil derselbe DAC-Knoten den Amp speist). R_DET 10k begrenzt
-    # den Clamp-Strom auf <300 µA; C_DET 1µF filtert Audio-AC vom GPA6-Knoten
-    # (fc ~16 Hz mit 10k||100k-int-Pullup) → kein Interrupt-Geflacker.
-    # Pegel: unplugged ≈ 0,3 V (LOW, int. 100k-Pullup vs 10k zum ~0-V-DAC-DC),
+    # ruht ohne Stecker am TIP-Kontakt (B) — NICHT am Sleeve! r19.19: der TIP
+    # haengt jetzt am U11-TPA-Ausgang (ground-zentriert, DC 0 V; Shutdown-
+    # Zout ~20Ω per DS) statt direkt am DAC — die r18.82-Analyse bleibt
+    # gueltig: R_DET 10k begrenzt den MCP-Clamp-Strom bei Audio-Halbwellen
+    # (±~1,5 Vpk nach -6dB-Gain) auf <150 µA; C_DET 1µF filtert Audio-AC vom
+    # GPA6-Knoten (fc ~16 Hz mit 10k||100k-int-Pullup) → kein Geflacker.
+    # Pegel: unplugged ≈ 0,3 V (LOW, int. 100k-Pullup vs 10k zum 0-V-Amp-DC),
     # plugged = 3,3 V (HIGH). Firmware: HIGH = Klinke drin → Speaker muten.
     wires.append(wire(167.38, 152, 153.81, 152, seed_suffix="j8-det"))
     symbols.append(
@@ -6362,14 +6622,14 @@ def audio_sheet() -> str:
         f'  (uuid "{sheet_uuid}")\n'
         f'  (paper "A3")\n'
         f'  (title_block\n'
-        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403H)")\n'
-        f'    (date "2026-05-14")\n'
-        f'    (rev "0.7")\n'
+        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403H + TPA6132A2)")\n'
+        f'    (date "2026-07-13")\n'
+        f'    (rev "0.8")\n'
         f'    (company "Field Ambience Project")\n'
-        f'    (comment 1 "Per SPEC v0.6.3 §8 + Errata-Fixes (PCM5102A TI, PAM8403H PDF verifiziert)")\n'
+        f'    (comment 1 "Per SPEC §8 + r19.19 (ADR-0024): U11 TPA6132A2 HP-Amp — J8 = PHONES/LINE OUT")\n'
         f'    (comment 2 "PCM5102A pinout per TI SLAS859C: CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20")\n'
-        f'    (comment 3 "PAM8403H pinout per Diodes Inc PAM8403H.PDF Rev 1-0 (LCSC C17337)")\n'
-        f'    (comment 4 "v0.6.3 adds R_MUTE_PD + R_SHDN_PD 10k pull-downs - Amp default-OFF/muted during Pico boot"))\n'
+        f'    (comment 3 "PAM8403H per Diodes PAM8403H.PDF; TPA6132A2 per TI SLOS597B (Gain -6dB, EN=AMP_nSHDN)")\n'
+        f'    (comment 4 "R_MUTE_PD + R_SHDN_PD 10k pull-downs - beide Amps default-OFF waehrend Boot"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"

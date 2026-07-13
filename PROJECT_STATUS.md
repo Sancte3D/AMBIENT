@@ -1,6 +1,14 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-13 (r19.18 — BQ24074-Power-Path-Redesign: alle P0 des externen Hardware-Audits gefixt, ADR-0023)**
+**Updated: 2026-07-13 (r19.19 — TPA6132A2-Kopfhoererverstaerker: J8 = PHONES/LINE OUT, ADR-0024; davor r19.18 BQ24074-Power-Path, ADR-0023)**
+
+> **r19.19 (2026-07-13) — Kopfhoerer rein (User: "ja das muss rein!!!").**
+> U11 TPA6132A2 (C69901) zwischen DAC und J8: DirectPath, Gain −6 dB,
+> EN=AMP_nSHDN. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
+> Buchse; Auto-Mute-Verhalten unveraendert (Speaker muten beim Einstecken,
+> J8 bleibt live). Netzliste 165/649/0-floating, alle Teile live-verifiziert.
+> Details: CHANGELOG r19.19 + ADR-0024.
+
 
 > **r19.15–r19.18 (2026-07-08…13) — Audit-Reaktion + Sound-Vollausbau.**
 > - **r19.18 (ADR-0023, DER Blocker vor Fab):** Externes Hardware-Audit

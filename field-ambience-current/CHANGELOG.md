@@ -10,6 +10,27 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.19 (2026-07-13) — TPA6132A2: J8 wird echter PHONES / LINE OUT (ADR-0024)
+
+User: "ja das muss rein!!!" — Kopfhoerer-Betrieb an J8 war bisher out-of-spec
+(DAC-Tap, ≥1 kΩ). Jetzt sitzt **U11 TPA6132A2RTER** (C69901, live-verifiziert:
+370 Stk., JLC Economic+Standard) zwischen PCM5102A und Buchse:
+
+- DirectPath (interne Ladungspumpe, keine Auskoppel-Elkos), Gain −6 dB
+  (G0=G1=GND) → ~1,05 Vrms: Line-Pegel UND sichere Kopfhoerer-Lautstaerke.
+- EN = AMP_nSHDN (boot-safe, Shutdown 0,7–1,2 µA — passt zur ADR-0023-
+  Aus-Zustand-Analyse). Jack-Detect-Mute betrifft weiter NUR die Speaker.
+- Beschaltung per TI SLOS597B: CIN 2×1 µF, Flying 1 µF, HPVSS 1 µF,
+  VDD+HPVDD je 2,2 µF (**C1607**, 16.200 Stk.); HPVDD NIE an VDD (DS-WARNING).
+- Footprint QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm gegen JLC-Landpattern
+  C69901 + TI RTE0016C abgeglichen. R_LO 22Ω bleiben (jetzt hinter dem Amp).
+- Netzliste: 165 Netze / 649 Pins / 0 floating; AMP_nSHDN = U11.EN + U4.SHDN
+  + PB14; check_pinmap gruen. BOM: 60 Teile-Typen / 200 Platzierungen.
+- Doku: ADR-0024, SPEC-Phones-Sektion (die alte "v0.8-Option TPA6132" ist
+  damit exakt umgesetzt), Walkthrough §3, PINMAP, BOM-Dokus, COMPONENT_LINKS.
+
+---
+
 ## v0.7-r19.18 (2026-07-13) — BQ24074-Power-Path: alle P0 des externen Hardware-Audits gefixt (ADR-0023)
 
 Externes statisches Audit (Verdikt „DO NOT FABRICATE") — alle pruefbaren

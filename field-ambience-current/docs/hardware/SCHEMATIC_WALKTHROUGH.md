@@ -37,7 +37,7 @@ Wenn du das hier von oben nach unten liest, weißt du am Ende:
 | 3 | `lcd.kicad_sch` | `make_lcd_sheet()` ~Z. 3533 | ST7789-Modul-Header J3 + Backlight-FET Q2 + lokale Caps |
 | 4 | `mcp.kicad_sch` | `make_mcp_sheet()` ~Z. 4560 | MCP23017 (16 I/O over I²C) + PCA9685 (16 PWM für LEDs) + 10 Buttons (5 Cells SW1–5 auf Kailh-Choc-V1 direkt-gelötet + 5 Modifier SW6–10 auf HX-B3F-Tactile, alle digital am Expander) + 10 LEDs |
 | 5 | `encoder.kicad_sch` | `make_encoder_sheet()` ~Z. 4845 | 4 EC11-Encoder mit Push + RC-Filter |
-| 6 | `audio.kicad_sch` | `make_audio_sheet()` ~Z. 4878 | PCM5102A I²S-DAC + PAM8403 Class-D-Amp + Speaker-Header + 3.5-mm-Line-Out + (DNP) MIDI-Out |
+| 6 | `audio.kicad_sch` | `audio_sheet()` | PCM5102A I²S-DAC + PAM8403 Class-D-Amp + Speaker-Header + U11 TPA6132A2 HP-Amp (r19.19) + 3.5-mm-PHONES/LINE-OUT + (DNP) MIDI-Out |
 | 7 | `battery.kicad_sch` | `battery_sheet()` | BQ24074 Power-Path-Charger (r19.18, ADR-0023) + F2 PTC + Akku-JST + TPS61089 Boost + Bat-Sense-Divider |
 
 Plus das Top-Level `field_ambience.kicad_sch` — verbindet die 7 Sheets über
@@ -81,7 +81,7 @@ pfeile = bidirektional (I²C/SPI command + status).
         ┌──────────────────────────────────────────┐│
         │             STM32H743 (U1)               ││
         │  ◄── SPI ───► LCD (J3)                   ││
-        │  ◄── I²S ────► PCM5102A ─► Line-Out (J8) ││
+        │  ◄── I²S ────► PCM5102A ─► TPA6132A2 ─► J8 ││
         │                          └─► PAM8403 ─► SP
         │  ◄── I²C ────► MCP23017 ─► 10× Buttons   ││
         │                  (5 Cells + 5 Modifier)  ││
@@ -251,7 +251,8 @@ Cortex-M7 480 MHz mit FPU + 1 MB SRAM + 2 MB Flash, LQFP-100-Gehäuse.
 
 Die zweite Hälfte der Sound-Pipeline. MCU spuckt **I²S 16-Bit 44,1 kHz** an
 einen externen DAC (`U3`), der DAC fährt entweder die Class-D-Speaker-Endstufe
-(`U4`) ODER die Line-Out-Buchse `J8`. **Sub-Bass-Layer geht NUR an Line-Out**
+(`U4`) ODER die PHONES/LINE-OUT-Buchse `J8` (via U11 HP-Amp, r19.19).
+**Sub-Bass-Layer geht NUR an J8**
 (ADR-0010 §6) — die 40-mm-Speaker können keinen Sub-Bass, das wäre nur
 Geklapper.
 
@@ -269,7 +270,8 @@ software-seitig im Engine-Mix-Bus, nicht in der PCB.
 | `U3` | PCM5102APWR | I²S → Stereo-DAC, 32-Bit-Resolution, interne PLL (synct sich auf BCK ohne MCLK). Eigene AVDD-Versorgung über Ferrit-Bead. | TSSOP-20 KiCad-Standard |
 | `U4` | PAM8403DR-H | Stereo Class-D-Amp, 3 W/ch @ 4 Ω, BTL-Output. `AMP_SHDN_N` (active-low Shutdown) vom MCP23017 gated. | SO-16-150mil KiCad-Standard |
 | `J7` | Speaker-Header 2×2 Pin (PUI AS04008PS, 8 Ω, 40 mm) | Speaker-Anschluss BTL — 2 Drähte pro Kanal | Pin-Header 2,54 mm |
-| `J8` | PJ-320D 3,5 mm TRS (mit Insertion-Detect) | Line-Out / Kopfhörer. Insertion-Detect-Pin gated optional die Speaker-Amp (Auto-Mute beim Einstecken) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (Custom EasyEDA-CAD) |
+| `U11` | TPA6132A2RTER (r19.19, ADR-0024) | DirectPath-Kopfhoererverstaerker: DAC → CIN 1µF → U11 (Gain −6 dB, EN=AMP_nSHDN) → 22 Ω → J8. Ladungspumpe intern (C_FLY_HP/C_HPVSS), HPVDD nur an 2,2 µF (NIE an VDD!) | `Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` |
+| `J8` | PJ-320D 3,5 mm TRS (mit Insertion-Detect) | **PHONES / LINE OUT** (r19.19): Kopfhörer 16 Ω+ UND Line-Eingänge, niederohmig getrieben von U11. Insertion-Detect → Firmware mutet NUR die Speaker (Auto-Mute beim Einstecken, wieder an beim Ausstecken) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (Custom EasyEDA-CAD) |
 | `J9` | PJ-320D MIDI-OUT — **DNP für 5er-Run** (ADR-0004 r18.30) | 2× 220 Ω Resistor pair + UART-TX. Reaktivierbar durch Bestücken + `midi_tx_init()` | gleicher FP, DNP |
 | `FB1` | BLM18AG601 (Ferrit-Bead) | AVDD-Trennung DAC (Digital-Rail → Analog-Rail) | 0603 |
 | `C_AVDD` | 10 µF + 100 nF X7R am Ferrit-Output | DAC-AVDD-Decoupling | 0603 |
@@ -287,7 +289,7 @@ PCM5102A (U3)
    │           ▲
    │           │ AMP_SHDN_N (MCP23017 GPA4) — Mute aus Firmware
    │
-   └─────────► J8 3,5 mm Line-Out (TRS) ──► Kopfhörer / Mixer / Aktiv-Box
+   └── C_HP_IN 1µF ─► U11 TPA6132A2 (−6 dB) ─► 22 Ω ─► J8 PHONES/LINE OUT ──► Kopfhörer / Mixer / Aktiv-Box
                    │
                    └─ Insertion-Detect ──► MCP23017 (optional Auto-Speaker-Mute)
 ```
@@ -296,8 +298,9 @@ PCM5102A (U3)
 
 | Bauteil stirbt | Symptom | Fix |
 |---|---|---|
-| `U3` PCM5102A | Komplett stumm an allen Outs (Line-Out + Speakers) | DAC oder I²S-Verkabelung prüfen |
-| `U4` PAM8403 | Speakers stumm, Line-Out lebt | Amp prüfen — oft thermisch oder Strapping-Pin falsch |
+| `U3` PCM5102A | Komplett stumm an allen Outs (J8 + Speakers) | DAC oder I²S-Verkabelung prüfen |
+| `U4` PAM8403 | Speakers stumm, J8 lebt | Amp prüfen — oft thermisch oder Strapping-Pin falsch |
+| `U11` TPA6132A2 | J8 stumm (Kopfhörer UND Line), Speakers leben | AMP_nSHDN high? Ladungspumpen-Caps (C_FLY_HP/C_HPVSS) prüfen; HPVDD-Spannung ~VDD-nah messen |
 | `FB1` Ferrit | Digital-Switching grießelt im Headphone-Out | Ferrit tauschen |
 | `J7` Speaker-Header lose | Speaker brüllt, Brummen, evtl. Amp thermisch | Header neu löten |
 | Speaker fällt aus Mesh | Hörbar dünn — und mechanisch oft Folge eines lose gewordenen Mesh-Klebepunkts | Membran + Mesh checken (ADR-0007) |
@@ -313,13 +316,13 @@ sondern an drei mechanischen Dingen:
    Gehäuse-CAD vorsehen — kein BOM-Eintrag, aber kritisch.**
 2. **EQ-Pre-Filter im Pad-Render-Pfad** — der DSP rollt unter 80 Hz ab fürs
    Speaker-Routing (ADR-0010 §6 + `engine.c`), damit der Treiber nicht
-   mechanisch überlastet wird. Sub-Bass landet nur am Line-Out.
+   mechanisch überlastet wird. Sub-Bass landet nur am J8-Ausgang.
 3. **Passive Membran** — *optional* on top der geschlossenen Kammer. Zusatz-
    Bauteil (25–30 mm PR-Membran pro Seite, ~1–3 $/Stück), erweitert f3 von
    ~250 Hz auf ~150 Hz. Nicht critical-path; entscheiden nach Hörtest auf
    Prototyp.
 
-**Honest take:** Line-Out (`J8`) ist die *echte* Hörerfahrung. Speakers sind
+**Honest take:** J8 (Kopfhörer/Line) ist die *echte* Hörerfahrung. Speakers sind
 "convenience ohne Kopfhörer" — das Gerät richtig zu positionieren ist Punkt
 des Sound-Designs, nicht ein Versuch, 40 mm zu HiFi zu prügeln.
 
@@ -328,7 +331,7 @@ des Sound-Designs, nicht ein Versuch, 40 mm zu HiFi zu prügeln.
 - **PCM5102A statt billigerer PT8211**: Interne DAC-PLL synct sich auf BCK
   → kein externer MCLK nötig → ein SAI-Pin weniger. Saubere 112 dB SNR.
 - **PAM8403 statt MAX98357A I²S-Amp**: PAM8403 ist analoger Class-D — wir
-  *wollen* den Analog-Pfad zwischen DAC + Amp, damit der Line-Out gleichzeitig
+  *wollen* den Analog-Pfad zwischen DAC + Amp, damit J8 gleichzeitig
   möglich ist (MAX98357 hat keinen Analog-Output).
 - **8 Ω / 40 mm PUI statt 4 Ω / 28 mm**: 40 mm gibt physikalisch mehr Membran-
   Fläche → mehr Mid-Lautstärke (alles unter 250 Hz ist sowieso nur am

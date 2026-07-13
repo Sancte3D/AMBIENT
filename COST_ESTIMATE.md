@@ -24,7 +24,7 @@ r18.87: U10-PCA9685 + 8 VU-LEDs + Heartbeat-LED entfernt (−22 Placements,
 | PCB-Fab 4-Layer 252×102, 1.6 mm, ×5 | ~$50 | ~$50 | 2.57 dm²/Board |
 | Stencil | ~$8 | ~$38 | |
 | PCBA-Setup | ~$8 | ~$25 | pro Design |
-| Feeder/Extended-Gebühren | ~$8–15 | ~$8–15 | Große ICs sind „Extended (Preferred)“ = gebührenfrei (r18.22-Erkenntnis); plain-Extended: MCP23017, BQ24074, TPS22918, MST-12D18G3, PJ-320D, JST, Polyfuse u. a. à $1.50 |
+| Feeder/Extended-Gebühren | ~$8–15 | ~$8–15 | Große ICs sind „Extended (Preferred)“ = gebührenfrei (r18.22-Erkenntnis); plain-Extended: MCP23017, BQ24074, TPA6132A2, TPS22918, MST-12D18G3, PJ-320D, JST, Polyfuse u. a. à $1.50 |
 | Placement (~610 SMD-Joints × 5) | ~$5 | ~$5 | $0.0017/Joint |
 | SMD-BOM-Teile ×5 (§3) | ~$110 | ~$110 | ~$21.3/Board + Attrition |
 | Versand DHL EU | ~$30–40 | ~$30–40 | 5× 252-mm-Boards sind sperrig |
@@ -50,7 +50,7 @@ r18.87: U10-PCA9685 + 8 VU-LEDs + Heartbeat-LED entfernt (−22 Placements,
 **MCP23017 $1.62** · **PCM5102A $0.99** · **BQ24074 $2.24** ·
 **TPS61089 $0.50** · PAM8403 ~$0.44 · TPS22918 $0.25 (live r18.81) ·
 L1 SWPA6045 ~$0.25 · C_BULK2 ~$0.25 · AP7361C ~$0.20 · USBLC6 ~$0.20 ·
-**USB-C $0.17** · Polyfuse ~$0.15 · Crystal ~$0.12 · 2× PJ-320D ~$0.24 ·
+**USB-C $0.17** · Polyfuse ~$0.15 · Crystal ~$0.12 · 2× PJ-320D ~$0.24 · **TPA6132A2 $1.35** ·
 JST ~$0.10 · MST-12D18G3 $0.08 (live r18.81) · 2× SS34 + TVS ~$0.16 ·
 2× TS-1088 ~$0.04 · 2N7002 ~$0.01 · 16× LED ~$0.40 · 3× Header ~$0.35 ·
 ~110 R/C-Passives ~$0.55

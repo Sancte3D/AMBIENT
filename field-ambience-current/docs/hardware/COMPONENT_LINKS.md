@@ -19,8 +19,9 @@ page). Regenerate: this list is derived from `kicad/jlc_bom.csv` + `kicad/*.kica
 | LED7,LED11G,LED12G,LED13G,LED14G,LED15G | KT-0603G (Hubei KENTO, pure green 525nm 0603, Vf 3.1V) | [C12624](https://www.lcsc.com/product-detail/C12624.html) | — |
 | U_PWR | TPS22918DBVR | [C131941](https://www.lcsc.com/product-detail/C131941.html) | [PDF](https://www.ti.com/lit/ds/symlink/tps22918.pdf) |
 | C2,C5,C6c,C7b,C8b,C10,C11,C12,C13,C14,C15,C16,C17,C_BOOST_HF,C_BOOT,C_CPVDD_HF,C_LDOO,C_NRST,C_PCA_VDD_HF,C_QSPI,C_SYS_HF,C_VDD1B,C_VDD2B,C_VDD3B,C_VDD4B,C_VDD5B,C_VDDA2,C_VREF2 | CC0603KRX7R9BB104 (Yageo, 50V X7R) | [C14663](https://www.lcsc.com/product-detail/C14663.html) | — |
-| C9b,C_DET_J8,C_FLY,C_PVDDR_HF,C_UPWR_IN,C_VCC,C_VDDA1,C_VNEG,C_VREF,C_VREF1,C_in_L,C_in_R | CL10A105KB8NNNC | [C15849](https://www.lcsc.com/product-detail/C15849.html) | — |
+| C9b,C_DET_J8,C_FLY,C_FLY_HP,C_HPVSS,C_HP_INL,C_HP_INR,C_PVDDR_HF,C_UPWR_IN,C_VCC,C_VDDA1,C_VNEG,C_VREF,C_VREF1,C_in_L,C_in_R | CL10A105KB8NNNC | [C15849](https://www.lcsc.com/product-detail/C15849.html) | — |
 | C1,C6b,C7a,C8a,C_CPVDD_BULK,C_PCA_VDD,C_PWR_SW,C_QSPI2 | CL21A106KAYNNNE (Samsung, 25V X5R) | [C15850](https://www.lcsc.com/product-detail/C15850.html) | — |
+| C_HPVDD,C_HP_VDD | CL10A225KP8NNNC | [C1607](https://www.lcsc.com/product-detail/C1607.html) | — |
 | U8 | TPS61089RNR | [C165129](https://www.lcsc.com/product-detail/C165129.html) | [PDF](https://www.ti.com/lit/ds/symlink/tps61089.pdf) |
 | J1 | TYPE-C-31-M-12 | [C165948](https://www.lcsc.com/product-detail/C165948.html) | [PDF](https://datasheet.lcsc.com/lcsc/1903211732_Korean-Hroparts-Elec-TYPE-C-31-M-12_C165948.pdf) |
 | U4 | PAM8403DR-H | [C17337](https://www.lcsc.com/product-detail/C17337.html) | PAM8403H.PDF (Diodes Inc Rev 1-0, Nov 2012) |
@@ -61,6 +62,7 @@ page). Regenerate: this list is derived from `kicad/jlc_bom.csv` + `kicad/*.kica
 | U7 | BQ24074RGTR | [C54313](https://www.lcsc.com/product-detail/C54313.html) | [PDF](https://www.ti.com/lit/ds/symlink/bq24074.pdf) |
 | C5b,C_BAT_FILT,C_COMP | 0603B103K500NT | [C57112](https://www.lcsc.com/product-detail/C57112.html) | — |
 | Y1 | ABLS-8.000MHZ-B4-T | [C596838](https://www.lcsc.com/product-detail/C596838.html) | [PDF](https://abracon.com/Resonators/ABLS.pdf) |
+| U11 | TPA6132A2RTER | [C69901](https://www.lcsc.com/product-detail/C69901.html) | [PDF](https://www.ti.com/lit/ds/symlink/tpa6132a2.pdf) |
 | SW_BOOT | TS-1088-AR02016 | [C720477](https://www.lcsc.com/product-detail/C720477.html) | — |
 | Q2 | 2N7002,215 | [C8545](https://www.lcsc.com/product-detail/C8545.html) | — |
 | D3 | SS34 | [C8678](https://www.lcsc.com/product-detail/C8678.html) | — |

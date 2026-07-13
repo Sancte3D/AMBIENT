@@ -207,7 +207,7 @@ Each A/B has a 10 kΩ pull-up + 100 nF RC debounce; switches pull-up + tactile-t
 | Net | From | To |
 |---|---|---|
 | `I2S_LRCK`/`I2S_BCK`/`I2S_DOUT` | MCU SAI1 (PE4/PE5/PE6) | PCM5102A LRCK/BCK/DIN |
-| PCM5102A analog L/R | DAC OUT | PAM8403 IN + J8 line-out (TRS) |
+| PCM5102A analog L/R | DAC OUT | PAM8403 IN + U11 TPA6132A2 HP-Amp → J8 PHONES/LINE-OUT (r19.19) |
 | `AMP_nSHDN`/`AMP_nMUTE` | MCU PB14/PB15 (+10 kΩ PD) | PAM8403 /SHDN, /MUTE |
 | speaker out | PAM8403 BTL | J6 (L+/L−), J7 (R+/R−) → 2× speaker |
 | jack-detect | J8 insertion-detect | MCP23017 (auto-mute speakers) |

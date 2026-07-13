@@ -527,12 +527,15 @@ LED6-LED15) als separate Symbole im Schematic. Vorteile gegenüber r7:
 - LED-Helligkeit/Farbe pro Kanal in BOM frei wählbar (SMD-0603 in beliebigen Farben verfügbar)
 - Bessere visuelle Hierarchie: LED neben Switch ist klarer ablesbar als „LED-im-Switch-Body"
 
-### Line-Out / Kopfhörer (v0.7)
+### Phones / Line-Out (r19.19, ADR-0024)
 
 | Ref | Part | JLCPCB # | Bemerkung |
 |---|---|---|---|
-| J8 | 3.5mm TRS-Buchse mit Switch (PJ-320D, SHOU HAN) | C431535 | Insertion-Detect → MCP GPA6. **v0.8: war C2884109 → PJ-320D (lagernd, 21k+ pcs); r8: verifiziert gold-plated + 5000 cycles + SPST-NC-Detect = bereits premium-tauglich. AltMPN für 2nd-Source: PJ-320D-B-SMT (C2884940, XKB Connectivity, drop-in)** |
-| R_LO_L/R | 22Ω 0603 | C23345 | Line-Out Serien/Schutz. **v0.8: war C22962 (= 220Ω, falsch) → C23345 (echte 22Ω, Basic)** |
+| J8 | 3.5mm TRS-Buchse mit Switch (PJ-320D, SHOU HAN) | C431535 | Insertion-Detect → MCP GPA6. **v0.8: war C2884109 → PJ-320D (lagernd); AltMPN 2nd-Source: PJ-320D-B-SMT (C2884940, XKB, drop-in)** |
+| U11 | **TPA6132A2RTER** DirectPath-Kopfhoererverstaerker (r19.19) | C69901 | Gain −6 dB (G0=G1=GND), EN=AMP_nSHDN, Ladungspumpe intern → keine Auskoppel-Elkos. Kopfhoerer 16 Ω+ UND Line-Out aus einem Ausgang |
+| C_HP_INL/R, C_FLY_HP, C_HPVSS | 1 µF 0603 X5R | C15849 | Eingangskopplung ×2 + Flying-Cap + HPVSS (TI SLOS597B) |
+| C_HP_VDD, C_HPVDD | 2.2 µF 0603 X5R | C1607 | VDD-Decoupling <5 mm + HPVDD-Cap (**NIE an VDD — TI-WARNING**) |
+| R_LO_L/R | 22Ω 0603 | C23345 | Serien hinter U11 (Kabel/ESD). **v0.8: war C22962 (= 220Ω, falsch) → C23345** |
 
 ### Resistors + Capacitors + Misc [v0.6 Änderungen markiert]
 
@@ -1243,25 +1246,28 @@ schlicht keinen Hub unter ~250 Hz.
 F0=380 Hz schließt jede Reflex-Lösung (Port oder PR) aus. Geschlossene Kammer
 ist die einzige korrekte Lösung für diesen Treiber.
 
-### Line-Out / Kopfhörer (J8, v0.7)
+### Phones / Line-Out (J8 + U11, r19.19 — ADR-0024)
 
-Passiver Tap an PCM5102A VOUTL/VOUTR (vor dem PAM8403) → 3.5mm TRS-Buchse,
-damit der tiefe Charakter über externe Boxen/Kopfhörer hörbar wird.
+PCM5102A VOUTL/R → C_HP_IN 1 µF → **U11 TPA6132A2** (DirectPath, Gain −6 dB)
+→ 22 Ω → J8. Kopfhoerer (16 Ω+) UND Line-Eingaenge werden niederohmig und
+in-Spec getrieben; der tiefe Charakter ist ueber beides voll hoerbar.
 
 | Element | Wert |
 |---|---|
-| J8 | 3.5mm TRS-Buchse mit Insertion-Detect-Switch (PJ-320D, LCSC C431535) |
-| R_LO_L / R_LO_R | 22Ω 0603 Serien (Schutz / Kurzschluss-Limit) |
-| Tap | PCM5102A VOUTL (pin 6) / VOUTR (pin 7) — ground-centered, keine Koppel-Caps nötig |
+| J8 | 3.5mm TRS-Buchse mit Insertion-Detect-Switch (PJ-320D, LCSC C431535) — **Gehaeuse-Label: PHONES / LINE OUT** |
+| U11 | TPA6132A2RTER (C69901): Gain −6 dB via G0=G1=GND, EN=AMP_nSHDN, Pop-Suppression, Kurzschluss-Schutz, Shutdown 0,7–1,2 µA |
+| C_HP_INL/R | 1 µF Eingangskopplung (fc < 15 Hz); INL+/INR+ an GND (SE-Betrieb per DS) |
+| C_FLY_HP / C_HPVSS / C_HPVDD / C_HP_VDD | 1 µF / 1 µF / 2,2 µF / 2,2 µF (TI SLOS597B §8.2/§9; HPVDD NIE an VDD) |
+| R_LO_L / R_LO_R | 22Ω 0603 Serien hinter U11 (Kabel-Entkopplung/ESD) |
 | Jack-Detect | J8 DET-Switch → MCP23017 GPA6 (Pull-Up + IRQ). Idle=LOW, Plug=HIGH |
 
 **Jack-Detect-Verhalten**: Plug einstecken → Firmware mutet NUR den PAM8403
-(Speaker), PCM5102A-DAC + Line-Out bleiben live. Speaker und Line-Out sind
-also gegenseitig ausschließend (Plug = Speaker aus).
+(Speaker) via AMP_nMUTE; U11 bleibt an → Kopfhoerer/Line live. Ausstecken →
+Speaker wieder an. U11 + U4 teilen sich AMP_nSHDN (beide aus im Boot/Aus).
 
-**Kopfhörer-Hinweis**: Direkter PCM5102A-Tap treibt Line-In (hochohmig) und
-hochohmige Kopfhörer (>32Ω) sauber. Für niederohmige Kopfhörer wäre ein
-dedizierter Kopfhörer-Amp (TPA6132 o.ä.) besser — v0.8-Option.
+**Historie**: bis r19.18 hing J8 passiv am DAC (Line-only; Kopfhoerer
+ausserhalb der PCM5102A-Spec ≥1 kΩ). Die damals notierte v0.8-Option
+TPA6132 ist mit r19.19 exakt so umgesetzt.
 
 ### MIDI Out (J10, r18.67 — implementiert; vorher fälschlich „J9" = Akku)
 

@@ -59,7 +59,8 @@ The player triggers notes on 5 keyswitch "cells", shapes them with 5 modifier
 buttons + 4 rotary encoders, and reads a 1.9" colour LCD. Sound is a generative
 ambient engine (pads, drones, a harmonic-safety note picker, reverb/echo/blur/
 shimmer/tape, world presets, just/equal tuning). Audio out via a PCM5102A DAC →
-line-out jack + a Class-D speaker amp. MIDI out on a TRS jack. USB-C charging +
+phones/line-out jack (TPA6132A2 headphone amp, r19.19) + a Class-D speaker amp.
+MIDI out on a TRS jack. USB-C charging +
 firmware flash. STM32H743 MCU.
 
 **Please confirm or correct:** target user, price point, the "must sound like X"
@@ -103,7 +104,8 @@ Grounded in `kicad/jlc_bom.csv` (regenerated from the schematic generator).
 |---|---|---|---|---|
 | U3 | PCM5102A | I²S DAC | C107671 | ⚠️ |
 | U4 | PAM8403 | Class-D speaker amp | C17337 | ⚠️ |
-| J8 / J10 | PJ-320D ×2 | line-out / MIDI-out TRS | C431535 | ⚠️ pad map + TRS-A/B |
+| J8 / J10 | PJ-320D ×2 | phones+line-out / MIDI-out TRS | C431535 | ⚠️ pad map + TRS-A/B |
+| U11 | TPA6132A2RTER | DirectPath headphone amp (r19.19, ADR-0024) | C69901 | ⚠️ |
 | FB1/FB2 | BLM18AG601 | supply ferrites | C19330 | ⚠️ |
 | SPK ×2 | CMS-402811-28SP | speakers (off-board) | — | ⚠️ |
 

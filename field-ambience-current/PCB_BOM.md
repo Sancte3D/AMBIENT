@@ -53,8 +53,11 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | U3 | PCM5102A DAC | — | TSSOP-20 | C107671 |
 | U4 | PAM8403 Class-D amp | — | SOIC-16 | C17337 |
 | FB1, FB2 | ferrite bead (AVDD/analog isolate) | 600 Ω | 0603 | C19330 / C84094 |
-| J8 | PJ-320D 3.5 mm TRS line-out | — | custom FP | C431535 |
-| R_LO_L/R | line-out series | 220 Ω | 0603 | C23345 |
+| U11 | TPA6132A2RTER DirectPath HP-Amp (r19.19, ADR-0024; Gain −6 dB) | 25 mW/16 Ω | WQFN-16 3×3 | C69901 |
+| C_HP_VDD/C_HPVDD | TPA6132A2 VDD/HPVDD decoupling (HPVDD NIE an VDD!) | 2.2 µF | 0603 | C1607 |
+| C_HP_INL/R, C_FLY_HP, C_HPVSS | TPA6132A2 Eingangskopplung + Ladungspumpe | 1 µF | 0603 | C15849 |
+| J8 | PJ-320D 3.5 mm TRS PHONES/LINE-OUT (r19.19) | — | custom FP | C431535 |
+| R_LO_L/R | phones/line-out series (hinter U11) | 22 Ω | 0603 | C23345 |
 | R_VOL_L/R | input/level | 20 k | 0603 | C4184 |
 | R_in/C_in_L/R, C_FLY, C_VNEG, C_PVDDR(_HF), C_CPVDD_BULK/HF | DAC/amp caps | 1 µF/10 µF/100 nF | 0603/0805 | C15849 / C15850 / C14663 |
 | R_SHDN_PD / R_MUTE_PD / R_XSMT_PD | amp/DAC default pull-downs | 10 k | 0603 | C25804 |
