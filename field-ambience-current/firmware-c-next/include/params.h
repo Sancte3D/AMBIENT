@@ -21,6 +21,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define PARAM_ENC_DRIVE   1
 #define PARAM_ENC_BRIGHT  2
@@ -41,5 +42,16 @@ void params_encoder(uint8_t enc_id, int delta, uint32_t now_ms);
 int   params_drive_pct(void);    /* 0..100 */
 float params_bright_hz(void);    /* pad brightness offset in Hz */
 int   params_volume_pct(void);   /* 0..100 */
+
+/* r19.21 — Encoder-Push-Aktionen (knobs.c). Alle halten params.c als
+ * einzige Quelle der Wahrheit: Drehen an DRIVE/VOLUME hebt Bypass/Mute
+ * automatisch auf (params_encoder), damit der Knopf den Wert "nimmt". */
+int  params_toggle_drive_bypass(void);  /* Rueckgabe: 1 = jetzt Bypass    */
+bool params_drive_bypassed(void);
+void params_reset_drive(void);          /* Default 15 %, Bypass aus       */
+void params_set_bright_neutral(void);   /* Kurz-Druck: 0 Hz               */
+void params_reset_bright(void);         /* Lang-Druck: Default (= 0 Hz)   */
+int  params_toggle_mute(void);          /* Rueckgabe: 1 = jetzt stumm     */
+bool params_muted(void);
 
 #endif

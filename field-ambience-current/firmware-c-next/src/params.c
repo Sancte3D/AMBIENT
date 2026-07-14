@@ -22,6 +22,21 @@ static accel_t s_acc[PARAM_ENC_VOLUME + 1];
 static float s_drive;    /* 0..1 */
 static float s_bright;   /* Hz */
 static float s_volume;   /* 0..1 */
+/* r19.21 — Push-Zustaende (knobs.c). Bypass/Mute lassen den gemerkten
+ * Wert stehen und schalten nur die Engine-Seite; Drehen hebt sie auf. */
+static bool  s_drive_byp;
+static bool  s_muted;
+
+#define DRIVE_DEFAULT 0.15f   /* engine_init-Referenz (gentle warmth) */
+
+static void apply_drive(void) {
+    float d = s_drive_byp ? 0.0f : s_drive;
+    engine_set_drive(d);
+    engine_set_reverb_drive(0.10f + 0.45f * d);
+}
+static void apply_volume(void) {
+    engine_set_master_volume(s_muted ? 0.0f : s_volume);
+}
 
 static int accel_mul(uint8_t id, uint32_t now) {
     static const struct { uint32_t max_dt; int mul; } T[] = {
@@ -52,13 +67,14 @@ void params_init(void) {
                          * old 0.60 predates the phones jack). The device
                          * boot additionally starts hard-muted and fades in
                          * (engine_boot_mute + this target). */
+    s_drive_byp = false;
+    s_muted     = false;
     /* r18.89: DRIVE = master drive stage + a slaved touch of reverb-input
      * drive (the space growls along, ~half a knob behind). Before this the
      * encoder ONLY drove the reverb input — nearly inaudible on dry sounds. */
-    engine_set_drive(s_drive);
-    engine_set_reverb_drive(0.10f + 0.45f * s_drive);
+    apply_drive();
     engine_set_brightness(s_bright);
-    engine_set_master_volume(s_volume);
+    apply_volume();
 }
 
 void params_encoder(uint8_t enc_id, int delta, uint32_t now_ms) {
@@ -69,9 +85,9 @@ void params_encoder(uint8_t enc_id, int delta, uint32_t now_ms) {
 
     switch (enc_id) {
         case PARAM_ENC_DRIVE:
+            s_drive_byp = false;               /* r19.21: der Knopf nimmt den Wert */
             s_drive = clampf(s_drive + dir * ticks * 0.01f, 0.0f, 1.0f);
-            engine_set_drive(s_drive);
-            engine_set_reverb_drive(0.10f + 0.45f * s_drive);
+            apply_drive();
             break;
         case PARAM_ENC_BRIGHT:
             s_bright = clampf(s_bright + dir * ticks * BRIGHT_STEP_HZ,
@@ -79,14 +95,36 @@ void params_encoder(uint8_t enc_id, int delta, uint32_t now_ms) {
             engine_set_brightness(s_bright);
             break;
         case PARAM_ENC_VOLUME:
+            s_muted = false;                   /* r19.21: Drehen entstummt */
             s_volume = clampf(s_volume + dir * ticks * 0.01f, 0.0f, 1.0f);
-            engine_set_master_volume(s_volume);
+            apply_volume();
             break;
         case PARAM_ENC_DISPLAY:    /* menu owns this encoder — ignore here */
         default:
             break;
     }
 }
+
+/* ---- r19.21: Push-Aktionen (knobs.c) ------------------------------------ */
+int  params_toggle_drive_bypass(void) {
+    s_drive_byp = !s_drive_byp;
+    apply_drive();
+    return s_drive_byp ? 1 : 0;
+}
+bool params_drive_bypassed(void) { return s_drive_byp; }
+void params_reset_drive(void) {
+    s_drive_byp = false;
+    s_drive = DRIVE_DEFAULT;
+    apply_drive();
+}
+void params_set_bright_neutral(void) { s_bright = 0.0f; engine_set_brightness(0.0f); }
+void params_reset_bright(void)       { params_set_bright_neutral(); }
+int  params_toggle_mute(void) {
+    s_muted = !s_muted;
+    apply_volume();
+    return s_muted ? 1 : 0;
+}
+bool params_muted(void) { return s_muted; }
 
 int   params_drive_pct(void)  { return (int)(s_drive  * 100.0f + 0.5f); }
 float params_bright_hz(void)  { return s_bright; }

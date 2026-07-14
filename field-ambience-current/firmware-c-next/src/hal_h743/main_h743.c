@@ -31,6 +31,9 @@
 #include "mcp23017.h"
 #include "oled.h"
 #include "oled_color.h"  /* accent crossfade tick (world → screen tint) */
+#include "overlay.h"     /* r19.21: transient knob-value overlay */
+#include "knobs.h"       /* r19.21: encoder push short/long actions */
+#include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
 #include "params.h"      /* encoder → engine param bindings */
@@ -90,9 +93,19 @@ static const engine_synth_backend_t s_v2_backend = {
 /* Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW), Line-Out
  * bleibt live — NICHT audio_mute() rufen (das wuerde auch XSMT ziehen und
  * den Line-Out toeten). Design: ADR / v0.7. */
+static bool s_jack_plugged = false;   /* r19.21: fuer das Status-Overlay */
+
 static void apply_amp_mute_for_jack(bool plugged) {
+    s_jack_plugged = plugged;
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15,
                       plugged ? GPIO_PIN_RESET : GPIO_PIN_SET);
+}
+
+/* r19.21: VOLUME lang gedrueckt → Batterie/USB + Ausgangsstatus. */
+static void knob_status_lines(char *l1, unsigned n1, char *l2, unsigned n2) {
+    snprintf(l1, n1, battery_usb_present() ? "BAT %d%% +USB" : "BAT %d%%",
+             battery_pct());
+    snprintf(l2, n2, "%s", s_jack_plugged ? "PHONES" : "SPEAKERS");
 }
 
 /* --- MIDI note tap (r19.14) ---------------------------------------------
@@ -189,6 +202,14 @@ int main(void) {
     }
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     params_init();            /* encoder param values → engine defaults */
+    overlay_init();
+    {   /* r19.21: Encoder-Push-Belegung (DISPLAY kurz = Menue wie bisher;
+         * DISPLAY lang bleibt fuer Scenes reserviert). */
+        knobs_callbacks_t kcb = { 0 };
+        kcb.display_push = menu_push;
+        kcb.status_lines = knob_status_lines;
+        knobs_init(&kcb);
+    }
     leds_init();              /* 16-ch PWM render */
     leds_set_backlight((uint16_t)(LED_PWM_MAX * 70 / 100));   /* 70 % boot */
     bat_adc_init();           /* r18.92: BAT_SENSE (PA3) — battery UI */
@@ -258,15 +279,20 @@ int main(void) {
                         ui_dirty = true;
                     }
                 } else {
-                    params_encoder(ev.id, ev.value, now);   /* DRIVE/BRIGHT/VOLUME */
+                    /* r19.21: DRIVE/BRIGHT/VOLUME → params + Overlay */
+                    knobs_rotate(ev.id, ev.value, now);
                 }
-            } else if (ev.kind == ENC_EVENT_PUSH && ev.value) {
-                if (ev.id == PARAM_ENC_DISPLAY) {
-                    menu_push();                        /* DISPLAY-Push: Menü-Enter */
-                    ui_dirty = true;
-                }
+            } else if (ev.kind == ENC_EVENT_PUSH) {
+                /* r19.21: BEIDE Flanken in die Kurz/Lang-Klassifikation.
+                 * DISPLAY-kurz ruft menu_push ueber den Callback (feuert
+                 * jetzt auf der Loslass-Flanke statt auf Druck — noetig
+                 * fuer die Lang-Druck-Unterscheidung). */
+                knobs_push(ev.id, ev.value != 0, now);
+                if (ev.id == PARAM_ENC_DISPLAY && !ev.value)
+                    ui_dirty = true;            /* Menue evtl. veraendert */
             }
         }
+        knobs_tick(now);                        /* Lang-Druck-Schwelle */
 
         /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
          * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
@@ -362,10 +388,19 @@ int main(void) {
          * longer stalls the main loop (inputs/generative stay responsive).
          * The !oled_flush_busy() guard means we never rewrite the framebuffer
          * while the DMA is still reading it (r19.12). */
+        {   /* r19.21: Overlay-Zustandswechsel erzwingen ein Redraw —
+             * neues show() (Generation) oder Ablauf (aktiv→inaktiv). */
+            static uint32_t ov_gen_seen = 0;
+            static bool     ov_was      = false;
+            bool ov_now = overlay_active(now);
+            if (overlay_gen() != ov_gen_seen) { ov_gen_seen = overlay_gen(); ui_dirty = true; }
+            if (ov_now != ov_was)             { ov_was = ov_now;             ui_dirty = true; }
+        }
         if (ui_dirty && !oled_flush_busy() &&
             (uint32_t)(now - last_frame_ms) >= 33) {
             bool accent_moving = oled_accent_tick(now) != 0;
-            menu_render();
+            if (overlay_active(now)) overlay_render();
+            else                     menu_render();
             oled_show_async();
             ui_dirty      = accent_moving;
             last_frame_ms = now;

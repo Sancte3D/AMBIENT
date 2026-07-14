@@ -119,6 +119,8 @@ set(DSP_SOURCES
     src/cells.c
     src/controls.c      # ADR-0008 r2: hold-latch + modifier state machine
     src/params.c        # encoder → engine parameter bindings + acceleration
+    src/knobs.c         # r19.21: encoder push short/long actions
+    src/overlay.c       # r19.21: transient knob-value overlay
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
     src/oled_draw.c
     src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)
