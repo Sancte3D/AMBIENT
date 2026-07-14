@@ -1,6 +1,14 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-13 (r19.20 — Bedienlogik-Fixes: SHIFT momentary, CLEAR = Full-Stop, HOLD+GENERATE-Deadlock weg, Boot 30 % + Fade-in; davor r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+**Updated: 2026-07-13 (r19.21 — Encoder-Push-Belegung + Wert-Overlays; davor r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+
+> **r19.21 (2026-07-13) — Bedienlogik Runde 2:** Alle vier Encoder-Druecker
+> leben jetzt (vorher nur DISPLAY): DRIVE kurz=Bypass/lang=Reset, BRIGHT
+> kurz=Neutral/lang=Reset, VOLUME kurz=Mute/lang=Batterie+Ausgang-Status,
+> DISPLAY lang reserviert fuer Scenes (Runde 3). Jede Knob-Aktion zeigt
+> ein 1,2-s-Overlay in Menue-Typo. NEU knobs.c + overlay.c + test_knobs
+> (29 Checks). 33 Suiten gruen.
+
 
 > **r19.20 (2026-07-13) — Bedienlogik Runde 1** (aus dem HiChord/Orchid-
 > Review, alle Befunde code-verifiziert): SHIFT momentary; CLEAR stoppt

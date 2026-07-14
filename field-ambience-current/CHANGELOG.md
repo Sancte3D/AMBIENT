@@ -10,6 +10,36 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.21 (2026-07-13) — Encoder-Push-Belegung + Overlays (Bedienlogik Runde 2)
+
+Bis jetzt verarbeitete nur der DISPLAY-Encoder seinen Druck — DRIVE/
+BRIGHTNESS/VOLUME erzeugten Push-Events, die weggeworfen wurden, und
+Drehen an ihnen veraenderte den Klang ohne jedes Display-Feedback.
+
+**NEU knobs.c** (Kurz/Lang-Klassifikation, 500 ms; hardware-unabhaengig):
+
+| Encoder    | drehen        | kurz              | lang                    |
+|------------|---------------|-------------------|-------------------------|
+| DRIVE      | Drive+Overlay | Bypass an/aus A-B | Reset auf Default (15)  |
+| BRIGHTNESS | Hell.+Overlay | Neutral (0 Hz)    | Reset auf Default       |
+| DISPLAY    | Browse/Edit   | Browse/Edit       | reserviert (Scenes, R3) |
+| VOLUME     | Vol.+Overlay  | Mute/Unmute       | Batterie + Ausgang      |
+
+**NEU overlay.c**: 1,2-s-Wert-Overlay in Menue-Typo (Label klein, Wert
+gross), kehrt von selbst zum vorherigen Screen zurueck. **params.c**:
+Bypass/Mute lassen den gemerkten Wert stehen; DREHEN nimmt den Wert
+zurueck (Bypass/Mute loesen sich auf — Orchid-Gefuehl). Kurz feuert auf
+Loslassen (<500 ms), lang EINMAL beim Schwellen-Erreichen; menu_push
+liegt jetzt auf der Loslass-Flanke (noetig fuer die Unterscheidung,
+DISPLAY-lang bleibt fuer den Scenes-Browser frei). VOLUME-lang zeigt
+"BAT 78% +USB / PHONES|SPEAKERS" (2 s).
+
+Tests: **NEU test_knobs.c** (29 Checks: Klassifikation, Bypass/Mute-
+Zyklen, Rotate-nimmt-Wert, Reset, Status-Callback, Overlay-Lifetime,
+Render-Smoke). 33 Suiten gruen; H743-Cross-Build gruen (203 KB Flash).
+
+---
+
 ## v0.7-r19.20 (2026-07-13) — Bedienlogik-Fixes Runde 1 (SHIFT / CLEAR / HOLD+GENERATE / Boot-Volume)
 
 Erste Runde aus dem Bedienlogik-Review (HiChord/Orchid-Vergleich) — alle
