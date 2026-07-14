@@ -163,6 +163,8 @@ int main(void) {
     dsp_init();
     brain_init();
     engine_init();
+    engine_boot_mute();       /* r19.20 SPEC boot: silent until params_init
+                               * sets the 30 % target → ~350 ms fade-in */
     for (int i = 0; i < 16; ++i) s_midi_src_note[i] = -1;
     engine_set_note_hook(midi_note_tap);   /* played cells → MIDI out */
     synth_host_init();
@@ -286,12 +288,22 @@ int main(void) {
                 if (rose & m) controls_cell_release(c);
             }
 
-            /* Modifier GPB0-4 (bits 8-12). */
+            /* Modifier GPB0-4 (bits 8-12). r19.20: BOTH edges reach
+             * controls.c — SHIFT is momentary now (needs its release), and
+             * feeding releases uniformly keeps the toggles honest too
+             * (they only act on pressed=true). CLEAR press also drives the
+             * confirm-flash that existed since r18.64 but was never wired. */
             if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
+            if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
             if (fell & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, true);
+            if (rose & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, false);
             if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
+            if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
             if (fell & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, true);
-            if (fell & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, true);
+            if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
+            if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { controls_modifier(MOD_CLEAR, true);
+                                                   leds_clear_flash(now); }
+            if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
 
             /* EN4 (volume) push lives on GPB5 — feed the level into the
              * encoder layer so enc_pushed(4)/PUSH events stay uniform. */

@@ -10,6 +10,38 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.20 (2026-07-13) — Bedienlogik-Fixes Runde 1 (SHIFT / CLEAR / HOLD+GENERATE / Boot-Volume)
+
+Erste Runde aus dem Bedienlogik-Review (HiChord/Orchid-Vergleich) — alle
+vier Befunde waren code-verifiziert:
+
+- **SHIFT ist momentary** (aktiv nur solange gehalten; war ein versteckter
+  Toggle ohne Lock-Anzeige). main_h743 fuettert jetzt BEIDE Flanken aller
+  Modifier in controls.c.
+- **CLEAR = echter Full-Stop**: Latches weg, DRONE/GENERATE/HOLD aus,
+  engine_all_off() (weiche natuerliche Releases, kein Hard-Cut) — vorher
+  loeschte CLEAR nur die Hold-Latches, Drone+Generator spielten weiter.
+  Die seit r18.64 existierende, nie verdrahtete leds_clear_flash() wird
+  jetzt beim Druck aufgerufen. **SHIFT+CLEAR = Flush**: nur Stimmen weg,
+  alle Modi laufen weiter (Drone klingt durch, Generator bluehte neu).
+- **HOLD+GENERATE-Deadlock behoben**: das Generative-Gate ist jetzt die
+  PHYSISCHE Tastenlage (engine_set_user_presence, von controls.c per
+  Press/Release-Flanke gefuettert) statt "irgendeine aktive Voice" — eine
+  gelatchte Cell fror den Composer vorher dauerhaft ein. Momentanes
+  Spielen pausiert weiterhin sofort.
+- **Boot-Volume 30 % + Fade-in** (SPEC-Regel, seit dem r19.19-Kopfhoerer-
+  verstaerker doppelt relevant): params-Default 0.60→0.30, neu
+  engine_boot_mute() — das Geraet startet hart stumm und faedelt ueber die
+  Parameter-Rampe (~350 ms) auf 30 % ein. Host-Renderer behalten die
+  0.6-Bench-Referenz (boot_mute ist nur im Device-Pfad).
+
+Tests: test_controls +9 Checks (Momentary, Full-Stop vs Flush, Presence),
+test_generative_tick +Latch-Regression (Generator komponiert um gelatchte
+Stimme herum), test_params/test_leds an neue Semantik angepasst. 32 Suiten
+gruen, H743-Cross-Build gruen (FLASH ~201 KB).
+
+---
+
 ## v0.7-r19.19 (2026-07-13) — TPA6132A2: J8 wird echter PHONES / LINE OUT (ADR-0024)
 
 User: "ja das muss rein!!!" — Kopfhoerer-Betrieb an J8 war bisher out-of-spec

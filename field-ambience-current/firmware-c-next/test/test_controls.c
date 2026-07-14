@@ -66,10 +66,14 @@ int main(void) {
     CHECK(controls_hold_base(3),  "base latch survives shift-tap");
     CHECK(controls_hold_shift(3), "shift latch set");
     CHECK(peak_over(0.5f) > 800,  "octave-stacked cell sounds");
+    controls_modifier(MOD_SHIFT, false);    /* r19.20: SHIFT is momentary —
+                                             * release it so §4 is a PLAIN clear */
 
     /* ---- 4. Clear wipes everything; held voices stop (reverb tail decays) ---- */
     controls_modifier(MOD_CLEAR, true);
+    controls_modifier(MOD_CLEAR, false);
     CHECK(!controls_hold_base(3) && !controls_hold_shift(3), "Clear wipes both latches");
+    CHECK(!controls_modifier_active(MOD_HOLD), "r19.20: plain Clear turns HOLD off");
     /* The held voices are note_off'd; only the reverb tail remains and must
      * DECAY (no sustained source re-feeding it). Compare early vs late peak. */
     int tail_early = peak_over(0.5f);
@@ -121,8 +125,11 @@ int main(void) {
     /* ---- 9. Hold latches + momentary tap of an EXTRA cell coexist --------- */
     /* (still HOLD+SHIFT from §8 — clear SHIFT, then turn HOLD off so the
      * next tap is momentary; the latched cells should keep sounding.)         */
-    controls_modifier(MOD_SHIFT, false);              /* shift off — but shift-latches persist */
-    controls_modifier(MOD_HOLD, false);               /* hold off — taps become momentary */
+    controls_modifier(MOD_SHIFT, false);              /* shift RELEASED (momentary, r19.20) */
+    controls_modifier(MOD_HOLD, true);                /* toggle HOLD off — taps momentary
+                                                       * (r19.20: the old ',false' here was a
+                                                       * no-op and HOLD silently stayed on) */
+    CHECK(!controls_modifier_active(MOD_HOLD), "HOLD toggled off for the momentary tap");
     /* The 10 held latches must still be visible. */
     CHECK(controls_hold_base(0)  && controls_hold_shift(0),  "latches survive HOLD-off");
     /* Cell 2 is already latched (base+shift). A momentary tap of cell 2
@@ -164,6 +171,52 @@ int main(void) {
           "re-pitch re-blooms the SAME source, no voice leak: %d",
           engine_active_voices());
     CHECK(peak_over(0.6f) > 800, "re-pitched latched voice audible");
+
+    /* ---- 12. r19.20: SHIFT is momentary ---------------------------------- */
+    controls_init(); engine_init();
+    controls_modifier(MOD_SHIFT, true);
+    CHECK(controls_modifier_active(MOD_SHIFT),  "SHIFT active while held");
+    controls_modifier(MOD_SHIFT, false);
+    CHECK(!controls_modifier_active(MOD_SHIFT), "SHIFT inactive after release (momentary)");
+
+    /* ---- 13. r19.20: CLEAR full stop vs SHIFT+CLEAR flush ----------------- */
+    controls_init(); engine_init();
+    controls_modifier(MOD_DRONE, true);
+    controls_modifier(MOD_GENERATE, true);
+    controls_modifier(MOD_HOLD, true);
+    controls_cell_press(0, 0.15f);                       /* latch a voice */
+    /* SHIFT+CLEAR: voices flushed, ALL modes keep running */
+    controls_modifier(MOD_SHIFT, true);
+    controls_modifier(MOD_CLEAR, true);
+    controls_modifier(MOD_CLEAR, false);
+    controls_modifier(MOD_SHIFT, false);
+    CHECK(!controls_hold_base(0),                       "flush wiped the latch");
+    CHECK(controls_modifier_active(MOD_DRONE),          "flush keeps DRONE running");
+    CHECK(controls_modifier_active(MOD_GENERATE),       "flush keeps GENERATE running");
+    CHECK(controls_modifier_active(MOD_HOLD),           "flush keeps HOLD armed");
+    /* plain CLEAR: everything off */
+    controls_cell_press(1, 0.15f);                       /* latch again */
+    controls_modifier(MOD_CLEAR, true);
+    controls_modifier(MOD_CLEAR, false);
+    CHECK(!controls_hold_base(1),                       "full stop wiped the latch");
+    CHECK(!controls_modifier_active(MOD_DRONE),         "full stop turns DRONE off");
+    CHECK(!controls_modifier_active(MOD_GENERATE),      "full stop turns GENERATE off");
+    CHECK(!controls_modifier_active(MOD_HOLD),          "full stop turns HOLD off");
+    /* the full stop must actually END the sound: either the tail is still
+     * decaying, or we are already at the noise floor (silence). */
+    int fs_early = peak_over(0.5f);
+    int fs_late  = peak_over(3.0f);
+    CHECK(fs_late < fs_early || fs_late < 100,
+          "full stop: audio decays/silent (early=%d late=%d)", fs_early, fs_late);
+
+    /* ---- 14. r19.20: physical-presence tracking --------------------------- */
+    controls_init(); engine_init();
+    controls_modifier(MOD_HOLD, true);
+    controls_cell_press(4, 0.15f);                       /* latch ON, key DOWN */
+    CHECK(controls_any_cell_down(),  "key physically down while pressed");
+    controls_cell_release(4);                            /* latch stays, key UP */
+    CHECK(!controls_any_cell_down(), "latched cell does NOT count as key-down");
+    CHECK(controls_hold_base(4),     "latch survived the release");
 
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");

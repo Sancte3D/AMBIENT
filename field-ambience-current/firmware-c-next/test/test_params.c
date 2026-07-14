@@ -25,7 +25,9 @@ int main(void) {
 
     /* ---- defaults ---- */
     CHECK(params_drive_pct() == 15, "drive default 15%% (got %d)", params_drive_pct());
-    CHECK(params_volume_pct() == 60, "volume default 60%% (got %d)", params_volume_pct());
+    /* r19.20: SPEC boot rule — 30 % max at power-on (headphone-safe since
+     * the TPA6132A2). Was 60 % before the phones jack existed. */
+    CHECK(params_volume_pct() == 30, "volume default 30%% (got %d)", params_volume_pct());
     CHECK(params_bright_hz() == 0.0f, "bright default 0 Hz");
 
     /* ---- slow detents: 1 %/step. Space events 300 ms apart (no accel). ---- */

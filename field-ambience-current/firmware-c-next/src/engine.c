@@ -389,6 +389,7 @@ void engine_set_reverb_drive(float v) { reverb_set_drive(dsp_clampf(v, 0.0f, 1.0
 void engine_set_wet_amp(float v)      { wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_boot_mute(void)           { master_vol_cur  = master_vol_tgt = 0.0f; }
 void engine_set_drive(float v)        { drive_tgt       = dsp_clampf(v, 0.0f, 1.0f); }
 /* r18.90 macro: one emotional dimension, three destinations. hz is the
  * legacy pad-cutoff offset (-600..+800); the hall and the plucks follow.
@@ -521,16 +522,17 @@ void engine_set_pad_voice(int voice_idx) {
     pad_set_voice_mix(MIX[voice_idx]);
 }
 
-/* r18.88 AUDIT-FIX: this used to check only cells 0..4 — the Shift-octave
- * latch voices live on sources 9..13 (ADR-0008 r2, controls.c SHIFT_SRC),
- * so the generative bed kept playing OVER the user's held shift notes.
- * "User is playing" = any cell source, base or shift octave. The bed's own
- * voice (8) and the sparkle sources (14/15) are deliberately excluded. */
-static bool any_user_note(void) {
-    for (int i = 0; i < 5; ++i)  if (active_freq[i] > 0.0f) return true;
-    for (int i = 9; i < 14; ++i) if (active_freq[i] > 0.0f) return true;
-    return false;
-}
+/* r19.20 — the generative gate is PHYSICAL now. History: r18.88 gated on
+ * "any active cell voice" (sources 0..4 + 9..13) so the bed would not play
+ * over held notes. That fixed momentary playing but created the
+ * HOLD+GENERATE deadlock: a hold-LATCHED voice keeps its source active
+ * forever, so one latched drone note froze autoplay permanently. The gate
+ * is now the physical key state fed by controls.c (press/release edges):
+ * while a finger is down the composer yields; latched voices are standing
+ * texture the generator plays AROUND (their sources stay protected simply
+ * because the generator only ever writes its own sources 8/14/15). */
+static bool s_user_present = false;
+void engine_set_user_presence(bool any_key_down) { s_user_present = any_key_down; }
 
 /* --- Generative autoplay (r18.88) -----------------------------------------
  * The GENERATE modifier was always meant to make the instrument PLAY BY
@@ -580,7 +582,7 @@ void engine_set_generative(bool on, int program) {
  * low fundament from it (lowest_held). Returns state index + 1 (1..4). */
 int engine_generative_advance(void) {
     if (!gen_on) return -1;
-    if (any_user_note()) return -1;          /* live playing overrides the bed */
+    if (s_user_present) return -1;           /* live playing overrides the bed */
     harmony_advance();
     int midi = harmony_bass_midi() + 12;
     snd_bed_midi = midi;
@@ -601,7 +603,7 @@ void engine_generative_tick(uint32_t now_ms) {
      * composer.h). Ticks on the same clock as everything else. */
     composer_tick(now_ms);
 
-    if (any_user_note()) {
+    if (s_user_present) {
         /* Player takes over: freeze everything and re-arm so the piece
          * resumes promptly after release. */
         gen_timing_valid = false;

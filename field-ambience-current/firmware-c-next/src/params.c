@@ -47,7 +47,11 @@ void params_init(void) {
     /* Match engine_init() defaults so the readout is truthful at boot. */
     s_drive  = 0.15f;   /* gentle warmth by default */
     s_bright = 0.0f;    /* pad brightness offset default */
-    s_volume = 0.60f;   /* engine master-volume default */
+    s_volume = 0.30f;   /* r19.20: SPEC boot rule — max 30 % at power-on
+                         * (headphone-safe since the r19.19 TPA6132A2; the
+                         * old 0.60 predates the phones jack). The device
+                         * boot additionally starts hard-muted and fades in
+                         * (engine_boot_mute + this target). */
     /* r18.89: DRIVE = master drive stage + a slaved touch of reverb-input
      * drive (the space growls along, ~half a knob behind). Before this the
      * encoder ONLY drove the reverb input — nearly inaudible on dry sounds. */

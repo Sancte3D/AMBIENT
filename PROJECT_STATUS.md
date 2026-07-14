@@ -1,6 +1,16 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-13 (r19.19 — TPA6132A2-Kopfhoererverstaerker: J8 = PHONES/LINE OUT, ADR-0024; davor r19.18 BQ24074-Power-Path, ADR-0023)**
+**Updated: 2026-07-13 (r19.20 — Bedienlogik-Fixes: SHIFT momentary, CLEAR = Full-Stop, HOLD+GENERATE-Deadlock weg, Boot 30 % + Fade-in; davor r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+
+> **r19.20 (2026-07-13) — Bedienlogik Runde 1** (aus dem HiChord/Orchid-
+> Review, alle Befunde code-verifiziert): SHIFT momentary; CLEAR stoppt
+> jetzt WIRKLICH alles (weich) + Clear-LED-Flash endlich verdrahtet;
+> SHIFT+CLEAR = Voice-Flush bei laufenden Modi; Generative-Gate haengt an
+> der physischen Tastenlage statt an aktiven Voices (gelatchte Cell friert
+> den Composer nicht mehr ein); Boot stumm → Fade auf 30 % (SPEC, jetzt
+> kopfhoerer-relevant). Naechste Runden geplant: Encoder-Push-Belegung +
+> Overlays, Parameter-Locks, Scenes, Chord Bloom, interaktives GENERATE.
+
 
 > **r19.19 (2026-07-13) — Kopfhoerer rein (User: "ja das muss rein!!!").**
 > U11 TPA6132A2 (C69901) zwischen DAC und J8: DirectPath, Gain −6 dB,

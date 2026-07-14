@@ -81,10 +81,13 @@ int main(void) {
     CHECK(max_voices >= 2, "Eno loops actually joined the bed (%d)", max_voices);
     CHECK(max_voices <= 5, "pad pool = bed + 3 Eno loops + melody max (%d)", max_voices);
 
-    /* ---- 3. User override incl. SHIFT-octave source (the r18.88 fix) ---- */
+    /* ---- 3. User override — r19.20: the gate is PHYSICAL key presence
+     * (controls.c edges), not "any active voice". The device path calls
+     * engine_set_user_presence(true) on key-down; simulate exactly that. */
     engine_note_on(11, dsp_midi_to_hz(76.0f), 0.12f);   /* shift source 9..13 */
+    engine_set_user_presence(true);                     /* finger is DOWN */
     CHECK(engine_generative_advance() == -1,
-          "advance() blocked by a held SHIFT note (was the any_cell_held bug)");
+          "advance() blocked while a key is physically held");
     int voices_with_user = 0;
     for (int step = 0; step < 1500; ++step) {           /* 24 s held */
         now += 16;
@@ -112,6 +115,7 @@ int main(void) {
      * check below can only be satisfied by NEW sparkle notes, not by the
      * old note still fading out. */
     engine_note_off(11);
+    engine_set_user_presence(false);                    /* finger lifted */
     render_ms(10000);
     CHECK(engine_active_voices() >= 1 && engine_active_voices() <= 4,
           "only the bed choir left after the user tail (%d)",
@@ -126,6 +130,22 @@ int main(void) {
         if ((step & 127) == 0) render_ms(16 * 128);
     }
     CHECK(resumed, "autoplay (sparkles) resumes after the user lets go");
+
+    /* ---- 4b. r19.20 HOLD+GENERATE regression: a LATCHED voice (note on,
+     * finger UP → no presence) must NOT freeze the composer. Before r19.20
+     * the gate was any_user_note(): one latched cell paused autoplay
+     * forever. Now the generator keeps composing around the latch. */
+    engine_note_on(2, dsp_midi_to_hz(64.0f), 0.12f);    /* latched: no presence */
+    int gen_moved = 0;
+    for (int step = 0; step < 9500; ++step) {
+        now += 16;
+        engine_generative_tick(now);
+        if (pluck_active_count() > 0) { gen_moved = 1; break; }
+        if ((step & 127) == 0) render_ms(16 * 128);
+    }
+    CHECK(gen_moved, "generator keeps playing around a latched voice (r19.20)");
+    engine_note_off(2);
+    render_ms(6000);
 
     /* ---- 5. Disable releases everything ---- */
     engine_set_generative(false, -1);

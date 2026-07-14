@@ -31,6 +31,19 @@ void engine_note_on(uint8_t source, float freq_hz, float amp);
 void engine_note_off(uint8_t source);
 void engine_all_off(void);
 
+/* r19.20 — "user is playing" for the generative gate. controls.c feeds the
+ * PHYSICAL key state (any cell down) via press/release edges. Latched hold
+ * voices deliberately do NOT count: they are standing texture, and gating
+ * on active voices froze the generator forever under HOLD+GENERATE. */
+void engine_set_user_presence(bool any_key_down);
+
+/* r19.20 — SPEC boot sequence: start the master volume hard at 0 (call
+ * once right after engine_init(), before the audio pump). The next
+ * engine_set_master_volume() target then fades in over the standard
+ * parameter ramp (~120 ms time constant, click-free). Host tools/tests
+ * that never call this keep the bench 0.6 reference level. */
+void engine_boot_mute(void);
+
 /* Note-event tap for MIDI out (or any observer). `on` = 1 note-on, 0 note-off,
  * -1 all-off. Called from the control-rate note path (not the audio ISR), so
  * the sink may enqueue freely. NULL (default) = no tap. The product wires this

@@ -16,6 +16,11 @@
 #define SHIFT_SRC(c) ((uint8_t)((c) + 9))   /* shift-octave pad source */
 
 static bool s_mod[MOD_COUNT];
+/* r19.20: which cell keys are PHYSICALLY down right now (press/release
+ * edges, independent of latch mode). This — not "any active voice" — is
+ * what pauses the generator: a hold-latched voice is part of the ambient
+ * texture and must NOT freeze autoplay (the old HOLD+GENERATE deadlock). */
+static uint8_t s_cells_down;
 static bool s_hold_base [CTRL_CELL_COUNT];
 static bool s_hold_shift[CTRL_CELL_COUNT];
 /* Latch velocity, remembered so a key/world change can re-pitch the held
@@ -29,6 +34,8 @@ static int8_t s_moment_src[CTRL_CELL_COUNT];
 
 void controls_init(void) {
     for (int i = 0; i < MOD_COUNT; ++i) s_mod[i] = false;
+    s_cells_down = 0;
+    engine_set_user_presence(false);
     for (int c = 0; c < CTRL_CELL_COUNT; ++c) {
         s_hold_base[c]  = false;
         s_hold_shift[c] = false;
@@ -50,6 +57,8 @@ void controls_modifier(mod_id_t mod, bool pressed) {
     if (mod >= MOD_COUNT) return;
     switch (mod) {
         case MOD_SHIFT:
+            s_mod[MOD_SHIFT] = pressed;   /* r19.20: momentary, both edges */
+            break;
         case MOD_HOLD:
             if (pressed) s_mod[mod] = !s_mod[mod];   /* latch toggle on press */
             break;
@@ -61,7 +70,27 @@ void controls_modifier(mod_id_t mod, bool pressed) {
                            engine_set_generative(s_mod[MOD_GENERATE], -1); }  /* -1 = Markov auto */
             break;
         case MOD_CLEAR:
-            if (pressed) clear_all_holds();          /* momentary: clear held cells */
+            if (!pressed) break;
+            if (s_mod[MOD_SHIFT]) {
+                /* r19.20 SHIFT+CLEAR — FLUSH: silence everything that is
+                 * sounding, but leave the modes running. The drone module
+                 * is not touched by engine_all_off (own envelope), so it
+                 * keeps sounding; the generator re-blooms on its next bar. */
+                clear_all_holds();
+                engine_all_off();
+            } else {
+                /* r19.20 CLEAR — FULL STOP: before this it only wiped the
+                 * hold latches; drone + generator played on and the panel
+                 * had no true "silence now" gesture. Order matters: modes
+                 * off first (no new notes), then the all-off (voices end
+                 * via their natural releases — the soft fade is the
+                 * envelope, no hard cut, no click). */
+                clear_all_holds();
+                s_mod[MOD_HOLD] = false;
+                if (s_mod[MOD_DRONE])    { s_mod[MOD_DRONE]    = false; engine_set_drone(false); }
+                if (s_mod[MOD_GENERATE]) { s_mod[MOD_GENERATE] = false; engine_set_generative(false, -1); }
+                engine_all_off();
+            }
             break;
         default: break;
     }
@@ -69,6 +98,8 @@ void controls_modifier(mod_id_t mod, bool pressed) {
 
 void controls_cell_press(uint8_t cell, float velocity_amp) {
     if (cell >= CTRL_CELL_COUNT) return;
+    s_cells_down |= (uint8_t)(1u << cell);      /* r19.20: physical key down */
+    engine_set_user_presence(true);
     int   root = brain_cell_root(cell);
     float hz   = tuning_hz((float)root);
     float hz_s = tuning_hz((float)(root + 12));
@@ -98,6 +129,8 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
 
 void controls_cell_release(uint8_t cell) {
     if (cell >= CTRL_CELL_COUNT) return;
+    s_cells_down &= (uint8_t)~(1u << cell);     /* r19.20: physical key up */
+    engine_set_user_presence(s_cells_down != 0);
     /* Only momentary notes release on key-up; held latches persist. */
     if (s_moment_src[cell] < 0) return;
     uint8_t src = (uint8_t)s_moment_src[cell];
@@ -134,6 +167,7 @@ void controls_refresh_held_pitches(void) {
     }
 }
 
+bool controls_any_cell_down(void) { return s_cells_down != 0; }
 bool controls_hold_base (uint8_t cell) { return cell < CTRL_CELL_COUNT && s_hold_base[cell]; }
 bool controls_hold_shift(uint8_t cell) { return cell < CTRL_CELL_COUNT && s_hold_shift[cell]; }
 bool controls_modifier_active(mod_id_t mod) { return mod < MOD_COUNT && s_mod[mod]; }
