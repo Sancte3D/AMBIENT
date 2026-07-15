@@ -583,6 +583,38 @@ void engine_set_generative(bool on, int program) {
  * classes, ≤2 voices move — harmony.c enforces the contract). The pad
  * bed voice sits an octave over the bass register; bass.c derives the
  * low fundament from it (lowest_held). Returns state index + 1 (1..4). */
+/* r19.24 — the five cells as composer intents (see engine.h). Deliberately
+ * a MAPPING of gestures to the existing composer states, not a claim that
+ * harmony pitch-picks encode tension: the directional FEEL comes from the
+ * composer table (density/depth/rest), and harmony_advance() moves the
+ * actual voicing so the answer is heard. */
+static const composer_state_t CELL_INTENT[5] = {
+    COMPOSER_RETURN,   /* 0 Home / Resolve — warmth back            */
+    COMPOSER_OPEN,     /* 1 Lift           — more light, denser      */
+    COMPOSER_DEEP,     /* 2 Dark           — floor rises, melody recedes */
+    COMPOSER_CALM,     /* 3 Open           — spacious resting rate    */
+    COMPOSER_EMPTY,    /* 4 Tension        — the held breath          */
+};
+
+void engine_generative_nudge(int cell, uint32_t now_ms) {
+    if (!gen_on || cell < 0 || cell > 4) return;
+    composer_nudge(CELL_INTENT[cell], now_ms);
+    harmony_advance();               /* move the harmonic state NOW */
+    gen_state_seen = -1;             /* re-sound the bed on the next tick */
+}
+
+void engine_generative_new_field(uint32_t seed) {
+    engine_set_gen_seed(seed);
+    composer_reseed(seed ^ 0x9E3779B9u);
+    harmony_reseed(seed ^ 0x85EBCA6Bu);
+    /* restart the field at state 0 in the SAME pitch world (key/mode) */
+    harmony_set_world(brain_get_key(), mode_is_minor(musical_mode));
+    composer_init();                 /* fresh intent clock; reseed below   */
+    composer_reseed(seed ^ 0x9E3779B9u);
+    gen_timing_valid = false;        /* strike fresh on the next tick */
+    gen_state_seen   = -1;
+}
+
 int engine_generative_advance(void) {
     if (!gen_on) return -1;
     if (s_user_present) return -1;           /* live playing overrides the bed */

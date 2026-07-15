@@ -81,6 +81,9 @@ static void hal_set_echo       (float v)   { engine_set_echo(v); }
 static void hal_set_blur       (float v)   { engine_set_blur(v); }
 static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
 static bool s_cell_bloom = false;   /* r19.23: 0 Note / 1 Bloom */
+static uint32_t s_field_seed = 0x1234u;             /* r19.24: New-Field seed source */
+static const char *const STEER_NAME[5] =            /* r19.24: cell → intent */
+    { "HOME", "LIFT", "DARK", "OPEN", "TENSION" };
 static void hal_set_cell(int mode) {
     bool bloom = (mode == 1);
     if (bloom != s_cell_bloom) {
@@ -361,6 +364,14 @@ int main(void) {
                     if (fell & m)
                         scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
                                        now);
+                } else if (controls_modifier_active(MOD_GENERATE)) {
+                    /* r19.24: GENERATE an → die Zelle STEUERT den Composer
+                     * (Richtung fuer den naechsten harmonischen Zustand)
+                     * statt zu spielen; der Generator laeuft weiter. */
+                    if (fell & m) {
+                        engine_generative_nudge(c, now);
+                        overlay_show("STEER", STEER_NAME[c], now, 0);
+                    }
                 } else if (s_cell_bloom) {
                     /* r19.23: BLOOM — Cell triggert den Akkord der Stufe. */
                     if (fell & m)
@@ -384,7 +395,18 @@ int main(void) {
             if (rose & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, false);
             if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
             if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
-            if (fell & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, true);
+            if (fell & (1u<<MCP_BIT_MOD_GENERATE)) {
+                if (controls_modifier_active(MOD_SHIFT)) {
+                    /* r19.24: SHIFT+GENERATE = New Field — sicher AN + neuer,
+                     * reproduzierbarer Seed (via engine_gen_seed scene-bar). */
+                    if (!controls_modifier_active(MOD_GENERATE))
+                        controls_modifier(MOD_GENERATE, true);
+                    engine_generative_new_field(s_field_seed++ ^ now);
+                    overlay_show("GENERATE", "NEW FIELD", now, 0);
+                } else {
+                    controls_modifier(MOD_GENERATE, true);   /* normaler Toggle */
+                }
+            }
             if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
             if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { controls_modifier(MOD_CLEAR, true);
                                                    bloom_all_off();  /* r19.23 */

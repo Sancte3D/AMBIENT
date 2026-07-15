@@ -1,6 +1,15 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-15 (r19.23 — Chord Bloom cell mode; davor r19.22 Parameter-Locks + Scenes, r19.21 Encoder-Push, r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+**Updated: 2026-07-15 (r19.24 — interaktives GENERATE; davor r19.23 Chord Bloom, r19.22 Parameter-Locks + Scenes, r19.21 Encoder-Push, r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+
+> **r19.24 (2026-07-15) — Bedienlogik Runde 5:** GENERATE ist jetzt
+> interaktiv. Cell-Druck bei laufendem GENERATE STEUERT den Composer (5 Cells
+> → 5 Intents Home/Lift/Dark/Open/Tension) + mutiert die Harmonie sofort,
+> statt zu pausieren — das Geraet antwortet. SHIFT+GENERATE = New Field
+> (reseed, reproduzierbar, gleicher Key). NEU test_generative_interactive
+> (12 Checks). 36 Suiten gruen. Letzte offene Runde aus Mischis Liste:
+> Gesten-Loop (Events statt Audio).
+
 
 > **r19.23 (2026-07-15) — Bedienlogik Runde 4:** NEU Menue-Slot Cell
 > (Note/Bloom) + bloom.c. BLOOM spielt die schon berechneten Akkorde der

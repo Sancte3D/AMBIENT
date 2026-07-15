@@ -50,8 +50,12 @@ void harmony_set_world(int tonic_midi, int minor);
  * States dwell 24..48 s (humanized, fixed seed), then MUTATE. */
 void harmony_tick(uint32_t now_ms);
 
-/* Force one state mutation now (offline renderers / tests). */
+/* Force one state mutation now (offline renderers / tests + r19.24 steer). */
 void harmony_advance(void);
+
+/* r19.24 New Field: reseed the mutation LCG (reproducible per seed). The
+ * pitch world is unchanged; only the evolution path differs. */
+void harmony_reseed(uint32_t seed);
 
 /* --- current state ------------------------------------------------------ */
 

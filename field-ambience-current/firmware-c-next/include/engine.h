@@ -168,6 +168,19 @@ void engine_generative_tick(uint32_t now_ms);
 uint32_t engine_gen_seed(void);
 void     engine_set_gen_seed(uint32_t seed);
 
+/* r19.24 interactive GENERATE — a cell press while GENERATE is on STEERS the
+ * autoplay instead of pausing it. cell 0..4 maps to a composer intent
+ * (0 Home→RETURN, 1 Lift→OPEN, 2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY)
+ * and mutates the harmony now so the piece audibly answers. No-op unless
+ * generative is on; deliberately does NOT mark user-presence (the generator
+ * keeps playing — that is the whole point). */
+void engine_generative_nudge(int cell, uint32_t now_ms);
+
+/* r19.24 New Field (SHIFT+GENERATE): reseed harmony + composer + the bar
+ * humanization to a fresh but reproducible field and restart it at state 0.
+ * The pitch world (key/mode) is unchanged. */
+void engine_generative_new_field(uint32_t seed);
+
 /* r18.90 melody-grammar observability (tests + a future UI readout):
  * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
 int engine_generative_last_melody_midi(void);

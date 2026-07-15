@@ -90,6 +90,15 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/params_test"
 "$tmp/params_test"
 
+# r19.24: interactive GENERATE (cells steer the composer + New Field reseed)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_generative_interactive.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    -lm -o "$tmp/gen_interactive_test"
+"$tmp/gen_interactive_test"
+
 # r19.23: chord-bloom cell mode (voice-leading + staggered onset scheduler)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bloom.c" \

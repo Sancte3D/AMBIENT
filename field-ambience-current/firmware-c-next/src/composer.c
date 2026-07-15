@@ -61,6 +61,15 @@ void composer_tick(uint32_t now_ms) {
     }
 }
 
+void composer_nudge(composer_state_t target, uint32_t now_ms) {
+    if (target >= COMPOSER_STATE_COUNT) return;
+    s_state    = target;
+    s_until_ms = now_ms + STATE_MIN_MS + (uint32_t)(rnd01() * (float)STATE_VAR_MS);
+    s_timing_valid = 1;
+}
+
+void composer_reseed(uint32_t seed) { s_rng = seed ? seed : 0xC0400511u; }
+
 const composer_params_t *composer_params(void)     { return &TABLE[s_state]; }
 composer_state_t         composer_state(void)      { return s_state; }
 const char              *composer_state_name(void) { return NAMES[s_state]; }

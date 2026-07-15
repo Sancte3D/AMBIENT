@@ -10,6 +10,37 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.24 (2026-07-15) — Interaktives GENERATE: die Cells steuern den Composer (Bedienlogik Runde 5)
+
+Bis jetzt spielte GENERATE nur autonom oder PAUSIERTE, sobald man eine Zelle
+drueckte (r19.20-Presence). Jetzt HOERT das Geraet zu und antwortet, statt zu
+stoppen:
+
+- **Cell-Druck bei laufendem GENERATE = Richtung** statt Note. Die 5 Cells
+  mappen auf die 5 Composer-Intents (composer.h): 0 Home→RETURN, 1 Lift→OPEN,
+  2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY. Der Druck springt sofort in den
+  Intent (composer_nudge, haelt eine volle Dwell-Zeit) UND mutiert die
+  Harmonie jetzt (harmony_advance) — man HOERT die Antwort. Der Generator
+  laeuft weiter (bewusst KEIN user-presence → kein Pausieren). Kurzes
+  Overlay zeigt HOME/LIFT/DARK/OPEN/TENSION.
+  Ehrlich: die Richtung ist der FEEL aus der Composer-Tabelle (Dichte/Tiefe/
+  Ruhe), nicht ein Harmonie-Theorie-Spannungsgrad — der Pitch-World verbietet
+  harte Dissonanz strukturell; harmony_advance bewegt nur die Stimmen sichtbar.
+- **SHIFT+GENERATE = New Field:** reseedet Harmonie + Composer + Bar-
+  Humanisierung auf ein frisches, reproduzierbares Feld (gleicher Key/Modus),
+  Neustart bei State 0. Der Seed liegt in engine_gen_seed() → wird in Scenes
+  mitgespeichert (reproduzierbare Feld-ID). Overlay "NEW FIELD".
+
+NEU composer_nudge/reseed, harmony_reseed, engine_generative_nudge/new_field.
+Alles control-rate + host-testbar.
+
+Tests: **NEU test_generative_interactive.c** (12 Checks: Nudge no-op wenn aus,
+5 Cell→Intent-Mappings, kein Freeze + Harmonie-Bewegung, New-Field
+reproduzierbar pro Seed / verschieden ueber Seeds / Key unveraendert).
+36 Suiten gruen; H743-Cross-Build gruen (209 KB Flash).
+
+---
+
 ## v0.7-r19.23 (2026-07-15) — Chord Bloom: die Akkorde endlich spielbar (Bedienlogik Runde 4)
 
 Die Akkorde waren in brain.c laengst berechnet (brain_chord), wurden aber

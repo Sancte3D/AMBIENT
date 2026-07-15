@@ -64,4 +64,12 @@ const composer_params_t *composer_params(void);
 composer_state_t composer_state(void);
 const char      *composer_state_name(void);   /* for a future UI readout */
 
+/* r19.24 interactive GENERATE: jump to `target` now and hold it a full
+ * dwell before the natural cycle resumes (a played cell steers the intent
+ * instead of stopping the piece). */
+void composer_nudge(composer_state_t target, uint32_t now_ms);
+
+/* r19.24 New Field: reseed the humanization LCG (reproducible per seed). */
+void composer_reseed(uint32_t seed);
+
 #endif
