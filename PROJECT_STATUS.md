@@ -1,6 +1,15 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-15 (r19.22 — Parameter-Locks + 5 Scenes; davor r19.21 Encoder-Push, r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+**Updated: 2026-07-15 (r19.23 — Chord Bloom cell mode; davor r19.22 Parameter-Locks + Scenes, r19.21 Encoder-Push, r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+
+> **r19.23 (2026-07-15) — Bedienlogik Runde 4:** NEU Menue-Slot Cell
+> (Note/Bloom) + bloom.c. BLOOM spielt die schon berechneten Akkorde der
+> 5 Skalenstufen, gestaffelt aufbluehend, mit Voice-Leading (Oktav-Abgleich
+> zum vorherigen Akkord). Monophon-akkordisch (HiChord-Modell, ehrlich zum
+> 5-Voice-Budget). HOLD latcht, Generator weicht bei physischem Druck,
+> geht auf MIDI. NEU test_bloom (15 Checks). 35 Suiten gruen. Naechste
+> Runden: interaktives GENERATE, Gesten-Loop.
+
 
 > **r19.22 (2026-07-15) — Bedienlogik Runde 3:** Parameter-Locks (DISPLAY
 > lang im EDIT; gesperrte Werte ueberleben den World-Wechsel) + Scenes-

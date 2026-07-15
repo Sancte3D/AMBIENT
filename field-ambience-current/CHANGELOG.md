@@ -10,6 +10,42 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.23 (2026-07-15) — Chord Bloom: die Akkorde endlich spielbar (Bedienlogik Runde 4)
+
+Die Akkorde waren in brain.c laengst berechnet (brain_chord), wurden aber
+nie gespielt — die Cells triggerten nur den tiefsten Einzelton. NEU
+Menue-Slot **Cell (Note / Bloom)** + **bloom.c**:
+
+- **BLOOM:** Cell 1–5 → der harmonisch passende Akkord der 5 Skalenstufen,
+  dessen Toene langsam nacheinander aufbluehen (~100–170 ms Abstand,
+  gesamt ~200–900 ms; deterministischer Jitter).
+- **Voice-Leading:** der neue Akkord wird per Oktav-Verschiebung so gelegt,
+  dass sein Schwerpunkt dem des vorherigen am naechsten liegt (kuerzester
+  Weg auf Block-Ebene, keine Stimmkreuzungen). Test belegt |Δcentroid| ≤ 6.
+- **Bewusst monophon-akkordisch** (wie HiChord): ein Druck ERSETZT den
+  Akkord — Voice-Leading braucht einen "vorherigen Akkord", und das Voice-
+  Budget (5 Cell-Sources 0..4, Rest = Bett/Shift/Sparkles) traegt keine
+  5 unabhaengigen Akkorde. Ehrlich zum Budget, statt Polyphonie zu
+  versprechen, die die Hardware nicht hat.
+- **HOLD** haelt den Akkord ueber das Loslassen; ohne HOLD momentan.
+  **CLEAR** + Modewechsel raeumen sauber ab. Der Generator weicht, solange
+  eine Bloom-Zelle physisch gedrueckt ist (r19.20-Presence-Prinzip). Bloom-
+  Akkorde gehen als "gespielte" Noten auch auf MIDI-Out.
+- **NOTE** = das bisherige Einzelton-Verhalten (Default). Cell-Modus ist
+  player-global und wird in Scenes mitgespeichert (Scene-Magic → SCN2).
+
+Chord-Pool = Engine-Sources 0..4; in BLOOM routet das Device die Cells
+NICHT durch controls.c, sondern durch den control-rate Bloom-Scheduler
+(bloom_tick im Main-Loop, NICHT im Audio-ISR). Hardware-unabhaengig +
+host-testbar.
+
+Tests: **NEU test_bloom.c** (15 Checks: gestaffelte Einsaetze, voller
+Akkord auf dem Pool, Voice-Leading-Register, Pool-Cap, HOLD-Latch vs
+momentan, all_off-Reset, Generator-Yield). 35 Suiten gruen; H743-Cross-
+Build gruen (208 KB Flash).
+
+---
+
 ## v0.7-r19.22 (2026-07-15) — Parameter-Locks + 5 Scenes (Bedienlogik Runde 3)
 
 Die staerkste Orchid-Uebernahme (Locks) + speicherbare Zustaende (HiChord-

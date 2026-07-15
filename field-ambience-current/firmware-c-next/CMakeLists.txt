@@ -122,6 +122,7 @@ set(DSP_SOURCES
     src/knobs.c         # r19.21: encoder push short/long actions
     src/overlay.c       # r19.21: transient knob-value overlay
     src/scenes.c        # r19.22: parameter locks companion — 5 scene slots
+    src/bloom.c         # r19.23: chord-bloom cell mode + voice-leading
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
     src/oled_draw.c
     src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)

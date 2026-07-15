@@ -63,6 +63,7 @@ typedef enum {
     MP_ECHO,
     MP_BLUR,
     MP_SYNTH,     /* r19.16: sound-core 0 Ambient / 1..6 V2 synth (user-global) */
+    MP_CELL,      /* r19.23: cell play mode 0 Note / 1 Bloom (user-global) */
     MP_COUNT
 } menu_param_t;
 
@@ -89,6 +90,7 @@ typedef struct {
     void (*set_echo)       (float v01);              /* tape-style delay      */
     void (*set_blur)       (float v01);              /* granular cloud        */
     void (*set_synth)      (int idx);                /* r19.16: 0 Ambient / 1..6 V2 core */
+    void (*set_cell)       (int mode);               /* r19.23: 0 Note / 1 Bloom */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);
@@ -114,7 +116,7 @@ void menu_set_locks(uint16_t mask);      /* Scenes-Recall stellt sie wieder her 
  * Snapshot dessen, was eine Scene speichert (KEINE gehaltenen Noten,
  * KEIN Volume — Lautstaerke springt beim Recall nie). */
 typedef struct {
-    uint8_t  world, key_pc, tuning, voice, synth;
+    uint8_t  world, key_pc, tuning, voice, synth, cell;
     uint8_t  space, shimmer, atmos, motion, age, echo, blur;   /* % */
     uint16_t locks;
 } menu_state_t;

@@ -34,6 +34,7 @@
 #include "overlay.h"     /* r19.21: transient knob-value overlay */
 #include "knobs.h"       /* r19.21: encoder push short/long actions */
 #include "scenes.h"      /* r19.22: parameter locks + 5 scene slots */
+#include "bloom.h"       /* r19.23: chord-bloom cell mode */
 #include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
@@ -79,6 +80,16 @@ static void hal_set_age        (float v)   { engine_set_age(v); }
 static void hal_set_echo       (float v)   { engine_set_echo(v); }
 static void hal_set_blur       (float v)   { engine_set_blur(v); }
 static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
+static bool s_cell_bloom = false;   /* r19.23: 0 Note / 1 Bloom */
+static void hal_set_cell(int mode) {
+    bool bloom = (mode == 1);
+    if (bloom != s_cell_bloom) {
+        /* Modewechsel: die Stimmen des verlassenen Modus sauber beenden. */
+        if (bloom) engine_all_off();     /* NOTE → BLOOM: evtl. Latches weg */
+        else       bloom_all_off();      /* BLOOM → NOTE: Akkord weg        */
+    }
+    s_cell_bloom = bloom;
+}
 
 /* r19.16 — V2 sound-core backend: thin adapters so the engine keeps no link
  * dependency on src/v2 (host tests link engine.c without it). */
@@ -222,10 +233,12 @@ int main(void) {
             .set_echo       = hal_set_echo,
             .set_blur       = hal_set_blur,
             .set_synth      = hal_set_synth,
+            .set_cell       = hal_set_cell,
         };
         menu_init(&cb);
     }
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
+    bloom_init();             /* r19.23: chord-bloom cell mode */
     params_init();            /* encoder param values → engine defaults */
     overlay_init();
     {   /* r19.21: Encoder-Push-Belegung (DISPLAY kurz = Menue wie bisher;
@@ -324,6 +337,7 @@ int main(void) {
         }
         knobs_tick(now);                        /* Lang-Druck-Schwelle */
         scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
+        bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
 
         /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
          * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
@@ -347,6 +361,12 @@ int main(void) {
                     if (fell & m)
                         scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
                                        now);
+                } else if (s_cell_bloom) {
+                    /* r19.23: BLOOM — Cell triggert den Akkord der Stufe. */
+                    if (fell & m)
+                        bloom_press(c, CELL_TAP_AMP,
+                                    controls_modifier_active(MOD_HOLD), now);
+                    if (rose & m) bloom_release(c, now);
                 } else {
                     if (fell & m) controls_cell_press(c, CELL_TAP_AMP);
                     if (rose & m) controls_cell_release(c);
@@ -367,6 +387,7 @@ int main(void) {
             if (fell & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, true);
             if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
             if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { controls_modifier(MOD_CLEAR, true);
+                                                   bloom_all_off();  /* r19.23 */
                                                    leds_clear_flash(now); }
             if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
 
