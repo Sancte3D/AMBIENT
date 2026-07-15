@@ -162,6 +162,12 @@ int engine_generative_advance(void);
  * the tick after release. */
 void engine_generative_tick(uint32_t now_ms);
 
+/* r19.22 (Scenes): reproduzierbarer Generator-Zustand. Der Seed treibt die
+ * Bar-Humanisierung + Sparkle-Streuung; save/recall einer Scene stellt ihn
+ * wieder her, damit "dasselbe Feld" wieder dasselbe Feld ist. */
+uint32_t engine_gen_seed(void);
+void     engine_set_gen_seed(uint32_t seed);
+
 /* r18.90 melody-grammar observability (tests + a future UI readout):
  * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
 int engine_generative_last_melody_midi(void);

@@ -8,6 +8,7 @@
 
 #include "leds.h"
 #include "controls.h"
+#include "scenes.h"   /* r19.22: Scenes-Modus uebersteuert die Cell-LEDs */
 #include <string.h>
 
 /* Channel layout (matches generate_kicad_project.py:4459) */
@@ -69,9 +70,20 @@ void leds_render(uint32_t now_ms, uint16_t dt_ms, uint16_t out[LED_CH_COUNT]) {
     target[CH_GENERATE] = controls_modifier_active(MOD_GENERATE) ? LED_DUTY_WHITE  : 0;
     target[CH_CLEAR]    = (now_ms < s_clear_until)               ? LED_DUTY_WHITE  : 0;
 
-    for (uint8_t c = 0; c < 5; ++c) {
-        target[CH_CELL_Y(c)] = controls_hold_base(c)  ? LED_DUTY_YELLOW : 0;
-        target[CH_CELL_G(c)] = controls_hold_shift(c) ? LED_DUTY_GREEN  : 0;
+    if (scenes_ui_active()) {
+        /* r19.22 Scenes-Modus: gelb = Slot belegt, gruen = aktive Scene —
+         * die Latch-Anzeige pausiert, solange der Browser offen ist. */
+        for (uint8_t c = 0; c < 5; ++c) {
+            bool used   = scenes_used(c);
+            bool active = used && scenes_active() == (int)c;
+            target[CH_CELL_Y(c)] = (used && !active) ? LED_DUTY_YELLOW : 0;
+            target[CH_CELL_G(c)] = active            ? LED_DUTY_GREEN  : 0;
+        }
+    } else {
+        for (uint8_t c = 0; c < 5; ++c) {
+            target[CH_CELL_Y(c)] = controls_hold_base(c)  ? LED_DUTY_YELLOW : 0;
+            target[CH_CELL_G(c)] = controls_hold_shift(c) ? LED_DUTY_GREEN  : 0;
+        }
     }
     target[CH_BACKLIGHT] = s_backlight;
 

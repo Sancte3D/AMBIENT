@@ -121,6 +121,7 @@ set(DSP_SOURCES
     src/params.c        # encoder → engine parameter bindings + acceleration
     src/knobs.c         # r19.21: encoder push short/long actions
     src/overlay.c       # r19.21: transient knob-value overlay
+    src/scenes.c        # r19.22: parameter locks companion — 5 scene slots
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
     src/oled_draw.c
     src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)
@@ -194,6 +195,7 @@ if(FAM_TARGET STREQUAL "h743")
         src/hal_h743/stm32h7xx_it.c
         src/hal_h743/audio_h743.c
         src/hal_h743/encoders_h743.c
+        src/hal_h743/scenes_flash_h743.c   # r19.22: Scenes-Persistenz (Bank-2-Sektor)
         src/hal_h743/lcd_st7789_h743.c
         src/hal_h743/mcp23017_h743.c
         src/hal_h743/midi_uart_h743.c

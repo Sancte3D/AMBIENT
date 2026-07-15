@@ -1,6 +1,16 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-13 (r19.21 — Encoder-Push-Belegung + Wert-Overlays; davor r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+**Updated: 2026-07-15 (r19.22 — Parameter-Locks + 5 Scenes; davor r19.21 Encoder-Push, r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+
+> **r19.22 (2026-07-15) — Bedienlogik Runde 3:** Parameter-Locks (DISPLAY
+> lang im EDIT; gesperrte Werte ueberleben den World-Wechsel) + Scenes-
+> Browser (DISPLAY lang im BROWSE; Cell laedt, SHIFT+Cell speichert, LEDs
+> gelb=belegt/gruen=aktiv). Scene = World/Key/Tuning/Voice/Synth/Makros/
+> Locks/Drive/Bright/Generator-Seed; Persistenz im Bank-2-Flash-Sektor
+> (dual-bank: Audio laeuft beim Save weiter). NEU scenes.c + test_scenes
+> (28 Checks). 34 Suiten gruen. Naechste Runden: Chord Bloom, interaktives
+> GENERATE, Gesten-Loop.
+
 
 > **r19.21 (2026-07-13) — Bedienlogik Runde 2:** Alle vier Encoder-Druecker
 > leben jetzt (vorher nur DISPLAY): DRIVE kurz=Bypass/lang=Reset, BRIGHT

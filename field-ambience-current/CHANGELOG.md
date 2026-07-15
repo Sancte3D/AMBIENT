@@ -10,6 +10,35 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.22 (2026-07-15) — Parameter-Locks + 5 Scenes (Bedienlogik Runde 3)
+
+Die staerkste Orchid-Uebernahme (Locks) + speicherbare Zustaende (HiChord-
+Prinzip) — ohne neue Hardware, ueber die vorhandenen Cells.
+
+**Parameter-Locks:** DISPLAY lang druecken IM EDIT-MODUS sperrt/entsperrt
+den aktuellen Parameter (Lock-Punkt links vom Label). Beim World-Wechsel
+setzt load_world_preset() nur noch UNgesperrte Werte auf das neue Preset —
+der gesperrte Hallraum/Echo bleibt beim Wechsel Tokyo→Hours stehen.
+Sperrbar: Key + die 7 Makros (genau das, was ein World-Wechsel anfasst).
+
+**Scenes (NEU scenes.c):** DISPLAY lang im BROWSE oeffnet den Scenes-
+Browser: Cell 1–5 laedt, SHIFT+Cell speichert, Cell-LED gelb = belegt /
+gruen = aktiv, DISPLAY kurz oder 8 s idle schliesst. Gespeichert: World,
+Key, Tuning, Voice, Synth, alle 7 Makros, Locks, Drive, Brightness,
+Generator-Seed (NEU engine_gen_seed/set — "dasselbe Feld" ist wieder
+dasselbe Feld). NICHT gespeichert: gehaltene Noten, Modi, Volume (springt
+beim Recall nie). Persistenz: **letzter Flash-Sektor Bank 2** (0x081E0000)
+— H7 ist dual-bank read-while-write, der Audio-ISR laeuft beim Speichern
+ununterbrochen weiter (NEU hal_h743/scenes_flash_h743.c, bench-pending).
+Host-Tests injizieren ein RAM-Backend.
+
+Tests: **NEU test_scenes.c** (28 Checks: Lock ueberlebt World-Wechsel,
+nicht-sperrbare Slots, Save/Recall-Roundtrip inkl. Seed, Volume unberuehrt,
+Persistenz-Roundtrip, UI-Flow inkl. Idle-Timeout, Render-Smoke).
+34 Suiten gruen; H743-Cross-Build gruen.
+
+---
+
 ## v0.7-r19.21 (2026-07-13) — Encoder-Push-Belegung + Overlays (Bedienlogik Runde 2)
 
 Bis jetzt verarbeitete nur der DISPLAY-Encoder seinen Druck — DRIVE/

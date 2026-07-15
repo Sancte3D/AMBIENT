@@ -52,6 +52,9 @@ void params_reset_drive(void);          /* Default 15 %, Bypass aus       */
 void params_set_bright_neutral(void);   /* Kurz-Druck: 0 Hz               */
 void params_reset_bright(void);         /* Lang-Druck: Default (= 0 Hz)   */
 int  params_toggle_mute(void);          /* Rueckgabe: 1 = jetzt stumm     */
+/* r19.22 Scenes-Recall: Drive/Brightness setzen (Volume bewusst NICHT —
+ * Lautstaerke springt beim Recall nie). Hebt einen Drive-Bypass auf. */
+void params_apply_scene(int drive_pct, float bright_hz);
 bool params_muted(void);
 
 #endif

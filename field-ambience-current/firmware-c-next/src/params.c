@@ -125,6 +125,13 @@ int  params_toggle_mute(void) {
     return s_muted ? 1 : 0;
 }
 bool params_muted(void) { return s_muted; }
+void params_apply_scene(int drive_pct, float bright_hz) {
+    s_drive_byp = false;
+    s_drive  = clampf((float)drive_pct / 100.0f, 0.0f, 1.0f);
+    s_bright = clampf(bright_hz, BRIGHT_MIN_HZ, BRIGHT_MAX_HZ);
+    apply_drive();
+    engine_set_brightness(s_bright);
+}
 
 int   params_drive_pct(void)  { return (int)(s_drive  * 100.0f + 0.5f); }
 float params_bright_hz(void)  { return s_bright; }

@@ -99,6 +99,29 @@ void menu_rotate(int delta);
 void menu_push(void);
 
 /* Read-only state for the renderer and the host tests. */
+/* --- r19.22 Parameter-Locks (Orchid-Prinzip) ---------------------------
+ * Gesperrte Parameter ueberlebt der World-Wechsel: load_world_preset()
+ * setzt nur UNgesperrte Werte auf das neue World-Preset. Sperrbar sind
+ * genau die 8 Werte, die ein World-Wechsel ueberschreibt (Key + die 7
+ * Makros) — alles andere (Voice/Tuning/Synth) wird ohnehin nie angefasst.
+ * Toggle: DISPLAY lang druecken IM EDIT-MODUS (knobs.c routet). */
+bool menu_toggle_lock_current(void);     /* Rueckgabe: jetzt gesperrt?     */
+bool menu_param_locked(menu_param_t p);
+uint16_t menu_locks(void);               /* Bitmask (Bit = menu_param_t)   */
+void menu_set_locks(uint16_t mask);      /* Scenes-Recall stellt sie wieder her */
+
+/* --- r19.22 Scenes: kompletter einstellbarer Zustand -------------------
+ * Snapshot dessen, was eine Scene speichert (KEINE gehaltenen Noten,
+ * KEIN Volume — Lautstaerke springt beim Recall nie). */
+typedef struct {
+    uint8_t  world, key_pc, tuning, voice, synth;
+    uint8_t  space, shimmer, atmos, motion, age, echo, blur;   /* % */
+    uint16_t locks;
+} menu_state_t;
+void menu_get_state(menu_state_t *out);
+/* Werte setzen + ALLE Engine-Callbacks feuern (Recall = live). */
+void menu_apply_state(const menu_state_t *st);
+
 menu_param_t menu_current(void);
 menu_mode_t  menu_mode(void);
 const char  *menu_current_label(void);

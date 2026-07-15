@@ -553,6 +553,9 @@ void engine_set_user_presence(bool any_key_down) { s_user_present = any_key_down
  * host-testable. The old engine_generative_advance() stays as the manual
  * step API (offline renderers, tests). State lives up by gen_on. */
 
+uint32_t engine_gen_seed(void)          { return gen_tick_rng; }
+void     engine_set_gen_seed(uint32_t s) { gen_tick_rng = s ? s : 0x5EEDBA55u; }
+
 static float gen_rand01(void) {
     gen_tick_rng = gen_tick_rng * 1664525u + 1013904223u;
     return (float)(gen_tick_rng >> 8) / 16777216.0f;

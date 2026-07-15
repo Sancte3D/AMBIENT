@@ -33,6 +33,7 @@
 #include "oled_color.h"  /* accent crossfade tick (world → screen tint) */
 #include "overlay.h"     /* r19.21: transient knob-value overlay */
 #include "knobs.h"       /* r19.21: encoder push short/long actions */
+#include "scenes.h"      /* r19.22: parameter locks + 5 scene slots */
 #include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
@@ -99,6 +100,30 @@ static void apply_amp_mute_for_jack(bool plugged) {
     s_jack_plugged = plugged;
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15,
                       plugged ? GPIO_PIN_RESET : GPIO_PIN_SET);
+}
+
+/* r19.22: Scenes-Flash-Backend (scenes_flash_h743.c, Bank-2-Sektor). */
+bool scenes_flash_write(const void *blob, unsigned len);
+bool scenes_flash_read(void *blob, unsigned len);
+
+/* r19.22: DISPLAY kurz/lang sind kontextabhaengig —
+ *   Scenes-Browser offen: kurz = schliessen
+ *   Menue BROWSE:         kurz = menu_push, lang = Scenes oeffnen
+ *   Menue EDIT:           kurz = menu_push, lang = Parameter-Lock toggeln */
+static void display_short_dispatch(void) {
+    if (scenes_ui_active()) { scenes_ui_close(); return; }
+    menu_push();
+}
+static void display_long_dispatch(void) {
+    uint32_t now = HAL_GetTick();
+    if (scenes_ui_active()) { scenes_ui_close(); return; }
+    if (menu_mode() == MENU_EDIT) {
+        bool locked = menu_toggle_lock_current();
+        overlay_show(menu_current_label(), locked ? "LOCKED" : "UNLOCKED",
+                     now, 0);
+    } else {
+        scenes_ui_open(now);
+    }
 }
 
 /* r19.21: VOLUME lang gedrueckt → Batterie/USB + Ausgangsstatus. */
@@ -206,9 +231,14 @@ int main(void) {
     {   /* r19.21: Encoder-Push-Belegung (DISPLAY kurz = Menue wie bisher;
          * DISPLAY lang bleibt fuer Scenes reserviert). */
         knobs_callbacks_t kcb = { 0 };
-        kcb.display_push = menu_push;
+        kcb.display_push = display_short_dispatch;   /* r19.22: kontextabhaengig */
+        kcb.display_long = display_long_dispatch;    /* r19.22: Lock / Scenes    */
         kcb.status_lines = knob_status_lines;
         knobs_init(&kcb);
+    }
+    {   /* r19.22: Scenes aus dem Flash laden (Bank-2-Sektor, dual-bank —
+         * Audio laeuft beim Speichern weiter). */
+        scenes_init(scenes_flash_write, scenes_flash_read);
     }
     leds_init();              /* 16-ch PWM render */
     leds_set_backlight((uint16_t)(LED_PWM_MAX * 70 / 100));   /* 70 % boot */
@@ -293,6 +323,7 @@ int main(void) {
             }
         }
         knobs_tick(now);                        /* Lang-Druck-Schwelle */
+        scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
 
         /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
          * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
@@ -307,11 +338,19 @@ int main(void) {
             uint16_t fell = (uint16_t)(prev_gpio & ~gpio);   /* 1→0 = press */
             uint16_t rose = (uint16_t)(~prev_gpio & gpio);   /* 0→1 = release */
 
-            /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL). */
+            /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL).
+             * r19.22: solange der Scenes-Browser offen ist, WAEHLEN die
+             * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
             for (uint8_t c = 0; c < 5; ++c) {
                 uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
-                if (fell & m) controls_cell_press(c, CELL_TAP_AMP);
-                if (rose & m) controls_cell_release(c);
+                if (scenes_ui_active()) {
+                    if (fell & m)
+                        scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
+                                       now);
+                } else {
+                    if (fell & m) controls_cell_press(c, CELL_TAP_AMP);
+                    if (rose & m) controls_cell_release(c);
+                }
             }
 
             /* Modifier GPB0-4 (bits 8-12). r19.20: BOTH edges reach
@@ -392,15 +431,21 @@ int main(void) {
              * neues show() (Generation) oder Ablauf (aktiv→inaktiv). */
             static uint32_t ov_gen_seen = 0;
             static bool     ov_was      = false;
+            static bool     sc_was      = false;
             bool ov_now = overlay_active(now);
+            bool sc_now = scenes_ui_active();
             if (overlay_gen() != ov_gen_seen) { ov_gen_seen = overlay_gen(); ui_dirty = true; }
             if (ov_now != ov_was)             { ov_was = ov_now;             ui_dirty = true; }
+            /* r19.22: Scenes-Screen lebt (LED-/Slot-Zustand) — waehrend er
+             * offen ist einfach jedes 30-fps-Fenster neu zeichnen. */
+            if (sc_now || sc_now != sc_was)   { sc_was = sc_now;             ui_dirty = true; }
         }
         if (ui_dirty && !oled_flush_busy() &&
             (uint32_t)(now - last_frame_ms) >= 33) {
             bool accent_moving = oled_accent_tick(now) != 0;
-            if (overlay_active(now)) overlay_render();
-            else                     menu_render();
+            if (scenes_ui_active())       scenes_ui_render();
+            else if (overlay_active(now)) overlay_render();
+            else                          menu_render();
             oled_show_async();
             ui_dirty      = accent_moving;
             last_frame_ms = now;

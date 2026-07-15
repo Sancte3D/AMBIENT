@@ -90,6 +90,17 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/params_test"
 "$tmp/params_test"
 
+# r19.22: parameter locks + 5 scene slots (menu state snapshot + RAM backend)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_scenes.c" \
+    "$src/src/scenes.c" "$src/src/menu.c" "$src/src/params.c" "$src/src/battery.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    -lm -o "$tmp/scenes_test"
+"$tmp/scenes_test"
+
 # r19.21: encoder push layer (short/long press, bypass/mute/reset) + overlay
 "$CC" "${CFLAGS[@]}" \
     "$here/test_knobs.c" \
@@ -105,6 +116,8 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_leds.c" \
     "$src/src/leds.c" "$src/src/controls.c" \
+    "$src/src/scenes.c" "$src/src/menu.c" "$src/src/params.c" "$src/src/battery.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \

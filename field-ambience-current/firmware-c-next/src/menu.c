@@ -41,6 +41,11 @@ static int           age     = 30;
 static int           echo    = 35;
 static int           blur    = 15;
 static int           synth_i = 0;         /* r19.16: 0 Ambient, player-global */
+static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
+
+/* Sperrbar = was ein World-Wechsel ueberschreibt (menu.h r19.22). */
+#define LOCKABLE_MASK ((uint16_t)((1u<<MP_KEY)|(1u<<MP_SPACE)|(1u<<MP_SHIMMER)|\
+    (1u<<MP_ATMOS)|(1u<<MP_MOTION)|(1u<<MP_AGE)|(1u<<MP_ECHO)|(1u<<MP_BLUR)))
 
 static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
@@ -85,15 +90,19 @@ static void apply_current(void) {
  * Called when the user changes the WORLD value. */
 static void load_world_preset(void) {
     const world_t *w = worlds_get(world_i);
-    key_pc = (int)w->key_midi % 12;    /* world identity includes its key;
-                                        * VOICE stays — a player's choice   */
-    space  = w->space_pct;
-    shim   = w->shimmer_pct;
-    atmos  = w->atmos_pct;
-    motion = w->motion_pct;
-    age    = w->age_pct;
-    echo   = w->echo_pct;
-    blur   = w->blur_pct;
+    /* r19.22 Parameter-Locks: nur UNgesperrte Werte folgen dem neuen
+     * World-Preset — ein gesperrter Hallraum/Echo-Wert etc. bleibt beim
+     * Wechsel Tokyo→Hours stehen (Orchid-Prinzip). VOICE bleibt immer. */
+    #define UNLESS_LOCKED(bit) if (!(s_locks & (1u << (bit))))
+    UNLESS_LOCKED(MP_KEY)     key_pc = (int)w->key_midi % 12;
+    UNLESS_LOCKED(MP_SPACE)   space  = w->space_pct;
+    UNLESS_LOCKED(MP_SHIMMER) shim   = w->shimmer_pct;
+    UNLESS_LOCKED(MP_ATMOS)   atmos  = w->atmos_pct;
+    UNLESS_LOCKED(MP_MOTION)  motion = w->motion_pct;
+    UNLESS_LOCKED(MP_AGE)     age    = w->age_pct;
+    UNLESS_LOCKED(MP_ECHO)    echo   = w->echo_pct;
+    UNLESS_LOCKED(MP_BLUR)    blur   = w->blur_pct;
+    #undef UNLESS_LOCKED
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_space)      cb.set_space     (space  / 100.0f);
@@ -104,6 +113,56 @@ static void load_world_preset(void) {
     if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
     if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
     if (cb.set_key)        cb.set_key       (key_pc);
+}
+
+/* --- r19.22 Locks + Scene-State-API (menu.h) --------------------------- */
+bool menu_toggle_lock_current(void) {
+    uint16_t bit = (uint16_t)(1u << cur);
+    if (!(LOCKABLE_MASK & bit)) return false;    /* Slot nicht sperrbar */
+    s_locks ^= bit;
+    return (s_locks & bit) != 0;
+}
+bool     menu_param_locked(menu_param_t p) { return (s_locks >> p) & 1u; }
+uint16_t menu_locks(void)                  { return s_locks; }
+void     menu_set_locks(uint16_t mask)     { s_locks = mask & LOCKABLE_MASK; }
+
+void menu_get_state(menu_state_t *out) {
+    out->world  = (uint8_t)world_i;  out->key_pc = (uint8_t)key_pc;
+    out->tuning = (uint8_t)tuning_i; out->voice  = (uint8_t)voice_i;
+    out->synth  = (uint8_t)synth_i;
+    out->space  = (uint8_t)space;  out->shimmer = (uint8_t)shim;
+    out->atmos  = (uint8_t)atmos;  out->motion  = (uint8_t)motion;
+    out->age    = (uint8_t)age;    out->echo    = (uint8_t)echo;
+    out->blur   = (uint8_t)blur;
+    out->locks  = s_locks;
+}
+
+void menu_apply_state(const menu_state_t *st) {
+    world_i  = clampi(st->world, 0, worlds_count() - 1);
+    key_pc   = clampi(st->key_pc, 0, 11);
+    tuning_i = clampi(st->tuning, 0, 1);
+    voice_i  = clampi(st->voice, 0, 2);
+    synth_i  = clampi(st->synth, 0, 6);
+    space  = clampi(st->space, 0, 100);  shim   = clampi(st->shimmer, 0, 100);
+    atmos  = clampi(st->atmos, 0, 100);  motion = clampi(st->motion, 0, 100);
+    age    = clampi(st->age, 0, 100);    echo   = clampi(st->echo, 0, 100);
+    blur   = clampi(st->blur, 0, 100);
+    s_locks = st->locks & LOCKABLE_MASK;
+    set_world_accent(true);
+    /* Alle Callbacks feuern — Recall ist ein Live-Update wie das Menue
+     * selbst. Reihenfolge wie load_world_preset + die Player-Globals. */
+    if (cb.set_world)      cb.set_world(world_i);
+    if (cb.set_space)      cb.set_space     (space  / 100.0f);
+    if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
+    if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
+    if (cb.set_motion)     cb.set_motion    (motion / 100.0f);
+    if (cb.set_age)        cb.set_age       (age    / 100.0f);
+    if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
+    if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
+    if (cb.set_key)        cb.set_key       (key_pc);
+    if (cb.set_tuning)     cb.set_tuning(tuning_i);
+    if (cb.set_voice)      cb.set_voice(voice_i);
+    if (cb.set_synth)      cb.set_synth(synth_i);
 }
 
 void menu_init(const menu_callbacks_t *cbs) {
@@ -380,6 +439,10 @@ void menu_render(void) {
 
     uint8_t lbl_gs = (mode == MENU_EDIT) ? GS_DIM : GS_LABEL;
     bfont_draw(&font_hn_label, PAD_L, PAD_T, menu_current_label(), lbl_gs);
+    /* r19.22: Lock-Marke — kleiner heller Punkt links vom Label, wenn der
+     * aktuelle Parameter gesperrt ist (ueberlebt World-Wechsel). */
+    if (menu_param_locked(cur))
+        oled_rrect_fill(PAD_L - 12, PAD_T + 3, 6, 6, 2, GS_ACTIVE);
 
     render_battery();
     render_value();
