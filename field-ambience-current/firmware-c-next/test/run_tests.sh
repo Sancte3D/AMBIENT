@@ -90,6 +90,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/params_test"
 "$tmp/params_test"
 
+# r19.25: gesture loop (record/replay cell events, no audio)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_gesture.c" \
+    "$src/src/gesture.c" \
+    -lm -o "$tmp/gesture_test"
+"$tmp/gesture_test"
+
 # r19.24: interactive GENERATE (cells steer the composer + New Field reseed)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_generative_interactive.c" \
@@ -134,7 +141,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # LED render: controls/modifier state → PCA9685 16-ch PWM with fade engine
 "$CC" "${CFLAGS[@]}" \
     "$here/test_leds.c" \
-    "$src/src/leds.c" "$src/src/controls.c" \
+    "$src/src/leds.c" "$src/src/controls.c" "$src/src/gesture.c" \
     "$src/src/scenes.c" "$src/src/menu.c" "$src/src/params.c" "$src/src/battery.c" \
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \

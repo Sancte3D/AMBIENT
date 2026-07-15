@@ -9,6 +9,7 @@
 #include "leds.h"
 #include "controls.h"
 #include "scenes.h"   /* r19.22: Scenes-Modus uebersteuert die Cell-LEDs */
+#include "gesture.h"  /* r19.25: HOLD-LED zeigt den Gesten-Loop-Zustand */
 #include <string.h>
 
 /* Channel layout (matches generate_kicad_project.py:4459) */
@@ -65,7 +66,22 @@ void leds_render(uint32_t now_ms, uint16_t dt_ms, uint16_t out[LED_CH_COUNT]) {
      * it flashes on click and goes dark; the others show persistent status. */
     uint16_t target[LED_CH_COUNT] = {0};
     target[CH_SHIFT]    = controls_modifier_active(MOD_SHIFT)    ? LED_DUTY_YELLOW : 0;
-    target[CH_HOLD]     = controls_modifier_active(MOD_HOLD)     ? LED_DUTY_GREEN  : 0;
+    /* r19.25: SHIFT+HOLD steuert den Gesten-Loop → die HOLD-LED zeigt ihn:
+     * REC pulsiert (Dreieck ~800 ms), PLAY leuchtet ruhig, sonst normale
+     * HOLD-Latch-Anzeige. */
+    {
+        gesture_state_t g = gesture_state();
+        if (g == GESTURE_REC) {
+            uint32_t ph = now_ms % 800u;
+            target[CH_HOLD] = (uint16_t)(ph < 400u
+                ? (uint32_t)LED_DUTY_GREEN * ph / 400u
+                : (uint32_t)LED_DUTY_GREEN * (800u - ph) / 400u);
+        } else if (g == GESTURE_PLAY) {
+            target[CH_HOLD] = LED_DUTY_GREEN;
+        } else {
+            target[CH_HOLD] = controls_modifier_active(MOD_HOLD) ? LED_DUTY_GREEN : 0;
+        }
+    }
     target[CH_DRONE]    = controls_modifier_active(MOD_DRONE)    ? LED_DUTY_WHITE  : 0;
     target[CH_GENERATE] = controls_modifier_active(MOD_GENERATE) ? LED_DUTY_WHITE  : 0;
     target[CH_CLEAR]    = (now_ms < s_clear_until)               ? LED_DUTY_WHITE  : 0;

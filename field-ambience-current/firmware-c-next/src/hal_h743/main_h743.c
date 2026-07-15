@@ -35,6 +35,7 @@
 #include "knobs.h"       /* r19.21: encoder push short/long actions */
 #include "scenes.h"      /* r19.22: parameter locks + 5 scene slots */
 #include "bloom.h"       /* r19.23: chord-bloom cell mode */
+#include "gesture.h"     /* r19.25: gesture loop (record/replay cells) */
 #include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
@@ -84,6 +85,24 @@ static bool s_cell_bloom = false;   /* r19.23: 0 Note / 1 Bloom */
 static uint32_t s_field_seed = 0x1234u;             /* r19.24: New-Field seed source */
 static const char *const STEER_NAME[5] =            /* r19.24: cell → intent */
     { "HOME", "LIFT", "DARK", "OPEN", "TENSION" };
+
+/* r19.25: the single cell-routing path — used by the physical buttons AND
+ * by the gesture-loop playback, so a replayed cell behaves exactly like a
+ * live one in the current mode (generate-steer / bloom / note). */
+static void route_cell(uint8_t c, bool pressed, uint32_t now) {
+    if (c >= 5) return;
+    if (controls_modifier_active(MOD_GENERATE)) {
+        if (pressed) { engine_generative_nudge(c, now);
+                       overlay_show("STEER", STEER_NAME[c], now, 0); }
+    } else if (s_cell_bloom) {
+        if (pressed) bloom_press(c, CELL_TAP_AMP,
+                                 controls_modifier_active(MOD_HOLD), now);
+        else         bloom_release(c, now);
+    } else {
+        if (pressed) controls_cell_press(c, CELL_TAP_AMP);
+        else         controls_cell_release(c);
+    }
+}
 static void hal_set_cell(int mode) {
     bool bloom = (mode == 1);
     if (bloom != s_cell_bloom) {
@@ -242,6 +261,7 @@ int main(void) {
     }
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     bloom_init();             /* r19.23: chord-bloom cell mode */
+    gesture_init(route_cell); /* r19.25: gesture loop replays via route_cell */
     params_init();            /* encoder param values → engine defaults */
     overlay_init();
     {   /* r19.21: Encoder-Push-Belegung (DISPLAY kurz = Menue wie bisher;
@@ -341,6 +361,7 @@ int main(void) {
         knobs_tick(now);                        /* Lang-Druck-Schwelle */
         scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
         bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
+        gesture_tick(now);                      /* r19.25: Gesten-Wiedergabe */
 
         /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
          * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
@@ -364,23 +385,13 @@ int main(void) {
                     if (fell & m)
                         scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
                                        now);
-                } else if (controls_modifier_active(MOD_GENERATE)) {
-                    /* r19.24: GENERATE an → die Zelle STEUERT den Composer
-                     * (Richtung fuer den naechsten harmonischen Zustand)
-                     * statt zu spielen; der Generator laeuft weiter. */
-                    if (fell & m) {
-                        engine_generative_nudge(c, now);
-                        overlay_show("STEER", STEER_NAME[c], now, 0);
-                    }
-                } else if (s_cell_bloom) {
-                    /* r19.23: BLOOM — Cell triggert den Akkord der Stufe. */
-                    if (fell & m)
-                        bloom_press(c, CELL_TAP_AMP,
-                                    controls_modifier_active(MOD_HOLD), now);
-                    if (rose & m) bloom_release(c, now);
                 } else {
-                    if (fell & m) controls_cell_press(c, CELL_TAP_AMP);
-                    if (rose & m) controls_cell_release(c);
+                    /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
+                     * durch die gemeinsame Routing-Logik spielen. */
+                    if (fell & m) { gesture_record_cell(c, true,  now);
+                                    route_cell(c, true,  now); }
+                    if (rose & m) { gesture_record_cell(c, false, now);
+                                    route_cell(c, false, now); }
                 }
             }
 
@@ -391,7 +402,19 @@ int main(void) {
              * confirm-flash that existed since r18.64 but was never wired. */
             if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
             if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
-            if (fell & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, true);
+            if (fell & (1u<<MCP_BIT_MOD_HOLD)) {
+                if (controls_modifier_active(MOD_SHIFT)) {
+                    /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.
+                     * (Mischis SHIFT+GENERATE ist seit r19.24 New Field.) */
+                    gesture_toggle(now);
+                    gesture_state_t g = gesture_state();
+                    overlay_show("GESTURE",
+                                 g == GESTURE_REC  ? "REC"  :
+                                 g == GESTURE_PLAY ? "LOOP" : "OFF", now, 0);
+                } else {
+                    controls_modifier(MOD_HOLD, true);
+                }
+            }
             if (rose & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, false);
             if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
             if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
@@ -410,6 +433,7 @@ int main(void) {
             if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
             if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { controls_modifier(MOD_CLEAR, true);
                                                    bloom_all_off();  /* r19.23 */
+                                                   gesture_clear(now); /* r19.25 */
                                                    leds_clear_flash(now); }
             if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
 

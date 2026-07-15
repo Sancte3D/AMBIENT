@@ -1,6 +1,16 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-15 (r19.24 — interaktives GENERATE; davor r19.23 Chord Bloom, r19.22 Parameter-Locks + Scenes, r19.21 Encoder-Push, r19.20 Bedienlogik-Fixes, r19.19 Kopfhoerer-Amp, r19.18 BQ24074)**
+**Updated: 2026-07-15 (r19.25 — Gesten-Loop; Bedienlogik-Analyse komplett (r19.20–r19.25). Davor r19.24 interaktives GENERATE, r19.23 Chord Bloom, r19.22 Locks+Scenes, r19.21 Encoder-Push, r19.20 Fixes, r19.19 Kopfhoerer, r19.18 BQ24074)**
+
+> **r19.25 (2026-07-15) — Bedienlogik Runde 6 (Abschluss):** Gesten-Loop
+> (gesture.c) — nimmt Zell-Ereignisse auf und loopt sie ueber das Live-Setup,
+> kein Audio, ~0,75 KB RAM, kein PSRAM. SHIFT+HOLD zykelt REC→PLAY→OFF,
+> HOLD-LED pulst in REC. NEU test_gesture (14 Checks). 37 Suiten gruen.
+> **Alle 7 Punkte aus Mischis Bedienlogik-Analyse sind damit umgesetzt.**
+> Naechster grosser Block bleibt der erste echte Hardware-Bring-up (alles
+> Geraeteseitige ist compile-/cross-verifiziert, aber nie auf Silizium
+> gelaufen).
+
 
 > **r19.24 (2026-07-15) — Bedienlogik Runde 5:** GENERATE ist jetzt
 > interaktiv. Cell-Druck bei laufendem GENERATE STEUERT den Composer (5 Cells

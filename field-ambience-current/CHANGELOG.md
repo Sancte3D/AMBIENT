@@ -10,6 +10,39 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.25 (2026-07-15) — Gesten-Schleife statt Audio-Looper (Bedienlogik Runde 6, Abschluss)
+
+HiChord/Orchid haben grosse Audio-Looper — wir bauen bewusst etwas
+Eigenstaendigeres. NEU gesture.c: nimmt CELL-EREIGNISSE auf (Druck/Loslassen
+mit Zeitstempel, KEIN Audio) und wiederholt die gespielten Zellen ueber das
+AKTUELL geladene World + Klang + Zellmodus.
+
+- **SHIFT+HOLD** zykelt IDLE→REC→PLAY→IDLE. (Mischis Vorschlag war
+  SHIFT+GENERATE — das ist seit r19.24 "New Field", daher SHIFT+HOLD.)
+  Die **HOLD-LED pulsiert** waehrend REC, leuchtet ruhig in PLAY. Overlay
+  zeigt REC/LOOP/OFF. CLEAR (voll) stoppt + leert die Schleife ebenfalls.
+- Wiedergabe laeuft durch dieselbe route_cell-Logik wie das Live-Spiel —
+  eine geloopte Zelle verhaelt sich exakt wie eine gedrueckte (Note/Bloom/
+  Generate-Steer). Beim Loop-Umbruch werden offene Stimmen freigegeben
+  (keine Haenger).
+- **Sehr wenig RAM** (128 Events × 6 B ≈ 0,75 KB), kein PSRAM, control-rate
+  (Main-Loop, nicht Audio-ISR). Grenze v1: nur Zell-Gesten — Encoder-/
+  World-/Modifier-Aufnahme bewusst ausgeklammert; die Schleife spielt ueber
+  das LIVE-Setup (RAM-arm, deckt "wiederholt mit dem aktuell geladenen
+  World und Klang").
+
+Refactor: die Zell-Routing-Logik ist jetzt EINE Funktion (route_cell),
+geteilt von physischen Buttons + Gesten-Wiedergabe.
+
+Tests: **NEU test_gesture.c** (14 Checks: Zustandszyklus, Aufnahme nur in
+REC, phasenrichtige Wiedergabe, Loop-Umbruch gibt Stimmen frei, CLEAR/leer-
+REC-Kollaps). 37 Suiten gruen; H743-Cross-Build gruen (210 KB Flash).
+
+**Damit sind alle 7 Punkte aus Mischis Bedienlogik-Analyse umgesetzt
+(r19.20–r19.25).**
+
+---
+
 ## v0.7-r19.24 (2026-07-15) — Interaktives GENERATE: die Cells steuern den Composer (Bedienlogik Runde 5)
 
 Bis jetzt spielte GENERATE nur autonom oder PAUSIERTE, sobald man eine Zelle
