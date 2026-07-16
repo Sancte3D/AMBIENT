@@ -1,0 +1,77 @@
+# OpenAI Snyth Models
+
+An original, resource-bounded sound and display laboratory for the Sancte3D
+AMBIENT instrument. The directory name preserves the requested spelling;
+`Snyth` is intentional here.
+
+The package contains ten playable synthesis models and five audio-reactive
+display models. Every sound is generated at runtime from original C code. No
+recorded samples, MIDI files, extracted presets, transcribed melodies, or
+third-party source code are required.
+
+## Sound models
+
+| # | Model | Character | Primary method |
+|---:|---|---|---|
+| 1 | ACID RAIN | elastic droplets and damp reflections | falling resonators + procedural excitation |
+| 2 | FM GLASS | clear mallets with a soft halo | original two-operator phase modulation |
+| 3 | CHORUS MIST | wide, slow-breathing pad | detuned analytic oscillators + short chorus |
+| 4 | ION STORM | dark electrical air and distant sparks | subharmonics + bounded stochastic accents |
+| 5 | GLASS ORBIT | rotating inharmonic bells | four analytic partials + moving pan |
+| 6 | BAMBOO CIRCUIT | organic plucks with electronic grain | compact feedback string model |
+| 7 | NACRE HORIZON | pearly, almost weightless harmonic bed | sparse open partial field |
+| 8 | TIDEGLASS | fluid FM pad with slow refraction | continuously moving modulation ratio |
+| 9 | LUMEN SWARM | small lights collecting into harmony | deterministic micro-oscillator cluster |
+| 10 | HOLLOW CHOIR | distant vowel-like breath | moving formant partial field |
+
+The presets are starting points only. Six smoothed macros—color, motion,
+space, texture, width, and level—make every model performable from the existing
+encoder vocabulary.
+
+## Display models
+
+The renderers target a 320 × 170 packed 4-bit framebuffer and need no second
+framebuffer or FFT:
+
+- RESONANT GARDEN — bass grows stems, treble releases luminous pollen.
+- ORBITAL LOOM — spectral energy weaves rotating harmonic threads.
+- SPECTRAL CANYON — frequency bands become receding animated ridges.
+- RAIN MEMORY — transients fall, low energy opens lingering rings.
+- DREAM TOPOGRAPHY — the sound continuously redraws a contour-map dream.
+
+See [docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings and the generated
+GIF/PNG previews in `ui/previews`.
+
+## Build and verify
+
+Requires a C11 compiler, `make`, and `rg`. Preview generation additionally uses
+`ffmpeg`.
+
+```sh
+make verify
+make sanitize
+make benchmark
+make previews
+make manifest
+sha256sum -c SOURCE_MANIFEST.sha256
+sha256sum -c ASSET_MANIFEST.sha256
+```
+
+The state budgets are compile-time assertions:
+
+- audio model context: at most 32,768 bytes;
+- visual context: at most 2,048 bytes;
+- existing packed framebuffer: 27,200 bytes;
+- additional display framebuffer: 0 bytes.
+
+## Commercial-use posture
+
+The implementation was written from a blank design for this project and is
+kept isolated inside this directory. `docs/ORIGINALITY_AND_IP.md` records its
+provenance and limits. This is a technical clean-origin package, not a legal
+opinion or a trademark clearance. Before shipping, the rights holder should
+complete the checklist in that document and choose a customer-facing product
+name that does not imply endorsement by another company.
+
+Copyright © 2026 Sancte3D. All rights reserved. See
+[LICENSE-PROPRIETARY.md](LICENSE-PROPRIETARY.md).
