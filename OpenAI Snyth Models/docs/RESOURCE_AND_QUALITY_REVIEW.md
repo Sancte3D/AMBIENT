@@ -67,3 +67,24 @@ The saturation-preserving palette morph increased the `-Os` host object text
 from 1,423 to 2,375 bytes (**+952 bytes**) while object data remained 576 bytes.
 Target linking may differ, but this bounds the order of magnitude: the neon pass
 costs roughly one kilobyte of flash and zero additional state RAM.
+
+## Cinematic master-loop capacity
+
+The ten high-quality loops are offline art masters. Their 2× working canvas,
+NumPy arrays, Pillow layers, and Gaussian bloom exist only on the development
+host and therefore do not alter the enforced audio, visual-state, or packed
+framebuffer budgets above.
+
+The generated GIFs total roughly 9 MB and range from about 316 KB to 1.6 MB per
+loop. Shipping all of them in internal MCU flash would contradict the small
+capacity goal. The current recommendation is to test the loops on the physical
+panel, choose three to five, and then select one measured playback path:
+
+- external-flash scanline streaming;
+- one 54,400-byte 8-bit indexed frame plus a per-loop palette;
+- or a strict 27,200-byte procedural 4-bit port using position-derived hue.
+
+The third path preserves the existing framebuffer budget but is not expected
+to be pixel-identical to the masters. `HIGH_QUALITY_VISUALS.md` records this
+distinction so review GIF quality is never mistaken for completed target
+firmware capability.

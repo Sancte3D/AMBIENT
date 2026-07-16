@@ -94,3 +94,16 @@ used only to collect the renderer's exact colour swatches, quantize them into a
 stable GIF palette, and package the animation; it does not design or paint the
 frames. Swatches are weighted independently of pixel area so thin neon lines
 cannot be averaged into the black background.
+
+## Cinematic art masters
+
+The ten loops in `ui/previews/high-quality` are a separate, higher-fidelity
+art-direction layer. They use project-authored offline recipes at 2× working
+resolution so bloom, clipped cores, particles, and downsampling can be judged
+without pretending that one-pixel C contours already meet that bar. Each loop
+also has a numbered all-frame sheet.
+
+These masters are candidates for external-flash playback or for a later
+measured firmware port; they do not silently increase the embedded framebuffer
+budget. See `HIGH_QUALITY_VISUALS.md` for the exact model catalog and the three
+realistic device paths.

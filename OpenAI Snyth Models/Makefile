@@ -8,7 +8,7 @@ CORE := firmware/src/ambient_models.c firmware/src/ambient_visuals.c firmware/sr
 AUDIO_CORE := firmware/src/ambient_models.c
 VISUAL_CORE := firmware/src/ambient_visuals.c firmware/src/ambient_palettes.c
 
-.PHONY: all verify sanitize benchmark visual-benchmark previews audio-previews ui-previews color-ui-previews motion-ui-previews analyze verify-artifacts audit manifest clean
+.PHONY: all verify sanitize benchmark visual-benchmark previews audio-previews ui-previews color-ui-previews motion-ui-previews hq-ui-previews analyze verify-artifacts verify-hq-previews audit manifest clean
 
 all: verify benchmark
 
@@ -57,7 +57,10 @@ color-ui-previews: $(BUILD)/render_ui
 motion-ui-previews: $(BUILD)/render_ui
 	./tools/generate_motion_studies.sh
 
-previews: audio-previews ui-previews color-ui-previews motion-ui-previews
+hq-ui-previews:
+	python3 tools/render_high_quality_visuals.py
+
+previews: audio-previews ui-previews color-ui-previews motion-ui-previews hq-ui-previews
 
 analyze: audio-previews
 	python3 tools/analyze_previews.py
@@ -66,6 +69,10 @@ verify-artifacts:
 	./tools/verify_artifacts.sh
 	python3 tools/verify_color_previews.py
 	python3 tools/verify_motion_studies.py
+	python3 tools/verify_high_quality_visuals.py
+
+verify-hq-previews:
+	python3 tools/verify_high_quality_visuals.py
 
 audit:
 	./tools/audit_clean_ip.sh

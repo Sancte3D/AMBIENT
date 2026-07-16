@@ -175,11 +175,59 @@ def make_sheet(entries: list[tuple[dict[str, object], list[Image.Image]]],
     canvas.save(output, optimize=True)
 
 
+def make_full_frame_sheet(path: pathlib.Path, output: pathlib.Path,
+                          columns: int) -> None:
+    """Write every composited frame to a numbered, review-only contact sheet."""
+    tile_w, tile_h, label_h, gap = 112, 96, 18, 6
+    with Image.open(path) as image:
+        frame_count = getattr(image, "n_frames", 1)
+        rows = (frame_count + columns - 1) // columns
+        canvas = Image.new(
+            "RGB",
+            (columns * tile_w + (columns + 1) * gap,
+             rows * (tile_h + label_h) + (rows + 1) * gap),
+            (3, 4, 8),
+        )
+        draw = ImageDraw.Draw(canvas)
+        font = ImageFont.load_default(size=11)
+        previous: Image.Image | None = None
+        for index in range(frame_count):
+            image.seek(index)
+            frame = image.convert("RGB")
+            frame.thumbnail((tile_w, tile_h), Image.Resampling.LANCZOS)
+            tile = Image.new("RGB", (tile_w, tile_h), (0, 0, 0))
+            tile.paste(frame, ((tile_w - frame.width) // 2,
+                               (tile_h - frame.height) // 2))
+            column = index % columns
+            row = index // columns
+            x = gap + column * (tile_w + gap)
+            y = gap + row * (tile_h + label_h + gap)
+            canvas.paste(tile, (x, y))
+
+            grey = tile.convert("L")
+            if previous is None:
+                delta = 0.0
+            else:
+                delta = float(ImageStat.Stat(
+                    ImageChops.difference(previous, grey)
+                ).mean[0]) / 255.0
+            delay = frame_duration_ms(image)
+            draw.text((x + 2, y + tile_h + 3),
+                      f"{index:03d}  {delay:03d}ms  d{delta:.3f}",
+                      fill=(205, 212, 225), font=font)
+            previous = grey
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(output, optimize=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("images", nargs="+", type=pathlib.Path)
     parser.add_argument("--json", type=pathlib.Path)
     parser.add_argument("--contact-sheet", type=pathlib.Path)
+    parser.add_argument("--full-sheet-dir", type=pathlib.Path)
+    parser.add_argument("--sheet-columns", type=int, default=12)
     args = parser.parse_args()
 
     entries = [analyse(path) for path in args.images]
@@ -192,6 +240,15 @@ def main() -> None:
         print(payload)
     if args.contact_sheet:
         make_sheet(entries, args.contact_sheet)
+    if args.full_sheet_dir:
+        if args.sheet_columns < 1 or args.sheet_columns > 24:
+            raise SystemExit("--sheet-columns must be between 1 and 24")
+        for path in args.images:
+            make_full_frame_sheet(
+                path,
+                args.full_sheet_dir / f"{path.stem}-all-frames.png",
+                args.sheet_columns,
+            )
 
 
 if __name__ == "__main__":

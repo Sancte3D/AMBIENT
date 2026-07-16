@@ -10,6 +10,33 @@ normalized to a 160 × 160 analysis canvas; inter-frame and loop-seam change are
 mean absolute luminance differences on a 0–1 scale. The numbers compare motion
 behavior, not artistic similarity.
 
+The analyser can now emit a numbered contact sheet containing every composited
+frame with its delay and inter-frame delta. Those sheets were generated in a
+temporary review directory for this pass and inspected in full. They are not
+stored in the repository because reference pixels are analysis inputs, not
+product assets.
+
+## Full frame-sequence audit
+
+| Sequence | Frame-by-frame finding | Timing decision in the cinematic redesign |
+|---|---|---|
+| 17-frame blue trace | alternating hold/jump rhythm; the large visual change occurs on packet replacement, with near-identical frames between changes | **ELECTRIC SCRIPT** quantizes motion to twelve states and intentionally repeats poses |
+| 24-frame square halo | global brightness stays almost fixed while many local rectangles change position/size every frame | **VOXEL BLOOM** keeps a stable cavity and moves independently seeded cells rather than pulsing the whole ring |
+| 44-frame particle form | curved gathered state opens into a broad cloud, crosses a bright central state, then curls back before closure | **PARTICLE APPARITION** uses a periodic gather field and a separately moving parametric current |
+| 26-frame wire chamber | floor perspective remains locked; rain and canopy detail rewrite at 50 fps across almost the full image | **WIRE RAIN** separates a static depth scaffold from integer-rate wrapping streaks |
+| 24-frame crystal field | the center seam remains legible while needle lengths, tips, and colour neighbourhoods change on every frame | **PRISM RAIN** gives each of 116 needles its own 2–5× loop rate around one authored seam |
+| 19-frame radial flash | central white mass is stable; ray length, direction, density, and exposure change aggressively every 40 ms | **RADIANT THRESHOLD** keeps its abstract aperture fixed while 54 rays flare and steer independently |
+| 86-frame green ribbon | slow travelling compression; silhouette and overall luminance barely change, but underside fibres continually propagate | **BIOLUME WEAVE** uses two coupled waves and procedural fibre motion at a slower 60 ms frame delay |
+| 75-frame monochrome volume | boundary remains approximately spherical while the dense internal line field is replaced continuously; lateral caustics persist | **NOISE CHRYSALIS** fills the body with 92 moving cross-sections and retains original side-light logic |
+| 177-frame selector | long readable holds are separated by short focus transitions; motion is state-driven, not decorative | **FOCUS RAIL HQ** travels through five original rows and back with a seamless cosine schedule |
+| static chromatic horizon | sparse asymmetric peaks, black negative space, narrow white cores, and coloured vertical bloom carry the image without global motion | **SPECTRAL HORIZON** limits motion amplitude and preserves the dark field |
+
+This audit corrected a major error in the first translation: merely drawing the
+same nouns—ray, particle, line, square—does not reproduce the visual behavior.
+The cinematic set therefore models separate light bodies, cores, bloom, and
+temporal roles. Its full specification and device-capacity options are in
+`HIGH_QUALITY_VISUALS.md`.
+
 ## Uploaded files
 
 | Ref. | Source behavior measured | Reusable principle | New implementation |

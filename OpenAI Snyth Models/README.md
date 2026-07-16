@@ -4,9 +4,11 @@ An original, resource-bounded sound and display laboratory for the Sancte3D
 AMBIENT instrument. The directory name preserves the requested spelling;
 `Snyth` is intentional here.
 
-The package contains ten playable synthesis models, eighteen audio-reactive
-display models, and twelve embedded colour palettes. Every sound and display geometry
-is generated at runtime from original C code. No
+The package contains ten playable synthesis models, eighteen embedded
+audio-reactive display models, twelve embedded colour palettes, and ten
+high-quality cinematic display masters. Embedded geometry is generated at
+runtime from original C code; the cinematic loops are generated offline from
+original deterministic Python recipes. No
 recorded samples, MIDI files, extracted presets, transcribed melodies, or
 third-party source code are required.
 
@@ -55,17 +57,28 @@ See
 [docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings,
 [docs/MOTION_STUDY_CATALOG.md](docs/MOTION_STUDY_CATALOG.md) for the new
 systems, and [docs/REFERENCE_MOTION_ANALYSIS.md](docs/REFERENCE_MOTION_ANALYSIS.md)
-for the clean translation record. The package includes 46 GIFs: five base
-previews, fifteen foundational colour studies, and 26 new motion studies.
+for the clean translation record.
+
+The new cinematic suite directly addresses the gap between thin firmware
+geometry and the supplied light-art references. Its ten 48-frame loops use 2×
+supersampling, additive coloured bodies, clipped white cores, dual-radius
+bloom, and deterministic temporal systems. They are honest art masters rather
+than a claim that the current nibble renderer already emits the same pixels;
+deployment choices for the small device are measured in
+[docs/HIGH_QUALITY_VISUALS.md](docs/HIGH_QUALITY_VISUALS.md). The package now
+includes 56 GIFs: five base previews, fifteen foundational colour studies, 26
+motion studies, and ten cinematic masters.
 
 ![Fifteen colour display studies](ui/previews/color-contact-sheet.png)
 
 ![Thirteen new motion systems](ui/previews/motion-primary-contact-sheet.png)
 
+![Ten high-quality cinematic systems](ui/previews/high-quality/high-quality-contact-sheet.png)
+
 ## Build and verify
 
 Requires a C11 compiler, `make`, and `rg`. Preview generation additionally uses
-`ffmpeg`; the colour encoder uses the Pillow version pinned in
+`ffmpeg`; the colour and cinematic encoders use the Pillow and NumPy versions pinned in
 `requirements-preview.txt`.
 
 ```sh

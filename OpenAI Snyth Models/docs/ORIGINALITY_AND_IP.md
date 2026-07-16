@@ -15,6 +15,13 @@ measurements are recorded in `REFERENCE_MOTION_ANALYSIS.md`. Reference media
 was not copied into this directory, traced, sampled, encoded into previews, or
 used as device runtime input.
 
+The ten later cinematic master loops were also authored in this directory.
+Their renderer accepts no reference-image argument and contains no reference
+pixels, extracted palette, coordinates, masks, optical-flow data, trained
+weights, or copied frame timing. Full user-supplied sequences were reviewed to
+separate general optical and temporal principles—such as a stable core plus
+changing rays—from protectable source pixels and recognizable source forms.
+
 The synthesis techniques employed—oscillation, phase modulation, delay
 feedback, filtering, panning, envelopes, and procedural noise—are general
 signal-processing techniques. Their specific combination, constants, state
@@ -33,11 +40,14 @@ layout, model behavior, and code here were authored for this package.
   were deliberately replaced with non-figurative project-authored geometry.
 - All 26 motion-study GIFs can be regenerated exclusively from the C renderer
   and the project-authored palette tables.
+- All ten cinematic GIFs, stills, and frame sheets can be regenerated
+  exclusively from `tools/render_high_quality_visuals.py`; the script does not
+  read reference media.
 
-Pillow is an external MIT-CMU-licensed build tool used only to encode the
-project's rendered frames. It is not copied into or linked with the device
-firmware. See `BUILD_TOOL_LICENSES.md` for the retained notice and upstream
-license location.
+Pillow and NumPy are external permissively licensed build tools used only to
+render, analyse, and encode project-authored frames. They are not copied into
+or linked with device firmware. See `BUILD_TOOL_LICENSES.md` for notices and
+upstream license locations.
 
 The automated audit is a guardrail, not proof of non-infringement. SHA-256
 hashes establish which source version produced a review candidate but do not

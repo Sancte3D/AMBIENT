@@ -1,5 +1,10 @@
 # Thirteen new motion systems
 
+> These packed-framebuffer studies remain useful as low-cost firmware
+> prototypes. They are not the final visual-quality target. The later
+> supersampled cinematic redesign is documented in
+> [HIGH_QUALITY_VISUALS.md](HIGH_QUALITY_VISUALS.md).
+
 The second visual set adds thirteen original, sound-reactive renderers and 26
 native-resolution GIFs. Each renderer has two palette treatments. Together
 with the five foundational systems, the firmware now exposes eighteen display

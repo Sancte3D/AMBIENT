@@ -65,3 +65,19 @@ control-rate LUT math but adds no visual-state or framebuffer memory.
 The preview encoder now builds its global GIF palette from equal-weight exact
 C-renderer swatches instead of resized frame thumbnails. This prevents black
 background area from suppressing rare bright colors.
+
+## 2026-07-16 — Cinematic reset after frame-by-frame review
+
+The saturated C previews still read as thin vector diagrams and did not meet
+the supplied visual bar. The failure was architectural, not a palette problem:
+the references use separate coloured light bodies, overexposed cores, soft
+bloom, persistence, and depth, while the packed renderer drew maximum-value
+single-pixel geometry with no optical finishing stage.
+
+A separate clean-room master renderer was therefore added. It renders ten
+original deterministic systems at 2× resolution, applies additive light and
+dual-radius bloom, and downsamples once to 320 × 170. The full 480-frame output
+is inspectable in numbered frame sheets. These masters are explicitly labelled
+as offline art direction; the project will choose external-flash playback,
+an 8-bit indexed buffer, or a measured 4-bit procedural port only after panel
+review. This avoids both visual self-deception and an unapproved RAM increase.

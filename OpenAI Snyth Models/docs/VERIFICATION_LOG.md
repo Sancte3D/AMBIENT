@@ -10,14 +10,23 @@
   the real-time implementation performs no allocation.
 - Clean-origin implementation audit: passed.
 - Preview signal-health gate: passed for all ten models.
-- Artifact gate: ten stereo MP3s, 46 GIFs, 46 matching stills, and four
-  overview PNGs at the expected formats and geometry.
+- Artifact gate: ten stereo MP3s, 56 GIFs, 56 matching stills, five overview
+  PNGs, and ten cinematic all-frame sheets at the expected formats and geometry.
 - Colour gate: all fifteen studies contain 96 animation frames, at least twelve
   visible colours, a neon-accent saturation ratio of at least 65%, and less
   than 5 RGB levels mean drift between GIF midpoint and lossless PNG.
 - Motion gate: all 26 new studies contain exactly 96 frames, animate across
   sampled frames, pass the same neon/fidelity gates, have distinct first
   frames, and remain below the loop-seam limit.
+- Cinematic gate: all ten masters contain exactly 48 native-size frames,
+  preserve effect-specific timing, animate, close their loops within the
+  authored transition envelope, retain negative space and mid-level light
+  volume, and keep each lossless still close to a decoded GIF frame. All ten
+  passed; each has 28–48 distinct decoded frames, with ELECTRIC SCRIPT's lower
+  count caused by intentional stepped holds.
+- Deterministic regeneration: rendering all 480 cinematic frames twice
+  produced identical SHA-256 hashes for every GIF, still, frame sheet, and the
+  overview contact sheet.
 
 ## Measured static state
 
