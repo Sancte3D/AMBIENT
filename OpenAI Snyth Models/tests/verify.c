@@ -190,6 +190,17 @@ int main(void)
                 CHECK(luma >= previous_luma, "palette luma must follow nibble order");
                 previous_luma = luma;
             }
+            uint8_t neon_r, neon_g, neon_b;
+            ambient_palette_rgb((AmbientPalette)palette, 14u, phase,
+                                &neon_r, &neon_g, &neon_b);
+            unsigned neon_max = neon_r;
+            unsigned neon_min = neon_r;
+            if (neon_g > neon_max) neon_max = neon_g;
+            if (neon_b > neon_max) neon_max = neon_b;
+            if (neon_g < neon_min) neon_min = neon_g;
+            if (neon_b < neon_min) neon_min = neon_b;
+            CHECK(neon_max - neon_min >= 100u,
+                  "palette tone 14 must retain strong neon chroma");
         }
     }
     printf("verification: %llu checks, %llu failures\n",

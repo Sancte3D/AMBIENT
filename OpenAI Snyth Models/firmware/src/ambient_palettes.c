@@ -1,10 +1,18 @@
 #include "ambient_palettes.h"
 
+#include <math.h>
+
 typedef struct Rgb {
     uint8_t r;
     uint8_t g;
     uint8_t b;
 } Rgb;
+
+typedef struct Hsv {
+    float h;
+    float s;
+    float v;
+} Hsv;
 
 typedef struct PaletteDefinition {
     const char *name;
@@ -13,44 +21,47 @@ typedef struct PaletteDefinition {
     Rgb alive[5];
 } PaletteDefinition;
 
-/* Five anchors map to indices 0, 3, 7, 11, and 15. */
+/*
+ * Five anchors map to indices 0, 3, 7, 14, and 15. Index 14 carries the
+ * saturated neon colour; index 15 is reserved for tiny specular highlights.
+ */
 static const PaletteDefinition k_palettes[AMBIENT_PALETTE_COUNT] = {
     {"NACRE DAWN", "nacre-dawn",
-     {{1, 3, 12}, {22, 18, 55}, {61, 69, 132}, {211, 122, 178}, {255, 244, 239}},
-     {{1, 4, 13}, {13, 31, 66}, {40, 107, 142}, {161, 155, 226}, {244, 251, 255}}},
+     {{1, 0, 10}, {20, 0, 80}, {80, 10, 180}, {255, 45, 185}, {255, 225, 245}},
+     {{0, 2, 12}, {0, 28, 90}, {0, 100, 220}, {20, 240, 255}, {225, 255, 255}}},
     {"TIDAL PRISM", "tidal-prism",
-     {{0, 4, 12}, {5, 29, 70}, {13, 89, 146}, {29, 202, 195}, {231, 255, 246}},
-     {{2, 2, 18}, {30, 17, 83}, {39, 93, 177}, {81, 196, 239}, {247, 246, 255}}},
+     {{0, 2, 12}, {0, 12, 70}, {0, 70, 220}, {0, 230, 255}, {215, 255, 255}},
+     {{2, 0, 18}, {20, 0, 95}, {20, 45, 240}, {40, 170, 255}, {235, 245, 255}}},
     {"EMBER MOSS", "ember-moss",
-     {{4, 6, 3}, {29, 39, 18}, {92, 100, 43}, {224, 143, 55}, {255, 238, 191}},
-     {{7, 4, 3}, {54, 25, 20}, {117, 75, 35}, {225, 158, 74}, {255, 245, 210}}},
+     {{1, 5, 0}, {5, 35, 0}, {40, 110, 0}, {180, 220, 0}, {255, 250, 210}},
+     {{8, 1, 0}, {60, 5, 0}, {180, 35, 0}, {255, 150, 0}, {255, 235, 190}}},
     {"ION VIOLET", "ion-violet",
-     {{2, 1, 14}, {33, 14, 75}, {105, 35, 154}, {79, 171, 236}, {239, 244, 255}},
-     {{1, 4, 16}, {18, 33, 91}, {96, 73, 191}, {203, 113, 224}, {255, 242, 255}}},
+     {{3, 0, 16}, {30, 0, 90}, {110, 0, 210}, {245, 40, 255}, {255, 205, 255}},
+     {{0, 3, 18}, {10, 10, 100}, {45, 35, 220}, {120, 110, 255}, {245, 215, 255}}},
     {"LUNAR PEACH", "lunar-peach",
-     {{6, 3, 9}, {57, 25, 50}, {134, 62, 87}, {241, 144, 132}, {255, 242, 222}},
-     {{3, 5, 14}, {42, 39, 75}, {124, 88, 131}, {232, 164, 162}, {255, 245, 235}}},
+     {{10, 1, 0}, {70, 5, 0}, {200, 35, 0}, {255, 125, 10}, {255, 230, 195}},
+     {{8, 0, 8}, {70, 0, 35}, {200, 10, 75}, {255, 65, 125}, {255, 210, 225}}},
     {"ARCTIC BLOOM", "arctic-bloom",
-     {{0, 5, 13}, {8, 34, 65}, {24, 102, 137}, {95, 210, 220}, {239, 255, 255}},
-     {{1, 4, 17}, {29, 24, 74}, {56, 100, 165}, {151, 195, 239}, {249, 249, 255}}},
+     {{0, 4, 14}, {0, 25, 90}, {0, 105, 230}, {0, 235, 255}, {220, 255, 255}},
+     {{2, 0, 18}, {25, 0, 100}, {55, 35, 230}, {80, 170, 255}, {235, 240, 255}}},
     {"ACID PETAL", "acid-petal",
-     {{3, 7, 2}, {23, 49, 14}, {74, 132, 27}, {194, 224, 65}, {251, 255, 222}},
-     {{8, 2, 13}, {61, 15, 65}, {147, 39, 118}, {230, 113, 174}, {255, 236, 248}}},
+     {{1, 8, 0}, {5, 45, 0}, {35, 150, 0}, {170, 255, 0}, {245, 255, 205}},
+     {{5, 2, 0}, {45, 10, 0}, {170, 55, 0}, {255, 200, 0}, {255, 245, 195}}},
     {"COPPER RAIN", "copper-rain",
-     {{5, 4, 4}, {48, 26, 21}, {123, 67, 43}, {221, 139, 88}, {255, 238, 207}},
-     {{1, 7, 11}, {9, 47, 59}, {28, 111, 120}, {100, 198, 185}, {227, 255, 242}}},
+     {{6, 2, 0}, {50, 12, 0}, {150, 45, 0}, {255, 140, 20}, {255, 230, 185}},
+     {{3, 5, 0}, {30, 35, 0}, {100, 105, 0}, {245, 210, 0}, {255, 245, 200}}},
     {"DEEP CORAL", "deep-coral",
-     {{8, 2, 5}, {65, 13, 32}, {150, 42, 58}, {241, 104, 87}, {255, 232, 190}},
-     {{4, 3, 13}, {42, 24, 70}, {121, 56, 111}, {230, 119, 120}, {255, 239, 211}}},
+     {{10, 0, 3}, {70, 0, 20}, {190, 10, 45}, {255, 60, 90}, {255, 205, 210}},
+     {{5, 0, 12}, {45, 0, 75}, {150, 15, 170}, {255, 70, 230}, {255, 210, 250}}},
     {"GHOST ORCHID", "ghost-orchid",
-     {{3, 3, 10}, {35, 28, 65}, {99, 79, 145}, {202, 163, 224}, {255, 247, 255}},
-     {{1, 6, 11}, {19, 49, 67}, {73, 121, 139}, {164, 206, 214}, {244, 255, 255}}},
+     {{3, 0, 12}, {25, 0, 80}, {95, 10, 190}, {220, 70, 255}, {250, 215, 255}},
+     {{0, 5, 12}, {0, 35, 85}, {15, 115, 185}, {80, 230, 255}, {225, 255, 255}}},
     {"SOLAR INK", "solar-ink",
-     {{4, 4, 6}, {38, 32, 35}, {103, 75, 48}, {226, 160, 60}, {255, 243, 193}},
-     {{4, 3, 10}, {46, 24, 61}, {119, 61, 87}, {224, 139, 97}, {255, 239, 207}}},
+     {{4, 2, 0}, {45, 15, 0}, {140, 60, 0}, {255, 180, 0}, {255, 245, 190}},
+     {{8, 0, 6}, {65, 0, 35}, {190, 15, 80}, {255, 95, 50}, {255, 220, 205}}},
     {"BIOLUME", "biolume",
-     {{0, 6, 8}, {3, 41, 48}, {9, 108, 104}, {63, 218, 165}, {226, 255, 210}},
-     {{1, 4, 13}, {10, 32, 68}, {27, 89, 151}, {77, 196, 217}, {232, 254, 255}}}
+     {{0, 7, 6}, {0, 45, 35}, {0, 150, 110}, {0, 255, 190}, {215, 255, 235}},
+     {{0, 3, 15}, {0, 25, 95}, {0, 105, 225}, {0, 225, 255}, {210, 250, 255}}}
 };
 
 static float clamp01(float x)
@@ -82,9 +93,76 @@ static Rgb mix_rgb(Rgb a, Rgb b, float amount)
     return result;
 }
 
+static Hsv rgb_to_hsv(Rgb rgb)
+{
+    float r = (float)rgb.r / 255.0f;
+    float g = (float)rgb.g / 255.0f;
+    float b = (float)rgb.b / 255.0f;
+    float maximum = fmaxf(r, fmaxf(g, b));
+    float minimum = fminf(r, fminf(g, b));
+    float delta = maximum - minimum;
+    Hsv result = {0.0f, maximum > 0.0f ? delta / maximum : 0.0f, maximum};
+    if (delta > 0.00001f) {
+        if (maximum == r) {
+            result.h = fmodf((g - b) / delta, 6.0f) / 6.0f;
+        } else if (maximum == g) {
+            result.h = ((b - r) / delta + 2.0f) / 6.0f;
+        } else {
+            result.h = ((r - g) / delta + 4.0f) / 6.0f;
+        }
+        if (result.h < 0.0f) result.h += 1.0f;
+    }
+    return result;
+}
+
+static uint8_t hsv_channel(float value)
+{
+    if (value < 0.0f) value = 0.0f;
+    if (value > 1.0f) value = 1.0f;
+    return (uint8_t)(value * 255.0f + 0.5f);
+}
+
+static Rgb hsv_to_rgb(Hsv hsv)
+{
+    float scaled = hsv.h * 6.0f;
+    int sector = (int)floorf(scaled);
+    float fraction = scaled - (float)sector;
+    float p = hsv.v * (1.0f - hsv.s);
+    float q = hsv.v * (1.0f - fraction * hsv.s);
+    float t = hsv.v * (1.0f - (1.0f - fraction) * hsv.s);
+    float r, g, b;
+    switch (sector % 6) {
+    case 0: r = hsv.v; g = t;     b = p;     break;
+    case 1: r = q;     g = hsv.v; b = p;     break;
+    case 2: r = p;     g = hsv.v; b = t;     break;
+    case 3: r = p;     g = q;     b = hsv.v; break;
+    case 4: r = t;     g = p;     b = hsv.v; break;
+    default:r = hsv.v; g = p;     b = q;     break;
+    }
+    Rgb result = {hsv_channel(r), hsv_channel(g), hsv_channel(b)};
+    return result;
+}
+
+static Rgb mix_hsv(Rgb a, Rgb b, float amount)
+{
+    Hsv from = rgb_to_hsv(a);
+    Hsv to = rgb_to_hsv(b);
+    float hue_delta = to.h - from.h;
+    if (hue_delta > 0.5f) hue_delta -= 1.0f;
+    if (hue_delta < -0.5f) hue_delta += 1.0f;
+    Hsv result = {
+        from.h + hue_delta * amount,
+        from.s + (to.s - from.s) * amount,
+        from.v + (to.v - from.v) * amount
+    };
+    if (result.h < 0.0f) result.h += 1.0f;
+    if (result.h >= 1.0f) result.h -= 1.0f;
+    return hsv_to_rgb(result);
+}
+
 static Rgb sample_anchors(const Rgb anchors[5], unsigned index)
 {
-    static const unsigned position[5] = {0u, 3u, 7u, 11u, 15u};
+    static const unsigned position[5] = {0u, 3u, 7u, 14u, 15u};
     if (index >= 15u) return anchors[4];
     unsigned segment = 0u;
     while (segment < 3u && index > position[segment + 1u]) ++segment;
@@ -111,7 +189,7 @@ void ambient_palette_rgb(AmbientPalette palette, uint8_t index, float phase,
     Rgb quiet = sample_anchors(k_palettes[palette].quiet, tone);
     Rgb alive = sample_anchors(k_palettes[palette].alive, tone);
     float movement = triangle(clamp01(phase));
-    Rgb result = mix_rgb(quiet, alive, movement * 0.72f);
+    Rgb result = mix_hsv(quiet, alive, movement * 0.72f);
     if (r) *r = result.r;
     if (g) *g = result.g;
     if (b) *b = result.b;

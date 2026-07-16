@@ -26,6 +26,8 @@ reinitializes that same memory instead of keeping ten engines resident.
 - animated/non-empty framebuffer checks;
 - host render benchmark for all eighteen visual modes;
 - twelve animated palette identity, range, and RGB565 uniqueness checks;
+- tone-14 neon-chroma checks at quiet and peak palette phases;
+- GIF saturation and midpoint-to-PNG colour-fidelity gates;
 - 26 motion GIF checks for geometry, exact frame count, animation, chroma,
   distinct first frames, and bounded loop seams;
 - AddressSanitizer and UndefinedBehaviorSanitizer build;
@@ -57,6 +59,11 @@ and an FFT dedicated to visuals are intentionally excluded.
 
 The thirteen additional motion systems increase flash/code size and the test
 surface, but not visual-state RAM, framebuffer RAM, SPI payload size, or palette
-LUT size. The host run measured the slowest renderer at roughly 56 microseconds
+LUT size. The host run measured the slowest renderer at roughly 59 microseconds
 per frame; use this only as a regression baseline until the target cycle count
 is captured.
+
+The saturation-preserving palette morph increased the `-Os` host object text
+from 1,423 to 2,375 bytes (**+952 bytes**) while object data remained 576 bytes.
+Target linking may differ, but this bounds the order of magnitude: the neon pass
+costs roughly one kilobyte of flash and zero additional state RAM.

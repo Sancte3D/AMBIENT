@@ -53,3 +53,15 @@ visual state, and audio state remain unchanged.
 Pillow is used only after the C renderer to package preview GIFs with one stable
 global palette. It is neither linked into firmware nor used to invent display
 geometry.
+
+## 2026-07-16 — Saturated neon hierarchy
+
+The initial palette set washed high tone indices toward pastel white and used
+RGB interpolation between some opposing hues. The revision reserves index 14
+for a strongly saturated colour body, index 15 for small specular highlights,
+and morphs quiet/alive states through HSV hue space. This changes constants and
+control-rate LUT math but adds no visual-state or framebuffer memory.
+
+The preview encoder now builds its global GIF palette from equal-weight exact
+C-renderer swatches instead of resized frame thumbnails. This prevents black
+background area from suppressing rare bright colors.

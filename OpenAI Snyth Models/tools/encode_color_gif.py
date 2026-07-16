@@ -5,20 +5,37 @@ from __future__ import annotations
 
 import argparse
 import glob
+import math
 import pathlib
 
 from PIL import Image
 
 
 def build_global_palette(paths: list[pathlib.Path]) -> Image.Image:
-    sample_count = min(12, len(paths))
-    indices = [round(i * (len(paths) - 1) / max(1, sample_count - 1)) for i in range(sample_count)]
-    atlas = Image.new("RGB", (80 * 4, 43 * 3), (0, 0, 0))
-    for slot, frame_index in enumerate(indices):
-        with Image.open(paths[frame_index]) as image:
-            sample = image.convert("RGB").resize((80, 43), Image.Resampling.BILINEAR)
-        atlas.paste(sample, ((slot % 4) * 80, (slot // 4) * 43))
-    return atlas.quantize(colors=192, method=Image.Quantize.MEDIANCUT)
+    # The C renderer emits at most 16 exact colours per frame. Build the GIF
+    # palette from those colours directly: resizing thin lines would mix them
+    # with black and produce the washed-out dark palette this tool must avoid.
+    colours: set[tuple[int, int, int]] = {(0, 0, 0)}
+    for path in paths:
+        with Image.open(path) as image:
+            counts = image.convert("RGB").getcolors(maxcolors=256 * 256)
+        if counts is None:
+            raise RuntimeError(f"too many source colours in {path}")
+        colours.update(colour for _, colour in counts)
+
+    swatches: list[tuple[int, int, int]] = []
+    for colour in sorted(colours):
+        maximum = max(colour)
+        minimum = min(colour)
+        repeats = 2 if maximum >= 64 and maximum - minimum >= 32 else 1
+        swatches.extend([colour] * repeats)
+    swatches.extend([(0, 0, 0)] * max(64, len(swatches) // 10))
+    width = 64
+    height = math.ceil(len(swatches) / width)
+    swatches.extend([(0, 0, 0)] * (width * height - len(swatches)))
+    atlas = Image.new("RGB", (width, height), (0, 0, 0))
+    atlas.putdata(swatches)
+    return atlas.quantize(colors=240, method=Image.Quantize.MEDIANCUT)
 
 
 def encode(paths: list[pathlib.Path], gif_path: pathlib.Path, still_path: pathlib.Path) -> None:
@@ -31,7 +48,7 @@ def encode(paths: list[pathlib.Path], gif_path: pathlib.Path, still_path: pathli
             rgb = source.convert("RGB")
             if index == still_index:
                 still_rgb = rgb.copy()
-            frame = rgb.quantize(palette=palette, dither=Image.Dither.FLOYDSTEINBERG)
+            frame = rgb.quantize(palette=palette, dither=Image.Dither.NONE)
             frames.append(frame)
     if still_rgb is None:
         raise RuntimeError("no still frame selected")
@@ -44,7 +61,7 @@ def encode(paths: list[pathlib.Path], gif_path: pathlib.Path, still_path: pathli
         duration=42,
         loop=0,
         disposal=2,
-        optimize=True,
+        optimize=False,
         comment=b"Sancte3D original 4-bit framebuffer colour study",
     )
     still_rgb.save(still_path, optimize=True)

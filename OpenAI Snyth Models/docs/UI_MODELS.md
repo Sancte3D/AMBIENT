@@ -69,7 +69,10 @@ framebuffer remains exactly 27,200 bytes.
 Twelve palettes are included: NACRE DAWN, TIDAL PRISM, EMBER MOSS, ION VIOLET,
 LUNAR PEACH, ARCTIC BLOOM, ACID PETAL, COPPER RAIN, DEEP CORAL, GHOST ORCHID,
 SOLAR INK, and BIOLUME. Each has quiet and alive anchor sets; the palette phase
-morphs between them without altering geometry or audio state.
+morphs between them without altering geometry or audio state. The morph now
+travels through HSV hue space rather than averaging opposing RGB channels, so
+it retains chroma throughout the animation. Index 14 is the saturated neon
+anchor; index 15 is used only for restrained near-white sparkle cores.
 
 For the existing driver, the integration is a small generalization of its
 16-entry grey-to-RGB565 LUT: call `ambient_palette_build_rgb565`, then index the
@@ -87,5 +90,7 @@ overviews are `ui/previews/color-contact-sheet.png`,
 `ui/previews/motion-contact-sheet.png`.
 
 Geometry and RGB values come from the C framebuffer and palette code. Pillow is
-used only to quantize those frames into a stable GIF palette and package the
-animation; it does not design or paint the frames.
+used only to collect the renderer's exact colour swatches, quantize them into a
+stable GIF palette, and package the animation; it does not design or paint the
+frames. Swatches are weighted independently of pixel area so thin neon lines
+cannot be averaged into the black background.

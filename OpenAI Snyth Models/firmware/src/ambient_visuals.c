@@ -66,6 +66,8 @@ static void pixel(uint8_t *fb, int x, int y, unsigned tone)
 
 static void line(uint8_t *fb, int x0, int y0, int x1, int y1, unsigned tone)
 {
+    /* Keep index 15 available for isolated sparkle cores. */
+    if (tone > 14u) tone = 14u;
     int dx = abs(x1 - x0);
     int sx = x0 < x1 ? 1 : -1;
     int dy = -abs(y1 - y0);
@@ -676,6 +678,9 @@ static void draw_chroma_fall(AmbientVisualState *s, uint8_t *fb)
         int end = 104 + (int)(bass * 48.0f) - abs(streak) * 9;
         line(fb, x, 9, x, end, 10u + (unsigned)(2 - abs(streak)));
     }
+    int drop_y = (int)((s->frame * 3u) % AMBIENT_DISPLAY_HEIGHT);
+    int drop_x = cx + (int)(wave((float)s->frame * 0.013f) * 12.0f);
+    glow(fb, drop_x, drop_y, 1 + (int)(rms * 2.0f), 15u);
     glow(fb, cx, 30, 4 + (int)(rms * 7.0f), 15u);
 }
 

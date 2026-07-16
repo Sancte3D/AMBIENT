@@ -2,7 +2,9 @@
 
 The colour set contains fifteen 4-second, 96-frame GIFs: three materially
 different palette directions for each geometric visual. Every GIF is rendered
-at the device's native 320 × 170 geometry.
+at the device's native 320 × 170 geometry. The neon revision keeps at least
+65% of each bright colour body strongly saturated while allowing isolated
+near-white highlights.
 
 ![Fifteen colour studies](../ui/previews/color-contact-sheet.png)
 

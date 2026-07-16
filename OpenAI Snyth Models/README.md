@@ -48,8 +48,10 @@ halos, bilateral pulses, falling chroma, and radial softbursts. They translate
 high-level motion principles into newly authored geometric C renderers; no
 reference pixels or recognizable reference figures are included.
 
-The same nibble buffer can act as a 16-colour palette index. Twelve slowly
-animated RGB565 LUTs add colour for only 32 bytes of LUT storage. See
+The same nibble buffer can act as a 16-colour palette index. Twelve saturated,
+slowly animated RGB565 LUTs add colour for only 32 bytes of LUT storage. Tone
+14 carries the neon body while tone 15 is reserved for small specular accents.
+See
 [docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings,
 [docs/MOTION_STUDY_CATALOG.md](docs/MOTION_STUDY_CATALOG.md) for the new
 systems, and [docs/REFERENCE_MOTION_ANALYSIS.md](docs/REFERENCE_MOTION_ANALYSIS.md)

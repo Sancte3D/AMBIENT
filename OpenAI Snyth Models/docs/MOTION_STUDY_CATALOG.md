@@ -55,5 +55,5 @@ There is no second framebuffer and no runtime Pillow or graphics-library
 dependency.
 
 On the review host, the slowest of all eighteen renderers was still DREAM
-TOPOGRAPHY at roughly 56 microseconds per frame. This is a regression signal,
+TOPOGRAPHY at roughly 59 microseconds per frame. This is a regression signal,
 not an STM32 timing guarantee; target-cycle measurement remains mandatory.

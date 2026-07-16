@@ -19,6 +19,6 @@ following separately installed development tool:
   <https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif>
 
 The encoder uses documented `save_all`, `append_images`, duration, loop,
-disposal, palette, and optimization options. Generated GIFs contain only this
+disposal, quantization, and palette options. Generated GIFs contain only this
 project's original framebuffer geometry and palette data; no upstream example
 artwork or source asset is embedded.
