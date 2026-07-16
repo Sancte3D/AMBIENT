@@ -44,6 +44,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/brain_test"
 "$tmp/brain_test"
 
+# r19.26: cell harmonics — ascending, collision-free pentatonic per world
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_brain_cells.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" \
+    -lm -o "$tmp/brain_cells_test"
+"$tmp/brain_cells_test"
+
 # ADR-0013: cell-velocity input model (Hall position → velocity → amp)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_cells.c" \

@@ -97,11 +97,34 @@ int brain_chord(int degree, int *out_midi, int max) {
     return n;
 }
 
+/* r19.26 — cell pitch = a clean, strictly ascending pentatonic degree, NOT
+ * the lowest note of an octave-folded diatonic chord.
+ *
+ * The old path took degrees 1..5 of the seven-note scale and octave-centred
+ * each chord independently. Two consequences, both audible: (a) diatonic
+ * degrees carry a semitone step (3-4, 7-8), so every world's five cell roots
+ * contained one semitone pair — held together under the long reverb they beat
+ * against the Harmonic-Safety principle (SOUND_WORLD.md §4); (b) the per-cell
+ * octave fold pushed some roots below their neighbour, so left→right was not
+ * always rising.
+ *
+ * A gapped pentatonic removes the semitone by construction (min step = 2) and,
+ * added directly to the key with no fold, always rises. Major worlds use the
+ * major pentatonic, minor/modal-minor worlds the minor pentatonic; the modal
+ * colour (dorian vs aeolian) still lives in the pad/composer harmony, which
+ * keeps using the full scale via brain_chord(). Shift = +1 octave is applied
+ * by the caller (controls.c), so the octave relationship stays exact. */
+static const int PENT_MAJ[5] = { 0, 2, 4, 7,  9 };   /* C D E G A  */
+static const int PENT_MIN[5] = { 0, 3, 5, 7, 10 };   /* C Eb F G Bb */
+
+/* dorian(1) / phrygian(2) / aeolian(5) read as minor; the rest as major. */
+static int mode_is_minor(int mode) {
+    return mode == 1 || mode == 2 || mode == 5;
+}
+
 int brain_cell_root(int cell) {
-    int chord[BRAIN_MAX_CHORD];
-    int n = brain_chord(cell + 1, chord, BRAIN_MAX_CHORD);
-    if (n <= 0) return s_key;
-    int lo = chord[0];
-    for (int i = 1; i < n; ++i) if (chord[i] < lo) lo = chord[i];
-    return lo;
+    if (cell < 0) cell = 0;
+    if (cell > 4) cell = 4;
+    const int *pent = mode_is_minor(s_mode) ? PENT_MIN : PENT_MAJ;
+    return s_key + pent[cell];
 }

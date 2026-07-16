@@ -36,8 +36,10 @@ int  brain_get_key(void);
  * to `max` MIDI notes into out_midi, returns the count written. */
 int brain_chord(int degree, int *out_midi, int max);
 
-/* The MIDI pitch a cell tap should sound: lowest note of the voiced chord for
- * that cell's degree (cell 0 → degree 1). Matches the webapp cellOn root. */
+/* The MIDI pitch a cell tap should sound (cell 0..4). r19.26: a strictly
+ * ascending pentatonic degree above the key (major or minor pentatonic per the
+ * world's mode) — no semitone/tritone between any two cell roots, always
+ * rising left→right. Shift = +1 octave is applied by the caller. */
 int brain_cell_root(int cell);
 
 #endif
