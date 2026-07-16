@@ -1,0 +1,7 @@
+build/
+*.wav
+*.pgm
+*.o
+*.a
+*.exe
+*.dSYM/
