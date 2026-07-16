@@ -21,6 +21,12 @@ layout, model behavior, and code here were authored for this package.
 - Preview notes use a newly written interval walk to exercise the engines.
 - Preview MP3s are rendered exclusively from this source and may be regenerated.
 - Display concepts are code-generated from geometric primitives.
+- Colour palettes and their anchor values were authored for this package.
+
+Pillow is an external MIT-CMU-licensed build tool used only to encode the
+project's rendered frames. It is not copied into or linked with the device
+firmware. See `BUILD_TOOL_LICENSES.md` for the retained notice and upstream
+license location.
 
 The automated audit is a guardrail, not proof of non-infringement. SHA-256
 hashes establish which source version produced a review candidate but do not

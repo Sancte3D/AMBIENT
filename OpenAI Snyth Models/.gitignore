@@ -5,3 +5,5 @@ build/
 *.a
 *.exe
 *.dSYM/
+__pycache__/
+*.pyc

@@ -1,3 +1,4 @@
+#include "ambient_palettes.h"
 #include "ambient_visuals.h"
 
 #include <math.h>
@@ -23,16 +24,43 @@ static int write_pgm(const char *path, const uint8_t *packed)
     return ok;
 }
 
+static int write_ppm(const char *path, const uint8_t *packed,
+                     AmbientPalette palette, float phase)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f) return 0;
+    fprintf(f, "P6\n%u %u\n255\n", AMBIENT_DISPLAY_WIDTH, AMBIENT_DISPLAY_HEIGHT);
+    for (unsigned y = 0; y < AMBIENT_DISPLAY_HEIGHT; ++y) {
+        for (unsigned x = 0; x < AMBIENT_DISPLAY_WIDTH; ++x) {
+            unsigned index = y * (AMBIENT_DISPLAY_WIDTH / 2u) + x / 2u;
+            uint8_t nibble = (uint8_t)((x & 1u) ? packed[index] & 15u : packed[index] >> 4);
+            uint8_t r, g, b;
+            ambient_palette_rgb(palette, nibble, phase, &r, &g, &b);
+            fputc(r, f);
+            fputc(g, f);
+            fputc(b, f);
+        }
+    }
+    int ok = !ferror(f);
+    fclose(f);
+    return ok;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 4) {
-        fprintf(stderr, "usage: %s VISUAL_INDEX OUTPUT_DIR FRAMES\n", argv[0]);
+        fprintf(stderr, "usage: %s VISUAL_INDEX OUTPUT_DIR FRAMES [PALETTE_INDEX]\n", argv[0]);
         return 2;
     }
     int visual_i = atoi(argv[1]);
     int frames = atoi(argv[3]);
+    int palette_i = argc > 4 ? atoi(argv[4]) : -1;
     if (visual_i < 0 || visual_i >= AMBIENT_VISUAL_COUNT || frames < 1 || frames > 1200) {
         fprintf(stderr, "invalid arguments\n");
+        return 2;
+    }
+    if (palette_i >= AMBIENT_PALETTE_COUNT) {
+        fprintf(stderr, "invalid palette index\n");
         return 2;
     }
     AmbientVisual visual = (AmbientVisual)visual_i;
@@ -55,15 +83,32 @@ int main(int argc, char **argv)
         };
         ambient_visual_render(&state, framebuffer, input);
         char path[1024];
-        snprintf(path, sizeof(path), "%s/%s_%03d.pgm", argv[2],
-                 ambient_visual_slug(visual), frame);
-        if (!write_pgm(path, framebuffer)) {
+        int written;
+        if (palette_i >= 0) {
+            AmbientPalette palette = (AmbientPalette)palette_i;
+            float palette_phase = (float)frame / (float)frames;
+            snprintf(path, sizeof(path), "%s/%s-%s_%03d.ppm", argv[2],
+                     ambient_visual_slug(visual), ambient_palette_slug(palette), frame);
+            written = write_ppm(path, framebuffer, palette, palette_phase);
+        } else {
+            snprintf(path, sizeof(path), "%s/%s_%03d.pgm", argv[2],
+                     ambient_visual_slug(visual), frame);
+            written = write_pgm(path, framebuffer);
+        }
+        if (!written) {
             fprintf(stderr, "could not write %s\n", path);
             return 1;
         }
     }
-    printf("%s: %d frames, %zu state bytes, %u framebuffer bytes\n",
-           ambient_visual_name(visual), frames, ambient_visual_state_bytes(),
-           AMBIENT_DISPLAY_BYTES);
+    if (palette_i >= 0) {
+        printf("%s + %s: %d colour frames, %zu visual state bytes, %u framebuffer bytes, %zu LUT bytes\n",
+               ambient_visual_name(visual), ambient_palette_name((AmbientPalette)palette_i),
+               frames, ambient_visual_state_bytes(), AMBIENT_DISPLAY_BYTES,
+               ambient_palette_lut_bytes());
+    } else {
+        printf("%s: %d frames, %zu state bytes, %u framebuffer bytes\n",
+               ambient_visual_name(visual), frames, ambient_visual_state_bytes(),
+               AMBIENT_DISPLAY_BYTES);
+    }
     return 0;
 }

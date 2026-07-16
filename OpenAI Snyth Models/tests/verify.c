@@ -1,4 +1,5 @@
 #include "ambient_models.h"
+#include "ambient_palettes.h"
 #include "ambient_visuals.h"
 
 #include <math.h>
@@ -154,6 +155,35 @@ int main(void)
     for (int visual = 0; visual < AMBIENT_VISUAL_COUNT; ++visual) {
         CHECK(strcmp(ambient_visual_name((AmbientVisual)visual), "UNKNOWN") != 0, "visual name");
         verify_visual((AmbientVisual)visual);
+    }
+    CHECK(ambient_palette_lut_bytes() == 32u, "palette LUT byte cost");
+    for (int palette = 0; palette < AMBIENT_PALETTE_COUNT; ++palette) {
+        CHECK(strcmp(ambient_palette_name((AmbientPalette)palette), "UNKNOWN") != 0, "palette name");
+        uint16_t quiet[16];
+        uint16_t alive[16];
+        ambient_palette_build_rgb565((AmbientPalette)palette, 0.0f, quiet);
+        ambient_palette_build_rgb565((AmbientPalette)palette, 0.5f, alive);
+        CHECK(quiet[0] != quiet[15], "palette needs visible dynamic range");
+        CHECK(memcmp(quiet, alive, sizeof(quiet)) != 0, "palette must animate");
+        unsigned unique = 1u;
+        for (unsigned i = 1; i < 16u; ++i) {
+            int seen = 0;
+            for (unsigned j = 0; j < i; ++j) seen |= quiet[i] == quiet[j];
+            if (!seen) ++unique;
+        }
+        CHECK(unique >= 12u, "palette loses too many 4-bit colours in RGB565");
+        for (int phase_step = 0; phase_step < 2; ++phase_step) {
+            float phase = phase_step ? 0.5f : 0.0f;
+            unsigned previous_luma = 0u;
+            for (unsigned tone = 0; tone < 16u; ++tone) {
+                uint8_t r, g, b;
+                ambient_palette_rgb((AmbientPalette)palette, (uint8_t)tone,
+                                    phase, &r, &g, &b);
+                unsigned luma = 54u * r + 183u * g + 19u * b;
+                CHECK(luma >= previous_luma, "palette luma must follow nibble order");
+                previous_luma = luma;
+            }
+        }
     }
     printf("verification: %llu checks, %llu failures\n",
            (unsigned long long)checks, (unsigned long long)failures);

@@ -30,3 +30,14 @@ surface, and display CPU.
 Every visual clips and writes 4-bit pixels in place. No animation history frame
 is retained; motion comes from compact particles, phases, and deterministic
 geometry.
+
+## 2026-07-16 — Colour through a 16-entry LUT
+
+Colour was added by reinterpreting each existing 4-bit nibble as a palette
+index. Twelve original palettes morph between quiet and alive anchors. The
+driver needs a 32-byte RGB565 table, while framebuffer size, SPI transfer size,
+visual state, and audio state remain unchanged.
+
+Pillow is used only after the C renderer to package preview GIFs with one stable
+global palette. It is neither linked into firmware nor used to invent display
+geometry.

@@ -59,6 +59,12 @@ fps. The function writes an entire packed frame and clips every primitive to
 the display bounds. If the product reserves a status strip, apply a clip
 rectangle in the product adapter or offset the visual region before merge.
 
+For colour, allocate one `uint16_t palette_lut[16]` in the display driver and
+call `ambient_palette_build_rgb565(selected_palette, phase, palette_lut)` at UI
+rate. During LCD row conversion, map each nibble through that LUT. This replaces
+the existing accent-grey LUT lookup and consumes 32 bytes without changing the
+framebuffer or SPI transfer size.
+
 ## Target acceptance gates
 
 - no DMA underruns during a two-hour maximum-load soak;

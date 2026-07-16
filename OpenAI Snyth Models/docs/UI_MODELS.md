@@ -41,8 +41,30 @@ for eight frames, switch, then raise the incoming range for eight frames.
 - Do not encode critical state only through animation. Model name, battery, and
   menu focus remain explicit text/icons.
 
+## Colour without a larger framebuffer
+
+The new palette layer treats each existing 4-bit pixel as a colour index rather
+than only a grey value. A 16-entry RGB565 LUT costs 32 bytes and can be rebuilt
+at UI rate. This creates multicolour gradients and slow hue breathing while the
+framebuffer remains exactly 27,200 bytes.
+
+Twelve palettes are included: NACRE DAWN, TIDAL PRISM, EMBER MOSS, ION VIOLET,
+LUNAR PEACH, ARCTIC BLOOM, ACID PETAL, COPPER RAIN, DEEP CORAL, GHOST ORCHID,
+SOLAR INK, and BIOLUME. Each has quiet and alive anchor sets; the palette phase
+morphs between them without altering geometry or audio state.
+
+For the existing driver, the integration is a small generalization of its
+16-entry grey-to-RGB565 LUT: call `ambient_palette_build_rgb565`, then index the
+result with the framebuffer nibble during row conversion. No framebuffer
+format conversion is needed.
+
 ## Preview files
 
-Generated previews are stored in `ui/previews` as one animated GIF and one PNG
-per concept. They are derived from the C framebuffer output, not painted
-mockups, so their geometry matches the firmware renderer.
+Generated base previews are stored in `ui/previews` as one animated GIF and one
+PNG per concept. `ui/previews/color` adds fifteen 96-frame colour GIFs and
+matching stills—three different palette directions for every visual. The
+labelled overview is `ui/previews/color-contact-sheet.png`.
+
+Geometry and RGB values come from the C framebuffer and palette code. Pillow is
+used only to quantize those frames into a stable GIF palette and package the
+animation; it does not design or paint the frames.

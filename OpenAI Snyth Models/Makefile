@@ -4,18 +4,18 @@ CPPFLAGS := -Ifirmware/include
 LDLIBS := -lm
 
 BUILD := build
-CORE := firmware/src/ambient_models.c firmware/src/ambient_visuals.c
+CORE := firmware/src/ambient_models.c firmware/src/ambient_visuals.c firmware/src/ambient_palettes.c
 AUDIO_CORE := firmware/src/ambient_models.c
-VISUAL_CORE := firmware/src/ambient_visuals.c
+VISUAL_CORE := firmware/src/ambient_visuals.c firmware/src/ambient_palettes.c
 
-.PHONY: all verify sanitize benchmark previews audio-previews ui-previews analyze verify-artifacts audit manifest clean
+.PHONY: all verify sanitize benchmark previews audio-previews ui-previews color-ui-previews analyze verify-artifacts audit manifest clean
 
 all: verify benchmark
 
 $(BUILD):
 	mkdir -p $(BUILD)
 
-$(BUILD)/verify: tests/verify.c $(CORE) firmware/include/ambient_models.h firmware/include/ambient_visuals.h | $(BUILD)
+$(BUILD)/verify: tests/verify.c $(CORE) firmware/include/ambient_models.h firmware/include/ambient_visuals.h firmware/include/ambient_palettes.h | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) tests/verify.c $(CORE) -o $@ $(LDLIBS)
 
 $(BUILD)/verify_sanitize: tests/verify.c $(CORE) | $(BUILD)
@@ -27,7 +27,7 @@ $(BUILD)/benchmark: tests/benchmark.c $(AUDIO_CORE) firmware/include/ambient_mod
 $(BUILD)/render_audio: tools/render_audio.c $(AUDIO_CORE) firmware/include/ambient_models.h | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) tools/render_audio.c $(AUDIO_CORE) -o $@ $(LDLIBS)
 
-$(BUILD)/render_ui: tools/render_ui.c $(VISUAL_CORE) firmware/include/ambient_visuals.h | $(BUILD)
+$(BUILD)/render_ui: tools/render_ui.c $(VISUAL_CORE) firmware/include/ambient_visuals.h firmware/include/ambient_palettes.h | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) tools/render_ui.c $(VISUAL_CORE) -o $@ $(LDLIBS)
 
 verify: $(BUILD)/verify audit
@@ -45,13 +45,17 @@ audio-previews: $(BUILD)/render_audio
 ui-previews: $(BUILD)/render_ui
 	./tools/generate_ui_previews.sh
 
-previews: audio-previews ui-previews
+color-ui-previews: $(BUILD)/render_ui
+	./tools/generate_color_ui_previews.sh
+
+previews: audio-previews ui-previews color-ui-previews
 
 analyze: audio-previews
 	python3 tools/analyze_previews.py
 
 verify-artifacts:
 	./tools/verify_artifacts.sh
+	python3 tools/verify_color_previews.py
 
 audit:
 	./tools/audit_clean_ip.sh

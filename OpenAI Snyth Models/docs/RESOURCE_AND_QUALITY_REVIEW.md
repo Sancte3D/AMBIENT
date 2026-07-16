@@ -7,6 +7,7 @@
 | active audio context | 32,768 bytes | C11 static assertion + host test |
 | visual state | 2,048 bytes | C11 static assertion + host test |
 | packed framebuffer | 27,200 bytes | API constant + host test |
+| animated RGB565 palette LUT | 32 bytes | fixed 16-entry table + host test |
 | additional framebuffer | 0 bytes | direct packed rendering |
 | audio allocation in render | 0 | fixed state and stack-only block output |
 
@@ -23,6 +24,7 @@ reinitializes that same memory instead of keeping ten engines resident.
 - control/event stress across every delay-line wrap point;
 - framebuffer guard checks for every visual;
 - animated/non-empty framebuffer checks;
+- twelve animated palette identity, range, and RGB565 uniqueness checks;
 - AddressSanitizer and UndefinedBehaviorSanitizer build;
 - source-origin audit for media and external implementation references;
 - SHA-256 source manifest.

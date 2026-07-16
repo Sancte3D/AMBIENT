@@ -7,7 +7,8 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 add_library(sancte_ambient_models STATIC
     firmware/src/ambient_models.c
-    firmware/src/ambient_visuals.c)
+    firmware/src/ambient_visuals.c
+    firmware/src/ambient_palettes.c)
 target_include_directories(sancte_ambient_models PUBLIC firmware/include)
 target_compile_options(sancte_ambient_models PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(sancte_ambient_models PUBLIC m)

@@ -4,8 +4,9 @@ An original, resource-bounded sound and display laboratory for the Sancte3D
 AMBIENT instrument. The directory name preserves the requested spelling;
 `Snyth` is intentional here.
 
-The package contains ten playable synthesis models and five audio-reactive
-display models. Every sound is generated at runtime from original C code. No
+The package contains ten playable synthesis models, five audio-reactive display
+models, and twelve embedded colour palettes. Every sound and display geometry
+is generated at runtime from original C code. No
 recorded samples, MIDI files, extracted presets, transcribed melodies, or
 third-party source code are required.
 
@@ -39,13 +40,18 @@ framebuffer or FFT:
 - RAIN MEMORY — transients fall, low energy opens lingering rings.
 - DREAM TOPOGRAPHY — the sound continuously redraws a contour-map dream.
 
-See [docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings and the generated
-GIF/PNG previews in `ui/previews`.
+The same nibble buffer can act as a 16-colour palette index. Twelve slowly
+animated RGB565 LUTs add colour for only 32 bytes of LUT storage. See
+[docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings, five base GIFs,
+and fifteen colour studies in `ui/previews/color`.
+
+![Fifteen colour display studies](ui/previews/color-contact-sheet.png)
 
 ## Build and verify
 
 Requires a C11 compiler, `make`, and `rg`. Preview generation additionally uses
-`ffmpeg`.
+`ffmpeg`; the colour encoder uses the Pillow version pinned in
+`requirements-preview.txt`.
 
 ```sh
 make verify
@@ -62,6 +68,7 @@ The state budgets are compile-time assertions:
 - audio model context: at most 32,768 bytes;
 - visual context: at most 2,048 bytes;
 - existing packed framebuffer: 27,200 bytes;
+- 16-entry RGB565 palette LUT: 32 bytes;
 - additional display framebuffer: 0 bytes.
 
 ## Commercial-use posture
