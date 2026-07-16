@@ -56,7 +56,7 @@ static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
 static const char * const SYNTH_NAMES[7] = {
     "Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"
 };
-static const char * const CELL_NAMES[2] = { "Note", "Bloom" };
+static const char * const CELL_NAMES[3] = { "Note", "Bloom", "Land" };
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -146,7 +146,7 @@ void menu_apply_state(const menu_state_t *st) {
     tuning_i = clampi(st->tuning, 0, 1);
     voice_i  = clampi(st->voice, 0, 2);
     synth_i  = clampi(st->synth, 0, 6);
-    cell_i   = clampi(st->cell, 0, 1);
+    cell_i   = clampi(st->cell, 0, 2);
     space  = clampi(st->space, 0, 100);  shim   = clampi(st->shimmer, 0, 100);
     atmos  = clampi(st->atmos, 0, 100);  motion = clampi(st->motion, 0, 100);
     age    = clampi(st->age, 0, 100);    echo   = clampi(st->echo, 0, 100);
@@ -243,7 +243,7 @@ int menu_value_count(menu_param_t p) {
         case MP_TUNING:return 2;
         case MP_VOICE: return 3;
         case MP_SYNTH: return 7;
-        case MP_CELL:  return 2;
+        case MP_CELL:  return 3;
         default:       return 0;   /* SPACE / ATMOS / MOTION / AGE = % */
     }
 }
@@ -293,7 +293,7 @@ void menu_rotate(int delta) {
         case MP_TUNING: tuning_i = wrapi(tuning_i + delta, 2); break;
         case MP_VOICE:  voice_i = wrapi(voice_i + delta, 3);  break;
         case MP_SYNTH:  synth_i = wrapi(synth_i + delta, 7);  break;
-        case MP_CELL:   cell_i  = wrapi(cell_i  + delta, 2);  break;
+        case MP_CELL:   cell_i  = wrapi(cell_i  + delta, 3);  break;
         case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
         case MP_SHIMMER:shim   = clampi(shim   + delta, 0, 100); break;
         case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;

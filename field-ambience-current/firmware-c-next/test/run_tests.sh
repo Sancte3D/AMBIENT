@@ -51,6 +51,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/brain_cells_test"
 "$tmp/brain_cells_test"
 
+# r19.27: Landscape cell mode — layer-role state machine (drone/bed/motif/atmos/memory)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_landscape.c" \
+    "$src/src/landscape.c" \
+    -lm -o "$tmp/landscape_test"
+"$tmp/landscape_test"
+
 # ADR-0013: cell-velocity input model (Hall position → velocity → amp)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_cells.c" \

@@ -300,6 +300,13 @@ static void melody_strike(float freq_hz, float amp) {
     else                   pluck_note(freq_hz, amp);
 }
 
+/* r19.27 — Landscape "Motif" layer: a bare fragile-voice impulse (pluck or
+ * glass per VOICE), no pad swell and no bass under it — the brittle,
+ * C418-like single event the layer role calls for. */
+void engine_motif_strike(float freq_hz, float amp) {
+    melody_strike(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
+}
+
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
  * audibly, but enough that two consecutive identical cell taps aren't
  * bit-identical → no "mechanical" feel on repeats. */

@@ -35,6 +35,8 @@
 #include "knobs.h"       /* r19.21: encoder push short/long actions */
 #include "scenes.h"      /* r19.22: parameter locks + 5 scene slots */
 #include "bloom.h"       /* r19.23: chord-bloom cell mode */
+#include "landscape.h"   /* r19.27: layer-role cell mode */
+#include "tuning.h"      /* r19.27: tuning_hz for the Bed/Motif layer pitches */
 #include "gesture.h"     /* r19.25: gesture loop (record/replay cells) */
 #include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
@@ -75,42 +77,81 @@ static void hal_set_voice      (int   idx) { engine_set_voice(idx); }
 static void hal_set_tuning     (int   just){ engine_set_tuning(just); }
 static void hal_set_space      (float v)   { engine_set_space(v); }
 static void hal_set_shimmer    (float v)   { engine_set_shimmer(v); }
-static void hal_set_atmosphere (float v)   { engine_set_atmosphere(v); }
+static float s_atmos_base = 0.35f;                  /* r19.27: world/menu atmos level, restored when the Landscape ATMOS layer releases */
+static void hal_set_atmosphere (float v)   { s_atmos_base = v; engine_set_atmosphere(v); }
 static void hal_set_motion     (float v)   { engine_set_motion(v); }
 static void hal_set_age        (float v)   { engine_set_age(v); }
 static void hal_set_echo       (float v)   { engine_set_echo(v); }
 static void hal_set_blur       (float v)   { engine_set_blur(v); }
 static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
-static bool s_cell_bloom = false;   /* r19.23: 0 Note / 1 Bloom */
+/* r19.23/r19.27: cell play mode — 0 Note, 1 Bloom, 2 Landscape. */
+enum { CELL_NOTE = 0, CELL_BLOOM = 1, CELL_LAND = 2 };
+static int s_cell_mode = CELL_NOTE;
 static uint32_t s_field_seed = 0x1234u;             /* r19.24: New-Field seed source */
 static const char *const STEER_NAME[5] =            /* r19.24: cell → intent */
     { "HOME", "LIFT", "DARK", "OPEN", "TENSION" };
 
+/* r19.27 — Landscape layer callbacks: map the abstract role state machine
+ * (landscape.c) onto the engine's existing layers. Bed/Motif pitches come
+ * from brain.c's clean pentatonic (r19.26); ATMOS boosts over, then restores,
+ * the world/menu baseline; MEMORY drives the r19.25 gesture loop. */
+#define BED_LAYER_AMP   0.16f
+#define MOTIF_LAYER_AMP 0.20f
+#define ATMOS_LAYER_HI  0.72f
+static void ls_drone(bool on)             { engine_set_drone(on); }
+static void ls_bed  (bool on, uint8_t c)  {
+    if (on) engine_note_on(c, tuning_hz((float)brain_cell_root(c)), BED_LAYER_AMP);
+    else    engine_note_off(c);
+}
+static void ls_motif(uint8_t c)           {
+    engine_motif_strike(tuning_hz((float)brain_cell_root(c)), MOTIF_LAYER_AMP);
+}
+static void ls_atmos(bool on)             {
+    engine_set_atmosphere(on ? (s_atmos_base > ATMOS_LAYER_HI ? s_atmos_base
+                                                              : ATMOS_LAYER_HI)
+                             : s_atmos_base);
+}
+static void ls_memory(uint32_t now)       {
+    gesture_toggle(now);
+    gesture_state_t g = gesture_state();
+    overlay_show("MEMORY",
+                 g == GESTURE_REC  ? "REC"  :
+                 g == GESTURE_PLAY ? "LOOP" : "OFF", now, 0);
+}
+static const landscape_iface_t s_ls_iface = {
+    ls_drone, ls_bed, ls_motif, ls_atmos, ls_memory
+};
+
 /* r19.25: the single cell-routing path — used by the physical buttons AND
  * by the gesture-loop playback, so a replayed cell behaves exactly like a
- * live one in the current mode (generate-steer / bloom / note). */
+ * live one in the current mode (generate-steer / bloom / landscape / note). */
 static void route_cell(uint8_t c, bool pressed, uint32_t now) {
     if (c >= 5) return;
     if (controls_modifier_active(MOD_GENERATE)) {
         if (pressed) { engine_generative_nudge(c, now);
                        overlay_show("STEER", STEER_NAME[c], now, 0); }
-    } else if (s_cell_bloom) {
+    } else if (s_cell_mode == CELL_BLOOM) {
         if (pressed) bloom_press(c, CELL_TAP_AMP,
                                  controls_modifier_active(MOD_HOLD), now);
         else         bloom_release(c, now);
+    } else if (s_cell_mode == CELL_LAND) {
+        if (pressed) landscape_press(c, controls_modifier_active(MOD_HOLD), now);
+        else         landscape_release(c, now);
     } else {
         if (pressed) controls_cell_press(c, CELL_TAP_AMP);
         else         controls_cell_release(c);
     }
 }
 static void hal_set_cell(int mode) {
-    bool bloom = (mode == 1);
-    if (bloom != s_cell_bloom) {
-        /* Modewechsel: die Stimmen des verlassenen Modus sauber beenden. */
-        if (bloom) engine_all_off();     /* NOTE → BLOOM: evtl. Latches weg */
-        else       bloom_all_off();      /* BLOOM → NOTE: Akkord weg        */
+    if (mode < CELL_NOTE || mode > CELL_LAND) mode = CELL_NOTE;
+    if (mode == s_cell_mode) return;
+    /* Modewechsel: die Stimmen/Latches des verlassenen Modus sauber beenden. */
+    switch (s_cell_mode) {
+        case CELL_BLOOM: bloom_all_off();          break;
+        case CELL_LAND:  landscape_all_off(0);     break;
+        default:         engine_all_off();         break;   /* NOTE latches */
     }
-    s_cell_bloom = bloom;
+    s_cell_mode = mode;
 }
 
 /* r19.16 — V2 sound-core backend: thin adapters so the engine keeps no link
@@ -261,6 +302,7 @@ int main(void) {
     }
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     bloom_init();             /* r19.23: chord-bloom cell mode */
+    landscape_init(&s_ls_iface); /* r19.27: layer-role cell mode */
     gesture_init(route_cell); /* r19.25: gesture loop replays via route_cell */
     params_init();            /* encoder param values → engine defaults */
     overlay_init();
@@ -387,10 +429,15 @@ int main(void) {
                                        now);
                 } else {
                     /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
-                     * durch die gemeinsame Routing-Logik spielen. */
-                    if (fell & m) { gesture_record_cell(c, true,  now);
+                     * durch die gemeinsame Routing-Logik spielen.
+                     * r19.27: in Landscape ist Cell 5 die MEMORY-Steuerung
+                     * selbst — die darf NICHT in die Schleife aufgenommen
+                     * werden (sonst würde der aufgenommene Cell-5-Druck die
+                     * Schleife bei der Wiedergabe wieder stoppen). */
+                    bool record = !(s_cell_mode == CELL_LAND && c == 4);
+                    if (fell & m) { if (record) gesture_record_cell(c, true,  now);
                                     route_cell(c, true,  now); }
-                    if (rose & m) { gesture_record_cell(c, false, now);
+                    if (rose & m) { if (record) gesture_record_cell(c, false, now);
                                     route_cell(c, false, now); }
                 }
             }
@@ -433,6 +480,7 @@ int main(void) {
             if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
             if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { controls_modifier(MOD_CLEAR, true);
                                                    bloom_all_off();  /* r19.23 */
+                                                   landscape_all_off(now); /* r19.27 */
                                                    gesture_clear(now); /* r19.25 */
                                                    leds_clear_flash(now); }
             if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
