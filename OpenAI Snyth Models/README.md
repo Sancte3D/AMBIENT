@@ -4,8 +4,11 @@ An original, resource-bounded sound and display laboratory for the Sancte3D
 AMBIENT instrument. The directory name preserves the requested spelling;
 `Snyth` is intentional here.
 
-The package contains ten playable synthesis models and five audio-reactive
-display models. Every sound is generated at runtime from original C code. No
+The package contains ten playable synthesis models, eighteen embedded
+audio-reactive display models, twelve embedded colour palettes, and ten
+high-quality cinematic display masters. Embedded geometry is generated at
+runtime from original C code; the cinematic loops are generated offline from
+original deterministic Python recipes. No
 recorded samples, MIDI files, extracted presets, transcribed melodies, or
 third-party source code are required.
 
@@ -31,7 +34,8 @@ encoder vocabulary.
 ## Display models
 
 The renderers target a 320 × 170 packed 4-bit framebuffer and need no second
-framebuffer or FFT:
+framebuffer or FFT. Five foundational systems cover landscapes, particles, and
+contours:
 
 - RESONANT GARDEN — bass grows stems, treble releases luminous pollen.
 - ORBITAL LOOM — spectral energy weaves rotating harmonic threads.
@@ -39,18 +43,49 @@ framebuffer or FFT:
 - RAIN MEMORY — transients fall, low energy opens lingering rings.
 - DREAM TOPOGRAPHY — the sound continuously redraws a contour-map dream.
 
-See [docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings and the generated
-GIF/PNG previews in `ui/previews`.
+Thirteen additional systems explore sound-reactive menu focus, neon spectrum
+veins, crystalline needles, abstract radial gates, organic signal ribbons,
+path drawing, particle currents, wireframe rain, waveform shells, glitch
+halos, bilateral pulses, falling chroma, and radial softbursts. They translate
+high-level motion principles into newly authored geometric C renderers; no
+reference pixels or recognizable reference figures are included.
+
+The same nibble buffer can act as a 16-colour palette index. Twelve saturated,
+slowly animated RGB565 LUTs add colour for only 32 bytes of LUT storage. Tone
+14 carries the neon body while tone 15 is reserved for small specular accents.
+See
+[docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings,
+[docs/MOTION_STUDY_CATALOG.md](docs/MOTION_STUDY_CATALOG.md) for the new
+systems, and [docs/REFERENCE_MOTION_ANALYSIS.md](docs/REFERENCE_MOTION_ANALYSIS.md)
+for the clean translation record.
+
+The new cinematic suite directly addresses the gap between thin firmware
+geometry and the supplied light-art references. Its ten 48-frame loops use 2×
+supersampling, additive coloured bodies, clipped white cores, dual-radius
+bloom, and deterministic temporal systems. They are honest art masters rather
+than a claim that the current nibble renderer already emits the same pixels;
+deployment choices for the small device are measured in
+[docs/HIGH_QUALITY_VISUALS.md](docs/HIGH_QUALITY_VISUALS.md). The package now
+includes 56 GIFs: five base previews, fifteen foundational colour studies, 26
+motion studies, and ten cinematic masters.
+
+![Fifteen colour display studies](ui/previews/color-contact-sheet.png)
+
+![Thirteen new motion systems](ui/previews/motion-primary-contact-sheet.png)
+
+![Ten high-quality cinematic systems](ui/previews/high-quality/high-quality-contact-sheet.png)
 
 ## Build and verify
 
 Requires a C11 compiler, `make`, and `rg`. Preview generation additionally uses
-`ffmpeg`.
+`ffmpeg`; the colour and cinematic encoders use the Pillow and NumPy versions pinned in
+`requirements-preview.txt`.
 
 ```sh
 make verify
 make sanitize
 make benchmark
+make visual-benchmark
 make previews
 make manifest
 sha256sum -c SOURCE_MANIFEST.sha256
@@ -62,6 +97,7 @@ The state budgets are compile-time assertions:
 - audio model context: at most 32,768 bytes;
 - visual context: at most 2,048 bytes;
 - existing packed framebuffer: 27,200 bytes;
+- 16-entry RGB565 palette LUT: 32 bytes;
 - additional display framebuffer: 0 bytes.
 
 ## Commercial-use posture

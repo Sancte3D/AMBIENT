@@ -1,4 +1,5 @@
 #include "ambient_models.h"
+#include "ambient_palettes.h"
 #include "ambient_visuals.h"
 
 #include <math.h>
@@ -147,13 +148,60 @@ int main(void)
     CHECK(ambient_synth_state_bytes() <= AMBIENT_STATE_BUDGET_BYTES, "audio RAM budget");
     CHECK(ambient_visual_state_bytes() <= AMBIENT_VISUAL_STATE_BUDGET_BYTES, "visual RAM budget");
     CHECK(AMBIENT_DISPLAY_BYTES == 27200u, "packed framebuffer size");
+    CHECK(AMBIENT_VISUAL_COUNT == 18, "visual model count");
     for (int model = 0; model < AMBIENT_MODEL_COUNT; ++model) {
         CHECK(strcmp(ambient_model_name((AmbientModel)model), "UNKNOWN") != 0, "model name");
         verify_model((AmbientModel)model);
     }
     for (int visual = 0; visual < AMBIENT_VISUAL_COUNT; ++visual) {
         CHECK(strcmp(ambient_visual_name((AmbientVisual)visual), "UNKNOWN") != 0, "visual name");
+        CHECK(strcmp(ambient_visual_slug((AmbientVisual)visual), "unknown") != 0, "visual slug");
+        for (int earlier = 0; earlier < visual; ++earlier) {
+            CHECK(strcmp(ambient_visual_slug((AmbientVisual)visual),
+                         ambient_visual_slug((AmbientVisual)earlier)) != 0,
+                  "visual slugs must be unique");
+        }
         verify_visual((AmbientVisual)visual);
+    }
+    CHECK(ambient_palette_lut_bytes() == 32u, "palette LUT byte cost");
+    for (int palette = 0; palette < AMBIENT_PALETTE_COUNT; ++palette) {
+        CHECK(strcmp(ambient_palette_name((AmbientPalette)palette), "UNKNOWN") != 0, "palette name");
+        uint16_t quiet[16];
+        uint16_t alive[16];
+        ambient_palette_build_rgb565((AmbientPalette)palette, 0.0f, quiet);
+        ambient_palette_build_rgb565((AmbientPalette)palette, 0.5f, alive);
+        CHECK(quiet[0] != quiet[15], "palette needs visible dynamic range");
+        CHECK(memcmp(quiet, alive, sizeof(quiet)) != 0, "palette must animate");
+        unsigned unique = 1u;
+        for (unsigned i = 1; i < 16u; ++i) {
+            int seen = 0;
+            for (unsigned j = 0; j < i; ++j) seen |= quiet[i] == quiet[j];
+            if (!seen) ++unique;
+        }
+        CHECK(unique >= 12u, "palette loses too many 4-bit colours in RGB565");
+        for (int phase_step = 0; phase_step < 2; ++phase_step) {
+            float phase = phase_step ? 0.5f : 0.0f;
+            unsigned previous_luma = 0u;
+            for (unsigned tone = 0; tone < 16u; ++tone) {
+                uint8_t r, g, b;
+                ambient_palette_rgb((AmbientPalette)palette, (uint8_t)tone,
+                                    phase, &r, &g, &b);
+                unsigned luma = 54u * r + 183u * g + 19u * b;
+                CHECK(luma >= previous_luma, "palette luma must follow nibble order");
+                previous_luma = luma;
+            }
+            uint8_t neon_r, neon_g, neon_b;
+            ambient_palette_rgb((AmbientPalette)palette, 14u, phase,
+                                &neon_r, &neon_g, &neon_b);
+            unsigned neon_max = neon_r;
+            unsigned neon_min = neon_r;
+            if (neon_g > neon_max) neon_max = neon_g;
+            if (neon_b > neon_max) neon_max = neon_b;
+            if (neon_g < neon_min) neon_min = neon_g;
+            if (neon_b < neon_min) neon_min = neon_b;
+            CHECK(neon_max - neon_min >= 100u,
+                  "palette tone 14 must retain strong neon chroma");
+        }
     }
     printf("verification: %llu checks, %llu failures\n",
            (unsigned long long)checks, (unsigned long long)failures);

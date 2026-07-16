@@ -1,10 +1,11 @@
 #!/bin/sh
 set -eu
 
-find firmware tools tests docs -type f -print0 \
+find firmware tools tests docs -type f \
+    ! -path '*/__pycache__/*' ! -name '*.pyc' -print0 \
     | sort -z \
     | xargs -0 sha256sum > SOURCE_MANIFEST.sha256
-sha256sum README.md CMakeLists.txt Makefile LICENSE-PROPRIETARY.md \
+sha256sum README.md CMakeLists.txt Makefile LICENSE-PROPRIETARY.md requirements-preview.txt \
     >> SOURCE_MANIFEST.sha256
 find audio/previews ui/previews -type f -print0 \
     | sort -z \

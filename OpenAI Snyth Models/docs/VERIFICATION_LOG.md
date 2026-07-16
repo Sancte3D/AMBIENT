@@ -4,14 +4,29 @@
 
 - Strict C11 compilation with `-Wall -Wextra -Wpedantic -Wshadow
   -Wconversion -Werror`: passed.
-- Functional/property verification: **2,210,398 checks, 0 failures**.
+- Functional/property verification: **2,211,898 checks, 0 failures**.
 - AddressSanitizer + UndefinedBehaviorSanitizer: passed. Leak detection is
   disabled because the execution container does not support LeakSanitizer;
   the real-time implementation performs no allocation.
 - Clean-origin implementation audit: passed.
 - Preview signal-health gate: passed for all ten models.
-- Artifact gate: ten stereo MP3s, five animated GIFs, and five matching stills
-  at the expected formats and geometry.
+- Artifact gate: ten stereo MP3s, 56 GIFs, 56 matching stills, five overview
+  PNGs, and ten cinematic all-frame sheets at the expected formats and geometry.
+- Colour gate: all fifteen studies contain 96 animation frames, at least twelve
+  visible colours, a neon-accent saturation ratio of at least 65%, and less
+  than 5 RGB levels mean drift between GIF midpoint and lossless PNG.
+- Motion gate: all 26 new studies contain exactly 96 frames, animate across
+  sampled frames, pass the same neon/fidelity gates, have distinct first
+  frames, and remain below the loop-seam limit.
+- Cinematic gate: all ten masters contain exactly 48 native-size frames,
+  preserve effect-specific timing, animate, close their loops within the
+  authored transition envelope, retain negative space and mid-level light
+  volume, and keep each lossless still close to a decoded GIF frame. All ten
+  passed; each has 28–48 distinct decoded frames, with ELECTRIC SCRIPT's lower
+  count caused by intentional stepped holds.
+- Deterministic regeneration: rendering all 480 cinematic frames twice
+  produced identical SHA-256 hashes for every GIF, still, frame sheet, and the
+  overview contact sheet.
 
 ## Measured static state
 
@@ -20,14 +35,25 @@
 | audio context | 27,488 B | 32,768 B | 5,280 B |
 | visual context | 1,444 B | 2,048 B | 604 B |
 | packed 320 × 170 framebuffer | 27,200 B | existing buffer | — |
+| animated RGB565 palette LUT | 32 B | 32 B | 0 B |
 | additional framebuffer | 0 B | 0 B | 0 B |
+
+The twelve palettes were additionally checked for RGB565 uniqueness, animated
+state change, visible range, monotonically increasing luminance by nibble
+index, and strong tone-14 chroma at quiet and peak phases. This preserves the
+renderer's maximum-tone blending semantics without washing the bright body to
+white.
 
 ## Relative host benchmark
 
 Five seconds of four-note audio per model were rendered on the CI host. The
-slowest result was TIDEGLASS at **88.54× real time** and the fastest was GLASS
-ORBIT at **312.32× real time**. These numbers are useful only for host
+slowest result was TIDEGLASS at **91.08× real time** and the fastest was GLASS
+ORBIT at **337.68× real time**. These numbers are useful only for host
 regression; they are not a target-MCU cycle claim.
+
+All eighteen visual systems were also benchmarked for 360 frames on the review
+host. The slowest was DREAM TOPOGRAPHY at **58.7 µs/frame**; the new modes did
+not exceed it. This is likewise only a host regression baseline.
 
 ## Tooling limitation
 
