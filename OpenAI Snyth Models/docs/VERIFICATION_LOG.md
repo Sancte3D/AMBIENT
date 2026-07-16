@@ -4,16 +4,19 @@
 
 - Strict C11 compilation with `-Wall -Wextra -Wpedantic -Wshadow
   -Wconversion -Werror`: passed.
-- Functional/property verification: **2,210,831 checks, 0 failures**.
+- Functional/property verification: **2,211,874 checks, 0 failures**.
 - AddressSanitizer + UndefinedBehaviorSanitizer: passed. Leak detection is
   disabled because the execution container does not support LeakSanitizer;
   the real-time implementation performs no allocation.
 - Clean-origin implementation audit: passed.
 - Preview signal-health gate: passed for all ten models.
-- Artifact gate: ten stereo MP3s, five base GIFs, fifteen colour GIFs, twenty
-  matching stills, and two overview PNGs at the expected formats and geometry.
+- Artifact gate: ten stereo MP3s, 46 GIFs, 46 matching stills, and four
+  overview PNGs at the expected formats and geometry.
 - Colour gate: all fifteen studies contain 96 distinct animation frames,
   chromatic pixels, and at least twelve visible colours across sampled frames.
+- Motion gate: all 26 new studies contain exactly 96 frames, animate across
+  sampled frames, contain chromatic content, have distinct first frames, and
+  remain below the loop-seam limit.
 
 ## Measured static state
 
@@ -35,6 +38,10 @@ Five seconds of four-note audio per model were rendered on the CI host. The
 slowest result was TIDEGLASS at **91.08× real time** and the fastest was GLASS
 ORBIT at **337.68× real time**. These numbers are useful only for host
 regression; they are not a target-MCU cycle claim.
+
+All eighteen visual systems were also benchmarked for 360 frames on the review
+host. The slowest was DREAM TOPOGRAPHY at **56.1 µs/frame**; the new modes did
+not exceed it. This is likewise only a host regression baseline.
 
 ## Tooling limitation
 

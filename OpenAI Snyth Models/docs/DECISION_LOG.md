@@ -19,11 +19,23 @@ One fixed context is reused across ten models. A shared spatial network and
 short chorus provide family coherence and avoid the RAM cost of ten resident
 engines.
 
-## 2026-07-16 — Five visual systems, not ten
+## 2026-07-16 — Five foundational visual systems
 
 Five reusable renderers cover the ten sounds through explicit default mapping.
 This gives each family a visual identity while constraining code size, test
 surface, and display CPU.
+
+## 2026-07-16 — Thirteen clean motion translations
+
+Ten user-supplied visuals and three public Pinterest previews were analyzed for
+general motion and composition principles. Thirteen new renderers were written
+from geometric primitives, with recognizable people, animals, hands, clothing,
+icons, and exact reference layouts deliberately excluded. The modes reuse the
+same fixed visual state; the expansion costs flash and offline preview storage,
+not runtime framebuffer or state RAM.
+
+Two color treatments are generated for each new mode so the review set tests
+the geometry independently of a single palette choice.
 
 ## 2026-07-16 — Direct packed framebuffer rendering
 

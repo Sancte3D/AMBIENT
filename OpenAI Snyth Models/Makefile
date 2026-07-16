@@ -8,7 +8,7 @@ CORE := firmware/src/ambient_models.c firmware/src/ambient_visuals.c firmware/sr
 AUDIO_CORE := firmware/src/ambient_models.c
 VISUAL_CORE := firmware/src/ambient_visuals.c firmware/src/ambient_palettes.c
 
-.PHONY: all verify sanitize benchmark previews audio-previews ui-previews color-ui-previews analyze verify-artifacts audit manifest clean
+.PHONY: all verify sanitize benchmark visual-benchmark previews audio-previews ui-previews color-ui-previews motion-ui-previews analyze verify-artifacts audit manifest clean
 
 all: verify benchmark
 
@@ -23,6 +23,9 @@ $(BUILD)/verify_sanitize: tests/verify.c $(CORE) | $(BUILD)
 
 $(BUILD)/benchmark: tests/benchmark.c $(AUDIO_CORE) firmware/include/ambient_models.h | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) tests/benchmark.c $(AUDIO_CORE) -o $@ $(LDLIBS)
+
+$(BUILD)/visual_benchmark: tests/visual_benchmark.c firmware/src/ambient_visuals.c firmware/include/ambient_visuals.h | $(BUILD)
+	$(CC) $(CPPFLAGS) $(CFLAGS) tests/visual_benchmark.c firmware/src/ambient_visuals.c -o $@ $(LDLIBS)
 
 $(BUILD)/render_audio: tools/render_audio.c $(AUDIO_CORE) firmware/include/ambient_models.h | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) tools/render_audio.c $(AUDIO_CORE) -o $@ $(LDLIBS)
@@ -39,6 +42,9 @@ sanitize: $(BUILD)/verify_sanitize
 benchmark: $(BUILD)/benchmark
 	./$(BUILD)/benchmark
 
+visual-benchmark: $(BUILD)/visual_benchmark
+	./$(BUILD)/visual_benchmark
+
 audio-previews: $(BUILD)/render_audio
 	./tools/generate_audio_previews.sh
 
@@ -48,7 +54,10 @@ ui-previews: $(BUILD)/render_ui
 color-ui-previews: $(BUILD)/render_ui
 	./tools/generate_color_ui_previews.sh
 
-previews: audio-previews ui-previews color-ui-previews
+motion-ui-previews: $(BUILD)/render_ui
+	./tools/generate_motion_studies.sh
+
+previews: audio-previews ui-previews color-ui-previews motion-ui-previews
 
 analyze: audio-previews
 	python3 tools/analyze_previews.py
@@ -56,6 +65,7 @@ analyze: audio-previews
 verify-artifacts:
 	./tools/verify_artifacts.sh
 	python3 tools/verify_color_previews.py
+	python3 tools/verify_motion_studies.py
 
 audit:
 	./tools/audit_clean_ip.sh

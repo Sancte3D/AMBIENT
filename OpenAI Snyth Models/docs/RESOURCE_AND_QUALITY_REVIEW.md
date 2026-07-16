@@ -24,7 +24,10 @@ reinitializes that same memory instead of keeping ten engines resident.
 - control/event stress across every delay-line wrap point;
 - framebuffer guard checks for every visual;
 - animated/non-empty framebuffer checks;
+- host render benchmark for all eighteen visual modes;
 - twelve animated palette identity, range, and RGB565 uniqueness checks;
+- 26 motion GIF checks for geometry, exact frame count, animation, chroma,
+  distinct first frames, and bounded loop seams;
 - AddressSanitizer and UndefinedBehaviorSanitizer build;
 - source-origin audit for media and external implementation references;
 - SHA-256 source manifest.
@@ -51,3 +54,9 @@ existing audio profiler and include a multi-hour underrun soak.
 
 Large sample libraries, convolution, per-model reverbs, a second framebuffer,
 and an FFT dedicated to visuals are intentionally excluded.
+
+The thirteen additional motion systems increase flash/code size and the test
+surface, but not visual-state RAM, framebuffer RAM, SPI payload size, or palette
+LUT size. The host run measured the slowest renderer at roughly 56 microseconds
+per frame; use this only as a regression baseline until the target cycle count
+is captured.

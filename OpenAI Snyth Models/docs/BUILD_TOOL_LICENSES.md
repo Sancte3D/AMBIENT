@@ -6,8 +6,9 @@ following separately installed development tool:
 
 ## Pillow
 
-- Purpose: convert C-rendered RGB frames into stable-palette animated GIFs and
-  build the labelled colour contact sheet.
+- Purpose: convert C-rendered RGB frames into stable-palette animated GIFs,
+  build labelled contact sheets, and measure user-provided motion references
+  without importing those references into firmware or generated assets.
 - Distribution: Pillow itself is not copied into this repository or linked into
   device firmware.
 - License: MIT-CMU.

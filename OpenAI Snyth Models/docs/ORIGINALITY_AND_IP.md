@@ -3,10 +3,17 @@
 ## Provenance statement
 
 The C implementation, test harnesses, preview score, documentation, names, and
-display geometry in this directory were created from a blank technical design
-for the Sancte3D AMBIENT project on 16 July 2026. No external source repository,
-sample pack, preset file, MIDI sequence, score transcription, or recording was
-used as an implementation input.
+display geometry in this directory were authored for the Sancte3D AMBIENT
+project on 16 July 2026. No external source repository, sample pack, preset
+file, MIDI sequence, score transcription, or recording was used as an
+implementation input.
+
+For the thirteen later display studies, user-supplied motion references were
+reviewed only to identify general ideas such as negative space, radial motion,
+particle flow, spectral streaks, and focus hierarchy. The translation and
+measurements are recorded in `REFERENCE_MOTION_ANALYSIS.md`. Reference media
+was not copied into this directory, traced, sampled, encoded into previews, or
+used as device runtime input.
 
 The synthesis techniques employed—oscillation, phase modulation, delay
 feedback, filtering, panning, envelopes, and procedural noise—are general
@@ -22,6 +29,10 @@ layout, model behavior, and code here were authored for this package.
 - Preview MP3s are rendered exclusively from this source and may be regenerated.
 - Display concepts are code-generated from geometric primitives.
 - Colour palettes and their anchor values were authored for this package.
+- Human, animal, clothing, hand, and other recognizable reference silhouettes
+  were deliberately replaced with non-figurative project-authored geometry.
+- All 26 motion-study GIFs can be regenerated exclusively from the C renderer
+  and the project-authored palette tables.
 
 Pillow is an external MIT-CMU-licensed build tool used only to encode the
 project's rendered frames. It is not copied into or linked with the device

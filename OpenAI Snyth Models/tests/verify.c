@@ -148,12 +148,19 @@ int main(void)
     CHECK(ambient_synth_state_bytes() <= AMBIENT_STATE_BUDGET_BYTES, "audio RAM budget");
     CHECK(ambient_visual_state_bytes() <= AMBIENT_VISUAL_STATE_BUDGET_BYTES, "visual RAM budget");
     CHECK(AMBIENT_DISPLAY_BYTES == 27200u, "packed framebuffer size");
+    CHECK(AMBIENT_VISUAL_COUNT == 18, "visual model count");
     for (int model = 0; model < AMBIENT_MODEL_COUNT; ++model) {
         CHECK(strcmp(ambient_model_name((AmbientModel)model), "UNKNOWN") != 0, "model name");
         verify_model((AmbientModel)model);
     }
     for (int visual = 0; visual < AMBIENT_VISUAL_COUNT; ++visual) {
         CHECK(strcmp(ambient_visual_name((AmbientVisual)visual), "UNKNOWN") != 0, "visual name");
+        CHECK(strcmp(ambient_visual_slug((AmbientVisual)visual), "unknown") != 0, "visual slug");
+        for (int earlier = 0; earlier < visual; ++earlier) {
+            CHECK(strcmp(ambient_visual_slug((AmbientVisual)visual),
+                         ambient_visual_slug((AmbientVisual)earlier)) != 0,
+                  "visual slugs must be unique");
+        }
         verify_visual((AmbientVisual)visual);
     }
     CHECK(ambient_palette_lut_bytes() == 32u, "palette LUT byte cost");

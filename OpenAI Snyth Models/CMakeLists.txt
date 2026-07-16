@@ -19,6 +19,9 @@ target_link_libraries(ambient_verify PRIVATE sancte_ambient_models)
 add_executable(ambient_benchmark tests/benchmark.c)
 target_link_libraries(ambient_benchmark PRIVATE sancte_ambient_models)
 
+add_executable(ambient_visual_benchmark tests/visual_benchmark.c)
+target_link_libraries(ambient_visual_benchmark PRIVATE sancte_ambient_models)
+
 add_executable(render_ambient_audio tools/render_audio.c)
 target_link_libraries(render_ambient_audio PRIVATE sancte_ambient_models)
 

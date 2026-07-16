@@ -1,4 +1,4 @@
-# Five display directions
+# Eighteen display directions
 
 All concepts render directly into the existing 320 × 170 packed luminance
 buffer. They use six already-available audio descriptors—RMS, bass, mid, high,
@@ -11,6 +11,24 @@ centroid, and beat phase—so no FFT is required inside the display renderer.
 | SPECTRAL CANYON | bass → relief; mid → depth; high → detail | immersive landscape | 13 low-resolution ridges |
 | RAIN MEMORY | high → drops; bass → ring size; RMS → glow | sound leaves visible memory | 96 bounded drops + line bands |
 | DREAM TOPOGRAPHY | bands → contour deformation; high → beacons | strange, meditative map | 17 contours, no particles required |
+
+Thirteen additional directions reuse the same state and framebuffer:
+
+| Concept | Sound mapping | Interaction feeling | Cost profile |
+|---|---|---|---|
+| FOCUS RAIL | RMS → focus brightness; time → row | explicit, calm instrument UI | five rows + geometric icons |
+| PRISM VEINS | bands → vertical reach and bend | neon spectral organism | 46 bounded streaks |
+| CRYSTAL CHOIR | high → shimmer; bass → reach | bright crystalline field | 64 mirrored needles |
+| RADIANT GATE | RMS → rays; mid → aperture | non-figurative energy portal | up to 44 rays + seven ellipses |
+| LUMEN RIBBON | bass → undulation; high → fibres | slow living signal | 25 procedural segments |
+| GLYPH RELAY | RMS/high → trace and head | legible path reveal | 16-point authored glyph |
+| PARTICLE CURRENT | bands → spiral width/aspect | cosmic flowing matter | existing 96-point capacity |
+| SIGNAL CHAMBER | high → rain speed; RMS → grid | deep wireframe room | perspective grid + 96 signals |
+| RESONANCE ORB | bands → shell deformation | tactile harmonic body | six 96-segment contours |
+| GLITCH HALO | bands → cell field deformation | digital but elegant | 84 outlined cells |
+| TWIN PULSE | bass/mid → amplitude and lobes | bilateral breathing waveform | six mirrored contours |
+| CHROMA FALL | bass/mid → shell depth/motion | liquid light architecture | eleven nested shells |
+| SOFTBURST | high → ray count/length | colorful transient bloom | up to 54 rounded rays |
 
 ## Recommended product arrangement
 
@@ -61,9 +79,12 @@ format conversion is needed.
 ## Preview files
 
 Generated base previews are stored in `ui/previews` as one animated GIF and one
-PNG per concept. `ui/previews/color` adds fifteen 96-frame colour GIFs and
-matching stills—three different palette directions for every visual. The
-labelled overview is `ui/previews/color-contact-sheet.png`.
+PNG per foundational concept. `ui/previews/color` adds fifteen 96-frame colour
+GIFs and matching stills. `ui/previews/motion-studies` adds 26 more 96-frame
+GIFs—two palette directions for each of the thirteen new systems. The labelled
+overviews are `ui/previews/color-contact-sheet.png`,
+`ui/previews/motion-primary-contact-sheet.png`, and
+`ui/previews/motion-contact-sheet.png`.
 
 Geometry and RGB values come from the C framebuffer and palette code. Pillow is
 used only to quantize those frames into a stable GIF palette and package the

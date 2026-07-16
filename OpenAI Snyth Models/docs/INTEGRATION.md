@@ -1,7 +1,7 @@
 # Firmware integration
 
 This package intentionally changes no existing firmware folder. Integrate it
-only after review by adding the two implementation files to the product build
+only after review by adding the three implementation files to the product build
 and adapting the existing engine callbacks.
 
 ## Minimal adapter sketch
@@ -58,6 +58,9 @@ Feed already-smoothed 0–1 audio features to `ambient_visual_render` at 24–30
 fps. The function writes an entire packed frame and clips every primitive to
 the display bounds. If the product reserves a status strip, apply a clip
 rectangle in the product adapter or offset the visual region before merge.
+`AmbientVisual` exposes eighteen modes; indexes 0–4 are the foundational set
+and indexes 5–17 are the newer motion studies documented in
+`MOTION_STUDY_CATALOG.md`.
 
 For colour, allocate one `uint16_t palette_lut[16]` in the display driver and
 call `ambient_palette_build_rgb565(selected_palette, phase, palette_lut)` at UI

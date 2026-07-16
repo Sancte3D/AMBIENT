@@ -4,8 +4,8 @@ An original, resource-bounded sound and display laboratory for the Sancte3D
 AMBIENT instrument. The directory name preserves the requested spelling;
 `Snyth` is intentional here.
 
-The package contains ten playable synthesis models, five audio-reactive display
-models, and twelve embedded colour palettes. Every sound and display geometry
+The package contains ten playable synthesis models, eighteen audio-reactive
+display models, and twelve embedded colour palettes. Every sound and display geometry
 is generated at runtime from original C code. No
 recorded samples, MIDI files, extracted presets, transcribed melodies, or
 third-party source code are required.
@@ -32,7 +32,8 @@ encoder vocabulary.
 ## Display models
 
 The renderers target a 320 × 170 packed 4-bit framebuffer and need no second
-framebuffer or FFT:
+framebuffer or FFT. Five foundational systems cover landscapes, particles, and
+contours:
 
 - RESONANT GARDEN — bass grows stems, treble releases luminous pollen.
 - ORBITAL LOOM — spectral energy weaves rotating harmonic threads.
@@ -40,12 +41,24 @@ framebuffer or FFT:
 - RAIN MEMORY — transients fall, low energy opens lingering rings.
 - DREAM TOPOGRAPHY — the sound continuously redraws a contour-map dream.
 
+Thirteen additional systems explore sound-reactive menu focus, neon spectrum
+veins, crystalline needles, abstract radial gates, organic signal ribbons,
+path drawing, particle currents, wireframe rain, waveform shells, glitch
+halos, bilateral pulses, falling chroma, and radial softbursts. They translate
+high-level motion principles into newly authored geometric C renderers; no
+reference pixels or recognizable reference figures are included.
+
 The same nibble buffer can act as a 16-colour palette index. Twelve slowly
 animated RGB565 LUTs add colour for only 32 bytes of LUT storage. See
-[docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings, five base GIFs,
-and fifteen colour studies in `ui/previews/color`.
+[docs/UI_MODELS.md](docs/UI_MODELS.md) for control mappings,
+[docs/MOTION_STUDY_CATALOG.md](docs/MOTION_STUDY_CATALOG.md) for the new
+systems, and [docs/REFERENCE_MOTION_ANALYSIS.md](docs/REFERENCE_MOTION_ANALYSIS.md)
+for the clean translation record. The package includes 46 GIFs: five base
+previews, fifteen foundational colour studies, and 26 new motion studies.
 
 ![Fifteen colour display studies](ui/previews/color-contact-sheet.png)
+
+![Thirteen new motion systems](ui/previews/motion-primary-contact-sheet.png)
 
 ## Build and verify
 
@@ -57,6 +70,7 @@ Requires a C11 compiler, `make`, and `rg`. Preview generation additionally uses
 make verify
 make sanitize
 make benchmark
+make visual-benchmark
 make previews
 make manifest
 sha256sum -c SOURCE_MANIFEST.sha256
