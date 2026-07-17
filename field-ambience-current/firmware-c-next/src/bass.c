@@ -77,6 +77,13 @@ void bass_init(void) {
 
 void bass_set_depth(float d) { depth = dsp_clampf(d, 0.0f, 1.0f); }
 
+/* r19.31 — portamento time for the root glide (HARMONY bass modes: ROOT snaps,
+ * DRIFT glides slowly, FIFTH sits in between). */
+void bass_set_glide(float tau_s) {
+    if (tau_s < 0.001f) tau_s = 0.001f;
+    freq_glide = dsp_smooth_coef(tau_s);
+}
+
 void bass_note(float lowest_freq_hz) {
     if (lowest_freq_hz < 1.0f) return;
     float sub_f  = lowest_freq_hz * 0.25f;         /* 2 octaves down */

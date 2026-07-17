@@ -47,6 +47,15 @@ void bloom_tick(uint32_t now_ms);
 void bloom_all_off(void);
 
 /* Observability (Tests/UI). */
+/* r19.31 — separate HARMONY bass under the chord (own octave/glide, dry):
+ *   OFF   kein Bass · ROOT Grundton (schneller Wechsel) ·
+ *   FIFTH Root oder Quinte (kleinster Uebergang) · DRIFT Root, langsames Glide. */
+typedef enum { BLOOM_BASS_OFF = 0, BLOOM_BASS_ROOT, BLOOM_BASS_FIFTH,
+               BLOOM_BASS_DRIFT, BLOOM_BASS_COUNT } bloom_bass_t;
+void bloom_set_bassmode(int mode);
+int  bloom_bassmode(void);          /* aktueller Modus (Test/UI) */
+int  bloom_cycle_bassmode(void);    /* zum naechsten Modus, gibt den neuen zurueck */
+
 int  bloom_pending(void);        /* noch nicht gestartete Akkordtoene */
 int  bloom_active_cell(void);    /* zuletzt gedrueckte Zelle, -1 = keine */
 int  bloom_centroid(void);       /* MIDI-Schwerpunkt des akt. Akkords (Test/UI) */

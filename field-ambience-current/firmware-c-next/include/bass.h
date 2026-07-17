@@ -41,6 +41,9 @@ void bass_note(float lowest_freq_hz);
 /* Release both layers into their exponential tails (all notes lifted). */
 void bass_release(void);
 
+/* r19.31 — set the root-glide portamento time (s). Default 0.12 s. */
+void bass_set_glide(float tau_s);
+
 /* ADD the bass into the dry buffers (mono → both channels) and each layer's
  * own send (sub 0.03, deep 0.08) into the reverb-send buffers. */
 void bass_render_mix(float *dry_L, float *dry_R,

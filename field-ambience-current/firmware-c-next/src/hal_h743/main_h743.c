@@ -153,6 +153,9 @@ static void hal_set_cell(int mode) {
         case CELL_LAND:  landscape_all_off(0);     break;
         default:         engine_all_off();         break;   /* NOTE latches */
     }
+    /* r19.31: HARMONY owns the bass (own octave/glide per mode); NOTE/LAND let
+     * the engine auto-follow the lowest held note again. */
+    engine_bass_follow(mode != CELL_HARMONY);
     s_cell_mode = mode;
 }
 

@@ -137,7 +137,17 @@ static float lowest_held(void) {
 }
 
 /* Re-point the bass at the current lowest note, or release it if none held. */
+/* r19.31: when a cell mode owns the bass explicitly (HARMONY bass modes), the
+ * engine stops auto-following the lowest held note. NOTE/LAND keep following. */
+static bool s_bass_follow = true;
+void engine_bass_follow(bool on) { s_bass_follow = on; }
+void engine_bass_set(float freq_hz) { if (freq_hz > 1.0f) bass_note(freq_hz); }
+void engine_bass_off(void)          { bass_release(); }
+void engine_bass_glide(float tau_s) { bass_set_glide(tau_s); }
+bool engine_bass_active(void)       { return bass_active(); }
+
 static void refresh_bass(void) {
+    if (!s_bass_follow) return;                /* a cell mode drives it itself */
     float lo = lowest_held();
     if (lo > 0.0f) bass_note(lo);
     else           bass_release();

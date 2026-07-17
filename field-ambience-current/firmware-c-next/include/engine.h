@@ -39,6 +39,15 @@ void engine_motif_strike(float freq_hz, float amp);
  * shimmer over the pad body); no pad, no bass. */
 void engine_sparkle_strike(float freq_hz, float amp);
 
+/* r19.31 — bass ownership. engine_bass_follow(false) stops the auto-bass from
+ * tracking the lowest held note so a cell mode can drive it explicitly via
+ * engine_bass_set()/off()/glide(); (true) restores auto-follow. */
+void engine_bass_follow(bool on);
+void engine_bass_set(float freq_hz);
+void engine_bass_off(void);
+void engine_bass_glide(float tau_s);
+bool engine_bass_active(void);      /* bass voice sounding? (test/UI) */
+
 /* r19.20 — "user is playing" for the generative gate. controls.c feeds the
  * PHYSICAL key state (any cell down) via press/release edges. Latched hold
  * voices deliberately do NOT count: they are standing texture, and gating

@@ -30,6 +30,54 @@ static bool    s_have_prev;
 static int8_t  s_active_cell;      /* -1 = keiner                             */
 static bool    s_hold;             /* Akkord gelatcht (HOLD beim Druck)       */
 static uint32_t s_rng;
+static int     s_bassmode = BLOOM_BASS_DRIFT;  /* r19.31 separater Bass       */
+static int     s_bass_pc  = -1;    /* letzte Bass-Pitch-Class (FIFTH-Wahl)    */
+
+void bloom_set_bassmode(int mode) {
+    if (mode < 0 || mode >= BLOOM_BASS_COUNT) mode = BLOOM_BASS_DRIFT;
+    s_bassmode = mode;
+    if (mode == BLOOM_BASS_OFF) { engine_bass_off(); s_bass_pc = -1; }
+}
+int bloom_bassmode(void) { return s_bassmode; }
+int bloom_cycle_bassmode(void) {
+    bloom_set_bassmode((s_bassmode + 1) % BLOOM_BASS_COUNT);
+    return s_bassmode;
+}
+
+/* semitone distance between two pitch classes (0..6) */
+static int pc_dist(int a, int b) {
+    int d = (a - b) % 12; if (d < 0) d += 12;
+    return d > 6 ? 12 - d : d;
+}
+
+/* r19.31: drive the separate bass for the current chord root (chord register;
+ * bass.c drops two octaves). ROOT snaps, DRIFT glides slowly, FIFTH picks root
+ * or fifth by the smallest bass move. */
+static void apply_bass(int root_midi) {
+    int fifth_midi = root_midi + 7;
+    switch (s_bassmode) {
+        case BLOOM_BASS_OFF:
+            engine_bass_off(); s_bass_pc = -1; break;
+        case BLOOM_BASS_ROOT:
+            engine_bass_glide(0.02f);
+            engine_bass_set(tuning_hz((float)root_midi));
+            s_bass_pc = ((root_midi % 12) + 12) % 12; break;
+        case BLOOM_BASS_FIFTH: {
+            int target = root_midi;
+            if (s_bass_pc >= 0 &&
+                pc_dist(fifth_midi % 12, s_bass_pc) < pc_dist(root_midi % 12, s_bass_pc))
+                target = fifth_midi;
+            engine_bass_glide(0.12f);
+            engine_bass_set(tuning_hz((float)target));
+            s_bass_pc = ((target % 12) + 12) % 12; break;
+        }
+        case BLOOM_BASS_DRIFT:
+        default:
+            engine_bass_glide(0.70f);
+            engine_bass_set(tuning_hz((float)root_midi));
+            s_bass_pc = ((root_midi % 12) + 12) % 12; break;
+    }
+}
 
 void bloom_init(void) {
     for (int i = 0; i < POOL; ++i) s_onset[i].armed = false;
@@ -58,6 +106,7 @@ void bloom_press(uint8_t cell, float velocity_amp, bool hold, uint32_t now_ms) {
     int cn = brain_chord(brain_role_degree((int)cell), chord, BRAIN_MAX_CHORD);
     if (cn <= 0) return;
 
+    int root_midi = chord[0];           /* brain_chord voices the root first    */
     int m = cn > MAXV ? MAXV : cn;      /* keep root..(4th tone): the essentials */
     int pc[MAXV];
     for (int i = 0; i < m; ++i) pc[i] = ((chord[i] % 12) + 12) % 12;
@@ -90,6 +139,8 @@ void bloom_press(uint8_t cell, float velocity_amp, bool hold, uint32_t now_ms) {
         s_onset[i].sparkle = velocity_amp * rp->sparkle_gain;
         t += STEP_MS + jitter();
     }
+
+    apply_bass(root_midi);              /* r19.31: separate bass under the chord */
 
     for (int i = 0; i < n; ++i) s_prev_pitch[i] = voiced[i];
     s_have_prev     = true;
@@ -124,6 +175,8 @@ void bloom_all_off(void) {
         s_onset[i].armed = false;
         engine_note_off((uint8_t)i);
     }
+    if (s_bassmode != BLOOM_BASS_OFF) engine_bass_off();   /* r19.31 */
+    s_bass_pc     = -1;
     s_prev_n      = 0;
     s_active_cell = -1;
     s_hold        = false;

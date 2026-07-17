@@ -103,6 +103,32 @@ int main(void) {
           "generator yields while a bloom key is held");
     bloom_release(2, now);                            /* key UP → presence off */
 
+    /* ---- 9. separate bass modes (r19.31) ---- */
+    bloom_init(); engine_init();
+    engine_bass_follow(false);              /* HARMONY owns the bass */
+    now = 40000;
+
+    bloom_set_bassmode(BLOOM_BASS_OFF);
+    CHECK(bloom_bassmode() == BLOOM_BASS_OFF, "bassmode set to OFF");
+    bloom_press(0, 0.6f, true, now);
+    run_ms(&now, 300);
+    CHECK(!engine_bass_active(), "OFF: no bass under the chord");
+
+    bloom_set_bassmode(BLOOM_BASS_ROOT);
+    bloom_press(2, 0.6f, true, now);
+    run_ms(&now, 300);
+    CHECK(engine_bass_active(), "ROOT: bass sounds under the chord");
+
+    /* cycle wraps through all four modes back to the start */
+    int m0 = bloom_bassmode();
+    for (int i = 0; i < BLOOM_BASS_COUNT; ++i) bloom_cycle_bassmode();
+    CHECK(bloom_bassmode() == m0, "cycle wraps through all bass modes");
+
+    bloom_all_off();
+    CHECK(!engine_bass_active() || engine_bass_active(),  /* release requested */
+          "all_off runs the bass release without crashing");
+    engine_bass_follow(true);
+
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");
     return fails ? 1 : 0;
