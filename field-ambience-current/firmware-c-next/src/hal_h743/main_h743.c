@@ -104,7 +104,8 @@ static void ls_bed  (bool on, uint8_t c)  {
     else    engine_note_off(c);
 }
 static void ls_motif(uint8_t c)           {
-    engine_motif_strike(tuning_hz((float)brain_cell_root(c)), MOTIF_LAYER_AMP);
+    /* +1 octave: Motif is the "high light" role — a fragile bell above the bed. */
+    engine_motif_strike(tuning_hz((float)brain_cell_root(c) + 12.0f), MOTIF_LAYER_AMP);
 }
 static void ls_atmos(bool on)             {
     engine_set_atmosphere(on ? (s_atmos_base > ATMOS_LAYER_HI ? s_atmos_base

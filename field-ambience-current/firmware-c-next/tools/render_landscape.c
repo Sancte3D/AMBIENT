@@ -33,7 +33,7 @@ static void ls_bed  (bool on, uint8_t c) {
     else    engine_note_off(c);
 }
 static void ls_motif(uint8_t c)          {
-    engine_motif_strike(tuning_hz((float)brain_cell_root(c)), MOTIF_AMP);
+    engine_motif_strike(tuning_hz((float)brain_cell_root(c) + 12.0f), MOTIF_AMP);
 }
 static void ls_atmos(bool on)            {
     engine_set_atmosphere(on ? ATMOS_HI : g_atmos_base);
@@ -57,25 +57,19 @@ static const ev_t SCRIPT[] = {
     /* --- Tokyo City: build the field layer by layer --- */
     { 0.0f, EV_WORLD, 0, 0 }, { 0.0f, EV_ATMOSBASE, 35, 0 },
     { 0.5f, EV_PRESS, 0, 1 },                       /* latch DRONE           */
-    { 4.0f, EV_PRESS, 1, 1 },                       /* latch BED (cell 1)    */
-    { 8.0f, EV_PRESS, 2, 0 }, { 8.15f, EV_REL, 2, 0 },   /* MOTIF impulse     */
-    {11.0f, EV_PRESS, 2, 0 }, {11.15f, EV_REL, 2, 0 },
-    {13.0f, EV_PRESS, 3, 1 },                       /* latch ATMOS (wind up) */
-    {16.0f, EV_PRESS, 2, 0 }, {16.15f, EV_REL, 2, 0 },
-    {19.0f, EV_REL,   3, 0 }, {19.0f, EV_PRESS, 3, 1 }, /* atmos toggle off→on via latch */
-    {20.0f, EV_PRESS, 3, 1 },                       /* second HOLD = ATMOS off */
-    {22.0f, EV_PRESS, 2, 0 }, {22.15f, EV_REL, 2, 0 },
-    {26.0f, EV_PRESS, 1, 1 },                       /* BED off (second HOLD) */
-    {28.0f, EV_PRESS, 0, 1 },                       /* DRONE off             */
+    { 5.0f, EV_PRESS, 1, 1 },                       /* latch BED (cell 1)    */
+    {11.0f, EV_PRESS, 2, 0 }, {11.15f, EV_REL, 2, 0 },   /* one bell, room to bloom */
+    {15.0f, EV_PRESS, 3, 1 },                       /* latch ATMOS (wind up) */
+    {21.0f, EV_PRESS, 2, 0 }, {21.15f, EV_REL, 2, 0 },   /* a second, distant  */
+    {26.0f, EV_PRESS, 3, 1 },                       /* second HOLD = ATMOS off */
+    {29.0f, EV_PRESS, 1, 1 },                       /* BED off               */
+    {31.0f, EV_PRESS, 0, 1 },                       /* DRONE off             */
     /* --- After Hours: darker minor world --- */
-    {31.0f, EV_WORLD, 3, 0 }, {31.0f, EV_ATMOSBASE, 50, 0 },
-    {31.5f, EV_PRESS, 0, 1 },                       /* latch DRONE           */
-    {34.0f, EV_PRESS, 1, 1 },                       /* latch BED             */
-    {37.0f, EV_PRESS, 3, 1 },                       /* latch ATMOS           */
-    {39.0f, EV_PRESS, 2, 0 }, {39.15f, EV_REL, 2, 0 },
-    {42.0f, EV_PRESS, 2, 0 }, {42.15f, EV_REL, 2, 0 },
-    {45.0f, EV_PRESS, 2, 0 }, {45.15f, EV_REL, 2, 0 },
-    {49.0f, EV_WORLD, 3, 0 },                        /* (hold world; let it ring) */
+    {34.0f, EV_WORLD, 3, 0 }, {34.0f, EV_ATMOSBASE, 50, 0 },
+    {34.5f, EV_PRESS, 0, 1 },                       /* latch DRONE           */
+    {38.0f, EV_PRESS, 1, 1 },                       /* latch BED             */
+    {42.0f, EV_PRESS, 3, 1 },                       /* latch ATMOS           */
+    {47.0f, EV_PRESS, 2, 0 }, {47.15f, EV_REL, 2, 0 },  /* a lone bell, far off */
 };
 #define NEV (int)(sizeof(SCRIPT)/sizeof(SCRIPT[0]))
 #define TOTAL_S 56

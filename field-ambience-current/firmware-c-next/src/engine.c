@@ -300,11 +300,13 @@ static void melody_strike(float freq_hz, float amp) {
     else                   pluck_note(freq_hz, amp);
 }
 
-/* r19.27 — Landscape "Motif" layer: a bare fragile-voice impulse (pluck or
- * glass per VOICE), no pad swell and no bass under it — the brittle,
- * C418-like single event the layer role calls for. */
+/* r19.27 — Landscape "Motif" layer: a fragile GLASS/bell impulse that blooms
+ * into the shared hall (2.5 s ring, 0.5 send). Deliberately the glass voice,
+ * NOT the Karplus-Strong string and NOT following the global VOICE menu — a
+ * bare KS pluck over the slow bed read as a random plucked guitar, the
+ * opposite of the brittle, C418-like single event this role wants. */
 void engine_motif_strike(float freq_hz, float amp) {
-    melody_strike(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
+    glass_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
