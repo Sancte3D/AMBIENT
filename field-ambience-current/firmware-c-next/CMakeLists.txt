@@ -123,7 +123,8 @@ set(DSP_SOURCES
     src/knobs.c         # r19.21: encoder push short/long actions
     src/overlay.c       # r19.21: transient knob-value overlay
     src/scenes.c        # r19.22: parameter locks companion — 5 scene slots
-    src/bloom.c         # r19.23: chord-bloom cell mode + voice-leading
+    src/bloom.c         # r19.23/r19.29: Harmony cell mode (chord + voice-leading)
+    src/voicelead.c     # r19.29: minimal-movement voicing
     src/landscape.c     # r19.27: layer-role cell mode (drone/bed/motif/atmos/memory)
     src/gesture.c       # r19.25: gesture loop (record/replay cell events)
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade

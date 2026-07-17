@@ -42,4 +42,13 @@ int brain_chord(int degree, int *out_midi, int max);
  * rising left→right. Shift = +1 octave is applied by the caller. */
 int brain_cell_root(int cell);
 
+/* 1 if the current world reads as minor/modal-minor (dorian/phrygian/aeolian),
+ * 0 if major-ish. */
+int brain_is_minor(void);
+
+/* r19.29 HARMONY mode: the scale degree (1-indexed) of cell 0..4's chord
+ * role for the current world — I ii IV V vi (major) / i III IV v VII (minor).
+ * Feed to brain_chord() to build the voiced chord. */
+int brain_role_degree(int cell);
+
 #endif

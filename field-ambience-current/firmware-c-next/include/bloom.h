@@ -50,5 +50,7 @@ void bloom_all_off(void);
 int  bloom_pending(void);        /* noch nicht gestartete Akkordtoene */
 int  bloom_active_cell(void);    /* zuletzt gedrueckte Zelle, -1 = keine */
 int  bloom_centroid(void);       /* MIDI-Schwerpunkt des akt. Akkords (Test/UI) */
+int  bloom_voice_pitch(int i);   /* r19.29: Tonhoehe der Akkordstimme i, -1 leer */
+int  bloom_voice_count(void);    /* r19.29: Anzahl klingender Akkordstimmen (≤4) */
 
 #endif

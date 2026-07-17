@@ -84,8 +84,9 @@ static void hal_set_age        (float v)   { engine_set_age(v); }
 static void hal_set_echo       (float v)   { engine_set_echo(v); }
 static void hal_set_blur       (float v)   { engine_set_blur(v); }
 static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
-/* r19.23/r19.27: cell play mode — 0 Note, 1 Bloom, 2 Landscape. */
-enum { CELL_NOTE = 0, CELL_BLOOM = 1, CELL_LAND = 2 };
+/* cell play mode — 0 Note (r19.26), 1 Harmony (r19.29, chord + voice-leading),
+ * 2 Landscape (r19.27, sound layers). */
+enum { CELL_NOTE = 0, CELL_HARMONY = 1, CELL_LAND = 2 };
 static int s_cell_mode = CELL_NOTE;
 static uint32_t s_field_seed = 0x1234u;             /* r19.24: New-Field seed source */
 static const char *const STEER_NAME[5] =            /* r19.24: cell → intent */
@@ -131,7 +132,7 @@ static void route_cell(uint8_t c, bool pressed, uint32_t now) {
     if (controls_modifier_active(MOD_GENERATE)) {
         if (pressed) { engine_generative_nudge(c, now);
                        overlay_show("STEER", STEER_NAME[c], now, 0); }
-    } else if (s_cell_mode == CELL_BLOOM) {
+    } else if (s_cell_mode == CELL_HARMONY) {
         if (pressed) bloom_press(c, CELL_TAP_AMP,
                                  controls_modifier_active(MOD_HOLD), now);
         else         bloom_release(c, now);
@@ -148,7 +149,7 @@ static void hal_set_cell(int mode) {
     if (mode == s_cell_mode) return;
     /* Modewechsel: die Stimmen/Latches des verlassenen Modus sauber beenden. */
     switch (s_cell_mode) {
-        case CELL_BLOOM: bloom_all_off();          break;
+        case CELL_HARMONY: bloom_all_off();          break;
         case CELL_LAND:  landscape_all_off(0);     break;
         default:         engine_all_off();         break;   /* NOTE latches */
     }

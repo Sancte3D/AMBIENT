@@ -27,7 +27,7 @@ static void run_ms(uint32_t *now, uint32_t ms) {
 }
 
 int main(void) {
-    printf("== chord bloom (r19.23) ==\n");
+    printf("== harmony chord mode (r19.29, was bloom r19.23) ==\n");
     dsp_init(); brain_init(); engine_init(); bloom_init();
     uint32_t now = 10000;
 
@@ -43,16 +43,25 @@ int main(void) {
     CHECK(bloom_pending() == 0, "all onsets fired (%d pending)", bloom_pending());
     int v_full = engine_active_voices();
     CHECK(v_full >= 3, "full chord has >=3 voices (%d)", v_full);
-    CHECK(v_full <= 5, "chord capped at the 5-voice pool (%d)", v_full);
+    CHECK(v_full <= 4, "chord capped at 4 voices (r19.29) (%d)", v_full);
+    CHECK(bloom_voice_count() <= 4, "harmony holds <=4 voices (%d)", bloom_voice_count());
 
-    /* ---- 3. voice-leading: new chord centroid near the previous one ---- */
+    /* ---- 3. voice-leading: new chord centroid near the previous one, and at
+     *        least one voice held on the SAME exact pitch (common tone) ---- */
     int c_a = bloom_centroid();
-    bloom_press(3, 0.6f, false, now);                 /* different degree */
+    int prev_pitch[4]; int prev_cnt = bloom_voice_count();
+    for (int i = 0; i < prev_cnt; ++i) prev_pitch[i] = bloom_voice_pitch(i);
+    bloom_press(3, 0.6f, false, now);                 /* different role */
     run_ms(&now, 900);
     int c_b = bloom_centroid();
     CHECK(abs(c_b - c_a) <= 6,
           "voice-leading keeps the register (|%d-%d|=%d <= 6)",
           c_b, c_a, abs(c_b - c_a));
+    int common = 0;
+    for (int i = 0; i < bloom_voice_count(); ++i)
+        for (int j = 0; j < prev_cnt; ++j)
+            if (bloom_voice_pitch(i) == prev_pitch[j]) common = 1;
+    CHECK(common, "at least one common tone held on the same pitch");
 
     /* ---- 4. mono-chord: still within the pool, active cell tracks ---- */
     CHECK(bloom_active_cell() == 3, "active cell follows the last press");

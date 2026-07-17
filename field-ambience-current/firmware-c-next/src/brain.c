@@ -128,3 +128,20 @@ int brain_cell_root(int cell) {
     const int *pent = mode_is_minor(s_mode) ? PENT_MIN : PENT_MAJ;
     return s_key + pent[cell];
 }
+
+int brain_is_minor(void) { return mode_is_minor(s_mode); }
+
+/* r19.29 — the five most useful chord ROLES per world (HARMONY cell mode),
+ * as 1-indexed scale degrees, instead of a flat degrees 1..5:
+ *   major world:  I  ii  IV  V   vi   (home, motion, opening, tension, emotion)
+ *   minor/modal:  i  III IV  v   VII  (home, lift, opening, tension, colour)
+ * The chord for a role is still built by brain_chord() from the world scale,
+ * so every note stays in the pitch world — no accidental chromatics. */
+static const int ROLE_MAJ[5] = { 1, 2, 4, 5, 6 };
+static const int ROLE_MIN[5] = { 1, 3, 4, 5, 7 };
+
+int brain_role_degree(int cell) {
+    if (cell < 0) cell = 0;
+    if (cell > 4) cell = 4;
+    return (mode_is_minor(s_mode) ? ROLE_MIN : ROLE_MAJ)[cell];
+}

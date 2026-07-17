@@ -56,7 +56,7 @@ static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
 static const char * const SYNTH_NAMES[7] = {
     "Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"
 };
-static const char * const CELL_NAMES[3] = { "Note", "Bloom", "Land" };
+static const char * const CELL_NAMES[3] = { "Note", "Harmony", "Land" };
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }

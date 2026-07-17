@@ -6,10 +6,13 @@
 #include "engine.h"
 #include "brain.h"
 #include "tuning.h"
+#include "voicelead.h"
 
-#define POOL      5          /* Chord-Sources 0..4 (= Base-Cell-Sources) */
-#define STEP_MS   100u       /* Grund-Abstand zwischen Akkordtoenen      */
-#define JITTER_MS 70u        /* + 0..70 ms (deterministisch) pro Ton      */
+#define POOL      5          /* Chord-Sources 0..4 (= Base-Cell-Sources)  */
+#define MAXV      4          /* r19.29: max 4 sustained chord voices       */
+#define STEP_MS   100u       /* Grund-Abstand zwischen Akkordtoenen        */
+#define JITTER_MS 70u        /* + 0..70 ms (deterministisch) pro Ton       */
+#define ANCHOR    64         /* VOICE_CENTER — Register des ersten Akkords */
 
 typedef struct {
     bool     armed;          /* wartet auf seinen Einsatz  */
@@ -19,17 +22,17 @@ typedef struct {
 } onset_t;
 
 static onset_t s_onset[POOL];
-static int     s_prev_n;      /* Anzahl Toene des aktuell klingenden Akkords */
-static int     s_prev_centroid;
+static int     s_prev_pitch[MAXV]; /* aktuell klingende Akkord-Tonhoehen      */
+static int     s_prev_n;           /* Anzahl Toene des aktuell klingenden Akk. */
 static bool    s_have_prev;
-static int8_t  s_active_cell; /* -1 = keiner                                */
-static bool    s_hold;        /* Akkord gelatcht (HOLD beim Druck)          */
+static int8_t  s_active_cell;      /* -1 = keiner                             */
+static bool    s_hold;             /* Akkord gelatcht (HOLD beim Druck)       */
 static uint32_t s_rng;
 
 void bloom_init(void) {
     for (int i = 0; i < POOL; ++i) s_onset[i].armed = false;
+    for (int i = 0; i < MAXV; ++i) s_prev_pitch[i] = 0;
     s_prev_n = 0;
-    s_prev_centroid = 0;
     s_have_prev = false;
     s_active_cell = -1;
     s_hold = false;
@@ -41,31 +44,25 @@ static uint32_t jitter(void) {          /* 0..JITTER_MS, deterministisch */
     return (s_rng >> 9) % (JITTER_MS + 1u);
 }
 
-/* Voice-Leading: brain_chord zentriert um VOICE_CENTER. Den ganzen neuen
- * Akkord um ganze Oktaven verschieben, so dass sein Schwerpunkt dem des
- * vorherigen Akkords am naechsten liegt — kuerzester Weg auf Block-Ebene,
- * ohne Stimmkreuzungen (die brain-interne Voicing bleibt erhalten). */
-static void voice_lead(int *chord, int n) {
-    if (n <= 0 || !s_have_prev) return;
-    int sum = 0;
-    for (int i = 0; i < n; ++i) sum += chord[i];
-    int centroid = sum / n;
-    /* naechste Oktav-Verschiebung k*12, die |centroid + k*12 - prev| minimiert */
-    int k = (s_prev_centroid - centroid);
-    k = (k >= 0) ? (k + 6) / 12 : -(( -k + 6) / 12);
-    int shift = k * 12;
-    for (int i = 0; i < n; ++i) chord[i] += shift;
-}
-
+/* r19.29 HARMONY: cell → world chord ROLE (brain_role_degree), then place the
+ * new chord's pitch classes by MINIMAL-MOVEMENT voice leading (voicelead.c)
+ * against the sounding chord — common tones stay put, only the voices that
+ * must change move, and each keeps its own source so it glides, not re-strikes.
+ * Capped at 4 sustained voices (clean level, no 20-voice pile-up). */
 void bloom_press(uint8_t cell, float velocity_amp, bool hold, uint32_t now_ms) {
     if (cell >= POOL) return;
 
     int chord[BRAIN_MAX_CHORD];
-    int n = brain_chord((int)cell + 1, chord, BRAIN_MAX_CHORD);
-    if (n <= 0) return;
-    if (n > POOL) n = POOL;              /* Voice-Budget: max 5 Toene */
+    int cn = brain_chord(brain_role_degree((int)cell), chord, BRAIN_MAX_CHORD);
+    if (cn <= 0) return;
 
-    voice_lead(chord, n);
+    int m = cn > MAXV ? MAXV : cn;      /* keep root..(4th tone): the essentials */
+    int pc[MAXV];
+    for (int i = 0; i < m; ++i) pc[i] = ((chord[i] % 12) + 12) % 12;
+
+    int voiced[MAXV];
+    int n = voicelead(s_have_prev ? s_prev_pitch : 0, s_have_prev ? s_prev_n : 0,
+                      pc, m, ANCHOR, voiced);
 
     /* Wurde der Akkord kleiner als der vorherige, die ueberzaehligen
      * Pool-Stimmen freigeben (Voice-Leading laesst die uebrigen gleiten). */
@@ -81,14 +78,12 @@ void bloom_press(uint8_t cell, float velocity_amp, bool hold, uint32_t now_ms) {
     for (int i = 0; i < n; ++i) {
         s_onset[i].armed  = true;
         s_onset[i].due_ms = t;
-        s_onset[i].freq   = tuning_hz((float)chord[i]);
+        s_onset[i].freq   = tuning_hz((float)voiced[i]);
         s_onset[i].amp    = velocity_amp;
         t += STEP_MS + jitter();
     }
 
-    int sum = 0;
-    for (int i = 0; i < n; ++i) sum += chord[i];
-    s_prev_centroid = sum / n;
+    for (int i = 0; i < n; ++i) s_prev_pitch[i] = voiced[i];
     s_have_prev     = true;
     s_prev_n        = n;
     s_active_cell   = (int8_t)cell;
@@ -122,7 +117,7 @@ void bloom_all_off(void) {
     s_prev_n      = 0;
     s_active_cell = -1;
     s_hold        = false;
-    /* s_have_prev / s_prev_centroid bleiben: der naechste Akkord soll
+    /* s_have_prev / s_prev_pitch bleiben: der naechste Akkord soll
      * weiterhin ins zuletzt gehoerte Register voice-leaden. */
 }
 
@@ -133,4 +128,16 @@ int bloom_pending(void) {
 }
 
 int bloom_active_cell(void) { return s_active_cell; }
-int bloom_centroid(void)    { return s_prev_centroid; }
+int bloom_centroid(void) {
+    if (s_prev_n <= 0) return ANCHOR;
+    int sum = 0;
+    for (int i = 0; i < s_prev_n; ++i) sum += s_prev_pitch[i];
+    return sum / s_prev_n;
+}
+
+/* r19.29: read a sounding chord voice's pitch (for the display needles / tests);
+ * -1 when that slot is silent. */
+int bloom_voice_pitch(int i) {
+    return (i >= 0 && i < s_prev_n) ? s_prev_pitch[i] : -1;
+}
+int bloom_voice_count(void) { return s_prev_n; }
