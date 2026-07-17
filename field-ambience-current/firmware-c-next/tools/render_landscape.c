@@ -29,8 +29,15 @@
 static float g_atmos_base = 0.35f;
 static void ls_drone(bool on)            { engine_set_drone(on); }
 static void ls_bed  (bool on, uint8_t c) {
-    if (on) engine_note_on(c, tuning_hz((float)brain_cell_root(c)), BED_AMP);
-    else    engine_note_off(c);
+    (void)c;                                  /* r19.35: soft breathing tonic triad */
+    if (on) {
+        int chord[3];
+        int n = brain_color_chord(1, 0, chord, 3);
+        for (int i = 0; i < n && i < 3; ++i)
+            engine_note_on((uint8_t)(1 + i), tuning_hz((float)chord[i]), BED_AMP * 0.62f);
+    } else {
+        for (int i = 0; i < 3; ++i) engine_note_off((uint8_t)(1 + i));
+    }
 }
 static void ls_motif(uint8_t c)          {
     engine_motif_strike(tuning_hz((float)brain_cell_root(c) + 12.0f), MOTIF_AMP);

@@ -102,9 +102,21 @@ static const char *const STEER_NAME[5] =            /* r19.24: cell → intent *
 #define MOTIF_LAYER_AMP 0.20f
 #define ATMOS_LAYER_HI  0.72f
 static void ls_drone(bool on)             { engine_set_drone(on); }
+/* r19.35: BED is a soft breathing tonic triad (pad sources 1..3), not a lone
+ * tone — the "broad slowly-breathing chord" the layer role wants. Uses the
+ * world's home chord (degree I) as a stable harmonic ground under the motif. */
+#define BED_SRC0 1
 static void ls_bed  (bool on, uint8_t c)  {
-    if (on) engine_note_on(c, tuning_hz((float)brain_cell_root(c)), BED_LAYER_AMP);
-    else    engine_note_off(c);
+    (void)c;
+    if (on) {
+        int chord[3];
+        int n = brain_color_chord(1, 0 /*PURE triad*/, chord, 3);
+        for (int i = 0; i < n && i < 3; ++i)
+            engine_note_on((uint8_t)(BED_SRC0 + i), tuning_hz((float)chord[i]),
+                           BED_LAYER_AMP * 0.62f);
+    } else {
+        for (int i = 0; i < 3; ++i) engine_note_off((uint8_t)(BED_SRC0 + i));
+    }
 }
 static void ls_motif(uint8_t c)           {
     /* +1 octave: Motif is the "high light" role — a fragile bell above the bed. */
