@@ -226,10 +226,10 @@ static void test_key_and_voice_slots(void) {
           "set_tuning Just (got %d)", st.tuning);
     menu_push();
 
-    /* VOICE: slot 3, 3 options, defaults to Pad, fires the callback */
+    /* VOICE: slot 3, 4 options (Pad/String/Glass/Ember r19.28), defaults to Pad */
     menu_rotate(1);
     CHECK(menu_current() == MP_VOICE, "slot 3 should be VOICE (got %d)", menu_current());
-    CHECK(menu_value_count(MP_VOICE) == 3, "VOICE has 3 options");
+    CHECK(menu_value_count(MP_VOICE) == 4, "VOICE has 4 options");
     CHECK(strcmp(menu_current_value_text(), "Pad") == 0,
           "default voice is Pad: got %s", menu_current_value_text());
     menu_push();

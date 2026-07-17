@@ -292,14 +292,15 @@ void engine_init(void) {
  * needs SOME second colour, that was the whole r18.89 point). */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 2) voice_idx = 2;
+    if (voice_idx > 3) voice_idx = 3;    /* r19.28: 3 = Ember (optional)   */
     melody_voice = voice_idx;
 }
 
 /* Fire the selected melody voice (used by cell presses + sparkles). */
 static void melody_strike(float freq_hz, float amp) {
-    if (melody_voice == 2) glass_note(freq_hz, amp);
-    else                   pluck_note(freq_hz, amp);
+    if      (melody_voice == 3) ember_note(freq_hz, amp);   /* r19.28 analog */
+    else if (melody_voice == 2) glass_note(freq_hz, amp);
+    else                        pluck_note(freq_hz, amp);
 }
 
 /* r19.28 — Landscape "Motif" layer: a warm subtractive ANALOG voice (ember.c:
