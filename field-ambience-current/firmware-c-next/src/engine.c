@@ -100,6 +100,9 @@ static bool     s_gen_suppressed  = false;
  * player can keep the evolving bed/pad without the lonely melodic events. */
 static bool     s_mel_enabled = true;    /* long lead melody voice           */
 static bool     s_eno_enabled = true;    /* three one-note Eno tape loops     */
+static bool     s_gentle_return = false; /* r19.34: first melody note after the
+                                          * player-priority silence swells in
+                                          * softly (no bright ding, low register) */
 void engine_set_autoplay_melody(int on) { s_mel_enabled = on ? true : false; }
 void engine_set_autoplay_eno   (int on) { s_eno_enabled = on ? true : false; }
 int  engine_autoplay_melody(void)        { return s_mel_enabled ? 1 : 0; }
@@ -276,6 +279,7 @@ void engine_init(void) {
     s_last_active_ms = 0;
     s_mel_enabled    = true;         /* r19.34 autoplay layers on by default */
     s_eno_enabled    = true;
+    s_gentle_return  = false;
     composer_init();                 /* r18.96 top-level intent reset   */
     harmony_init();                  /* r19.0 harmonic safety core */
     gen_state_seen = -1;
@@ -698,9 +702,13 @@ void engine_generative_tick(uint32_t now_ms) {
         (s_ever_active && (uint32_t)(now_ms - s_last_active_ms) < GEN_RETURN_MS);
     if (suppressed != s_gen_suppressed) {
         s_gen_suppressed = suppressed;
-        if (suppressed && mel_sounding) {   /* hush the auto melody as the player takes over */
-            engine_note_off((uint8_t)MEL_SRC);
-            mel_sounding = 0;
+        if (suppressed) {
+            if (mel_sounding) {             /* hush the auto melody as the player takes over */
+                engine_note_off((uint8_t)MEL_SRC);
+                mel_sounding = 0;
+            }
+        } else {
+            s_gentle_return = true;         /* the piece comes back softly, not with a ding */
         }
     }
     if (suppressed) {
@@ -842,14 +850,26 @@ void engine_generative_tick(uint32_t now_ms) {
                     harmony_collision_ok(want, sus, nsus))
                     tone = want;                 /* the motif survives   */
             }
-            if (tone < 0)
-                tone = harmony_melody_next(mel_last_midi, sus, nsus,
-                                           0.05f + composer_params()->high_p);
+            if (tone < 0) {
+                /* r19.34: the first note coming back after the player-priority
+                 * silence stays low (no high_p reach) so it re-enters calmly. */
+                float hp = s_gentle_return ? 0.0f
+                                           : (0.05f + composer_params()->high_p);
+                tone = harmony_melody_next(mel_last_midi, sus, nsus, hp);
+            }
             if (tone > 0) {
                 float hz  = tuning_hz((float)tone);
                 float amp = 0.062f + gen_rand01() * 0.014f;
-                engine_note_on((uint8_t)MEL_SRC, hz, amp);
-                melody_strike(hz, amp * 2.0f);   /* articulate the onset */
+                if (s_gentle_return) {
+                    /* swell the piece back in: softer, and NO bright strike —
+                     * a pad swell, not the exposed "ding" the r19.33 silence
+                     * gap used to make of the first returning note. */
+                    engine_note_on((uint8_t)MEL_SRC, hz, amp * 0.5f);
+                    s_gentle_return = false;
+                } else {
+                    engine_note_on((uint8_t)MEL_SRC, hz, amp);
+                    melody_strike(hz, amp * 2.0f);   /* articulate the onset */
+                }
                 mel_sounding  = 1;
                 mel_last_midi = tone;
                 ++mel_note_count;
