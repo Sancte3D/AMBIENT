@@ -10,6 +10,6 @@ cc -O2 -std=c11 -Iinclude tools/render_landscape.c \
     src/dsp.c src/pad.c src/padsynth.c src/texture.c src/ambience.c src/tape.c \
     src/echo.c src/blur.c src/bass.c src/drone.c src/reverb.c src/reverb_presets.c \
     src/brain.c src/worlds.c src/generative.c src/cells.c src/engine.c src/body.c \
-    src/composer.c src/harmony.c src/tuning.c src/pluck.c src/glass.c src/shimmer.c \
+    src/composer.c src/harmony.c src/tuning.c src/pluck.c src/glass.c src/ember.c src/shimmer.c \
     src/landscape.c -lm -o "$BIN"
 "$BIN" "$OUT"

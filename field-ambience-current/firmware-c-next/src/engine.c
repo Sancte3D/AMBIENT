@@ -27,6 +27,7 @@
 #include "cells.h"
 #include "pluck.h"
 #include "glass.h"
+#include "ember.h"
 #include "shimmer.h"
 #include "padsynth.h"
 #include "body.h"
@@ -266,6 +267,7 @@ void engine_init(void) {
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
     glass_init();                    /* r18.98 FM glass voice */
+    ember_init();                    /* r19.28 warm subtractive analog voice */
     shimmer_init();                  /* r18.99 octave-up hall regeneration */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
@@ -300,13 +302,12 @@ static void melody_strike(float freq_hz, float amp) {
     else                   pluck_note(freq_hz, amp);
 }
 
-/* r19.27 — Landscape "Motif" layer: a fragile GLASS/bell impulse that blooms
- * into the shared hall (2.5 s ring, 0.5 send). Deliberately the glass voice,
- * NOT the Karplus-Strong string and NOT following the global VOICE menu — a
- * bare KS pluck over the slow bed read as a random plucked guitar, the
- * opposite of the brittle, C418-like single event this role wants. */
+/* r19.28 — Landscape "Motif" layer: a warm subtractive ANALOG voice (ember.c:
+ * detuned saws + sub, a resonant filter with its own decay envelope, and a
+ * delayed vibrato LFO). The FM bell (r19.27.1) read as dead/static; this is a
+ * moving, nostalgic tone — independent of the global VOICE menu. */
 void engine_motif_strike(float freq_hz, float amp) {
-    glass_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
+    ember_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
@@ -857,6 +858,9 @@ static void render_ambient(int16_t *buf, int frames) {
             sendR[n] += plkR[n] * 0.5f;
         }
     }
+    /* r19.28: the warm analog voice runs its OWN clean bus (its filter is the
+     * character) straight into dry + hall send — no modal body coloring. */
+    ember_render_mix(dryL, dryR, sendL, sendR, frames);
 
     /* Echo sits AFTER all generators but BEFORE the reverb so the delay
      * picks up the whole mix; send_amount=0.40 routes a copy of the
