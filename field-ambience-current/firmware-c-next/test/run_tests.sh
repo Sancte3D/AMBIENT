@@ -58,6 +58,13 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/voicelead_test"
 "$tmp/voicelead_test"
 
+# r19.30: role-based chord timbre (role mapping + patch table)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_rolepatch.c" \
+    "$src/src/rolepatch.c" \
+    -lm -o "$tmp/rolepatch_test"
+"$tmp/rolepatch_test"
+
 # r19.27: Landscape cell mode — layer-role state machine (drone/bed/motif/atmos/memory)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_landscape.c" \
@@ -137,7 +144,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # r19.23: chord-bloom cell mode (voice-leading + staggered onset scheduler)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_bloom.c" \
-    "$src/src/bloom.c" "$src/src/voicelead.c" \
+    "$src/src/bloom.c" "$src/src/voicelead.c" "$src/src/rolepatch.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
     "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \

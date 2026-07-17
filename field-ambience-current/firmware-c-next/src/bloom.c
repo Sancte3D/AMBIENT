@@ -7,6 +7,7 @@
 #include "brain.h"
 #include "tuning.h"
 #include "voicelead.h"
+#include "rolepatch.h"
 
 #define POOL      5          /* Chord-Sources 0..4 (= Base-Cell-Sources)  */
 #define MAXV      4          /* r19.29: max 4 sustained chord voices       */
@@ -18,7 +19,8 @@ typedef struct {
     bool     armed;          /* wartet auf seinen Einsatz  */
     uint32_t due_ms;
     float    freq;
-    float    amp;
+    float    amp;            /* r19.30: pad body amp, nach Rollen-Gain      */
+    float    sparkle;        /* r19.30: >0 → zusaetzlich Glas-Bloom (EXT)    */
 } onset_t;
 
 static onset_t s_onset[POOL];
@@ -74,12 +76,18 @@ void bloom_press(uint8_t cell, float velocity_amp, bool hold, uint32_t now_ms) {
     /* Gestaffelte Einsaetze: erster Ton sofort, dann STEP+Jitter pro Ton.
      * note_on auf einer schon klingenden Source re-pitcht sie (Ramp) →
      * die Stimmen gleiten ins neue Voicing statt hart neu zu triggern. */
+    /* r19.30: each voice plays its chord ROLE, not the same pad patch — root
+     * full, inner voices pulled back, the top voice softened + a glass shimmer
+     * blooming over it (rolepatch.c). Turns "4 identical pad notes" into an
+     * arranged chord. */
     uint32_t t = now_ms;
     for (int i = 0; i < n; ++i) {
-        s_onset[i].armed  = true;
-        s_onset[i].due_ms = t;
-        s_onset[i].freq   = tuning_hz((float)voiced[i]);
-        s_onset[i].amp    = velocity_amp;
+        const role_patch_t *rp = rolepatch_get(rolepatch_role_for(i, n));
+        s_onset[i].armed   = true;
+        s_onset[i].due_ms  = t;
+        s_onset[i].freq    = tuning_hz((float)voiced[i]);
+        s_onset[i].amp     = velocity_amp * rp->gain;
+        s_onset[i].sparkle = velocity_amp * rp->sparkle_gain;
         t += STEP_MS + jitter();
     }
 
@@ -105,6 +113,8 @@ void bloom_tick(uint32_t now_ms) {
             (int32_t)(now_ms - s_onset[i].due_ms) >= 0) {
             s_onset[i].armed = false;
             engine_note_on((uint8_t)i, s_onset[i].freq, s_onset[i].amp);
+            if (s_onset[i].sparkle > 0.0f)      /* r19.30: extension shimmer */
+                engine_sparkle_strike(s_onset[i].freq, s_onset[i].sparkle);
         }
     }
 }

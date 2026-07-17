@@ -311,6 +311,13 @@ void engine_motif_strike(float freq_hz, float amp) {
     ember_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
+/* r19.30 — a bare glass/bell bloom for the HARMONY "extension" role: the FM
+ * shimmer that lets a chord's top sparkle over the sustained pad body, and
+ * decays into the shared hall. No pad, no bass. */
+void engine_sparkle_strike(float freq_hz, float amp) {
+    glass_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
+}
+
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
  * audibly, but enough that two consecutive identical cell taps aren't
  * bit-identical → no "mechanical" feel on repeats. */

@@ -35,6 +35,10 @@ void engine_all_off(void);
  * Landscape "Motif" layer; no pad, no bass. */
 void engine_motif_strike(float freq_hz, float amp);
 
+/* r19.30 — a glass/bell bloom for the HARMONY extension role (chord-top
+ * shimmer over the pad body); no pad, no bass. */
+void engine_sparkle_strike(float freq_hz, float amp);
+
 /* r19.20 — "user is playing" for the generative gate. controls.c feeds the
  * PHYSICAL key state (any cell down) via press/release edges. Latched hold
  * voices deliberately do NOT count: they are standing texture, and gating
