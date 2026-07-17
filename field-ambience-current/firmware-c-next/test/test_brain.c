@@ -134,12 +134,49 @@ static void test_all_degrees_centered_and_sane(void) {
     }
 }
 
+/* r19.32: chord colours build the intended interval shape, all in the scale. */
+static int pc_in_scale_cmaj(int m) {
+    int pc = ((m % 12) + 12) % 12;
+    /* C major pitch classes */
+    return pc==0||pc==2||pc==4||pc==5||pc==7||pc==9||pc==11;
+}
+static int has_pc(const int *c, int n, int pc) {
+    for (int i = 0; i < n; ++i) if ((((c[i]%12)+12)%12) == pc) return 1;
+    return 0;
+}
+static void test_color_chords(void) {
+    brain_init(); brain_set_key(60); brain_set_mode(0);   /* C major */
+    int c[BRAIN_MAX_CHORD], n;
+
+    n = brain_color_chord(1, 0, c, BRAIN_MAX_CHORD);       /* PURE 1-3-5 */
+    CHECK(n == 3, "PURE is a triad (%d)", n);
+    CHECK(has_pc(c,n,0)&&has_pc(c,n,4)&&has_pc(c,n,7), "PURE = C E G");
+
+    n = brain_color_chord(1, 1, c, BRAIN_MAX_CHORD);       /* OPEN 1-5-9 */
+    CHECK(has_pc(c,n,0)&&has_pc(c,n,7)&&has_pc(c,n,2), "OPEN = C G D");
+    CHECK(!has_pc(c,n,4), "OPEN has no third");
+
+    n = brain_color_chord(1, 3, c, BRAIN_MAX_CHORD);       /* DEEP 1-3-5-7 */
+    CHECK(n == 4, "DEEP has four notes (%d)", n);
+    CHECK(has_pc(c,n,11), "DEEP includes the major 7th (B)");
+
+    /* every colour, every degree: only scale tones (no accidental chromatics) */
+    for (int col = 0; col < BRAIN_COLOR_COUNT; ++col)
+        for (int deg = 1; deg <= 7; ++deg) {
+            n = brain_color_chord(deg, col, c, BRAIN_MAX_CHORD);
+            for (int i = 0; i < n; ++i)
+                CHECK(pc_in_scale_cmaj(c[i]), "color %d deg %d note %d in scale",
+                      col, deg, c[i]);
+        }
+}
+
 int main(void) {
     printf("== harmonic brain ==\n");
     test_default_ionian_add9();
     test_mode_changes_thirds();
     test_vibe_changes_family();
     test_key_moves_cell_root();
+    test_color_chords();
     test_all_degrees_centered_and_sane();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);

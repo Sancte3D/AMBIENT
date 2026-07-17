@@ -97,6 +97,38 @@ int brain_chord(int degree, int *out_midi, int max) {
     return n;
 }
 
+/* r19.32 — CHORD COLOR: build the chord from the world scale using a chosen
+ * interval shape instead of the world's fixed vibe family. Every note still
+ * comes from the scale (scale-step offsets), so no accidental chromatics:
+ *   PURE 1-3-5 (triad) · OPEN 1-5-9 (no third, airy) ·
+ *   WARM 1-3-6-9 (6/9) · DEEP 1-3-5-7 (seventh).
+ * Scale-step offsets from the chord's root degree (0=root, 2=third, 4=fifth,
+ * 6=seventh, 8=ninth, 5=sixth). Voiced-centred like brain_chord. */
+static const int8_t COL_PURE[3] = { 0, 2, 4 };
+static const int8_t COL_OPEN[3] = { 0, 4, 8 };
+static const int8_t COL_WARM[4] = { 0, 2, 5, 8 };
+static const int8_t COL_DEEP[4] = { 0, 2, 4, 6 };
+
+int brain_color_chord(int degree, int color, int *out, int max) {
+    static const int8_t *const CS[BRAIN_COLOR_COUNT] =
+        { COL_PURE, COL_OPEN, COL_WARM, COL_DEEP };
+    static const int CN[BRAIN_COLOR_COUNT] = { 3, 3, 4, 4 };
+    if (color < 0 || color >= BRAIN_COLOR_COUNT) color = 0;
+
+    const int8_t *iv = SCALES[s_mode];
+    const int8_t *st = CS[color];
+    int n = CN[color];
+    int d = degree - 1;
+
+    int count = 0;
+    for (int i = 0; i < n && count < max; ++i) {
+        int idx  = d + st[i];
+        out[count++] = s_key + iv[fmod7(idx)] + 12 * fdiv7(idx);
+    }
+    voice_centered(out, count);
+    return count;
+}
+
 /* r19.26 — cell pitch = a clean, strictly ascending pentatonic degree, NOT
  * the lowest note of an octave-folded diatonic chord.
  *

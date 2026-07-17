@@ -32,6 +32,13 @@ static bool    s_hold;             /* Akkord gelatcht (HOLD beim Druck)       */
 static uint32_t s_rng;
 static int     s_bassmode = BLOOM_BASS_DRIFT;  /* r19.31 separater Bass       */
 static int     s_bass_pc  = -1;    /* letzte Bass-Pitch-Class (FIFTH-Wahl)    */
+static int     s_color    = 0;     /* r19.32 Chord-Color (PURE default)       */
+
+void bloom_set_color(int color) {
+    if (color < 0 || color >= BRAIN_COLOR_COUNT) color = 0;
+    s_color = color;
+}
+int bloom_color(void) { return s_color; }
 
 void bloom_set_bassmode(int mode) {
     if (mode < 0 || mode >= BLOOM_BASS_COUNT) mode = BLOOM_BASS_DRIFT;
@@ -103,7 +110,8 @@ void bloom_press(uint8_t cell, float velocity_amp, bool hold, uint32_t now_ms) {
     if (cell >= POOL) return;
 
     int chord[BRAIN_MAX_CHORD];
-    int cn = brain_chord(brain_role_degree((int)cell), chord, BRAIN_MAX_CHORD);
+    int cn = brain_color_chord(brain_role_degree((int)cell), s_color,
+                               chord, BRAIN_MAX_CHORD);
     if (cn <= 0) return;
 
     int root_midi = chord[0];           /* brain_chord voices the root first    */

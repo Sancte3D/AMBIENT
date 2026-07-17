@@ -85,6 +85,7 @@ static void hal_set_echo       (float v)   { engine_set_echo(v); }
 static void hal_set_blur       (float v)   { engine_set_blur(v); }
 static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
 static void hal_set_bass       (int   mode){ bloom_set_bassmode(mode); }   /* r19.31 */
+static void hal_set_color      (int   col) { bloom_set_color(col); }        /* r19.32 */
 /* cell play mode — 0 Note (r19.26), 1 Harmony (r19.29, chord + voice-leading),
  * 2 Landscape (r19.27, sound layers). */
 enum { CELL_NOTE = 0, CELL_HARMONY = 1, CELL_LAND = 2 };
@@ -304,6 +305,7 @@ int main(void) {
             .set_synth      = hal_set_synth,
             .set_cell       = hal_set_cell,
             .set_bass       = hal_set_bass,
+            .set_color      = hal_set_color,
         };
         menu_init(&cb);
     }

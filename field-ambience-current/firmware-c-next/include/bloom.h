@@ -56,6 +56,11 @@ void bloom_set_bassmode(int mode);
 int  bloom_bassmode(void);          /* aktueller Modus (Test/UI) */
 int  bloom_cycle_bassmode(void);    /* zum naechsten Modus, gibt den neuen zurueck */
 
+/* r19.32 — Chord-Color (0 PURE / 1 OPEN / 2 WARM / 3 DEEP): Intervallform des
+ * Akkords. Wirkt ab dem naechsten Cell-Druck. */
+void bloom_set_color(int color);
+int  bloom_color(void);
+
 int  bloom_pending(void);        /* noch nicht gestartete Akkordtoene */
 int  bloom_active_cell(void);    /* zuletzt gedrueckte Zelle, -1 = keine */
 int  bloom_centroid(void);       /* MIDI-Schwerpunkt des akt. Akkords (Test/UI) */
