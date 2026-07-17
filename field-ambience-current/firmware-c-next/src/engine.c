@@ -96,6 +96,14 @@ static int      gen_state_seen   = -1;   /* bed re-strikes on state change */
 static uint32_t s_last_active_ms = 0;
 static bool     s_ever_active     = false;
 static bool     s_gen_suppressed  = false;
+/* r19.34 — the two sparse single-tone autoplay layers, each toggleable so the
+ * player can keep the evolving bed/pad without the lonely melodic events. */
+static bool     s_mel_enabled = true;    /* long lead melody voice           */
+static bool     s_eno_enabled = true;    /* three one-note Eno tape loops     */
+void engine_set_autoplay_melody(int on) { s_mel_enabled = on ? true : false; }
+void engine_set_autoplay_eno   (int on) { s_eno_enabled = on ? true : false; }
+int  engine_autoplay_melody(void)        { return s_mel_enabled ? 1 : 0; }
+int  engine_autoplay_eno(void)           { return s_eno_enabled ? 1 : 0; }
 
 /* Long melody voice: pad source 15 sustains 4-16 s, the selected VOICE
  * (string/glass) strikes the onset. */
@@ -266,6 +274,8 @@ void engine_init(void) {
     s_gen_suppressed = false;        /* r19.33 player-priority state reset */
     s_ever_active    = false;
     s_last_active_ms = 0;
+    s_mel_enabled    = true;         /* r19.34 autoplay layers on by default */
+    s_eno_enabled    = true;
     composer_init();                 /* r18.96 top-level intent reset   */
     harmony_init();                  /* r19.0 harmonic safety core */
     gen_state_seen = -1;
@@ -716,6 +726,11 @@ void engine_generative_tick(uint32_t now_ms) {
      * old tone, sound THIS loop's chord member of the CURRENT harmony,
      * hold for 62 % of the period, rest for the remainder — the gaps are
      * where the recombination shows. */
+    if (!s_eno_enabled) {                /* r19.34: layer off → hush + re-arm */
+        for (int i = 0; i < ENO_LOOPS; ++i)
+            if (eno_on[i]) { engine_note_off(ENO_SRC(i)); eno_on[i] = 0; snd_eno_midi[i] = 0; }
+        eno_timing_valid = 0;
+    } else {
     if (!eno_timing_valid) {
         eno_next_ms[0] = now_ms + (uint32_t)(ENO_PERIOD_MS[0] * 0.40f);
         eno_next_ms[1] = now_ms + (uint32_t)(ENO_PERIOD_MS[1] * 0.62f);
@@ -753,6 +768,7 @@ void engine_generative_tick(uint32_t now_ms) {
                 eno_next_ms[i] += ENO_PERIOD_MS[i];
         }
     }
+    }   /* r19.34: end of s_eno_enabled branch */
 
     /* --- r19.0 HARMONIC STATE (harmony.h) -------------------------------
      * The state machine dwells 24-48 s, then MUTATES: ≥3 common pitch
@@ -783,6 +799,9 @@ void engine_generative_tick(uint32_t now_ms) {
      * is doubled by the selected VOICE strike (string/glass) so the tone
      * has an attack in front of the pad swell — not an arpeggiator, a
      * slow cinematic line. */
+    if (!s_mel_enabled) {                /* r19.34: melody layer off */
+        if (mel_sounding) { engine_note_off((uint8_t)MEL_SRC); mel_sounding = 0; }
+    } else {
     if (mel_sounding && (int32_t)(now_ms - mel_off_ms) >= 0) {
         engine_note_off((uint8_t)MEL_SRC);
         mel_sounding = 0;
@@ -847,6 +866,7 @@ void engine_generative_tick(uint32_t now_ms) {
             mel_next_ms = now_ms + 2000u + (uint32_t)(gen_rand01() * 4000.0f);
         }
     }
+    }   /* r19.34: end of s_mel_enabled branch */
 
     /* --- r19.0 spectral undulation (Blendwave principle) ------------------
      * "Same note, evolve timbre": every 400 ms the pad brightness tilt
