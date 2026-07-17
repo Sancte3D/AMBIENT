@@ -200,6 +200,7 @@ void engine_generative_new_field(uint32_t seed);
 
 /* r18.90 melody-grammar observability (tests + a future UI readout):
  * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
+int engine_generative_suppressed(void);   /* r19.33: 1 = player-priority hold-off active */
 int engine_generative_last_melody_midi(void);
 int engine_generative_melody_count(void);
 /* r18.93: phrases replayed by the déjà-vu memory (Marbles concept). */

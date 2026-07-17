@@ -235,6 +235,32 @@ int main(void) {
         engine_set_generative(false, -1);
     }
 
+    /* r19.33 — player-priority "listening": the generator holds off while a
+     * key is down AND for ~8 s after the last release, then returns. */
+    {
+        engine_init();
+        engine_set_generative(true, -1);
+        uint32_t t = 500000;
+        engine_generative_tick(t);                     /* running */
+        CHECK(!engine_generative_suppressed(), "not suppressed with no player");
+
+        engine_set_user_presence(true);                /* player presses */
+        t += 250; engine_generative_tick(t);
+        CHECK(engine_generative_suppressed(), "suppressed while a key is down");
+        CHECK(engine_generative_advance() == -1, "no bed advance while playing");
+
+        engine_set_user_presence(false);               /* player lifts */
+        t += 250; engine_generative_tick(t);
+        CHECK(engine_generative_suppressed(), "still held off right after release");
+
+        t += 4000; engine_generative_tick(t);          /* 4 s later — inside hold-off */
+        CHECK(engine_generative_suppressed(), "held off 4 s after release (return delay)");
+
+        t += 5000; engine_generative_tick(t);          /* ~9 s after release */
+        CHECK(!engine_generative_suppressed(), "returns after the hold-off elapses");
+        engine_set_generative(false, -1);
+    }
+
     printf("%d checks, %d failures\n", checks, fails);
     return fails ? 1 : 0;
 }

@@ -91,6 +91,11 @@ static bool     gen_on = false;
 static bool     gen_timing_valid = false;
 static uint32_t gen_tick_rng     = 0x5EEDBA55u;
 static int      gen_state_seen   = -1;   /* bed re-strikes on state change */
+/* r19.33 player-priority state (declared here so engine_init can reset it). */
+#define GEN_RETURN_MS   8000u            /* auto-content returns ~8 s after play */
+static uint32_t s_last_active_ms = 0;
+static bool     s_ever_active     = false;
+static bool     s_gen_suppressed  = false;
 
 /* Long melody voice: pad source 15 sustains 4-16 s, the selected VOICE
  * (string/glass) strikes the onset. */
@@ -258,6 +263,9 @@ void engine_init(void) {
     cells_init();                    /* ADR-0013 cell-velocity state */
     gen_on = false;
     gen_timing_valid = false;        /* r18.88 autoplay scheduler reset */
+    s_gen_suppressed = false;        /* r19.33 player-priority state reset */
+    s_ever_active    = false;
+    s_last_active_ms = 0;
     composer_init();                 /* r18.96 top-level intent reset   */
     harmony_init();                  /* r19.0 harmonic safety core */
     gen_state_seen = -1;
@@ -562,6 +570,11 @@ void engine_set_pad_voice(int voice_idx) {
 static bool s_user_present = false;
 void engine_set_user_presence(bool any_key_down) { s_user_present = any_key_down; }
 
+/* r19.33 — player takes priority (musical "listening"): the bed + melody hold
+ * off while the user plays AND for GEN_RETURN_MS after the last release, then
+ * return gently. State lives up top so engine_init can reset it. */
+int engine_generative_suppressed(void) { return s_gen_suppressed ? 1 : 0; }
+
 /* --- Generative autoplay (r18.88) -----------------------------------------
  * The GENERATE modifier was always meant to make the instrument PLAY BY
  * ITSELF (passive mode = music without hands). The old wiring gave one
@@ -645,7 +658,7 @@ void engine_generative_new_field(uint32_t seed) {
 
 int engine_generative_advance(void) {
     if (!gen_on) return -1;
-    if (s_user_present) return -1;           /* live playing overrides the bed */
+    if (s_user_present || s_gen_suppressed) return -1;   /* r19.33: player + return-delay */
     harmony_advance();
     int midi = harmony_bass_midi() + 12;
     snd_bed_midi = midi;
@@ -666,9 +679,21 @@ void engine_generative_tick(uint32_t now_ms) {
      * composer.h). Ticks on the same clock as everything else. */
     composer_tick(now_ms);
 
-    if (s_user_present) {
-        /* Player takes over: freeze everything and re-arm so the piece
-         * resumes promptly after release. */
+    /* r19.33 — player-priority "listening": suppressed while a key is down AND
+     * for GEN_RETURN_MS after the last release, so the machine steps back and
+     * lets the player breathe, then returns gently (the re-arm below strikes
+     * the bed and schedules the first melody note 1.5–4 s later). */
+    if (s_user_present) { s_last_active_ms = now_ms; s_ever_active = true; }
+    bool suppressed = s_user_present ||
+        (s_ever_active && (uint32_t)(now_ms - s_last_active_ms) < GEN_RETURN_MS);
+    if (suppressed != s_gen_suppressed) {
+        s_gen_suppressed = suppressed;
+        if (suppressed && mel_sounding) {   /* hush the auto melody as the player takes over */
+            engine_note_off((uint8_t)MEL_SRC);
+            mel_sounding = 0;
+        }
+    }
+    if (suppressed) {
         gen_timing_valid = false;
         return;
     }
