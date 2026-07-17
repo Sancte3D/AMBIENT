@@ -42,6 +42,7 @@ static int           echo    = 35;
 static int           blur    = 15;
 static int           synth_i = 0;         /* r19.16: 0 Ambient, player-global */
 static int           cell_i  = 0;         /* r19.23: 0 Note / 1 Bloom, player-global */
+static int           bass_i  = 3;         /* r19.31: HARMONY bass, default Drift */
 static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
 
 /* Sperrbar = was ein World-Wechsel ueberschreibt (menu.h r19.22). */
@@ -57,6 +58,7 @@ static const char * const SYNTH_NAMES[7] = {
     "Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"
 };
 static const char * const CELL_NAMES[3] = { "Note", "Harmony", "Land" };
+static const char * const BASS_NAMES[4] = { "Off", "Root", "Fifth", "Drift" };
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -85,6 +87,7 @@ static void apply_current(void) {
         case MP_BLUR:   if (cb.set_blur)       cb.set_blur  (blur   / 100.0f);   break;
         case MP_SYNTH:  if (cb.set_synth)      cb.set_synth(synth_i);            break;
         case MP_CELL:   if (cb.set_cell)       cb.set_cell(cell_i);              break;
+        case MP_BASS:   if (cb.set_bass)       cb.set_bass(bass_i);              break;
         default: break;
     }
 }
@@ -133,6 +136,7 @@ void menu_get_state(menu_state_t *out) {
     out->world  = (uint8_t)world_i;  out->key_pc = (uint8_t)key_pc;
     out->tuning = (uint8_t)tuning_i; out->voice  = (uint8_t)voice_i;
     out->synth  = (uint8_t)synth_i;  out->cell = (uint8_t)cell_i;
+    out->bass   = (uint8_t)bass_i;
     out->space  = (uint8_t)space;  out->shimmer = (uint8_t)shim;
     out->atmos  = (uint8_t)atmos;  out->motion  = (uint8_t)motion;
     out->age    = (uint8_t)age;    out->echo    = (uint8_t)echo;
@@ -147,6 +151,7 @@ void menu_apply_state(const menu_state_t *st) {
     voice_i  = clampi(st->voice, 0, 3);
     synth_i  = clampi(st->synth, 0, 6);
     cell_i   = clampi(st->cell, 0, 2);
+    bass_i   = clampi(st->bass, 0, 3);
     space  = clampi(st->space, 0, 100);  shim   = clampi(st->shimmer, 0, 100);
     atmos  = clampi(st->atmos, 0, 100);  motion = clampi(st->motion, 0, 100);
     age    = clampi(st->age, 0, 100);    echo   = clampi(st->echo, 0, 100);
@@ -168,6 +173,7 @@ void menu_apply_state(const menu_state_t *st) {
     if (cb.set_voice)      cb.set_voice(voice_i);
     if (cb.set_synth)      cb.set_synth(synth_i);
     if (cb.set_cell)       cb.set_cell(cell_i);
+    if (cb.set_bass)       cb.set_bass(bass_i);
 }
 
 void menu_init(const menu_callbacks_t *cbs) {
@@ -204,7 +210,7 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
-        "Age","Echo","Blur","Synth","Cell"
+        "Age","Echo","Blur","Synth","Cell","Bass"
     };
     return LABELS[cur];
 }
@@ -217,6 +223,7 @@ int menu_value_index(menu_param_t p) {
         case MP_VOICE: return voice_i;
         case MP_SYNTH: return synth_i;
         case MP_CELL:  return cell_i;
+        case MP_BASS:  return bass_i;
         default: return 0;
     }
 }
@@ -244,6 +251,7 @@ int menu_value_count(menu_param_t p) {
         case MP_VOICE: return 4;
         case MP_SYNTH: return 7;
         case MP_CELL:  return 3;
+        case MP_BASS:  return 4;
         default:       return 0;   /* SPACE / ATMOS / MOTION / AGE = % */
     }
 }
@@ -257,6 +265,7 @@ const char *menu_current_value_text(void) {
         case MP_VOICE:  return VOICE_NAMES[voice_i];
         case MP_SYNTH:  return SYNTH_NAMES[synth_i];
         case MP_CELL:   return CELL_NAMES[cell_i];
+        case MP_BASS:   return BASS_NAMES[bass_i];
         case MP_SPACE:  snprintf(buf, sizeof buf, "%d%%", space);  return buf;
         case MP_SHIMMER:snprintf(buf, sizeof buf, "%d%%", shim);   return buf;
         case MP_ATMOS:  snprintf(buf, sizeof buf, "%d%%", atmos);  return buf;
@@ -294,6 +303,7 @@ void menu_rotate(int delta) {
         case MP_VOICE:  voice_i = wrapi(voice_i + delta, 4);  break;
         case MP_SYNTH:  synth_i = wrapi(synth_i + delta, 7);  break;
         case MP_CELL:   cell_i  = wrapi(cell_i  + delta, 3);  break;
+        case MP_BASS:   bass_i  = wrapi(bass_i  + delta, 4);  break;
         case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
         case MP_SHIMMER:shim   = clampi(shim   + delta, 0, 100); break;
         case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;

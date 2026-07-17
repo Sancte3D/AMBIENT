@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define SCENE_MAGIC 0x53434E32u   /* "SCN2" — r19.23: menu_state_t + cell mode */
+#define SCENE_MAGIC 0x53434E33u   /* "SCN3" — r19.31: menu_state_t + bass mode */
 
 typedef struct {
     uint32_t     magic;           /* SCENE_MAGIC = belegt                  */
