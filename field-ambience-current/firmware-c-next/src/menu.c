@@ -112,8 +112,14 @@ static void load_world_preset(void) {
     UNLESS_LOCKED(MP_ECHO)    echo   = w->echo_pct;
     UNLESS_LOCKED(MP_BLUR)    blur   = w->blur_pct;
     #undef UNLESS_LOCKED
+    /* r19.36: each world carries a curated HARMONY character (chord colour +
+     * bass mode). Loaded like the macros — the player can nudge after. */
+    color_i = w->chord_color; if (color_i > 3) color_i = 0;
+    bass_i  = w->bass_mode;   if (bass_i  > 3) bass_i  = 3;
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
+    if (cb.set_color)      cb.set_color(color_i);
+    if (cb.set_bass)       cb.set_bass(bass_i);
     if (cb.set_space)      cb.set_space     (space  / 100.0f);
     if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
     if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
