@@ -39,7 +39,7 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | C_BOOT / C_BOOST_OUT(×3) / C_BOOST_HF | boost caps (r18.80: output bulk now **3× 22 µF** per TI DS §9.2.2.7 “typically three 22 µF”; was 1×, and the 470 µF bulk sits behind D3 where the control loop can't see it) | 100 nF / 3× 22 µF / 100 nF | 0603/0805 | C14663 / C45783 / C14663 |
 | C_LDO_IN / C_LDO_OUT | LDO caps | 4.7 µF | 0603 | C46653 |
 | **U_PWR** | TPS22918 load switch — **r18.81: ADR-0016 power-off now actually in the schematic** (+5V_RAIL → +5V_SW → LDO; charger stays ahead of it = "dark, but charging"; QOD tied to VOUT = active discharge; CT floats per TI DS) | 5.5 V / 2 A | SOT-23-6 | C131941 |
-| **SW_PWR** | MST-12D18G3 side-actuated slide switch on `U_PWR.ON` — r18.81: mounting **datasheet-verified for a horizontal PCB**: body sits flat, stem sticks out horizontally 3 mm past the body (z ≈ 2.3–3.8 mm above board), place at board edge, slot in enclosure side wall; travel 2 mm. ⚠ terminal mapping (common = middle pad) assumed per SPDT convention — buzz out before fab (fail-safe if wrong: unit just won't switch on) | 12 V / 100 mA | RA SMD + 2 pegs | C49023766 |
+| **SW_PWR** | ALPS SSSS811101 side-actuated slide switch on `U_PWR.ON` — r18.85 (ADR-0016) premium swap from MST-12D18G3. Body sits flat, actuator sticks out **horizontally** to the board edge (body only 1.4 mm tall, stem z ≈ 0–1.4 mm — much flatter than the old MST, so the enclosure slot + slider cap must reach deeper). Travel 1.5 mm. Terminal mapping **datasheet-verified** against the ALPS circuit diagram (Common = Terminal 2, labeled — unlike the old MST which was assumed); short continuity check before fab still cheap, fail-safe if wrong (100k PD holds PWR_ON low). Footprint `field_ambience:SW_ALPS-SSSS811101_SlideSwitch_SMD`. Budget fallback MST-12D18G3 (C49023766) stays vendored in the repo. | 12 V / 100 mA | slide SMD (3 sig + 4 GND-frame pads) | C109335 |
 | R_PWR_PD / C_UPWR_IN / C_PWR_SW | PWR_ON pull-down (default OFF) / TPS22918 VIN bypass / +5V_SW output cap | 100 k / 1 µF / 10 µF | 0603/0603/0805 | C25803 / C15849 / C15850 |
 | R_DET_J8 / C_DET_J8 | jack-detect series + AC filter (r18.82: PJ-320D detect contact rests on the TIP when unplugged = DAC output — series R limits MCP input-clamp current to <300 µA, cap kills audio AC on GPA6; unplugged ≈ 0.3 V LOW, plugged 3.3 V HIGH) | 10 k / 1 µF | 0603 | C25804 / C15849 |
 | C_CHG_IN | BQ24074 IN bypass (r19.18 — TI DS 1–10 µF, am VBUS_FUSED-Knoten) | 4.7 µF | 0603 | C46653 |
@@ -125,20 +125,20 @@ RC stay removed; PC0/PC1/PA4/PB0/PB1 stay freed.
 
 ---
 
-## B · Power-off block — decided, drawn at schematic build (drop-in spec in ADR-0016)
+## B · Power-off block — now in the generated schematic (spec in ADR-0016)
 
-> The only parts not yet in the generated schematic. Everything else in §A is in
-> the generator + `jlc_bom.csv` (all LCSC verified — **no NO-LCSC parts left**).
+> **r18.85 update:** these parts are **no longer pending** — they are all in the
+> generator + `jlc_bom.csv` now (part of §A above; all LCSC verified, **no
+> NO-LCSC parts left**). This section is kept as the power-off block reference.
 
 | Ref | Part | LCSC |
 |---|---|---|
 | **U_PWR** | TPS22918 load-switch — gates `+5V_RAIL→+5V_SW` (= whole 3V3 domain) | **C131941** · SOT-23-6 |
-| **SW_PWR** | MST-12D18G3 right-angle slide switch (side-actuated, drives `U_PWR.ON`) · FP `field_ambience:SW_MST-12D18_SlideSwitch_RA` (+STEP) in repo | **C49023766** |
+| **SW_PWR** | ALPS SSSS811101 slide switch (side-actuated, drives `U_PWR.ON`; r18.85 swap from MST-12D18G3) · FP `field_ambience:SW_ALPS-SSSS811101_SlideSwitch_SMD` in repo | **C109335** |
 | R_PWR_PD | 100 k 0603 (`U_PWR.ON` pull-down, default off) | C25803 |
 | C_PWR_SW | 10 µF 0805 (`+5V_SW` output cap) | C15850 |
 
 Pin-level wiring (VIN/VOUT/ON + the single LDO-input reroute) = **`ADR-0016`**.
-~10 min to draw + ERC.
 
 ---
 
