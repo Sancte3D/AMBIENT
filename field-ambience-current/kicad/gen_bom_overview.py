@@ -21,6 +21,7 @@ JLC = {
  "C150470":("Extended",15210),"C460397":("Extended",1821),"C131941":("Extended",44589),
  "C49023766":("Extended",388),"C109335":("Extended",32992),"C424093":("Extended",10731),"C295747":("Extended",102433),
  "C107671":("Extended",2045),"C17337":("Extended",3903),"C19330":("Extended",950152),
+ "C86270":("Extended",8731),  # PAM8406DR — JLC assembly-available (own partdetail page), stock verified 2026-07-20
  "C84094":("NONE",0),"C431535":("Extended",49905),"C506653":("Extended",3378),
  "C2678753":("Extended",3147),"C8545":("Basic",421360),"C124383":("Extended",12518),
  "C124375":("Extended",64842),"C2152902":("Extended",3057),"C2845240":("Extended",30),
@@ -73,7 +74,7 @@ G = [
  ]),
  ("Audio", "#10b981", [
    ("U3","PCM5102A DAC","I²S → analog audio","C107671","jlc",False),
-   ("U4","PAM8406 Class-D amp","drives the speakers (r19.37, ADR-0025: replaces NRND PAM8403; same 16-SOIC; MODE=+5V→Class-D; input RI 174k = gain +4.3 dB, C_in 10nF = speaker HPF ~91 Hz; line-out/HP unaffected. C86270, lifecycle Active — re-verify live JLC stock before order)","C86270","jlc",False),
+   ("U4","PAM8406 Class-D amp","drives the speakers (r19.37, ADR-0025: replaces NRND PAM8403; same 16-SOIC; MODE=+5V→Class-D; input RI 174k = gain +4.3 dB, C_in 10nF = speaker HPF ~91 Hz; line-out/HP unaffected. C86270, lifecycle Active, JLC SMT-assembly-available, LCSC 8,731 in stock verified 2026-07-20)","C86270","jlc",False),
    ("J8","PJ-320D 3.5 mm line-out","audio out (r18.82: pad map fixed against the SHOU HAN datasheet — pads are 1=sleeve, 2=ring, 3=detect, 4=tip; the old map put LEFT AUDIO on the grounded barrel and the detect line on the tip. Footprint pad pitch + locator holes verified = drawing. Added R_DET 10k + C_DET 1µF: the detect contact rests on the TIP when unplugged, so the MCP input needed clamp-current protection from the DAC’s ±3V swings)","C431535","jlc",True),
    ("J10","PJ-320D 3.5 mm MIDI-out","MIDI out (TRS Type A) — same r18.82 pad-map fix as J8","C431535","jlc",True),
    ("FB1","BLM18AG601 ferrite","audio supply filter","C19330","jlc",False),
