@@ -73,7 +73,7 @@ G = [
  ]),
  ("Audio", "#10b981", [
    ("U3","PCM5102A DAC","I²S → analog audio","C107671","jlc",False),
-   ("U4","PAM8403 Class-D amp","drives the speakers","C17337","jlc",False),
+   ("U4","PAM8406 Class-D amp","drives the speakers (r19.37, ADR-0025: replaces NRND PAM8403; same 16-SOIC; MODE=+5V→Class-D; input RI 174k = gain +4.3 dB, C_in 10nF = speaker HPF ~91 Hz; line-out/HP unaffected. C86270, lifecycle Active — re-verify live JLC stock before order)","C86270","jlc",False),
    ("J8","PJ-320D 3.5 mm line-out","audio out (r18.82: pad map fixed against the SHOU HAN datasheet — pads are 1=sleeve, 2=ring, 3=detect, 4=tip; the old map put LEFT AUDIO on the grounded barrel and the detect line on the tip. Footprint pad pitch + locator holes verified = drawing. Added R_DET 10k + C_DET 1µF: the detect contact rests on the TIP when unplugged, so the MCP input needed clamp-current protection from the DAC’s ±3V swings)","C431535","jlc",True),
    ("J10","PJ-320D 3.5 mm MIDI-out","MIDI out (TRS Type A) — same r18.82 pad-map fix as J8","C431535","jlc",True),
    ("FB1","BLM18AG601 ferrite","audio supply filter","C19330","jlc",False),
@@ -131,7 +131,7 @@ KDIR = os.path.dirname(os.path.abspath(__file__))   # the kicad/ dir
 SHEET_INFO = {  # filename -> (title, function); order = reading order
  "power_tree":("Power","USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±"),
  "stm32h743":("MCU","STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)"),
- "audio":("Audio","PCM5102A DAC (I²S) → PAM8403 Class-D amp + line-out / MIDI jacks"),
+ "audio":("Audio","PCM5102A DAC (I²S) → PAM8406 Class-D amp + line-out / MIDI jacks"),
  "mcp":("I/O & LEDs","MCP23017 + 2× PCA9685 + the 23 LEDs + 10 buttons (5 cells on direct-solder Kailh Choc + 5 tactile modifiers, all digital on the expander) (largest sheet)"),
  "encoder":("Encoders","4 push-encoders (A/B/SW)"),
  "lcd":("Display","ST7789 1.9″ SPI + backlight FET (Q2)"),

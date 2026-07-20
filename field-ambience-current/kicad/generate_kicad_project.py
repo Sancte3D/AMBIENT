@@ -1659,36 +1659,41 @@ def _pcm5102a_lib_symbol() -> str:
     return "\n".join(out)
 
 
-def _pam8403_lib_symbol() -> str:
-    """PAM8403H Class-D Stereo Amp (SOP-16).
+def _pam8406_lib_symbol() -> str:
+    """PAM8406 Class-D/AB Stereo Amp (SOP-16) — r19.37 (ADR-0025).
 
-    Pinout VERIFIED gegen Diodes Inc PAM8403H Datasheet PDF
-    (Rev 1-0, November 2012, dem im Repo unter PAM8403H.PDF).
+    Replaces the NRND PAM8403H. Pinout VERIFIED against the Diodes Inc
+    PAM8406 datasheet, document DSxxxxx Rev. 1-0, March 2013, "Pin
+    Descriptions" (p.2). LCSC C86270 = PAM8406DR (lifecycle: Active).
 
-    LCSC C17337 = PAM8403H von Diodes Inc.
+    Near-identical to the PAM8403H footprint (same 16-SOIC) — the ONE
+    functional pin difference is pin 9: PAM8403 = NC, PAM8406 = MODE
+    (High: Class-D / Low: Class-AB). We tie MODE HIGH (+5V) for Class-D.
+    The output-polarity pin labels also differ from the 8403 (pin 1 is
+    +OUT_L on the 8406, not -OUT_L) — corrected here per the datasheet.
 
     Pin-Belegung per Datasheet Page 2 "Pin Descriptions":
-        1:  -OUT_L  (Left Channel Negative Output, BTL)
-        2:  PGND    (Power Ground)
-        3:  +OUT_L  (Left Channel Positive Output, BTL)
-        4:  PVDD    (Power VDD)
+        1:  +OUT_L  (Left Channel Positive Output, BTL)
+        2:  PGNDL   (Power Ground, left)
+        3:  -OUT_L  (Left Channel Negative Output, BTL)
+        4:  PVDDL   (Power VDD, left)
         5:  MUTE    (Mute Control Input, ACTIVE LOW)
         6:  VDD     (Analog VDD)
         7:  INL     (Left Channel Input)
         8:  VREF    (Internal analog reference — bypass cap to GND REQUIRED)
-        9:  NC      (No connected)
+        9:  MODE    (High: Class-D, Low: Class-AB — tied +5V here = Class-D)
         10: INR     (Right Channel Input)
         11: GND     (Analog GND)
         12: SHDN    (Shutdown Control Input, ACTIVE LOW)
-        13: PVDD    (Power VDD)
-        14: +OUT_R  (Right Channel Positive Output, BTL)
-        15: PGND    (Power Ground)
-        16: -OUT_R  (Right Channel Negative Output, BTL)
+        13: PVDDR   (Power VDD, right)
+        14: -OUT_R  (Right Channel Negative Output, BTL)
+        15: PGNDR   (Power Ground, right)
+        16: +OUT_R  (Right Channel Positive Output, BTL)
     """
     pins_left = [
-        (1, "OUTL-", "output"),
+        (1, "OUTL+", "output"),
         (2, "PGND", "power_in"),
-        (3, "OUTL+", "output"),
+        (3, "OUTL-", "output"),
         (4, "PVDD", "power_in"),
         (5, "/MUTE", "input"),
         (6, "VDD", "power_in"),
@@ -1696,27 +1701,27 @@ def _pam8403_lib_symbol() -> str:
         (8, "VREF", "output"),
     ]
     pins_right = [
-        (16, "OUTR-", "output"),
+        (16, "OUTR+", "output"),
         (15, "PGND", "power_in"),
-        (14, "OUTR+", "output"),
+        (14, "OUTR-", "output"),
         (13, "PVDD", "power_in"),
         (12, "/SHDN", "input"),
         (11, "GND", "power_in"),
         (10, "INR", "input"),
-        (9, "NC", "no_connect"),
+        (9, "MODE", "input"),
     ]
     y_top = 8.89
     rect_top = y_top + 2.54
     rect_bot = -y_top - 2.54
-    out = ['    (symbol "Audio:PAM8403" (in_bom yes) (on_board yes)']
+    out = ['    (symbol "Audio:PAM8406" (in_bom yes) (on_board yes)']
     out.append(f'      (property "Reference" "U" (at 0 {rect_top + 1.27} 0) (effects (font (size 1.27 1.27))))')
-    out.append(f'      (property "Value" "PAM8403H" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append(f'      (property "Value" "PAM8406" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (property "Datasheet" "PAM8403H.PDF (Diodes Inc Rev 1-0, Nov 2012)" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (symbol "Audio:PAM8403_0_1"')
+    out.append('      (property "Datasheet" "PAM8406 (Diodes Inc Rev 1-0, Mar 2013)" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Audio:PAM8406_0_1"')
     out.append(f'        (rectangle (start -10.16 {rect_top}) (end 10.16 {rect_bot})')
     out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
-    out.append('      (symbol "Audio:PAM8403_1_1"')
+    out.append('      (symbol "Audio:PAM8406_1_1"')
     for idx, (num, name, ptype) in enumerate(pins_left):
         ly = y_top - idx * 2.54
         out.append(
@@ -2044,7 +2049,7 @@ LIB_SYMBOLS = (
     + "\n" + _schottky_diode_lib_symbol()
     + "\n" + _rotary_encoder_switch_lib_symbol()
     + "\n" + _pcm5102a_lib_symbol()
-    + "\n" + _pam8403_lib_symbol()
+    + "\n" + _pam8406_lib_symbol()
     + "\n" + _ferrite_bead_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(2)
     + "\n" + _conn_02xN_lib_symbol(20)
@@ -5537,8 +5542,8 @@ def encoder_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
-# Sheet 6 — Audio: PCM5102A I²S DAC + FB1 + PAM8403 Class-D + 2× Speaker
-# per SPEC v0.6 §8 (+ H2/M2/C2 Fixes: PAM8403 10µF Bulk, AVDD/DVDD split via
+# Sheet 6 — Audio: PCM5102A I²S DAC + FB1 + PAM8406 Class-D + 2× Speaker
+# per SPEC v0.6 §8 (+ H2/M2/C2 Fixes: PAM8406 10µF Bulk, AVDD/DVDD split via
 # Ferrite Bead, AMP_nSHDN+AMP_nMUTE GPIOs).
 # Inputs: +5V, +3V3, GND, I2S_BCK, I2S_LRCK, I2S_DOUT (von Pi/Sheet 7),
 #         AMP_nSHDN, AMP_nMUTE (von Pico/Sheet 2).
@@ -5547,11 +5552,11 @@ def encoder_sheet() -> str:
 
 
 def audio_sheet() -> str:
-    """Sheet 6: Audio (PCM5102A I²S DAC + PAM8403 Class-D Amp + Speaker Header).
+    """Sheet 6: Audio (PCM5102A I²S DAC + PAM8406 Class-D Amp + Speaker Header).
 
     Symbol-Pinouts korrekt nach Datasheets:
       - PCM5102A: offizielles TI-Pinout SLAS859C (CPVDD=1, ..., DVDD=20).
-      - PAM8403:  Diodes Inc PAM8403DR-H Datasheet DS31295 (für JLCPCB C17337).
+      - PAM8406:  Diodes Inc PAM8406DR Datasheet (Rev 1-0, Mar 2013; JLCPCB C86270).
 
     Hinweis: Audio-Routing-Layout wurde für die korrigierten Pinouts neu
     aufgesetzt. Alte audio.kicad_sch v0.6-commits hatten falsche PCM5102A-
@@ -5715,7 +5720,7 @@ def audio_sheet() -> str:
     wires.append(wire(78, cvneg_y + 3.81, 78, cvneg_y + 6, seed_suffix="cvneg-gnd"))
     attach_gnd(78, cvneg_y + 6, "CVNEG", rot=270)
 
-    # ---- Pin 6 OUTL → PCM_VOUTL label (to PAM8403 INL)
+    # ---- Pin 6 OUTL → PCM_VOUTL label (to PAM8406 INL)
     p6_y = u3_left(6)
     wires.append(wire(U3_LX, p6_y, 80, p6_y, seed_suffix="u3-outl"))
     labels.append(label(80, p6_y, "PCM_VOUTL"))
@@ -5946,51 +5951,54 @@ def audio_sheet() -> str:
     attach_gnd(124, c8a_y - 6, "C8b", rot=180)
 
     # ====================================================================
-    # U4 PAM8403H @ (160, 130). Body x=149.84..170.16, y=121.11..138.89.
+    # U4 PAM8406 @ (160, 130). Body x=149.84..170.16, y=121.11..138.89.
     # Pin local x=±12.7. Abs anchor: links x=147.3, rechts x=172.7.
-    # Pin-Belegung VERIFIED gegen PAM8403H.PDF (Diodes Inc, Repo-Root):
-    #   left:  1=-OUT_L 2=PGND 3=+OUT_L 4=PVDD 5=MUTE 6=VDD 7=INL 8=VREF
-    #   right: 16=-OUT_R 15=PGND 14=+OUT_R 13=PVDD 12=SHDN 11=GND 10=INR 9=NC
+    # r19.37 (ADR-0025): PAM8403H (NRND) -> PAM8406DR (Active, C86270).
+    # Pin-Belegung VERIFIED gegen Diodes PAM8406 Datasheet (Rev 1-0, Mar 2013):
+    #   left:  1=+OUT_L 2=PGND 3=-OUT_L 4=PVDD 5=MUTE 6=VDD 7=INL 8=VREF
+    #   right: 16=+OUT_R 15=PGND 14=-OUT_R 13=PVDD 12=SHDN 11=GND 10=INR 9=MODE
+    #   (only diff vs 8403: pin 9 NC->MODE, tie +5V=Class-D; output polarity
+    #    labels 1/3/14/16 corrected. Same 16-SOIC footprint.)
     # ====================================================================
     U4_X, U4_Y = 160.0, 130.0
     U4_LX, U4_RX = 147.3, 172.7
 
     def u4_left(pin: int) -> float:
-        """Pin 1 (-OUT_L) abs y=121.11. Pin N (1..8) abs y=121.11+(N-1)*2.54."""
+        """Pin 1 (+OUT_L) abs y=121.11. Pin N (1..8) abs y=121.11+(N-1)*2.54."""
         return 121.11 + (pin - 1) * 2.54
 
     def u4_right(pin: int) -> float:
-        """Pin 16 (-OUT_R) abs y=121.11. Pin N (9..16) abs y=121.11+(16-N)*2.54."""
+        """Pin 16 (+OUT_R) abs y=121.11. Pin N (9..16) abs y=121.11+(16-N)*2.54."""
         return 121.11 + (16 - pin) * 2.54
 
     symbols.append(
         place_symbol(
-            lib_id="Audio:PAM8403",
+            lib_id="Audio:PAM8406",
             ref="U4",
-            value="PAM8403H Class-D Stereo Amp (SOIC-16)",
+            value="PAM8406 Class-D Stereo Amp (SOIC-16)",
             x=U4_X, y=U4_Y,
             footprint="Package_SO:SOIC-16_3.9x9.9mm_P1.27mm",
-            datasheet="PAM8403H.PDF (Diodes Inc Rev 1-0, Nov 2012)",
-            extra_props={"MPN": "PAM8403DR-H", "LCSC": "C17337"},
+            datasheet="PAM8406 (Diodes Inc Rev 1-0, Mar 2013)",
+            extra_props={"MPN": "PAM8406DR", "LCSC": "C86270"},
             seed_suffix="U4",
             sheet_uuid_seed=sus,
         )
     )
 
-    # ---- Pin 1 -OUT_L → SPK_L- (Speaker L negative)
+    # ---- Pin 1 +OUT_L → SPK_L+ (Speaker L positive, BTL)
     p1uy = u4_left(1)
-    wires.append(wire(U4_LX, p1uy, 144, p1uy, seed_suffix="u4-outlm-stub"))
-    labels.append(label(144, p1uy, "SPK_L-"))
+    wires.append(wire(U4_LX, p1uy, 144, p1uy, seed_suffix="u4-outlp-stub"))
+    labels.append(label(144, p1uy, "SPK_L+"))
 
     # ---- Pin 2 PGND → GND (Power Ground left)
     p2uy = u4_left(2)
     wires.append(wire(U4_LX, p2uy, U4_LX - 3, p2uy, seed_suffix="u4-pgnd-l"))
     attach_gnd(U4_LX - 3, p2uy, "U4_PGND_L", rot=90)
 
-    # ---- Pin 3 +OUT_L → SPK_L+ (Speaker L positive)
+    # ---- Pin 3 -OUT_L → SPK_L- (Speaker L negative, BTL)
     p3uy = u4_left(3)
-    wires.append(wire(U4_LX, p3uy, 144, p3uy, seed_suffix="u4-outlp-stub"))
-    labels.append(label(144, p3uy, "SPK_L+"))
+    wires.append(wire(U4_LX, p3uy, 144, p3uy, seed_suffix="u4-outlm-stub"))
+    labels.append(label(144, p3uy, "SPK_L-"))
 
     # ---- Pin 4 PVDD (left) → +5V
     p4uy = u4_left(4)
@@ -6044,7 +6052,7 @@ def audio_sheet() -> str:
         )
     )
     junctions.append(junction(U4_LX - 3, p6uy))
-    # PAM8403H Datasheet decoupling: "1.0µF ceramic close to VDD" (HF) +
+    # PAM8406 datasheet decoupling: "1.0µF ceramic close to VDD" (HF) +
     # "20µF or greater" (bulk). v0.6.3-r6: upgraded from 100nF/10µF.
     # This left-side set serves VDD (pin 6) + PVDD-L (pin 4, adjacent).
     c9b_y = p6uy + 3.81
@@ -6052,7 +6060,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C9b",
-            value="1uF X7R 0603 (VDD/PVDD-L HF, PAM8403H datasheet)",
+            value="1uF X7R 0603 (VDD/PVDD-L HF, PAM8406 datasheet)",
             x=140, y=c9b_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
@@ -6067,7 +6075,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C9",
-            value="22uF X5R 0805 (VDD/PVDD-L bulk, PAM8403H datasheet >=20uF)",
+            value="22uF X5R 0805 (VDD/PVDD-L bulk, PAM8406 datasheet >=20uF)",
             x=136, y=c9b_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
@@ -6080,18 +6088,25 @@ def audio_sheet() -> str:
     wires.append(wire(136, c9b_y + 3.81, 136, c9b_y + 6, seed_suffix="c9-gnd"))
     attach_gnd(136, c9b_y + 6, "C9", rot=270)
 
-    # ---- Pin 7 INL ← PCM_VOUTL via C_in_L 1µF (DC-block) + R_VOL_L 20k series (RI)
-    # PAM8403H gain = 2*RF/RI (RF=142k internal). RI=20k → AVD=14.2 = 23 dB (Datasheet-spec).
-    # Mit RI<18k wird die max-Gain-Spec überschritten und Clipping wahrscheinlicher.
+    # ---- Pin 7 INL ← PCM_VOUTL via C_in_L 10nF (DC-block + speaker HPF) + R_VOL_L 174k series (RI)
+    # r19.37 (ADR-0025) gain-staging fix. PAM8406 gain = 2*RF/RI (RF=142k internal).
+    # RI=174k → AVD=1.63 = +4.3 dB (was 20k = +23 dB, which drove the 5V BTL amp
+    # into analog clipping well below DAC full-scale). Now DAC FS 2.1Vrms *1.63 =
+    # 3.4Vrms ≈ the ~3.1Vrms clean ceiling of a 5V BTL amp into 8Ω — clip only in
+    # the top ~1 dB, above the firmware limiter.
+    # C_in 10nF (was 1µF): with RI=174k the DC-block also forms the SPEAKER
+    # high-pass fc = 1/(2π·174k·10n) ≈ 91 Hz, protecting the 8Ω 40mm driver from
+    # sub-bass excursion. The line-out/headphone branch (C_HP_INL → U11) keeps its
+    # own 1µF and stays full-range — speaker treatment is local to this branch.
     p7uy = u4_left(7)
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_VOL_L",
-            value="20k 0603 (L input series, RI per PAM8403H datasheet, gain 23 dB)",
+            value="174k 0603 (L input series RI, PAM8406 gain +4.3 dB)",
             x=140, y=p7uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
+            extra_props={"MPN": "0603WAF1743T5E", "LCSC": "C22890"},
             seed_suffix="RVOLL",
             sheet_uuid_seed=sus,
         )
@@ -6101,10 +6116,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_in_L",
-            value="1uF X7R 0603 (L input DC-block)",
+            value="10nF X7R 0603 (L input DC-block + speaker HPF ~91Hz)",
             x=132, y=p7uy, rotation=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
             seed_suffix="CINL",
             sheet_uuid_seed=sus,
         )
@@ -6121,7 +6136,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_VREF",
-            value="1uF X7R 0603 (VREF bypass - PAM8403H datasheet REQUIRED)",
+            value="1uF X7R 0603 (VREF bypass - PAM8406 datasheet REQUIRED)",
             x=144, y=cvref_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
@@ -6132,21 +6147,32 @@ def audio_sheet() -> str:
     wires.append(wire(144, cvref_y + 3.81, 144, cvref_y + 6, seed_suffix="cvref-gnd"))
     attach_gnd(144, cvref_y + 6, "CVREF", rot=270)
 
-    # ---- Pin 9 NC (per datasheet) → NC label
+    # ---- Pin 9 MODE → +5V (High = Class-D per datasheet; Low would be Class-AB)
+    # r19.37 (ADR-0025): PAM8406 adds MODE where the 8403 had NC. Hard-tied HIGH.
     p9uy = u4_right(9)
-    wires.append(wire(U4_RX, p9uy, U4_RX + 3, p9uy, seed_suffix="u4-nc-9"))
-    labels.append(label(U4_RX + 3, p9uy, "NC_U4_9"))
+    wires.append(wire(U4_RX, p9uy, U4_RX + 3, p9uy, seed_suffix="u4-mode-9"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_U4_MODE",
+            value="+5V",
+            x=U4_RX + 3, y=p9uy, rotation=90,
+            seed_suffix="u4-mode-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
 
-    # ---- Pin 10 INR ← PCM_VOUTR via C_in_R 1µF + R_VOL_R 20k series (RI per datasheet)
+    # ---- Pin 10 INR ← PCM_VOUTR via C_in_R 10nF (DC-block + speaker HPF) + R_VOL_R 174k series (RI)
+    # r19.37 (ADR-0025): mirror of the L branch — gain +4.3 dB, speaker HPF ~91 Hz.
     p10uy = u4_right(10)
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_VOL_R",
-            value="20k 0603 (R input series, RI per PAM8403H datasheet, gain 23 dB)",
+            value="174k 0603 (R input series RI, PAM8406 gain +4.3 dB)",
             x=180, y=p10uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
+            extra_props={"MPN": "0603WAF1743T5E", "LCSC": "C22890"},
             seed_suffix="RVOLR",
             sheet_uuid_seed=sus,
         )
@@ -6156,10 +6182,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_in_R",
-            value="1uF X7R 0603 (R input DC-block)",
+            value="10nF X7R 0603 (R input DC-block + speaker HPF ~91Hz)",
             x=188, y=p10uy, rotation=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
             seed_suffix="CINR",
             sheet_uuid_seed=sus,
         )
@@ -6220,7 +6246,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_PVDDR",
-            value="22uF X5R 0805 (PVDD-R bulk, PAM8403H datasheet >=20uF)",
+            value="22uF X5R 0805 (PVDD-R bulk, PAM8406 datasheet >=20uF)",
             x=181, y=cpvddr_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
@@ -6235,7 +6261,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_PVDDR_HF",
-            value="1uF X7R 0603 (PVDD-R HF, PAM8403H datasheet)",
+            value="1uF X7R 0603 (PVDD-R HF, PAM8406 datasheet)",
             x=185, y=cpvddr_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
@@ -6248,20 +6274,20 @@ def audio_sheet() -> str:
     wires.append(wire(185, cpvddr_y + 3.81, 185, cpvddr_y + 6, seed_suffix="cpvddr-hf-gnd"))
     attach_gnd(185, cpvddr_y + 6, "CPVDDR_HF", rot=270)
 
-    # ---- Pin 14 +OUT_R → SPK_R+ (Speaker R positive)
+    # ---- Pin 14 -OUT_R → SPK_R- (Speaker R negative, BTL)
     p14uy = u4_right(14)
-    wires.append(wire(U4_RX, p14uy, 176, p14uy, seed_suffix="u4-outrp-stub"))
-    labels.append(label(176, p14uy, "SPK_R+"))
+    wires.append(wire(U4_RX, p14uy, 176, p14uy, seed_suffix="u4-outrm-stub"))
+    labels.append(label(176, p14uy, "SPK_R-"))
 
     # ---- Pin 15 PGND → GND (Power Ground right)
     p15uy = u4_right(15)
     wires.append(wire(U4_RX, p15uy, U4_RX + 3, p15uy, seed_suffix="u4-pgnd-r"))
     attach_gnd(U4_RX + 3, p15uy, "U4_PGND_R", rot=270)
 
-    # ---- Pin 16 -OUT_R → SPK_R- (Speaker R negative)
+    # ---- Pin 16 +OUT_R → SPK_R+ (Speaker R positive, BTL)
     p16uy = u4_right(16)
-    wires.append(wire(U4_RX, p16uy, 176, p16uy, seed_suffix="u4-outrm-stub"))
-    labels.append(label(176, p16uy, "SPK_R-"))
+    wires.append(wire(U4_RX, p16uy, 176, p16uy, seed_suffix="u4-outrp-stub"))
+    labels.append(label(176, p16uy, "SPK_R+"))
 
     # ---- J6 Speaker L connector (Conn_01x02)
     j6_x, j6_y = 158, 117
@@ -6311,7 +6337,7 @@ def audio_sheet() -> str:
     # Gain -6dB (G0=G1=GND, DS Table 1): 2.1Vrms DAC-Full-Scale → ~1.05Vrms
     # = sauberer Consumer-Line-Pegel UND sichere Kopfhoerer-Lautstaerke
     # (Acoustic-Shock-Design, DS §7.3.3 "constant maximum output power").
-    # EN = AMP_nSHDN (wie PAM8403; R_SHDN_PD haelt beide im Boot/Aus in
+    # EN = AMP_nSHDN (wie PAM8406; R_SHDN_PD haelt beide im Boot/Aus in
     # Shutdown, TPA-Shutdown-Iq 0.7-1.2µA). Jack-Detect-Mute betrifft nur
     # den Speaker-Amp (AMP_nMUTE) — Kopfhoerer bleiben live.
     # J8-Detect ruht am TIP (= U11-OUTL): DC 0V ob an oder aus (Shutdown-
@@ -6378,7 +6404,7 @@ def audio_sheet() -> str:
     wires.append(wire(U11_LX, u11_inrp_y, 116, u11_inrp_y, seed_suffix="u11-inrp"))
     attach_gnd(116, u11_inrp_y, "U11_INRP", rot=90)
 
-    # ---- EN ← AMP_nSHDN (gleicher hier-Input wie PAM8403-SHDN; boot-safe
+    # ---- EN ← AMP_nSHDN (gleicher hier-Input wie PAM8406-SHDN; boot-safe
     # low via R_SHDN_PD, MCU zieht nach Power-Sequencing high)
     wires.append(wire(U11_LX, u11_en_y, 107, u11_en_y, seed_suffix="u11-en"))
     hlabels.append(hier_label(107, u11_en_y, "AMP_nSHDN", shape="input", rotation=0))
@@ -6395,7 +6421,7 @@ def audio_sheet() -> str:
     wires.append(wire(U11_RX, u11_outr_y, 146, u11_outr_y, seed_suffix="u11-outr"))
     labels.append(label(146, u11_outr_y, "HP_OUTR"))
 
-    # ---- VDD → +5V (ungeschaltete Rail wie PAM8403; im Aus haelt EN=low
+    # ---- VDD → +5V (ungeschaltete Rail wie PAM8406; im Aus haelt EN=low
     # den Amp bei 0.7-1.2µA). C_HP_VDD 2.2µF als Label-freies Standalone-
     # Decoupling direkt am Netz (+5V-Flag oben, GND unten) — Layout <5mm.
     wires.append(wire(U11_RX, u11_vdd_y, 146, u11_vdd_y, seed_suffix="u11-vdd"))
@@ -6622,13 +6648,13 @@ def audio_sheet() -> str:
         f'  (uuid "{sheet_uuid}")\n'
         f'  (paper "A3")\n'
         f'  (title_block\n'
-        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403H + TPA6132A2)")\n'
+        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8406 + TPA6132A2)")\n'
         f'    (date "2026-07-13")\n'
         f'    (rev "0.8")\n'
         f'    (company "Field Ambience Project")\n'
         f'    (comment 1 "Per SPEC §8 + r19.19 (ADR-0024): U11 TPA6132A2 HP-Amp — J8 = PHONES/LINE OUT")\n'
         f'    (comment 2 "PCM5102A pinout per TI SLAS859C: CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20")\n'
-        f'    (comment 3 "PAM8403H per Diodes PAM8403H.PDF; TPA6132A2 per TI SLOS597B (Gain -6dB, EN=AMP_nSHDN)")\n'
+        f'    (comment 3 "PAM8406 per Diodes PAM8406 datasheet; TPA6132A2 per TI SLOS597B (Gain -6dB, EN=AMP_nSHDN)")\n'
         f'    (comment 4 "R_MUTE_PD + R_SHDN_PD 10k pull-downs - beide Amps default-OFF waehrend Boot"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
@@ -7479,7 +7505,7 @@ def battery_sheet() -> str:
     r23_sy = 75
     # r18.79 AUDIT-FIX: R23 war 200k — mit VREF 1,212 V (TI SLVSD38C EC-Tabelle)
     # und R24 39k ergibt VOUT = 1,212 × (1 + R23/R24). 200k/39k = 7,43 V (!!) —
-    # haette den PAM8403 (5,5 V abs max) und den geplanten TPS22918 (5,5 V max)
+    # haette den PAM8406 (6,0 V abs max) und den geplanten TPS22918 (5,5 V max)
     # zerstoert. 121k/39k → 4,97 V. (Exakt 5,00 V braeuchte 122k — kein
     # verifizierbarer LCSC-Bestand; 121k = C25809, 71k Stock, −0,6 % ist die
     # sichere Richtung.) Formel: Datenblatt Gl. 5, R1 = (VOUT−VREF)×R2/VREF.
@@ -7701,7 +7727,7 @@ def battery_sheet() -> str:
     # (neue zweite SS34, power_tree, hinter F1) → +5V_OUT. Kein Bauteil ohne
     # verifizierten LCSC-Code noetig (SS34 = C8678, bereits in der BOM).
     # Kosten: ~0,35V Drop im USB-Pfad (Rail ~4,6V an USB) — LDO (braucht
-    # >3,6V) und PAM8403 (2,5–5,5V) unkritisch.
+    # >3,6V) und PAM8406 (2,5–5,5V) unkritisch.
     # ====================================================================
 
     # ====================================================================

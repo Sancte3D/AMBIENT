@@ -1,6 +1,17 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-15 (r19.25 — Gesten-Loop; Bedienlogik-Analyse komplett (r19.20–r19.25). Davor r19.24 interaktives GENERATE, r19.23 Chord Bloom, r19.22 Locks+Scenes, r19.21 Encoder-Push, r19.20 Fixes, r19.19 Kopfhoerer, r19.18 BQ24074)**
+**Updated: 2026-07-20 (r19.37 — Audio-Endstufe: PAM8403→PAM8406 + Gain-Staging. Davor r19.26–r19.36 Sound/Bedienlogik-Runden, r19.25 Gesten-Loop, r19.18 BQ24074)**
+
+> **r19.37 (2026-07-20) — Audio-Front-End-Revision (ADR-0025):** U4 von
+> **PAM8403 (NRND) auf PAM8406DR (Active, C86270)** getauscht — gleiches
+> 16-SOIC, MODE-Pin fest auf +5V (Class-D), Pinout gegen das Diodes-
+> Datenblatt verifiziert. Gleichzeitig Gain-Staging repariert (externer
+> Review): RI 20k→174k = **Gain +23 dB → +4.3 dB** (5-V-BTL-Amp clippte
+> analog weit unter DAC-Full-Scale), und C_in 1µF→10nF = **Speaker-HPF
+> ~91 Hz** zum Schutz des 8-Ω-40-mm-Treibers; Line-Out/Kopfhörer bleiben
+> voll-range. Beide neuen R/C-Werte nutzen bereits vorhandene LCSC-Teile
+> (C22890/C57112) — BOM 60→59 Teile. Generator + jlc_bom.csv + BOM-Docs +
+> Handoff-PDF regeneriert. Host-Tests grün (reiner PCB-Change).
 
 > **r19.25 (2026-07-15) — Bedienlogik Runde 6 (Abschluss):** Gesten-Loop
 > (gesture.c) — nimmt Zell-Ereignisse auf und loopt sie ueber das Live-Setup,

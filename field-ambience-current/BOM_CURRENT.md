@@ -2,9 +2,9 @@
 
 **Generated:** 2026-07-20 · **Source of truth:** `kicad/generate_kicad_project.py` → `kicad/jlc_bom.csv`
 
-**On-PCB totals:** 60 unique parts · 200 placements · 60 verified LCSC · 0 without LCSC
+**On-PCB totals:** 59 unique parts · 200 placements · 59 verified LCSC · 0 without LCSC
 
-> Audio chain current as of **r19.19** (PCM5102A + PAM8403 + TPA6132A2). Power-path current as of **r19.18** (BQ24074). Everything r19.20→r19.36 is firmware/sound only — no board change.
+> Audio chain current as of **r19.37** (PCM5102A + **PAM8406** + TPA6132A2; PAM8403 was NRND — swapped, ADR-0025). Power-path current as of **r19.18** (BQ24074).
 
 ## 1 · MCU · clock · memory
 
@@ -19,7 +19,6 @@
 
 | Qty | Ref(s) | Part / MPN | Package | LCSC |
 |----:|--------|------------|---------|------|
-| 3 | C5b,C_BAT_FILT,C_COMP | 0603B103K500NT | C_0603_1608Metric | C57112 |
 | 3 | C_CHG_IN,C_LDO_IN,C_LDO_OUT | GRM188R61A475KE15D | C_0603_1608Metric | C46653 |
 | 3 | R_BOOT_SW,R_CHRG,R_ISET | 0603WAF1001T5E | R_0603_1608Metric | C21190 |
 | 2 | R_PWR_PD,R_VBUS_PD | 0603WAF1003T5E | R_0603_1608Metric | C25803 |
@@ -34,7 +33,6 @@
 | 1 | R24 | 0603WAF3902T5E | R_0603_1608Metric | C23153 |
 | 1 | R_COMP | 0603WAF6201T5E | R_0603_1608Metric | C4260 |
 | 1 | R_FSW | 0603WAF3603T5E | R_0603_1608Metric | C23146 |
-| 1 | R_ILIM | 0603WAF1743T5E | R_0603_1608Metric | C22890 |
 | 1 | R_ILIM_IN | RC0603FR-071K2L | R_0603_1608Metric | C114605 |
 | 1 | SW_PWR | SSSS811101 | SW_ALPS-SSSS811101_SlideSwitch_SMD | C109335 |
 | 1 | U5 | AP7361C-33Y5-13 | SOT-89-5 | C460397 |
@@ -46,14 +44,15 @@
 
 | Qty | Ref(s) | Part / MPN | Package | LCSC |
 |----:|--------|------------|---------|------|
+| 5 | C5b,C_BAT_FILT,C_COMP,C_in_L,C_in_R | 0603B103K500NT | C_0603_1608Metric | C57112 |
+| 3 | R_ILIM,R_VOL_L,R_VOL_R | 0603WAF1743T5E | R_0603_1608Metric | C22890 |
 | 2 | C_HPVDD,C_HP_VDD | CL10A225KP8NNNC | C_0603_1608Metric | C1607 |
 | 2 | FB1,FB2 | BLM18AG601SN1D | L_0603_1608Metric | C19330 |
 | 2 | J8,J10 | PJ-320D (3.5mm TRS w/ switch) | Jack_3.5mm_PJ-320D_SMT | C431535 |
 | 2 | R_LO_L,R_LO_R | 0603WAF220JT5E | R_0603_1608Metric | C23345 |
-| 2 | R_VOL_L,R_VOL_R | 0603WAF2002T5E | R_0603_1608Metric | C4184 |
 | 1 | U11 | TPA6132A2RTER | QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm | C69901 |
 | 1 | U3 | PCM5102APWR | TSSOP-20_4.4x6.5mm_P0.65mm | C107671 |
-| 1 | U4 | PAM8403DR-H | SOIC-16_3.9x9.9mm_P1.27mm | C17337 |
+| 1 | U4 | PAM8406DR | SOIC-16_3.9x9.9mm_P1.27mm | C86270 |
 
 ## 4 · I/O expander + LEDs
 
@@ -94,7 +93,7 @@
 |----:|-------|--------|-----|---------|------|
 | 28 | 100 nF X7R 0603 | C2,C5,C6c,C7b,C8b,C10,C11,C12,C13,C14,C15,C16,C17,C_BOOST_HF,C_BOOT,C_CPVDD_HF,C_LDOO,C_NRST,C_PCA_VDD_HF,C_QSPI,C_SYS_HF,C_VDD1B,C_VDD2B,C_VDD3B,C_VDD4B,C_VDD5B,C_VDDA2,C_VREF2 | CC0603KRX7R9BB104 (Yageo, 50V X7R) | C_0603_1608Metric | C14663 |
 | 26 | 10 kΩ 0603 | R6,R7,R8,R9,R10,R11,R12,R13,R14,R15,R16,R17,R18,R20,R_BAT_DIV_BOT,R_BAT_DIV_TOP,R_BLK_PD,R_BOOT0,R_DET_J8,R_MUTE_PD,R_NRST,R_OE,R_SHDN_PD,R_TS,R_VBUS_SENSE,R_XSMT_PD | 0603WAF1002T5E | R_0603_1608Metric | C25804 |
-| 16 | 1 µF X5R 0603 | C9b,C_DET_J8,C_FLY,C_FLY_HP,C_HPVSS,C_HP_INL,C_HP_INR,C_PVDDR_HF,C_UPWR_IN,C_VCC,C_VDDA1,C_VNEG,C_VREF,C_VREF1,C_in_L,C_in_R | CL10A105KB8NNNC | C_0603_1608Metric | C15849 |
+| 14 | 1 µF X5R 0603 | C9b,C_DET_J8,C_FLY,C_FLY_HP,C_HPVSS,C_HP_INL,C_HP_INR,C_PVDDR_HF,C_UPWR_IN,C_VCC,C_VDDA1,C_VNEG,C_VREF,C_VREF1 | CL10A105KB8NNNC | C_0603_1608Metric | C15849 |
 | 12 | 22 µF X5R 25V 0805 | C9,C_BAT,C_BOOST_OUT,C_BOOST_OUT2,C_BOOST_OUT3,C_PVDDR,C_SYS1,C_VDD1A,C_VDD2A,C_VDD3A,C_VDD4A,C_VDD5A | CL21A226MAQNNNE | C_0805_2012Metric | C45783 |
 | 8 | 10 µF X5R 0805 | C1,C6b,C7a,C8a,C_CPVDD_BULK,C_PCA_VDD,C_PWR_SW,C_QSPI2 | CL21A106KAYNNNE (Samsung, 25V X5R) | C_0805_2012Metric | C15850 |
 | 2 | 2.2 µF (VCAP) 0603 | C_VCAP1,C_VCAP2 | CL10A225KO8NNNC | C_0603_1608Metric | C23630 |
@@ -121,7 +120,8 @@
 ---
 
 ### Notes
-- **SW_PWR = ALPS SSSS811101 (C109335)** — current part per the generator. Older docs naming *MST-12D18G3 (C49023766)* are stale; that is now the documented budget fallback only.
+- **U4 = PAM8406DR (C86270)** — replaces the NRND PAM8403; MODE tied +5V (Class-D), input RI set for +4.3 dB gain, speaker HPF ~91 Hz (ADR-0025). Line-out/headphone stay full-range.
+- **SW_PWR = ALPS SSSS811101 (C109335)** — current part; MST-12D18G3 (C49023766) is the vendored budget fallback only.
 - **J4** = TC2030-IDC Tag-Connect programming footprint — pads only, no part placed (no BOM line).
 - Shared-passive lines (§7) each cover one LCSC value spread across power/audio/MCU nets — grouped by value, not by function, on purpose.
 - Machine-upload file for JLC assembly = `kicad/jlc_bom.csv` (identical part data, one row per LCSC).

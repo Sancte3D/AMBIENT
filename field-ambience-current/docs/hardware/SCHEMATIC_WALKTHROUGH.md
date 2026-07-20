@@ -37,7 +37,7 @@ Wenn du das hier von oben nach unten liest, weißt du am Ende:
 | 3 | `lcd.kicad_sch` | `make_lcd_sheet()` ~Z. 3533 | ST7789-Modul-Header J3 + Backlight-FET Q2 + lokale Caps |
 | 4 | `mcp.kicad_sch` | `make_mcp_sheet()` ~Z. 4560 | MCP23017 (16 I/O over I²C) + PCA9685 (16 PWM für LEDs) + 10 Buttons (5 Cells SW1–5 auf Kailh-Choc-V1 direkt-gelötet + 5 Modifier SW6–10 auf HX-B3F-Tactile, alle digital am Expander) + 10 LEDs |
 | 5 | `encoder.kicad_sch` | `make_encoder_sheet()` ~Z. 4845 | 4 EC11-Encoder mit Push + RC-Filter |
-| 6 | `audio.kicad_sch` | `audio_sheet()` | PCM5102A I²S-DAC + PAM8403 Class-D-Amp + Speaker-Header + U11 TPA6132A2 HP-Amp (r19.19) + 3.5-mm-PHONES/LINE-OUT + (DNP) MIDI-Out |
+| 6 | `audio.kicad_sch` | `audio_sheet()` | PCM5102A I²S-DAC + PAM8406 Class-D-Amp + Speaker-Header + U11 TPA6132A2 HP-Amp (r19.19) + 3.5-mm-PHONES/LINE-OUT + (DNP) MIDI-Out |
 | 7 | `battery.kicad_sch` | `battery_sheet()` | BQ24074 Power-Path-Charger (r19.18, ADR-0023) + F2 PTC + Akku-JST + TPS61089 Boost + Bat-Sense-Divider |
 
 Plus das Top-Level `field_ambience.kicad_sch` — verbindet die 7 Sheets über
@@ -69,7 +69,7 @@ pfeile = bidirektional (I²C/SPI command + status).
         └──────┬───────────┘                        │
                │ +5V_RAIL (Boost via D3)            │
                │                                    │
-               ├────► PAM8403 Class-D ──► Speakers  │
+               ├────► PAM8406 Class-D ──► Speakers  │
                │                                    │
                ▼                                    │
         ┌──────────────────┐                        │
@@ -82,7 +82,7 @@ pfeile = bidirektional (I²C/SPI command + status).
         │             STM32H743 (U1)               ││
         │  ◄── SPI ───► LCD (J3)                   ││
         │  ◄── I²S ────► PCM5102A ─► TPA6132A2 ─► J8 ││
-        │                          └─► PAM8403 ─► SP
+        │                          └─► PAM8406 ─► SP
         │  ◄── I²C ────► MCP23017 ─► 10× Buttons   ││
         │                  (5 Cells + 5 Modifier)  ││
         │  ◄── I²C ────► PCA9685 ──► 10× LEDs      ││
@@ -115,7 +115,7 @@ Drei Geschwindigkeits-Tiers im Signal:
 Aus dem USB-C-Stecker (5 V von extern) oder dem Akku (3.0–4.2 V LiPo) macht
 dieser Block die einzige Logik-Versorgung des Geräts: **+3V3** auf der ganzen
 PCB. Zusätzlich erzeugt ein **Boost-Konverter** aus dem Akku +5 V für die
-Speaker-Endstufe (PAM8403 mag keinen direkten LiPo-Range). Eingangs-Schutz
+Speaker-Endstufe (PAM8406 mag keinen direkten LiPo-Range). Eingangs-Schutz
 gegen Überstrom + ESD ist hier verortet.
 
 ### Bauteile
@@ -135,7 +135,7 @@ gegen Überstrom + ESD ist hier verortet.
 
 ```
 USB-C VBUS ──F1──► VBUS_FUSED ──► U7 BQ24074 ─┐ (r19.18: Rail haengt NICHT mehr direkt am USB)
-LiPo-Akku ──F2──────────────────► (BAT)      OUT=VSYS ──► TPS61089 ──D3──► +5V_RAIL ─┬─ PAM8403 (Speakers)
+LiPo-Akku ──F2──────────────────► (BAT)      OUT=VSYS ──► TPS61089 ──D3──► +5V_RAIL ─┬─ PAM8406 (Speakers)
                                                                                      └─ U_PWR ─► LDO ─► +3V3 (alle Logik)
 ```
 
@@ -158,7 +158,7 @@ USB-D+/D− gehen durch `D1` zum MCU (USB-OTG-FS für Firmware-Updates per DFU).
 - **3 A Polyfuse statt 2 A**: 2,45 A Bass-Peak gemessen → 2 A würde trippen
   bei lauter Wiedergabe. 3 A hat ~25 % Reserve unter 50 °C-Innentemp.
 - **TPS61089 + Sunlord-Drossel**: Boost-Konverter mit niedrigem Schaltrauschen
-  unter Audio-Band. Wichtig: Bulk-Cap muss **< 5 mm** vom PAM8403-PVDD-Pin
+  unter Audio-Band. Wichtig: Bulk-Cap muss **< 5 mm** vom PAM8406-PVDD-Pin
   liegen, sonst koppelt Class-D-Switching auf den DAC-Output (ADR-0010 §4).
 - **AP7361A-33ER LDO** statt einfacher Boost-direkt-zu-3,3V: LDO ist *low-noise*,
   Boost ist *switcher*. Audio-Analog hängt am LDO-3V3, nicht am Boost-Output —
@@ -268,14 +268,14 @@ software-seitig im Engine-Mix-Bus, nicht in der PCB.
 | Ref | Teil | Wozu | Footprint |
 |---|---|---|---|
 | `U3` | PCM5102APWR | I²S → Stereo-DAC, 32-Bit-Resolution, interne PLL (synct sich auf BCK ohne MCLK). Eigene AVDD-Versorgung über Ferrit-Bead. | TSSOP-20 KiCad-Standard |
-| `U4` | PAM8403DR-H | Stereo Class-D-Amp, 3 W/ch @ 4 Ω, BTL-Output. `AMP_SHDN_N` (active-low Shutdown) vom MCP23017 gated. | SO-16-150mil KiCad-Standard |
+| `U4` | PAM8406DR | Stereo Class-D-Amp, BTL-Output (r19.37, ADR-0025: ersetzt NRND PAM8406; MODE=+5V→Class-D; RI 174k = Gain +4.3 dB; C_in 10nF = Speaker-HPF ~91 Hz). `AMP_SHDN_N` (active-low Shutdown) vom MCP23017 gated. | SO-16-150mil KiCad-Standard |
 | `J7` | Speaker-Header 2×2 Pin (PUI AS04008PS, 8 Ω, 40 mm) | Speaker-Anschluss BTL — 2 Drähte pro Kanal | Pin-Header 2,54 mm |
 | `U11` | TPA6132A2RTER (r19.19, ADR-0024) | DirectPath-Kopfhoererverstaerker: DAC → CIN 1µF → U11 (Gain −6 dB, EN=AMP_nSHDN) → 22 Ω → J8. Ladungspumpe intern (C_FLY_HP/C_HPVSS), HPVDD nur an 2,2 µF (NIE an VDD!) | `Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` |
 | `J8` | PJ-320D 3,5 mm TRS (mit Insertion-Detect) | **PHONES / LINE OUT** (r19.19): Kopfhörer 16 Ω+ UND Line-Eingänge, niederohmig getrieben von U11. Insertion-Detect → Firmware mutet NUR die Speaker (Auto-Mute beim Einstecken, wieder an beim Ausstecken) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (Custom EasyEDA-CAD) |
 | `J9` | PJ-320D MIDI-OUT — **DNP für 5er-Run** (ADR-0004 r18.30) | 2× 220 Ω Resistor pair + UART-TX. Reaktivierbar durch Bestücken + `midi_tx_init()` | gleicher FP, DNP |
 | `FB1` | BLM18AG601 (Ferrit-Bead) | AVDD-Trennung DAC (Digital-Rail → Analog-Rail) | 0603 |
 | `C_AVDD` | 10 µF + 100 nF X7R am Ferrit-Output | DAC-AVDD-Decoupling | 0603 |
-| `C_AMP` | 1 µF + 100 nF auf PAM8403 PVDD | Amp-lokales Decoupling | 0603 |
+| `C_AMP` | 1 µF + 100 nF auf PAM8406 PVDD | Amp-lokales Decoupling | 0603 |
 
 ### Wie es fließt
 
@@ -285,7 +285,7 @@ STM32H743 SAI1
    ▼
 PCM5102A (U3)
    │ Analog L/R
-   ├──► PAM8403 (U4) ──► J7 Speaker-Header ──► 2× PUI AS04008PS 40 mm
+   ├──► PAM8406 (U4) ──► J7 Speaker-Header ──► 2× PUI AS04008PS 40 mm
    │           ▲
    │           │ AMP_SHDN_N (MCP23017 GPA4) — Mute aus Firmware
    │
@@ -299,7 +299,7 @@ PCM5102A (U3)
 | Bauteil stirbt | Symptom | Fix |
 |---|---|---|
 | `U3` PCM5102A | Komplett stumm an allen Outs (J8 + Speakers) | DAC oder I²S-Verkabelung prüfen |
-| `U4` PAM8403 | Speakers stumm, J8 lebt | Amp prüfen — oft thermisch oder Strapping-Pin falsch |
+| `U4` PAM8406 | Speakers stumm, J8 lebt | Amp prüfen — oft thermisch oder Strapping-Pin falsch |
 | `U11` TPA6132A2 | J8 stumm (Kopfhörer UND Line), Speakers leben | AMP_nSHDN high? Ladungspumpen-Caps (C_FLY_HP/C_HPVSS) prüfen; HPVDD-Spannung ~VDD-nah messen |
 | `FB1` Ferrit | Digital-Switching grießelt im Headphone-Out | Ferrit tauschen |
 | `J7` Speaker-Header lose | Speaker brüllt, Brummen, evtl. Amp thermisch | Header neu löten |
@@ -330,12 +330,12 @@ des Sound-Designs, nicht ein Versuch, 40 mm zu HiFi zu prügeln.
 
 - **PCM5102A statt billigerer PT8211**: Interne DAC-PLL synct sich auf BCK
   → kein externer MCLK nötig → ein SAI-Pin weniger. Saubere 112 dB SNR.
-- **PAM8403 statt MAX98357A I²S-Amp**: PAM8403 ist analoger Class-D — wir
+- **PAM8406 statt MAX98357A I²S-Amp** (r19.37: PAM8406→PAM8406, NRND-Swap): analoger Class-D — wir
   *wollen* den Analog-Pfad zwischen DAC + Amp, damit J8 gleichzeitig
   möglich ist (MAX98357 hat keinen Analog-Output).
 - **8 Ω / 40 mm PUI statt 4 Ω / 28 mm**: 40 mm gibt physikalisch mehr Membran-
   Fläche → mehr Mid-Lautstärke (alles unter 250 Hz ist sowieso nur am
-  Line-Out). 8 Ω passt zur PAM8403-Optimierung.
+  Line-Out). 8 Ω passt zur PAM8406-Auslegung.
 - **PJ-320D-Jack mit Insertion-Detect**: Auto-Mute der Speakers beim
   Einstecken — Standard-User-Erwartung.
 
@@ -600,7 +600,7 @@ J9 LiPo+ ──F2──► BAT_PLUS ◄── BAT ─┤
                                           ▼
                        U8 TPS61089 (EN=PWR_ON) ──L1──► 4,97 V ──D3──► +5V_RAIL
                                                                         │
-                                                    ├──► PAM8403 (Audio, ungeschaltet, R_SHDN_PD)
+                                                    ├──► PAM8406 (Audio, ungeschaltet, R_SHDN_PD)
                                                     └──► U_PWR (ON=PWR_ON) ──► +5V_SW ──► LDO ──► +3V3
 
 BAT_PLUS ──► 100k:100k ──► STM32 ADC (`BAT_SENSE`)
