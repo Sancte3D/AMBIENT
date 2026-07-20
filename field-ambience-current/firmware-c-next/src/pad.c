@@ -281,7 +281,6 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     float crate  = 0.05f + (float)(source % 4) * 0.015f;
     float fatk   = 2.5f + (float)(source % 3) * 0.5f;
 
-    v->used   = true;
     v->source = source;
     v->amp    = dsp_clampf(amp, 0.0f, 1.0f);
     if (!keep_phase) {
@@ -305,6 +304,16 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     /* side 0 = −detune, freqMul 1.003; side 1 = +detune, freqMul 0.997 */
     side_setup(&v->side[0], freq_hz, -1, voice_pan, detune, 1.003f, cbase, crate, fatk, keep_phase);
     side_setup(&v->side[1], freq_hz, +1, voice_pan, detune, 0.997f, cbase, crate, fatk, keep_phase);
+
+    /* r19.38 realtime-safety: publish the voice LAST. The DMA-IRQ render loop
+     * gates on v->used; every field above must be initialised before the ISR
+     * can see this slot active, otherwise a freshly allocated slot renders
+     * half-built state (click / garbage). The compiler barrier keeps the store
+     * to `used` from being hoisted above the field writes. (Re-triggered voices
+     * were already used=true and live, so this only tightens the fresh-alloc
+     * path — no behavioural change there.) */
+    __asm__ volatile("" ::: "memory");
+    v->used = true;
 }
 
 void pad_note_off(uint8_t source) {
