@@ -205,9 +205,30 @@ void menu_init(const menu_callbacks_t *cbs) {
         blur   = w->blur_pct;
     }
     set_world_accent(false);       /* boot world's tint (world 0), snap */
-    /* Don't push the macro defaults here — the engine sets its own at
-     * engine_init. The accent IS set: it's a display concern, not an engine
-     * callback, and the panel should boot already tinted to world 0. */
+    /* r19.39 boot-state truthfulness: push world 0's preset into the engine so
+     * the panel never shows a value the engine hasn't applied. Previously the
+     * engine kept its own engine_init defaults until the first world change, so
+     * the display could read e.g. Atmos 35 while the engine sat at 0 (the panel
+     * "lied"). engine_init has already run (main boot order), and boot is still
+     * muted (engine_boot_mute) + fades in afterwards, so setting the macros here
+     * only makes display == engine; it does not make noise. Accent stays snapped
+     * (already set above) — we push the params, not the crossfade. */
+    {
+        const world_t *w = worlds_get(0);
+        color_i = w->chord_color; if (color_i > 3) color_i = 0;
+        bass_i  = w->bass_mode;   if (bass_i  > 3) bass_i  = 3;
+        if (cb.set_world)      cb.set_world(world_i);
+        if (cb.set_color)      cb.set_color(color_i);
+        if (cb.set_bass)       cb.set_bass(bass_i);
+        if (cb.set_space)      cb.set_space     (space  / 100.0f);
+        if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
+        if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
+        if (cb.set_motion)     cb.set_motion    (motion / 100.0f);
+        if (cb.set_age)        cb.set_age       (age    / 100.0f);
+        if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
+        if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
+        if (cb.set_key)        cb.set_key       (key_pc);
+    }
 }
 
 /* --- state queries ---------------------------------------------------- */
