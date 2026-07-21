@@ -38,6 +38,7 @@
 /* Amp envelope (seconds). Webapp cellOn uses attack 0.8 / release 3.0 — the
  * 1.5 s value from _makePadVoice defaults is for chord-spawn use, not cell
  * taps. Using the spawn value here made cells feel bloomy instead of tap-y. */
+#define PAD_ORPHAN_SRC 0xFEu     /* r19.43: released tail with no owner */
 #define PAD_ATTACK_S   0.8f
 #define PAD_RELEASE_S  3.0f
 
@@ -96,6 +97,9 @@ typedef struct {
     float       atkInc;     /* per-sample linear attack step */
     float       relCoef;    /* per-sample exponential release coef */
     env_state_t state;
+    bool        rel_pending;/* r19.43: note_off arrived mid-attack — finish
+                             * the bloom to a body (0.35*amp) first, then
+                             * auto-release. A short tap = a complete tone. */
 
     /* r19.5 spectral animator walk (per voice; both sides read it mirrored).
      * A CORRELATED random walk 0..1 — small persistent steps (20,21,23,26…
@@ -265,10 +269,27 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     if (!padsynth_ready()) padsynth_build(0, 0);
 #endif
     int i = find_source(source);
+    /* r19.43 (Ambient-Chill-Analyse): re-pressing a RELEASING cell starts a
+     * NEW overlapping voice while the old tail keeps ringing — the tails-
+     * over-tails behaviour the reference playlist lives on. Only a voice
+     * that is still gated (attack/sustain) re-triggers in place. Scoped to
+     * the PLAYER's cell sources (base 0-4, shift 9-13): the generative
+     * bed/Eno/melody sources keep their fixed one-voice-per-source budget. */
+    bool player_cell = (source <= 4u) || (source >= 9u && source <= 13u);
+    if (player_cell && i >= 0 && voices[i].state == ENV_RELEASE) {
+        voices[i].source = PAD_ORPHAN_SRC;      /* keeps decaying, unowned */
+        i = -1;
+    }
     bool keep_phase = (i >= 0);                 /* re-trigger: glide, don't click */
-    if (i < 0) i = alloc_slot();
+    bool stolen = false;
+    if (i < 0) { i = alloc_slot(); stolen = voices[i].used; }
     if (i < 0) return;
     pad_voice_t *v = &voices[i];
+    /* r19.43 soft steal: the quietest victim is still audible — keep its
+     * phase and current env so the new note enters amplitude- and phase-
+     * continuous (no hard reset click; analysis: "niemals hart abgeschaltet"). */
+    float steal_env = (stolen && v->env > 1.0e-4f) ? v->env : -1.0f;
+    if (steal_env > 0.0f) keep_phase = true;
 
     /* Deterministic per-source variation (no rand(): keeps tests reproducible
      * while still detuning each voice differently). */
@@ -283,7 +304,9 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
 
     v->source = source;
     v->amp    = dsp_clampf(amp, 0.0f, 1.0f);
-    if (!keep_phase) {
+    v->rel_pending = false;
+    if (steal_env > 0.0f) v->env = steal_env;
+    else if (!keep_phase) {
         v->env = 0.0001f;
         /* r19.5 spectral walk: start mid-band, seed per source so voices
          * don't wander in lockstep (fixed seed → reproducible). */
@@ -319,7 +342,16 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
 void pad_note_off(uint8_t source) {
     int i = find_source(source);
     if (i < 0) return;
-    if (voices[i].state != ENV_IDLE) voices[i].state = ENV_RELEASE;
+    pad_voice_t *v = &voices[i];
+    if (v->state == ENV_IDLE) return;
+    /* r19.43: a tap that ends mid-attack finishes blooming to a body first
+     * (0.35*amp ≈ 0.28 s into the 0.8 s attack), then auto-releases — a
+     * short press yields a complete tone with tail, not a thin blip. */
+    if (v->state == ENV_ATTACK && v->env < 0.35f * v->amp) {
+        v->rel_pending = true;
+        return;
+    }
+    v->state = ENV_RELEASE;
 }
 
 void pad_all_off(void) {
@@ -432,7 +464,12 @@ static void render_block_float(float *outL, float *outR, int frames) {
             switch (v->state) {
                 case ENV_ATTACK:
                     v->env += v->atkInc;
-                    if (v->env >= v->amp) { v->env = v->amp; v->state = ENV_SUSTAIN; }
+                    if (v->rel_pending && v->env >= 0.35f * v->amp) {
+                        v->rel_pending = false;
+                        v->state = ENV_RELEASE;      /* tap: body reached */
+                    } else if (v->env >= v->amp) {
+                        v->env = v->amp; v->state = ENV_SUSTAIN;
+                    }
                     break;
                 case ENV_RELEASE:
                     v->env -= v->relCoef * v->env;

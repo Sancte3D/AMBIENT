@@ -1,5 +1,16 @@
 # PROJECT STATUS
 
+> **r19.43 (2026-07-21) — Cell-Lebenszyklus (Ambient-Chill-Analyse):** Die
+> 250-Track-Referenzanalyse verlangt Cells als fünf spielbare Töne mit
+> überlappenden Tails. Umgesetzt in pad.c: (1) erneuter Druck auf eine
+> RELEASENDE Cell startet eine NEUE Stimme, der alte Tail klingt weiter
+> (nur Player-Sources 0-4/9-13; Generativ behält sein Voice-Budget);
+> (2) kurzer Tap blüht erst zum Körper (0,35·amp) und released dann —
+> vollständiger Ton statt dünnem Blip; (3) Voice-Steal ist amplituden- und
+> phasenkontinuierlich (kein Hard-Reset-Klick mehr). Alle Suiten grün.
+> Offen aus der Analyse: Oktav-Entclusterung simultaner Cells, Attack/
+> Release-Ranges pro World, Density-Makro.
+
 **Updated: 2026-07-20 (r19.41 — Master-Effects-Engine integriert; davor r19.38–r19.40 Realtime-Safety, r19.37 PAM8406-Endstufe + Gain-Staging)**
 
 > **r19.41 (2026-07-20) — Master-Effects-Integration:** Die gelieferte
