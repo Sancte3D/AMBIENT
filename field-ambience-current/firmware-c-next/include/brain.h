@@ -36,8 +36,25 @@ int  brain_get_key(void);
  * to `max` MIDI notes into out_midi, returns the count written. */
 int brain_chord(int degree, int *out_midi, int max);
 
-/* The MIDI pitch a cell tap should sound: lowest note of the voiced chord for
- * that cell's degree (cell 0 → degree 1). Matches the webapp cellOn root. */
+/* r19.32 CHORD COLOR: same, but the interval shape comes from a colour, not
+ * the world vibe — PURE 1-3-5 / OPEN 1-5-9 / WARM 1-3-6-9 / DEEP 1-3-5-7. All
+ * notes stay in the world scale. Voiced-centred like brain_chord. */
+#define BRAIN_COLOR_COUNT 4
+int brain_color_chord(int degree, int color, int *out, int max);
+
+/* The MIDI pitch a cell tap should sound (cell 0..4). r19.26: a strictly
+ * ascending pentatonic degree above the key (major or minor pentatonic per the
+ * world's mode) — no semitone/tritone between any two cell roots, always
+ * rising left→right. Shift = +1 octave is applied by the caller. */
 int brain_cell_root(int cell);
+
+/* 1 if the current world reads as minor/modal-minor (dorian/phrygian/aeolian),
+ * 0 if major-ish. */
+int brain_is_minor(void);
+
+/* r19.29 HARMONY mode: the scale degree (1-indexed) of cell 0..4's chord
+ * role for the current world — I ii IV V vi (major) / i III IV v VII (minor).
+ * Feed to brain_chord() to build the voiced chord. */
+int brain_role_degree(int cell);
 
 #endif

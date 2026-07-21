@@ -29,7 +29,7 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 | U4 | PAM8403DR-H | ⏳ noch nicht reviewed | — | — | unverändert |
 | U2 | MCP23017-E/SS | ⏳ noch nicht reviewed | — | — | unverändert |
 | U6 | PCA9685PW | ⏳ noch nicht reviewed | — | — | unverändert |
-| U7 | MCP73831T-2ACI/OT | ⏳ noch nicht reviewed | — | — | unverändert |
+| U7 | BQ24074RGTR (r19.18, ADR-0023) | ✅ r19.18: Pin-Map/Formeln gegen TI SLUS810N, Footprint gegen JLC-Landpattern C54313 | 2026-07-13 | ADR-0023 | **ersetzt MCP73831** |
 | U8 | TPS61089RNR | 🔴 SOFORT-FINDING (F-1) | — | — | **Datenblatt im Repo ist falsche Variante (RNSR statt RNR)** |
 | Q1 | DMG2305UX | ⏳ noch nicht reviewed | — | — | unverändert |
 | EN1–4 | ALPSALPINE EC11J1525402 | 🔴 SOFORT-FINDING (F-2) | — | — | **Datenblatt im Repo ist falsches Teil (Bourns PEC11R)** |
@@ -144,4 +144,4 @@ Priorisiert nach Risiko + Migrations-Relevanz:
 4. **HOCH (Quellenbeschaffung für U1):** ST AN3318, ST UM2407 Nucleo-Schematic, DS12110 §6.1 + §6.3.13 (HSE detail), §7 (Package)
 5. **MITTEL (zentral aber unverändert):** U3 PCM5102A (SAI-Kompatibilität), U4 PAM8403, U2 MCP23017, U6 PCA9685
 6. **MITTEL (Power-Tree H7):** Decoupling-Caps gegen AN3318 final verifizieren
-7. **NIEDRIG (bewährt aus v0.6):** U7 MCP73831, U8 TPS61089 (nach F-1), Q1 DMG2305UX, USB-C, ST7789-Modul, USBLC6, Polyfuse, Speakers, Battery
+7. **NIEDRIG (bewährt aus v0.6):** U8 TPS61089 (nach F-1), USB-C, ST7789-Modul, USBLC6, Polyfuse, Speakers, Battery. (U7 ist seit r19.18 der BQ24074 — reviewed, s.o.; Q1 seit r18.79 entfernt.)

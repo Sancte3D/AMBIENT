@@ -47,10 +47,10 @@ int main(void) {
     CHECK(out[1] == LED_DUTY_GREEN,  "HOLD lit green on ch 1");
 
     /* ---- 4. Cell 2 base hold lights ch 9 (yellow), shift bit lights ch 10 ---- */
-    /* Clear shift first (it latched on in test 2). */
-    controls_modifier(MOD_SHIFT, true);             /* shift now OFF */
+    /* r19.20: SHIFT is momentary — release it (it was held since test 2). */
+    controls_modifier(MOD_SHIFT, false);            /* shift released = OFF */
     controls_cell_press(2, 0.15f);                  /* base on */
-    controls_modifier(MOD_SHIFT, true);             /* shift ON */
+    controls_modifier(MOD_SHIFT, true);             /* shift held = ON */
     controls_cell_press(2, 0.15f);                  /* shift bit on too */
     settle(&now, out, 200);
     CHECK(out[5 + 2*2]     == LED_DUTY_YELLOW, "Cell 2 base → ch 9 yellow (%d)", out[5+2*2]);

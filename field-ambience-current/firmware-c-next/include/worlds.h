@@ -41,9 +41,11 @@ typedef struct {
     uint8_t     key_midi;          /* tonic MIDI note (brain_set_key)         */
     uint8_t     mode;              /* 0..5 ionian..aeolian (brain_set_mode)   */
     uint8_t     vibe;              /* 0..3 warm/bright/deep/floating (vibe)   */
-    /* Phase 3 slots are intentionally left out for now — they'll be added
-     * when the modules they feed exist, so we don't commit to an interface
-     * we can't validate yet. */
+    /* r19.36: curated HARMONY character per world — the chord colour + bass
+     * mode loaded on world-change (like the macros; the user can nudge after).
+     * Makes the four worlds feel harmonically distinct, not just texturally. */
+    uint8_t     chord_color;       /* 0 Pure / 1 Open / 2 Warm / 3 Deep       */
+    uint8_t     bass_mode;         /* 0 Off / 1 Root / 2 Fifth / 3 Drift      */
 } world_t;
 
 /* Get the immutable descriptor for a world index. Index is clamped to

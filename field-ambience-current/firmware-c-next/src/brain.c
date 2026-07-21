@@ -97,11 +97,83 @@ int brain_chord(int degree, int *out_midi, int max) {
     return n;
 }
 
+/* r19.32 — CHORD COLOR: build the chord from the world scale using a chosen
+ * interval shape instead of the world's fixed vibe family. Every note still
+ * comes from the scale (scale-step offsets), so no accidental chromatics:
+ *   PURE 1-3-5 (triad) · OPEN 1-5-9 (no third, airy) ·
+ *   WARM 1-3-6-9 (6/9) · DEEP 1-3-5-7 (seventh).
+ * Scale-step offsets from the chord's root degree (0=root, 2=third, 4=fifth,
+ * 6=seventh, 8=ninth, 5=sixth). Voiced-centred like brain_chord. */
+static const int8_t COL_PURE[3] = { 0, 2, 4 };
+static const int8_t COL_OPEN[3] = { 0, 4, 8 };
+static const int8_t COL_WARM[4] = { 0, 2, 5, 8 };
+static const int8_t COL_DEEP[4] = { 0, 2, 4, 6 };
+
+int brain_color_chord(int degree, int color, int *out, int max) {
+    static const int8_t *const CS[BRAIN_COLOR_COUNT] =
+        { COL_PURE, COL_OPEN, COL_WARM, COL_DEEP };
+    static const int CN[BRAIN_COLOR_COUNT] = { 3, 3, 4, 4 };
+    if (color < 0 || color >= BRAIN_COLOR_COUNT) color = 0;
+
+    const int8_t *iv = SCALES[s_mode];
+    const int8_t *st = CS[color];
+    int n = CN[color];
+    int d = degree - 1;
+
+    int count = 0;
+    for (int i = 0; i < n && count < max; ++i) {
+        int idx  = d + st[i];
+        out[count++] = s_key + iv[fmod7(idx)] + 12 * fdiv7(idx);
+    }
+    voice_centered(out, count);
+    return count;
+}
+
+/* r19.26 — cell pitch = a clean, strictly ascending pentatonic degree, NOT
+ * the lowest note of an octave-folded diatonic chord.
+ *
+ * The old path took degrees 1..5 of the seven-note scale and octave-centred
+ * each chord independently. Two consequences, both audible: (a) diatonic
+ * degrees carry a semitone step (3-4, 7-8), so every world's five cell roots
+ * contained one semitone pair — held together under the long reverb they beat
+ * against the Harmonic-Safety principle (SOUND_WORLD.md §4); (b) the per-cell
+ * octave fold pushed some roots below their neighbour, so left→right was not
+ * always rising.
+ *
+ * A gapped pentatonic removes the semitone by construction (min step = 2) and,
+ * added directly to the key with no fold, always rises. Major worlds use the
+ * major pentatonic, minor/modal-minor worlds the minor pentatonic; the modal
+ * colour (dorian vs aeolian) still lives in the pad/composer harmony, which
+ * keeps using the full scale via brain_chord(). Shift = +1 octave is applied
+ * by the caller (controls.c), so the octave relationship stays exact. */
+static const int PENT_MAJ[5] = { 0, 2, 4, 7,  9 };   /* C D E G A  */
+static const int PENT_MIN[5] = { 0, 3, 5, 7, 10 };   /* C Eb F G Bb */
+
+/* dorian(1) / phrygian(2) / aeolian(5) read as minor; the rest as major. */
+static int mode_is_minor(int mode) {
+    return mode == 1 || mode == 2 || mode == 5;
+}
+
 int brain_cell_root(int cell) {
-    int chord[BRAIN_MAX_CHORD];
-    int n = brain_chord(cell + 1, chord, BRAIN_MAX_CHORD);
-    if (n <= 0) return s_key;
-    int lo = chord[0];
-    for (int i = 1; i < n; ++i) if (chord[i] < lo) lo = chord[i];
-    return lo;
+    if (cell < 0) cell = 0;
+    if (cell > 4) cell = 4;
+    const int *pent = mode_is_minor(s_mode) ? PENT_MIN : PENT_MAJ;
+    return s_key + pent[cell];
+}
+
+int brain_is_minor(void) { return mode_is_minor(s_mode); }
+
+/* r19.29 — the five most useful chord ROLES per world (HARMONY cell mode),
+ * as 1-indexed scale degrees, instead of a flat degrees 1..5:
+ *   major world:  I  ii  IV  V   vi   (home, motion, opening, tension, emotion)
+ *   minor/modal:  i  III IV  v   VII  (home, lift, opening, tension, colour)
+ * The chord for a role is still built by brain_chord() from the world scale,
+ * so every note stays in the pitch world — no accidental chromatics. */
+static const int ROLE_MAJ[5] = { 1, 2, 4, 5, 6 };
+static const int ROLE_MIN[5] = { 1, 3, 4, 5, 7 };
+
+int brain_role_degree(int cell) {
+    if (cell < 0) cell = 0;
+    if (cell > 4) cell = 4;
+    return (mode_is_minor(s_mode) ? ROLE_MIN : ROLE_MAJ)[cell];
 }

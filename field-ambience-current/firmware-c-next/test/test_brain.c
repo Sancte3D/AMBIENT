@@ -53,7 +53,9 @@ static void test_default_ionian_add9(void) {
     print_chord("ionian V add9", c, n);
     int exp5[] = { 55, 59, 62, 69 };               /* voiced down an octave */
     CHECK(chord_eq(c, n, exp5, 4), "ionian degree 5 add9 wrong");
-    CHECK(brain_cell_root(4) == 55, "cell 4 root != 55: %d", brain_cell_root(4));
+    /* r19.26: cell roots are an ascending pentatonic above the key, not the
+     * degree-5 chord root. C major → cell 4 = 60 + 9 = A4 (69). */
+    CHECK(brain_cell_root(4) == 69, "cell 4 root != 69: %d", brain_cell_root(4));
 }
 
 static void test_mode_changes_thirds(void) {
@@ -88,20 +90,21 @@ static void test_vibe_changes_family(void) {
     CHECK(chord_eq(c, n, exps, 3), "sus2 family wrong");
 }
 
-static void test_pitch_class_of_key_matters(void) {
-    /* Octave changes of key are normalised away by voiceCentered, but the
-     * pitch class still shifts the chord. */
+static void test_key_moves_cell_root(void) {
+    /* r19.26: cell 0 is the key itself, so a key change moves the root by
+     * exactly that interval — an octave key change moves it a full octave
+     * (no voiceCentered fold on the cell path any more). */
     brain_init();
     int root60 = brain_cell_root(0);
-    brain_set_key(48);                             /* C3 — same pitch class */
+    CHECK(root60 == 60, "cell 0 must be the key (60): %d", root60);
+    brain_set_key(48);                             /* C3 — octave below */
     int root48 = brain_cell_root(0);
-    CHECK(root60 == root48, "octave key change should not move voiced root: %d vs %d",
-          root60, root48);
+    CHECK(root48 == root60 - 12, "octave key change should move root an octave: %d vs %d",
+          root48, root60);
     brain_set_key(62);                             /* D — different pitch class */
     int root62 = brain_cell_root(0);
-    CHECK(root62 != root60, "pitch-class key change should move root: %d vs %d",
-          root62, root60);
-    printf("  cell0 root: C=%d  D=%d\n", root60, root62);
+    CHECK(root62 == 62, "cell 0 should follow the key: %d", root62);
+    printf("  cell0 root: C=%d  C3=%d  D=%d\n", root60, root48, root62);
 }
 
 static void test_all_degrees_centered_and_sane(void) {
@@ -125,10 +128,46 @@ static void test_all_degrees_centered_and_sane(void) {
                 CHECK(mean >= 58.0f && mean <= 70.0f,
                       "voicing not centred (mean %.1f) mode=%d vibe=%d deg=%d",
                       mean, mode, vibe, deg);
-                CHECK(brain_cell_root(deg - 1) == lo, "cell_root != chord min");
+                (void)lo;   /* r19.26: cell roots no longer track chord min */
             }
         }
     }
+}
+
+/* r19.32: chord colours build the intended interval shape, all in the scale. */
+static int pc_in_scale_cmaj(int m) {
+    int pc = ((m % 12) + 12) % 12;
+    /* C major pitch classes */
+    return pc==0||pc==2||pc==4||pc==5||pc==7||pc==9||pc==11;
+}
+static int has_pc(const int *c, int n, int pc) {
+    for (int i = 0; i < n; ++i) if ((((c[i]%12)+12)%12) == pc) return 1;
+    return 0;
+}
+static void test_color_chords(void) {
+    brain_init(); brain_set_key(60); brain_set_mode(0);   /* C major */
+    int c[BRAIN_MAX_CHORD], n;
+
+    n = brain_color_chord(1, 0, c, BRAIN_MAX_CHORD);       /* PURE 1-3-5 */
+    CHECK(n == 3, "PURE is a triad (%d)", n);
+    CHECK(has_pc(c,n,0)&&has_pc(c,n,4)&&has_pc(c,n,7), "PURE = C E G");
+
+    n = brain_color_chord(1, 1, c, BRAIN_MAX_CHORD);       /* OPEN 1-5-9 */
+    CHECK(has_pc(c,n,0)&&has_pc(c,n,7)&&has_pc(c,n,2), "OPEN = C G D");
+    CHECK(!has_pc(c,n,4), "OPEN has no third");
+
+    n = brain_color_chord(1, 3, c, BRAIN_MAX_CHORD);       /* DEEP 1-3-5-7 */
+    CHECK(n == 4, "DEEP has four notes (%d)", n);
+    CHECK(has_pc(c,n,11), "DEEP includes the major 7th (B)");
+
+    /* every colour, every degree: only scale tones (no accidental chromatics) */
+    for (int col = 0; col < BRAIN_COLOR_COUNT; ++col)
+        for (int deg = 1; deg <= 7; ++deg) {
+            n = brain_color_chord(deg, col, c, BRAIN_MAX_CHORD);
+            for (int i = 0; i < n; ++i)
+                CHECK(pc_in_scale_cmaj(c[i]), "color %d deg %d note %d in scale",
+                      col, deg, c[i]);
+        }
 }
 
 int main(void) {
@@ -136,7 +175,8 @@ int main(void) {
     test_default_ionian_add9();
     test_mode_changes_thirds();
     test_vibe_changes_family();
-    test_pitch_class_of_key_matters();
+    test_key_moves_cell_root();
+    test_color_chords();
     test_all_degrees_centered_and_sane();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);

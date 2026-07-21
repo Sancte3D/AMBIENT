@@ -20,9 +20,12 @@ Line-out testen.
 ## Schnellreferenz
 | Rail | Soll | Woher |
 |---|---|---|
-| `+5V_RAIL` (USB) | ~4,7 V | VBUS → F1 → D3B (SS34, ~0,3 V Drop) |
-| `+5V_RAIL` (Akku) | ~4,97 V | TPS61089 Boost (121k-Divider) |
-| `+5V_SW` | = +5V_RAIL | TPS22918 U_PWR, geschaltet von SW_PWR |
+| `VBUS_FUSED` (USB) | ~5,0 V | VBUS → F1 (TP: TP_VBUS ist PRE-fuse `VBUS_USBC`) |
+| `VSYS` (USB, TP_VSYS) | ~4,4 V | BQ24074 OUT-Regulation (DPPM) |
+| `VSYS` (Akku) | = VBAT (3,0–4,2 V) | BQ24074 BAT-FET |
+| `+5V_RAIL` (ON) | ~4,6–4,7 V | TPS61089 Boost 4,97 V − D3-Drop |
+| `+5V_RAIL` (OFF) | ~3–3,7 V **unreguliert** | Boost-Body-Diode + D3 — KEIN Fehler (TPS61089 hat kein Output-Disconnect, ADR-0023) |
+| `+5V_SW` | = +5V_RAIL (nur ON) | TPS22918 U_PWR, geschaltet von SW_PWR |
 | `+3V3` | 3,30 V | AP7361C LDO (ganze 3V3-Domäne) |
 
 | I²C @ 400 kHz | Adresse |
@@ -32,7 +35,7 @@ Line-out testen.
 
 | Debug | Pin |
 |---|---|
-| SWD J4 (Tag-Connect TC2030) | SWDIO PA13 · SWCLK PA14 · SWO PB3 |
+| SWD J4 (DNP-Pads 1×3 1,27 mm — Header/Litzen von Hand, r19.18) | SWDIO PA13 · SWCLK PA14 · SWO PB3 |
 | NRST | Pin 14 (SW11 + 10k PU + 100 nF) |
 | BOOT0 | Pin 94 (SW_BOOT + Pull-**down** → Flash-Boot) |
 | HSE | Y1 8 MHz Crystal |
@@ -43,14 +46,16 @@ Line-out testen.
 - Sichtprüfung: Bestückung vollständig, Polung von Elkos/Dioden/USB-C/JST,
   keine Lötbrücken (besonders unter dem LQFP-100 + den QFN/SOT-Reglern).
 - **Kurzschluss-Check** (Ohmmeter gegen GND, muss NICHT ~0 Ω sein):
-  `+5V_RAIL`, `+5V_SW`, `+3V3`, `BAT_PLUS`.
+  `VBUS_FUSED`, `VSYS`, `+5V_RAIL`, `+5V_SW`, `+3V3`, `BAT_PLUS`.
 - SW_PWR in **OFF**. Akku **nicht** gesteckt.
 
 ## Stufe 1 — USB an, Gerät AUS (strombegrenzt)
 - USB-C rein, Limit ~200 mA. Erwartung (SW_PWR off, PWR_ON per 100k PD low):
-  - `+5V_RAIL` ≈ 4,7 V (über D3B von VBUS).
+  - `VBUS_FUSED` ≈ 5,0 V; `VSYS` (TP_VSYS) ≈ **4,4 V** (BQ24074-OUT-Regulation — der wichtigste Messpunkt).
+  - `+5V_RAIL` ≈ 3,4–3,7 V unreguliert (Body-Dioden-Leck, Boost aus) — normal.
   - `+5V_SW` = 0 V, `+3V3` = **0 V** (LDO aus — Load-Switch sperrt).
-  - Charger MCP73831 aktiv; ohne Akku flackert/ruht STAT-LED (orange).
+  - Charger BQ24074 aktiv; **mit** Akku leuchtet LED_CHRG (CHG open-drain),
+    **ohne** Akku zyklt die Battery-Detection (LED kann blinken/aus sein — normal).
   - Ruhestrom klein, **kein Bauteil warm**. Wird etwas heiß → trennen.
 
 ## Stufe 2 — Power-On (SW_PWR ON)

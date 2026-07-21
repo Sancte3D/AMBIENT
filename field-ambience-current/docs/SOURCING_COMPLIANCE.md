@@ -25,7 +25,7 @@ SMD-BOM ~**$21,30/Board** (@10+). Status **🟢** — das ist der Teil, den man
 | PCA9685 (U6) | C… | 2,93 | 🟢 |
 | MCP23017 | C… | 1,62 | 🟢 |
 | PCM5102A DAC | C… | 0,99 | 🟢 |
-| MCP73831 Charger | C424093 | 0,70 | 🟢 |
+| BQ24074 Power-Path-Charger (r19.18) | C54313 | 2,24 | 🟢 |
 | TPS61089 Boost | C… | 0,50 | 🟢 |
 | PAM8403 Amp | C… | 0,44 | 🟢 |
 | TPS22918 Load-Switch | C131941 | 0,25 | 🟢 |
@@ -87,7 +87,7 @@ getract): J9 `Conn_01x02` Pin 1 = `BAT_PLUS` (+), Pin 2 = `GND`. Beweis:
 Symbol-Pin 1 (3.81, +1.27) → nach Y-Spiegelung Schaltplan-Punkt
 (53.81, 78.73) → Wire → `BAT_PLUS`-Label (60, 78.73); Pin 2 → (53.81,
 81.27) → GND. Damit ist **Footprint-Pad 1 = Plus**. Topologie komplett:
-`BAT_PLUS` erreicht MCP73831-VBAT, TPS61089-VIN (Boost) und den
+`BAT_PLUS` erreicht (via F2 PTC) BQ24074-BAT und den
 BAT_SENSE-Teiler; GND sauber.
 
 Rest — nur noch am physischen Teil (kein File-Thema mehr):

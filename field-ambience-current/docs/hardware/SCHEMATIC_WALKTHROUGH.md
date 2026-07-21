@@ -37,8 +37,8 @@ Wenn du das hier von oben nach unten liest, weißt du am Ende:
 | 3 | `lcd.kicad_sch` | `make_lcd_sheet()` ~Z. 3533 | ST7789-Modul-Header J3 + Backlight-FET Q2 + lokale Caps |
 | 4 | `mcp.kicad_sch` | `make_mcp_sheet()` ~Z. 4560 | MCP23017 (16 I/O over I²C) + PCA9685 (16 PWM für LEDs) + 10 Buttons (5 Cells SW1–5 auf Kailh-Choc-V1 direkt-gelötet + 5 Modifier SW6–10 auf HX-B3F-Tactile, alle digital am Expander) + 10 LEDs |
 | 5 | `encoder.kicad_sch` | `make_encoder_sheet()` ~Z. 4845 | 4 EC11-Encoder mit Push + RC-Filter |
-| 6 | `audio.kicad_sch` | `make_audio_sheet()` ~Z. 4878 | PCM5102A I²S-DAC + PAM8403 Class-D-Amp + Speaker-Header + 3.5-mm-Line-Out + (DNP) MIDI-Out |
-| 7 | `battery.kicad_sch` | `make_battery_sheet()` ~Z. 5956+ | MCP73831 Lade-IC + Akku-JST + Power-Path-Switching (USB ↔ Akku) + Bat-Sense-Divider |
+| 6 | `audio.kicad_sch` | `audio_sheet()` | PCM5102A I²S-DAC + PAM8406 Class-D-Amp + Speaker-Header + U11 TPA6132A2 HP-Amp (r19.19) + 3.5-mm-PHONES/LINE-OUT + (DNP) MIDI-Out |
+| 7 | `battery.kicad_sch` | `battery_sheet()` | BQ24074 Power-Path-Charger (r19.18, ADR-0023) + F2 PTC + Akku-JST + TPS61089 Boost + Bat-Sense-Divider |
 
 Plus das Top-Level `field_ambience.kicad_sch` — verbindet die 7 Sheets über
 Hierarchical Labels.
@@ -64,12 +64,12 @@ pfeile = bidirektional (I²C/SPI command + status).
                │ +5V_USB                            │ USB_DM/DP
                ▼                                    │
         ┌──────────────────┐ ◄──── Akku (LiPo) ──── │
-        │  Q1 Power-Path   │      via J_BAT         │
-        │  (USB ↔ Akku)    │                        │
+        │ U7 BQ24074 DPPM  │      via J9 + F2       │
+        │ OUT=VSYS→U8 Boost│      (r19.18 ADR-0023) │
         └──────┬───────────┘                        │
-               │ +5V_RAIL                           │
+               │ +5V_RAIL (Boost via D3)            │
                │                                    │
-               ├────► PAM8403 Class-D ──► Speakers  │
+               ├────► PAM8406 Class-D ──► Speakers  │
                │                                    │
                ▼                                    │
         ┌──────────────────┐                        │
@@ -81,8 +81,8 @@ pfeile = bidirektional (I²C/SPI command + status).
         ┌──────────────────────────────────────────┐│
         │             STM32H743 (U1)               ││
         │  ◄── SPI ───► LCD (J3)                   ││
-        │  ◄── I²S ────► PCM5102A ─► Line-Out (J8) ││
-        │                          └─► PAM8403 ─► SP
+        │  ◄── I²S ────► PCM5102A ─► TPA6132A2 ─► J8 ││
+        │                          └─► PAM8406 ─► SP
         │  ◄── I²C ────► MCP23017 ─► 10× Buttons   ││
         │                  (5 Cells + 5 Modifier)  ││
         │  ◄── I²C ────► PCA9685 ──► 10× LEDs      ││
@@ -93,8 +93,8 @@ pfeile = bidirektional (I²C/SPI command + status).
                        │ ADC1_INP15
                        └──◄── BAT_SENSE-Teiler (LiPo+)
 
-   (Lade-Pfad parallel: USB-VBUS → U7 MCP73831 → LiPo+ — immer aktiv)
-   (Boost-Pfad parallel: LiPo+ → U8 TPS61089 + L1 → +5V_RAIL via D3)
+   (Lade-Pfad: VBUS_FUSED → U7 BQ24074 → F2 → LiPo+ — aktiv sobald USB da)
+   (Versorgung: BQ-OUT=VSYS → U8 TPS61089 + L1 → +5V_RAIL via D3 — einzige Quelle)
 ```
 
 Drei Geschwindigkeits-Tiers im Signal:
@@ -115,7 +115,7 @@ Drei Geschwindigkeits-Tiers im Signal:
 Aus dem USB-C-Stecker (5 V von extern) oder dem Akku (3.0–4.2 V LiPo) macht
 dieser Block die einzige Logik-Versorgung des Geräts: **+3V3** auf der ganzen
 PCB. Zusätzlich erzeugt ein **Boost-Konverter** aus dem Akku +5 V für die
-Speaker-Endstufe (PAM8403 mag keinen direkten LiPo-Range). Eingangs-Schutz
+Speaker-Endstufe (PAM8406 mag keinen direkten LiPo-Range). Eingangs-Schutz
 gegen Überstrom + ESD ist hier verortet.
 
 ### Bauteile
@@ -129,15 +129,14 @@ gegen Überstrom + ESD ist hier verortet.
 | `C_BULK` | 1000 µF 16 V Alu-Elko | Reservoir-Kondensator für Class-D-Bass-Peaks. *Wichtigster anti-Brumm-Hebel* (ADR-0010 §4) | KiCad-Standard 8 mm-Elko |
 | diverse | 4,7 µF + 100 nF X7R | Lokales Decoupling pro IC | 0603 |
 
-> Boost-Konverter `U8` (TPS61089), Speicherdrossel `L1`, USB↔Akku-Power-Path-MOSFET `Q1` und der Lade-IC `U7` (MCP73831) leben im **Battery-Sheet** (§7), nicht hier — sie bilden konzeptionell die untere Hälfte des Power-Trees, sind aber im Generator beim Akku-Block geclustered weil sie alle den Akku-Pfad anfassen.
+> Boost-Konverter `U8` (TPS61089), Speicherdrossel `L1` und der Power-Path-Charger `U7` (BQ24074, r19.18) leben im **Battery-Sheet** (§7), nicht hier — sie bilden konzeptionell die untere Hälfte des Power-Trees, sind aber im Generator beim Akku-Block geclustered weil sie alle den Akku-Pfad anfassen.
 
 ### Wie es fließt
 
 ```
-USB-C VBUS ──F1── Power-Path Q1 ──┬── +5V_RAIL ──┬── PAM8403 (Speakers)
-                                  │              └── AP7361A LDO ──┬── +3V3_RAIL
-LiPo-Akku ────────TPS61089 Boost──┘                                 │
-                                                                    └── alle Logik (MCU, MCP, PCA, DAC, LCD)
+USB-C VBUS ──F1──► VBUS_FUSED ──► U7 BQ24074 ─┐ (r19.18: Rail haengt NICHT mehr direkt am USB)
+LiPo-Akku ──F2──────────────────► (BAT)      OUT=VSYS ──► TPS61089 ──D3──► +5V_RAIL ─┬─ PAM8406 (Speakers)
+                                                                                     └─ U_PWR ─► LDO ─► +3V3 (alle Logik)
 ```
 
 USB-D+/D− gehen durch `D1` zum MCU (USB-OTG-FS für Firmware-Updates per DFU).
@@ -147,7 +146,7 @@ USB-D+/D− gehen durch `D1` zum MCU (USB-OTG-FS für Firmware-Updates per DFU).
 | Bauteil stirbt | Symptom | Fix |
 |---|---|---|
 | `F1` polyfuse trippt | Gerät komplett tot bis Polyfuse abgekühlt (~30 s) | warten oder echte Ursache (Kurzschluss?) finden |
-| `Q1` P-MOSFET | USB lädt, Akku-Betrieb tot — oder umgekehrt | Q1 ersetzen |
+| `U7` BQ24074 | Kein VSYS → komplett tot (USB und Akku) | TP_VSYS messen, §7 |
 | `U8` Boost | Speakers tot, Logik (3V3) lebt | U8 + L1 prüfen |
 | `U5` LDO | Gerät komplett tot (kein 3V3) | LDO prüfen — kann thermisch aus, wenn Layout-Ground schlecht |
 | `C_BULK` | Brummt bei Bass, klingt schlecht, evtl. Boost-Aussetzer | Elko tauschen, Polarität prüfen |
@@ -159,13 +158,14 @@ USB-D+/D− gehen durch `D1` zum MCU (USB-OTG-FS für Firmware-Updates per DFU).
 - **3 A Polyfuse statt 2 A**: 2,45 A Bass-Peak gemessen → 2 A würde trippen
   bei lauter Wiedergabe. 3 A hat ~25 % Reserve unter 50 °C-Innentemp.
 - **TPS61089 + Sunlord-Drossel**: Boost-Konverter mit niedrigem Schaltrauschen
-  unter Audio-Band. Wichtig: Bulk-Cap muss **< 5 mm** vom PAM8403-PVDD-Pin
+  unter Audio-Band. Wichtig: Bulk-Cap muss **< 5 mm** vom PAM8406-PVDD-Pin
   liegen, sonst koppelt Class-D-Switching auf den DAC-Output (ADR-0010 §4).
 - **AP7361A-33ER LDO** statt einfacher Boost-direkt-zu-3,3V: LDO ist *low-noise*,
   Boost ist *switcher*. Audio-Analog hängt am LDO-3V3, nicht am Boost-Output —
   sonst hört man das Switching im Headphone-Out.
-- **Power-Path-MOSFET Q1**: hält den Akku frisch, wenn USB angeschlossen ist
-  (lädt + speist gleichzeitig).
+- **BQ24074-Power-Path (r19.18, ADR-0023)**: haelt den Akku frisch bei USB
+  (DPPM: Systemlast zuerst, Ladestrom dynamisch) und liefert ILIM, Timer,
+  TS und CHG-Status in einem Chip — Details §7.
 
 ### Sleep-Architektur (ADR-0016 — geplant)
 
@@ -251,7 +251,8 @@ Cortex-M7 480 MHz mit FPU + 1 MB SRAM + 2 MB Flash, LQFP-100-Gehäuse.
 
 Die zweite Hälfte der Sound-Pipeline. MCU spuckt **I²S 16-Bit 44,1 kHz** an
 einen externen DAC (`U3`), der DAC fährt entweder die Class-D-Speaker-Endstufe
-(`U4`) ODER die Line-Out-Buchse `J8`. **Sub-Bass-Layer geht NUR an Line-Out**
+(`U4`) ODER die PHONES/LINE-OUT-Buchse `J8` (via U11 HP-Amp, r19.19).
+**Sub-Bass-Layer geht NUR an J8**
 (ADR-0010 §6) — die 40-mm-Speaker können keinen Sub-Bass, das wäre nur
 Geklapper.
 
@@ -267,13 +268,14 @@ software-seitig im Engine-Mix-Bus, nicht in der PCB.
 | Ref | Teil | Wozu | Footprint |
 |---|---|---|---|
 | `U3` | PCM5102APWR | I²S → Stereo-DAC, 32-Bit-Resolution, interne PLL (synct sich auf BCK ohne MCLK). Eigene AVDD-Versorgung über Ferrit-Bead. | TSSOP-20 KiCad-Standard |
-| `U4` | PAM8403DR-H | Stereo Class-D-Amp, 3 W/ch @ 4 Ω, BTL-Output. `AMP_SHDN_N` (active-low Shutdown) vom MCP23017 gated. | SO-16-150mil KiCad-Standard |
+| `U4` | PAM8406DR | Stereo Class-D-Amp, BTL-Output (r19.37, ADR-0025: ersetzt NRND PAM8406; MODE=+5V→Class-D; RI 174k = Gain +4.3 dB; C_in 10nF = Speaker-HPF ~91 Hz). `AMP_SHDN_N` (active-low Shutdown) vom MCP23017 gated. | SO-16-150mil KiCad-Standard |
 | `J7` | Speaker-Header 2×2 Pin (PUI AS04008PS, 8 Ω, 40 mm) | Speaker-Anschluss BTL — 2 Drähte pro Kanal | Pin-Header 2,54 mm |
-| `J8` | PJ-320D 3,5 mm TRS (mit Insertion-Detect) | Line-Out / Kopfhörer. Insertion-Detect-Pin gated optional die Speaker-Amp (Auto-Mute beim Einstecken) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (Custom EasyEDA-CAD) |
+| `U11` | TPA6132A2RTER (r19.19, ADR-0024) | DirectPath-Kopfhoererverstaerker: DAC → CIN 1µF → U11 (Gain −6 dB, EN=AMP_nSHDN) → 22 Ω → J8. Ladungspumpe intern (C_FLY_HP/C_HPVSS), HPVDD nur an 2,2 µF (NIE an VDD!) | `Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` |
+| `J8` | PJ-320D 3,5 mm TRS (mit Insertion-Detect) | **PHONES / LINE OUT** (r19.19): Kopfhörer 16 Ω+ UND Line-Eingänge, niederohmig getrieben von U11. Insertion-Detect → Firmware mutet NUR die Speaker (Auto-Mute beim Einstecken, wieder an beim Ausstecken) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (Custom EasyEDA-CAD) |
 | `J9` | PJ-320D MIDI-OUT — **DNP für 5er-Run** (ADR-0004 r18.30) | 2× 220 Ω Resistor pair + UART-TX. Reaktivierbar durch Bestücken + `midi_tx_init()` | gleicher FP, DNP |
 | `FB1` | BLM18AG601 (Ferrit-Bead) | AVDD-Trennung DAC (Digital-Rail → Analog-Rail) | 0603 |
 | `C_AVDD` | 10 µF + 100 nF X7R am Ferrit-Output | DAC-AVDD-Decoupling | 0603 |
-| `C_AMP` | 1 µF + 100 nF auf PAM8403 PVDD | Amp-lokales Decoupling | 0603 |
+| `C_AMP` | 1 µF + 100 nF auf PAM8406 PVDD | Amp-lokales Decoupling | 0603 |
 
 ### Wie es fließt
 
@@ -283,11 +285,11 @@ STM32H743 SAI1
    ▼
 PCM5102A (U3)
    │ Analog L/R
-   ├──► PAM8403 (U4) ──► J7 Speaker-Header ──► 2× PUI AS04008PS 40 mm
+   ├──► PAM8406 (U4) ──► J7 Speaker-Header ──► 2× PUI AS04008PS 40 mm
    │           ▲
    │           │ AMP_SHDN_N (MCP23017 GPA4) — Mute aus Firmware
    │
-   └─────────► J8 3,5 mm Line-Out (TRS) ──► Kopfhörer / Mixer / Aktiv-Box
+   └── C_HP_IN 1µF ─► U11 TPA6132A2 (−6 dB) ─► 22 Ω ─► J8 PHONES/LINE OUT ──► Kopfhörer / Mixer / Aktiv-Box
                    │
                    └─ Insertion-Detect ──► MCP23017 (optional Auto-Speaker-Mute)
 ```
@@ -296,8 +298,9 @@ PCM5102A (U3)
 
 | Bauteil stirbt | Symptom | Fix |
 |---|---|---|
-| `U3` PCM5102A | Komplett stumm an allen Outs (Line-Out + Speakers) | DAC oder I²S-Verkabelung prüfen |
-| `U4` PAM8403 | Speakers stumm, Line-Out lebt | Amp prüfen — oft thermisch oder Strapping-Pin falsch |
+| `U3` PCM5102A | Komplett stumm an allen Outs (J8 + Speakers) | DAC oder I²S-Verkabelung prüfen |
+| `U4` PAM8406 | Speakers stumm, J8 lebt | Amp prüfen — oft thermisch oder Strapping-Pin falsch |
+| `U11` TPA6132A2 | J8 stumm (Kopfhörer UND Line), Speakers leben | AMP_nSHDN high? Ladungspumpen-Caps (C_FLY_HP/C_HPVSS) prüfen; HPVDD-Spannung ~VDD-nah messen |
 | `FB1` Ferrit | Digital-Switching grießelt im Headphone-Out | Ferrit tauschen |
 | `J7` Speaker-Header lose | Speaker brüllt, Brummen, evtl. Amp thermisch | Header neu löten |
 | Speaker fällt aus Mesh | Hörbar dünn — und mechanisch oft Folge eines lose gewordenen Mesh-Klebepunkts | Membran + Mesh checken (ADR-0007) |
@@ -313,13 +316,13 @@ sondern an drei mechanischen Dingen:
    Gehäuse-CAD vorsehen — kein BOM-Eintrag, aber kritisch.**
 2. **EQ-Pre-Filter im Pad-Render-Pfad** — der DSP rollt unter 80 Hz ab fürs
    Speaker-Routing (ADR-0010 §6 + `engine.c`), damit der Treiber nicht
-   mechanisch überlastet wird. Sub-Bass landet nur am Line-Out.
+   mechanisch überlastet wird. Sub-Bass landet nur am J8-Ausgang.
 3. **Passive Membran** — *optional* on top der geschlossenen Kammer. Zusatz-
    Bauteil (25–30 mm PR-Membran pro Seite, ~1–3 $/Stück), erweitert f3 von
    ~250 Hz auf ~150 Hz. Nicht critical-path; entscheiden nach Hörtest auf
    Prototyp.
 
-**Honest take:** Line-Out (`J8`) ist die *echte* Hörerfahrung. Speakers sind
+**Honest take:** J8 (Kopfhörer/Line) ist die *echte* Hörerfahrung. Speakers sind
 "convenience ohne Kopfhörer" — das Gerät richtig zu positionieren ist Punkt
 des Sound-Designs, nicht ein Versuch, 40 mm zu HiFi zu prügeln.
 
@@ -327,12 +330,12 @@ des Sound-Designs, nicht ein Versuch, 40 mm zu HiFi zu prügeln.
 
 - **PCM5102A statt billigerer PT8211**: Interne DAC-PLL synct sich auf BCK
   → kein externer MCLK nötig → ein SAI-Pin weniger. Saubere 112 dB SNR.
-- **PAM8403 statt MAX98357A I²S-Amp**: PAM8403 ist analoger Class-D — wir
-  *wollen* den Analog-Pfad zwischen DAC + Amp, damit der Line-Out gleichzeitig
+- **PAM8406 statt MAX98357A I²S-Amp** (r19.37: PAM8406→PAM8406, NRND-Swap): analoger Class-D — wir
+  *wollen* den Analog-Pfad zwischen DAC + Amp, damit J8 gleichzeitig
   möglich ist (MAX98357 hat keinen Analog-Output).
 - **8 Ω / 40 mm PUI statt 4 Ω / 28 mm**: 40 mm gibt physikalisch mehr Membran-
   Fläche → mehr Mid-Lautstärke (alles unter 250 Hz ist sowieso nur am
-  Line-Out). 8 Ω passt zur PAM8403-Optimierung.
+  Line-Out). 8 Ω passt zur PAM8406-Auslegung.
 - **PJ-320D-Jack mit Insertion-Detect**: Auto-Mute der Speakers beim
   Einstecken — Standard-User-Erwartung.
 
@@ -554,86 +557,96 @@ LCD_BL_LED_A (Anode) ◄── +3V3                          GND
 
 ## §7 — Battery, Charger, Boost & Power-Path (Sheet 7)
 
-**Generator:** `battery_sheet()` Zeile 5994.
+**Generator:** `battery_sheet()`. **r19.18 komplett neu (ADR-0023)** — das
+externe Hardware-Audit (P0-1…P0-7) hat die alte MCP73831+Dioden-OR-Topologie
+als fabrikationsblockierend eingestuft; sie ist durch einen echten
+Power-Path-Charger ersetzt.
 
 ### Was es macht
 
-Die *zweite* Hälfte des Power-Trees: vom **LiPo-Akku** auf der einen Seite
-zum **+5V-Rail** auf der anderen. Lade-Pfad (USB-VBUS via MCP73831 in den
-Akku), Boost-Konverter (Akku → 5 V für die Speaker-Amp), Power-Path-Switch
-(automatisches USB ↔ Akku) und Akku-Spannungsmessung sitzen alle hier.
+Das Herz der Stromversorgung: **BQ24074** verwaltet USB-Eingang, Akku-Ladung
+und Systemversorgung in einem Chip (DPPM = Dynamic Power Path Management —
+Systemlast hat Vorrang, der Ladestrom wird dynamisch gedrosselt, bei
+Ueberlast supplementiert der Akku). Sein OUT-Knoten `VSYS` speist den Boost;
+die +5V-Rail hat damit genau **eine** Quelle.
 
 ### Bauteile
 
 | Ref | Teil | Wozu | Footprint |
 |---|---|---|---|
-| `J_BAT` / `J9` | JST-PH 2.0 2-Pin (S2B-PH-SM4-TB) | Akku-Steckverbinder. **Im Inneren erreichbar** — ABR. trennen für echtes Lagern (ADR-0016) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` |
-| LiPo-Pouch | 503759 (50×37×9,4 mm, 2000 mAh) | Energiespeicher. Single-Cell 3,0–4,2 V. Bottom-Case-Slot — kein PCB-Footprint | — (Vendor) |
-| `U7` | MCP73831T-2ACI/OT | LiPo-Single-Cell-Lader. CV/CC-Modus, programmierbarer Ladestrom über `R21`. 500 mA bei `R_PROG`=2 kΩ. `STAT`-Pin → Lade-LED | `Package_TO_SOT_SMD:SOT-23-5` |
-| `R21` | 2 kΩ 0603 | Sets `Icharge = 1000 / R_PROG` → 500 mA (~0,25C bei 2000 mAh = sanftes Laden) | 0603 |
-| `D_STAT` | Lade-LED (rot) | Leuchtet während CV-Charging, geht aus bei Full | LED 0603 |
-| `U8` | TPS61089RNR Boost | Akku 3,0–4,2 V → 5,0 V für PAM8403. Synchroner Boost, 2 A continuous. Wenn USB anliegt: bypasst über `Q1`-Pfad | `field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` (Custom) |
-| `L1` | 2,2 µH 5 A Shielded SWPA6045 | Boost-Speicherdrossel. Geschirmt (kein EMI-Streufeld in die Audio-Region) | `field_ambience:L_Sunlord_SWPA6045` (Custom) |
-| `R23` | 200 kΩ 0603 | TPS61089 FB-Divider Top — setzt Vout=5,0 V (Vout = 0,6 · (R23+R24)/R24) | 0603 |
-| `R24` | 39 kΩ 0603 | FB-Divider Bottom | 0603 |
-| `D3` | SS34 (40 V 3 A Schottky) | Boost-Output-Reverse-Schutz — verhindert Rück-Strom in den Boost wenn USB-VBUS hochkommt | KiCad-Standard SMA |
-| `Q1` | DMG2305UX (P-MOSFET) | Power-Path: VBUS schaltet Q1-Gate (durch `R22` Pull-Down default-OFF, USB-VBUS pulled high via Gate-Drive) → bei USB-Plug verbindet sich der USB-Pfad direkt aufs 5V-Rail; im Akku-Betrieb sperrt Q1 | `Package_TO_SOT_SMD:SOT-23` |
-| `R22` | 10 kΩ 0603 | Gate-Pull-Down — Q1 default OFF, schaltet erst wenn VBUS hochkommt | 0603 |
-| `R_BAT_SENSE_A`/`B` | Spannungsteiler (z. B. 100 k : 100 k) | Akku-Spannung halbiert auf MCU-ADC-Pin `BAT_SENSE` (PA3 / ADC1_INP15) | 0603 — *UNVERIFIED: konkrete Werte/Refs noch festzulegen* |
+| `J9` | JST-PH 2.0 2-Pin (S2B-PH-SM4-TB, C295747) | Akku-Steckverbinder. Pad 1 = BAT_PLUS (Polung vor erstem Stecken messen!) | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` |
+| LiPo-Pouch | 2000 mAh mit Schutz-PCB (Pflicht!) | Energiespeicher. Single-Cell 3,0–4,2 V. Bottom-Case-Slot | — (Vendor) |
+| `F2` | SMD1812P260TF/16 PTC (C438899) | 2,6 A hold / 5 A trip — Hard-Short-Backup im BAT+-Pfad (r19.18) | `Fuse:Fuse_1812_4532Metric` |
+| `U7` | **BQ24074RGTR** (C54313) | 1,5-A-Power-Path-Charger. IN←`VBUS_FUSED`, OUT=`VSYS` (4,4 V @USB), BAT←F2←J9. ICHG 0,89 A (`R_ISET` 1k), IIN-MAX 1,34 A (`R_ILIM_IN` 1,2k, C114605), ITERM/TMR = NC-Default (10 % / 5 h), `R_TS` 10k fest (kein Pack-NTC), CE_N+EN1=GND, EN2=VSYS. CHG (open-drain) → LED_CHRG | `Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` |
+| `C_CHG_IN` / `C_BAT` / `C_SYS1`+`C_SYS_HF` | 4,7 µF / 22 µF / 22 µF+100 nF | DS-Bypass: IN (1–10 µF), BAT (4,7–47 µF), OUT=VSYS (4,7–47 µF, zugleich Boost-Input-Bulk) | 0603/0805 |
+| `U8` | TPS61089RNR Boost | `VSYS` 3,0–4,4 V → 4,97 V. **EN = `PWR_ON`** (r19.18: Schiebeschalter toetet den Boost, Shutdown-Iq <3 µA) | `field_ambience:Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A` (Custom) |
+| `L1` | 2,2 µH 5 A Shielded SWPA6045 (C36500) | Boost-Speicherdrossel, geschirmt | `field_ambience:L_Sunlord_SWPA6045` (Custom) |
+| `R23`/`R24` | 121 k / 39 k | FB-Divider → 4,97 V (VREF 1,212 V, r18.79) | 0603 |
+| `R_COMP`/`C_COMP`, `R_FSW`, `R_ILIM`, `C_BOOT`, `C_VCC`, 3×`C_BOOST_OUT` | s. BOM_MASTER | Boost-Peripherie (Kompensation r18.80, Fsw ~440 kHz, ILIM 5,9 A) | 0603/0805 |
+| `D3` | SS34 Schottky | Trennt den Boost-Regelknoten vom Rail-Bulk (470 µF sieht der Regler nicht) + Reverse-Schutz | SMA |
+| `LED_CHRG` + `R_CHRG` | amber 0603 + 1 k | `VBUS_FUSED` → LED → 1 k → CHG: leuchtet nur bei USB **und** laufender Ladung | 0603 |
+| `R_BAT_DIV_TOP/BOT` + `C_BAT_FILT` | 100 k : 100 k + 10 nF | `BAT_PLUS` halbiert auf MCU-ADC `BAT_SENSE` (PA3); 21 µA Dauer-Drain | 0603 |
+| `TP_VSYS` / `TP_BAT` | Testpunkte | Bring-Up: VSYS ist der erste Messpunkt wenn "nichts geht" | DNP |
 
 ### Wie es fließt
 
 ```
-USB-C VBUS (5 V) ──┬── MCP73831 VIN ──► CHARGE ──► LiPo+ ──► J_BAT
-                   │
-                   └──► Q1 P-MOS Source     LiPo+ ──► TPS61089 VIN ──► L1 ──► +5V_BOOST
-                            │ Gate-Pull-Down (R22)             │
-                            ▼ Drain                            └──► D3 Schottky ──┐
-                          +5V_RAIL ◄───────────────────────────────────────────────┘
-                            │
-                            ├──► AP7361A LDO ──► +3V3 (Sheet 1)
-                            └──► PAM8403 (Audio)
+USB-C VBUS ──F1──► VBUS_FUSED ──► U7 BQ24074 IN     [D2 TVS klemmt VBUS_FUSED]
+                                   │  (DPPM)
+J9 LiPo+ ──F2──► BAT_PLUS ◄── BAT ─┤
+                                   └─ OUT = VSYS (4,4V @USB / VBAT @Akku)
+                                          │
+        SW_PWR Throw-A ◄──────────────────┤   (Pull-Quelle: immer versorgt)
+                                          ▼
+                       U8 TPS61089 (EN=PWR_ON) ──L1──► 4,97 V ──D3──► +5V_RAIL
+                                                                        │
+                                                    ├──► PAM8406 (Audio, ungeschaltet, R_SHDN_PD)
+                                                    └──► U_PWR (ON=PWR_ON) ──► +5V_SW ──► LDO ──► +3V3
 
-LiPo+ ──► R_BAT_SENSE-Divider ──► STM32 ADC (`BAT_SENSE`)
+BAT_PLUS ──► 100k:100k ──► STM32 ADC (`BAT_SENSE`)
 ```
 
 ### Was kaputt geht wenn …
 
 | Bauteil stirbt | Symptom | Fix |
 |---|---|---|
-| `U7` MCP73831 | Akku lädt nicht (USB liegt an, aber Spannung steigt nicht) | Lader prüfen, R21 (kein Kurzschluss?), Lade-LED-Pfad |
-| `R21` falscher Wert | Ladestrom zu hoch (Akku zu heiß) oder zu klein (lädt ewig) | Auf 2 kΩ ±1 % prüfen |
-| `U8` TPS61089 | Im reinen Akku-Betrieb: kein +5 V → Speaker tot, +3V3 tot (LDO speist sich aus +5V) — USB-Betrieb funktioniert noch | Boost-Layout prüfen (Bulk-Caps, Drossel-Lötstellen) |
-| `L1` Drossel-Lötstelle | Boost macht Mucken (Aussetzer, Pfeifen) | Drossel neu löten, magnetische Sättigung ausgeschlossen? |
-| `Q1` defekt offen | Im USB-Betrieb läuft der Akku-Pfad mit, lädt + entlädt gleichzeitig — Akku-Stress | Q1 ersetzen |
-| `D3` Schottky kurz | Boost speist *in* die LiPo zurück bei USB-Betrieb → MCP73831 verwirrt | D3 prüfen — Polarität extrem wichtig (Anode = TPS61089-Output) |
-| `J_BAT` Lötstelle | Gerät startet nicht aus Akku, USB funktioniert noch | JST neu löten |
+| `U7` BQ24074 | Kein VSYS (weder USB noch Akku) → Geraet komplett tot | TP_VSYS messen: 0 V? → U7-Loetstellen (QFN-EP!), VBUS_FUSED 5 V da? |
+| `R_ISET` offen | Laden komplett deaktiviert (DS: ISET unconnected = charging disabled) | R_ISET 1 k pruefen |
+| `R_ILIM_IN` offen | Laden deaktiviert (DS: ILIM unconnected = all charging disabled) | R_ILIM_IN 1,2 k pruefen |
+| `R_TS` fehlt/falsch | Lader verweigert (TS ausserhalb Fenster) | 10 k gegen GND pruefen |
+| `F2` getript | Akku-Pfad tot, USB-Betrieb geht noch | Ursache suchen (Short?), PTC kuehlt selbst zurueck |
+| `U8` TPS61089 | VSYS ok, aber +5V_RAIL nur ~3,5 V unreguliert → Speaker leise/tot, 3V3 bricht unter Last | Boost-Layout (Bulk, L1), PWR_ON high? |
+| `D3` kurz | Rail-Bulk haengt am Regelknoten → Boost-Loop traege/instabil | D3 pruefen — Anode = Boost-Output |
+| `J9`/JST | Geraet startet nicht aus Akku, USB geht | JST + F2 nachloeten |
 
 ### Warum gerade diese Wahl?
 
-- **MCP73831 statt smarter Lader (BQ24074 etc.)**: Single-Cell-LiPo,
-  USB-VBUS-Eingang, kein I²C nötig — die simple analoge Lade-Maschine reicht.
-  Spart 2–3 $ + 4–5 Bauteile.
-- **TPS61089 statt einfacherem Boost**: programmierbare Schaltfrequenz +
-  synchroner Boost = sauber unter dem Audio-Band; bei naiven Boost-Konvertern
-  pfeift bei lauter Wiedergabe Class-D-Carrier-Mischprodukte (ADR-0010 §4).
-- **Schottky `D3` statt MOSFET-OR**: einfacher, 1 Bauteil; der ~300 mV
-  Vorwärts-Drop ist verschmerzbar (5,3 V Boost-Setting kompensiert).
-- **JST-PH-Innen statt Slide-Switch außen**: gewollte Friction-Schwelle für
-  echtes Lagern + spart Panel-Bohrung (ADR-0016).
+- **BQ24074 statt MCP73831 + Dioden-OR** (r19.18, ADR-0023): das Audit hat
+  die Einfachloesung zerlegt (Lader pre-fuse, LED-Rueckspeisung, Boost
+  immer an, kein Eingangsstrom-Management, Hot-Plug-Inrush). Der BQ24074
+  loest alle fuenf Punkte in einem Chip: DPPM-Power-Path, ILIM, echter
+  Lade-Timer, TS, CHG-Status — ohne I²C, rein analog konfiguriert.
+- **TPS61089 bleibt**: programmierbare Schaltfrequenz + synchroner Boost =
+  sauber unter dem Audio-Band (ADR-0010 §4); Kompensation r18.80 bleibt
+  gueltig, weil D3 den Regelknoten weiterhin vom 470-µF-Rail-Bulk trennt.
+- **Boost-EN an PWR_ON statt always-on**: Audit P0-3. Im Aus: <3 µA Boost-Iq;
+  die Rail liegt dann unreguliert auf ~VSYS−0,7 V (Body-Diode — TPS61089 hat
+  kein Output-Disconnect), alle Lasten sind hochohmig (Amp via R_SHDN_PD).
+- **SW_PWR-Pull an VSYS**: die Rail existiert erst NACH dem Einschalten —
+  ein Pull von der Rail waere ein Henne-Ei-Deadlock. VSYS ist immer da.
+- **F2 PTC als Backup, nicht als Ersatz**: Overcharge/Overdischarge-Schutz
+  liefert die Zellen-Schutzplatine (Pflicht-Vorgabe), der PTC faengt nur den
+  Hard-Short.
 - **R_BAT_SENSE 100 k : 100 k Divider**: 1:2 Reduktion (4,2 V max → 2,1 V am
-  ADC-Eingang, sicher unter 3,3 V VDDA-Ref). Hoher Wert = niedriger
-  permanenter Drain (4,2 V / 200 kΩ = 21 µA — vernachlässigbar gegen Sleep-
-  Budget).
+  ADC-Eingang, sicher unter 3,3 V VDDA-Ref). 21 µA Dauer-Drain.
 
-### Sleep-Architektur (ADR-0016)
+### Aus-Zustand (ADR-0016 + ADR-0023)
 
-Im Sleep-Mode:
-- `U7` Lader bleibt aktiv — wenn USB anliegt soll das Gerät laden (auch im Sleep)
-- `U8` Boost bleibt aktiv — er treibt aber nichts (Audio-Stages sind dann muted)
-- `Q1` schaltet wie immer (USB-Plug-Wake nutzt diesen Pfad)
-- Bat-Sense-Divider zieht 21 µA — bleibt an, sonst kann der MCU nicht
-  Akku-Stand vor dem nächsten Wake lesen
+SW_PWR OFF (`PWR_ON` low via R_PWR_PD):
+- `U7` Lader bleibt aktiv — Geraet laedt im Aus ("dunkel, aber laedt"),
+  LED_CHRG zeigt es an (haengt an VBUS_FUSED, nicht an der Rail)
+- `U8` Boost aus (<3 µA) + `U_PWR` trennt die 3V3-Domaene
+- Rest-Drain am Akku: µA-Bereich (Bat-Sense 21 µA ist der groesste Posten)
 
 ---
 

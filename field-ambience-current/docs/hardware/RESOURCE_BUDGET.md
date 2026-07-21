@@ -1,7 +1,7 @@
 # Resource Budget — STM32H743VIT6
 
 Wie viel Flash / RAM / CPU der Sound frisst und **was noch reinpasst**.
-Zahlen aus dem realen h743-Cross-Build (Stand r19.6). Bei jeder neuen
+Zahlen aus dem realen h743-Cross-Build (Stand r19.16 — V2-SYNTH-Modus gelinkt). Bei jeder neuen
 Sound-Idee hier zuerst schauen.
 
 > Regenerieren: `cmake --build <build> ` liest das Size-Report am Ende aus;
@@ -10,9 +10,9 @@ Sound-Idee hier zuerst schauen.
 ## Regionen (gemessen)
 | Region | Belegt | Größe | % | Verdikt |
 |---|---|---|---|---|
-| FLASH | 183 KB | 2 MB | 8,7 % | 🟢 massig |
+| FLASH | 227 KB | 2 MB | 11,1 % | 🟢 massig |
 | DTCMRAM | 119 KB | 128 KB | 90,9 % | 🟡 knapp |
-| RAM_D1 (AXI) | 504 KB | 512 KB | 96,2 % | 🔴 fast voll |
+| RAM_D1 (AXI) | 446 KB | 512 KB | 87,2 % | 🟡 wieder Luft (r19.17: FFT-Scratch halbiert via Real-IFFT — ~66 KB frei; r19.16 V2-Busse +16,5 KB enthalten) |
 | RAM_D2 | 283 KB | 288 KB | 95,9 % | 🔴 fast voll |
 | RAM_D3 | 0 KB | 64 KB | 0 % | ⚪ **brach** |
 | ITCMRAM | 0 KB | 64 KB | 0 % | ⚪ **brach** |
@@ -22,7 +22,7 @@ Sound-Idee hier zuerst schauen.
 |---|---|---|---|
 | `H` | 152 KB | D1 | **Reverb** (Dattorro-Tank, alle Delay-Lines) |
 | `bufL`+`bufR` | 207 KB | D2 | **Echo**-Delay-Puffer |
-| `s_re`+`s_im` | **128 KB** | D1 | **PADsynth-FFT-Scratch — nur beim Weltwechsel** |
+| `s_xr`+`s_xi` | **64 KB** | D1 | PADsynth-Halb-Spektrum-Scratch (r19.17: Real-IFFT via N/2-komplexer IFFT — war 128 KB) |
 | `voices` | 100 KB | DTCM | Pad-Stimmen (Voice-Pool) |
 | `ringL`+`ringR` | 69 KB | D2 | **Blur**-Granular-Ringe |
 | `s_table` | 64 KB | D1 | PADsynth-Spektraltisch (Dauer-Nutzung) |
@@ -53,12 +53,11 @@ Ringe + Display. **D2** = Echo + Blur. **DTCM** = Pad-Voices.
 ## Latente Reserve (Rückgewinn-Pfad)
 Wenn ein Feature RAM braucht, gibt es effektiv **~180–250 KB** zu holen:
 
-1. **128 KB FFT-Build-Scratch** (`s_re`+`s_im`) — nur bei `padsynth_build`
-   (Weltwechsel) gebraucht, aber permanent in D1 reserviert. Größter
-   Einzelbrocken. **Caveat:** der Weltwechsel läuft mit **live Audio**, also
-   kann der Scratch nicht naiv die aktiven Audio-Puffer (Echo/Reverb)
-   aliasen. Saubere Optionen: eigener overlaybarer Bereich, kleineres
-   In-Place-FFT, oder PADSYNTH_N reduzieren (Timbre-Retune nötig).
+1. ~~128 KB FFT-Build-Scratch~~ **ERLEDIGT r19.17:** Real-IFFT via
+   N/2-komplexer IFFT (Even/Odd-Split) — Scratch 128 → 64 KB, host-verifiziert
+   über die Spektral-Suite (Goertzel, Loop-Naht, Determinismus). Die
+   restlichen 64 KB (`s_xr`+`s_xi`) laufen weiterhin nur beim Weltwechsel;
+   weiteres Overlay bleibt cache-heikel → erst auf Hardware.
 2. **128 KB brach** (RAM_D3 64 KB + ITCM 64 KB) — komplett ungenutzt,
    aber Domänen-/Cache-Vorsicht (D3 ist eine eigene Power-/Bus-Domäne;
    ITCM ist eigentlich für Code). Belegung will auf **echter Hardware**
@@ -69,7 +68,7 @@ Clouds-Granular oder mehr Stimmen.
 
 ### Externe Erweiterung: QSPI-PSRAM (die große Tür)
 Für **Megabyte** statt Kilobyte gibt es die echte Lösung: **8 MB QSPI-PSRAM**
-(APS6404L, LCSC C5333729, JLC-Economic, ~$2,94, 6 freie Pins), memory-mapped
+(APS6404L, LCSC C3028887, JLC-Economic, ~$2,94, 6 freie Pins), memory-mapped
 → CPU liest wie internen RAM. Ermöglicht Sample-Playback, Convolution-Reverb
 mit echten IRs, großes Granular. **Board-Änderung** → muss vor Arons Layout
 rein. Voll verifizierte Integration: **`ADR-0022`**.

@@ -26,6 +26,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .shimmer_pct = 12,   /* r18.99: a hint of halo over the rain      */
         /* A-major ionian, warm add9 — "DAS IST ES" dreamy reference */
         .key_midi = 57, .mode = 0, .vibe = 0,
+        .chord_color = 2, .bass_mode = 3,   /* Warm 6/9, drifting bass — dreamy */
     },
     {
         .name = "Crystal Coast",
@@ -36,6 +37,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .shimmer_pct = 22,   /* r18.99: the bright world blooms upward    */
         /* D-major ionian, bright maj7 — sunset optimism, open horizon */
         .key_midi = 62, .mode = 0, .vibe = 1,
+        .chord_color = 1, .bass_mode = 2,   /* Open 1-5-9, root/fifth — airy horizon */
     },
     {
         .name = "Midnight Drive",
@@ -46,6 +48,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .shimmer_pct = 6,    /* r18.99: the highway stays grounded        */
         /* F#-minor dorian, deep min11 — moody highway, descending arc */
         .key_midi = 54, .mode = 1, .vibe = 2,
+        .chord_color = 3, .bass_mode = 1,   /* Deep 7th, grounded root — moody */
     },
     {
         .name = "After Hours",
@@ -56,6 +59,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .shimmer_pct = 16,   /* r18.99: faded-glory halo for the bar      */
         /* C-minor aeolian, floating sus2 — 3am jazz bar, lonely but okay */
         .key_midi = 60, .mode = 5, .vibe = 3,
+        .chord_color = 3, .bass_mode = 3,   /* Deep maj7, drifting bass — 3am jazz */
     },
 };
 

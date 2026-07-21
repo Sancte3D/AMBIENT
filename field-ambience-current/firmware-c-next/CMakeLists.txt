@@ -102,6 +102,7 @@ set(DSP_SOURCES
     src/blur.c          # Reddit Blur macro: granular cloud
     src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
     src/glass.c         # r18.98: 2-op FM glass melody voice (VOICE menu)
+    src/ember.c         # r19.28: warm subtractive analog voice (Motif layer)
     src/shimmer.c       # r18.99: octave-up hall regeneration (SHIMMER menu)
     src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/body.c          # r18.94: modal resonant body for the plucks (Rings concept)
@@ -111,6 +112,8 @@ set(DSP_SOURCES
     src/bass.c
     src/reverb.c
     src/reverb_presets.c
+    src/ambient_effects.c   # r19.41: master-effects engine (replaces master tape/echo/blur/shimmer)
+    src/fx_master.c         # r19.41: product adapter — owns the D2 hot arena
     src/engine.c
     src/brain.c
     src/drone.c
@@ -119,6 +122,14 @@ set(DSP_SOURCES
     src/cells.c
     src/controls.c      # ADR-0008 r2: hold-latch + modifier state machine
     src/params.c        # encoder → engine parameter bindings + acceleration
+    src/knobs.c         # r19.21: encoder push short/long actions
+    src/overlay.c       # r19.21: transient knob-value overlay
+    src/scenes.c        # r19.22: parameter locks companion — 5 scene slots
+    src/bloom.c         # r19.23/r19.29: Harmony cell mode (chord + voice-leading)
+    src/voicelead.c     # r19.29: minimal-movement voicing
+    src/rolepatch.c     # r19.30: role-based chord timbre
+    src/landscape.c     # r19.27: layer-role cell mode (drone/bed/motif/atmos/memory)
+    src/gesture.c       # r19.25: gesture loop (record/replay cell events)
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
     src/oled_draw.c
     src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)
@@ -181,8 +192,15 @@ if(FAM_TARGET STREQUAL "h743")
     # the glob is exactly the wanted set (disabled stragglers compile empty).
     file(GLOB H743_HAL_SOURCES ${H743_VENDOR}/STM32H7xx_HAL_Driver/Src/*.c)
 
+    # r19.41: the legacy master processors are host-test-only now — the
+    # ambient effects engine replaces them on the target, and their large
+    # delay .bss (echo 207 KB + blur 69 KB in D2) is reclaimed for the
+    # effects arena. Keep them out of the target link.
+    set(DSP_SOURCES_H743 ${DSP_SOURCES})
+    list(REMOVE_ITEM DSP_SOURCES_H743
+        src/tape.c src/echo.c src/blur.c src/shimmer.c)
     add_executable(field_ambience_h743
-        ${DSP_SOURCES}
+        ${DSP_SOURCES_H743}
         ${V2_SOURCES_H743}
         ${H743_HAL_SOURCES}
         ${H743_VENDOR}/CMSIS/Device/ST/STM32H7xx/Source/system_stm32h7xx.c
@@ -192,6 +210,7 @@ if(FAM_TARGET STREQUAL "h743")
         src/hal_h743/stm32h7xx_it.c
         src/hal_h743/audio_h743.c
         src/hal_h743/encoders_h743.c
+        src/hal_h743/scenes_flash_h743.c   # r19.22: Scenes-Persistenz (Bank-2-Sektor)
         src/hal_h743/lcd_st7789_h743.c
         src/hal_h743/mcp23017_h743.c
         src/hal_h743/midi_uart_h743.c

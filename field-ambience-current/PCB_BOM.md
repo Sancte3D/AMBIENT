@@ -27,8 +27,8 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | L1 | SWPA6045S2R2NT inductor (r18.77: was C83455, a dead link; MPN was also wrong — 2.2µH only exists as "NT" not "MT" suffix) | 2.2 µH | 6×6 | C36500 |
 | D3 | SS34 Schottky | — | SMA | C8678 |
 | U5 | AP7361C-33Y5 LDO | 3.3 V | SOT-89-5 | C460397 |
-| U7 | MCP73831 charger | 500 mA | SOT-23-5 | C424093 |
-| D3B | SS34 Schottky — USB-Pfad Dioden-OR (r18.79, ersetzt Q1-Power-Path: Backfeed-/Fuse-Bypass-Bug) | — | SMA | C8678 |
+| U7 | BQ24074RGTR power-path charger (r19.18, ADR-0023; ICHG 0,89 A / IIN 1,34 A) | 1,5 A max | VQFN-16 3×3 | C54313 |
+| F2 | SMD1812P260TF/16 PTC — Batterie-Hard-Short-Backup (r19.18; D3B/Dioden-OR entfernt) | 2,6 A hold / 5 A trip | 1812 | C438899 |
 | D2 | SMAJ5.0A TVS | — | SMA | C113952 |
 | F1 | 1812L300 PTC fuse | 3 A | 1812 | C18198349 |
 | C_BULK | Polymer-tantalum | 470 µF/10 V | Case-E | C444831 |
@@ -39,10 +39,10 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | C_BOOT / C_BOOST_OUT(×3) / C_BOOST_HF | boost caps (r18.80: output bulk now **3× 22 µF** per TI DS §9.2.2.7 “typically three 22 µF”; was 1×, and the 470 µF bulk sits behind D3 where the control loop can't see it) | 100 nF / 3× 22 µF / 100 nF | 0603/0805 | C14663 / C45783 / C14663 |
 | C_LDO_IN / C_LDO_OUT | LDO caps | 4.7 µF | 0603 | C46653 |
 | **U_PWR** | TPS22918 load switch — **r18.81: ADR-0016 power-off now actually in the schematic** (+5V_RAIL → +5V_SW → LDO; charger stays ahead of it = "dark, but charging"; QOD tied to VOUT = active discharge; CT floats per TI DS) | 5.5 V / 2 A | SOT-23-6 | C131941 |
-| **SW_PWR** | MST-12D18G3 side-actuated slide switch on `U_PWR.ON` — r18.81: mounting **datasheet-verified for a horizontal PCB**: body sits flat, stem sticks out horizontally 3 mm past the body (z ≈ 2.3–3.8 mm above board), place at board edge, slot in enclosure side wall; travel 2 mm. ⚠ terminal mapping (common = middle pad) assumed per SPDT convention — buzz out before fab (fail-safe if wrong: unit just won't switch on) | 12 V / 100 mA | RA SMD + 2 pegs | C49023766 |
+| **SW_PWR** | ALPS SSSS811101 side-actuated slide switch on `U_PWR.ON` — r18.85 (ADR-0016) premium swap from MST-12D18G3. Body sits flat, actuator sticks out **horizontally** to the board edge (body only 1.4 mm tall, stem z ≈ 0–1.4 mm — much flatter than the old MST, so the enclosure slot + slider cap must reach deeper). Travel 1.5 mm. Terminal mapping **datasheet-verified** against the ALPS circuit diagram (Common = Terminal 2, labeled — unlike the old MST which was assumed); short continuity check before fab still cheap, fail-safe if wrong (100k PD holds PWR_ON low). Footprint `field_ambience:SW_ALPS-SSSS811101_SlideSwitch_SMD`. Budget fallback MST-12D18G3 (C49023766) stays vendored in the repo. | 12 V / 100 mA | slide SMD (3 sig + 4 GND-frame pads) | C109335 |
 | R_PWR_PD / C_UPWR_IN / C_PWR_SW | PWR_ON pull-down (default OFF) / TPS22918 VIN bypass / +5V_SW output cap | 100 k / 1 µF / 10 µF | 0603/0603/0805 | C25803 / C15849 / C15850 |
 | R_DET_J8 / C_DET_J8 | jack-detect series + AC filter (r18.82: PJ-320D detect contact rests on the TIP when unplugged = DAC output — series R limits MCP input-clamp current to <300 µA, cap kills audio AC on GPA6; unplugged ≈ 0.3 V LOW, plugged 3.3 V HIGH) | 10 k / 1 µF | 0603 | C25804 / C15849 |
-| C_CHG_IN | MCP73831 VDD input cap (r18.82 — DS20001984 typical application; the VBUS_USBC node had no local capacitance at all) | 4.7 µF | 0603 | C46653 |
+| C_CHG_IN | BQ24074 IN bypass (r19.18 — TI DS 1–10 µF, am VBUS_FUSED-Knoten) | 4.7 µF | 0603 | C46653 |
 | R21 / R_CHRG | charger PROG / status | 2 k / 1 k | 0603 | C22975 / C21190 |
 | R_BAT_DIV_TOP/BOT, R_VBUS_SENSE, R_VBUS_PD | battery/VBUS sense | 100 k / 10 k / 100 k | 0603 | C25804 / C25803 |
 | C_BAT_IN / C_BAT_HF / C_BAT_FILT | battery caps (r18.80: C45783 ist 22 µF CL21A226MAQNNNE — alte 4.7-µF-Angabe war falsch) | 22 µF / 100 nF / 10 nF | 0603/0805 | C45783 / C14663 / C57112 |
@@ -51,12 +51,16 @@ enclosure) are in **§C** and are **NOT** part of the board assembly.
 | Ref | Part | Value | Package | LCSC |
 |---|---|---|---|---|
 | U3 | PCM5102A DAC | — | TSSOP-20 | C107671 |
-| U4 | PAM8403 Class-D amp | — | SOIC-16 | C17337 |
+| U4 | PAM8406 Class-D amp (r19.37, ADR-0025; **replaces NRND PAM8403**, MODE=+5V→Class-D, gain set +4.3 dB) | — | SOIC-16 | C86270 |
 | FB1, FB2 | ferrite bead (AVDD/analog isolate) | 600 Ω | 0603 | C19330 / C84094 |
-| J8 | PJ-320D 3.5 mm TRS line-out | — | custom FP | C431535 |
-| R_LO_L/R | line-out series | 220 Ω | 0603 | C23345 |
-| R_VOL_L/R | input/level | 20 k | 0603 | C4184 |
-| R_in/C_in_L/R, C_FLY, C_VNEG, C_PVDDR(_HF), C_CPVDD_BULK/HF | DAC/amp caps | 1 µF/10 µF/100 nF | 0603/0805 | C15849 / C15850 / C14663 |
+| U11 | TPA6132A2RTER DirectPath HP-Amp (r19.19, ADR-0024; Gain −6 dB) | 25 mW/16 Ω | WQFN-16 3×3 | C69901 |
+| C_HP_VDD/C_HPVDD | TPA6132A2 VDD/HPVDD decoupling (HPVDD NIE an VDD!) | 2.2 µF | 0603 | C1607 |
+| C_HP_INL/R, C_FLY_HP, C_HPVSS | TPA6132A2 Eingangskopplung + Ladungspumpe | 1 µF | 0603 | C15849 |
+| J8 | PJ-320D 3.5 mm TRS PHONES/LINE-OUT (r19.19) | — | custom FP | C431535 |
+| R_LO_L/R | phones/line-out series (hinter U11) | 22 Ω | 0603 | C23345 |
+| R_VOL_L/R | amp input series RI → **gain +4.3 dB** (r19.37, ADR-0025; was 20 k = +23 dB → analog clip) | 174 k | 0603 | C22890 |
+| C_in_L/R | amp input DC-block **+ speaker HPF ~91 Hz** (r19.37; was 1 µF full-range → 10 nF; line-out/HP keep 1 µF) | 10 nF | 0603 | C57112 |
+| C_FLY, C_VNEG, C_PVDDR(_HF), C_CPVDD_BULK/HF | DAC/amp caps | 1 µF/10 µF/100 nF | 0603/0805 | C15849 / C15850 / C14663 |
 | R_SHDN_PD / R_MUTE_PD / R_XSMT_PD | amp/DAC default pull-downs | 10 k | 0603 | C25804 |
 
 ### I/O expander + LED drivers + status LEDs
@@ -122,20 +126,20 @@ RC stay removed; PC0/PC1/PA4/PB0/PB1 stay freed.
 
 ---
 
-## B · Power-off block — decided, drawn at schematic build (drop-in spec in ADR-0016)
+## B · Power-off block — now in the generated schematic (spec in ADR-0016)
 
-> The only parts not yet in the generated schematic. Everything else in §A is in
-> the generator + `jlc_bom.csv` (all LCSC verified — **no NO-LCSC parts left**).
+> **r18.85 update:** these parts are **no longer pending** — they are all in the
+> generator + `jlc_bom.csv` now (part of §A above; all LCSC verified, **no
+> NO-LCSC parts left**). This section is kept as the power-off block reference.
 
 | Ref | Part | LCSC |
 |---|---|---|
 | **U_PWR** | TPS22918 load-switch — gates `+5V_RAIL→+5V_SW` (= whole 3V3 domain) | **C131941** · SOT-23-6 |
-| **SW_PWR** | MST-12D18G3 right-angle slide switch (side-actuated, drives `U_PWR.ON`) · FP `field_ambience:SW_MST-12D18_SlideSwitch_RA` (+STEP) in repo | **C49023766** |
+| **SW_PWR** | ALPS SSSS811101 slide switch (side-actuated, drives `U_PWR.ON`; r18.85 swap from MST-12D18G3) · FP `field_ambience:SW_ALPS-SSSS811101_SlideSwitch_SMD` in repo | **C109335** |
 | R_PWR_PD | 100 k 0603 (`U_PWR.ON` pull-down, default off) | C25803 |
 | C_PWR_SW | 10 µF 0805 (`+5V_SW` output cap) | C15850 |
 
 Pin-level wiring (VIN/VOUT/ON + the single LDO-input reroute) = **`ADR-0016`**.
-~10 min to draw + ERC.
 
 ---
 

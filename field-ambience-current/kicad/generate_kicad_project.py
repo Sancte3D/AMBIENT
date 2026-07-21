@@ -1272,35 +1272,116 @@ def _pca9685pw_lib_symbol() -> str:
     return "\n".join(out)
 
 
-def _mcp73831_lib_symbol() -> str:
-    """MCP73831T-2ACI/OT — LiPo Charger, SOT-23-5, 5 Pins.
-    Per Microchip DS20001984H (PCB-Pin-Map Page 2):
-    Pin 1: STAT (output, open-drain status indicator)
-    Pin 2: VSS (power_in)
-    Pin 3: VBAT (output, charge current to battery)
-    Pin 4: VDD (power_in, +5V from USB-C)
-    Pin 5: ~PROG (input, programs Icharge via Rprog to GND)
+def _bq24074_lib_symbol() -> str:
+    """BQ24074RGTR — 1.5A Single-Cell Li-Ion Charger mit Power-Path (DPPM),
+    VQFN-16 RGT (3x3mm, 0.5mm Pitch, EP 1.7x1.7). r19.18 (ADR-0023): ersetzt
+    MCP73831 + D3B-Dioden-OR (Audit P0-1..P0-7).
+
+    Pin-Map VERIFIED gegen TI SLUS810N (Okt 2021), Table 7-1 "Pin Functions",
+    Spalte '74 (BQ24074 = RGT0016B, Figure 7-2):
+      1=TS  2=BAT  3=BAT  4=CE(aktiv-low)  5=EN2  6=EN1  7=PGOOD(OD)  8=VSS
+      9=CHG(OD)  10=OUT  11=OUT  12=ILIM  13=IN  14=TMR  15=ITERM  16=ISET
+      17=EP (Thermal Pad, muss auf VSS-Potential)
     """
-    pins = [
-        (1, "STAT", "output", -7.62, 5.08),
-        (2, "VSS", "power_in", -7.62, 0.0),
-        (3, "VBAT", "output", 7.62, 5.08),
-        (4, "VDD", "power_in", 7.62, 0.0),
-        (5, "PROG", "input", 7.62, -5.08),
+    pins_left = [
+        (13, "IN",     "power_in", 10.16),
+        (6,  "EN1",    "input",     7.62),
+        (5,  "EN2",    "input",     5.08),
+        (4,  "CE_N",   "input",     2.54),
+        (12, "ILIM",   "input",     0.0),
+        (16, "ISET",   "input",    -2.54),
+        (15, "ITERM",  "input",    -5.08),
+        (14, "TMR",    "input",    -7.62),
+        (1,  "TS",     "input",   -10.16),
     ]
-    out = ['    (symbol "Battery:MCP73831" (in_bom yes) (on_board yes)']
-    out.append('      (property "Reference" "U" (at 0 7.62 0) (effects (font (size 1.27 1.27))))')
-    out.append('      (property "Value" "MCP73831T-2ACI/OT" (at 0 -7.62 0) (effects (font (size 1.27 1.27))))')
+    pins_right = [
+        (10, "OUT",     "power_out",      10.16),
+        (11, "OUT",     "power_out",       7.62),
+        (2,  "BAT",     "passive",         5.08),
+        (3,  "BAT",     "passive",         2.54),
+        (9,  "CHG_N",   "open_collector", -2.54),
+        (7,  "PGOOD_N", "open_collector", -5.08),
+        (8,  "VSS",     "power_in",      -10.16),
+        (17, "EP",      "passive",       -12.70),
+    ]
+    out = ['    (symbol "Battery:BQ24074" (in_bom yes) (on_board yes)']
+    out.append('      (property "Reference" "U" (at 0 13.97 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "BQ24074RGTR" (at 0 -16.51 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (property "Datasheet" "https://ww1.microchip.com/downloads/en/DeviceDoc/MCP73831-Family-Data-Sheet-DS20001984H.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (symbol "Battery:MCP73831_0_1"')
-    out.append('        (rectangle (start -5.08 6.35) (end 5.08 -6.35)')
+    out.append('      (property "Datasheet" "https://www.ti.com/lit/ds/symlink/bq24074.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Battery:BQ24074_0_1"')
+    out.append('        (rectangle (start -7.62 12.7) (end 7.62 -14.605)')
     out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
-    out.append('      (symbol "Battery:MCP73831_1_1"')
-    for num, name, ptype, px, py in pins:
-        rot = 0 if px < 0 else 180
+    out.append('      (symbol "Battery:BQ24074_1_1"')
+    for num, name, ptype, py in pins_left:
         out.append(
-            f'        (pin {ptype} line (at {px} {py:.3f} {rot}) (length 2.54)\n'
+            f'        (pin {ptype} line (at -10.16 {py:.3f} 0) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    for num, name, ptype, py in pins_right:
+        out.append(
+            f'        (pin {ptype} line (at 10.16 {py:.3f} 180) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    out.append('        )')
+    out.append('      )')
+    return "\n".join(out)
+
+
+def _tpa6132a2_lib_symbol() -> str:
+    """TPA6132A2RTER — 25mW DirectPath Stereo-Kopfhoererverstaerker,
+    WQFN-16 RTE (3x3mm, 0.5mm Pitch, EP 1.68). r19.19 (ADR-0024).
+
+    Pin-Map VERIFIED gegen TI SLOS597B (Juli 2017), Pin Functions Tabelle:
+      1=INL- 2=INL+ 3=INR+ 4=INR- 5=OUTR 6=G0 7=G1 8=HPVSS 9=CPN 10=PGND
+      11=CPP 12=HPVDD 13=EN 14=VDD 15=SGND 16=OUTL 17=EP (GND oder floatend)
+    Gain via G0/G1 (Table 1): LL=-6dB LH(G1)=+3dB HL(G0)=0dB HH=+6dB.
+    EN: high=an (VIH 1.3V), low=Shutdown (0.7-1.2µA).
+    DirectPath: interne Ladungspumpe (CPP/CPN-Flying-Cap + HPVSS-Cap)
+    erzeugt die negative Rail — Ausgaenge ground-zentriert, KEINE
+    Auskoppel-Elkos. HPVDD NIE an VDD anschliessen (DS-WARNING).
+    """
+    pins_left = [
+        (1,  "INL-", "input", 10.16),
+        (2,  "INL+", "input",  7.62),
+        (3,  "INR+", "input",  5.08),
+        (4,  "INR-", "input",  2.54),
+        (13, "EN",   "input",  0.0),
+        (6,  "G0",   "input", -2.54),
+        (7,  "G1",   "input", -5.08),
+    ]
+    pins_right = [
+        (16, "OUTL",  "output",   10.16),
+        (5,  "OUTR",  "output",    7.62),
+        (14, "VDD",   "power_in",  5.08),
+        (12, "HPVDD", "passive",   2.54),
+        (11, "CPP",   "passive",   0.0),
+        (9,  "CPN",   "passive",  -2.54),
+        (8,  "HPVSS", "passive",  -5.08),
+        (15, "SGND",  "power_in", -7.62),
+        (10, "PGND",  "power_in", -10.16),
+        (17, "EP",    "passive",  -12.70),
+    ]
+    out = ['    (symbol "Audio:TPA6132A2" (in_bom yes) (on_board yes)']
+    out.append('      (property "Reference" "U" (at 0 13.97 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "TPA6132A2RTER" (at 0 -16.51 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "https://www.ti.com/lit/ds/symlink/tpa6132a2.pdf" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Audio:TPA6132A2_0_1"')
+    out.append('        (rectangle (start -7.62 12.7) (end 7.62 -14.605)')
+    out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
+    out.append('      (symbol "Audio:TPA6132A2_1_1"')
+    for num, name, ptype, py in pins_left:
+        out.append(
+            f'        (pin {ptype} line (at -10.16 {py:.3f} 0) (length 2.54)\n'
+            f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
+            f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
+        )
+    for num, name, ptype, py in pins_right:
+        out.append(
+            f'        (pin {ptype} line (at 10.16 {py:.3f} 180) (length 2.54)\n'
             f'          (name "{name}" (effects (font (size 1.27 1.27))))\n'
             f'          (number "{num}" (effects (font (size 1.27 1.27)))))'
         )
@@ -1578,36 +1659,41 @@ def _pcm5102a_lib_symbol() -> str:
     return "\n".join(out)
 
 
-def _pam8403_lib_symbol() -> str:
-    """PAM8403H Class-D Stereo Amp (SOP-16).
+def _pam8406_lib_symbol() -> str:
+    """PAM8406 Class-D/AB Stereo Amp (SOP-16) — r19.37 (ADR-0025).
 
-    Pinout VERIFIED gegen Diodes Inc PAM8403H Datasheet PDF
-    (Rev 1-0, November 2012, dem im Repo unter PAM8403H.PDF).
+    Replaces the NRND PAM8403H. Pinout VERIFIED against the Diodes Inc
+    PAM8406 datasheet, document DSxxxxx Rev. 1-0, March 2013, "Pin
+    Descriptions" (p.2). LCSC C86270 = PAM8406DR (lifecycle: Active).
 
-    LCSC C17337 = PAM8403H von Diodes Inc.
+    Near-identical to the PAM8403H footprint (same 16-SOIC) — the ONE
+    functional pin difference is pin 9: PAM8403 = NC, PAM8406 = MODE
+    (High: Class-D / Low: Class-AB). We tie MODE HIGH (+5V) for Class-D.
+    The output-polarity pin labels also differ from the 8403 (pin 1 is
+    +OUT_L on the 8406, not -OUT_L) — corrected here per the datasheet.
 
     Pin-Belegung per Datasheet Page 2 "Pin Descriptions":
-        1:  -OUT_L  (Left Channel Negative Output, BTL)
-        2:  PGND    (Power Ground)
-        3:  +OUT_L  (Left Channel Positive Output, BTL)
-        4:  PVDD    (Power VDD)
+        1:  +OUT_L  (Left Channel Positive Output, BTL)
+        2:  PGNDL   (Power Ground, left)
+        3:  -OUT_L  (Left Channel Negative Output, BTL)
+        4:  PVDDL   (Power VDD, left)
         5:  MUTE    (Mute Control Input, ACTIVE LOW)
         6:  VDD     (Analog VDD)
         7:  INL     (Left Channel Input)
         8:  VREF    (Internal analog reference — bypass cap to GND REQUIRED)
-        9:  NC      (No connected)
+        9:  MODE    (High: Class-D, Low: Class-AB — tied +5V here = Class-D)
         10: INR     (Right Channel Input)
         11: GND     (Analog GND)
         12: SHDN    (Shutdown Control Input, ACTIVE LOW)
-        13: PVDD    (Power VDD)
-        14: +OUT_R  (Right Channel Positive Output, BTL)
-        15: PGND    (Power Ground)
-        16: -OUT_R  (Right Channel Negative Output, BTL)
+        13: PVDDR   (Power VDD, right)
+        14: -OUT_R  (Right Channel Negative Output, BTL)
+        15: PGNDR   (Power Ground, right)
+        16: +OUT_R  (Right Channel Positive Output, BTL)
     """
     pins_left = [
-        (1, "OUTL-", "output"),
+        (1, "OUTL+", "output"),
         (2, "PGND", "power_in"),
-        (3, "OUTL+", "output"),
+        (3, "OUTL-", "output"),
         (4, "PVDD", "power_in"),
         (5, "/MUTE", "input"),
         (6, "VDD", "power_in"),
@@ -1615,27 +1701,27 @@ def _pam8403_lib_symbol() -> str:
         (8, "VREF", "output"),
     ]
     pins_right = [
-        (16, "OUTR-", "output"),
+        (16, "OUTR+", "output"),
         (15, "PGND", "power_in"),
-        (14, "OUTR+", "output"),
+        (14, "OUTR-", "output"),
         (13, "PVDD", "power_in"),
         (12, "/SHDN", "input"),
         (11, "GND", "power_in"),
         (10, "INR", "input"),
-        (9, "NC", "no_connect"),
+        (9, "MODE", "input"),
     ]
     y_top = 8.89
     rect_top = y_top + 2.54
     rect_bot = -y_top - 2.54
-    out = ['    (symbol "Audio:PAM8403" (in_bom yes) (on_board yes)']
+    out = ['    (symbol "Audio:PAM8406" (in_bom yes) (on_board yes)']
     out.append(f'      (property "Reference" "U" (at 0 {rect_top + 1.27} 0) (effects (font (size 1.27 1.27))))')
-    out.append(f'      (property "Value" "PAM8403H" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
+    out.append(f'      (property "Value" "PAM8406" (at 0 {rect_bot - 1.27} 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (property "Datasheet" "PAM8403H.PDF (Diodes Inc Rev 1-0, Nov 2012)" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (symbol "Audio:PAM8403_0_1"')
+    out.append('      (property "Datasheet" "PAM8406 (Diodes Inc Rev 1-0, Mar 2013)" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (symbol "Audio:PAM8406_0_1"')
     out.append(f'        (rectangle (start -10.16 {rect_top}) (end 10.16 {rect_bot})')
     out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
-    out.append('      (symbol "Audio:PAM8403_1_1"')
+    out.append('      (symbol "Audio:PAM8406_1_1"')
     for idx, (num, name, ptype) in enumerate(pins_left):
         ly = y_top - idx * 2.54
         out.append(
@@ -1899,7 +1985,7 @@ def _sw_spdt_lib_symbol() -> str:
 
 
 def _psram_lib_symbol() -> str:
-    """APS6404L-3SQR-SN — 8 MB QSPI PSRAM, SOP-8 (LCSC C5333729, ADR-0022).
+    """APS6404L-3SQN-SN — 8 MB QSPI PSRAM, SOP-8 (LCSC C3028887, ADR-0022).
     Pinout VERIFIED against the AP Memory datasheet Rev. 2.1 (Oct 2019),
     §3.1 "Package Types SOP/USON, Top view":
         /CE 1 - 8 VDD ; SO/SIO[1] 2 - 7 SIO[3] ; SIO[2] 3 - 6 SCLK ;
@@ -1907,7 +1993,7 @@ def _psram_lib_symbol() -> str:
     Footprint dims: SOP-8L(150) = 3.9 mm body / 1.27 mm pitch = the generic
     Package_SO:SOIC-8_3.9x4.9mm_P1.27mm (standard SOIC pad numbering 1-8).
     Belt-and-suspenders before fab: pull the exact LCSC land pattern via
-    `easyeda2kicad --full --lcsc_id=C5333729`.
+    `easyeda2kicad --full --lcsc_id=C3028887`.
     Pin 1: CE   (/CE — chip select, active-low)
     Pin 2: SIO1 (SO/SIO[1])
     Pin 3: SIO2 (SIO[2] / WP# in SPI mode)
@@ -1929,9 +2015,9 @@ def _psram_lib_symbol() -> str:
     ]
     out = ['    (symbol "Memory_RAM:APS6404L" (in_bom yes) (on_board yes)']
     out.append('      (property "Reference" "U" (at 0 8.89 0) (effects (font (size 1.27 1.27))))')
-    out.append('      (property "Value" "APS6404L-3SQR-SN" (at 0 -8.89 0) (effects (font (size 1.27 1.27))))')
+    out.append('      (property "Value" "APS6404L-3SQN-SN" (at 0 -8.89 0) (effects (font (size 1.27 1.27))))')
     out.append('      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
-    out.append('      (property "Datasheet" "https://www.lcsc.com/product-detail/C5333729.html" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
+    out.append('      (property "Datasheet" "https://www.lcsc.com/product-detail/C3028887.html" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
     out.append('      (symbol "Memory_RAM:APS6404L_0_1"')
     out.append('        (rectangle (start -5.08 7.62) (end 5.08 -7.62)')
     out.append('          (stroke (width 0.254) (type default)) (fill (type none))))')
@@ -1955,14 +2041,15 @@ LIB_SYMBOLS = (
     + "\n" + _conn_01xN_lib_symbol(16)
     + "\n" + _mcp23017_lib_symbol()
     + "\n" + _pca9685pw_lib_symbol()
-    + "\n" + _mcp73831_lib_symbol()
+    + "\n" + _bq24074_lib_symbol()       # r19.18 (ADR-0023): Power-Path-Charger
+    + "\n" + _tpa6132a2_lib_symbol()     # r19.19 (ADR-0024): Kopfhoererverstaerker
     + "\n" + _tps61089_lib_symbol()
     + "\n" + _dmg2305ux_lib_symbol()
     + "\n" + _inductor_lib_symbol()
     + "\n" + _schottky_diode_lib_symbol()
     + "\n" + _rotary_encoder_switch_lib_symbol()
     + "\n" + _pcm5102a_lib_symbol()
-    + "\n" + _pam8403_lib_symbol()
+    + "\n" + _pam8406_lib_symbol()
     + "\n" + _ferrite_bead_lib_symbol()
     + "\n" + _conn_01xN_lib_symbol(2)
     + "\n" + _conn_02xN_lib_symbol(20)
@@ -2081,12 +2168,12 @@ def pin_abs(sym_x: float, sym_y: float, local_x: float, local_y: float, rotation
 # ----------------------------------------------------------------------------
 # Sheet 1 — Power Tree
 # Komponenten + Verdrahtung lt. SPEC v0.6 §1, §3:
-#   USB-C(VBUS) -> F1 (polyfuse 3A/6A) -> D3B (SS34, r18.79 Dioden-OR) -> +5V Rail
-#   (Akku-Pfad: battery_sheet U8-Boost 4,97V -> D3 -> gleicher +5V_OUT-Rail)
+#   USB-C(VBUS) -> F1 (polyfuse 3A/6A) -> VBUS_FUSED -> BQ24074-IN (battery_sheet)
+#   (+5V-Rail wird NUR vom Boost gespeist: VSYS -> U8 -> D3 -> +5V_OUT, r19.18)
 #   USB-C(D±)   -> D1 (USBLC6-2SC6 ESD)   -> USB hier-label to stm32 sheet
 #   USB-C(CC1)  -> R2 (5.1k)              -> GND
 #   USB-C(CC2)  -> R3 (5.1k)              -> GND
-#   VBUS_FUSED  -> D2 (SMAJ5.0A TVS, pre-D3B) -> GND
+#   VBUS_FUSED  -> D2 (SMAJ5.0A TVS)      -> GND
 # ----------------------------------------------------------------------------
 
 
@@ -2223,42 +2310,29 @@ def power_tree_sheet() -> str:
     wires.append(wire(30.48, RAIL_Y, 35, RAIL_Y, seed_suffix="rail-30-35"))
     wires.append(wire(35, RAIL_Y, 41.19, RAIL_Y, seed_suffix="rail-35-f1"))
 
-    # ---- r12: VBUS_USBC hier-output (pre-fuse raw VBUS) für USB-Detect-Pfad in mcp_sheet
-    # + Battery-Charger-Input (U7 MCP73831) in battery_sheet. Tap am rail-30-35-Segment.
+    # ---- r12: VBUS_USBC hier-output (pre-fuse raw VBUS) für USB-Detect-Pfad
+    # in mcp_sheet (µA-Divider). r19.18: der Lader haengt NICHT mehr hier —
+    # er bekommt VBUS_FUSED (post-F1, Audit P0-1). Tap am rail-30-35-Segment.
     wires.append(wire(30.48, RAIL_Y, 30.48, RAIL_Y - 6, seed_suffix="vbus-usbc-tap-up"))
     hlabels.append(hier_label(30.48, RAIL_Y - 6, "VBUS_USBC", shape="output", rotation=90))
     junctions.append(junction(30.48, RAIL_Y))
 
-    # ---- F1 pin2 → D3B (Dioden-OR, r18.79) → Rail nach rechts (48.81 → 110)
-    # r18.79 AUDIT-FIX: D3B (2. SS34) NEU in Serie hinter F1. Vorher exportierte
-    # power_tree den Rail DIREKT hinter F1 → die Boost-5V (battery_sheet, via
-    # D3 auf demselben +5V_OUT-Netz) floss rueckwaerts durch F1 auf den
-    # USB-C-VBUS (Polyfuse leitet bidirektional) → Lader U7 speiste sich aus
-    # dem eigenen Boost (Selbstladeschleife), USB-Detect dauerhaft HIGH, 5V am
-    # offenen Stecker. D3B blockt das; Q1/R22 (die den Fuse zusaetzlich
-    # ueberbrueckten) sind im battery_sheet entfernt. Topologie jetzt:
-    #   USB: VBUS → F1 → [D2 TVS klemmt pre-Diode] → D3B → +5V-Rail
-    #   Akku: BAT → U8 Boost (4,97V) → D3 → +5V-Rail
-    # CBULK an der Rail @ (65, sy) [post-D3B], D2 TVS @ (55, sy) [pre-D3B]
-    # C1 (10µF) @ x=80, C2 (100nF) @ x=86 = +5V-Rail HF-Bypass (SPEC §3).
+    # ---- F1 pin2 → VBUS_FUSED (r19.18 / ADR-0023): der USB-Pfad endet hier.
+    # D3B (Dioden-OR, r18.79) ist ENTFERNT — USB speist die +5V-Rail nicht
+    # mehr direkt. Neue Topologie:
+    #   USB: VBUS → F1 → VBUS_FUSED → [D2 TVS klemmt] → U7 BQ24074-IN (battery_sheet)
+    #   Rail: U7-OUT=VSYS → U8 Boost (4,97V) → D3 → +5V-Rail (EINZIGE Quelle)
+    # Audit-P0-Fixes damit: P0-1 (Lader post-Fuse), P0-5 (kein Diode-OR-
+    # Rueckspeise-Pfad mehr), P0-6 (C_BULK ~580µF liegt hinter dem Boost —
+    # USB-Hot-Plug laedt nur noch C_CHG_IN 4,7µF; Inrush begrenzt BQ-ILIM).
+    # C_BULK @ (65, sy), C1 (10µF) @ x=80, C2 (100nF) @ x=86 bleiben am Rail.
     wires.append(wire(48.81, RAIL_Y, 55, RAIL_Y, seed_suffix="rail-48.81-55"))
     junctions.append(junction(55, RAIL_Y))
-    # D3B: Anode links (Richtung F1/USB), Kathode rechts (Richtung Rail).
-    # Device:D_Schottky rotation=180: pin1 K abs (sx+3.81), pin2 A abs (sx-3.81).
-    symbols.append(
-        place_symbol(
-            lib_id="Device:D_Schottky",
-            ref="D3B",
-            value="SS34 40V 3A Schottky (USB-Pfad Dioden-OR, r18.79 ersetzt Q1-Power-Path)",
-            x=60, y=RAIL_Y,
-            rotation=180,
-            footprint="Diode_SMD:D_SMA",
-            extra_props={"MPN": "SS34", "LCSC": "C8678"},
-            seed_suffix="D3B",
-        )
-    )
-    wires.append(wire(55, RAIL_Y, 56.19, RAIL_Y, seed_suffix="rail-55-d3b"))
-    wires.append(wire(63.81, RAIL_Y, 65, RAIL_Y, seed_suffix="d3b-rail-65"))
+    wires.append(wire(55, RAIL_Y, 60, RAIL_Y, seed_suffix="vbus-fused-stub"))
+    hlabels.append(hier_label(60, RAIL_Y, "VBUS_FUSED", shape="output", rotation=0))
+    # +5V-Rail (getrennt vom USB-Pfad!): Segmente 65..110, gespeist via
+    # hier +5V_OUT (Boost, battery_sheet). KEIN Wire 60→65 — die Luecke
+    # zwischen VBUS_FUSED-Label und C_BULK-Knoten ist die Design-Absicht.
     for xa, xb in zip([65, 80, 86], [80, 86, 110]):
         wires.append(wire(xa, RAIL_Y, xb, RAIL_Y, seed_suffix=f"rail-{xa}-{xb}"))
     for x in (65, 80, 86):
@@ -2637,9 +2711,14 @@ def power_tree_sheet() -> str:
                                     "PREV_PART": "MST-12D18G3 (SHOU HAN, C49023766) — Budget-Fallback; Footprint SW_MST-12D18_SlideSwitch_RA bleibt vendored im Repo.",
                                 },
                                 seed_suffix="SW_PWR", sheet_uuid_seed="sheet_power_tree"))
-    # COM (Pad 2, links am Symbol) → PWR_ON + R_PWR_PD 100k → GND
+    # COM (Pad 2, links am Symbol) → PWR_ON + R_PWR_PD 100k → GND.
+    # r19.18: PWR_ON geht zusaetzlich als hier-output zum battery_sheet
+    # (U8-Boost-EN, Audit P0-3 — Schalter toetet jetzt auch den Boost).
     wires.append(wire(SWP_X - 5.08, SWP_Y, 100, SWP_Y, seed_suffix="swpwr-com"))
     labels.append(label(100, SWP_Y, "PWR_ON"))
+    wires.append(wire(100, SWP_Y, 96, SWP_Y, seed_suffix="pwr-on-export"))
+    hlabels.append(hier_label(96, SWP_Y, "PWR_ON", shape="output", rotation=180))
+    junctions.append(junction(100, SWP_Y))
     symbols.append(place_symbol(lib_id="Device:R", ref="R_PWR_PD",
                                 value="100k 0603 (PWR_ON pull-down, Default AUS)",
                                 x=100, y=SWP_Y + 3.81,
@@ -2650,11 +2729,14 @@ def power_tree_sheet() -> str:
     symbols.append(place_symbol(lib_id="Power:GND", ref="#PWR_R_PWR_PD", value="GND",
                                 x=100, y=SWP_Y + 10.5, seed_suffix="r-pwr-pd-gnd",
                                 sheet_uuid_seed="sheet_power_tree"))
-    # Throw A (Pad 1) → +5V-Rail (globales Flag); Throw B (Pad 3) → NC-Label
+    # Throw A (Pad 1) → VSYS (r19.18: war +5V-Rail — Henne-Ei-Deadlock: die
+    # Rail haengt jetzt HINTER dem PWR_ON-gesteuerten Boost, ein Pull von der
+    # Rail koennte das System nie einschalten. VSYS (BQ24074-OUT) ist IMMER
+    # versorgt — 4,4V am USB, VBAT am Akku — Pegel 3,0-4,4V ist sicher HIGH
+    # fuer U8-EN (VIH 1,2V) und U_PWR-ON (TPS22918 VIH ~1,05V @5V)).
+    # Throw B (Pad 3) → NC-Label
     wires.append(wire(SWP_X + 5.08, SWP_Y - 2.54, 117, SWP_Y - 2.54, seed_suffix="swpwr-throw-a"))
-    symbols.append(place_symbol(lib_id="Power:+5V", ref="#PWR_SWPWR", value="+5V",
-                                x=117, y=SWP_Y - 2.54, rotation=270, seed_suffix="swpwr-5v",
-                                sheet_uuid_seed="sheet_power_tree"))
+    hlabels.append(hier_label(117, SWP_Y - 2.54, "VSYS", shape="input", rotation=0))
     wires.append(wire(SWP_X + 5.08, SWP_Y + 2.54, 117, SWP_Y + 2.54, seed_suffix="swpwr-throw-b"))
     labels.append(label(117, SWP_Y + 2.54, "NC_SW_PWR_B"))
     # ---- LDO-VIN haengt jetzt am geschalteten Netz: "+5V_SW"-Label statt Drop
@@ -2774,7 +2856,9 @@ def power_tree_sheet() -> str:
                                     x=mh_x, y=170.0, seed_suffix=f"{mh_ref}-gnd",
                                     sheet_uuid_seed="sheet_power_tree"))
 
-    hlabels.append(hier_label(115, RAIL_Y, "+5V_OUT", shape="output", rotation=0))
+    # r19.18: +5V_OUT ist jetzt ein INPUT dieses Sheets — die Rail wird
+    # ausschliesslich vom Boost (battery_sheet, via D3) gespeist.
+    hlabels.append(hier_label(115, RAIL_Y, "+5V_OUT", shape="input", rotation=0))
     wires.append(wire(110, RAIL_Y, 115, RAIL_Y, seed_suffix="rail-to-hlbl"))
     # GND_OUT — vom GND-Bus
     wires.append(wire(30.48, GND_LABEL_Y, 115, GND_LABEL_Y, seed_suffix="gnd-bus"))
@@ -2786,14 +2870,14 @@ def power_tree_sheet() -> str:
         f'  (uuid "{sheet_uuid}")\n'
         f'  (paper "A3")\n'
         f'  (title_block\n'
-        f'    (title "Field Ambience PCB — Sheet 1: Power Tree")\n'
-        f'    (date "2026-05-14")\n'
-        f'    (rev "0.7")\n'
+        f'    (title "Field Ambience PCB — Sheet 1: Power Tree (r19.18 ADR-0023)")\n'
+        f'    (date "2026-07-13")\n'
+        f'    (rev "0.8")\n'
         f'    (company "Field Ambience Project")\n'
-        f'    (comment 1 "Per SPEC v0.6.3 §1 + §3")\n'
-        f'    (comment 2 "USB-C → F1(3A/6A) → D3B SS34 (r18.79 Dioden-OR) → +5V rail (C_BULK 470µF Polymer + 100µF MLCC)")\n'
-        f'    (comment 3 "USB-C VBUS/GND-Pin-Belegung per USB Type-C Spec Rev 2.1 (v0.6.3 fix)")\n'
-        f'    (comment 4 "ESD: USBLC6-2SC6 on D+/D-; TVS: SMAJ5.0A on +5V"))\n'
+        f'    (comment 1 "USB-C → F1(3A/6A) → VBUS_FUSED → BQ24074 (Sheet 7); Rail nur vom Boost")\n'
+        f'    (comment 2 "+5V rail (C_BULK 470µF + 100µF MLCC) ← +5V_OUT (Boost via D3, battery sheet)")\n'
+        f'    (comment 3 "SW_PWR: COM=PWR_ON (→U8-EN + U_PWR-ON), Throw-A=VSYS (immer versorgt)")\n'
+        f'    (comment 4 "ESD: USBLC6-2SC6 on D+/D-; TVS: SMAJ5.0A on VBUS_FUSED"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
@@ -3723,12 +3807,19 @@ def stm32h743_sheet() -> str:
                                 sheet_uuid_seed=sus))
 
     # ---- SWD J4 (3-Pin 1.27mm, bestehend aus v0.6): SWCLK / GND / SWDIO (§5.8)
+    # r19.18 AUDIT-FIX: MPN war "TC2030-IDC" mit LCSC "TBD" — doppelt falsch:
+    # TC2030-IDC ist das Tag-Connect-KABEL (passt nicht auf dieses Footprint),
+    # und "TBD" landete als Bestell-Zeile im JLC-BOM. Jetzt DNP: JLC bestueckt
+    # nichts, die 3 Pads bleiben als Debug-Zugang. Zum Flashen/Debuggen einen
+    # beliebigen 1x3-1.27mm-Header von Hand aufloeten oder Litzen direkt
+    # anloeten (ST-Link: SWDIO/SWCLK/GND, 3V3-Referenz am TP_3V3).
     jx, jy = 196.0, 208.0
     symbols.append(place_symbol(lib_id="Connector:Conn_01x03", ref="J4",
-                                value="SWD 1.27mm (SWCLK/GND/SWDIO)",
+                                value="SWD 1.27mm Debug-Pads (SWCLK/GND/SWDIO, DNP)",
                                 x=jx, y=jy,
                                 footprint="Connector_PinHeader_1.27mm:PinHeader_1x03_P1.27mm_Vertical",
-                                extra_props={"MPN": "TC2030-IDC", "LCSC": "TBD"},
+                                extra_props={"DNP": "true (Debug-Pads; Header bei Bedarf von Hand: beliebiger 1x3 P1.27mm vertikal)",
+                                             "NOTE": "r19.18: Ex-MPN TC2030-IDC entfernt (war das Tag-Connect-Kabel, nicht dieser Header)."},
                                 seed_suffix="J4", sheet_uuid_seed=sus))
     # r18.80 AUDIT-FIX (KRITISCH): die Stubs liefen vorher nach LINKS zu
     # (jx-5.08, ...) — die Custom-Lib Conn_01x03 hat ihre Pins aber RECHTS
@@ -3867,12 +3958,12 @@ def stm32h743_sheet() -> str:
     px9, py9 = 60.0, 210.0
     symbols.append(place_symbol(
         lib_id="Memory_RAM:APS6404L", ref="U9",
-        value="APS6404L-3SQR-SN (8MB QSPI PSRAM)",
+        value="APS6404L-3SQN-SN (8MB QSPI PSRAM)",
         x=px9, y=py9,
         footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
-        datasheet="https://www.lcsc.com/product-detail/C5333729.html",
-        extra_props={"MPN": "APS6404L-3SQR-SN", "LCSC": "C5333729",
-                     "FP_NOTE": "SOP-8L(150) = 3.9mm body / 1.27mm pitch. ADR-0022. Pinout VERIFIED vs AP Memory datasheet Rev 2.1 (2019): 1=/CE 2=SO/SIO1 3=SIO2 4=VSS 5=SI/SIO0 6=SCLK 7=SIO3 8=VDD. FP dims match generic SOIC-8_3.9x4.9_P1.27 (std pad numbering). Belt+suspenders: pull exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C5333729 before fab."},
+        datasheet="https://www.lcsc.com/product-detail/C3028887.html",
+        extra_props={"MPN": "APS6404L-3SQN-SN", "LCSC": "C3028887",
+                     "FP_NOTE": "SOP-8L(150) = 3.9mm body / 1.27mm pitch. ADR-0022. Pinout VERIFIED vs AP Memory datasheet Rev 2.1 (2019): 1=/CE 2=SO/SIO1 3=SIO2 4=VSS 5=SI/SIO0 6=SCLK 7=SIO3 8=VDD. FP dims match generic SOIC-8_3.9x4.9_P1.27 (std pad numbering). Belt+suspenders: pull exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C3028887 before fab."},
         seed_suffix="U9", sheet_uuid_seed=sus))
     for (lx, ly, net) in [(-7.62, 5.08, "QSPI_NCS"), (-7.62, 2.54, "QSPI_CLK"),
                           (-7.62, 0.0, "QSPI_IO0"), (-7.62, -2.54, "QSPI_IO1"),
@@ -5451,8 +5542,8 @@ def encoder_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
-# Sheet 6 — Audio: PCM5102A I²S DAC + FB1 + PAM8403 Class-D + 2× Speaker
-# per SPEC v0.6 §8 (+ H2/M2/C2 Fixes: PAM8403 10µF Bulk, AVDD/DVDD split via
+# Sheet 6 — Audio: PCM5102A I²S DAC + FB1 + PAM8406 Class-D + 2× Speaker
+# per SPEC v0.6 §8 (+ H2/M2/C2 Fixes: PAM8406 10µF Bulk, AVDD/DVDD split via
 # Ferrite Bead, AMP_nSHDN+AMP_nMUTE GPIOs).
 # Inputs: +5V, +3V3, GND, I2S_BCK, I2S_LRCK, I2S_DOUT (von Pi/Sheet 7),
 #         AMP_nSHDN, AMP_nMUTE (von Pico/Sheet 2).
@@ -5461,11 +5552,11 @@ def encoder_sheet() -> str:
 
 
 def audio_sheet() -> str:
-    """Sheet 6: Audio (PCM5102A I²S DAC + PAM8403 Class-D Amp + Speaker Header).
+    """Sheet 6: Audio (PCM5102A I²S DAC + PAM8406 Class-D Amp + Speaker Header).
 
     Symbol-Pinouts korrekt nach Datasheets:
       - PCM5102A: offizielles TI-Pinout SLAS859C (CPVDD=1, ..., DVDD=20).
-      - PAM8403:  Diodes Inc PAM8403DR-H Datasheet DS31295 (für JLCPCB C17337).
+      - PAM8406:  Diodes Inc PAM8406DR Datasheet (Rev 1-0, Mar 2013; JLCPCB C86270).
 
     Hinweis: Audio-Routing-Layout wurde für die korrigierten Pinouts neu
     aufgesetzt. Alte audio.kicad_sch v0.6-commits hatten falsche PCM5102A-
@@ -5629,7 +5720,7 @@ def audio_sheet() -> str:
     wires.append(wire(78, cvneg_y + 3.81, 78, cvneg_y + 6, seed_suffix="cvneg-gnd"))
     attach_gnd(78, cvneg_y + 6, "CVNEG", rot=270)
 
-    # ---- Pin 6 OUTL → PCM_VOUTL label (to PAM8403 INL)
+    # ---- Pin 6 OUTL → PCM_VOUTL label (to PAM8406 INL)
     p6_y = u3_left(6)
     wires.append(wire(U3_LX, p6_y, 80, p6_y, seed_suffix="u3-outl"))
     labels.append(label(80, p6_y, "PCM_VOUTL"))
@@ -5860,51 +5951,54 @@ def audio_sheet() -> str:
     attach_gnd(124, c8a_y - 6, "C8b", rot=180)
 
     # ====================================================================
-    # U4 PAM8403H @ (160, 130). Body x=149.84..170.16, y=121.11..138.89.
+    # U4 PAM8406 @ (160, 130). Body x=149.84..170.16, y=121.11..138.89.
     # Pin local x=±12.7. Abs anchor: links x=147.3, rechts x=172.7.
-    # Pin-Belegung VERIFIED gegen PAM8403H.PDF (Diodes Inc, Repo-Root):
-    #   left:  1=-OUT_L 2=PGND 3=+OUT_L 4=PVDD 5=MUTE 6=VDD 7=INL 8=VREF
-    #   right: 16=-OUT_R 15=PGND 14=+OUT_R 13=PVDD 12=SHDN 11=GND 10=INR 9=NC
+    # r19.37 (ADR-0025): PAM8403H (NRND) -> PAM8406DR (Active, C86270).
+    # Pin-Belegung VERIFIED gegen Diodes PAM8406 Datasheet (Rev 1-0, Mar 2013):
+    #   left:  1=+OUT_L 2=PGND 3=-OUT_L 4=PVDD 5=MUTE 6=VDD 7=INL 8=VREF
+    #   right: 16=+OUT_R 15=PGND 14=-OUT_R 13=PVDD 12=SHDN 11=GND 10=INR 9=MODE
+    #   (only diff vs 8403: pin 9 NC->MODE, tie +5V=Class-D; output polarity
+    #    labels 1/3/14/16 corrected. Same 16-SOIC footprint.)
     # ====================================================================
     U4_X, U4_Y = 160.0, 130.0
     U4_LX, U4_RX = 147.3, 172.7
 
     def u4_left(pin: int) -> float:
-        """Pin 1 (-OUT_L) abs y=121.11. Pin N (1..8) abs y=121.11+(N-1)*2.54."""
+        """Pin 1 (+OUT_L) abs y=121.11. Pin N (1..8) abs y=121.11+(N-1)*2.54."""
         return 121.11 + (pin - 1) * 2.54
 
     def u4_right(pin: int) -> float:
-        """Pin 16 (-OUT_R) abs y=121.11. Pin N (9..16) abs y=121.11+(16-N)*2.54."""
+        """Pin 16 (+OUT_R) abs y=121.11. Pin N (9..16) abs y=121.11+(16-N)*2.54."""
         return 121.11 + (16 - pin) * 2.54
 
     symbols.append(
         place_symbol(
-            lib_id="Audio:PAM8403",
+            lib_id="Audio:PAM8406",
             ref="U4",
-            value="PAM8403H Class-D Stereo Amp (SOIC-16)",
+            value="PAM8406 Class-D Stereo Amp (SOIC-16)",
             x=U4_X, y=U4_Y,
             footprint="Package_SO:SOIC-16_3.9x9.9mm_P1.27mm",
-            datasheet="PAM8403H.PDF (Diodes Inc Rev 1-0, Nov 2012)",
-            extra_props={"MPN": "PAM8403DR-H", "LCSC": "C17337"},
+            datasheet="PAM8406 (Diodes Inc Rev 1-0, Mar 2013)",
+            extra_props={"MPN": "PAM8406DR", "LCSC": "C86270"},
             seed_suffix="U4",
             sheet_uuid_seed=sus,
         )
     )
 
-    # ---- Pin 1 -OUT_L → SPK_L- (Speaker L negative)
+    # ---- Pin 1 +OUT_L → SPK_L+ (Speaker L positive, BTL)
     p1uy = u4_left(1)
-    wires.append(wire(U4_LX, p1uy, 144, p1uy, seed_suffix="u4-outlm-stub"))
-    labels.append(label(144, p1uy, "SPK_L-"))
+    wires.append(wire(U4_LX, p1uy, 144, p1uy, seed_suffix="u4-outlp-stub"))
+    labels.append(label(144, p1uy, "SPK_L+"))
 
     # ---- Pin 2 PGND → GND (Power Ground left)
     p2uy = u4_left(2)
     wires.append(wire(U4_LX, p2uy, U4_LX - 3, p2uy, seed_suffix="u4-pgnd-l"))
     attach_gnd(U4_LX - 3, p2uy, "U4_PGND_L", rot=90)
 
-    # ---- Pin 3 +OUT_L → SPK_L+ (Speaker L positive)
+    # ---- Pin 3 -OUT_L → SPK_L- (Speaker L negative, BTL)
     p3uy = u4_left(3)
-    wires.append(wire(U4_LX, p3uy, 144, p3uy, seed_suffix="u4-outlp-stub"))
-    labels.append(label(144, p3uy, "SPK_L+"))
+    wires.append(wire(U4_LX, p3uy, 144, p3uy, seed_suffix="u4-outlm-stub"))
+    labels.append(label(144, p3uy, "SPK_L-"))
 
     # ---- Pin 4 PVDD (left) → +5V
     p4uy = u4_left(4)
@@ -5958,7 +6052,7 @@ def audio_sheet() -> str:
         )
     )
     junctions.append(junction(U4_LX - 3, p6uy))
-    # PAM8403H Datasheet decoupling: "1.0µF ceramic close to VDD" (HF) +
+    # PAM8406 datasheet decoupling: "1.0µF ceramic close to VDD" (HF) +
     # "20µF or greater" (bulk). v0.6.3-r6: upgraded from 100nF/10µF.
     # This left-side set serves VDD (pin 6) + PVDD-L (pin 4, adjacent).
     c9b_y = p6uy + 3.81
@@ -5966,7 +6060,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C9b",
-            value="1uF X7R 0603 (VDD/PVDD-L HF, PAM8403H datasheet)",
+            value="1uF X7R 0603 (VDD/PVDD-L HF, PAM8406 datasheet)",
             x=140, y=c9b_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
@@ -5981,7 +6075,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C9",
-            value="22uF X5R 0805 (VDD/PVDD-L bulk, PAM8403H datasheet >=20uF)",
+            value="22uF X5R 0805 (VDD/PVDD-L bulk, PAM8406 datasheet >=20uF)",
             x=136, y=c9b_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
@@ -5994,18 +6088,25 @@ def audio_sheet() -> str:
     wires.append(wire(136, c9b_y + 3.81, 136, c9b_y + 6, seed_suffix="c9-gnd"))
     attach_gnd(136, c9b_y + 6, "C9", rot=270)
 
-    # ---- Pin 7 INL ← PCM_VOUTL via C_in_L 1µF (DC-block) + R_VOL_L 20k series (RI)
-    # PAM8403H gain = 2*RF/RI (RF=142k internal). RI=20k → AVD=14.2 = 23 dB (Datasheet-spec).
-    # Mit RI<18k wird die max-Gain-Spec überschritten und Clipping wahrscheinlicher.
+    # ---- Pin 7 INL ← PCM_VOUTL via C_in_L 10nF (DC-block + speaker HPF) + R_VOL_L 174k series (RI)
+    # r19.37 (ADR-0025) gain-staging fix. PAM8406 gain = 2*RF/RI (RF=142k internal).
+    # RI=174k → AVD=1.63 = +4.3 dB (was 20k = +23 dB, which drove the 5V BTL amp
+    # into analog clipping well below DAC full-scale). Now DAC FS 2.1Vrms *1.63 =
+    # 3.4Vrms ≈ the ~3.1Vrms clean ceiling of a 5V BTL amp into 8Ω — clip only in
+    # the top ~1 dB, above the firmware limiter.
+    # C_in 10nF (was 1µF): with RI=174k the DC-block also forms the SPEAKER
+    # high-pass fc = 1/(2π·174k·10n) ≈ 91 Hz, protecting the 8Ω 40mm driver from
+    # sub-bass excursion. The line-out/headphone branch (C_HP_INL → U11) keeps its
+    # own 1µF and stays full-range — speaker treatment is local to this branch.
     p7uy = u4_left(7)
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_VOL_L",
-            value="20k 0603 (L input series, RI per PAM8403H datasheet, gain 23 dB)",
+            value="174k 0603 (L input series RI, PAM8406 gain +4.3 dB)",
             x=140, y=p7uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
+            extra_props={"MPN": "0603WAF1743T5E", "LCSC": "C22890"},
             seed_suffix="RVOLL",
             sheet_uuid_seed=sus,
         )
@@ -6015,10 +6116,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_in_L",
-            value="1uF X7R 0603 (L input DC-block)",
+            value="10nF X7R 0603 (L input DC-block + speaker HPF ~91Hz)",
             x=132, y=p7uy, rotation=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
             seed_suffix="CINL",
             sheet_uuid_seed=sus,
         )
@@ -6035,7 +6136,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_VREF",
-            value="1uF X7R 0603 (VREF bypass - PAM8403H datasheet REQUIRED)",
+            value="1uF X7R 0603 (VREF bypass - PAM8406 datasheet REQUIRED)",
             x=144, y=cvref_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
@@ -6046,21 +6147,32 @@ def audio_sheet() -> str:
     wires.append(wire(144, cvref_y + 3.81, 144, cvref_y + 6, seed_suffix="cvref-gnd"))
     attach_gnd(144, cvref_y + 6, "CVREF", rot=270)
 
-    # ---- Pin 9 NC (per datasheet) → NC label
+    # ---- Pin 9 MODE → +5V (High = Class-D per datasheet; Low would be Class-AB)
+    # r19.37 (ADR-0025): PAM8406 adds MODE where the 8403 had NC. Hard-tied HIGH.
     p9uy = u4_right(9)
-    wires.append(wire(U4_RX, p9uy, U4_RX + 3, p9uy, seed_suffix="u4-nc-9"))
-    labels.append(label(U4_RX + 3, p9uy, "NC_U4_9"))
+    wires.append(wire(U4_RX, p9uy, U4_RX + 3, p9uy, seed_suffix="u4-mode-9"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_U4_MODE",
+            value="+5V",
+            x=U4_RX + 3, y=p9uy, rotation=90,
+            seed_suffix="u4-mode-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
 
-    # ---- Pin 10 INR ← PCM_VOUTR via C_in_R 1µF + R_VOL_R 20k series (RI per datasheet)
+    # ---- Pin 10 INR ← PCM_VOUTR via C_in_R 10nF (DC-block + speaker HPF) + R_VOL_R 174k series (RI)
+    # r19.37 (ADR-0025): mirror of the L branch — gain +4.3 dB, speaker HPF ~91 Hz.
     p10uy = u4_right(10)
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_VOL_R",
-            value="20k 0603 (R input series, RI per PAM8403H datasheet, gain 23 dB)",
+            value="174k 0603 (R input series RI, PAM8406 gain +4.3 dB)",
             x=180, y=p10uy, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2002T5E", "LCSC": "C4184"},
+            extra_props={"MPN": "0603WAF1743T5E", "LCSC": "C22890"},
             seed_suffix="RVOLR",
             sheet_uuid_seed=sus,
         )
@@ -6070,10 +6182,10 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_in_R",
-            value="1uF X7R 0603 (R input DC-block)",
+            value="10nF X7R 0603 (R input DC-block + speaker HPF ~91Hz)",
             x=188, y=p10uy, rotation=90,
             footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            extra_props={"MPN": "0603B103K500NT", "LCSC": "C57112"},
             seed_suffix="CINR",
             sheet_uuid_seed=sus,
         )
@@ -6134,7 +6246,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_PVDDR",
-            value="22uF X5R 0805 (PVDD-R bulk, PAM8403H datasheet >=20uF)",
+            value="22uF X5R 0805 (PVDD-R bulk, PAM8406 datasheet >=20uF)",
             x=181, y=cpvddr_y,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
@@ -6149,7 +6261,7 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Device:C",
             ref="C_PVDDR_HF",
-            value="1uF X7R 0603 (PVDD-R HF, PAM8403H datasheet)",
+            value="1uF X7R 0603 (PVDD-R HF, PAM8406 datasheet)",
             x=185, y=cpvddr_y,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
@@ -6162,20 +6274,20 @@ def audio_sheet() -> str:
     wires.append(wire(185, cpvddr_y + 3.81, 185, cpvddr_y + 6, seed_suffix="cpvddr-hf-gnd"))
     attach_gnd(185, cpvddr_y + 6, "CPVDDR_HF", rot=270)
 
-    # ---- Pin 14 +OUT_R → SPK_R+ (Speaker R positive)
+    # ---- Pin 14 -OUT_R → SPK_R- (Speaker R negative, BTL)
     p14uy = u4_right(14)
-    wires.append(wire(U4_RX, p14uy, 176, p14uy, seed_suffix="u4-outrp-stub"))
-    labels.append(label(176, p14uy, "SPK_R+"))
+    wires.append(wire(U4_RX, p14uy, 176, p14uy, seed_suffix="u4-outrm-stub"))
+    labels.append(label(176, p14uy, "SPK_R-"))
 
     # ---- Pin 15 PGND → GND (Power Ground right)
     p15uy = u4_right(15)
     wires.append(wire(U4_RX, p15uy, U4_RX + 3, p15uy, seed_suffix="u4-pgnd-r"))
     attach_gnd(U4_RX + 3, p15uy, "U4_PGND_R", rot=270)
 
-    # ---- Pin 16 -OUT_R → SPK_R- (Speaker R negative)
+    # ---- Pin 16 +OUT_R → SPK_R+ (Speaker R positive, BTL)
     p16uy = u4_right(16)
-    wires.append(wire(U4_RX, p16uy, 176, p16uy, seed_suffix="u4-outrm-stub"))
-    labels.append(label(176, p16uy, "SPK_R-"))
+    wires.append(wire(U4_RX, p16uy, 176, p16uy, seed_suffix="u4-outrp-stub"))
+    labels.append(label(176, p16uy, "SPK_R+"))
 
     # ---- J6 Speaker L connector (Conn_01x02)
     j6_x, j6_y = 158, 117
@@ -6216,21 +6328,221 @@ def audio_sheet() -> str:
     labels.append(label(207, 131.27, "SPK_R-"))
 
     # ====================================================================
-    # LINE-OUT / KOPFHÖRER (v0.7) — passiver Tap an PCM5102A VOUTL/R, VOR
-    # dem PAM8403. PCM5102A-Output ist ground-centered (kein DC-Offset durch
-    # interne Charge-Pump) → keine Koppel-Caps nötig, nur Serien-R zum Schutz.
-    # J8 TRS-Buchse mit Detect-Switch: Einstecken → JACK_DETECT → MCP GPA6
-    # → Firmware mutet NUR den PAM8403 (Speaker), Line-Out bleibt live.
-    # Damit wird der tiefe Charakter über externe Boxen/Kopfhörer hörbar
-    # (40mm-Onboard-Speaker können den 30-60Hz SubBass nicht).
+    # PHONES / LINE-OUT (r19.19, ADR-0024) — U11 TPA6132A2 DirectPath-
+    # Kopfhoererverstaerker zwischen PCM5102A und J8. Vorher hing die Buchse
+    # passiv am DAC (Line-only; 16-32Ω-Kopfhoerer ausserhalb der PCM5102A-
+    # Spec ≥1kΩ). Jetzt: echter Kopfhoerer-Betrieb UND Line-Out aus einem
+    # niederohmigen Ausgang. User-Anforderung: "Kopfhoerer muss rein".
+    #   PCM_VOUTL/R → C_HP_IN* 1µF → U11 (Gain -6dB) → R_LO_* 22Ω → J8 T/R
+    # Gain -6dB (G0=G1=GND, DS Table 1): 2.1Vrms DAC-Full-Scale → ~1.05Vrms
+    # = sauberer Consumer-Line-Pegel UND sichere Kopfhoerer-Lautstaerke
+    # (Acoustic-Shock-Design, DS §7.3.3 "constant maximum output power").
+    # EN = AMP_nSHDN (wie PAM8406; R_SHDN_PD haelt beide im Boot/Aus in
+    # Shutdown, TPA-Shutdown-Iq 0.7-1.2µA). Jack-Detect-Mute betrifft nur
+    # den Speaker-Amp (AMP_nMUTE) — Kopfhoerer bleiben live.
+    # J8-Detect ruht am TIP (= U11-OUTL): DC 0V ob an oder aus (Shutdown-
+    # Zout ~20Ω, DS) → Detect-Logik unveraendert (R_DET/C_DET r18.82).
     # ====================================================================
-    # R_LO_L 22Ω series an VOUTL (Tap vom PCM_VOUTL-Netz)
+    U11_X, U11_Y = 130.0, 180.0
+    U11_LX, U11_RX = U11_X - 10.16, U11_X + 10.16  # 119.84 / 140.16
+    symbols.append(
+        place_symbol(
+            lib_id="Audio:TPA6132A2",
+            ref="U11",
+            value="TPA6132A2RTER (DirectPath HP-Amp, Gain -6dB, EN=AMP_nSHDN)",
+            x=U11_X, y=U11_Y,
+            footprint="Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm",
+            datasheet="https://www.ti.com/lit/ds/symlink/tpa6132a2.pdf",
+            extra_props={
+                "MPN": "TPA6132A2RTER",
+                "Manufacturer": "Texas Instruments",
+                "LCSC": "C69901",
+                "Package": "WQFN-16 RTE0016 (3x3mm, 0.5mm Pitch, EP)",
+                "PIN_SOURCE": "TI SLOS597B (Jul 2017) Pin Functions: 1=INL- 2=INL+ 3=INR+ 4=INR- 5=OUTR 6=G0 7=G1 8=HPVSS 9=CPN 10=PGND 11=CPP 12=HPVDD 13=EN 14=VDD 15=SGND 16=OUTL, EP=GND. Gain-Table: G0=G1=GND -> -6dB.",
+                "FP_NOTE": "KiCad QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm — gegen JLC/EasyEDA-Landpattern C69901 geprueft (Pads 0.28x0.8 @0.5mm, EP 1.6x1.6, Pin-1 links oben CCW) + TI RTE0016C-Outline (EP-Metall 1.68±0.07): kompatibel.",
+                "NOTE": "r19.19 live-verifiziert: LCSC C69901, 370 Stk., $1.35@1, JLC Economic+Standard. HPVDD (Pin 12) NIE an VDD (TI-DS-WARNING — interne Ladungspumpen-Rail). SGND als eigene Leitung zum J8-Sleeve fuehren (DS Pin-15-Note). Layout: C_HP_VDD + C_HPVDD <5mm an Pins 14/12.",
+            },
+            seed_suffix="U11",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # Pin-Y abs (Y-DOWN): links INL- 169.84 | INL+ 172.38 | INR+ 174.92 |
+    # INR- 177.46 | EN 180.0 | G0 182.54 | G1 185.08; rechts OUTL 169.84 |
+    # OUTR 172.38 | VDD 174.92 | HPVDD 177.46 | CPP 180.0 | CPN 182.54 |
+    # HPVSS 185.08 | SGND 187.62 | PGND 190.16 | EP 192.70
+    u11_inlm_y, u11_inlp_y, u11_inrp_y, u11_inrm_y = 169.84, 172.38, 174.92, 177.46
+    u11_en_y, u11_g0_y, u11_g1_y = 180.0, 182.54, 185.08
+    u11_outl_y, u11_outr_y, u11_vdd_y, u11_hpvdd_y = 169.84, 172.38, 174.92, 177.46
+    u11_cpp_y, u11_cpn_y, u11_hpvss_y = 180.0, 182.54, 185.08
+    u11_sgnd_y, u11_pgnd_y, u11_ep_y = 187.62, 190.16, 192.70
+
+    # ---- Eingaenge: PCM_VOUTL/R → C_HP_INL/R 1µF → INL-/INR- (single-ended
+    # per DS: Signal auf die invertierenden Eingaenge, +Eingaenge an GND).
+    # CIN 1µF: fc = 1/(2π·RIN·CIN) — RIN steigt bei -6dB ueber die 13.2k des
+    # +6dB-Falls, fc liegt damit sicher unter 15 Hz (DS Gl. 3/4).
+    for cref, cy, srclbl in (("C_HP_INL", u11_inlm_y, "PCM_VOUTL"),
+                             ("C_HP_INR", u11_inrm_y, "PCM_VOUTR")):
+        symbols.append(
+            place_symbol(
+                lib_id="Device:C",
+                ref=cref,
+                value="1uF X5R 0603 (TPA6132A2 input coupling, DS §8.2.1.2.1)",
+                x=114, y=cy, rotation=90,
+                footprint="Capacitor_SMD:C_0603_1608Metric",
+                extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+                seed_suffix=cref,
+                sheet_uuid_seed=sus,
+            )
+        )
+        # C rot=90 horizontal: pin1 (110.19, cy), pin2 (117.81, cy)
+        wires.append(wire(117.81, cy, U11_LX, cy, seed_suffix=f"{cref.lower()}-to-u11"))
+        wires.append(wire(110.19, cy, 107, cy, seed_suffix=f"{cref.lower()}-to-src"))
+        labels.append(label(107, cy, srclbl))
+    # INL+ / INR+ → GND (DS: "connect INL+ and INR+ to ground" fuer SE)
+    wires.append(wire(U11_LX, u11_inlp_y, 116, u11_inlp_y, seed_suffix="u11-inlp"))
+    attach_gnd(116, u11_inlp_y, "U11_INLP", rot=90)
+    wires.append(wire(U11_LX, u11_inrp_y, 116, u11_inrp_y, seed_suffix="u11-inrp"))
+    attach_gnd(116, u11_inrp_y, "U11_INRP", rot=90)
+
+    # ---- EN ← AMP_nSHDN (gleicher hier-Input wie PAM8406-SHDN; boot-safe
+    # low via R_SHDN_PD, MCU zieht nach Power-Sequencing high)
+    wires.append(wire(U11_LX, u11_en_y, 107, u11_en_y, seed_suffix="u11-en"))
+    hlabels.append(hier_label(107, u11_en_y, "AMP_nSHDN", shape="input", rotation=0))
+
+    # ---- G0 + G1 → GND = Gain -6dB (DS Table 1)
+    wires.append(wire(U11_LX, u11_g0_y, 116, u11_g0_y, seed_suffix="u11-g0"))
+    attach_gnd(116, u11_g0_y, "U11_G0", rot=90)
+    wires.append(wire(U11_LX, u11_g1_y, 116, u11_g1_y, seed_suffix="u11-g1"))
+    attach_gnd(116, u11_g1_y, "U11_G1", rot=90)
+
+    # ---- Ausgaenge → HP_OUTL/R-Netze (weiter unten an R_LO_L/R)
+    wires.append(wire(U11_RX, u11_outl_y, 146, u11_outl_y, seed_suffix="u11-outl"))
+    labels.append(label(146, u11_outl_y, "HP_OUTL"))
+    wires.append(wire(U11_RX, u11_outr_y, 146, u11_outr_y, seed_suffix="u11-outr"))
+    labels.append(label(146, u11_outr_y, "HP_OUTR"))
+
+    # ---- VDD → +5V (ungeschaltete Rail wie PAM8406; im Aus haelt EN=low
+    # den Amp bei 0.7-1.2µA). C_HP_VDD 2.2µF als Label-freies Standalone-
+    # Decoupling direkt am Netz (+5V-Flag oben, GND unten) — Layout <5mm.
+    wires.append(wire(U11_RX, u11_vdd_y, 146, u11_vdd_y, seed_suffix="u11-vdd"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_U11_VDD",
+            value="+5V",
+            x=146, y=u11_vdd_y, rotation=270,
+            seed_suffix="u11-vdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_HP_VDD",
+            value="2.2uF X5R 0603 (TPA6132A2 VDD decoupling <5mm, TI DS §9)",
+            x=108, y=192,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A225KP8NNNC", "LCSC": "C1607"},
+            seed_suffix="C_HP_VDD",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # C vertikal: pin1 (108,188.19) → +5V-Flag; pin2 (108,195.81) → GND
+    wires.append(wire(108, 188.19, 108, 186.5, seed_suffix="c-hp-vdd-top"))
+    symbols.append(
+        place_symbol(
+            lib_id="Power:+5V",
+            ref="#PWR_C_HP_VDD",
+            value="+5V",
+            x=108, y=186.5,
+            seed_suffix="c-hp-vdd-flag",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(108, 195.81, 108, 197.5, seed_suffix="c-hp-vdd-gnd"))
+    attach_gnd(108, 197.5, "C_HP_VDD", rot=270)
+
+    # ---- HPVDD (12) → NUR 2.2µF nach GND (TI-WARNING: nie an VDD!)
+    wires.append(wire(U11_RX, u11_hpvdd_y, 146, u11_hpvdd_y, seed_suffix="u11-hpvdd"))
+    labels.append(label(146, u11_hpvdd_y, "HP_HPVDD"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_HPVDD",
+            value="2.2uF X5R 0603 (TPA6132A2 HPVDD — interner Bias, NIE an VDD; DS §9)",
+            x=166, y=181.27,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A225KP8NNNC", "LCSC": "C1607"},
+            seed_suffix="C_HPVDD",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(166, 177.46, 166, 176, seed_suffix="c-hpvdd-top"))
+    labels.append(label(166, 176, "HP_HPVDD"))
+    wires.append(wire(166, 185.08, 166, 187, seed_suffix="c-hpvdd-gnd"))
+    attach_gnd(166, 187, "C_HPVDD", rot=270)
+
+    # ---- Ladungspumpe: C_FLY_HP 1µF zwischen CPP und CPN (DS §8.2.1.2.2)
+    wires.append(wire(U11_RX, u11_cpp_y, 146, u11_cpp_y, seed_suffix="u11-cpp"))
+    labels.append(label(146, u11_cpp_y, "HP_CPP"))
+    wires.append(wire(U11_RX, u11_cpn_y, 146, u11_cpn_y, seed_suffix="u11-cpn"))
+    labels.append(label(146, u11_cpn_y, "HP_CPN"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_FLY_HP",
+            value="1uF X5R 0603 (TPA6132A2 charge-pump flying cap CPP-CPN)",
+            x=172, y=181.27,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            seed_suffix="C_FLY_HP",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(172, 177.46, 172, 176, seed_suffix="c-fly-hp-top"))
+    labels.append(label(172, 176, "HP_CPP"))
+    wires.append(wire(172, 185.08, 172, 187, seed_suffix="c-fly-hp-bot"))
+    labels.append(label(172, 187, "HP_CPN"))
+
+    # ---- HPVSS (8): negative Rail der Ladungspumpe → 1µF nach GND
+    # (DS: HPVSS-Cap >= Flying-Cap)
+    wires.append(wire(U11_RX, u11_hpvss_y, 146, u11_hpvss_y, seed_suffix="u11-hpvss"))
+    labels.append(label(146, u11_hpvss_y, "HP_HPVSS"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:C",
+            ref="C_HPVSS",
+            value="1uF X5R 0603 (TPA6132A2 HPVSS — negative Charge-Pump-Rail; DS: >= C_FLY)",
+            x=178, y=181.27,
+            footprint="Capacitor_SMD:C_0603_1608Metric",
+            extra_props={"MPN": "CL10A105KB8NNNC", "LCSC": "C15849"},
+            seed_suffix="C_HPVSS",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(178, 177.46, 178, 176, seed_suffix="c-hpvss-top"))
+    labels.append(label(178, 176, "HP_HPVSS"))
+    wires.append(wire(178, 185.08, 178, 187, seed_suffix="c-hpvss-gnd"))
+    attach_gnd(178, 187, "C_HPVSS", rot=270)
+
+    # ---- SGND (15, Referenz — Layout: eigene Leitung zum J8-Sleeve),
+    # PGND (10) und EP (17) → GND
+    wires.append(wire(U11_RX, u11_sgnd_y, 146, u11_sgnd_y, seed_suffix="u11-sgnd"))
+    attach_gnd(146, u11_sgnd_y, "U11_SGND", rot=270)
+    wires.append(wire(U11_RX, u11_pgnd_y, 146, u11_pgnd_y, seed_suffix="u11-pgnd"))
+    attach_gnd(146, u11_pgnd_y, "U11_PGND", rot=270)
+    wires.append(wire(U11_RX, u11_ep_y, 146, u11_ep_y, seed_suffix="u11-ep"))
+    attach_gnd(146, u11_ep_y, "U11_EP", rot=270)
+
+    # ---- R_LO_L/R 22Ω Serie: jetzt HINTER dem HP-Amp (Kabel-Entkopplung /
+    # ESD; TPA hat eigenen Kurzschluss-Schutz). In 32Ω: -4.6dB zusaetzlich —
+    # mit -6dB-Gain immer noch >100dB SPL an typischen Kopfhoerern.
     lo_y = 150.0
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_LO_L",
-            value="22R 0603 (line-out L series/protect)",
+            value="22R 0603 (phones/line-out L series — Kabel/ESD-Entkopplung)",
             x=160, y=lo_y, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "0603WAF220JT5E", "LCSC": "C23345"},
@@ -6238,16 +6550,16 @@ def audio_sheet() -> str:
             sheet_uuid_seed=sus,
         )
     )
-    # R rot=90: pin1 abs (156.19, lo_y) ← PCM_VOUTL label, pin2 abs (163.81, lo_y) → jack T
+    # R rot=90: pin1 abs (156.19, lo_y) ← HP_OUTL label, pin2 abs (163.81, lo_y) → jack T
     wires.append(wire(156.19, lo_y, 152, lo_y, seed_suffix="rlol-to-voutl"))
-    labels.append(label(152, lo_y, "PCM_VOUTL"))
+    labels.append(label(152, lo_y, "HP_OUTL"))
 
     lo_y2 = lo_y + 6
     symbols.append(
         place_symbol(
             lib_id="Device:R",
             ref="R_LO_R",
-            value="22R 0603 (line-out R series/protect)",
+            value="22R 0603 (phones/line-out R series — Kabel/ESD-Entkopplung)",
             x=160, y=lo_y2, rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
             extra_props={"MPN": "0603WAF220JT5E", "LCSC": "C23345"},
@@ -6256,7 +6568,7 @@ def audio_sheet() -> str:
         )
     )
     wires.append(wire(156.19, lo_y2, 152, lo_y2, seed_suffix="rlor-to-voutr"))
-    labels.append(label(152, lo_y2, "PCM_VOUTR"))
+    labels.append(label(152, lo_y2, "HP_OUTR"))
 
     # J8 TRS jack @ (175, 152). Pins: T(1) @ (182.62,149.46), R(2) @ (182.62,152),
     # S(3) @ (182.62,154.54), DET(4) @ (167.38,152).
@@ -6265,13 +6577,17 @@ def audio_sheet() -> str:
         place_symbol(
             lib_id="Connector:AudioJack3_Switch",
             ref="J8",
-            value="3.5mm TRS Line/Headphone Out (PJ-320 class, w/ detect)",
+            value="3.5mm TRS PHONES / LINE OUT (PJ-320 class, w/ detect)",
             x=j8_x, y=j8_y,
             footprint="field_ambience:Jack_3.5mm_PJ-320D_SMT",
             # v0.8: C2884109 existierte nicht in der JLC-Teile-DB → ersetzt durch
             # PJ-320D (C431535, SMD 3.5mm TRS mit Schaltkontakt, lagernd). Footprint
             # gegen PJ-320D-Pads im GUI verifizieren (TODO B0b) + Detect-Polarität.
-            extra_props={"MPN": "PJ-320D (3.5mm TRS w/ switch)", "LCSC": "C431535"},
+            # r19.19 (ADR-0024): jetzt PHONES/LINE OUT — U11 TPA6132A2 treibt die
+            # Buchse niederohmig (Kopfhoerer 16Ω+ UND Line-Eingaenge). Beim
+            # Einstecken muten nur die Speaker (AMP_nMUTE), die Buchse bleibt an.
+            extra_props={"MPN": "PJ-320D (3.5mm TRS w/ switch)", "LCSC": "C431535",
+                         "PANEL_LABEL": "PHONES / LINE OUT"},
             seed_suffix="J8",
             sheet_uuid_seed=sus,
         )
@@ -6288,14 +6604,13 @@ def audio_sheet() -> str:
     attach_gnd(186, 154.54, "J8_S", rot=270)
     # DET @ (j8_x-7.62, j8_y) = (167.38, 152) → R_DET 10k → JACK_DETECT (MCP GPA6)
     # r18.82: Das PJ-320D-Datenblatt-Schaltbild zeigt den Detect-Kontakt (C)
-    # ruht ohne Stecker am TIP-Kontakt (B) — NICHT am Sleeve! Unplugged haengt
-    # DET also am DAC-L-Ausgang (ground-centered, ±~3 Vpk bei Vollaussteuerung):
-    # ohne Serien-R wuerde die MCP-Eingangs-Clamp die negativen Halbwellen
-    # ueber 22R kurzschliessen (>100 mA Injection + hoerbare Verzerrung am
-    # SPEAKER, weil derselbe DAC-Knoten den Amp speist). R_DET 10k begrenzt
-    # den Clamp-Strom auf <300 µA; C_DET 1µF filtert Audio-AC vom GPA6-Knoten
-    # (fc ~16 Hz mit 10k||100k-int-Pullup) → kein Interrupt-Geflacker.
-    # Pegel: unplugged ≈ 0,3 V (LOW, int. 100k-Pullup vs 10k zum ~0-V-DAC-DC),
+    # ruht ohne Stecker am TIP-Kontakt (B) — NICHT am Sleeve! r19.19: der TIP
+    # haengt jetzt am U11-TPA-Ausgang (ground-zentriert, DC 0 V; Shutdown-
+    # Zout ~20Ω per DS) statt direkt am DAC — die r18.82-Analyse bleibt
+    # gueltig: R_DET 10k begrenzt den MCP-Clamp-Strom bei Audio-Halbwellen
+    # (±~1,5 Vpk nach -6dB-Gain) auf <150 µA; C_DET 1µF filtert Audio-AC vom
+    # GPA6-Knoten (fc ~16 Hz mit 10k||100k-int-Pullup) → kein Geflacker.
+    # Pegel: unplugged ≈ 0,3 V (LOW, int. 100k-Pullup vs 10k zum 0-V-Amp-DC),
     # plugged = 3,3 V (HIGH). Firmware: HIGH = Klinke drin → Speaker muten.
     wires.append(wire(167.38, 152, 153.81, 152, seed_suffix="j8-det"))
     symbols.append(
@@ -6333,14 +6648,14 @@ def audio_sheet() -> str:
         f'  (uuid "{sheet_uuid}")\n'
         f'  (paper "A3")\n'
         f'  (title_block\n'
-        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8403H)")\n'
-        f'    (date "2026-05-14")\n'
-        f'    (rev "0.7")\n'
+        f'    (title "Field Ambience PCB — Sheet 6: Audio (PCM5102A + PAM8406 + TPA6132A2)")\n'
+        f'    (date "2026-07-13")\n'
+        f'    (rev "0.8")\n'
         f'    (company "Field Ambience Project")\n'
-        f'    (comment 1 "Per SPEC v0.6.3 §8 + Errata-Fixes (PCM5102A TI, PAM8403H PDF verifiziert)")\n'
+        f'    (comment 1 "Per SPEC §8 + r19.19 (ADR-0024): U11 TPA6132A2 HP-Amp — J8 = PHONES/LINE OUT")\n'
         f'    (comment 2 "PCM5102A pinout per TI SLAS859C: CPVDD=1, OUTL=6, AVDD=8, BCK=13, DIN=14, LRCK=15, DVDD=20")\n'
-        f'    (comment 3 "PAM8403H pinout per Diodes Inc PAM8403H.PDF Rev 1-0 (LCSC C17337)")\n'
-        f'    (comment 4 "v0.6.3 adds R_MUTE_PD + R_SHDN_PD 10k pull-downs - Amp default-OFF/muted during Pico boot"))\n'
+        f'    (comment 3 "PAM8406 per Diodes PAM8406 datasheet; TPA6132A2 per TI SLOS597B (Gain -6dB, EN=AMP_nSHDN)")\n'
+        f'    (comment 4 "R_MUTE_PD + R_SHDN_PD 10k pull-downs - beide Amps default-OFF waehrend Boot"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
@@ -6612,17 +6927,35 @@ def pi_sheet() -> str:
 
 
 # ----------------------------------------------------------------------------
-# Sheet 7 — Battery & Power-Path (NEU r9 + r12)
+# Sheet 7 — Battery & Power-Path (r19.18 / ADR-0023: BQ24074-Redesign)
 # ----------------------------------------------------------------------------
-# Components per SPEC §2.2:
-#   U7 MCP73831 LiPo-Charger (500mA via R21=2kΩ)
-#   U8 TPS61089 Boost LiPo→5V (FB-Divider R23/R24)
-#   (Q1 Power-Path r18.79 ENTFERNT -- Backfeed-Bug; ersetzt durch Dioden-OR D3/D3B)
-#   L1 2.2µH, D3 SS34, J9 JST-PH-2P, R21-R24, 4× Caps, LED_CHRG + R_CHRG
+# Externes Hardware-Audit (2026-07, P0-1..P0-7) hat die alte Topologie
+# (MCP73831-Lader + SS34-Dioden-OR D3B/D3) als fabrikationsblockierend
+# eingestuft: Lader am PRE-Fuse-VBUS, Boost-EN immer an (Akku-Drain im Aus),
+# ~580µF Hot-Plug-Bulk direkt am USB, kein Zell-Schutz, kein Eingangsstrom-
+# Management. r19.18 ersetzt das durch einen echten Power-Path:
+#
+#   USB-C → F1 → VBUS_FUSED → U7 BQ24074 (IN)          [D2 TVS klemmt VBUS_FUSED]
+#                              ├─ OUT (DPPM, 4.4V max) → VSYS → U8 TPS61089 → D3 → +5V
+#                              └─ BAT ← F2 PTC ← J9 LiPo (BAT_PLUS)
+#
+#   U7 BQ24074RGTR (C54313): ICHG=KISET/RISET=890/1k=0.89A typ (~0.45C @2Ah),
+#     IIN-MAX=KILIM/RILIM=1610/1.2k=1.34A typ (EN2=HI an VSYS, EN1=LO),
+#     ITERM=NC (Default 10%), TMR=NC (Default 5h), TS=10k fest (kein Pack-NTC,
+#     DS-vorgeschrieben), CE_N=GND (Laden an). Alle Werte TI SLUS810N.
+#   F2 SMD1812P260TF/16 (C438899): 2.6A hold / 5A trip / 16V — Zell-Backup-
+#     Schutz (Hard-Short); zusaetzlich NUR Zellen mit Schutz-PCB verbauen!
+#   U8 TPS61089 Boost VSYS→4.97V: EN jetzt = PWR_ON (Audit P0-3; Shutdown-Iq
+#     <3µA, DS §8.3.2 — Achtung: kein Output-Disconnect, VOUT liegt im Aus
+#     ueber die Body-Diode auf ~VSYS-0.4V; Amp haelt sich per R_SHDN_PD aus).
+#   LED_CHRG: VBUS_FUSED → LED → R_CHRG → CHG_N (open-drain) — leuchtet nur
+#     wenn USB steckt UND geladen wird (Audit P0-2: war am globalen +5V).
 #
 # Hier-I/O:
-#   VBUS_USBC (input)   ← raw USB-C VBUS pre-fuse, from power_tree
-#   +5V_OUT (output)    → system rail (merges with power_tree's +5V_OUT net)
+#   VBUS_FUSED (input)  ← post-F1 USB-VBUS, from power_tree
+#   PWR_ON (input)      ← Schiebeschalter-Netz, from power_tree (Boost-EN)
+#   VSYS (output)       → System-Knoten (BQ-OUT), Quelle fuer SW_PWR-Pull
+#   +5V_OUT (output)    → system rail (Boost via D3; einzige 5V-Quelle)
 #   BAT_PLUS (output)   → Battery+ for BAT_SENSE-Divider in pico_sheet
 # ----------------------------------------------------------------------------
 
@@ -6650,16 +6983,21 @@ def battery_sheet() -> str:
         )
 
     # ====================================================================
-    # J9 JST-PH 2-pin Battery-Connector @ (50, 80). Pin1=BAT_PLUS, Pin2=GND.
+    # J9 JST-PH 2-pin Battery-Connector @ (50, 80) → F2 PTC → BAT_PLUS.
+    # r19.18 (Audit P0-4): F2 Resettable-PTC in Serie im BAT+-Pfad als
+    # Hard-Short-Backup (2.6A hold / 5A trip — worst-case Dauerentnahme
+    # ~2A liegt darunter, ein Zell-Kurzschluss (>>5A) trippt). Der PRIMAERE
+    # Schutz bleibt eine Zelle MIT Schutz-PCB (siehe SOURCING_COMPLIANCE).
     # ====================================================================
     symbols.append(
         place_symbol(
             lib_id="Connector:Conn_01x02",
             ref="J9",
-            value="JST PH 2.0 2-pin (LiPo Battery, r9)",
+            value="JST PH 2.0 2-pin (LiPo Battery 2000mAh, nur Zellen MIT Schutz-PCB)",
             x=50, y=80,
             footprint="Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal",
-            extra_props={"MPN": "S2B-PH-SM4-TB(LF)(SN)", "LCSC": "C295747"},
+            extra_props={"MPN": "S2B-PH-SM4-TB(LF)(SN)", "LCSC": "C295747",
+                         "NOTE": "Kontakt-Rating 2A/Pin — Peak-Transienten reiten die VSYS/Boost-Caps; Dauerentnahme durch F2 2.6A-hold begrenzt."},
             seed_suffix="J9",
             sheet_uuid_seed=sus,
         )
@@ -6667,100 +7005,76 @@ def battery_sheet() -> str:
     # Conn_01x02 pins at local (3.81, +1.27) and (3.81, -1.27), angle 180.
     # Abs: pin1 (sx+3.81, sy-1.27), pin2 (sx+3.81, sy+1.27).
     # sy=80: pin1 (53.81, 78.73), pin2 (53.81, 81.27)
-    wires.append(wire(53.81, 78.73, 60, 78.73, seed_suffix="j9-bat-plus"))
-    hlabels.append(hier_label(60, 78.73, "BAT_PLUS", shape="output", rotation=0))
-    wires.append(wire(53.81, 81.27, 60, 81.27, seed_suffix="j9-gnd"))
-    attach_gnd(60, 81.27, "J9", rotation=270)
-
-    # ====================================================================
-    # U7 MCP73831 LiPo-Charger @ (90, 80). 5-Pin SOT-23-5.
-    # Pin layout (from _mcp73831_lib_symbol): 1=STAT(-7.62,5.08), 2=VSS(-7.62,0),
-    # 3=VBAT(+7.62,5.08), 4=VDD(+7.62,0), 5=PROG(+7.62,-5.08).
-    # ====================================================================
-    U7_X, U7_Y = 90.0, 80.0
+    # F2 @ (63, 78.73) horizontal: pin1 (59.19, 78.73), pin2 (66.81, 78.73)
     symbols.append(
         place_symbol(
-            lib_id="Battery:MCP73831",
+            lib_id="Device:Polyfuse",
+            ref="F2",
+            value="2.6A/5A 1812 PTC (Batterie-Pfad Hard-Short-Backup, r19.18)",
+            x=63, y=78.73,
+            footprint="Fuse:Fuse_1812_4532Metric",
+            extra_props={"MPN": "SMD1812P260TF/16", "Manufacturer": "PTTC (Polytronics)",
+                         "LCSC": "C438899",
+                         "NOTE": "r19.18 live-verifiziert: LCSC 1.730 Stk., JLC Economic+Standard. 16V / Ihold 2.6A / Itrip 5A / 15mOhm."},
+            seed_suffix="F2",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(53.81, 78.73, 59.19, 78.73, seed_suffix="j9-to-f2"))
+    wires.append(wire(66.81, 78.73, 70, 78.73, seed_suffix="f2-bat-plus"))
+    hlabels.append(hier_label(70, 78.73, "BAT_PLUS", shape="output", rotation=0))
+    wires.append(wire(53.81, 81.27, 56, 81.27, seed_suffix="j9-gnd"))
+    attach_gnd(56, 81.27, "J9", rotation=270)
+    # ====================================================================
+    # U7 BQ24074RGTR Power-Path-Charger @ (95, 85). VQFN-16 RGT (3x3, EP).
+    # Pin-Map: TI SLUS810N Table 7-1, Spalte '74 (siehe _bq24074_lib_symbol).
+    # Symbol-Pins abs (Y-DOWN, abs_y = sy - local_y), U7 @ (95, 85):
+    #   links  x=84.84: IN 74.84 | EN1 77.38 | EN2 79.92 | CE_N 82.46 |
+    #                   ILIM 85.0 | ISET 87.54 | ITERM 90.08 | TMR 92.62 | TS 95.16
+    #   rechts x=105.16: OUT 74.84 | OUT 77.38 | BAT 79.92 | BAT 82.46 |
+    #                    CHG_N 87.54 | PGOOD_N 90.08 | VSS 95.16 | EP 97.70
+    # ====================================================================
+    U7_X, U7_Y = 95.0, 85.0
+    U7_LX = U7_X - 10.16   # 84.84
+    U7_RX = U7_X + 10.16   # 105.16
+    symbols.append(
+        place_symbol(
+            lib_id="Battery:BQ24074",
             ref="U7",
-            value="MCP73831T-2ACI/OT (LiPo Charger, 500mA via R21=2k)",
+            value="BQ24074RGTR (1.5A Li-Ion Power-Path-Charger, DPPM; ICHG 0.89A, IIN 1.34A)",
             x=U7_X, y=U7_Y,
-            footprint="Package_TO_SOT_SMD:SOT-23-5",
-            datasheet="https://ww1.microchip.com/downloads/en/DeviceDoc/MCP73831-Family-Data-Sheet-DS20001984H.pdf",
-            extra_props={"MPN": "MCP73831T-2ACI/OT", "LCSC": "C424093"},
+            footprint="Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm",
+            datasheet="https://www.ti.com/lit/ds/symlink/bq24074.pdf",
+            extra_props={
+                "MPN": "BQ24074RGTR",
+                "Manufacturer": "Texas Instruments",
+                "LCSC": "C54313",
+                "Package": "VQFN-16 RGT0016B (3x3mm, 0.5mm Pitch, EP)",
+                "PIN_SOURCE": "TI SLUS810N (Okt 2021) Table 7-1 Pin Functions, Spalte '74: 1=TS 2/3=BAT 4=CE 5=EN2 6=EN1 7=PGOOD 8=VSS 9=CHG 10/11=OUT 12=ILIM 13=IN 14=TMR 15=ITERM 16=ISET, EP=VSS-Potential (Pflicht).",
+                "FP_NOTE": "KiCad-Standard QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm — gegen JLC/EasyEDA-Landpattern fuer C54313 geprueft (Pads 0.28x0.85 @0.5mm, EP 1.70x1.70, Pin-1 links oben, CCW): identische Geometrie. RGT0016C-Outline im DS: Body 3.0±0.1, EP 1.68±0.07 — passt. TI liefert fuer RGT0016B (='74-Variante) nur die Generic-View; Massabgleich der B-Variante am physischen Teil/EVM = guenstiger Pre-Fab-Check.",
+                "NOTE": "r19.18 live-verifiziert: LCSC C54313, 1.074 Stk., $2.24@1/$1.19@1k, JLC Economic+Standard. VIN 4.35-10.5V (26V tolerant), OUT-Reg 4.4V typ, DPPM: Systemlast hat Prioritaet, Akku supplementiert.",
+            },
             seed_suffix="U7",
             sheet_uuid_seed=sus,
         )
     )
-    # ---- U7 VSS (Pin 2, left, y=80) → GND
-    wires.append(wire(U7_X - 7.62, U7_Y, U7_X - 12, U7_Y, seed_suffix="u7-vss"))
-    attach_gnd(U7_X - 12, U7_Y, "U7_VSS", rotation=90)
+    # Pin-Y-Konstanten (abs)
+    u7_in_y, u7_en1_y, u7_en2_y, u7_cen_y = 74.84, 77.38, 79.92, 82.46
+    u7_ilim_y, u7_iset_y, u7_iterm_y, u7_tmr_y, u7_ts_y = 85.0, 87.54, 90.08, 92.62, 95.16
+    u7_out1_y, u7_out2_y, u7_bat1_y, u7_bat2_y = 74.84, 77.38, 79.92, 82.46
+    u7_chg_y, u7_pgood_y, u7_vss_y, u7_ep_y = 87.54, 90.08, 95.16, 97.70
 
-    # ---- U7 STAT (Pin 1, left, y=75) → R_CHRG (1kΩ) → LED_CHRG kathode; LED_CHRG anode → +5V
-    # Topology: STAT ist open-drain LOW=charging. Strom-Pfad +5V → LED_A → LED_K → R_CHRG → STAT-pin
-    # (LOW). Wire-Endpunkte alle exakt an Pin-Positionen (sonst dangling).
-    p_stat_y = U7_Y - 5.08  # = 74.92
-    # R_CHRG rotation=90 horizontal at (U7_X-16, p_stat_y): pin1 (U7_X-19.81), pin2 (U7_X-12.19)
-    # U7-STAT-pin abs = (U7_X-7.62, p_stat_y). Wire muss U7-STAT → R_CHRG-pin2 exakt verbinden.
-    wires.append(wire(U7_X - 7.62, p_stat_y, U7_X - 12.19, p_stat_y, seed_suffix="u7-stat-to-rchrg"))
-    symbols.append(
-        place_symbol(
-            lib_id="Device:R",
-            ref="R_CHRG",
-            value="1k 0603 (LED_CHRG series)",
-            x=U7_X - 16, y=p_stat_y,
-            rotation=90,
-            footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
-            seed_suffix="R_CHRG",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # LED_CHRG at (U7_X-23, p_stat_y), rotation=180: pin1 K abs (sx+3.81)=U7_X-19.19 RIGHT (zu R_CHRG),
-    # pin2 A abs (sx-3.81)=U7_X-26.81 LEFT (zu +5V). Forward-biased: +5V → A → K → R_CHRG → STAT-LOW.
-    symbols.append(
-        place_symbol(
-            lib_id="Device:LED",
-            ref="LED_CHRG",
-            value="0603 amber (LiPo Charging indicator)",
-            x=U7_X - 23, y=p_stat_y,
-            rotation=180,
-            footprint="LED_SMD:LED_0603_1608Metric",
-            extra_props={"MPN": "XL-1608UOC-06", "Manufacturer": "XINGLIGHT", "LCSC": "C965800"},  # r18.71: was C72041 (actually BLUE + discontinued!) -> C965800 (orange 605nm 0603)
-            seed_suffix="LED_CHRG",
-            sheet_uuid_seed=sus,
-        )
-    )
-    # R_CHRG pin1 (U7_X-19.81) → LED_CHRG kathode pin1 (U7_X-19.19): wire bridge 0.62mm
-    wires.append(wire(U7_X - 19.81, p_stat_y, U7_X - 19.19, p_stat_y, seed_suffix="r-chrg-to-led"))
-    # LED_CHRG Anode pin2 (U7_X-26.81) → +5V flag at (U7_X-30)
-    wires.append(wire(U7_X - 26.81, p_stat_y, U7_X - 30, p_stat_y, seed_suffix="led-chrg-to-5v"))
-    symbols.append(
-        place_symbol(
-            lib_id="Power:+5V",
-            ref="#PWR_LED_CHRG",
-            value="+5V",
-            x=U7_X - 30, y=p_stat_y,
-            rotation=270,
-            seed_suffix="led-chrg-5v",
-            sheet_uuid_seed=sus,
-        )
-    )
-
-    # ---- U7 VDD (Pin 4, right, y=80) → VBUS_USBC hier-input (pre-fuse USB-Detect/Charger-Netz)
-    p_vdd_y = U7_Y  # 80
-    wires.append(wire(U7_X + 7.62, p_vdd_y, U7_X + 14, p_vdd_y, seed_suffix="u7-vdd"))
-    hlabels.append(hier_label(U7_X + 14, p_vdd_y, "VBUS_USBC", shape="input", rotation=0))
-    # r18.82: C_CHG_IN 4.7µF am Charger-VDD — Microchip DS20001984 (Typical
-    # Application, S. 1): 4.7µF an VIN/VDD. Fehlte bisher komplett (der
-    # VBUS_USBC-Knoten hatte keinerlei lokale Kapazitaet). Platzierung links
-    # unten (Label-Match VBUS_USBC), Layout: nah an U7-Pin-4.
+    # ---- IN (Pin 13) ← VBUS_FUSED (post-F1, von power_tree; Audit P0-1:
+    # Lader hing am PRE-Fuse-VBUS). C_CHG_IN 4.7µF = DS-Input-Bypass (1-10µF).
+    wires.append(wire(U7_LX, u7_in_y, 76, u7_in_y, seed_suffix="u7-in"))
+    hlabels.append(hier_label(76, u7_in_y, "VBUS_FUSED", shape="input", rotation=0))
     wires.append(wire(56, 87, 56, 89, seed_suffix="cchgin-label-stub"))
-    labels.append(label(56, 87, "VBUS_USBC"))
+    labels.append(label(56, 87, "VBUS_FUSED"))
     symbols.append(
         place_symbol(
             lib_id="Device:C",
             ref="C_CHG_IN",
-            value="4.7uF X5R 0603 (MCP73831 VDD input cap, DS20001984 Typ.App; r18.82)",
+            value="4.7uF X5R 0603 (BQ24074 IN-Bypass, TI DS 1-10uF; Layout: an Pin 13)",
             x=56, y=92.81,
             footprint="Capacitor_SMD:C_0603_1608Metric",
             extra_props={"MPN": "GRM188R61A475KE15D", "LCSC": "C46653"},
@@ -6771,59 +7085,170 @@ def battery_sheet() -> str:
     wires.append(wire(56, 96.62, 56, 98.5, seed_suffix="cchgin-gnd"))
     attach_gnd(56, 98.5, "C_CHG_IN", rotation=0)
 
-    # ---- U7 VBAT (Pin 3, right, y=75) → BAT_PLUS hier-output (zur Pico via root_sheet)
-    p_vbat_y = U7_Y - 5.08  # 74.92
-    wires.append(wire(U7_X + 7.62, p_vbat_y, U7_X + 14, p_vbat_y, seed_suffix="u7-vbat"))
-    hlabels.append(hier_label(U7_X + 14, p_vbat_y, "BAT_PLUS", shape="output", rotation=0))
+    # ---- EN1 (6) → GND, EN2 (5) → VSYS: EN2=HI/EN1=LO = ILIM-Widerstand-Modus
+    # (Table 7-2). EN2 haengt an OUT/VSYS (4.4V bzw. VBAT — VIH 1.4-6V immer
+    # erfuellt, EN-Zustand ist ohne Input ohnehin egal; Abs-Max 7V eingehalten,
+    # bewusst NICHT an VBUS_FUSED: TVS-Klemmspannung >7V moeglich).
+    wires.append(wire(U7_LX, u7_en1_y, 80, u7_en1_y, seed_suffix="u7-en1"))
+    attach_gnd(80, u7_en1_y, "U7_EN1", rotation=90)
+    wires.append(wire(U7_LX, u7_en2_y, 78, u7_en2_y, seed_suffix="u7-en2"))
+    labels.append(label(78, u7_en2_y, "VSYS"))
 
-    # ---- U7 PROG (Pin 5, right, y=85) → R21 (2k) → GND. Sets Icharge=1000/Rprog=500mA.
-    # Wire-Endpunkte exakt an Pin-Positionen (R rotation=90: pin1 sx-3.81, pin2 sx+3.81).
-    p_prog_y = U7_Y + 5.08  # 85.08
-    # R21 at (U7_X+18, p_prog_y): pin1=U7_X+14.19, pin2=U7_X+21.81
-    wires.append(wire(U7_X + 7.62, p_prog_y, U7_X + 14.19, p_prog_y, seed_suffix="u7-prog-to-r21"))
+    # ---- CE_N (4) → GND = Laden aktiv (DS: "Connect CE low to enable")
+    wires.append(wire(U7_LX, u7_cen_y, 80, u7_cen_y, seed_suffix="u7-cen"))
+    attach_gnd(80, u7_cen_y, "U7_CE", rotation=90)
+
+    # ---- ILIM (12) → R_ILIM_IN 1.2k → GND. IIN-MAX = KILIM/RILIM (DS Gl. 1),
+    # KILIM 1500/1610/1720 AΩ → 1.25/1.34/1.43 A. Gueltiger R-Bereich 1.1k-8k.
+    wires.append(wire(U7_LX, u7_ilim_y, 81.81, u7_ilim_y, seed_suffix="u7-ilim"))
     symbols.append(
         place_symbol(
             lib_id="Device:R",
-            ref="R21",
-            value="2k 0603 (MCP73831 R_PROG → 500mA Icharge)",
-            x=U7_X + 18, y=p_prog_y,
+            ref="R_ILIM_IN",
+            value="1.2k 0603 1% (BQ24074 IIN-MAX=1610/1.2k=1.34A typ, DS Gl.1; Bereich 1.1k-8k)",
+            x=78, y=u7_ilim_y,
             rotation=90,
             footprint="Resistor_SMD:R_0603_1608Metric",
-            extra_props={"MPN": "0603WAF2001T5E", "LCSC": "C22975"},
-            seed_suffix="R21",
+            extra_props={"MPN": "RC0603FR-071K2L", "Manufacturer": "YAGEO", "LCSC": "C114605",
+                         "NOTE": "r19.18 live-verifiziert: 407.400 Stk. LCSC."},
+            seed_suffix="R_ILIM_IN",
             sheet_uuid_seed=sus,
         )
     )
-    # R21 pin2 (U7_X+21.81, p_prog_y) → GND
-    wires.append(wire(U7_X + 21.81, p_prog_y, U7_X + 25, p_prog_y, seed_suffix="r21-to-gnd"))
-    attach_gnd(U7_X + 25, p_prog_y, "R21", rotation=270)
+    wires.append(wire(74.19, u7_ilim_y, 72, u7_ilim_y, seed_suffix="rilimin-gnd"))
+    attach_gnd(72, u7_ilim_y, "R_ILIM_IN", rotation=90)
+
+    # ---- ISET (16) → R_ISET 1k → GND. ICHG = KISET/RISET (DS Gl. 2),
+    # KISET 797/890/975 AΩ → 0.80/0.89/0.98 A ≈ 0.45C @ 2000mAh (~2.5h CC).
+    wires.append(wire(U7_LX, u7_iset_y, 81.81, u7_iset_y, seed_suffix="u7-iset"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_ISET",
+            value="1k 0603 1% (BQ24074 ICHG=890/1k=0.89A typ ≈0.45C, DS Gl.2; Bereich 590R-8.9k)",
+            x=78, y=u7_iset_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
+            seed_suffix="R_ISET",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(74.19, u7_iset_y, 72, u7_iset_y, seed_suffix="riset-gnd"))
+    attach_gnd(72, u7_iset_y, "R_ISET", rotation=90)
+
+    # ---- ITERM (15) = NC → Default-Termination 10% von ICHG (~89mA). DS:
+    # "Leave ITERM unconnected to set the default 10% termination threshold."
+    wires.append(wire(U7_LX, u7_iterm_y, 80, u7_iterm_y, seed_suffix="u7-iterm"))
+    labels.append(label(80, u7_iterm_y, "NC_ITERM_10PCT"))
+
+    # ---- TMR (14) = NC → Default-Safety-Timer (tMAXCHG 5h typ; Ladung ~3.2h
+    # inkl. CV-Phase → Timer schlaegt nie regulaer an). DS: "Leave TMR
+    # unconnected to set the timers to the default values."
+    wires.append(wire(U7_LX, u7_tmr_y, 80, u7_tmr_y, seed_suffix="u7-tmr"))
+    labels.append(label(80, u7_tmr_y, "NC_TMR_5H"))
+
+    # ---- TS (1) → R_TS 10k fest → GND. Kein NTC im 2-Pin-JST-Pack; DS
+    # schreibt fuer No-Thermistor-Anwendungen EXAKT 10k fest an VSS vor.
+    wires.append(wire(U7_LX, u7_ts_y, 81.81, u7_ts_y, seed_suffix="u7-ts"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_TS",
+            value="10k 0603 (BQ24074 TS fest, DS: 'connect a 10-k fixed resistor from TS to VSS')",
+            x=78, y=u7_ts_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "0603WAF1002T5E", "LCSC": "C25804"},
+            seed_suffix="R_TS",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(74.19, u7_ts_y, 72, u7_ts_y, seed_suffix="rts-gnd"))
+    attach_gnd(72, u7_ts_y, "R_TS", rotation=90)
+
+    # ---- OUT (10+11) → VSYS (System-Knoten: Boost-VIN, SW_PWR-Pull, EN2)
+    wires.append(wire(U7_RX, u7_out1_y, 110, u7_out1_y, seed_suffix="u7-out1"))
+    wires.append(wire(U7_RX, u7_out2_y, 110, u7_out2_y, seed_suffix="u7-out2"))
+    wires.append(wire(110, u7_out1_y, 110, u7_out2_y, seed_suffix="u7-out-join"))
+    junctions.append(junction(110, u7_out1_y))
+    wires.append(wire(110, u7_out1_y, 116, u7_out1_y, seed_suffix="u7-out-vsys"))
+    hlabels.append(hier_label(116, u7_out1_y, "VSYS", shape="output", rotation=0))
+
+    # ---- BAT (2+3) → BAT_PLUS (Zelle via F2; C_BAT + TP_BAT + BAT_SENSE)
+    wires.append(wire(U7_RX, u7_bat1_y, 112, u7_bat1_y, seed_suffix="u7-bat1"))
+    wires.append(wire(U7_RX, u7_bat2_y, 112, u7_bat2_y, seed_suffix="u7-bat2"))
+    wires.append(wire(112, u7_bat1_y, 112, u7_bat2_y, seed_suffix="u7-bat-join"))
+    junctions.append(junction(112, u7_bat1_y))
+    wires.append(wire(112, u7_bat1_y, 116, u7_bat1_y, seed_suffix="u7-bat-plus"))
+    hlabels.append(hier_label(116, u7_bat1_y, "BAT_PLUS", shape="output", rotation=0))
+
+    # ---- CHG_N (9, open-drain) ← R_CHRG 1k ← LED_CHRG ← VBUS_FUSED.
+    # Audit P0-2-Fix: Anode war am globalen +5V (Rueckspeisung Boost→CHG).
+    # Jetzt: VBUS_FUSED → LED(A→K) → R_CHRG → CHG_N. LED leuchtet nur wenn
+    # USB steckt UND geladen wird; aus bei Charge-Complete/kein USB.
+    wires.append(wire(U7_RX, u7_chg_y, 106.19, u7_chg_y, seed_suffix="u7-chg-to-rchrg"))
+    symbols.append(
+        place_symbol(
+            lib_id="Device:R",
+            ref="R_CHRG",
+            value="1k 0603 (LED_CHRG series, ~2.6mA @ 5V-VF)",
+            x=110, y=u7_chg_y,
+            rotation=90,
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            extra_props={"MPN": "0603WAF1001T5E", "LCSC": "C21190"},
+            seed_suffix="R_CHRG",
+            sheet_uuid_seed=sus,
+        )
+    )
+    # LED_CHRG @ (118, u7_chg_y) rotation=0: pin1 K links (114.19), pin2 A rechts (121.81)
+    symbols.append(
+        place_symbol(
+            lib_id="Device:LED",
+            ref="LED_CHRG",
+            value="0603 amber (Li-Ion Charging indicator)",
+            x=118, y=u7_chg_y,
+            rotation=0,
+            footprint="LED_SMD:LED_0603_1608Metric",
+            extra_props={"MPN": "XL-1608UOC-06", "Manufacturer": "XINGLIGHT", "LCSC": "C965800"},
+            seed_suffix="LED_CHRG",
+            sheet_uuid_seed=sus,
+        )
+    )
+    wires.append(wire(113.81, u7_chg_y, 114.19, u7_chg_y, seed_suffix="rchrg-to-led"))
+    wires.append(wire(121.81, u7_chg_y, 124, u7_chg_y, seed_suffix="led-to-vbusfused"))
+    labels.append(label(124, u7_chg_y, "VBUS_FUSED"))
+
+    # ---- PGOOD_N (7) = NC (Status optional; Firmware nutzt VBUS_USBC-Detect)
+    wires.append(wire(U7_RX, u7_pgood_y, 109, u7_pgood_y, seed_suffix="u7-pgood"))
+    labels.append(label(109, u7_pgood_y, "NC_PGOOD"))
+
+    # ---- VSS (8) + EP (17) → GND (EP MUSS auf VSS-Potential, DS Table 7-1)
+    wires.append(wire(U7_RX, u7_vss_y, 109, u7_vss_y, seed_suffix="u7-vss"))
+    attach_gnd(109, u7_vss_y, "U7_VSS", rotation=270)
+    wires.append(wire(U7_RX, u7_ep_y, 109, u7_ep_y, seed_suffix="u7-ep"))
+    attach_gnd(109, u7_ep_y, "U7_EP", rotation=270)
 
     # ====================================================================
-    # BAT_PLUS bus — Decoupling C_BAT_IN (22µF) + C_BAT_HF (100nF) at (75, 90).
+    # C_BAT — BAT-Pin-Bypass (DS Table 7-1: "Bypass BAT to VSS with a 4.7-uF
+    # to 47-uF ceramic capacitor"). Netz via BAT_PLUS-Label-Match.
     # ====================================================================
-    # C_BAT_IN at (75, 90) vertical. pin1 top (75, 86.19), pin2 bottom (75, 93.81)
     symbols.append(
         place_symbol(
             lib_id="Device:C",
-            ref="C_BAT_IN",
-            value="22uF X5R 0805 (Battery-Input Bulk)",
-            x=75, y=90,
+            ref="C_BAT",
+            value="22uF X5R 0805 (BQ24074 BAT-Bypass, DS 4.7-47uF; Layout: an Pins 2/3)",
+            x=66, y=90,
             footprint="Capacitor_SMD:C_0805_2012Metric",
             extra_props={"MPN": "CL21A226MAQNNNE", "LCSC": "C45783"},
-            seed_suffix="C_BAT_IN",
+            seed_suffix="C_BAT",
             sheet_uuid_seed=sus,
         )
     )
-    # BAT_PLUS-Netz via Label-Matching (BAT_PLUS-Label an C_BAT_IN-Top, J9,
-    # U7-VBAT, U8-VIN). r18.80: der fruehere vertikale Rest-Stub
-    # (75,86.19)→(75,80) aus dem verworfenen Bus-Ansatz ist ENTFERNT — er
-    # endete blind 3mm neben dem U7-VSS-GND-Flag (Kurzschluss-Falle bei
-    # spaeteren Layout-Aenderungen).
-    wires.append(wire(75, 86.19, 79, 86.19, seed_suffix="c-bat-in-top-stub"))
-    hlabels.append(hier_label(79, 86.19, "BAT_PLUS", shape="output", rotation=0))
-    # C_BAT_IN bottom → GND
-    wires.append(wire(75, 93.81, 75, 96, seed_suffix="c-bat-in-gnd"))
-    attach_gnd(75, 96, "C_BAT_IN", rotation=0)
+    wires.append(wire(66, 86.19, 66, 84, seed_suffix="c-bat-top"))
+    hlabels.append(hier_label(66, 84, "BAT_PLUS", shape="output", rotation=90))
+    wires.append(wire(66, 93.81, 66, 96, seed_suffix="c-bat-gnd"))
+    attach_gnd(66, 96, "C_BAT", rotation=0)
 
     # r18.84: TP_BAT Testpunkt am BAT_PLUS-Netz (Label-Match)
     symbols.append(place_symbol(
@@ -6835,23 +7260,44 @@ def battery_sheet() -> str:
     wires.append(wire(62, 97.54, 62, 100, seed_suffix="tp-bat-wire"))
     hlabels.append(hier_label(62, 100, "BAT_PLUS", shape="output", rotation=90))
 
-    # C_BAT_HF at (82, 90) vertical
-    symbols.append(
-        place_symbol(
-            lib_id="Device:C",
-            ref="C_BAT_HF",
-            value="100nF X7R 0603 (Battery-Input HF)",
-            x=82, y=90,
-            footprint="Capacitor_SMD:C_0603_1608Metric",
-            extra_props={"MPN": "CC0603KRX7R9BB104", "LCSC": "C14663"},
-            seed_suffix="C_BAT_HF",
-            sheet_uuid_seed=sus,
+    # r19.18: TP_VSYS Testpunkt am neuen System-Knoten (Bring-Up: 4.4V bei
+    # USB, VBAT ohne USB — der erste Messpunkt wenn "nichts geht").
+    symbols.append(place_symbol(
+        lib_id="Connector:TestPoint", ref="TP_VSYS", value="TestPoint (r19.18)",
+        x=120, y=68,
+        footprint="TestPoint:TestPoint_Pad_D1.5mm",
+        extra_props={"DNP": "true (Testpad, nichts zu bestuecken)"},
+        seed_suffix="TP_VSYS", sheet_uuid_seed=sus))
+    wires.append(wire(120, 70.54, 120, 72, seed_suffix="tp-vsys-wire"))
+    labels.append(label(120, 72, "VSYS"))
+
+    # ====================================================================
+    # VSYS-Bulk — C_SYS1 (22µF) + C_SYS_HF (100nF): BQ24074-OUT-Bypass
+    # (DS 4.7-47µF) UND TPS61089-Eingangs-Bulk in einem Knoten. Layout:
+    # C_SYS1 zwischen U7-OUT-Pins und L1/U8-VIN aufteilen.
+    # ====================================================================
+    for csys_ref, csys_x, csys_val, csys_fp, csys_mpn, csys_lcsc in (
+        ("C_SYS1", 128, "22uF X5R 0805 (VSYS Bulk: BQ-OUT-Bypass + Boost-Input)",
+         "Capacitor_SMD:C_0805_2012Metric", "CL21A226MAQNNNE", "C45783"),
+        ("C_SYS_HF", 132, "100nF X7R 0603 (VSYS HF)",
+         "Capacitor_SMD:C_0603_1608Metric", "CC0603KRX7R9BB104", "C14663"),
+    ):
+        symbols.append(
+            place_symbol(
+                lib_id="Device:C",
+                ref=csys_ref,
+                value=csys_val,
+                x=csys_x, y=72,
+                footprint=csys_fp,
+                extra_props={"MPN": csys_mpn, "LCSC": csys_lcsc},
+                seed_suffix=csys_ref,
+                sheet_uuid_seed=sus,
+            )
         )
-    )
-    wires.append(wire(82, 86.19, 79, 86.19, seed_suffix="c-bat-hf-top-stub"))
-    junctions.append(junction(79, 86.19))
-    wires.append(wire(82, 93.81, 82, 96, seed_suffix="c-bat-hf-gnd"))
-    attach_gnd(82, 96, "C_BAT_HF", rotation=0)
+        wires.append(wire(csys_x, 68.19, csys_x, 66, seed_suffix=f"{csys_ref.lower()}-top"))
+        labels.append(label(csys_x, 66, "VSYS"))
+        wires.append(wire(csys_x, 75.81, csys_x, 78, seed_suffix=f"{csys_ref.lower()}-gnd"))
+        attach_gnd(csys_x, 78, csys_ref, rotation=0)
 
     # ====================================================================
     # U8 TPS61089RNR Boost @ (140, 90). VQFN-11 HotRod 2x2.5mm + Thermal Pad.
@@ -6928,7 +7374,10 @@ def battery_sheet() -> str:
         )
     )
     wires.append(wire(140, 71.19, 140, 68, seed_suffix="l1-top-stub"))
-    hlabels.append(hier_label(140, 68, "BAT_PLUS", shape="output", rotation=90))
+    # r19.18: Boost speist sich aus VSYS (BQ24074-OUT, DPPM-Knoten) — nicht
+    # mehr direkt aus der Zelle. USB-Betrieb laeuft damit ueber den Lader-
+    # Power-Path (Systemlast-Prioritaet), Akku-Betrieb via BQ-BAT-FET.
+    hlabels.append(hier_label(140, 68, "VSYS", shape="input", rotation=90))
     wires.append(wire(140, 78.81, 140, sw_y, seed_suffix="l1-bottom-to-sw"))
     wires.append(wire(140, sw_y, 156, sw_y, seed_suffix="l1-to-sw-h"))
     junctions.append(junction(140, sw_y))
@@ -6939,13 +7388,19 @@ def battery_sheet() -> str:
     # High-Side-Gate-Treiber ohne Bootstrap → Boost startet nicht).
     labels.append(label(141, sw_y, "U8_SW_NODE"))
 
-    # ---- U8 VIN (Pin 9, right) → BAT_PLUS hier-output
+    # ---- U8 VIN (Pin 9, right) → VSYS (r19.18: BQ24074-OUT statt Zelle)
     wires.append(wire(U8_RX, vin_y, 156, vin_y, seed_suffix="u8-vin-stub"))
-    hlabels.append(hier_label(156, vin_y, "BAT_PLUS", shape="output", rotation=0))
+    hlabels.append(hier_label(156, vin_y, "VSYS", shape="input", rotation=0))
 
-    # ---- U8 EN (Pin 7, right) → BAT_PLUS (always-on when battery present)
+    # ---- U8 EN (Pin 7, right) → PWR_ON (r19.18, Audit P0-3: war BAT_PLUS =
+    # Boost lief IMMER → Akku-Drain im "Aus". Jetzt schaltet der Schiebe-
+    # schalter den Boost: Shutdown-Iq <3µA (TI SLVSD38C §8.3.2). EN-VIH 1.2V,
+    # PWR_ON traegt VSYS-Pegel 3.0-4.4V → sicher HIGH. Kein Output-Disconnect:
+    # VOUT liegt im Aus via Body-Diode auf ~VSYS-0.4V — unkritisch, alle
+    # Rail-Lasten sind dann hochohmig (Amp via R_SHDN_PD in Shutdown, LEDs
+    # high-Z, 3V3-Domaene hinter U_PWR getrennt).
     wires.append(wire(U8_RX, en_y, 156, en_y, seed_suffix="u8-en-stub"))
-    hlabels.append(hier_label(156, en_y, "BAT_PLUS", shape="output", rotation=0))
+    hlabels.append(hier_label(156, en_y, "PWR_ON", shape="input", rotation=0))
 
     # ---- U8 BOOT (Pin 10, right) → C_BOOT 100nF → U8_SW_NODE
     wires.append(wire(U8_RX, boot_y, 154, boot_y, seed_suffix="u8-boot-stub"))
@@ -7050,7 +7505,7 @@ def battery_sheet() -> str:
     r23_sy = 75
     # r18.79 AUDIT-FIX: R23 war 200k — mit VREF 1,212 V (TI SLVSD38C EC-Tabelle)
     # und R24 39k ergibt VOUT = 1,212 × (1 + R23/R24). 200k/39k = 7,43 V (!!) —
-    # haette den PAM8403 (5,5 V abs max) und den geplanten TPS22918 (5,5 V max)
+    # haette den PAM8406 (6,0 V abs max) und den geplanten TPS22918 (5,5 V max)
     # zerstoert. 121k/39k → 4,97 V. (Exakt 5,00 V braeuchte 122k — kein
     # verifizierbarer LCSC-Bestand; 121k = C25809, 71k Stock, −0,6 % ist die
     # sichere Richtung.) Formel: Datenblatt Gl. 5, R1 = (VOUT−VREF)×R2/VREF.
@@ -7272,11 +7727,11 @@ def battery_sheet() -> str:
     # (neue zweite SS34, power_tree, hinter F1) → +5V_OUT. Kein Bauteil ohne
     # verifizierten LCSC-Code noetig (SS34 = C8678, bereits in der BOM).
     # Kosten: ~0,35V Drop im USB-Pfad (Rail ~4,6V an USB) — LDO (braucht
-    # >3,6V) und PAM8403 (2,5–5,5V) unkritisch.
+    # >3,6V) und PAM8406 (2,5–5,5V) unkritisch.
     # ====================================================================
 
     # ====================================================================
-    # Hier-Labels für externe Nets sind inline an U7/U8/D3/J9/C_BAT_IN platziert
+    # Hier-Labels für externe Nets sind inline an U7/U8/D3/F2/C_BAT platziert
     # (Same-Name-Match mit root_sheet's Sheet-Pins). Keine separaten Edge-Labels
     # nötig — KiCad merged alle gleichnamigen hier-labels innerhalb des Sheets.
     # ====================================================================
@@ -7286,14 +7741,14 @@ def battery_sheet() -> str:
         f'  (uuid "{sheet_uuid}")\n'
         f'  (paper "A3")\n'
         f'  (title_block\n'
-        f'    (title "Field Ambience PCB — Sheet 7: Battery & Power-Path (r9 + r12)")\n'
-        f'    (date "2026-05-31")\n'
-        f'    (rev "0.6.3-r12")\n'
+        f'    (title "Field Ambience PCB — Sheet 7: Battery & Power-Path (r19.18 ADR-0023)")\n'
+        f'    (date "2026-07-13")\n'
+        f'    (rev "0.8")\n'
         f'    (company "Field Ambience Project")\n'
-        f'    (comment 1 "Per SPEC v0.6 §2.2 (Battery-Add r9 + Battery-Sense r12)")\n'
-        f'    (comment 2 "U7 MCP73831 LiPo-Charger 500mA + U8 TPS61089 Boost LiPo→5V")\n'
-        f'    (comment 3 "Q1 DMG2305UX P-MOS USB-Path-Selector + D3 SS34 Boost-Reverse-Protect")\n'
-        f'    (comment 4 "Hier-I/O: VBUS_USBC← +5V_OUT→ BAT_PLUS→"))\n'
+        f'    (comment 1 "U7 BQ24074 Power-Path: VBUS_FUSED→IN, OUT=VSYS→Boost, BAT←F2 PTC←J9")\n'
+        f'    (comment 2 "ICHG 0.89A (R_ISET 1k) / IIN 1.34A (R_ILIM_IN 1.2k) / ITERM+TMR=NC-Default / TS 10k fest")\n'
+        f'    (comment 3 "U8 TPS61089 Boost VSYS→4.97V, EN=PWR_ON (Audit P0-3) + D3 SS34 → +5V_OUT")\n'
+        f'    (comment 4 "Hier-I/O: VBUS_FUSED← PWR_ON← VSYS→ +5V_OUT→ BAT_PLUS→"))\n'
         "  (lib_symbols\n"
         + LIB_SYMBOLS
         + "\n  )\n"
@@ -7340,7 +7795,7 @@ def root_sheet() -> str:
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
         f'    (property "Sheetfile" "power_tree.kicad_sch" (at 30 100.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
-        f'    (pin "+5V_OUT" output (at 90 50 0)\n'
+        f'    (pin "+5V_OUT" input (at 90 50 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_5v")}"))\n'
         f'    (pin "GND_OUT" passive (at 90 55 0)\n'
@@ -7349,13 +7804,24 @@ def root_sheet() -> str:
         f'    (pin "+3V3_OUT" output (at 90 60 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_3v3")}"))\n'
+        # r19.18 (ADR-0023): PWR_ON → battery_sheet (U8-Boost-EN), VSYS ← battery_sheet
+        f'    (pin "PWR_ON" output (at 90 65 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("rootpin_pwr_on")}"))\n'
+        f'    (pin "VSYS" input (at 90 70 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("rootpin_vsys")}"))\n'
         f'    (pin "USB_DP" output (at 90 75 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_dp")}"))\n'
         f'    (pin "USB_DM" output (at 90 80 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_dn")}"))\n'
-        # NEU r12: VBUS_USBC (raw USB-C VBUS pre-fuse) für battery_sheet U7-Charger + mcp-GPA7-Detect
+        # r19.18: VBUS_FUSED (post-F1) → battery_sheet BQ24074-IN (Audit P0-1)
+        f'    (pin "VBUS_FUSED" output (at 90 85 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("rootpin_vbus_fused")}"))\n'
+        # r12: VBUS_USBC (raw USB-C VBUS pre-fuse) für mcp-GPA7-USB-Detect
         f'    (pin "VBUS_USBC" output (at 90 95 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("rootpin_vbus_usbc")}")))\n'
@@ -7641,23 +8107,42 @@ def root_sheet() -> str:
         f'      (effects (font (size 1.27 1.27)) (justify left bottom)))\n'
         f'    (property "Sheetfile" "battery.kicad_sch" (at 30 220.5 0)\n'
         f'      (effects (font (size 1.27 1.27)) (justify left top)))\n'
-        f'    (pin "VBUS_USBC" input (at 30 190 180)\n'
+        f'    (pin "VBUS_FUSED" input (at 30 190 180)\n'
         f'      (effects (font (size 1.524 1.524)) (justify left))\n'
-        f'      (uuid "{det_uuid("batpin_vbus_usbc")}"))\n'
+        f'      (uuid "{det_uuid("batpin_vbus_fused")}"))\n'
+        f'    (pin "PWR_ON" input (at 30 195 180)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify left))\n'
+        f'      (uuid "{det_uuid("batpin_pwr_on")}"))\n'
         f'    (pin "BAT_PLUS" output (at 90 195 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("batpin_bat_plus")}"))\n'
+        f'    (pin "VSYS" output (at 90 190 0)\n'
+        f'      (effects (font (size 1.524 1.524)) (justify right))\n'
+        f'      (uuid "{det_uuid("batpin_vsys")}"))\n'
         f'    (pin "+5V_OUT" output (at 90 200 0)\n'
         f'      (effects (font (size 1.524 1.524)) (justify right))\n'
         f'      (uuid "{det_uuid("batpin_5v_out")}")))\n'
-        # ---- Inter-sheet labels for r9 + r12 (Battery / Sense / Power-Path) ----
-        # VBUS_USBC (raw USB-C VBUS pre-fuse): Power-Tree → Battery + MCP
+        # ---- Inter-sheet labels (Battery / Sense / Power-Path) ----
+        # VBUS_USBC (raw USB-C VBUS pre-fuse): Power-Tree → MCP (USB-Detect)
         f'  (wire (pts (xy 90 95) (xy 95 95)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vbususbc_pt")}"))\n'
         f'  (label "VBUS_USBC" (at 95 95 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_vbususbc_pt")}"))\n'
-        f'  (wire (pts (xy 25 190) (xy 30 190)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vbususbc_bat")}"))\n'
-        f'  (label "VBUS_USBC" (at 25 190 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_vbususbc_bat")}"))\n'
         f'  (wire (pts (xy 125 225) (xy 130 225)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vbususbc_mcp")}"))\n'
         f'  (label "VBUS_USBC" (at 125 225 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_vbususbc_mcp")}"))\n'
+        # r19.18 VBUS_FUSED (post-F1): Power-Tree → Battery (BQ24074-IN)
+        f'  (wire (pts (xy 90 85) (xy 95 85)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vbusfused_pt")}"))\n'
+        f'  (label "VBUS_FUSED" (at 95 85 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_vbusfused_pt")}"))\n'
+        f'  (wire (pts (xy 25 190) (xy 30 190)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vbusfused_bat")}"))\n'
+        f'  (label "VBUS_FUSED" (at 25 190 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_vbusfused_bat")}"))\n'
+        # r19.18 PWR_ON: Power-Tree (SW_PWR) → Battery (U8-Boost-EN)
+        f'  (wire (pts (xy 90 65) (xy 95 65)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_pwron_pt")}"))\n'
+        f'  (label "PWR_ON" (at 95 65 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_pwron_pt")}"))\n'
+        f'  (wire (pts (xy 25 195) (xy 30 195)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_pwron_bat")}"))\n'
+        f'  (label "PWR_ON" (at 25 195 0) (effects (font (size 1.524 1.524)) (justify right bottom)) (uuid "{det_uuid("rootlbl_pwron_bat")}"))\n'
+        # r19.18 VSYS: Battery (BQ24074-OUT) → Power-Tree (SW_PWR Throw-A)
+        f'  (wire (pts (xy 90 190) (xy 95 190)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vsys_bat")}"))\n'
+        f'  (label "VSYS" (at 95 190 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_vsys_bat")}"))\n'
+        f'  (wire (pts (xy 90 70) (xy 95 70)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_vsys_pt")}"))\n'
+        f'  (label "VSYS" (at 95 70 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_vsys_pt")}"))\n'
         # BAT_PLUS: Battery → Pico (BAT_SENSE-Divider)
         f'  (wire (pts (xy 90 195) (xy 95 195)) (stroke (width 0) (type default)) (uuid "{det_uuid("rootw_batplus_bat")}"))\n'
         f'  (label "BAT_PLUS" (at 95 195 0) (effects (font (size 1.524 1.524)) (justify left bottom)) (uuid "{det_uuid("rootlbl_batplus_bat")}"))\n'

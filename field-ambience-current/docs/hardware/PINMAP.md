@@ -149,12 +149,14 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 ### Power tree (`power_tree.kicad_sch` + `battery.kicad_sch`)
 | Net | Source | Sinks |
 |---|---|---|
-| `+5V_USB` | USB-C VBUS → F1 polyfuse | D3B (SS34) Anode — Dioden-OR in den +5V-Rail (r18.79; Q1-Power-Path entfernt) |
-| `+5V_RAIL` | Dioden-OR (r18.79): USB via F1→D3B ‖ TPS61089-Boost (4,97 V) via D3 | PAM8403 PVDD (UNgeschaltet), U_PWR VIN, SW_PWR Throw A, LED-Anoden (globales +5V-Flag, r18.81) |
+| `VBUS_FUSED` | USB-C VBUS → F1 polyfuse (r19.18, ADR-0023) | BQ24074 IN (Pin 13), D2 SMAJ5.0A TVS, C_CHG_IN 4,7 µF, LED_CHRG-Anode |
+| `VSYS` | BQ24074 OUT (DPPM: 4,4 V @USB / VBAT @Akku — immer versorgt) | TPS61089 VIN + L1, SW_PWR Throw A (Pull-Quelle), BQ EN2, C_SYS1/C_SYS_HF, TP_VSYS |
+| `PWR_ON` | SW_PWR COM (Throw A = VSYS; R_PWR_PD 100k = Default AUS) | U8 TPS61089 EN (r19.18 — Schalter tötet den Boost) + U_PWR ON |
+| `+5V_RAIL` | **einzige Quelle (r19.18):** TPS61089-Boost (4,97 V) via D3 | PAM8403 PVDD (UNgeschaltet, R_SHDN_PD hält Amp im Aus), U_PWR VIN, LED-Anoden (globales +5V-Flag, r18.81) |
 | `+5V_SW` | **U_PWR TPS22918** (r18.81, ADR-0016): +5V_RAIL → VOUT, geschaltet von SW_PWR via `PWR_ON` (R_PWR_PD 100k = Default AUS) | AP7361C LDO IN (= gesamte 3V3-Domäne: MCU, MCP, 2× PCA9685, LCD) |
 | `+3V3` | AP7361C-33 LDO OUT (r18.79: Doku-Drift „AP7361A-33ER“ korrigiert — BOM/Schematic haben AP7361C-33Y5-13) | MCU VDD×5+VBAT, MCP23017, PCA9685, PCM5102A, LCD module, encoders' pull-ups |
 | `VDDA` | +3V3 via FB1 ferrite | MCU pin 21 (+ 1 µF‖100 nF) |
-| `BAT_PLUS` (LiPo+) | J_BAT / charger | TPS61089 VIN, BAT_SENSE divider, MCP73831 VBAT |
+| `BAT_PLUS` (LiPo+) | J9 → **F2 PTC 2,6 A** (r19.18) | BQ24074 BAT (Pins 2/3), C_BAT 22 µF, BAT_SENSE divider, TP_BAT |
 | `GND` | star point | everything |
 
 ### MCU support (`stm32h743.kicad_sch`)
@@ -205,7 +207,7 @@ Each A/B has a 10 kΩ pull-up + 100 nF RC debounce; switches pull-up + tactile-t
 | Net | From | To |
 |---|---|---|
 | `I2S_LRCK`/`I2S_BCK`/`I2S_DOUT` | MCU SAI1 (PE4/PE5/PE6) | PCM5102A LRCK/BCK/DIN |
-| PCM5102A analog L/R | DAC OUT | PAM8403 IN + J8 line-out (TRS) |
+| PCM5102A analog L/R | DAC OUT | PAM8403 IN + U11 TPA6132A2 HP-Amp → J8 PHONES/LINE-OUT (r19.19) |
 | `AMP_nSHDN`/`AMP_nMUTE` | MCU PB14/PB15 (+10 kΩ PD) | PAM8403 /SHDN, /MUTE |
 | speaker out | PAM8403 BTL | J6 (L+/L−), J7 (R+/R−) → 2× speaker |
 | jack-detect | J8 insertion-detect | MCP23017 (auto-mute speakers) |
@@ -214,8 +216,9 @@ Each A/B has a 10 kΩ pull-up + 100 nF RC debounce; switches pull-up + tactile-t
 ### Battery / charger (`battery.kicad_sch`)
 | Net | From | To |
 |---|---|---|
-| USB VBUS | J1 | MCP73831 VIN (pre-fuse) + F1→D3B→+5V_RAIL (r18.79) |
-| charge | MCP73831 VBAT (R21=2k → 500 mA) | LiPo+ |
+| USB VBUS | J1 → F1 | `VBUS_FUSED` → BQ24074 IN (r19.18; Rail hängt NICHT mehr am USB-Pfad) |
+| charge | BQ24074 BAT (R_ISET 1k → 0,89 A; IIN-Limit R_ILIM_IN 1,2k → 1,34 A; ITERM/TMR = NC-Default) | F2 PTC → LiPo+ |
+| system | BQ24074 OUT = `VSYS` (DPPM: Systemlast vor Ladestrom, Akku supplementiert) | TPS61089 VIN |
 | boost | TPS61089 (L1 + FB-Teiler R23 121k / R24 39k → 4,97 V; R_ILIM 174k → 5,9 A; Fsw ~440 kHz, r18.79) → D3 | +5V_RAIL |
 | `BAT_SENSE` | LiPo+ via 100k:100k | MCU PA3 (ADC) |
 

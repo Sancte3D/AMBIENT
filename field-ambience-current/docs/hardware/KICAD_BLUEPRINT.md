@@ -109,7 +109,7 @@ Parts + order links: `BOM_MASTER.md`.
             │                                  │
             │ D+/D-/CC (ESD via D1)            ├──► AP7361C LDO (U5) ──► +3V3 rail
             │                                  │
-       MCP73831 charger (U7) ◄── battery (J_BAT, LiPo)
+       BQ24074 power-path charger (U7, r19.18 ADR-0023) ◄── F2 PTC ◄── battery (J9, LiPo)
                                                │
    ┌───────────────────────── +3V3 ───────────┴───────────────────────┐
    │                                                                    │

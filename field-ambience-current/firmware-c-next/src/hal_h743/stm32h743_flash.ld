@@ -20,7 +20,12 @@ ENTRY(Reset_Handler)
 
 MEMORY
 {
-  FLASH   (rx)  : ORIGIN = 0x08000000, LENGTH = 2048K
+  /* r19.22: the last 128 KB sector (bank 2 sector 7, 0x081E0000) is reserved
+   * for persistent Scenes storage — see hal_h743/scenes_flash_h743.c
+   * (SCENES_FLASH_ADDR). Shrinking FLASH by that sector keeps the linker from
+   * ever placing code/data into it (firmware is ~203 KB today, far below, but
+   * this guards against future growth silently colliding with the store). */
+  FLASH   (rx)  : ORIGIN = 0x08000000, LENGTH = 1920K   /* 2048K - 128K scenes */
   DTCMRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 128K
   RAM_D1  (xrw) : ORIGIN = 0x24000000, LENGTH = 512K
   RAM_D2  (xrw) : ORIGIN = 0x30000000, LENGTH = 288K
@@ -145,13 +150,17 @@ SECTIONS
     _edtcm_bss = .;
   } >DTCMRAM
 
-  /* echo (~207 KB) + blur (~69 KB) delay lines → D2 SRAM1-3 (288 KB). */
+  /* r19.41: the master-effects adapter (storage 4 KB + hot arena 240 KB +
+   * interleave scratch 4 KB ≈ 248 KB) → D2 SRAM1-3 (288 KB). This is the
+   * region the legacy echo (~207 KB) + blur (~69 KB) delay lines occupied;
+   * those modules are host-test-only now (out of the target link). CPU-only
+   * access from engine_render — never DMA — so D2 is safe per ADR-0015 D3.
+   * Confirm placement + margin in the .map after any change here. */
   .d2_bss (NOLOAD) :
   {
-    . = ALIGN(4);
+    . = ALIGN(32);
     _sd2_bss = .;
-    *echo.c.obj(.bss .bss* COMMON)
-    *blur.c.obj(.bss .bss* COMMON)
+    *fx_master.c.obj(.bss .bss* COMMON)
     . = ALIGN(4);
     _ed2_bss = .;
   } >RAM_D2

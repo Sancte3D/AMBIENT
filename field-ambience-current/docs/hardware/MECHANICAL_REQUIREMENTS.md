@@ -259,7 +259,7 @@ Wärme-Budget (real):
 
 - **MCU** STM32H743 0,4–0,6 W (LQFP-100 ~1 W passiv → unkritisch, U1-Review).
 - **LDO** AP7361C ~0,5–0,6 W (5V→3,3V-Drop × MCU-Strom) → **heißester Punkt**.
-- **Charger** MCP73831 ~0,5–0,6 W **nur beim Laden** (transient).
+- **Charger** BQ24074 (r19.18): Power-Path-Linearstufe, worst case ~(5V−4,2V)×0,89A ≈ 0,7 W **nur beim Laden** (transient; QFN-EP braucht Kupferflaeche).
 - **Boost** TPS61089 + L1 ~0,2–0,3 W nur im Akkubetrieb.
 
 Layout-Vorgaben statt Vents:

@@ -31,6 +31,36 @@ void engine_note_on(uint8_t source, float freq_hz, float amp);
 void engine_note_off(uint8_t source);
 void engine_all_off(void);
 
+/* r19.27 — bare fragile-voice impulse (pluck/glass per VOICE) for the
+ * Landscape "Motif" layer; no pad, no bass. */
+void engine_motif_strike(float freq_hz, float amp);
+
+/* r19.30 — a glass/bell bloom for the HARMONY extension role (chord-top
+ * shimmer over the pad body); no pad, no bass. */
+void engine_sparkle_strike(float freq_hz, float amp);
+
+/* r19.31 — bass ownership. engine_bass_follow(false) stops the auto-bass from
+ * tracking the lowest held note so a cell mode can drive it explicitly via
+ * engine_bass_set()/off()/glide(); (true) restores auto-follow. */
+void engine_bass_follow(bool on);
+void engine_bass_set(float freq_hz);
+void engine_bass_off(void);
+void engine_bass_glide(float tau_s);
+bool engine_bass_active(void);      /* bass voice sounding? (test/UI) */
+
+/* r19.20 — "user is playing" for the generative gate. controls.c feeds the
+ * PHYSICAL key state (any cell down) via press/release edges. Latched hold
+ * voices deliberately do NOT count: they are standing texture, and gating
+ * on active voices froze the generator forever under HOLD+GENERATE. */
+void engine_set_user_presence(bool any_key_down);
+
+/* r19.20 — SPEC boot sequence: start the master volume hard at 0 (call
+ * once right after engine_init(), before the audio pump). The next
+ * engine_set_master_volume() target then fades in over the standard
+ * parameter ramp (~120 ms time constant, click-free). Host tools/tests
+ * that never call this keep the bench 0.6 reference level. */
+void engine_boot_mute(void);
+
 /* Note-event tap for MIDI out (or any observer). `on` = 1 note-on, 0 note-off,
  * -1 all-off. Called from the control-rate note path (not the audio ISR), so
  * the sink may enqueue freely. NULL (default) = no tap. The product wires this
@@ -38,6 +68,24 @@ void engine_all_off(void);
  * Kept as a hook so the engine keeps no link dependency on midi.c. */
 typedef void (*engine_note_hook_t)(int on, uint8_t source, float freq_hz, float amp);
 void engine_set_note_hook(engine_note_hook_t h);
+
+/* r19.16 — SYNTH mode: swappable V2 sound-cores behind the ambient engine.
+ * mode 0 = ambient (default identity); 1..N = a V2 core rendered through the
+ * registered backend. The engine has NO link dependency on src/v2 — the
+ * product main (or a test) registers the backend, so all existing host-test
+ * link lines stay untouched. Switching crossfades ~15 ms; played cells drive
+ * the active core (mono), the generative bed never does. Without a backend,
+ * engine_set_synth(>0) is a no-op and the device stays ambient. */
+typedef struct {
+    void (*select)   (int id);                 /* 0-based V2 core id       */
+    void (*note_on)  (int midi, float vel01);
+    void (*note_off) (void);
+    void (*panic)    (void);
+    void (*render)   (int16_t *buf, int frames);   /* interleaved stereo   */
+} engine_synth_backend_t;
+void engine_set_synth_backend(const engine_synth_backend_t *be);
+void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */
+int  engine_synth(void);
 
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
  * for cell `cell` (0..4) at `now_ms`. The cell-velocity model (cells.c) turns
@@ -69,6 +117,11 @@ void engine_set_age(float amount_0_1);         /* tape hiss + saturation combo *
 void engine_set_echo(float amount_0_1);        /* tape-style stereo delay macro */
 void engine_set_blur(float amount_0_1);       /* granular cloud / smear macro */
 void engine_set_shimmer(float amount_0_1);     /* r18.99: octave-up hall regeneration */
+/* r19.41 master-effects page: 0=Bypass..8=Dream Chain (boot default 8). */
+void engine_set_fx_mode(int idx);
+int  engine_fx_mode(void);
+int  engine_fx_mode_count(void);
+const char *engine_fx_mode_name(int idx);
 void engine_set_bass_depth(float depth_0_1);   /* famSubBass/DeepBass depth */
 void engine_set_world(int world_idx);          /* pick ambience generator (ADR-0017) */
 
@@ -131,8 +184,35 @@ int engine_generative_advance(void);
  * the tick after release. */
 void engine_generative_tick(uint32_t now_ms);
 
+/* r19.22 (Scenes): reproduzierbarer Generator-Zustand. Der Seed treibt die
+ * Bar-Humanisierung + Sparkle-Streuung; save/recall einer Scene stellt ihn
+ * wieder her, damit "dasselbe Feld" wieder dasselbe Feld ist. */
+uint32_t engine_gen_seed(void);
+void     engine_set_gen_seed(uint32_t seed);
+
+/* r19.24 interactive GENERATE — a cell press while GENERATE is on STEERS the
+ * autoplay instead of pausing it. cell 0..4 maps to a composer intent
+ * (0 Home→RETURN, 1 Lift→OPEN, 2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY)
+ * and mutates the harmony now so the piece audibly answers. No-op unless
+ * generative is on; deliberately does NOT mark user-presence (the generator
+ * keeps playing — that is the whole point). */
+void engine_generative_nudge(int cell, uint32_t now_ms);
+
+/* r19.24 New Field (SHIFT+GENERATE): reseed harmony + composer + the bar
+ * humanization to a fresh but reproducible field and restart it at state 0.
+ * The pitch world (key/mode) is unchanged. */
+void engine_generative_new_field(uint32_t seed);
+
 /* r18.90 melody-grammar observability (tests + a future UI readout):
  * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
+int engine_generative_suppressed(void);   /* r19.33: 1 = player-priority hold-off active */
+
+/* r19.34 — toggle the two sparse single-tone autoplay layers (evolving bed/pad
+ * stays either way). Default on. */
+void engine_set_autoplay_melody(int on);
+void engine_set_autoplay_eno(int on);
+int  engine_autoplay_melody(void);
+int  engine_autoplay_eno(void);
 int engine_generative_last_melody_midi(void);
 int engine_generative_melody_count(void);
 /* r18.93: phrases replayed by the déjà-vu memory (Marbles concept). */

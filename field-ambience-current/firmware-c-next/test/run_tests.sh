@@ -44,6 +44,41 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/brain_test"
 "$tmp/brain_test"
 
+# r19.26: cell harmonics — ascending, collision-free pentatonic per world
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_brain_cells.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" \
+    -lm -o "$tmp/brain_cells_test"
+"$tmp/brain_cells_test"
+
+# r19.29: minimal-movement voice leading (pure integer)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_voicelead.c" \
+    "$src/src/voicelead.c" \
+    -lm -o "$tmp/voicelead_test"
+"$tmp/voicelead_test"
+
+# r19.30: role-based chord timbre (role mapping + patch table)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_rolepatch.c" \
+    "$src/src/rolepatch.c" \
+    -lm -o "$tmp/rolepatch_test"
+"$tmp/rolepatch_test"
+
+# r19.27: Landscape cell mode — layer-role state machine (drone/bed/motif/atmos/memory)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_landscape.c" \
+    "$src/src/landscape.c" \
+    -lm -o "$tmp/landscape_test"
+"$tmp/landscape_test"
+
+# r19.28: ember warm subtractive voice (osc + filter env + LFO)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_ember.c" \
+    "$src/src/ember.c" "$src/src/dsp.c" \
+    -lm -o "$tmp/ember_test"
+"$tmp/ember_test"
+
 # ADR-0013: cell-velocity input model (Hall position → velocity → amp)
 "$CC" "${CFLAGS[@]}" \
     "$here/test_cells.c" \
@@ -57,17 +92,17 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/controls.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/controls_test"
 "$tmp/controls_test"
 
 # r18.89: sound upgrades — noise primitives, drive shaper, KS pluck, crackle
 "$CC" "${CFLAGS[@]}" \
     "$here/test_sound_upgrades.c" \
-    "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" "$src/src/tape.c" \
+    "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" "$src/src/tape.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" \
     -lm -o "$tmp/sound_upgrades_test"
 "$tmp/sound_upgrades_test"
 
@@ -76,7 +111,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$here/test_generative_tick.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/generative_tick_test"
 "$tmp/generative_tick_test"
 
@@ -86,17 +121,67 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/params.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/params_test"
 "$tmp/params_test"
+
+# r19.25: gesture loop (record/replay cell events, no audio)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_gesture.c" \
+    "$src/src/gesture.c" \
+    -lm -o "$tmp/gesture_test"
+"$tmp/gesture_test"
+
+# r19.24: interactive GENERATE (cells steer the composer + New Field reseed)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_generative_interactive.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
+    -lm -o "$tmp/gen_interactive_test"
+"$tmp/gen_interactive_test"
+
+# r19.23: chord-bloom cell mode (voice-leading + staggered onset scheduler)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_bloom.c" \
+    "$src/src/bloom.c" "$src/src/voicelead.c" "$src/src/rolepatch.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
+    -lm -o "$tmp/bloom_test"
+"$tmp/bloom_test"
+
+# r19.22: parameter locks + 5 scene slots (menu state snapshot + RAM backend)
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_scenes.c" \
+    "$src/src/scenes.c" "$src/src/menu.c" "$src/src/params.c" "$src/src/battery.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
+    -lm -o "$tmp/scenes_test"
+"$tmp/scenes_test"
+
+# r19.21: encoder push layer (short/long press, bypass/mute/reset) + overlay
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_knobs.c" \
+    "$src/src/knobs.c" "$src/src/overlay.c" "$src/src/params.c" \
+    "$src/src/oled_draw.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
+    -lm -o "$tmp/knobs_test"
+"$tmp/knobs_test"
 
 # LED render: controls/modifier state → PCA9685 16-ch PWM with fade engine
 "$CC" "${CFLAGS[@]}" \
     "$here/test_leds.c" \
-    "$src/src/leds.c" "$src/src/controls.c" \
+    "$src/src/leds.c" "$src/src/controls.c" "$src/src/gesture.c" \
+    "$src/src/scenes.c" "$src/src/menu.c" "$src/src/params.c" "$src/src/battery.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" \
-    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/leds_test"
 "$tmp/leds_test"
 
@@ -206,7 +291,7 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/worlds.c" \
     "$src/src/generative.c" \
     "$src/src/cells.c" \
-    "$src/src/engine.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" \
+    "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
     -lm -o "$tmp/reverb_test"
 "$tmp/reverb_test"
 
@@ -296,7 +381,31 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" \
     "$here/test_blocksize_sweep.c" \
     "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
-    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" \
-    "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/shimmer.c" "$src/src/audio_profiler.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" \
+    "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" "$src/src/audio_profiler.c" \
     -lm -o "$tmp/bsweep_test"
 "$tmp/bsweep_test"
+
+# r19.16: SYNTH mode through the DEVICE path — V2 sound-cores behind the
+# engine backend: no-op without backend, click-free 15ms crossfade, all six
+# cores playable via the cell path, bounded, decays, ambient restores.
+"$CC" "${CFLAGS[@]}" \
+    "$here/test_synth_device.c" \
+    "$src/src/dsp.c" "$src/src/pad.c" "$src/src/padsynth.c" "$src/src/texture.c" "$src/src/ambience.c" "$src/src/tape.c" "$src/src/echo.c" "$src/src/blur.c" "$src/src/bass.c" \
+    "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" \
+    "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/shimmer.c" \
+    "$src/src/dsp_ladder.c" "$src/src/v2/beauty_guard.c" "$src/src/v2/synth_host.c" \
+    "$src/src/v2/engines/engine_acid.c" "$src/src/v2/engines/engine_fm_glass.c" "$src/src/v2/engines/engine_chorus_mist.c" \
+    "$src/src/v2/engines/engine_ion_storm.c" "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
+    -lm -o "$tmp/synth_device_test"
+"$tmp/synth_device_test"
+
+# r19.41: master-effects engine property suite (bit-exact bypass, block-
+# partition invariance, arena guards, delay timing, long tails, reverse
+# alignment, parameter stress) — the handoff's verification adapted into
+# this runner. Same sources the product links (src/ambient_effects.c).
+"$CC" "${CFLAGS[@]}" -Wno-conversion \
+    "$src/../effects-engine/tests/effects_verify.c" \
+    "$src/src/ambient_effects.c" \
+    -lm -o "$tmp/ambient_fx_test"
+"$tmp/ambient_fx_test"

@@ -10,6 +10,249 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.25 (2026-07-15) — Gesten-Schleife statt Audio-Looper (Bedienlogik Runde 6, Abschluss)
+
+HiChord/Orchid haben grosse Audio-Looper — wir bauen bewusst etwas
+Eigenstaendigeres. NEU gesture.c: nimmt CELL-EREIGNISSE auf (Druck/Loslassen
+mit Zeitstempel, KEIN Audio) und wiederholt die gespielten Zellen ueber das
+AKTUELL geladene World + Klang + Zellmodus.
+
+- **SHIFT+HOLD** zykelt IDLE→REC→PLAY→IDLE. (Mischis Vorschlag war
+  SHIFT+GENERATE — das ist seit r19.24 "New Field", daher SHIFT+HOLD.)
+  Die **HOLD-LED pulsiert** waehrend REC, leuchtet ruhig in PLAY. Overlay
+  zeigt REC/LOOP/OFF. CLEAR (voll) stoppt + leert die Schleife ebenfalls.
+- Wiedergabe laeuft durch dieselbe route_cell-Logik wie das Live-Spiel —
+  eine geloopte Zelle verhaelt sich exakt wie eine gedrueckte (Note/Bloom/
+  Generate-Steer). Beim Loop-Umbruch werden offene Stimmen freigegeben
+  (keine Haenger).
+- **Sehr wenig RAM** (128 Events × 6 B ≈ 0,75 KB), kein PSRAM, control-rate
+  (Main-Loop, nicht Audio-ISR). Grenze v1: nur Zell-Gesten — Encoder-/
+  World-/Modifier-Aufnahme bewusst ausgeklammert; die Schleife spielt ueber
+  das LIVE-Setup (RAM-arm, deckt "wiederholt mit dem aktuell geladenen
+  World und Klang").
+
+Refactor: die Zell-Routing-Logik ist jetzt EINE Funktion (route_cell),
+geteilt von physischen Buttons + Gesten-Wiedergabe.
+
+Tests: **NEU test_gesture.c** (14 Checks: Zustandszyklus, Aufnahme nur in
+REC, phasenrichtige Wiedergabe, Loop-Umbruch gibt Stimmen frei, CLEAR/leer-
+REC-Kollaps). 37 Suiten gruen; H743-Cross-Build gruen (210 KB Flash).
+
+**Damit sind alle 7 Punkte aus Mischis Bedienlogik-Analyse umgesetzt
+(r19.20–r19.25).**
+
+---
+
+## v0.7-r19.24 (2026-07-15) — Interaktives GENERATE: die Cells steuern den Composer (Bedienlogik Runde 5)
+
+Bis jetzt spielte GENERATE nur autonom oder PAUSIERTE, sobald man eine Zelle
+drueckte (r19.20-Presence). Jetzt HOERT das Geraet zu und antwortet, statt zu
+stoppen:
+
+- **Cell-Druck bei laufendem GENERATE = Richtung** statt Note. Die 5 Cells
+  mappen auf die 5 Composer-Intents (composer.h): 0 Home→RETURN, 1 Lift→OPEN,
+  2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY. Der Druck springt sofort in den
+  Intent (composer_nudge, haelt eine volle Dwell-Zeit) UND mutiert die
+  Harmonie jetzt (harmony_advance) — man HOERT die Antwort. Der Generator
+  laeuft weiter (bewusst KEIN user-presence → kein Pausieren). Kurzes
+  Overlay zeigt HOME/LIFT/DARK/OPEN/TENSION.
+  Ehrlich: die Richtung ist der FEEL aus der Composer-Tabelle (Dichte/Tiefe/
+  Ruhe), nicht ein Harmonie-Theorie-Spannungsgrad — der Pitch-World verbietet
+  harte Dissonanz strukturell; harmony_advance bewegt nur die Stimmen sichtbar.
+- **SHIFT+GENERATE = New Field:** reseedet Harmonie + Composer + Bar-
+  Humanisierung auf ein frisches, reproduzierbares Feld (gleicher Key/Modus),
+  Neustart bei State 0. Der Seed liegt in engine_gen_seed() → wird in Scenes
+  mitgespeichert (reproduzierbare Feld-ID). Overlay "NEW FIELD".
+
+NEU composer_nudge/reseed, harmony_reseed, engine_generative_nudge/new_field.
+Alles control-rate + host-testbar.
+
+Tests: **NEU test_generative_interactive.c** (12 Checks: Nudge no-op wenn aus,
+5 Cell→Intent-Mappings, kein Freeze + Harmonie-Bewegung, New-Field
+reproduzierbar pro Seed / verschieden ueber Seeds / Key unveraendert).
+36 Suiten gruen; H743-Cross-Build gruen (209 KB Flash).
+
+---
+
+## v0.7-r19.23 (2026-07-15) — Chord Bloom: die Akkorde endlich spielbar (Bedienlogik Runde 4)
+
+Die Akkorde waren in brain.c laengst berechnet (brain_chord), wurden aber
+nie gespielt — die Cells triggerten nur den tiefsten Einzelton. NEU
+Menue-Slot **Cell (Note / Bloom)** + **bloom.c**:
+
+- **BLOOM:** Cell 1–5 → der harmonisch passende Akkord der 5 Skalenstufen,
+  dessen Toene langsam nacheinander aufbluehen (~100–170 ms Abstand,
+  gesamt ~200–900 ms; deterministischer Jitter).
+- **Voice-Leading:** der neue Akkord wird per Oktav-Verschiebung so gelegt,
+  dass sein Schwerpunkt dem des vorherigen am naechsten liegt (kuerzester
+  Weg auf Block-Ebene, keine Stimmkreuzungen). Test belegt |Δcentroid| ≤ 6.
+- **Bewusst monophon-akkordisch** (wie HiChord): ein Druck ERSETZT den
+  Akkord — Voice-Leading braucht einen "vorherigen Akkord", und das Voice-
+  Budget (5 Cell-Sources 0..4, Rest = Bett/Shift/Sparkles) traegt keine
+  5 unabhaengigen Akkorde. Ehrlich zum Budget, statt Polyphonie zu
+  versprechen, die die Hardware nicht hat.
+- **HOLD** haelt den Akkord ueber das Loslassen; ohne HOLD momentan.
+  **CLEAR** + Modewechsel raeumen sauber ab. Der Generator weicht, solange
+  eine Bloom-Zelle physisch gedrueckt ist (r19.20-Presence-Prinzip). Bloom-
+  Akkorde gehen als "gespielte" Noten auch auf MIDI-Out.
+- **NOTE** = das bisherige Einzelton-Verhalten (Default). Cell-Modus ist
+  player-global und wird in Scenes mitgespeichert (Scene-Magic → SCN2).
+
+Chord-Pool = Engine-Sources 0..4; in BLOOM routet das Device die Cells
+NICHT durch controls.c, sondern durch den control-rate Bloom-Scheduler
+(bloom_tick im Main-Loop, NICHT im Audio-ISR). Hardware-unabhaengig +
+host-testbar.
+
+Tests: **NEU test_bloom.c** (15 Checks: gestaffelte Einsaetze, voller
+Akkord auf dem Pool, Voice-Leading-Register, Pool-Cap, HOLD-Latch vs
+momentan, all_off-Reset, Generator-Yield). 35 Suiten gruen; H743-Cross-
+Build gruen (208 KB Flash).
+
+---
+
+## v0.7-r19.22 (2026-07-15) — Parameter-Locks + 5 Scenes (Bedienlogik Runde 3)
+
+Die staerkste Orchid-Uebernahme (Locks) + speicherbare Zustaende (HiChord-
+Prinzip) — ohne neue Hardware, ueber die vorhandenen Cells.
+
+**Parameter-Locks:** DISPLAY lang druecken IM EDIT-MODUS sperrt/entsperrt
+den aktuellen Parameter (Lock-Punkt links vom Label). Beim World-Wechsel
+setzt load_world_preset() nur noch UNgesperrte Werte auf das neue Preset —
+der gesperrte Hallraum/Echo bleibt beim Wechsel Tokyo→Hours stehen.
+Sperrbar: Key + die 7 Makros (genau das, was ein World-Wechsel anfasst).
+
+**Scenes (NEU scenes.c):** DISPLAY lang im BROWSE oeffnet den Scenes-
+Browser: Cell 1–5 laedt, SHIFT+Cell speichert, Cell-LED gelb = belegt /
+gruen = aktiv, DISPLAY kurz oder 8 s idle schliesst. Gespeichert: World,
+Key, Tuning, Voice, Synth, alle 7 Makros, Locks, Drive, Brightness,
+Generator-Seed (NEU engine_gen_seed/set — "dasselbe Feld" ist wieder
+dasselbe Feld). NICHT gespeichert: gehaltene Noten, Modi, Volume (springt
+beim Recall nie). Persistenz: **letzter Flash-Sektor Bank 2** (0x081E0000)
+— H7 ist dual-bank read-while-write, der Audio-ISR laeuft beim Speichern
+ununterbrochen weiter (NEU hal_h743/scenes_flash_h743.c, bench-pending).
+Host-Tests injizieren ein RAM-Backend.
+
+Tests: **NEU test_scenes.c** (28 Checks: Lock ueberlebt World-Wechsel,
+nicht-sperrbare Slots, Save/Recall-Roundtrip inkl. Seed, Volume unberuehrt,
+Persistenz-Roundtrip, UI-Flow inkl. Idle-Timeout, Render-Smoke).
+34 Suiten gruen; H743-Cross-Build gruen.
+
+---
+
+## v0.7-r19.21 (2026-07-13) — Encoder-Push-Belegung + Overlays (Bedienlogik Runde 2)
+
+Bis jetzt verarbeitete nur der DISPLAY-Encoder seinen Druck — DRIVE/
+BRIGHTNESS/VOLUME erzeugten Push-Events, die weggeworfen wurden, und
+Drehen an ihnen veraenderte den Klang ohne jedes Display-Feedback.
+
+**NEU knobs.c** (Kurz/Lang-Klassifikation, 500 ms; hardware-unabhaengig):
+
+| Encoder    | drehen        | kurz              | lang                    |
+|------------|---------------|-------------------|-------------------------|
+| DRIVE      | Drive+Overlay | Bypass an/aus A-B | Reset auf Default (15)  |
+| BRIGHTNESS | Hell.+Overlay | Neutral (0 Hz)    | Reset auf Default       |
+| DISPLAY    | Browse/Edit   | Browse/Edit       | reserviert (Scenes, R3) |
+| VOLUME     | Vol.+Overlay  | Mute/Unmute       | Batterie + Ausgang      |
+
+**NEU overlay.c**: 1,2-s-Wert-Overlay in Menue-Typo (Label klein, Wert
+gross), kehrt von selbst zum vorherigen Screen zurueck. **params.c**:
+Bypass/Mute lassen den gemerkten Wert stehen; DREHEN nimmt den Wert
+zurueck (Bypass/Mute loesen sich auf — Orchid-Gefuehl). Kurz feuert auf
+Loslassen (<500 ms), lang EINMAL beim Schwellen-Erreichen; menu_push
+liegt jetzt auf der Loslass-Flanke (noetig fuer die Unterscheidung,
+DISPLAY-lang bleibt fuer den Scenes-Browser frei). VOLUME-lang zeigt
+"BAT 78% +USB / PHONES|SPEAKERS" (2 s).
+
+Tests: **NEU test_knobs.c** (29 Checks: Klassifikation, Bypass/Mute-
+Zyklen, Rotate-nimmt-Wert, Reset, Status-Callback, Overlay-Lifetime,
+Render-Smoke). 33 Suiten gruen; H743-Cross-Build gruen (203 KB Flash).
+
+---
+
+## v0.7-r19.20 (2026-07-13) — Bedienlogik-Fixes Runde 1 (SHIFT / CLEAR / HOLD+GENERATE / Boot-Volume)
+
+Erste Runde aus dem Bedienlogik-Review (HiChord/Orchid-Vergleich) — alle
+vier Befunde waren code-verifiziert:
+
+- **SHIFT ist momentary** (aktiv nur solange gehalten; war ein versteckter
+  Toggle ohne Lock-Anzeige). main_h743 fuettert jetzt BEIDE Flanken aller
+  Modifier in controls.c.
+- **CLEAR = echter Full-Stop**: Latches weg, DRONE/GENERATE/HOLD aus,
+  engine_all_off() (weiche natuerliche Releases, kein Hard-Cut) — vorher
+  loeschte CLEAR nur die Hold-Latches, Drone+Generator spielten weiter.
+  Die seit r18.64 existierende, nie verdrahtete leds_clear_flash() wird
+  jetzt beim Druck aufgerufen. **SHIFT+CLEAR = Flush**: nur Stimmen weg,
+  alle Modi laufen weiter (Drone klingt durch, Generator bluehte neu).
+- **HOLD+GENERATE-Deadlock behoben**: das Generative-Gate ist jetzt die
+  PHYSISCHE Tastenlage (engine_set_user_presence, von controls.c per
+  Press/Release-Flanke gefuettert) statt "irgendeine aktive Voice" — eine
+  gelatchte Cell fror den Composer vorher dauerhaft ein. Momentanes
+  Spielen pausiert weiterhin sofort.
+- **Boot-Volume 30 % + Fade-in** (SPEC-Regel, seit dem r19.19-Kopfhoerer-
+  verstaerker doppelt relevant): params-Default 0.60→0.30, neu
+  engine_boot_mute() — das Geraet startet hart stumm und faedelt ueber die
+  Parameter-Rampe (~350 ms) auf 30 % ein. Host-Renderer behalten die
+  0.6-Bench-Referenz (boot_mute ist nur im Device-Pfad).
+
+Tests: test_controls +9 Checks (Momentary, Full-Stop vs Flush, Presence),
+test_generative_tick +Latch-Regression (Generator komponiert um gelatchte
+Stimme herum), test_params/test_leds an neue Semantik angepasst. 32 Suiten
+gruen, H743-Cross-Build gruen (FLASH ~201 KB).
+
+---
+
+## v0.7-r19.19 (2026-07-13) — TPA6132A2: J8 wird echter PHONES / LINE OUT (ADR-0024)
+
+User: "ja das muss rein!!!" — Kopfhoerer-Betrieb an J8 war bisher out-of-spec
+(DAC-Tap, ≥1 kΩ). Jetzt sitzt **U11 TPA6132A2RTER** (C69901, live-verifiziert:
+370 Stk., JLC Economic+Standard) zwischen PCM5102A und Buchse:
+
+- DirectPath (interne Ladungspumpe, keine Auskoppel-Elkos), Gain −6 dB
+  (G0=G1=GND) → ~1,05 Vrms: Line-Pegel UND sichere Kopfhoerer-Lautstaerke.
+- EN = AMP_nSHDN (boot-safe, Shutdown 0,7–1,2 µA — passt zur ADR-0023-
+  Aus-Zustand-Analyse). Jack-Detect-Mute betrifft weiter NUR die Speaker.
+- Beschaltung per TI SLOS597B: CIN 2×1 µF, Flying 1 µF, HPVSS 1 µF,
+  VDD+HPVDD je 2,2 µF (**C1607**, 16.200 Stk.); HPVDD NIE an VDD (DS-WARNING).
+- Footprint QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm gegen JLC-Landpattern
+  C69901 + TI RTE0016C abgeglichen. R_LO 22Ω bleiben (jetzt hinter dem Amp).
+- Netzliste: 165 Netze / 649 Pins / 0 floating; AMP_nSHDN = U11.EN + U4.SHDN
+  + PB14; check_pinmap gruen. BOM: 60 Teile-Typen / 200 Platzierungen.
+- Doku: ADR-0024, SPEC-Phones-Sektion (die alte "v0.8-Option TPA6132" ist
+  damit exakt umgesetzt), Walkthrough §3, PINMAP, BOM-Dokus, COMPONENT_LINKS.
+
+---
+
+## v0.7-r19.18 (2026-07-13) — BQ24074-Power-Path: alle P0 des externen Hardware-Audits gefixt (ADR-0023)
+
+Externes statisches Audit (Verdikt „DO NOT FABRICATE") — alle pruefbaren
+Befunde gegen die selbst-extrahierte Netzliste bestaetigt, dann komplett
+behoben. **Schaltplan-Redesign der Stromversorgung:**
+
+- **U7 = BQ24074RGTR** (C54313, live-verifiziert: 1.074 Stk., JLC
+  Economic+Standard) ersetzt MCP73831 + D3B-Dioden-OR. Topologie:
+  USB→F1→`VBUS_FUSED`→BQ-IN; BQ-OUT=`VSYS`→TPS61089→D3→+5V-Rail (einzige
+  Quelle); BQ-BAT←**F2 PTC** (SMD1812P260TF/16, C438899)←J9.
+- Dimensionierung per TI SLUS810N: ICHG 0,89 A (R_ISET 1k C21190), IIN-MAX
+  1,34 A (R_ILIM_IN 1,2k **C114605**, YAGEO — 1,1k/1,2k UNI-ROYAL bei LCSC
+  out-of-stock), ITERM/TMR = NC-Default (10 % / 5 h), TS = 10k fest,
+  EN2=VSYS/EN1=GND (ILIM-Modus), CE_N=GND. EP→VSS.
+- **Boost-EN = PWR_ON** (Audit P0-3): der Schiebeschalter toetet jetzt auch
+  den Boost (<3 µA Shutdown). SW_PWR-Pull-Quelle von der Rail auf **VSYS**
+  verlegt (Henne-Ei-Deadlock vermieden). LED_CHRG von +5V auf VBUS_FUSED
+  (P0-2). Bulk (~580 µF) liegt jetzt hinter dem Boost — USB-Hot-Plug sieht
+  nur noch 4,7 µF (P0-6).
+- Neue Netze `VBUS_FUSED`/`VSYS`/`PWR_ON` durch power_tree↔root↔battery
+  gezogen; +5V_OUT am power_tree jetzt input (Rail wird von Sheet 7 gespeist).
+- Footprint QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm gegen JLC/EasyEDA-
+  Landpattern fuer C54313 abgeglichen (Pitch/Pads/EP identisch).
+- **Validierung:** geometrischer Netzlisten-Extractor ueber alle 7 Sheets:
+  157 Netze, 620 Pins, **0 floating**; check_pinmap gruen; JLC-BOM ohne
+  „TBD"-Zeilen (J4 = DNP-Debug-Pads, Ex-MPN „TC2030-IDC" war das falsche
+  Teil). J8 explizit **LINE OUT**; mechanical_coordinates 5000→2000 mAh.
+- Doku: **ADR-0023** (Rechnungen + Verifikations-Trail), SCHEMATIC_WALKTHROUGH
+  §1/§7 neu, PINMAP-Power-Tabellen, BRING_UP-Sollwerte (TP_VSYS!), BOM_MASTER/
+  PCB_BOM/COST/SOURCING/OBJECTIVES/COMPONENT_LINKS nachgezogen.
+
 ## v0.7-r19.6 (2026-07-06) — Just Intonation: „harmonies without beating" (Sonicware Ø v1.5-Prinzip)
 
 User „ja" auf den Vorschlag, die letzte 🟡-Sache aus dem Audit anzugehen:

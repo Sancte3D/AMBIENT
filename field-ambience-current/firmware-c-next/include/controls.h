@@ -14,12 +14,18 @@
  * Both bits are independent: both lit at once = octave-stack (the rich
  * ambient drone effect from ADR-0008 r2).
  *
- * Modifier states (toggle-on-press, like real synth panels):
- *   shift      — picks WHICH branch a Hold-Tap toggles
- *   hold       — without this, cell taps are momentary (release on tap-up)
- *   drone      — toggles engine_set_drone(); root drone follows brain key
- *   generate   — toggles engine_set_generative(true,…); advance bar timer
- *   clear      — momentary: clears all hold bits and any sustained voices
+ * Modifier states (r19.20 semantics):
+ *   shift      — MOMENTARY: active only while physically held (was a hidden
+ *                toggle until r19.20 — a held modifier reads far more
+ *                naturally on a panel with no dedicated shift LED lock)
+ *   hold       — toggle-on-press; without it cell taps are momentary
+ *   drone      — toggle; engine_set_drone(); root drone follows brain key
+ *   generate   — toggle; engine_set_generative(true,…)
+ *   clear      — momentary FULL STOP: wipes all hold bits, silences all
+ *                voices (engine_all_off — natural releases, no hard cut),
+ *                and turns HOLD/DRONE/GENERATE off
+ *   shift+clear— FLUSH: silence the voices only; HOLD/DRONE/GENERATE keep
+ *                running (drone re-swells, the generator plays on)
  *
  * Tap semantics (Hold latched + cell c tapped):
  *   shift OFF → toggle hold_base[c]:  if turning ON  → engine_note_on(c, root)
@@ -53,9 +59,9 @@ typedef enum {
 void controls_init(void);
 
 /* Modifier press edge (pressed=true) / release edge (pressed=false).
- * SHIFT and HOLD latch on press (next press toggles off). CLEAR is
- * momentary: a press clears everything and re-arms. DRONE and GENERATE
- * latch and forward to engine. */
+ * SHIFT is momentary (r19.20) — feed BOTH edges. HOLD/DRONE/GENERATE latch
+ * on press (next press toggles off). CLEAR acts on press: full stop, or
+ * voice-flush when SHIFT is held. */
 void controls_modifier(mod_id_t mod, bool pressed);
 
 /* Cell tap (momentary press edge with velocity amp 0..1, ADR-0013). Velocity
@@ -68,6 +74,7 @@ void controls_cell_press(uint8_t cell, float velocity_amp);
 void controls_cell_release(uint8_t cell);
 
 /* Observability — used by LED renderer + UI. */
+bool controls_any_cell_down(void);   /* r19.20: any cell key physically held */
 bool controls_hold_base (uint8_t cell);
 bool controls_hold_shift(uint8_t cell);
 bool controls_modifier_active(mod_id_t mod);

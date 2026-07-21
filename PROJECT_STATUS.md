@@ -1,6 +1,136 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-07 (r19.14 — QSPI-PSRAM (Schaltplan + Firmware), Realtime-Audio-Härtung, Async-Display, MIDI-Aktivierung, Bring-up-Diagnose)**
+**Updated: 2026-07-20 (r19.41 — Master-Effects-Engine integriert; davor r19.38–r19.40 Realtime-Safety, r19.37 PAM8406-Endstufe + Gain-Staging)**
+
+> **r19.41 (2026-07-20) — Master-Effects-Integration:** Die gelieferte
+> Effects-Engine (`effects-engine/`) ersetzt die Legacy-Master-Kette im
+> Produktpfad. `render_ambient`: echo/blur/tape/shimmer + Master-Reverb raus,
+> EIN `ambient_fx_process_f32` auf dem finalen Float-Mix vor dem einzigen
+> Soft-Limiter rein (DREAM CHAIN default; neuer Menü-Slot **FX** mit 9 Modi
+> für A/B; Scenes → "SCN5"). Makro-Routing 1:1 (Space/Atmos/Echo/Motion/Age/
+> Shimmer/Blur/Tone), Worlds 1:1, Reverse-Swell an die Eno-Loops (echte
+> Scheduled-Notes, 1,5 s Lead). Legacy-Module sind NUR noch Host-Test-Code —
+> aus dem H743-Link entfernt, ihr Delay-RAM (echo 207 KB + blur 69 KB, D2)
+> reklamiert: **Arena 245.760 B in RAM_D2 @0x30001040, .map-verifiziert**
+> (Cross-Build arm-none-eabi 13.2.1: FLASH 11 %, D1 74 %, D2 86 %, 40 KB
+> Marge). Property-Suite (478.857 Checks) im Runner, alle Suiten grün,
+> Hot-Path-Lint sauber (Engine hat 0 Transzendentale). **Offen (Bench):**
+> DWT-WCET <60 % + Soak/Klick/DC-Messung — siehe
+> `effects-engine/INTEGRATION_REPORT.md`. Klang-Hinweis: DREAM voiced den
+> Mix ~5,7 dB leiser als die alte Kette (gemessen) — beim Bring-up zusammen
+> mit dem r19.37-Amp-Gain beurteilen.
+
+> **r19.38–r19.40 (2026-07-20) — Realtime-Safety (externer Review):** drei
+> ISR-vs-Main-Befunde gegen den aktuellen Stand geprüft und behoben.
+> **r19.38** pad_note_on veröffentlicht die Voice jetzt ZULETZT (used=true nach
+> allen Feld-Inits + Compiler-Barrier) — der DMA-IRQ kann keine halb-
+> initialisierte Voice mehr rendern. **r19.39** menu_init pusht das World-0-
+> Preset in die Engine (Panel zeigte Makros, die die Engine bis zum ersten
+> World-Wechsel nicht hatte — „das Instrument log"). **r19.40** PADsynth-
+> Tabellen-Rebuild: der Reader wird während des (sub-ms) Final-Copy gegatet
+> (liefert saubere 0 statt torn data). Ein echter Double-Buffer wäre die
+> Ideallösung, aber der RAM-Haushalt hat keinen Platz für eine 2. 64-KB-Tabelle
+> (D1 knapp, D2 zu 96 % voll, D3 latenz-kritisch, DTCM = pad+stack) — dokumen-
+> tiert. Host-Suite grün. Offen aus dem Review: Live/Generate-Note-off-Flush,
+> Key/World/Tuning-Lifecycle am Blockrand, PAD-Mipmaps/Aliasing.
+
+> **r19.37 (2026-07-20) — Audio-Front-End-Revision (ADR-0025):** U4 von
+> **PAM8403 (NRND) auf PAM8406DR (Active, C86270)** getauscht — gleiches
+> 16-SOIC, MODE-Pin fest auf +5V (Class-D), Pinout gegen das Diodes-
+> Datenblatt verifiziert. Gleichzeitig Gain-Staging repariert (externer
+> Review): RI 20k→174k = **Gain +23 dB → +4.3 dB** (5-V-BTL-Amp clippte
+> analog weit unter DAC-Full-Scale), und C_in 1µF→10nF = **Speaker-HPF
+> ~91 Hz** zum Schutz des 8-Ω-40-mm-Treibers; Line-Out/Kopfhörer bleiben
+> voll-range. Beide neuen R/C-Werte nutzen bereits vorhandene LCSC-Teile
+> (C22890/C57112) — BOM 60→59 Teile. Generator + jlc_bom.csv + BOM-Docs +
+> Handoff-PDF regeneriert. Host-Tests grün (reiner PCB-Change).
+
+> **r19.25 (2026-07-15) — Bedienlogik Runde 6 (Abschluss):** Gesten-Loop
+> (gesture.c) — nimmt Zell-Ereignisse auf und loopt sie ueber das Live-Setup,
+> kein Audio, ~0,75 KB RAM, kein PSRAM. SHIFT+HOLD zykelt REC→PLAY→OFF,
+> HOLD-LED pulst in REC. NEU test_gesture (14 Checks). 37 Suiten gruen.
+> **Alle 7 Punkte aus Mischis Bedienlogik-Analyse sind damit umgesetzt.**
+> Naechster grosser Block bleibt der erste echte Hardware-Bring-up (alles
+> Geraeteseitige ist compile-/cross-verifiziert, aber nie auf Silizium
+> gelaufen).
+
+
+> **r19.24 (2026-07-15) — Bedienlogik Runde 5:** GENERATE ist jetzt
+> interaktiv. Cell-Druck bei laufendem GENERATE STEUERT den Composer (5 Cells
+> → 5 Intents Home/Lift/Dark/Open/Tension) + mutiert die Harmonie sofort,
+> statt zu pausieren — das Geraet antwortet. SHIFT+GENERATE = New Field
+> (reseed, reproduzierbar, gleicher Key). NEU test_generative_interactive
+> (12 Checks). 36 Suiten gruen. Letzte offene Runde aus Mischis Liste:
+> Gesten-Loop (Events statt Audio).
+
+
+> **r19.23 (2026-07-15) — Bedienlogik Runde 4:** NEU Menue-Slot Cell
+> (Note/Bloom) + bloom.c. BLOOM spielt die schon berechneten Akkorde der
+> 5 Skalenstufen, gestaffelt aufbluehend, mit Voice-Leading (Oktav-Abgleich
+> zum vorherigen Akkord). Monophon-akkordisch (HiChord-Modell, ehrlich zum
+> 5-Voice-Budget). HOLD latcht, Generator weicht bei physischem Druck,
+> geht auf MIDI. NEU test_bloom (15 Checks). 35 Suiten gruen. Naechste
+> Runden: interaktives GENERATE, Gesten-Loop.
+
+
+> **r19.22 (2026-07-15) — Bedienlogik Runde 3:** Parameter-Locks (DISPLAY
+> lang im EDIT; gesperrte Werte ueberleben den World-Wechsel) + Scenes-
+> Browser (DISPLAY lang im BROWSE; Cell laedt, SHIFT+Cell speichert, LEDs
+> gelb=belegt/gruen=aktiv). Scene = World/Key/Tuning/Voice/Synth/Makros/
+> Locks/Drive/Bright/Generator-Seed; Persistenz im Bank-2-Flash-Sektor
+> (dual-bank: Audio laeuft beim Save weiter). NEU scenes.c + test_scenes
+> (28 Checks). 34 Suiten gruen. Naechste Runden: Chord Bloom, interaktives
+> GENERATE, Gesten-Loop.
+
+
+> **r19.21 (2026-07-13) — Bedienlogik Runde 2:** Alle vier Encoder-Druecker
+> leben jetzt (vorher nur DISPLAY): DRIVE kurz=Bypass/lang=Reset, BRIGHT
+> kurz=Neutral/lang=Reset, VOLUME kurz=Mute/lang=Batterie+Ausgang-Status,
+> DISPLAY lang reserviert fuer Scenes (Runde 3). Jede Knob-Aktion zeigt
+> ein 1,2-s-Overlay in Menue-Typo. NEU knobs.c + overlay.c + test_knobs
+> (29 Checks). 33 Suiten gruen.
+
+
+> **r19.20 (2026-07-13) — Bedienlogik Runde 1** (aus dem HiChord/Orchid-
+> Review, alle Befunde code-verifiziert): SHIFT momentary; CLEAR stoppt
+> jetzt WIRKLICH alles (weich) + Clear-LED-Flash endlich verdrahtet;
+> SHIFT+CLEAR = Voice-Flush bei laufenden Modi; Generative-Gate haengt an
+> der physischen Tastenlage statt an aktiven Voices (gelatchte Cell friert
+> den Composer nicht mehr ein); Boot stumm → Fade auf 30 % (SPEC, jetzt
+> kopfhoerer-relevant). Naechste Runden geplant: Encoder-Push-Belegung +
+> Overlays, Parameter-Locks, Scenes, Chord Bloom, interaktives GENERATE.
+
+
+> **r19.19 (2026-07-13) — Kopfhoerer rein (User: "ja das muss rein!!!").**
+> U11 TPA6132A2 (C69901) zwischen DAC und J8: DirectPath, Gain −6 dB,
+> EN=AMP_nSHDN. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
+> Buchse; Auto-Mute-Verhalten unveraendert (Speaker muten beim Einstecken,
+> J8 bleibt live). Netzliste 165/649/0-floating, alle Teile live-verifiziert.
+> Details: CHANGELOG r19.19 + ADR-0024.
+
+
+> **r19.15–r19.18 (2026-07-08…13) — Audit-Reaktion + Sound-Vollausbau.**
+> - **r19.18 (ADR-0023, DER Blocker vor Fab):** Externes Hardware-Audit
+>   („DO NOT FABRICATE") — alle P0 bestaetigt und behoben. **BQ24074
+>   (C54313)** ersetzt MCP73831+Dioden-OR: USB→F1→VBUS_FUSED→BQ-IN,
+>   OUT=VSYS→Boost→D3→+5V (einzige Quelle), BAT←F2-PTC (C438899)←J9.
+>   Boost-EN=PWR_ON (Aus = µA statt always-on), LED_CHRG an VBUS_FUSED,
+>   Bulk hinter dem Boost, ICHG 0,89 A / IIN 1,34 A per TI-Formeln.
+>   Netzliste: 157 Netze / 0 floating; JLC-BOM ohne TBD (J4→DNP-Pads);
+>   J8 = LINE OUT; mechanical 2000 mAh. Alle Teile live-verifiziert
+>   (Stock + JLC-Assembly). Details: CHANGELOG r19.18 + ADR-0023.
+> - **r19.17:** PADsynth-FFT-Scratch halbiert (Real-IFFT) — RAM_D1
+>   99,7 % → **87,2 %** (echter Headroom zurueck).
+> - **r19.16:** SYNTH-Menue-Slot — die 6 V2-Sound-Cores (Acid, FM Glass,
+>   Mist, Storm, Orbit, Bamboo) sind on-device spielbar: Engine-Backend-
+>   Vtable, 15-ms-Crossfade (klickfrei, test-belegt), Cell-Note-Routing.
+>   Hot-Path-Lint deckt jetzt 23 Module ab. +test_synth_device (24 Checks).
+> - **r19.15:** PSRAM out-of-stock-Trap: C5333729 tot, in-stock „SQN"-
+>   Variante waere **1,8 V** gewesen (Board-Killer) → APS6404L-**3**SQN-SN
+>   (C3028887, 2,7–3,6 V) ueberall getauscht, Pinout gegen Primaer-PDF.
+> - Deliverables an Aron: englisches BOM-PDF (alle Links klickbar),
+>   netlist.txt (155→157 Netze), DOUBLE_CHECK_LIST.
+
 
 > **r19.7–r19.14 (2026-07-07) — Härtung + Board-Erweiterung + Produkt-Reife-Check.**
 > Ein langer Session-Bogen. **Ehrliches Gesamtbild zuerst:** Design + Firmware

@@ -162,6 +162,8 @@ void harmony_init(void) {
     voice_initial();
 }
 
+void harmony_reseed(uint32_t seed) { rng = seed ? seed : 0x19A0C0DEu; }
+
 void harmony_set_world(int tonic_midi, int minor) {
     tonic_pc = wrap12(tonic_midi);
     is_minor = minor ? 1 : 0;

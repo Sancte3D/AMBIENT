@@ -20,8 +20,13 @@ root="${1:?usage: lint_hotpath.sh <firmware-c-next-root>}"
 # list in sync when a new DSP module joins engine_render(). NOT included:
 # UI/menu, presets, generative brain (control-rate, main loop), HAL drivers.
 HOTPATH=(
-  engine.c pad.c padsynth.c texture.c ambience.c tape.c echo.c blur.c
-  bass.c reverb.c shimmer.c glass.c harmonic_bass.c dsp.c dsp_ladder.c
+  engine.c pad.c padsynth.c texture.c ambience.c
+  ambient_effects.c fx_master.c
+  bass.c reverb.c glass.c harmonic_bass.c dsp.c dsp_ladder.c
+  v2/synth_host.c v2/beauty_guard.c
+  v2/engines/engine_acid.c v2/engines/engine_fm_glass.c
+  v2/engines/engine_chorus_mist.c v2/engines/engine_ion_storm.c
+  v2/engines/engine_glass_orbit.c v2/engines/engine_bamboo_circuit.c
 )
 
 py() { python3 "$@"; }

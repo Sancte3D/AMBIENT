@@ -21,6 +21,7 @@ JLC = {
  "C150470":("Extended",15210),"C460397":("Extended",1821),"C131941":("Extended",44589),
  "C49023766":("Extended",388),"C109335":("Extended",32992),"C424093":("Extended",10731),"C295747":("Extended",102433),
  "C107671":("Extended",2045),"C17337":("Extended",3903),"C19330":("Extended",950152),
+ "C86270":("Extended",8731),  # PAM8406DR — JLC assembly-available (own partdetail page), stock verified 2026-07-20
  "C84094":("NONE",0),"C431535":("Extended",49905),"C506653":("Extended",3378),
  "C2678753":("Extended",3147),"C8545":("Basic",421360),"C124383":("Extended",12518),
  "C124375":("Extended",64842),"C2152902":("Extended",3057),"C2845240":("Extended",30),
@@ -52,7 +53,7 @@ G = [
    ("C_HSE","27 pF C0G ×2","crystal load caps","C107045","jlc",False),
  ]),
  ("Memory", "#8b5cf6", [
-   ("U9","APS6404L-3SQR-SN (SOP-8, 8 MB QSPI PSRAM)","external RAM over QUADSPI BK2 — memory-mapped expansion for sample playback / convolution IRs / big granular / multi-table Blendwave (r19.10, ADR-0022). LCSC C5333729, ~$2.94, JLC-Economic assemblable (verify live before order). Pinout VERIFIED vs the AP Memory datasheet Rev 2.1 (1=/CE 2=SIO1 3=SIO2 4=VSS 5=SIO0 6=SCLK 7=SIO3 8=VDD); footprint SOIC-8_3.9x4.9_P1.27 matches SOP-8L(150) — pull the exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C5333729 as a final check. Decoupling: C_QSPI 100nF + C_QSPI2 10µF.","C5333729","jlc",False),
+   ("U9","APS6404L-3SQN-SN (SOP-8, 8 MB QSPI PSRAM)","external RAM over QUADSPI BK2 — memory-mapped expansion for sample playback / convolution IRs / big granular / multi-table Blendwave (r19.10, ADR-0022). LCSC C3028887 (r19.15: swapped from C5333729/3SQR-SN which went OUT OF STOCK; 3SQN-SN = same 3V family, 2.7-3.6V, same SOP-8 pinout; LCSC 432 in stock @ $3.09/100, JLC Economic+Standard, checked live 2026-07-07). Pinout VERIFIED vs the AP Memory datasheet Rev 2.1 (1=/CE 2=SIO1 3=SIO2 4=VSS 5=SIO0 6=SCLK 7=SIO3 8=VDD); footprint SOIC-8_3.9x4.9_P1.27 matches SOP-8L(150) — pull the exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C3028887 as a final check. Decoupling: C_QSPI 100nF + C_QSPI2 10µF.","C3028887","jlc",False),
  ]),
  ("Power", "#ef4444", [
    ("J1","USB-C TYPE-C-31-M-12","charging + USB-DFU flash","C165948","jlc",True),
@@ -73,7 +74,7 @@ G = [
  ]),
  ("Audio", "#10b981", [
    ("U3","PCM5102A DAC","I²S → analog audio","C107671","jlc",False),
-   ("U4","PAM8403 Class-D amp","drives the speakers","C17337","jlc",False),
+   ("U4","PAM8406 Class-D amp","drives the speakers (r19.37, ADR-0025: replaces NRND PAM8403; same 16-SOIC; MODE=+5V→Class-D; input RI 174k = gain +4.3 dB, C_in 10nF = speaker HPF ~91 Hz; line-out/HP unaffected. C86270, lifecycle Active, JLC SMT-assembly-available, LCSC 8,731 in stock verified 2026-07-20)","C86270","jlc",False),
    ("J8","PJ-320D 3.5 mm line-out","audio out (r18.82: pad map fixed against the SHOU HAN datasheet — pads are 1=sleeve, 2=ring, 3=detect, 4=tip; the old map put LEFT AUDIO on the grounded barrel and the detect line on the tip. Footprint pad pitch + locator holes verified = drawing. Added R_DET 10k + C_DET 1µF: the detect contact rests on the TIP when unplugged, so the MCP input needed clamp-current protection from the DAC’s ±3V swings)","C431535","jlc",True),
    ("J10","PJ-320D 3.5 mm MIDI-out","MIDI out (TRS Type A) — same r18.82 pad-map fix as J8","C431535","jlc",True),
    ("FB1","BLM18AG601 ferrite","audio supply filter","C19330","jlc",False),
@@ -131,7 +132,7 @@ KDIR = os.path.dirname(os.path.abspath(__file__))   # the kicad/ dir
 SHEET_INFO = {  # filename -> (title, function); order = reading order
  "power_tree":("Power","USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±"),
  "stm32h743":("MCU","STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)"),
- "audio":("Audio","PCM5102A DAC (I²S) → PAM8403 Class-D amp + line-out / MIDI jacks"),
+ "audio":("Audio","PCM5102A DAC (I²S) → PAM8406 Class-D amp + line-out / MIDI jacks"),
  "mcp":("I/O & LEDs","MCP23017 + 2× PCA9685 + the 23 LEDs + 10 buttons (5 cells on direct-solder Kailh Choc + 5 tactile modifiers, all digital on the expander) (largest sheet)"),
  "encoder":("Encoders","4 push-encoders (A/B/SW)"),
  "lcd":("Display","ST7789 1.9″ SPI + backlight FET (Q2)"),

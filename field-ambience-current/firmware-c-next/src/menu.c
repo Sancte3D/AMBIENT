@@ -40,12 +40,34 @@ static int           motion  = 40;
 static int           age     = 30;
 static int           echo    = 35;
 static int           blur    = 15;
+static int           synth_i = 0;         /* r19.16: 0 Ambient, player-global */
+static int           cell_i  = 0;         /* r19.23: 0 Note / 1 Bloom, player-global */
+static int           bass_i  = 3;         /* r19.31: HARMONY bass, default Drift */
+static int           color_i = 0;         /* r19.32: HARMONY chord color, default Pure */
+static int           fx_i    = 8;         /* r19.41: FX page, default Dream Chain */
+static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
+
+/* Sperrbar = was ein World-Wechsel ueberschreibt (menu.h r19.22). */
+#define LOCKABLE_MASK ((uint16_t)((1u<<MP_KEY)|(1u<<MP_SPACE)|(1u<<MP_SHIMMER)|\
+    (1u<<MP_ATMOS)|(1u<<MP_MOTION)|(1u<<MP_AGE)|(1u<<MP_ECHO)|(1u<<MP_BLUR)))
 
 static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
-static const char * const VOICE_NAMES[3] = { "Pad", "String", "Glass" };
+static const char * const VOICE_NAMES[4] = { "Pad", "String", "Glass", "Ember" };
 static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
+static const char * const SYNTH_NAMES[7] = {
+    "Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"
+};
+static const char * const CELL_NAMES[3] = { "Note", "Harmony", "Land" };
+static const char * const BASS_NAMES[4] = { "Off", "Root", "Fifth", "Drift" };
+static const char * const COLOR_NAMES[4] = { "Pure", "Open", "Warm", "Deep" };
+/* r19.41: master-effects page. Dream = the complete chain (boot default);
+ * the single modes stay selectable for A/B listening. */
+static const char * const FX_NAMES[9] = {
+    "Bypass", "Reverb", "Delay", "Chorus", "Tape", "Swell", "Shimmer",
+    "Blur", "Dream"
+};
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -72,6 +94,11 @@ static void apply_current(void) {
         case MP_AGE:    if (cb.set_age)        cb.set_age   (age    / 100.0f);   break;
         case MP_ECHO:   if (cb.set_echo)       cb.set_echo  (echo   / 100.0f);   break;
         case MP_BLUR:   if (cb.set_blur)       cb.set_blur  (blur   / 100.0f);   break;
+        case MP_SYNTH:  if (cb.set_synth)      cb.set_synth(synth_i);            break;
+        case MP_CELL:   if (cb.set_cell)       cb.set_cell(cell_i);              break;
+        case MP_BASS:   if (cb.set_bass)       cb.set_bass(bass_i);              break;
+        case MP_COLOR:  if (cb.set_color)      cb.set_color(color_i);            break;
+        case MP_FX:     if (cb.set_fx)         cb.set_fx(fx_i);                  break;
         default: break;
     }
 }
@@ -80,16 +107,80 @@ static void apply_current(void) {
  * Called when the user changes the WORLD value. */
 static void load_world_preset(void) {
     const world_t *w = worlds_get(world_i);
-    key_pc = (int)w->key_midi % 12;    /* world identity includes its key;
-                                        * VOICE stays — a player's choice   */
-    space  = w->space_pct;
-    shim   = w->shimmer_pct;
-    atmos  = w->atmos_pct;
-    motion = w->motion_pct;
-    age    = w->age_pct;
-    echo   = w->echo_pct;
-    blur   = w->blur_pct;
+    /* r19.22 Parameter-Locks: nur UNgesperrte Werte folgen dem neuen
+     * World-Preset — ein gesperrter Hallraum/Echo-Wert etc. bleibt beim
+     * Wechsel Tokyo→Hours stehen (Orchid-Prinzip). VOICE bleibt immer. */
+    #define UNLESS_LOCKED(bit) if (!(s_locks & (1u << (bit))))
+    UNLESS_LOCKED(MP_KEY)     key_pc = (int)w->key_midi % 12;
+    UNLESS_LOCKED(MP_SPACE)   space  = w->space_pct;
+    UNLESS_LOCKED(MP_SHIMMER) shim   = w->shimmer_pct;
+    UNLESS_LOCKED(MP_ATMOS)   atmos  = w->atmos_pct;
+    UNLESS_LOCKED(MP_MOTION)  motion = w->motion_pct;
+    UNLESS_LOCKED(MP_AGE)     age    = w->age_pct;
+    UNLESS_LOCKED(MP_ECHO)    echo   = w->echo_pct;
+    UNLESS_LOCKED(MP_BLUR)    blur   = w->blur_pct;
+    #undef UNLESS_LOCKED
+    /* r19.36: each world carries a curated HARMONY character (chord colour +
+     * bass mode). Loaded like the macros — the player can nudge after. */
+    color_i = w->chord_color; if (color_i > 3) color_i = 0;
+    bass_i  = w->bass_mode;   if (bass_i  > 3) bass_i  = 3;
     set_world_accent(true);        /* crossfade the UI tint to the new world */
+    if (cb.set_world)      cb.set_world(world_i);
+    if (cb.set_color)      cb.set_color(color_i);
+    if (cb.set_bass)       cb.set_bass(bass_i);
+    if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_space)      cb.set_space     (space  / 100.0f);
+    if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
+    if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
+    if (cb.set_motion)     cb.set_motion    (motion / 100.0f);
+    if (cb.set_age)        cb.set_age       (age    / 100.0f);
+    if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
+    if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
+    if (cb.set_key)        cb.set_key       (key_pc);
+}
+
+/* --- r19.22 Locks + Scene-State-API (menu.h) --------------------------- */
+bool menu_toggle_lock_current(void) {
+    uint16_t bit = (uint16_t)(1u << cur);
+    if (!(LOCKABLE_MASK & bit)) return false;    /* Slot nicht sperrbar */
+    s_locks ^= bit;
+    return (s_locks & bit) != 0;
+}
+bool     menu_param_locked(menu_param_t p) { return (s_locks >> p) & 1u; }
+uint16_t menu_locks(void)                  { return s_locks; }
+void     menu_set_locks(uint16_t mask)     { s_locks = mask & LOCKABLE_MASK; }
+
+void menu_get_state(menu_state_t *out) {
+    out->world  = (uint8_t)world_i;  out->key_pc = (uint8_t)key_pc;
+    out->tuning = (uint8_t)tuning_i; out->voice  = (uint8_t)voice_i;
+    out->synth  = (uint8_t)synth_i;  out->cell = (uint8_t)cell_i;
+    out->bass   = (uint8_t)bass_i;  out->color = (uint8_t)color_i;
+    out->fx     = (uint8_t)fx_i;
+    out->space  = (uint8_t)space;  out->shimmer = (uint8_t)shim;
+    out->atmos  = (uint8_t)atmos;  out->motion  = (uint8_t)motion;
+    out->age    = (uint8_t)age;    out->echo    = (uint8_t)echo;
+    out->blur   = (uint8_t)blur;
+    out->locks  = s_locks;
+}
+
+void menu_apply_state(const menu_state_t *st) {
+    world_i  = clampi(st->world, 0, worlds_count() - 1);
+    key_pc   = clampi(st->key_pc, 0, 11);
+    tuning_i = clampi(st->tuning, 0, 1);
+    voice_i  = clampi(st->voice, 0, 3);
+    synth_i  = clampi(st->synth, 0, 6);
+    cell_i   = clampi(st->cell, 0, 2);
+    bass_i   = clampi(st->bass, 0, 3);
+    color_i  = clampi(st->color, 0, 3);
+    fx_i     = clampi(st->fx, 0, 8);
+    space  = clampi(st->space, 0, 100);  shim   = clampi(st->shimmer, 0, 100);
+    atmos  = clampi(st->atmos, 0, 100);  motion = clampi(st->motion, 0, 100);
+    age    = clampi(st->age, 0, 100);    echo   = clampi(st->echo, 0, 100);
+    blur   = clampi(st->blur, 0, 100);
+    s_locks = st->locks & LOCKABLE_MASK;
+    set_world_accent(true);
+    /* Alle Callbacks feuern — Recall ist ein Live-Update wie das Menue
+     * selbst. Reihenfolge wie load_world_preset + die Player-Globals. */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_space)      cb.set_space     (space  / 100.0f);
     if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
@@ -99,6 +190,13 @@ static void load_world_preset(void) {
     if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
     if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
     if (cb.set_key)        cb.set_key       (key_pc);
+    if (cb.set_tuning)     cb.set_tuning(tuning_i);
+    if (cb.set_voice)      cb.set_voice(voice_i);
+    if (cb.set_synth)      cb.set_synth(synth_i);
+    if (cb.set_cell)       cb.set_cell(cell_i);
+    if (cb.set_bass)       cb.set_bass(bass_i);
+    if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_color)      cb.set_color(color_i);
 }
 
 void menu_init(const menu_callbacks_t *cbs) {
@@ -119,9 +217,31 @@ void menu_init(const menu_callbacks_t *cbs) {
         blur   = w->blur_pct;
     }
     set_world_accent(false);       /* boot world's tint (world 0), snap */
-    /* Don't push the macro defaults here — the engine sets its own at
-     * engine_init. The accent IS set: it's a display concern, not an engine
-     * callback, and the panel should boot already tinted to world 0. */
+    /* r19.39 boot-state truthfulness: push world 0's preset into the engine so
+     * the panel never shows a value the engine hasn't applied. Previously the
+     * engine kept its own engine_init defaults until the first world change, so
+     * the display could read e.g. Atmos 35 while the engine sat at 0 (the panel
+     * "lied"). engine_init has already run (main boot order), and boot is still
+     * muted (engine_boot_mute) + fades in afterwards, so setting the macros here
+     * only makes display == engine; it does not make noise. Accent stays snapped
+     * (already set above) — we push the params, not the crossfade. */
+    {
+        const world_t *w = worlds_get(0);
+        color_i = w->chord_color; if (color_i > 3) color_i = 0;
+        bass_i  = w->bass_mode;   if (bass_i  > 3) bass_i  = 3;
+        if (cb.set_world)      cb.set_world(world_i);
+        if (cb.set_color)      cb.set_color(color_i);
+        if (cb.set_bass)       cb.set_bass(bass_i);
+    if (cb.set_fx)         cb.set_fx(fx_i);
+        if (cb.set_space)      cb.set_space     (space  / 100.0f);
+        if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
+        if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
+        if (cb.set_motion)     cb.set_motion    (motion / 100.0f);
+        if (cb.set_age)        cb.set_age       (age    / 100.0f);
+        if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
+        if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
+        if (cb.set_key)        cb.set_key       (key_pc);
+    }
 }
 
 /* --- state queries ---------------------------------------------------- */
@@ -135,7 +255,7 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
-        "Age","Echo","Blur"
+        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX"
     };
     return LABELS[cur];
 }
@@ -146,6 +266,11 @@ int menu_value_index(menu_param_t p) {
         case MP_KEY:   return key_pc;
         case MP_TUNING:return tuning_i;
         case MP_VOICE: return voice_i;
+        case MP_SYNTH: return synth_i;
+        case MP_CELL:  return cell_i;
+        case MP_BASS:  return bass_i;
+        case MP_COLOR: return color_i;
+        case MP_FX:    return fx_i;
         default: return 0;
     }
 }
@@ -170,7 +295,12 @@ int menu_value_count(menu_param_t p) {
         case MP_WORLD: return worlds_count();
         case MP_KEY:   return 12;
         case MP_TUNING:return 2;
-        case MP_VOICE: return 3;
+        case MP_VOICE: return 4;
+        case MP_SYNTH: return 7;
+        case MP_CELL:  return 3;
+        case MP_BASS:  return 4;
+        case MP_COLOR: return 4;
+        case MP_FX:    return 9;
         default:       return 0;   /* SPACE / ATMOS / MOTION / AGE = % */
     }
 }
@@ -182,6 +312,11 @@ const char *menu_current_value_text(void) {
         case MP_KEY:    return KEY_NAMES[key_pc];
         case MP_TUNING: return TUNING_NAMES[tuning_i];
         case MP_VOICE:  return VOICE_NAMES[voice_i];
+        case MP_SYNTH:  return SYNTH_NAMES[synth_i];
+        case MP_CELL:   return CELL_NAMES[cell_i];
+        case MP_BASS:   return BASS_NAMES[bass_i];
+        case MP_COLOR:  return COLOR_NAMES[color_i];
+        case MP_FX:     return FX_NAMES[fx_i];
         case MP_SPACE:  snprintf(buf, sizeof buf, "%d%%", space);  return buf;
         case MP_SHIMMER:snprintf(buf, sizeof buf, "%d%%", shim);   return buf;
         case MP_ATMOS:  snprintf(buf, sizeof buf, "%d%%", atmos);  return buf;
@@ -216,7 +351,12 @@ void menu_rotate(int delta) {
             return;                     /* preset push covers the callbacks   */
         case MP_KEY:    key_pc  = wrapi(key_pc  + delta, 12); break;
         case MP_TUNING: tuning_i = wrapi(tuning_i + delta, 2); break;
-        case MP_VOICE:  voice_i = wrapi(voice_i + delta, 3);  break;
+        case MP_VOICE:  voice_i = wrapi(voice_i + delta, 4);  break;
+        case MP_SYNTH:  synth_i = wrapi(synth_i + delta, 7);  break;
+        case MP_CELL:   cell_i  = wrapi(cell_i  + delta, 3);  break;
+        case MP_BASS:   bass_i  = wrapi(bass_i  + delta, 4);  break;
+        case MP_COLOR:  color_i = wrapi(color_i + delta, 4);  break;
+        case MP_FX:     fx_i    = wrapi(fx_i    + delta, 9);  break;
         case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
         case MP_SHIMMER:shim   = clampi(shim   + delta, 0, 100); break;
         case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;
@@ -371,6 +511,10 @@ void menu_render(void) {
 
     uint8_t lbl_gs = (mode == MENU_EDIT) ? GS_DIM : GS_LABEL;
     bfont_draw(&font_hn_label, PAD_L, PAD_T, menu_current_label(), lbl_gs);
+    /* r19.22: Lock-Marke — kleiner heller Punkt links vom Label, wenn der
+     * aktuelle Parameter gesperrt ist (ueberlebt World-Wechsel). */
+    if (menu_param_locked(cur))
+        oled_rrect_fill(PAD_L - 12, PAD_T + 3, 6, 6, 2, GS_ACTIVE);
 
     render_battery();
     render_value();

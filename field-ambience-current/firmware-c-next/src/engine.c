@@ -13,11 +13,9 @@
 #include "engine.h"
 #include "pad.h"
 #include "reverb.h"
+#include "fx_master.h"
 #include "texture.h"
 #include "ambience.h"
-#include "tape.h"
-#include "echo.h"
-#include "blur.h"
 #include "bass.h"
 #include "drone.h"
 #include "reverb_presets.h"
@@ -27,7 +25,7 @@
 #include "cells.h"
 #include "pluck.h"
 #include "glass.h"
-#include "shimmer.h"
+#include "ember.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -56,6 +54,10 @@ static float active_freq[MAX_SOURCES];
  * 0=off, -1=all-off. */
 static engine_note_hook_t s_note_hook = 0;
 void engine_set_note_hook(engine_note_hook_t h) { s_note_hook = h; }
+
+/* r19.16 SYNTH-mode state (logic lives beside engine_render below). */
+static const engine_synth_backend_t *s_synth_be = 0;
+static volatile int s_synth_tgt = 0;       /* set at control rate            */
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
 /* r18.99 ENO LOOPS — the Music-for-Airports principle (studied via the
@@ -75,6 +77,13 @@ static uint32_t eno_next_ms[ENO_LOOPS];
 static uint32_t eno_off_ms[ENO_LOOPS];
 static uint8_t  eno_on[ENO_LOOPS];
 static int      eno_timing_valid;
+/* r19.41: reverse swell for SCHEDULED notes only (task rule — a live key
+ * press cannot be preceded without look-ahead latency). The Eno loops are
+ * the composer's genuinely pre-known events: after each fire the next fire
+ * time is exact, so the swell triggers SWELL_LEAD_MS before it with the
+ * same lead. One-shot per cycle. */
+#define ENO_SWELL_LEAD_MS 1500u
+static uint8_t  eno_swell_armed[ENO_LOOPS];
 #define ENO_SRC(i) ((uint8_t)(5 + (i)))
 
 /* Generative state (r19.0: rebuilt on the HARMONIC SAFETY CORE, see
@@ -86,6 +95,22 @@ static bool     gen_on = false;
 static bool     gen_timing_valid = false;
 static uint32_t gen_tick_rng     = 0x5EEDBA55u;
 static int      gen_state_seen   = -1;   /* bed re-strikes on state change */
+/* r19.33 player-priority state (declared here so engine_init can reset it). */
+#define GEN_RETURN_MS   8000u            /* auto-content returns ~8 s after play */
+static uint32_t s_last_active_ms = 0;
+static bool     s_ever_active     = false;
+static bool     s_gen_suppressed  = false;
+/* r19.34 — the two sparse single-tone autoplay layers, each toggleable so the
+ * player can keep the evolving bed/pad without the lonely melodic events. */
+static bool     s_mel_enabled = true;    /* long lead melody voice           */
+static bool     s_eno_enabled = true;    /* three one-note Eno tape loops     */
+static bool     s_gentle_return = false; /* r19.34: first melody note after the
+                                          * player-priority silence swells in
+                                          * softly (no bright ding, low register) */
+void engine_set_autoplay_melody(int on) { s_mel_enabled = on ? true : false; }
+void engine_set_autoplay_eno   (int on) { s_eno_enabled = on ? true : false; }
+int  engine_autoplay_melody(void)        { return s_mel_enabled ? 1 : 0; }
+int  engine_autoplay_eno(void)           { return s_eno_enabled ? 1 : 0; }
 
 /* Long melody voice: pad source 15 sustains 4-16 s, the selected VOICE
  * (string/glass) strikes the onset. */
@@ -132,7 +157,17 @@ static float lowest_held(void) {
 }
 
 /* Re-point the bass at the current lowest note, or release it if none held. */
+/* r19.31: when a cell mode owns the bass explicitly (HARMONY bass modes), the
+ * engine stops auto-following the lowest held note. NOTE/LAND keep following. */
+static bool s_bass_follow = true;
+void engine_bass_follow(bool on) { s_bass_follow = on; }
+void engine_bass_set(float freq_hz) { if (freq_hz > 1.0f) bass_note(freq_hz); }
+void engine_bass_off(void)          { bass_release(); }
+void engine_bass_glide(float tau_s) { bass_set_glide(tau_s); }
+bool engine_bass_active(void)       { return bass_active(); }
+
 static void refresh_bass(void) {
+    if (!s_bass_follow) return;                /* a cell mode drives it itself */
     float lo = lowest_held();
     if (lo > 0.0f) bass_note(lo);
     else           bass_release();
@@ -144,8 +179,6 @@ static float dryL [BLOCK];
 static float dryR [BLOCK];
 static float sendL[BLOCK];
 static float sendR[BLOCK];
-static float wetL [BLOCK];
-static float wetR [BLOCK];
 
 static float send_amount_cur, send_amount_tgt;
 static float wet_amp_cur,     wet_amp_tgt;
@@ -213,12 +246,13 @@ static void recompute_reverb_from_presets(void) {
 
 void engine_init(void) {
     pad_init();
-    reverb_init();
+    reverb_init();      /* tank still owned by the V2 synth hosts (SYNTH mode) */
     texture_init();
     ambience_init();
-    tape_init();
-    echo_init();
-    blur_init();
+    /* r19.41: the legacy master processors (tape/echo/blur/shimmer + master
+     * reverb render) are replaced by the ambient effects engine. Init runs
+     * here — outside the audio callback — and FAILS CLOSED to dry audio. */
+    fx_master_init();
     bass_init();
     drone_init();
 
@@ -243,6 +277,12 @@ void engine_init(void) {
     cells_init();                    /* ADR-0013 cell-velocity state */
     gen_on = false;
     gen_timing_valid = false;        /* r18.88 autoplay scheduler reset */
+    s_gen_suppressed = false;        /* r19.33 player-priority state reset */
+    s_ever_active    = false;
+    s_last_active_ms = 0;
+    s_mel_enabled    = true;         /* r19.34 autoplay layers on by default */
+    s_eno_enabled    = true;
+    s_gentle_return  = false;
     composer_init();                 /* r18.96 top-level intent reset   */
     harmony_init();                  /* r19.0 harmonic safety core */
     gen_state_seen = -1;
@@ -262,10 +302,11 @@ void engine_init(void) {
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
     glass_init();                    /* r18.98 FM glass voice */
-    shimmer_init();                  /* r18.99 octave-up hall regeneration */
+    ember_init();                    /* r19.28 warm subtractive analog voice */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
     memset(eno_on,      0, sizeof eno_on);
+    memset(eno_swell_armed, 0, sizeof eno_swell_armed);
     eno_timing_valid = 0;
     melody_voice = 0;                /* PAD — the bench-tuned reference */
     body_init();                     /* r18.94 modal body (per-world material) */
@@ -286,14 +327,30 @@ void engine_init(void) {
  * needs SOME second colour, that was the whole r18.89 point). */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 2) voice_idx = 2;
+    if (voice_idx > 3) voice_idx = 3;    /* r19.28: 3 = Ember (optional)   */
     melody_voice = voice_idx;
 }
 
 /* Fire the selected melody voice (used by cell presses + sparkles). */
 static void melody_strike(float freq_hz, float amp) {
-    if (melody_voice == 2) glass_note(freq_hz, amp);
-    else                   pluck_note(freq_hz, amp);
+    if      (melody_voice == 3) ember_note(freq_hz, amp);   /* r19.28 analog */
+    else if (melody_voice == 2) glass_note(freq_hz, amp);
+    else                        pluck_note(freq_hz, amp);
+}
+
+/* r19.28 — Landscape "Motif" layer: a warm subtractive ANALOG voice (ember.c:
+ * detuned saws + sub, a resonant filter with its own decay envelope, and a
+ * delayed vibrato LFO). The FM bell (r19.27.1) read as dead/static; this is a
+ * moving, nostalgic tone — independent of the global VOICE menu. */
+void engine_motif_strike(float freq_hz, float amp) {
+    ember_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
+}
+
+/* r19.30 — a bare glass/bell bloom for the HARMONY "extension" role: the FM
+ * shimmer that lets a chord's top sparkle over the sustained pad body, and
+ * decays into the shared hall. No pad, no bass. */
+void engine_sparkle_strike(float freq_hz, float amp) {
+    glass_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
@@ -313,6 +370,17 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     freq_hz *= 1.0f + pitch_jitter;                    /* 2^(jit) ≈ 1+jit at tiny jit */
     amp     *= 1.0f + amp_jitter;
     if (s_note_hook) s_note_hook(1, source, freq_hz, amp);
+    /* r19.16 SYNTH mode: played cells drive the V2 sound-core instead of the
+     * pad. Generative/drone sources never reach V2 (it's a played mono synth). */
+    if (s_synth_tgt > 0 && s_synth_be &&
+        (source <= 4 || (source >= 9 && source <= 13))) {
+        int n = (int)lrintf(69.0f + 12.0f * log2f(freq_hz / 440.0f));
+        if (n < 0)   n = 0;
+        if (n > 127) n = 127;
+        s_synth_be->note_on(n, dsp_clampf(amp, 0.0f, 1.0f));
+        if (source < MAX_SOURCES) active_freq[source] = freq_hz;
+        return;
+    }
     pad_note_on(source, freq_hz, amp);
     if (source < MAX_SOURCES) active_freq[source] = freq_hz;
     /* r18.98 VOICE: cell sources (base 0..4 + shift 9..13) also strike the
@@ -327,12 +395,19 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
 void engine_note_off(uint8_t source) {
     if (s_note_hook && source < MAX_SOURCES)
         s_note_hook(0, source, active_freq[source], 0.0f);
+    if (s_synth_tgt > 0 && s_synth_be &&
+        (source <= 4 || (source >= 9 && source <= 13))) {
+        s_synth_be->note_off();                        /* V2 core is mono */
+        if (source < MAX_SOURCES) active_freq[source] = 0.0f;
+        return;
+    }
     pad_note_off(source);
     if (source < MAX_SOURCES) active_freq[source] = 0.0f;
     refresh_bass();
 }
 void engine_all_off(void) {
     if (s_note_hook) s_note_hook(-1, 0, 0.0f, 0.0f);   /* all-off sentinel */
+    if (s_synth_tgt > 0 && s_synth_be) s_synth_be->panic();
     pad_all_off();
     memset(active_freq, 0, sizeof active_freq);
     bass_release();
@@ -367,6 +442,7 @@ void engine_set_reverb_drive(float v) { reverb_set_drive(dsp_clampf(v, 0.0f, 1.0
 void engine_set_wet_amp(float v)      { wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_boot_mute(void)           { master_vol_cur  = master_vol_tgt = 0.0f; }
 void engine_set_drive(float v)        { drive_tgt       = dsp_clampf(v, 0.0f, 1.0f); }
 /* r18.90 macro: one emotional dimension, three destinations. hz is the
  * legacy pad-cutoff offset (-600..+800); the hall and the plucks follow.
@@ -376,9 +452,16 @@ void engine_set_brightness(float hz)  {
     bright_damp_trim = dsp_clampf(-hz * (0.18f / 800.0f), -0.135f, 0.18f);
     reverb_apply();
     pluck_set_damp(dsp_clampf(0.42f - hz * (0.12f / 800.0f), 0.28f, 0.55f));
+    /* r19.41: the master-effects tone follows the same macro (hz -600..+800
+     * → 0..1, centre unchanged at the world default until the user moves it). */
+    fx_master_set_tone((hz + 600.0f) / 1400.0f);
 }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
-void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1.0f)); }
+void engine_set_atmosphere(float v)   {
+    v = dsp_clampf(v, 0.0f, 1.0f);
+    ambience_set_level(v);               /* per-world atmospheric sound layer */
+    fx_master_set_atmosphere(v);         /* r19.41: global spatial send       */
+}
 /* World change applies BOTH the texture layer (ambience) AND the harmonic
  * identity (key/mode/vibe) so each world sounds musically distinct, not just
  * texturally. The cell taps then play in the world's key/mode (brain), the
@@ -396,6 +479,11 @@ void engine_set_world(int idx) {
     engine_set_key ((int)w->key_midi);   /* brain key + drone root          */
     engine_set_mode((int)w->mode);       /* brain mode + reverb recompute   */
     engine_set_vibe((int)w->vibe);       /* brain vibe + reverb recompute   */
+    /* r19.41: master-effects world voicing (Tokyo/Coast/Drive/Hours map 1:1
+     * onto the engine worlds). The menu pushes its macro values right after
+     * this call, overwriting the user-facing fields — the engine keeps its
+     * curated width/tone/level/delay for the world. */
+    fx_master_set_world(idx);
 }
 void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
 
@@ -404,35 +492,39 @@ void engine_set_motion(float v) {
     v = dsp_clampf(v, 0.0f, 1.0f);
     /* user 0..1 → pad-LFO depth 0..2 (centre 0.5 = default movement). */
     pad_set_motion(v * 2.0f);
+    fx_master_set_motion(v);             /* r19.41: chorus/slow modulation */
 }
 void engine_set_age(float v) {
-    v = dsp_clampf(v, 0.0f, 1.0f);
-    /* user 0..1 → hiss 0..0.015 (≈ -36 dBFS at max) + sat drive 1.0..1.40.
-     * v=0.30 lands near the dreamy_warm reference (hiss 0.005, drive 1.10). */
-    tape_set_hiss_amount(0.0012f + v * v * 0.005f);   /* r18.97: square, quiet */
-    tape_set_saturation_drive(1.0f + v * 0.40f);
-    tape_set_crackle(v);             /* r18.89: vinyl ticks join the macro */
-    /* r18.99: age also un-steadies the transport — square curve again, so
-     * the reference band (v ≤ 0.3) barely moves and old tape gets drunk. */
-    tape_set_wow_depth(v * v);
+    /* r19.41: wow, flutter, bandwidth loss, saturation, hiss and hum all
+     * live in the master-effects engine now (its `age` parameter) — the
+     * legacy tape module left the audio path with the engine swap. */
+    fx_master_set_age(dsp_clampf(v, 0.0f, 1.0f));
 }
 
-/* r18.99 SHIMMER macro (menu slot). Pure pass-through to the module. */
+/* SHIMMER macro (menu slot). r19.41: restrained octave regeneration inside
+ * the master-effects engine (replaces the legacy shimmer wrap-loop). */
 void engine_set_shimmer(float v) {
-    shimmer_set_amount(dsp_clampf(v, 0.0f, 1.0f));
+    fx_master_set_shimmer(dsp_clampf(v, 0.0f, 1.0f));
 }
 
-/* Echo macro — single setter, internally maps to time + feedback + wet +
- * tone in echo.c. See echo.c::recompute_internals for the mapping. */
+/* Echo macro. r19.41: filtered ping-pong delay inside the master-effects
+ * engine (replaces the legacy echo.c tape-style delay). */
 void engine_set_echo(float v) {
-    echo_set_amount(dsp_clampf(v, 0.0f, 1.0f));
+    fx_master_set_echo(dsp_clampf(v, 0.0f, 1.0f));
 }
 
-/* Blur macro — granular smear. See blur.c::recompute_params for the
- * internal mapping (density + grain size + pitch jitter + wet). */
+/* Blur macro. r19.41: deterministic temporal blur inside the master-effects
+ * engine (replaces the legacy blur.c granular cloud). */
 void engine_set_blur(float v) {
-    blur_set_amount(dsp_clampf(v, 0.0f, 1.0f));
+    fx_master_set_blur(dsp_clampf(v, 0.0f, 1.0f));
 }
+
+/* r19.41 FX effect page: 0=Bypass..8=Dream Chain (menu slot; Dream Chain is
+ * the boot default, single modes stay selectable for A/B listening). */
+void engine_set_fx_mode(int idx)       { fx_master_set_mode(idx); }
+int  engine_fx_mode(void)              { return fx_master_mode(); }
+int  engine_fx_mode_count(void)        { return fx_master_mode_count(); }
+const char *engine_fx_mode_name(int i) { return fx_master_mode_name(i); }
 
 /* Step 12b #1 — musical-state setters. Each triggers a preset recompute so
  * the reverb shifts character with the mode/vibe/macro change. The reverb
@@ -464,7 +556,8 @@ void engine_set_vibe(int vibe_idx) {
 }
 void engine_set_space(float v) {
     musical_space = dsp_clampf(v, 0.0f, 1.0f);
-    recompute_reverb_from_presets();
+    recompute_reverb_from_presets();     /* V2 synth hosts still use the tank */
+    fx_master_set_space(musical_space);  /* r19.41: master-effects room scale */
 }
 void engine_set_mood(float v) {
     musical_mood = dsp_clampf(v, 0.0f, 1.0f);
@@ -499,16 +592,22 @@ void engine_set_pad_voice(int voice_idx) {
     pad_set_voice_mix(MIX[voice_idx]);
 }
 
-/* r18.88 AUDIT-FIX: this used to check only cells 0..4 — the Shift-octave
- * latch voices live on sources 9..13 (ADR-0008 r2, controls.c SHIFT_SRC),
- * so the generative bed kept playing OVER the user's held shift notes.
- * "User is playing" = any cell source, base or shift octave. The bed's own
- * voice (8) and the sparkle sources (14/15) are deliberately excluded. */
-static bool any_user_note(void) {
-    for (int i = 0; i < 5; ++i)  if (active_freq[i] > 0.0f) return true;
-    for (int i = 9; i < 14; ++i) if (active_freq[i] > 0.0f) return true;
-    return false;
-}
+/* r19.20 — the generative gate is PHYSICAL now. History: r18.88 gated on
+ * "any active cell voice" (sources 0..4 + 9..13) so the bed would not play
+ * over held notes. That fixed momentary playing but created the
+ * HOLD+GENERATE deadlock: a hold-LATCHED voice keeps its source active
+ * forever, so one latched drone note froze autoplay permanently. The gate
+ * is now the physical key state fed by controls.c (press/release edges):
+ * while a finger is down the composer yields; latched voices are standing
+ * texture the generator plays AROUND (their sources stay protected simply
+ * because the generator only ever writes its own sources 8/14/15). */
+static bool s_user_present = false;
+void engine_set_user_presence(bool any_key_down) { s_user_present = any_key_down; }
+
+/* r19.33 — player takes priority (musical "listening"): the bed + melody hold
+ * off while the user plays AND for GEN_RETURN_MS after the last release, then
+ * return gently. State lives up top so engine_init can reset it. */
+int engine_generative_suppressed(void) { return s_gen_suppressed ? 1 : 0; }
 
 /* --- Generative autoplay (r18.88) -----------------------------------------
  * The GENERATE modifier was always meant to make the instrument PLAY BY
@@ -528,6 +627,9 @@ static bool any_user_note(void) {
  * All timing derives from the passed now_ms — hardware-independent and
  * host-testable. The old engine_generative_advance() stays as the manual
  * step API (offline renderers, tests). State lives up by gen_on. */
+
+uint32_t engine_gen_seed(void)          { return gen_tick_rng; }
+void     engine_set_gen_seed(uint32_t s) { gen_tick_rng = s ? s : 0x5EEDBA55u; }
 
 static float gen_rand01(void) {
     gen_tick_rng = gen_tick_rng * 1664525u + 1013904223u;
@@ -556,9 +658,41 @@ void engine_set_generative(bool on, int program) {
  * classes, ≤2 voices move — harmony.c enforces the contract). The pad
  * bed voice sits an octave over the bass register; bass.c derives the
  * low fundament from it (lowest_held). Returns state index + 1 (1..4). */
+/* r19.24 — the five cells as composer intents (see engine.h). Deliberately
+ * a MAPPING of gestures to the existing composer states, not a claim that
+ * harmony pitch-picks encode tension: the directional FEEL comes from the
+ * composer table (density/depth/rest), and harmony_advance() moves the
+ * actual voicing so the answer is heard. */
+static const composer_state_t CELL_INTENT[5] = {
+    COMPOSER_RETURN,   /* 0 Home / Resolve — warmth back            */
+    COMPOSER_OPEN,     /* 1 Lift           — more light, denser      */
+    COMPOSER_DEEP,     /* 2 Dark           — floor rises, melody recedes */
+    COMPOSER_CALM,     /* 3 Open           — spacious resting rate    */
+    COMPOSER_EMPTY,    /* 4 Tension        — the held breath          */
+};
+
+void engine_generative_nudge(int cell, uint32_t now_ms) {
+    if (!gen_on || cell < 0 || cell > 4) return;
+    composer_nudge(CELL_INTENT[cell], now_ms);
+    harmony_advance();               /* move the harmonic state NOW */
+    gen_state_seen = -1;             /* re-sound the bed on the next tick */
+}
+
+void engine_generative_new_field(uint32_t seed) {
+    engine_set_gen_seed(seed);
+    composer_reseed(seed ^ 0x9E3779B9u);
+    harmony_reseed(seed ^ 0x85EBCA6Bu);
+    /* restart the field at state 0 in the SAME pitch world (key/mode) */
+    harmony_set_world(brain_get_key(), mode_is_minor(musical_mode));
+    composer_init();                 /* fresh intent clock; reseed below   */
+    composer_reseed(seed ^ 0x9E3779B9u);
+    gen_timing_valid = false;        /* strike fresh on the next tick */
+    gen_state_seen   = -1;
+}
+
 int engine_generative_advance(void) {
     if (!gen_on) return -1;
-    if (any_user_note()) return -1;          /* live playing overrides the bed */
+    if (s_user_present || s_gen_suppressed) return -1;   /* r19.33: player + return-delay */
     harmony_advance();
     int midi = harmony_bass_midi() + 12;
     snd_bed_midi = midi;
@@ -579,9 +713,25 @@ void engine_generative_tick(uint32_t now_ms) {
      * composer.h). Ticks on the same clock as everything else. */
     composer_tick(now_ms);
 
-    if (any_user_note()) {
-        /* Player takes over: freeze everything and re-arm so the piece
-         * resumes promptly after release. */
+    /* r19.33 — player-priority "listening": suppressed while a key is down AND
+     * for GEN_RETURN_MS after the last release, so the machine steps back and
+     * lets the player breathe, then returns gently (the re-arm below strikes
+     * the bed and schedules the first melody note 1.5–4 s later). */
+    if (s_user_present) { s_last_active_ms = now_ms; s_ever_active = true; }
+    bool suppressed = s_user_present ||
+        (s_ever_active && (uint32_t)(now_ms - s_last_active_ms) < GEN_RETURN_MS);
+    if (suppressed != s_gen_suppressed) {
+        s_gen_suppressed = suppressed;
+        if (suppressed) {
+            if (mel_sounding) {             /* hush the auto melody as the player takes over */
+                engine_note_off((uint8_t)MEL_SRC);
+                mel_sounding = 0;
+            }
+        } else {
+            s_gentle_return = true;         /* the piece comes back softly, not with a ding */
+        }
+    }
+    if (suppressed) {
         gen_timing_valid = false;
         return;
     }
@@ -604,6 +754,11 @@ void engine_generative_tick(uint32_t now_ms) {
      * old tone, sound THIS loop's chord member of the CURRENT harmony,
      * hold for 62 % of the period, rest for the remainder — the gaps are
      * where the recombination shows. */
+    if (!s_eno_enabled) {                /* r19.34: layer off → hush + re-arm */
+        for (int i = 0; i < ENO_LOOPS; ++i)
+            if (eno_on[i]) { engine_note_off(ENO_SRC(i)); eno_on[i] = 0; snd_eno_midi[i] = 0; }
+        eno_timing_valid = 0;
+    } else {
     if (!eno_timing_valid) {
         eno_next_ms[0] = now_ms + (uint32_t)(ENO_PERIOD_MS[0] * 0.40f);
         eno_next_ms[1] = now_ms + (uint32_t)(ENO_PERIOD_MS[1] * 0.62f);
@@ -616,6 +771,25 @@ void engine_generative_tick(uint32_t now_ms) {
             engine_note_off(ENO_SRC(i));
             eno_on[i] = 0;
             snd_eno_midi[i] = 0;
+        }
+        /* r19.41: the next fire time is exact — arm the reverse swell
+         * exactly ENO_SWELL_LEAD_MS ahead of it, once per cycle. */
+        if (!eno_swell_armed[i] &&
+            (int32_t)(eno_next_ms[i] - now_ms) > 0 &&
+            (uint32_t)(eno_next_ms[i] - now_ms) <= ENO_SWELL_LEAD_MS) {
+            /* Predict the scheduled note from the CURRENT harmony with the
+             * same register rule the fire branch applies. A state mutation
+             * inside the lead window can shift it — the pre-tail is a
+             * spectral gesture, not a pitch guarantee. */
+            int hv[HARMONY_VOICES];
+            harmony_voices(hv, HARMONY_VOICES);
+            int midi = hv[i];
+            while (midi > 74) midi -= 12;
+            while (midi < 50) midi += 12;
+            fx_master_trigger_swell(tuning_hz((float)midi),
+                                    ENO_AMP[i] * composer_params()->bed_amp,
+                                    (float)ENO_SWELL_LEAD_MS / 1000.0f);
+            eno_swell_armed[i] = 1;
         }
         if ((int32_t)(now_ms - eno_next_ms[i]) >= 0) {
             /* r19.0: each loop owns ONE voice of the harmonic STATE (the
@@ -639,8 +813,10 @@ void engine_generative_tick(uint32_t now_ms) {
              * playing human) without machine-gunning retriggers. */
             while ((int32_t)(now_ms - eno_next_ms[i]) >= 0)
                 eno_next_ms[i] += ENO_PERIOD_MS[i];
+            eno_swell_armed[i] = 0;      /* re-arm for the next known fire */
         }
     }
+    }   /* r19.34: end of s_eno_enabled branch */
 
     /* --- r19.0 HARMONIC STATE (harmony.h) -------------------------------
      * The state machine dwells 24-48 s, then MUTATES: ≥3 common pitch
@@ -671,6 +847,9 @@ void engine_generative_tick(uint32_t now_ms) {
      * is doubled by the selected VOICE strike (string/glass) so the tone
      * has an attack in front of the pad swell — not an arpeggiator, a
      * slow cinematic line. */
+    if (!s_mel_enabled) {                /* r19.34: melody layer off */
+        if (mel_sounding) { engine_note_off((uint8_t)MEL_SRC); mel_sounding = 0; }
+    } else {
     if (mel_sounding && (int32_t)(now_ms - mel_off_ms) >= 0) {
         engine_note_off((uint8_t)MEL_SRC);
         mel_sounding = 0;
@@ -711,14 +890,26 @@ void engine_generative_tick(uint32_t now_ms) {
                     harmony_collision_ok(want, sus, nsus))
                     tone = want;                 /* the motif survives   */
             }
-            if (tone < 0)
-                tone = harmony_melody_next(mel_last_midi, sus, nsus,
-                                           0.05f + composer_params()->high_p);
+            if (tone < 0) {
+                /* r19.34: the first note coming back after the player-priority
+                 * silence stays low (no high_p reach) so it re-enters calmly. */
+                float hp = s_gentle_return ? 0.0f
+                                           : (0.05f + composer_params()->high_p);
+                tone = harmony_melody_next(mel_last_midi, sus, nsus, hp);
+            }
             if (tone > 0) {
                 float hz  = tuning_hz((float)tone);
                 float amp = 0.062f + gen_rand01() * 0.014f;
-                engine_note_on((uint8_t)MEL_SRC, hz, amp);
-                melody_strike(hz, amp * 2.0f);   /* articulate the onset */
+                if (s_gentle_return) {
+                    /* swell the piece back in: softer, and NO bright strike —
+                     * a pad swell, not the exposed "ding" the r19.33 silence
+                     * gap used to make of the first returning note. */
+                    engine_note_on((uint8_t)MEL_SRC, hz, amp * 0.5f);
+                    s_gentle_return = false;
+                } else {
+                    engine_note_on((uint8_t)MEL_SRC, hz, amp);
+                    melody_strike(hz, amp * 2.0f);   /* articulate the onset */
+                }
                 mel_sounding  = 1;
                 mel_last_midi = tone;
                 ++mel_note_count;
@@ -735,6 +926,7 @@ void engine_generative_tick(uint32_t now_ms) {
             mel_next_ms = now_ms + 2000u + (uint32_t)(gen_rand01() * 4000.0f);
         }
     }
+    }   /* r19.34: end of s_mel_enabled branch */
 
     /* --- r19.0 spectral undulation (Blendwave principle) ------------------
      * "Same note, evolve timbre": every 400 ms the pad brightness tilt
@@ -749,7 +941,7 @@ void engine_generative_tick(uint32_t now_ms) {
     }
 }
 
-void engine_render(int16_t *buf, int frames) {
+static void render_ambient(int16_t *buf, int frames) {
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
     if (frames > BLOCK) frames = BLOCK;
 
@@ -789,50 +981,23 @@ void engine_render(int16_t *buf, int frames) {
             sendR[n] += plkR[n] * 0.5f;
         }
     }
+    /* r19.28: the warm analog voice runs its OWN clean bus (its filter is the
+     * character) straight into dry + hall send — no modal body coloring. */
+    ember_render_mix(dryL, dryR, sendL, sendR, frames);
 
-    /* Echo sits AFTER all generators but BEFORE the reverb so the delay
-     * picks up the whole mix; send_amount=0.40 routes a copy of the
-     * delayed signal into the reverb send so the echo also picks up room. */
-    echo_render_mix(dryL, dryR, sendL, sendR, frames, 0.40f);
+    /* r19.41 MASTER-EFFECTS SWAP: echo, blur, tape hiss/crackle, the master
+     * reverb render and the shimmer wrap-loop all left this path — the
+     * ambient effects engine (fx_master_process below) replaces them with
+     * one coherent chain (dark FDN reverb, filtered ping-pong delay, chorus,
+     * tape age, shimmer, temporal blur — DREAM CHAIN by default). The send
+     * bus is still filled by the generators but no longer consumed here: the
+     * engine derives its global spatial send from the Atmosphere macro. The
+     * shared reverb tank stays initialised for the V2 synth hosts only. */
 
-    /* Blur (granular cloud) — captures the dry+echo mix and re-emits as a
-     * cloud of grains. Sits after echo so it grains the echoes too; before
-     * the reverb so the cloud picks up room. send_amount=0.50 — cloud +
-     * reverb is the classic "frozen-shimmer" wash. */
-    blur_render_mix(dryL, dryR, sendL, sendR, frames, 0.50f);
-
-    /* Tape character (ADR-0017 Phase 3): subtle hiss into the DRY bus only —
-     * we don't want the reverb to amplify the noise floor. r18.92: feed the
-     * program follower first so hiss/crackle duck when the music breathes. */
-    {
-        float pk = 0.0f;
-        for (int n = 0; n < frames; ++n) {
-            float a = dryL[n] < 0.0f ? -dryL[n] : dryL[n];
-            float b = dryR[n] < 0.0f ? -dryR[n] : dryR[n];
-            if (a > pk) pk = a;
-            if (b > pk) pk = b;
-        }
-        tape_set_program_level(pk);
-    }
-    tape_hiss_render_add(dryL, dryR, frames);
-
-    /* r18.89: vinyl crackle (AGE macro) — dry bus only, like the hiss. */
-    tape_crackle_render_add(dryL, dryR, frames);
-
-    /* Reverb writes (does not add) wet from send. r18.99: the shimmer
-     * loop wraps it — last block's wet, one octave up and darkened,
-     * re-enters the send; each pass climbs and dies (Sonicware/Eno
-     * shimmer principle, see shimmer.h). */
-    shimmer_feed_add(sendL, sendR, frames);
-    reverb_render(sendL, sendR, wetL, wetR, frames);
-    shimmer_capture(wetL, wetR, frames);
-
-    /* Master: sum + DC-block + volume → outL/outR; then tanh warmth
-     * (block call); then soft-limit safety net → int16. Two-pass keeps
-     * the saturation block-call cheap (one loop body, one tanh call/sample). */
+    /* Master: dry sum + DC-block + volume → outL/outR; then the effects
+     * engine; then the single soft-limit safety net → int16. */
     master_vol_cur += SMOOTH_COEF * (master_vol_tgt - master_vol_cur);
     drive_cur      += SMOOTH_COEF * (drive_tgt      - drive_cur);
-    const float wa = wet_amp_cur;
     const float mv = master_vol_cur;
 
     /* r18.89 master drive (per block: curve params + makeup are constant
@@ -845,8 +1010,8 @@ void engine_render(int16_t *buf, int frames) {
 
     static float outL[BLOCK], outR[BLOCK];
     for (int n = 0; n < frames; ++n) {
-        float L = dryL[n] + wetL[n] * wa;
-        float R = dryR[n] + wetR[n] * wa;
+        float L = dryL[n];
+        float R = dryR[n];
 
         if (drv_on) {
             /* dry/wet fade over the first quarter of the knob so tiny
@@ -865,15 +1030,12 @@ void engine_render(int16_t *buf, int frames) {
         outL[n] = yL * mv;
         outR[n] = yR * mv;
     }
-    /* r18.99 WOW & FLUTTER: the whole mix (hall tail included) breathes
-     * like a tape recording of the performance. AGE drives the depth;
-     * depth 0 is bit-exact bypass. Before the saturation — pitch wobble
-     * happens on the tape, the head saturation after it. */
-    tape_wow_process(outL, outR, frames);
-    /* Warm tanh saturation — "tape" colour. Always-on at the dreamy_warm
-     * reference drive (1.10). Peaks roll into the tanh knee, even harmonics
-     * appear, makeup-gain implicit (×0.78 inside). */
-    tape_saturation_process(outL, outR, frames);
+    /* r19.41: the complete master-effects chain on the final float mix —
+     * hot-path safe (no heap, bounded, LUT-only transcendentals; verified by
+     * the engine property suite). If init failed this is a bit-exact dry
+     * pass-through (fail closed). The soft_limit below stays the ONE final
+     * limiter in the path. */
+    fx_master_process(outL, outR, frames);
     for (int n = 0; n < frames; ++n) {
         /* soft_limit is now a safety net for the rare residual peak above
          * 0.75 — saturation usually already keeps us in range. */
@@ -881,6 +1043,93 @@ void engine_render(int16_t *buf, int frames) {
         float yR = soft_limit(outR[n]);
         buf[n * 2 + 0] = (int16_t)(yL * 32767.0f);
         buf[n * 2 + 1] = (int16_t)(yR * 32767.0f);
+    }
+}
+
+/* ===== r19.16 — SYNTH mode: V2 sound-cores behind the ambient engine =====
+ *
+ * mode 0 = the ambient engine (identity, default). 1..SYNTH-count = a V2
+ * sound-core rendered by the backend (synth_host, registered by the product
+ * main — the engine keeps NO link dependency on src/v2, so every existing
+ * host test still links). Switching crossfades ~15 ms equal-power between
+ * the two rendered paths (REALTIME_AUDIO_RULES §4: algorithm changes need a
+ * crossfade, never a hard swap). During the fade both paths render (bounded,
+ * a handful of blocks); in steady state only the active one runs. */
+#define SYNTH_XFADE_SAMPLES 662            /* ~15 ms at 44.1 kHz */
+
+static int  s_synth_cur   = 0;             /* what the render currently is   */
+static int  s_xfade_pos   = -1;            /* -1 = no fade in progress       */
+static int16_t s_v2buf[BLOCK * 2];         /* V2 render scratch (interleaved) */
+
+void engine_set_synth_backend(const engine_synth_backend_t *be) { s_synth_be = be; }
+
+void engine_set_synth(int idx) {
+    if (idx < 0) idx = 0;
+    if (idx > 0 && !s_synth_be) return;    /* no backend (bench/host) = ambient only */
+    if (idx == s_synth_tgt) return;
+    if (idx > 0) {
+        s_synth_be->select(idx - 1);       /* control rate — safe             */
+        s_synth_be->panic();
+        engine_all_off();                  /* V1 tails decay during fade-out  */
+    } else {
+        /* Back to ambient: V2 shares the single reverb.c tank and set its
+         * own params — restore V1's cached musical reverb (size/damp/drive/
+         * wet) so the ambient identity returns exactly as the user left it. */
+        recompute_reverb_from_presets();
+    }
+    s_synth_tgt = idx;                     /* render picks the fade up        */
+}
+
+int engine_synth(void) { return s_synth_tgt; }
+
+void engine_render(int16_t *buf, int frames) {
+    if (frames > BLOCK) frames = BLOCK;
+
+    int tgt = s_synth_tgt;
+    if (tgt != s_synth_cur && s_xfade_pos < 0) s_xfade_pos = 0;
+
+    const bool need_v1 = (s_synth_cur == 0) || (tgt == 0);
+    const bool need_v2 = (s_synth_cur >  0) || (tgt >  0);
+
+    if (!need_v2) { render_ambient(buf, frames); return; }
+    if (!need_v1 && s_xfade_pos < 0 && s_synth_be) {
+        s_synth_be->render(buf, frames);
+        return;
+    }
+
+    /* fade (or v2↔v2 switch, which select() already made seamless) */
+    render_ambient(buf, frames);
+    if (s_synth_be) s_synth_be->render(s_v2buf, frames);
+    else            memset(s_v2buf, 0, (size_t)frames * 2 * sizeof(int16_t));
+
+    for (int n = 0; n < frames; ++n) {
+        float t = 1.0f;                              /* 0 = v1, 1 = v2 side  */
+        if (s_xfade_pos >= 0) {
+            float p = (float)(s_xfade_pos + n) / (float)SYNTH_XFADE_SAMPLES;
+            if (p > 1.0f) p = 1.0f;
+            t = (tgt > 0) ? p : 1.0f - p;            /* fade toward target   */
+        } else {
+            t = (s_synth_cur > 0) ? 1.0f : 0.0f;
+        }
+        /* linear complementary blend (a+b=1). Both paths are already
+         * soft-limited, and at 15 ms the centre dip of a linear fade is
+         * inaudible — no per-sample sqrt in the hot path. */
+        float a = 1.0f - t, b = t;
+        int L = (int)(a * (float)buf[2*n]   + b * (float)s_v2buf[2*n]);
+        int R = (int)(a * (float)buf[2*n+1] + b * (float)s_v2buf[2*n+1]);
+        if (L >  32767) L =  32767;
+        if (L < -32768) L = -32768;
+        if (R >  32767) R =  32767;
+        if (R < -32768) R = -32768;
+        buf[2*n]   = (int16_t)L;
+        buf[2*n+1] = (int16_t)R;
+    }
+    if (s_xfade_pos >= 0) {
+        s_xfade_pos += frames;
+        if (s_xfade_pos >= SYNTH_XFADE_SAMPLES) {
+            s_synth_cur = tgt;
+            s_xfade_pos = -1;
+        }
     }
 }
 

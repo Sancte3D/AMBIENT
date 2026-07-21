@@ -89,8 +89,8 @@
 <div class="sheets"><div class="scard">
         <div class="sh"><b>Power</b> <span class="sfile">power_tree.kicad_sch</span></div>
         <div class="sd">USB-C / battery → boost U8 → +5V → load-switch U_PWR → LDO → +3V3; USB D±</div>
-        <div class="smeta">43 parts · 6 inter-sheet nets</div>
-        <div class="snets">+3V3_OUT, +5V_OUT, GND_OUT, USB_DM, USB_DP, VBUS_USBC</div>
+        <div class="smeta">42 parts · 9 inter-sheet nets</div>
+        <div class="snets">+3V3_OUT, +5V_OUT, GND_OUT, PWR_ON, USB_DM, USB_DP, VBUS_FUSED, VBUS_USBC, VSYS</div>
         <a class="sopen" href="../../kicad/power_tree.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>MCU</b> <span class="sfile">stm32h743.kicad_sch</span></div>
         <div class="sd">STM32H743 + decoupling + 8 MHz crystal + SWD + BOOT0 — the hub (most inter-sheet nets)</div>
@@ -98,8 +98,8 @@
         <div class="snets">AMP_nMUTE, AMP_nSHDN, BAT_PLUS, BRIGHT_A, BRIGHT_B, BRIGHT_SW, DISPLAY_A, DISPLAY_B, DISPLAY_SW, DRIVE_A …</div>
         <a class="sopen" href="../../kicad/stm32h743.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Audio</b> <span class="sfile">audio.kicad_sch</span></div>
-        <div class="sd">PCM5102A DAC (I²S) → PAM8403 Class-D amp + line-out / MIDI jacks</div>
-        <div class="smeta">45 parts · 7 inter-sheet nets</div>
+        <div class="sd">PCM5102A DAC (I²S) → PAM8406 Class-D amp + line-out / MIDI jacks</div>
+        <div class="smeta">52 parts · 7 inter-sheet nets</div>
         <div class="snets">AMP_nMUTE, AMP_nSHDN, I2S_BCK, I2S_DOUT, I2S_LRCK, JACK_DETECT, PCM_XSMT</div>
         <a class="sopen" href="../../kicad/audio.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>I/O &amp; LEDs</b> <span class="sfile">mcp.kicad_sch</span></div>
@@ -119,8 +119,8 @@
         <a class="sopen" href="../../kicad/lcd.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Battery &amp; charge</b> <span class="sfile">battery.kicad_sch</span></div>
         <div class="sd">LiPo JST + MCP73831 charger + power-path (charges while off)</div>
-        <div class="smeta">38 parts · 3 inter-sheet nets</div>
-        <div class="snets">+5V_OUT, BAT_PLUS, VBUS_USBC</div>
+        <div class="smeta">43 parts · 5 inter-sheet nets</div>
+        <div class="snets">+5V_OUT, BAT_PLUS, PWR_ON, VBUS_FUSED, VSYS</div>
         <a class="sopen" href="../../kicad/battery.kicad_sch">open in KiCad ↗</a></div><div class="scard">
         <div class="sh"><b>Root / hierarchy</b> <span class="sfile">field_ambience.kicad_sch</span></div>
         <div class="sd">top sheet — ties the 7 functional sheets together</div>
@@ -178,8 +178,8 @@
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
       <tbody><tr class="">
         <td class="ref">U9</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C5333729.html" target="_blank" rel="noopener">APS6404L-3SQR-SN (SOP-8, 8 MB QSPI PSRAM) ↗</a></td>
-        <td class="fn">external RAM over QUADSPI BK2 — memory-mapped expansion for sample playback / convolution IRs / big granular / multi-table Blendwave (r19.10, ADR-0022). LCSC C5333729, ~$2.94, JLC-Economic assemblable (verify live before order). Pinout VERIFIED vs the AP Memory datasheet Rev 2.1 (1=/CE 2=SIO1 3=SIO2 4=VSS 5=SIO0 6=SCLK 7=SIO3 8=VDD); footprint SOIC-8_3.9x4.9_P1.27 matches SOP-8L(150) — pull the exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C5333729 as a final check. Decoupling: C_QSPI 100nF + C_QSPI2 10µF.</td>
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C3028887.html" target="_blank" rel="noopener">APS6404L-3SQN-SN (SOP-8, 8 MB QSPI PSRAM) ↗</a></td>
+        <td class="fn">external RAM over QUADSPI BK2 — memory-mapped expansion for sample playback / convolution IRs / big granular / multi-table Blendwave (r19.10, ADR-0022). LCSC C3028887 (r19.15: swapped from C5333729/3SQR-SN which went OUT OF STOCK; 3SQN-SN = same 3V family, 2.7-3.6V, same SOP-8 pinout; LCSC 432 in stock @ $3.09/100, JLC Economic+Standard, checked live 2026-07-07). Pinout VERIFIED vs the AP Memory datasheet Rev 2.1 (1=/CE 2=SIO1 3=SIO2 4=VSS 5=SIO0 6=SCLK 7=SIO3 8=VDD); footprint SOIC-8_3.9x4.9_P1.27 matches SOP-8L(150) — pull the exact LCSC land pattern via easyeda2kicad --full --lcsc_id=C3028887 as a final check. Decoupling: C_QSPI 100nF + C_QSPI2 10µF.</td>
         <td class="jlc"><span class="b warn">JLC ? verify</span></td></tr></tbody></table></section><section><h2 style="border-color:#ef4444"><span class="dot" style="background:#ef4444"></span>Power</h2>
       <table><thead><tr><th>Ref</th><th>Part (→ LCSC/JLC page)</th><th>What it's for</th><th>JLC assembly</th></tr></thead>
       <tbody><tr class="vis">
@@ -250,9 +250,9 @@
         <td class="fn">I²S → analog audio</td>
         <td class="jlc"><span class="b ext">JLC Extended · 2,045</span></td></tr><tr class="">
         <td class="ref">U4</td>
-        <td class="part"><a href="https://www.lcsc.com/product-detail/C17337.html" target="_blank" rel="noopener">PAM8403 Class-D amp ↗</a></td>
-        <td class="fn">drives the speakers</td>
-        <td class="jlc"><span class="b ext">JLC Extended · 3,903</span></td></tr><tr class="vis">
+        <td class="part"><a href="https://www.lcsc.com/product-detail/C86270.html" target="_blank" rel="noopener">PAM8406 Class-D amp ↗</a></td>
+        <td class="fn">drives the speakers (r19.37, ADR-0025: replaces NRND PAM8403; same 16-SOIC; MODE=+5V→Class-D; input RI 174k = gain +4.3 dB, C_in 10nF = speaker HPF ~91 Hz; line-out/HP unaffected. C86270, lifecycle Active, JLC SMT-assembly-available, LCSC 8,731 in stock verified 2026-07-20)</td>
+        <td class="jlc"><span class="b ext">JLC Extended · 8,731</span></td></tr><tr class="vis">
         <td class="ref">J8</td>
         <td class="part"><a href="https://www.lcsc.com/product-detail/C431535.html" target="_blank" rel="noopener">PJ-320D 3.5 mm line-out ↗</a><span class="eye">👁</span></td>
         <td class="fn">audio out (r18.82: pad map fixed against the SHOU HAN datasheet — pads are 1=sleeve, 2=ring, 3=detect, 4=tip; the old map put LEFT AUDIO on the grounded barrel and the detect line on the tip. Footprint pad pitch + locator holes verified = drawing. Added R_DET 10k + C_DET 1µF: the detect contact rests on the TIP when unplugged, so the MCP input needed clamp-current protection from the DAC’s ±3V swings)</td>
