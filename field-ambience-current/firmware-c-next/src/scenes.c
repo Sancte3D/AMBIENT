@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define SCENE_MAGIC 0x53434E34u   /* "SCN4" — r19.32: menu_state_t + chord color */
+#define SCENE_MAGIC 0x53434E35u   /* "SCN5" — r19.41: menu_state_t + FX page */
 
 typedef struct {
     uint32_t     magic;           /* SCENE_MAGIC = belegt                  */

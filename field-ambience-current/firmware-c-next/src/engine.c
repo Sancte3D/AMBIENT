@@ -13,11 +13,9 @@
 #include "engine.h"
 #include "pad.h"
 #include "reverb.h"
+#include "fx_master.h"
 #include "texture.h"
 #include "ambience.h"
-#include "tape.h"
-#include "echo.h"
-#include "blur.h"
 #include "bass.h"
 #include "drone.h"
 #include "reverb_presets.h"
@@ -28,7 +26,6 @@
 #include "pluck.h"
 #include "glass.h"
 #include "ember.h"
-#include "shimmer.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -80,6 +77,13 @@ static uint32_t eno_next_ms[ENO_LOOPS];
 static uint32_t eno_off_ms[ENO_LOOPS];
 static uint8_t  eno_on[ENO_LOOPS];
 static int      eno_timing_valid;
+/* r19.41: reverse swell for SCHEDULED notes only (task rule — a live key
+ * press cannot be preceded without look-ahead latency). The Eno loops are
+ * the composer's genuinely pre-known events: after each fire the next fire
+ * time is exact, so the swell triggers SWELL_LEAD_MS before it with the
+ * same lead. One-shot per cycle. */
+#define ENO_SWELL_LEAD_MS 1500u
+static uint8_t  eno_swell_armed[ENO_LOOPS];
 #define ENO_SRC(i) ((uint8_t)(5 + (i)))
 
 /* Generative state (r19.0: rebuilt on the HARMONIC SAFETY CORE, see
@@ -175,8 +179,6 @@ static float dryL [BLOCK];
 static float dryR [BLOCK];
 static float sendL[BLOCK];
 static float sendR[BLOCK];
-static float wetL [BLOCK];
-static float wetR [BLOCK];
 
 static float send_amount_cur, send_amount_tgt;
 static float wet_amp_cur,     wet_amp_tgt;
@@ -244,12 +246,13 @@ static void recompute_reverb_from_presets(void) {
 
 void engine_init(void) {
     pad_init();
-    reverb_init();
+    reverb_init();      /* tank still owned by the V2 synth hosts (SYNTH mode) */
     texture_init();
     ambience_init();
-    tape_init();
-    echo_init();
-    blur_init();
+    /* r19.41: the legacy master processors (tape/echo/blur/shimmer + master
+     * reverb render) are replaced by the ambient effects engine. Init runs
+     * here — outside the audio callback — and FAILS CLOSED to dry audio. */
+    fx_master_init();
     bass_init();
     drone_init();
 
@@ -300,10 +303,10 @@ void engine_init(void) {
     pluck_init();                    /* r18.89 sparkle plucks */
     glass_init();                    /* r18.98 FM glass voice */
     ember_init();                    /* r19.28 warm subtractive analog voice */
-    shimmer_init();                  /* r18.99 octave-up hall regeneration */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
     memset(eno_on,      0, sizeof eno_on);
+    memset(eno_swell_armed, 0, sizeof eno_swell_armed);
     eno_timing_valid = 0;
     melody_voice = 0;                /* PAD — the bench-tuned reference */
     body_init();                     /* r18.94 modal body (per-world material) */
@@ -449,9 +452,16 @@ void engine_set_brightness(float hz)  {
     bright_damp_trim = dsp_clampf(-hz * (0.18f / 800.0f), -0.135f, 0.18f);
     reverb_apply();
     pluck_set_damp(dsp_clampf(0.42f - hz * (0.12f / 800.0f), 0.28f, 0.55f));
+    /* r19.41: the master-effects tone follows the same macro (hz -600..+800
+     * → 0..1, centre unchanged at the world default until the user moves it). */
+    fx_master_set_tone((hz + 600.0f) / 1400.0f);
 }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
-void engine_set_atmosphere(float v)   { ambience_set_level(dsp_clampf(v, 0.0f, 1.0f)); }
+void engine_set_atmosphere(float v)   {
+    v = dsp_clampf(v, 0.0f, 1.0f);
+    ambience_set_level(v);               /* per-world atmospheric sound layer */
+    fx_master_set_atmosphere(v);         /* r19.41: global spatial send       */
+}
 /* World change applies BOTH the texture layer (ambience) AND the harmonic
  * identity (key/mode/vibe) so each world sounds musically distinct, not just
  * texturally. The cell taps then play in the world's key/mode (brain), the
@@ -469,6 +479,11 @@ void engine_set_world(int idx) {
     engine_set_key ((int)w->key_midi);   /* brain key + drone root          */
     engine_set_mode((int)w->mode);       /* brain mode + reverb recompute   */
     engine_set_vibe((int)w->vibe);       /* brain vibe + reverb recompute   */
+    /* r19.41: master-effects world voicing (Tokyo/Coast/Drive/Hours map 1:1
+     * onto the engine worlds). The menu pushes its macro values right after
+     * this call, overwriting the user-facing fields — the engine keeps its
+     * curated width/tone/level/delay for the world. */
+    fx_master_set_world(idx);
 }
 void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
 
@@ -477,35 +492,39 @@ void engine_set_motion(float v) {
     v = dsp_clampf(v, 0.0f, 1.0f);
     /* user 0..1 → pad-LFO depth 0..2 (centre 0.5 = default movement). */
     pad_set_motion(v * 2.0f);
+    fx_master_set_motion(v);             /* r19.41: chorus/slow modulation */
 }
 void engine_set_age(float v) {
-    v = dsp_clampf(v, 0.0f, 1.0f);
-    /* user 0..1 → hiss 0..0.015 (≈ -36 dBFS at max) + sat drive 1.0..1.40.
-     * v=0.30 lands near the dreamy_warm reference (hiss 0.005, drive 1.10). */
-    tape_set_hiss_amount(0.0012f + v * v * 0.005f);   /* r18.97: square, quiet */
-    tape_set_saturation_drive(1.0f + v * 0.40f);
-    tape_set_crackle(v);             /* r18.89: vinyl ticks join the macro */
-    /* r18.99: age also un-steadies the transport — square curve again, so
-     * the reference band (v ≤ 0.3) barely moves and old tape gets drunk. */
-    tape_set_wow_depth(v * v);
+    /* r19.41: wow, flutter, bandwidth loss, saturation, hiss and hum all
+     * live in the master-effects engine now (its `age` parameter) — the
+     * legacy tape module left the audio path with the engine swap. */
+    fx_master_set_age(dsp_clampf(v, 0.0f, 1.0f));
 }
 
-/* r18.99 SHIMMER macro (menu slot). Pure pass-through to the module. */
+/* SHIMMER macro (menu slot). r19.41: restrained octave regeneration inside
+ * the master-effects engine (replaces the legacy shimmer wrap-loop). */
 void engine_set_shimmer(float v) {
-    shimmer_set_amount(dsp_clampf(v, 0.0f, 1.0f));
+    fx_master_set_shimmer(dsp_clampf(v, 0.0f, 1.0f));
 }
 
-/* Echo macro — single setter, internally maps to time + feedback + wet +
- * tone in echo.c. See echo.c::recompute_internals for the mapping. */
+/* Echo macro. r19.41: filtered ping-pong delay inside the master-effects
+ * engine (replaces the legacy echo.c tape-style delay). */
 void engine_set_echo(float v) {
-    echo_set_amount(dsp_clampf(v, 0.0f, 1.0f));
+    fx_master_set_echo(dsp_clampf(v, 0.0f, 1.0f));
 }
 
-/* Blur macro — granular smear. See blur.c::recompute_params for the
- * internal mapping (density + grain size + pitch jitter + wet). */
+/* Blur macro. r19.41: deterministic temporal blur inside the master-effects
+ * engine (replaces the legacy blur.c granular cloud). */
 void engine_set_blur(float v) {
-    blur_set_amount(dsp_clampf(v, 0.0f, 1.0f));
+    fx_master_set_blur(dsp_clampf(v, 0.0f, 1.0f));
 }
+
+/* r19.41 FX effect page: 0=Bypass..8=Dream Chain (menu slot; Dream Chain is
+ * the boot default, single modes stay selectable for A/B listening). */
+void engine_set_fx_mode(int idx)       { fx_master_set_mode(idx); }
+int  engine_fx_mode(void)              { return fx_master_mode(); }
+int  engine_fx_mode_count(void)        { return fx_master_mode_count(); }
+const char *engine_fx_mode_name(int i) { return fx_master_mode_name(i); }
 
 /* Step 12b #1 — musical-state setters. Each triggers a preset recompute so
  * the reverb shifts character with the mode/vibe/macro change. The reverb
@@ -537,7 +556,8 @@ void engine_set_vibe(int vibe_idx) {
 }
 void engine_set_space(float v) {
     musical_space = dsp_clampf(v, 0.0f, 1.0f);
-    recompute_reverb_from_presets();
+    recompute_reverb_from_presets();     /* V2 synth hosts still use the tank */
+    fx_master_set_space(musical_space);  /* r19.41: master-effects room scale */
 }
 void engine_set_mood(float v) {
     musical_mood = dsp_clampf(v, 0.0f, 1.0f);
@@ -752,6 +772,25 @@ void engine_generative_tick(uint32_t now_ms) {
             eno_on[i] = 0;
             snd_eno_midi[i] = 0;
         }
+        /* r19.41: the next fire time is exact — arm the reverse swell
+         * exactly ENO_SWELL_LEAD_MS ahead of it, once per cycle. */
+        if (!eno_swell_armed[i] &&
+            (int32_t)(eno_next_ms[i] - now_ms) > 0 &&
+            (uint32_t)(eno_next_ms[i] - now_ms) <= ENO_SWELL_LEAD_MS) {
+            /* Predict the scheduled note from the CURRENT harmony with the
+             * same register rule the fire branch applies. A state mutation
+             * inside the lead window can shift it — the pre-tail is a
+             * spectral gesture, not a pitch guarantee. */
+            int hv[HARMONY_VOICES];
+            harmony_voices(hv, HARMONY_VOICES);
+            int midi = hv[i];
+            while (midi > 74) midi -= 12;
+            while (midi < 50) midi += 12;
+            fx_master_trigger_swell(tuning_hz((float)midi),
+                                    ENO_AMP[i] * composer_params()->bed_amp,
+                                    (float)ENO_SWELL_LEAD_MS / 1000.0f);
+            eno_swell_armed[i] = 1;
+        }
         if ((int32_t)(now_ms - eno_next_ms[i]) >= 0) {
             /* r19.0: each loop owns ONE voice of the harmonic STATE (the
              * voiced, collision-safe upper harmony) — the recombination
@@ -774,6 +813,7 @@ void engine_generative_tick(uint32_t now_ms) {
              * playing human) without machine-gunning retriggers. */
             while ((int32_t)(now_ms - eno_next_ms[i]) >= 0)
                 eno_next_ms[i] += ENO_PERIOD_MS[i];
+            eno_swell_armed[i] = 0;      /* re-arm for the next known fire */
         }
     }
     }   /* r19.34: end of s_eno_enabled branch */
@@ -945,49 +985,19 @@ static void render_ambient(int16_t *buf, int frames) {
      * character) straight into dry + hall send — no modal body coloring. */
     ember_render_mix(dryL, dryR, sendL, sendR, frames);
 
-    /* Echo sits AFTER all generators but BEFORE the reverb so the delay
-     * picks up the whole mix; send_amount=0.40 routes a copy of the
-     * delayed signal into the reverb send so the echo also picks up room. */
-    echo_render_mix(dryL, dryR, sendL, sendR, frames, 0.40f);
+    /* r19.41 MASTER-EFFECTS SWAP: echo, blur, tape hiss/crackle, the master
+     * reverb render and the shimmer wrap-loop all left this path — the
+     * ambient effects engine (fx_master_process below) replaces them with
+     * one coherent chain (dark FDN reverb, filtered ping-pong delay, chorus,
+     * tape age, shimmer, temporal blur — DREAM CHAIN by default). The send
+     * bus is still filled by the generators but no longer consumed here: the
+     * engine derives its global spatial send from the Atmosphere macro. The
+     * shared reverb tank stays initialised for the V2 synth hosts only. */
 
-    /* Blur (granular cloud) — captures the dry+echo mix and re-emits as a
-     * cloud of grains. Sits after echo so it grains the echoes too; before
-     * the reverb so the cloud picks up room. send_amount=0.50 — cloud +
-     * reverb is the classic "frozen-shimmer" wash. */
-    blur_render_mix(dryL, dryR, sendL, sendR, frames, 0.50f);
-
-    /* Tape character (ADR-0017 Phase 3): subtle hiss into the DRY bus only —
-     * we don't want the reverb to amplify the noise floor. r18.92: feed the
-     * program follower first so hiss/crackle duck when the music breathes. */
-    {
-        float pk = 0.0f;
-        for (int n = 0; n < frames; ++n) {
-            float a = dryL[n] < 0.0f ? -dryL[n] : dryL[n];
-            float b = dryR[n] < 0.0f ? -dryR[n] : dryR[n];
-            if (a > pk) pk = a;
-            if (b > pk) pk = b;
-        }
-        tape_set_program_level(pk);
-    }
-    tape_hiss_render_add(dryL, dryR, frames);
-
-    /* r18.89: vinyl crackle (AGE macro) — dry bus only, like the hiss. */
-    tape_crackle_render_add(dryL, dryR, frames);
-
-    /* Reverb writes (does not add) wet from send. r18.99: the shimmer
-     * loop wraps it — last block's wet, one octave up and darkened,
-     * re-enters the send; each pass climbs and dies (Sonicware/Eno
-     * shimmer principle, see shimmer.h). */
-    shimmer_feed_add(sendL, sendR, frames);
-    reverb_render(sendL, sendR, wetL, wetR, frames);
-    shimmer_capture(wetL, wetR, frames);
-
-    /* Master: sum + DC-block + volume → outL/outR; then tanh warmth
-     * (block call); then soft-limit safety net → int16. Two-pass keeps
-     * the saturation block-call cheap (one loop body, one tanh call/sample). */
+    /* Master: dry sum + DC-block + volume → outL/outR; then the effects
+     * engine; then the single soft-limit safety net → int16. */
     master_vol_cur += SMOOTH_COEF * (master_vol_tgt - master_vol_cur);
     drive_cur      += SMOOTH_COEF * (drive_tgt      - drive_cur);
-    const float wa = wet_amp_cur;
     const float mv = master_vol_cur;
 
     /* r18.89 master drive (per block: curve params + makeup are constant
@@ -1000,8 +1010,8 @@ static void render_ambient(int16_t *buf, int frames) {
 
     static float outL[BLOCK], outR[BLOCK];
     for (int n = 0; n < frames; ++n) {
-        float L = dryL[n] + wetL[n] * wa;
-        float R = dryR[n] + wetR[n] * wa;
+        float L = dryL[n];
+        float R = dryR[n];
 
         if (drv_on) {
             /* dry/wet fade over the first quarter of the knob so tiny
@@ -1020,15 +1030,12 @@ static void render_ambient(int16_t *buf, int frames) {
         outL[n] = yL * mv;
         outR[n] = yR * mv;
     }
-    /* r18.99 WOW & FLUTTER: the whole mix (hall tail included) breathes
-     * like a tape recording of the performance. AGE drives the depth;
-     * depth 0 is bit-exact bypass. Before the saturation — pitch wobble
-     * happens on the tape, the head saturation after it. */
-    tape_wow_process(outL, outR, frames);
-    /* Warm tanh saturation — "tape" colour. Always-on at the dreamy_warm
-     * reference drive (1.10). Peaks roll into the tanh knee, even harmonics
-     * appear, makeup-gain implicit (×0.78 inside). */
-    tape_saturation_process(outL, outR, frames);
+    /* r19.41: the complete master-effects chain on the final float mix —
+     * hot-path safe (no heap, bounded, LUT-only transcendentals; verified by
+     * the engine property suite). If init failed this is a bit-exact dry
+     * pass-through (fail closed). The soft_limit below stays the ONE final
+     * limiter in the path. */
+    fx_master_process(outL, outR, frames);
     for (int n = 0; n < frames; ++n) {
         /* soft_limit is now a safety net for the rare residual peak above
          * 0.75 — saturation usually already keeps us in range. */

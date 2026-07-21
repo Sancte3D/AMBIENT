@@ -112,6 +112,8 @@ set(DSP_SOURCES
     src/bass.c
     src/reverb.c
     src/reverb_presets.c
+    src/ambient_effects.c   # r19.41: master-effects engine (replaces master tape/echo/blur/shimmer)
+    src/fx_master.c         # r19.41: product adapter — owns the D2 hot arena
     src/engine.c
     src/brain.c
     src/drone.c
@@ -190,8 +192,15 @@ if(FAM_TARGET STREQUAL "h743")
     # the glob is exactly the wanted set (disabled stragglers compile empty).
     file(GLOB H743_HAL_SOURCES ${H743_VENDOR}/STM32H7xx_HAL_Driver/Src/*.c)
 
+    # r19.41: the legacy master processors are host-test-only now — the
+    # ambient effects engine replaces them on the target, and their large
+    # delay .bss (echo 207 KB + blur 69 KB in D2) is reclaimed for the
+    # effects arena. Keep them out of the target link.
+    set(DSP_SOURCES_H743 ${DSP_SOURCES})
+    list(REMOVE_ITEM DSP_SOURCES_H743
+        src/tape.c src/echo.c src/blur.c src/shimmer.c)
     add_executable(field_ambience_h743
-        ${DSP_SOURCES}
+        ${DSP_SOURCES_H743}
         ${V2_SOURCES_H743}
         ${H743_HAL_SOURCES}
         ${H743_VENDOR}/CMSIS/Device/ST/STM32H7xx/Source/system_stm32h7xx.c

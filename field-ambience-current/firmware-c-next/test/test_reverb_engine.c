@@ -203,10 +203,14 @@ static void test_engine_silent_then_note(void) {
 
 static void test_engine_reverb_tail_outlives_dry(void) {
     /* With a healthy wet-send, releasing the note should leave audible
-     * reverb tail for several seconds — the whole point of Step 11. */
+     * reverb tail for several seconds — the whole point of Step 11.
+     * r19.41: the master hall lives in the effects engine now — Space and
+     * Atmosphere are the wet controls (the legacy wet_amp/reverb_size knobs
+     * only configure the V2 tank). Same intent, new knobs. */
     engine_init();
     engine_set_send(0.8f); engine_set_wet_amp(0.7f);
-    engine_set_reverb_size(0.85f);
+    engine_set_space(0.85f);
+    engine_set_atmosphere(0.80f);
     engine_all_off();
     run_engine(SR * 6);
 
@@ -223,11 +227,18 @@ static void test_engine_reverb_tail_outlives_dry(void) {
           tail.pk_l, tail.pk_r);
     printf("  reverb tail 3.5-4.5s after release  L=%d  R=%d\n", tail.pk_l, tail.pk_r);
 
-    /* And it does decay eventually: 15 s later it should be near silent. */
+    /* And it does decay: 15 s later the level must have dropped by ≥6 dB
+     * from the tail window. r19.41: an ABSOLUTE silence check is no longer
+     * possible here — Atmosphere now also drives the per-world ambience
+     * layer (wind/waves), a constant bed that never decays by design
+     * (measured floor ~680 LSB at this setting). The relative check still
+     * catches a runaway / never-decaying hall (end ≈ tail) while
+     * tolerating the bed. */
     run_engine((int)(15.0f * SR));
     eng_stats_t end = run_engine(SR / 2);
-    CHECK(end.pk_l < 200 && end.pk_r < 200,
-          "reverb tail never decays: L=%d R=%d", end.pk_l, end.pk_r);
+    CHECK(end.pk_l < tail.pk_l / 2 && end.pk_r < tail.pk_r / 2,
+          "reverb tail never decays: tail L=%d R=%d → end L=%d R=%d",
+          tail.pk_l, tail.pk_r, end.pk_l, end.pk_r);
 }
 
 static void test_engine_overload_holds_int16(void) {

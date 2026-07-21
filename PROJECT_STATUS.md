@@ -1,6 +1,24 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-20 (r19.40 — Realtime-Safety-Runde; r19.37 PAM8406-Endstufe + Gain-Staging. Davor r19.26–r19.36 Sound/Bedienlogik-Runden, r19.18 BQ24074)**
+**Updated: 2026-07-20 (r19.41 — Master-Effects-Engine integriert; davor r19.38–r19.40 Realtime-Safety, r19.37 PAM8406-Endstufe + Gain-Staging)**
+
+> **r19.41 (2026-07-20) — Master-Effects-Integration:** Die gelieferte
+> Effects-Engine (`effects-engine/`) ersetzt die Legacy-Master-Kette im
+> Produktpfad. `render_ambient`: echo/blur/tape/shimmer + Master-Reverb raus,
+> EIN `ambient_fx_process_f32` auf dem finalen Float-Mix vor dem einzigen
+> Soft-Limiter rein (DREAM CHAIN default; neuer Menü-Slot **FX** mit 9 Modi
+> für A/B; Scenes → "SCN5"). Makro-Routing 1:1 (Space/Atmos/Echo/Motion/Age/
+> Shimmer/Blur/Tone), Worlds 1:1, Reverse-Swell an die Eno-Loops (echte
+> Scheduled-Notes, 1,5 s Lead). Legacy-Module sind NUR noch Host-Test-Code —
+> aus dem H743-Link entfernt, ihr Delay-RAM (echo 207 KB + blur 69 KB, D2)
+> reklamiert: **Arena 245.760 B in RAM_D2 @0x30001040, .map-verifiziert**
+> (Cross-Build arm-none-eabi 13.2.1: FLASH 11 %, D1 74 %, D2 86 %, 40 KB
+> Marge). Property-Suite (478.857 Checks) im Runner, alle Suiten grün,
+> Hot-Path-Lint sauber (Engine hat 0 Transzendentale). **Offen (Bench):**
+> DWT-WCET <60 % + Soak/Klick/DC-Messung — siehe
+> `effects-engine/INTEGRATION_REPORT.md`. Klang-Hinweis: DREAM voiced den
+> Mix ~5,7 dB leiser als die alte Kette (gemessen) — beim Bring-up zusammen
+> mit dem r19.37-Amp-Gain beurteilen.
 
 > **r19.38–r19.40 (2026-07-20) — Realtime-Safety (externer Review):** drei
 > ISR-vs-Main-Befunde gegen den aktuellen Stand geprüft und behoben.

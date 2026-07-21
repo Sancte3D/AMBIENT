@@ -66,6 +66,7 @@ typedef enum {
     MP_CELL,      /* r19.23/r19.27: cell mode 0 Note / 1 Bloom / 2 Land (user-global) */
     MP_BASS,      /* r19.31: HARMONY bass 0 Off / 1 Root / 2 Fifth / 3 Drift */
     MP_COLOR,     /* r19.32: HARMONY chord color 0 Pure / 1 Open / 2 Warm / 3 Deep */
+    MP_FX,        /* r19.41: master-effects page 0 Bypass .. 8 Dream (default 8) */
     MP_COUNT
 } menu_param_t;
 
@@ -95,6 +96,7 @@ typedef struct {
     void (*set_cell)       (int mode);               /* r19.23/r19.27: 0 Note / 1 Bloom / 2 Land */
     void (*set_bass)       (int mode);               /* r19.31: 0 Off / 1 Root / 2 Fifth / 3 Drift */
     void (*set_color)      (int color);              /* r19.32: 0 Pure / 1 Open / 2 Warm / 3 Deep */
+    void (*set_fx)         (int mode);               /* r19.41: 0 Bypass .. 8 Dream Chain */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);
@@ -120,7 +122,7 @@ void menu_set_locks(uint16_t mask);      /* Scenes-Recall stellt sie wieder her 
  * Snapshot dessen, was eine Scene speichert (KEINE gehaltenen Noten,
  * KEIN Volume — Lautstaerke springt beim Recall nie). */
 typedef struct {
-    uint8_t  world, key_pc, tuning, voice, synth, cell, bass, color;
+    uint8_t  world, key_pc, tuning, voice, synth, cell, bass, color, fx;
     uint8_t  space, shimmer, atmos, motion, age, echo, blur;   /* % */
     uint16_t locks;
 } menu_state_t;

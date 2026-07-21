@@ -85,7 +85,11 @@ int main(void) {
     controls_init(); engine_init();
     controls_modifier(MOD_DRONE, true);
     CHECK(controls_modifier_active(MOD_DRONE), "Drone latched");
-    CHECK(peak_over(2.5f) > 300, "drone produces audio (after bloom)");
+    /* r19.41: threshold recalibrated 300→250 — the master-effects DREAM
+     * chain voices the mix ~5.7 dB below the legacy chain (world level trim
+     * + dark tone + tape age). Measured: drone peak 540 in BYPASS, 280 in
+     * DREAM; the assertion's purpose (drone audibly present) still holds. */
+    CHECK(peak_over(2.5f) > 250, "drone produces audio (after bloom)");
     controls_modifier(MOD_DRONE, true);     /* toggle off */
     CHECK(!controls_modifier_active(MOD_DRONE), "Drone toggles off");
     controls_modifier(MOD_GENERATE, true);

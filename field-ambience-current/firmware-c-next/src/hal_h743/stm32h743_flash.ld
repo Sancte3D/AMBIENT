@@ -150,13 +150,17 @@ SECTIONS
     _edtcm_bss = .;
   } >DTCMRAM
 
-  /* echo (~207 KB) + blur (~69 KB) delay lines → D2 SRAM1-3 (288 KB). */
+  /* r19.41: the master-effects adapter (storage 4 KB + hot arena 240 KB +
+   * interleave scratch 4 KB ≈ 248 KB) → D2 SRAM1-3 (288 KB). This is the
+   * region the legacy echo (~207 KB) + blur (~69 KB) delay lines occupied;
+   * those modules are host-test-only now (out of the target link). CPU-only
+   * access from engine_render — never DMA — so D2 is safe per ADR-0015 D3.
+   * Confirm placement + margin in the .map after any change here. */
   .d2_bss (NOLOAD) :
   {
-    . = ALIGN(4);
+    . = ALIGN(32);
     _sd2_bss = .;
-    *echo.c.obj(.bss .bss* COMMON)
-    *blur.c.obj(.bss .bss* COMMON)
+    *fx_master.c.obj(.bss .bss* COMMON)
     . = ALIGN(4);
     _ed2_bss = .;
   } >RAM_D2

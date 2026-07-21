@@ -117,6 +117,11 @@ void engine_set_age(float amount_0_1);         /* tape hiss + saturation combo *
 void engine_set_echo(float amount_0_1);        /* tape-style stereo delay macro */
 void engine_set_blur(float amount_0_1);       /* granular cloud / smear macro */
 void engine_set_shimmer(float amount_0_1);     /* r18.99: octave-up hall regeneration */
+/* r19.41 master-effects page: 0=Bypass..8=Dream Chain (boot default 8). */
+void engine_set_fx_mode(int idx);
+int  engine_fx_mode(void);
+int  engine_fx_mode_count(void);
+const char *engine_fx_mode_name(int idx);
 void engine_set_bass_depth(float depth_0_1);   /* famSubBass/DeepBass depth */
 void engine_set_world(int world_idx);          /* pick ambience generator (ADR-0017) */
 
