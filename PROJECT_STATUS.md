@@ -1,6 +1,20 @@
 # PROJECT STATUS
 
-**Updated: 2026-07-20 (r19.37 — Audio-Endstufe: PAM8403→PAM8406 + Gain-Staging. Davor r19.26–r19.36 Sound/Bedienlogik-Runden, r19.25 Gesten-Loop, r19.18 BQ24074)**
+**Updated: 2026-07-20 (r19.40 — Realtime-Safety-Runde; r19.37 PAM8406-Endstufe + Gain-Staging. Davor r19.26–r19.36 Sound/Bedienlogik-Runden, r19.18 BQ24074)**
+
+> **r19.38–r19.40 (2026-07-20) — Realtime-Safety (externer Review):** drei
+> ISR-vs-Main-Befunde gegen den aktuellen Stand geprüft und behoben.
+> **r19.38** pad_note_on veröffentlicht die Voice jetzt ZULETZT (used=true nach
+> allen Feld-Inits + Compiler-Barrier) — der DMA-IRQ kann keine halb-
+> initialisierte Voice mehr rendern. **r19.39** menu_init pusht das World-0-
+> Preset in die Engine (Panel zeigte Makros, die die Engine bis zum ersten
+> World-Wechsel nicht hatte — „das Instrument log"). **r19.40** PADsynth-
+> Tabellen-Rebuild: der Reader wird während des (sub-ms) Final-Copy gegatet
+> (liefert saubere 0 statt torn data). Ein echter Double-Buffer wäre die
+> Ideallösung, aber der RAM-Haushalt hat keinen Platz für eine 2. 64-KB-Tabelle
+> (D1 knapp, D2 zu 96 % voll, D3 latenz-kritisch, DTCM = pad+stack) — dokumen-
+> tiert. Host-Suite grün. Offen aus dem Review: Live/Generate-Note-off-Flush,
+> Key/World/Tuning-Lifecycle am Blockrand, PAD-Mipmaps/Aliasing.
 
 > **r19.37 (2026-07-20) — Audio-Front-End-Revision (ADR-0025):** U4 von
 > **PAM8403 (NRND) auf PAM8406DR (Active, C86270)** getauscht — gleiches

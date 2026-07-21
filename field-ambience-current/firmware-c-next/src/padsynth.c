@@ -18,13 +18,25 @@
  * N-point real inverse transform computed with one N/2-point COMPLEX IFFT
  * (even/odd interleave, textbook Cooley-Tukey identity; same math, same
  * table up to float rounding). Scratch drops from 2×N floats (128 KB) to
- * 2×(N/2+1) (64 KB). s_table is still written ONLY in the final pass, so
- * live audio keeps reading the old table during a world-change rebuild. */
+ * 2×(N/2+1) (64 KB).
+ *
+ * r19.40 realtime-safety: the final pass writes all N floats of s_table in a
+ * loop while the audio ISR reads it — so during that (sub-ms) window a read
+ * could straddle the write frontier and return a torn value (old+new mixed →
+ * a loud spectral pop). A true fix is a double buffer + pointer swap, but the
+ * RAM budget has no home for a second 64 KB table (D1 tight, D2 96 % full with
+ * echo+blur, D3 high-latency, DTCM holds pad+stack). So instead the reader is
+ * GATED: while s_publishing is set (only around the final copy) it returns a
+ * clean 0.0f instead of a half-written sample. Same tiny window as before, but
+ * a bounded silence rather than torn data — and the world-change re-bloom
+ * crossfade masks it. (Not a hard atomicity guarantee against a flag flip mid-
+ * read; that needs the double buffer. It removes the torn-garbage case.) */
 #define NHALF (N / 2)
 static float s_table[N];
 static float s_xr[NHALF + 1];   /* X[0..N/2] half-spectrum, then Z (in place) */
 static float s_xi[NHALF + 1];
 static int   s_ready = 0;
+static volatile int s_publishing = 0;   /* 1 only during the final s_table copy */
 
 /* --- deterministic RNG (fixed seed per build → reproducible tests) ------ */
 static uint32_t s_rng;
@@ -214,10 +226,16 @@ void padsynth_build(int world_idx, uint32_t seed) {
         acc += (double)s_xr[m] * s_xr[m] + (double)s_xi[m] * s_xi[m];
     float rms  = (float)sqrt(acc / (double)N);
     float gain = rms > 1e-9f ? 0.22f / rms : 0.0f;
+    /* Gate the reader for the duration of the (non-atomic) table copy so the
+     * audio ISR never reads a half-written s_table. See the header note. */
+    s_publishing = 1;
+    __asm__ volatile("" ::: "memory");
     for (int m = 0; m < NHALF; ++m) {                  /* single final pass */
         s_table[2 * m]     = s_xr[m] * gain;
         s_table[2 * m + 1] = s_xi[m] * gain;
     }
+    __asm__ volatile("" ::: "memory");
+    s_publishing = 0;
 
     s_ready = 1;
 }
@@ -225,6 +243,7 @@ void padsynth_build(int world_idx, uint32_t seed) {
 int padsynth_ready(void) { return s_ready; }
 
 float padsynth_read(float phase) {
+    if (s_publishing) return 0.0f;   /* table mid-rewrite: clean 0, never torn */
     int   i0 = (int)phase;
     float fr = phase - (float)i0;
     i0 &= (N - 1);
