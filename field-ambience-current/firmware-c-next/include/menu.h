@@ -97,6 +97,7 @@ typedef struct {
     void (*set_bass)       (int mode);               /* r19.31: 0 Off / 1 Root / 2 Fifth / 3 Drift */
     void (*set_color)      (int color);              /* r19.32: 0 Pure / 1 Open / 2 Warm / 3 Deep */
     void (*set_fx)         (int mode);               /* r19.41: 0 Bypass .. 8 Dream Chain */
+    void (*set_bright)     (float hz);               /* r19.45: per-world pad brightness (Hz) */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

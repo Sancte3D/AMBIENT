@@ -33,6 +33,7 @@ static void wav_header(FILE *f, uint32_t nframes){
 static void apply_world(int i){
     const world_t *w = worlds_get(i);
     engine_set_world(i);                       /* key/mode/vibe + fx + ambience + colour/bass via bloom */
+    engine_set_brightness((float)w->brightness_hz);   /* r19.45 per-world brightness */
     engine_set_space     (w->space_pct   / 100.0f);
     engine_set_shimmer   (w->shimmer_pct / 100.0f);
     engine_set_atmosphere(w->atmos_pct   / 100.0f);

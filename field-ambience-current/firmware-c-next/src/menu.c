@@ -129,6 +129,7 @@ static void load_world_preset(void) {
     if (cb.set_color)      cb.set_color(color_i);
     if (cb.set_bass)       cb.set_bass(bass_i);
     if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_bright)     cb.set_bright((float)w->brightness_hz);
     if (cb.set_space)      cb.set_space     (space  / 100.0f);
     if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
     if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
@@ -196,6 +197,7 @@ void menu_apply_state(const menu_state_t *st) {
     if (cb.set_cell)       cb.set_cell(cell_i);
     if (cb.set_bass)       cb.set_bass(bass_i);
     if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_bright)     cb.set_bright((float)worlds_get(world_i)->brightness_hz);
     if (cb.set_color)      cb.set_color(color_i);
 }
 
@@ -233,6 +235,7 @@ void menu_init(const menu_callbacks_t *cbs) {
         if (cb.set_color)      cb.set_color(color_i);
         if (cb.set_bass)       cb.set_bass(bass_i);
     if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_bright)     cb.set_bright((float)worlds_get(world_i)->brightness_hz);
         if (cb.set_space)      cb.set_space     (space  / 100.0f);
         if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
         if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);

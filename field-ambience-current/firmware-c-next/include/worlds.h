@@ -46,6 +46,11 @@ typedef struct {
      * Makes the four worlds feel harmonically distinct, not just texturally. */
     uint8_t     chord_color;       /* 0 Pure / 1 Open / 2 Warm / 3 Deep       */
     uint8_t     bass_mode;         /* 0 Off / 1 Root / 2 Fifth / 3 Drift      */
+    /* r19.45: per-world brightness (pad filter cutoff + fx tone + reverb
+     * damping), Hz offset in [-600, +800]. THE strongest timbral lever — dark
+     * worlds go negative, bright/open worlds positive. Loaded on world-change
+     * like the macros; the BRIGHT encoder then nudges from here. */
+    int16_t     brightness_hz;
 } world_t;
 
 /* Get the immutable descriptor for a world index. Index is clamped to
