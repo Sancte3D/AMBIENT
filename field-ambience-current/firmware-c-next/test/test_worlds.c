@@ -14,34 +14,33 @@ static int g_checks = 0, g_fails = 0;
     fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } } while (0)
 
 int main(void) {
-    /* exactly four worlds, in order Tokyo → Coast → Drive → After Hours */
-    CHECK(worlds_count() == 4, "worlds_count = %d", worlds_count());
+    /* r19.44: five LANDSCAPE worlds, in order Alps → Open Sea → Fjords →
+     * Moss Fields → Desert (was the four nocturnal-city worlds). */
+    CHECK(worlds_count() == 5, "worlds_count = %d", worlds_count());
 
-    const char *expect_names[4]    = { "Tokyo City", "Crystal Coast",
-                                       "Midnight Drive", "After Hours" };
-    const char *expect_subtitles[4] = { "night . rain", "sunset . waves",
-                                        "highway . wind", "3am . vinyl" };
-    /* the accent table from the original menu.c — these values must be
-     * preserved byte-for-byte by the lift, otherwise the UI tint shifts */
-    uint8_t expect_accent[4][3] = {
-        { 175, 205, 255 },
-        { 180, 245, 240 },
-        { 220, 180, 255 },
-        { 255, 205, 150 },
+    const char *expect_names[5]    = { "Alps", "Open Sea", "Fjords",
+                                       "Moss Fields", "Desert" };
+    const char *expect_subtitles[5] = { "high . clear", "wide . swell",
+                                        "deep . mist", "damp . fog",
+                                        "heat . stone" };
+    /* accent tints (ADR-0015: at least one channel near full) */
+    uint8_t expect_accent[5][3] = {
+        { 255, 238, 205 },   /* Alps — warm cream   */
+        { 140, 225, 255 },   /* Open Sea — aqua     */
+        { 150, 195, 255 },   /* Fjords — cold blue  */
+        { 180, 255, 195 },   /* Moss — green        */
+        { 255, 215, 150 },   /* Desert — ochre      */
     };
-    /* same preservation requirement for macro presets:
-     * space, atmos, motion, age, echo. Tone dropped (duplicate of
-     * Brightness encoder); Drums dropped (adaptive drums = own can of
-     * worms). Echo added in the post-Phase-4 perform-macros pass. */
-    uint8_t expect_preset[4][6] = {
-        /* space, atmos, motion, age, echo, blur */
-        { 42, 35, 40, 30, 35, 15 },
-        { 30, 25, 60, 20, 15, 25 },
-        { 40, 45, 30, 50, 55, 10 },
-        { 55, 50, 20, 70, 45, 35 },
+    /* macro presets: space, atmos, motion, age, echo, blur */
+    uint8_t expect_preset[5][6] = {
+        { 55, 28, 35, 12, 42,  8 },   /* Alps       */
+        { 58, 35, 65, 20, 25, 28 },   /* Open Sea   */
+        { 65, 40, 25, 25, 55, 12 },   /* Fjords     */
+        { 45, 45, 18, 35, 30, 40 },   /* Moss       */
+        { 45, 30, 15, 40, 50, 20 },   /* Desert     */
     };
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 5; ++i) {
         const world_t *w = worlds_get(i);
         CHECK(w != NULL, "worlds_get(%d) NULL", i);
         CHECK(strcmp(w->name, expect_names[i]) == 0,
@@ -78,21 +77,21 @@ int main(void) {
         CHECK(w->vibe < 4, "vibe[%d] out of range (%d)", i, w->vibe);
     }
 
-    /* per-world musical identity from the render_worlds audition: each world
-     * is a distinct (key, mode, vibe). Tokyo A-ionian-warm, Coast D-ionian-
-     * bright, Drive F#-dorian-deep, Hours C-aeolian-floating. */
-    uint8_t expect_key [4] = { 57, 62, 54, 60 };
-    uint8_t expect_mode[4] = {  0,  0,  1,  5 };
-    uint8_t expect_vibe[4] = {  0,  1,  2,  3 };
-    for (int i = 0; i < 4; ++i) {
+    /* per-world musical identity (key, mode, vibe): Alps G-lydian-bright,
+     * Open Sea D-mixolydian-floating, Fjords F#-dorian-deep, Moss C-aeolian-
+     * warm, Desert F-phrygian-deep. */
+    uint8_t expect_key [5] = { 55, 62, 54, 60, 53 };
+    uint8_t expect_mode[5] = {  3,  4,  1,  5,  2 };
+    uint8_t expect_vibe[5] = {  1,  3,  2,  0,  2 };
+    for (int i = 0; i < 5; ++i) {
         const world_t *w = worlds_get(i);
         CHECK(w->key_midi == expect_key[i],  "key[%d] = %d, want %d",  i, w->key_midi, expect_key[i]);
         CHECK(w->mode     == expect_mode[i], "mode[%d] = %d, want %d", i, w->mode,     expect_mode[i]);
         CHECK(w->vibe     == expect_vibe[i], "vibe[%d] = %d, want %d", i, w->vibe,     expect_vibe[i]);
     }
-    /* all four worlds should differ harmonically — no two identical triples */
-    for (int a = 0; a < 4; ++a)
-        for (int b = a + 1; b < 4; ++b) {
+    /* all five worlds should differ harmonically — no two identical triples */
+    for (int a = 0; a < 5; ++a)
+        for (int b = a + 1; b < 5; ++b) {
             const world_t *wa = worlds_get(a), *wb = worlds_get(b);
             CHECK(!(wa->key_midi == wb->key_midi && wa->mode == wb->mode && wa->vibe == wb->vibe),
                   "worlds %d and %d are harmonically identical", a, b);
@@ -100,7 +99,7 @@ int main(void) {
 
     /* out-of-range index must clamp, not crash */
     CHECK(worlds_get(-1) == worlds_get(0), "clamp -1 → 0");
-    CHECK(worlds_get(99) == worlds_get(3), "clamp 99 → 3");
+    CHECK(worlds_get(99) == worlds_get(4), "clamp 99 → 4");
 
     /* every world must have a non-empty name + subtitle */
     for (int i = 0; i < worlds_count(); ++i) {

@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-#define WORLD_COUNT 4
+#define WORLD_COUNT 5   /* r19.44: 5 landscape worlds (was 4 city worlds) */
 
 typedef struct {
     const char *name;              /* short display name (<=13 chars)         */

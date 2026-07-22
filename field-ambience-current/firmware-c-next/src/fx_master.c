@@ -69,7 +69,12 @@ void fx_master_set_tone(float v)       { s_params.tone       = clamp01(v); push(
 
 void fx_master_set_world(int idx) {
     if (!s_ok) return;
-    if (idx < 0 || idx >= (int)AMBIENT_FX_WORLD_COUNT) idx = 0;
+    if (idx < 0) idx = 0;
+    /* r19.44: the product has 5 landscape worlds; the vendored effects engine
+     * still carries 4 per-world voicings. Map the 5th (Desert, idx 4) onto the
+     * softest/darkest fx voicing (idx 3) rather than clamp to 0 — a documented
+     * fallback until the fx engine gains a 5th world row. */
+    if (idx >= (int)AMBIENT_FX_WORLD_COUNT) idx = (int)AMBIENT_FX_WORLD_COUNT - 1;
     AmbientFxWorld w = (AmbientFxWorld)idx;
     /* Engine voicing first, then the parameter set for that world. The
      * product's world load pushes its own macro values right after this

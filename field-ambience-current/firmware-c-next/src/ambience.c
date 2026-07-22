@@ -4,17 +4,17 @@
  * Generators run inside engine_render() between texture and bass:
  *   • WIND    — universal, every world. Pink-BP swept 350..900 Hz / 14 s
  *               + random gust envelopes.
- *   • RAIN    — Tokyo only (world 0). Pink-BP "sshhh" + pool of 12
+ *   • RAIN    — Moss Fields only (world 3). Pink-BP "sshhh" + pool of 12
  *               noise-burst drops at 1.5..4.5 kHz, 15..40 ms decay.
- *   • WAVES   — Crystal Coast only (world 1). Asymmetric envelope
+ *   • WAVES   — Open Sea only (world 1). Asymmetric envelope
  *               (1.2..2 s attack, 5..9 s decay, 1..4 s gap). LP'd brown
  *               body + HF pink-BP splash gated to crest.
  *   • VINYL   — After Hours only (world 3). Hi-pass noise crackle +
  *               sparse sharp pops every ~0.02..0.08 s + slow LP'd brown
  *               rumble (distant city through walls).
  *
- * Midnight Drive (world 2) intentionally gets only WIND today — the
- * highway feel comes from wind sweep; distant-traffic generator can be
+ * Fjords (world 2) + Desert (world 4) intentionally get only WIND today — a
+ * fjord-water and a desert heat-shimmer generator can be
  * added later without changing the API.
  *
  * All generators lifted near-verbatim from tools/render_worlds.c so the
@@ -32,9 +32,13 @@
 
 /* World index keys per-world dispatch. Index meaning matches worlds.c:
  *   0 = Tokyo City, 1 = Crystal Coast, 2 = Midnight Drive, 3 = After Hours. */
-#define WORLD_TOKYO   0
-#define WORLD_COAST   1
-#define WORLD_HOURS   3
+/* r19.44: landscape worlds (order matches worlds.c). Environmental textures
+ * are gated by index so each landscape gets its matching support layer. */
+#define WORLD_ALPS     0
+#define WORLD_OPENSEA  1
+#define WORLD_FJORDS   2
+#define WORLD_MOSS     3
+#define WORLD_DESERT   4
 
 static int   world_i = 0;
 static float level_cur = 0.0f, level_tgt = 0.0f;
@@ -499,9 +503,13 @@ void ambience_render_mix(float *dry_L, float *dry_R,
 
     if (level_cur < SILENCE_EPS && level_tgt < SILENCE_EPS) return;
 
-    const int do_rain  = (world_i == WORLD_TOKYO);
-    const int do_waves = (world_i == WORLD_COAST);
-    const int do_vinyl = (world_i == WORLD_HOURS);
+    /* r19.44: RAIN → Moss Fields (damp . fog), WAVES → Open Sea. Alps stays
+     * clear air (wind only); Fjords/Desert are wind-only for now (fjord water
+     * + desert heat-shimmer textures are a future addition). Vinyl retired —
+     * no landscape is a 3am jazz bar. */
+    const int do_rain  = (world_i == WORLD_MOSS);
+    const int do_waves = (world_i == WORLD_OPENSEA);
+    const int do_vinyl = 0;
 
     /* r18.92 (user: "Grundrauschen zu praesent/zu dirty"): the macro used
      * to apply LINEARLY — ATMOS 0.35 already put a constant −36 dBFS noise
