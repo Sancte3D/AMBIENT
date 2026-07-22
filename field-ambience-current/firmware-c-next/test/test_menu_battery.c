@@ -226,10 +226,11 @@ static void test_key_and_voice_slots(void) {
           "set_tuning Just (got %d)", st.tuning);
     menu_push();
 
-    /* VOICE: slot 3, 4 options (Pad/String/Glass/Ember r19.28), defaults to Pad */
+    /* VOICE: slot 3, 5 options (Pad/String/Glass/Ember/Bowed r19.47), boot
+     * world (Alps) defaults to Pad. */
     menu_rotate(1);
     CHECK(menu_current() == MP_VOICE, "slot 3 should be VOICE (got %d)", menu_current());
-    CHECK(menu_value_count(MP_VOICE) == 4, "VOICE has 4 options");
+    CHECK(menu_value_count(MP_VOICE) == 5, "VOICE has 5 options");
     CHECK(strcmp(menu_current_value_text(), "Pad") == 0,
           "default voice is Pad: got %s", menu_current_value_text());
     menu_push();
@@ -240,14 +241,15 @@ static void test_key_and_voice_slots(void) {
           strcmp(menu_current_value_text(), "Glass") == 0, "set_voice Glass");
     menu_push();
 
-    /* world change: KEY snaps to the new world's tonic, VOICE stays.
+    /* world change: KEY snaps to the new world's tonic, and r19.47 VOICE now
+     * follows the world's character instrument (Open Sea = Bowed lyra = 4).
      * VOICE is slot 3 now → three single-step retreats back to WORLD. */
     menu_rotate(-1); menu_rotate(-1); menu_rotate(-1);
     CHECK(menu_current() == MP_WORLD, "back on WORLD (got %d)", menu_current());
     menu_push();
-    menu_rotate(1);                       /* -> Open Sea (D, key kept) */
+    menu_rotate(1);                       /* -> Open Sea (D, Bowed voice) */
     CHECK(st.key == 2, "world change pushes the new tonic D=2 (got %d)", st.key);
-    CHECK(st.voice == 2, "world change must NOT reset the voice (got %d)", st.voice);
+    CHECK(st.voice == 4, "world change loads the world's voice (Open Sea=Bowed=4, got %d)", st.voice);
     menu_push();
     menu_rotate(1);                       /* -> KEY slot */
     CHECK(strcmp(menu_current_value_text(), "D") == 0,

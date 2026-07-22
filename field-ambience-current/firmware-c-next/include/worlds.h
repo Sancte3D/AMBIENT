@@ -46,6 +46,12 @@ typedef struct {
      * Makes the four worlds feel harmonically distinct, not just texturally. */
     uint8_t     chord_color;       /* 0 Pure / 1 Open / 2 Warm / 3 Deep       */
     uint8_t     bass_mode;         /* 0 Off / 1 Root / 2 Fifth / 3 Drift      */
+    /* r19.47: per-world CHARACTER VOICE — the melody instrument loaded on
+     * world-change (like the macros; the user can override via the VOICE menu).
+     * This is the first step of the location brief's per-world "instrument DNA":
+     * a world sounds like its place, not just like a filtered version of one
+     * pad. 0 Pad / 1 String / 2 Glass / 3 Ember / 4 Bowed (lyra/Hardanger). */
+    uint8_t     voice;
     /* r19.45: per-world brightness (pad filter cutoff + fx tone + reverb
      * damping), Hz offset in [-600, +800]. THE strongest timbral lever — dark
      * worlds go negative, bright/open worlds positive. Loaded on world-change

@@ -45,6 +45,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 55, .mode = 3, .vibe = 1,
         .chord_color = 0, .bass_mode = 2,   /* Pure open fifths, drone fifth */
         .brightness_hz = 550,   /* clear alpine air — wide open */
+        .voice = 0,             /* Pad — alpine breath/horn is a later round */
     },
     {
         .name = "Open Sea",
@@ -57,6 +58,8 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 62, .mode = 4, .vibe = 3,
         .chord_color = 1, .bass_mode = 2,   /* Open 1-5-9, tidal fifth */
         .brightness_hz = 220,   /* bright horizon, but hazy */
+        .voice = 4,             /* Bowed lyra (colour 0) — the Mediterranean
+                                 * character voice: warm swelling bow strokes */
     },
     {
         .name = "Fjords",
@@ -69,6 +72,8 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 54, .mode = 1, .vibe = 2,
         .chord_color = 3, .bass_mode = 1,   /* Deep 7th, grounded root */
         .brightness_hz = -320,  /* dark deep water */
+        .voice = 4,             /* Bowed Hardanger (colour 1) — darker body,
+                                 * more sympathetic ring than Open Sea */
     },
     {
         .name = "Moss Fields",
@@ -81,6 +86,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 60, .mode = 5, .vibe = 0,
         .chord_color = 2, .bass_mode = 1,   /* Warm 6/9, grounded root */
         .brightness_hz = -160,  /* muted, absorbed upper */
+        .voice = 0,             /* Pad — damp organ/choir voice is a later round */
     },
     {
         .name = "Desert",
@@ -94,6 +100,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 53, .mode = 2, .vibe = 2,
         .chord_color = 2, .bass_mode = 1,   /* Warm low body, strong root */
         .brightness_hz = -420,  /* dark heavy heat */
+        .voice = 0,             /* Pad — low guembri/body voice is a later round */
     },
 };
 
