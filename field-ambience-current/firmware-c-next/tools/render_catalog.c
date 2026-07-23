@@ -188,9 +188,27 @@ static int fx_by_name(const char *n){
     const char *names[]={"bypass","reverb","delay","chorus","tape","swell","shimmer","blur","dream"};
     for(int i=0;i<9;++i) if(!strcmp(n,names[i])) return i; return 8;
 }
-/* Feed the shared phrase (glass voice) through one master-fx mode. */
+/* Feed the shared phrase through one master-fx mode. IMPORTANT: selecting a
+ * mode is not enough — each effect has its own AMOUNT (echo/motion/age/shimmer/
+ * blur); at 0 the mode is inaudible (that's why an earlier catalog had every fx
+ * sounding identical and Tape silent). Drive the mode's amount hard so the
+ * effect is clearly demonstrated. */
 static void render_fx(int mode, FILE *f, int secs){
-    dsp_init(); glass_init(); fx_master_init(); fx_master_set_world(1); fx_master_set_mode(mode);
+    dsp_init(); pluck_init(); fx_master_init(); fx_master_set_world(1);
+    /* clear all amounts, then push the one this mode needs */
+    fx_master_set_echo(0.f); fx_master_set_motion(0.f); fx_master_set_age(0.f);
+    fx_master_set_shimmer(0.f); fx_master_set_blur(0.f);
+    switch(mode){
+      case 2: fx_master_set_echo(0.85f);    break;  /* delay   */
+      case 3: fx_master_set_motion(0.85f);  break;  /* chorus  */
+      case 4: fx_master_set_age(0.85f);     break;  /* tape    */
+      case 6: fx_master_set_shimmer(0.85f); break;  /* shimmer */
+      case 7: fx_master_set_blur(0.85f);    break;  /* blur    */
+      case 8: fx_master_set_echo(0.5f); fx_master_set_motion(0.5f);   /* dream: all */
+              fx_master_set_age(0.4f); fx_master_set_shimmer(0.5f); fx_master_set_blur(0.4f); break;
+      default: break;                               /* bypass / reverb */
+    }
+    fx_master_set_mode(mode);
     uint32_t total=(uint32_t)secs*SR; hdr(f,total);
     float dL[BLOCK],dR[BLOCK],sL[BLOCK],sR[BLOCK]; int16_t buf[BLOCK*2];
     const int NB=(int)(2.2f*SR/BLOCK); int next=0,ni=0; uint32_t done=0,blk=0;

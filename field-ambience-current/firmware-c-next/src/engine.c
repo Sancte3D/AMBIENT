@@ -85,6 +85,12 @@ static int      eno_timing_valid;
  * same lead. One-shot per cycle. */
 #define ENO_SWELL_LEAD_MS 1500u
 static uint8_t  eno_swell_armed[ENO_LOOPS];
+/* r19.50: the reverse PRE-swell was a rising, mostly-NOISE whoosh (62 % noise
+ * through an opening filter) that ended with a near-hard cut — heard as a loud
+ * "zschhh" a second before each generative note, then an abrupt stop. It read
+ * as a defect, not a breath. Disabled by default; the note's own attack is the
+ * onset. (Kept the machinery so a gentler, mostly-pitched version can return.) */
+static const int ENO_SWELL_ENABLE = 0;
 #define ENO_SRC(i) ((uint8_t)(5 + (i)))
 
 /* Generative state (r19.0: rebuilt on the HARMONIC SAFETY CORE, see
@@ -786,7 +792,7 @@ void engine_generative_tick(uint32_t now_ms) {
         }
         /* r19.41: the next fire time is exact — arm the reverse swell
          * exactly ENO_SWELL_LEAD_MS ahead of it, once per cycle. */
-        if (!eno_swell_armed[i] &&
+        if (ENO_SWELL_ENABLE && !eno_swell_armed[i] &&
             (int32_t)(eno_next_ms[i] - now_ms) > 0 &&
             (uint32_t)(eno_next_ms[i] - now_ms) <= ENO_SWELL_LEAD_MS) {
             /* Predict the scheduled note from the CURRENT harmony with the
