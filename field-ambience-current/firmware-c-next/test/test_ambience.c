@@ -111,13 +111,13 @@ int main(void) {
     CHECK(rms_neg > 1.0e-4f, "neg-world: no signal");
     CHECK(rms_big > 1.0e-4f, "big-world: no signal");
 
-    /* 6: Phase 2b — Tokyo (world 0) gates rain on top of wind. */
-    ambience_init(); ambience_set_world(0);   /* Tokyo: wind + rain */
-    float rms_tokyo = run_rms(1.0f);
-    CHECK(rms_tokyo > 1.0e-3f, "Tokyo silent (%g)", (double)rms_tokyo);
-    CHECK(rms_tokyo < 1.0f, "Tokyo rms unbounded (%g)", (double)rms_tokyo);
+    /* 6: Phase 2b — Moss Fields (world 3) gates rain on top of wind (r19.44). */
+    ambience_init(); ambience_set_world(3);   /* Moss: wind + rain */
+    float rms_moss = run_rms(1.0f);
+    CHECK(rms_moss > 1.0e-3f, "Moss silent (%g)", (double)rms_moss);
+    CHECK(rms_moss < 1.0f, "Moss rms unbounded (%g)", (double)rms_moss);
 
-    /* 7: Phase 2c — Coast (world 1) gates waves on top of wind. Waves are
+    /* 7: Phase 2c — Open Sea (world 1) gates waves on top of wind. Waves are
      * SLOW events (2 s gap + 1.5 s attack + ~7 s decay), so a short RMS
      * window can miss the peak entirely. Measure the PEAK over a longer
      * run (≈ 12 s) and assert it strictly exceeds wind-only's peak under
@@ -125,7 +125,7 @@ int main(void) {
     float peak_wind_only = 0.0f, peak_coast = 0.0f;
     {
         float dryL[BLOCK], dryR[BLOCK], sendL[BLOCK], sendR[BLOCK];
-        /* baseline: world 2 (Drive) so only wind runs. */
+        /* baseline: world 2 (Fjords) so only wind runs. */
         ambience_init(); ambience_set_world(2); ambience_set_level(1.0f);
         for (int b = 0; b < 2100; ++b) {     /* ~12.2 s */
             memset(dryL, 0, sizeof dryL); memset(dryR, 0, sizeof dryR);

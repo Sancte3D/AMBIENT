@@ -4,17 +4,21 @@
  * Generators run inside engine_render() between texture and bass:
  *   • WIND    — universal, every world. Pink-BP swept 350..900 Hz / 14 s
  *               + random gust envelopes.
- *   • RAIN    — Tokyo only (world 0). Pink-BP "sshhh" + pool of 12
+ *   • RAIN    — Moss Fields only (world 3). Pink-BP "sshhh" + pool of 12
  *               noise-burst drops at 1.5..4.5 kHz, 15..40 ms decay.
- *   • WAVES   — Crystal Coast only (world 1). Asymmetric envelope
+ *   • WAVES   — Open Sea only (world 1). Asymmetric envelope
  *               (1.2..2 s attack, 5..9 s decay, 1..4 s gap). LP'd brown
- *               body + HF pink-BP splash gated to crest.
+ *               body + HF pink-BP splash gated to crest. r19.47: softened to
+ *               a gentle Mediterranean lap (warmer wash, quieter break).
+ *   • SEA HUM — Open Sea only (r19.47). Warm, wide, non-tonal low bed
+ *               (brown → resonant ~160 Hz SVF) that breathes with a slow
+ *               ground-swell — the body of the sea under the surf.
  *   • VINYL   — After Hours only (world 3). Hi-pass noise crackle +
  *               sparse sharp pops every ~0.02..0.08 s + slow LP'd brown
  *               rumble (distant city through walls).
  *
- * Midnight Drive (world 2) intentionally gets only WIND today — the
- * highway feel comes from wind sweep; distant-traffic generator can be
+ * Fjords (world 2) + Desert (world 4) intentionally get only WIND today — a
+ * fjord-water and a desert heat-shimmer generator can be
  * added later without changing the API.
  *
  * All generators lifted near-verbatim from tools/render_worlds.c so the
@@ -32,9 +36,13 @@
 
 /* World index keys per-world dispatch. Index meaning matches worlds.c:
  *   0 = Tokyo City, 1 = Crystal Coast, 2 = Midnight Drive, 3 = After Hours. */
-#define WORLD_TOKYO   0
-#define WORLD_COAST   1
-#define WORLD_HOURS   3
+/* r19.44: landscape worlds (order matches worlds.c). Environmental textures
+ * are gated by index so each landscape gets its matching support layer. */
+#define WORLD_ALPS     0
+#define WORLD_OPENSEA  1
+#define WORLD_FJORDS   2
+#define WORLD_MOSS     3
+#define WORLD_DESERT   4
 
 static int   world_i = 0;
 static float level_cur = 0.0f, level_tgt = 0.0f;
@@ -350,7 +358,9 @@ static inline void waves_tick(float *outL, float *outR) {
         dsp_svf_set(&wv_lpL, body_fc, 0.7f);
         dsp_svf_set(&wv_lpR, body_fc, 0.7f);
         float rec     = (wv_state == 2) ? wv_env : 1.0f;  /* receding water */
-        float wash_fc = 500.0f + rec * 2100.0f;
+        /* r19.47: warmer Mediterranean wash — cap the splash brightness lower
+         * (was 500..2600 Hz) so Open Sea laps gently instead of hissing. */
+        float wash_fc = 420.0f + rec * 1150.0f;
         dsp_svf_set(&wv_splashL, wash_fc,         1.4f);
         dsp_svf_set(&wv_splashR, wash_fc * 1.08f, 1.4f);
     }
@@ -384,9 +394,78 @@ static inline void waves_tick(float *outL, float *outR) {
     }
 
     /* body 1.35 (was 1.8): the env-following LP passes more energy at the
-     * crest than the old fixed 400 Hz LP — 1.8 peaked past full scale */
-    *outL += bodyL * 1.35f + splashL * 0.5f + sprayL * 0.6f;
-    *outR += bodyR * 1.35f + splashR * 0.5f + sprayR * 0.6f;
+     * crest than the old fixed 400 Hz LP — 1.8 peaked past full scale.
+     * r19.47: soften the surf for a gentle Mediterranean lap — splash 0.5→0.38
+     * and the spray "crash" 0.6→0.22. The warm body + the new sea hum carry
+     * Open Sea now, not a bright break. */
+    *outL += bodyL * 1.35f + splashL * 0.38f + sprayL * 0.22f;
+    *outR += bodyR * 1.35f + splashR * 0.38f + sprayR * 0.22f;
+}
+
+/* ===========================================================================
+ * Sea hum (r19.47) — Open Sea only, ON TOP of the (now gentler) waves.
+ *
+ * The location brief wants Open Sea to read as the warm Mediterranean, not a
+ * cold generic beach. The waves alone gave rhythmic surf but no BODY — the
+ * feeling of a wide, warm mass of water under everything. This adds that body:
+ *   • a warm, wide low bed — brown noise through a resonant low SVF (~160 Hz)
+ *     that BREATHES with a very slow swell (~0.05 Hz), so it rises and falls
+ *     like a long ground-swell rather than sitting as a static drone;
+ *   • fully decorrelated L/R (own noise streams + a slight cutoff offset) so it
+ *     opens the stereo field wide;
+ *   • deliberately NON-tonal (filtered noise, not an oscillator) so it never
+ *     clashes with the musical key — it is the sea's warmth, not a note.
+ * =========================================================================== */
+
+static uint32_t  sh_rng_L = 0x1EAF00D5u, sh_rng_R = 0xB16B00B7u;
+static float     sh_brnL = 0.0f, sh_brnR = 0.0f;
+static dsp_svf_t sh_lpL, sh_lpR;
+static float     sh_swell = 0.35f;        /* slow breath envelope 0..1        */
+static float     sh_swell_tgt = 0.8f;
+static int       sh_swell_until = 0;
+static uint32_t  sh_ctrl = 0;             /* ÷16 control-rate divider          */
+
+static inline float sh_white(uint32_t *r) {
+    *r = (*r) * 1664525u + 1013904223u;
+    return (float)((int32_t)*r) * (1.0f / 2147483648.0f);
+}
+
+static void seahum_reset(void) {
+    dsp_svf_reset(&sh_lpL); dsp_svf_set(&sh_lpL, 160.0f, 1.3f);
+    dsp_svf_reset(&sh_lpR); dsp_svf_set(&sh_lpR, 172.0f, 1.3f);   /* wide offset */
+    sh_brnL = sh_brnR = 0.0f;
+    sh_swell       = 0.35f;
+    sh_swell_tgt   = 0.80f;
+    sh_swell_until = (int)(SR * 8.0f);
+    sh_ctrl        = 0;
+}
+
+static inline void seahum_tick(float *outL, float *outR) {
+    /* Slow ground-swell: retarget every 8..20 s between 0.35 and 0.95, glide
+     * gently toward it — the bed swells and settles under the surf. */
+    if (--sh_swell_until <= 0) {
+        float r = sh_white(&sh_rng_L) * 0.5f + 0.5f;
+        sh_swell_tgt   = 0.35f + r * 0.60f;
+        float rr = sh_white(&sh_rng_R) * 0.5f + 0.5f;
+        sh_swell_until = (int)(SR * (8.0f + rr * 12.0f));
+    }
+    sh_swell += 6.0e-6f * (sh_swell_tgt - sh_swell);
+
+    /* control-rate cutoff drift — the warm body opens slightly on the swell. */
+    if ((sh_ctrl++ & 15u) == 0) {
+        float fc = 150.0f + sh_swell * 60.0f;
+        dsp_svf_set(&sh_lpL, fc,          1.3f);
+        dsp_svf_set(&sh_lpR, fc * 1.075f, 1.3f);
+    }
+
+    /* decorrelated brown noise → warm low SVF, scaled by the swell. */
+    sh_brnL = sh_brnL * 0.996f + sh_white(&sh_rng_L) * 0.04f;
+    sh_brnR = sh_brnR * 0.996f + sh_white(&sh_rng_R) * 0.04f;
+    float L = dsp_svf_lp(&sh_lpL, sh_brnL) * sh_swell;
+    float R = dsp_svf_lp(&sh_lpR, sh_brnR) * sh_swell;
+
+    *outL += L * 0.85f;
+    *outR += R * 0.85f;
 }
 
 /* ===========================================================================
@@ -475,6 +554,7 @@ void ambience_init(void) {
     wind_reset();
     rain_reset();
     waves_reset();
+    seahum_reset();
     vinyl_reset();
 }
 
@@ -499,9 +579,13 @@ void ambience_render_mix(float *dry_L, float *dry_R,
 
     if (level_cur < SILENCE_EPS && level_tgt < SILENCE_EPS) return;
 
-    const int do_rain  = (world_i == WORLD_TOKYO);
-    const int do_waves = (world_i == WORLD_COAST);
-    const int do_vinyl = (world_i == WORLD_HOURS);
+    /* r19.44: RAIN → Moss Fields (damp . fog), WAVES → Open Sea. Alps stays
+     * clear air (wind only); Fjords/Desert are wind-only for now (fjord water
+     * + desert heat-shimmer textures are a future addition). Vinyl retired —
+     * no landscape is a 3am jazz bar. */
+    const int do_rain  = (world_i == WORLD_MOSS);
+    const int do_waves = (world_i == WORLD_OPENSEA);
+    const int do_vinyl = 0;
 
     /* r18.92 (user: "Grundrauschen zu praesent/zu dirty"): the macro used
      * to apply LINEARLY — ATMOS 0.35 already put a constant −36 dBFS noise
@@ -514,7 +598,7 @@ void ambience_render_mix(float *dry_L, float *dry_R,
         float L = 0.0f, R = 0.0f;
         wind_tick(&L, &R);
         if (do_rain)  rain_tick(&L, &R);
-        if (do_waves) waves_tick(&L, &R);
+        if (do_waves) { waves_tick(&L, &R); seahum_tick(&L, &R); }  /* r19.47 */
         if (do_vinyl) vinyl_tick(&L, &R);
 
         float outL = L * lvl;

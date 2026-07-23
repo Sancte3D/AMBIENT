@@ -103,6 +103,7 @@ set(DSP_SOURCES
     src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
     src/glass.c         # r18.98: 2-op FM glass melody voice (VOICE menu)
     src/ember.c         # r19.28: warm subtractive analog voice (Motif layer)
+    src/bowed.c         # r19.47: bowed lyra/Hardanger voice (Open Sea / Fjords)
     src/shimmer.c       # r18.99: octave-up hall regeneration (SHIMMER menu)
     src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/body.c          # r18.94: modal resonant body for the plucks (Rings concept)

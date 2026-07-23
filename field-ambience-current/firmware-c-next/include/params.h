@@ -55,6 +55,7 @@ int  params_toggle_mute(void);          /* Rueckgabe: 1 = jetzt stumm     */
 /* r19.22 Scenes-Recall: Drive/Brightness setzen (Volume bewusst NICHT —
  * Lautstaerke springt beim Recall nie). Hebt einen Drive-Bypass auf. */
 void params_apply_scene(int drive_pct, float bright_hz);
+void params_set_bright(float hz);       /* r19.45: per-world brightness base */
 bool params_muted(void);
 
 #endif

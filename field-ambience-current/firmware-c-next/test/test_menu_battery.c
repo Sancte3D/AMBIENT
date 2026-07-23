@@ -70,15 +70,15 @@ static void test_push_toggles_mode(void) {
     menu_push(); CHECK(menu_mode() == MENU_BROWSE, "push didn't return to browse");
 }
 
-static void test_edit_world_cycles_4_and_loads_preset(void) {
+static void test_edit_world_cycles_5_and_loads_preset(void) {
     init();
     menu_push();                          /* enter edit on WORLD */
     CHECK(menu_mode() == MENU_EDIT, "");
     CHECK(menu_world_index() == 0, "init world != 0");
-    CHECK(strcmp(menu_current_value_text(), "Tokyo City") == 0,
-          "world 0 should be Tokyo City: got %s", menu_current_value_text());
+    CHECK(strcmp(menu_current_value_text(), "Alps") == 0,
+          "world 0 should be Alps: got %s", menu_current_value_text());
 
-    menu_rotate(1);                       /* → Crystal Coast */
+    menu_rotate(1);                       /* → Open Sea */
     CHECK(menu_world_index() == 1, "world+1 != 1");
     CHECK(st.world == 1, "set_world not called with 1: got %d", st.world);
     /* selecting a world loads its preset → space/atmos/motion/age callbacks fire */
@@ -86,10 +86,10 @@ static void test_edit_world_cycles_4_and_loads_preset(void) {
     CHECK(st.motion > 0.0f, "world change should push motion preset");
     CHECK(st.age    > 0.0f, "world change should push age preset");
 
-    /* 4 worlds → wrap back to Tokyo City */
-    for (int i = 0; i < 3; ++i) menu_rotate(1);
+    /* 5 worlds → wrap back to Alps */
+    for (int i = 0; i < 4; ++i) menu_rotate(1);
     CHECK(menu_world_index() == 0, "wrap to world 0 failed: %d", menu_world_index());
-    CHECK(strcmp(menu_current_value_text(), "Tokyo City") == 0, "wrap text wrong");
+    CHECK(strcmp(menu_current_value_text(), "Alps") == 0, "wrap text wrong");
 }
 
 static void test_continuous_steps_by_tick_and_clamps(void) {
@@ -98,12 +98,12 @@ static void test_continuous_steps_by_tick_and_clamps(void) {
     for (int i = 0; i < (int)MP_SPACE; ++i) menu_rotate(1);
     CHECK(menu_current() == MP_SPACE, "didn't reach SPACE");
     menu_push();
-    /* Tokyo City default space = 42. One tick = 1%. */
-    CHECK(menu_value_int(MP_SPACE) == 42, "init space != 42 (got %d)", menu_value_int(MP_SPACE));
+    /* Alps default space = 55. One tick = 1%. */
+    CHECK(menu_value_int(MP_SPACE) == 55, "init space != 55 (got %d)", menu_value_int(MP_SPACE));
     menu_rotate(+1);
-    CHECK(menu_value_int(MP_SPACE) == 43, "one tick should be 1%%: %d", menu_value_int(MP_SPACE));
+    CHECK(menu_value_int(MP_SPACE) == 56, "one tick should be 1%%: %d", menu_value_int(MP_SPACE));
     menu_rotate(+8);
-    CHECK(menu_value_int(MP_SPACE) == 51, "8-tick flick should add 8%%: %d", menu_value_int(MP_SPACE));
+    CHECK(menu_value_int(MP_SPACE) == 64, "8-tick flick should add 8%%: %d", menu_value_int(MP_SPACE));
     menu_rotate(+100);
     CHECK(menu_value_int(MP_SPACE) == 100, "did not clamp at 100");
     CHECK(st.space > 0.99f, "callback space didn't reach 1.0: %.3f", st.space);
@@ -200,18 +200,18 @@ static void test_bfont_width(void) {
  * (Pad/String/Glass, a player's global choice that world changes keep). */
 static void test_key_and_voice_slots(void) {
     init();
-    /* KEY sits right after WORLD, boots on Tokyo's tonic A */
+    /* KEY sits right after WORLD, boots on Alps' tonic G (pc 7) */
     menu_rotate(1);
     CHECK(menu_current() == MP_KEY, "slot 1 should be KEY (got %d)", menu_current());
     CHECK(menu_value_count(MP_KEY) == 12, "KEY has 12 options");
-    CHECK(strcmp(menu_current_value_text(), "A") == 0,
-          "boot key is Tokyo's A: got %s", menu_current_value_text());
+    CHECK(strcmp(menu_current_value_text(), "G") == 0,
+          "boot key is Alps' G: got %s", menu_current_value_text());
     menu_push();
-    menu_rotate(1);                       /* A -> A# */
-    CHECK(st.key == 10, "set_key not fired with A#=10 (got %d)", st.key);
-    CHECK(strcmp(menu_current_value_text(), "A#") == 0, "value text follows");
-    menu_rotate(-2);                      /* wrap check runs later; back to G# */
-    CHECK(st.key == 8, "key steps down (got %d)", st.key);
+    menu_rotate(1);                       /* G -> G# */
+    CHECK(st.key == 8, "set_key not fired with G#=8 (got %d)", st.key);
+    CHECK(strcmp(menu_current_value_text(), "G#") == 0, "value text follows");
+    menu_rotate(-2);                      /* G# -> F# */
+    CHECK(st.key == 6, "key steps down to F#=6 (got %d)", st.key);
     menu_push();
 
     /* TUNING (r19.6): slot 2, 2 options, defaults to Equal */
@@ -226,10 +226,11 @@ static void test_key_and_voice_slots(void) {
           "set_tuning Just (got %d)", st.tuning);
     menu_push();
 
-    /* VOICE: slot 3, 4 options (Pad/String/Glass/Ember r19.28), defaults to Pad */
+    /* VOICE: slot 3, 5 options (Pad/String/Glass/Ember/Bowed r19.47), boot
+     * world (Alps) defaults to Pad. */
     menu_rotate(1);
     CHECK(menu_current() == MP_VOICE, "slot 3 should be VOICE (got %d)", menu_current());
-    CHECK(menu_value_count(MP_VOICE) == 4, "VOICE has 4 options");
+    CHECK(menu_value_count(MP_VOICE) == 5, "VOICE has 5 options");
     CHECK(strcmp(menu_current_value_text(), "Pad") == 0,
           "default voice is Pad: got %s", menu_current_value_text());
     menu_push();
@@ -240,14 +241,15 @@ static void test_key_and_voice_slots(void) {
           strcmp(menu_current_value_text(), "Glass") == 0, "set_voice Glass");
     menu_push();
 
-    /* world change: KEY snaps to the new world's tonic, VOICE stays.
+    /* world change: KEY snaps to the new world's tonic, and r19.47 VOICE now
+     * follows the world's character instrument (Open Sea = Bowed lyra = 4).
      * VOICE is slot 3 now → three single-step retreats back to WORLD. */
     menu_rotate(-1); menu_rotate(-1); menu_rotate(-1);
     CHECK(menu_current() == MP_WORLD, "back on WORLD (got %d)", menu_current());
     menu_push();
-    menu_rotate(1);                       /* -> Crystal Coast (D major) */
+    menu_rotate(1);                       /* -> Open Sea (D, Bowed voice) */
     CHECK(st.key == 2, "world change pushes the new tonic D=2 (got %d)", st.key);
-    CHECK(st.voice == 2, "world change must NOT reset the voice (got %d)", st.voice);
+    CHECK(st.voice == 4, "world change loads the world's voice (Open Sea=Bowed=4, got %d)", st.voice);
     menu_push();
     menu_rotate(1);                       /* -> KEY slot */
     CHECK(strcmp(menu_current_value_text(), "D") == 0,
@@ -260,7 +262,7 @@ int main(void) {
     test_key_and_voice_slots();
     test_browse_navigates_through_all_params();
     test_push_toggles_mode();
-    test_edit_world_cycles_4_and_loads_preset();
+    test_edit_world_cycles_5_and_loads_preset();
     test_continuous_steps_by_tick_and_clamps();
     test_motion_and_age_macros();
     test_browse_nav_ignores_accel();

@@ -26,6 +26,7 @@
 #include "pluck.h"
 #include "glass.h"
 #include "ember.h"
+#include "bowed.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -84,6 +85,12 @@ static int      eno_timing_valid;
  * same lead. One-shot per cycle. */
 #define ENO_SWELL_LEAD_MS 1500u
 static uint8_t  eno_swell_armed[ENO_LOOPS];
+/* r19.50: the reverse PRE-swell was a rising, mostly-NOISE whoosh (62 % noise
+ * through an opening filter) that ended with a near-hard cut — heard as a loud
+ * "zschhh" a second before each generative note, then an abrupt stop. It read
+ * as a defect, not a breath. Disabled by default; the note's own attack is the
+ * onset. (Kept the machinery so a gentler, mostly-pitched version can return.) */
+static const int ENO_SWELL_ENABLE = 0;
 #define ENO_SRC(i) ((uint8_t)(5 + (i)))
 
 /* Generative state (r19.0: rebuilt on the HARMONIC SAFETY CORE, see
@@ -303,6 +310,7 @@ void engine_init(void) {
     pluck_init();                    /* r18.89 sparkle plucks */
     glass_init();                    /* r18.98 FM glass voice */
     ember_init();                    /* r19.28 warm subtractive analog voice */
+    bowed_init();                    /* r19.47 bowed lyra/Hardanger voice (Open Sea / Fjords) */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
     memset(eno_on,      0, sizeof eno_on);
@@ -327,13 +335,18 @@ void engine_init(void) {
  * needs SOME second colour, that was the whole r18.89 point). */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 3) voice_idx = 3;    /* r19.28: 3 = Ember (optional)   */
+    if (voice_idx > 4) voice_idx = 4;    /* r19.47: 4 = Bowed lyra/Hardanger */
     melody_voice = voice_idx;
 }
 
 /* Fire the selected melody voice (used by cell presses + sparkles). */
 static void melody_strike(float freq_hz, float amp) {
-    if      (melody_voice == 3) ember_note(freq_hz, amp);   /* r19.28 analog */
+    /* r19.47: the bowed lyra is a full CHARACTER voice, not a sparkle under the
+     * pad — the generative melody amp (~0.06) would make it a whisper. Scale it
+     * up (and floor it) so it sits forward, near the audition level the design
+     * was approved at (~0.3..0.55). */
+    if      (melody_voice == 4) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
+    else if (melody_voice == 3) ember_note(freq_hz, amp);   /* r19.28 analog */
     else if (melody_voice == 2) glass_note(freq_hz, amp);
     else                        pluck_note(freq_hz, amp);
 }
@@ -475,6 +488,11 @@ void engine_set_world(int idx) {
      * copy, and the world-change re-bloom masks the swap. */
     padsynth_build(idx, 0);
     body_set_world(idx);             /* r18.94: the pluck's resonant material */
+    /* r19.47: bowed-voice colour follows the world identity. Only worlds that
+     * carry voice==Bowed hear it, but setting it unconditionally keeps the
+     * engine self-consistent (Fjords = colour 1 = darker, more sympathetic
+     * ring; every other world = colour 0 = the warmer Open-Sea lyra). */
+    bowed_set_colour(idx == 2 ? 1 : 0);
     const world_t *w = worlds_get(idx);
     engine_set_key ((int)w->key_midi);   /* brain key + drone root          */
     engine_set_mode((int)w->mode);       /* brain mode + reverb recompute   */
@@ -774,7 +792,7 @@ void engine_generative_tick(uint32_t now_ms) {
         }
         /* r19.41: the next fire time is exact — arm the reverse swell
          * exactly ENO_SWELL_LEAD_MS ahead of it, once per cycle. */
-        if (!eno_swell_armed[i] &&
+        if (ENO_SWELL_ENABLE && !eno_swell_armed[i] &&
             (int32_t)(eno_next_ms[i] - now_ms) > 0 &&
             (uint32_t)(eno_next_ms[i] - now_ms) <= ENO_SWELL_LEAD_MS) {
             /* Predict the scheduled note from the CURRENT harmony with the
@@ -984,6 +1002,12 @@ static void render_ambient(int16_t *buf, int frames) {
     /* r19.28: the warm analog voice runs its OWN clean bus (its filter is the
      * character) straight into dry + hall send — no modal body coloring. */
     ember_render_mix(dryL, dryR, sendL, sendR, frames);
+
+    /* r19.47: the bowed lyra/Hardanger voice carries its own resonant wood
+     * body + sympathetic resonators, so it also bypasses the modal body and
+     * mixes straight to dry + hall send. Idle voices cost nothing (the inner
+     * loop early-outs), so it runs unconditionally regardless of the world. */
+    bowed_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
 
     /* r19.41 MASTER-EFFECTS SWAP: echo, blur, tape hiss/crackle, the master
      * reverb render and the shimmer wrap-loop all left this path — the

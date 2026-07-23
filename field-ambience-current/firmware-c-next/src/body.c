@@ -22,7 +22,7 @@ typedef struct {
     mode_def_t m[BODY_MAX_MODES];
 } material_t;
 
-static const material_t MATERIALS[4] = {
+static const material_t MATERIALS[5] = {
     { 180.0f, 8, {  /* Tokyo — warm wood, dense inharmonic */
         { 1.00f, 0.80f, 1.00f }, { 1.47f, 0.65f, 0.70f },
         { 2.09f, 0.50f, 0.55f }, { 2.56f, 0.42f, 0.50f },
@@ -36,9 +36,13 @@ static const material_t MATERIALS[4] = {
         { 1.00f, 0.55f, 1.00f }, { 1.58f, 0.45f, 0.75f },
         { 2.24f, 0.38f, 0.55f }, { 2.92f, 0.30f, 0.40f },
         { 3.91f, 0.24f, 0.28f }, { 5.02f, 0.18f, 0.18f } } },
-    { 160.0f, 4, {  /* Hours — felt/paper, soft fast-dying thump */
+    { 160.0f, 4, {  /* Moss — felt/paper, soft fast-dying thump (was Hours) */
         { 1.00f, 0.28f, 1.00f }, { 1.79f, 0.20f, 0.60f },
         { 2.67f, 0.15f, 0.40f }, { 3.46f, 0.10f, 0.25f } } },
+    { 110.0f, 5, {  /* Desert — low wood/membrane body, dry warm, no long ring */
+        { 1.00f, 0.45f, 1.00f }, { 1.66f, 0.36f, 0.70f },
+        { 2.40f, 0.28f, 0.48f }, { 3.18f, 0.20f, 0.30f },
+        { 4.35f, 0.15f, 0.18f } } },
 };
 
 /* Two-pole resonator state per mode per channel:
@@ -66,7 +70,7 @@ static void mode_setup(res_t *r, float f_hz, float t60, float gain) {
 
 void body_set_world(int world_idx) {
     if (world_idx < 0) world_idx = 0;
-    if (world_idx > 3) world_idx = 3;
+    if (world_idx > 4) world_idx = 4;   /* r19.44: 5 worlds */
     if (world_idx == s_world) return;
     s_world = world_idx;
     const material_t *mt = &MATERIALS[world_idx];
