@@ -60,7 +60,11 @@ world|moss|6_worlds|world_moss|40|OK|Full world — Moss Fields (Pad; own voice 
 world|desert|6_worlds|world_desert|40|OK|Full world — Desert (Pad; own voice TODO)
 "
 
-rm -rf "$outdir"; mkdir -p "$outdir"
+mkdir -p "$outdir"
+# clean only previously-generated audio — never the tracked .gitignore / INDEX.md
+find "$outdir" -type f \( -name '*.wav' -o -name '*.flac' \) -delete 2>/dev/null || true
+# self-heal the ignore rule so generated audio never gets committed
+printf '# generated audio — regenerate with tools/render_catalog.sh\n*.wav\n*.flac\n' > "$outdir/.gitignore"
 idx="$outdir/INDEX.md"
 {
   echo "# Field Ambience — Sound Catalog"
