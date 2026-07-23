@@ -1,0 +1,517 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Field Ambience — Bill of Materials</title>
+<style>
+  @page { size: A4; margin: 15mm 13mm; }
+  * { box-sizing: border-box; }
+  body { font: 12px/1.45 -apple-system,'Helvetica Neue',Arial,sans-serif;
+         color:#1a1a1a; margin:0; padding:26px 30px; -webkit-print-color-adjust:exact; }
+  h1 { font-size:24px; font-weight:800; letter-spacing:-.01em; margin:0 0 6px; }
+  .sub { color:#6b7280; font-size:12px; margin:0 0 22px; max-width:52em; }
+  h2 { font-size:12.5px; font-weight:800; letter-spacing:.09em; color:#111;
+        margin:26px 0 0; padding-bottom:6px; border-bottom:2px solid #111;
+        page-break-after:avoid; }
+  table { width:100%; border-collapse:collapse; }
+  tr { page-break-inside:avoid; }
+  th { text-align:left; font-size:9.5px; font-weight:700; letter-spacing:.07em;
+        color:#9ca3af; padding:8px 10px 6px 0; border-bottom:1px solid #e5e7eb; }
+  td { padding:9px 10px 9px 0; border-bottom:1px solid #eef0f2; vertical-align:top; }
+  .part { width:31%; }
+  .qty  { width:5%; color:#374151; }
+  .lnk  { width:18%; }
+  .off .lnk { width:22%; }
+  .pn  { display:block; font-weight:700; color:#111; }
+  .mpn { display:block; font-family:'SFMono-Regular',Consolas,monospace;
+          font-size:10px; color:#9ca3af; margin-top:2px; }
+  .fn  { color:#374151; }
+  a { color:#2563eb; text-decoration:none; }
+</style></head>
+<body>
+  <h1>Field Ambience — Bill of Materials</h1>
+  <p class="sub">Handheld ambient synthesizer · 60 board part-types (200 placements) + 4 off-board parts · generated from jlc_bom.csv · 2026-07-23 (rev r19.37 — PAM8406 speaker amp + gain-staging (ADR-0025)) · links open the LCSC page (datasheet · specs · footprint)</p>
+  
+    <h2>PROCESSOR &amp; MEMORY</h2>
+    <table>
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>QTY</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">Main processor</span>
+            <span class="mpn">STM32H743VIT6 · LQFP-100_14x14mm_P0.5mm</span></td>
+        <td class="fn">Runs everything: the sound engine, screen, buttons, MIDI. The brain of the instrument.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C114409.html">LCSC C114409</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">8 MB memory chip</span>
+            <span class="mpn">APS6404L-3SQN-SN · SOIC-8_3.9x4.9mm_P1.27mm</span></td>
+        <td class="fn">Extra memory for the sound engine — holds audio samples, reverb impulses and wavetables that don&#x27;t fit inside the processor.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C3028887.html">LCSC C3028887</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">8 MHz crystal</span>
+            <span class="mpn">ABLS-8.000MHZ-B4-T · Crystal_HC49-US-SMD_ABLS</span></td>
+        <td class="fn">The processor&#x27;s clock reference. Everything is timed from this.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C596838.html">LCSC C596838</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Crystal capacitors (27 pF) ×2</span>
+            <span class="mpn">CC0603JRNPO9BN270 · C_0603_1608Metric</span></td>
+        <td class="fn">Help the crystal oscillate cleanly.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C107045.html">LCSC C107045</a></td>
+      </tr>
+    </table>
+    <h2>AUDIO</h2>
+    <table>
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>QTY</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">Audio DAC</span>
+            <span class="mpn">PCM5102APWR · TSSOP-20_4.4x6.5mm_P0.65mm</span></td>
+        <td class="fn">Turns the digital sound from the processor into an analog audio signal.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C107671.html">LCSC C107671</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Speaker amplifier</span>
+            <span class="mpn">PAM8406DR · SOIC-16_3.9x9.9mm_P1.27mm</span></td>
+        <td class="fn">Amplifies the DAC&#x27;s signal to drive the two speakers. Class-D (MODE tied to +5 V); input resistors set +4.3 dB gain, input caps give a ~91 Hz speaker high-pass. Replaces the NRND PAM8403 (ADR-0025).</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C86270.html">LCSC C86270</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Headphone amplifier</span>
+            <span class="mpn">TPA6132A2RTER · QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm</span></td>
+        <td class="fn">Drives headphones (16 Ω and up) and line inputs from the audio jack — pop-free, short-circuit protected. Before this, the jack was line-level only.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C69901.html">LCSC C69901</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">3.5 mm jacks ×2</span>
+            <span class="mpn">PJ-320D · Jack_3.5mm_PJ-320D_SMT</span></td>
+        <td class="fn">One is the PHONES / LINE OUT (headphones and line inputs, driven by the headphone amplifier), one is the MIDI output. Plugging into the audio jack mutes the speakers; unplugging brings them back.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C431535.html">LCSC C431535</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Audio supply filters ×2</span>
+            <span class="mpn">BLM18AG601SN1D · L_0603_1608Metric</span></td>
+        <td class="fn">Ferrite beads that keep digital noise out of the audio power supply.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C19330.html">LCSC C19330</a></td>
+      </tr>
+    </table>
+    <h2>POWER</h2>
+    <table>
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>QTY</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">Boost converter</span>
+            <span class="mpn">TPS61089RNR · Texas_VQFN-HR-11_2x2.5mm_P0.5mm_RNR0011A</span></td>
+        <td class="fn">Raises the 3.7 V battery voltage to 5 V for the amplifier and LEDs.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C165129.html">LCSC C165129</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Boost inductor (2.2 µH)</span>
+            <span class="mpn">SWPA6045S2R2NT · L_Sunlord_SWPA6045</span></td>
+        <td class="fn">Energy-storage coil the boost converter needs to work.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C36500.html">LCSC C36500</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">3.3 V regulator</span>
+            <span class="mpn">AP7361C-33Y5-13 · SOT-89-5</span></td>
+        <td class="fn">Makes the clean 3.3 V that the processor, screen and chips run on. Gets warm — needs copper area on the board.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C460397.html">LCSC C460397</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Power switch chip</span>
+            <span class="mpn">TPS22918DBVR · SOT-23-6</span></td>
+        <td class="fn">Electronic switch that turns the whole 3.3 V system on and off.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C131941.html">LCSC C131941</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Slide switch</span>
+            <span class="mpn">SSSS811101 · SW_ALPS-SSSS811101_SlideSwitch_SMD</span></td>
+        <td class="fn">The physical on/off switch on the side of the device.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C109335.html">LCSC C109335</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Battery charger with power path</span>
+            <span class="mpn">BQ24074RGTR · QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm</span></td>
+        <td class="fn">Manages USB power, battery charging and the system supply in one chip. The system is powered first, the battery gets what&#x27;s left; charging works while the device is off. Charge current 0.89 A, USB input limited to 1.34 A.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C54313.html">LCSC C54313</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Battery fuse (resettable)</span>
+            <span class="mpn">SMD1812P260TF/16 · Fuse_1812_4532Metric</span></td>
+        <td class="fn">Sits in the battery + wire. Trips at 5 A if the battery is ever shorted, then resets itself. Backup protection — the battery pouch must still have its own protection.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C438899.html">LCSC C438899</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Battery connector</span>
+            <span class="mpn">S2B-PH-SM4-TB(LF)(SN) · JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal</span></td>
+        <td class="fn">JST plug the LiPo battery connects to. Pin 1 = battery plus.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C295747.html">LCSC C295747</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">USB protection</span>
+            <span class="mpn">USBLC6-2SC6 · SOT-23-6</span></td>
+        <td class="fn">Protects the USB data lines from static discharge.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C2687116.html">LCSC C2687116</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">USB fuse (3 A)</span>
+            <span class="mpn">1812L300/16GR · Fuse_1812_4532Metric</span></td>
+        <td class="fn">Cuts power if something shorts on the USB input. Resets itself.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C18198349.html">LCSC C18198349</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Surge protector</span>
+            <span class="mpn">SMAJ5.0A · D_SMA</span></td>
+        <td class="fn">Clamps voltage spikes on the 5 V rail.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C113952.html">LCSC C113952</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Power diode</span>
+            <span class="mpn">SS34 · D_SMA</span></td>
+        <td class="fn">Sits between the 5 V boost converter and the big rail capacitors — keeps the regulator stable and blocks reverse current.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C8678.html">LCSC C8678</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">USB-C connector</span>
+            <span class="mpn">TYPE-C-31-M-12 · USB_C_Receptacle_HRO_TYPE-C-31-M-12</span></td>
+        <td class="fn">For charging and flashing firmware.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C165948.html">LCSC C165948</a></td>
+      </tr>
+    </table>
+    <h2>CONTROLS &amp; LIGHTS</h2>
+    <table>
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>QTY</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">Button expander</span>
+            <span class="mpn">MCP23017-E/SS · SSOP-28_5.3x10.2mm_P0.65mm</span></td>
+        <td class="fn">Reads the 5 playing keys and 5 modifier buttons over a 2-wire bus, so the processor doesn&#x27;t need 10 extra pins.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C506653.html">LCSC C506653</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">LED driver</span>
+            <span class="mpn">PCA9685PW · TSSOP-28_4.4x9.7mm_P0.65mm</span></td>
+        <td class="fn">Controls the brightness of all 15 status LEDs and the screen backlight.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C2678753.html">LCSC C2678753</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Rotary encoders ×4</span>
+            <span class="mpn">EC11E18244AU · RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm</span></td>
+        <td class="fn">The four knobs: sound drive, brightness, volume and menu navigation. Each can also be pressed.</td>
+        <td class="qty">4</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C202365.html">LCSC C202365</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Playing keys (Kailh Choc) ×5</span>
+            <span class="mpn">CPG135001D01 · SW_KailhChoc_CPG1350_THT_2P</span></td>
+        <td class="fn">The five main keys you play notes on. Real mechanical keyswitches. Hand-soldered.</td>
+        <td class="qty">5</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C400229.html">LCSC C400229</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Modifier buttons ×5</span>
+            <span class="mpn">HX B3F-4055-Y · SW_TC1212-7.3_THT_4P</span></td>
+        <td class="fn">Shift, Hold, Drone, Generate, Clear. Hand-soldered.</td>
+        <td class="qty">5</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C36498965.html">LCSC C36498965</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Service buttons</span>
+            <span class="mpn">TS-1088-AR02016 · SW_TS1088_SMD</span></td>
+        <td class="fn">Reset and boot-mode — only needed when flashing/debugging.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C720477.html">LCSC C720477</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Backlight transistor</span>
+            <span class="mpn">2N7002 · SOT-23</span></td>
+        <td class="fn">Switches the screen backlight, dimmed by the LED driver.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C8545.html">LCSC C8545</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Yellow LEDs ×6</span>
+            <span class="mpn">KT-0603Y · LED_0603_1608Metric</span></td>
+        <td class="fn">Status lights: Shift + one per playing key.</td>
+        <td class="qty">6</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C2287.html">LCSC C2287</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Green LEDs ×6</span>
+            <span class="mpn">KT-0603G · LED_0603_1608Metric</span></td>
+        <td class="fn">Status lights: Hold + one per playing key (shift layer).</td>
+        <td class="qty">6</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C12624.html">LCSC C12624</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">White LEDs ×3</span>
+            <span class="mpn">XL-1608UWC-04 · LED_0603_1608Metric</span></td>
+        <td class="fn">Status lights for Drone, Generate, Clear.</td>
+        <td class="qty">3</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C965808.html">LCSC C965808</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Orange LED</span>
+            <span class="mpn">XL-1608UOC-06 · LED_0603_1608Metric</span></td>
+        <td class="fn">Charging indicator. Lit while the battery charges.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C965800.html">LCSC C965800</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">LED resistors 390 Ω ×15</span>
+            <span class="mpn">0603WAF3900T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Set the current through each status LED.</td>
+        <td class="qty">15</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23151.html">LCSC C23151</a></td>
+      </tr>
+    </table>
+    <h2>CONNECTORS</h2>
+    <table>
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>QTY</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">Screen header (1×8)</span>
+            <span class="mpn">1x8 2.54mm pin header · PinHeader_1x08_P2.54mm_Vertical</span></td>
+        <td class="fn">The screen module plugs into this via a short cable.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C124383.html">LCSC C124383</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Speaker headers ×2</span>
+            <span class="mpn">1x2 2.54mm pin header · PinHeader_1x02_P2.54mm_Vertical</span></td>
+        <td class="fn">The two speakers plug into these.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C124375.html">LCSC C124375</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Debug pads (not fitted)</span>
+            <span class="mpn">SWD 1×3 · 1.27 mm pads · DNP</span></td>
+        <td class="fn">Three bare pads for programming/debugging. Nothing is soldered here at the factory — solder a small header or wires by hand when needed.</td>
+        <td class="qty">0</td>
+        <td class="lnk">—</td>
+      </tr>
+    </table>
+    <h2>CAPACITORS</h2>
+    <table>
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>QTY</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">Bulk capacitor 470 µF</span>
+            <span class="mpn">TPSE477K010R0100 · CP_Tantalum_Case-E_EIA-7343-43_Reflow</span></td>
+        <td class="fn">Big energy reservoir that keeps the 5 V rail steady under load.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C444831.html">LCSC C444831</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Bulk capacitor 100 µF</span>
+            <span class="mpn">CL32A107MPVNNNE · C_1210_3225Metric</span></td>
+        <td class="fn">Second reservoir for fast load changes.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23742.html">LCSC C23742</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">100 nF capacitors ×28</span>
+            <span class="mpn">CC0603KRX7R9BB104 · C_0603_1608Metric</span></td>
+        <td class="fn">Small decoupling capacitors — one next to every chip to keep its supply clean.</td>
+        <td class="qty">28</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C14663.html">LCSC C14663</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">1 µF capacitors ×14</span>
+            <span class="mpn">CL10A105KB8NNNC · C_0603_1608Metric</span></td>
+        <td class="fn">Decoupling and audio-path capacitors, including the headphone amplifier charge pump and input coupling.</td>
+        <td class="qty">14</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C15849.html">LCSC C15849</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">2.2 µF capacitors ×2</span>
+            <span class="mpn">CL10A225KP8NNNC · C_0603_1608Metric</span></td>
+        <td class="fn">Supply and internal-rail capacitors for the headphone amplifier.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C1607.html">LCSC C1607</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">10 µF capacitors ×8</span>
+            <span class="mpn">CL21A106KAYNNNE · C_0805_2012Metric</span></td>
+        <td class="fn">Local supply reservoirs for the chips.</td>
+        <td class="qty">8</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C15850.html">LCSC C15850</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">22 µF capacitors ×12</span>
+            <span class="mpn">CL21A226MAQNNNE · C_0805_2012Metric</span></td>
+        <td class="fn">Supply reservoirs, including the boost converter output and the charger system/battery pins.</td>
+        <td class="qty">12</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C45783.html">LCSC C45783</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">4.7 µF capacitors ×3</span>
+            <span class="mpn">GRM188R61A475KE15D · C_0603_1608Metric</span></td>
+        <td class="fn">Input/output capacitors for the regulator and charger.</td>
+        <td class="qty">3</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C46653.html">LCSC C46653</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">2.2 µF capacitors ×2</span>
+            <span class="mpn">CL10A225KO8NNNC · C_0603_1608Metric</span></td>
+        <td class="fn">Required by the processor&#x27;s internal power supply (VCAP pins).</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23630.html">LCSC C23630</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">10 nF capacitors ×5</span>
+            <span class="mpn">0603B103K500NT · C_0603_1608Metric</span></td>
+        <td class="fn">Filtering, the boost converter&#x27;s compensation, and the speaker-amp input coupling.</td>
+        <td class="qty">5</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C57112.html">LCSC C57112</a></td>
+      </tr>
+    </table>
+    <h2>RESISTORS</h2>
+    <table>
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>QTY</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">10 kΩ resistors ×26</span>
+            <span class="mpn">0603WAF1002T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Pull-ups/pull-downs that define safe default states everywhere (reset, mute, boot, buttons, charger temperature pin…).</td>
+        <td class="qty">26</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C25804.html">LCSC C25804</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">100 kΩ resistors ×2</span>
+            <span class="mpn">0603WAF1003T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Pull-downs on the power-on and USB-detect lines.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C25803.html">LCSC C25803</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">1 kΩ resistors ×3</span>
+            <span class="mpn">0603WAF1001T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Series resistors for the boot button and charge LED; one also programs the battery charge current (0.89 A).</td>
+        <td class="qty">3</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C21190.html">LCSC C21190</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">220 Ω resistors ×2</span>
+            <span class="mpn">0603WAF2200T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Required series resistors on the MIDI output.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C22962.html">LCSC C22962</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">22 Ω resistors ×2</span>
+            <span class="mpn">0603WAF220JT5E · R_0603_1608Metric</span></td>
+        <td class="fn">Series resistors on the line output.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23345.html">LCSC C23345</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">1.2 kΩ resistor</span>
+            <span class="mpn">RC0603FR-071K2L · R_0603_1608Metric</span></td>
+        <td class="fn">Sets the maximum current the charger may draw from USB (1.34 A).</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C114605.html">LCSC C114605</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">121 kΩ resistor</span>
+            <span class="mpn">0603WAF1213T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Sets the boost converter&#x27;s output to 5 V (with the 39 kΩ).</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C25809.html">LCSC C25809</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">39 kΩ resistor</span>
+            <span class="mpn">0603WAF3902T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Second half of the boost voltage divider.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23153.html">LCSC C23153</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">174 kΩ resistors ×3</span>
+            <span class="mpn">0603WAF1743T5E · R_0603_1608Metric</span></td>
+        <td class="fn">The boost converter&#x27;s current limit, plus the speaker amplifier&#x27;s input / gain resistors (+4.3 dB).</td>
+        <td class="qty">3</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C22890.html">LCSC C22890</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">360 kΩ resistor</span>
+            <span class="mpn">0603WAF3603T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Sets the boost converter&#x27;s switching frequency.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23146.html">LCSC C23146</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">6.2 kΩ resistor</span>
+            <span class="mpn">0603WAF6201T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Boost converter loop compensation — keeps it stable under load.</td>
+        <td class="qty">1</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C4260.html">LCSC C4260</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">4.7 kΩ resistors ×2</span>
+            <span class="mpn">0603WAF4701T5E · R_0603_1608Metric</span></td>
+        <td class="fn">Pull-ups the I²C bus needs to work.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23162.html">LCSC C23162</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">5.1 kΩ resistors ×2</span>
+            <span class="mpn">0603WAF5101T5E · R_0603_1608Metric</span></td>
+        <td class="fn">USB-C configuration resistors — tell the charger this is a device.</td>
+        <td class="qty">2</td>
+        <td class="lnk"><a href="https://www.lcsc.com/product-detail/C23186.html">LCSC C23186</a></td>
+      </tr>
+    </table>
+    <h2>OFF-BOARD PARTS (HAND-FITTED, NOT SOLDERED BY THE ASSEMBLER)</h2>
+    <table class="off">
+      <tr class="hd"><th>PART</th><th>WHAT IT DOES</th><th>LINKS</th></tr>
+      
+      <tr>
+        <td class="part"><span class="pn">Screen</span>
+            <span class="mpn">Waveshare 1.9″ LCD, 170×320, ST7789V2</span></td>
+        <td class="fn">Colour display. Plugs into the 1×8 header via a short cable — wire by signal name, the module pin order differs from the header.</td>
+        <td class="lnk"><a href="https://eckstein-shop.de/WaveShare-19inch-LCD-Display-Module-170320-IPS-262K-Colors-SPI-Interface-EN">Product page</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Battery</span>
+            <span class="mpn">LiPo 2000 mAh, JST-PH (Adafruit 2011)</span></td>
+        <td class="fn">Powers the device. Check plug polarity before first connect: connector pin 1 = battery plus.</td>
+        <td class="lnk"><a href="https://www.adafruit.com/product/2011">Product page</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Speakers ×2</span>
+            <span class="mpn">Same Sky CMS-402811-28SP, 8 Ω</span></td>
+        <td class="fn">The built-in speakers. Plug into the two speaker headers.</td>
+        <td class="lnk"><a href="https://www.digikey.com/en/products/detail/cui-devices/CMS-402811-28SP/10821307">Product page</a></td>
+      </tr>
+      <tr>
+        <td class="part"><span class="pn">Debug cable</span>
+            <span class="mpn">Tag-Connect TC2030-IDC</span></td>
+        <td class="fn">Presses onto the SWD pads for flashing/debugging. A tool, not soldered.</td>
+        <td class="lnk"><a href="https://www.tag-connect.com/product/tc2030-idc">Product page</a></td>
+      </tr>
+    </table>
+</body></html>
