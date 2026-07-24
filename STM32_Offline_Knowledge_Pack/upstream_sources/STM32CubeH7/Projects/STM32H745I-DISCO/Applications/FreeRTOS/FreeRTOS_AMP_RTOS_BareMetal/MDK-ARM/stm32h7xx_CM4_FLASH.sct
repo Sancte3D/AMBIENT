@@ -1,0 +1,26 @@
+;------------------------------------------------------------------------------
+; Linker script for MDK-ARM (Keil) based on EWARM and CubeIDE memory layout
+;--------------0----------------------------------------------------------------
+
+LR_IROM1 0x08100000 0x00100000  {    ; load region size_region
+  ER_IROM1 0x08100000 0x00100000  {  ; load address = execution address
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+   .ANY (+XO)
+  }
+  RW_IRAM1 0x10000000 0x00040000  {  ; RW data
+   .ANY (+RW +ZI)
+  }
+  ER_RAM_D3_Z1 0x38000000 0x00000004 {
+    *o (.RAM_D3_Z1)
+  }
+
+  ER_RAM_D3_Z2 0x38000004 0x0000003c {
+    *o (.RAM_D3_Z2)
+  }
+
+  ER_RAM_D3_Z3 0x38000040 ALIGN 4 0x00001000 {
+    *o (.RAM_D3_Z3)
+  }
+}
