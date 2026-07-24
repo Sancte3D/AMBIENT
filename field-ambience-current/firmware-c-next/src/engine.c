@@ -210,7 +210,14 @@ static const float SMOOTH_COEF = 0.05f;       /* per-block, ~120 ms time-const *
  *      true peaks — replaces the old tanf() that distorted everything above
  *      ~0.5 (that continuous saturation was the harshness). */
 #define DC_R 0.995f                           /* one-pole HP, ≈35 Hz at 44.1 k */
+/* r19.52: the AUDIT found the worlds were ~90 % mono sub-bass (spectral
+ * centroid 93–151 Hz, stereo width ~0.02) — the drone/bass low end masked all
+ * the mid character and collapsed the stereo. A 2nd master high-pass at ~62 Hz
+ * removes the useless sub-rumble (the 40 mm speakers can't reproduce <150 Hz
+ * anyway, and on headphones it just muddies) so the mids + stereo breathe. */
+#define HP2_R 0.9912f                          /* 2nd-order HP stage, ≈62 Hz    */
 static float dc_x1L, dc_y1L, dc_x1R, dc_y1R;
+static float hp2_x1L, hp2_y1L, hp2_x1R, hp2_y1R;   /* r19.52: 2nd master-HP stage */
 static float master_vol_cur, master_vol_tgt;
 
 /* r18.89 — master DRIVE stage. The DRIVE encoder used to reach only the
@@ -304,6 +311,7 @@ void engine_init(void) {
     /* Master stage: DC-block cleared, moderate default volume (no on-device
      * volume knob bound yet — keeps headphones from being slammed). */
     dc_x1L = dc_y1L = dc_x1R = dc_y1R = 0.0f;
+    hp2_x1L = hp2_y1L = hp2_x1R = hp2_y1R = 0.0f;
     master_vol_cur = master_vol_tgt = 0.6f;
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
@@ -976,7 +984,26 @@ static void render_ambient(int16_t *buf, int frames) {
     pad_render_mix(dryL, dryR, sendL, sendR, frames, send_amount_cur);
     texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
     ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
-    bass_render_mix(dryL, dryR, sendL, sendR, frames);
+    /* r19.52: the AUDIT found the low end (bass + drone) was ~90 % of the mix
+     * energy — masking every mid voice and pulling the stereo image to mono.
+     * The real culprit is the BASS (spectral centroid ~25 Hz, deep sub the
+     * 40 mm speakers can't even reproduce): render it onto its own bus and trim
+     * it hard so it supports instead of dominates. The DRONE is left at full
+     * level — it is a musical ~110 Hz voice the player deliberately holds, not
+     * mud. The master high-pass (HP2 above) cleans both. */
+    {
+        static float subL[BLOCK], subR[BLOCK], subJL[BLOCK], subJR[BLOCK];
+        memset(subL, 0, sizeof(float) * (size_t)frames);
+        memset(subR, 0, sizeof(float) * (size_t)frames);
+        memset(subJL, 0, sizeof(float) * (size_t)frames);
+        memset(subJR, 0, sizeof(float) * (size_t)frames);
+        bass_render_mix(subL, subR, subJL, subJR, frames);
+        const float BASS_TRIM = 0.5f;
+        for (int n = 0; n < frames; ++n) {
+            dryL[n]  += subL[n]  * BASS_TRIM;  dryR[n]  += subR[n]  * BASS_TRIM;
+            sendL[n] += subJL[n] * BASS_TRIM;  sendR[n] += subJR[n] * BASS_TRIM;
+        }
+    }
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
     /* r18.94: plucks render onto their own bus, run through the MODAL
      * BODY (fixed per-world resonances — the string varies, the body does
@@ -1049,9 +1076,13 @@ static void render_ambient(int16_t *buf, int frames) {
          * small DC offset the drive bias introduces) */
         float yL = L - dc_x1L + DC_R * dc_y1L; dc_x1L = L; dc_y1L = yL;
         float yR = R - dc_x1R + DC_R * dc_y1R; dc_x1R = R; dc_y1R = yR;
+        /* r19.52: 2nd high-pass stage (~62 Hz) — kills the sub-bass mud that
+         * masked the mids + collapsed the stereo (see AUDIT). */
+        float zL = yL - hp2_x1L + HP2_R * hp2_y1L; hp2_x1L = yL; hp2_y1L = zL;
+        float zR = yR - hp2_x1R + HP2_R * hp2_y1R; hp2_x1R = yR; hp2_y1R = zR;
 
-        outL[n] = yL * mv;
-        outR[n] = yR * mv;
+        outL[n] = zL * mv;
+        outR[n] = zR * mv;
     }
     /* r19.41: the complete master-effects chain on the final float mix —
      * hot-path safe (no heap, bounded, LUT-only transcendentals; verified by

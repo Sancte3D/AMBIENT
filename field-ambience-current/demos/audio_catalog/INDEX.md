@@ -16,7 +16,6 @@ into the product · **TODO** = placeholder / own voice or layer still to build.
 | `1_voices/voice_bowed_fjords.wav` | OK | Bowed Hardanger — Fjords voice (darker, more sympathetic ring) |
 | `1_voices/voice_horn_alps.wav` | PROTO | Alphorn/brass — Alps voice (prototype, NOT yet wired into the engine) |
 | `1_voices/voice_pluck_string.wav` | OK | Karplus-Strong pluck/string (VOICE: String) |
-| `1_voices/voice_glass.wav` | OK | FM glass bell (VOICE: Glass) |
 | `1_voices/voice_ember.wav` | OK | Warm subtractive analog (VOICE: Ember) |
 
 ## BEDS
