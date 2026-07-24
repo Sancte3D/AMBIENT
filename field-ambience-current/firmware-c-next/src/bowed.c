@@ -15,6 +15,7 @@
  * two saws + one LP + two BP + adds. Alias-free, no per-sample transcendental.
  */
 #include "bowed.h"
+#include "shape.h"
 #include "dsp.h"
 #include <math.h>
 #include <string.h>
@@ -95,8 +96,8 @@ void bowed_note(float freq_hz, float amp) {
     dsp_svf_reset(&v->bowbp); dsp_svf_set(&v->bowbp, freq_hz * 2.6f, 1.4f);
 
     v->env = 0.0001f;
-    v->envInc = v->amp / (0.30f * SR);        /* ~300 ms bow swell         */
-    v->relCoef = dsp_smooth_coef(0.9f);        /* ~2 s tail                 */
+    v->envInc = v->amp / (0.30f * shape_attack_scale() * SR);   /* r19.60: 300 ms x SHAPE */
+    v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
     v->bow = 0.0f;
     v->vibPh = 0.0f; v->vibInc = 5.1f / SR;    /* ~5.1 Hz vibrato           */

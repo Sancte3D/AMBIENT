@@ -27,6 +27,7 @@
 #include "ember.h"
 #include "bowed.h"
 #include "horn.h"
+#include "shape.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -319,6 +320,7 @@ void engine_init(void) {
     ember_init();                    /* r19.28 warm subtractive analog voice */
     bowed_init();                    /* r19.47 bowed lyra/Hardanger voice (Open Sea / Fjords) */
     horn_init();                     /* r19.53 alphorn/brass voice (Alps) */
+    shape_init();                    /* r19.60 envelope shape (neutral)   */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
     memset(eno_on,      0, sizeof eno_on);
@@ -489,6 +491,10 @@ void engine_set_resonance(float amount_0_1) {
     pad_set_resonance(dsp_clampf(amount_0_1, 0.0f, 1.0f));
 }
 float engine_resonance(void) { return pad_resonance(); }
+
+/* r19.60 SHAPE — global envelope scaling (see shape.c). */
+void engine_set_attack (float v01) { shape_set_attack(v01); }
+void engine_set_release(float v01) { shape_set_release(v01); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   {
     v = dsp_clampf(v, 0.0f, 1.0f);

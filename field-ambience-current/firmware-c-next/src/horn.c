@@ -17,6 +17,7 @@
  * transcendental.
  */
 #include "horn.h"
+#include "shape.h"
 #include "dsp.h"
 #include <string.h>
 
@@ -84,8 +85,8 @@ void horn_note(float freq_hz, float amp) {
     dsp_svf_reset(&v->chiffbp); dsp_svf_set(&v->chiffbp, 1700.0f, 1.1f);
 
     v->env = 0.0001f;
-    v->envInc  = v->amp / (0.13f * SR);       /* ~130 ms blow-in (faster than bow) */
-    v->relCoef = dsp_smooth_coef(0.7f);        /* ~1.4 s tail                       */
+    v->envInc  = v->amp / (0.13f * shape_attack_scale() * SR);  /* r19.60: 130 ms x SHAPE */
+    v->relCoef = dsp_smooth_coef(0.7f * shape_release_scale()); /* r19.60 */
     v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
     v->blareEnv  = 0.0f;
     v->chiff_left = (int)(0.09f * SR);         /* 90 ms of air at the onset          */

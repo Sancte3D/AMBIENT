@@ -110,8 +110,15 @@ Engine passt (Blockrate, Ramping, Hot-Path-Regeln).
    umgangen → Klang wie vorher. Messung: die dominante Frequenz wandert bei 90 %
    Resonanz mit dem Sweep von 872 → 3607 → 1104 Hz (ohne Resonanz statisch bei
    ~450 Hz). Der Filter ist damit hörbar geworden statt eine Tonblende zu sein.
-2. **`ATTACK` / `RELEASE` global spielbar** — jede Stimme bekommt Hüllkurven-
-   Skalierung statt fester Zeiten. Verwandelt 5 Stimmen in ein Kontinuum.
+2. ~~**`ATTACK` / `RELEASE` global spielbar**~~ ✅ **ERLEDIGT (r19.60)**
+   Neues Modul `shape.c`: liefert **Skalierungsfaktoren** statt absoluter Zeiten,
+   mit denen jede Stimme ihre *eigene* natürliche Hüllkurve multipliziert. So
+   bleibt der Charakter erhalten (Horn 130 ms bläst weiter schneller an als der
+   Bogen mit 300 ms), aber das ganze Instrument lässt sich Richtung perkussiv
+   oder atmend schieben. Mapping exponentiell (0.5 = exakt neutral = Klang wie
+   vorher), Attack ×0.125…×8, Release ×0.25…×4. Verdrahtet in pad/bowed/horn/
+   ember/pluck + zwei Menü-Slots. Messung an derselben Bowed-Stimme, Pegel nach
+   100 ms: **Attack 0 % → 54 %, neutral → 18 %, Attack 100 % → 9 %.**
 3. **Mini-Mod-Matrix** — LFO + Env auf Cutoff/Pitch/Amp. Bringt Eigenleben.
 
 **Bedienung:** Wir haben 4 Encoder (Drive, Bright, Display, Volume) + SHIFT.

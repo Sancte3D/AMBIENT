@@ -3,6 +3,7 @@
  */
 
 #include "ember.h"
+#include "shape.h"
 #include "dsp.h"
 #include <math.h>
 #include <string.h>
@@ -78,8 +79,8 @@ void ember_note(float freq_hz, float amp) {
     v->amp  = amp;
     v->env  = 0.0f;
     v->attacking = 1;
-    v->atk_inc   = 1.0f / (ATK_S * SR);
-    v->amp_coef  = powf(0.001f, 1.0f / (AMP_T60_S * SR));
+    v->atk_inc   = 1.0f / (ATK_S * shape_attack_scale() * SR);            /* r19.60 */
+    v->amp_coef  = powf(0.001f, 1.0f / (AMP_T60_S * shape_release_scale() * SR)); /* r19.60 */
     v->fenv      = 1.0f;
     v->fenv_coef = powf(0.001f, 1.0f / (FLT_T60_S * SR));
     dsp_svf_reset(&v->svf);

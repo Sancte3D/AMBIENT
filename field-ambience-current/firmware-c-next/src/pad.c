@@ -14,6 +14,7 @@
  */
 
 #include "pad.h"
+#include "shape.h"
 #include "dsp.h"
 #include "padsynth.h"
 #include "dsp_ladder.h"
@@ -340,8 +341,9 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
         v->spec_rng = 0x5A17E0B1u + (uint32_t)source * 2654435761u;
         v->spec_ctr = 1;
     }
-    v->atkInc = v->amp / (PAD_ATTACK_S * SR);
-    v->relCoef = dsp_smooth_coef(PAD_RELEASE_S / 3.0f);
+    /* r19.60 SHAPE: die natuerliche Zeit der Stimme mal dem globalen Faktor */
+    v->atkInc = v->amp / (PAD_ATTACK_S * shape_attack_scale() * SR);
+    v->relCoef = dsp_smooth_coef(PAD_RELEASE_S * shape_release_scale() / 3.0f);
     v->state  = ENV_ATTACK;
 
     /* Webapp cellOn pans cells across the stereo field: pan = (degree-4)·0.15

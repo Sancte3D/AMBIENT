@@ -3,6 +3,7 @@
  */
 
 #include "pluck.h"
+#include "shape.h"
 #include "dsp.h"
 #include <math.h>
 #include <string.h>
@@ -76,7 +77,7 @@ void pluck_note(float freq_hz, float amp) {
     pluck_voice_t *p = &v[i];
     p->N   = SR / freq_hz;
     if (p->N > (float)(BUF_LEN - 4)) p->N = (float)(BUF_LEN - 4);
-    p->rho = powf(0.001f, 1.0f / (freq_hz * T60_S));   /* −60 dB in T60 */
+    p->rho = powf(0.001f, 1.0f / (freq_hz * T60_S * shape_release_scale())); /* r19.60 */
     p->widx   = 0;
     p->y_prev = 0.0f;
     p->env    = amp;

@@ -44,6 +44,8 @@ static int           synth_i = 0;         /* r19.16: 0 Ambient, player-global */
 static int           cell_i  = 0;         /* r19.23: 0 Note / 1 Bloom, player-global */
 static int           bass_i  = 3;         /* r19.31: HARMONY bass, default Drift */
 static int           color_i = 0;         /* r19.32: HARMONY chord color, default Pure */
+static int           atk_i   = 50;        /* r19.60: SHAPE attack %% (50 = neutral) */
+static int           rel_i   = 50;        /* r19.60: SHAPE release %% (50 = neutral) */
 static int           reso    = 0;         /* r19.59: RESONANCE %% (0 = off/bypassed) */
 static int           fx_i    = 8;         /* r19.41: FX page, default Dream Chain */
 static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
@@ -103,6 +105,8 @@ static void apply_current(void) {
         case MP_COLOR:  if (cb.set_color)      cb.set_color(color_i);            break;
         case MP_FX:     if (cb.set_fx)         cb.set_fx(fx_i);                  break;
         case MP_RESO:   if (cb.set_reso)       cb.set_reso (reso   / 100.0f);    break;
+        case MP_ATTACK: if (cb.set_attack)     cb.set_attack(atk_i / 100.0f);    break;
+        case MP_RELEASE:if (cb.set_release)    cb.set_release(rel_i/ 100.0f);    break;
         default: break;
     }
 }
@@ -267,7 +271,8 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
-        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX","Resonance"
+        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX","Resonance",
+        "Attack","Release"
     };
     return LABELS[cur];
 }
@@ -297,6 +302,8 @@ int menu_value_int(menu_param_t p) {
         case MP_ECHO:   return echo;
         case MP_BLUR:   return blur;
         case MP_RESO:   return reso;
+        case MP_ATTACK: return atk_i;
+        case MP_RELEASE:return rel_i;
         default:        return 0;
     }
 }
@@ -338,6 +345,8 @@ const char *menu_current_value_text(void) {
         case MP_ECHO:   snprintf(buf, sizeof buf, "%d%%", echo);   return buf;
         case MP_BLUR:   snprintf(buf, sizeof buf, "%d%%", blur);   return buf;
         case MP_RESO:   snprintf(buf, sizeof buf, "%d%%", reso);   return buf;
+        case MP_ATTACK: snprintf(buf, sizeof buf, "%d%%", atk_i);  return buf;
+        case MP_RELEASE:snprintf(buf, sizeof buf, "%d%%", rel_i);  return buf;
         default: return "";
     }
 }
@@ -379,6 +388,8 @@ void menu_rotate(int delta) {
         case MP_ECHO:   echo   = clampi(echo   + delta, 0, 100); break;
         case MP_BLUR:   blur   = clampi(blur   + delta, 0, 100); break;
         case MP_RESO:   reso   = clampi(reso   + delta, 0, 100); break;
+        case MP_ATTACK: atk_i  = clampi(atk_i  + delta, 0, 100); break;
+        case MP_RELEASE:rel_i  = clampi(rel_i  + delta, 0, 100); break;
         default: break;
     }
     apply_current();

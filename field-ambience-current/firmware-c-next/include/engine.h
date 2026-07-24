@@ -115,6 +115,12 @@ void engine_set_brightness(float hz);          /* pass-through to pad */
  * tone control into a played filter (see docs/SYNTH_IDENTITY.md). */
 void engine_set_resonance(float amount_0_1);
 float engine_resonance(void);
+/* r19.60 SHAPE (0..1, 0.5 = neutral): skaliert die natuerliche Attack- bzw.
+ * Release-Zeit ALLER Stimmen. Erhaelt den Charakter jeder Stimme (relative
+ * Verhaeltnisse bleiben), schiebt aber das ganze Instrument Richtung perkussiv
+ * oder atmend. Siehe docs/SYNTH_IDENTITY.md, Saeule SHAPE. */
+void engine_set_attack(float v01);
+void engine_set_release(float v01);
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-0017) */
 void engine_set_motion(float amount_0_1);      /* Pad LFO depth (perform macro) */

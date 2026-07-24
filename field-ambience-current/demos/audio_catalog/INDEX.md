@@ -45,6 +45,9 @@ into the product · **TODO** = placeholder / own voice or layer still to build.
 | `7_synth/reso_00_off.wav` | OK | RESONANCE 0 % — Filter aus (Referenz, klingt wie vor r19.59) |
 | `7_synth/reso_55_mid.wav` | OK | RESONANCE 55 % — der Moog-Ladder singt mit, BRIGHT fährt den Sweep |
 | `7_synth/reso_90_high.wav` | OK | RESONANCE 90 % — kurz vor Selbstoszillation, klassisches Ambient-Timbre |
+| `7_synth/shape_0_pluck.wav` | OK | SHAPE Attack 0 % — dieselbe Bowed-Stimme wird perkussiv |
+| `7_synth/shape_50_neutral.wav` | OK | SHAPE 50 % — neutral, exakt der Klang vor r19.60 |
+| `7_synth/shape_100_swell.wav` | OK | SHAPE Attack 100 % — dieselbe Stimme wird zum atmenden Swell |
 
 ## LOW
 

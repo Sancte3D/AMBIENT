@@ -89,6 +89,8 @@ static void hal_set_color      (int   col) { bloom_set_color(col); }        /* r
 static void hal_set_fx         (int   m)   { engine_set_fx_mode(m); }       /* r19.41 */
 static void hal_set_bright      (float hz)  { params_set_bright(hz); }         /* r19.45 */
 static void hal_set_reso        (float v)   { engine_set_resonance(v); }       /* r19.59 */
+static void hal_set_attack      (float v)   { engine_set_attack(v); }          /* r19.60 */
+static void hal_set_release     (float v)   { engine_set_release(v); }         /* r19.60 */
 /* cell play mode — 0 Note (r19.26), 1 Harmony (r19.29, chord + voice-leading),
  * 2 Landscape (r19.27, sound layers). */
 enum { CELL_NOTE = 0, CELL_HARMONY = 1, CELL_LAND = 2 };
@@ -324,6 +326,8 @@ int main(void) {
             .set_fx         = hal_set_fx,
             .set_bright     = hal_set_bright,
         .set_reso        = hal_set_reso,
+        .set_attack      = hal_set_attack,
+        .set_release     = hal_set_release,
         };
         menu_init(&cb);
     }

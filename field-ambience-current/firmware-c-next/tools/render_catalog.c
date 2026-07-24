@@ -32,6 +32,7 @@
 #include "ember.h"
 #include "bowed.h"
 #include "horn.h"
+#include "shape.h"
 #include "bass.h"
 #include "drone.h"
 #include "ambience.h"
@@ -159,6 +160,28 @@ static void render_reso(float res, FILE *f, int secs){
     }
 }
 
+/* ------------------------------------------------------------------ shape */
+/* r19.60: dieselbe Phrase auf derselben Stimme (Bowed), nur ATTACK/RELEASE
+ * verschoben. Zeigt, dass eine Stimme dadurch zu zwei Instrumenten wird. */
+static void render_shape(float atk01, float rel01, FILE *f, int secs){
+    dsp_init(); shape_init();
+    shape_set_attack(atk01); shape_set_release(rel01);
+    bowed_init(); bowed_set_colour(0);
+    reverb_init(); reverb_set(0.82f,0.38f);
+    uint32_t total=(uint32_t)secs*SR; hdr(f,total);
+    float dL[BLOCK],dR[BLOCK],sL[BLOCK],sR[BLOCK],wL[BLOCK],wR[BLOCK];
+    int16_t buf[BLOCK*2]; const int NB=(int)(2.2f*SR/BLOCK);
+    int next=0,ni=0; uint32_t done=0,blk=0;
+    while(done<total){
+        memset(dL,0,sizeof dL);memset(dR,0,sizeof dR);memset(sL,0,sizeof sL);memset(sR,0,sizeof sR);
+        if((int)blk>=next && ni<PHRASE_N){ bowed_note(dsp_midi_to_hz((float)PHRASE[ni]),PAMP[ni]); ni++; next+=NB; }
+        bowed_render_mix(dL,dR,sL,sR,BLOCK,0.55f);
+        reverb_render(sL,sR,wL,wR,BLOCK);
+        for(int n=0;n<BLOCK;++n){ buf[n*2]=clip16(dL[n]+wL[n]*0.6f); buf[n*2+1]=clip16(dR[n]+wR[n]*0.6f); }
+        fwrite(buf,2,BLOCK*2,f); done+=BLOCK; blk++;
+    }
+}
+
 /* ---------------------------------------------------------------- ambience */
 static void render_ambience(int wi, FILE *f, int secs){
     dsp_init(); ambience_init(); ambience_set_world(wi); ambience_set_level(1.0f);
@@ -283,6 +306,10 @@ int main(int argc,char**argv){
     } else if(!strcmp(cat,"reso")){
         float r = !strcmp(name,"off")?0.0f : !strcmp(name,"mid")?0.55f : 0.9f;
         render_reso(r,f, secs?secs:26);
+    } else if(!strcmp(cat,"shape")){
+        float a = !strcmp(name,"pluck")?0.0f : !strcmp(name,"neutral")?0.5f : 1.0f;
+        float r = !strcmp(name,"pluck")?0.15f: !strcmp(name,"neutral")?0.5f : 1.0f;
+        render_shape(a,r,f, secs?secs:30);
     } else if(!strcmp(cat,"bass")){       render_bass(!strcmp(name,"deep"),f, secs?secs:16);
     } else if(!strcmp(cat,"drone")){      render_drone(f, secs?secs:24);
     } else if(!strcmp(cat,"fx")){         render_fx(fx_by_name(name),f, secs?secs:26);

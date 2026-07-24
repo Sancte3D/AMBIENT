@@ -110,6 +110,7 @@ set(DSP_SOURCES
     src/composer.c      # r18.96: ambient composer state machine (probabilities only)
     src/harmony.c       # r19.0: harmonic safety core (pitch worlds, mutation, collision filter)
     src/tuning.c        # r19.6: equal/just intonation layer
+    src/shape.c         # r19.60: global envelope shape (attack/release scaling)
     src/bass.c
     src/reverb.c
     src/reverb_presets.c
