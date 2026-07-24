@@ -44,6 +44,7 @@ static int           synth_i = 0;         /* r19.16: 0 Ambient, player-global */
 static int           cell_i  = 0;         /* r19.23: 0 Note / 1 Bloom, player-global */
 static int           bass_i  = 3;         /* r19.31: HARMONY bass, default Drift */
 static int           color_i = 0;         /* r19.32: HARMONY chord color, default Pure */
+static int           reso    = 0;         /* r19.59: RESONANCE %% (0 = off/bypassed) */
 static int           fx_i    = 8;         /* r19.41: FX page, default Dream Chain */
 static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
 
@@ -101,6 +102,7 @@ static void apply_current(void) {
         case MP_BASS:   if (cb.set_bass)       cb.set_bass(bass_i);              break;
         case MP_COLOR:  if (cb.set_color)      cb.set_color(color_i);            break;
         case MP_FX:     if (cb.set_fx)         cb.set_fx(fx_i);                  break;
+        case MP_RESO:   if (cb.set_reso)       cb.set_reso (reso   / 100.0f);    break;
         default: break;
     }
 }
@@ -265,7 +267,7 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
-        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX"
+        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX","Resonance"
     };
     return LABELS[cur];
 }
@@ -294,6 +296,7 @@ int menu_value_int(menu_param_t p) {
         case MP_AGE:    return age;
         case MP_ECHO:   return echo;
         case MP_BLUR:   return blur;
+        case MP_RESO:   return reso;
         default:        return 0;
     }
 }
@@ -334,6 +337,7 @@ const char *menu_current_value_text(void) {
         case MP_AGE:    snprintf(buf, sizeof buf, "%d%%", age);    return buf;
         case MP_ECHO:   snprintf(buf, sizeof buf, "%d%%", echo);   return buf;
         case MP_BLUR:   snprintf(buf, sizeof buf, "%d%%", blur);   return buf;
+        case MP_RESO:   snprintf(buf, sizeof buf, "%d%%", reso);   return buf;
         default: return "";
     }
 }
@@ -374,6 +378,7 @@ void menu_rotate(int delta) {
         case MP_AGE:    age    = clampi(age    + delta, 0, 100); break;
         case MP_ECHO:   echo   = clampi(echo   + delta, 0, 100); break;
         case MP_BLUR:   blur   = clampi(blur   + delta, 0, 100); break;
+        case MP_RESO:   reso   = clampi(reso   + delta, 0, 100); break;
         default: break;
     }
     apply_current();

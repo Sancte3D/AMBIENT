@@ -102,8 +102,14 @@ Engine passt (Blockrate, Ramping, Hot-Path-Regeln).
 
 ## 5. Vorschlag: Reihenfolge nach Wirkung/Aufwand
 
-1. **Ladder-Filter anschliessen + `RESONANCE` als Parameter** — Code existiert
-   bereits, grösste Wirkung pro Aufwand. Macht Brightness zum echten Filter.
+1. ~~**Ladder-Filter anschliessen + `RESONANCE` als Parameter**~~ ✅ **ERLEDIGT (r19.59)**
+   Der Moog-Ladder sitzt jetzt als **Stereo-Masterfilter auf dem Pad-Bus** (nicht
+   pro Stimme: 12 Resonanzspitzen wären Matsch, und 4x-Oversampling x12 hätte das
+   IRQ-Budget gesprengt — 2 Instanzen statt 12). BRIGHT fährt den Cutoff,
+   RESONANCE (Menü-Slot, 0..100 %) lässt ihn singen. Bei 0 % vollständig
+   umgangen → Klang wie vorher. Messung: die dominante Frequenz wandert bei 90 %
+   Resonanz mit dem Sweep von 872 → 3607 → 1104 Hz (ohne Resonanz statisch bei
+   ~450 Hz). Der Filter ist damit hörbar geworden statt eine Tonblende zu sein.
 2. **`ATTACK` / `RELEASE` global spielbar** — jede Stimme bekommt Hüllkurven-
    Skalierung statt fester Zeiten. Verwandelt 5 Stimmen in ein Kontinuum.
 3. **Mini-Mod-Matrix** — LFO + Env auf Cutoff/Pitch/Amp. Bringt Eigenleben.

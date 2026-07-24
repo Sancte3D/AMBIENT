@@ -132,6 +132,33 @@ static void render_bed(int wi, FILE *f, int secs){
     }
 }
 
+/* -------------------------------------------------------------- resonance */
+/* r19.59: the pad bed with the Moog ladder engaged — a slow BRIGHT sweep so you
+ * hear the filter move. 'off' = resonance 0 (reference), 'mid'/'high' = the
+ * filter singing. This is the "does it sound like a synth" test. */
+static void render_reso(float res, FILE *f, int secs){
+    const world_t *w=worlds_get(0);
+    dsp_init(); brain_init(); pad_init(); padsynth_build(0,0);
+    brain_set_key(w->key_midi); brain_set_mode(w->mode); tuning_set_key(w->key_midi);
+    pad_set_motion(1.0f); pad_set_resonance(res);
+    reverb_init(); reverb_set(0.80f,0.35f);
+    int chord[4]; int nc=brain_color_chord(0,w->chord_color,chord,4);
+    for(int i=0;i<nc&&i<3;++i) pad_note_on((uint8_t)(1+i), tuning_hz((float)chord[i]), 0.5f);
+    uint32_t total=(uint32_t)secs*SR; hdr(f,total);
+    float dL[BLOCK],dR[BLOCK],sL[BLOCK],sR[BLOCK],wL[BLOCK],wR[BLOCK];
+    int16_t buf[BLOCK*2]; uint32_t done=0;
+    while(done<total){
+        /* slow triangle sweep of BRIGHT: -500 .. +2600 Hz and back */
+        float t=(float)done/(float)total; float tri = t<0.5f ? t*2.0f : (1.0f-t)*2.0f;
+        pad_set_brightness(-500.0f + tri*3100.0f);
+        memset(dL,0,sizeof dL);memset(dR,0,sizeof dR);memset(sL,0,sizeof sL);memset(sR,0,sizeof sR);
+        pad_render_mix(dL,dR,sL,sR,BLOCK,0.4f);
+        reverb_render(sL,sR,wL,wR,BLOCK);
+        for(int n=0;n<BLOCK;++n){ buf[n*2]=clip16(dL[n]+wL[n]*0.5f); buf[n*2+1]=clip16(dR[n]+wR[n]*0.5f); }
+        fwrite(buf,2,BLOCK*2,f); done+=BLOCK;
+    }
+}
+
 /* ---------------------------------------------------------------- ambience */
 static void render_ambience(int wi, FILE *f, int secs){
     dsp_init(); ambience_init(); ambience_set_world(wi); ambience_set_level(1.0f);
@@ -253,6 +280,9 @@ int main(int argc,char**argv){
         render_voice(v,f, secs?secs:30);
     } else if(!strcmp(cat,"bed")){        render_bed(world_by_name(name),f, secs?secs:24);
     } else if(!strcmp(cat,"ambience")){   render_ambience(world_by_name(name),f, secs?secs:24);
+    } else if(!strcmp(cat,"reso")){
+        float r = !strcmp(name,"off")?0.0f : !strcmp(name,"mid")?0.55f : 0.9f;
+        render_reso(r,f, secs?secs:26);
     } else if(!strcmp(cat,"bass")){       render_bass(!strcmp(name,"deep"),f, secs?secs:16);
     } else if(!strcmp(cat,"drone")){      render_drone(f, secs?secs:24);
     } else if(!strcmp(cat,"fx")){         render_fx(fx_by_name(name),f, secs?secs:26);

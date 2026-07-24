@@ -16,6 +16,7 @@
 #include "pad.h"
 #include "dsp.h"
 #include "padsynth.h"
+#include "dsp_ladder.h"
 
 /* r18.93 — oscillator core selector. 0 = legacy 10-osc polyBLEP stack,
  * 1 = PADsynth spectral-table reads (default). The envelopes, SVF,
@@ -114,6 +115,15 @@ static pad_voice_t voices[PAD_MAX];
 static int   ctl_phase;             /* shared control-rate counter */
 static float bright_target;         /* brightness offset target (Hz) */
 static float bright_cur;            /* smoothed brightness */
+
+/* r19.59 RESONANCE — Moog ladder on the pad bus (see pad_render_mix).
+ * BASE is where the ladder sits with BRIGHT at 0; the BRIGHT encoder offsets
+ * it, so one knob sweeps the filter and the other makes it sing. */
+#define LADDER_FC_BASE  1250.0f     /* cutoff at BRIGHT = 0                  */
+#define LADDER_RES_MAX  1.55f       /* just under self-oscillation (max 1.8) */
+static dsp_ladder_t ladL, ladR;
+static float res_target;            /* 0..1 from the player                  */
+static float res_cur;               /* smoothed (no zipper)                  */
 static float bright_coef;           /* per-control-block smoothing coef */
 static float motion_depth = 1.0f;   /* LFO-depth multiplier (Motion macro) */
 static float spec_depth   = 0.0f;   /* r19.5 spectral-animator depth (Motion) */
@@ -154,9 +164,24 @@ void pad_init(void) {
     pulsew_cur  = 0.0f;
     /* timbre glide ~150 ms */
     vmix_coef = 1.0f - expf(-(float)CTL_DECIMATE / (0.15f * SR));
+
+    /* r19.59: the bus ladder starts fully open + resonance off, so boot sounds
+     * exactly as before until the player turns RESONANCE up. */
+    dsp_ladder_init(&ladL, SR);  dsp_ladder_init(&ladR, SR);
+    dsp_ladder_set_freq(&ladL, LADDER_FC_BASE); dsp_ladder_set_res(&ladL, 0.0f);
+    dsp_ladder_set_freq(&ladR, LADDER_FC_BASE); dsp_ladder_set_res(&ladR, 0.0f);
+    res_target = res_cur = 0.0f;
 }
 
 void pad_set_brightness(float hz) { bright_target = hz; }
+
+/* r19.59 RESONANCE (0..1): how hard the pad-bus ladder rings. 0 = bypassed
+ * (bit-identical to the pre-r19.59 sound), 1 = just under self-oscillation.
+ * Smoothed in the render loop, so a fast knob sweep cannot zipper. */
+void pad_set_resonance(float amount_0_1) {
+    res_target = dsp_clampf(amount_0_1, 0.0f, 1.0f);
+}
+float pad_resonance(void) { return res_target; }
 void pad_set_motion(float d)      {
     motion_depth = dsp_clampf(d, 0.0f, 2.0f);
     /* r19.5: MOTION also drives the spectral animator (same emotional
@@ -582,6 +607,30 @@ void pad_render_mix(float *dry_L, float *dry_R,
     while (left > 0) {
         int n = left < CH ? left : CH;
         render_block_float(L, R, n);
+
+        /* r19.59 RESONANCE — the Moog ladder as the pad's MASTER filter.
+         * One stereo pair on the bus, NOT per voice: 12 resonant peaks would
+         * be mud, while a single resonant sweep across the whole bed is the
+         * classic ambient timbre — and it costs 2 instances instead of 12
+         * (the ladder is 4x oversampled, so per-voice would blow the IRQ
+         * budget). Bypassed entirely at res≈0 so the old sound is untouched
+         * until the player asks for resonance. */
+        if (res_cur > 0.005f || res_target > 0.005f) {
+            /* control-rate coefficient update (once per sub-block) */
+            res_cur += 0.08f * (res_target - res_cur);      /* ~ramped, no zipper */
+            float fc = dsp_clampf(LADDER_FC_BASE + bright_cur, 60.0f, 9000.0f);
+            float rz = res_cur * LADDER_RES_MAX;
+            dsp_ladder_set_freq(&ladL, fc);  dsp_ladder_set_res(&ladL, rz);
+            dsp_ladder_set_freq(&ladR, fc);  dsp_ladder_set_res(&ladR, rz);
+            /* wet/dry blend by resonance amount: the filter fades IN with the
+             * knob, so there is never a jump when it engages. */
+            float w = res_cur, d = 1.0f - res_cur;
+            for (int i = 0; i < n; ++i) {
+                L[i] = d * L[i] + w * dsp_ladder_process(&ladL, L[i]);
+                R[i] = d * R[i] + w * dsp_ladder_process(&ladR, R[i]);
+            }
+        }
+
         for (int i = 0; i < n; ++i) {
             dry_L[out_idx + i]  += L[i];
             dry_R[out_idx + i]  += R[i];

@@ -482,6 +482,13 @@ void engine_set_brightness(float hz)  {
      * → 0..1, centre unchanged at the world default until the user moves it). */
     fx_master_set_tone((hz + 600.0f) / 1400.0f);
 }
+
+/* r19.59 RESONANCE — see docs/SYNTH_IDENTITY.md. The pad bus gets a real
+ * resonant ladder; BRIGHT sweeps its cutoff, RESONANCE makes it sing. */
+void engine_set_resonance(float amount_0_1) {
+    pad_set_resonance(dsp_clampf(amount_0_1, 0.0f, 1.0f));
+}
+float engine_resonance(void) { return pad_resonance(); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   {
     v = dsp_clampf(v, 0.0f, 1.0f);

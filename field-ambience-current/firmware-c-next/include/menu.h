@@ -67,6 +67,7 @@ typedef enum {
     MP_BASS,      /* r19.31: HARMONY bass 0 Off / 1 Root / 2 Fifth / 3 Drift */
     MP_COLOR,     /* r19.32: HARMONY chord color 0 Pure / 1 Open / 2 Warm / 3 Deep */
     MP_FX,        /* r19.41: master-effects page 0 Bypass .. 8 Dream (default 8) */
+    MP_RESO,      /* r19.59: RESONANCE of the pad-bus ladder (0..100 %) */
     MP_COUNT
 } menu_param_t;
 
@@ -98,6 +99,7 @@ typedef struct {
     void (*set_color)      (int color);              /* r19.32: 0 Pure / 1 Open / 2 Warm / 3 Deep */
     void (*set_fx)         (int mode);               /* r19.41: 0 Bypass .. 8 Dream Chain */
     void (*set_bright)     (float hz);               /* r19.45: per-world pad brightness (Hz) */
+    void (*set_reso)       (float v01);              /* r19.59: pad-bus ladder resonance */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

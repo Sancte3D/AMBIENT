@@ -38,6 +38,14 @@ into the product · **TODO** = placeholder / own voice or layer still to build.
 | `3_ambience/amb_moss.wav` | OK | Moss ambience — wind + rain |
 | `3_ambience/amb_desert.wav` | OK | Desert ambience — dry heat haze + sparse sand grains (r19.54) |
 
+## SYNTH
+
+| sample | status | what it is |
+|---|---|---|
+| `7_synth/reso_00_off.wav` | OK | RESONANCE 0 % — Filter aus (Referenz, klingt wie vor r19.59) |
+| `7_synth/reso_55_mid.wav` | OK | RESONANCE 55 % — der Moog-Ladder singt mit, BRIGHT fährt den Sweep |
+| `7_synth/reso_90_high.wav` | OK | RESONANCE 90 % — kurz vor Selbstoszillation, klassisches Ambient-Timbre |
+
 ## LOW
 
 | sample | status | what it is |

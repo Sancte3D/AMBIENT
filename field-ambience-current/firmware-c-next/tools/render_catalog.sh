@@ -40,6 +40,9 @@ ambience|opensea|3_ambience|amb_opensea|24|OK|Open Sea ambience — gentle waves
 ambience|fjords|3_ambience|amb_fjords|24|OK|Fjords ambience — dark water murmur + deep drips (r19.54)
 ambience|moss|3_ambience|amb_moss|24|OK|Moss ambience — wind + rain
 ambience|desert|3_ambience|amb_desert|24|OK|Desert ambience — dry heat haze + sparse sand grains (r19.54)
+reso|off|7_synth|reso_00_off|26|OK|RESONANCE 0 % — Filter aus (Referenz, klingt wie vor r19.59)
+reso|mid|7_synth|reso_55_mid|26|OK|RESONANCE 55 % — der Moog-Ladder singt mit, BRIGHT fährt den Sweep
+reso|high|7_synth|reso_90_high|26|OK|RESONANCE 90 % — kurz vor Selbstoszillation, klassisches Ambient-Timbre
 bass|root|4_low|bass_root|16|OK|Bass voice — root mode
 bass|deep|4_low|bass_deep|16|OK|Bass voice — deep mode
 drone|default|4_low|drone|24|OK|Drone voice (bloom in / tail out)

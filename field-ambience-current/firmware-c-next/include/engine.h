@@ -110,6 +110,11 @@ void engine_set_master_volume(float vol_0_1);  /* master level (VOLUME encoder) 
  * just the reverb input. */
 void engine_set_drive(float drive_0_1);
 void engine_set_brightness(float hz);          /* pass-through to pad */
+/* r19.59 RESONANCE (0..1): the Moog ladder on the pad bus. 0 = off (the
+ * pre-r19.59 sound), 1 = just under self-oscillation. With BRIGHT it turns the
+ * tone control into a played filter (see docs/SYNTH_IDENTITY.md). */
+void engine_set_resonance(float amount_0_1);
+float engine_resonance(void);
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-0017) */
 void engine_set_motion(float amount_0_1);      /* Pad LFO depth (perform macro) */
