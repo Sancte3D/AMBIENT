@@ -27,6 +27,8 @@
 #include "ember.h"
 #include "bowed.h"
 #include "horn.h"
+#include "choir.h"
+#include "guembri.h"
 #include "shape.h"
 #include "padsynth.h"
 #include "body.h"
@@ -320,6 +322,8 @@ void engine_init(void) {
     ember_init();                    /* r19.28 warm subtractive analog voice */
     bowed_init();                    /* r19.47 bowed lyra/Hardanger voice (Open Sea / Fjords) */
     horn_init();                     /* r19.53 alphorn/brass voice (Alps) */
+    choir_init();                    /* r19.61 damp organ/choir (Moss)    */
+    guembri_init();                  /* r19.61 plucked low lute (Desert)  */
     shape_init();                    /* r19.60 envelope shape (neutral)   */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
@@ -345,7 +349,7 @@ void engine_init(void) {
  * needs SOME second colour, that was the whole r18.89 point). */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 4) voice_idx = 4;    /* r19.53: 4 = Horn (Alps) */
+    if (voice_idx > 6) voice_idx = 6;    /* r19.61: 5 Choir (Moss), 6 Guembri (Desert) */
     melody_voice = voice_idx;
 }
 
@@ -359,7 +363,9 @@ static void melody_strike(float freq_hz, float amp) {
      * menu. Voices renumbered: 0 Pad / 1 String / 2 Ember / 3 Bowed.
      * r19.53: 4 = Horn (alphorn/brass, Alps). Like bowed it is a full CHARACTER
      * voice, so the tiny generative amp is scaled + floored to sit forward. */
-    if      (melody_voice == 4) horn_note (freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f));
+    if      (melody_voice == 6) guembri_note(freq_hz, dsp_clampf(amp * 2.8f, 0.35f, 0.60f));
+    else if (melody_voice == 5) choir_note  (freq_hz, dsp_clampf(amp * 2.6f, 0.32f, 0.55f));
+    else if (melody_voice == 4) horn_note (freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f));
     else if (melody_voice == 3) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
     else if (melody_voice == 2) ember_note(freq_hz, amp);   /* r19.28 analog */
     else                        pluck_note(freq_hz, amp);   /* 0 Pad / 1 String */
@@ -1060,6 +1066,11 @@ static void render_ambient(int16_t *buf, int frames) {
     /* r19.53: the alphorn/brass voice (Alps) — its own reed body + formant, no
      * modal-body colour; idle voices early-out so it runs unconditionally. */
     horn_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
+
+    /* r19.61: Moss-Chor und Desert-Guembri — eigene Koerper, daher wie
+     * bowed/horn direkt in dry + Hall-Send, ohne Modal-Body. */
+    choir_render_mix  (dryL, dryR, sendL, sendR, frames, 0.55f);
+    guembri_render_mix(dryL, dryR, sendL, sendR, frames, 0.35f);
 
     /* r19.41 MASTER-EFFECTS SWAP: echo, blur, tape hiss/crackle, the master
      * reverb render and the shimmer wrap-loop all left this path — the

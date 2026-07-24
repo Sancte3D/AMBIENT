@@ -86,7 +86,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 60, .mode = 5, .vibe = 0,
         .chord_color = 2, .bass_mode = 1,   /* Warm 6/9, grounded root */
         .brightness_hz = -160,  /* muted, absorbed upper */
-        .voice = 0,             /* Pad — damp organ/choir voice is a later round */
+        .voice = 5,             /* Choir — gedaempfte Orgel/Chor-Stimme (r19.61) */
     },
     {
         .name = "Desert",
@@ -100,7 +100,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 53, .mode = 2, .vibe = 2,
         .chord_color = 2, .bass_mode = 1,   /* Warm low body, strong root */
         .brightness_hz = -420,  /* dark heavy heat */
-        .voice = 0,             /* Pad — low guembri/body voice is a later round */
+        .voice = 6,             /* Guembri — gezupfte Bass-Laute mit Steg-Buzz (r19.61) */
     },
 };
 

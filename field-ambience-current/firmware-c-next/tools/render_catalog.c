@@ -32,6 +32,8 @@
 #include "ember.h"
 #include "bowed.h"
 #include "horn.h"
+#include "choir.h"
+#include "guembri.h"
 #include "shape.h"
 #include "bass.h"
 #include "drone.h"
@@ -67,11 +69,12 @@ static const float PAMP[]  = {.5f,.42f,.55f,.5f,.48f,.5f,.46f,.44f,.4f,.5f,.52f,
 #define PHRASE_N ((int)(sizeof(PHRASE)/sizeof(PHRASE[0])))
 
 /* ------------------------------------------------------------------ voices */
-enum { V_PLUCK, V_GLASS, V_EMBER, V_BOWED_OS, V_BOWED_FJ, V_HORN };
+enum { V_PLUCK, V_GLASS, V_EMBER, V_BOWED_OS, V_BOWED_FJ, V_HORN, V_CHOIR, V_GUEMBRI };
 
 static void render_voice(int v, FILE *f, int secs){
     dsp_init();
     pluck_init(); glass_init(); ember_init(); bowed_init(); horn_init();
+    choir_init(); guembri_init();
     if (v==V_BOWED_OS) bowed_set_colour(0);
     if (v==V_BOWED_FJ) bowed_set_colour(1);
     reverb_init(); reverb_set(0.82f, 0.38f);
@@ -92,6 +95,8 @@ static void render_voice(int v, FILE *f, int secs){
               case V_EMBER: ember_note(hz,a); break;
               case V_BOWED_OS: case V_BOWED_FJ: bowed_note(hz,a); break;
               case V_HORN: horn_note(hz,a); break;
+              case V_CHOIR: choir_note(hz,a); break;
+              case V_GUEMBRI: guembri_note(hz*0.5f,a); break;   /* Bass-Lage */
             }
         }
         switch(v){
@@ -100,6 +105,8 @@ static void render_voice(int v, FILE *f, int secs){
           case V_EMBER: ember_render_mix(dL,dR,sL,sR,BLOCK); break;
           case V_BOWED_OS: case V_BOWED_FJ: bowed_render_mix(dL,dR,sL,sR,BLOCK,0.55f); break;
           case V_HORN: horn_render_mix(dL,dR,sL,sR,BLOCK,0.5f); break;
+          case V_CHOIR: choir_render_mix(dL,dR,sL,sR,BLOCK,0.55f); break;
+          case V_GUEMBRI: guembri_render_mix(dL,dR,sL,sR,BLOCK,0.35f); break;
         }
         reverb_render(sL,sR,wL,wR,BLOCK);
         for(int n=0;n<BLOCK;++n){ buf[n*2]=clip16(dL[n]+wL[n]*0.6f); buf[n*2+1]=clip16(dR[n]+wR[n]*0.6f); }
@@ -328,7 +335,8 @@ int main(int argc,char**argv){
     if(!strcmp(cat,"voice")){
         int v = !strcmp(name,"pluck")?V_PLUCK : !strcmp(name,"glass")?V_GLASS :
                 !strcmp(name,"ember")?V_EMBER : !strcmp(name,"bowed_opensea")?V_BOWED_OS :
-                !strcmp(name,"bowed_fjords")?V_BOWED_FJ : V_HORN;
+                !strcmp(name,"bowed_fjords")?V_BOWED_FJ :
+                !strcmp(name,"choir")?V_CHOIR : !strcmp(name,"guembri")?V_GUEMBRI : V_HORN;
         render_voice(v,f, secs?secs:30);
     } else if(!strcmp(cat,"bed")){        render_bed(world_by_name(name),f, secs?secs:24);
     } else if(!strcmp(cat,"ambience")){   render_ambience(world_by_name(name),f, secs?secs:24);

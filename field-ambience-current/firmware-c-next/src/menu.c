@@ -59,8 +59,9 @@ static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       *
 static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
-static const char * const VOICE_NAMES[5] = {
-    "Pad", "String", "Ember", "Bowed", "Horn"   /* r19.53: +Horn (Alps) */
+static const char * const VOICE_NAMES[7] = {
+    "Pad", "String", "Ember", "Bowed", "Horn",
+    "Choir", "Guembri"                          /* r19.61: Moss + Desert */
 };
 static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
 static const char * const SYNTH_NAMES[7] = {
@@ -138,7 +139,7 @@ static void load_world_preset(void) {
      * bass mode). Loaded like the macros — the player can nudge after. */
     color_i = w->chord_color; if (color_i > 3) color_i = 0;
     bass_i  = w->bass_mode;   if (bass_i  > 3) bass_i  = 3;
-    voice_i = w->voice;       if (voice_i > 4) voice_i = 0;   /* r19.47 */
+    voice_i = w->voice;       if (voice_i > 6) voice_i = 0;   /* r19.47 */
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_color)      cb.set_color(color_i);
@@ -184,7 +185,7 @@ void menu_apply_state(const menu_state_t *st) {
     world_i  = clampi(st->world, 0, worlds_count() - 1);
     key_pc   = clampi(st->key_pc, 0, 11);
     tuning_i = clampi(st->tuning, 0, 1);
-    voice_i  = clampi(st->voice, 0, 4);
+    voice_i  = clampi(st->voice, 0, 6);
     synth_i  = clampi(st->synth, 0, 6);
     cell_i   = clampi(st->cell, 0, 2);
     bass_i   = clampi(st->bass, 0, 3);
@@ -225,7 +226,7 @@ void menu_init(const menu_callbacks_t *cbs) {
     {
         const world_t *w = worlds_get(0);
         key_pc = (int)w->key_midi % 12;
-        voice_i = w->voice; if (voice_i > 4) voice_i = 0;   /* r19.47 boot voice */
+        voice_i = w->voice; if (voice_i > 6) voice_i = 0;   /* r19.47 boot voice */
         space  = w->space_pct;
         shim   = w->shimmer_pct;
         atmos  = w->atmos_pct;
@@ -321,7 +322,7 @@ int menu_value_count(menu_param_t p) {
         case MP_WORLD: return worlds_count();
         case MP_KEY:   return 12;
         case MP_TUNING:return 2;
-        case MP_VOICE: return 5;
+        case MP_VOICE: return 7;
         case MP_SYNTH: return 7;
         case MP_CELL:  return 3;
         case MP_BASS:  return 4;
@@ -382,7 +383,7 @@ void menu_rotate(int delta) {
             return;                     /* preset push covers the callbacks   */
         case MP_KEY:    key_pc  = wrapi(key_pc  + delta, 12); break;
         case MP_TUNING: tuning_i = wrapi(tuning_i + delta, 2); break;
-        case MP_VOICE:  voice_i = wrapi(voice_i + delta, 5);  break;
+        case MP_VOICE:  voice_i = wrapi(voice_i + delta, 7);  break;
         case MP_SYNTH:  synth_i = wrapi(synth_i + delta, 7);  break;
         case MP_CELL:   cell_i  = wrapi(cell_i  + delta, 3);  break;
         case MP_BASS:   bass_i  = wrapi(bass_i  + delta, 4);  break;

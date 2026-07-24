@@ -230,16 +230,19 @@ static void test_key_and_voice_slots(void) {
      * world (Alps) now carries its own character voice = Horn (voice 4). */
     menu_rotate(1);
     CHECK(menu_current() == MP_VOICE, "slot 3 should be VOICE (got %d)", menu_current());
-    CHECK(menu_value_count(MP_VOICE) == 5, "VOICE has 5 options");
+    CHECK(menu_value_count(MP_VOICE) == 7, "VOICE has 7 options");
     CHECK(strcmp(menu_current_value_text(), "Horn") == 0,
           "boot world Alps voice is Horn: got %s", menu_current_value_text());
     menu_push();
-    menu_rotate(1);                       /* Horn(4) -> wrap -> Pad(0) */
+    menu_rotate(1);                       /* Horn(4) -> Choir(5) */
+    CHECK(st.voice == 5 &&
+          strcmp(menu_current_value_text(), "Choir") == 0, "Horn->Choir (got %d)", st.voice);
+    menu_rotate(1);                       /* -> Guembri(6) */
+    CHECK(st.voice == 6 &&
+          strcmp(menu_current_value_text(), "Guembri") == 0, "Choir->Guembri (got %d)", st.voice);
+    menu_rotate(1);                       /* -> wrap -> Pad(0) */
     CHECK(st.voice == 0 &&
           strcmp(menu_current_value_text(), "Pad") == 0, "wrap to Pad (got %d)", st.voice);
-    menu_rotate(1);
-    CHECK(st.voice == 1 &&
-          strcmp(menu_current_value_text(), "String") == 0, "set_voice String");
     menu_push();
 
     /* world change: KEY snaps to the new world's tonic, and r19.47 VOICE now

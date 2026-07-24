@@ -13,6 +13,7 @@
  * one BP + one LP + adds. No per-sample transcendental (dsp_sin is a LUT).
  */
 #include "choir.h"
+#include "shape.h"
 #include "dsp.h"
 #include <string.h>
 
@@ -72,8 +73,8 @@ void choir_note(float freq_hz, float amp){
     dsp_svf_reset(&v->form);     dsp_svf_set(&v->form, 600.0f, 1.6f);
     dsp_svf_reset(&v->damp);     dsp_svf_set(&v->damp, 1500.0f, 0.8f);
     v->env=0.0001f;
-    v->envInc=v->amp/(0.40f*SR);            /* ~400 ms breathy swell */
-    v->relCoef=dsp_smooth_coef(1.1f);        /* long soft tail */
+    v->envInc=v->amp/(0.40f*shape_attack_scale()*SR);   /* r19.61: 400 ms x SHAPE */
+    v->relCoef=dsp_smooth_coef(1.1f*shape_release_scale()); /* r19.61 */
     v->hold_left=(int)(3.0f*SR);
     v->breath=1.0f;
     v->vibPh=0.0f; v->vibInc=4.6f/SR; v->vibDelay=(int)(0.5f*SR);

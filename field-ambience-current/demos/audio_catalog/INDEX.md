@@ -15,6 +15,8 @@ into the product · **TODO** = placeholder / own voice or layer still to build.
 | `1_voices/voice_bowed_opensea.wav` | OK | Bowed lyra — Open Sea character voice (warm) |
 | `1_voices/voice_bowed_fjords.wav` | OK | Bowed Hardanger — Fjords voice (darker, more sympathetic ring) |
 | `1_voices/voice_horn_alps.wav` | OK | Alphorn/brass — Alps character voice (wired r19.53) |
+| `1_voices/voice_choir_moss.wav` | OK | Chor/Orgel — Moss-Charakterstimme (verdrahtet r19.61) |
+| `1_voices/voice_guembri_desert.wav` | OK | Guembri/Sintir — Desert-Charakterstimme (verdrahtet r19.61) |
 | `1_voices/voice_pluck_string.wav` | OK | Karplus-Strong pluck/string (VOICE: String) |
 | `1_voices/voice_ember.wav` | OK | Warm subtractive analog (VOICE: Ember) |
 
@@ -81,5 +83,5 @@ into the product · **TODO** = placeholder / own voice or layer still to build.
 | `6_worlds/world_alps.wav` | OK | Full world — Alps (Horn voice + de-hissed wind) |
 | `6_worlds/world_opensea.wav` | OK | Full world — Open Sea (bowed lyra + Mediterranean bed) |
 | `6_worlds/world_fjords.wav` | OK | Full world — Fjords (bowed, darker) |
-| `6_worlds/world_moss.wav` | OK | Full world — Moss Fields (Pad; own voice TODO) |
-| `6_worlds/world_desert.wav` | OK | Full world — Desert (Pad; own voice TODO) |
+| `6_worlds/world_moss.wav` | OK | Full world — Moss Fields (Chor-Stimme + Regen) |
+| `6_worlds/world_desert.wav` | OK | Full world — Desert (Guembri + Hitze-Flimmern) |

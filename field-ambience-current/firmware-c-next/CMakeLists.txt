@@ -104,6 +104,8 @@ set(DSP_SOURCES
     src/ember.c         # r19.28: warm subtractive analog voice (Motif layer)
     src/bowed.c         # r19.47: bowed lyra/Hardanger voice (Open Sea / Fjords)
     src/horn.c          # r19.53: alphorn/brass voice (Alps)
+    src/choir.c         # r19.61: damp organ/choir voice (Moss Fields)
+    src/guembri.c       # r19.61: plucked low lute / sintir (Desert)
     src/shimmer.c       # r18.99: octave-up hall regeneration (SHIMMER menu)
     src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/body.c          # r18.94: modal resonant body for the plucks (Rings concept)

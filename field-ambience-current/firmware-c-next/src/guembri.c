@@ -21,6 +21,7 @@
  * one LP + one BP + adds. Alias-free, no per-sample transcendental.
  */
 #include "guembri.h"
+#include "shape.h"
 #include "dsp.h"
 #include <string.h>
 
@@ -74,10 +75,10 @@ void guembri_note(float freq_hz, float amp){
     /* rattle sits in the presence band where a metal ring actually rings */
     dsp_svf_reset(&v->buzzbp); dsp_svf_set(&v->buzzbp, 2600.0f, 6.0f);
 
-    v->env=1.0f;      v->envCoef =decay_coef(1.6f);   /* dry-ish sustain   */
+    v->env=1.0f;      v->envCoef =decay_coef(1.6f*shape_release_scale()); /* r19.61 */
     v->fenv=1.0f;     v->fenvCoef=decay_coef(0.45f);  /* brightness closes */
     v->buzz_env=1.0f; v->buzz_coef=decay_coef(0.70f); /* rattle rings on   */
-    v->atk=0.0f;      v->atkInc=1.0f/(0.004f*SR);     /* 4 ms, no click    */
+    v->atk=0.0f;      v->atkInc=1.0f/(0.004f*shape_attack_scale()*SR);    /* r19.61 */
 
     float pan=(i==0)?-0.15f:(i==1)?0.15f:0.0f;
     v->panL=0.5f*(1.0f-pan); v->panR=0.5f*(1.0f+pan);
