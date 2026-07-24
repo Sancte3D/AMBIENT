@@ -34,9 +34,9 @@ into the product · **TODO** = placeholder / own voice or layer still to build.
 |---|---|---|
 | `3_ambience/amb_alps.wav` | OK | Alps ambience — wind only (clear air) |
 | `3_ambience/amb_opensea.wav` | OK | Open Sea ambience — gentle waves + warm Mediterranean sea-hum |
-| `3_ambience/amb_fjords.wav` | TODO | Fjords ambience — wind only (fjord-water texture still to build) |
+| `3_ambience/amb_fjords.wav` | OK | Fjords ambience — dark water murmur + deep drips (r19.54) |
 | `3_ambience/amb_moss.wav` | OK | Moss ambience — wind + rain |
-| `3_ambience/amb_desert.wav` | TODO | Desert ambience — wind only (heat-shimmer texture still to build) |
+| `3_ambience/amb_desert.wav` | OK | Desert ambience — dry heat haze + sparse sand grains (r19.54) |
 
 ## LOW
 

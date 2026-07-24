@@ -37,9 +37,9 @@ bed|moss|2_beds|bed_moss|24|OK|PADsynth pad bed — Moss (dusty)
 bed|desert|2_beds|bed_desert|24|OK|PADsynth pad bed — Desert (dark-warm low-mid)
 ambience|alps|3_ambience|amb_alps|24|OK|Alps ambience — wind only (clear air)
 ambience|opensea|3_ambience|amb_opensea|24|OK|Open Sea ambience — gentle waves + warm Mediterranean sea-hum
-ambience|fjords|3_ambience|amb_fjords|24|TODO|Fjords ambience — wind only (fjord-water texture still to build)
+ambience|fjords|3_ambience|amb_fjords|24|OK|Fjords ambience — dark water murmur + deep drips (r19.54)
 ambience|moss|3_ambience|amb_moss|24|OK|Moss ambience — wind + rain
-ambience|desert|3_ambience|amb_desert|24|TODO|Desert ambience — wind only (heat-shimmer texture still to build)
+ambience|desert|3_ambience|amb_desert|24|OK|Desert ambience — dry heat haze + sparse sand grains (r19.54)
 bass|root|4_low|bass_root|16|OK|Bass voice — root mode
 bass|deep|4_low|bass_deep|16|OK|Bass voice — deep mode
 drone|default|4_low|drone|24|OK|Drone voice (bloom in / tail out)
