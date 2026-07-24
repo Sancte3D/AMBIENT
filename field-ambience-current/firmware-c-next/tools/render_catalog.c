@@ -160,6 +160,35 @@ static void render_reso(float res, FILE *f, int secs){
     }
 }
 
+/* ----------------------------------------------------------------- motion */
+/* r19.60: der Bus-Filter bewegt sich VON SELBST. 'sweep' = langsamer LFO auf
+ * den Cutoff (BRIGHT bleibt fest!), 'envmod' = Huellkurvenfolger — der Filter
+ * oeffnet beim Anschlag und schliesst mit dem Ausklang. */
+static void render_motion(float sweep, float envmod, FILE *f, int secs){
+    const world_t *w=worlds_get(0);
+    dsp_init(); brain_init(); pad_init(); padsynth_build(0,0);
+    brain_set_key(w->key_midi); brain_set_mode(w->mode); tuning_set_key(w->key_midi);
+    pad_set_motion(1.0f); pad_set_brightness(0.0f);
+    pad_set_resonance(0.55f);                  /* damit man die Bewegung hoert */
+    pad_set_sweep(sweep); pad_set_envmod(envmod);
+    reverb_init(); reverb_set(0.80f,0.35f);
+    int chord[4]; int nc=brain_color_chord(0,w->chord_color,chord,4);
+    uint32_t total=(uint32_t)secs*SR; hdr(f,total);
+    float dL[BLOCK],dR[BLOCK],sL[BLOCK],sR[BLOCK],wL[BLOCK],wR[BLOCK];
+    int16_t buf[BLOCK*2]; uint32_t done=0; uint32_t nextnote=0;
+    while(done<total){
+        /* alle 6 s neu anschlagen, damit EnvMod etwas zu folgen hat */
+        if(done>=nextnote){ pad_all_off();
+            for(int i=0;i<nc&&i<3;++i) pad_note_on((uint8_t)(1+i), tuning_hz((float)chord[i]), 0.5f);
+            nextnote += (uint32_t)(6*SR); }
+        memset(dL,0,sizeof dL);memset(dR,0,sizeof dR);memset(sL,0,sizeof sL);memset(sR,0,sizeof sR);
+        pad_render_mix(dL,dR,sL,sR,BLOCK,0.4f);
+        reverb_render(sL,sR,wL,wR,BLOCK);
+        for(int n=0;n<BLOCK;++n){ buf[n*2]=clip16(dL[n]+wL[n]*0.5f); buf[n*2+1]=clip16(dR[n]+wR[n]*0.5f); }
+        fwrite(buf,2,BLOCK*2,f); done+=BLOCK;
+    }
+}
+
 /* ------------------------------------------------------------------ shape */
 /* r19.60: dieselbe Phrase auf derselben Stimme (Bowed), nur ATTACK/RELEASE
  * verschoben. Zeigt, dass eine Stimme dadurch zu zwei Instrumenten wird. */
@@ -306,6 +335,10 @@ int main(int argc,char**argv){
     } else if(!strcmp(cat,"reso")){
         float r = !strcmp(name,"off")?0.0f : !strcmp(name,"mid")?0.55f : 0.9f;
         render_reso(r,f, secs?secs:26);
+    } else if(!strcmp(cat,"motion")){
+        float sw = !strcmp(name,"sweep")?0.85f:0.0f;
+        float em = !strcmp(name,"envmod")?0.9f:0.0f;
+        render_motion(sw,em,f, secs?secs:30);
     } else if(!strcmp(cat,"shape")){
         float a = !strcmp(name,"pluck")?0.0f : !strcmp(name,"neutral")?0.5f : 1.0f;
         float r = !strcmp(name,"pluck")?0.15f: !strcmp(name,"neutral")?0.5f : 1.0f;

@@ -46,6 +46,8 @@ static int           bass_i  = 3;         /* r19.31: HARMONY bass, default Drift
 static int           color_i = 0;         /* r19.32: HARMONY chord color, default Pure */
 static int           atk_i   = 50;        /* r19.60: SHAPE attack %% (50 = neutral) */
 static int           rel_i   = 50;        /* r19.60: SHAPE release %% (50 = neutral) */
+static int           sweep_i = 0;         /* r19.60: MOTION LFO %% */
+static int           envm_i  = 0;         /* r19.60: MOTION EnvMod %% */
 static int           reso    = 0;         /* r19.59: RESONANCE %% (0 = off/bypassed) */
 static int           fx_i    = 8;         /* r19.41: FX page, default Dream Chain */
 static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
@@ -107,6 +109,8 @@ static void apply_current(void) {
         case MP_RESO:   if (cb.set_reso)       cb.set_reso (reso   / 100.0f);    break;
         case MP_ATTACK: if (cb.set_attack)     cb.set_attack(atk_i / 100.0f);    break;
         case MP_RELEASE:if (cb.set_release)    cb.set_release(rel_i/ 100.0f);    break;
+        case MP_SWEEP:  if (cb.set_sweep)      cb.set_sweep (sweep_i/100.0f);    break;
+        case MP_ENVMOD: if (cb.set_envmod)     cb.set_envmod(envm_i/ 100.0f);    break;
         default: break;
     }
 }
@@ -272,7 +276,7 @@ const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
         "Age","Echo","Blur","Synth","Cell","Bass","Color","FX","Resonance",
-        "Attack","Release"
+        "Attack","Release","Sweep","EnvMod"
     };
     return LABELS[cur];
 }
@@ -304,6 +308,8 @@ int menu_value_int(menu_param_t p) {
         case MP_RESO:   return reso;
         case MP_ATTACK: return atk_i;
         case MP_RELEASE:return rel_i;
+        case MP_SWEEP:  return sweep_i;
+        case MP_ENVMOD: return envm_i;
         default:        return 0;
     }
 }
@@ -347,6 +353,8 @@ const char *menu_current_value_text(void) {
         case MP_RESO:   snprintf(buf, sizeof buf, "%d%%", reso);   return buf;
         case MP_ATTACK: snprintf(buf, sizeof buf, "%d%%", atk_i);  return buf;
         case MP_RELEASE:snprintf(buf, sizeof buf, "%d%%", rel_i);  return buf;
+        case MP_SWEEP:  snprintf(buf, sizeof buf, "%d%%", sweep_i);return buf;
+        case MP_ENVMOD: snprintf(buf, sizeof buf, "%d%%", envm_i); return buf;
         default: return "";
     }
 }
@@ -390,6 +398,8 @@ void menu_rotate(int delta) {
         case MP_RESO:   reso   = clampi(reso   + delta, 0, 100); break;
         case MP_ATTACK: atk_i  = clampi(atk_i  + delta, 0, 100); break;
         case MP_RELEASE:rel_i  = clampi(rel_i  + delta, 0, 100); break;
+        case MP_SWEEP:  sweep_i= clampi(sweep_i+ delta, 0, 100); break;
+        case MP_ENVMOD: envm_i = clampi(envm_i + delta, 0, 100); break;
         default: break;
     }
     apply_current();

@@ -44,6 +44,9 @@ ambience|desert|3_ambience|amb_desert|24|OK|Desert ambience — dry heat haze + 
 reso|off|7_synth|reso_00_off|26|OK|RESONANCE 0 % — Filter aus (Referenz, klingt wie vor r19.59)
 reso|mid|7_synth|reso_55_mid|26|OK|RESONANCE 55 % — der Moog-Ladder singt mit, BRIGHT fährt den Sweep
 reso|high|7_synth|reso_90_high|26|OK|RESONANCE 90 % — kurz vor Selbstoszillation, klassisches Ambient-Timbre
+motion|off|7_synth|motion_0_off|30|OK|MOTION aus — Filter steht still (Referenz)
+motion|sweep|7_synth|motion_sweep|30|OK|MOTION Sweep 85 % — der Filter atmet von selbst (langsamer LFO, ~18 s)
+motion|envmod|7_synth|motion_envmod|30|OK|MOTION EnvMod 90 % — der Filter oeffnet beim Anschlag (TD-3-EnvMod)
 shape|pluck|7_synth|shape_0_pluck|30|OK|SHAPE Attack 0 % — dieselbe Bowed-Stimme wird perkussiv
 shape|neutral|7_synth|shape_50_neutral|30|OK|SHAPE 50 % — neutral, exakt der Klang vor r19.60
 shape|swell|7_synth|shape_100_swell|30|OK|SHAPE Attack 100 % — dieselbe Stimme wird zum atmenden Swell

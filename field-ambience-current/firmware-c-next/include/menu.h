@@ -70,6 +70,8 @@ typedef enum {
     MP_RESO,      /* r19.59: RESONANCE of the pad-bus ladder (0..100 %) */
     MP_ATTACK,    /* r19.60: SHAPE attack  (0..100 %, 50 = neutral) */
     MP_RELEASE,   /* r19.60: SHAPE release (0..100 %, 50 = neutral) */
+    MP_SWEEP,     /* r19.60: MOTION — LFO auf den Filter-Cutoff */
+    MP_ENVMOD,    /* r19.60: MOTION — Huellkurvenfolger auf den Cutoff */
     MP_COUNT
 } menu_param_t;
 
@@ -104,6 +106,8 @@ typedef struct {
     void (*set_reso)       (float v01);              /* r19.59: pad-bus ladder resonance */
     void (*set_attack)     (float v01);              /* r19.60: envelope shape attack  */
     void (*set_release)    (float v01);              /* r19.60: envelope shape release */
+    void (*set_sweep)      (float v01);              /* r19.60: LFO -> filter cutoff   */
+    void (*set_envmod)     (float v01);              /* r19.60: env -> filter cutoff   */
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);

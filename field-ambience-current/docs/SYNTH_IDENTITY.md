@@ -119,7 +119,19 @@ Engine passt (Blockrate, Ramping, Hot-Path-Regeln).
    vorher), Attack ×0.125…×8, Release ×0.25…×4. Verdrahtet in pad/bowed/horn/
    ember/pluck + zwei Menü-Slots. Messung an derselben Bowed-Stimme, Pegel nach
    100 ms: **Attack 0 % → 54 %, neutral → 18 %, Attack 100 % → 9 %.**
-3. **Mini-Mod-Matrix** — LFO + Env auf Cutoff/Pitch/Amp. Bringt Eigenleben.
+3. ~~**Mini-Mod-Matrix**~~ ✅ **ERLEDIGT (r19.60)**
+   Bewusst **zwei Quellen auf EIN Ziel** statt einer grossen Matrix: ein langsamer
+   LFO (~18 s) und ein **Hüllkurvenfolger** auf den Cutoff des Bus-Filters.
+   `SWEEP` = der Filter atmet von selbst; `ENVMOD` = er öffnet beim Spielen und
+   schliesst mit dem Ausklang — das TD-3-„EnvMod", auf einen Bus-Filter übersetzt
+   (dort gibt es keine einzelne Note, also ist der Modulator die Lautstärke des
+   Betts). Beide **engagieren den Filter auch ohne Resonanz** — ein atmender
+   Tiefpass ohne Resonanz ist ein legitimer Ambient-Klang, deshalb ist
+   „Filter im Pfad" von „wie stark er klingelt" entkoppelt.
+   Wichtig: die Modulation ist **exponentiell in Oktaven**, nicht linear in Hz —
+   linear klang oben stumpf (dort ist kaum Energie) und unten brutal. Messung
+   (Spektralschwerpunkt/Sekunde): ohne Motion 246 Hz Spannweite, mit Sweep
+   **650 Hz** in einem vollen langsamen Zyklus (1006 → 356 → 870).
 
 **Bedienung:** Wir haben 4 Encoder (Drive, Bright, Display, Volume) + SHIFT.
 Die neuen Parameter gehören auf die **SHIFT-Ebene der bestehenden Encoder**

@@ -121,6 +121,12 @@ float engine_resonance(void);
  * oder atmend. Siehe docs/SYNTH_IDENTITY.md, Saeule SHAPE. */
 void engine_set_attack(float v01);
 void engine_set_release(float v01);
+/* r19.60 MOTION (0..1): Modulation auf den Bus-Filter. SWEEP = langsamer LFO
+ * (der Filter atmet von selbst), ENVMOD = Huellkurvenfolger (der Filter oeffnet
+ * beim Spielen — das TD-3-"EnvMod"). Beide engagieren den Filter auch ohne
+ * Resonanz. Siehe docs/SYNTH_IDENTITY.md, Saeule MOTION. */
+void engine_set_sweep(float v01);
+void engine_set_envmod(float v01);
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-0017) */
 void engine_set_motion(float amount_0_1);      /* Pad LFO depth (perform macro) */

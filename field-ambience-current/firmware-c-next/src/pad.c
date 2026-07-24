@@ -122,9 +122,22 @@ static float bright_cur;            /* smoothed brightness */
  * it, so one knob sweeps the filter and the other makes it sing. */
 #define LADDER_FC_BASE  1250.0f     /* cutoff at BRIGHT = 0                  */
 #define LADDER_RES_MAX  1.55f       /* just under self-oscillation (max 1.8) */
+/* r19.60: Modulation EXPONENTIELL, in Oktaven — nicht linear in Hz. Ein
+ * Filter wird musikalisch in Oktaven gehoert; linear in Hz moduliert klingt
+ * oben stumpf (dort ist kaum Energie) und unten brutal. Werte = max. Hub. */
+#define LADDER_SWEEP_OCT  2.6f      /* +/- Oktaven, LFO                      */
+#define LADDER_ENVMOD_OCT 2.2f      /* Oktaven nach oben, Huellkurvenfolger  */
 static dsp_ladder_t ladL, ladR;
 static float res_target;            /* 0..1 from the player                  */
 static float res_cur;               /* smoothed (no zipper)                  */
+/* r19.60 MOTION — zwei Modulationsquellen auf den Bus-Cutoff. Bewusst nur
+ * EIN Ziel und zwei Quellen (siehe docs/SYNTH_IDENTITY.md: "nicht 20 Ziele"):
+ * ein langsamer LFO laesst den Filter von selbst atmen, ein Huellkurvenfolger
+ * oeffnet ihn beim Spielen (das TD-3-"EnvMod", auf einen Bus-Filter uebersetzt). */
+static float sweep_target,  sweep_cur;    /* LFO-Tiefe   0..1 */
+static float envmod_target, envmod_cur;   /* EnvMod-Tiefe 0..1 */
+static float mod_lfo_ph, mod_lfo_inc;     /* langsamer LFO (turns) */
+static float env_follow;                  /* Huellkurvenfolger auf dem Bus */
 static float bright_coef;           /* per-control-block smoothing coef */
 static float motion_depth = 1.0f;   /* LFO-depth multiplier (Motion macro) */
 static float spec_depth   = 0.0f;   /* r19.5 spectral-animator depth (Motion) */
@@ -172,6 +185,10 @@ void pad_init(void) {
     dsp_ladder_set_freq(&ladL, LADDER_FC_BASE); dsp_ladder_set_res(&ladL, 0.0f);
     dsp_ladder_set_freq(&ladR, LADDER_FC_BASE); dsp_ladder_set_res(&ladR, 0.0f);
     res_target = res_cur = 0.0f;
+    sweep_target = sweep_cur = envmod_target = envmod_cur = 0.0f;
+    mod_lfo_ph = 0.0f;
+    mod_lfo_inc = 0.055f / SR;      /* ~18 s pro Zyklus — Ambient-Tempo */
+    env_follow = 0.0f;
 }
 
 void pad_set_brightness(float hz) { bright_target = hz; }
@@ -183,6 +200,13 @@ void pad_set_resonance(float amount_0_1) {
     res_target = dsp_clampf(amount_0_1, 0.0f, 1.0f);
 }
 float pad_resonance(void) { return res_target; }
+
+/* r19.60 MOTION: Tiefe der beiden Modulationsquellen auf den Bus-Cutoff.
+ * 0 = aus. Beide engagieren den Filter auch ohne Resonanz. */
+void pad_set_sweep(float amount_0_1)  { sweep_target  = dsp_clampf(amount_0_1,0.0f,1.0f); }
+void pad_set_envmod(float amount_0_1) { envmod_target = dsp_clampf(amount_0_1,0.0f,1.0f); }
+float pad_sweep(void)  { return sweep_target; }
+float pad_envmod(void) { return envmod_target; }
 void pad_set_motion(float d)      {
     motion_depth = dsp_clampf(d, 0.0f, 2.0f);
     /* r19.5: MOTION also drives the spectral animator (same emotional
@@ -617,20 +641,53 @@ void pad_render_mix(float *dry_L, float *dry_R,
          * (the ladder is 4x oversampled, so per-voice would blow the IRQ
          * budget). Bypassed entirely at res≈0 so the old sound is untouched
          * until the player asks for resonance. */
-        if (res_cur > 0.005f || res_target > 0.005f) {
-            /* control-rate coefficient update (once per sub-block) */
-            res_cur += 0.08f * (res_target - res_cur);      /* ~ramped, no zipper */
-            float fc = dsp_clampf(LADDER_FC_BASE + bright_cur, 60.0f, 9000.0f);
+        /* r19.60 MOTION: the filter is in the path if the player asked for
+         * RESONANCE *or* for either modulation — a breathing lowpass without
+         * resonance is a legitimate (and very ambient) sound, so "filter
+         * engaged" is deliberately decoupled from "how much it rings". */
+        {
+        res_cur    += 0.08f * (res_target    - res_cur);
+        sweep_cur  += 0.08f * (sweep_target  - sweep_cur);
+        envmod_cur += 0.08f * (envmod_target - envmod_cur);
+        float engage = res_cur;
+        if (sweep_cur  > engage) engage = sweep_cur;
+        if (envmod_cur > engage) engage = envmod_cur;
+
+        if (engage > 0.005f) {
+            /* --- source 1: slow free-running LFO ("the filter breathes") --- */
+            mod_lfo_ph += mod_lfo_inc * (float)n;
+            if (mod_lfo_ph >= 1.0f) mod_lfo_ph -= 1.0f;
+            float lfo = dsp_sin(mod_lfo_ph);                    /* -1..+1 */
+
+            /* --- source 2: envelope follower on the pad's own output -------
+             * The TD-3's EnvMod, adapted to a BUS filter: there is no single
+             * note here, so the modulator is how loud the bed currently is.
+             * Fast attack / slow release → the filter opens when you play and
+             * closes as the bed decays. */
+            float pk = 0.0f;
+            for (int i = 0; i < n; ++i) {
+                float a = L[i] >= 0.0f ? L[i] : -L[i];
+                if (a > pk) pk = a;
+            }
+            env_follow = (pk > env_follow) ? pk : env_follow + 0.06f * (pk - env_follow);
+            float ef = dsp_clampf(env_follow * 2.4f, 0.0f, 1.0f);   /* usable 0..1 */
+
+            /* Basis (inkl. BRIGHT) exponentiell verschieben: Oktaven, nicht Hz. */
+            float base = dsp_clampf(LADDER_FC_BASE + bright_cur, 60.0f, 9000.0f);
+            float oct  = sweep_cur  * lfo * LADDER_SWEEP_OCT
+                       + envmod_cur * ef  * LADDER_ENVMOD_OCT;
+            float fc = dsp_clampf(base * exp2f(oct), 60.0f, 9000.0f);
             float rz = res_cur * LADDER_RES_MAX;
             dsp_ladder_set_freq(&ladL, fc);  dsp_ladder_set_res(&ladL, rz);
             dsp_ladder_set_freq(&ladR, fc);  dsp_ladder_set_res(&ladR, rz);
-            /* wet/dry blend by resonance amount: the filter fades IN with the
-             * knob, so there is never a jump when it engages. */
-            float w = res_cur, d = 1.0f - res_cur;
+            /* wet/dry blend: the filter fades IN with whichever knob engaged
+             * it, so it never jumps into the path. */
+            float w = engage, d = 1.0f - engage;
             for (int i = 0; i < n; ++i) {
                 L[i] = d * L[i] + w * dsp_ladder_process(&ladL, L[i]);
                 R[i] = d * R[i] + w * dsp_ladder_process(&ladR, R[i]);
             }
+        }
         }
 
         for (int i = 0; i < n; ++i) {

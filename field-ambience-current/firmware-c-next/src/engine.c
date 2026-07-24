@@ -495,6 +495,10 @@ float engine_resonance(void) { return pad_resonance(); }
 /* r19.60 SHAPE — global envelope scaling (see shape.c). */
 void engine_set_attack (float v01) { shape_set_attack(v01); }
 void engine_set_release(float v01) { shape_set_release(v01); }
+
+/* r19.60 MOTION — LFO + envelope follower onto the pad-bus filter cutoff. */
+void engine_set_sweep (float v01) { pad_set_sweep(dsp_clampf(v01,0.0f,1.0f)); }
+void engine_set_envmod(float v01) { pad_set_envmod(dsp_clampf(v01,0.0f,1.0f)); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   {
     v = dsp_clampf(v, 0.0f, 1.0f);
