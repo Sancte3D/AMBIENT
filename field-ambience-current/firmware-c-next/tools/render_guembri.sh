@@ -20,7 +20,7 @@ int main(int argc,char**argv){
   const char*out=argc>1?argv[1]:"/tmp/guembri.wav";
   dsp_init(); guembri_init(); reverb_init(); reverb_set(0.55f,0.5f);   /* dry-ish desert */
   /* F-phrygian (Desert) low riff, guembri register */
-  static const int notes[]={29,36,41,29,34,36,41,29,36,34,29,41};
+  static const int notes[]={41,48,53,41,46,44,48,41,53,46,41,44};
   static const float amps[]={.6f,.55f,.5f,.6f,.52f,.55f,.5f,.6f,.55f,.52f,.6f,.5f};
   const int NN=(int)(sizeof(notes)/sizeof(notes[0]));
   FILE*f=fopen(out,"wb"); uint32_t total=(uint32_t)SECS*SR; hdr(f,total);
