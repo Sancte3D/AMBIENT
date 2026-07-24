@@ -16,7 +16,8 @@
 #define ATK_S         0.055f    /* soft attack (s)                         */
 #define AMP_T60_S     2.6f      /* amp ring after the attack (s)           */
 #define FLT_T60_S     0.55f     /* filter envelope decay — closes fast (s) */
-#define FC_BASE_HZ    280.0f    /* cutoff floor                            */
+#define FC_BASE_HZ    370.0f    /* cutoff floor (r19.55: 280→370, more presence — AUDIT: too dull) */
+#define EMBER_OUT     1.6f      /* r19.55: makeup — AUDIT found it too quiet */
 #define FC_RANGE_HZ   3300.0f   /* env sweep on top of the floor           */
 #define FLT_Q         2.6f      /* resonance — vintage vowel               */
 #define LFO_HZ        5.2f      /* vibrato rate                            */
@@ -138,7 +139,7 @@ void ember_render_mix(float *dry_L, float *dry_R,
             if (v->vib_ramp < 1.0f) { v->vib_ramp += v->vib_ramp_inc;
                                       if (v->vib_ramp > 1.0f) v->vib_ramp = 1.0f; }
 
-            float o = y * v->amp * v->env;
+            float o = y * v->amp * v->env * EMBER_OUT;
             float l = o * gL, r = o * gR;
             dry_L[n]  += l;             dry_R[n]  += r;
             send_L[n] += l * EMBER_SEND; send_R[n] += r * EMBER_SEND;

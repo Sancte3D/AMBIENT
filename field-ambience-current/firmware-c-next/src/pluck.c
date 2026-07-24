@@ -92,8 +92,10 @@ void pluck_note(float freq_hz, float amp) {
     float lp = 0.0f;
     for (int k = 0; k < BUF_LEN; ++k) {
         if (k < n) {
-            lp += 0.45f * (burst_white() - lp);
-            p->buf[k] = lp * amp * 2.2f;   /* ≈ peak `amp` after the LP loss */
+            /* r19.55: darker excitation LP (0.45→0.30) — the AUDIT heard the
+             * old burst as HF hiss (>8 kHz). Softer attack, same body. */
+            lp += 0.30f * (burst_white() - lp);
+            p->buf[k] = lp * amp * 2.6f;   /* ≈ peak `amp` after the (bigger) LP loss */
         } else {
             p->buf[k] = 0.0f;
         }
