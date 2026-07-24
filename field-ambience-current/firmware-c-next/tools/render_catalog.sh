@@ -27,7 +27,7 @@ cc -std=c11 -O2 -I"$here/include" "$here/tools/render_catalog.c" \
 MANIFEST="
 voice|bowed_opensea|1_voices|voice_bowed_opensea|30|OK|Bowed lyra — Open Sea character voice (warm)
 voice|bowed_fjords|1_voices|voice_bowed_fjords|30|OK|Bowed Hardanger — Fjords voice (darker, more sympathetic ring)
-voice|horn|1_voices|voice_horn_alps|30|PROTO|Alphorn/brass — Alps voice (prototype, NOT yet wired into the engine)
+voice|horn|1_voices|voice_horn_alps|30|OK|Alphorn/brass — Alps character voice (wired r19.53)
 voice|pluck|1_voices|voice_pluck_string|30|OK|Karplus-Strong pluck/string (VOICE: String)
 voice|ember|1_voices|voice_ember|30|OK|Warm subtractive analog (VOICE: Ember)
 bed|alps|2_beds|bed_alps|24|OK|PADsynth pad bed — Alps timbre (warm odd harmonics)
@@ -52,7 +52,7 @@ fx|swell|5_fx|fx_swell|26|OK|Effects: reverse Swell
 fx|shimmer|5_fx|fx_shimmer|26|OK|Effects: octave Shimmer
 fx|blur|5_fx|fx_blur|26|OK|Effects: temporal Blur
 fx|dream|5_fx|fx_dream|26|OK|Effects: Dream Chain (boot default — everything)
-world|alps|6_worlds|world_alps|40|OK|Full world — Alps (Pad voice; own voice TODO)
+world|alps|6_worlds|world_alps|40|OK|Full world — Alps (Horn voice + de-hissed wind)
 world|opensea|6_worlds|world_opensea|40|OK|Full world — Open Sea (bowed lyra + Mediterranean bed)
 world|fjords|6_worlds|world_fjords|40|OK|Full world — Fjords (bowed, darker)
 world|moss|6_worlds|world_moss|40|OK|Full world — Moss Fields (Pad; own voice TODO)
