@@ -226,19 +226,20 @@ static void test_key_and_voice_slots(void) {
           "set_tuning Just (got %d)", st.tuning);
     menu_push();
 
-    /* VOICE: slot 3, 4 options (Pad/String/Ember/Bowed r19.51 — Glass removed),
-     * boot world (Alps) defaults to Pad. */
+    /* VOICE: slot 3, 5 options (Pad/String/Ember/Bowed/Horn r19.53). The boot
+     * world (Alps) now carries its own character voice = Horn (voice 4). */
     menu_rotate(1);
     CHECK(menu_current() == MP_VOICE, "slot 3 should be VOICE (got %d)", menu_current());
-    CHECK(menu_value_count(MP_VOICE) == 4, "VOICE has 4 options");
-    CHECK(strcmp(menu_current_value_text(), "Pad") == 0,
-          "default voice is Pad: got %s", menu_current_value_text());
+    CHECK(menu_value_count(MP_VOICE) == 5, "VOICE has 5 options");
+    CHECK(strcmp(menu_current_value_text(), "Horn") == 0,
+          "boot world Alps voice is Horn: got %s", menu_current_value_text());
     menu_push();
+    menu_rotate(1);                       /* Horn(4) -> wrap -> Pad(0) */
+    CHECK(st.voice == 0 &&
+          strcmp(menu_current_value_text(), "Pad") == 0, "wrap to Pad (got %d)", st.voice);
     menu_rotate(1);
-    CHECK(st.voice == 1, "set_voice String (got %d)", st.voice);
-    menu_rotate(1);
-    CHECK(st.voice == 2 &&
-          strcmp(menu_current_value_text(), "Ember") == 0, "set_voice Ember");
+    CHECK(st.voice == 1 &&
+          strcmp(menu_current_value_text(), "String") == 0, "set_voice String");
     menu_push();
 
     /* world change: KEY snaps to the new world's tonic, and r19.47 VOICE now

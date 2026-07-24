@@ -45,7 +45,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 55, .mode = 3, .vibe = 1,
         .chord_color = 0, .bass_mode = 2,   /* Pure open fifths, drone fifth */
         .brightness_hz = 550,   /* clear alpine air — wide open */
-        .voice = 0,             /* Pad — alpine breath/horn is a later round */
+        .voice = 4,             /* Horn (alphorn/brass) — Alps character voice */
     },
     {
         .name = "Open Sea",

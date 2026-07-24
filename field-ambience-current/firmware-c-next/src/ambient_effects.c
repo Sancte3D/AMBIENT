@@ -722,7 +722,7 @@ static void process_reverb_wet(AmbientFx *fx, float in_l, float in_r,
         fx->fdn[i].feedback +=
             (fx->fdn[i].feedback_target - fx->fdn[i].feedback) * 0.0025f;
         float input = (hp_l * inject_l[i] + hp_r * inject_r[i]) * 0.105f;
-        input += fx->shimmer_return * shimmer_sign[i] * 0.080f;
+        input += fx->shimmer_return * shimmer_sign[i] * 0.115f;   /* r19.53: was .080 */
         float write = soft_clip(input + matrix * fx->fdn[i].feedback);
         fx->fdn[i].data[fx->fdn[i].write] = float_to_i16(write);
         ++fx->fdn[i].write;
@@ -742,7 +742,11 @@ static void process_reverb_wet(AmbientFx *fx, float in_l, float in_r,
     fx->shimmer_hp_x = pitch_input;
     fx->shimmer_hp_y = high;
     float shifted = process_pitch_octave(fx, high);
-    float shimmer_gain = 0.22f * shimmer_amount * shimmer_amount;
+    /* r19.53: the AUDIT found shimmer barely audible even at full amount. Raise
+     * the ceiling (0.22→0.42) and soften the curve (was pure square — moderate
+     * settings were inaudible) so it reads as a real octave halo. soft_clip +
+     * the regeneration feedback keep it from running away. */
+    float shimmer_gain = 0.42f * shimmer_amount * (0.35f + 0.65f * shimmer_amount);
     fx->shimmer_return = soft_clip(shifted * shimmer_gain);
 
     fx->reverb_wet_l = left;

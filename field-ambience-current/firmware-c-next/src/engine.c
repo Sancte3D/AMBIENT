@@ -26,6 +26,7 @@
 #include "pluck.h"
 #include "ember.h"
 #include "bowed.h"
+#include "horn.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -317,6 +318,7 @@ void engine_init(void) {
     pluck_init();                    /* r18.89 sparkle plucks */
     ember_init();                    /* r19.28 warm subtractive analog voice */
     bowed_init();                    /* r19.47 bowed lyra/Hardanger voice (Open Sea / Fjords) */
+    horn_init();                     /* r19.53 alphorn/brass voice (Alps) */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
     memset(eno_on,      0, sizeof eno_on);
@@ -341,7 +343,7 @@ void engine_init(void) {
  * needs SOME second colour, that was the whole r18.89 point). */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 3) voice_idx = 3;    /* r19.51: 3 = Bowed (Glass removed) */
+    if (voice_idx > 4) voice_idx = 4;    /* r19.53: 4 = Horn (Alps) */
     melody_voice = voice_idx;
 }
 
@@ -352,8 +354,11 @@ static void melody_strike(float freq_hz, float amp) {
      * up (and floor it) so it sits forward, near the audition level the design
      * was approved at (~0.3..0.55).
      * r19.51: Glass (FM bell) removed — inharmonic/harsh, cut from the VOICE
-     * menu. Voices renumbered: 0 Pad / 1 String / 2 Ember / 3 Bowed. */
-    if      (melody_voice == 3) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
+     * menu. Voices renumbered: 0 Pad / 1 String / 2 Ember / 3 Bowed.
+     * r19.53: 4 = Horn (alphorn/brass, Alps). Like bowed it is a full CHARACTER
+     * voice, so the tiny generative amp is scaled + floored to sit forward. */
+    if      (melody_voice == 4) horn_note (freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f));
+    else if (melody_voice == 3) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
     else if (melody_voice == 2) ember_note(freq_hz, amp);   /* r19.28 analog */
     else                        pluck_note(freq_hz, amp);   /* 0 Pad / 1 String */
 }
@@ -1034,6 +1039,10 @@ static void render_ambient(int16_t *buf, int frames) {
      * mixes straight to dry + hall send. Idle voices cost nothing (the inner
      * loop early-outs), so it runs unconditionally regardless of the world. */
     bowed_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
+
+    /* r19.53: the alphorn/brass voice (Alps) — its own reed body + formant, no
+     * modal-body colour; idle voices early-out so it runs unconditionally. */
+    horn_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
 
     /* r19.41 MASTER-EFFECTS SWAP: echo, blur, tape hiss/crackle, the master
      * reverb render and the shimmer wrap-loop all left this path — the

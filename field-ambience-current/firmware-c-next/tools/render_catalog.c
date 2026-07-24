@@ -195,6 +195,9 @@ static int fx_by_name(const char *n){
  * effect is clearly demonstrated. */
 static void render_fx(int mode, FILE *f, int secs){
     dsp_init(); pluck_init(); fx_master_init(); fx_master_set_world(1);
+    /* a reverb bed so wet-path effects (reverb/shimmer) have something to act
+     * on — without SPACE the tail is silent and every mode sounds dry. */
+    fx_master_set_space(0.75f); fx_master_set_tone(0.6f);
     /* clear all amounts, then push the one this mode needs */
     fx_master_set_echo(0.f); fx_master_set_motion(0.f); fx_master_set_age(0.f);
     fx_master_set_shimmer(0.f); fx_master_set_blur(0.f);

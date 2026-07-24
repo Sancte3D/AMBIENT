@@ -140,12 +140,15 @@ static inline void wind_tick(float *outL, float *outR) {
         wnd_lfo += 16.0f * (1.0f / 14.0f) / SR;
         if (wnd_lfo >= 1.0f) wnd_lfo -= 1.0f;
         float s = dsp_sin(wnd_lfo);
-        float centre = 450.0f + s * 180.0f + wnd_gust_env * 500.0f;
-        dsp_svf_set(&wnd_bpL, centre,         1.8f);
-        dsp_svf_set(&wnd_bpR, centre * 1.07f, 1.8f);
+        /* r19.53: the AUDIT heard the wind as bright hiss (centroid ~956 Hz).
+         * Darken the body a lot — real wind is a low, breathy roar, not a
+         * band-pass sizzle. Was 450 + 180·s + 500·gust (→ ~1130 Hz). */
+        float centre = 300.0f + s * 110.0f + wnd_gust_env * 300.0f;
+        dsp_svf_set(&wnd_bpL, centre,         1.4f);
+        dsp_svf_set(&wnd_bpR, centre * 1.07f, 1.4f);
 
         if (--wnd_wh_until <= 0) {
-            wnd_wh_tgt   = 400.0f + (wnd_white(&wnd_rng_R) * 0.5f + 0.5f) * 700.0f;
+            wnd_wh_tgt   = 350.0f + (wnd_white(&wnd_rng_R) * 0.5f + 0.5f) * 500.0f;
             wnd_wh_until = (int)((SR / 16.0f) * 10.0f);
         }
         wnd_wh_fc += 0.002f * (wnd_wh_tgt - wnd_wh_fc);
@@ -158,9 +161,11 @@ static inline void wind_tick(float *outL, float *outR) {
     float L = dsp_svf_bp(&wnd_bpL, pL) * gust;
     float R = dsp_svf_bp(&wnd_bpR, pR) * gust;
 
-    /* Whistle only in strong gusts — the "singing wires" cue (3). */
-    if (wnd_gust_env > 0.6f) {
-        float wg = (wnd_gust_env - 0.6f) * 0.38f;
+    /* Whistle only in the strongest gusts — the "singing wires" cue (3).
+     * r19.53: much rarer + quieter (was >0.6, ×0.38) so it accents instead of
+     * dominating — the whistle was a big part of the "hiss" the audit flagged. */
+    if (wnd_gust_env > 0.72f) {
+        float wg = (wnd_gust_env - 0.72f) * 0.18f;
         L += dsp_svf_bp(&wnd_whL, pL) * wg;
         R += dsp_svf_bp(&wnd_whR, pR) * wg;
     }
