@@ -24,7 +24,6 @@
 #include "generative.h"
 #include "cells.h"
 #include "pluck.h"
-#include "glass.h"
 #include "ember.h"
 #include "bowed.h"
 #include "padsynth.h"
@@ -308,7 +307,6 @@ void engine_init(void) {
     master_vol_cur = master_vol_tgt = 0.6f;
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
-    glass_init();                    /* r18.98 FM glass voice */
     ember_init();                    /* r19.28 warm subtractive analog voice */
     bowed_init();                    /* r19.47 bowed lyra/Hardanger voice (Open Sea / Fjords) */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
@@ -335,7 +333,7 @@ void engine_init(void) {
  * needs SOME second colour, that was the whole r18.89 point). */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 4) voice_idx = 4;    /* r19.47: 4 = Bowed lyra/Hardanger */
+    if (voice_idx > 3) voice_idx = 3;    /* r19.51: 3 = Bowed (Glass removed) */
     melody_voice = voice_idx;
 }
 
@@ -344,11 +342,12 @@ static void melody_strike(float freq_hz, float amp) {
     /* r19.47: the bowed lyra is a full CHARACTER voice, not a sparkle under the
      * pad — the generative melody amp (~0.06) would make it a whisper. Scale it
      * up (and floor it) so it sits forward, near the audition level the design
-     * was approved at (~0.3..0.55). */
-    if      (melody_voice == 4) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
-    else if (melody_voice == 3) ember_note(freq_hz, amp);   /* r19.28 analog */
-    else if (melody_voice == 2) glass_note(freq_hz, amp);
-    else                        pluck_note(freq_hz, amp);
+     * was approved at (~0.3..0.55).
+     * r19.51: Glass (FM bell) removed — inharmonic/harsh, cut from the VOICE
+     * menu. Voices renumbered: 0 Pad / 1 String / 2 Ember / 3 Bowed. */
+    if      (melody_voice == 3) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
+    else if (melody_voice == 2) ember_note(freq_hz, amp);   /* r19.28 analog */
+    else                        pluck_note(freq_hz, amp);   /* 0 Pad / 1 String */
 }
 
 /* r19.28 — Landscape "Motif" layer: a warm subtractive ANALOG voice (ember.c:
@@ -359,11 +358,12 @@ void engine_motif_strike(float freq_hz, float amp) {
     ember_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
-/* r19.30 — a bare glass/bell bloom for the HARMONY "extension" role: the FM
- * shimmer that lets a chord's top sparkle over the sustained pad body, and
- * decays into the shared hall. No pad, no bass. */
+/* r19.30 — a bare bell bloom for the HARMONY "extension" role: a sparkle that
+ * lets a chord's top ring over the sustained pad body, decaying into the shared
+ * hall. No pad, no bass. r19.51: was the FM glass (removed as harsh); now the
+ * plucked-string voice, which is gentler and already on the pluck bus. */
 void engine_sparkle_strike(float freq_hz, float amp) {
-    glass_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
+    pluck_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
@@ -990,7 +990,6 @@ static void render_ambient(int16_t *buf, int frames) {
         memset(plkJL, 0, sizeof(float) * (size_t)frames);
         memset(plkJR, 0, sizeof(float) * (size_t)frames);
         pluck_render_mix(plkL, plkR, plkJL, plkJR, frames);
-        glass_render_mix(plkL, plkR, plkJL, plkJR, frames);   /* r18.98 */
         body_process(plkL, plkR, frames);
         for (int n = 0; n < frames; ++n) {
             dryL[n]  += plkL[n];

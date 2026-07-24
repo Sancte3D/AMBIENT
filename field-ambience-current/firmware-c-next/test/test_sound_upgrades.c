@@ -17,6 +17,7 @@
 #include "dsp.h"
 #include "pluck.h"
 #include "glass.h"
+#include "ember.h"
 #include "shimmer.h"
 #include "tape.h"
 #include "reverb.h"
@@ -513,23 +514,23 @@ int main(void) {
         CHECK(l_sb < l_f * 0.05,
               "ring is nearly pure (sb/f %.4f)", l_sb / (l_f + 1e-12));
 
-        /* (c) engine dispatch */
+        /* (c) engine VOICE dispatch (r19.51: Glass removed; map is now
+         *     0 Pad / 1 String→pluck / 2 Ember / 3 Bowed). */
         engine_init();
-        engine_set_voice(2);
-        engine_note_on(0, 220.0f, 0.12f);
-        CHECK(glass_active_count() > 0, "VOICE=GLASS strikes on a cell press");
-        CHECK(pluck_active_count() == 0, "no string when GLASS is chosen");
+        engine_set_voice(1);
+        engine_note_on(0, 330.0f, 0.12f);
+        CHECK(pluck_active_count() > 0, "VOICE=STRING strikes the pluck on a cell press");
         engine_note_off(0);
         { int16_t b[512]; for (int i = 0; i < 1200; ++i) engine_render(b, 256); }
-        engine_set_voice(1);
+        engine_set_voice(2);
         engine_note_on(1, 330.0f, 0.12f);
-        CHECK(pluck_active_count() > 0, "VOICE=STRING strikes on a cell press");
+        CHECK(ember_active_count() > 0, "VOICE=EMBER strikes on a cell press");
         engine_note_off(1);
         { int16_t b[512]; for (int i = 0; i < 1200; ++i) engine_render(b, 256); }
         engine_set_voice(0);
-        int g0 = glass_active_count(), p0 = pluck_active_count();
+        int p0 = pluck_active_count(), e0 = ember_active_count();
         engine_note_on(2, 440.0f, 0.12f);
-        CHECK(glass_active_count() == g0 && pluck_active_count() == p0,
+        CHECK(pluck_active_count() == p0 && ember_active_count() == e0,
               "VOICE=PAD leaves the reference sound untouched");
         engine_note_off(2);
 

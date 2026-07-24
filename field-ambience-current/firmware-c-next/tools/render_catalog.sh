@@ -29,7 +29,6 @@ voice|bowed_opensea|1_voices|voice_bowed_opensea|30|OK|Bowed lyra — Open Sea c
 voice|bowed_fjords|1_voices|voice_bowed_fjords|30|OK|Bowed Hardanger — Fjords voice (darker, more sympathetic ring)
 voice|horn|1_voices|voice_horn_alps|30|PROTO|Alphorn/brass — Alps voice (prototype, NOT yet wired into the engine)
 voice|pluck|1_voices|voice_pluck_string|30|OK|Karplus-Strong pluck/string (VOICE: String)
-voice|glass|1_voices|voice_glass|30|OK|FM glass bell (VOICE: Glass)
 voice|ember|1_voices|voice_ember|30|OK|Warm subtractive analog (VOICE: Ember)
 bed|alps|2_beds|bed_alps|24|OK|PADsynth pad bed — Alps timbre (warm odd harmonics)
 bed|opensea|2_beds|bed_opensea|24|OK|PADsynth pad bed — Open Sea (glassy)

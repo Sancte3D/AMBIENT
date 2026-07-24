@@ -101,7 +101,6 @@ set(DSP_SOURCES
     src/echo.c          # Reddit Echo macro: tape-style stereo delay
     src/blur.c          # Reddit Blur macro: granular cloud
     src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
-    src/glass.c         # r18.98: 2-op FM glass melody voice (VOICE menu)
     src/ember.c         # r19.28: warm subtractive analog voice (Motif layer)
     src/bowed.c         # r19.47: bowed lyra/Hardanger voice (Open Sea / Fjords)
     src/shimmer.c       # r18.99: octave-up hall regeneration (SHIMMER menu)

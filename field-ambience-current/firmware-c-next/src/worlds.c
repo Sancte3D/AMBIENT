@@ -58,7 +58,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 62, .mode = 4, .vibe = 3,
         .chord_color = 1, .bass_mode = 2,   /* Open 1-5-9, tidal fifth */
         .brightness_hz = 220,   /* bright horizon, but hazy */
-        .voice = 4,             /* Bowed lyra (colour 0) — the Mediterranean
+        .voice = 3,             /* Bowed lyra (colour 0) — the Mediterranean
                                  * character voice: warm swelling bow strokes */
     },
     {
@@ -72,7 +72,7 @@ static const world_t WORLDS[WORLD_COUNT] = {
         .key_midi = 54, .mode = 1, .vibe = 2,
         .chord_color = 3, .bass_mode = 1,   /* Deep 7th, grounded root */
         .brightness_hz = -320,  /* dark deep water */
-        .voice = 4,             /* Bowed Hardanger (colour 1) — darker body,
+        .voice = 3,             /* Bowed Hardanger (colour 1) — darker body,
                                  * more sympathetic ring than Open Sea */
     },
     {
