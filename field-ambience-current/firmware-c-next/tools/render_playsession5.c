@@ -55,6 +55,19 @@ static void apply_world(int i){
     engine_set_age       (w->age_pct     / 100.0f);
     engine_set_echo      (w->echo_pct    / 100.0f);
     engine_set_blur      (w->blur_pct    / 100.0f);
+    /* r19.62: die neuen Synth-Parameter musikalisch dosiert — kein Extrem,
+     * sondern so, wie ein Spieler sie stehen haette. Pro Welt leicht anders,
+     * damit man hoert, dass sie wirken. */
+    static const float RESO[5]   = {0.30f, 0.42f, 0.55f, 0.35f, 0.25f};
+    static const float SWEEP[5]  = {0.35f, 0.50f, 0.40f, 0.30f, 0.25f};
+    static const float ENVM[5]   = {0.35f, 0.30f, 0.35f, 0.40f, 0.45f};
+    static const float ATK[5]    = {0.45f, 0.60f, 0.55f, 0.65f, 0.35f};
+    static const float REL[5]    = {0.55f, 0.65f, 0.70f, 0.60f, 0.45f};
+    engine_set_resonance(RESO[i]);
+    engine_set_sweep    (SWEEP[i]);
+    engine_set_envmod   (ENVM[i]);
+    engine_set_attack   (ATK[i]);
+    engine_set_release  (REL[i]);
 }
 
 /* Play a held chord (colour of the current world) on the pad pool. */
