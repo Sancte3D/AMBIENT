@@ -1,5 +1,20 @@
 # PROJECT STATUS
 
+> **r19.65 (2026-07-26) — Pad-Mapping: 2 echte Defekte gefunden.** Der letzte
+> offene Punkt vor dem Layout ("landet jede Symbol-Pinnummer auf einem Pad?",
+> fuer 9 ICs als pinout-pending markiert) ist erledigt — und war nicht leer:
+> (1) **J1 USB-C Schirm** haette an nichts gehangen (Symbol-Pin `S1` vs.
+> Footprint-Pad `SH`), obwohl das Schematic ihn auf GND legt. (2) **C_BULK**
+> zeigte auf einen Footprint, den es in keiner KiCad-Library gibt — der Name
+> war erfunden; KiCad haette "footprint not found" gemeldet und der 470-µF-
+> Polymer-Tantal (laut ADR-0010 der wichtigste Hebel gegen kratzigen Klang)
+> waere nicht platzierbar gewesen. Beides behoben; das ist die einzige
+> BOM-Zeile, die sich geaendert hat. `scripts/check_footprints.py` prueft das
+> jetzt fuer **alle 38** Symbol/Footprint-Paare automatisch statt fuer eine
+> handgepflegte Liste aus 4 Teilen, mit Exit-Code und gegen einen injizierten
+> Fehler getestet. **Nicht** abgedeckt: dass Pin *n* die Datenblatt-*Funktion*
+> von Pin *n* traegt — das bleibt ein menschlicher Durchgang je IC.
+
 > **r19.64 (2026-07-26) — BOM-/Schematic-Audit Runde 2:** Arons 40-Pin-Frage
 > als Anlass fuer einen kompletten Durchlauf. **Die BOM ist byte-identisch
 > geblieben** (kein Bauteil/LCSC/Menge geaendert) — gefunden wurden drei andere

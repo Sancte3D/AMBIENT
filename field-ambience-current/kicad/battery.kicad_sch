@@ -201,7 +201,7 @@
           (number "B12" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at 0 -25.4 90) (length 2.54)
           (name "SHIELD" (effects (font (size 1.27 1.27))))
-          (number "S1" (effects (font (size 1.27 1.27)))))))
+          (number "SH" (effects (font (size 1.27 1.27)))))))
     (symbol "Power_Protection:USBLC6-2SC6" (in_bom yes) (on_board yes)
       (property "Reference" "D" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
       (property "Value" "USBLC6-2SC6" (at 0 5.08 0) (effects (font (size 1.27 1.27))))

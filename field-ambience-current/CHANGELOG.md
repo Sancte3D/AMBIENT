@@ -10,6 +10,55 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.65 (2026-07-26) — Pad-Mapping-Check ueber ALLE Teile: 2 echte Defekte
+
+Der letzte offene Punkt vor dem Layout war: landet jede Symbol-Pinnummer auch
+auf einem Footprint-Pad? Das war fuer 9 ICs als "pinout-pending" markiert.
+Statt die 9 einzeln von Hand zu pruefen, macht `scripts/check_footprints.py`
+das jetzt fuer **jedes platzierte Teil** automatisch — 38 Symbol/Footprint-
+Paare. Zwei echte Defekte kamen dabei heraus.
+
+**1. J1 USB-C Schirm haengt an nichts** (haette es aufs Board geschafft)
+Das Symbol nennt den Schirm-Pin `S1`, der KiCad-Footprint
+`USB_C_Receptacle_HRO_TYPE-C-31-M-12` nennt das Schalen-Pad aber `SH`. Das
+Schematic legt SHIELD ordentlich auf GND — diese Verbindung haette die
+Metallhuelle des Steckers nie erreicht. Symbol-Pin auf `SH` korrigiert.
+
+**2. C_BULK zeigte auf einen Footprint, den es nicht gibt**
+`Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` existiert in KEINER
+KiCad-Library — der Name war erfunden (falsche Library *und* falscher Name;
+Tantal-Landpatterns liegen in `Capacitor_Tantalum_SMD`). Beim Netlist-Import
+haette KiCad "footprint not found" gemeldet und der 470-µF-Polymer-Tantal
+waere nicht platzierbar gewesen — ausgerechnet das Bauteil, das ADR-0010 als
+"wichtigsten anti-kratzig-Hebel" fuehrt. Korrigiert auf
+`Capacitor_Tantalum_SMD:CP_EIA-7343-43_Kemet-X` (Gehaeusegroesse unveraendert:
+TPSE477K010R0100 = AVX-Case-E = EIA 7343-43; KiCad benennt diese EIA-Groesse
+nach Kemets Buchstaben X). Einzige BOM-Zeile, die sich geaendert hat.
+
+**Ergebnis:** 38/38 Paare deckungsgleich, 0 Symbol-Pins ohne Pad. Die 9
+"pinout-pending"-ICs sind damit auf Nummernebene erledigt (U1 100 Pins,
+U2/U6 28, U3 20, U4 16, U5 5, U7/U11 16+EP, U8 11, U9 8, D1 6, Q2 3).
+
+**Drei Pads ohne Symbol-Pin** — bewusst so, einmal beim Layout ansehen:
+`MP` an J9 (JST) und an EN1-4 (Encoder) = Montagepads ohne Netz; Pads 4-7 an
+SW_PWR = der Masse-Rahmen des ALPS-Schiebeschalters. Aron kann die im Layout
+auf GND legen.
+
+**Der Checker selbst** ersetzt die r18.82-Version, die eine handgepflegte
+Liste aus 4 Teilen verglich (und deren U4-Eintrag noch den PAM8403 mit Pin 9
+= NC fuehrte). Neu: deckt automatisch jedes Teil ab, parst S-Expressions
+richtig (Regex allein ordnet Pins dem falschen Symbol zu — daran waren meine
+ersten Messungen falsch), versteht das alte KiCad-5-`(module ...)`-Format mit
+unquoteten Pad-Nummern (mehrere projekt-lokale Footprints sind noch so), holt
+fehlende Standard-Footprints per `--fetch`, merged `lib_symbols` ueber alle
+Sheets und liefert Exit-Code 1. Gegen einen injizierten Fehler getestet.
+
+**Bewusst NICHT behauptet:** dass Pin *n* die Datenblatt-*Funktion* von Pin
+*n* traegt. Nummern-Deckung ist notwendig, nicht hinreichend — die
+Funktionszuordnung braucht weiterhin einen menschlichen Durchgang je IC.
+
+---
+
 ## v0.7-r19.64 (2026-07-26) — BOM-/Schematic-Audit Runde 2 (Arons Frage als Anlass)
 
 Vollstaendiger Durchlauf ueber BOM + Schematic, ausgeloest von Arons 40-Pin-

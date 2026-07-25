@@ -364,7 +364,7 @@ LIB_SYMBOLS = r"""
           (number "B12" (effects (font (size 1.27 1.27)))))
         (pin power_in line (at 0 -25.4 90) (length 2.54)
           (name "SHIELD" (effects (font (size 1.27 1.27))))
-          (number "S1" (effects (font (size 1.27 1.27)))))))
+          (number "SH" (effects (font (size 1.27 1.27)))))))
     (symbol "Power_Protection:USBLC6-2SC6" (in_bom yes) (on_board yes)
       (property "Reference" "D" (at 0 7.62 0) (effects (font (size 1.27 1.27))))
       (property "Value" "USBLC6-2SC6" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
@@ -2194,7 +2194,7 @@ def power_tree_sheet() -> str:
             value="470uF 10V Polymer-Tantal (Case-E 7343-43, ESR 100mOhm)",
             x=65,
             y=63.81,
-            footprint="Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow",
+            footprint="Capacitor_Tantalum_SMD:CP_EIA-7343-43_Kemet-X",
             extra_props={
                 "MPN": "TPSE477K010R0100 (Kyocera AVX, Polymer-Tantal)",
                 "LCSC": "TBD-VERIFY (JLC-Stock vor Layout pruefen)",
