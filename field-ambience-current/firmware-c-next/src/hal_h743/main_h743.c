@@ -191,7 +191,7 @@ static const engine_synth_backend_t s_v2_backend = {
     be_select, be_note_on, be_note_off, be_panic, be_render
 };
 
-/* Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW), Line-Out
+/* Klinke drin → NUR den PAM8406 muten (AMP_MUTE_N = PB15 LOW), Line-Out
  * bleibt live — NICHT audio_mute() rufen (das wuerde auch XSMT ziehen und
  * den Line-Out toeten). Design: ADR / v0.7. */
 static bool s_jack_plugged = false;   /* r19.21: fuer das Status-Overlay */
@@ -543,7 +543,7 @@ int main(void) {
             prev_gpio = gpio;
         }
 
-        /* --- 3. Jack debounce settle → PAM8403 /MUTE --- */
+        /* --- 3. Jack debounce settle → PAM8406 /MUTE --- */
         if (jack_pending != 0xFF &&
             (uint32_t)(now - jack_edge_ms) >= JACK_DEBOUNCE_MS) {
             /* Still at the level that armed the debounce? (A bounce mid-

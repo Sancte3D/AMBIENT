@@ -115,9 +115,9 @@ Line-out testen.
   PE6 DOUT) → PCM5102A → J8. Ton sauber?
 - Mute-Reihenfolge (SPEC §8.3): beim Start `/SHDN` (PB14) → `/MUTE` (PB15)
   → `XSMT` (MCP GPA5) lösen; beim Stop rückwärts. Kein Pop.
-- **Jack-Detect** (MCP GPA6): Klinke rein → PAM8403 gemutet (Speaker aus),
+- **Jack-Detect** (MCP GPA6): Klinke rein → PAM8406 gemutet (Speaker aus),
   Line-out bleibt live. Raus → Speaker an.
-- **Speaker (PAM8403) zuletzt**, leise anfangen.
+- **Speaker (PAM8406) zuletzt**, leise anfangen.
 
 ## Stufe 9 — Batterie-UI + Laden
 - `BAT_SENSE` (PA3, 100k:100k): Menü zeigt Akkustand plausibel.

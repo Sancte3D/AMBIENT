@@ -1,5 +1,22 @@
 # PROJECT STATUS
 
+> **r19.64 (2026-07-26) — BOM-/Schematic-Audit Runde 2:** Arons 40-Pin-Frage
+> als Anlass fuer einen kompletten Durchlauf. **Die BOM ist byte-identisch
+> geblieben** (kein Bauteil/LCSC/Menge geaendert) — gefunden wurden drei andere
+> Klassen: (1) drei weitere *nie platzierte* Symbole in der eingebetteten
+> Library jedes Sheets, darunter `MCU:Pico2` = ein **40-Pin-Symbol** und damit
+> die zweite moegliche Quelle von Arons Sichtung (+ ~880 Zeilen toter
+> Generator-Code); die Library enthaelt jetzt exakt 37 Symbole = 37 platzierte
+> Teile, null Waisen. (2) **17 ERC-Richtungskonflikte** zwischen Root-Sheet-Pins
+> und Hier-Labels — vor allem alle 11 Encoder-Signale, die von MCU- *und*
+> Encoder-Sheet als `output` deklariert waren (zwei Treiber auf einem Netz),
+> plus USB/I2C/VSYS; alle 7 Sheets stimmen jetzt exakt ueberein. (3)
+> **Netznamen** gegen den AI-Ready-Standard: Slash raus (`GPA5/XSMT`,
+> `GPA6/JACKDET`), Active-Low auf `_N` (`AMP_SHDN_N`, `AMP_MUTE_N`,
+> `QSPI_CS_N`) inkl. Firmware + Docs. Dazu: mehrere **bestellrelevante**
+> Dokumente fuehrten noch den NRND-`PAM8403DR-H C17337` statt des seit r19.37
+> verbauten **PAM8406DR C86270** — korrigiert. Host-Tests gruen.
+
 > **r19.44 (2026-07-21) — Landschafts-Welten (Location-Brief, kritisch gefiltert):**
 > Die 4 Nacht-/Stadt-Welten wurden zu 5 global lesbaren LANDSCHAFTEN
 > umbenannt + im Mood verschoben: **Alps · Open Sea · Fjords · Moss Fields ·
@@ -127,7 +144,7 @@
 
 > **r19.19 (2026-07-13) — Kopfhoerer rein (User: "ja das muss rein!!!").**
 > U11 TPA6132A2 (C69901) zwischen DAC und J8: DirectPath, Gain −6 dB,
-> EN=AMP_nSHDN. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
+> EN=AMP_SHDN_N. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
 > Buchse; Auto-Mute-Verhalten unveraendert (Speaker muten beim Einstecken,
 > J8 bleibt live). Netzliste 165/649/0-floating, alle Teile live-verifiziert.
 > Details: CHANGELOG r19.19 + ADR-0024.

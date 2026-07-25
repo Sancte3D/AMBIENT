@@ -10,6 +10,80 @@ KEIN .kicad_pcb.)
 
 ---
 
+## v0.7-r19.64 (2026-07-26) — BOM-/Schematic-Audit Runde 2 (Arons Frage als Anlass)
+
+Vollstaendiger Durchlauf ueber BOM + Schematic, ausgeloest von Arons 40-Pin-
+Rueckfrage. Die BOM selbst ist **byte-identisch geblieben** — kein Bauteil,
+kein LCSC-Code, keine Menge hat sich geaendert. Gefunden wurden drei andere
+Fehlerklassen.
+
+**1. Symbol-Leichen (dieselbe Ursache wie die 40-Pin-Frage)**
+Nach dem 2x20-Header aus r19.63 waren noch drei weitere Symbole in der
+eingebetteten Library JEDES Sheets definiert, aber nirgends platziert:
+- `MCU:Pico2` — laut Generator ein **"40-pin module symbol"**, also eine
+  *zweite* moegliche Quelle von Arons Sichtung
+- `Connector:Conn_01x16` (OLED-Aera)
+- `Transistor_FET:DMG2305UX` (Q1-Power-Path, r18.79 entfernt)
+
+Alle drei entfernt, dazu die jetzt toten Generator-Funktionen `pico_sheet()`,
+`oled_sheet()`, `_conn_02xN_lib_symbol()` (~880 Zeilen). Gegenprobe: die
+eingebettete Library enthaelt jetzt **exakt 37 Symbole = exakt 37 platzierte
+lib_ids**, null Waisen in beide Richtungen. Diff = nur Loeschungen (210 Zeilen
+je Sheet, 0 Zusaetze), BOM-md5 unveraendert.
+
+**2. ERC: 17 Sheet-Pin/Hier-Label-Richtungskonflikte**
+Aron haette beim ersten ERC-Lauf eine Wand aus Fehlern bekommen:
+- **11x Encoder** (`DRIVE_A/B/SW`, `BRIGHT_*`, `DISPLAY_*`, `VOL_A/B`): das
+  STM32-Sheet deklarierte sie als `output` — die MCU *liest* die Encoder.
+  Encoder-Sheet und MCU-Sheet haben damit beide dasselbe Netz getrieben
+  (ERC "conflicting outputs"). MCU-Seite jetzt `input`, Root-Sheet-Pin des
+  Encoder-Blocks jetzt `output`.
+- **VOL_SW**: Root-Pin des Encoder-Blocks war `input`, das Sheet `output`.
+- **USB_DP/DM**: dreimal unterschiedlich (`output`/`input`/`bidirectional`)
+  — jetzt durchgaengig `bidirectional`.
+- **I2C_SCL/SDA**: Slave-Sheets `input`, Root `bidirectional` — jetzt
+  durchgaengig `bidirectional`.
+- **VSYS**: das Battery-Sheet hatte drei Hier-Labels desselben Namens, einen
+  als `output` (BQ24074-OUT, korrekt) und zwei als `input` fuer *sheet-interne*
+  Verbraucher (L1, U8-VIN). Zwei Interfaces mit demselben Namen; die beiden
+  `input`-Labels hatten gar keinen Root-Sheet-Pin. Sind jetzt normale lokale
+  Labels — Netz-Topologie unveraendert, Interface eindeutig.
+Automatisierte Gegenprobe: alle 7 Sheets, Root-Pins == Hier-Labels, 0 Diffs.
+
+**3. Netznamen gegen AI_READY_SCHEMATIC_STANDARD**
+- `GPA5/XSMT`, `GPA6/JACKDET` — **Slash im Netznamen** (Standard verbietet
+  Slashes; `/` ist in KiCad ausserdem der Hierarchie-Pfadtrenner). Beide waren
+  zusaetzliche lokale Labels auf einem Draht, der ueber `PCM_XSMT` /
+  `JACK_DETECT` schon benannt war, also doppelte Benennung desselben Netzes.
+  Ersatzlos entfernt, die GPIO-Zuordnung steht jetzt als Kommentar.
+- Active-Low auf die vom Standard geforderte `_N`-Endung (CLAUDE.md nennt
+  genau diesen Fall als Beispiel): `AMP_nSHDN`→`AMP_SHDN_N`,
+  `AMP_nMUTE`→`AMP_MUTE_N`, `QSPI_NCS`→`QSPI_CS_N`. Firmware (hal_h743,
+  hal_pico, firmware-c) und alle Hardware-Docs mitgezogen.
+- Bewusst NICHT umbenannt: `NRST` und `PCM_XSMT` (Datenblatt-Pinnamen von ST
+  bzw. TI — Traceability zum Datenblatt schlaegt hier die Endungsregel;
+  `XSMT` traegt die Negation schon im Namen) und `LCD_RES` (steht so auf dem
+  Waveshare-Modul-Silkscreen, das Aron verkabelt).
+
+**4. Veraltete Doku-Bauteile (haette Fehlbestellung ausloesen koennen)**
+Der PAM8403DR-H (NRND) wurde in r19.37/ADR-0025 durch den **PAM8406DR
+(C86270)** ersetzt — mehrere *bestellrelevante* Dokumente fuehrten aber noch
+`C17337`: `BOM_MASTER.md` (Bauteiltabelle), `docs/hardware/COMPONENT_LINKS.md`
+(die Bestell-Linkliste), `docs/OBJECTIVES_AND_DELIVERABLES.md`,
+`PCB_FOOTPRINT_RISK_AUDIT.md`, `docs/component_reviews/README.md`. Alle auf
+PAM8406DR/C86270 korrigiert, dazu der Hinweis auf **Pin 9 = MODE** (beim 8403
+ein NC) im Footprint-Risk-Audit. Historische Eintraege (CHANGELOG,
+BOM_MASTER-Historie, PROJECT_STATUS-Historie) bleiben stehen — sie
+beschreiben korrekt die Vergangenheit.
+
+Sauber geblieben (geprueft, keine Aenderung noetig): 213 platzierte Bauteile
+vs. 200 BOM-Designatoren (die 13 Differenzen sind H1-H4 Mounting Holes, 8
+Testpunkte, J4 Tag-Connect-SWD/DNP — korrekt aus der JLC-BOM ausgeschlossen),
+0 BOM-Zeilen ohne Schematic-Bauteil, 0 doppelte Refdes, 0 Schematic/BOM-LCSC-
+Abweichungen, alle LCSC-Codes formal gueltig, kein TBD. Host-Tests gruen.
+
+---
+
 ## v0.7-r19.25 (2026-07-15) — Gesten-Schleife statt Audio-Looper (Bedienlogik Runde 6, Abschluss)
 
 HiChord/Orchid haben grosse Audio-Looper — wir bauen bewusst etwas

@@ -270,7 +270,7 @@ software-seitig im Engine-Mix-Bus, nicht in der PCB.
 | `U3` | PCM5102APWR | I²S → Stereo-DAC, 32-Bit-Resolution, interne PLL (synct sich auf BCK ohne MCLK). Eigene AVDD-Versorgung über Ferrit-Bead. | TSSOP-20 KiCad-Standard |
 | `U4` | PAM8406DR | Stereo Class-D-Amp, BTL-Output (r19.37, ADR-0025: ersetzt NRND PAM8406; MODE=+5V→Class-D; RI 174k = Gain +4.3 dB; C_in 10nF = Speaker-HPF ~91 Hz). `AMP_SHDN_N` (active-low Shutdown) vom MCP23017 gated. | SO-16-150mil KiCad-Standard |
 | `J7` | Speaker-Header 2×2 Pin (PUI AS04008PS, 8 Ω, 40 mm) | Speaker-Anschluss BTL — 2 Drähte pro Kanal | Pin-Header 2,54 mm |
-| `U11` | TPA6132A2RTER (r19.19, ADR-0024) | DirectPath-Kopfhoererverstaerker: DAC → CIN 1µF → U11 (Gain −6 dB, EN=AMP_nSHDN) → 22 Ω → J8. Ladungspumpe intern (C_FLY_HP/C_HPVSS), HPVDD nur an 2,2 µF (NIE an VDD!) | `Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` |
+| `U11` | TPA6132A2RTER (r19.19, ADR-0024) | DirectPath-Kopfhoererverstaerker: DAC → CIN 1µF → U11 (Gain −6 dB, EN=AMP_SHDN_N) → 22 Ω → J8. Ladungspumpe intern (C_FLY_HP/C_HPVSS), HPVDD nur an 2,2 µF (NIE an VDD!) | `Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` |
 | `J8` | PJ-320D 3,5 mm TRS (mit Insertion-Detect) | **PHONES / LINE OUT** (r19.19): Kopfhörer 16 Ω+ UND Line-Eingänge, niederohmig getrieben von U11. Insertion-Detect → Firmware mutet NUR die Speaker (Auto-Mute beim Einstecken, wieder an beim Ausstecken) | `field_ambience:Jack_3.5mm_PJ-320D_SMT` (Custom EasyEDA-CAD) |
 | `J9` | PJ-320D MIDI-OUT — **DNP für 5er-Run** (ADR-0004 r18.30) | 2× 220 Ω Resistor pair + UART-TX. Reaktivierbar durch Bestücken + `midi_tx_init()` | gleicher FP, DNP |
 | `FB1` | BLM18AG601 (Ferrit-Bead) | AVDD-Trennung DAC (Digital-Rail → Analog-Rail) | 0603 |
@@ -300,7 +300,7 @@ PCM5102A (U3)
 |---|---|---|
 | `U3` PCM5102A | Komplett stumm an allen Outs (J8 + Speakers) | DAC oder I²S-Verkabelung prüfen |
 | `U4` PAM8406 | Speakers stumm, J8 lebt | Amp prüfen — oft thermisch oder Strapping-Pin falsch |
-| `U11` TPA6132A2 | J8 stumm (Kopfhörer UND Line), Speakers leben | AMP_nSHDN high? Ladungspumpen-Caps (C_FLY_HP/C_HPVSS) prüfen; HPVDD-Spannung ~VDD-nah messen |
+| `U11` TPA6132A2 | J8 stumm (Kopfhörer UND Line), Speakers leben | AMP_SHDN_N high? Ladungspumpen-Caps (C_FLY_HP/C_HPVSS) prüfen; HPVDD-Spannung ~VDD-nah messen |
 | `FB1` Ferrit | Digital-Switching grießelt im Headphone-Out | Ferrit tauschen |
 | `J7` Speaker-Header lose | Speaker brüllt, Brummen, evtl. Amp thermisch | Header neu löten |
 | Speaker fällt aus Mesh | Hörbar dünn — und mechanisch oft Folge eines lose gewordenen Mesh-Klebepunkts | Membran + Mesh checken (ADR-0007) |
