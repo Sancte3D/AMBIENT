@@ -1,3 +1,60 @@
+# 320x170 pixel-perfect system (`ui_grid.py`) — the current one
+
+```
+python3 design/ui_grid.py      # -> design/out/grid/*.png
+```
+
+This inverts how `design/` worked until now. Every other file here designs
+large and scales down; this one is **authored at 320x170** and previewed by
+**integer nearest-neighbour upscale only**. Nothing is ever resampled, so the
+preview is what the panel puts out, pixel for pixel.
+
+Assertions in `check()` enforce it rather than the comments claiming it: all
+16 geometry constants are `int`, the segments close exactly on the track width,
+the label axis equals track x + track width + gap, the radius is exactly half
+the track height, and a bottom margin survives.
+
+## The type scale is measured, not chosen
+
+Bitcount Grid Single is a dot-grid face: it is crisp only where its dots land
+on whole pixels. Rendering `Granular 87%` at 7–22 px and counting distinct ink
+values:
+
+| px | 7 | 8 | 9 | **10** | 11 | 12 | 13 | 14 | 16 | 18 | 20 |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| distinct ink values | 44 | 38 | 13 | **1** | 37 | 25 | 84 | 55 | 73 | 100 | 6 |
+
+At 10 px there is **exactly one ink value** — every stem is a solid pixel, no
+partial coverage anywhere. 20 px is the next clean step and is where the dot
+pattern itself becomes visible, which is the face's whole character. So the
+scale is **10 and 20, with nothing in between**: 11–14 px is measurably
+mushier than 10 px despite being larger.
+
+## The grid
+
+```
+PAD_L 22   TRACK_X 22   TRACK_W 187   COL_GAP 16   LABEL_X 225   CONTENT_R 296
+HEAD_MID 16   TITLE_BASE 48   ROW_0 68   ROW_PITCH 20
+TRACK_H 14   TRACK_R 7   BADGE 38x12   SEG 4 x 43 + 3 x 5 = 187
+rows at y 68 88 108 128 148        bottom margin 15 px
+```
+
+`00_grid_6x.png` draws the shared axes and row centres over the screen, so a
+misaligned element is visible instead of arguable.
+
+## Deviation from the measured reference
+
+**Track height.** The measured ratio gives 10.7 px; drawn at **14**. At 1:1 on
+a 1.9-inch panel a 10 px capsule with a value inside it is thin.
+
+It is **not 16**: five rows of 16 need a 22 px pitch, which leaves 12 px of
+bottom margin against the reference's 24, and that generous bottom margin is a
+real part of how the reference reads. 14/20 keeps 15 px. So the "slider height
+16 px" suggestion is right in direction and one step too far in size — the
+arithmetic is in `check()`.
+
+---
+
 # Reference direction (`ui_ref.py`) — measured, not eyeballed
 
 ```
