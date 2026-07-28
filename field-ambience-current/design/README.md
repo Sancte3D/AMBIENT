@@ -121,13 +121,48 @@ If that assertion ever fails, the design has silently stopped being buildable.
 
 | entries | use |
 |---|---|
-| 0–8 | the bloom — 9 entries, median-cut over the bloom itself |
+| 0–7 | the bloom — 8 entries, median-cut over the frosted bloom |
+| 8 | ink on accent — lets the value on the handle antialias |
 | 9–10 | ink 33 % / 66 % — the two blend steps that let type antialias |
 | 11 | white — card rim, handle top light |
 | 12 | veil — bar and segment track |
-| 13 | ink — type, active segment chunk, label on the handle |
+| 13 | ink — type, active segment chunk |
 | 14 | accent — bar fill, handle, badge |
 | 15 | accent glow — handle top light, the ring around the handle |
+
+## The frost, and the proportion mistake it fixes
+
+The first pass mapped the reference's card onto the whole 320×170 panel and
+drew only its rim. That is wrong twice over. In the reference the card is
+**314 px inside a 1133 px field** — a calm panel floating in a big soft wash,
+where the hot core of the bloom is a minority of the picture. Blown up to fill
+the screen, with the bloom normalisation unchanged, the core ended up directly
+under the labels: an unreadable magenta blob that read as an object on the
+card rather than a field behind it.
+
+Two corrections, and the second is the one that matters:
+
+* the bloom's radial normalisation was tightened so the hot core is small
+  again relative to the frame;
+* **the card interior is frosted** — the bloom lifted 55 % toward white inside
+  the rounded rect, full strength in the 6 px margin around it. That is what a
+  glass card actually does, it turns the bloom into atmosphere, and it gives
+  the reference's "panel in a field" read on a screen where the panel would
+  otherwise *be* the whole screen. It costs nothing: it bakes into the same
+  static bitmap, still 8 entries.
+
+Three smaller things also came from comparing against the reference rather
+than against the previous render:
+
+* **Proportion.** Bars are 7 px tall and 128 px wide, not 11 × 170. The right
+  two-fifths of the card is deliberately empty apart from label and value.
+* **The dark chunk.** In the reference it is ONE crisp near-black chip in an
+  otherwise quiet card. Softening it to grey to avoid heaviness just made it
+  muddy — the fix was to keep it full ink and make it *small*.
+* **Two faces.** A grotesk for reading (labels, title), a mono for numerals
+  only, so the value column aligns. The category label is the one thing set in
+  caps, and it is wide-tracked; PIL has no tracking, so glyphs go down one at
+  a time.
 
 ## The three things that were actually verified, not assumed
 
