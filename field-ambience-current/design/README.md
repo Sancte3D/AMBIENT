@@ -94,3 +94,76 @@ extra memory. Either that, or commit to the banding as stepped strata.
   reference look uses a mono face with hard pixel edges anyway, so drawing type
   **without** AA is both on-style and the simple way out.
 * `oled_draw.c` fills need the dither described above.
+
+---
+
+# Glass direction (`ui_glass.py`) — the current proposal
+
+```
+python3 design/ui_glass.py      # -> design/out/glass/*.png
+```
+
+Built from the supplied reference: a soft radial colour **bloom** under a
+rounded **glass card**, a white hairline rim, spring-green bars on a nearly
+invisible track, and **one draggable handle carrying the live value**. Same
+five-category menu system, same 21 parameters, nothing merged.
+
+Two renders per screen, and the second one is the point:
+
+* `design_*.png` — 6×, true colour, real alpha, real gaussian glow. The intent.
+* `device_*.png` — **true 320×170 through the real 16-entry palette**, flat
+  fills, dithered bloom, three-level type. What the panel can actually put out.
+
+`main()` asserts every `device_*.png` contains **at most 16 distinct colours**.
+If that assertion ever fails, the design has silently stopped being buildable.
+
+## Palette budget
+
+| entries | use |
+|---|---|
+| 0–8 | the bloom — 9 entries, median-cut over the bloom itself |
+| 9–10 | ink 33 % / 66 % — the two blend steps that let type antialias |
+| 11 | white — card rim, handle top light |
+| 12 | veil — bar and segment track |
+| 13 | ink — type, active segment chunk, label on the handle |
+| 14 | accent — bar fill, handle, badge |
+| 15 | accent glow — handle top light, the ring around the handle |
+
+## The three things that were actually verified, not assumed
+
+**The bloom does not have to be computed at runtime.** It is static per world,
+so it bakes into a 4bpp bitmap in flash: `320×170/2 = 27,200 B` per world, five
+worlds = **136 KB**. The H743VI has 2 MB. No gradient maths in the draw path at
+all, and the Floyd–Steinberg dither runs once, offline, where its cost is free.
+
+**Nine entries is enough — but only because the bloom is one-dimensional.** It
+is written as an analytic radial falloff rather than a stack of blurred blobs,
+so colour is a function of a single scalar and the nine entries are sampled
+along that one path instead of scattered through RGB. Undithered it bands hard;
+`quantize(colors=9)` alone gives nine flat stripes, because PIL only honours
+`dither` when it is handed an explicit palette. Pick the nine, then dither
+*onto* them.
+
+**Two things from the reference do not survive 320×170, and were changed:**
+
+* *The glow around the handle.* Ordered-dithering a gaussian into one palette
+  entry was tried first. At one device pixel it is not a glow, it is dirt — a
+  visible 4×4 grid smeared over the neighbouring tracks. Replaced on device by
+  a solid 2 px ring of the glow entry, which reads as "lifted" and costs the
+  same single entry. The 6× render keeps the real gaussian.
+* *Type below ~9 px.* The reference sets the handle value and the state badge
+  very small. At 6 and 7 px JetBrains Mono has a ~4 px cap height, PIL applies
+  no hinting, stems land between pixels, and `62%` came out as three grey
+  smudges. Everything the user has to read is now **9 px or larger**
+  (`SZ_*` in the source), which is why the rows are pitched 20 px apart.
+
+## Still open before this can ship
+
+* The type sizes above are validated for **this** face at **this** size. The
+  shipped font path (`tools/generate_fonts.py`) bakes 56/36/20 px only — the
+  9/10/19 px sizes this design uses still have to be baked, and 8–10 px bitmap
+  type wants hand-hinting, not autoscaling.
+* JetBrains Mono (SIL OFL) is a *drawing* stand-in for design review here. It
+  is not compiled into firmware and not shipped. See `THIRD_PARTY_NOTICES.md`.
+* Nothing here is wired into `menu.c` yet. This is a design proposal with a
+  verified implementation budget, not an implementation.

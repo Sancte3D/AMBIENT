@@ -30,7 +30,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FONTS = os.path.join(HERE, "fonts")
+FONTS = os.path.join(HERE, ".fonts")
 S = 6
 DW, DH = 320, 170
 
@@ -201,7 +201,7 @@ def ensure_fonts():
 def main():
     global S
     ensure_fonts()
-    out = os.path.join(HERE, "ui", "color")
+    out = os.path.join(HERE, "out", "color")
     os.makedirs(out, exist_ok=True)
     shots = [("01_air", "OPEN SEA", 4, 0), ("02_shape", "DESERT", 3, 3),
              ("03_tone", "FJORDS", 2, 2), ("04_field", "MOSS FIELDS", 0, 2)]

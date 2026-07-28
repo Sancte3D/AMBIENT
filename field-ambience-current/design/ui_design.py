@@ -156,7 +156,7 @@ def frame(world, ci, pi):
 
 def main():
     ensure_fonts()
-    out = os.path.join(HERE, "ui", "design")
+    out = os.path.join(HERE, "out", "design")
     os.makedirs(out, exist_ok=True)
     shots = [
         ("01_field",   "OPEN SEA",    0, 0),
