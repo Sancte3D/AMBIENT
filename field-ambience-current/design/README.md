@@ -1,3 +1,67 @@
+# Reference layout system (`ui_panel.py`)
+
+```
+python3 design/ui_panel.py     # -> design/out/panel/*.png
+```
+
+Built from the reference feedback, and driven by two corrections.
+
+**The white rounded outline is the SCREEN, not a UI element.** Every earlier
+pass here drew it as a card *inside* the display with a margin around it. It
+is the visible display area itself. So the gradient is full-bleed, nothing is
+inset from a card, and the reference's "internal panel padding" is the
+screen's padding. That one misreading is what made the earlier layouts wrong
+at the whole-surface level rather than in details.
+
+**One coordinate system, not guessed positions.** Every number is a fraction
+of the panel, named once at the top of the file and reused:
+
+| | fraction | of |
+|---|---:|---|
+| left padding (shared axis) | 7.7 % | width |
+| right padding | 8.8 % | width |
+| track column | 57.2 % | width |
+| track → label gap | 4.6 % | width |
+| row pitch (constant) | 10.04 % | height |
+| track height | 7.21 % | height |
+
+The breadcrumb, the title and every track share **one** left axis. The labels
+are a **fixed second column**, left-aligned, never nudged per row. Row pitch is
+**constant and never derived from row count** — which is right for this
+product and not only for the reference: a category holds 3 to 5 parameters,
+and with a fixed pitch the rows do not jump when you switch category. The
+visible consequence is bottom air on a 3-row category (see `03_harmony`), and
+that is the intended trade.
+
+The reference spec gives vertical padding both as "40 px" and as "7.8 %",
+which disagree once a CSS percentage resolves against width. Vertical
+fractions here resolve against **height**, which reproduces the measured 40 px.
+
+## What does not survive the reduction
+
+The reference panel is 1019 px wide; ours is 320. That is a **3.18× reduction**,
+and it lands on the type:
+
+| | reference | at 320×170 |
+|---|---:|---:|
+| breadcrumb | 27 px | 8.9 px |
+| title | 40 px | 13.3 px |
+| label | 31 px | 10.3 px |
+| value / badge | 18 px | **6.0 px** |
+
+6 px is measured on this panel as three grey smudges — no hinting, stems
+between pixels. The small size is therefore clamped to a **9 px floor** and is
+the one deliberate deviation from the ratios; everything else keeps the
+reference proportion exactly. The dot-matrix face the reference spec asks for
+is a real option *because* of this — a hand-hinted bitmap font is what
+survives at 6–10 px — but it is the opposite of the earlier "no pixel font"
+instruction, so it is left as a decision rather than assumed.
+
+Renders `design_*.png` at 1019×513 (the system at its designed size) and
+`device_*_1x.png` / `_6x.png` at the true panel size, integer-scaled only.
+
+---
+
 # Instrument direction (`ui_instrument.py`) — done under `.claude/skills`
 
 ```
