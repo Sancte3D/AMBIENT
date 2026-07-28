@@ -1,0 +1,143 @@
+{
+  "generated_at": "2026-07-28",
+  "policy": "Conceptual adaptation only. No third-party code or unlicensed skill text is vendored by this pack.",
+  "sources": [
+    {
+      "repository": "Sancte3D/AMBIENT",
+      "commit": "447ffe8b0b2760b3860620dc8cee01133240f4b4",
+      "paths": [
+        "CLAUDE.md",
+        "PROJECT_STATUS.md",
+        "field-ambience-current/docs/decisions/ADR-0015-display-pivot-2inch-color-animations.md",
+        "field-ambience-current/firmware-c-next/src/hal_h743/lcd_st7789_h743.c"
+      ],
+      "license": "Project source",
+      "purpose": "Project-specific baseline and binding implementation constraints"
+    },
+    {
+      "repository": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "commit": "4857a2c5ef989794751a0f66b8545a4a49566286",
+      "paths": [".claude/skills/ui-ux-pro-max/SKILL.md"],
+      "license": "MIT",
+      "purpose": "UI systems, typography, color and motion research"
+    },
+    {
+      "repository": "travisjneuman/.claude",
+      "commit": "e74cd20465be466b0f30c19da760bc986c50177f",
+      "paths": [
+        "skills/ui-animation/SKILL.md",
+        "skills/ui-research/SKILL.md",
+        "skills/graphic-design/SKILL.md",
+        "skills/embedded-iot/SKILL.md"
+      ],
+      "license": "MIT",
+      "purpose": "Motion, visual direction and embedded workflow research"
+    },
+    {
+      "repository": "Jeffallan/claude-skills",
+      "commit": "e8be415bc94d8d6ebddc2fb50e5d03c6e27d4319",
+      "paths": ["skills/embedded-systems/SKILL.md"],
+      "license": "MIT",
+      "purpose": "STM32, DMA, ISR and constrained firmware workflow"
+    },
+    {
+      "repository": "rmyndharis/antigravity-skills",
+      "commit": "e63f7ddae2720effda0aa3e69cd6732c709351b3",
+      "paths": [
+        "skills/arm-cortex-expert/SKILL.md",
+        "skills/ui-ux-designer/SKILL.md"
+      ],
+      "license": "MIT",
+      "purpose": "Cortex-M implementation and general UI design review"
+    },
+    {
+      "repository": "Milind220/Ki-Stack",
+      "commit": "d5f5d0103e4b2a5572f724fe90cb49dc4f131d37",
+      "paths": ["skills/ki-stack/"],
+      "license": "MIT",
+      "purpose": "KiCad orientation, automation, rendering and verification"
+    },
+    {
+      "repository": "Seeed-Studio/ai-skills",
+      "commit": "2746e676e81d85dc073e523407235725efe2f8ca",
+      "paths": ["skills/schematic-analyzer/"],
+      "license": "MIT",
+      "purpose": "Evidence-first schematic analysis"
+    },
+    {
+      "repository": "aklofas/kicad-happy",
+      "commit": "c6b504ac91f18c24ee909ded4c00f409f07dcbff",
+      "paths": [
+        "skills/kicad/SKILL.md",
+        "skills/bom/SKILL.md",
+        "skills/lcsc/SKILL.md",
+        "skills/jlcpcb/SKILL.md"
+      ],
+      "license": "MIT",
+      "purpose": "KiCad, BOM, LCSC and JLCPCB workflows"
+    },
+    {
+      "repository": "LeoKemp223/NextBoard",
+      "commit": "69810c13084804d35ac26876fd2560d69973918f",
+      "paths": ["skills/hardware-solution/"],
+      "license": "MIT declared in README; no root LICENSE file found",
+      "purpose": "Hardware solution gates and sourcing-risk structure"
+    },
+    {
+      "repository": "github/awesome-copilot",
+      "commit": "9933dcad5be5caeb288cebcd370eeeb2fc2f1685",
+      "paths": [
+        "agents/expert-embedded-c-engineer.agent.md",
+        "skills/legacy-circuit-mockups/references/lcd.md"
+      ],
+      "license": "MIT",
+      "purpose": "Embedded C and LCD reference research"
+    },
+    {
+      "repository": "lvgl/lvgl",
+      "commit": "65bc757457270152ea27a0c8922023dc7290761f",
+      "paths": ["src/", "docs/"],
+      "license": "MIT",
+      "purpose": "Embedded UI, animation, invalidation and display-driver architecture"
+    },
+    {
+      "repository": "ARM-software/Arm-2D",
+      "commit": "3dd16b28b2d8c920e43736d644c8e5876180eb50",
+      "paths": ["Library/", "examples/"],
+      "license": "Apache-2.0",
+      "purpose": "Cortex-M tiles, partial framebuffer, dirty regions and acceleration"
+    },
+    {
+      "repository": "libdriver/st7789",
+      "commit": "400adbaf6e16b82183a05a01b7b97714cb5176f1",
+      "paths": ["src/"],
+      "license": "MIT",
+      "purpose": "ST7789 command and driver cross-check"
+    },
+    {
+      "repository": "STMicroelectronics/STM32CubeH7",
+      "commit": "a2de035db3d87b6dff5ff055613489f273afac19",
+      "paths": ["Drivers/", "Projects/"],
+      "license": "Mixed by component; see LICENSE.md",
+      "purpose": "Authoritative STM32H7 HAL, DMA, cache, DMA2D and memory examples"
+    },
+    {
+      "repository": "uxuiprinciples/agent-skills",
+      "commit": "2dc7f30ce8e54bc798236a9ed82b7daef0b53bc1",
+      "paths": [
+        "uxui-evaluator/SKILL.md",
+        "interface-auditor/SKILL.md",
+        "flow-checker/SKILL.md"
+      ],
+      "license": "No root license found",
+      "purpose": "Link-only UX principle discovery"
+    },
+    {
+      "repository": "anthropics/skills",
+      "commit": "b29e7cf65e5cb78a5ac33d582270551bc74a14eb",
+      "paths": ["skills/frontend-design/"],
+      "license": "Upstream-specific terms in skill folder",
+      "purpose": "Link-only visual-direction research"
+    }
+  ]
+}
