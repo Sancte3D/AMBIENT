@@ -1,3 +1,60 @@
+# Reference direction (`ui_ref.py`) — measured, not eyeballed
+
+```
+python3 design/ui_ref.py       # -> design/out/ref/*.png
+```
+
+The reference screen rebuilt from **measurements of the reference PNG**, not
+from looking at it. The panel bounding box, every track run, the label column,
+the badge, the row pitch, the colours and the type sizes were all read out of
+the pixels; type sizes were solved by matching rendered string widths against
+the measured ones. The constants in the file are those measurements as
+fractions of the panel, so the same code renders at 1502x970 and at 320x170.
+
+Two assets come straight out of the reference instead of being reinvented:
+
+* **`assets/gradient_ref.png`** — the actual background field. Green fills, the
+  glow, the tracks, the type, the badge and the white rim plus its bleed were
+  masked out; the remaining background was median-sampled into a 32x20 grid and
+  the holes filled by diffusion. **349 of 640 cells carry real measured
+  pixels.** Smooth, so it upsamples to any size, and it costs **1.1 KB**.
+* **`assets/BitcountGridSingle-Regular.ttf`** — the real face, SIL OFL. Unlike
+  the Helvetica stand-ins elsewhere in `design/`, this one is *shippable*.
+  Recorded in `THIRD_PARTY_NOTICES.md` §4.
+
+## What measuring corrected
+
+| | I had been drawing | measured |
+|---|---|---|
+| track | white at 22–34 % | **white at 12 %** — (248,126,140) over (249,107,126) |
+| Key row | "138 px + 3 fractions" | **four equal segments**, 19 px gaps (runs 126-331, 350-554, 575-778, 801-1001) |
+| value on active row | dark ink in its own capsule | **same green, one step darker**; the capsule is the fill's own rounded end |
+| left axis | three separate margins | breadcrumb, title and every track all start at **exactly x=126** |
+
+The written spec disagreed with the image on the Key row and on the track
+opacity. The pixels win.
+
+## The reduction
+
+1502 px wide down to 320 is **4.69x**.
+
+| | reference | at 320×170 |
+|---|---:|---:|
+| breadcrumb | 48 px | 8.4 px |
+| title | 62 px | 10.9 px |
+| label | 45 px | 7.9 px |
+| value | 33 px | 5.8 px → clamped to 8 |
+
+Bitcount Grid is a grid face and holds together far further down than Inter
+did — this is why the font choice mattered. Only the value size is clamped;
+every other size keeps the measured ratio exactly.
+
+Still open: the gradient has not been put through the 16-entry palette yet
+(see the glass section below for what that costs), and nothing is wired into
+`menu.c`.
+
+---
+
 # Reference layout system (`ui_panel.py`)
 
 ```

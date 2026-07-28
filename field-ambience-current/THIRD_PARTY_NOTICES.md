@@ -1,7 +1,8 @@
 # Third-Party Notices — Field Ambience
 
 Diese Firmware enthält Software Dritter. Alle hier gelisteten Bestände stehen
-unter **permissiven** Lizenzen (MIT · BSD-3-Clause · Apache-2.0) und dürfen in
+unter **permissiven** Lizenzen (MIT · BSD-3-Clause · Apache-2.0 · SIL OFL 1.1)
+und dürfen in
 einem kommerziellen, geschlossenen Produkt verwendet werden. Die einzige
 Auflage ist die **Erhaltung und Mitlieferung der Copyright-Hinweise** — genau
 dafür existiert dieses Dokument.
@@ -12,7 +13,7 @@ dafür existiert dieses Dokument.
 > beiliegen (Handbuch, Support-Seite oder Datei auf dem Gerät).
 
 **Kein GPL/LGPL-Code und kein unlizenzierter Code ist in dieser Firmware
-enthalten.** Copyleft-Bestände sind bewusst ausgeschlossen (siehe §4).
+enthalten.** Copyleft-Bestände sind bewusst ausgeschlossen (siehe §5).
 
 ---
 
@@ -91,7 +92,25 @@ kennzeichnen. Wir haben CMSIS **unverändert** übernommen.
 
 ---
 
-## 4. Bewusst NICHT verwendet (Copyleft / ohne Lizenz)
+## 4. Bitcount Grid Single — SIL OFL 1.1
+
+**Ort:** `design/assets/BitcountGridSingle-Regular.ttf`
+**Lizenztext:** `design/assets/BitcountGridSingle-OFL.txt`
+
+Die Display-Schrift der Referenz-Richtung (`design/ui_ref.py`). Anders als die
+Helvetica-Platzhalter in `design/` ist diese Schrift **auslieferbar**: die OFL
+erlaubt Einbetten und Weitergabe, auch in kommerziellen Produkten.
+
+Auflagen: Lizenztext beilegen und Copyright-Hinweise erhalten. Die Schrift darf
+**nicht** allein verkauft werden, und ein abgeleiteter Font darf den
+reservierten Namen nicht weiterführen. Sollten wir daraus einen Bitmap-Font für
+die Firmware backen, ist das ein abgeleitetes Werk: dann unter **anderem Namen**
+und wieder unter OFL veröffentlichen. Wir haben die Schrift **unverändert**
+übernommen.
+
+---
+
+## 5. Bewusst NICHT verwendet (Copyleft / ohne Lizenz)
 
 Diese Bestände liegen ggf. als Referenz im Repository-Branch
 `agent/stm32-offline-knowledge-pack`, sind aber **nicht Teil der Firmware** und
@@ -108,7 +127,7 @@ dürfen nicht in sie kopiert werden:
 
 ---
 
-## 5. Arbeitsregel für neuen Fremdcode
+## 6. Arbeitsregel für neuen Fremdcode
 
 1. **Lizenz zuerst prüfen** — kein Header/keine Lizenz ⇒ nicht verwenden.
 2. **MIT/BSD/Apache:** Verwendung erlaubt, **Copyright-Header vollständig
