@@ -1,3 +1,63 @@
+# Instrument direction (`ui_instrument.py`) — done under `.claude/skills`
+
+```
+python3 design/ui_instrument.py    # -> design/out/instrument/*.png
+```
+
+The redo of the display design routed through `ambient-ui-art-direction`,
+`ambient-ui-prototyping` and `ambient-lcd-ux` rather than from a reference
+picture. Those skills say to read the current implementation first, and doing
+that turned up three things that change the design — not opinions, facts from
+the source.
+
+**1. Only three type sizes exist.** `src/baked_font_data.c` ships
+`font_hn_value` (advance 40, height 55), `font_hn_value_small` (26/36) and
+`font_hn_label` (15/20). Every earlier mockup here used 8–16 px, none of which
+exist, all of which need the Helvetica OTF that is not in the repo. On a
+170 px-tall panel a 55 px value plus 20 px labels **is** the composition.
+This direction needs no new font baked.
+
+**2. One encoder drives the menu, and it has two modes.** `include/encoders.h`:
+EN1 drive, EN2 bright, EN3 *display* = the menu encoder, EN4 volume.
+`include/menu.h`: rotate browses, push enters edit, rotate edits, push leaves.
+So the screen has two jobs. The earlier card design had **no edit state at
+all** — a functional gap, not a matter of taste. Both are rendered here.
+
+**3. The current LUT cannot hold a neutral next to an accent.**
+`oled_color.c` builds `lut[n] = grey(n*17) * accent / 255`, so every level is
+the same hue at a different brightness. With a saturated accent the whole
+screen is that hue. Compare `compare_lut_current_6x.png` against
+`compare_lut_split_6x.png` — same pixels, and in the current LUT the type,
+the labels and the rule are all orange.
+
+The baseline asks for "primarily black, white and gray with one controlled
+world accent" that stays "visibly saturated while occupying limited area".
+That is **not expressible** with the multiplicative ramp. The minimal fix is a
+**split ramp**: levels 0–11 neutral grey, 12–15 the accent. Same 16 entries,
+same 4 bpp framebuffer, no extra RAM, about a dozen lines in `rebuild()`.
+Levels 1–11 staying a true grey ramp also keeps the existing max-blended
+antialiased font path working unchanged.
+
+Compared with the glass direction below, this costs **no baked bloom bitmaps
+(−136 KB flash), no new fonts, and no new draw primitives.**
+
+## Fixtures
+
+Deterministic, one per state that matters — not a single hero screen:
+`edit_continuous`, `edit_min`, `edit_max`, `edit_discrete`, `edit_longest`
+(longest word + LOCK), `browse_field`, `browse_harmony`. Each is written at
+1× (320×170, through the real LUT and RGB565) and at 6× nearest-neighbour.
+
+## Conflict to decide
+
+`ambient-ui-art-direction` lists under **Avoid**: "web cards, navigation bars,
+pills, glassmorphism, drop-shadow stacks", "decorative gradients that band
+badly in RGB565", and "Do not make the whole UI pale to appear calm". The
+glass direction below is all four. Both are in the repo; this is a call to
+make, not something to resolve silently.
+
+---
+
 # Display design
 
 `ui_design.py` — the light two-column ("duo") menu, drawn in device
