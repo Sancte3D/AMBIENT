@@ -48,7 +48,7 @@ r18.87: U10-PCA9685 + 8 VU-LEDs + Heartbeat-LED entfernt (−22 Placements,
 
 **STM32H743VIT6 $8.68** · **PCA9685 $2.93 (r18.87: nur noch U6)** · **C_BULK Tantal 470µ $1.78** ·
 **MCP23017 $1.62** · **PCM5102A $0.99** · **BQ24074 $2.24** ·
-**TPS61089 $0.50** · PAM8403 ~$0.44 · TPS22918 $0.25 (live r18.81) ·
+**TPS61089 $0.50** · PAM8406 ~$0.44 · TPS22918 $0.25 (live r18.81) ·
 L1 SWPA6045 ~$0.25 · C_BULK2 ~$0.25 · AP7361C ~$0.20 · USBLC6 ~$0.20 ·
 **USB-C $0.17** · Polyfuse ~$0.15 · Crystal ~$0.12 · 2× PJ-320D ~$0.24 · **TPA6132A2 $1.35** ·
 JST ~$0.10 · MST-12D18G3 $0.08 (live r18.81) · 2× SS34 + TVS ~$0.16 ·

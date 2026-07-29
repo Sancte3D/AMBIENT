@@ -14,8 +14,10 @@
  */
 
 #include "pad.h"
+#include "shape.h"
 #include "dsp.h"
 #include "padsynth.h"
+#include "dsp_ladder.h"
 
 /* r18.93 — oscillator core selector. 0 = legacy 10-osc polyBLEP stack,
  * 1 = PADsynth spectral-table reads (default). The envelopes, SVF,
@@ -38,6 +40,7 @@
 /* Amp envelope (seconds). Webapp cellOn uses attack 0.8 / release 3.0 — the
  * 1.5 s value from _makePadVoice defaults is for chord-spawn use, not cell
  * taps. Using the spawn value here made cells feel bloomy instead of tap-y. */
+#define PAD_ORPHAN_SRC 0xFEu     /* r19.43: released tail with no owner */
 #define PAD_ATTACK_S   0.8f
 #define PAD_RELEASE_S  3.0f
 
@@ -96,6 +99,9 @@ typedef struct {
     float       atkInc;     /* per-sample linear attack step */
     float       relCoef;    /* per-sample exponential release coef */
     env_state_t state;
+    bool        rel_pending;/* r19.43: note_off arrived mid-attack — finish
+                             * the bloom to a body (0.35*amp) first, then
+                             * auto-release. A short tap = a complete tone. */
 
     /* r19.5 spectral animator walk (per voice; both sides read it mirrored).
      * A CORRELATED random walk 0..1 — small persistent steps (20,21,23,26…
@@ -110,6 +116,28 @@ static pad_voice_t voices[PAD_MAX];
 static int   ctl_phase;             /* shared control-rate counter */
 static float bright_target;         /* brightness offset target (Hz) */
 static float bright_cur;            /* smoothed brightness */
+
+/* r19.59 RESONANCE — Moog ladder on the pad bus (see pad_render_mix).
+ * BASE is where the ladder sits with BRIGHT at 0; the BRIGHT encoder offsets
+ * it, so one knob sweeps the filter and the other makes it sing. */
+#define LADDER_FC_BASE  1250.0f     /* cutoff at BRIGHT = 0                  */
+#define LADDER_RES_MAX  1.55f       /* just under self-oscillation (max 1.8) */
+/* r19.60: Modulation EXPONENTIELL, in Oktaven — nicht linear in Hz. Ein
+ * Filter wird musikalisch in Oktaven gehoert; linear in Hz moduliert klingt
+ * oben stumpf (dort ist kaum Energie) und unten brutal. Werte = max. Hub. */
+#define LADDER_SWEEP_OCT  2.6f      /* +/- Oktaven, LFO                      */
+#define LADDER_ENVMOD_OCT 2.2f      /* Oktaven nach oben, Huellkurvenfolger  */
+static dsp_ladder_t ladL, ladR;
+static float res_target;            /* 0..1 from the player                  */
+static float res_cur;               /* smoothed (no zipper)                  */
+/* r19.60 MOTION — zwei Modulationsquellen auf den Bus-Cutoff. Bewusst nur
+ * EIN Ziel und zwei Quellen (siehe docs/SYNTH_IDENTITY.md: "nicht 20 Ziele"):
+ * ein langsamer LFO laesst den Filter von selbst atmen, ein Huellkurvenfolger
+ * oeffnet ihn beim Spielen (das TD-3-"EnvMod", auf einen Bus-Filter uebersetzt). */
+static float sweep_target,  sweep_cur;    /* LFO-Tiefe   0..1 */
+static float envmod_target, envmod_cur;   /* EnvMod-Tiefe 0..1 */
+static float mod_lfo_ph, mod_lfo_inc;     /* langsamer LFO (turns) */
+static float env_follow;                  /* Huellkurvenfolger auf dem Bus */
 static float bright_coef;           /* per-control-block smoothing coef */
 static float motion_depth = 1.0f;   /* LFO-depth multiplier (Motion macro) */
 static float spec_depth   = 0.0f;   /* r19.5 spectral-animator depth (Motion) */
@@ -150,9 +178,35 @@ void pad_init(void) {
     pulsew_cur  = 0.0f;
     /* timbre glide ~150 ms */
     vmix_coef = 1.0f - expf(-(float)CTL_DECIMATE / (0.15f * SR));
+
+    /* r19.59: the bus ladder starts fully open + resonance off, so boot sounds
+     * exactly as before until the player turns RESONANCE up. */
+    dsp_ladder_init(&ladL, SR);  dsp_ladder_init(&ladR, SR);
+    dsp_ladder_set_freq(&ladL, LADDER_FC_BASE); dsp_ladder_set_res(&ladL, 0.0f);
+    dsp_ladder_set_freq(&ladR, LADDER_FC_BASE); dsp_ladder_set_res(&ladR, 0.0f);
+    res_target = res_cur = 0.0f;
+    sweep_target = sweep_cur = envmod_target = envmod_cur = 0.0f;
+    mod_lfo_ph = 0.0f;
+    mod_lfo_inc = 0.055f / SR;      /* ~18 s pro Zyklus — Ambient-Tempo */
+    env_follow = 0.0f;
 }
 
 void pad_set_brightness(float hz) { bright_target = hz; }
+
+/* r19.59 RESONANCE (0..1): how hard the pad-bus ladder rings. 0 = bypassed
+ * (bit-identical to the pre-r19.59 sound), 1 = just under self-oscillation.
+ * Smoothed in the render loop, so a fast knob sweep cannot zipper. */
+void pad_set_resonance(float amount_0_1) {
+    res_target = dsp_clampf(amount_0_1, 0.0f, 1.0f);
+}
+float pad_resonance(void) { return res_target; }
+
+/* r19.60 MOTION: Tiefe der beiden Modulationsquellen auf den Bus-Cutoff.
+ * 0 = aus. Beide engagieren den Filter auch ohne Resonanz. */
+void pad_set_sweep(float amount_0_1)  { sweep_target  = dsp_clampf(amount_0_1,0.0f,1.0f); }
+void pad_set_envmod(float amount_0_1) { envmod_target = dsp_clampf(amount_0_1,0.0f,1.0f); }
+float pad_sweep(void)  { return sweep_target; }
+float pad_envmod(void) { return envmod_target; }
 void pad_set_motion(float d)      {
     motion_depth = dsp_clampf(d, 0.0f, 2.0f);
     /* r19.5: MOTION also drives the spectral animator (same emotional
@@ -265,10 +319,27 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
     if (!padsynth_ready()) padsynth_build(0, 0);
 #endif
     int i = find_source(source);
+    /* r19.43 (Ambient-Chill-Analyse): re-pressing a RELEASING cell starts a
+     * NEW overlapping voice while the old tail keeps ringing — the tails-
+     * over-tails behaviour the reference playlist lives on. Only a voice
+     * that is still gated (attack/sustain) re-triggers in place. Scoped to
+     * the PLAYER's cell sources (base 0-4, shift 9-13): the generative
+     * bed/Eno/melody sources keep their fixed one-voice-per-source budget. */
+    bool player_cell = (source <= 4u) || (source >= 9u && source <= 13u);
+    if (player_cell && i >= 0 && voices[i].state == ENV_RELEASE) {
+        voices[i].source = PAD_ORPHAN_SRC;      /* keeps decaying, unowned */
+        i = -1;
+    }
     bool keep_phase = (i >= 0);                 /* re-trigger: glide, don't click */
-    if (i < 0) i = alloc_slot();
+    bool stolen = false;
+    if (i < 0) { i = alloc_slot(); stolen = voices[i].used; }
     if (i < 0) return;
     pad_voice_t *v = &voices[i];
+    /* r19.43 soft steal: the quietest victim is still audible — keep its
+     * phase and current env so the new note enters amplitude- and phase-
+     * continuous (no hard reset click; analysis: "niemals hart abgeschaltet"). */
+    float steal_env = (stolen && v->env > 1.0e-4f) ? v->env : -1.0f;
+    if (steal_env > 0.0f) keep_phase = true;
 
     /* Deterministic per-source variation (no rand(): keeps tests reproducible
      * while still detuning each voice differently). */
@@ -283,7 +354,9 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
 
     v->source = source;
     v->amp    = dsp_clampf(amp, 0.0f, 1.0f);
-    if (!keep_phase) {
+    v->rel_pending = false;
+    if (steal_env > 0.0f) v->env = steal_env;
+    else if (!keep_phase) {
         v->env = 0.0001f;
         /* r19.5 spectral walk: start mid-band, seed per source so voices
          * don't wander in lockstep (fixed seed → reproducible). */
@@ -292,8 +365,9 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
         v->spec_rng = 0x5A17E0B1u + (uint32_t)source * 2654435761u;
         v->spec_ctr = 1;
     }
-    v->atkInc = v->amp / (PAD_ATTACK_S * SR);
-    v->relCoef = dsp_smooth_coef(PAD_RELEASE_S / 3.0f);
+    /* r19.60 SHAPE: die natuerliche Zeit der Stimme mal dem globalen Faktor */
+    v->atkInc = v->amp / (PAD_ATTACK_S * shape_attack_scale() * SR);
+    v->relCoef = dsp_smooth_coef(PAD_RELEASE_S * shape_release_scale() / 3.0f);
     v->state  = ENV_ATTACK;
 
     /* Webapp cellOn pans cells across the stereo field: pan = (degree-4)·0.15
@@ -319,7 +393,16 @@ void pad_note_on(uint8_t source, float freq_hz, float amp) {
 void pad_note_off(uint8_t source) {
     int i = find_source(source);
     if (i < 0) return;
-    if (voices[i].state != ENV_IDLE) voices[i].state = ENV_RELEASE;
+    pad_voice_t *v = &voices[i];
+    if (v->state == ENV_IDLE) return;
+    /* r19.43: a tap that ends mid-attack finishes blooming to a body first
+     * (0.35*amp ≈ 0.28 s into the 0.8 s attack), then auto-releases — a
+     * short press yields a complete tone with tail, not a thin blip. */
+    if (v->state == ENV_ATTACK && v->env < 0.35f * v->amp) {
+        v->rel_pending = true;
+        return;
+    }
+    v->state = ENV_RELEASE;
 }
 
 void pad_all_off(void) {
@@ -432,7 +515,12 @@ static void render_block_float(float *outL, float *outR, int frames) {
             switch (v->state) {
                 case ENV_ATTACK:
                     v->env += v->atkInc;
-                    if (v->env >= v->amp) { v->env = v->amp; v->state = ENV_SUSTAIN; }
+                    if (v->rel_pending && v->env >= 0.35f * v->amp) {
+                        v->rel_pending = false;
+                        v->state = ENV_RELEASE;      /* tap: body reached */
+                    } else if (v->env >= v->amp) {
+                        v->env = v->amp; v->state = ENV_SUSTAIN;
+                    }
                     break;
                 case ENV_RELEASE:
                     v->env -= v->relCoef * v->env;
@@ -545,6 +633,63 @@ void pad_render_mix(float *dry_L, float *dry_R,
     while (left > 0) {
         int n = left < CH ? left : CH;
         render_block_float(L, R, n);
+
+        /* r19.59 RESONANCE — the Moog ladder as the pad's MASTER filter.
+         * One stereo pair on the bus, NOT per voice: 12 resonant peaks would
+         * be mud, while a single resonant sweep across the whole bed is the
+         * classic ambient timbre — and it costs 2 instances instead of 12
+         * (the ladder is 4x oversampled, so per-voice would blow the IRQ
+         * budget). Bypassed entirely at res≈0 so the old sound is untouched
+         * until the player asks for resonance. */
+        /* r19.60 MOTION: the filter is in the path if the player asked for
+         * RESONANCE *or* for either modulation — a breathing lowpass without
+         * resonance is a legitimate (and very ambient) sound, so "filter
+         * engaged" is deliberately decoupled from "how much it rings". */
+        {
+        res_cur    += 0.08f * (res_target    - res_cur);
+        sweep_cur  += 0.08f * (sweep_target  - sweep_cur);
+        envmod_cur += 0.08f * (envmod_target - envmod_cur);
+        float engage = res_cur;
+        if (sweep_cur  > engage) engage = sweep_cur;
+        if (envmod_cur > engage) engage = envmod_cur;
+
+        if (engage > 0.005f) {
+            /* --- source 1: slow free-running LFO ("the filter breathes") --- */
+            mod_lfo_ph += mod_lfo_inc * (float)n;
+            if (mod_lfo_ph >= 1.0f) mod_lfo_ph -= 1.0f;
+            float lfo = dsp_sin(mod_lfo_ph);                    /* -1..+1 */
+
+            /* --- source 2: envelope follower on the pad's own output -------
+             * The TD-3's EnvMod, adapted to a BUS filter: there is no single
+             * note here, so the modulator is how loud the bed currently is.
+             * Fast attack / slow release → the filter opens when you play and
+             * closes as the bed decays. */
+            float pk = 0.0f;
+            for (int i = 0; i < n; ++i) {
+                float a = L[i] >= 0.0f ? L[i] : -L[i];
+                if (a > pk) pk = a;
+            }
+            env_follow = (pk > env_follow) ? pk : env_follow + 0.06f * (pk - env_follow);
+            float ef = dsp_clampf(env_follow * 2.4f, 0.0f, 1.0f);   /* usable 0..1 */
+
+            /* Basis (inkl. BRIGHT) exponentiell verschieben: Oktaven, nicht Hz. */
+            float base = dsp_clampf(LADDER_FC_BASE + bright_cur, 60.0f, 9000.0f);
+            float oct  = sweep_cur  * lfo * LADDER_SWEEP_OCT
+                       + envmod_cur * ef  * LADDER_ENVMOD_OCT;
+            float fc = dsp_clampf(base * exp2f(oct), 60.0f, 9000.0f);
+            float rz = res_cur * LADDER_RES_MAX;
+            dsp_ladder_set_freq(&ladL, fc);  dsp_ladder_set_res(&ladL, rz);
+            dsp_ladder_set_freq(&ladR, fc);  dsp_ladder_set_res(&ladR, rz);
+            /* wet/dry blend: the filter fades IN with whichever knob engaged
+             * it, so it never jumps into the path. */
+            float w = engage, d = 1.0f - engage;
+            for (int i = 0; i < n; ++i) {
+                L[i] = d * L[i] + w * dsp_ladder_process(&ladL, L[i]);
+                R[i] = d * R[i] + w * dsp_ladder_process(&ladR, R[i]);
+            }
+        }
+        }
+
         for (int i = 0; i < n; ++i) {
             dry_L[out_idx + i]  += L[i];
             dry_R[out_idx + i]  += R[i];

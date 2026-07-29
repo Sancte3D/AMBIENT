@@ -3,6 +3,7 @@
  */
 
 #include "pluck.h"
+#include "shape.h"
 #include "dsp.h"
 #include <math.h>
 #include <string.h>
@@ -76,7 +77,7 @@ void pluck_note(float freq_hz, float amp) {
     pluck_voice_t *p = &v[i];
     p->N   = SR / freq_hz;
     if (p->N > (float)(BUF_LEN - 4)) p->N = (float)(BUF_LEN - 4);
-    p->rho = powf(0.001f, 1.0f / (freq_hz * T60_S));   /* −60 dB in T60 */
+    p->rho = powf(0.001f, 1.0f / (freq_hz * T60_S * shape_release_scale())); /* r19.60 */
     p->widx   = 0;
     p->y_prev = 0.0f;
     p->env    = amp;
@@ -92,8 +93,10 @@ void pluck_note(float freq_hz, float amp) {
     float lp = 0.0f;
     for (int k = 0; k < BUF_LEN; ++k) {
         if (k < n) {
-            lp += 0.45f * (burst_white() - lp);
-            p->buf[k] = lp * amp * 2.2f;   /* ≈ peak `amp` after the LP loss */
+            /* r19.55: darker excitation LP (0.45→0.30) — the AUDIT heard the
+             * old burst as HF hiss (>8 kHz). Softer attack, same body. */
+            lp += 0.30f * (burst_white() - lp);
+            p->buf[k] = lp * amp * 2.6f;   /* ≈ peak `amp` after the (bigger) LP loss */
         } else {
             p->buf[k] = 0.0f;
         }

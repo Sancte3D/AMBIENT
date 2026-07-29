@@ -26,7 +26,7 @@ Volle Regeln: siehe Session-Log-Reviewer-Template (User-Vorgabe 2026-06-08).
 | C_VDD\*, VCAP\*, VDDA | Decoupling-Caps | ⏳ noch nicht reviewed (VCAP = 2× 2.2 µF bereits aus DS12110 Rev 5 Table 24 bestätigt) | — | — | **NEU** |
 | R_BOOT0, R_NRST, C_NRST | Boot/Reset | ⏳ noch nicht reviewed | — | — | **NEU** |
 | U3 | PCM5102APWR | ⏳ noch nicht reviewed | — | — | unverändert (SAI-Master statt PIO im MCU) |
-| U4 | PAM8403DR-H | ⏳ noch nicht reviewed | — | — | unverändert |
+| U4 | PAM8406DR (C86270) | ⏳ noch nicht reviewed | — | — | r19.37: NRND PAM8406DR ersetzt (ADR-0025) |
 | U2 | MCP23017-E/SS | ⏳ noch nicht reviewed | — | — | unverändert |
 | U6 | PCA9685PW | ⏳ noch nicht reviewed | — | — | unverändert |
 | U7 | BQ24074RGTR (r19.18, ADR-0023) | ✅ r19.18: Pin-Map/Formeln gegen TI SLUS810N, Footprint gegen JLC-Landpattern C54313 | 2026-07-13 | ADR-0023 | **ersetzt MCP73831** |
@@ -142,6 +142,6 @@ Priorisiert nach Risiko + Migrations-Relevanz:
    - F-5 (Datasheet-Revision) → neuere DS12110 Revision beschaffen
 3. **HOCH (neu in r18):** U5 AP7361A-LDO
 4. **HOCH (Quellenbeschaffung für U1):** ST AN3318, ST UM2407 Nucleo-Schematic, DS12110 §6.1 + §6.3.13 (HSE detail), §7 (Package)
-5. **MITTEL (zentral aber unverändert):** U3 PCM5102A (SAI-Kompatibilität), U4 PAM8403, U2 MCP23017, U6 PCA9685
+5. **MITTEL (zentral aber unverändert):** U3 PCM5102A (SAI-Kompatibilität), U4 PAM8406, U2 MCP23017, U6 PCA9685
 6. **MITTEL (Power-Tree H7):** Decoupling-Caps gegen AN3318 final verifizieren
 7. **NIEDRIG (bewährt aus v0.6):** U8 TPS61089 (nach F-1), USB-C, ST7789-Modul, USBLC6, Polyfuse, Speakers, Battery. (U7 ist seit r19.18 der BQ24074 — reviewed, s.o.; Q1 seit r18.79 entfernt.)

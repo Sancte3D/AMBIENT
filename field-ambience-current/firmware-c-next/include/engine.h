@@ -110,6 +110,23 @@ void engine_set_master_volume(float vol_0_1);  /* master level (VOLUME encoder) 
  * just the reverb input. */
 void engine_set_drive(float drive_0_1);
 void engine_set_brightness(float hz);          /* pass-through to pad */
+/* r19.59 RESONANCE (0..1): the Moog ladder on the pad bus. 0 = off (the
+ * pre-r19.59 sound), 1 = just under self-oscillation. With BRIGHT it turns the
+ * tone control into a played filter (see docs/SYNTH_IDENTITY.md). */
+void engine_set_resonance(float amount_0_1);
+float engine_resonance(void);
+/* r19.60 SHAPE (0..1, 0.5 = neutral): skaliert die natuerliche Attack- bzw.
+ * Release-Zeit ALLER Stimmen. Erhaelt den Charakter jeder Stimme (relative
+ * Verhaeltnisse bleiben), schiebt aber das ganze Instrument Richtung perkussiv
+ * oder atmend. Siehe docs/SYNTH_IDENTITY.md, Saeule SHAPE. */
+void engine_set_attack(float v01);
+void engine_set_release(float v01);
+/* r19.60 MOTION (0..1): Modulation auf den Bus-Filter. SWEEP = langsamer LFO
+ * (der Filter atmet von selbst), ENVMOD = Huellkurvenfolger (der Filter oeffnet
+ * beim Spielen — das TD-3-"EnvMod"). Beide engagieren den Filter auch ohne
+ * Resonanz. Siehe docs/SYNTH_IDENTITY.md, Saeule MOTION. */
+void engine_set_sweep(float v01);
+void engine_set_envmod(float v01);
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-0017) */
 void engine_set_motion(float amount_0_1);      /* Pad LFO depth (perform macro) */

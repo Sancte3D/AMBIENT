@@ -25,7 +25,7 @@ bewusst **NICHT** im Akku-Hochstrompfad, sondern auf einer **Enable-Leitung**
   Eingang**: `+5V_RAIL → U_PWR(VIN→VOUT) → +5V_SW → AP7361C-LDO-VIN`.
   Gated damit die **gesamte 3V3-Domäne** (MCU + die 17,5 mA Hall-Sensoren +
   beide PCA9685/LEDs + LCD) auf einmal. Der Class-D-Amp (an +5V) geht über
-  seinen `AMP_nSHDN`-Pulldown selbst in Shutdown → dunkel.
+  seinen `AMP_SHDN_N`-Pulldown selbst in Shutdown → dunkel.
 - **Schiebeschalter `SW_PWR`** steuert `U_PWR.ON`: `+5V_RAIL → SW_PWR → ON`,
   `R_PWR_PD` (100 k) zieht `ON` low (Default AUS). EN-Referenz = `+5V_RAIL`
   (immer da, sobald USB **oder** Akku) — nicht +3V3 (das gibt's erst nach dem

@@ -1,5 +1,61 @@
 # PROJECT STATUS
 
+> **r19.65 (2026-07-26) — Pad-Mapping: 2 echte Defekte gefunden.** Der letzte
+> offene Punkt vor dem Layout ("landet jede Symbol-Pinnummer auf einem Pad?",
+> fuer 9 ICs als pinout-pending markiert) ist erledigt — und war nicht leer:
+> (1) **J1 USB-C Schirm** haette an nichts gehangen (Symbol-Pin `S1` vs.
+> Footprint-Pad `SH`), obwohl das Schematic ihn auf GND legt. (2) **C_BULK**
+> zeigte auf einen Footprint, den es in keiner KiCad-Library gibt — der Name
+> war erfunden; KiCad haette "footprint not found" gemeldet und der 470-µF-
+> Polymer-Tantal (laut ADR-0010 der wichtigste Hebel gegen kratzigen Klang)
+> waere nicht platzierbar gewesen. Beides behoben; das ist die einzige
+> BOM-Zeile, die sich geaendert hat. `scripts/check_footprints.py` prueft das
+> jetzt fuer **alle 38** Symbol/Footprint-Paare automatisch statt fuer eine
+> handgepflegte Liste aus 4 Teilen, mit Exit-Code und gegen einen injizierten
+> Fehler getestet. **Nicht** abgedeckt: dass Pin *n* die Datenblatt-*Funktion*
+> von Pin *n* traegt — das bleibt ein menschlicher Durchgang je IC.
+
+> **r19.64 (2026-07-26) — BOM-/Schematic-Audit Runde 2:** Arons 40-Pin-Frage
+> als Anlass fuer einen kompletten Durchlauf. **Die BOM ist byte-identisch
+> geblieben** (kein Bauteil/LCSC/Menge geaendert) — gefunden wurden drei andere
+> Klassen: (1) drei weitere *nie platzierte* Symbole in der eingebetteten
+> Library jedes Sheets, darunter `MCU:Pico2` = ein **40-Pin-Symbol** und damit
+> die zweite moegliche Quelle von Arons Sichtung (+ ~880 Zeilen toter
+> Generator-Code); die Library enthaelt jetzt exakt 37 Symbole = 37 platzierte
+> Teile, null Waisen. (2) **17 ERC-Richtungskonflikte** zwischen Root-Sheet-Pins
+> und Hier-Labels — vor allem alle 11 Encoder-Signale, die von MCU- *und*
+> Encoder-Sheet als `output` deklariert waren (zwei Treiber auf einem Netz),
+> plus USB/I2C/VSYS; alle 7 Sheets stimmen jetzt exakt ueberein. (3)
+> **Netznamen** gegen den AI-Ready-Standard: Slash raus (`GPA5/XSMT`,
+> `GPA6/JACKDET`), Active-Low auf `_N` (`AMP_SHDN_N`, `AMP_MUTE_N`,
+> `QSPI_CS_N`) inkl. Firmware + Docs. Dazu: mehrere **bestellrelevante**
+> Dokumente fuehrten noch den NRND-`PAM8403DR-H C17337` statt des seit r19.37
+> verbauten **PAM8406DR C86270** — korrigiert. Host-Tests gruen.
+
+> **r19.44 (2026-07-21) — Landschafts-Welten (Location-Brief, kritisch gefiltert):**
+> Die 4 Nacht-/Stadt-Welten wurden zu 5 global lesbaren LANDSCHAFTEN
+> umbenannt + im Mood verschoben: **Alps · Open Sea · Fjords · Moss Fields ·
+> Desert** (nur mit vorhandenen Hebeln: Key/Mode/Vibe/Makros/Farbe/Bass/Accent
+> + PADsynth-Timbre + Modal-Body). Ambience-Texturen mitverschoben: RAIN →
+> Moss (damp·fog), WAVES → Open Sea, Vinyl raus. 5. Welt sauber ergänzt
+> (WORLD_COUNT 4→5; body/padsynth/fx-Fallback erweitert). Cross-Build grün
+> (FLASH 11 %, RAM unverändert). Golden-Value-Tests (worlds/menu/ambience) auf
+> die neuen Presets aktualisiert, alle Suiten grün. **Bewusst NICHT gemacht:**
+> die per-Welt Instrumenten-DNA-Engines aus dem Brief (Alphorn/Hardanger/Lyra/
+> Guembri) — die kollidieren mit dem gemessenen RAM/CPU-Budget und sind ein
+> eigenes Roadmap-Item, kein Preset-Wechsel.
+
+> **r19.43 (2026-07-21) — Cell-Lebenszyklus (Ambient-Chill-Analyse):** Die
+> 250-Track-Referenzanalyse verlangt Cells als fünf spielbare Töne mit
+> überlappenden Tails. Umgesetzt in pad.c: (1) erneuter Druck auf eine
+> RELEASENDE Cell startet eine NEUE Stimme, der alte Tail klingt weiter
+> (nur Player-Sources 0-4/9-13; Generativ behält sein Voice-Budget);
+> (2) kurzer Tap blüht erst zum Körper (0,35·amp) und released dann —
+> vollständiger Ton statt dünnem Blip; (3) Voice-Steal ist amplituden- und
+> phasenkontinuierlich (kein Hard-Reset-Klick mehr). Alle Suiten grün.
+> Offen aus der Analyse: Oktav-Entclusterung simultaner Cells, Attack/
+> Release-Ranges pro World, Density-Makro.
+
 **Updated: 2026-07-20 (r19.41 — Master-Effects-Engine integriert; davor r19.38–r19.40 Realtime-Safety, r19.37 PAM8406-Endstufe + Gain-Staging)**
 
 > **r19.41 (2026-07-20) — Master-Effects-Integration:** Die gelieferte
@@ -103,7 +159,7 @@
 
 > **r19.19 (2026-07-13) — Kopfhoerer rein (User: "ja das muss rein!!!").**
 > U11 TPA6132A2 (C69901) zwischen DAC und J8: DirectPath, Gain −6 dB,
-> EN=AMP_nSHDN. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
+> EN=AMP_SHDN_N. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
 > Buchse; Auto-Mute-Verhalten unveraendert (Speaker muten beim Einstecken,
 > J8 bleibt live). Netzliste 165/649/0-floating, alle Teile live-verifiziert.
 > Details: CHANGELOG r19.19 + ADR-0024.

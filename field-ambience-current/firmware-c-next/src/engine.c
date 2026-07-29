@@ -24,8 +24,12 @@
 #include "generative.h"
 #include "cells.h"
 #include "pluck.h"
-#include "glass.h"
 #include "ember.h"
+#include "bowed.h"
+#include "horn.h"
+#include "choir.h"
+#include "guembri.h"
+#include "shape.h"
 #include "padsynth.h"
 #include "body.h"
 #include "composer.h"
@@ -84,6 +88,12 @@ static int      eno_timing_valid;
  * same lead. One-shot per cycle. */
 #define ENO_SWELL_LEAD_MS 1500u
 static uint8_t  eno_swell_armed[ENO_LOOPS];
+/* r19.50: the reverse PRE-swell was a rising, mostly-NOISE whoosh (62 % noise
+ * through an opening filter) that ended with a near-hard cut — heard as a loud
+ * "zschhh" a second before each generative note, then an abrupt stop. It read
+ * as a defect, not a breath. Disabled by default; the note's own attack is the
+ * onset. (Kept the machinery so a gentler, mostly-pitched version can return.) */
+static const int ENO_SWELL_ENABLE = 0;
 #define ENO_SRC(i) ((uint8_t)(5 + (i)))
 
 /* Generative state (r19.0: rebuilt on the HARMONIC SAFETY CORE, see
@@ -204,7 +214,14 @@ static const float SMOOTH_COEF = 0.05f;       /* per-block, ~120 ms time-const *
  *      true peaks — replaces the old tanf() that distorted everything above
  *      ~0.5 (that continuous saturation was the harshness). */
 #define DC_R 0.995f                           /* one-pole HP, ≈35 Hz at 44.1 k */
+/* r19.52: the AUDIT found the worlds were ~90 % mono sub-bass (spectral
+ * centroid 93–151 Hz, stereo width ~0.02) — the drone/bass low end masked all
+ * the mid character and collapsed the stereo. A 2nd master high-pass at ~62 Hz
+ * removes the useless sub-rumble (the 40 mm speakers can't reproduce <150 Hz
+ * anyway, and on headphones it just muddies) so the mids + stereo breathe. */
+#define HP2_R 0.9912f                          /* 2nd-order HP stage, ≈62 Hz    */
 static float dc_x1L, dc_y1L, dc_x1R, dc_y1R;
+static float hp2_x1L, hp2_y1L, hp2_x1R, hp2_y1R;   /* r19.52: 2nd master-HP stage */
 static float master_vol_cur, master_vol_tgt;
 
 /* r18.89 — master DRIVE stage. The DRIVE encoder used to reach only the
@@ -298,11 +315,16 @@ void engine_init(void) {
     /* Master stage: DC-block cleared, moderate default volume (no on-device
      * volume knob bound yet — keeps headphones from being slammed). */
     dc_x1L = dc_y1L = dc_x1R = dc_y1R = 0.0f;
+    hp2_x1L = hp2_y1L = hp2_x1R = hp2_y1R = 0.0f;
     master_vol_cur = master_vol_tgt = 0.6f;
     drive_cur = drive_tgt = 0.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
-    glass_init();                    /* r18.98 FM glass voice */
     ember_init();                    /* r19.28 warm subtractive analog voice */
+    bowed_init();                    /* r19.47 bowed lyra/Hardanger voice (Open Sea / Fjords) */
+    horn_init();                     /* r19.53 alphorn/brass voice (Alps) */
+    choir_init();                    /* r19.61 damp organ/choir (Moss)    */
+    guembri_init();                  /* r19.61 plucked low lute (Desert)  */
+    shape_init();                    /* r19.60 envelope shape (neutral)   */
     memset(eno_next_ms, 0, sizeof eno_next_ms);
     memset(eno_off_ms,  0, sizeof eno_off_ms);
     memset(eno_on,      0, sizeof eno_on);
@@ -327,15 +349,26 @@ void engine_init(void) {
  * needs SOME second colour, that was the whole r18.89 point). */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
-    if (voice_idx > 3) voice_idx = 3;    /* r19.28: 3 = Ember (optional)   */
+    if (voice_idx > 6) voice_idx = 6;    /* r19.61: 5 Choir (Moss), 6 Guembri (Desert) */
     melody_voice = voice_idx;
 }
 
 /* Fire the selected melody voice (used by cell presses + sparkles). */
 static void melody_strike(float freq_hz, float amp) {
-    if      (melody_voice == 3) ember_note(freq_hz, amp);   /* r19.28 analog */
-    else if (melody_voice == 2) glass_note(freq_hz, amp);
-    else                        pluck_note(freq_hz, amp);
+    /* r19.47: the bowed lyra is a full CHARACTER voice, not a sparkle under the
+     * pad — the generative melody amp (~0.06) would make it a whisper. Scale it
+     * up (and floor it) so it sits forward, near the audition level the design
+     * was approved at (~0.3..0.55).
+     * r19.51: Glass (FM bell) removed — inharmonic/harsh, cut from the VOICE
+     * menu. Voices renumbered: 0 Pad / 1 String / 2 Ember / 3 Bowed.
+     * r19.53: 4 = Horn (alphorn/brass, Alps). Like bowed it is a full CHARACTER
+     * voice, so the tiny generative amp is scaled + floored to sit forward. */
+    if      (melody_voice == 6) guembri_note(freq_hz, dsp_clampf(amp * 2.8f, 0.35f, 0.60f));
+    else if (melody_voice == 5) choir_note  (freq_hz, dsp_clampf(amp * 2.6f, 0.32f, 0.55f));
+    else if (melody_voice == 4) horn_note (freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f));
+    else if (melody_voice == 3) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
+    else if (melody_voice == 2) ember_note(freq_hz, amp);   /* r19.28 analog */
+    else                        pluck_note(freq_hz, amp);   /* 0 Pad / 1 String */
 }
 
 /* r19.28 — Landscape "Motif" layer: a warm subtractive ANALOG voice (ember.c:
@@ -346,11 +379,12 @@ void engine_motif_strike(float freq_hz, float amp) {
     ember_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
-/* r19.30 — a bare glass/bell bloom for the HARMONY "extension" role: the FM
- * shimmer that lets a chord's top sparkle over the sustained pad body, and
- * decays into the shared hall. No pad, no bass. */
+/* r19.30 — a bare bell bloom for the HARMONY "extension" role: a sparkle that
+ * lets a chord's top ring over the sustained pad body, decaying into the shared
+ * hall. No pad, no bass. r19.51: was the FM glass (removed as harsh); now the
+ * plucked-string voice, which is gentler and already on the pluck bus. */
 void engine_sparkle_strike(float freq_hz, float amp) {
-    glass_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
+    pluck_note(freq_hz, dsp_clampf(amp, 0.0f, 0.30f));
 }
 
 /* Tier A #2: tiny LCG for micro-humanisation. Inside JND so it doesn't drift
@@ -456,6 +490,21 @@ void engine_set_brightness(float hz)  {
      * → 0..1, centre unchanged at the world default until the user moves it). */
     fx_master_set_tone((hz + 600.0f) / 1400.0f);
 }
+
+/* r19.59 RESONANCE — see docs/SYNTH_IDENTITY.md. The pad bus gets a real
+ * resonant ladder; BRIGHT sweeps its cutoff, RESONANCE makes it sing. */
+void engine_set_resonance(float amount_0_1) {
+    pad_set_resonance(dsp_clampf(amount_0_1, 0.0f, 1.0f));
+}
+float engine_resonance(void) { return pad_resonance(); }
+
+/* r19.60 SHAPE — global envelope scaling (see shape.c). */
+void engine_set_attack (float v01) { shape_set_attack(v01); }
+void engine_set_release(float v01) { shape_set_release(v01); }
+
+/* r19.60 MOTION — LFO + envelope follower onto the pad-bus filter cutoff. */
+void engine_set_sweep (float v01) { pad_set_sweep(dsp_clampf(v01,0.0f,1.0f)); }
+void engine_set_envmod(float v01) { pad_set_envmod(dsp_clampf(v01,0.0f,1.0f)); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   {
     v = dsp_clampf(v, 0.0f, 1.0f);
@@ -475,6 +524,11 @@ void engine_set_world(int idx) {
      * copy, and the world-change re-bloom masks the swap. */
     padsynth_build(idx, 0);
     body_set_world(idx);             /* r18.94: the pluck's resonant material */
+    /* r19.47: bowed-voice colour follows the world identity. Only worlds that
+     * carry voice==Bowed hear it, but setting it unconditionally keeps the
+     * engine self-consistent (Fjords = colour 1 = darker, more sympathetic
+     * ring; every other world = colour 0 = the warmer Open-Sea lyra). */
+    bowed_set_colour(idx == 2 ? 1 : 0);
     const world_t *w = worlds_get(idx);
     engine_set_key ((int)w->key_midi);   /* brain key + drone root          */
     engine_set_mode((int)w->mode);       /* brain mode + reverb recompute   */
@@ -774,7 +828,7 @@ void engine_generative_tick(uint32_t now_ms) {
         }
         /* r19.41: the next fire time is exact — arm the reverse swell
          * exactly ENO_SWELL_LEAD_MS ahead of it, once per cycle. */
-        if (!eno_swell_armed[i] &&
+        if (ENO_SWELL_ENABLE && !eno_swell_armed[i] &&
             (int32_t)(eno_next_ms[i] - now_ms) > 0 &&
             (uint32_t)(eno_next_ms[i] - now_ms) <= ENO_SWELL_LEAD_MS) {
             /* Predict the scheduled note from the CURRENT harmony with the
@@ -958,7 +1012,26 @@ static void render_ambient(int16_t *buf, int frames) {
     pad_render_mix(dryL, dryR, sendL, sendR, frames, send_amount_cur);
     texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
     ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
-    bass_render_mix(dryL, dryR, sendL, sendR, frames);
+    /* r19.52: the AUDIT found the low end (bass + drone) was ~90 % of the mix
+     * energy — masking every mid voice and pulling the stereo image to mono.
+     * The real culprit is the BASS (spectral centroid ~25 Hz, deep sub the
+     * 40 mm speakers can't even reproduce): render it onto its own bus and trim
+     * it hard so it supports instead of dominates. The DRONE is left at full
+     * level — it is a musical ~110 Hz voice the player deliberately holds, not
+     * mud. The master high-pass (HP2 above) cleans both. */
+    {
+        static float subL[BLOCK], subR[BLOCK], subJL[BLOCK], subJR[BLOCK];
+        memset(subL, 0, sizeof(float) * (size_t)frames);
+        memset(subR, 0, sizeof(float) * (size_t)frames);
+        memset(subJL, 0, sizeof(float) * (size_t)frames);
+        memset(subJR, 0, sizeof(float) * (size_t)frames);
+        bass_render_mix(subL, subR, subJL, subJR, frames);
+        const float BASS_TRIM = 0.5f;
+        for (int n = 0; n < frames; ++n) {
+            dryL[n]  += subL[n]  * BASS_TRIM;  dryR[n]  += subR[n]  * BASS_TRIM;
+            sendL[n] += subJL[n] * BASS_TRIM;  sendR[n] += subJR[n] * BASS_TRIM;
+        }
+    }
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
     /* r18.94: plucks render onto their own bus, run through the MODAL
      * BODY (fixed per-world resonances — the string varies, the body does
@@ -972,7 +1045,6 @@ static void render_ambient(int16_t *buf, int frames) {
         memset(plkJL, 0, sizeof(float) * (size_t)frames);
         memset(plkJR, 0, sizeof(float) * (size_t)frames);
         pluck_render_mix(plkL, plkR, plkJL, plkJR, frames);
-        glass_render_mix(plkL, plkR, plkJL, plkJR, frames);   /* r18.98 */
         body_process(plkL, plkR, frames);
         for (int n = 0; n < frames; ++n) {
             dryL[n]  += plkL[n];
@@ -984,6 +1056,21 @@ static void render_ambient(int16_t *buf, int frames) {
     /* r19.28: the warm analog voice runs its OWN clean bus (its filter is the
      * character) straight into dry + hall send — no modal body coloring. */
     ember_render_mix(dryL, dryR, sendL, sendR, frames);
+
+    /* r19.47: the bowed lyra/Hardanger voice carries its own resonant wood
+     * body + sympathetic resonators, so it also bypasses the modal body and
+     * mixes straight to dry + hall send. Idle voices cost nothing (the inner
+     * loop early-outs), so it runs unconditionally regardless of the world. */
+    bowed_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
+
+    /* r19.53: the alphorn/brass voice (Alps) — its own reed body + formant, no
+     * modal-body colour; idle voices early-out so it runs unconditionally. */
+    horn_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
+
+    /* r19.61: Moss-Chor und Desert-Guembri — eigene Koerper, daher wie
+     * bowed/horn direkt in dry + Hall-Send, ohne Modal-Body. */
+    choir_render_mix  (dryL, dryR, sendL, sendR, frames, 0.55f);
+    guembri_render_mix(dryL, dryR, sendL, sendR, frames, 0.35f);
 
     /* r19.41 MASTER-EFFECTS SWAP: echo, blur, tape hiss/crackle, the master
      * reverb render and the shimmer wrap-loop all left this path — the
@@ -1026,9 +1113,13 @@ static void render_ambient(int16_t *buf, int frames) {
          * small DC offset the drive bias introduces) */
         float yL = L - dc_x1L + DC_R * dc_y1L; dc_x1L = L; dc_y1L = yL;
         float yR = R - dc_x1R + DC_R * dc_y1R; dc_x1R = R; dc_y1R = yR;
+        /* r19.52: 2nd high-pass stage (~62 Hz) — kills the sub-bass mud that
+         * masked the mids + collapsed the stereo (see AUDIT). */
+        float zL = yL - hp2_x1L + HP2_R * hp2_y1L; hp2_x1L = yL; hp2_y1L = zL;
+        float zR = yR - hp2_x1R + HP2_R * hp2_y1R; hp2_x1R = yR; hp2_y1R = zR;
 
-        outL[n] = yL * mv;
-        outR[n] = yR * mv;
+        outL[n] = zL * mv;
+        outR[n] = zR * mv;
     }
     /* r19.41: the complete master-effects chain on the final float mix —
      * hot-path safe (no heap, bounded, LUT-only transcendentals; verified by

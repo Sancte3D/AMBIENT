@@ -7,6 +7,7 @@
 
 #include "params.h"
 #include "engine.h"
+#include "worlds.h"
 
 /* Tunables ---------------------------------------------------------------- */
 #define BRIGHT_MIN_HZ  (-600.0f)   /* darkest pad cutoff offset */
@@ -61,7 +62,7 @@ void params_init(void) {
     }
     /* Match engine_init() defaults so the readout is truthful at boot. */
     s_drive  = 0.15f;   /* gentle warmth by default */
-    s_bright = 0.0f;    /* pad brightness offset default */
+    s_bright = (float)worlds_get(0)->brightness_hz;  /* r19.45: boot world brightness */
     s_volume = 0.30f;   /* r19.20: SPEC boot rule — max 30 % at power-on
                          * (headphone-safe since the r19.19 TPA6132A2; the
                          * old 0.60 predates the phones jack). The device
@@ -130,6 +131,13 @@ void params_apply_scene(int drive_pct, float bright_hz) {
     s_drive  = clampf((float)drive_pct / 100.0f, 0.0f, 1.0f);
     s_bright = clampf(bright_hz, BRIGHT_MIN_HZ, BRIGHT_MAX_HZ);
     apply_drive();
+    engine_set_brightness(s_bright);
+}
+
+/* r19.45: world-change sets the per-world brightness base; the BRIGHT encoder
+ * then nudges from here (keeps the encoder value in sync). */
+void params_set_bright(float hz) {
+    s_bright = clampf(hz, BRIGHT_MIN_HZ, BRIGHT_MAX_HZ);
     engine_set_brightness(s_bright);
 }
 

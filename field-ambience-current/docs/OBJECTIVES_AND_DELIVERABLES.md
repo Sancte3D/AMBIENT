@@ -103,7 +103,7 @@ Grounded in `kicad/jlc_bom.csv` (regenerated from the schematic generator).
 | Ref | Part | Role | LCSC | Check |
 |---|---|---|---|---|
 | U3 | PCM5102A | I²S DAC | C107671 | ⚠️ |
-| U4 | PAM8403 | Class-D speaker amp | C17337 | ⚠️ |
+| U4 | PAM8406 | Class-D speaker amp | C86270 | ⚠️ |
 | J8 / J10 | PJ-320D ×2 | phones+line-out / MIDI-out TRS | C431535 | ⚠️ pad map + TRS-A/B |
 | U11 | TPA6132A2RTER | DirectPath headphone amp (r19.19, ADR-0024) | C69901 | ⚠️ |
 | FB1/FB2 | BLM18AG601 | supply ferrites | C19330 | ⚠️ |

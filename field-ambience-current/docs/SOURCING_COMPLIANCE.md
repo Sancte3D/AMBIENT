@@ -27,7 +27,7 @@ SMD-BOM ~**$21,30/Board** (@10+). Status **🟢** — das ist der Teil, den man
 | PCM5102A DAC | C… | 0,99 | 🟢 |
 | BQ24074 Power-Path-Charger (r19.18) | C54313 | 2,24 | 🟢 |
 | TPS61089 Boost | C… | 0,50 | 🟢 |
-| PAM8403 Amp | C… | 0,44 | 🟢 |
+| PAM8406 Amp | C… | 0,44 | 🟢 |
 | TPS22918 Load-Switch | C131941 | 0,25 | 🟢 |
 | USB-C | C165948 | 0,17 | 🟢 |
 | JST-PH S2B-PH-SM4-TB | C295747 | 0,10 | 🟢 |

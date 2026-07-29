@@ -87,6 +87,12 @@ static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
 static void hal_set_bass       (int   mode){ bloom_set_bassmode(mode); }   /* r19.31 */
 static void hal_set_color      (int   col) { bloom_set_color(col); }        /* r19.32 */
 static void hal_set_fx         (int   m)   { engine_set_fx_mode(m); }       /* r19.41 */
+static void hal_set_bright      (float hz)  { params_set_bright(hz); }         /* r19.45 */
+static void hal_set_reso        (float v)   { engine_set_resonance(v); }       /* r19.59 */
+static void hal_set_attack      (float v)   { engine_set_attack(v); }          /* r19.60 */
+static void hal_set_release     (float v)   { engine_set_release(v); }         /* r19.60 */
+static void hal_set_sweep       (float v)   { engine_set_sweep(v); }           /* r19.60 */
+static void hal_set_envmod      (float v)   { engine_set_envmod(v); }          /* r19.60 */
 /* cell play mode — 0 Note (r19.26), 1 Harmony (r19.29, chord + voice-leading),
  * 2 Landscape (r19.27, sound layers). */
 enum { CELL_NOTE = 0, CELL_HARMONY = 1, CELL_LAND = 2 };
@@ -185,7 +191,7 @@ static const engine_synth_backend_t s_v2_backend = {
     be_select, be_note_on, be_note_off, be_panic, be_render
 };
 
-/* Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW), Line-Out
+/* Klinke drin → NUR den PAM8406 muten (AMP_MUTE_N = PB15 LOW), Line-Out
  * bleibt live — NICHT audio_mute() rufen (das wuerde auch XSMT ziehen und
  * den Line-Out toeten). Design: ADR / v0.7. */
 static bool s_jack_plugged = false;   /* r19.21: fuer das Status-Overlay */
@@ -320,6 +326,12 @@ int main(void) {
             .set_bass       = hal_set_bass,
             .set_color      = hal_set_color,
             .set_fx         = hal_set_fx,
+            .set_bright     = hal_set_bright,
+        .set_reso        = hal_set_reso,
+        .set_attack      = hal_set_attack,
+        .set_release     = hal_set_release,
+        .set_sweep       = hal_set_sweep,
+        .set_envmod      = hal_set_envmod,
         };
         menu_init(&cb);
     }
@@ -531,7 +543,7 @@ int main(void) {
             prev_gpio = gpio;
         }
 
-        /* --- 3. Jack debounce settle → PAM8403 /MUTE --- */
+        /* --- 3. Jack debounce settle → PAM8406 /MUTE --- */
         if (jack_pending != 0xFF &&
             (uint32_t)(now - jack_edge_ms) >= JACK_DEBOUNCE_MS) {
             /* Still at the level that armed the debounce? (A bounce mid-

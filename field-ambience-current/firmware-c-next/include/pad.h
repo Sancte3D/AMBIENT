@@ -49,6 +49,17 @@ void pad_all_off(void);
  * so turning it does not zipper. */
 void pad_set_brightness(float hz);
 
+/* r19.59: RESONANCE of the Moog ladder on the pad bus. 0 = off/bypassed,
+ * 1 = just under self-oscillation. Cutoff follows the BRIGHT macro. */
+void  pad_set_resonance(float amount_0_1);
+float pad_resonance(void);
+
+/* r19.60 MOTION: LFO- und Huellkurven-Modulation auf den Bus-Cutoff (0..1). */
+void  pad_set_sweep(float amount_0_1);
+void  pad_set_envmod(float amount_0_1);
+float pad_sweep(void);
+float pad_envmod(void);
+
 /* Global LFO-depth multiplier for the filter sweep (0..2). 0 = LFO has no
  * effect on cutoff (static voice). 1 = current default (audible chorus
  * movement). 2 = strong, dramatic motion. Maps the "Motion" menu macro.

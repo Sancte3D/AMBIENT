@@ -44,6 +44,11 @@ static int           synth_i = 0;         /* r19.16: 0 Ambient, player-global */
 static int           cell_i  = 0;         /* r19.23: 0 Note / 1 Bloom, player-global */
 static int           bass_i  = 3;         /* r19.31: HARMONY bass, default Drift */
 static int           color_i = 0;         /* r19.32: HARMONY chord color, default Pure */
+static int           atk_i   = 50;        /* r19.60: SHAPE attack %% (50 = neutral) */
+static int           rel_i   = 50;        /* r19.60: SHAPE release %% (50 = neutral) */
+static int           sweep_i = 0;         /* r19.60: MOTION LFO %% */
+static int           envm_i  = 0;         /* r19.60: MOTION EnvMod %% */
+static int           reso    = 0;         /* r19.59: RESONANCE %% (0 = off/bypassed) */
 static int           fx_i    = 8;         /* r19.41: FX page, default Dream Chain */
 static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
 
@@ -54,7 +59,10 @@ static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       *
 static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
 };
-static const char * const VOICE_NAMES[4] = { "Pad", "String", "Glass", "Ember" };
+static const char * const VOICE_NAMES[7] = {
+    "Pad", "String", "Ember", "Bowed", "Horn",
+    "Choir", "Guembri"                          /* r19.61: Moss + Desert */
+};
 static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
 static const char * const SYNTH_NAMES[7] = {
     "Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"
@@ -99,6 +107,11 @@ static void apply_current(void) {
         case MP_BASS:   if (cb.set_bass)       cb.set_bass(bass_i);              break;
         case MP_COLOR:  if (cb.set_color)      cb.set_color(color_i);            break;
         case MP_FX:     if (cb.set_fx)         cb.set_fx(fx_i);                  break;
+        case MP_RESO:   if (cb.set_reso)       cb.set_reso (reso   / 100.0f);    break;
+        case MP_ATTACK: if (cb.set_attack)     cb.set_attack(atk_i / 100.0f);    break;
+        case MP_RELEASE:if (cb.set_release)    cb.set_release(rel_i/ 100.0f);    break;
+        case MP_SWEEP:  if (cb.set_sweep)      cb.set_sweep (sweep_i/100.0f);    break;
+        case MP_ENVMOD: if (cb.set_envmod)     cb.set_envmod(envm_i/ 100.0f);    break;
         default: break;
     }
 }
@@ -109,7 +122,9 @@ static void load_world_preset(void) {
     const world_t *w = worlds_get(world_i);
     /* r19.22 Parameter-Locks: nur UNgesperrte Werte folgen dem neuen
      * World-Preset — ein gesperrter Hallraum/Echo-Wert etc. bleibt beim
-     * Wechsel Tokyo→Hours stehen (Orchid-Prinzip). VOICE bleibt immer. */
+     * Wechsel Tokyo→Hours stehen (Orchid-Prinzip).
+     * r19.47: VOICE folgt jetzt der Welt (per-world Charakter-Instrument, siehe
+     * worlds.c); der Spieler kann danach im VOICE-Slot ueberschreiben. */
     #define UNLESS_LOCKED(bit) if (!(s_locks & (1u << (bit))))
     UNLESS_LOCKED(MP_KEY)     key_pc = (int)w->key_midi % 12;
     UNLESS_LOCKED(MP_SPACE)   space  = w->space_pct;
@@ -124,11 +139,14 @@ static void load_world_preset(void) {
      * bass mode). Loaded like the macros — the player can nudge after. */
     color_i = w->chord_color; if (color_i > 3) color_i = 0;
     bass_i  = w->bass_mode;   if (bass_i  > 3) bass_i  = 3;
+    voice_i = w->voice;       if (voice_i > 6) voice_i = 0;   /* r19.47 */
     set_world_accent(true);        /* crossfade the UI tint to the new world */
     if (cb.set_world)      cb.set_world(world_i);
     if (cb.set_color)      cb.set_color(color_i);
     if (cb.set_bass)       cb.set_bass(bass_i);
+    if (cb.set_voice)      cb.set_voice(voice_i);
     if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_bright)     cb.set_bright((float)w->brightness_hz);
     if (cb.set_space)      cb.set_space     (space  / 100.0f);
     if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
     if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
@@ -167,7 +185,7 @@ void menu_apply_state(const menu_state_t *st) {
     world_i  = clampi(st->world, 0, worlds_count() - 1);
     key_pc   = clampi(st->key_pc, 0, 11);
     tuning_i = clampi(st->tuning, 0, 1);
-    voice_i  = clampi(st->voice, 0, 3);
+    voice_i  = clampi(st->voice, 0, 6);
     synth_i  = clampi(st->synth, 0, 6);
     cell_i   = clampi(st->cell, 0, 2);
     bass_i   = clampi(st->bass, 0, 3);
@@ -196,6 +214,7 @@ void menu_apply_state(const menu_state_t *st) {
     if (cb.set_cell)       cb.set_cell(cell_i);
     if (cb.set_bass)       cb.set_bass(bass_i);
     if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_bright)     cb.set_bright((float)worlds_get(world_i)->brightness_hz);
     if (cb.set_color)      cb.set_color(color_i);
 }
 
@@ -207,7 +226,7 @@ void menu_init(const menu_callbacks_t *cbs) {
     {
         const world_t *w = worlds_get(0);
         key_pc = (int)w->key_midi % 12;
-        voice_i = 0;
+        voice_i = w->voice; if (voice_i > 6) voice_i = 0;   /* r19.47 boot voice */
         space  = w->space_pct;
         shim   = w->shimmer_pct;
         atmos  = w->atmos_pct;
@@ -232,7 +251,9 @@ void menu_init(const menu_callbacks_t *cbs) {
         if (cb.set_world)      cb.set_world(world_i);
         if (cb.set_color)      cb.set_color(color_i);
         if (cb.set_bass)       cb.set_bass(bass_i);
+        if (cb.set_voice)      cb.set_voice(voice_i);   /* r19.47 boot voice */
     if (cb.set_fx)         cb.set_fx(fx_i);
+    if (cb.set_bright)     cb.set_bright((float)worlds_get(world_i)->brightness_hz);
         if (cb.set_space)      cb.set_space     (space  / 100.0f);
         if (cb.set_shimmer)    cb.set_shimmer   (shim   / 100.0f);
         if (cb.set_atmosphere) cb.set_atmosphere(atmos  / 100.0f);
@@ -255,7 +276,8 @@ const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 const char *menu_current_label(void) {
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
-        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX"
+        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX","Resonance",
+        "Attack","Release","Sweep","EnvMod"
     };
     return LABELS[cur];
 }
@@ -284,6 +306,11 @@ int menu_value_int(menu_param_t p) {
         case MP_AGE:    return age;
         case MP_ECHO:   return echo;
         case MP_BLUR:   return blur;
+        case MP_RESO:   return reso;
+        case MP_ATTACK: return atk_i;
+        case MP_RELEASE:return rel_i;
+        case MP_SWEEP:  return sweep_i;
+        case MP_ENVMOD: return envm_i;
         default:        return 0;
     }
 }
@@ -295,7 +322,7 @@ int menu_value_count(menu_param_t p) {
         case MP_WORLD: return worlds_count();
         case MP_KEY:   return 12;
         case MP_TUNING:return 2;
-        case MP_VOICE: return 4;
+        case MP_VOICE: return 7;
         case MP_SYNTH: return 7;
         case MP_CELL:  return 3;
         case MP_BASS:  return 4;
@@ -324,6 +351,11 @@ const char *menu_current_value_text(void) {
         case MP_AGE:    snprintf(buf, sizeof buf, "%d%%", age);    return buf;
         case MP_ECHO:   snprintf(buf, sizeof buf, "%d%%", echo);   return buf;
         case MP_BLUR:   snprintf(buf, sizeof buf, "%d%%", blur);   return buf;
+        case MP_RESO:   snprintf(buf, sizeof buf, "%d%%", reso);   return buf;
+        case MP_ATTACK: snprintf(buf, sizeof buf, "%d%%", atk_i);  return buf;
+        case MP_RELEASE:snprintf(buf, sizeof buf, "%d%%", rel_i);  return buf;
+        case MP_SWEEP:  snprintf(buf, sizeof buf, "%d%%", sweep_i);return buf;
+        case MP_ENVMOD: snprintf(buf, sizeof buf, "%d%%", envm_i); return buf;
         default: return "";
     }
 }
@@ -351,7 +383,7 @@ void menu_rotate(int delta) {
             return;                     /* preset push covers the callbacks   */
         case MP_KEY:    key_pc  = wrapi(key_pc  + delta, 12); break;
         case MP_TUNING: tuning_i = wrapi(tuning_i + delta, 2); break;
-        case MP_VOICE:  voice_i = wrapi(voice_i + delta, 4);  break;
+        case MP_VOICE:  voice_i = wrapi(voice_i + delta, 7);  break;
         case MP_SYNTH:  synth_i = wrapi(synth_i + delta, 7);  break;
         case MP_CELL:   cell_i  = wrapi(cell_i  + delta, 3);  break;
         case MP_BASS:   bass_i  = wrapi(bass_i  + delta, 4);  break;
@@ -364,6 +396,11 @@ void menu_rotate(int delta) {
         case MP_AGE:    age    = clampi(age    + delta, 0, 100); break;
         case MP_ECHO:   echo   = clampi(echo   + delta, 0, 100); break;
         case MP_BLUR:   blur   = clampi(blur   + delta, 0, 100); break;
+        case MP_RESO:   reso   = clampi(reso   + delta, 0, 100); break;
+        case MP_ATTACK: atk_i  = clampi(atk_i  + delta, 0, 100); break;
+        case MP_RELEASE:rel_i  = clampi(rel_i  + delta, 0, 100); break;
+        case MP_SWEEP:  sweep_i= clampi(sweep_i+ delta, 0, 100); break;
+        case MP_ENVMOD: envm_i = clampi(envm_i + delta, 0, 100); break;
         default: break;
     }
     apply_current();

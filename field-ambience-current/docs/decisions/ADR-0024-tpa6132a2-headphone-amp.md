@@ -17,9 +17,9 @@ ehrliche Beschreibung dieses Zustands, nicht das gewuenschte Produktverhalten.
 und Buchse:
 
 ```
-PCM5102A OUTL/R ──┬── C_in_L/R 1µF ── PAM8403 (Speaker, unveraendert)
+PCM5102A OUTL/R ──┬── C_in_L/R 1µF ── PAM8406 (Speaker, unveraendert)
                   └── C_HP_INL/R 1µF ── U11 TPA6132A2 (Gain −6 dB)
-                                          │ EN = AMP_nSHDN (boot-safe low)
+                                          │ EN = AMP_SHDN_N (boot-safe low)
                                           └── R_LO_L/R 22Ω ── J8 T/R
 ```
 
@@ -30,11 +30,11 @@ PCM5102A OUTL/R ──┬── C_in_L/R 1µF ── PAM8403 (Speaker, unveraend
   −4,6 dB an 32 Ω) sichere, trotzdem laute Kopfhoerer-Lautstaerke. Der Chip
   haelt die Maximalleistung versorgungsunabhaengig konstant (Acoustic-Shock-
   Design, DS §7.3.3).
-- **EN = AMP_nSHDN**: gleiches Enable wie der Speaker-Amp — beide sind im
+- **EN = AMP_SHDN_N**: gleiches Enable wie der Speaker-Amp — beide sind im
   Boot/Aus in Shutdown (R_SHDN_PD 10k). TPA-Shutdown-Iq 0,7–1,2 µA → die
   ungeschaltete +5V-Rail bleibt im Aus-Zustand drainfrei (passt zu ADR-0023).
 - **Auto-Mute unveraendert**: Jack-Detect → MCP GPA6 → Firmware zieht nur
-  AMP_nMUTE (Speaker stumm); U11 bleibt an → Kopfhoerer/Line live. Ausstecken
+  AMP_MUTE_N (Speaker stumm); U11 bleibt an → Kopfhoerer/Line live. Ausstecken
   → Speaker wieder an. Detect-Analyse r18.82 bleibt gueltig (TIP jetzt am
   TPA-Ausgang: DC 0 V, Shutdown-Zout ~20 Ω per DS).
 
@@ -48,7 +48,7 @@ PCM5102A OUTL/R ──┬── C_in_L/R 1µF ── PAM8403 (Speaker, unveraend
 | C_HP_VDD (VDD→GND) | 2,2 µF X5R (C1607) | §9 („within 5 mm") |
 | C_HPVDD (HPVDD→GND) | 2,2 µF X5R (C1607) | §9 — **WARNING: HPVDD NIE an VDD** (interne Rail) |
 | G0 / G1 | GND / GND | Table 1 → −6 dB |
-| EN | AMP_nSHDN | VIH 1,3 V (3V3-GPIO ok); high = an |
+| EN | AMP_SHDN_N | VIH 1,3 V (3V3-GPIO ok); high = an |
 | SGND (Pin 15) | GND, Layout: eigene Leitung zum J8-Sleeve | Pin-Functions-Tabelle |
 | EP | GND | Pin-Functions-Tabelle (GND oder floatend) |
 
@@ -60,7 +60,7 @@ PCM5102A OUTL/R ──┬── C_in_L/R 1µF ── PAM8403 (Speaker, unveraend
 - **Footprint** `QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm` gegen das JLC/EasyEDA-
   Landpattern fuer C69901 (Pads 0,28×0,8 @ 0,5 mm, EP 1,6×1,6, CCW) und die
   TI-RTE0016C-Zeichnung (EP-Metall 1,68±0,07) abgeglichen — kompatibel.
-- **Netzliste**: 165 Netze, 649 Pins, 0 floating. AMP_nSHDN enthaelt jetzt
+- **Netzliste**: 165 Netze, 649 Pins, 0 floating. AMP_SHDN_N enthaelt jetzt
   U11.13(EN) + U4.12(/SHDN) + MCU PB14; HP_OUTL/R, HP_CPP/CPN, HP_HPVDD,
   HP_HPVSS jeweils exakt 2 Pins; J8-T/R haengen an den R_LO-Ausgaengen.
 - check_pinmap gruen; JLC-BOM: 60 Teile-Typen, 200 Platzierungen.
@@ -69,7 +69,7 @@ PCM5102A OUTL/R ──┬── C_in_L/R 1µF ── PAM8403 (Speaker, unveraend
 
 - Gehaeuse-Label: **PHONES / LINE OUT** (statt LINE OUT).
 - +~$1,50 BOM (U11 + 2× C1607 + 4× 1µF), ~25 mm² Layout nahe J8.
-- Kein Firmware-Change noetig: AMP_nSHDN/AMP_nMUTE-Logik deckt beide Amps ab.
+- Kein Firmware-Change noetig: AMP_SHDN_N/AMP_MUTE_N-Logik deckt beide Amps ab.
 - C69901-Stock (370) ist der niedrigste im BOM → Order-Day-Checkliste (B1).
 - Layout-Pflichten: C_HP_VDD/C_HPVDD <5 mm an Pins 14/12; SGND-Leitung zum
   Jack-Sleeve; Ladungspumpen-Caps eng am Chip.

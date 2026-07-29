@@ -101,14 +101,18 @@ set(DSP_SOURCES
     src/echo.c          # Reddit Echo macro: tape-style stereo delay
     src/blur.c          # Reddit Blur macro: granular cloud
     src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
-    src/glass.c         # r18.98: 2-op FM glass melody voice (VOICE menu)
     src/ember.c         # r19.28: warm subtractive analog voice (Motif layer)
+    src/bowed.c         # r19.47: bowed lyra/Hardanger voice (Open Sea / Fjords)
+    src/horn.c          # r19.53: alphorn/brass voice (Alps)
+    src/choir.c         # r19.61: damp organ/choir voice (Moss Fields)
+    src/guembri.c       # r19.61: plucked low lute / sintir (Desert)
     src/shimmer.c       # r18.99: octave-up hall regeneration (SHIMMER menu)
     src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/body.c          # r18.94: modal resonant body for the plucks (Rings concept)
     src/composer.c      # r18.96: ambient composer state machine (probabilities only)
     src/harmony.c       # r19.0: harmonic safety core (pitch worlds, mutation, collision filter)
     src/tuning.c        # r19.6: equal/just intonation layer
+    src/shape.c         # r19.60: global envelope shape (attack/release scaling)
     src/bass.c
     src/reverb.c
     src/reverb_presets.c
