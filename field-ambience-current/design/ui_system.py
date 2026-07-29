@@ -140,23 +140,43 @@ class Encoder:
 
 # ---------------------------------------------------------------- the state
 class UiState:
+    """Values live in ONE dict keyed (category, row).
+
+    A discrete parameter stores its option INDEX as a float so it can be eased
+    between slots; a continuous one stores 0..1. `opts_of` is the single place
+    that decides which a row is, so nothing else has to know.
+    """
+
     def __init__(self, ci=0, pi=0):
         self.ci, self.pi, self.mode = ci, pi, BROWSE
         self.values = {}
-        for c, (_, _, rows) in enumerate(G.CATS):
-            for i, (name, _, amt) in enumerate(rows):
-                self.values[(c, i)] = amt
+        for c, (_, rows) in enumerate(G.CATS):
+            for i, (_, opts, dflt) in enumerate(rows):
+                self.values[(c, i)] = float(dflt)
+
+    def opts_of(self, i, ci=None):
+        return G.CATS[self.ci if ci is None else ci][1][i][1]
 
     @property
     def rows(self):
-        return G.CATS[self.ci][2]
+        return G.CATS[self.ci][1]
 
     def rotate(self, steps):
         if self.mode == BROWSE:
-            self.pi = max(0, min(len(self.rows) - 1, self.pi + (1 if steps > 0 else -1)))
-        else:
-            k = (self.ci, self.pi)
+            # browsing is always one row per detent — acceleration belongs on
+            # values, and skipping rows would make the list unusable
+            self.pi = max(0, min(len(self.rows) - 1,
+                                 self.pi + (1 if steps > 0 else -1)))
+            return
+        k = (self.ci, self.pi)
+        opts = self.opts_of(self.pi)
+        if opts is None:
             self.values[k] = max(0.0, min(1.0, self.values[k] + steps * 0.01))
+        else:
+            # one detent = one option, always. A 2-option Tuning must not jump
+            # past its own range because the user was spinning fast.
+            d = 1 if steps > 0 else -1
+            self.values[k] = max(0.0, min(len(opts) - 1.0, self.values[k] + d))
 
     def push(self):
         self.mode = EDIT if self.mode == BROWSE else BROWSE
@@ -170,10 +190,11 @@ class UiState:
         self.mode = BROWSE
 
     def text_for(self, i):
-        name, val, _ = self.rows[i]
-        if name in G.SEGMENTED:
-            return val
-        return "%d%%" % round(self.values[(self.ci, i)] * 100)
+        opts = self.opts_of(i)
+        v = self.values[(self.ci, i)]
+        if opts is None:
+            return "%d%%" % round(v * 100)
+        return opts[max(0, min(len(opts) - 1, int(round(v))))]
 
 
 class Motion:
@@ -249,27 +270,40 @@ def _bands(rows_touched):
     return out
 
 
-def _fill_end(st, mo, i):
-    """Right edge of row i's fill, in px — where the chip wants to sit."""
-    name = st.rows[i][0]
-    if name in G.SEGMENTED:
-        slot = min(G.SEG_N - 1, mo.fill[i].v * G.SEG_N)
-        return G.TRACK_X + int(round(slot * (G.SEG_W + G.SEG_GAP))) + G.SEG_W
-    return G.TRACK_X + max(G.TRACK_H, int(round(G.TRACK_W * mo.fill[i].v)))
+def _chip_anchor(st, mo, i):
+    """Where the chip points, and whether it centres there.
+
+    Continuous: the right end of the fill. Discrete: the CENTRE of the lit
+    slot — a chip parked at the track end points at the last option no matter
+    which one is selected.
+    """
+    opts = st.opts_of(i)
+    v = mo.fill[i].v
+    if opts is None:
+        return G.TRACK_X + max(G.TRACK_H, int(round(G.TRACK_W * v))), False
+    k = max(0, min(len(opts) - 1, int(round(v))))
+    x, w = G.seg_slot(len(opts), k)
+    return x + w // 2, True
 
 
-def _row(d, i, name, amount, rv, f_small):
+def _row(d, i, name, opts, amount, rv, f_small):
     """One parameter row at reveal factor rv. Used by BOTH the outgoing and
     the incoming phase of a category change, so the two can never drift."""
     y = G.row_y(i)
-    if name in G.SEGMENTED:
-        for k in range(G.SEG_N):
-            x = G.TRACK_X + k * (G.SEG_W + G.SEG_GAP)
-            G.pill(d, x, y, G.SEG_W, G.TRACK_H, G.WHITE, G.TRACK_A * rv)
-        slot = min(G.SEG_N - 1, amount * G.SEG_N)
-        sx = G.TRACK_X + int(round(slot * (G.SEG_W + G.SEG_GAP)))
-        w = max(2, int(round(G.SEG_W * rv)))
-        G.pill(d, sx, y, w, G.TRACK_H, G.GREEN)
+    if opts is not None:
+        n = len(opts)
+        for k in range(n):
+            x, w = G.seg_slot(n, k)
+            G.pill(d, x, y, w, G.TRACK_H, G.WHITE, G.TRACK_A * rv)
+        # the lit capsule SLIDES between slots, so a discrete parameter still
+        # reads as one continuous control
+        k = max(0, min(n - 1, int(round(amount))))
+        x0, w0 = G.seg_slot(n, k)
+        kn = max(0, min(n - 1, k + (1 if amount > k else -1)))
+        x1, _ = G.seg_slot(n, kn)
+        f = min(1.0, abs(amount - k))
+        sx = int(round(x0 + (x1 - x0) * f))
+        G.pill(d, sx, y, max(4, int(round(w0 * rv))), G.TRACK_H, G.GREEN)
     else:
         G.pill(d, G.TRACK_X, y, G.TRACK_W, G.TRACK_H, G.WHITE, G.TRACK_A * rv)
         fw = max(G.TRACK_H, int(round(G.TRACK_W * amount * rv)))
@@ -289,8 +323,11 @@ def render(st, mo):
     d = ImageDraw.Draw(im, "RGBA")
     f_small, f_title = G.font(G.SZ_SMALL), G.font(G.SZ_TITLE)
     head_ci = st.ci if (mo.out is None or mo.swapped) else mo.out[0]
-    head, title, _ = G.CATS[head_ci]
-    rows = G.CATS[st.ci][2]
+    head = G.CATS[head_ci][0]
+    rows = G.CATS[st.ci][1]
+    # the title is the WORLD, which is what World in Field selects
+    wi = st.values[(0, 0)]
+    title = G.WORLD_NAMES[max(0, min(4, int(round(wi))))]
 
     d.text((G.TRACK_X, G.HEAD_MID), head, font=f_small, fill=G.WHITE, anchor="lm")
     bx = G.CONTENT_R - G.BADGE_W
@@ -305,19 +342,17 @@ def render(st, mo):
 
     if mo.out is not None:
         oci, ovals = mo.out
-        for i, (name, val, _) in enumerate(G.CATS[oci][2]):
+        for i, (name, opts, _) in enumerate(G.CATS[oci][1]):
             rv = mo.reveal_out(i)
             if rv > 0.005:
-                _row(d, i, name, ovals.get(i, 0.0), rv, f_small)
+                _row(d, i, name, opts, ovals.get(i, 0.0), rv, f_small)
                 touched.append(i)
 
-    for i, (name, val, _) in enumerate(rows):
-        y = G.row_y(i)
+    for i, (name, opts, _) in enumerate(rows):
         rv = mo.reveal(i)
         if rv <= 0.005:
             continue
-
-        _row(d, i, name, mo.fill[i].v, rv, f_small)
+        _row(d, i, name, opts, mo.fill[i].v, rv, f_small)
 
         if (i in mo.fill and mo.fill[i].moving) or mo.revealing(i):
             touched.append(i)
@@ -330,18 +365,18 @@ def render(st, mo):
         i0 = max(0, min(len(rows) - 1, int(math.floor(mo.sel.v))))
         i1 = max(0, min(len(rows) - 1, i0 + 1))
         f = mo.sel.v - i0
-        e0, e1 = _fill_end(st, mo, i0), _fill_end(st, mo, i1)
+        (e0, c0), (e1, c1) = _chip_anchor(st, mo, i0), _chip_anchor(st, mo, i1)
         x_end = int(round(e0 + (e1 - e0) * f))
         y = int(round(G.ROW_0 + mo.sel.v * G.ROW_PITCH))
         _bubble(d, x_end, y, st.text_for(i1 if f >= 0.5 else i0), f_small,
-                mo.grow.v)
+                mo.grow.v, c1 if f >= 0.5 else c0)
         if sel_moving:
             touched += [i0, i1]
 
     return im, _bands(touched)
 
 
-def _bubble(d, x_end, y, text, f, grow):
+def _bubble(d, x_end, y, text, f, grow, centre=False):
     """Same capsule as ui_grid.bubble, with the grow factor animated.
 
     Height interpolates from the track height to the measured bubble height,
@@ -353,7 +388,8 @@ def _bubble(d, x_end, y, text, f, grow):
     w = tw + 2 * G.BUBBLE_PAD
     h = int(round(G.TRACK_H + (G.BUBBLE_H - G.TRACK_H) * grow))
     h += h % 2                                   # keep the radius exact
-    x = min(G.TRACK_X + G.TRACK_W - w, max(G.TRACK_X, x_end - w))
+    x = x_end - w // 2 if centre else x_end - w
+    x = min(G.TRACK_X + G.TRACK_W - w, max(G.TRACK_X, x))
     for k, a in ((3, 0.10), (1, 0.16)):          # halo only while editing
         if grow > 0.02:
             G.pill(d, x - k, y, w + 2 * k, h + 2 * k, G.GREEN, a * grow)
@@ -386,13 +422,13 @@ def scripted():
     ev.append((2.40, "push", 0))
     ev.append((2.70, "rot", +1))
     ev.append((2.95, "rot", +1))
-    ev.append((3.40, "cat", 1))          # cell key -> AIR, staged reveal
+    ev.append((3.40, "cat", 1))          # cell key -> Harmony (Key has 12 slots)
     ev.append((4.40, "rot", +1))
     ev.append((4.70, "push", 0))
     t = 5.00
     for _ in range(8):                   # spin on the new category
         ev.append((t, "rot", -1)); t += 0.045
-    ev.append((6.20, "cat", 2))          # -> HARMONY, only three rows
+    ev.append((6.20, "cat", 2))          # -> Tone, only three rows
     return ev, 7.2
 
 
@@ -439,7 +475,9 @@ def main():
 
     row_ms = 320 * G.ROW_PITCH * 2 * 8 / 30e6 * 1000.0
     print("scripted interaction: %d frames at %d fps (%.1f s)" % (n, FPS, total))
-    print("acceleration (t, detent, steps applied):")
+    print("acceleration (t, detent, steps out of the encoder):")
+    print("  (a discrete parameter takes exactly one option per detent "
+          "regardless — see UiState.rotate)")
     for t, dl, s in accel_log:
         print("   %5.3f s  %+d  ->  %+d" % (t, dl, s))
     print("dirty bands: %.2f per frame average, %d worst case" %

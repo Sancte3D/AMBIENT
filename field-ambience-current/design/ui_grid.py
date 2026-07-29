@@ -86,17 +86,84 @@ GREEN_D = (10, 150, 92)
 WHITE = (255, 255, 255)
 TRACK_A = 0.12                      # measured off the reference
 
+# --------------------------------------------------------------- the system
+# THE REAL ONE. Everything below is read out of the firmware, not invented:
+# option tables from src/menu.c, labels from its LABELS[MP_COUNT], world names
+# from src/worlds.c in their enum order.
+#
+# The earlier version of this file carried "Drive / Granular / Noise" over a
+# world called "Crystal Ocean" — all four lifted straight from the reference
+# picture, none of which exist in the device. Drive is a dedicated encoder
+# (EN1), not a menu slot; Granular and Noise are not parameters at all.
+WORLD_NAMES = ["Alps", "Open Sea", "Fjords", "Moss Fields", "Desert"]
+KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+VOICE_NAMES = ["Pad", "String", "Ember", "Bowed", "Horn", "Choir", "Guembri"]
+SYNTH_NAMES = ["Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"]
+TUNING_NAMES = ["Equal", "Just"]
+CELL_NAMES = ["Note", "Harmony", "Land"]
+BASS_NAMES = ["Off", "Root", "Fifth", "Drift"]
+COLOR_NAMES = ["Pure", "Open", "Warm", "Deep"]
+FX_NAMES = ["Bypass", "Reverb", "Delay", "Chorus", "Tape", "Swell", "Shimmer",
+            "Blur", "Dream"]
+
+# The 21 MP_* slots grouped into five categories — one per cell key. Every
+# parameter appears EXACTLY ONCE; the counts are 4+4+3+5+5 = 21, which is
+# MP_COUNT. (name, options or None for a 0-100 % value, default)
 CATS = [
-    ("Ambience", "Crystal Ocean",
-     [("Drive", "87%", .36), ("Echo", "72%", .72), ("Granular", "29%", .29),
-      ("Key", "D", .25), ("Noise", "88%", .88)]),
-    ("Air", "Open Sea",
-     [("Space", "72%", .72), ("Shimmer", "45%", .45), ("Echo", "28%", .28),
-      ("Blur", "15%", .15), ("Age", "33%", .33)]),
-    ("Harmony", "Fjords",
-     [("Key", "D", .25), ("Tuning", "Just", .50), ("Bass", "Fifth", .75)]),
+    ("Field", [
+        ("World",      WORLD_NAMES, 1),
+        ("FX",         FX_NAMES,    8),      # Dream is the boot default
+        ("Atmosphere", None,        0.62),
+        ("Cell",       CELL_NAMES,  1),
+    ]),
+    ("Harmony", [
+        ("Key",        KEY_NAMES,   2),
+        ("Tuning",     TUNING_NAMES, 1),
+        ("Bass",       BASS_NAMES,  2),
+        ("Color",      COLOR_NAMES, 2),
+    ]),
+    ("Tone", [
+        ("Voice",      VOICE_NAMES, 3),
+        ("Synth",      SYNTH_NAMES, 0),
+        ("Resonance",  None,        0.55),
+    ]),
+    ("Shape", [
+        ("Attack",     None,        0.40),
+        ("Release",    None,        0.65),
+        ("Motion",     None,        0.35),
+        ("Sweep",      None,        0.50),
+        ("EnvMod",     None,        0.30),
+    ]),
+    ("Air", [
+        ("Space",      None,        0.72),
+        ("Shimmer",    None,        0.45),
+        ("Echo",       None,        0.28),
+        ("Blur",       None,        0.15),
+        ("Age",        None,        0.33),
+    ]),
 ]
-SEGMENTED = {"Key", "Tuning", "Bass", "Voice", "Synth", "FX", "Cell", "World"}
+
+assert sum(len(r) for _, r in CATS) == 21, "the menu has 21 MP_ slots"
+
+
+def seg_gap(n):
+    """A 12-option Key cannot be four fat chunks.
+
+    SEG_N used to be hard-coded to 4 while the real option counts are
+    2, 3, 4, 5, 7, 9 and 12 — so the row said "one of four" no matter what the
+    parameter actually offered. The slot count now comes from the parameter and
+    the gap shrinks as the count grows, so twelve slots still tile the same
+    187 px track and stay individually visible.
+    """
+    return 5 if n <= 5 else (3 if n <= 8 else 2)
+
+
+def seg_slot(n, k):
+    """Exact tiling: slot k of n across TRACK_W, no leftover pixels."""
+    g = seg_gap(n)
+    x0 = TRACK_X + int(round(k * TRACK_W / float(n)))
+    x1 = TRACK_X + int(round((k + 1) * TRACK_W / float(n)))
+    return x0, max(4, x1 - x0 - g)
 
 
 def font(px):
@@ -118,7 +185,7 @@ def pill(d, x, y_mid, w, h, fill, alpha=1.0):
     d.rounded_rectangle([x, top, x + w - 1, bot], radius=h // 2, fill=fill)
 
 
-def bubble(d, x_end, y, text, f):
+def bubble(d, x_end, y, text, f, centre=False):
     """The value capsule at the fill's right end, 16 % taller than the track.
 
     The value inside is WHITE, not dark. Sampling the reference's fill instead
@@ -127,7 +194,8 @@ def bubble(d, x_end, y, text, f):
     """
     tw = int(d.textlength(text, font=f))
     w = tw + 2 * BUBBLE_PAD
-    x = min(TRACK_X + TRACK_W - w, max(TRACK_X, x_end - w))
+    x = x_end - w // 2 if centre else x_end - w
+    x = min(TRACK_X + TRACK_W - w, max(TRACK_X, x))
     for k, a in ((3, 0.10), (1, 0.16)):          # a two-step halo, not a blur:
         pill(d, x - k, y, w + 2 * k, BUBBLE_H + 2 * k, GREEN, a)
     pill(d, x, y, w, BUBBLE_H, GREEN)
@@ -135,42 +203,44 @@ def bubble(d, x_end, y, text, f):
 
 
 def screen(ci, pi):
-    head, title, rows = CATS[ci]
+    head, rows = CATS[ci]
     im = Image.open(os.path.join(ASSETS, GRADIENT)).convert(
         "RGB").resize((W, H), Image.BICUBIC)
     d = ImageDraw.Draw(im, "RGBA")
-    f_small, f_label, f_title = font(SZ_SMALL), font(SZ_LABEL), font(SZ_TITLE)
+    f_small, f_title = font(SZ_SMALL), font(SZ_TITLE)
 
+    # The title is the WORLD, which is state, and World is also a row in
+    # Field, which is the control. Showing both is correct, not redundant.
+    world = WORLD_NAMES[CATS[0][1][0][2]]
     d.text((TRACK_X, HEAD_MID), head, font=f_small, fill=WHITE, anchor="lm")
     bx = CONTENT_R - BADGE_W
     pill(d, bx, HEAD_MID, BADGE_W, BADGE_H, GREEN)
     d.text((bx + BADGE_W // 2, HEAD_MID), "100%", font=f_small,
            fill=GREEN_D, anchor="mm")
+    d.text((TRACK_X, TITLE_BASE), world, font=f_title, fill=WHITE, anchor="ls")
 
-    d.text((TRACK_X, TITLE_BASE), title, font=f_title, fill=WHITE, anchor="ls")
-
-    for i, (name, val, amt) in enumerate(rows):
+    for i, (name, opts, val) in enumerate(rows):
         y = row_y(i)
-        on = (i == pi)
-
-        if name in SEGMENTED:
-            for k in range(SEG_N):
-                x = TRACK_X + k * (SEG_W + SEG_GAP)
-                if k == 0:
-                    pill(d, x, y, SEG_W, TRACK_H, GREEN)
-                else:
-                    pill(d, x, y, SEG_W, TRACK_H, WHITE, TRACK_A)
-            if on:
-                d.text((TRACK_X + SEG_W // 2, y), val, font=f_small,
-                       fill=GREEN_D, anchor="mm")
+        if opts is not None:
+            n = len(opts)
+            for k in range(n):
+                x, w = seg_slot(n, k)
+                pill(d, x, y, w, TRACK_H, GREEN if k == val else WHITE,
+                     1.0 if k == val else TRACK_A)
+            # centred on the LIT slot, not at the track end: a chip parked on
+            # the right edge points at the last option no matter which one is
+            # actually selected. It may overhang its slot — that is fine, it
+            # is anchored to the right place.
+            sx, sw = seg_slot(n, val)
+            end, text, mid = sx + sw // 2, opts[val], True
         else:
             pill(d, TRACK_X, y, TRACK_W, TRACK_H, WHITE, TRACK_A)
-            fw = max(TRACK_H, int(round(TRACK_W * amt)))
+            fw = max(TRACK_H, int(round(TRACK_W * val)))
             pill(d, TRACK_X, y, fw, TRACK_H, GREEN)
-            if on:
-                bubble(d, TRACK_X + fw, y, val, f_small)
-
-        d.text((LABEL_X, y), name, font=f_label, fill=WHITE, anchor="lm")
+            end, text, mid = TRACK_X + fw, "%d%%" % round(val * 100), False
+        if i == pi:
+            bubble(d, end, y, text, f_small, mid)
+        d.text((LABEL_X, y), name, font=f_small, fill=WHITE, anchor="lm")
     return im
 
 
@@ -195,18 +265,21 @@ def check():
                 COL_GAP=COL_GAP, LABEL_X=LABEL_X, CONTENT_R=CONTENT_R,
                 HEAD_MID=HEAD_MID, TITLE_BASE=TITLE_BASE, ROW_0=ROW_0,
                 ROW_PITCH=ROW_PITCH, TRACK_H=TRACK_H, BADGE_W=BADGE_W,
-                BADGE_H=BADGE_H, SEG_W=SEG_W, SEG_GAP=SEG_GAP)
+                BADGE_H=BADGE_H)
     bad = [k for k, v in ints.items() if not isinstance(v, int)]
     assert not bad, "non-integer geometry: %s" % bad
-    assert SEG_N * SEG_W + (SEG_N - 1) * SEG_GAP == TRACK_W, \
-        "segments do not close on the track width"
+    for n in (2, 3, 4, 5, 7, 9, 12):     # every real option count
+        x, w = seg_slot(n, n - 1)
+        assert x + w + seg_gap(n) == TRACK_X + TRACK_W, \
+            "%d slots do not close on the track width" % n
     assert TRACK_X + TRACK_W + COL_GAP == LABEL_X
     assert row_y(4) + TRACK_H // 2 < H - 12, "no bottom margin left"
     assert TRACK_R * 2 == TRACK_H, "radius must be exactly half the height"
     return ints
 
 
-SHOTS = [("01_ambience", 0, 0), ("02_air", 1, 0), ("03_harmony", 2, 1)]
+SHOTS = [("01_field", 0, 0), ("02_harmony", 1, 0), ("03_tone", 2, 1),
+         ("04_shape", 3, 2), ("05_air", 4, 0)]
 
 
 def main():
@@ -224,8 +297,8 @@ def main():
     print("  type scale (measured crisp sizes): %d / %d px"
           % (SZ_SMALL, SZ_TITLE))
     print("  rows at y: %s" % [row_y(i) for i in range(5)])
-    print("  segments: %d x %d + %d x %d = %d = track width"
-          % (SEG_N, SEG_W, SEG_N - 1, SEG_GAP, TRACK_W))
+    print("  slot widths by option count: %s"
+          % {n: seg_slot(n, 0)[1] for n in (2, 3, 4, 5, 7, 9, 12)})
     print("  bottom margin: %d px" % (H - (row_y(4) + TRACK_H // 2)))
     print("  all %d geometry constants are int" % len(ints))
     print("wrote %d screens + grid overlay to %s" % (len(SHOTS), out))

@@ -1,3 +1,53 @@
+# The system is the real one (`ui_grid.CATS`)
+
+Everything is read out of the firmware, not invented: option tables from
+`src/menu.c`, labels from its `LABELS[MP_COUNT]`, world names from
+`src/worlds.c` in enum order. `assert sum(len(r) for _, r in CATS) == 21`
+holds it to `MP_COUNT`.
+
+The previous version of this file carried **"Drive / Granular / Noise"** on a
+world called **"Crystal Ocean"** — all four lifted straight from the reference
+picture, and none of them exist in the device. Drive is a dedicated encoder
+(EN1), not a menu slot; Granular and Noise are not parameters at all; the five
+worlds are Alps, Open Sea, Fjords, Moss Fields, Desert. "Key" also appeared
+twice and "Echo" twice.
+
+| category | parameters | |
+|---|---|--:|
+| Field | World · FX · Atmosphere · Cell | 4 |
+| Harmony | Key · Tuning · Bass · Color | 4 |
+| Tone | Voice · Synth · Resonance | 3 |
+| Shape | Attack · Release · Motion · Sweep · EnvMod | 5 |
+| Air | Space · Shimmer · Echo · Blur · Age | 5 |
+
+Each of the 21 slots appears exactly once, and each category is one cell key.
+
+## The selection options now match the parameter
+
+`SEG_N` was hard-coded to **4** while the real option counts are 2, 3, 4, 5,
+7, 9 and 12. Every discrete row said "one of four" no matter what the
+parameter actually offered — a 12-note Key drawn as four chunks is not a
+rounding error, it is the wrong control. The slot count now comes from the
+parameter and the gap shrinks as the count grows, so all of them tile the same
+187 px track exactly (asserted in `check()` for every real count):
+
+| options | 2 | 3 | 4 | 5 | 7 | 9 | 12 |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| slot width px | 89 | 57 | 42 | 32 | 24 | 19 | 14 |
+
+Two consequences that follow from this and were also wrong before:
+
+* **The chip is centred on the lit slot**, not parked at the track end. A chip
+  on the right edge points at the last option no matter which is selected.
+* **One detent = one option**, always. Encoder acceleration applies to
+  continuous values only; a 2-option Tuning must not jump past its own range
+  because the user was spinning fast.
+
+The title is the **world**, which is what `World` in Field selects. Showing it
+in the title and as a row is correct — the title is state, the row is control.
+
+---
+
 # Interaction system (`ui_system.py`) — state, motion, encoder accel
 
 ```
