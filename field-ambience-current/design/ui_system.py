@@ -47,6 +47,16 @@ BROWSE, EDIT = 0, 1
 T_VALUE = 0.110        # encoder value settle      (skill: 80-140 ms)
 T_SELECT = 0.150       # focus / selection shift   (skill: 120-180 ms)
 T_BUBBLE = 0.130       # bubble grow / shrink on entering and leaving EDIT
+T_OUT = 0.140          # one row leaving on a category change
+T_LEAD = 0.100         # head start the outgoing rows get over the incoming
+T_REVEAL = 0.200       # one row arriving after a category change
+STAGGER = 0.050        # delay between consecutive rows
+
+# Why a STAGED reveal and not a crossfade: a crossfade needs the old and the
+# new pixels at once, and a full frame is 29.0 ms — 100.1 % of a 30 fps budget
+# — so there is no frame in which both could be pushed. Staggering means about
+# T_REVEAL/STAGGER = 3.3 rows are in flight at once, which is 3.3 * 3.413 =
+# 11.3 ms = 34 % of the budget. That is the whole reason for this shape.
 
 
 def ease_out_cubic(t):
@@ -151,6 +161,14 @@ class UiState:
     def push(self):
         self.mode = EDIT if self.mode == BROWSE else BROWSE
 
+    def set_category(self, ci):
+        """A cell key picks the category. Leaving EDIT is deliberate: staying
+        in edit across a switch would put the encoder on a different parameter
+        than the one the user was holding."""
+        self.ci = ci % len(G.CATS)
+        self.pi = 0
+        self.mode = BROWSE
+
     def text_for(self, i):
         name, val, _ = self.rows[i]
         if name in G.SEGMENTED:
@@ -164,19 +182,60 @@ class Motion:
     def __init__(self, st):
         self.sel = Eased(st.pi, T_SELECT)
         self.grow = Eased(0.0, T_BUBBLE)          # 0 = browse, 1 = edit
+        self.ci = st.ci
+        self.tr = 99.0                            # transition clock, done
+        self.out = None                           # snapshot of what is leaving
+        self._rebuild(st)
+
+    def _rebuild(self, st):
+        """fill is keyed by row index, so it MUST be rebuilt when the category
+        changes — categories hold 3 to 5 rows and the old dict would be both
+        stale and the wrong length."""
         self.fill = {i: Eased(st.values[(st.ci, i)], T_VALUE)
                      for i in range(len(st.rows))}
 
     def sync(self, st):
+        if st.ci != self.ci:
+            # snapshot what is on screen so it can be run OUT rather than cut.
+            # Without this the old rows vanish in a single frame, which
+            # measured as the two largest frame-to-frame deltas in the whole
+            # interaction (17.8 and 11.3 against a moving mean of 1.5).
+            self.out = (self.ci, {i: e.v for i, e in self.fill.items()})
+            self.ci, self.tr = st.ci, 0.0
+            self._rebuild(st)
+            self.sel = Eased(st.pi, T_SELECT)     # no slide across a switch
         self.sel.target(st.pi)
         self.grow.target(1.0 if st.mode == EDIT else 0.0)
         for i in self.fill:
             self.fill[i].target(st.values[(st.ci, i)])
 
+    def reveal(self, i):
+        """0..1 for an incoming row during a staged category change."""
+        return ease_out_cubic((self.tr - T_LEAD - i * STAGGER) / T_REVEAL)
+
+    def reveal_out(self, i):
+        """1..0 for an outgoing row. Runs ahead of the incoming ones so the
+        two phases overlap and read as one motion rather than two."""
+        return 1.0 - ease_out_cubic((self.tr - i * STAGGER) / T_OUT)
+
+    def revealing(self, i):
+        return (0.0 <= self.tr - i * STAGGER <= T_OUT or
+                0.0 <= self.tr - T_LEAD - i * STAGGER <= T_REVEAL)
+
+    @property
+    def swapped(self):
+        """The header swaps mid-flight, while the eye is on the rows."""
+        return self.tr >= T_LEAD + 2 * STAGGER
+
     def step(self, dt):
         m = self.sel.step(dt) | self.grow.step(dt)
         for e in self.fill.values():
             m |= e.step(dt)
+        if self.tr < 90.0:
+            self.tr += dt
+            if self.tr > T_LEAD + 5 * STAGGER + T_REVEAL:
+                self.tr, self.out = 99.0, None
+            m = True
         return m
 
 
@@ -190,6 +249,35 @@ def _bands(rows_touched):
     return out
 
 
+def _fill_end(st, mo, i):
+    """Right edge of row i's fill, in px — where the chip wants to sit."""
+    name = st.rows[i][0]
+    if name in G.SEGMENTED:
+        slot = min(G.SEG_N - 1, mo.fill[i].v * G.SEG_N)
+        return G.TRACK_X + int(round(slot * (G.SEG_W + G.SEG_GAP))) + G.SEG_W
+    return G.TRACK_X + max(G.TRACK_H, int(round(G.TRACK_W * mo.fill[i].v)))
+
+
+def _row(d, i, name, amount, rv, f_small):
+    """One parameter row at reveal factor rv. Used by BOTH the outgoing and
+    the incoming phase of a category change, so the two can never drift."""
+    y = G.row_y(i)
+    if name in G.SEGMENTED:
+        for k in range(G.SEG_N):
+            x = G.TRACK_X + k * (G.SEG_W + G.SEG_GAP)
+            G.pill(d, x, y, G.SEG_W, G.TRACK_H, G.WHITE, G.TRACK_A * rv)
+        slot = min(G.SEG_N - 1, amount * G.SEG_N)
+        sx = G.TRACK_X + int(round(slot * (G.SEG_W + G.SEG_GAP)))
+        w = max(2, int(round(G.SEG_W * rv)))
+        G.pill(d, sx, y, w, G.TRACK_H, G.GREEN)
+    else:
+        G.pill(d, G.TRACK_X, y, G.TRACK_W, G.TRACK_H, G.WHITE, G.TRACK_A * rv)
+        fw = max(G.TRACK_H, int(round(G.TRACK_W * amount * rv)))
+        G.pill(d, G.TRACK_X, y, fw, G.TRACK_H, G.GREEN)
+    if rv > 0.35:
+        d.text((G.LABEL_X, y), name, font=f_small, fill=G.WHITE, anchor="lm")
+
+
 def render(st, mo):
     """Draw a frame and report which row bands changed.
 
@@ -200,7 +288,9 @@ def render(st, mo):
         "RGB").resize((G.W, G.H), Image.BICUBIC)
     d = ImageDraw.Draw(im, "RGBA")
     f_small, f_title = G.font(G.SZ_SMALL), G.font(G.SZ_TITLE)
-    head, title, rows = G.CATS[st.ci]
+    head_ci = st.ci if (mo.out is None or mo.swapped) else mo.out[0]
+    head, title, _ = G.CATS[head_ci]
+    rows = G.CATS[st.ci][2]
 
     d.text((G.TRACK_X, G.HEAD_MID), head, font=f_small, fill=G.WHITE, anchor="lm")
     bx = G.CONTENT_R - G.BADGE_W
@@ -212,47 +302,46 @@ def render(st, mo):
 
     touched = []
     sel_moving = mo.sel.moving or mo.grow.moving
+
+    if mo.out is not None:
+        oci, ovals = mo.out
+        for i, (name, val, _) in enumerate(G.CATS[oci][2]):
+            rv = mo.reveal_out(i)
+            if rv > 0.005:
+                _row(d, i, name, ovals.get(i, 0.0), rv, f_small)
+                touched.append(i)
+
     for i, (name, val, _) in enumerate(rows):
         y = G.row_y(i)
-        # focus is a continuous distance, so the selection can be mid-flight
-        # between two rows without either of them flickering
-        focus = max(0.0, 1.0 - abs(mo.sel.v - i))
+        rv = mo.reveal(i)
+        if rv <= 0.005:
+            continue
 
-        if name in G.SEGMENTED:
-            for k in range(G.SEG_N):
-                x = G.TRACK_X + k * (G.SEG_W + G.SEG_GAP)
-                if k == 0:
-                    G.pill(d, x, y, G.SEG_W, G.TRACK_H, G.GREEN)
-                else:
-                    G.pill(d, x, y, G.SEG_W, G.TRACK_H, G.WHITE, G.TRACK_A)
-            if focus > 0.5 and st.mode == EDIT:
-                d.text((G.TRACK_X + G.SEG_W // 2, y), val, font=f_small,
-                       fill=G.WHITE, anchor="mm")
-        else:
-            G.pill(d, G.TRACK_X, y, G.TRACK_W, G.TRACK_H, G.WHITE, G.TRACK_A)
-            fw = max(G.TRACK_H, int(round(G.TRACK_W * mo.fill[i].v)))
-            G.pill(d, G.TRACK_X, y, fw, G.TRACK_H, G.GREEN)
-            if focus > 0.01:
-                # The chip is on the SELECTED row at all times — browse mode
-                # otherwise has no focus indicator at all, and "the value being
-                # changed is slightly bigger" only means anything if there is a
-                # normal size to be bigger than. grow scales height 14 -> 16
-                # and fades the halo in; focus scales it so a mid-flight
-                # selection cannot show two chips at full size.
-                _bubble(d, G.TRACK_X + fw, y, st.text_for(i),
-                        f_small, mo.grow.v * focus, focus)
+        _row(d, i, name, mo.fill[i].v, rv, f_small)
 
-        # A band is dirty only when something in it actually moved this
-        # frame. Marking the focused row every frame would make the average
-        # look like 1.0 forever and hide the real cost.
-        if (i in mo.fill and mo.fill[i].moving) or (sel_moving and focus > 0.01):
+        if (i in mo.fill and mo.fill[i].moving) or mo.revealing(i):
             touched.append(i)
-        d.text((G.LABEL_X, y), name, font=f_small, fill=G.WHITE, anchor="lm")
+
+    # ONE chip, drawn at the interpolated position. Drawing a chip per row and
+    # cross-fading them put the value text on TWO rows at once for two frames
+    # of every selection move; a single chip that slides is both correct and
+    # the actual "selection shift" motion the interaction was missing.
+    if mo.reveal(int(mo.sel.v)) > 0.5:
+        i0 = max(0, min(len(rows) - 1, int(math.floor(mo.sel.v))))
+        i1 = max(0, min(len(rows) - 1, i0 + 1))
+        f = mo.sel.v - i0
+        e0, e1 = _fill_end(st, mo, i0), _fill_end(st, mo, i1)
+        x_end = int(round(e0 + (e1 - e0) * f))
+        y = int(round(G.ROW_0 + mo.sel.v * G.ROW_PITCH))
+        _bubble(d, x_end, y, st.text_for(i1 if f >= 0.5 else i0), f_small,
+                mo.grow.v)
+        if sel_moving:
+            touched += [i0, i1]
 
     return im, _bands(touched)
 
 
-def _bubble(d, x_end, y, text, f, grow, focus=1.0):
+def _bubble(d, x_end, y, text, f, grow):
     """Same capsule as ui_grid.bubble, with the grow factor animated.
 
     Height interpolates from the track height to the measured bubble height,
@@ -269,8 +358,7 @@ def _bubble(d, x_end, y, text, f, grow, focus=1.0):
         if grow > 0.02:
             G.pill(d, x - k, y, w + 2 * k, h + 2 * k, G.GREEN, a * grow)
     G.pill(d, x, y, w, h, G.GREEN)
-    if focus > 0.45:
-        d.text((x + w // 2, y), text, font=f, fill=G.WHITE, anchor="mm")
+    d.text((x + w // 2, y), text, font=f, fill=G.WHITE, anchor="mm")
 
 
 # ------------------------------------------------------------------ script
@@ -298,7 +386,14 @@ def scripted():
     ev.append((2.40, "push", 0))
     ev.append((2.70, "rot", +1))
     ev.append((2.95, "rot", +1))
-    return ev, 3.6
+    ev.append((3.40, "cat", 1))          # cell key -> AIR, staged reveal
+    ev.append((4.40, "rot", +1))
+    ev.append((4.70, "push", 0))
+    t = 5.00
+    for _ in range(8):                   # spin on the new category
+        ev.append((t, "rot", -1)); t += 0.045
+    ev.append((6.20, "cat", 2))          # -> HARMONY, only three rows
+    return ev, 7.2
 
 
 def main():
@@ -319,6 +414,8 @@ def main():
             _, kind, delta = events[ei]
             if kind == "push":
                 st.push()
+            elif kind == "cat":
+                st.set_category(delta)
             else:
                 steps = enc.detent(now, delta)
                 accel_log.append((round(now, 3), delta, steps))
@@ -332,7 +429,7 @@ def main():
         worst = max(worst, len(bands))
         now += DT
 
-    for k in (9, 24, 30, 45, 60, 84):
+    for k in (9, 30, 84, 105, 112, 150, 190):
         if k < len(frames):
             frames[k].resize((G.W * 4, G.H * 4), Image.NEAREST).save(
                 os.path.join(out, "frame_%03d_4x.png" % k))

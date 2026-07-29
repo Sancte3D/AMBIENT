@@ -69,6 +69,55 @@ swells it 14 → 16 and fades the halo in. Height is **rounded to an int every
 frame** — a 15.4 px capsule does not exist on this panel, and letting it be
 fractional is how a smooth animation turns into a shimmering edge.
 
+## Category transition
+
+Switching category (a cell key) is a **staged wipe**, not a crossfade. A
+crossfade needs the old and the new pixels in the same frame, and a full frame
+is 29.0 ms — 100.1 % of a 30 fps budget — so there is no frame in which both
+could be pushed. Instead the old rows run OUT with a stagger and the new ones
+run IN behind them, overlapping so it reads as one motion:
+
+```
+T_OUT 140 ms   T_LEAD 100 ms   T_REVEAL 200 ms   STAGGER 50 ms
+total 0.10 + 4*0.05 + 0.20 = 500 ms   (skill range for a world change: 300-600)
+```
+
+Both phases go through the **same** `_row()`, so they cannot drift apart. The
+header swaps at the midpoint, while the eye is on the rows.
+
+## Is it actually smooth — measured
+
+Mean absolute frame-to-frame pixel delta across the whole 7.2 s interaction,
+counting only frames where something moves, and flagging any frame above 4x
+that mean as a visible jump:
+
+| | before | after |
+|---|---:|---:|
+| moving-frame mean delta | 1.53 | **1.33** |
+| worst single frame | 17.84 | **5.42** |
+| frames flagged as a jump | 2 of 215 | **1 of 215** |
+
+The two large ones were the category switches: the staged reveal brought rows
+IN smoothly but the old rows vanished in a **single frame**. That is what the
+outgoing phase fixes. The one remaining flagged frame is the header text swap
+at 4.1x the mean, which is a deliberate mid-transition cut hidden by the row
+motion.
+
+A second defect the audit found: drawing a chip per row and cross-fading them
+put the value text on **two rows at once** for two frames of every selection
+move. There is now exactly **one** chip, drawn at the interpolated position
+between rows — which is also the sliding "selection shift" motion the
+interaction had been missing entirely.
+
+Worst-case cost rose from 2 to 5 dirty bands (17.1 ms = 51.2 % of a 30 fps
+budget) during a transition, which is the price of overlapping the phases and
+still leaves half the frame.
+
+## Still not animated
+
+The badge is static, there is no boot or idle animation, and no overlay or
+error states exist yet. Those are missing features, not rough edges.
+
 ## Backgrounds are swappable
 
 `ui_grid.GRADIENT` names the file. Swapping the look is that one line plus a
