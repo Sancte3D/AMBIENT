@@ -53,6 +53,10 @@ ASSETS = os.path.join(HERE, "assets")
 
 W, H = 320, 170
 
+# The background is an ASSET, never generated in the renderer. Swapping the
+# look is this one filename plus a new file in assets/ — no geometry moves.
+GRADIENT = "gradient_ref.png"
+
 # ------------------------------------------------------------- the grid (px)
 PAD_L, PAD_R = 22, 24
 TRACK_X, TRACK_W = 22, 187          # shared left axis
@@ -66,6 +70,13 @@ ROW_0, ROW_PITCH = 68, 20           # centres 68 88 108 128 148
 TRACK_H, TRACK_R = 14, 7            # radius = h/2, a true pill
 BADGE_W, BADGE_H = 38, 12   # "100%" is 24 px; 7 px each side, as measured
 SEG_N, SEG_GAP = 4, 5
+
+# The value bubble on the row being edited. Measured off the reference: the
+# plain fill is 61 px tall and the bubble peaks at 71 — 16 % taller — centred
+# on the fill's right end. 14 * 1.16 = 16, and 16 is even so the radius is a
+# clean 8. It grows into the 6 px gap between rows by 1 px per side, which the
+# 20 px pitch absorbs.
+BUBBLE_H, BUBBLE_R, BUBBLE_PAD = 16, 8, 10
 SEG_W = (TRACK_W - SEG_GAP * (SEG_N - 1)) // SEG_N   # 43, exact
 
 SZ_SMALL, SZ_LABEL, SZ_TITLE = 10, 10, 20    # the measured crisp sizes
@@ -107,9 +118,25 @@ def pill(d, x, y_mid, w, h, fill, alpha=1.0):
     d.rounded_rectangle([x, top, x + w - 1, bot], radius=h // 2, fill=fill)
 
 
+def bubble(d, x_end, y, text, f):
+    """The value capsule at the fill's right end, 16 % taller than the track.
+
+    The value inside is WHITE, not dark. Sampling the reference's fill instead
+    of its glyphs is what made me call it dark green before; the brightest
+    pixel in that capsule is (255,255,255).
+    """
+    tw = int(d.textlength(text, font=f))
+    w = tw + 2 * BUBBLE_PAD
+    x = min(TRACK_X + TRACK_W - w, max(TRACK_X, x_end - w))
+    for k, a in ((3, 0.10), (1, 0.16)):          # a two-step halo, not a blur:
+        pill(d, x - k, y, w + 2 * k, BUBBLE_H + 2 * k, GREEN, a)
+    pill(d, x, y, w, BUBBLE_H, GREEN)
+    d.text((x + w // 2, y), text, font=f, fill=WHITE, anchor="mm")
+
+
 def screen(ci, pi):
     head, title, rows = CATS[ci]
-    im = Image.open(os.path.join(ASSETS, "gradient_ref.png")).convert(
+    im = Image.open(os.path.join(ASSETS, GRADIENT)).convert(
         "RGB").resize((W, H), Image.BICUBIC)
     d = ImageDraw.Draw(im, "RGBA")
     f_small, f_label, f_title = font(SZ_SMALL), font(SZ_LABEL), font(SZ_TITLE)
@@ -141,8 +168,7 @@ def screen(ci, pi):
             fw = max(TRACK_H, int(round(TRACK_W * amt)))
             pill(d, TRACK_X, y, fw, TRACK_H, GREEN)
             if on:
-                d.text((TRACK_X + fw - 5, y), val, font=f_small,
-                       fill=GREEN_D, anchor="rm")
+                bubble(d, TRACK_X + fw, y, val, f_small)
 
         d.text((LABEL_X, y), name, font=f_label, fill=WHITE, anchor="lm")
     return im

@@ -1,3 +1,82 @@
+# Interaction system (`ui_system.py`) — state, motion, encoder accel
+
+```
+python3 design/ui_system.py    # -> design/out/system/{frame_*_4x.png,interaction.gif}
+```
+
+`ui_grid.py` is the still picture; this is the system around it. It **imports**
+the grid rather than restating it, so a coordinate lives in exactly one place.
+
+## The transfer budget decides the architecture
+
+Run through the skill's own calculator at 30 MHz SPI:
+
+| region | wire | of a 30 fps frame |
+|---|---:|---:|
+| full 320×170 | 29.013 ms | **100.1 %** |
+| one row band 320×20 | 3.413 ms | 11.8 % |
+| the bubble 64×22 | 0.751 ms | 2.6 % |
+
+A full-frame repaint does not fit in a 30 fps frame, let alone 60. So this is
+not "render a frame and push it": advance state, mark the row bands that
+changed, push only those. Measured over the scripted interaction:
+
+```
+dirty bands: 0.42 per frame average, 2 worst case
+worst frame = 6.827 ms = 20.5 % of a 30 fps budget
+```
+
+## Encoder acceleration
+
+Pointer acceleration, on an EC11 detent. Below **6 detents/s** one detent is
+always exactly one step, so slow turning stays exact and any value can be
+dialled precisely. Above that the step grows linearly and is **capped at 8**.
+
+This was tuned against the printed log, not guessed. The first curve
+(gain 1.6, cap 12) pegged at the cap on the **third** detent of a spin — every
+detent after that was worth the same, and 2 → 12 happened in one click. The
+shipped curve ramps 1 → 1 → 3 → 5 → 6 over a spin and holds around 6, so a
+full 0–100 sweep is about 17 detents.
+
+Acceleration is on the **value**, never on the layout: it never changes row
+pitch, never skips a frame, never moves the bubble discontinuously.
+
+## Motion
+
+Durations from `ambient-lcd-motion`, all ease-out cubic, all advanced from
+elapsed time rather than a frame count — a dropped frame costs smoothness, not
+correctness. Every animated scalar **retargets from its current value**, so a
+new input mid-flight continues from where the pixels are.
+
+| | duration |
+|---|---:|
+| encoder value settle | 110 ms |
+| selection shift | 150 ms |
+| bubble grow / shrink | 130 ms |
+
+## The value bubble
+
+Measured off the reference: the plain fill is 61 px tall, the bubble peaks at
+71 — **16 % taller** — centred on the fill's right end, and the value inside is
+**white** (brightest pixel 255,255,255; my earlier "dark green" reading had
+sampled the fill, not the glyphs). At our scale that is 14 → **16 px**, even,
+so the radius stays an exact 8.
+
+The chip is on the selected row **at all times**. Browse mode otherwise has no
+focus indicator at all, and "the value being changed is slightly bigger" only
+means something if there is a normal size to be bigger than. Entering EDIT
+swells it 14 → 16 and fades the halo in. Height is **rounded to an int every
+frame** — a 15.4 px capsule does not exist on this panel, and letting it be
+fractional is how a smooth animation turns into a shimmering edge.
+
+## Backgrounds are swappable
+
+`ui_grid.GRADIENT` names the file. Swapping the look is that one line plus a
+new file in `assets/` — the renderer never generates a background, so no
+geometry moves.
+
+---
+
 # 320x170 pixel-perfect system (`ui_grid.py`) — the current one
 
 ```
