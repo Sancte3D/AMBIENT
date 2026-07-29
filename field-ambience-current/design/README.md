@@ -1,3 +1,63 @@
+# UI rules the layout now enforces
+
+Four rules, and each is checked or measured rather than asserted in prose.
+
+**1. A value must never hide or overlap the value next to it.** The chip used
+to be drawn ON the track, so on a discrete row it covered its neighbours —
+"Open Sea" hid four of the five World options, "Equal" hid both Tuning
+options. A control that hides its own state is not a style problem. The layout
+is now three columns that cannot collide:
+
+```
+track 22..148 | value 156.. | label 236..296
+```
+
+`check()` walks **every option string of every parameter** and asserts the
+chip stays clear of the label column, and that every label fits before the
+content edge. Worst cases: value "Moss Fields" 66 px, label "Atmosphere"
+60 px, and `LABEL_X + 60 = CONTENT_R` exactly.
+
+**2. You must always see which row is selected and which is not.** The
+selected row carries the chip behind its value and full-strength type; the
+others keep their fills and recede to 62 % type. Focus is shape and position,
+not colour alone.
+
+**3. You must always see the value you would change.** Every row prints its
+value, not only the selected one — you cannot choose what to turn if you
+cannot read what the others currently are.
+
+**4. Hovering and editing must look different.** Browse: the chip is flat, at
+track height. Edit: it grows to 16 px and the halo fades in. That is the
+"the one being changed is slightly bigger" distinction, and it finally has a
+column to be bigger in.
+
+## Two things that were wrong and are worth naming
+
+*Dimming the fills.* Non-selected rows first receded by alpha-blending their
+green fill toward the pink. That produced a muddy olive that read as broken
+rather than quiet, and made the value harder to read — the opposite of rule 3.
+Fills now stay fully saturated, as in the reference; only type recedes.
+
+*Right-aligned values.* With the value right-aligned 6 px from the label they
+read as one phrase: "Dream FX", "62% Atmosphere". Left-aligned, the ragged
+right edge keeps the two columns apart.
+
+## Smoothness after the change
+
+Mean absolute frame-to-frame delta over the 7.2 s interaction, moving frames
+only, flagging anything above 4x the mean:
+
+| | before the transition work | after | after this layout |
+|---|---:|---:|---:|
+| moving mean | 1.53 | 1.33 | **1.32** |
+| worst frame | 17.84 | 5.42 | **3.16** |
+| flagged jumps | 2 of 215 | 1 of 215 | **0 of 215** |
+
+The chip's x is now fixed, so a selection move is a clean vertical slide
+instead of a diagonal one — which is also why the last flagged frame went away.
+
+---
+
 # The system is the real one (`ui_grid.CATS`)
 
 Everything is read out of the firmware, not invented: option tables from
@@ -29,16 +89,14 @@ Each of the 21 slots appears exactly once, and each category is one cell key.
 parameter actually offered — a 12-note Key drawn as four chunks is not a
 rounding error, it is the wrong control. The slot count now comes from the
 parameter and the gap shrinks as the count grows, so all of them tile the same
-187 px track exactly (asserted in `check()` for every real count):
+126 px track exactly (asserted in `check()` for every real count):
 
 | options | 2 | 3 | 4 | 5 | 7 | 9 | 12 |
 |---|--:|--:|--:|--:|--:|--:|--:|
-| slot width px | 89 | 57 | 42 | 32 | 24 | 19 | 14 |
+| slot width px | 59 | 38 | 28 | 21 | 16 | 12 | 9 |
 
 Two consequences that follow from this and were also wrong before:
 
-* **The chip is centred on the lit slot**, not parked at the track end. A chip
-  on the right edge points at the last option no matter which is selected.
 * **One detent = one option**, always. Encoder acceleration applies to
   continuous values only; a 2-option Tuning must not jump past its own range
   because the user was spinning fast.
@@ -72,8 +130,8 @@ not "render a frame and push it": advance state, mark the row bands that
 changed, push only those. Measured over the scripted interaction:
 
 ```
-dirty bands: 0.42 per frame average, 2 worst case
-worst frame = 6.827 ms = 20.5 % of a 30 fps budget
+dirty bands: 0.66 per frame average, 4 worst case
+worst frame = 13.653 ms = 41.0 % of a 30 fps budget
 ```
 
 ## Encoder acceleration

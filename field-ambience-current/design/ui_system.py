@@ -270,46 +270,39 @@ def _bands(rows_touched):
     return out
 
 
-def _chip_anchor(st, mo, i):
-    """Where the chip points, and whether it centres there.
+def _row(d, i, name, opts, amount, rv, sel, f):
+    """One row at reveal factor rv. Used by BOTH phases of a category change.
 
-    Continuous: the right end of the fill. Discrete: the CENTRE of the lit
-    slot — a chip parked at the track end points at the last option no matter
-    which one is selected.
+    Three columns: track | value | label. The value of EVERY row is drawn, so
+    you can always read what the other parameters currently are; the selected
+    row is marked by the chip and by full-strength type.
     """
-    opts = st.opts_of(i)
-    v = mo.fill[i].v
-    if opts is None:
-        return G.TRACK_X + max(G.TRACK_H, int(round(G.TRACK_W * v))), False
-    k = max(0, min(len(opts) - 1, int(round(v))))
-    x, w = G.seg_slot(len(opts), k)
-    return x + w // 2, True
-
-
-def _row(d, i, name, opts, amount, rv, f_small):
-    """One parameter row at reveal factor rv. Used by BOTH the outgoing and
-    the incoming phase of a category change, so the two can never drift."""
     y = G.row_y(i)
     if opts is not None:
         n = len(opts)
-        for k in range(n):
-            x, w = G.seg_slot(n, k)
+        k = max(0, min(n - 1, int(round(amount))))
+        for j in range(n):
+            x, w = G.seg_slot(n, j)
             G.pill(d, x, y, w, G.TRACK_H, G.WHITE, G.TRACK_A * rv)
         # the lit capsule SLIDES between slots, so a discrete parameter still
         # reads as one continuous control
-        k = max(0, min(n - 1, int(round(amount))))
         x0, w0 = G.seg_slot(n, k)
         kn = max(0, min(n - 1, k + (1 if amount > k else -1)))
         x1, _ = G.seg_slot(n, kn)
-        f = min(1.0, abs(amount - k))
-        sx = int(round(x0 + (x1 - x0) * f))
+        sx = int(round(x0 + (x1 - x0) * min(1.0, abs(amount - k))))
         G.pill(d, sx, y, max(4, int(round(w0 * rv))), G.TRACK_H, G.GREEN)
+        text = opts[k]
     else:
         G.pill(d, G.TRACK_X, y, G.TRACK_W, G.TRACK_H, G.WHITE, G.TRACK_A * rv)
         fw = max(G.TRACK_H, int(round(G.TRACK_W * amount * rv)))
         G.pill(d, G.TRACK_X, y, fw, G.TRACK_H, G.GREEN)
+        text = "%d%%" % round(amount * 100)
+
     if rv > 0.35:
-        d.text((G.LABEL_X, y), name, font=f_small, fill=G.WHITE, anchor="lm")
+        ink = G.WHITE if sel else tuple(G.WHITE) + (int(G.DIM_TEXT * 255),)
+        if not sel:
+            d.text((G.VAL_X, y), text, font=f, fill=ink, anchor="lm")
+        d.text((G.LABEL_X, y), name, font=f, fill=ink, anchor="lm")
 
 
 def render(st, mo):
@@ -322,10 +315,10 @@ def render(st, mo):
         "RGB").resize((G.W, G.H), Image.BICUBIC)
     d = ImageDraw.Draw(im, "RGBA")
     f_small, f_title = G.font(G.SZ_SMALL), G.font(G.SZ_TITLE)
+
     head_ci = st.ci if (mo.out is None or mo.swapped) else mo.out[0]
     head = G.CATS[head_ci][0]
     rows = G.CATS[st.ci][1]
-    # the title is the WORLD, which is what World in Field selects
     wi = st.values[(0, 0)]
     title = G.WORLD_NAMES[max(0, min(4, int(round(wi))))]
 
@@ -339,62 +332,37 @@ def render(st, mo):
 
     touched = []
     sel_moving = mo.sel.moving or mo.grow.moving
+    sel_i = int(round(mo.sel.v))
 
     if mo.out is not None:
         oci, ovals = mo.out
         for i, (name, opts, _) in enumerate(G.CATS[oci][1]):
             rv = mo.reveal_out(i)
             if rv > 0.005:
-                _row(d, i, name, opts, ovals.get(i, 0.0), rv, f_small)
+                _row(d, i, name, opts, ovals.get(i, 0.0), rv, False, f_small)
                 touched.append(i)
 
     for i, (name, opts, _) in enumerate(rows):
         rv = mo.reveal(i)
         if rv <= 0.005:
             continue
-        _row(d, i, name, opts, mo.fill[i].v, rv, f_small)
-
+        _row(d, i, name, opts, mo.fill[i].v, rv, i == sel_i, f_small)
         if (i in mo.fill and mo.fill[i].moving) or mo.revealing(i):
             touched.append(i)
 
-    # ONE chip, drawn at the interpolated position. Drawing a chip per row and
-    # cross-fading them put the value text on TWO rows at once for two frames
-    # of every selection move; a single chip that slides is both correct and
-    # the actual "selection shift" motion the interaction was missing.
-    if mo.reveal(int(mo.sel.v)) > 0.5:
+    # ONE chip, sliding vertically between rows. Its x is fixed now — the
+    # value column — so it can never cover a slot, a fill or a label, and the
+    # selection move is a clean vertical slide instead of a diagonal one.
+    if mo.reveal(sel_i) > 0.5:
         i0 = max(0, min(len(rows) - 1, int(math.floor(mo.sel.v))))
         i1 = max(0, min(len(rows) - 1, i0 + 1))
         f = mo.sel.v - i0
-        (e0, c0), (e1, c1) = _chip_anchor(st, mo, i0), _chip_anchor(st, mo, i1)
-        x_end = int(round(e0 + (e1 - e0) * f))
         y = int(round(G.ROW_0 + mo.sel.v * G.ROW_PITCH))
-        _bubble(d, x_end, y, st.text_for(i1 if f >= 0.5 else i0), f_small,
-                mo.grow.v, c1 if f >= 0.5 else c0)
+        G.chip(d, y, st.text_for(i1 if f >= 0.5 else i0), f_small, mo.grow.v)
         if sel_moving:
             touched += [i0, i1]
 
     return im, _bands(touched)
-
-
-def _bubble(d, x_end, y, text, f, grow, centre=False):
-    """Same capsule as ui_grid.bubble, with the grow factor animated.
-
-    Height interpolates from the track height to the measured bubble height,
-    and it is ROUNDED TO AN INT every frame — a capsule that is 15.4 px tall
-    does not exist on this panel, and letting it be fractional is how a
-    'smooth' animation turns into an edge that shimmers.
-    """
-    tw = int(d.textlength(text, font=f))
-    w = tw + 2 * G.BUBBLE_PAD
-    h = int(round(G.TRACK_H + (G.BUBBLE_H - G.TRACK_H) * grow))
-    h += h % 2                                   # keep the radius exact
-    x = x_end - w // 2 if centre else x_end - w
-    x = min(G.TRACK_X + G.TRACK_W - w, max(G.TRACK_X, x))
-    for k, a in ((3, 0.10), (1, 0.16)):          # halo only while editing
-        if grow > 0.02:
-            G.pill(d, x - k, y, w + 2 * k, h + 2 * k, G.GREEN, a * grow)
-    G.pill(d, x, y, w, h, G.GREEN)
-    d.text((x + w // 2, y), text, font=f, fill=G.WHITE, anchor="mm")
 
 
 # ------------------------------------------------------------------ script

@@ -58,10 +58,24 @@ W, H = 320, 170
 GRADIENT = "gradient_ref.png"
 
 # ------------------------------------------------------------- the grid (px)
+# THREE columns, because a value must never sit on top of another value.
+# The chip used to be drawn ON the track, so on a discrete row it covered the
+# neighbouring slots — "Open Sea" hid four of the five World options and
+# "Equal" hid both Tuning options. A value that hides the value next to it is
+# not a style question, it is the control lying about its own state.
+#
+# Widths are the measured worst cases at 10 px Bitcount:
+#   value  "Moss Fields" 66 px + 2*5 chip padding = 76
+#   label  "Atmosphere"  60 px, and LABEL_X + 60 = CONTENT_R exactly.
+#
+# Values are LEFT-aligned, not right-aligned against the label column. Right-
+# aligned they sat 6 px from the label and read as one phrase — "Dream FX",
+# "62% Atmosphere". Left-aligned, the ragged right edge keeps them apart.
 PAD_L, PAD_R = 22, 24
-TRACK_X, TRACK_W = 22, 187          # shared left axis
-COL_GAP = 16
-LABEL_X = TRACK_X + TRACK_W + COL_GAP        # 225 — the measured label axis
+TRACK_X, TRACK_W = 22, 126          # shared left axis
+COL_GAP = 6
+VAL_X = TRACK_X + TRACK_W + 8                # 156 — values LEFT-aligned here
+LABEL_X = 236                                # so the two columns never merge
 CONTENT_R = W - PAD_R                        # 296
 
 HEAD_MID = 16                       # breadcrumb + badge share this centre line
@@ -69,15 +83,12 @@ TITLE_BASE = 48
 ROW_0, ROW_PITCH = 68, 20           # centres 68 88 108 128 148
 TRACK_H, TRACK_R = 14, 7            # radius = h/2, a true pill
 BADGE_W, BADGE_H = 38, 12   # "100%" is 24 px; 7 px each side, as measured
-SEG_N, SEG_GAP = 4, 5
-
 # The value bubble on the row being edited. Measured off the reference: the
 # plain fill is 61 px tall and the bubble peaks at 71 — 16 % taller — centred
 # on the fill's right end. 14 * 1.16 = 16, and 16 is even so the radius is a
 # clean 8. It grows into the 6 px gap between rows by 1 px per side, which the
 # 20 px pitch absorbs.
-BUBBLE_H, BUBBLE_R, BUBBLE_PAD = 16, 8, 10
-SEG_W = (TRACK_W - SEG_GAP * (SEG_N - 1)) // SEG_N   # 43, exact
+BUBBLE_H, BUBBLE_R, BUBBLE_PAD = 16, 8, 5
 
 SZ_SMALL, SZ_LABEL, SZ_TITLE = 10, 10, 20    # the measured crisp sizes
 
@@ -85,6 +96,11 @@ GREEN = (12, 249, 149)
 GREEN_D = (10, 150, 92)
 WHITE = (255, 255, 255)
 TRACK_A = 0.12                      # measured off the reference
+# Unselected rows recede through their TYPE only. Alpha-blending the green
+# fill toward the pink turned it into a muddy olive that read as broken, not
+# as quiet — and it also made the value harder to read, which is the opposite
+# of the point. The fills stay fully saturated, as in the reference.
+DIM_TEXT = 0.62
 
 # --------------------------------------------------------------- the system
 # THE REAL ONE. Everything below is read out of the firmware, not invented:
@@ -155,7 +171,7 @@ def seg_gap(n):
     the gap shrinks as the count grows, so twelve slots still tile the same
     187 px track and stay individually visible.
     """
-    return 5 if n <= 5 else (3 if n <= 8 else 2)
+    return 4 if n <= 5 else (2 if n <= 9 else 1)
 
 
 def seg_slot(n, k):
@@ -185,32 +201,65 @@ def pill(d, x, y_mid, w, h, fill, alpha=1.0):
     d.rounded_rectangle([x, top, x + w - 1, bot], radius=h // 2, fill=fill)
 
 
-def bubble(d, x_end, y, text, f, centre=False):
-    """The value capsule at the fill's right end, 16 % taller than the track.
+def chip(d, y, text, f, grow=0.0):
+    """The focus marker: a capsule behind the value of the SELECTED row.
 
-    The value inside is WHITE, not dark. Sampling the reference's fill instead
-    of its glyphs is what made me call it dark green before; the brightest
-    pixel in that capsule is (255,255,255).
+    It lives in the value column, left-aligned with every other value, so it
+    can never cover a slot, a fill or a label. grow 0 -> browse (track height,
+    flat), grow 1 -> edit (16 px, halo). That is the "the one being changed is
+    slightly bigger" distinction, and it now has room to be bigger without
+    eating its neighbours.
     """
     tw = int(d.textlength(text, font=f))
     w = tw + 2 * BUBBLE_PAD
-    x = x_end - w // 2 if centre else x_end - w
-    x = min(TRACK_X + TRACK_W - w, max(TRACK_X, x))
-    for k, a in ((3, 0.10), (1, 0.16)):          # a two-step halo, not a blur:
-        pill(d, x - k, y, w + 2 * k, BUBBLE_H + 2 * k, GREEN, a)
-    pill(d, x, y, w, BUBBLE_H, GREEN)
+    h = int(round(TRACK_H + (BUBBLE_H - TRACK_H) * grow))
+    h += h % 2
+    x = VAL_X - BUBBLE_PAD
+    if grow > 0.02:
+        for k, a in ((3, 0.10), (1, 0.16)):
+            pill(d, x - k, y, w + 2 * k, h + 2 * k, GREEN, a * grow)
+    pill(d, x, y, w, h, GREEN)
     d.text((x + w // 2, y), text, font=f, fill=WHITE, anchor="mm")
 
 
-def screen(ci, pi):
+def row(d, i, name, opts, val, sel, mode_edit, f):
+    """One parameter row: track | value | label. Three columns, no overlap.
+
+    EVERY row shows its value, not only the selected one — you cannot decide
+    what to turn if you cannot read what the other rows currently are. The
+    selected row is marked by the chip behind its value and by full-strength
+    type; the others keep their fills but their type recedes.
+    """
+    y = row_y(i)
+    if opts is not None:
+        n = len(opts)
+        k = max(0, min(n - 1, int(round(val))))
+        for j in range(n):
+            x, w = seg_slot(n, j)
+            pill(d, x, y, w, TRACK_H, GREEN if j == k else WHITE,
+                 1.0 if j == k else TRACK_A)
+        text = opts[k]
+    else:
+        pill(d, TRACK_X, y, TRACK_W, TRACK_H, WHITE, TRACK_A)
+        pill(d, TRACK_X, y, max(TRACK_H, int(round(TRACK_W * val))), TRACK_H,
+             GREEN)
+        text = "%d%%" % round(val * 100)
+
+    ink = WHITE if sel else tuple(WHITE) + (int(DIM_TEXT * 255),)
+    if sel:
+        chip(d, y, text, f, 1.0 if mode_edit else 0.0)
+    else:
+        d.text((VAL_X, y), text, font=f, fill=ink, anchor="lm")
+    d.text((LABEL_X, y), name, font=f, fill=ink, anchor="lm")
+
+
+def screen(ci, pi, edit=False):
     head, rows = CATS[ci]
     im = Image.open(os.path.join(ASSETS, GRADIENT)).convert(
         "RGB").resize((W, H), Image.BICUBIC)
     d = ImageDraw.Draw(im, "RGBA")
     f_small, f_title = font(SZ_SMALL), font(SZ_TITLE)
 
-    # The title is the WORLD, which is state, and World is also a row in
-    # Field, which is the control. Showing both is correct, not redundant.
     world = WORLD_NAMES[CATS[0][1][0][2]]
     d.text((TRACK_X, HEAD_MID), head, font=f_small, fill=WHITE, anchor="lm")
     bx = CONTENT_R - BADGE_W
@@ -220,27 +269,7 @@ def screen(ci, pi):
     d.text((TRACK_X, TITLE_BASE), world, font=f_title, fill=WHITE, anchor="ls")
 
     for i, (name, opts, val) in enumerate(rows):
-        y = row_y(i)
-        if opts is not None:
-            n = len(opts)
-            for k in range(n):
-                x, w = seg_slot(n, k)
-                pill(d, x, y, w, TRACK_H, GREEN if k == val else WHITE,
-                     1.0 if k == val else TRACK_A)
-            # centred on the LIT slot, not at the track end: a chip parked on
-            # the right edge points at the last option no matter which one is
-            # actually selected. It may overhang its slot — that is fine, it
-            # is anchored to the right place.
-            sx, sw = seg_slot(n, val)
-            end, text, mid = sx + sw // 2, opts[val], True
-        else:
-            pill(d, TRACK_X, y, TRACK_W, TRACK_H, WHITE, TRACK_A)
-            fw = max(TRACK_H, int(round(TRACK_W * val)))
-            pill(d, TRACK_X, y, fw, TRACK_H, GREEN)
-            end, text, mid = TRACK_X + fw, "%d%%" % round(val * 100), False
-        if i == pi:
-            bubble(d, end, y, text, f_small, mid)
-        d.text((LABEL_X, y), name, font=f_small, fill=WHITE, anchor="lm")
+        row(d, i, name, opts, val, i == pi, edit, f_small)
     return im
 
 
@@ -249,7 +278,7 @@ def grid_overlay(im):
     top, so a misaligned element is visible instead of arguable."""
     im = im.copy()
     d = ImageDraw.Draw(im, "RGBA")
-    for x in (TRACK_X, TRACK_X + TRACK_W, LABEL_X, CONTENT_R):
+    for x in (TRACK_X, TRACK_X + TRACK_W, VAL_X, LABEL_X, CONTENT_R):
         d.line([(x, 0), (x, H - 1)], fill=(0, 200, 255, 130))
     for i in range(5):
         y = row_y(i)
@@ -262,7 +291,8 @@ def grid_overlay(im):
 def check():
     """Every number that reaches a draw call must be an int."""
     ints = dict(PAD_L=PAD_L, PAD_R=PAD_R, TRACK_X=TRACK_X, TRACK_W=TRACK_W,
-                COL_GAP=COL_GAP, LABEL_X=LABEL_X, CONTENT_R=CONTENT_R,
+                COL_GAP=COL_GAP, VAL_X=VAL_X, LABEL_X=LABEL_X,
+                CONTENT_R=CONTENT_R,
                 HEAD_MID=HEAD_MID, TITLE_BASE=TITLE_BASE, ROW_0=ROW_0,
                 ROW_PITCH=ROW_PITCH, TRACK_H=TRACK_H, BADGE_W=BADGE_W,
                 BADGE_H=BADGE_H)
@@ -272,26 +302,39 @@ def check():
         x, w = seg_slot(n, n - 1)
         assert x + w + seg_gap(n) == TRACK_X + TRACK_W, \
             "%d slots do not close on the track width" % n
-    assert TRACK_X + TRACK_W + COL_GAP == LABEL_X
+    assert VAL_X - BUBBLE_PAD >= TRACK_X + TRACK_W, "chip lane hits the track"
     assert row_y(4) + TRACK_H // 2 < H - 12, "no bottom margin left"
     assert TRACK_R * 2 == TRACK_H, "radius must be exactly half the height"
+
+    # THE NO-OVERLAP RULE, checked against every string the UI can show.
+    f = font(SZ_SMALL)
+    d = ImageDraw.Draw(Image.new("RGB", (W, H)))
+    for cat, rows in CATS:
+        for name, opts, _ in rows:
+            assert LABEL_X + d.textlength(name, font=f) <= CONTENT_R, \
+                "label '%s' runs past the content edge" % name
+            for s in (opts or ["100%"]):
+                w = int(d.textlength(s, font=f)) + 2 * BUBBLE_PAD
+                assert VAL_X - BUBBLE_PAD + w <= LABEL_X - 4, \
+                    "chip for '%s' would reach the label column" % s
     return ints
 
 
-SHOTS = [("01_field", 0, 0), ("02_harmony", 1, 0), ("03_tone", 2, 1),
-         ("04_shape", 3, 2), ("05_air", 4, 0)]
+SHOTS = [("01_field_browse", 0, 0, False), ("02_field_edit", 0, 0, True),
+         ("03_harmony", 1, 0, True), ("04_tone", 2, 1, True),
+         ("05_shape", 3, 2, False), ("06_air", 4, 0, True)]
 
 
 def main():
     ints = check()
     out = os.path.join(HERE, "out", "grid")
     os.makedirs(out, exist_ok=True)
-    for tag, ci, pi in SHOTS:
-        im = screen(ci, pi)
+    for tag, ci, pi, ed in SHOTS:
+        im = screen(ci, pi, ed)
         im.save(os.path.join(out, "%s_1x.png" % tag))
         im.resize((W * 6, H * 6), Image.NEAREST).save(
             os.path.join(out, "%s_6x.png" % tag))
-    grid_overlay(screen(0, 0)).resize((W * 6, H * 6), Image.NEAREST).save(
+    grid_overlay(screen(0, 0, True)).resize((W * 6, H * 6), Image.NEAREST).save(
         os.path.join(out, "00_grid_6x.png"))
     print("authored at %dx%d, previewed by integer NEAREST only" % (W, H))
     print("  type scale (measured crisp sizes): %d / %d px"
