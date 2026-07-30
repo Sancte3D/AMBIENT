@@ -2,6 +2,27 @@
 
 **Updated: 2026-07-20 (r19.41 — Master-Effects-Engine integriert; davor r19.38–r19.40 Realtime-Safety, r19.37 PAM8406-Endstufe + Gain-Staging)**
 
+> **2026-07-30 — Audit des externen Fertigungspakets (kein Release-Tag):** Das
+> gelieferte Paket „Field Ambience Source files" (eigenständiges KiCad-Projekt
+> + Gerber + BOM + CPL, **nicht** aus `generate_kicad_project.py`) wurde
+> vollständig geprüft: Netzliste aus der Platine rekonstruiert, Pinouts gegen
+> die verifizierten Generator-Symbole und gegen `hal_h743` gespiegelt,
+> Geometrie/Gerber/Drill/BOM/CPL durchgerechnet. **Ergebnis: NICHT fertigen.**
+> 7 Blocker — 0402-Chipdrossel (1,8 µH) als Boost-Speicherdrossel, der komplette
+> Boost-Eingangsstrom über den 50-mA-Schiebeschalter SW2, kein Pull-down auf
+> `PWR_ON`, USB-C A6/A7 unbeschaltet (D+/D− nur in einer Steckrichtung), LED17
+> verpolt, PCA9685 im Totem-Pole-Modus gegen 5-V-Pull-ups, MIDI-Buchse CN5 auf
+> den falschen Kontakten. Dazu 15 wichtige Punkte (VBAT offen, VREF+ nicht an
+> VDDA, 2 von 4 Encodern auf Pins ohne Timer-Quadratur, keine durchgehende
+> GND-Lage, DRC-Severities auf „ignore", NPTH als PTH exportiert) und
+> Regressionen gegen r19.37 (PAM8403 statt PAM8406 → Gain-Staging-Fix nicht
+> anwendbar; 1 µF statt 10 nF Koppel-C). Sauber: BOM/CPL/PCB 1:1 konsistent,
+> keine floatenden Netze, keine Pour-Kurzschlüsse, STM32-Entkopplung,
+> BQ24074-Beschaltung, SAI/QSPI/MCP-Pinmap deckungsgleich mit der Firmware.
+> Vollständiger Befundbericht mit Severity, Wirkung und Fix je Punkt:
+> `field-ambience-current/docs/hardware/EXT_LAYOUT_AUDIT_2026-07-30.md`.
+> Host-Suite unverändert grün (reine Doku-Änderung).
+
 > **r19.41 (2026-07-20) — Master-Effects-Integration:** Die gelieferte
 > Effects-Engine (`effects-engine/`) ersetzt die Legacy-Master-Kette im
 > Produktpfad. `render_ambient`: echo/blur/tape/shimmer + Master-Reverb raus,
