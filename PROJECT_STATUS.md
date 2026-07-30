@@ -8,7 +8,7 @@
 > vollständig geprüft: Netzliste aus der Platine rekonstruiert, Pinouts gegen
 > die verifizierten Generator-Symbole und gegen `hal_h743` gespiegelt,
 > Geometrie/Gerber/Drill/BOM/CPL durchgerechnet. **Ergebnis: NICHT fertigen.**
-> 6 Blocker — 0402-Chipdrossel (1,8 µH) als Boost-Speicherdrossel, der komplette
+> Bericht-Fassung 2. 6 Blocker — 0402-Chipdrossel (1,8 µH) als Boost-Speicherdrossel, der komplette
 > Boost-Eingangsstrom über den 50-mA-Schiebeschalter SW2, kein Pull-down auf
 > `PWR_ON`, USB-C A6/A7 unbeschaltet (D+/D− nur in einer Steckrichtung),
 > PCA9685 im Totem-Pole-Modus gegen 5-V-Pull-ups, MIDI-Buchse CN5 auf den
