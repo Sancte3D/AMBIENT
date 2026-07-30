@@ -9,7 +9,7 @@ Kasten direkt darunter.
 > 198,8 × 106,9 mm, 4 Lagen) samt Gerbern, BOM und CPL entstanden — es stammt
 > **nicht** aus `kicad/generate_kicad_project.py`. Vollständiges Audit dieses
 > Pakets: **`docs/hardware/EXT_LAYOUT_AUDIT_2026-07-30.md`**. Ergebnis:
-> **nicht fertigungsreif** — 7 Blocker (u. a. 0402-Drossel im Boost-Pfad,
+> **nicht fertigungsreif** — 6 Blocker (u. a. 0402-Drossel im Boost-Pfad,
 > Boost-Eingangsstrom über einen 50-mA-Schiebeschalter, USB-C D+/D− nur in
 > einer Steckrichtung), dazu Regressionen gegen r19.37 (PAM8403 statt PAM8406).
 

@@ -8,11 +8,15 @@
 > vollständig geprüft: Netzliste aus der Platine rekonstruiert, Pinouts gegen
 > die verifizierten Generator-Symbole und gegen `hal_h743` gespiegelt,
 > Geometrie/Gerber/Drill/BOM/CPL durchgerechnet. **Ergebnis: NICHT fertigen.**
-> 7 Blocker — 0402-Chipdrossel (1,8 µH) als Boost-Speicherdrossel, der komplette
+> 6 Blocker — 0402-Chipdrossel (1,8 µH) als Boost-Speicherdrossel, der komplette
 > Boost-Eingangsstrom über den 50-mA-Schiebeschalter SW2, kein Pull-down auf
-> `PWR_ON`, USB-C A6/A7 unbeschaltet (D+/D− nur in einer Steckrichtung), LED17
-> verpolt, PCA9685 im Totem-Pole-Modus gegen 5-V-Pull-ups, MIDI-Buchse CN5 auf
-> den falschen Kontakten. Dazu 15 wichtige Punkte (VBAT offen, VREF+ nicht an
+> `PWR_ON`, USB-C A6/A7 unbeschaltet (D+/D− nur in einer Steckrichtung),
+> PCA9685 im Totem-Pole-Modus gegen 5-V-Pull-ups, MIDI-Buchse CN5 auf den
+> falschen Kontakten. **Nachprüfung auf Rückfrage: ein siebter Blenderbefund
+> („LED17 verpolt") war ein Prüffehler meinerseits und wurde zurückgezogen** —
+> die Silk-Fase markiert bei allen vier LED-Footprints die Kathode, das Kupfer
+> ist richtig; es bleibt eine Symbol/Footprint-Inkonsistenz (I16). Dazu
+> 16 wichtige Punkte (VBAT offen, VREF+ nicht an
 > VDDA, 2 von 4 Encodern auf Pins ohne Timer-Quadratur, keine durchgehende
 > GND-Lage, DRC-Severities auf „ignore", NPTH als PTH exportiert) und
 > Regressionen gegen r19.37 (PAM8403 statt PAM8406 → Gain-Staging-Fix nicht

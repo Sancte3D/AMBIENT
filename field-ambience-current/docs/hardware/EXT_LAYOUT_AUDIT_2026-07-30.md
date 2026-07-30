@@ -14,8 +14,10 @@ BOM/CPL/PCB-Designator-Abgleich, Gerber-/Drill-/Job-File-Inspektion.
 
 **Ergebnis in einem Satz:** **Nein — so nicht fertigen.** Das Paket ist formal
 sauber (BOM/CPL/PCB 1:1 konsistent, keine floatenden Netze, keine
-Pour-Kurzschlüsse), hat aber **7 Blocker**, davon zwei, die den 5-V-Zweig beim
+Pour-Kurzschlüsse), hat aber **6 Blocker**, davon zwei, die den 5-V-Zweig beim
 ersten Einschalten zerstören können.
+(Ein siebter, B5, stand in der ersten Fassung und wurde bei der Nachprüfung als
+Fehlbefund zurückgezogen — siehe §6b.)
 
 > **Wichtiger Hinweis vorab:** Dieses Layout ist **nicht** aus
 > `kicad/generate_kicad_project.py` entstanden. Es ist ein eigenständiges,
@@ -81,15 +83,14 @@ ersten Einschalten zerstören können.
   die im Bring-up tagelang als „defekte Platine" fehlgedeutet wird.
 - **Fix:** A6→B6 und A7→B7 direkt an der Buchse verbinden.
 
-### B5 · LED17 ist verpolt 🔴
+### ~~B5 · LED17 ist verpolt~~ → **ZURÜCKGEZOGEN**, siehe I16 🟠
 
-- **Was:** `XL-1608UOC-06` hat laut Symbol **Pin 1 = K, Pin 2 = A**. Auf der
-  Platine: `LED17.1 (K) → R45 → +5V`, `LED17.2 (A) → PCA9685 Kanal 9`.
-- **Warum kritisch:** Alle anderen 16 LEDs sind korrekt A → R → +5 V und
-  K → PCA-Senke (auch die baugleichen LED14–16, `XL-1608UWC-04`, mit
-  identischer Pin-Konvention). LED17 ist als einzige gedreht.
-- **Was ausfällt:** LED17 leuchtet nie. Kein Bodge ohne Leiterbahn-Schnitt.
-- **Fix:** LED17 im Schaltplan drehen.
+> **Korrektur (Nachprüfung 2026-07-30):** Dieser Punkt stand ursprünglich als
+> Blocker („LED17 leuchtet nie") in diesem Bericht. Er war **falsch** — der
+> Fehler lag in der Prüfung, nicht im Layout. Die Verpolung war allein aus den
+> Symbol-Pinnamen abgeleitet, ohne die Polaritätsmarkierung im Footprint zu
+> prüfen. Das Kupfer auf der Platine ist **korrekt**. Was bleibt, ist eine
+> Bibliotheks-Inkonsistenz — als **I16** in §2 heruntergestuft.
 
 ### B6 · PCA9685 treibt LEDs gegen +5 V, Firmware konfiguriert Totem-Pole 🔴
 
@@ -111,17 +112,26 @@ ersten Einschalten zerstören können.
 ### B7 · MIDI-Out-Buchse CN5 liegt auf den falschen Kontakten 🔴
 
 - **Was:** CN2 und CN5 sind dasselbe Bauteil (`PJ-320D`, C431535) mit demselben
-  Footprint. Bei **CN2** liegt GND auf **Pad 3**, Audio L/R auf Pad 1/2, der
-  Schaltkontakt (Jack-Detect) auf Pad 4. Bei **CN5** liegt GND auf **Pad 1**,
+  Footprint. Bei **CN2** liegt GND auf **Pad 3**, zwei Signale über je 33 Ω auf
+  Pad 1/2, ein Pull-up-Zweig auf Pad 4. Bei **CN5** liegt GND auf **Pad 1**,
   R50 (10 k → 3,3 V) auf Pad 2, R49 (220 Ω ← USART2_TX) auf **Pad 4**, und
   **Pad 3 ist unbeschaltet**.
-- **Warum kritisch:** Zwei identische Bauteile mit widersprüchlicher
-  Pin-Belegung — mindestens eine der beiden Buchsen ist falsch verdrahtet.
-  Unabhängig davon ist das CN5-Netzwerk kein MIDI-TRS-Type-A-Ausgang: der
-  „+"-Zweig braucht ~33 Ω gegen 3,3 V (CA-033), nicht 10 kΩ. Über 10 kΩ lässt
-  sich die 5-mA-Stromschleife eines MIDI-Optokopplers nicht treiben.
-- **Was ausfällt:** MIDI-Out tot; bei CN2 im schlechtesten Fall Audio auf dem
-  Schaltkontakt statt auf Tip/Ring.
+- **Warum kritisch — zwei voneinander unabhängige, beweisbare Punkte:**
+  1. **Widerspruch:** Zwei Instanzen desselben Footprints belegen GND auf
+     verschiedenen Pads (3 vs. 1). Welche Pad↔Kontakt-Zuordnung auch immer
+     stimmt — **beide können nicht richtig sein.** Das ist reine Netzlisten-
+     Arithmetik und hängt an keiner Datenblatt-Annahme.
+  2. **Rechnung:** Über 10 kΩ liefert ein 3,3-V-Zweig maximal 0,33 mA. Die
+     MIDI-Stromschleife braucht 5 mA. R50 kann den Optokoppler eines
+     MIDI-Eingangs **um den Faktor 15 nicht treiben**, unabhängig davon, auf
+     welchem Kontakt er landet.
+- **Was ausfällt:** MIDI-Out tot. Zusätzlich floatet bei CN5 ein Kontakt
+  (Pad 3), und an einer der beiden Buchsen liegt ein Signal auf dem falschen
+  Kontakt.
+- **Nicht Teil des Befunds:** *welche* der beiden Buchsen die falsche ist —
+  das lässt sich ohne die Pad↔Kontakt-Zuordnung des PJ-320D nicht sagen. Die
+  Pad-Geometrie im Footprint (Pad 2/3/4 an der Unterkante, Pad 1 allein an der
+  Oberkante, Barrel bei −x) reicht dafür nicht aus.
 - **Fix:** Pad↔Kontakt-Zuordnung des PJ-320D gegen das Datenblatt festnageln
   (`PJ-320D Pad-/Kontakt-Zuordnung: UNVERIFIED — NEEDS HUMAN CHECK`), dann
   beide Buchsen konsistent neu verdrahten. MIDI: Tip ← 33 Ω ← USART2_TX,
@@ -148,6 +158,7 @@ ersten Einschalten zerstören können.
 | **I13** | **Akku-NTC R13 sitzt auf der Platine, nicht an der Zelle** | R13 (NCP15XH103) liegt in der Power-Ecke neben Lader und Boost → BQ24074-TS misst Platinentemperatur. Unter Last droht ein Temperatur-Fault, der das Laden abbricht. Das Repo verwendet bewusst einen festen 10 k statt eines NTC | Festwiderstand 10 k **oder** NTC an die Zelle (Pack-NTC über CN1) |
 | **I14** | **PCA9685 EXTCLK (Pin 25) floatet** | CMOS-Eingang, laut NXP nicht offen lassen | auf VSS legen |
 | **I15** | **PSRAM-Exposed-Pad (U9 Pad 9) unbeschaltet** | Thermik/EMV | auf GND |
+| **I16** | **Bibliotheks-Teil `XL-1608UOC-06` (LED17) ist in sich widersprüchlich** — Symbol sagt Pin 1 = K, der Footprint `LED0603-R-RD_ORANGE` legt **Pad 1 auf das Anoden-Ende** (Polaritäts-Fase im Silk bei −x, dort sitzt Pad 2) | **Das Kupfer ist korrekt** — LED17 ist richtig herum verdrahtet. Aber: der Schaltplan zeigt „K" auf der +5-V-Seite, KiCad-Netznamen und ERC lügen entsprechend, und die Bestückungs-Orientierung von LEDs referenziert bei JLC auf Pad 1 | Symbol/Footprint-Paarung geradeziehen. **Vor Bestellung mit dem Bestücker abklären, ob die LED-Drehung für C965800 auf Pad 1 oder auf die Fase referenziert** |
 
 ---
 
@@ -253,6 +264,52 @@ unbrauchbar:
 
 ---
 
+## 6b · Belastbarkeit der Befunde (wie sicher ist was?)
+
+Nicht jeder Punkt oben steht auf demselben Fundament. Wer den Bericht gegenprüft,
+sollte wissen, wo er ansetzen muss.
+
+**Klasse A — direkt aus den gelieferten Dateien, jederzeit nachrechenbar.**
+Kein Datenblatt-Wissen nötig, kein Ermessen. Wer die Dateien öffnet, sieht
+dasselbe: B2, B3, B4, I1, I5, I6, I7, I8, I9, I10, I16, der Widerspruch in B7,
+sämtliche Punkte in §6, und alles in §7. Bei B4 schreibt die Platine die
+Nicht-Verbindung sogar wörtlich hin (`unconnected-(USBC1-DP1-PadA6)`).
+
+**Klasse B — Datei plus einfache Rechnung.** B1 (Package aus BOM und Pad-Maß;
+dass ein 0402-Chipinduktor keine 2 A führt, ist keine Grenzfall-Einschätzung),
+die 10-kΩ-Rechnung in B7, I9.
+
+**Klasse C — hängt an Datenblatt-Angaben, die hier aus dem Gedächtnis stammen.
+Hier bitte gegenprüfen:**
+
+| Punkt | Die Annahme | Warum sie trotzdem trägt |
+|---|---|---|
+| **B2** | SSSS811101 ist mit ~12 V / 50 mA spezifiziert | Der exakte Wert ist zu prüfen. Qualitativ ändert er nichts: ein ALPS-Signal-Schiebeschalter ist kein 2-A-Lastschalter |
+| **B6** | PCA9685-LEDn sind nur im Open-Drain-Modus 5,5-V-tolerant; im Totem-Pole gilt VDD+0,5 V | **Der Punkt, den ich am ehesten gegenprüfen lassen würde.** Nachlesen in NXP PCA9685, „Limiting values" + `MODE2`/`OUTDRV` |
+| **I3** | PC4/PC5 haben auf dem H743 keine TIM-AF; PB0/PB1 nur CH3/CH4/CHxN | Gegen DS12110 „Alternate function mapping" prüfen. Falls doch ein CH1/CH2 existiert, entfällt der halbe Punkt (die Kollision mit `hal_h743` aus I4 bleibt) |
+| **R1** | PAM8403 hat feste +24 dB ohne externe Gain-Widerstände | Wird vom eigenen Repo gestützt: r19.37/ADR-0025 hat genau deshalb auf den PAM8406 mit externem RI gewechselt |
+
+**Zwei Gegenprüfungen, bei denen die MCU-Analyse an einem zweiten, unabhängigen
+Zeugen hängt:** Das STM32-Symbol in Arons Projekt (`STM32H743VIT6_C114409`)
+wurde Pin für Pin gegen die im Repo aus DS12110 verifizierte Pin-Tabelle
+gestellt — **60 von 60 geprüften Pins stimmen überein**, einzige Abweichung sind
+die Namen „VCAP" statt „VCAP1"/„VCAP2". I1 (VBAT offen) und der komplette
+Pinmap-Vergleich in §4 stehen damit auf zwei voneinander unabhängigen Quellen.
+
+**Drei Punkte, die in der ersten Fassung dieses Berichts falsch waren oder
+falsch geworden wären** — hier zur Ehrlichkeit dokumentiert:
+
+1. `R_FSW` gegen den SW-Knoten sah nach einem Verdrahtungsfehler aus. Ist
+   **korrekt** (TI SLVSD38C Table 6-1) — vor Aufnahme in den Bericht am
+   Repo-Generator geprüft und verworfen.
+2. `ITERM` (U2 Pin 15) offen sah nach einem fehlenden Widerstand aus. Ist der
+   **Datenblatt-Default** (10 % Termination) — ebenfalls vorab verworfen.
+3. **B5 („LED17 verpolt") war ein echter Fehlbefund** und stand bis zur
+   Nachprüfung als Blocker im Bericht. Er entstand aus den Symbol-Pinnamen
+   ohne Blick auf die Polaritätsmarkierung im Footprint. Nachgerechnet über
+   alle vier LED-Footprints: die Silk-Fase markiert durchgängig die Kathode,
+   und bei LED17 sitzt dort Pad 2 — die Platine ist richtig. Bleibt als I16.
+
 ## 7 · Was sauber ist (geprüft, keine Beanstandung)
 
 - **BOM ↔ CPL ↔ PCB sind 1:1 konsistent:** 195 Designatoren in Platine und
@@ -279,7 +336,12 @@ unbrauchbar:
   Eingänge single-ended mit IN+ auf GND, EP auf GND ✅.
 - **PCM5102A / APS6404L / MCP23017 / PCA9685:** Pin-Zuordnungen gegen die
   Symbole geprüft, keine Vertauschung.
-- **USB-ESD (USBLC6-2SC6) vorhanden, CC1/CC2 mit 5,1 k** ✅.
+- **LED-Polarität aller 17 LEDs auf Footprint-Ebene geprüft** (Silk-Fase =
+  Kathode, gegen alle vier LED-Footprints abgeglichen): **alle 17 sind auf der
+  Platine richtig herum** ✅. Nur die Symbol/Footprint-Paarung von LED17 ist
+  inkonsistent (I16).
+- **USB-ESD (USBLC6-2SC6) vorhanden, CC1/CC2 mit 5,1 k** ✅. D+/D− laufen bei
+  D1 kanalrein durch (Pin 3→4 und Pin 1→6) ✅.
 - **Board-Outline geschlossen**, 198,84 × 106,92 mm, 4 Lagen, 1,6 mm,
   Vias 0,6/0,3 mm, Innenlagen-Clearance 0,127 mm — alles innerhalb der
   JLC-Standardkapazität.
@@ -290,11 +352,11 @@ unbrauchbar:
 
 1. **B1 + B2 + B3 zusammen** — Power-Stage neu zeichnen und neu platzieren
    (Drossel, Schalterpfad, Pull-down, Eingangs-C an den IC).
-2. **B4, B5, B7** — reine Netzlisten-Korrekturen.
+2. **B4, B7** — reine Netzlisten-Korrekturen.
 3. **B6** — Firmware-Einzeiler (`MODE2 = 0x00`), sofort machbar.
 4. **R1 + R2 + R4** — Audio-Front-End auf den r19.37-Stand ziehen und das
    LDO-Pinout verifizieren.
-5. **I1, I2, I14, I15** — vier kleine Netzlisten-Ergänzungen.
+5. **I1, I2, I14, I15, I16** — kleine Netzlisten-/Bibliotheks-Korrekturen.
 6. **I3 + I4** — Encoder-Pins gerade ziehen, danach Firmware-Port planen.
 7. **I6** — Lagenaufbau auf SPEC §9.
 8. **I7 + I8** — DRC-Severities zurücksetzen, NPTH korrigieren, Gerber neu
