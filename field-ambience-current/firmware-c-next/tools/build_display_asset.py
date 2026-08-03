@@ -151,6 +151,10 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--source", help=f"background at {HIRES[0]}x{HIRES[1]} "
                                      f"(or any 32:17 image); omit to generate one")
+    ap.add_argument("--cover", action="store_true",
+                    help="source is NOT 32:17: scale proportionally to cover "
+                         f"{HIRES[0]}x{HIRES[1]} and centre-crop the overflow. "
+                         "Never squashes — X and Y always share one factor.")
     ap.add_argument("--out", required=True, help="output stem")
     ap.add_argument("--resample", choices=("lanczos", "area", "bicubic"), default="lanczos")
     ap.add_argument("--sharpen", type=int, default=110, help="UnsharpMask percent, 0 = off")
@@ -162,12 +166,27 @@ def main() -> int:
     # 1-2 — full-resolution composition
     if a.source:
         hi = Image.open(a.source).convert("RGB")
-        if abs(hi.width / hi.height - PANEL[0] / PANEL[1]) > 0.01:
-            return (f"{a.source} is {hi.width}x{hi.height}; aspect must be 32:17 "
-                    f"({PANEL[0]}:{PANEL[1]}). Re-export the frame.")
-        if hi.size != HIRES:
-            print(f"note: source is {hi.width}x{hi.height}, working size is "
-                  f"{HIRES[0]}x{HIRES[1]}")
+        target = PANEL[0] / PANEL[1]
+        if abs(hi.width / hi.height - target) > 0.01:
+            if not a.cover:
+                keep_h = round(hi.width / target)
+                return (f"{a.source} is {hi.width}x{hi.height} (aspect "
+                        f"{hi.width/hi.height:.3f}); the panel is {target:.3f}. "
+                        f"Re-export at 32:17, or pass --cover to crop to "
+                        f"{hi.width}x{keep_h} — {(hi.height-keep_h)//2} px off the top "
+                        f"and bottom. Refusing to scale X and Y by different factors: "
+                        f"that squashes circles, corner radii and type.")
+            # proportional cover: ONE factor for both axes, then centre-crop
+            k = max(HIRES[0] / hi.width, HIRES[1] / hi.height)
+            nw, nh = round(hi.width * k), round(hi.height * k)
+            hi = hi.resize((nw, nh), Image.LANCZOS)
+            l, tp = (nw - HIRES[0]) // 2, (nh - HIRES[1]) // 2
+            hi = hi.crop((l, tp, l + HIRES[0], tp + HIRES[1]))
+            print(f"cover: scaled x{k:.4f} on BOTH axes, cropped "
+                  f"{(nw-HIRES[0])//2} px left/right, {(nh-HIRES[1])//2} px top/bottom")
+        elif hi.size != HIRES:
+            hi = hi.resize(HIRES, Image.LANCZOS)
+            print(f"note: source rescaled proportionally to {HIRES[0]}x{HIRES[1]}")
     else:
         hi = compose_background(*HIRES)
 
@@ -194,8 +213,17 @@ def main() -> int:
         raw.append(v & 0xFF)
     stem.with_suffix(".rgb565").write_bytes(raw)
     prev.save(stem.with_suffix(".565.png"))
+    # inspection preview only — 4x nearest = 1280x680. Never a design source.
     prev.resize((PANEL[0] * 4, PANEL[1] * 4), Image.NEAREST) \
         .save(stem.with_suffix(".lcdzoom.png"))
+
+    for src, dst in [(".hires.png", "_master_1920x1020_rgb888.png"),
+                     (".320.png",   "_downsampled_320x170_rgb888.png"),
+                     (".565.png",   "_final_320x170_rgb565.png"),
+                     (".lcdzoom.png", "_pixel_preview_1280x680_nearest.png")]:
+        p = stem.with_suffix(src)
+        if p.exists():
+            (stem.parent / (stem.name + dst)).write_bytes(p.read_bytes())
 
     print(f"1-2  composition   {hi.width}x{hi.height}   {stem.with_suffix('.hires.png')}")
     print(f"3-4  downsample    {a.resample} + unsharp {a.sharpen}%   "
