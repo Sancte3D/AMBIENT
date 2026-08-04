@@ -140,6 +140,31 @@ void oled_init(void) {
     run_init_sequence();
 }
 
+/* --- raw RGB565 streaming ------------------------------------------------
+ * oled_show() below owns the 4-bit-grey path the menu UI uses. These three
+ * expose the same address-window + stream sequence for callers that already
+ * hold finished RGB565 rows — the design bench composites a flash-resident
+ * background with live foreground straight into a line buffer, so it never
+ * builds a framebuffer at all. Keeping them here means the ST7789 command
+ * sequence has exactly one home. */
+void lcd_set_window_full(void) {
+    uint16_t xs = OLED_LCD_X_OFFSET, xe = OLED_LCD_X_OFFSET + OLED_WIDTH  - 1;
+    uint16_t ys = OLED_LCD_Y_OFFSET, ye = OLED_LCD_Y_OFFSET + OLED_HEIGHT - 1;
+    cmd(ST_CASET); { const uint8_t d[4] = { (uint8_t)(xs >> 8), (uint8_t)xs,
+                                            (uint8_t)(xe >> 8), (uint8_t)xe }; data(d, 4); }
+    cmd(ST_RASET); { const uint8_t d[4] = { (uint8_t)(ys >> 8), (uint8_t)ys,
+                                            (uint8_t)(ye >> 8), (uint8_t)ye }; data(d, 4); }
+    cmd(ST_RAMWR);
+}
+
+void lcd_stream_begin(void) { lcd_dc(true); lcd_cs(true); }
+
+void lcd_stream_row(const uint8_t *row, size_t n) {
+    spi_write_blocking(LCD_SPI, row, n);
+}
+
+void lcd_stream_end(void) { lcd_cs(false); }
+
 /* Address-window the full visible area, then stream the framebuffer converting
  * each 4-bit grey pixel to RGB565 a row at a time (640 B per row → 170 rows). */
 void oled_show(void) {
