@@ -319,6 +319,17 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/bench_test"
 "$tmp/bench_test"
 
+# Candidate 320x170 layouts: Bitcount stays on its ppem grid, and nothing a
+# layout draws escapes the glass card. See tools/ui_layouts.h for the
+# legibility arithmetic these guard.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" -I"$src/assets" \
+    "$here/test_ui_layouts.c" \
+    "$src/tools/ui_layouts.c" "$src/assets/plate_plain.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/ui_layouts_test"
+"$tmp/ui_layouts_test"
+
 # r19.6: equal / just intonation layer (pure ratios, bit-exact ET).
 "$CC" "${CFLAGS[@]}" \
     "$here/test_tuning.c" \

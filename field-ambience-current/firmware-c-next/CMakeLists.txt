@@ -296,14 +296,16 @@ elseif(FAM_TARGET STREQUAL "pico")
     pico_enable_stdio_uart(display_hw_test 0)
     pico_add_extra_outputs(display_hw_test)
 
-    # --- design_bench: the approved artwork on the real panel, bars live ----
+    # --- design_bench: the three candidate layouts on the real panel --------
     # Same breadboard and same pins as display_hw_test. Composites the baked
-    # RGB565 plate (assets/plate_bg.c, flash-resident) with live bar fills a
-    # row at a time — no framebuffer, just two line buffers.
+    # RGB565 plate (assets/plate_plain.c, flash-resident) with live UI a row at
+    # a time — no framebuffer, just two line buffers. SHIFT + push cycles
+    # A FOCUS / B CONTEXT / C PAGES so all three can be judged on real glass.
     add_executable(design_bench
         tools/design_bench_pico.c
+        tools/ui_layouts.c
         src/hal_pico/lcd_st7789_pico.c
-        assets/plate_bg.c
+        assets/plate_plain.c
         src/oled_draw.c
         src/oled_color.c
         src/baked_font.c
@@ -312,6 +314,7 @@ elseif(FAM_TARGET STREQUAL "pico")
     target_include_directories(design_bench PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools
     )
     target_compile_definitions(design_bench PRIVATE
         LCD_SPI_HZ=24000000

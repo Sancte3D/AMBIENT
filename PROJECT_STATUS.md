@@ -663,6 +663,11 @@ product build.
 | **Display für diesen PCB-Rev: 1.9″ EINGEFROREN** | ✅ r18.64 — User-Entscheidung „1,9 zoll reicht safe"; verifiziert + im Schematic. Entblockt das Layout. |
 | **Panel-Hardware-Pivot 1.9″ → 2.0″ (physisches Modul)** | ⏳ **Rev-B** ADR-0015 — kein Blocker mehr; später wenn User reales 2.0″-Modul (SKU/Pin-Order/Maße) verifiziert |
 | **Voller RGB565-FB + DMA-Animationen** | ⏳ ADR-0015 D4 — nach Hardware-Pivot |
+| **6-Zeilen-Parameterliste (Figma-Entwurf) auf dem Panel** | ❌ verworfen — Labels lagen bei 6,4′ Sehwinkel (0,75 mm Ziffernhöhe bei 0,125 mm/px). Sechs beschriftete Zeilen passen bei keiner lesbaren Größe: eine lesbare Zeile kostet 36 px, das Panel hat 170. Siehe ADR-0026 |
+| **Drei Dichte-Kandidaten A FOCUS / B CONTEXT / C PAGES** | 🟡 ADR-0026 PROPOSED — gebaut, gerendert (`tools/render_layouts.c` → `LAYOUT_COMPARISON.png`) und als `design_bench.uf2` auf dem Pico durchschaltbar (SHIFT + Push). **User-Entscheidung offen** |
+| **Plate ohne eingebrannte UI** | ✅ `tools/make_plain_plate.py` → `assets/plate_plain.*`; Diffusions-Inpaint entfernt die alte Liste, Karte/Rand/Glow bleiben unangetastet |
+| **Row-Compositor (Flash-Plate + Live-Vordergrund)** | ✅ `tools/ui_layouts.c` — kein Farb-Framebuffer, zwei 640-Byte-Zeilenpuffer statt 106 KB. Gilt für alle drei Kandidaten |
+| **Layout-Regressionstest** | ✅ `test/test_ui_layouts.c` — ppem-Grid (6/12/20 px) + Karten-Grenzen über 96 Kombinationen |
 
 ### Cells / Input
 
