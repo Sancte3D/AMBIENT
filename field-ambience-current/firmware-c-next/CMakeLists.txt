@@ -296,16 +296,15 @@ elseif(FAM_TARGET STREQUAL "pico")
     pico_enable_stdio_uart(display_hw_test 0)
     pico_add_extra_outputs(display_hw_test)
 
-    # --- design_bench: the three candidate layouts on the real panel --------
-    # Same breadboard and same pins as display_hw_test. Composites the baked
-    # RGB565 plate (assets/plate_plain.c, flash-resident) with live UI a row at
-    # a time — no framebuffer, just two line buffers. SHIFT + push cycles
-    # A FOCUS / B CONTEXT / C PAGES so all three can be judged on real glass.
+    # --- design_bench: the radial navigation system on the real panel -------
+    # Same breadboard and same pins as display_hw_test. tools/ui_wheel.c draws
+    # the wheel from signed distance fields a row at a time — no framebuffer,
+    # no background asset, just two line buffers.
     add_executable(design_bench
         tools/design_bench_pico.c
-        tools/ui_layouts.c
+        tools/ui_wheel.c
+        tools/ui_draw.c
         src/hal_pico/lcd_st7789_pico.c
-        assets/plate_plain.c
         src/oled_draw.c
         src/oled_color.c
         src/baked_font.c

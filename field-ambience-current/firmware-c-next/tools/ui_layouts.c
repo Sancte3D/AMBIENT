@@ -12,6 +12,7 @@
 #include "plate_plain.h"
 #include "baked_font.h"
 #include "oled.h"
+#include "ui_draw.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -147,124 +148,19 @@ void ui_edit(ui_state_t *st, int dir, int coarse)
     }
 }
 
-/* ---- scanline primitives ------------------------------------------------ */
-static inline uint16_t pack565(int r, int g, int b)
-{
-    return (uint16_t)(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
-}
-
-/* Blend (r,g,b) at coverage `a` (0..255) over one packed pixel. Expanding the
- * 5/6/5 fields back to 8 bit first keeps repeated overlays from drifting dark. */
-static inline void blend_px(uint16_t *px, int r, int g, int b, int a)
-{
-    if (a <= 0) return;
-    if (a > 255) a = 255;
-    int dr = (*px >> 11) & 0x1F, dg = (*px >> 5) & 0x3F, db = *px & 0x1F;
-    dr = (dr << 3) | (dr >> 2);
-    dg = (dg << 2) | (dg >> 4);
-    db = (db << 3) | (db >> 2);
-    *px = pack565(dr + ((r - dr) * a) / 255,
-                  dg + ((g - dg) * a) / 255,
-                  db + ((b - db) * a) / 255);
-}
-
-static inline void blend_span(uint16_t *line, int x0, int x1,
-                              int r, int g, int b, int a)
-{
-    if (x0 < 0) x0 = 0;
-    if (x1 > OLED_WIDTH) x1 = OLED_WIDTH;
-    for (int x = x0; x < x1; ++x) blend_px(&line[x], r, g, b, a);
-}
-
-/* Horizontal inset of a rounded cap on scanline `dy` of an `h`-tall pill. */
-static int cap_inset(int dy, int h)
-{
-    int rad = h / 2;
-    int d = dy < rad ? (rad - dy) : (dy - (h - 1 - rad));
-    if (d <= 0) return 0;
-    int i = 0;
-    while (i < rad && (rad - i) * (rad - i) + d * d > rad * rad) ++i;
-    return i;
-}
-
-/* One row of a rounded pill. Draws nothing when `y` is outside it. */
-static void row_pill(uint16_t *line, int y, int top, int h, int x, int w,
-                     int r, int g, int b, int a)
-{
-    int dy = y - top;
-    if (dy < 0 || dy >= h || w <= 0) return;
-    int inset = cap_inset(dy, h);
-    blend_span(line, x + inset, x + w - inset, r, g, b, a);
-}
-
-static int text_w(const bakedfont_t *f, const char *s)
-{
-    int w = 0;
-    for (; *s; ++s) {
-        int i = (uint8_t)*s - f->first;
-        if (i < 0 || i >= f->count) continue;
-        w += f->glyphs[i].adv;
-    }
-    return w;
-}
-
-/* Copy as much of `s` as fits in `maxw`, hard cut — no ellipsis, because at
- * this size an ellipsis costs a whole glyph and reads as noise. */
-static const char *fit_text(const bakedfont_t *f, const char *s, int maxw,
-                            char *buf, int bufsz)
-{
-    if (text_w(f, s) <= maxw) return s;
-    int w = 0, n = 0;
-    while (s[n] && n < bufsz - 1) {
-        int i = (uint8_t)s[n] - f->first;
-        int adv = (i >= 0 && i < f->count) ? f->glyphs[i].adv : 0;
-        if (w + adv > maxw) break;
-        w += adv;
-        ++n;
-    }
-    memcpy(buf, s, (size_t)n);
-    buf[n] = 0;
-    return buf;
-}
-
-/* One scanline of a text run whose line box starts at `ytop`. */
-static void row_text(uint16_t *line, int y, int ytop, int x,
-                     const bakedfont_t *f, const char *s,
-                     int r, int g, int b, int a)
-{
-    if (y < ytop || y >= ytop + f->line + 4) return;   /* descenders included */
-    int base = ytop + f->ascent;
-    int pen  = x;
-    for (; *s; ++s) {
-        int i = (uint8_t)*s - f->first;
-        if (i < 0 || i >= f->count) continue;
-        const bglyph_t *gl = &f->glyphs[i];
-        int gy = y - (base - gl->top);
-        if (gy >= 0 && gy < gl->h) {
-            for (int gx = 0; gx < gl->w; ++gx) {
-                uint32_t nib = gl->off + (uint32_t)gy * gl->w + gx;
-                uint8_t v4 = (nib & 1) ? (f->data[nib >> 1] & 0x0F)
-                                       : (f->data[nib >> 1] >> 4);
-                if (v4 >= 8) {
-                    int px = pen + gl->left + gx;
-                    if (px >= 0 && px < OLED_WIDTH)
-                        blend_px(&line[px], r, g, b, a);
-                }
-            }
-        }
-        pen += gl->adv;
-    }
-}
+/* Scanline primitives (blend, pills, text) live in ui_draw.c — the wheel UI
+ * uses the same ones, and a second copy of a glyph blitter is exactly the kind
+ * of thing that silently diverges. */
 
 /* ---- shared widgets ----------------------------------------------------- */
 
 /* Continuous 0..100 as a track with a mint fill. */
 static void widget_fill(uint16_t *line, int y, int top, int h, int pct)
 {
-    row_pill(line, y, top, h, CX0, CX1 - CX0, 255, 255, 255, ALPHA_TRACK);
+    ui_row_pill(line, y, top, h, CX0, CX1 - CX0, 255, 255, 255, ALPHA_TRACK);
     int w = ((CX1 - CX0) * pct + 50) / 100;
     if (w < h && pct > 0) w = h;
-    if (w > 0) row_pill(line, y, top, h, CX0, w, MINT_R, MINT_G, MINT_B, 255);
+    if (w > 0) ui_row_pill(line, y, top, h, CX0, w, MINT_R, MINT_G, MINT_B, 255);
 }
 
 /* Discrete parameter as one pill per option, active one mint. */
@@ -279,8 +175,8 @@ static void widget_options(uint16_t *line, int y, int top, int h,
     if (w < 1) w = 1;
     for (int i = 0; i < n; ++i) {
         int x = CX0 + i * (w + gap);
-        if (i == active) row_pill(line, y, top, h, x, w, MINT_R, MINT_G, MINT_B, 255);
-        else             row_pill(line, y, top - 1, h + 2, x, w, 255, 255, 255, ALPHA_TRACK);
+        if (i == active) ui_row_pill(line, y, top, h, x, w, MINT_R, MINT_G, MINT_B, 255);
+        else             ui_row_pill(line, y, top - 1, h + 2, x, w, 255, 255, 255, ALPHA_TRACK);
     }
 }
 
@@ -297,8 +193,8 @@ static void widget_position(uint16_t *line, int y, int top, int sel)
     int x = CX0;
     for (int i = 0; i < n; ++i) {
         int w = (i == sel) ? act : ina;
-        if (i == sel) row_pill(line, y, top - 1, 7, x, w, MINT_R, MINT_G, MINT_B, 255);
-        else          row_pill(line, y, top + 1, 3, x, w, 255, 255, 255, ALPHA_DIMPILL);
+        if (i == sel) ui_row_pill(line, y, top - 1, 7, x, w, MINT_R, MINT_G, MINT_B, 255);
+        else          ui_row_pill(line, y, top + 1, 3, x, w, 255, 255, 255, ALPHA_DIMPILL);
         x += w + gap;
     }
 }
@@ -307,17 +203,17 @@ static void widget_battery(uint16_t *line, int y, int top, int pct)
 {
     const int w = 26, h = 12, x = CX1 - w;
     /* shell */
-    if (y == top || y == top + h - 1) blend_span(line, x, x + w, 255, 255, 255, 150);
+    if (y == top || y == top + h - 1) ui_blend_span(line, x, x + w, 255, 255, 255, 150);
     if (y > top && y < top + h - 1) {
-        blend_px(&line[x], 255, 255, 255, 150);
-        blend_px(&line[x + w - 1], 255, 255, 255, 150);
+        ui_blend_px(&line[x], 255, 255, 255, 150);
+        ui_blend_px(&line[x + w - 1], 255, 255, 255, 150);
         if (y > top + 3 && y < top + h - 4)
-            blend_span(line, x + w, x + w + 2, 255, 255, 255, 150);
+            ui_blend_span(line, x + w, x + w + 2, 255, 255, 255, 150);
     }
     /* charge */
     int fw = ((w - 6) * pct + 50) / 100;
     if (y > top + 2 && y < top + h - 3 && fw > 0)
-        blend_span(line, x + 3, x + 3 + fw, 255, 255, 255, 210);
+        ui_blend_span(line, x + 3, x + 3 + fw, 255, 255, 255, 210);
 }
 
 /* ---- layout A: one parameter, as large as the panel allows -------------- */
@@ -325,14 +221,14 @@ static void compose_focus(const ui_state_t *st, int y, uint16_t *line)
 {
     int p = st->sel;
 
-    row_text(line, y, 16, CX0, &font_hn_value_small, ui_param_label(p),
+    ui_row_text(line, y, 16, CX0, &font_hn_value_small, ui_param_label(p),
              255, 255, 255, ALPHA_LABEL);
     widget_battery(line, y, 18, st->batt);
 
     char tmp[32];
-    const char *v = fit_text(&font_hn_value, ui_param_value(st, p),
+    const char *v = ui_fit_text(&font_hn_value, ui_param_value(st, p),
                              CX1 - CX0, tmp, sizeof tmp);
-    row_text(line, y, 52, CX0, &font_hn_value, v,
+    ui_row_text(line, y, 52, CX0, &font_hn_value, v,
              255, 255, 255, st->edit ? 255 : 230);
 
     int n = ui_param_options(p);
@@ -347,10 +243,10 @@ static void ctx_row(const ui_state_t *st, int y, uint16_t *line, int p, int ytop
 {
     char tmp[32];
     const bakedfont_t *f = &font_hn_value_small;
-    row_text(line, y, ytop, CX0, f, ui_param_label(p),
+    ui_row_text(line, y, ytop, CX0, f, ui_param_label(p),
              255, 255, 255, ALPHA_CTX);
-    const char *v = fit_text(f, ui_param_value(st, p), 132, tmp, sizeof tmp);
-    row_text(line, y, ytop, CX1 - text_w(f, v), f, v, 255, 255, 255, ALPHA_CTX);
+    const char *v = ui_fit_text(f, ui_param_value(st, p), 132, tmp, sizeof tmp);
+    ui_row_text(line, y, ytop, CX1 - ui_text_w(f, v), f, v, 255, 255, 255, ALPHA_CTX);
 }
 
 static void compose_context(const ui_state_t *st, int y, uint16_t *line)
@@ -367,13 +263,13 @@ static void compose_context(const ui_state_t *st, int y, uint16_t *line)
      * trade. Stacked, the value keeps the full 226 px. The two line boxes
      * overlap by 2 px; the glyphs do not (label glyphs end at y=55, value
      * glyphs start at y=66). */
-    row_text(line, y, 38, CX0, &font_hn_value_small, ui_param_label(p),
+    ui_row_text(line, y, 38, CX0, &font_hn_value_small, ui_param_label(p),
              255, 255, 255, ALPHA_LABEL);
 
     char tmp[32];
-    const char *v = fit_text(&font_hn_value, ui_param_value(st, p),
+    const char *v = ui_fit_text(&font_hn_value, ui_param_value(st, p),
                              CX1 - CX0, tmp, sizeof tmp);
-    row_text(line, y, 60, CX0, &font_hn_value, v, 255, 255, 255, 255);
+    ui_row_text(line, y, 60, CX0, &font_hn_value, v, 255, 255, 255, 255);
 
     int n = ui_param_options(p);
     if (n) widget_options(line, y, 102, 10, n, st->val[p]);
@@ -391,15 +287,15 @@ static void compose_pages(const ui_state_t *st, int y, uint16_t *line)
 {
     int page = ui_param_page(st->sel);
 
-    row_text(line, y, CY0, CX0, &font_hn_value_small, ui_page_name(page),
+    ui_row_text(line, y, CY0, CX0, &font_hn_value_small, ui_page_name(page),
              255, 255, 255, 210);
 
     /* page dots, top right — 4 of them, current one mint and wider */
     for (int i = 0; i < UI_PAGE_COUNT; ++i) {
         int w = (i == page) ? 14 : 6;
         int x = CX1 - (UI_PAGE_COUNT - i) * 18 + (18 - w);
-        if (i == page) row_pill(line, y, CY0 + 8, 6, x, w, MINT_R, MINT_G, MINT_B, 255);
-        else           row_pill(line, y, CY0 + 9, 4, x, w, 255, 255, 255, 110);
+        if (i == page) ui_row_pill(line, y, CY0 + 8, 6, x, w, MINT_R, MINT_G, MINT_B, 255);
+        else           ui_row_pill(line, y, CY0 + 9, 4, x, w, 255, 255, 255, 110);
     }
 
     const bakedfont_t *f = &font_hn_value_small;
@@ -411,23 +307,23 @@ static void compose_pages(const ui_state_t *st, int y, uint16_t *line)
         int a    = sel ? 255 : 150;
 
         if (sel)   /* focus marker: a mint tick in the left margin */
-            row_pill(line, y, ytop + 3, 18, CX0 - 13, 4,
+            ui_row_pill(line, y, ytop + 3, 18, CX0 - 13, 4,
                      MINT_R, MINT_G, MINT_B, 255);
 
-        int lw = text_w(f, PARAMS[p].shortl);
-        row_text(line, y, ytop, CX0, f, PARAMS[p].shortl,
+        int lw = ui_text_w(f, PARAMS[p].shortl);
+        ui_row_text(line, y, ytop, CX0, f, PARAMS[p].shortl,
                  sel ? MINT_R : 255, sel ? MINT_G : 255, sel ? MINT_B : 255, a);
 
         char tmp[32];
-        const char *v = fit_text(f, ui_param_value(st, p),
+        const char *v = ui_fit_text(f, ui_param_value(st, p),
                                  CX1 - CX0 - lw - 12, tmp, sizeof tmp);
-        row_text(line, y, ytop, CX1 - text_w(f, v), f, v, 255, 255, 255, a);
+        ui_row_text(line, y, ytop, CX1 - ui_text_w(f, v), f, v, 255, 255, 255, a);
 
         if (!ui_param_options(p)) {   /* thin amount rule under the row */
             int by = ytop + 24;
-            row_pill(line, y, by, 3, CX0, CX1 - CX0, 255, 255, 255, ALPHA_TRACK);
+            ui_row_pill(line, y, by, 3, CX0, CX1 - CX0, 255, 255, 255, ALPHA_TRACK);
             int w = ((CX1 - CX0) * st->val[p] + 50) / 100;
-            if (w > 0) row_pill(line, y, by, 3, CX0, w,
+            if (w > 0) ui_row_pill(line, y, by, 3, CX0, w,
                                 MINT_R, MINT_G, MINT_B, sel ? 255 : 170);
         }
         ++slot;

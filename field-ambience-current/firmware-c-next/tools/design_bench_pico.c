@@ -1,37 +1,32 @@
 /*
- * design_bench — drive the candidate AMBIENT layouts on a real ST7789, live.
+ * design_bench — drive the radial navigation system on a real ST7789, live.
  *
  * Bench tool for the Pico-2 breadboard, NOT a product build. Its job is to
- * answer the one question no desktop preview can: at 39.1 x 21.2 mm of glass,
- * with the backlight down and the panel off-axis, which of the three
- * information densities can actually be read while playing.
+ * answer what no desktop preview can: at 39.1 x 21.2 mm of glass, does the
+ * wheel actually read while turning, do the icons survive at 22 px, and does
+ * the snap feel like a detent or like a lag.
  *
- * ARCHITECTURE — this is the split the product will use too:
+ * ARCHITECTURE. There is no framebuffer and no background asset. Each row is
+ * composited into a 640-byte line buffer by tools/ui_wheel.c and pushed
+ * straight to SPI, so the whole UI costs two line buffers instead of a 106 KB
+ * colour framebuffer — the H743 sits at 87 % RAM_D1 and 96 % RAM_D2 against
+ * 11 % flash, so that split is not optional. The wheel is drawn from signed
+ * distance fields, which also means it carries no artwork: the black ground
+ * costs nothing and the geometry is code.
  *
- *   background   the approved plate, baked once offline into RGB565 and living
- *                in flash as `plate_plain` (108,800 byte): gradient, glass
- *                card, white edge, glow. Never copied to RAM. The UI is NOT
- *                baked into it — tools/make_plain_plate.py removed the old
- *                list so any layout can draw over it.
- *   foreground   everything that carries information, drawn per row on the way
- *                to the panel by tools/ui_layouts.c.
- *
- * There is no framebuffer. Each row is composited into a 640-byte line buffer
- * straight from flash and pushed to SPI, so the whole UI costs two line
- * buffers instead of a 106 KB colour framebuffer. That matters: on the H743
- * the RAM budget is already at 87 % (D1) and 96 % (D2), while flash sits at
- * 11 %.
+ * Compositing measures 0.22 ms/frame on the host; the panel needs 29 ms to
+ * take a full frame at 32 MHz, so the transfer, not the drawing, sets the
+ * frame rate.
  *
  * CONTROLS (single encoder + one button, same wiring as display_hw_test)
- *   rotate          browse: move through the 16 parameters
- *                   edit:   change the selected value
- *   push            toggle browse <-> edit (same as src/menu.c)
- *   SHIFT + push    next layout: A FOCUS -> B CONTEXT -> C PAGES
- *   SHIFT + rotate  coarse steps while editing
+ *   rotate          MAIN/GROUP: rotate the structure under the 12 o'clock
+ *                   selection point.  VALUE: move the value.
+ *   push            descend: group -> parameter -> value
+ *   SHIFT + push    climb back out
+ *   SHIFT + rotate  coarse steps while editing a value
  */
 
-#include "ui_layouts.h"
-#include "plate_plain.h"
+#include "ui_wheel.h"
 #include "oled.h"
 
 #include "pico/stdlib.h"
@@ -64,7 +59,7 @@ extern void lcd_stream_begin(void);
 extern void lcd_stream_row(const uint8_t *row, size_t n);
 extern void lcd_stream_end(void);
 
-static ui_state_t ui;
+static wheel_state_t ui;
 
 static void present(void)
 {
@@ -73,7 +68,7 @@ static void present(void)
     lcd_set_window_full();
     lcd_stream_begin();
     for (int y = 0; y < OLED_HEIGHT; ++y) {
-        ui_compose_row(&ui, y, line);
+        ui_wheel_compose_row(&ui, y, line);
         for (int x = 0; x < OLED_WIDTH; ++x) {      /* ST7789 wants MSB first */
             out[x * 2]     = (uint8_t)(line[x] >> 8);
             out[x * 2 + 1] = (uint8_t)line[x];
@@ -83,7 +78,6 @@ static void present(void)
     lcd_stream_end();
 }
 
-/* ---- input -------------------------------------------------------------- */
 static void gpio_in_pullup(uint pin)
 {
     gpio_init(pin); gpio_set_dir(pin, GPIO_IN); gpio_pull_up(pin);
@@ -105,12 +99,14 @@ int main(void)
     pwm_set_enabled(slice, true);
 
     oled_init();
-    ui_init(&ui, UI_FOCUS);
+    ui_wheel_init(&ui);
+    ui_wheel_settle(&ui);
     present();
 
     bool last_clk = gpio_get(PIN_ENC_CLK);
     bool last_sw  = true;
     absolute_time_t sw_guard = get_absolute_time();
+    absolute_time_t last_frame = get_absolute_time();
 
     for (;;) {
         bool dirty = false;
@@ -119,8 +115,7 @@ int main(void)
         bool clk = gpio_get(PIN_ENC_CLK);
         if (last_clk && !clk) {                         /* falling edge */
             int dir = gpio_get(PIN_ENC_DT) ? +1 : -1;
-            if (ui.edit) ui_edit(&ui, dir, shift);
-            else         ui_move(&ui, dir);
+            ui_wheel_turn(&ui, dir, shift);
             dirty = true;
         }
         last_clk = clk;
@@ -128,19 +123,22 @@ int main(void)
         bool sw = gpio_get(PIN_ENC_SW);
         if (last_sw && !sw &&
             absolute_time_diff_us(sw_guard, get_absolute_time()) > 0) {
-            if (shift) {
-                ui.layout = (ui_layout_t)((ui.layout + 1) % UI_LAYOUT_COUNT);
-                ui.edit   = 0;
-                printf("layout %d\n", (int)ui.layout);
-            } else {
-                ui.edit = !ui.edit;
-            }
+            ui_wheel_press(&ui, shift);
             sw_guard = make_timeout_time_ms(180);
             dirty = true;
         }
         last_sw = sw;
 
+        /* Animate the snap. The wheel keeps drawing frames while it is still
+         * moving, and a new detent during the ease simply retargets it — the
+         * rotation is never queued or replayed. */
+        absolute_time_t now = get_absolute_time();
+        int dt = (int)(absolute_time_diff_us(last_frame, now) / 1000);
+        if (dt < 1) dt = 1;
+        last_frame = now;
+        if (ui_wheel_tick(&ui, dt)) dirty = true;
+
         if (dirty) present();
-        sleep_ms(2);
+        else       sleep_ms(2);
     }
 }
