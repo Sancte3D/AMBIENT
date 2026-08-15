@@ -2,6 +2,31 @@
 
 **Updated: 2026-07-20 (r19.41 — Master-Effects-Engine integriert; davor r19.38–r19.40 Realtime-Safety, r19.37 PAM8406-Endstufe + Gain-Staging)**
 
+> **2026-07-30 — Audit des externen Fertigungspakets (kein Release-Tag):** Das
+> gelieferte Paket „Field Ambience Source files" (eigenständiges KiCad-Projekt
+> + Gerber + BOM + CPL, **nicht** aus `generate_kicad_project.py`) wurde
+> vollständig geprüft: Netzliste aus der Platine rekonstruiert, Pinouts gegen
+> die verifizierten Generator-Symbole und gegen `hal_h743` gespiegelt,
+> Geometrie/Gerber/Drill/BOM/CPL durchgerechnet. **Ergebnis: NICHT fertigen.**
+> Bericht-Fassung 2. 6 Blocker — 0402-Chipdrossel (1,8 µH) als Boost-Speicherdrossel, der komplette
+> Boost-Eingangsstrom über den 50-mA-Schiebeschalter SW2, kein Pull-down auf
+> `PWR_ON`, USB-C A6/A7 unbeschaltet (D+/D− nur in einer Steckrichtung),
+> PCA9685 im Totem-Pole-Modus gegen 5-V-Pull-ups, MIDI-Buchse CN5 auf den
+> falschen Kontakten. **Nachprüfung auf Rückfrage: ein siebter Blenderbefund
+> („LED17 verpolt") war ein Prüffehler meinerseits und wurde zurückgezogen** —
+> die Silk-Fase markiert bei allen vier LED-Footprints die Kathode, das Kupfer
+> ist richtig; es bleibt eine Symbol/Footprint-Inkonsistenz (I16). Dazu
+> 16 wichtige Punkte (VBAT offen, VREF+ nicht an
+> VDDA, 2 von 4 Encodern auf Pins ohne Timer-Quadratur, keine durchgehende
+> GND-Lage, DRC-Severities auf „ignore", NPTH als PTH exportiert) und
+> Regressionen gegen r19.37 (PAM8403 statt PAM8406 → Gain-Staging-Fix nicht
+> anwendbar; 1 µF statt 10 nF Koppel-C). Sauber: BOM/CPL/PCB 1:1 konsistent,
+> keine floatenden Netze, keine Pour-Kurzschlüsse, STM32-Entkopplung,
+> BQ24074-Beschaltung, SAI/QSPI/MCP-Pinmap deckungsgleich mit der Firmware.
+> Vollständiger Befundbericht mit Severity, Wirkung und Fix je Punkt:
+> `field-ambience-current/docs/hardware/EXT_LAYOUT_AUDIT_2026-07-30.md`.
+> Host-Suite unverändert grün (reine Doku-Änderung).
+
 > **r19.41 (2026-07-20) — Master-Effects-Integration:** Die gelieferte
 > Effects-Engine (`effects-engine/`) ersetzt die Legacy-Master-Kette im
 > Produktpfad. `render_ambient`: echo/blur/tape/shimmer + Master-Reverb raus,
@@ -638,6 +663,20 @@ product build.
 | **Display für diesen PCB-Rev: 1.9″ EINGEFROREN** | ✅ r18.64 — User-Entscheidung „1,9 zoll reicht safe"; verifiziert + im Schematic. Entblockt das Layout. |
 | **Panel-Hardware-Pivot 1.9″ → 2.0″ (physisches Modul)** | ⏳ **Rev-B** ADR-0015 — kein Blocker mehr; später wenn User reales 2.0″-Modul (SKU/Pin-Order/Maße) verifiziert |
 | **Voller RGB565-FB + DMA-Animationen** | ⏳ ADR-0015 D4 — nach Hardware-Pivot |
+| **6-Zeilen-Parameterliste (Figma-Entwurf) auf dem Panel** | ❌ verworfen — Labels lagen bei 6,4′ Sehwinkel (0,75 mm Ziffernhöhe bei 0,125 mm/px). Sechs beschriftete Zeilen passen bei keiner lesbaren Größe: eine lesbare Zeile kostet 36 px, das Panel hat 170. Siehe ADR-0026 |
+| **Drei Dichte-Kandidaten A FOCUS / B CONTEXT / C PAGES** | 🟡 ADR-0026 — gebaut und gerendert (`tools/render_layouts.c` → `LAYOUT_COMPARISON.png`); **von ADR-0027 überholt**. Host-Renderer + Test bleiben vorerst, Löschung sobald das Rad auf Hardware bestätigt ist |
+| **Radiale Navigation — „der Kreis ist das Interface"** | 🟡 **ADR-0027 PROPOSED** — User-Entwurf, umgesetzt in `tools/ui_wheel.c`. Nabe bei (158, 171), also 1 px unter der Unterkante; 9 Gruppen à 40°, Auswahl fix auf 12 Uhr; drei Zustände derselben Geometrie (MAIN → GROUP → VALUE). Icons rotieren nie, Snap nimmt den kurzen Weg. Gerendert (`tools/render_wheel.c` → `WHEEL_FLOW.png`), läuft als `design_bench.uf2` auf dem Pico |
+| **SDF-Zeichenschicht** | ✅ `tools/ui_draw.c` (Blend/Pills/Text, geteilt) + SDF-Primitiven in `ui_wheel.c`. Geometrie antialiased, Text binär — Bitcount verträgt kein AA, ein rotierender Ast ohne AA kriecht |
+| **Kein Hintergrund-Asset mehr** | ✅ schwarzer Grund + SDF-Geometrie: `design_bench` von 169.440 auf **63.128 Byte** Text, die 108.800-Byte-Platte wird zum Rendern nicht mehr gebraucht |
+| **Szenen statt Menüseiten — „jeder Modus bekommt eine eigene kleine Welt"** | 🟡 **ADR-0028 PROPOSED** — `tools/ui_scene.c`: 9 monoline-Illustrationen, je Gruppe eine. Der Parameter ist die Geometrie, nicht eine Zahl daneben (Pitch: Just-Intonation verbiegt sichtbar die Abstände auf dem Ring). Vokabular gemessen an `iter-lab.svg` aus op1repacker: 96,7 % `fill=none`, 93 % `stroke-width 1.5`, >50 % ein einziges dunkles Grau. Rad-Ebene 2 („Unterrad + Wertescreen") ist damit ersatzlos weg — nur noch zwei Ebenen |
+| **Encoder-Farbzuordnung — „Rot Blau Grün Gelb"** | 🟡 **ADR-0028** — das eigentliche Mechanismus-Stück, nicht die Deko. **EN3 = Grün = Navigation, dauerhaft** (Rad, ausgewählter Knoten, „wo bin ich"); **EN1 Rot / EN2 Blau / EN4 Gelb** = die bis zu drei Szenen-Eigenschaften, in genau dieser Reihenfolge — links nach rechts im Readout **und** in drei festen Slots auf dem Wertering. Damit fallen die Parameter-**Namen** vom Schirm: die Farbe ist das Label. Es gibt nur noch zwei Tinten, das Struktur-Grau (42,42,42) und die Encoder-Farben — was farbig ist, bewegt ein Knopf. Batterie ist deshalb **nicht mehr grün**, sondern neutral (214) und wird nur zum Warnen farbig. `ui_wheel_turn_knob()` ist der Produkt-Eingabepfad, ein Aufruf pro Encoder. **Farbwerte sind Platzhalter**, bis die Kappen spezifiziert sind (eine Tabelle in `ui_scene.c`) |
+| **Szenen-Regressionstest** | ✅ `test/test_ui_scene.c` — jede Szene zeichnet bei jedem Wert, bleibt in ihrer Box, reagiert sichtbar auf **jede** ihrer Eigenschaften und benutzt **keine Tinte außerhalb Grau + Encoder-Farben** (eine Farbe, die niemand bewegt, ist ein Bedienelement ohne Knopf). Fand den Pitch-Referenzring, der aus der Box lief |
+| **Mechanismus-Test statt Pixel-Test** | ✅ `test/test_ui_wheel.c` neu: jeder Encoder bewegt **nur** seine eigene Eigenschaft (eine lügende Farbe ist schlimmer als keine), und **kein Readout kann je überlaufen** — der Test läuft den breitesten erreichbaren Wert jeder Eigenschaft jeder Gruppe ab. Deshalb heißt Cell „Chord" statt „Harmony" (kollidierte auch mit der *Gruppe* Harmony) und „FM Glass" jetzt „FM". Fand außerdem, dass `ui_wheel_param_value()` einen gemeinsamen static-Puffer zurückgibt: Room zeigte 62 und 38 beide als **„38 38"** |
+| **Quadratur-Decoder** | ✅ `tools/ui_encoder.c` — ein Klick = ein Schritt, Prellen hebt sich auf. Ersetzt das Flankenzählen, das pro Rastung 2–3 Schritte machte |
+| **Rad-Regressionstest** | ✅ `test/test_ui_wheel.c` — 9 Gruppen partitionieren alle 16 Parameter, Navigation schließt, Level-Wechsel nimmt den kurzen Weg, Ease terminiert, Orb bleibt bei 0 und 100 vollständig auf dem Panel |
+| **Plate ohne eingebrannte UI** | ✅ `tools/make_plain_plate.py` → `assets/plate_plain.*`; Diffusions-Inpaint entfernt die alte Liste, Karte/Rand/Glow bleiben unangetastet |
+| **Row-Compositor (Flash-Plate + Live-Vordergrund)** | ✅ `tools/ui_layouts.c` — kein Farb-Framebuffer, zwei 640-Byte-Zeilenpuffer statt 106 KB. Gilt für alle drei Kandidaten |
+| **Layout-Regressionstest** | ✅ `test/test_ui_layouts.c` — ppem-Grid (6/12/18 px) + Karten-Grenzen über 96 Kombinationen |
 
 ### Cells / Input
 

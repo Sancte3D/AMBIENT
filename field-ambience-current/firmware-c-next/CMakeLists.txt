@@ -289,12 +289,58 @@ elseif(FAM_TARGET STREQUAL "pico")
         # 2.0" module is verified — until then we stay on 1.9".
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
+    # hardware_dma because lcd_st7789_pico.c owns the DMA row-streaming path
+    # (design_bench uses it; this target does not, but it compiles the same
+    # driver, so it needs the header and the library either way).
     target_link_libraries(display_hw_test
-        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm
+        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm hardware_dma
     )
     pico_enable_stdio_usb(display_hw_test 1)
     pico_enable_stdio_uart(display_hw_test 0)
     pico_add_extra_outputs(display_hw_test)
+
+    # --- design_bench: the radial navigation system on the real panel -------
+    # Same breadboard and same pins as display_hw_test. tools/ui_wheel.c draws
+    # the wheel from signed distance fields a row at a time — no framebuffer,
+    # no background asset, just two line buffers.
+    add_executable(design_bench
+        tools/design_bench_pico.c
+        tools/ui_wheel.c
+        tools/ui_scene.c
+        tools/ui_draw.c
+        tools/ui_motion.c
+        tools/ui_encoder.c
+        src/hal_pico/lcd_st7789_pico.c
+        src/oled_draw.c
+        src/oled_color.c
+        src/baked_font.c
+        src/baked_font_data.c
+    )
+    target_include_directories(design_bench PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools
+    )
+    target_compile_definitions(design_bench PRIVATE
+        LCD_SPI_HZ=24000000
+        LCD_PIN_SCK=18
+        LCD_PIN_MOSI=19
+        LCD_PIN_CS=17
+        LCD_PIN_DC=16
+        LCD_PIN_RES=20
+        PIN_BL=22
+        PIN_ENC_CLK=2
+        PIN_ENC_DT=3
+        PIN_ENC_SW=4
+        PIN_SHIFT=5
+        "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
+    )
+    target_link_libraries(design_bench
+        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm hardware_dma
+    )
+    pico_enable_stdio_usb(design_bench 1)
+    pico_enable_stdio_uart(design_bench 0)
+    pico_add_extra_outputs(design_bench)
 
 elseif(FAM_TARGET STREQUAL "host")
     message(STATUS "Field Ambience: host DSP library + offline renderers")

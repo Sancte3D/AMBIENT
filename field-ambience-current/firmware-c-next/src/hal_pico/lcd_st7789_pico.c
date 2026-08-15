@@ -28,6 +28,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
+#include "hardware/dma.h"
 
 /* --- pin map (reuses the SSD1322 SPI0 group, SPEC v0.6 §5) ---
  * Every pin is #ifndef-guarded so bench targets (tools/display_hw_test.c)
@@ -138,6 +139,72 @@ void oled_init(void) {
 
     reset_panel();
     run_init_sequence();
+}
+
+/* --- raw RGB565 streaming ------------------------------------------------
+ * oled_show() below owns the 4-bit-grey path the menu UI uses. These three
+ * expose the same address-window + stream sequence for callers that already
+ * hold finished RGB565 rows — the design bench composites a flash-resident
+ * background with live foreground straight into a line buffer, so it never
+ * builds a framebuffer at all. Keeping them here means the ST7789 command
+ * sequence has exactly one home. */
+void lcd_set_window_full(void) {
+    uint16_t xs = OLED_LCD_X_OFFSET, xe = OLED_LCD_X_OFFSET + OLED_WIDTH  - 1;
+    uint16_t ys = OLED_LCD_Y_OFFSET, ye = OLED_LCD_Y_OFFSET + OLED_HEIGHT - 1;
+    cmd(ST_CASET); { const uint8_t d[4] = { (uint8_t)(xs >> 8), (uint8_t)xs,
+                                            (uint8_t)(xe >> 8), (uint8_t)xe }; data(d, 4); }
+    cmd(ST_RASET); { const uint8_t d[4] = { (uint8_t)(ys >> 8), (uint8_t)ys,
+                                            (uint8_t)(ye >> 8), (uint8_t)ye }; data(d, 4); }
+    cmd(ST_RAMWR);
+}
+
+void lcd_stream_begin(void) { lcd_dc(true); lcd_cs(true); }
+
+void lcd_stream_row(const uint8_t *row, size_t n) {
+    spi_write_blocking(LCD_SPI, row, n);
+}
+
+void lcd_stream_end(void) { lcd_cs(false); }
+
+/* --- DMA row streaming ---------------------------------------------------
+ * The blocking variant above spends the whole transfer doing nothing, which at
+ * 24 MHz is 36 ms per frame with the CPU idle, while the compositor needs its
+ * own time on top. Serialised, that is what dropped the bench to roughly 22
+ * fps — and a 90 ms animation at 22 fps is two frames, which is a stutter by
+ * definition rather than a motion.
+ *
+ * These let the caller composite the NEXT row while the current one is on the
+ * wire: start, compose, wait. The transfer and the drawing then cost whichever
+ * of the two is larger instead of their sum. */
+static int      s_dma = -1;
+static bool     s_dma_busy;
+
+static void lcd_dma_init(void) {
+    if (s_dma >= 0) return;
+    s_dma = dma_claim_unused_channel(true);
+    dma_channel_config c = dma_channel_get_default_config(s_dma);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_read_increment(&c, true);
+    channel_config_set_write_increment(&c, false);
+    channel_config_set_dreq(&c, spi_get_dreq(LCD_SPI, true));
+    dma_channel_set_config(s_dma, &c, false);
+    dma_channel_set_write_addr(s_dma, &spi_get_hw(LCD_SPI)->dr, false);
+}
+
+void lcd_stream_row_dma(const uint8_t *row, size_t n) {
+    lcd_dma_init();
+    dma_channel_transfer_from_buffer_now(s_dma, row, (uint32_t)n);
+    s_dma_busy = true;
+}
+
+/* Wait for the row to be fully clocked out. The DMA finishes when the last
+ * byte is handed to the SPI FIFO, not when it leaves the shift register, so
+ * the FIFO has to drain before CS may be raised or the next buffer touched. */
+void lcd_stream_wait(void) {
+    if (!s_dma_busy) return;
+    dma_channel_wait_for_finish_blocking(s_dma);
+    while (spi_is_busy(LCD_SPI)) tight_loop_contents();
+    s_dma_busy = false;
 }
 
 /* Address-window the full visible area, then stream the framebuffer converting

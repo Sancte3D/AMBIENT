@@ -132,18 +132,25 @@ jobs:
           cmake .. -DPICO_BOARD=pico2
           make -j"$(nproc)"
 
-      - name: Report size + verify UF2 exists
+      - name: Report size + verify UF2s exist
         working-directory: field-ambience-current/firmware-c-next/build
         run: |
-          arm-none-eabi-size display_hw_test.elf
-          test -f display_hw_test.uf2
-          ls -la display_hw_test.uf2
+          # Both bench tools are flashable deliverables, so both are checked and
+          # both are uploaded. design_bench was previously built but never
+          # published, which made it undownloadable.
+          for t in display_hw_test design_bench; do
+            arm-none-eabi-size "$t.elf"
+            test -f "$t.uf2"
+            ls -la "$t.uf2"
+          done
 
-      - name: Upload UF2 artifact
+      - name: Upload UF2 artifacts
         uses: actions/upload-artifact@v4
         with:
           name: firmware-c-next-pico2-uf2
-          path: field-ambience-current/firmware-c-next/build/display_hw_test.uf2
+          path: |
+            field-ambience-current/firmware-c-next/build/display_hw_test.uf2
+            field-ambience-current/firmware-c-next/build/design_bench.uf2
           if-no-files-found: error
 
   # --- STM32H743 product target: real ARM cross-build gate ----------------

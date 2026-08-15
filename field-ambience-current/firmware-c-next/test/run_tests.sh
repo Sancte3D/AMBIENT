@@ -319,6 +319,59 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/bench_test"
 "$tmp/bench_test"
 
+# Candidate 320x170 layouts: Bitcount stays on its ppem grid, and nothing a
+# layout draws escapes the glass card. See tools/ui_layouts.h for the
+# legibility arithmetic these guard.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" -I"$src/assets" \
+    "$here/test_ui_layouts.c" \
+    "$src/tools/ui_layouts.c" "$src/tools/ui_draw.c" "$src/assets/plate_plain.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/ui_layouts_test"
+"$tmp/ui_layouts_test"
+
+# Radial navigation system: the group model partitions all 16 parameters,
+# navigation closes, level changes rotate the short way, the snap terminates,
+# and the value orb stays on the panel at 0 and 100.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" \
+    "$here/test_ui_wheel.c" \
+    "$src/tools/ui_wheel.c" "$src/tools/ui_scene.c" "$src/tools/ui_draw.c" \
+    "$src/tools/ui_motion.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/ui_wheel_test"
+"$tmp/ui_wheel_test"
+
+# Motion rules (tools/ui_motion.h): curves anchored and monotonic without
+# overshoot, tweens land exactly, retargets stay continuous, timing is dt-based
+# rather than frame-based, and no input is swallowed while an animation runs.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" \
+    "$here/test_ui_motion.c" \
+    "$src/tools/ui_motion.c" "$src/tools/ui_wheel.c" "$src/tools/ui_scene.c" \
+    "$src/tools/ui_draw.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/ui_motion_test"
+"$tmp/ui_motion_test"
+
+# Quadrature decoding: one physical click must be exactly one step, and contact
+# bounce must cancel instead of counting as movement. This is the test that
+# would have caught the wheel jumping several steps per detent.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" \
+    "$here/test_ui_encoder.c" "$src/tools/ui_encoder.c" \
+    -lm -o "$tmp/ui_encoder_test"
+"$tmp/ui_encoder_test"
+
+# The nine scenes: each draws at every setting, stays inside its box, and
+# actually responds to its own properties. A scene that renders the same pixels
+# at 0 and 100 is decoration, not an instrument.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" \
+    "$here/test_ui_scene.c" "$src/tools/ui_scene.c" "$src/tools/ui_draw.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/ui_scene_test"
+"$tmp/ui_scene_test"
+
 # r19.6: equal / just intonation layer (pure ratios, bit-exact ET).
 "$CC" "${CFLAGS[@]}" \
     "$here/test_tuning.c" \
