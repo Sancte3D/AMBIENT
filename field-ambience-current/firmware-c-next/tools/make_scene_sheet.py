@@ -65,9 +65,10 @@ def main() -> int:
     dr.text((PAD, 24), "AMBIENT · one scene per group · 320×170",
             font=font(30, True), fill=FG)
     dr.text((PAD, 62),
-            "monoline at 1.5 px, one dim grey for structure, one blue for "
-            "information, one green for what the hand is moving — the discipline "
-            "measured off the OP-1, not its palette.",
+            "monoline at 1.5 px on one dim structural grey — and every movable "
+            "thing painted in the colour of the encoder that moves it: "
+            "EN1 red · EN2 blue · EN4 yellow, EN3 green is navigation. "
+            "The colour is the label; that is the mechanism, not the style.",
             font=font(16), fill=DIM)
 
     y = head

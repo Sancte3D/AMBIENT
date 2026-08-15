@@ -1,7 +1,7 @@
 # ADR-0028 — Scenes, not pages: each group gets its own small visual world
 
-**Status:** PROPOSED — nine scenes implemented, rendered and running on the
-Pico bench.
+**Status:** PROPOSED — nine scenes implemented on the four-encoder colour
+mapping, rendered and running on the Pico bench.
 **Date:** 2026-08-15
 **Builds on:** ADR-0027 (radial navigation). The wheel is unchanged; what it
 opens is different.
@@ -28,11 +28,26 @@ what. `op1repacker/assets/display/iter-lab.svg` is a real OP-1 display asset at
 | 157 of ~300 strokes are `#353238` | over half is one dim grey |
 | then, sparsely | `#698eff` 24, `#00ed95` 22, `#383572` 20, `#ff3a5d` 15, … |
 
-The coherence of those screens is not the palette — it is the **discipline**:
-one dim structural grey carrying most of the drawing, a handful of saturated
-accents used sparingly, one stroke weight everywhere, open paths, and dots as
-the only filled form. `#353238` is (53, 50, 56), almost exactly the (42, 42, 42)
-the wheel already used for inert structure — a convergence, not a copy.
+That measurement gives the **drawing style**: one dim structural grey carrying
+most of the picture, saturated accents used sparingly, one stroke weight
+everywhere, open paths, and dots as the only filled form. `#353238` is
+(53, 50, 56), almost exactly the (42, 42, 42) the wheel already used for inert
+structure — a convergence, not a copy.
+
+It does **not** give the mechanism, and the first version of this ADR said it
+did ("the coherence is not the palette, it is the discipline"). That was wrong,
+and it is worth saying plainly because the error cost a whole implementation
+pass. `iter.png` is the purest statement of what those screens actually are:
+four little needles in the four **encoder colours**, and nothing else. No
+labels, no names, no legend — you never read which parameter is which, you learn
+"the red one moves that". `iter-lab.svg` proves the other half: it is the *same
+four needles* dressed as a chemistry set. The elaborate drawing is a costume
+over four coloured value objects.
+
+So the drawing is the optional half and the colour mapping is the load-bearing
+one. A bespoke illustration with a single accent colour — which is exactly what
+the first pass built — keeps the expensive half and drops the half that does the
+work.
 
 The archive contains **no runtime**: `op1repacker` only moves static SVG
 elements (`move_all` / `move_element`, rewriting `x`, `cx`, path `d`, polyline
@@ -64,17 +79,60 @@ drops from three levels to two.
 Pitch is the clearest case for the whole idea: "Tuning: Just" is a word, but
 uneven spacing on a ring *is* the parameter. No number shows that as fast.
 
-Rules, kept from the measurement:
+### The colour mapping is the interface
+
+**AMBIENT's four encoders are RED, BLUE, GREEN, YELLOW**, and every movable
+thing on screen is painted in the colour of the encoder that moves it.
+
+| encoder | colour | role |
+|---|---|---|
+| EN3 Display | **green** (60, 230, 130) | navigation, **permanently, at every level** — the wheel, the selected node, where you are |
+| EN1 Drive | **red** (244, 86, 96) | scene property 1 |
+| EN2 Brightness | **blue** (92, 146, 255) | scene property 2 |
+| EN4 Volume | **yellow** (242, 200, 70) | scene property 3 |
+
+Green is never a scene property. "Where am I" and "what am I changing" must not
+be confusable, and one reserved colour buys that for free. That leaves three
+scene knobs — which is not a compromise, it is what the hardware has, and every
+group in the wheel already carries one to three parameters, so the fit is
+exact. At the top level those same three encoders keep their global roles
+(Drive, Brightness, Volume), so the globals stay one press away.
+
+Consequences that follow directly, and are the whole design:
+
+- **There are exactly two kinds of ink in a scene**: the dim structural grey
+  (42, 42, 42) for anything no encoder can move, and the encoder colours for
+  everything that can. No decorative colour, no third tone. If it is coloured, a
+  knob moves it; if it is grey, no knob does. `test_ui_scene.c` renders all nine
+  scenes at four settings and fails on any pixel that is neither a legal ink nor
+  a two-ink crossing.
+- **Property names are gone from the screen.** The colour is the label. Three
+  names plus three values do not fit in 250 px at 12 px per character anyway,
+  but the real reason is that a name you have to read is a name you are reading
+  instead of playing.
+- **The value ring is three fixed slots**, left to right in the same order as
+  the encoders under the hand. A knob's slot never moves between scenes — a slot
+  that resized itself per group would teach nothing. A group with one property
+  leaves the other two slots dim, which is the honest statement: those knobs do
+  nothing here.
+- **The battery is no longer green.** It was, and the moment green meant
+  navigation it became a green object in the corner that the navigation encoder
+  does not move. It is neutral (214, 214, 218) while healthy and earns colour
+  only to warn — which also makes the warning states read as warnings.
+
+Rules kept from the measurement:
 
 - **One stroke weight, 1.5 px**, in every scene, exactly as measured.
-- **Four semantic tones**, not nine hues — the project baseline asks for black,
-  white, grey and one controlled accent: `DIM` inert scaffolding, `INFO`
-  structure that carries information, `LIVE` what the hand is moving, `TEXT`
-  naming.
-- **One line of type per scene**, laid out right to left so nothing collides:
-  battery owns x ≥ 262, value right-aligned against it, property name left of
-  that, scene name in whatever is left — and **dropped, not truncated**, when
-  it does not fit. "Soun" reads as a fault; absence reads as a quiet line.
+- **One line of type per scene**: the three values right-aligned as a group
+  against the battery (which owns x ≥ 262), scene name in whatever is left and
+  **dropped, not truncated**, when it does not fit. "Soun" reads as a fault;
+  absence reads as a quiet line.
+- **No value is ever truncated either**, and that promise is kept at the source
+  rather than at the draw call: `test_ui_wheel.c` walks the widest reachable
+  value of every property of every group and fails if a group's worst case
+  overflows the line. It is why Cell's "Harmony" is now **Chord** (it also
+  collided with the *group* named Harmony — one word, two meanings, one level
+  apart) and why "FM Glass" is now **FM**.
 - **The ring stays** under every scene as the one constant, but **thins from
   9 px to 3 px** as a scene takes over. At the hub's weight it is six times the
   monoline and shouts over the drawing.
@@ -83,29 +141,64 @@ Rules, kept from the measurement:
 
 ## Consequences
 
-- `WHEEL_VALUE` is gone and `WHEEL_GROUP` became `WHEEL_SCENE`. A press inside
-  a scene no longer descends — it hands the encoder to the next property, which
-  on the product is what a second encoder would hold simultaneously. Long press
-  still exits.
+- `WHEEL_VALUE` is gone and `WHEEL_GROUP` became `WHEEL_SCENE`. There is nothing
+  to descend into and nothing to select; long press still exits.
+- **`ui_wheel_turn_knob(st, knob, dir, coarse)` is the product input path** —
+  one call per physical encoder, and the encoder index *is* the colour index.
+  `ui_wheel_turn()` is EN3 and navigates. A knob a scene does not use is a
+  no-op, not an error: the hand finding an unused encoder should feel like
+  nothing, not like a mistake.
+- `ui_scene_t` has **no focus field**, deliberately. All properties are live
+  because all three encoders are, and a focused property would reintroduce
+  exactly the modal selection the scene exists to remove.
 - Every property gets its own tween, so all features of a drawing move, not
   just the one being turned.
-- The drawing carries character, the arc carries the amount. Both stay: they
+- The drawing carries character, the arcs carry the amounts. Both stay: they
   answer different questions, and a scene alone cannot be read precisely.
-- `test/test_ui_scene.c` checks the three things that break silently: every
-  scene draws something at every setting, stays inside its box, and **visibly
-  responds to each of its own properties** — a scene rendering identical pixels
-  at 0 and 100 is decoration, not an instrument. It caught the Pitch reference
-  ring running past the box into the label above and the ring below.
+- `test/test_ui_scene.c` checks the four things that break silently: every scene
+  draws something at every setting, stays inside its box, **visibly responds to
+  each of its own properties** — a scene rendering identical pixels at 0 and 100
+  is decoration, not an instrument — and **uses no ink outside grey and the
+  encoder colours**. It caught the Pitch reference ring running past the box
+  into the label above and the ring below.
+- `test/test_ui_wheel.c` adds the two that break the *mechanism*: each encoder
+  moves its own property and nothing else (a colour that lies is worse than no
+  colour), and no readout can overflow its line.
+
+### The bench is one encoder, and says so
+
+`wheel_state_t.one_encoder` exists so the Pico bench can be honest rather than
+pretend. With one physical encoder something has to indicate which value a turn
+will hit, so the bench cycles `member` on press and draws an underline under
+that value in its own colour. The product sets neither and draws no underline —
+all three are live, which is the point.
+
+### Corrected along the way
+
+Holding three of `ui_wheel_param_value()`'s return pointers aliased its shared
+static format buffer, so Room's 62 and 38 both printed as **"38 38"**. Three
+identical numbers are worse than no numbers, because the readout still looks
+like it works. The values are copied now, and `test_values_do_not_alias()`
+holds the line.
 
 ## Open
 
-- **Four encoders, not one.** The product has EN1 Drive, EN2 Brightness, EN3
-  Display, EN4 Volume. The scene model wants one encoder per property, held
-  simultaneously — that is the OP-1's actual trick and the reason its screens
-  need no labels. The bench has one encoder, so it cycles focus instead. Which
-  physical encoder owns which scene property is an open interaction decision.
+- **The four hues are placeholders.** Red / blue / green / yellow is the
+  assignment asked for, and the RGB values are estimates chosen for separation
+  on an ST7789 at low backlight, not sampled from a source file or from the
+  physical encoder caps. When the caps are specified, the four constants in
+  `ui_scene.c` change and nothing else does — that is the point of having the
+  mapping in one table.
+- **Yellow is only exercised by one scene.** Sound is the only group with three
+  properties, so EN4 is dark in eight of nine scenes. That is honest — those
+  knobs genuinely do nothing there — but it means the yellow half of the
+  mapping is barely taught. Either some groups grow a third property or the
+  wheel's 40° step gets revisited.
 - Scene sizes are 1–3 properties because the groups were sized for the wheel's
   measured 40° step. Four properties per scene would map one-to-one onto four
-  encoders, but that means six groups at 60°, which changes the wheel's look.
-- Colours remain estimated rather than sampled from a source file.
+  encoders, but that means six groups at 60°, which changes the wheel's look —
+  and would need EN3 to stop navigating, which is not on offer.
+- **The four encoders are not yet wired.** `ui_wheel_turn_knob()` exists and is
+  tested; the H743 input layer still has to route each physical encoder to its
+  index (Step 13.3).
 - Not yet judged on glass at low backlight — `design_bench.uf2`.

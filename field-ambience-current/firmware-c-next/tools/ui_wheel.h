@@ -61,7 +61,13 @@ typedef struct {
     wheel_level_t level;                  /* where we are going              */
     wheel_level_t prev_level;             /* what is still fading out        */
     uint8_t    group;                     /* 0..WHEEL_GROUPS-1               */
-    uint8_t    member;                    /* which property the encoder holds */
+    /* BENCH ONLY. The product drives each scene property from its own encoder
+     * (ui_wheel_turn_knob), so nothing is "selected" — that is the whole point
+     * of the colour mapping. The bench has one encoder, so it cycles which
+     * property that encoder holds, and sets `one_encoder` to admit it: the
+     * readout then gets an underline it does not have on the product. */
+    uint8_t    member;
+    uint8_t    one_encoder;
 
     /* Presentation only. The model (group/member/val) is updated the moment
      * the encoder edge arrives; these lag behind it and never gate it. */
@@ -77,8 +83,17 @@ typedef struct {
 
 void ui_wheel_init(wheel_state_t *st);
 
-/* Encoder detent. In MAIN/GROUP this rotates the structure by one step; in
- * VALUE it moves the value. */
+/* THE PRODUCT INPUT PATH. One call per physical encoder, and the encoder index
+ * is the colour index: 0 = EN1 RED, 1 = EN2 BLUE, 2 = EN4 YELLOW. EN3 (GREEN)
+ * is navigation and calls ui_wheel_turn instead — permanently, at every level,
+ * which is why "where am I" can never be confused with "what am I changing".
+ * Turning a knob a scene does not use is a no-op, not an error: the hand
+ * finding an unused encoder should feel like nothing, not like a mistake. */
+void ui_wheel_turn_knob(wheel_state_t *st, int knob, int dir, int coarse);
+
+/* Navigation detent (EN3). In MAIN this rotates the wheel by one step. Inside
+ * a scene it falls back to `member` — the bench's single-encoder compromise;
+ * on the product the scene properties never arrive through this call. */
 void ui_wheel_turn(wheel_state_t *st, int dir, int coarse);
 /* Encoder press: descend a level. `back` climbs back out instead — that is
  * what a long hold does, so there is always a way out of the level you are in

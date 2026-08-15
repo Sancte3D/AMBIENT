@@ -64,6 +64,13 @@ int main(int argc, char **argv)
     ui_wheel_tick(&st, 70);           /* part-way through the eased snap */
     SHOT("02_wheel_rotating");
 
+    /* 02b — settled four groups along, still on the wheel. Pairs with
+     * 07_scene_room to show the same group before and after the press. */
+    ui_wheel_init(&st);
+    for (int i = 0; i < 4; ++i) ui_wheel_turn(&st, +1, 0);
+    ui_wheel_settle(&st);
+    SHOT("02b_wheel_room");
+
     /* 03..11 — every scene, settled, at its seeded values. One per group:
      * this is the sheet that shows whether nine drawings actually read as nine
      * different places rather than nine variations of the same widget. */

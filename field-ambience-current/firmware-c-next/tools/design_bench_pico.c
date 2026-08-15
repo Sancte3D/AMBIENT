@@ -194,6 +194,11 @@ int main(void)
 
     oled_init();
     ui_wheel_init(&ui);
+    /* This bench has ONE encoder; the product has four, and a scene's three
+     * properties live on three of them simultaneously. Saying so here turns on
+     * the underline that marks which property the single encoder is holding —
+     * an affordance the product does not need and does not draw. */
+    ui.one_encoder = 1;
     ui_wheel_settle(&ui);
     present();
 

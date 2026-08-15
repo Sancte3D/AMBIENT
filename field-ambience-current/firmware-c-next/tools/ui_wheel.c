@@ -22,9 +22,14 @@
 #include <string.h>
 
 /* ---- palette ------------------------------------------------------------
- * Estimated from the reference render; the exact values should come from the
- * Figma export when it exists. Green is the only chromatic colour in the
- * system and marks exactly one thing: what is active or changeable. */
+ * FOUR ENCODER COLOURS AND NOTHING ELSE (see ui_scene.h for why). GREEN is
+ * EN3 = navigation: the selected node, the ring, where you are. RED / BLUE /
+ * YELLOW are EN1 / EN2 / EN4 and appear only where those knobs act. Anything
+ * that no knob can move is grey.
+ *
+ * The battery used to be green, which broke the rule the moment green became
+ * navigation — a green thing in the corner that the navigation encoder does
+ * not move. It is now neutral, and only leaves neutral to warn. */
 #define BG_R      0
 #define BG_G      0
 #define BG_B      0
@@ -36,18 +41,22 @@
 #define DIM_R    42
 #define DIM_G    42
 #define DIM_B    42
-#define SEL_R   232            /* selected node body */
-#define SEL_G   232
-#define SEL_B   232
 #define ICON_R  126            /* icon inside an inactive node */
 #define ICON_G  126
 #define ICON_B  126
 #define SHELL_R 150            /* battery shell + terminal */
 #define SHELL_G 150
 #define SHELL_B 150
-#define GRN_R   124
-#define GRN_G   240
-#define GRN_B   132
+#define BATT_R  214            /* healthy charge — neutral, see above */
+#define BATT_G  214
+#define BATT_B  218
+/* The selected node IS the navigation encoder's colour. On the old white node
+ * the eye had to work out which of nine identical discs was the big one; in
+ * EN3's own green it is the same statement the value slots make, one level up:
+ * this colour belongs to that knob. */
+#define SEL_R   (UI_NAV_RGB[0])
+#define SEL_G   (UI_NAV_RGB[1])
+#define SEL_B   (UI_NAV_RGB[2])
 
 /* ---- geometry (panel px, from ui_wheel.h) ------------------------------- */
 #define HX          158.0f
@@ -89,9 +98,16 @@ static const char *const KEY_NAMES[]    = { "C","C#","D","D#","E","F",
                                             "F#","G","G#","A","A#","B" };
 static const char *const TUNING_NAMES[] = { "Equal","Just" };
 static const char *const VOICE_NAMES[]  = { "Pad","String","Glass","Ember" };
-static const char *const SYNTH_NAMES[]  = { "Ambient","Acid","FM Glass","Mist",
+/* Two names are shorter than the engine's own: "FM Glass" is "FM" and Cell's
+ * "Harmony" is "Chord". Both changes pay for themselves twice — the readout
+ * shows three values side by side and the line is 250 px at 12 px per
+ * character, so a 8-character option makes some combination overflow; and
+ * "Harmony" was also the name of a GROUP, so the same word meant two different
+ * things one level apart. Truncating them at draw time was the alternative, and
+ * "FM Glas" reads as a rendering fault where "FM" reads as a name. */
+static const char *const SYNTH_NAMES[]  = { "Ambient","Acid","FM","Mist",
                                             "Storm","Orbit","Bamboo" };
-static const char *const CELL_NAMES[]   = { "Note","Harmony","Land" };
+static const char *const CELL_NAMES[]   = { "Note","Chord","Land" };
 static const char *const BASS_NAMES[]   = { "Off","Root","Fifth","Drift" };
 static const char *const COLOR_NAMES[]  = { "Pure","Open","Warm","Deep" };
 static const char *const FX_NAMES[]     = { "Bypass","Reverb","Delay","Chorus",
@@ -192,23 +208,30 @@ void ui_wheel_init(wheel_state_t *st)
 float ui_wheel_theta(const wheel_state_t *st)        { return st->rot.cur; }
 float ui_wheel_theta_target(const wheel_state_t *st) { return st->rot.to; }
 
+void ui_wheel_turn_knob(wheel_state_t *st, int knob, int dir, int coarse)
+{
+    if (st->level != WHEEL_SCENE) return;
+    if (knob < 0 || knob >= ui_wheel_group_size(st->group)) return;
+
+    int p = ui_wheel_param_of(st->group, knob);
+    if (P_NOPT[p]) {
+        int i = (int)st->val[p] + dir;
+        while (i < 0) i += P_NOPT[p];
+        st->val[p] = (uint8_t)(i % P_NOPT[p]);
+    } else {
+        int v = (int)st->val[p] + dir * (coarse ? 10 : 2);
+        if (v < 0)   v = 0;
+        if (v > 100) v = 100;
+        st->val[p] = (uint8_t)v;
+    }
+    /* Only the turned property moves, and it follows the hand. */
+    ui_tween_to(&st->knob[knob], param_norm(st, p), UI_SPEED_MICRO, UI_EASE_OUT);
+}
+
 void ui_wheel_turn(wheel_state_t *st, int dir, int coarse)
 {
     if (st->level == WHEEL_SCENE) {
-        int p = ui_wheel_param_of(st->group, st->member);
-        if (P_NOPT[p]) {
-            int i = (int)st->val[p] + dir;
-            while (i < 0) i += P_NOPT[p];
-            st->val[p] = (uint8_t)(i % P_NOPT[p]);
-        } else {
-            int v = (int)st->val[p] + dir * (coarse ? 10 : 2);
-            if (v < 0)   v = 0;
-            if (v > 100) v = 100;
-            st->val[p] = (uint8_t)v;
-        }
-        /* Only the turned property moves, and it follows the hand. */
-        ui_tween_to(&st->knob[st->member], param_norm(st, p),
-                    UI_SPEED_MICRO, UI_EASE_OUT);
+        ui_wheel_turn_knob(st, st->member, dir, coarse);
         return;
     }
 
@@ -263,8 +286,9 @@ void ui_wheel_press(wheel_state_t *st, int back)
         return;
     }
     /* Inside a scene the press does not descend — there is nowhere deeper to
-     * go. It hands the encoder to the next property of the same drawing, which
-     * on the product is what a second encoder would do simultaneously. */
+     * go. On the BENCH it hands the single encoder to the next property; on the
+     * product the three encoders already hold all three and this press is free
+     * for something else. */
     st->member = (uint8_t)((st->member + 1) % GROUPS[st->group].n);
 }
 
@@ -398,7 +422,11 @@ static void wheel_battery(uint16_t *line, int y, int pct)
     const float hw = (bx1 - bx0) * 0.5f, hh = (by1 - by0) * 0.5f;
     const float rad = 3.0f, wall = 1.5f;
 
-    int r = GRN_R, g = GRN_G, b = GRN_B;
+    /* Neutral while healthy: colour in this system means "an encoder moves
+     * this", and no encoder moves the battery. It earns colour only when it
+     * needs the eye — which is also why the warning states now read as
+     * warnings instead of as one more coloured thing among several. */
+    int r = BATT_R, g = BATT_G, b = BATT_B;
     if (pct <= 10)      { r = 244; g =  90; b =  76; }   /* critical */
     else if (pct <= 25) { r = 246; g = 190; b =  84; }   /* low      */
 
@@ -557,10 +585,10 @@ static void compose_main(const wheel_state_t *st, int y, uint16_t *line,
                 ui_wheel_group_name(st->group), 255, 255, 255, 235 * talpha / 255);
 }
 
-/* The scene replaces the old sub-wheel and value screen both. Every property
- * of the group is visible at once as a feature of one drawing; the encoder
- * holds one of them at a time on this bench, which on the product is what four
- * encoders would hold simultaneously. */
+/* The scene replaces the old sub-wheel and value screen both. Every property of
+ * the group is visible at once as a feature of one drawing, in the colour of
+ * the encoder that moves it — so there is nothing to select and nothing to
+ * read. */
 static void compose_scene(const wheel_state_t *st, int y, uint16_t *line,
                           int alpha, int talpha)
 {
@@ -569,7 +597,6 @@ static void compose_scene(const wheel_state_t *st, int y, uint16_t *line,
     ui_scene_t sc;
     sc.group = st->group;
     sc.n     = g->n;
-    sc.focus = st->member;
     for (int i = 0; i < UI_SCENE_MAX_KNOBS; ++i) {
         sc.opts[i] = i < g->n ? P_NOPT[g->p[i]] : 0;
         sc.v[i]    = i < g->n ? st->knob[i].cur : 0.0f;
@@ -578,62 +605,94 @@ static void compose_scene(const wheel_state_t *st, int y, uint16_t *line,
     }
     ui_scene_row(&sc, y, line, alpha);
 
-    /* One line of type, and only one: the scene's own name on the left, the
-     * property the encoder is holding and its value on the right. Everything
-     * else the drawing already says. */
-    /* ONE line of type, laid out right to left so nothing can collide: the
-     * battery owns x >= 262, the value is right-aligned against it, the
-     * property name sits left of the value, and the scene name takes whatever
-     * is left over — truncated rather than allowed to run into either. A
-     * left-to-right layout put "Texture" straight through "Atmosphere" and
-     * "Tokyo City" straight through the battery. */
+    /* ONE line of type, and the property NAMES are gone from it. Three names
+     * plus three values do not fit in 216 px at this size, and more to the
+     * point they are no longer needed: each value is painted in the colour of
+     * the encoder that moves it, and the encoders are read left to right in
+     * exactly that order — RED, BLUE, YELLOW. The colour is the label, which is
+     * the whole reason the OP-1's screens can be operated without reading.
+     *
+     * Right-aligned as a group against the battery (which owns x >= 262), so a
+     * long word grows leftwards into empty space instead of into the corner.
+     *
+     * NOTHING IS TRUNCATED HERE, and nothing needs to be: the option names were
+     * chosen so that the widest reachable combination of every group fits in
+     * VLEFT..RIGHT, and test_ui_wheel.c walks all of them and fails if one does
+     * not. Fixing the width at the source is the only way to keep the promise —
+     * a fit-to-budget call would silently start cutting words the day someone
+     * adds an eighth synth core with a long name. */
     const bakedfont_t *f = &font_hn_value_small;
-    int p = ui_wheel_param_of(st->group, st->member);
-    char b1[24], b2[24];
+    const int VLEFT = 6, RIGHT = 256, GAPX = 12, LEFT = 40;
+    /* COPIED, not aliased: ui_wheel_param_value formats continuous values into
+     * one shared static buffer, so holding three of its return pointers made
+     * all three numbers show the last one — Room printed "38 38" for 62 and 38.
+     * A scene with three identical-looking numbers is worse than no numbers,
+     * because it looks like a working readout. */
+    char vs[UI_SCENE_MAX_KNOBS][16];
+    int vw[UI_SCENE_MAX_KNOBS], total = 0;
 
-    const int RIGHT = 256;
-    const char *v  = ui_fit_text(f, ui_wheel_param_value(st, p), 120, b1, sizeof b1);
-    int vw = ui_text_w(f, v);
-    ui_row_text(line, y, 10, RIGHT - vw, f, v, GRN_R, GRN_G, GRN_B, talpha);
-
-    int used = vw + 12;
-    if (g->n > 1) {
-        const char *nm = ui_fit_text(f, ui_wheel_param_label(p),
-                                     96, b2, sizeof b2);
-        int nw = ui_text_w(f, nm);
-        ui_row_text(line, y, 10, RIGHT - vw - 12 - nw, f, nm,
-                    255, 255, 255, 190 * talpha / 255);
-        used += nw + 12;
+    for (int i = 0; i < g->n; ++i) {
+        const char *s = ui_wheel_param_value(st, g->p[i]);
+        size_t len = strlen(s);
+        if (len >= sizeof vs[i]) len = sizeof vs[i] - 1;
+        memcpy(vs[i], s, len);
+        vs[i][len] = '\0';
+        vw[i] = ui_text_w(f, vs[i]);
+        total += vw[i] + (i ? GAPX : 0);
     }
+
+    int x = RIGHT - total;
+    if (x < VLEFT) x = VLEFT;      /* the test proves this unreachable */
+    for (int i = 0; i < g->n; ++i) {
+        ui_row_text(line, y, 10, x, f, vs[i], UI_KNOB_RGB[i][0],
+                    UI_KNOB_RGB[i][1], UI_KNOB_RGB[i][2], talpha);
+        /* BENCH ONLY: with one physical encoder something has to say which
+         * value the turn will hit. On the product all three are live and this
+         * underline is absent — see wheel_state_t.one_encoder. */
+        if (st->one_encoder && i == st->member) {
+            static uint8_t cov[OLED_WIDTH];
+            ui_cov_capsule(cov, y, (float)x, 25.0f, (float)(x + vw[i]), 25.0f,
+                           0.75f);
+            ui_cov_flush(line, cov, UI_KNOB_RGB[i][0], UI_KNOB_RGB[i][1],
+                         UI_KNOB_RGB[i][2], talpha);
+        }
+        x += vw[i] + GAPX;
+    }
+
     /* The scene name is DROPPED rather than truncated when the line is full.
      * "Soun" and "Textur" read as a rendering fault; nothing at all reads as a
      * deliberately quiet line — and the name is the least load-bearing thing
      * on screen, because the drawing already says where you are. */
-    int room = RIGHT - used - 40;
+    int room = (RIGHT - total) - LEFT - GAPX;
     if (ui_text_w(f, g->name) <= room)
-        ui_row_text(line, y, 10, 40, f, g->name, 255, 255, 255,
+        ui_row_text(line, y, 10, LEFT, f, g->name, 255, 255, 255,
                     110 * talpha / 255);
+}
 
-    /* Which property the encoder holds, when there is more than one: a dot per
-     * property under the name, the held one filled. Three dots cost nothing
-     * and remove the only genuine ambiguity in the scene. */
-    if (g->n > 1) {
-        static uint8_t cov[OLED_WIDTH];
-        for (int i = 0; i < g->n; ++i) {
-            float x = 40.0f + i * 8.0f;
-            if (i == st->member) ui_cov_disc(cov, y, x, 36.0f, 2.6f);
-            else                 ui_cov_arc(cov, y, x, 36.0f, 2.2f, 0.75f,
-                                            -180.0f, 180.0f);
-        }
-        ui_cov_flush(line, cov, 255, 255, 255, 150 * talpha / 255);
-    }
+/* The value ring is divided into THREE FIXED SLOTS, one per scene encoder, and
+ * a knob's slot never moves between scenes. Left slot = EN1 = red, middle =
+ * EN2 = blue, right = EN4 = yellow, which is the same left-to-right order as
+ * the three readouts above it and as the encoders under the user's hand.
+ *
+ * Fixed rather than shared out among however many properties the scene has: a
+ * slot that changes size and position per group teaches nothing, whereas a
+ * slot that is always in the same place becomes a position the hand knows. A
+ * group with one property simply leaves the other two slots dim, which is also
+ * the honest statement — those knobs do nothing here. */
+#define VAL_SLOT_GAP 7.0f
+
+static void ring_slot(int i, float *s0, float *s1)
+{
+    float step = (VAL_A1 - VAL_A0) / (float)UI_SCENE_MAX_KNOBS;
+    *s0 = VAL_A0 + i * step + VAL_SLOT_GAP * 0.5f;
+    *s1 = VAL_A0 + (i + 1) * step - VAL_SLOT_GAP * 0.5f;
 }
 
 /* The ring is the one thing every level shares, and it never fades. In the
  * wheel it is the hub the branches grow out of; in a scene it becomes the
- * horizon the drawing sits on AND the precise readout of whichever property
- * the encoder is holding. The drawing carries the character, the arc carries
- * the amount — they answer different questions, so both earn their place. */
+ * horizon the drawing sits on AND the precise readout of all three properties
+ * at once. The drawing carries the character, the arcs carry the amounts —
+ * they answer different questions, so both earn their place. */
 static void compose_ring(const wheel_state_t *st, int y, uint16_t *line,
                          float scene_weight)
 {
@@ -654,15 +713,27 @@ static void compose_ring(const wheel_state_t *st, int y, uint16_t *line,
 
     if (scene_weight <= 0.01f) return;
 
-    float pct = st->knob[st->member].cur * 100.0f;
-    if (pct < 0.0f)   pct = 0.0f;
-    if (pct > 100.0f) pct = 100.0f;
-    float a = VAL_A0 + (VAL_A1 - VAL_A0) * pct / 100.0f;
+    int n     = GROUPS[st->group].n;
+    int alpha = (int)(scene_weight * 255.0f);
 
-    if (pct > 0.0f) ui_cov_arc(cov, y, HX, HY, R_RING, ht, VAL_A0, a);
-    ui_cov_disc(cov, y, HX + R_RING * sinf(a * DEG2RAD),
-                HY - R_RING * cosf(a * DEG2RAD), 3.5f * scene_weight);
-    ui_cov_flush(line, cov, GRN_R, GRN_G, GRN_B, (int)(scene_weight * 255.0f));
+    for (int i = 0; i < n; ++i) {
+        float s0, s1;
+        ring_slot(i, &s0, &s1);
+
+        float v = st->knob[i].cur;
+        if (v < 0.0f) v = 0.0f;
+        if (v > 1.0f) v = 1.0f;
+        float a = s0 + (s1 - s0) * v;
+
+        /* Only draw the travelled part; at v = 0 the arc would otherwise be a
+         * round cap sitting at the slot's start, which reads as a small value
+         * rather than as none. The head dot alone is the correct mark for 0. */
+        if (a - s0 > 0.5f) ui_cov_arc(cov, y, HX, HY, R_RING, ht, s0, a);
+        ui_cov_disc(cov, y, HX + R_RING * sinf(a * DEG2RAD),
+                    HY - R_RING * cosf(a * DEG2RAD), 3.2f * scene_weight);
+        ui_cov_flush(line, cov, UI_KNOB_RGB[i][0], UI_KNOB_RGB[i][1],
+                     UI_KNOB_RGB[i][2], alpha);
+    }
 }
 
 static void compose_level(const wheel_state_t *st, wheel_level_t lv,

@@ -9,6 +9,7 @@
  * here instead.
  */
 #include "../tools/ui_wheel.h"
+#include "../tools/ui_draw.h"
 #include "oled.h"
 
 #include <stdio.h>
@@ -185,10 +186,15 @@ static void test_compose(void)
                  * through the middle. Node centres are (158, 67) r=22 in MAIN
                  * and (158, 79) r=15 in GROUP; 0.7 r above centre is inside
                  * the disc and outside the icon (icon radius is 0.42 r). */
+                /* The selected node is painted in the NAVIGATION encoder's
+                 * green, so probe green rather than a generic brightness — a
+                 * luminance probe would also pass on the white it used to be,
+                 * and the point of the change is that it is no longer white. */
                 if (st.level == WHEEL_MAIN && y == 67 - 15) {
                     uint16_t px = line[158];
                     int r = ((px >> 11) & 0x1F) << 3;
-                    sel_row_bright = (r > 160);
+                    int gg = ((px >> 5) & 0x3F) << 2;
+                    sel_row_bright = (gg > 160 && gg > r + 60);
                 }
             }
             CHECK(lit > 500, "%s/%s drew almost nothing (%ld px)",
@@ -205,21 +211,165 @@ static void test_compose(void)
 }
 
 /* 0 and 100 are the two values that must never be ambiguous, and they are
- * exactly the two that sit closest to the bottom edge. The orb has to stay
- * fully on the panel at both ends. */
+ * exactly the two that sit closest to the bottom edge. The head dot has to stay
+ * fully on the panel at both ends of every slot — mirrors ring_slot() in
+ * ui_wheel.c, so a change to the sweep or the gap that pushes a slot end off
+ * the panel fails here rather than on glass. */
 static void test_value_extremes(void)
 {
     const float HX = 158.0f, HY = 171.0f, R = 64.0f, ORB = 6.5f;
-    const float A0 = -78.0f, A1 = 78.0f, D2R = 0.017453293f;
+    const float A0 = -78.0f, A1 = 78.0f, GAP = 7.0f, D2R = 0.017453293f;
+    const float STEP = (A1 - A0) / (float)UI_SCENE_MAX_KNOBS;
 
-    for (int pct = 0; pct <= 100; pct += 100) {
-        float a  = (A0 + (A1 - A0) * pct / 100.0f) * D2R;
+    for (int slot = 0; slot < UI_SCENE_MAX_KNOBS; ++slot)
+    for (int end = 0; end < 2; ++end) {
+        float pct = end ? 100.0f : 0.0f;
+        float s0 = A0 + slot * STEP + GAP * 0.5f;
+        float s1 = A0 + (slot + 1) * STEP - GAP * 0.5f;
+        float a  = (s0 + (s1 - s0) * pct / 100.0f) * D2R;
         float cx = HX + R * sinf(a), cy = HY - R * cosf(a);
         CHECK(cx - ORB >= 0.0f && cx + ORB <= (float)OLED_WIDTH,
-              "value %d puts the orb off the side (x %.1f)", pct, cx);
+              "slot %d at %.0f puts the head off the side (x %.1f)",
+              slot, (double)pct, cx);
         CHECK(cy + ORB <= (float)OLED_HEIGHT,
-              "value %d clips the orb at the bottom edge (y %.1f, orb ends "
-              "%.1f, panel %d)", pct, cy, cy + ORB, OLED_HEIGHT);
+              "slot %d at %.0f clips the head at the bottom edge (y %.1f, ends "
+              "%.1f, panel %d)", slot, (double)pct, cy, cy + ORB, OLED_HEIGHT);
+    }
+}
+
+/* THE COLOUR MECHANISM, as behaviour rather than as pixels.
+ *
+ * Each scene property is bound to one physical encoder, and the binding is what
+ * the colour communicates. Two things therefore have to hold, or the colour is
+ * lying: turning encoder i must move property i AND NOTHING ELSE, and turning
+ * an encoder the scene does not use must do nothing at all rather than fall
+ * through to some other property. */
+static void test_knobs_are_independent(void)
+{
+    for (int g = 0; g < WHEEL_GROUPS; ++g) {
+        int n = ui_wheel_group_size(g);
+        for (int knob = 0; knob < UI_SCENE_MAX_KNOBS; ++knob) {
+            wheel_state_t st;
+            ui_wheel_init(&st);
+            for (int i = 0; i < g; ++i) ui_wheel_turn(&st, +1, 0);
+            ui_wheel_settle(&st);
+            ui_wheel_press(&st, 0);
+            ui_wheel_settle(&st);
+
+            uint8_t before[WHEEL_PARAM_COUNT];
+            memcpy(before, st.val, sizeof before);
+            uint8_t grp = st.group;
+
+            /* ONE detent. Three would wrap a 3-option list straight back to
+             * where it started and read as "the knob does nothing". */
+            ui_wheel_turn_knob(&st, knob, +1, 0);
+
+            CHECK(st.group == grp && st.level == WHEEL_SCENE,
+                  "turning knob %d in %s navigated — scene knobs must never "
+                  "move the wheel", knob, ui_wheel_group_name(g));
+
+            for (int p = 0; p < WHEEL_PARAM_COUNT; ++p) {
+                int owned = (knob < n && p == ui_wheel_param_of(g, knob));
+                if (owned) continue;
+                CHECK(st.val[p] == before[p],
+                      "turning knob %d in %s also changed %s (%d -> %d)",
+                      knob, ui_wheel_group_name(g), ui_wheel_param_label(p),
+                      before[p], st.val[p]);
+            }
+            if (knob < n) {
+                int p = ui_wheel_param_of(g, knob);
+                CHECK(st.val[p] != before[p],
+                      "knob %d in %s moved nothing — %s stayed at %d",
+                      knob, ui_wheel_group_name(g),
+                      ui_wheel_param_label(p), before[p]);
+            }
+        }
+
+        /* And a scene knob must be inert on the wheel itself, where those
+         * encoders hold the globals instead. */
+        wheel_state_t st;
+        ui_wheel_init(&st);
+        uint8_t before[WHEEL_PARAM_COUNT];
+        memcpy(before, st.val, sizeof before);
+        for (int knob = 0; knob < UI_SCENE_MAX_KNOBS; ++knob)
+            ui_wheel_turn_knob(&st, knob, +1, 0);
+        CHECK(memcmp(before, st.val, sizeof before) == 0,
+              "a scene knob changed a parameter from the top-level wheel");
+    }
+}
+
+/* NO VALUE MAY EVER BE TRUNCATED, so the names have to fit by construction.
+ *
+ * Three values sit side by side on one 250 px line at 12 px per character, and
+ * the previous version simply cut whatever ran over — which is how "Tokyo City"
+ * became "Tokyo Ci". A cut word reads as a rendering fault, and there is no
+ * space left to grow into, so the constraint belongs on the NAMES: this walks
+ * the widest reachable value of every property of every group and fails if any
+ * group's worst case overflows. It fails the day someone adds an option whose
+ * name is too long, which is the only moment the fix is cheap.
+ *
+ * Mirrors the layout constants in compose_scene(). */
+static void test_readout_never_truncates(void)
+{
+    const bakedfont_t *f = &font_hn_value_small;
+    const int VLEFT = 6, RIGHT = 256, GAPX = 12;
+
+    for (int g = 0; g < WHEEL_GROUPS; ++g) {
+        wheel_state_t st;
+        ui_wheel_init(&st);
+        int n = ui_wheel_group_size(g), total = 0;
+        char worst[UI_SCENE_MAX_KNOBS][24] = { { 0 } };
+
+        for (int m = 0; m < n; ++m) {
+            int p = ui_wheel_param_of(g, m), wide = 0;
+            /* 0..100 covers every option index (the accessor clamps past the
+             * end of a list) and every continuous reading. */
+            for (int v = 0; v <= 100; ++v) {
+                st.val[p] = (uint8_t)v;
+                const char *s = ui_wheel_param_value(&st, p);
+                int w = ui_text_w(f, s);
+                if (w > wide) {
+                    wide = w;
+                    snprintf(worst[m], sizeof worst[m], "%s", s);
+                }
+            }
+            total += wide + (m ? GAPX : 0);
+        }
+        CHECK(total <= RIGHT - VLEFT,
+              "%s's widest readout needs %d px but the line is %d: \"%s\" "
+              "\"%s\" \"%s\" — shorten an option name rather than let the "
+              "draw path cut it",
+              ui_wheel_group_name(g), total, RIGHT - VLEFT,
+              worst[0], worst[1], worst[2]);
+    }
+}
+
+/* ui_wheel_param_value formats continuous values into one shared static
+ * buffer. The scene readout holds up to three of them at once, so aliasing
+ * showed Room's 62 and 38 as "38 38" — a readout that looks like it works. */
+static void test_values_do_not_alias(void)
+{
+    wheel_state_t st;
+    ui_wheel_init(&st);
+    for (int g = 0; g < WHEEL_GROUPS; ++g) {
+        int n = ui_wheel_group_size(g);
+        if (n < 2) continue;
+        for (int m = 0; m < n; ++m) st.val[ui_wheel_param_of(g, m)] =
+            (uint8_t)(11 + m * 17);
+
+        char seen[UI_SCENE_MAX_KNOBS][16];
+        for (int m = 0; m < n; ++m)
+            snprintf(seen[m], sizeof seen[m], "%s",
+                     ui_wheel_param_value(&st, ui_wheel_param_of(g, m)));
+        for (int m = 0; m < n; ++m) {
+            char want[16];
+            snprintf(want, sizeof want, "%s",
+                     ui_wheel_param_value(&st, ui_wheel_param_of(g, m)));
+            CHECK(strcmp(seen[m], want) == 0,
+                  "%s property %d read back as \"%s\" but is \"%s\" — the "
+                  "value buffer is shared and the caller kept the pointer",
+                  ui_wheel_group_name(g), m, seen[m], want);
+        }
     }
 }
 
@@ -232,13 +382,18 @@ int main(void)
     test_ease_settles();
     test_compose();
     test_value_extremes();
+    test_knobs_are_independent();
+    test_readout_never_truncates();
+    test_values_do_not_alias();
 
     if (failures) {
         printf("test_ui_wheel: %d failure(s)\n", failures);
         return 1;
     }
     printf("test_ui_wheel: OK — %d groups partition %d parameters, "
-           "navigation closes, snaps take the short way, %d screens compose\n",
-           WHEEL_GROUPS, WHEEL_PARAM_COUNT, WHEEL_GROUPS * 2);
+           "navigation closes, snaps take the short way, %d screens compose, "
+           "and each of the %d scene encoders moves its own property only\n",
+           WHEEL_GROUPS, WHEEL_PARAM_COUNT, WHEEL_GROUPS * 2,
+           UI_SCENE_MAX_KNOBS);
     return 0;
 }

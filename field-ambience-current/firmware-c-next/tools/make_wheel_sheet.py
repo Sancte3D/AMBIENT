@@ -16,20 +16,22 @@ except ImportError:
     sys.exit("needs pillow:  pip install pillow")
 
 ROWS = [
-    ("rotate — the structure turns under a fixed selection point", [
-        ("01_main_world",     "main wheel · World"),
-        ("02_main_rotating",  "mid-snap · icons stay upright"),
-        ("03_main_space",     "settled on Room"),
+    ("rotate — the structure turns under a fixed selection point, and the "
+     "selected node is EN3's own green", [
+        ("01_wheel_world",    "the wheel · World"),
+        ("02_wheel_rotating", "mid-snap · icons stay upright"),
+        ("02b_wheel_room",    "settled on Room"),
     ]),
-    ("press — the same geometry goes one level in", [
-        ("04_group_space",    "group wheel · Room"),
-        ("05_group_shimmer",  "rotated to Shimmer"),
-        ("09_group_synth",    "a three-member group"),
+    ("press — the group becomes a place, and the ring becomes three "
+     "encoder-coloured slots", [
+        ("07_scene_room",     "Room · red = EN1 Space, blue = EN2 Shimmer"),
+        ("12_room_small",     "EN1 at 0 — its slot is a bare head dot"),
+        ("13_room_large",     "EN1 at 100 — EN2 untouched, as its slot shows"),
     ]),
-    ("press again — the circle becomes the parameter", [
-        ("06_value_shimmer",  "value · branches retracted"),
-        ("07_value_turned",   "turned up"),
-        ("08_value_world",    "discrete value on the same ring"),
+    ("one drawing, three live properties — no property names anywhere", [
+        ("04_scene_sound",    "Sound · the only group that uses all three"),
+        ("05_scene_pitch",    "Pitch · just intonation bends the spacing"),
+        ("03_scene_world",    "World · one property, two dim slots"),
     ]),
 ]
 
@@ -59,7 +61,10 @@ def main() -> int:
     tw, th = 320 * SCALE, 170 * SCALE
     head, rowhead, cap = 96, 46, 26
     W = PAD * 2 + 3 * tw + 2 * GAP
-    H = head + len(ROWS) * (rowhead + th + cap + GAP) + PAD + 150
+    # 46 for the 1:1 heading, 170 for the tiles themselves, then padding — the
+    # old constant 150 was short by the tile height and cropped the row that is
+    # supposed to be the honest one.
+    H = head + len(ROWS) * (rowhead + th + cap + GAP) + 46 + 170 + PAD
 
     sheet = Image.new("RGB", (W, H), BG)
     dr = ImageDraw.Draw(sheet)
@@ -85,7 +90,7 @@ def main() -> int:
     dr.text((PAD, y + 6), "1:1 — actual size on the panel",
             font=font(20, True), fill=FG)
     y += 40
-    for i, tag in enumerate(["01_main_world", "04_group_space", "06_value_shimmer"]):
+    for i, tag in enumerate(["01_wheel_world", "07_scene_room", "04_scene_sound"]):
         x = PAD + i * (320 + GAP * 2)
         sheet.paste(tiles[tag], (x, y))
         dr.rectangle([x - 1, y - 1, x + 320, y + 170], outline=(60, 60, 66))

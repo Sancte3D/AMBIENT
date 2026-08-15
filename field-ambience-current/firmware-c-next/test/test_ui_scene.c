@@ -57,7 +57,6 @@ static void fill(ui_scene_t *sc, int g, float v)
     memset(sc, 0, sizeof *sc);
     sc->group = g;
     sc->n     = 3;
-    sc->focus = 0;
     for (int i = 0; i < UI_SCENE_MAX_KNOBS; ++i) sc->v[i] = v;
 }
 
@@ -117,16 +116,129 @@ static void test_responds_to_its_parameters(void)
         }
 }
 
+/* THE COLOUR RULE, checked rather than asserted in a comment.
+ *
+ * A scene may contain exactly two kinds of ink: the dim structural grey, and
+ * the colours of the encoders. If a stroke is coloured, a knob moves it; if it
+ * is grey, no knob does. That is the entire labelling system — the value has no
+ * name written next to it, only a colour that matches the knob under the hand —
+ * so a stray fourth tone is not a cosmetic slip, it is a control the user
+ * cannot attribute to anything.
+ *
+ * Everything is blended over black at coverage a, so a lit pixel is the source
+ * colour scaled by a/255. The check is therefore on DIRECTION, not on value:
+ * antialiased edges are dim versions of a legal colour, and a mixture of two
+ * legal colours is not. */
+#define N_INK (1 + UI_SCENE_MAX_KNOBS)
+#define SLACK 14.0f      /* 5-6-5 costs 8 in r/b and 4 in g; this clears both */
+
+static void ink(int c, float out[3])
+{
+    static const float DIM_GREY[3] = { 42.0f, 42.0f, 42.0f };
+    if (c == 0) { out[0] = DIM_GREY[0]; out[1] = DIM_GREY[1]; out[2] = DIM_GREY[2]; }
+    else for (int j = 0; j < 3; ++j) out[j] = (float)UI_KNOB_RGB[c - 1][j];
+}
+
+/* One ink at some coverage: the pixel is that colour scaled down. */
+static int is_single_ink(const float px[3])
+{
+    for (int c = 0; c < N_INK; ++c) {
+        float col[3];
+        ink(c, col);
+        int big = 0;
+        for (int j = 1; j < 3; ++j) if (col[j] > col[big]) big = j;
+        float s = px[big] / col[big];
+        if (s > 1.05f) continue;
+        int ok = 1;
+        for (int j = 0; j < 3; ++j) {
+            float d = px[j] - s * col[j];
+            if (d < -SLACK || d > SLACK) ok = 0;
+        }
+        if (ok) return 1;
+    }
+    return 0;
+}
+
+/* Where two legal strokes cross, the pixel is one ink blended over the other:
+ * px = w1*C1 + w2*C2 with w >= 0 and w1 + w2 <= 1, which is what sequential
+ * alpha compositing over black produces. That is a legitimate mixture, so it
+ * has to be allowed — but only between two colours that are themselves legal.
+ * A purple pixel where red crosses blue is the drawing working; a purple pixel
+ * on its own is a fourth ink. */
+static int is_ink_pair(const float px[3])
+{
+    for (int a = 0; a < N_INK; ++a)
+        for (int b = a + 1; b < N_INK; ++b) {
+            float ca[3], cb[3];
+            ink(a, ca);
+            ink(b, cb);
+            for (int i = 0; i <= 32; ++i) {
+                float w1 = i / 32.0f;
+                for (int j = 0; j + i <= 32; ++j) {
+                    float w2 = j / 32.0f;
+                    int ok = 1;
+                    for (int k = 0; k < 3; ++k) {
+                        float d = px[k] - w1 * ca[k] - w2 * cb[k];
+                        if (d < -SLACK || d > SLACK) { ok = 0; break; }
+                    }
+                    if (ok) return 1;
+                }
+            }
+        }
+    return 0;
+}
+
+static int is_legal_ink(int r, int g, int b)
+{
+    const float px[3] = { (float)r, (float)g, (float)b };
+    return is_single_ink(px) || is_ink_pair(px);
+}
+
+static void test_only_grey_and_encoder_colours(void)
+{
+    static const float V[] = { 0.0f, 0.33f, 0.66f, 1.0f };
+    for (int g = 0; g < 9; ++g)
+        for (size_t v = 0; v < sizeof V / sizeof V[0]; ++v) {
+            ui_scene_t sc;
+            fill(&sc, g, V[v]);
+            int bad = 0, bad_x = -1, bad_y = -1, br = 0, bg = 0, bb = 0;
+            uint16_t line[OLED_WIDTH];
+            for (int y = 0; y < OLED_HEIGHT; ++y) {
+                memset(line, 0, sizeof line);
+                ui_scene_row(&sc, y, line, 255);
+                for (int x = 0; x < OLED_WIDTH; ++x) {
+                    if (!line[x]) continue;
+                    int r5 = (line[x] >> 11) & 0x1F, g6 = (line[x] >> 5) & 0x3F,
+                        b5 = line[x] & 0x1F;
+                    int r = (r5 << 3) | (r5 >> 2), gg = (g6 << 2) | (g6 >> 4),
+                        b = (b5 << 3) | (b5 >> 2);
+                    if (!is_legal_ink(r, gg, b)) {
+                        if (!bad) { bad_x = x; bad_y = y; br = r; bg = gg; bb = b; }
+                        ++bad;
+                    }
+                }
+            }
+            CHECK(bad == 0,
+                  "%s at %.2f drew %d pixel(s) that are neither the structural "
+                  "grey nor an encoder colour — first at (%d,%d) = (%d,%d,%d). "
+                  "Colour IS the label here; an unattributable tone is an "
+                  "unattributable control",
+                  NAME[g], (double)V[v], bad, bad_x, bad_y, br, bg, bb);
+        }
+}
+
 int main(void)
 {
     test_draws_and_stays_in_box();
     test_responds_to_its_parameters();
+    test_only_grey_and_encoder_colours();
 
     if (failures) {
         printf("test_ui_scene: %d failure(s)\n", failures);
         return 1;
     }
     printf("test_ui_scene: OK — 9 scenes draw at every setting, stay in the "
-           "box, and every property visibly moves its own geometry\n");
+           "box, every property visibly moves its own geometry, and nothing "
+           "is drawn in a tone outside grey + the three encoder colours\n");
     return 0;
 }

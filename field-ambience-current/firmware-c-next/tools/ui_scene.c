@@ -6,19 +6,21 @@
 #include <math.h>
 #include <string.h>
 
-/* ---- palette (semantic, four tones) ------------------------------------- */
+/* ---- palette -------------------------------------------------------------
+ * One dim grey for everything inert — 42,42,42, which is within a hair of the
+ * #353238 that carries over half of the measured OP-1 screen — and then
+ * nothing but the four encoder colours. There is no decorative colour in this
+ * system: if something is coloured, an encoder moves it. */
 #define DIM_R   42
 #define DIM_G   42
 #define DIM_B   42
-/* From the measured #698eff, held back so it reads as structure rather than as
- * an accent — but not so far back that a 1.5 px stroke of it disappears on
- * black, which is what the first pass did. */
-#define INFO_R 112
-#define INFO_G 144
-#define INFO_B 226
-#define LIVE_R 124
-#define LIVE_G 240
-#define LIVE_B 132
+
+const uint8_t UI_KNOB_RGB[UI_SCENE_MAX_KNOBS][3] = {
+    { 244,  86,  96 },   /* EN1 · RED    */
+    {  92, 146, 255 },   /* EN2 · BLUE   */
+    { 242, 200,  70 },   /* EN4 · YELLOW */
+};
+const uint8_t UI_NAV_RGB[3] = { 60, 230, 130 };   /* EN3 · GREEN — navigation */
 
 /* The measured OP-1 weight: 1.5 px, which is a half-width of 0.75. Every
  * stroke in every scene uses it. One weight is most of why those screens hold
@@ -92,7 +94,7 @@ const char *ui_scene_knob_name(int group, int knob)
  * Four worlds, four skylines. The parameter does not label the world, it IS
  * the shape of the land: a city cuts square, a coast rolls, a highway
  * converges to a point, a room is furniture. */
-static void scene_world(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live)
+static void scene_world(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     int w = (int)(sc->v[0] * 3.0f + 0.5f);
     float pts[2 * 26];
@@ -132,21 +134,20 @@ static void scene_world(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live)
             ++n;
         }
     }
-    ui_cov_polyline(live, y, pts, n, STROKE);
+    ui_cov_polyline(k[0], y, pts, n, STROKE);
     sc_line(dim, y, BX0, base, BX1, base);          /* ground */
 
     if (w == 2) {                                   /* vanishing point + road */
         sc_line(dim, y, BX0 + 10.0f, BY1, BCX, BY0 + 26.0f);
         sc_line(dim, y, BX1 - 10.0f, BY1, BCX, BY0 + 26.0f);
-        sc_dot(live, y, BCX, BY0 + 26.0f);
+        sc_dot(k[0], y, BCX, BY0 + 26.0f);
     }
 }
 
 /* ---- 1 · SOUND — one cycle of the actual voice ---------------------------
  * Synth bends the waveform, Voice tilts its envelope, Cell puts the trigger
  * points on it. Three knobs, three visible features, no labels needed once. */
-static void scene_sound(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
-                        cov_t *info)
+static void scene_sound(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     int shape = (int)(sc->v[0] * 6.0f + 0.5f);      /* 7 synth cores */
     float tilt = sc->v[1];                          /* voice            */
@@ -176,13 +177,13 @@ static void scene_sound(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
         pts[n*2+1] = BCY - v * env * (BH * 0.36f);
         ++n;
     }
-    ui_cov_polyline(live, y, pts, n, STROKE);
+    ui_cov_polyline(k[1], y, pts, n, STROKE);
 
-    for (int k = 0; k < trig; ++k) {                /* cell triggers */
-        float t = (k + 0.5f) / trig;
+    for (int t_i = 0; t_i < trig; ++t_i) {          /* cell triggers */
+        float t = (t_i + 0.5f) / trig;
         int i = (int)(t * 60.0f);
-        sc_dot(info, y, pts[i*2], pts[i*2+1]);
-        sc_line(info, y, pts[i*2], pts[i*2+1] + 4.0f, pts[i*2], BY1);
+        sc_dot(k[2], y, pts[i*2], pts[i*2+1]);
+        sc_line(k[2], y, pts[i*2], pts[i*2+1] + 4.0f, pts[i*2], BY1);
     }
 }
 
@@ -190,8 +191,7 @@ static void scene_sound(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
  * Twelve pitches on a ring. Equal temperament spaces them evenly; just
  * intonation does not — and that is the whole point of the parameter, so the
  * SPACING is the readout. No number can show that as fast. */
-static void scene_pitch(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
-                        cov_t *info)
+static void scene_pitch(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     /* Just-intonation ratios as cents/1200, the real uneven ladder. */
     static const float JUST[12] = {
@@ -208,10 +208,10 @@ static void scene_pitch(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
         float a = f * 6.2831853f - 1.5707963f;
         float x = BCX + r * cosf(a), yy = BCY + r * sinf(a);
         if (i == key) {
-            ui_cov_disc(live, y, x, yy, 3.2f);
-            sc_line(live, y, BCX, BCY, x, yy);
+            ui_cov_disc(k[0], y, x, yy, 3.2f);
+            sc_line(k[0], y, BCX, BCY, x, yy);
         } else {
-            sc_dot(info, y, x, yy);
+            sc_dot(just ? k[1] : dim, y, x, yy);
         }
     }
     /* The reference ring — where equal temperament would have put them —
@@ -226,8 +226,7 @@ static void scene_pitch(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
 }
 
 /* ---- 3 · HARMONY — a chord as a stack ----------------------------------- */
-static void scene_harmony(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
-                          cov_t *info)
+static void scene_harmony(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     int bass  = (int)(sc->v[0] * 3.0f + 0.5f);      /* Off/Root/Fifth/Drift */
     int color = (int)(sc->v[1] * 3.0f + 0.5f);      /* Pure/Open/Warm/Deep  */
@@ -244,50 +243,47 @@ static void scene_harmony(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
     float top = BY1 - 8.0f, span = BH - 16.0f;
     for (int i = 0; i < 3; ++i) {
         float yy = top - SPREAD[color][i] * span;
-        sc_dot(info, y, BCX - 26.0f + i * 26.0f, yy);
-        ui_cov_disc(info, y, BCX - 26.0f + i * 26.0f, yy, 2.6f);
+        ui_cov_disc(k[1], y, BCX - 26.0f + i * 26.0f, yy, 2.6f);
     }
     if (bass > 0) {                                  /* the bass voice */
         float yy = top + 4.0f;
         float x  = BCX - 52.0f;
-        ui_cov_disc(live, y, x, yy, 3.4f);
-        if (bass >= 2) sc_line(live, y, x, yy, x + 26.0f, top - SPREAD[color][1] * span);
-        if (bass == 3) sc_line(live, y, x, yy, x, yy - 12.0f);
+        ui_cov_disc(k[0], y, x, yy, 3.4f);
+        if (bass >= 2) sc_line(k[0], y, x, yy, x + 26.0f, top - SPREAD[color][1] * span);
+        if (bass == 3) sc_line(k[0], y, x, yy, x, yy - 12.0f);
     }
 }
 
 /* ---- 4 · ROOM — how far the sound goes ---------------------------------- */
-static void scene_room(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
-                       cov_t *info)
+static void scene_room(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     float space = sc->v[0], shim = sc->v[1];
     float rmax  = 14.0f + space * (BH * 0.52f);
 
-    sc_dot(info, y, BCX, BCY + BH * 0.22f);
+    sc_dot(dim, y, BCX, BCY + BH * 0.22f);
     for (int i = 1; i <= 5; ++i) {                   /* the room, opening up */
         float r = rmax * i / 5.0f;
         ui_cov_arc(dim, y, BCX, BCY + BH * 0.22f, r, STROKE, -78.0f, 78.0f);
     }
-    ui_cov_arc(live, y, BCX, BCY + BH * 0.22f, rmax, STROKE, -78.0f, 78.0f);
+    ui_cov_arc(k[0], y, BCX, BCY + BH * 0.22f, rmax, STROKE, -78.0f, 78.0f);
 
     int n = (int)(shim * 6.0f + 0.5f);               /* shimmer: upper partials */
     for (int i = 0; i < n; ++i) {
         float r = rmax * (0.35f + 0.13f * i);
         float a = (-60.0f + 24.0f * i) * UI_DEG2RAD;
         float x = BCX + r * sinf(a), yy = BCY + BH * 0.22f - r * cosf(a);
-        sc_dot(live, y, x, yy);
+        sc_dot(k[1], y, x, yy);
     }
 }
 
 /* ---- 5 · TIME — repeats, and how hard they smear ------------------------ */
-static void scene_time(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
-                       cov_t *info)
+static void scene_time(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     float echo = sc->v[0], blur = sc->v[1];
     float base = BY1 - 10.0f;
 
     sc_line(dim, y, BX0, base, BX1, base);
-    sc_line(info, y, BX0 + 6.0f, base, BX0 + 6.0f, BY0 + 6.0f);   /* the source */
+    sc_line(dim, y, BX0 + 6.0f, base, BX0 + 6.0f, BY0 + 6.0f);   /* the source */
 
     int n = 1 + (int)(echo * 9.0f + 0.5f);
     for (int i = 1; i <= n; ++i) {
@@ -297,16 +293,17 @@ static void scene_time(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
         /* blur widens each repeat into a band instead of a tick, which is
          * what a granular smear actually does to a transient */
         int w = 1 + (int)(blur * 5.0f + 0.5f);
-        for (int k = 0; k < w; ++k) {
-            float xx = x + (k - (w - 1) * 0.5f) * 2.4f;
-            sc_line(live, y, xx, base, xx, base - amp);
+        for (int kk = 0; kk < w; ++kk) {
+            float xx = x + (kk - (w - 1) * 0.5f) * 2.4f;
+            /* the centre tick belongs to Echo, the spread around it to Blur */
+            sc_line((w > 1 && kk != (w - 1) / 2) ? k[1] : k[0],
+                    y, xx, base, xx, base - amp);
         }
     }
 }
 
 /* ---- 6 · TEXTURE — grain, and how worn it is ---------------------------- */
-static void scene_texture(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
-                          cov_t *info)
+static void scene_texture(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     float atmos = sc->v[0], age = sc->v[1];
     int   n     = 12 + (int)(atmos * 78.0f);
@@ -319,14 +316,17 @@ static void scene_texture(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
         float gy = BY0 + 4.0f + h01(i, 2) * (BH - 8.0f);
         /* age eats holes in the field and jitters what is left */
         if (h01(i, 3) < age * 0.45f) continue;
-        gy += (h01(i, 4) - 0.5f) * age * 14.0f;
+        float shift = (h01(i, 4) - 0.5f) * age * 14.0f;
+        int   moved = (shift > 1.5f || shift < -1.5f);
+        gy += shift;
         if (gy < BY0 + 2.0f || gy > BY1 - 2.0f) continue;
-        ui_cov_disc(i % 5 == 0 ? live : info, y, gx, gy, 0.9f);
+        /* a grain the age has moved belongs to Age, the rest to Atmosphere */
+        ui_cov_disc(moved ? k[1] : k[0], y, gx, gy, 0.9f);
     }
 }
 
 /* ---- 7 · MOTION — the drift, as an orbit -------------------------------- */
-static void scene_motion(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live)
+static void scene_motion(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     float m = sc->v[0];
     float rx = BW * 0.30f, ry = BH * 0.34f;
@@ -345,12 +345,11 @@ static void scene_motion(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live)
         pts[n*2+1] = BCY + ry * sinf(t) * (0.08f + 0.92f * m);
         ++n;
     }
-    ui_cov_polyline(live, y, pts, n, STROKE);
+    ui_cov_polyline(k[0], y, pts, n, STROKE);
 }
 
 /* ---- 8 · FX — the chain, and which link is lit -------------------------- */
-static void scene_fx(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
-                     cov_t *info)
+static void scene_fx(const ui_scene_t *sc, int y, cov_t *dim, cov_t **k)
 {
     int sel = (int)(sc->v[0] * 8.0f + 0.5f);         /* 9 effects */
     float yy = BCY;
@@ -359,16 +358,16 @@ static void scene_fx(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
     for (int i = 0; i < 9; ++i) {
         float x = BX0 + 12.0f + (BW - 24.0f) * i / 8.0f;
         if (i == sel) {
-            sc_circle(live, y, x, yy, 9.0f);
+            sc_circle(k[0], y, x, yy, 9.0f);
             /* the tick hangs DOWN: upward it would run into the one line of
              * type this scene is allowed */
-            sc_line(live, y, x, yy + 9.0f, x, BY1 - 2.0f);
+            sc_line(k[0], y, x, yy + 9.0f, x, BY1 - 2.0f);
         } else {
-            sc_dot(info, y, x, yy);
+            sc_dot(dim, y, x, yy);
         }
     }
     /* bypass reads as the signal passing straight through, untouched */
-    if (sel == 0) sc_line(info, y, BX0, yy - 5.0f, BX1, yy - 5.0f);
+    if (sel == 0) sc_line(dim, y, BX0, yy - 5.0f, BX1, yy - 5.0f);
 }
 
 /* ---- entry point --------------------------------------------------------
@@ -377,21 +376,26 @@ static void scene_fx(const ui_scene_t *sc, int y, cov_t *dim, cov_t *live,
  * pile of overlapping strokes at different opacities. */
 void ui_scene_row(const ui_scene_t *sc, int y, uint16_t *line, int alpha)
 {
-    static cov_t dim[OLED_WIDTH], info[OLED_WIDTH], live[OLED_WIDTH];
+    static cov_t dim[OLED_WIDTH];
+    static cov_t kc[UI_SCENE_MAX_KNOBS][OLED_WIDTH];
+    cov_t *k[UI_SCENE_MAX_KNOBS] = { kc[0], kc[1], kc[2] };
 
     switch (sc->group) {
-        case 0: scene_world  (sc, y, dim, live);       break;
-        case 1: scene_sound  (sc, y, dim, live, info); break;
-        case 2: scene_pitch  (sc, y, dim, live, info); break;
-        case 3: scene_harmony(sc, y, dim, live, info); break;
-        case 4: scene_room   (sc, y, dim, live, info); break;
-        case 5: scene_time   (sc, y, dim, live, info); break;
-        case 6: scene_texture(sc, y, dim, live, info); break;
-        case 7: scene_motion (sc, y, dim, live);       break;
-        default: scene_fx    (sc, y, dim, live, info); break;
+        case 0: scene_world  (sc, y, dim, k); break;
+        case 1: scene_sound  (sc, y, dim, k); break;
+        case 2: scene_pitch  (sc, y, dim, k); break;
+        case 3: scene_harmony(sc, y, dim, k); break;
+        case 4: scene_room   (sc, y, dim, k); break;
+        case 5: scene_time   (sc, y, dim, k); break;
+        case 6: scene_texture(sc, y, dim, k); break;
+        case 7: scene_motion (sc, y, dim, k); break;
+        default: scene_fx    (sc, y, dim, k); break;
     }
 
-    ui_cov_flush(line, dim,  DIM_R,  DIM_G,  DIM_B,  alpha);
-    ui_cov_flush(line, info, INFO_R, INFO_G, INFO_B, alpha);
-    ui_cov_flush(line, live, LIVE_R, LIVE_G, LIVE_B, alpha);
+    /* Inert structure first, then each encoder's own colour — one flush per
+     * tone, so a union of same-coloured strokes never seams. */
+    ui_cov_flush(line, dim, DIM_R, DIM_G, DIM_B, alpha);
+    for (int i = 0; i < UI_SCENE_MAX_KNOBS; ++i)
+        ui_cov_flush(line, kc[i], UI_KNOB_RGB[i][0], UI_KNOB_RGB[i][1],
+                     UI_KNOB_RGB[i][2], alpha);
 }
