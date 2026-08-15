@@ -24,7 +24,7 @@ Two consequences make this better than a list rather than merely different:
   and the outer branches are clipped by the edges, the form itself says there
   is more outside the visible area, and it says "turn me" without a label.
 - Legibility stops competing with density. Only the selected node needs a
-  name, so that name gets the full width at 21.4′ while everything else is
+  name, so that name gets the full width at 19.3′ while everything else is
   carried by position and icon.
 
 ## Decision
@@ -103,9 +103,30 @@ Rules that follow from the model rather than from taste:
 - **One inactive grey** for branch, inactive node and ring alike. They are one
   object drawn in three parts, so three near-but-not-equal greys read as a
   rendering fault rather than as hierarchy.
-- **The battery is a single solid pill**, charge carried by colour. A dim track
-  with a proportional fill puts two rounded caps in the middle of a 26 × 12 px
-  shape, which at any partial charge reads as a blob.
+- **The battery is a rounded rectangle with a nub and a gradient fill.** Two
+  earlier attempts were pills — a dim track with a proportional fill on top
+  puts two rounded caps in the middle of a 24 × 12 px shape, and at any partial
+  charge that reads as a blob rather than as a battery. A rectangle gives the
+  charge boundary a straight edge, so the silhouette stays a battery at every
+  level; the gradient runs vertically inside the fill, which is what keeps a
+  20-px block from looking like a printed swatch.
+- **One typeface at every size.** The big value was baked from Bitcount
+  SemiBold while everything else came from Regular, and at 30 ppem SemiBold's
+  dots stop merging — the lattice breaks open and the headline reads as a
+  different face from its own label. All three faces now come from Regular,
+  which stays solid to 30 ppem (it breaks up at 40). The cost is honest: the
+  30 ppem digit is 18 px rather than 20, so the headline subtends **19.3′**
+  instead of 21.4′ at 40 cm. One voice at 19.3′ beats two voices at 21.4′.
+- **Motion is a system, not a per-site decision** — see
+  `docs/ui/MOTION_RULES.md` and `tools/ui_motion.h`. The model moves on the
+  encoder edge and only the presentation eases, transitions retarget rather
+  than queue, timing is dt-based, and the curve follows the cause (ease-out for
+  the hand, ease-in-out for system transitions). Encoder and button are on GPIO
+  interrupts on the bench, because a polled loop loses every detent that
+  arrives during the 29 ms blit.
+- **A long press (350 ms) climbs back out of the current level**, so there is
+  always an exit without a modifier. It acts on the way DOWN at the threshold;
+  waiting for the release would make the exit feel later than the gesture.
 - Compositing measures 0.22 ms/frame on the host against 29 ms of SPI transfer
   per full frame at 32 MHz, so the panel, not the drawing, sets the frame rate.
   Partial-region updates are still available if the H743 needs them later.

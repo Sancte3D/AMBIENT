@@ -4,8 +4,8 @@
  *
  * WHY THREE. The measured limit decides more than taste here. Active area is
  * 39.1 x 21.2 mm over 320 x 170 px, so one pixel is 0.125 mm. The baked
- * Bitcount faces give digit heights of 6 / 12 / 20 px = 0.75 / 1.50 / 2.49 mm,
- * which at a 40 cm viewing distance subtend 6.4' / 12.9' / 21.4'. Comfortable
+ * Bitcount faces give digit heights of 6 / 12 / 18 px = 0.75 / 1.50 / 2.24 mm,
+ * which at a 40 cm viewing distance subtend 6.4' / 12.9' / 19.3'. Comfortable
  * reading starts around 20'; 5' is the bare acuity limit of a healthy eye.
  * The 6-row list shipped its labels at 6.4' — that is why it could not be read
  * on the panel, and no amount of styling fixes it.
@@ -15,9 +15,9 @@
  * bar exist. Six labelled rows do not fit at any legible size. These three
  * layouts are the honest points on that curve:
  *
- *   UI_FOCUS    one parameter, 21.4'. Position carried by 16 pills, not text.
+ *   UI_FOCUS    one parameter, 19.3'. Position carried by 16 pills, not text.
  *               This is the model src/menu.c already implements.
- *   UI_CONTEXT  the selected parameter at 21.4' with one neighbour above and
+ *   UI_CONTEXT  the selected parameter at 19.3' with one neighbour above and
  *               below at 12.9'. Keeps a sense of place, shows 3 of 16.
  *   UI_PAGES    16 grouped into 4 pages of 4, all four rows at 12.9'. Closest
  *               to a list; the riskiest legibility at low backlight.

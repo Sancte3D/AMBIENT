@@ -121,16 +121,16 @@ static void test_short_way(void)
         ui_wheel_settle(&st);
 
         ui_wheel_press(&st, 0);
-        CHECK(fabsf(st.theta_target - st.theta) <= 180.0f + 1e-3f,
+        CHECK(fabsf(ui_wheel_theta_target(&st) - ui_wheel_theta(&st)) <= 180.0f + 1e-3f,
               "entering %s rotates %.1f deg — the long way",
-              ui_wheel_group_name(g), fabsf(st.theta_target - st.theta));
+              ui_wheel_group_name(g), fabsf(ui_wheel_theta_target(&st) - ui_wheel_theta(&st)));
 
         ui_wheel_settle(&st);
         while (st.level != WHEEL_MAIN) {
             ui_wheel_press(&st, 1);
-            CHECK(fabsf(st.theta_target - st.theta) <= 180.0f + 1e-3f,
+            CHECK(fabsf(ui_wheel_theta_target(&st) - ui_wheel_theta(&st)) <= 180.0f + 1e-3f,
                   "leaving %s rotates %.1f deg — the long way",
-                  ui_wheel_group_name(g), fabsf(st.theta_target - st.theta));
+                  ui_wheel_group_name(g), fabsf(ui_wheel_theta_target(&st) - ui_wheel_theta(&st)));
             ui_wheel_settle(&st);
         }
     }
@@ -146,8 +146,9 @@ static void test_ease_settles(void)
     int frames = 0;
     while (ui_wheel_tick(&st, 8) && frames < 500) ++frames;
     CHECK(frames < 500, "the snap never settled");
-    CHECK(st.theta == st.theta_target,
-          "settled at %.4f but the target is %.4f", st.theta, st.theta_target);
+    CHECK(ui_wheel_theta(&st) == ui_wheel_theta_target(&st),
+          "settled at %.4f but the target is %.4f",
+          ui_wheel_theta(&st), ui_wheel_theta_target(&st));
     CHECK(frames <= 60, "the snap took %d frames (~%d ms) — too slow to feel "
                         "like a detent", frames, frames * 8);
 }

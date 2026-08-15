@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
     /* 02 — mid-rotation: the frame that proves the branches survive motion */
     ui_wheel_turn(&st, +1, 0);
-    st.theta = st.theta_target + WHEEL_STEP_DEG * 0.45f;
+    ui_wheel_tick(&st, 70);           /* part-way through the eased snap */
     SHOT("02_main_rotating");
 
     /* 03 — settled on Space */
@@ -103,6 +103,38 @@ int main(int argc, char **argv)
     ui_wheel_press(&st, 0);
     ui_wheel_settle(&st);
     SHOT("09_group_synth");
+
+    /* ---- motion strips ---------------------------------------------------
+     * A still cannot show whether a move is smooth. These sample the SAME
+     * tween code the device runs, at a real 16 ms frame interval, so the
+     * spacing between frames IS the easing curve rather than a description of
+     * one. Frames bunching up toward the end of a strip means the motion is
+     * decelerating into the lock, which is what an ease-out looks like. */
+    for (int seq = 0; seq < 3; ++seq) {
+        ui_wheel_init(&st);
+        ui_wheel_settle(&st);
+        if (seq == 1) {                       /* descending into a group */
+            for (int i = 0; i < 4; ++i) ui_wheel_turn(&st, +1, 0);
+            ui_wheel_settle(&st);
+            ui_wheel_press(&st, 0);
+        } else if (seq == 2) {                /* a value being turned */
+            for (int i = 0; i < 4; ++i) ui_wheel_turn(&st, +1, 0);
+            ui_wheel_settle(&st);
+            ui_wheel_press(&st, 0);
+            ui_wheel_settle(&st);
+            ui_wheel_press(&st, 0);
+            ui_wheel_settle(&st);
+            for (int i = 0; i < 6; ++i) ui_wheel_turn(&st, +1, 0);
+        } else {                              /* one wheel step */
+            ui_wheel_turn(&st, +1, 0);
+        }
+
+        for (int f = 0; f < 18; ++f) {
+            snprintf(path, sizeof path, "%s/anim%d_%02d.ppm", dir, seq, f);
+            write_ppm(path, &st);
+            ui_wheel_tick(&st, 16);
+        }
+    }
 
 #undef SHOT
     return 0;

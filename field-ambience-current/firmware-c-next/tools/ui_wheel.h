@@ -41,6 +41,7 @@
 #define FAM_UI_WHEEL_H
 
 #include <stdint.h>
+#include "ui_motion.h"
 
 #define WHEEL_GROUPS       9
 #define WHEEL_PARAM_COUNT 16
@@ -53,11 +54,18 @@ typedef enum {
 } wheel_level_t;
 
 typedef struct {
-    wheel_level_t level;
-    uint8_t  group;                       /* 0..WHEEL_GROUPS-1               */
-    uint8_t  member;                      /* index within the group          */
-    float    theta;                       /* live rotation, degrees          */
-    float    theta_target;                /* where the snap is heading       */
+    wheel_level_t level;                  /* where we are going              */
+    wheel_level_t prev_level;             /* what is still fading out        */
+    uint8_t    group;                     /* 0..WHEEL_GROUPS-1               */
+    uint8_t    member;                    /* index within the group          */
+
+    /* Presentation only. The model (group/member/val) is updated the moment
+     * the encoder edge arrives; these lag behind it and never gate it. */
+    ui_tween_t rot;                       /* wheel angle, degrees            */
+    ui_tween_t amount;                    /* shown 0..100 of `amount_for`    */
+    ui_tween_t morph;                     /* 0 = prev_level, 1 = level       */
+    uint8_t    amount_for;                /* which parameter `amount` tracks */
+
     uint8_t  val[WHEEL_PARAM_COUNT];
     uint8_t  batt;                        /* 0..100                          */
 } wheel_state_t;
@@ -67,12 +75,18 @@ void ui_wheel_init(wheel_state_t *st);
 /* Encoder detent. In MAIN/GROUP this rotates the structure by one step; in
  * VALUE it moves the value. */
 void ui_wheel_turn(wheel_state_t *st, int dir, int coarse);
-/* Encoder press: descend a level. `back` climbs back out instead. */
+/* Encoder press: descend a level. `back` climbs back out instead — that is
+ * what a long hold does, so there is always a way out of the level you are in
+ * without hunting for a modifier. */
 void ui_wheel_press(wheel_state_t *st, int back);
 
-/* Ease `theta` toward `theta_target`. dt in milliseconds. Returns non-zero
- * while still moving, so the caller knows whether to keep drawing frames. */
+/* Advance every tween by dt milliseconds. Returns non-zero while anything is
+ * still moving, so the caller knows whether to keep drawing frames. */
 int  ui_wheel_tick(wheel_state_t *st, int dt_ms);
+
+/* Current and target wheel angle, for tests and diagnostics. */
+float ui_wheel_theta(const wheel_state_t *st);
+float ui_wheel_theta_target(const wheel_state_t *st);
 
 /* Jump straight to the settled position — used by the host renderer, which
  * has no frame loop. */

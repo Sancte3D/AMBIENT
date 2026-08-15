@@ -335,11 +335,22 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # and the value orb stays on the panel at 0 and 100.
 "$CC" "${CFLAGS[@]}" -I"$src/tools" \
     "$here/test_ui_wheel.c" \
-    "$src/tools/ui_wheel.c" "$src/tools/ui_draw.c" \
+    "$src/tools/ui_wheel.c" "$src/tools/ui_draw.c" "$src/tools/ui_motion.c" \
     "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/ui_wheel_test"
 "$tmp/ui_wheel_test"
+
+# Motion rules (tools/ui_motion.h): curves anchored and monotonic without
+# overshoot, tweens land exactly, retargets stay continuous, timing is dt-based
+# rather than frame-based, and no input is swallowed while an animation runs.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" \
+    "$here/test_ui_motion.c" \
+    "$src/tools/ui_motion.c" "$src/tools/ui_wheel.c" "$src/tools/ui_draw.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/ui_motion_test"
+"$tmp/ui_motion_test"
 
 # r19.6: equal / just intonation layer (pure ratios, bit-exact ET).
 "$CC" "${CFLAGS[@]}" \

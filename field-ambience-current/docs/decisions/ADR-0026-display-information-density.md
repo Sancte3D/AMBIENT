@@ -21,7 +21,7 @@ measured out of `src/baked_font_data.c`:
 |---|---:|---:|---:|---:|
 | `font_hn_label` | 10 | 6 px | 0.75 mm | **6.4′** |
 | `font_hn_value_small` | 20 | 12 px | 1.50 mm | 12.9′ |
-| `font_hn_value` | 30 | 20 px | 2.49 mm | **21.4′** |
+| `font_hn_value` | 30 | 20 px | 2.24 mm | **19.3′** |
 
 A healthy eye resolves a letter at roughly 5′ under ideal conditions;
 sustained comfortable reading wants about 20′. The six-row list drew its
@@ -51,8 +51,8 @@ real glass before committing:
 
 | | Shows | Type sizes | Trade |
 |---|---|---|---|
-| **A — FOCUS** | 1 of 16 + position | value 21.4′, label 12.9′ | most legible; no comparison between parameters |
-| **B — CONTEXT** | 3 of 16 + position | focus 21.4′, neighbours 12.9′ | keeps a sense of place; costs the neighbours' legibility |
+| **A — FOCUS** | 1 of 16 + position | value 19.3′, label 12.9′ | most legible; no comparison between parameters |
+| **B — CONTEXT** | 3 of 16 + position | focus 19.3′, neighbours 12.9′ | keeps a sense of place; costs the neighbours' legibility |
 | **C — PAGES** | 4 of 16, grouped in 4 pages | all rows 12.9′ | closest to a list; riskiest at low backlight |
 
 A is `src/menu.c`'s existing model re-skinned, so choosing it is the smallest
@@ -71,7 +71,7 @@ firmware change and keeps a proven interaction.
 - The row compositor stays: flash-resident plate + per-scanline foreground,
   two 640-byte line buffers, no colour framebuffer. Non-negotiable while
   RAM_D1 is at 87 % and RAM_D2 at 96 % against 11 % flash.
-- `test/test_ui_layouts.c` locks the ppem grid (6/12/20 px) and checks that no
+- `test/test_ui_layouts.c` locks the ppem grid (6/12/18 px) and checks that no
   layout draws outside the glass card across all 96 layout × parameter ×
   mode combinations.
 - Whichever layout wins, the losing two and `render_layouts.c` should be

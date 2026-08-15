@@ -671,7 +671,7 @@ product build.
 | **Rad-Regressionstest** | ✅ `test/test_ui_wheel.c` — 9 Gruppen partitionieren alle 16 Parameter, Navigation schließt, Level-Wechsel nimmt den kurzen Weg, Ease terminiert, Orb bleibt bei 0 und 100 vollständig auf dem Panel |
 | **Plate ohne eingebrannte UI** | ✅ `tools/make_plain_plate.py` → `assets/plate_plain.*`; Diffusions-Inpaint entfernt die alte Liste, Karte/Rand/Glow bleiben unangetastet |
 | **Row-Compositor (Flash-Plate + Live-Vordergrund)** | ✅ `tools/ui_layouts.c` — kein Farb-Framebuffer, zwei 640-Byte-Zeilenpuffer statt 106 KB. Gilt für alle drei Kandidaten |
-| **Layout-Regressionstest** | ✅ `test/test_ui_layouts.c` — ppem-Grid (6/12/20 px) + Karten-Grenzen über 96 Kombinationen |
+| **Layout-Regressionstest** | ✅ `test/test_ui_layouts.c` — ppem-Grid (6/12/18 px) + Karten-Grenzen über 96 Kombinationen |
 
 ### Cells / Input
 

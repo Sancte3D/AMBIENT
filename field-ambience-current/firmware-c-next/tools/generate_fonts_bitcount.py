@@ -42,10 +42,20 @@ CHARSET = [chr(c) for c in range(32, 127)]      # printable ASCII
 # solid strokes, and from module 3 px up the lattice becomes visible as
 # separate dots. The reference design uses solid strokes, hence the small
 # modules here. Go to 40/60 if the dotted look is wanted for the big value.
+#
+# ALL THREE COME FROM THE SAME TTF. That is the point, and it was wrong before:
+# the big value was baked from SemiBold while the rest came from Regular, and
+# at 30 ppem SemiBold's dots stop merging — the lattice breaks open and the
+# headline reads as a different typeface from its own label. Regular stays
+# solid all the way to 30 ppem (it breaks up at 40), so one face covers the
+# whole scale and the UI has exactly one voice.
+#
+# SemiBold is kept in the arguments for a future emphasis role, but nothing
+# should use it above 20 ppem without looking at a specimen first.
 FACES = [
-    ("font_hn_value",       1, 30),   # big value  — module 3 px, lattice just visible
-    ("font_hn_value_small", 1, 20),   # long-word fallback — module 2 px, solid
-    ("font_hn_label",       0, 10),   # labels / secondary — module 1 px, solid
+    ("font_hn_value",       0, 30),   # big value          — module 3 px, solid
+    ("font_hn_value_small", 0, 20),   # secondary / values — module 2 px, solid
+    ("font_hn_label",       0, 10),   # labels             — module 1 px, solid
 ]
 
 

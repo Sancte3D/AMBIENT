@@ -304,6 +304,7 @@ elseif(FAM_TARGET STREQUAL "pico")
         tools/design_bench_pico.c
         tools/ui_wheel.c
         tools/ui_draw.c
+        tools/ui_motion.c
         src/hal_pico/lcd_st7789_pico.c
         src/oled_draw.c
         src/oled_color.c

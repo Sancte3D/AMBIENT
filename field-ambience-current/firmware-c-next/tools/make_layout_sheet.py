@@ -18,9 +18,9 @@ except ImportError:
 
 LAYOUTS = [
     ("a_focus",   "A — FOCUS",
-     "one parameter, value at 21.4' · position via 16 pills"),
+     "one parameter, value at 19.3' · position via 16 pills"),
     ("b_context", "B — CONTEXT",
-     "selected at 21.4', neighbours at 12.9' · 3 of 16 visible"),
+     "selected at 19.3', neighbours at 12.9' · 3 of 16 visible"),
     ("c_pages",   "C — PAGES",
      "4 pages of 4, all rows at 12.9' · closest to a list"),
 ]
@@ -66,8 +66,8 @@ def main() -> int:
     dr.text((PAD, 24), "AMBIENT · 320×170 · three information densities",
             font=font(30, True), fill=FG)
     dr.text((PAD, 62),
-            "active area 39.1 × 21.2 mm · 0.125 mm/px · digit heights 6/12/20 px "
-            "= 0.75/1.50/2.49 mm = 6.4′/12.9′/21.4′ at 40 cm",
+            "active area 39.1 × 21.2 mm · 0.125 mm/px · digit heights 6/12/18 px "
+            "= 0.75/1.50/2.24 mm = 6.4′/12.9′/19.3′ at 40 cm",
             font=font(17), fill=DIM)
 
     y = head

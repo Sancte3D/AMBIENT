@@ -7,9 +7,9 @@
  * 1. OFF-GRID TYPE. Bitcount is a grid font on a 0.1 em module, so a ppem that
  *    is not a multiple of 10 puts every dot on a fractional pixel and the text
  *    turns to mush. The three baked faces must stay at 10/20/30 ppem, which
- *    shows up as digit heights of exactly 6/12/20 px. Those heights are what
+ *    shows up as digit heights of exactly 6/12/18 px. Those heights are what
  *    the legibility arithmetic in ui_layouts.h is built on (0.125 mm/px ->
- *    6.4'/12.9'/21.4' at 40 cm), so if they drift the whole argument moves and
+ *    6.4'/12.9'/19.3' at 40 cm), so if they drift the whole argument moves and
  *    a human has to look again.
  *
  * 2. CONTENT ESCAPING THE CARD. Every layout draws over a plate whose glass
@@ -55,8 +55,8 @@ static void test_font_grid(void)
     CHECK(digit_h(&font_hn_value_small) == 12,
           "font_hn_value_small digit height %d, expected 12 (ppem 20)",
           digit_h(&font_hn_value_small));
-    CHECK(digit_h(&font_hn_value) == 20,
-          "font_hn_value digit height %d, expected 20 (ppem 30)",
+    CHECK(digit_h(&font_hn_value) == 18,
+          "font_hn_value digit height %d, expected 18 (ppem 30, Regular)",
           digit_h(&font_hn_value));
 }
 
