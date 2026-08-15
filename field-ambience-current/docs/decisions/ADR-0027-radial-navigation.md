@@ -87,6 +87,25 @@ Rules that follow from the model rather than from taste:
   108,800-byte background is no longer needed to render a screen.
 - Shapes are antialiased, text is not. Both rules are now enforced in one
   place (`tools/ui_draw.c`), shared with the ADR-0026 layouts.
+- **Shapes accumulate coverage before they are blended.** Compositing two
+  overlapping same-coloured shapes in sequence never reaches full opacity —
+  where each covers half a pixel the result lands at 0.75 of the colour — so
+  every junction drew itself a darker hairline: branch into ring, stem into
+  node, the four strokes crossing in the FX icon. Primitives now write into a
+  per-row coverage mask with `max()` and a whole same-coloured group is blended
+  once. Cost went from 0.22 to 0.27 ms/frame, against 29 ms of SPI.
+- **Draw order is branches, then ring, then nodes**, so an arm never notches
+  the ring it crosses. Branches start on the ring's centreline (`R_BRANCH0 =
+  R_RING`): their rounded cap then spans 60..68 px, entirely inside the ring
+  band, leaving no gap outside and no stub protruding into the black inside.
+- **The hub arc spans ±92°, wider than the ±78° value sweep.** It has to reach
+  past the outermost branch or the ±80° arms emerge from nothing.
+- **One inactive grey** for branch, inactive node and ring alike. They are one
+  object drawn in three parts, so three near-but-not-equal greys read as a
+  rendering fault rather than as hierarchy.
+- **The battery is a single solid pill**, charge carried by colour. A dim track
+  with a proportional fill puts two rounded caps in the middle of a 26 × 12 px
+  shape, which at any partial charge reads as a blob.
 - Compositing measures 0.22 ms/frame on the host against 29 ms of SPI transfer
   per full frame at 32 MHz, so the panel, not the drawing, sets the frame rate.
   Partial-region updates are still available if the H743 needs them later.

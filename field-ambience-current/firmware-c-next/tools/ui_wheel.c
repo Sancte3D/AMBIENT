@@ -27,15 +27,20 @@
 #define BG_R      0
 #define BG_G      0
 #define BG_B      0
-#define NODE_R   38            /* inactive node / branch */
-#define NODE_G   38
-#define NODE_B   40
+/* ONE inactive grey, used by the branch, the inactive node and the ring alike.
+ * They are one object drawn in three parts, so three near-but-not-equal greys
+ * read as a rendering fault rather than as hierarchy. Neutral, too: a blue
+ * cast on the darks is invisible in isolation and obvious the moment two of
+ * them touch. */
+#define DIM_R    42
+#define DIM_G    42
+#define DIM_B    42
 #define SEL_R   232            /* selected node body */
 #define SEL_G   232
 #define SEL_B   232
 #define ICON_R  126            /* icon inside an inactive node */
 #define ICON_G  126
-#define ICON_B  130
+#define ICON_B  126
 #define GRN_R   124
 #define GRN_G   240
 #define GRN_B   132
@@ -51,7 +56,12 @@
 #define R_RING       64.0f     /* the shared circle */
 #define RING_HALF_T   4.5f
 #define BRANCH_HALF_W 4.0f
-#define R_BRANCH0    68.0f     /* branches start at the ring's outer edge */
+/* Branches start on the ring's CENTRELINE. Their rounded cap has radius
+ * BRANCH_HALF_W, so it spans 60..68 and lands entirely inside the ring band
+ * (59.5..68.5): no gap on the outside, and — the reason for the exact value —
+ * no stub poking through into the black inside the circle, which is what
+ * starting them further in produced. */
+#define R_BRANCH0    R_RING
 #define R_ORB         6.5f     /* value orb — 13 px across, not 20+ */
 
 /* Sweep of the value arc. Not the full visible half: the ring crosses the
@@ -234,7 +244,18 @@ int ui_wheel_tick(wheel_state_t *st, int dt_ms)
 
 void ui_wheel_settle(wheel_state_t *st) { st->theta = st->theta_target; }
 
-/* ---- signed-distance scanline primitives -------------------------------- */
+/* ---- signed-distance scanline primitives --------------------------------
+ * Primitives do NOT blend into the line buffer. They accumulate COVERAGE into
+ * a per-row byte mask with max(), and a whole group of same-coloured shapes is
+ * blended once at the end.
+ *
+ * That is not an optimisation, it is the fix for a visible seam. Compositing
+ * two overlapping shapes of the same colour in sequence never reaches full
+ * opacity: where each covers half a pixel the result lands at 0.75 of the
+ * colour, so every junction — branch into ring, stem into node, the four
+ * strokes crossing in the FX icon — drew itself a darker hairline. Taking the
+ * maximum of the coverages first makes a union behave like one shape.
+ */
 static inline int cov255(float d)          /* d = signed distance in px */
 {
     float c = 0.5f - d;
@@ -243,8 +264,24 @@ static inline int cov255(float d)          /* d = signed distance in px */
     return (int)(c * 255.0f + 0.5f);
 }
 
-static void row_disc(uint16_t *line, int y, float cx, float cy, float r,
-                     int cr, int cg, int cb, int alpha)
+static inline void cov_put(uint8_t *cov, int x, int c)
+{
+    if (c > cov[x]) cov[x] = (uint8_t)c;
+}
+
+/* Blend the accumulated mask in one pass and clear it for the next group. */
+static void cov_flush(uint16_t *line, uint8_t *cov, int cr, int cg, int cb,
+                      int alpha)
+{
+    for (int x = 0; x < OLED_WIDTH; ++x) {
+        if (cov[x]) {
+            ui_blend_px(&line[x], cr, cg, cb, cov[x] * alpha / 255);
+            cov[x] = 0;
+        }
+    }
+}
+
+static void cov_disc(uint8_t *cov, int y, float cx, float cy, float r)
 {
     float dy = (float)y - cy;
     if (dy < -r - 1.0f || dy > r + 1.0f) return;
@@ -253,15 +290,13 @@ static void row_disc(uint16_t *line, int y, float cx, float cy, float r,
     if (x1 > OLED_WIDTH) x1 = OLED_WIDTH;
     for (int x = x0; x < x1; ++x) {
         float dx = (float)x - cx;
-        int c = cov255(sqrtf(dx * dx + dy * dy) - r);
-        if (c) ui_blend_px(&line[x], cr, cg, cb, c * alpha / 255);
+        cov_put(cov, x, cov255(sqrtf(dx * dx + dy * dy) - r));
     }
 }
 
 /* Capsule: the branch. Distance to the segment, minus the half width. */
-static void row_capsule(uint16_t *line, int y, float ax, float ay,
-                        float bx, float by, float r,
-                        int cr, int cg, int cb, int alpha)
+static void cov_capsule(uint8_t *cov, int y, float ax, float ay,
+                        float bx, float by, float r)
 {
     float ylo = (ay < by ? ay : by) - r - 1.0f;
     float yhi = (ay > by ? ay : by) + r + 1.0f;
@@ -283,41 +318,34 @@ static void row_capsule(uint16_t *line, int y, float ax, float ay,
         if (t < 0.0f) t = 0.0f;
         if (t > 1.0f) t = 1.0f;
         float qx = px - ex * t, qy = py - ey * t;
-        int c = cov255(sqrtf(qx * qx + qy * qy) - r);
-        if (c) ui_blend_px(&line[x], cr, cg, cb, c * alpha / 255);
+        cov_put(cov, x, cov255(sqrtf(qx * qx + qy * qy) - r));
     }
 }
 
 /* Arc of an annulus, angles measured from 12 o'clock, positive clockwise.
  * The ends are rounded so a value fill terminates like the orb, not like a
  * cut. */
-static void row_arc(uint16_t *line, int y, float cx, float cy, float r,
-                    float half_t, float a0, float a1,
-                    int cr, int cg, int cb, int alpha)
+static void cov_arc(uint8_t *cov, int y, float cx, float cy, float r,
+                    float half_t, float a0, float a1)
 {
     float ro = r + half_t;
     float dy = (float)y - cy;
-    if (dy < -ro - 1.0f || dy > ro + 1.0f) return;
-    int x0 = (int)(cx - ro - 1.0f), x1 = (int)(cx + ro + 2.0f);
-    if (x0 < 0) x0 = 0;
-    if (x1 > OLED_WIDTH) x1 = OLED_WIDTH;
-
-    for (int x = x0; x < x1; ++x) {
-        float dx = (float)x - cx;
-        float dist = sqrtf(dx * dx + dy * dy);
-        float dr = fabsf(dist - r) - half_t;
-        if (dr > 0.75f) continue;                 /* outside the band */
-        float ang = atan2f(dx, -dy) / DEG2RAD;    /* 0 = up, + = right */
-        if (ang >= a0 && ang <= a1) {
-            int c = cov255(dr);
-            if (c) ui_blend_px(&line[x], cr, cg, cb, c * alpha / 255);
+    if (dy >= -ro - 1.0f && dy <= ro + 1.0f) {
+        int x0 = (int)(cx - ro - 1.0f), x1 = (int)(cx + ro + 2.0f);
+        if (x0 < 0) x0 = 0;
+        if (x1 > OLED_WIDTH) x1 = OLED_WIDTH;
+        for (int x = x0; x < x1; ++x) {
+            float dx = (float)x - cx;
+            float dist = sqrtf(dx * dx + dy * dy);
+            float dr = fabsf(dist - r) - half_t;
+            if (dr > 0.75f) continue;                 /* outside the band */
+            float ang = atan2f(dx, -dy) / DEG2RAD;    /* 0 = up, + = right */
+            if (ang >= a0 && ang <= a1) cov_put(cov, x, cov255(dr));
         }
     }
-    /* rounded caps */
-    for (int e = 0; e < 2; ++e) {
+    for (int e = 0; e < 2; ++e) {                     /* rounded caps */
         float a = (e ? a1 : a0) * DEG2RAD;
-        row_disc(line, y, cx + r * sinf(a), cy - r * cosf(a), half_t,
-                 cr, cg, cb, alpha);
+        cov_disc(cov, y, cx + r * sinf(a), cy - r * cosf(a), half_t);
     }
 }
 
@@ -375,40 +403,42 @@ static const icon_t ICONS[WHEEL_GROUPS] = {
 };
 #undef ICON
 
-static void row_icon(uint16_t *line, int y, const icon_t *ic,
-                     float cx, float cy, float rad,
-                     int cr, int cg, int cb, int alpha)
+static void cov_icon(uint8_t *cov, int y, const icon_t *ic,
+                     float cx, float cy, float rad)
 {
     float s = rad / 20.0f;
     for (int i = 0; i < ic->n; ++i) {
         const iprim_t *q = &ic->p[i];
         switch (q->kind) {
             case IP_DISC:
-                row_disc(line, y, cx + q->x0 * s, cy + q->y0 * s, q->r * s,
-                         cr, cg, cb, alpha);
+                cov_disc(cov, y, cx + q->x0 * s, cy + q->y0 * s, q->r * s);
                 break;
             case IP_CAP:
-                row_capsule(line, y, cx + q->x0 * s, cy + q->y0 * s,
-                            cx + q->x1 * s, cy + q->y1 * s, q->r * s,
-                            cr, cg, cb, alpha);
+                cov_capsule(cov, y, cx + q->x0 * s, cy + q->y0 * s,
+                            cx + q->x1 * s, cy + q->y1 * s, q->r * s);
                 break;
             default:
-                row_arc(line, y, cx + q->x0 * s, cy + q->y0 * s, q->x1 * s,
-                        q->r * s, (float)q->a0, (float)q->a1,
-                        cr, cg, cb, alpha);
+                cov_arc(cov, y, cx + q->x0 * s, cy + q->y0 * s, q->x1 * s,
+                        q->r * s, (float)q->a0, (float)q->a1);
                 break;
         }
     }
 }
 
 /* ---- widgets ------------------------------------------------------------ */
+
+/* One solid pill, exactly as the reference draws it. A dim track with a
+ * proportional fill on top makes two rounded caps meet in the middle of a
+ * 26 x 12 px shape, and at any partial charge that reads as a blob rather than
+ * as a battery. Charge is carried by COLOUR instead — the only thing legible
+ * at this size anyway, and it keeps the mark to one shape. */
 static void wheel_battery(uint16_t *line, int y, int pct)
 {
     const int x = 267, w = 26, top = 19, h = 12;
-    ui_row_pill(line, y, top, h, x, w, 255, 255, 255, 45);
-    int fw = (w * pct + 50) / 100;
-    if (fw < h) fw = h;
-    ui_row_pill(line, y, top, h, x, fw, GRN_R, GRN_G, GRN_B, 255);
+    int r = GRN_R, g = GRN_G, b = GRN_B;
+    if (pct <= 10)      { r = 244; g =  90; b =  76; }   /* critical */
+    else if (pct <= 25) { r = 246; g = 190; b =  84; }   /* low      */
+    ui_row_pill(line, y, top, h, x, w, r, g, b, 255);
 }
 
 static void text_centre(uint16_t *line, int y, int ytop,
@@ -421,89 +451,126 @@ static void text_centre(uint16_t *line, int y, int ytop,
                 cr, cg, cb, a);
 }
 
-/* The value arc and its orb, on the shared circle. */
-static void wheel_value_arc(uint16_t *line, int y, int pct, int show_orb)
+/* The circle itself. Its span depends on what job it is doing:
+ *
+ *   hub (MAIN/GROUP)  -92..+92, i.e. the whole visible half with both caps off
+ *                     the bottom edge. It has to reach past the outermost
+ *                     branch, or the +-80 deg arms emerge from nothing —
+ *                     stopping it at the value sweep left them floating.
+ *   value             VAL_A0..VAL_A1, because there the ends are the limits of
+ *                     the parameter and must be visible as ends.
+ */
+#define HUB_A0 (-92.0f)
+#define HUB_A1  (92.0f)
+
+/* Node centre for a wheel angle. */
+static void node_xy(float deg, float orbit, float *nx, float *ny)
 {
-    row_arc(line, y, HX, HY, R_RING, RING_HALF_T, VAL_A0, VAL_A1,
-            46, 46, 50, 255);
-    float a = VAL_A0 + (VAL_A1 - VAL_A0) * (float)pct / 100.0f;
-    if (pct > 0)
-        row_arc(line, y, HX, HY, R_RING, RING_HALF_T, VAL_A0, a,
-                GRN_R, GRN_G, GRN_B, 255);
-    if (show_orb) {
-        float ar = a * DEG2RAD;
-        row_disc(line, y, HX + R_RING * sinf(ar), HY - R_RING * cosf(ar),
-                 R_ORB, GRN_R, GRN_G, GRN_B, 255);
-    }
+    float a = deg * DEG2RAD;
+    *nx = HX + orbit * sinf(a);
+    *ny = HY - orbit * cosf(a);
 }
 
-/* One branch + its node, at wheel angle `deg`. */
-static void wheel_node(uint16_t *line, int y, float deg, float orbit,
-                       float nr, int selected, const icon_t *ic,
-                       const char *letter)
+/* Is this node worth scanning at all? One fully off the panel still costs its
+ * bounding box otherwise. */
+static int node_visible(float nx, float ny, float nr)
 {
-    float a  = deg * DEG2RAD;
-    float sx = sinf(a), cxa = cosf(a);
-    float nx = HX + orbit * sx, ny = HY - orbit * cxa;
+    if (nx < -nr - 12.0f || nx > OLED_WIDTH + nr + 12.0f) return 0;
+    if (ny - nr - 12.0f > (float)OLED_HEIGHT) return 0;
+    return 1;
+}
 
-    /* A node fully off the panel still costs its bounding scan; skip it. */
-    if (nx < -nr - 12.0f || nx > OLED_WIDTH + nr + 12.0f) return;
-    if (ny - nr - 12.0f > (float)OLED_HEIGHT) return;
+/* Branches, hub and node bodies all go into ONE coverage mask before being
+ * blended, so the wheel behaves as a single object: no seam where a branch
+ * enters the ring, and the ring is never notched by an arm crossing it. */
+static void cov_branch(uint8_t *cov, int y, float deg, float orbit)
+{
+    float nx, ny, a = deg * DEG2RAD;
+    node_xy(deg, orbit, &nx, &ny);
+    if (!node_visible(nx, ny, 24.0f)) return;
+    cov_capsule(cov, y, HX + R_BRANCH0 * sinf(a), HY - R_BRANCH0 * cosf(a),
+                nx, ny, BRANCH_HALF_W);
+}
 
-    row_capsule(line, y, HX + R_BRANCH0 * sx, HY - R_BRANCH0 * cxa, nx, ny,
-                BRANCH_HALF_W, NODE_R, NODE_G, NODE_B, 255);
+static void cov_node_body(uint8_t *cov, int y, float deg, float orbit, float nr)
+{
+    float nx, ny;
+    node_xy(deg, orbit, &nx, &ny);
+    if (!node_visible(nx, ny, nr)) return;
+    cov_disc(cov, y, nx, ny, nr);
+}
 
-    if (selected) {
-        row_disc(line, y, nx, ny, nr, SEL_R, SEL_G, SEL_B, 255);
-        if (letter && *letter) {
-            const bakedfont_t *f = &font_hn_value;
-            int tw = ui_text_w(f, letter);
-            ui_row_text(line, y, (int)(ny - f->line / 2.0f) - 1,
-                        (int)nx - tw / 2, f, letter, 0, 0, 0, 255);
-        } else if (ic) {
-            row_icon(line, y, ic, nx, ny, nr * 0.42f, 0, 0, 0, 255);
-        }
-    } else {
-        row_disc(line, y, nx, ny, nr, NODE_R, NODE_G, NODE_B, 255);
-        if (ic) row_icon(line, y, ic, nx, ny, nr * 0.42f,
-                         ICON_R, ICON_G, ICON_B, 255);
-    }
+static void cov_node_icon(uint8_t *cov, int y, float deg, float orbit,
+                          float nr, const icon_t *ic)
+{
+    float nx, ny;
+    node_xy(deg, orbit, &nx, &ny);
+    if (!node_visible(nx, ny, nr)) return;
+    cov_icon(cov, y, ic, nx, ny, nr * 0.42f);
 }
 
 /* ---- levels ------------------------------------------------------------- */
 static void compose_main(const wheel_state_t *st, int y, uint16_t *line)
 {
-    wheel_value_arc(line, y, 0, 0);          /* the hub, no value yet */
+    static uint8_t cov[OLED_WIDTH];        /* cov_flush leaves it zeroed */
 
-    for (int i = 0; i < WHEEL_GROUPS; ++i) {
-        float deg = i * WHEEL_STEP_DEG + st->theta;
-        int   sel = (i == st->group);
-        wheel_node(line, y, deg, R_ORBIT, R_NODE, sel, &ICONS[i], 0);
-    }
+    for (int i = 0; i < WHEEL_GROUPS; ++i)
+        cov_branch(cov, y, i * WHEEL_STEP_DEG + st->theta, R_ORBIT);
+    cov_arc(cov, y, HX, HY, R_RING, RING_HALF_T, HUB_A0, HUB_A1);
+    for (int i = 0; i < WHEEL_GROUPS; ++i)
+        if (i != st->group)
+            cov_node_body(cov, y, i * WHEEL_STEP_DEG + st->theta,
+                          R_ORBIT, R_NODE);
+    cov_flush(line, cov, DIM_R, DIM_G, DIM_B, 255);
+
+    for (int i = 0; i < WHEEL_GROUPS; ++i)
+        if (i != st->group)
+            cov_node_icon(cov, y, i * WHEEL_STEP_DEG + st->theta,
+                          R_ORBIT, R_NODE, &ICONS[i]);
+    cov_flush(line, cov, ICON_R, ICON_G, ICON_B, 255);
+
+    float sel_deg = st->group * WHEEL_STEP_DEG + st->theta;
+    cov_node_body(cov, y, sel_deg, R_ORBIT, R_NODE);
+    cov_flush(line, cov, SEL_R, SEL_G, SEL_B, 255);
+
+    cov_node_icon(cov, y, sel_deg, R_ORBIT, R_NODE, &ICONS[st->group]);
+    cov_flush(line, cov, 0, 0, 0, 255);
+
     text_centre(line, y, 18, &font_hn_value_small,
                 ui_wheel_group_name(st->group), 255, 255, 255, 235);
 }
 
 static void compose_group(const wheel_state_t *st, int y, uint16_t *line)
 {
+    static uint8_t cov[OLED_WIDTH];
     const wgroup_t *g = &GROUPS[st->group];
     int p = ui_wheel_param_of(st->group, st->member);
 
-    /* Preview the selected parameter's amount on the ring, but WITHOUT the orb:
-     * the orb is the thing the encoder moves, and it belongs to the value
-     * state. Here it would also sit under the selected branch at values near
-     * the middle of the range. */
-    wheel_value_arc(line, y, P_NOPT[p] ? 0 : st->val[p], 0);
-
+    for (int i = 0; i < g->n; ++i)
+        cov_branch(cov, y, i * WHEEL_STEP_DEG + st->theta, R_ORBIT_SUB);
+    cov_arc(cov, y, HX, HY, R_RING, RING_HALF_T, HUB_A0, HUB_A1);
     /* Sub-nodes carry no icon. The group icon on every branch would say the
      * same thing three times, and a second icon set for 16 parameters is more
-     * marks than a 22 px node can hold. Depth sheds detail: icons on the main
+     * marks than a 15 px node can hold. Depth sheds detail: icons on the main
      * wheel, plain discs below it, no discs at all in the value state. */
-    for (int i = 0; i < g->n; ++i) {
-        float deg = i * WHEEL_STEP_DEG + st->theta;
-        wheel_node(line, y, deg, R_ORBIT_SUB, R_NODE_SUB,
-                   i == st->member, 0, 0);
+    for (int i = 0; i < g->n; ++i)
+        if (i != st->member)
+            cov_node_body(cov, y, i * WHEEL_STEP_DEG + st->theta,
+                          R_ORBIT_SUB, R_NODE_SUB);
+    cov_flush(line, cov, DIM_R, DIM_G, DIM_B, 255);
+
+    /* Preview the selected parameter's amount, but WITHOUT the orb: the orb is
+     * the thing the encoder moves, and it belongs to the value state. Here it
+     * would also sit under the selected branch at mid-range values. */
+    if (!P_NOPT[p] && st->val[p] > 0) {
+        float a = VAL_A0 + (VAL_A1 - VAL_A0) * (float)st->val[p] / 100.0f;
+        cov_arc(cov, y, HX, HY, R_RING, RING_HALF_T, VAL_A0, a);
+        cov_flush(line, cov, GRN_R, GRN_G, GRN_B, 255);
     }
+
+    cov_node_body(cov, y, st->member * WHEEL_STEP_DEG + st->theta,
+                  R_ORBIT_SUB, R_NODE_SUB);
+    cov_flush(line, cov, SEL_R, SEL_G, SEL_B, 255);
 
     /* Group name stays quiet above the parameter name: depth is carried by
      * scale and position, not by a breadcrumb. */
@@ -514,13 +581,22 @@ static void compose_group(const wheel_state_t *st, int y, uint16_t *line)
 
 static void compose_value(const wheel_state_t *st, int y, uint16_t *line)
 {
+    static uint8_t cov[OLED_WIDTH];
     int p = ui_wheel_param_of(st->group, st->member);
     int continuous = !P_NOPT[p];
     int pct = continuous ? st->val[p]
                          : (P_NOPT[p] > 1
                             ? st->val[p] * 100 / (P_NOPT[p] - 1) : 0);
 
-    wheel_value_arc(line, y, pct, 1);
+    cov_arc(cov, y, HX, HY, R_RING, RING_HALF_T, VAL_A0, VAL_A1);
+    cov_flush(line, cov, DIM_R, DIM_G, DIM_B, 255);
+
+    float a = VAL_A0 + (VAL_A1 - VAL_A0) * (float)pct / 100.0f;
+    if (pct > 0) cov_arc(cov, y, HX, HY, R_RING, RING_HALF_T, VAL_A0, a);
+    cov_disc(cov, y, HX + R_RING * sinf(a * DEG2RAD),
+             HY - R_RING * cosf(a * DEG2RAD), R_ORB);
+    cov_flush(line, cov, GRN_R, GRN_G, GRN_B, 255);
+
     text_centre(line, y, 22, &font_hn_value_small, ui_wheel_param_label(p),
                 255, 255, 255, 160);
 
