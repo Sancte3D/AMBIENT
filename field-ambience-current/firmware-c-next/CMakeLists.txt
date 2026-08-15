@@ -289,8 +289,11 @@ elseif(FAM_TARGET STREQUAL "pico")
         # 2.0" module is verified — until then we stay on 1.9".
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
+    # hardware_dma because lcd_st7789_pico.c owns the DMA row-streaming path
+    # (design_bench uses it; this target does not, but it compiles the same
+    # driver, so it needs the header and the library either way).
     target_link_libraries(display_hw_test
-        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm
+        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm hardware_dma
     )
     pico_enable_stdio_usb(display_hw_test 1)
     pico_enable_stdio_uart(display_hw_test 0)
