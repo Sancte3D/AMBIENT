@@ -62,15 +62,16 @@ static void test_lands_exactly(void)
 {
     ui_tween_t tw;
     ui_tween_reset(&tw, 0.0f);
-    ui_tween_to(&tw, 40.0f, UI_DUR_MOVE, UI_EASE_OUT);
+    ui_tween_to(&tw, 40.0f, UI_SPEED_MOVE, UI_EASE_OUT);
     int frames = 0;
     while (ui_tween_tick(&tw, 8) && frames < 1000) ++frames;
     CHECK(frames < 1000, "tween never finished");
     CHECK(ui_tween_value(&tw) == 40.0f, "landed on %.6f, not 40",
           ui_tween_value(&tw));
     CHECK(!ui_tween_busy(&tw), "tween still reports busy after landing");
-    CHECK(frames * 8 <= UI_DUR_MOVE + 16, "took %d ms for a %d ms move",
-          frames * 8, UI_DUR_MOVE);
+    CHECK(frames * 8 <= ui_motion_duration(UI_SPEED_MOVE) + 16,
+          "took %d ms for a %d ms move",
+          frames * 8, ui_motion_duration(UI_SPEED_MOVE));
 }
 
 /* Rule 2. Retargeting mid-flight must stay continuous: the value may change
@@ -79,14 +80,14 @@ static void test_retarget_is_continuous(void)
 {
     ui_tween_t tw;
     ui_tween_reset(&tw, 0.0f);
-    ui_tween_to(&tw, 40.0f, UI_DUR_MOVE, UI_EASE_OUT);
+    ui_tween_to(&tw, 40.0f, UI_SPEED_MOVE, UI_EASE_OUT);
 
     float prev = ui_tween_value(&tw);
     float worst = 0.0f;
     for (int f = 0; f < 60; ++f) {
-        if (f == 5)  ui_tween_to(&tw, 80.0f, UI_DUR_MOVE, UI_EASE_OUT);
-        if (f == 9)  ui_tween_to(&tw, -40.0f, UI_DUR_MOVE, UI_EASE_OUT);
-        if (f == 12) ui_tween_to(&tw, 120.0f, UI_DUR_MOVE, UI_EASE_OUT);
+        if (f == 5)  ui_tween_to(&tw, 80.0f, UI_SPEED_MOVE, UI_EASE_OUT);
+        if (f == 9)  ui_tween_to(&tw, -40.0f, UI_SPEED_MOVE, UI_EASE_OUT);
+        if (f == 12) ui_tween_to(&tw, 120.0f, UI_SPEED_MOVE, UI_EASE_OUT);
         ui_tween_tick(&tw, 8);
         float step = fabsf(ui_tween_value(&tw) - prev);
         if (step > worst) worst = step;
@@ -106,8 +107,8 @@ static void test_time_based(void)
     ui_tween_t a, b;
     ui_tween_reset(&a, 0.0f);
     ui_tween_reset(&b, 0.0f);
-    ui_tween_to(&a, 100.0f, UI_DUR_LEVEL, UI_EASE_IN_OUT);
-    ui_tween_to(&b, 100.0f, UI_DUR_LEVEL, UI_EASE_IN_OUT);
+    ui_tween_to(&a, 100.0f, UI_SPEED_LEVEL, UI_EASE_IN_OUT);
+    ui_tween_to(&b, 100.0f, UI_SPEED_LEVEL, UI_EASE_IN_OUT);
 
     for (int i = 0; i < 12; ++i) ui_tween_tick(&a, 10);   /* 120 ms, fast */
     for (int i = 0; i < 4;  ++i) ui_tween_tick(&b, 30);   /* 120 ms, slow */
@@ -168,18 +169,50 @@ static void test_level_change_animates(void)
     CHECK(frames < 500, "level change never settled");
     CHECK(st.prev_level == st.level,
           "the outgoing level was never released after the cross-fade");
-    CHECK(frames * 8 <= UI_DUR_LEVEL + 24, "level change took %d ms",
-          frames * 8);
+    CHECK(frames * 8 <= ui_motion_duration(UI_SPEED_LEVEL) + 24,
+          "level change took %d ms", frames * 8);
 }
 
 /* The duration scale must stay ordered, or "micro" stops meaning micro. */
 static void test_duration_scale(void)
 {
-    CHECK(UI_DUR_MICRO < UI_DUR_MOVE, "micro is not shorter than move");
-    CHECK(UI_DUR_MOVE < UI_DUR_LEVEL, "move is not shorter than a level change");
-    CHECK(UI_DUR_MICRO >= 60, "micro below ~60 ms is imperceptible and only "
-                              "costs frames");
-    CHECK(UI_DUR_LEVEL <= 400, "a level change past ~400 ms reads as waiting");
+    ui_motion_set_frame_ms(16.7f);
+    for (int i = 0; i < 60; ++i) ui_motion_set_frame_ms(16.7f);
+    int mi = ui_motion_duration(UI_SPEED_MICRO);
+    int mo = ui_motion_duration(UI_SPEED_MOVE);
+    int lv = ui_motion_duration(UI_SPEED_LEVEL);
+    CHECK(mi < mo, "micro (%d) is not shorter than move (%d)", mi, mo);
+    CHECK(mo < lv, "move (%d) is not shorter than a level change (%d)", mo, lv);
+    CHECK(mi >= 60, "micro below ~60 ms is imperceptible and only costs frames");
+}
+
+/* THE ONE THAT WOULD HAVE CAUGHT THE JERKY MOTION.
+ *
+ * A duration in milliseconds means nothing on its own; what matters is how
+ * many frames it gets. The bench panel is 24 MHz, so a 320x170 RGB565 frame is
+ * 36.3 ms of wire time — at which the original fixed 90 ms ease had TWO AND A
+ * HALF frames to run in. Whatever the frame time, every speed class must still
+ * resolve to enough samples to read as movement. */
+static void test_enough_frames_at_any_rate(void)
+{
+    static const float RATES[] = { 8.0f, 16.7f, 25.0f, 36.3f, 50.0f, 80.0f };
+    static const char *NAME[] = { "MICRO", "MOVE", "LEVEL" };
+    const int MIN_FRAMES = 8;
+
+    for (size_t r = 0; r < sizeof RATES / sizeof RATES[0]; ++r) {
+        /* settle the smoothing filter on this rate */
+        for (int i = 0; i < 200; ++i) ui_motion_set_frame_ms(RATES[r]);
+
+        for (int sp = 0; sp < UI_SPEED_COUNT; ++sp) {
+            int dur    = ui_motion_duration((ui_speed_t)sp);
+            int frames = (int)(dur / RATES[r]);
+            CHECK(frames >= MIN_FRAMES,
+                  "at %.1f ms/frame, %s resolves to %d ms = %d frames — under "
+                  "%d frames it reads as a jump, not a motion",
+                  (double)RATES[r], NAME[sp], dur, frames, MIN_FRAMES);
+        }
+    }
+    for (int i = 0; i < 200; ++i) ui_motion_set_frame_ms(16.7f);   /* restore */
 }
 
 int main(void)
@@ -192,6 +225,7 @@ int main(void)
     test_no_input_is_swallowed();
     test_level_change_animates();
     test_duration_scale();
+    test_enough_frames_at_any_rate();
 
     if (failures) {
         printf("test_ui_motion: %d failure(s)\n", failures);

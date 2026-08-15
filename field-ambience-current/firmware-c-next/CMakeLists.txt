@@ -305,6 +305,7 @@ elseif(FAM_TARGET STREQUAL "pico")
         tools/ui_wheel.c
         tools/ui_draw.c
         tools/ui_motion.c
+        tools/ui_encoder.c
         src/hal_pico/lcd_st7789_pico.c
         src/oled_draw.c
         src/oled_color.c
@@ -331,7 +332,7 @@ elseif(FAM_TARGET STREQUAL "pico")
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
     target_link_libraries(design_bench
-        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm
+        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm hardware_dma
     )
     pico_enable_stdio_usb(design_bench 1)
     pico_enable_stdio_uart(design_bench 0)

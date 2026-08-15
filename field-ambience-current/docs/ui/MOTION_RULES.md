@@ -17,10 +17,19 @@ introduce latency, because nothing the user asked for is queued behind it — if
 the screen is two frames behind, the sound is already where the hand put it.
 
 Concretely on the bench (`tools/design_bench_pico.c`): the encoder and the
-button are on GPIO interrupts, not polled. A full frame takes **29 ms** on the
-wire at 32 MHz, and a polled loop simply loses every detent that arrives during
+button are on GPIO interrupts, not polled. A full frame takes **36 ms** on the
+wire at 24 MHz, and a polled loop simply loses every detent that arrives during
 a blit — on a fast turn that is roughly every other step. That is the classic
 "latency fail", and it is a wiring decision, not an animation decision.
+
+**And the interrupt must decode quadrature, not count edges.** Counting falling
+edges on A while sampling B inside the handler makes one physical click move
+two or three steps: the contacts bounce, so a single detent fires the interrupt
+several times, and B is read at the moment it is least settled. A time-based
+debounce cannot fix it — too short and bounces still count, too long and a fast
+turn is dropped. The state machine in `tools/ui_encoder.c` has neither problem:
+a bounce walks forward and straight back and the two cancel exactly. One click
+is one step, and `test_ui_encoder.c` proves it against simulated bounce.
 
 ## 2. Transitions are retargeted, never queued
 
@@ -52,13 +61,45 @@ test.
 Curves are anchored at both ends, monotonic, and never leave 0..1. An
 overshoot on a value ring means the number is briefly wrong.
 
-## 5. Three durations, nothing in between
+## 5. A duration is a speed class, resolved against the real frame time
 
-| | | |
-|---|---:|---|
-| `UI_DUR_MICRO` | 90 ms | value orb, small corrections. Below ~80 ms an ease is imperceptible and only costs frames; above ~120 ms a hand-driven value feels rubbery. |
-| `UI_DUR_MOVE` | 200 ms | the wheel snapping one step. |
-| `UI_DUR_LEVEL` | 280 ms | a level change — the most pixels moved, and the only place the eye has to re-orient. |
+**This is the rule the first version got wrong, and it is why it felt jerky.**
+Durations were written as fixed milliseconds — 90 / 200 / 280 — which are
+reasonable numbers for a 60 fps screen and meaningless on this one. The bench
+panel runs SPI at 24 MHz, so a 320 × 170 RGB565 frame is 108,800 bytes =
+**36.3 ms of wire time** before anything is drawn. At that rate a 90 ms ease is
+**two and a half frames**. Two frames is not a motion; it is a jump with one
+intermediate position, and it looks exactly as jerky as that description.
+
+So a duration is resolved, not written:
+
+```
+duration = max(target_ms, min_frames × measured_frame_ms)
+```
+
+| class | target | min frames | at 16.7 ms/frame | at 36.3 ms/frame |
+|---|---:|---:|---:|---:|
+| `UI_SPEED_MICRO` | 90 ms | 8 | 134 ms | 290 ms |
+| `UI_SPEED_MOVE` | 200 ms | 12 | 200 ms | 436 ms |
+| `UI_SPEED_LEVEL` | 280 ms | 14 | 280 ms | 508 ms |
+
+On a fast panel the target wins and the motion is crisp. On a slow one the
+floor wins and the motion stretches until it has enough samples to read as
+movement. `ui_motion_set_frame_ms()` takes the measured value every frame, so
+the timing corrects itself instead of being re-guessed per panel — and
+`design_bench` prints the number once a second, because guessing at it is what
+caused this.
+
+Two things follow that are not optional:
+
+- **Overlap drawing with transfer.** The blocking write spends 36 ms with the
+  CPU idle and then draws on top of that, so the frame costs transfer PLUS
+  drawing. The panel row DMA (`lcd_stream_row_dma` / `lcd_stream_wait`) lets
+  the compositor build row N+1 while row N is on the wire, so the frame costs
+  whichever is larger instead of the sum.
+- **If the motion still needs to be faster, the frame rate has to go up** —
+  raising the SPI clock or updating only the rows that changed. Shortening the
+  durations instead just puts the animation back under its frame floor.
 
 ## 6. Nothing snaps
 

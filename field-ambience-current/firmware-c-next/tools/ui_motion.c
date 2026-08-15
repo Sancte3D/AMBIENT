@@ -1,6 +1,41 @@
 /* ui_motion — see ui_motion.h for the rules these implement. */
 #include "ui_motion.h"
 
+/* target_ms, min_frames — see the speed-class note in the header. */
+static const struct { int ms; int frames; } SPEED[UI_SPEED_COUNT] = {
+    {  90,  8 },   /* MICRO */
+    { 200, 12 },   /* MOVE  */
+    { 280, 14 },   /* LEVEL */
+};
+
+/* Assume a 60 fps panel until told otherwise, so the host renderer and the
+ * tests get the crisp target timings without having to configure anything. */
+static float s_frame_ms = 16.7f;
+
+void ui_motion_set_frame_ms(float ms)
+{
+    /* Below ~4 ms is a measurement artefact (an idle loop that drew nothing);
+     * above 100 ms the panel is not animating anything anyway and letting it
+     * stretch the durations without bound would make every motion glacial. */
+    if (ms < 4.0f)   ms = 4.0f;
+    if (ms > 100.0f) ms = 100.0f;
+    /* Smoothed: one slow frame must not stretch the next motion. */
+    s_frame_ms += (ms - s_frame_ms) * 0.15f;
+}
+
+float ui_motion_frame_ms(void) { return s_frame_ms; }
+
+int ui_motion_duration(ui_speed_t speed)
+{
+    if (speed < 0 || speed >= UI_SPEED_COUNT) speed = UI_SPEED_MOVE;
+    /* Rounded UP: truncating here turns "at least 8 frames" into 7.96 frames,
+     * which is 7 after the division and exactly the off-by-one that lets a
+     * motion sit one sample below the threshold it was supposed to clear. */
+    float floor_ms = SPEED[speed].frames * s_frame_ms;
+    float ms = (float)SPEED[speed].ms;
+    return (int)((ms > floor_ms ? ms : floor_ms) + 0.999f);
+}
+
 float ui_ease(ui_ease_t curve, float t)
 {
     if (t <= 0.0f) return 0.0f;
@@ -31,13 +66,13 @@ void ui_tween_reset(ui_tween_t *tw, float v)
     tw->curve = UI_EASE_OUT;
 }
 
-void ui_tween_to(ui_tween_t *tw, float to, int dur_ms, ui_ease_t curve)
+void ui_tween_to(ui_tween_t *tw, float to, ui_speed_t speed, ui_ease_t curve)
 {
     if (to == tw->to && tw->dur_ms > 0.0f) return;   /* already heading there */
     tw->from       = tw->cur;                        /* continuous retarget */
     tw->to         = to;
     tw->elapsed_ms = 0.0f;
-    tw->dur_ms     = (float)(dur_ms > 0 ? dur_ms : 1);
+    tw->dur_ms     = (float)ui_motion_duration(speed);
     tw->curve      = curve;
 }
 

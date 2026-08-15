@@ -160,9 +160,9 @@ static void amount_track(wheel_state_t *st, int p, int pct)
 {
     if (st->amount_for != (uint8_t)p) {
         st->amount_for = (uint8_t)p;
-        ui_tween_to(&st->amount, (float)pct, UI_DUR_MOVE, UI_EASE_IN_OUT);
+        ui_tween_to(&st->amount, (float)pct, UI_SPEED_MOVE, UI_EASE_IN_OUT);
     } else {
-        ui_tween_to(&st->amount, (float)pct, UI_DUR_MICRO, UI_EASE_OUT);
+        ui_tween_to(&st->amount, (float)pct, UI_SPEED_MICRO, UI_EASE_OUT);
     }
 }
 
@@ -222,7 +222,7 @@ void ui_wheel_turn(wheel_state_t *st, int dir, int coarse)
      * wrapping from the last node to the first rotates one step rather than
      * spinning all the way back around. */
     ui_tween_to(&st->rot, st->rot.to - dir * WHEEL_STEP_DEG,
-                UI_DUR_MOVE, UI_EASE_OUT);
+                UI_SPEED_MOVE, UI_EASE_OUT);
     if (st->level == WHEEL_MAIN) {
         int g = ((int)st->group + dir) % n;
         if (g < 0) g += n;
@@ -242,13 +242,13 @@ void ui_wheel_turn(wheel_state_t *st, int dir, int coarse)
  * wanted angle has to be resolved to the 360-periodic representative nearest
  * to where the wheel already is — otherwise stepping back out of a group
  * unwinds the whole rotation that got you there. */
-static void wheel_retarget(wheel_state_t *st, int dur, ui_ease_t curve)
+static void wheel_retarget(wheel_state_t *st, ui_speed_t speed, ui_ease_t curve)
 {
     int   idx  = (st->level == WHEEL_MAIN) ? st->group : st->member;
     float want = -(float)idx * WHEEL_STEP_DEG;
     float d    = want - st->rot.cur;
     d -= 360.0f * floorf(d / 360.0f + 0.5f);
-    ui_tween_to(&st->rot, st->rot.cur + d, dur, curve);
+    ui_tween_to(&st->rot, st->rot.cur + d, speed, curve);
 }
 
 /* Begin a level change: the outgoing level keeps drawing while the incoming
@@ -260,8 +260,8 @@ static void level_to(wheel_state_t *st, wheel_level_t to)
     st->prev_level = st->level;
     st->level      = to;
     ui_tween_reset(&st->morph, 0.0f);
-    ui_tween_to(&st->morph, 1.0f, UI_DUR_LEVEL, UI_EASE_IN_OUT);
-    wheel_retarget(st, UI_DUR_LEVEL, UI_EASE_IN_OUT);
+    ui_tween_to(&st->morph, 1.0f, UI_SPEED_LEVEL, UI_EASE_IN_OUT);
+    wheel_retarget(st, UI_SPEED_LEVEL, UI_EASE_IN_OUT);
     amount_track(st, ui_wheel_param_of(st->group, st->member),
                  param_pct(st, ui_wheel_param_of(st->group, st->member)));
 }

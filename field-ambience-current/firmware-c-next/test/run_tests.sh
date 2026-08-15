@@ -352,6 +352,14 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     -lm -o "$tmp/ui_motion_test"
 "$tmp/ui_motion_test"
 
+# Quadrature decoding: one physical click must be exactly one step, and contact
+# bounce must cancel instead of counting as movement. This is the test that
+# would have caught the wheel jumping several steps per detent.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" \
+    "$here/test_ui_encoder.c" "$src/tools/ui_encoder.c" \
+    -lm -o "$tmp/ui_encoder_test"
+"$tmp/ui_encoder_test"
+
 # r19.6: equal / just intonation layer (pure ratios, bit-exact ET).
 "$CC" "${CFLAGS[@]}" \
     "$here/test_tuning.c" \
