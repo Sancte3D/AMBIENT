@@ -94,16 +94,21 @@ static void test_navigation(void)
         CHECK(st.group == g, "walked to %d, landed on %d", g, st.group);
 
         ui_wheel_press(&st, 0);
-        /* A one-member group must skip the sub-wheel entirely. */
-        if (ui_wheel_group_size(g) == 1)
-            CHECK(st.level == WHEEL_VALUE,
-                  "single-member group %s did not go straight to the value",
-                  ui_wheel_group_name(g));
-        else
-            CHECK(st.level == WHEEL_GROUP, "group %s did not open",
-                  ui_wheel_group_name(g));
+        CHECK(st.level == WHEEL_SCENE, "group %s did not open its scene",
+              ui_wheel_group_name(g));
 
-        while (st.level != WHEEL_MAIN) ui_wheel_press(&st, 1);
+        /* A press inside a scene hands the encoder to the next property; it
+         * must never descend, because there is nowhere deeper to go. */
+        for (int i = 0; i < 5; ++i) {
+            ui_wheel_press(&st, 0);
+            CHECK(st.level == WHEEL_SCENE,
+                  "a press inside %s left the scene", ui_wheel_group_name(g));
+            CHECK(st.member < ui_wheel_group_size(g),
+                  "focus %d is outside %s's %d properties",
+                  st.member, ui_wheel_group_name(g), ui_wheel_group_size(g));
+        }
+
+        ui_wheel_press(&st, 1);
         CHECK(st.group == g, "stepping back out of %s changed the group to %d",
               ui_wheel_group_name(g), st.group);
     }
@@ -157,7 +162,7 @@ static void test_ease_settles(void)
  * selected node must sit at 12 o'clock fully on the panel. */
 static void test_compose(void)
 {
-    static const char *LVL[] = { "MAIN", "GROUP", "VALUE" };
+    static const char *LVL[] = { "MAIN", "SCENE" };
 
     for (int g = 0; g < WHEEL_GROUPS; ++g) {
         wheel_state_t st;
@@ -165,7 +170,7 @@ static void test_compose(void)
         for (int i = 0; i < g; ++i) ui_wheel_turn(&st, +1, 0);
         ui_wheel_settle(&st);
 
-        for (int step = 0; step < 3; ++step) {
+        for (int step = 0; step < 2; ++step) {
             long lit = 0;
             uint16_t line[OLED_WIDTH];
             int sel_row_bright = 0;
@@ -180,8 +185,7 @@ static void test_compose(void)
                  * through the middle. Node centres are (158, 67) r=22 in MAIN
                  * and (158, 79) r=15 in GROUP; 0.7 r above centre is inside
                  * the disc and outside the icon (icon radius is 0.42 r). */
-                if (st.level != WHEEL_VALUE &&
-                    y == ((st.level == WHEEL_MAIN) ? 67 - 15 : 79 - 10)) {
+                if (st.level == WHEEL_MAIN && y == 67 - 15) {
                     uint16_t px = line[158];
                     int r = ((px >> 11) & 0x1F) << 3;
                     sel_row_bright = (r > 160);
@@ -189,7 +193,7 @@ static void test_compose(void)
             }
             CHECK(lit > 500, "%s/%s drew almost nothing (%ld px)",
                   ui_wheel_group_name(g), LVL[st.level], lit);
-            if (st.level != WHEEL_VALUE)
+            if (st.level == WHEEL_MAIN)
                 CHECK(sel_row_bright,
                       "%s/%s: the selected node is not at 12 o'clock",
                       ui_wheel_group_name(g), LVL[st.level]);
@@ -235,6 +239,6 @@ int main(void)
     }
     printf("test_ui_wheel: OK — %d groups partition %d parameters, "
            "navigation closes, snaps take the short way, %d screens compose\n",
-           WHEEL_GROUPS, WHEEL_PARAM_COUNT, WHEEL_GROUPS * 3);
+           WHEEL_GROUPS, WHEEL_PARAM_COUNT, WHEEL_GROUPS * 2);
     return 0;
 }

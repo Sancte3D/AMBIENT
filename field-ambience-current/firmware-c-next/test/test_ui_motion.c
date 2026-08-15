@@ -134,12 +134,11 @@ static void test_no_input_is_swallowed(void)
           st.group, 20 % WHEEL_GROUPS);
 
     /* And the value: the model must be at the new value before a single frame
-     * has been drawn. */
+     * has been drawn. Entering a scene hands the encoder straight to its first
+     * property — there is no separate value screen to descend into. */
     ui_wheel_init(&st);
     ui_wheel_settle(&st);
     while (ui_wheel_group_size(st.group) < 2) ui_wheel_turn(&st, +1, 0);
-    ui_wheel_press(&st, 0);
-    ui_wheel_settle(&st);
     ui_wheel_press(&st, 0);
     ui_wheel_settle(&st);
 
@@ -160,7 +159,7 @@ static void test_level_change_animates(void)
     ui_wheel_settle(&st);
 
     ui_wheel_press(&st, 0);
-    CHECK(st.prev_level == WHEEL_MAIN && st.level == WHEEL_GROUP,
+    CHECK(st.prev_level == WHEEL_MAIN && st.level == WHEEL_SCENE,
           "level change did not keep the outgoing level for the cross-fade");
     CHECK(ui_wheel_tick(&st, 8), "level change was not animated at all");
 

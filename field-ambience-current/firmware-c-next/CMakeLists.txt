@@ -306,6 +306,7 @@ elseif(FAM_TARGET STREQUAL "pico")
     add_executable(design_bench
         tools/design_bench_pico.c
         tools/ui_wheel.c
+        tools/ui_scene.c
         tools/ui_draw.c
         tools/ui_motion.c
         tools/ui_encoder.c

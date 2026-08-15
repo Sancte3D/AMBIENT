@@ -42,29 +42,34 @@
 
 #include <stdint.h>
 #include "ui_motion.h"
+#include "ui_scene.h"
 
 #define WHEEL_GROUPS       9
 #define WHEEL_PARAM_COUNT 16
 #define WHEEL_STEP_DEG    (360.0f / WHEEL_GROUPS)
 
+/* Two levels, not three. The old middle level was a sub-wheel of abstract
+ * parameter names leading to a separate value screen; the scene replaces both.
+ * A scene shows every property of the group at once as features of one
+ * drawing, so there is nothing left to descend into. */
 typedef enum {
-    WHEEL_MAIN = 0,     /* groups */
-    WHEEL_GROUP,        /* parameters inside one group */
-    WHEEL_VALUE         /* the ring is the parameter */
+    WHEEL_MAIN = 0,     /* the wheel of groups */
+    WHEEL_SCENE         /* one group's own small visual world */
 } wheel_level_t;
 
 typedef struct {
     wheel_level_t level;                  /* where we are going              */
     wheel_level_t prev_level;             /* what is still fading out        */
     uint8_t    group;                     /* 0..WHEEL_GROUPS-1               */
-    uint8_t    member;                    /* index within the group          */
+    uint8_t    member;                    /* which property the encoder holds */
 
     /* Presentation only. The model (group/member/val) is updated the moment
      * the encoder edge arrives; these lag behind it and never gate it. */
     ui_tween_t rot;                       /* wheel angle, degrees            */
-    ui_tween_t amount;                    /* shown 0..100 of `amount_for`    */
     ui_tween_t morph;                     /* 0 = prev_level, 1 = level       */
-    uint8_t    amount_for;                /* which parameter `amount` tracks */
+    /* One tween per scene property, so every feature of the drawing moves,
+     * not just the one being turned. */
+    ui_tween_t knob[UI_SCENE_MAX_KNOBS];  /* shown 0..1                      */
 
     uint8_t  val[WHEEL_PARAM_COUNT];
     uint8_t  batt;                        /* 0..100                          */

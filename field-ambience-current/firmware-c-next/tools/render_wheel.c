@@ -54,55 +54,46 @@ int main(int argc, char **argv)
 #define SHOT(tag) do { snprintf(path, sizeof path, "%s/%s.ppm", dir, tag); \
                        write_ppm(path, &st); } while (0)
 
-    /* 01 — main wheel, World selected */
+    /* 01 — the wheel itself */
     ui_wheel_init(&st);
     ui_wheel_settle(&st);
-    SHOT("01_main_world");
+    SHOT("01_wheel_world");
 
     /* 02 — mid-rotation: the frame that proves the branches survive motion */
     ui_wheel_turn(&st, +1, 0);
     ui_wheel_tick(&st, 70);           /* part-way through the eased snap */
-    SHOT("02_main_rotating");
+    SHOT("02_wheel_rotating");
 
-    /* 03 — settled on Space */
+    /* 03..11 — every scene, settled, at its seeded values. One per group:
+     * this is the sheet that shows whether nine drawings actually read as nine
+     * different places rather than nine variations of the same widget. */
+    static const char *SCENE_TAG[WHEEL_GROUPS] = {
+        "03_scene_world", "04_scene_sound", "05_scene_pitch",
+        "06_scene_harmony", "07_scene_room", "08_scene_time",
+        "09_scene_texture", "10_scene_motion", "11_scene_fx"
+    };
+    for (int g = 0; g < WHEEL_GROUPS; ++g) {
+        ui_wheel_init(&st);
+        for (int i = 0; i < g; ++i) ui_wheel_turn(&st, +1, 0);
+        ui_wheel_settle(&st);
+        ui_wheel_press(&st, 0);
+        ui_wheel_settle(&st);
+        snprintf(path, sizeof path, "%s/%s.ppm", dir, SCENE_TAG[g]);
+        write_ppm(path, &st);
+    }
+
+    /* 12/13 — the same scene at two very different settings, which is the
+     * whole claim: the geometry carries the value, not a number beside it. */
     ui_wheel_init(&st);
-    for (int i = 0; i < 4; ++i) ui_wheel_turn(&st, +1, 0);
-    ui_wheel_settle(&st);
-    SHOT("03_main_space");
-
-    /* 04 — press: the group wheel for Space */
-    ui_wheel_press(&st, 0);
-    ui_wheel_settle(&st);
-    SHOT("04_group_space");
-
-    /* 05 — rotate to Shimmer inside the group */
-    ui_wheel_turn(&st, +1, 0);
-    ui_wheel_settle(&st);
-    SHOT("05_group_shimmer");
-
-    /* 06 — press: the ring is the parameter */
-    ui_wheel_press(&st, 0);
-    SHOT("06_value_shimmer");
-
-    /* 07 — turned up */
-    for (int i = 0; i < 12; ++i) ui_wheel_turn(&st, +1, 0);
-    SHOT("07_value_turned");
-
-    /* 08 — a discrete parameter: the ring still carries position */
-    ui_wheel_init(&st);
-    ui_wheel_settle(&st);
-    ui_wheel_press(&st, 0);          /* World has one member -> straight to
-                                      * the value, no sub-wheel */
-    ui_wheel_turn(&st, +2, 0);
-    SHOT("08_value_world");
-
-    /* 09 — a three-member group, to show branch count changing with depth */
-    ui_wheel_init(&st);
-    ui_wheel_turn(&st, +1, 0);
+    for (int i = 0; i < 4; ++i) ui_wheel_turn(&st, +1, 0);   /* Room */
     ui_wheel_settle(&st);
     ui_wheel_press(&st, 0);
+    for (int i = 0; i < 40; ++i) ui_wheel_turn(&st, -1, 0);
     ui_wheel_settle(&st);
-    SHOT("09_group_synth");
+    SHOT("12_room_small");
+    for (int i = 0; i < 60; ++i) ui_wheel_turn(&st, +1, 0);
+    ui_wheel_settle(&st);
+    SHOT("13_room_large");
 
     /* ---- motion strips ---------------------------------------------------
      * A still cannot show whether a move is smooth. These sample the SAME
@@ -113,18 +104,16 @@ int main(int argc, char **argv)
     for (int seq = 0; seq < 3; ++seq) {
         ui_wheel_init(&st);
         ui_wheel_settle(&st);
-        if (seq == 1) {                       /* descending into a group */
+        if (seq == 1) {                       /* opening a scene */
             for (int i = 0; i < 4; ++i) ui_wheel_turn(&st, +1, 0);
             ui_wheel_settle(&st);
             ui_wheel_press(&st, 0);
-        } else if (seq == 2) {                /* a value being turned */
+        } else if (seq == 2) {                /* a property being turned */
             for (int i = 0; i < 4; ++i) ui_wheel_turn(&st, +1, 0);
             ui_wheel_settle(&st);
             ui_wheel_press(&st, 0);
             ui_wheel_settle(&st);
-            ui_wheel_press(&st, 0);
-            ui_wheel_settle(&st);
-            for (int i = 0; i < 6; ++i) ui_wheel_turn(&st, +1, 0);
+            for (int i = 0; i < 8; ++i) ui_wheel_turn(&st, +1, 0);
         } else {                              /* one wheel step */
             ui_wheel_turn(&st, +1, 0);
         }

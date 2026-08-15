@@ -22,6 +22,10 @@
 #include <stdint.h>
 #include "baked_font.h"
 
+/* Angles throughout this layer are degrees from 12 o'clock, positive
+ * clockwise — the same convention the wheel navigates in. */
+#define UI_DEG2RAD 0.017453293f
+
 static inline uint16_t ui_pack565(int r, int g, int b)
 {
     return (uint16_t)(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
@@ -51,5 +55,30 @@ const char *ui_fit_text(const bakedfont_t *f, const char *s, int maxw,
 void ui_row_text(uint16_t *line, int y, int ytop, int x,
                  const bakedfont_t *f, const char *s,
                  int r, int g, int b, int a);
+
+/* ---- signed-distance scanline primitives --------------------------------
+ * These do NOT blend. They accumulate COVERAGE into a per-row byte mask with
+ * max(), and a whole group of same-coloured shapes is blended once at the end
+ * with ui_cov_flush().
+ *
+ * That is not an optimisation, it is the fix for a visible seam: compositing
+ * two overlapping shapes of the same colour in sequence never reaches full
+ * opacity — where each covers half a pixel the result lands at 0.75 of the
+ * colour — so every junction drew itself a darker hairline. Taking the maximum
+ * first makes a union behave like one shape.
+ *
+ * `cov` is an OLED_WIDTH byte array; ui_cov_flush leaves it zeroed. */
+int  ui_cov255(float d);                       /* signed distance -> coverage */
+void ui_cov_put(uint8_t *cov, int x, int c);
+void ui_cov_flush(uint16_t *line, uint8_t *cov, int r, int g, int b, int alpha);
+
+void ui_cov_disc(uint8_t *cov, int y, float cx, float cy, float r);
+void ui_cov_capsule(uint8_t *cov, int y, float ax, float ay,
+                    float bx, float by, float r);
+/* Angles measured from 12 o'clock, positive clockwise; ends are rounded. */
+void ui_cov_arc(uint8_t *cov, int y, float cx, float cy, float r,
+                float half_t, float a0, float a1);
+/* Open polyline through n points (x,y interleaved), stroked at half_w. */
+void ui_cov_polyline(uint8_t *cov, int y, const float *pts, int n, float half_w);
 
 #endif

@@ -76,7 +76,7 @@
 #define VAL_A0      (-78.0f)
 #define VAL_A1       (78.0f)
 
-#define DEG2RAD 0.017453293f
+#define DEG2RAD UI_DEG2RAD
 
 /* ---- model -------------------------------------------------------------- */
 static const char *const P_LABEL[WHEEL_PARAM_COUNT] = {
@@ -153,23 +153,23 @@ const char *ui_wheel_param_value(const wheel_state_t *st, int p)
  * an animation, so a fast turn produces one continuous sweep instead of a
  * backlog of nine separate snaps. See ui_motion.h. */
 
-/* Track a parameter's amount on the ring. Changing WHICH parameter is a
- * different quantity, so it sweeps at move speed; changing the value itself is
- * the hand moving, so it follows at micro speed. */
-static void amount_track(wheel_state_t *st, int p, int pct)
+/* A property's value as 0..1, which is what a scene draws with. */
+static float param_norm(const wheel_state_t *st, int p)
 {
-    if (st->amount_for != (uint8_t)p) {
-        st->amount_for = (uint8_t)p;
-        ui_tween_to(&st->amount, (float)pct, UI_SPEED_MOVE, UI_EASE_IN_OUT);
-    } else {
-        ui_tween_to(&st->amount, (float)pct, UI_SPEED_MICRO, UI_EASE_OUT);
-    }
+    if (!P_NOPT[p]) return st->val[p] / 100.0f;
+    return P_NOPT[p] > 1 ? (float)st->val[p] / (float)(P_NOPT[p] - 1) : 0.0f;
 }
 
-static int param_pct(const wheel_state_t *st, int p)
+/* Point every knob tween at the current model, instantly. Used on entering a
+ * scene: the properties belong to a group that was not on screen a moment ago,
+ * so there is no previous position to travel from — easing here would show a
+ * drawing morphing out of the last group's numbers, which is meaningless. */
+static void knobs_reset(wheel_state_t *st)
 {
-    if (!P_NOPT[p]) return st->val[p];
-    return P_NOPT[p] > 1 ? st->val[p] * 100 / (P_NOPT[p] - 1) : 0;
+    const wgroup_t *g = &GROUPS[st->group];
+    for (int i = 0; i < UI_SCENE_MAX_KNOBS; ++i)
+        ui_tween_reset(&st->knob[i],
+                       i < g->n ? param_norm(st, g->p[i]) : 0.0f);
 }
 
 void ui_wheel_init(wheel_state_t *st)
@@ -186,22 +186,15 @@ void ui_wheel_init(wheel_state_t *st)
      * previous state to move from. */
     ui_tween_reset(&st->rot, 0.0f);
     ui_tween_reset(&st->morph, 1.0f);
-    st->amount_for = 0;
-    ui_tween_reset(&st->amount, (float)param_pct(st, 0));
+    knobs_reset(st);
 }
 
 float ui_wheel_theta(const wheel_state_t *st)        { return st->rot.cur; }
 float ui_wheel_theta_target(const wheel_state_t *st) { return st->rot.to; }
 
-static int level_nodes(const wheel_state_t *st)
-{
-    return (st->level == WHEEL_MAIN) ? WHEEL_GROUPS
-                                     : GROUPS[st->group].n;
-}
-
 void ui_wheel_turn(wheel_state_t *st, int dir, int coarse)
 {
-    if (st->level == WHEEL_VALUE) {
+    if (st->level == WHEEL_SCENE) {
         int p = ui_wheel_param_of(st->group, st->member);
         if (P_NOPT[p]) {
             int i = (int)st->val[p] + dir;
@@ -213,47 +206,39 @@ void ui_wheel_turn(wheel_state_t *st, int dir, int coarse)
             if (v > 100) v = 100;
             st->val[p] = (uint8_t)v;
         }
-        amount_track(st, p, param_pct(st, p));
+        /* Only the turned property moves, and it follows the hand. */
+        ui_tween_to(&st->knob[st->member], param_norm(st, p),
+                    UI_SPEED_MICRO, UI_EASE_OUT);
         return;
     }
 
-    int n = level_nodes(st);
     /* The target always moves by exactly one step in the turned direction, so
      * wrapping from the last node to the first rotates one step rather than
      * spinning all the way back around. */
     ui_tween_to(&st->rot, st->rot.to - dir * WHEEL_STEP_DEG,
                 UI_SPEED_MOVE, UI_EASE_OUT);
-    if (st->level == WHEEL_MAIN) {
-        int g = ((int)st->group + dir) % n;
-        if (g < 0) g += n;
-        st->group  = (uint8_t)g;
-        st->member = 0;
-    } else {
-        int m = ((int)st->member + dir) % n;
-        if (m < 0) m += n;
-        st->member = (uint8_t)m;
-        int p = ui_wheel_param_of(st->group, st->member);
-        amount_track(st, p, param_pct(st, p));
-    }
+    int g = ((int)st->group + dir) % WHEEL_GROUPS;
+    if (g < 0) g += WHEEL_GROUPS;
+    st->group  = (uint8_t)g;
+    st->member = 0;
 }
 
-/* Point the wheel at whatever index the current level selects, taking the
- * short way round. The angle accumulates freely as the user turns, so the
- * wanted angle has to be resolved to the 360-periodic representative nearest
- * to where the wheel already is — otherwise stepping back out of a group
- * unwinds the whole rotation that got you there. */
+/* Point the wheel at the selected group, taking the short way round. The angle
+ * accumulates freely as the user turns, so the wanted angle has to be resolved
+ * to the 360-periodic representative nearest to where the wheel already is —
+ * otherwise stepping back out of a scene unwinds the whole rotation that got
+ * you there. */
 static void wheel_retarget(wheel_state_t *st, ui_speed_t speed, ui_ease_t curve)
 {
-    int   idx  = (st->level == WHEEL_MAIN) ? st->group : st->member;
-    float want = -(float)idx * WHEEL_STEP_DEG;
+    float want = -(float)st->group * WHEEL_STEP_DEG;
     float d    = want - st->rot.cur;
     d -= 360.0f * floorf(d / 360.0f + 0.5f);
     ui_tween_to(&st->rot, st->rot.cur + d, speed, curve);
 }
 
 /* Begin a level change: the outgoing level keeps drawing while the incoming
- * one fades in, so the wheel reads as one object transforming rather than two
- * screens swapping. */
+ * one fades in, so the change reads as one thing becoming another rather than
+ * two screens swapping. */
 static void level_to(wheel_state_t *st, wheel_level_t to)
 {
     if (to == st->level) return;
@@ -262,38 +247,34 @@ static void level_to(wheel_state_t *st, wheel_level_t to)
     ui_tween_reset(&st->morph, 0.0f);
     ui_tween_to(&st->morph, 1.0f, UI_SPEED_LEVEL, UI_EASE_IN_OUT);
     wheel_retarget(st, UI_SPEED_LEVEL, UI_EASE_IN_OUT);
-    amount_track(st, ui_wheel_param_of(st->group, st->member),
-                 param_pct(st, ui_wheel_param_of(st->group, st->member)));
 }
 
 void ui_wheel_press(wheel_state_t *st, int back)
 {
     if (back) {
-        if (st->level == WHEEL_VALUE)
-            level_to(st, GROUPS[st->group].n > 1 ? WHEEL_GROUP : WHEEL_MAIN);
-        else if (st->level == WHEEL_GROUP)
-            level_to(st, WHEEL_MAIN);
+        if (st->level != WHEEL_MAIN) level_to(st, WHEEL_MAIN);
+        else                         wheel_retarget(st, UI_SPEED_MOVE, UI_EASE_IN_OUT);
         return;
     }
     if (st->level == WHEEL_MAIN) {
         st->member = 0;
-        /* A group of one has nothing to choose: a sub-wheel with a single
-         * branch is a menu that asks a question with one answer. Drop straight
-         * to the value. */
-        level_to(st, GROUPS[st->group].n > 1 ? WHEEL_GROUP : WHEEL_VALUE);
-    } else if (st->level == WHEEL_GROUP) {
-        level_to(st, WHEEL_VALUE);
-    } else {
-        level_to(st, GROUPS[st->group].n > 1 ? WHEEL_GROUP : WHEEL_MAIN);
+        knobs_reset(st);
+        level_to(st, WHEEL_SCENE);
+        return;
     }
+    /* Inside a scene the press does not descend — there is nowhere deeper to
+     * go. It hands the encoder to the next property of the same drawing, which
+     * on the product is what a second encoder would do simultaneously. */
+    st->member = (uint8_t)((st->member + 1) % GROUPS[st->group].n);
 }
 
 int ui_wheel_tick(wheel_state_t *st, int dt_ms)
 {
     int busy = 0;
     busy |= ui_tween_tick(&st->rot, dt_ms);
-    busy |= ui_tween_tick(&st->amount, dt_ms);
     busy |= ui_tween_tick(&st->morph, dt_ms);
+    for (int i = 0; i < UI_SCENE_MAX_KNOBS; ++i)
+        busy |= ui_tween_tick(&st->knob[i], dt_ms);
     if (!ui_tween_busy(&st->morph)) st->prev_level = st->level;
     return busy;
 }
@@ -301,115 +282,15 @@ int ui_wheel_tick(wheel_state_t *st, int dt_ms)
 void ui_wheel_settle(wheel_state_t *st)
 {
     ui_tween_settle(&st->rot);
-    ui_tween_settle(&st->amount);
     ui_tween_settle(&st->morph);
+    for (int i = 0; i < UI_SCENE_MAX_KNOBS; ++i) ui_tween_settle(&st->knob[i]);
     st->prev_level = st->level;
 }
 
-/* ---- signed-distance scanline primitives --------------------------------
- * Primitives do NOT blend into the line buffer. They accumulate COVERAGE into
- * a per-row byte mask with max(), and a whole group of same-coloured shapes is
- * blended once at the end.
- *
- * That is not an optimisation, it is the fix for a visible seam. Compositing
- * two overlapping shapes of the same colour in sequence never reaches full
- * opacity: where each covers half a pixel the result lands at 0.75 of the
- * colour, so every junction — branch into ring, stem into node, the four
- * strokes crossing in the FX icon — drew itself a darker hairline. Taking the
- * maximum of the coverages first makes a union behave like one shape.
- */
-static inline int cov255(float d)          /* d = signed distance in px */
-{
-    float c = 0.5f - d;
-    if (c <= 0.0f) return 0;
-    if (c >= 1.0f) return 255;
-    return (int)(c * 255.0f + 0.5f);
-}
-
-static inline void cov_put(uint8_t *cov, int x, int c)
-{
-    if (c > cov[x]) cov[x] = (uint8_t)c;
-}
-
-/* Blend the accumulated mask in one pass and clear it for the next group. */
-static void cov_flush(uint16_t *line, uint8_t *cov, int cr, int cg, int cb,
-                      int alpha)
-{
-    for (int x = 0; x < OLED_WIDTH; ++x) {
-        if (cov[x]) {
-            ui_blend_px(&line[x], cr, cg, cb, cov[x] * alpha / 255);
-            cov[x] = 0;
-        }
-    }
-}
-
-static void cov_disc(uint8_t *cov, int y, float cx, float cy, float r)
-{
-    float dy = (float)y - cy;
-    if (dy < -r - 1.0f || dy > r + 1.0f) return;
-    int x0 = (int)(cx - r - 1.0f), x1 = (int)(cx + r + 2.0f);
-    if (x0 < 0) x0 = 0;
-    if (x1 > OLED_WIDTH) x1 = OLED_WIDTH;
-    for (int x = x0; x < x1; ++x) {
-        float dx = (float)x - cx;
-        cov_put(cov, x, cov255(sqrtf(dx * dx + dy * dy) - r));
-    }
-}
-
-/* Capsule: the branch. Distance to the segment, minus the half width. */
-static void cov_capsule(uint8_t *cov, int y, float ax, float ay,
-                        float bx, float by, float r)
-{
-    float ylo = (ay < by ? ay : by) - r - 1.0f;
-    float yhi = (ay > by ? ay : by) + r + 1.0f;
-    if ((float)y < ylo || (float)y > yhi) return;
-
-    float xlo = (ax < bx ? ax : bx) - r - 1.0f;
-    float xhi = (ax > bx ? ax : bx) + r + 2.0f;
-    int x0 = (int)xlo, x1 = (int)xhi;
-    if (x0 < 0) x0 = 0;
-    if (x1 > OLED_WIDTH) x1 = OLED_WIDTH;
-
-    float ex = bx - ax, ey = by - ay;
-    float ee = ex * ex + ey * ey;
-    if (ee < 1e-6f) ee = 1e-6f;
-
-    for (int x = x0; x < x1; ++x) {
-        float px = (float)x - ax, py = (float)y - ay;
-        float t = (px * ex + py * ey) / ee;
-        if (t < 0.0f) t = 0.0f;
-        if (t > 1.0f) t = 1.0f;
-        float qx = px - ex * t, qy = py - ey * t;
-        cov_put(cov, x, cov255(sqrtf(qx * qx + qy * qy) - r));
-    }
-}
-
-/* Arc of an annulus, angles measured from 12 o'clock, positive clockwise.
- * The ends are rounded so a value fill terminates like the orb, not like a
- * cut. */
-static void cov_arc(uint8_t *cov, int y, float cx, float cy, float r,
-                    float half_t, float a0, float a1)
-{
-    float ro = r + half_t;
-    float dy = (float)y - cy;
-    if (dy >= -ro - 1.0f && dy <= ro + 1.0f) {
-        int x0 = (int)(cx - ro - 1.0f), x1 = (int)(cx + ro + 2.0f);
-        if (x0 < 0) x0 = 0;
-        if (x1 > OLED_WIDTH) x1 = OLED_WIDTH;
-        for (int x = x0; x < x1; ++x) {
-            float dx = (float)x - cx;
-            float dist = sqrtf(dx * dx + dy * dy);
-            float dr = fabsf(dist - r) - half_t;
-            if (dr > 0.75f) continue;                 /* outside the band */
-            float ang = atan2f(dx, -dy) / DEG2RAD;    /* 0 = up, + = right */
-            if (ang >= a0 && ang <= a1) cov_put(cov, x, cov255(dr));
-        }
-    }
-    for (int e = 0; e < 2; ++e) {                     /* rounded caps */
-        float a = (e ? a1 : a0) * DEG2RAD;
-        cov_disc(cov, y, cx + r * sinf(a), cy - r * cosf(a), half_t);
-    }
-}
+/* Signed-distance scanline primitives (cov_disc / cov_capsule / cov_arc /
+ * cov_flush) live in ui_draw.c — ui_scene.c draws from the same set, and a
+ * second copy of an antialiased arc is exactly the kind of thing that
+ * silently diverges. */
 
 /* ---- icons --------------------------------------------------------------
  * Local coordinates run -20..20, so one unit is 1/20 of the icon radius. Each
@@ -473,14 +354,14 @@ static void cov_icon(uint8_t *cov, int y, const icon_t *ic,
         const iprim_t *q = &ic->p[i];
         switch (q->kind) {
             case IP_DISC:
-                cov_disc(cov, y, cx + q->x0 * s, cy + q->y0 * s, q->r * s);
+                ui_cov_disc(cov, y, cx + q->x0 * s, cy + q->y0 * s, q->r * s);
                 break;
             case IP_CAP:
-                cov_capsule(cov, y, cx + q->x0 * s, cy + q->y0 * s,
+                ui_cov_capsule(cov, y, cx + q->x0 * s, cy + q->y0 * s,
                             cx + q->x1 * s, cy + q->y1 * s, q->r * s);
                 break;
             default:
-                cov_arc(cov, y, cx + q->x0 * s, cy + q->y0 * s, q->x1 * s,
+                ui_cov_arc(cov, y, cx + q->x0 * s, cy + q->y0 * s, q->x1 * s,
                         q->r * s, (float)q->a0, (float)q->a1);
                 break;
         }
@@ -541,14 +422,14 @@ static void wheel_battery(uint16_t *line, int y, int pct)
         float inner = rrect_sd(px, py, hw - wall, hh - wall, rad - wall * 0.6f);
 
         /* shell: the ring between outer and inner */
-        int shell = cov255(outer);
-        int hole  = cov255(inner);
+        int shell = ui_cov255(outer);
+        int hole  = ui_cov255(inner);
         if (shell > hole) ui_blend_px(&line[x], SHELL_R, SHELL_G, SHELL_B,
                                       shell - hole);
 
         /* charge: the cavity, clipped to the level, with a vertical gradient */
         if (pct > 0 && px <= fill_x1 - cx) {
-            int cav = cov255(rrect_sd(px, py, ihw, ihh, rad - wall));
+            int cav = ui_cov255(rrect_sd(px, py, ihw, ihh, rad - wall));
             /* soften the vertical charge edge by one pixel so it does not
              * crawl a whole pixel at a time while the value moves */
             float edge = (fill_x1 - cx) - px;
@@ -613,7 +494,7 @@ static void cov_branch(uint8_t *cov, int y, float deg, float orbit)
     float nx, ny, a = deg * DEG2RAD;
     node_xy(deg, orbit, &nx, &ny);
     if (!node_visible(nx, ny, 24.0f)) return;
-    cov_capsule(cov, y, HX + R_BRANCH0 * sinf(a), HY - R_BRANCH0 * cosf(a),
+    ui_cov_capsule(cov, y, HX + R_BRANCH0 * sinf(a), HY - R_BRANCH0 * cosf(a),
                 nx, ny, BRANCH_HALF_W);
 }
 
@@ -622,7 +503,7 @@ static void cov_node_body(uint8_t *cov, int y, float deg, float orbit, float nr)
     float nx, ny;
     node_xy(deg, orbit, &nx, &ny);
     if (nr < 0.6f || !node_visible(nx, ny, nr)) return;
-    cov_disc(cov, y, nx, ny, nr);
+    ui_cov_disc(cov, y, nx, ny, nr);
 }
 
 static void cov_node_icon(uint8_t *cov, int y, float deg, float orbit,
@@ -657,109 +538,131 @@ static void compose_main(const wheel_state_t *st, int y, uint16_t *line,
     for (int i = 0; i < WHEEL_GROUPS; ++i)
         if (i != st->group)
             cov_node_body(cov, y, i * WHEEL_STEP_DEG + theta, R_ORBIT, nr);
-    cov_flush(line, cov, DIM_R, DIM_G, DIM_B, alpha);
+    ui_cov_flush(line, cov, DIM_R, DIM_G, DIM_B, alpha);
 
     for (int i = 0; i < WHEEL_GROUPS; ++i)
         if (i != st->group)
             cov_node_icon(cov, y, i * WHEEL_STEP_DEG + theta, R_ORBIT, nr,
                           &ICONS[i]);
-    cov_flush(line, cov, ICON_R, ICON_G, ICON_B, alpha);
+    ui_cov_flush(line, cov, ICON_R, ICON_G, ICON_B, alpha);
 
     float sel_deg = st->group * WHEEL_STEP_DEG + theta;
     cov_node_body(cov, y, sel_deg, R_ORBIT, nr);
-    cov_flush(line, cov, SEL_R, SEL_G, SEL_B, alpha);
+    ui_cov_flush(line, cov, SEL_R, SEL_G, SEL_B, alpha);
 
     cov_node_icon(cov, y, sel_deg, R_ORBIT, nr, &ICONS[st->group]);
-    cov_flush(line, cov, 0, 0, 0, alpha);
+    ui_cov_flush(line, cov, 0, 0, 0, alpha);
 
     text_centre(line, y, 18, &font_hn_value_small,
                 ui_wheel_group_name(st->group), 255, 255, 255, 235 * talpha / 255);
 }
 
-static void compose_group(const wheel_state_t *st, int y, uint16_t *line,
+/* The scene replaces the old sub-wheel and value screen both. Every property
+ * of the group is visible at once as a feature of one drawing; the encoder
+ * holds one of them at a time on this bench, which on the product is what four
+ * encoders would hold simultaneously. */
+static void compose_scene(const wheel_state_t *st, int y, uint16_t *line,
                           int alpha, int talpha)
 {
-    static uint8_t cov[OLED_WIDTH];
     const wgroup_t *g = &GROUPS[st->group];
-    int   p     = ui_wheel_param_of(st->group, st->member);
-    float theta = st->rot.cur;
-    float k     = 0.55f + 0.45f * (float)alpha / 255.0f;
-    float nr    = R_NODE_SUB * k;
 
-    for (int i = 0; i < g->n; ++i)
-        cov_branch(cov, y, i * WHEEL_STEP_DEG + theta, R_ORBIT_SUB);
-    /* Sub-nodes carry no icon. The group icon on every branch would say the
-     * same thing three times, and a second icon set for 16 parameters is more
-     * marks than a 15 px node can hold. Depth sheds detail: icons on the main
-     * wheel, plain discs below it, no discs at all in the value state. */
-    for (int i = 0; i < g->n; ++i)
-        if (i != st->member)
-            cov_node_body(cov, y, i * WHEEL_STEP_DEG + theta, R_ORBIT_SUB, nr);
-    cov_flush(line, cov, DIM_R, DIM_G, DIM_B, alpha);
+    ui_scene_t sc;
+    sc.group = st->group;
+    sc.n     = g->n;
+    sc.focus = st->member;
+    for (int i = 0; i < UI_SCENE_MAX_KNOBS; ++i) {
+        sc.opts[i] = i < g->n ? P_NOPT[g->p[i]] : 0;
+        sc.v[i]    = i < g->n ? st->knob[i].cur : 0.0f;
+        if (sc.v[i] < 0.0f) sc.v[i] = 0.0f;
+        if (sc.v[i] > 1.0f) sc.v[i] = 1.0f;
+    }
+    ui_scene_row(&sc, y, line, alpha);
 
-    cov_node_body(cov, y, st->member * WHEEL_STEP_DEG + theta, R_ORBIT_SUB, nr);
-    cov_flush(line, cov, SEL_R, SEL_G, SEL_B, alpha);
-
-    /* Group name stays quiet above the parameter name: depth is carried by
-     * scale and position, not by a breadcrumb. */
-    text_centre(line, y, 12, &font_hn_value_small, g->name,
-                255, 255, 255, 110 * talpha / 255);
-    text_centre(line, y, 36, &font_hn_value_small, ui_wheel_param_label(p),
-                255, 255, 255, 245 * talpha / 255);
-}
-
-static void compose_value(const wheel_state_t *st, int y, uint16_t *line,
-                          int alpha, int talpha)
-{
+    /* One line of type, and only one: the scene's own name on the left, the
+     * property the encoder is holding and its value on the right. Everything
+     * else the drawing already says. */
+    /* ONE line of type, laid out right to left so nothing can collide: the
+     * battery owns x >= 262, the value is right-aligned against it, the
+     * property name sits left of the value, and the scene name takes whatever
+     * is left over — truncated rather than allowed to run into either. A
+     * left-to-right layout put "Texture" straight through "Atmosphere" and
+     * "Tokyo City" straight through the battery. */
+    const bakedfont_t *f = &font_hn_value_small;
     int p = ui_wheel_param_of(st->group, st->member);
-    /* The value state owns no geometry of its own — the ring belongs to every
-     * level and is drawn once, before any of them. Only text lives here. */
-    (void)alpha;
+    char b1[24], b2[24];
 
-    text_centre(line, y, 22, &font_hn_value_small, ui_wheel_param_label(p),
-                255, 255, 255, 160 * talpha / 255);
+    const int RIGHT = 256;
+    const char *v  = ui_fit_text(f, ui_wheel_param_value(st, p), 120, b1, sizeof b1);
+    int vw = ui_text_w(f, v);
+    ui_row_text(line, y, 10, RIGHT - vw, f, v, GRN_R, GRN_G, GRN_B, talpha);
 
-    /* Long option names ("Midnight Drive" is 252 px at 30 ppem against 240 px
-     * of room) drop to the 20 ppem face rather than being cut: a value is the
-     * one string on the screen that must never be guessed at. Truncation stays
-     * as the backstop below that. */
-    const char *v = ui_wheel_param_value(st, p);
-    const bakedfont_t *fv = &font_hn_value;
-    int ytop = 56;
-    if (ui_text_w(fv, v) > 240) { fv = &font_hn_value_small; ytop = 62; }
-    text_centre(line, y, ytop, fv, v, 255, 255, 255, talpha);
+    int used = vw + 12;
+    if (g->n > 1) {
+        const char *nm = ui_fit_text(f, ui_wheel_param_label(p),
+                                     96, b2, sizeof b2);
+        int nw = ui_text_w(f, nm);
+        ui_row_text(line, y, 10, RIGHT - vw - 12 - nw, f, nm,
+                    255, 255, 255, 190 * talpha / 255);
+        used += nw + 12;
+    }
+    /* The scene name is DROPPED rather than truncated when the line is full.
+     * "Soun" and "Textur" read as a rendering fault; nothing at all reads as a
+     * deliberately quiet line — and the name is the least load-bearing thing
+     * on screen, because the drawing already says where you are. */
+    int room = RIGHT - used - 40;
+    if (ui_text_w(f, g->name) <= room)
+        ui_row_text(line, y, 10, 40, f, g->name, 255, 255, 255,
+                    110 * talpha / 255);
+
+    /* Which property the encoder holds, when there is more than one: a dot per
+     * property under the name, the held one filled. Three dots cost nothing
+     * and remove the only genuine ambiguity in the scene. */
+    if (g->n > 1) {
+        static uint8_t cov[OLED_WIDTH];
+        for (int i = 0; i < g->n; ++i) {
+            float x = 40.0f + i * 8.0f;
+            if (i == st->member) ui_cov_disc(cov, y, x, 36.0f, 2.6f);
+            else                 ui_cov_arc(cov, y, x, 36.0f, 2.2f, 0.75f,
+                                            -180.0f, 180.0f);
+        }
+        ui_cov_flush(line, cov, 255, 255, 255, 150 * talpha / 255);
+    }
 }
 
-/* The ring, drawn once for whatever mix of levels is on screen. It carries the
- * amount whenever a continuous parameter is in play, and the orb only in the
- * value state — the orb is what the encoder moves, so it appears exactly where
- * moving it is what the encoder does. */
+/* The ring is the one thing every level shares, and it never fades. In the
+ * wheel it is the hub the branches grow out of; in a scene it becomes the
+ * horizon the drawing sits on AND the precise readout of whichever property
+ * the encoder is holding. The drawing carries the character, the arc carries
+ * the amount — they answer different questions, so both earn their place. */
 static void compose_ring(const wheel_state_t *st, int y, uint16_t *line,
-                         float value_weight)
+                         float scene_weight)
 {
     static uint8_t cov[OLED_WIDTH];
-    int p = ui_wheel_param_of(st->group, st->member);
 
-    /* Hub span contracts from +-92 to the value sweep as the value state takes
-     * over, so the ends arrive as ends instead of appearing. */
-    float a0 = lerp(HUB_A0, VAL_A0, value_weight);
-    float a1 = lerp(HUB_A1, VAL_A1, value_weight);
-    cov_arc(cov, y, HX, HY, R_RING, RING_HALF_T, a0, a1);
-    cov_flush(line, cov, DIM_R, DIM_G, DIM_B, 255);
+    /* The span contracts from the full visible half toward the value sweep as
+     * a scene takes over, so the ends arrive as ends instead of appearing. */
+    /* The ring THINS as a scene takes over. At the hub's 9 px it is six times
+     * the scene's 1.5 px monoline and simply shouts over the drawing — the
+     * loudest thing on screen would be the readout rather than the instrument.
+     * At 3 px it still reads as the horizon and as the value, without
+     * competing. */
+    float a0 = lerp(HUB_A0, VAL_A0, scene_weight);
+    float a1 = lerp(HUB_A1, VAL_A1, scene_weight);
+    float ht = lerp(RING_HALF_T, 1.5f, scene_weight);
+    ui_cov_arc(cov, y, HX, HY, R_RING, ht, a0, a1);
+    ui_cov_flush(line, cov, DIM_R, DIM_G, DIM_B, 255);
 
-    int show_amount = !P_NOPT[p] || value_weight > 0.01f;
-    if (!show_amount) return;
+    if (scene_weight <= 0.01f) return;
 
-    float pct = st->amount.cur;
+    float pct = st->knob[st->member].cur * 100.0f;
     if (pct < 0.0f)   pct = 0.0f;
     if (pct > 100.0f) pct = 100.0f;
     float a = VAL_A0 + (VAL_A1 - VAL_A0) * pct / 100.0f;
 
-    if (pct > 0.0f) cov_arc(cov, y, HX, HY, R_RING, RING_HALF_T, VAL_A0, a);
-    if (value_weight > 0.01f)
-        cov_disc(cov, y, HX + R_RING * sinf(a * DEG2RAD),
-                 HY - R_RING * cosf(a * DEG2RAD), R_ORB * value_weight);
-    cov_flush(line, cov, GRN_R, GRN_G, GRN_B, 255);
+    if (pct > 0.0f) ui_cov_arc(cov, y, HX, HY, R_RING, ht, VAL_A0, a);
+    ui_cov_disc(cov, y, HX + R_RING * sinf(a * DEG2RAD),
+                HY - R_RING * cosf(a * DEG2RAD), 3.5f * scene_weight);
+    ui_cov_flush(line, cov, GRN_R, GRN_G, GRN_B, (int)(scene_weight * 255.0f));
 }
 
 static void compose_level(const wheel_state_t *st, wheel_level_t lv,
@@ -768,8 +671,7 @@ static void compose_level(const wheel_state_t *st, wheel_level_t lv,
     if (alpha <= 0) return;
     switch (lv) {
         case WHEEL_MAIN:  compose_main(st, y, line, alpha, talpha);  break;
-        case WHEEL_GROUP: compose_group(st, y, line, alpha, talpha); break;
-        default:          compose_value(st, y, line, alpha, talpha); break;
+        default:          compose_scene(st, y, line, alpha, talpha); break;
     }
 }
 
@@ -810,12 +712,12 @@ void ui_wheel_compose_row(const wheel_state_t *st, int y, uint16_t *line)
     if (m < 0.0f) m = 0.0f;
     if (m > 1.0f) m = 1.0f;
 
-    /* How much of the value state is on screen right now — drives the orb and
-     * the ring's span, so both grow in with the level instead of popping. */
-    float vw = (st->level == WHEEL_VALUE ? m : 0.0f)
-             + (st->prev_level == WHEEL_VALUE ? 1.0f - m : 0.0f);
+    /* How much of a scene is on screen right now — drives the orb and the
+     * ring's span, so both grow in with the level instead of popping. */
+    float sw = (st->level == WHEEL_SCENE ? m : 0.0f)
+             + (st->prev_level == WHEEL_SCENE ? 1.0f - m : 0.0f);
 
-    compose_ring(st, y, line, vw);
+    compose_ring(st, y, line, sw);
 
     if (st->prev_level != st->level)
         compose_level(st, st->prev_level, y, line,

@@ -335,7 +335,8 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # and the value orb stays on the panel at 0 and 100.
 "$CC" "${CFLAGS[@]}" -I"$src/tools" \
     "$here/test_ui_wheel.c" \
-    "$src/tools/ui_wheel.c" "$src/tools/ui_draw.c" "$src/tools/ui_motion.c" \
+    "$src/tools/ui_wheel.c" "$src/tools/ui_scene.c" "$src/tools/ui_draw.c" \
+    "$src/tools/ui_motion.c" \
     "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/ui_wheel_test"
@@ -346,7 +347,8 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # rather than frame-based, and no input is swallowed while an animation runs.
 "$CC" "${CFLAGS[@]}" -I"$src/tools" \
     "$here/test_ui_motion.c" \
-    "$src/tools/ui_motion.c" "$src/tools/ui_wheel.c" "$src/tools/ui_draw.c" \
+    "$src/tools/ui_motion.c" "$src/tools/ui_wheel.c" "$src/tools/ui_scene.c" \
+    "$src/tools/ui_draw.c" \
     "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
     "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
     -lm -o "$tmp/ui_motion_test"
@@ -359,6 +361,16 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$here/test_ui_encoder.c" "$src/tools/ui_encoder.c" \
     -lm -o "$tmp/ui_encoder_test"
 "$tmp/ui_encoder_test"
+
+# The nine scenes: each draws at every setting, stays inside its box, and
+# actually responds to its own properties. A scene that renders the same pixels
+# at 0 and 100 is decoration, not an instrument.
+"$CC" "${CFLAGS[@]}" -I"$src/tools" \
+    "$here/test_ui_scene.c" "$src/tools/ui_scene.c" "$src/tools/ui_draw.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/ui_scene_test"
+"$tmp/ui_scene_test"
 
 # r19.6: equal / just intonation layer (pure ratios, bit-exact ET).
 "$CC" "${CFLAGS[@]}" \
