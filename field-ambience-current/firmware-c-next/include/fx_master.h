@@ -15,6 +15,9 @@
 #define FX_MASTER_H
 
 #include <stdbool.h>
+
+void fx_master_process_buses(float *dry_l, float *dry_r,
+                            const float *send_l, const float *send_r, int frames);
 #include <stdint.h>
 
 void fx_master_init(void);

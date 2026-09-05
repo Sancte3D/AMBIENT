@@ -14,6 +14,10 @@
 #define CHOIR_H
 
 void choir_init(void);
+/* Played sources sustain until release; note() remains a timed one-shot. */
+void choir_note_on(int source, float freq_hz, float amp);
+void choir_note_off(int source);
+void choir_all_off(void);
 void choir_note(float freq_hz, float amp);
 int  choir_active_count(void);
 void choir_render_mix(float *dry_L, float *dry_R,

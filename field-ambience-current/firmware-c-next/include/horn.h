@@ -21,6 +21,10 @@ void horn_init(void);
 
 /* Start one blown note at freq_hz, peak amplitude amp (0..1). Allocates a
  * voice (steals the quietest if full). The note completes on its own. */
+/* Played sources sustain until release; note() remains a timed one-shot. */
+void horn_note_on(int source, float freq_hz, float amp);
+void horn_note_off(int source);
+void horn_all_off(void);
 void horn_note(float freq_hz, float amp);
 
 int  horn_active_count(void);

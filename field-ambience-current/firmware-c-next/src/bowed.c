@@ -28,6 +28,8 @@ typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
 
 typedef struct {
     vstage_t stage;
+    int source;
+    float expression, vibFade;
     float    freq, amp;
     float    ph, ph2, inc, inc2, dt;      /* two detuned saws            */
     dsp_svf_t body, symp1, symp2;
@@ -72,11 +74,16 @@ static int alloc_voice(void) {
     return best;
 }
 
-void bowed_note(float freq_hz, float amp) {
-    if (freq_hz < 20.0f) return;
+static void start_note(int source, float freq_hz, float amp) {
+    if (freq_hz < 20.0f || amp <= 0.0f) return;
+    if (source >= 0) {
+        for (int j=0;j<VMAX;++j) if(V[j].stage!=V_IDLE && V[j].source==source)
+            V[j].stage=V_RELEASE;
+    }
     int i = alloc_voice();
     if (i < 0) return;
     bvoice_t *v = &V[i];
+    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
@@ -87,7 +94,7 @@ void bowed_note(float freq_hz, float amp) {
 
     /* colour: Open Sea = warmer/brighter body, moderate symp; Fjords = darker,
      * more sympathetic ring. */
-    v->body_base = (s_colour == 0) ? freq_hz * 6.5f : freq_hz * 4.2f;
+    v->body_base = ((s_colour == 0) ? freq_hz * 6.5f : freq_hz * 4.2f) * (0.75f+0.25f*v->expression);
     v->symp_gain = (s_colour == 0) ? 0.10f : 0.17f;
 
     dsp_svf_reset(&v->body);  dsp_svf_set(&v->body, v->body_base, 0.9f);
@@ -108,6 +115,19 @@ void bowed_note(float freq_hz, float amp) {
     v->panL = 0.5f * (1.0f - pan);
     v->panR = 0.5f * (1.0f + pan);
     v->stage = V_ATTACK;
+}
+
+void bowed_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
+void bowed_note_on(int source,float freq_hz,float amp) {
+    if(source>=0 && source<16) start_note(source,freq_hz,amp);
+}
+void bowed_note_off(int source) {
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE && V[i].source==source) {
+        V[i].source=-1; V[i].stage=V_RELEASE;
+    }
+}
+void bowed_all_off(void) {
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
 }
 
 int bowed_active_count(void) {
@@ -145,7 +165,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                     if (v->env >= v->amp) { v->env = v->amp; v->stage = V_HOLD; }
                     break;
                 case V_HOLD:
-                    if (--v->hold_left <= 0) v->stage = V_RELEASE;
+                    if (v->source < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
                     break;
                 case V_RELEASE:
                     v->env -= v->relCoef * v->env;
@@ -156,7 +176,8 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             if (v->stage == V_IDLE) continue;
 
             /* vibrato (LUT sine, per sample is cheap — table lookup) */
-            float vibAmt = 1.0f;
+            v->vibFade += 0.00009f*((v->vibDelay<=0 ? 1.0f : 0.0f)-v->vibFade);
+            float vibAmt = v->vibFade;
             if (v->vibDelay > 0) { --v->vibDelay; vibAmt = 0.0f; }
             float vib = dsp_sin(v->vibPh) * 0.0035f * vibAmt;   /* ±~6 cents */
             v->vibPh += v->vibInc; if (v->vibPh >= 1.0f) v->vibPh -= 1.0f;

@@ -72,6 +72,7 @@ typedef enum {
     MP_RELEASE,   /* r19.60: SHAPE release (0..100 %, 50 = neutral) */
     MP_SWEEP,     /* r19.60: MOTION — LFO auf den Filter-Cutoff */
     MP_ENVMOD,    /* r19.60: MOTION — Huellkurvenfolger auf den Cutoff */
+    MP_CORE_A, MP_CORE_B, MP_CORE_C, MP_CORE_D, MP_CORE_E, MP_CORE_F,
     MP_COUNT
 } menu_param_t;
 
@@ -108,6 +109,7 @@ typedef struct {
     void (*set_release)    (float v01);              /* r19.60: envelope shape release */
     void (*set_sweep)      (float v01);              /* r19.60: LFO -> filter cutoff   */
     void (*set_envmod)     (float v01);              /* r19.60: env -> filter cutoff   */
+    void (*set_synth_param)(int slot, float value);
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);
@@ -136,6 +138,8 @@ typedef struct {
     uint8_t  world, key_pc, tuning, voice, synth, cell, bass, color, fx;
     uint8_t  space, shimmer, atmos, motion, age, echo, blur;   /* % */
     uint16_t locks;
+    uint8_t reso, attack, release, sweep, envmod;
+    uint8_t core[6][6];
 } menu_state_t;
 void menu_get_state(menu_state_t *out);
 /* Werte setzen + ALLE Engine-Callbacks feuern (Recall = live). */

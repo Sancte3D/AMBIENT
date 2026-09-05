@@ -1,5 +1,13 @@
 # PROJECT STATUS
 
+> **2026-09-05 — Sound/playability review (host-verified, hardware pending).**
+> Shared master/FX for Ambient and all six synths; restored per-voice sends;
+> held-note priority; 36 named/smoothed synth controls; expressive gated
+> Bowed/Horn/Choir; gentle foreground/pad balance; SCN5→SCN6 scene migration.
+> 31 firmware listening renders plus reproducible A/B packaging. Full host
+> suite passes; H743 build/map/DWT and listening on the real device remain
+> open. Details: `field-ambience-current/docs/audio/MUSICAL_PLAYABILITY_2026-09-05.md`.
+
 > **r19.65 (2026-07-26) — Pad-Mapping: 2 echte Defekte gefunden.** Der letzte
 > offene Punkt vor dem Layout ("landet jede Symbol-Pinnummer auf einem Pad?",
 > fuer 9 ICs als pinout-pending markiert) ist erledigt — und war nicht leer:

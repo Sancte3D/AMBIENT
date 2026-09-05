@@ -187,8 +187,9 @@ static void be_note_on (int midi, float vel) { synth_host_note_on(midi, vel); }
 static void be_note_off(void)                { synth_host_note_off(); }
 static void be_panic   (void)                { synth_host_panic(); }
 static void be_render  (int16_t *b, int n)   { synth_host_render(b, n); }
+static void be_param(int slot, float value) { synth_host_set_param((synth_param_t)slot, value); }
 static const engine_synth_backend_t s_v2_backend = {
-    be_select, be_note_on, be_note_off, be_panic, be_render
+    be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param
 };
 
 /* Klinke drin → NUR den PAM8406 muten (AMP_MUTE_N = PB15 LOW), Line-Out
@@ -332,6 +333,7 @@ int main(void) {
         .set_release     = hal_set_release,
         .set_sweep       = hal_set_sweep,
         .set_envmod      = hal_set_envmod,
+        .set_synth_param = engine_set_synth_param,
         };
         menu_init(&cb);
     }

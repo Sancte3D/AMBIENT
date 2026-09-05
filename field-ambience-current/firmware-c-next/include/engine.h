@@ -82,10 +82,14 @@ typedef struct {
     void (*note_off) (void);
     void (*panic)    (void);
     void (*render)   (int16_t *buf, int frames);   /* interleaved stereo   */
+    /* Product path: unmastered buses, sharing the ambient mixer and FX. */
+    void (*render_mix)(float *dry_l, float *dry_r, float *send_l, float *send_r, int frames);
+    void (*set_param)(int slot, float value);
 } engine_synth_backend_t;
 void engine_set_synth_backend(const engine_synth_backend_t *be);
 void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */
 int  engine_synth(void);
+void engine_set_synth_param(int slot, float value);
 
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
  * for cell `cell` (0..4) at `now_ms`. The cell-velocity model (cells.c) turns

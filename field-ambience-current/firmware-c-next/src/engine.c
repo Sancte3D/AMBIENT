@@ -61,6 +61,9 @@ void engine_set_note_hook(engine_note_hook_t h) { s_note_hook = h; }
 
 /* r19.16 SYNTH-mode state (logic lives beside engine_render below). */
 static const engine_synth_backend_t *s_synth_be = 0;
+static float s_synth_blend;
+static uint8_t s_note_stack[MAX_SOURCES], s_note_count;
+static float s_note_amp[MAX_SOURCES];
 static volatile int s_synth_tgt = 0;       /* set at control rate            */
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
@@ -189,6 +192,8 @@ static float dryL [BLOCK];
 static float dryR [BLOCK];
 static float sendL[BLOCK];
 static float sendR[BLOCK];
+static float foreground_beforeL[BLOCK], foreground_beforeR[BLOCK];
+static float foreground_level, bed_gain=1.0f;
 
 static float send_amount_cur, send_amount_tgt;
 static float wet_amp_cur,     wet_amp_tgt;
@@ -318,6 +323,7 @@ void engine_init(void) {
     hp2_x1L = hp2_y1L = hp2_x1R = hp2_y1R = 0.0f;
     master_vol_cur = master_vol_tgt = 0.6f;
     drive_cur = drive_tgt = 0.0f;
+    foreground_level=0.0f; bed_gain=1.0f;
     pluck_init();                    /* r18.89 sparkle plucks */
     ember_init();                    /* r19.28 warm subtractive analog voice */
     bowed_init();                    /* r19.47 bowed lyra/Hardanger voice (Open Sea / Fjords) */
@@ -330,6 +336,8 @@ void engine_init(void) {
     memset(eno_on,      0, sizeof eno_on);
     memset(eno_swell_armed, 0, sizeof eno_swell_armed);
     eno_timing_valid = 0;
+    s_synth_tgt = 0; s_synth_blend = 0.0f;
+    s_note_count = 0;
     melody_voice = 0;                /* PAD — the bench-tuned reference */
     body_init();                     /* r18.94 modal body (per-world material) */
 
@@ -397,6 +405,7 @@ static inline float humanize_rand_unit(void){      /* in [-1, +1] */
 }
 
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
+    if (source>=MAX_SOURCES || !isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || amp<=0.0f) return;
     /* ±0.5 cent pitch jitter, ±0.3 % amp jitter. Bass / drone get the same
      * freq downstream (refresh_bass) so the jitter is consistent per press. */
     float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);   /* cents */
@@ -411,6 +420,11 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
         int n = (int)lrintf(69.0f + 12.0f * log2f(freq_hz / 440.0f));
         if (n < 0)   n = 0;
         if (n > 127) n = 127;
+        for (int i=0; i<s_note_count; ++i) if (s_note_stack[i] == source) {
+            memmove(&s_note_stack[i], &s_note_stack[i+1], (size_t)(--s_note_count-i)); break;
+        }
+        s_note_stack[s_note_count++] = source;
+        s_note_amp[source] = amp;
         s_synth_be->note_on(n, dsp_clampf(amp, 0.0f, 1.0f));
         if (source < MAX_SOURCES) active_freq[source] = freq_hz;
         return;
@@ -423,7 +437,15 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
      * the bed must stay a bed. Amp is scaled to sit like the sparkles. */
     if (melody_voice != 0 &&
         (source <= 4 || (source >= 9 && source <= 13)))
-        melody_strike(freq_hz, dsp_clampf(amp * 1.4f, 0.0f, 0.30f));
+    {
+        /* Preserve the player's dynamic range; only generated one-shots use
+         * the curated minimum level in melody_strike(). */
+        if (melody_voice==3) bowed_note_on(source,freq_hz,dsp_clampf(amp*3.0f,0.0f,0.62f));
+        else if (melody_voice==4) horn_note_on(source,freq_hz,dsp_clampf(amp*2.6f,0.0f,0.58f));
+        else if (melody_voice==5) choir_note_on(source,freq_hz,dsp_clampf(amp*2.6f,0.0f,0.55f));
+        else if (melody_voice==6) guembri_note(freq_hz,dsp_clampf(amp*2.8f,0.0f,0.60f));
+        else melody_strike(freq_hz,dsp_clampf(amp*1.4f,0.0f,0.30f));
+    }
     refresh_bass();
 }
 void engine_note_off(uint8_t source) {
@@ -431,17 +453,31 @@ void engine_note_off(uint8_t source) {
         s_note_hook(0, source, active_freq[source], 0.0f);
     if (s_synth_tgt > 0 && s_synth_be &&
         (source <= 4 || (source >= 9 && source <= 13))) {
-        s_synth_be->note_off();                        /* V2 core is mono */
+        int was_top = s_note_count && s_note_stack[s_note_count-1] == source;
+        for (int i=0; i<s_note_count; ++i) if (s_note_stack[i] == source) {
+            memmove(&s_note_stack[i], &s_note_stack[i+1], (size_t)(--s_note_count-i)); break;
+        }
+        if (was_top) {
+            if (!s_note_count) s_synth_be->note_off();
+            else {
+                int prev=s_note_stack[s_note_count-1];
+                int midi=(int)lrintf(69.0f+12.0f*log2f(active_freq[prev]/440.0f));
+                s_synth_be->note_on(midi, dsp_clampf(s_note_amp[prev],0.0f,1.0f));
+            }
+        }
         if (source < MAX_SOURCES) active_freq[source] = 0.0f;
         return;
     }
+    bowed_note_off(source); horn_note_off(source); choir_note_off(source);
     pad_note_off(source);
     if (source < MAX_SOURCES) active_freq[source] = 0.0f;
     refresh_bass();
 }
 void engine_all_off(void) {
+    s_note_count = 0;
     if (s_note_hook) s_note_hook(-1, 0, 0.0f, 0.0f);   /* all-off sentinel */
     if (s_synth_tgt > 0 && s_synth_be) s_synth_be->panic();
+    bowed_all_off(); horn_all_off(); choir_all_off();
     pad_all_off();
     memset(active_freq, 0, sizeof active_freq);
     bass_release();
@@ -995,7 +1031,7 @@ void engine_generative_tick(uint32_t now_ms) {
     }
 }
 
-static void render_ambient(int16_t *buf, int frames) {
+static void render_ambient(int frames) {
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
     if (frames > BLOCK) frames = BLOCK;
 
@@ -1010,6 +1046,14 @@ static void render_ambient(int16_t *buf, int frames) {
     memset(sendR, 0, sizeof(float) * frames);
 
     pad_render_mix(dryL, dryR, sendL, sendR, frames, send_amount_cur);
+    /* The foreground gently makes room in the pad (maximum 2.2 dB).
+     * Measured character-voice tails drive the release; no master pumping. */
+    float bed_target=1.0f-0.22f*dsp_clampf(foreground_level*28.0f,0.0f,1.0f);
+    for(int n=0;n<frames;++n) {
+        float k=bed_target<bed_gain ? 0.0002834f : 0.00001890f;
+        bed_gain+=k*(bed_target-bed_gain);
+        dryL[n]*=bed_gain; dryR[n]*=bed_gain; sendL[n]*=bed_gain; sendR[n]*=bed_gain;
+    }
     texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
     ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
     /* r19.52: the AUDIT found the low end (bass + drone) was ~90 % of the mix
@@ -1033,6 +1077,8 @@ static void render_ambient(int16_t *buf, int frames) {
         }
     }
     drone_render_mix(dryL, dryR, sendL, sendR, frames);
+    memcpy(foreground_beforeL,dryL,sizeof(float)*frames);
+    memcpy(foreground_beforeR,dryR,sizeof(float)*frames);
     /* r18.94: plucks render onto their own bus, run through the MODAL
      * BODY (fixed per-world resonances — the string varies, the body does
      * not; Rings/Elements concept, see body.h), then join dry + hall send.
@@ -1071,22 +1117,18 @@ static void render_ambient(int16_t *buf, int frames) {
      * bowed/horn direkt in dry + Hall-Send, ohne Modal-Body. */
     choir_render_mix  (dryL, dryR, sendL, sendR, frames, 0.55f);
     guembri_render_mix(dryL, dryR, sendL, sendR, frames, 0.35f);
+    float energy=0.0f;
+    for(int n=0;n<frames;++n)
+        energy+=0.5f*(fabsf(dryL[n]-foreground_beforeL[n])+fabsf(dryR[n]-foreground_beforeR[n]));
+    foreground_level=energy/(float)frames;
 
-    /* r19.41 MASTER-EFFECTS SWAP: echo, blur, tape hiss/crackle, the master
-     * reverb render and the shimmer wrap-loop all left this path — the
-     * ambient effects engine (fx_master_process below) replaces them with
-     * one coherent chain (dark FDN reverb, filtered ping-pong delay, chorus,
-     * tape age, shimmer, temporal blur — DREAM CHAIN by default). The send
-     * bus is still filled by the generators but no longer consumed here: the
-     * engine derives its global spatial send from the Atmosphere macro. The
-     * shared reverb tank stays initialised for the V2 synth hosts only. */
+}
 
-    /* Master: dry sum + DC-block + volume → outL/outR; then the effects
-     * engine; then the single soft-limit safety net → int16. */
-    master_vol_cur += SMOOTH_COEF * (master_vol_tgt - master_vol_cur);
-    drive_cur      += SMOOTH_COEF * (drive_tgt      - drive_cur);
-    const float mv = master_vol_cur;
-
+static void render_master(int16_t *buf, int frames) {
+    /* Per-block drive coefficients, sample-rate volume AFTER every effect.
+     * A mute therefore also silences stored tails and generated tape noise. */
+    drive_cur += (1.0f - expf(-(float)frames / (0.12f * DSP_SAMPLE_RATE_HZ))) *
+                 (drive_tgt - drive_cur);
     /* r18.89 master drive (per block: curve params + makeup are constant
      * inside a 5.8 ms block; the amount itself is smoothed above). */
     const bool  drv_on   = drive_cur > 1.0e-3f;
@@ -1095,7 +1137,6 @@ static void render_ambient(int16_t *buf, int frames) {
     const float drv_mk   = dsp_drive_makeup(drv_g, drv_bias);
     const float drv_mix  = drive_cur < 0.25f ? drive_cur * 4.0f : 1.0f;
 
-    static float outL[BLOCK], outR[BLOCK];
     for (int n = 0; n < frames; ++n) {
         float L = dryL[n];
         float R = dryR[n];
@@ -1109,6 +1150,11 @@ static void render_ambient(int16_t *buf, int frames) {
             R += drv_mix * (dR - R);
         }
 
+        dryL[n] = L; dryR[n] = R;
+    }
+    fx_master_process_buses(dryL, dryR, sendL, sendR, frames);
+    for (int n = 0; n < frames; ++n) {
+        float L = dryL[n], R = dryR[n];
         /* one-pole DC blocker per channel: y = x - x1 + R·y1 (also eats the
          * small DC offset the drive bias introduces) */
         float yL = L - dc_x1L + DC_R * dc_y1L; dc_x1L = L; dc_y1L = yL;
@@ -1118,20 +1164,14 @@ static void render_ambient(int16_t *buf, int frames) {
         float zL = yL - hp2_x1L + HP2_R * hp2_y1L; hp2_x1L = yL; hp2_y1L = zL;
         float zR = yR - hp2_x1R + HP2_R * hp2_y1R; hp2_x1R = yR; hp2_y1R = zR;
 
-        outL[n] = zL * mv;
-        outR[n] = zR * mv;
+        master_vol_cur += 0.000188947f * (master_vol_tgt - master_vol_cur);
+        dryL[n] = zL * master_vol_cur; dryR[n] = zR * master_vol_cur;
     }
-    /* r19.41: the complete master-effects chain on the final float mix —
-     * hot-path safe (no heap, bounded, LUT-only transcendentals; verified by
-     * the engine property suite). If init failed this is a bit-exact dry
-     * pass-through (fail closed). The soft_limit below stays the ONE final
-     * limiter in the path. */
-    fx_master_process(outL, outR, frames);
     for (int n = 0; n < frames; ++n) {
         /* soft_limit is now a safety net for the rare residual peak above
          * 0.75 — saturation usually already keeps us in range. */
-        float yL = soft_limit(outL[n]);
-        float yR = soft_limit(outR[n]);
+        float yL = soft_limit(dryL[n]);
+        float yR = soft_limit(dryR[n]);
         buf[n * 2 + 0] = (int16_t)(yL * 32767.0f);
         buf[n * 2 + 1] = (int16_t)(yR * 32767.0f);
     }
@@ -1142,86 +1182,64 @@ static void render_ambient(int16_t *buf, int frames) {
  * mode 0 = the ambient engine (identity, default). 1..SYNTH-count = a V2
  * sound-core rendered by the backend (synth_host, registered by the product
  * main — the engine keeps NO link dependency on src/v2, so every existing
- * host test still links). Switching crossfades ~15 ms equal-power between
+ * host test still links). Switching crossfades ~15 ms with complementary gains between
  * the two rendered paths (REALTIME_AUDIO_RULES §4: algorithm changes need a
  * crossfade, never a hard swap). During the fade both paths render (bounded,
  * a handful of blocks); in steady state only the active one runs. */
 #define SYNTH_XFADE_SAMPLES 662            /* ~15 ms at 44.1 kHz */
 
-static int  s_synth_cur   = 0;             /* what the render currently is   */
-static int  s_xfade_pos   = -1;            /* -1 = no fade in progress       */
-static int16_t s_v2buf[BLOCK * 2];         /* V2 render scratch (interleaved) */
+static int16_t s_v2buf[BLOCK * 2]; /* legacy backend compatibility */
+static float s_coreL[BLOCK], s_coreR[BLOCK], s_coreSL[BLOCK], s_coreSR[BLOCK];
 
 void engine_set_synth_backend(const engine_synth_backend_t *be) { s_synth_be = be; }
-
-void engine_set_synth(int idx) {
-    if (idx < 0) idx = 0;
-    if (idx > 0 && !s_synth_be) return;    /* no backend (bench/host) = ambient only */
-    if (idx == s_synth_tgt) return;
-    if (idx > 0) {
-        s_synth_be->select(idx - 1);       /* control rate — safe             */
-        s_synth_be->panic();
-        engine_all_off();                  /* V1 tails decay during fade-out  */
-    } else {
-        /* Back to ambient: V2 shares the single reverb.c tank and set its
-         * own params — restore V1's cached musical reverb (size/damp/drive/
-         * wet) so the ambient identity returns exactly as the user left it. */
-        recompute_reverb_from_presets();
-    }
-    s_synth_tgt = idx;                     /* render picks the fade up        */
+void engine_set_synth_param(int slot, float value) {
+    if (s_synth_tgt > 0 && s_synth_be && s_synth_be->set_param && slot >= 0 && slot < 6)
+        s_synth_be->set_param(slot, dsp_clampf(value, 0.0f, 1.0f));
 }
-
+void engine_set_synth(int idx) {
+    if (idx < 0 || idx > 6 || (idx > 0 && !s_synth_be) || idx == s_synth_tgt) return;
+    /* Release, don't panic: old core/ambient can decay during the crossfade. */
+    s_note_count = 0;
+    memset(active_freq, 0, sizeof active_freq);
+    bowed_all_off(); horn_all_off(); choir_all_off();
+    pad_all_off(); bass_release();
+    if (s_synth_tgt > 0 && s_synth_be->note_off) s_synth_be->note_off();
+    if (idx > 0) s_synth_be->select(idx - 1);
+    s_synth_tgt = idx;
+}
 int engine_synth(void) { return s_synth_tgt; }
 
 void engine_render(int16_t *buf, int frames) {
+    if (frames <= 0) return;
     if (frames > BLOCK) frames = BLOCK;
-
     int tgt = s_synth_tgt;
-    if (tgt != s_synth_cur && s_xfade_pos < 0) s_xfade_pos = 0;
-
-    const bool need_v1 = (s_synth_cur == 0) || (tgt == 0);
-    const bool need_v2 = (s_synth_cur >  0) || (tgt >  0);
-
-    if (!need_v2) { render_ambient(buf, frames); return; }
-    if (!need_v1 && s_xfade_pos < 0 && s_synth_be) {
-        s_synth_be->render(buf, frames);
-        return;
+    bool need_v1 = tgt == 0 || s_synth_blend < 1.0f;
+    bool need_v2 = tgt > 0 || s_synth_blend > 0.0f;
+    if (need_v1) render_ambient(frames);
+    else {
+        memset(dryL, 0, sizeof(float)*frames); memset(dryR, 0, sizeof(float)*frames);
+        memset(sendL, 0, sizeof(float)*frames); memset(sendR, 0, sizeof(float)*frames);
     }
-
-    /* fade (or v2↔v2 switch, which select() already made seamless) */
-    render_ambient(buf, frames);
-    if (s_synth_be) s_synth_be->render(s_v2buf, frames);
-    else            memset(s_v2buf, 0, (size_t)frames * 2 * sizeof(int16_t));
-
-    for (int n = 0; n < frames; ++n) {
-        float t = 1.0f;                              /* 0 = v1, 1 = v2 side  */
-        if (s_xfade_pos >= 0) {
-            float p = (float)(s_xfade_pos + n) / (float)SYNTH_XFADE_SAMPLES;
-            if (p > 1.0f) p = 1.0f;
-            t = (tgt > 0) ? p : 1.0f - p;            /* fade toward target   */
-        } else {
-            t = (s_synth_cur > 0) ? 1.0f : 0.0f;
+    if (need_v2 && s_synth_be) {
+        memset(s_coreL, 0, sizeof(float)*frames); memset(s_coreR, 0, sizeof(float)*frames);
+        memset(s_coreSL, 0, sizeof(float)*frames); memset(s_coreSR, 0, sizeof(float)*frames);
+        if (s_synth_be->render_mix) {
+            s_synth_be->render_mix(s_coreL, s_coreR, s_coreSL, s_coreSR, frames);
+        } else if (s_synth_be->render) {
+            s_synth_be->render(s_v2buf, frames);
+            for (int n=0; n<frames; ++n) {
+                s_coreL[n]=s_v2buf[2*n]/32768.0f; s_coreR[n]=s_v2buf[2*n+1]/32768.0f;
+            }
         }
-        /* linear complementary blend (a+b=1). Both paths are already
-         * soft-limited, and at 15 ms the centre dip of a linear fade is
-         * inaudible — no per-sample sqrt in the hot path. */
-        float a = 1.0f - t, b = t;
-        int L = (int)(a * (float)buf[2*n]   + b * (float)s_v2buf[2*n]);
-        int R = (int)(a * (float)buf[2*n+1] + b * (float)s_v2buf[2*n+1]);
-        if (L >  32767) L =  32767;
-        if (L < -32768) L = -32768;
-        if (R >  32767) R =  32767;
-        if (R < -32768) R = -32768;
-        buf[2*n]   = (int16_t)L;
-        buf[2*n+1] = (int16_t)R;
-    }
-    if (s_xfade_pos >= 0) {
-        s_xfade_pos += frames;
-        if (s_xfade_pos >= SYNTH_XFADE_SAMPLES) {
-            s_synth_cur = tgt;
-            s_xfade_pos = -1;
+        for (int n=0; n<frames; ++n) {
+            s_synth_blend = dsp_clampf(s_synth_blend + (tgt > 0 ? 1.0f : -1.0f) /
+                                       SYNTH_XFADE_SAMPLES, 0.0f, 1.0f);
+            float t=s_synth_blend, a=1.0f-t;
+            dryL[n]=a*dryL[n]+t*s_coreL[n]; dryR[n]=a*dryR[n]+t*s_coreR[n];
+            sendL[n]=a*sendL[n]+t*s_coreSL[n]; sendR[n]=a*sendR[n]+t*s_coreSR[n];
         }
     }
+    render_master(buf, frames);
 }
 
 int engine_active_voices(void) { return pad_active_count(); }

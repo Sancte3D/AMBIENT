@@ -43,5 +43,7 @@ void        synth_host_set_master(float v_0_1);
 /* Render `frames` stereo samples → interleaved int16. Runs the active engine
  * → global reverb on its send bus → master mix → beauty-guard limiter. */
 void        synth_host_render(int16_t *out, int frames);
+/* Adds unmastered dry/send buses. Device uses its shared master and FX. */
+void synth_host_render_mix(float *dry_l, float *dry_r, float *send_l, float *send_r, int frames);
 
 #endif /* FAM_V2_SYNTH_HOST_H */

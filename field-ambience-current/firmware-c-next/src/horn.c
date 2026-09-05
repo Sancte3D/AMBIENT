@@ -29,6 +29,8 @@ typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
 
 typedef struct {
     vstage_t stage;
+    int source;
+    float expression, vibFade;
     float    freq, amp;
     float    ph, inc;                 /* reed saw                          */
     float    subPh, subInc;           /* sub-octave body sine              */
@@ -68,11 +70,16 @@ static int alloc_voice(void) {
     return best;
 }
 
-void horn_note(float freq_hz, float amp) {
-    if (freq_hz < 20.0f) return;
+static void start_note(int source, float freq_hz, float amp) {
+    if (freq_hz < 20.0f || amp <= 0.0f) return;
+    if (source >= 0) {
+        for (int j=0;j<VMAX;++j) if(V[j].stage!=V_IDLE && V[j].source==source)
+            V[j].stage=V_RELEASE;
+    }
     int i = alloc_voice();
     if (i < 0) return;
     hvoice_t *v = &V[i];
+    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
@@ -96,6 +103,19 @@ void horn_note(float freq_hz, float amp) {
     v->panL = 0.5f * (1.0f - pan);
     v->panR = 0.5f * (1.0f + pan);
     v->stage = V_ATTACK;
+}
+
+void horn_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
+void horn_note_on(int source,float freq_hz,float amp) {
+    if(source>=0 && source<16) start_note(source,freq_hz,amp);
+}
+void horn_note_off(int source) {
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE && V[i].source==source) {
+        V[i].source=-1; V[i].stage=V_RELEASE;
+    }
+}
+void horn_all_off(void) {
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
 }
 
 int horn_active_count(void) {
@@ -123,7 +143,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
                 float btgt = (v->stage == V_ATTACK) ? 1.0f : 0.35f;
                 v->blareEnv += (btgt - v->blareEnv) * 0.035f;
                 float drift = dsp_sin(v->driftPh);
-                float cut = v->freq * (3.0f + 8.0f * v->blareEnv) * (1.0f + 0.03f * drift);
+                float cut = v->freq * (3.0f + (4.0f+4.0f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift);
                 dsp_svf_set(&v->blare, dsp_clampf(cut, 120.0f, SR * 0.45f), 1.6f);
             }
 
@@ -134,7 +154,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
                     if (v->env >= v->amp) { v->env = v->amp; v->stage = V_HOLD; }
                     break;
                 case V_HOLD:
-                    if (--v->hold_left <= 0) v->stage = V_RELEASE;
+                    if (v->source < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
                     break;
                 case V_RELEASE:
                     v->env -= v->relCoef * v->env;

@@ -12,6 +12,7 @@
 #include "v2/beauty_guard.h"
 #include "reverb.h"
 #include "dsp.h"
+#include "synth_controls.h"
 #include <math.h>
 #include <string.h>
 
@@ -37,12 +38,20 @@ static const synth_engine_t *const TABLE[SYNTH_COUNT] = {
 static struct {
     const synth_engine_t *active;
     synth_id_t            active_id;
+    volatile synth_id_t   requested_id;
     beauty_guard_t        guard;
     float wet_target, wet_amp;
     float master;
+    const synth_engine_t *previous;
+    synth_id_t previous_id;
+    int fade_left;
+    float target[SYNTH_COUNT][6], current[6];
+    float velocity[SYNTH_COUNT], velocity_target[SYNTH_COUNT];
 } H;
 
 static float dL[HBLOCK], dR[HBLOCK], sL[HBLOCK], sR[HBLOCK], wL[HBLOCK], wR[HBLOCK];
+
+static float prevSL[HBLOCK], prevSR[HBLOCK];
 
 static int16_t to_i16(float x) {
     if (x >  1.0f) x =  1.0f;
@@ -59,6 +68,10 @@ void synth_host_init(void) {
     H.wet_target = 0.25f;
     H.wet_amp    = 0.0f;
     H.master     = 0.9f;
+    for (int i=0;i<SYNTH_COUNT;++i) H.velocity[i]=H.velocity_target[i]=1.0f;
+    for (int i=0; i<SYNTH_COUNT; ++i) for (int p=0; p<6; ++p)
+        H.target[i][p] = synth_control_defaults[i][p] / 100.0f;
+    memcpy(H.current, H.target[0], sizeof H.current);
     for (int i = 0; i < SYNTH_COUNT; ++i)
         if (TABLE[i] && TABLE[i]->init) TABLE[i]->init();
     H.active_id = SYNTH_ACID;
@@ -68,25 +81,99 @@ void synth_host_init(void) {
 
 void synth_host_select(synth_id_t id) {
     if (id < 0 || id >= SYNTH_COUNT || !TABLE[id]) return;
-    if (H.active && H.active->deactivate) H.active->deactivate();
-    H.active    = TABLE[id];
-    H.active_id = id;
-    if (H.active->activate) H.active->activate();
+    if (H.requested_id == id) return;
+    /* Prepare only a dormant core, then publish the request LAST. The DMA
+     * renderer owns its active/previous pointers, so it never sees a half-
+     * initialised engine. A quick reversal reuses the still-running core. */
+    if (TABLE[id] != H.active && TABLE[id] != H.previous) {
+        if (TABLE[id]->activate) TABLE[id]->activate();
+        for (int p=0;p<6;++p) TABLE[id]->set_param((synth_param_t)p,H.target[id][p]);
+    }
+    __asm__ volatile("" ::: "memory");
+    H.requested_id = id;
 }
 
-synth_id_t  synth_host_active(void)      { return H.active_id; }
-const char *synth_host_active_name(void) { return H.active ? H.active->name : "-"; }
+synth_id_t  synth_host_active(void)      { return H.requested_id; }
+const char *synth_host_active_name(void) { return TABLE[H.requested_id]->name; }
 
-void synth_host_note_on(int midi, float vel) { if (H.active && H.active->note_on)  H.active->note_on(midi, vel); }
-void synth_host_note_off(void)               { if (H.active && H.active->note_off) H.active->note_off(); }
-void synth_host_set_param(synth_param_t p, float v) { if (H.active && H.active->set_param) H.active->set_param(p, v); }
-void synth_host_panic(void)                  { if (H.active && H.active->panic)    H.active->panic(); }
+void synth_host_note_on(int midi, float vel) {
+    vel=dsp_clampf(vel,0.0f,1.0f);
+    /* Mist ignored velocity; FM/Orbit/Storm changed colour only. Give every
+     * core a playable level response while retaining its native accent. */
+    H.velocity_target[H.requested_id]=sqrtf(vel);
+    if (TABLE[H.requested_id]->note_on) TABLE[H.requested_id]->note_on(midi,vel);
+}
+void synth_host_note_off(void) { if (TABLE[H.requested_id]->note_off) TABLE[H.requested_id]->note_off(); }
+void synth_host_set_param(synth_param_t p, float v) {
+    if ((int)p >= 0 && (int)p < 6 && isfinite(v)) H.target[H.requested_id][p] = dsp_clampf(v, 0.0f, 1.0f);
+}
+void synth_host_panic(void) {
+    if (H.active && H.active->panic) H.active->panic();
+    if (H.previous && H.previous->panic) H.previous->panic();
+    if (TABLE[H.requested_id]->panic) TABLE[H.requested_id]->panic();
+    H.previous = 0; H.fade_left = 0;
+}
 
 void synth_host_set_reverb(float size, float wet) {
     reverb_set(dsp_clampf(size, 0.0f, 1.0f), 0.4f);
     H.wet_target = dsp_clampf(wet, 0.0f, 1.0f);
 }
 void synth_host_set_master(float v) { H.master = dsp_clampf(v, 0.0f, 1.0f); }
+
+void synth_host_render_mix(float *l, float *r, float *sl, float *sr, int frames) {
+    for (int done=0; done<frames;) {
+        int n=frames-done; if(n>HBLOCK) n=HBLOCK;
+        synth_id_t requested=H.requested_id;
+        if (requested != H.active_id) {
+            if (H.previous && H.previous != TABLE[requested] && H.previous->deactivate)
+                H.previous->deactivate();
+            H.previous=H.active; H.previous_id=H.active_id; H.fade_left=662;
+            H.active=TABLE[requested]; H.active_id=requested;
+            memcpy(H.current,H.target[requested],sizeof H.current);
+            for (int p=0;p<6;++p) H.active->set_param((synth_param_t)p,H.current[p]);
+        }
+        memset(dL,0,sizeof(float)*n); memset(dR,0,sizeof(float)*n);
+        memset(sL,0,sizeof(float)*n); memset(sR,0,sizeof(float)*n);
+        /* Bounded control-rate updates, ~80 ms smoothing, no per-sample pow.
+         * Unchanged parameters cost no coefficient recalculation. */
+        float k=1.0f-expf(-(float)n/(0.080f*DSP_SAMPLE_RATE_HZ));
+        for (int p=0;p<6;++p) {
+            float delta=H.target[H.active_id][p]-H.current[p];
+            if (fabsf(delta)>0.00001f && H.active && H.active->set_param) {
+                H.current[p]+=k*delta;
+                H.active->set_param((synth_param_t)p,H.current[p]);
+            }
+        }
+        if (H.active && H.active->render_mix) H.active->render_mix(dL,dR,sL,sR,n);
+        for (int i=0;i<n;++i) {
+            H.velocity[H.active_id]+=0.00283046f*(H.velocity_target[H.active_id]-H.velocity[H.active_id]);
+            float gain=H.velocity[H.active_id];
+            dL[i]*=gain; dR[i]*=gain; sL[i]*=gain; sR[i]*=gain;
+        }
+        if (H.previous) {
+            memset(wL,0,sizeof(float)*n); memset(wR,0,sizeof(float)*n);
+            memset(prevSL,0,sizeof(float)*n); memset(prevSR,0,sizeof(float)*n);
+            H.previous->render_mix(wL,wR,prevSL,prevSR,n);
+            for (int i=0;i<n;++i) {
+                float gain=H.velocity[H.previous_id];
+                wL[i]*=gain; wR[i]*=gain; prevSL[i]*=gain; prevSR[i]*=gain;
+                float old=H.fade_left>0 ? H.fade_left/662.0f : 0.0f;
+                if(H.fade_left>0) --H.fade_left;
+                dL[i]+=old*(wL[i]-dL[i]); dR[i]+=old*(wR[i]-dR[i]);
+                sL[i]+=old*(prevSL[i]-sL[i]); sR[i]+=old*(prevSR[i]-sR[i]);
+            }
+            if (!H.fade_left) {
+                if (H.previous->deactivate) H.previous->deactivate();
+                H.previous=0;
+            }
+        }
+        for(int i=0;i<n;++i) {
+            l[done+i]+=dL[i]; r[done+i]+=dR[i];
+            sl[done+i]+=sL[i]; sr[done+i]+=sR[i];
+        }
+        done+=n;
+    }
+}
 
 void synth_host_render(int16_t *out, int frames) {
     int done = 0;
@@ -96,7 +183,12 @@ void synth_host_render(int16_t *out, int frames) {
         memset(dL, 0, sizeof(float) * n); memset(dR, 0, sizeof(float) * n);
         memset(sL, 0, sizeof(float) * n); memset(sR, 0, sizeof(float) * n);
 
-        if (H.active && H.active->render_mix) H.active->render_mix(dL, dR, sL, sR, n);
+        static float rawL[HBLOCK], rawR[HBLOCK], rawSL[HBLOCK], rawSR[HBLOCK];
+        memset(rawL,0,sizeof(float)*n); memset(rawR,0,sizeof(float)*n);
+        memset(rawSL,0,sizeof(float)*n); memset(rawSR,0,sizeof(float)*n);
+        synth_host_render_mix(rawL,rawR,rawSL,rawSR,n);
+        memcpy(dL,rawL,sizeof(float)*n); memcpy(dR,rawR,sizeof(float)*n);
+        memcpy(sL,rawSL,sizeof(float)*n); memcpy(sR,rawSR,sizeof(float)*n);
 
         reverb_render(sL, sR, wL, wR, n);
 

@@ -29,6 +29,8 @@ static const float PART_LVL[NPART] = { 1.0f, 0.42f, 0.16f, 0.08f };
 
 typedef struct {
     vstage_t stage;
+    int source;
+    float expression, vibFade;
     float    freq, amp;
     float    phA[NPART], phB[NPART];      /* two detuned singers          */
     float    incA[NPART], incB[NPART];
@@ -57,10 +59,15 @@ static int alloc_voice(void){
     return best;
 }
 
-void choir_note(float freq_hz, float amp){
-    if (freq_hz < 20.0f) return;
+static void start_note(int source, float freq_hz, float amp){
+    if (freq_hz < 20.0f || amp <= 0.0f) return;
+    if (source >= 0) {
+        for (int j=0;j<VMAX;++j) if(V[j].stage!=V_IDLE && V[j].source==source)
+            V[j].stage=V_RELEASE;
+    }
     int i = alloc_voice(); if (i<0) return;
     cvoice_t *v=&V[i];
+    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
     v->freq=freq_hz; v->amp=dsp_clampf(amp,0.0f,1.0f);
     for(int k=0;k<NPART;++k){
         float f=freq_hz*(float)(k+1);
@@ -71,7 +78,7 @@ void choir_note(float freq_hz, float amp){
     v->rng=0x2545F491u ^ (uint32_t)(freq_hz*71.0f);
     dsp_svf_reset(&v->breathbp); dsp_svf_set(&v->breathbp, freq_hz*3.0f+900.0f, 1.0f);
     dsp_svf_reset(&v->form);     dsp_svf_set(&v->form, 600.0f, 1.6f);
-    dsp_svf_reset(&v->damp);     dsp_svf_set(&v->damp, 1500.0f, 0.8f);
+    dsp_svf_reset(&v->damp);     dsp_svf_set(&v->damp, 1050.0f+450.0f*v->expression, 0.8f);
     v->env=0.0001f;
     v->envInc=v->amp/(0.40f*shape_attack_scale()*SR);   /* r19.61: 400 ms x SHAPE */
     v->relCoef=dsp_smooth_coef(1.1f*shape_release_scale()); /* r19.61 */
@@ -81,6 +88,19 @@ void choir_note(float freq_hz, float amp){
     float pan=(i==0)?-0.3f:(i==1)?0.3f:0.0f;
     v->panL=0.5f*(1.0f-pan); v->panR=0.5f*(1.0f+pan);
     v->stage=V_ATTACK;
+}
+
+void choir_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
+void choir_note_on(int source,float freq_hz,float amp) {
+    if(source>=0 && source<16) start_note(source,freq_hz,amp);
+}
+void choir_note_off(int source) {
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE && V[i].source==source) {
+        V[i].source=-1; V[i].stage=V_RELEASE;
+    }
+}
+void choir_all_off(void) {
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
 }
 
 int choir_active_count(void){ int c=0; for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) ++c; return c; }
@@ -100,14 +120,15 @@ void choir_render_mix(float *dry_L,float *dry_R,float *send_L,float *send_R,int 
             /* amp envelope */
             switch(v->stage){
                 case V_ATTACK: v->env+=v->envInc; if(v->env>=v->amp){v->env=v->amp;v->stage=V_HOLD;} break;
-                case V_HOLD:   if(--v->hold_left<=0) v->stage=V_RELEASE; break;
+                case V_HOLD:   if(v->source < 0 && --v->hold_left<=0) v->stage=V_RELEASE; break;
                 case V_RELEASE:v->env-=v->relCoef*v->env; if(v->env<=1.0e-5f){v->env=0.0f;v->stage=V_IDLE;} break;
                 default: break;
             }
             if(v->stage==V_IDLE) continue;
 
             /* delayed shallow vibrato */
-            float vibAmt=1.0f;
+            v->vibFade += 0.00009f*((v->vibDelay<=0 ? 1.0f : 0.0f)-v->vibFade);
+            float vibAmt=v->vibFade;
             if(v->vibDelay>0){--v->vibDelay; vibAmt=0.0f;}
             float vib=dsp_sin(v->vibPh)*0.0025f*vibAmt;      /* ±~4 cents */
             v->vibPh+=v->vibInc; if(v->vibPh>=1.0f) v->vibPh-=1.0f;

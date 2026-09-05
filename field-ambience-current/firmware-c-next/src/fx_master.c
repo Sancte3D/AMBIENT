@@ -18,6 +18,7 @@
 static AmbientFxStorage s_storage;
 static unsigned char s_arena[AMBIENT_FX_DEFAULT_ARENA_BUDGET_BYTES]
     __attribute__((aligned(32)));
+static float s_send[AUDIO_BUFFER_FRAMES * 2];
 static float s_buf[AUDIO_BUFFER_FRAMES * 2];   /* interleave scratch */
 
 static AmbientFx           *s_fx = 0;
@@ -48,6 +49,17 @@ void fx_master_process(float *outL, float *outR, int frames) {
         outL[n] = s_buf[2 * n];
         outR[n] = s_buf[2 * n + 1];
     }
+}
+
+void fx_master_process_buses(float *l, float *r, const float *sl, const float *sr, int frames) {
+    if (!s_ok || frames <= 0) return;
+    if (frames > AUDIO_BUFFER_FRAMES) frames = AUDIO_BUFFER_FRAMES;
+    for (int n = 0; n < frames; ++n) {
+        s_buf[2*n] = l[n]; s_buf[2*n+1] = r[n];
+        s_send[2*n] = sl[n]; s_send[2*n+1] = sr[n];
+    }
+    ambient_fx_process_buses_f32(s_fx, s_buf, s_send, (size_t)frames);
+    for (int n = 0; n < frames; ++n) { l[n] = s_buf[2*n]; r[n] = s_buf[2*n+1]; }
 }
 
 static float clamp01(float v) {

@@ -11,6 +11,7 @@
  */
 
 #include "menu.h"
+#include "synth_controls.h"
 #include "oled.h"
 #include "oled_color.h"
 #include "baked_font.h"
@@ -26,6 +27,7 @@
 
 /* --- live state ------------------------------------------------------- */
 
+static uint8_t core[6][6];
 static menu_callbacks_t cb;
 static menu_param_t  cur     = MP_WORLD;
 static menu_mode_t   mode    = MENU_BROWSE;
@@ -89,7 +91,17 @@ static void set_world_accent(bool animate) {
 }
 
 /* Apply the current slot's value to the engine via callback. */
+static void apply_core(void) {
+    if (synth_i && cb.set_synth_param)
+        for (int p=0;p<6;++p) cb.set_synth_param(p, core[synth_i-1][p]/100.0f);
+}
+
 static void apply_current(void) {
+    if (cur >= MP_CORE_A && cur <= MP_CORE_F) {
+        if (synth_i && cb.set_synth_param)
+            cb.set_synth_param(cur-MP_CORE_A, core[synth_i-1][cur-MP_CORE_A]/100.0f);
+        return;
+    }
     switch (cur) {
         case MP_WORLD:  if (cb.set_world)      cb.set_world(world_i);            break;
         case MP_KEY:    if (cb.set_key)        cb.set_key  (key_pc);             break;
@@ -102,7 +114,7 @@ static void apply_current(void) {
         case MP_AGE:    if (cb.set_age)        cb.set_age   (age    / 100.0f);   break;
         case MP_ECHO:   if (cb.set_echo)       cb.set_echo  (echo   / 100.0f);   break;
         case MP_BLUR:   if (cb.set_blur)       cb.set_blur  (blur   / 100.0f);   break;
-        case MP_SYNTH:  if (cb.set_synth)      cb.set_synth(synth_i);            break;
+        case MP_SYNTH:  if (cb.set_synth) cb.set_synth(synth_i); apply_core(); break;
         case MP_CELL:   if (cb.set_cell)       cb.set_cell(cell_i);              break;
         case MP_BASS:   if (cb.set_bass)       cb.set_bass(bass_i);              break;
         case MP_COLOR:  if (cb.set_color)      cb.set_color(color_i);            break;
@@ -169,6 +181,7 @@ uint16_t menu_locks(void)                  { return s_locks; }
 void     menu_set_locks(uint16_t mask)     { s_locks = mask & LOCKABLE_MASK; }
 
 void menu_get_state(menu_state_t *out) {
+    memset(out,0,sizeof *out);
     out->world  = (uint8_t)world_i;  out->key_pc = (uint8_t)key_pc;
     out->tuning = (uint8_t)tuning_i; out->voice  = (uint8_t)voice_i;
     out->synth  = (uint8_t)synth_i;  out->cell = (uint8_t)cell_i;
@@ -179,6 +192,8 @@ void menu_get_state(menu_state_t *out) {
     out->age    = (uint8_t)age;    out->echo    = (uint8_t)echo;
     out->blur   = (uint8_t)blur;
     out->locks  = s_locks;
+    out->reso=reso; out->attack=atk_i; out->release=rel_i; out->sweep=sweep_i; out->envmod=envm_i;
+    memcpy(out->core, core, sizeof core);
 }
 
 void menu_apply_state(const menu_state_t *st) {
@@ -196,6 +211,9 @@ void menu_apply_state(const menu_state_t *st) {
     age    = clampi(st->age, 0, 100);    echo   = clampi(st->echo, 0, 100);
     blur   = clampi(st->blur, 0, 100);
     s_locks = st->locks & LOCKABLE_MASK;
+    reso=clampi(st->reso,0,100); atk_i=clampi(st->attack,0,100); rel_i=clampi(st->release,0,100);
+    sweep_i=clampi(st->sweep,0,100); envm_i=clampi(st->envmod,0,100);
+    for (int i=0;i<6;++i) for(int p=0;p<6;++p) core[i][p]=clampi(st->core[i][p],0,100);
     set_world_accent(true);
     /* Alle Callbacks feuern — Recall ist ein Live-Update wie das Menue
      * selbst. Reihenfolge wie load_world_preset + die Player-Globals. */
@@ -211,6 +229,12 @@ void menu_apply_state(const menu_state_t *st) {
     if (cb.set_tuning)     cb.set_tuning(tuning_i);
     if (cb.set_voice)      cb.set_voice(voice_i);
     if (cb.set_synth)      cb.set_synth(synth_i);
+    apply_core();
+    if (cb.set_reso) cb.set_reso(reso/100.0f);
+    if (cb.set_attack) cb.set_attack(atk_i/100.0f);
+    if (cb.set_release) cb.set_release(rel_i/100.0f);
+    if (cb.set_sweep) cb.set_sweep(sweep_i/100.0f);
+    if (cb.set_envmod) cb.set_envmod(envm_i/100.0f);
     if (cb.set_cell)       cb.set_cell(cell_i);
     if (cb.set_bass)       cb.set_bass(bass_i);
     if (cb.set_fx)         cb.set_fx(fx_i);
@@ -220,6 +244,8 @@ void menu_apply_state(const menu_state_t *st) {
 
 void menu_init(const menu_callbacks_t *cbs) {
     if (cbs) cb = *cbs; else memset(&cb, 0, sizeof cb);
+    memcpy(core, synth_control_defaults, sizeof core);
+    synth_i=0; tuning_i=0; cell_i=0; reso=sweep_i=envm_i=0; atk_i=rel_i=50; fx_i=8; s_locks=0;
     cur = MP_WORLD;
     mode = MENU_BROWSE;
     world_i = 0;
@@ -274,6 +300,8 @@ int          menu_world_index(void)    { return world_i; }
 const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 
 const char *menu_current_label(void) {
+    if (cur >= MP_CORE_A && cur <= MP_CORE_F)
+        return synth_i ? synth_control_names[synth_i-1][cur-MP_CORE_A] : "Core";
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
         "Age","Echo","Blur","Synth","Cell","Bass","Color","FX","Resonance",
@@ -298,6 +326,7 @@ int menu_value_index(menu_param_t p) {
 }
 
 int menu_value_int(menu_param_t p) {
+    if (p >= MP_CORE_A && p <= MP_CORE_F) return synth_i ? core[synth_i-1][p-MP_CORE_A] : 0;
     switch (p) {
         case MP_SPACE:  return space;
         case MP_SHIMMER:return shim;
@@ -333,7 +362,13 @@ int menu_value_count(menu_param_t p) {
 }
 
 const char *menu_current_value_text(void) {
-    static char buf[12];
+    static char buf[16];
+    if (cur >= MP_CORE_A && cur <= MP_CORE_F) {
+        int v=menu_value_int(cur);
+        if(synth_i==2 && cur==MP_CORE_B) snprintf(buf,sizeof buf,"%d:1",1+(v+10)/20);
+        else snprintf(buf,sizeof buf,"%d%%",v);
+        return buf;
+    }
     switch (cur) {
         case MP_WORLD:  return worlds_get(world_i)->name;
         case MP_KEY:    return KEY_NAMES[key_pc];
@@ -372,7 +407,15 @@ void menu_push(void) {
 void menu_rotate(int delta) {
     if (mode == MENU_BROWSE) {
         int dir = (delta > 0) - (delta < 0);
-        cur = (menu_param_t)wrapi((int)cur + dir, MP_COUNT);
+        cur = (menu_param_t)wrapi((int)cur + dir, synth_i ? MP_COUNT : MP_CORE_A);
+        return;
+    }
+    if (cur >= MP_CORE_A && cur <= MP_CORE_F) {
+        if (synth_i) {
+            int p=cur-MP_CORE_A;
+            core[synth_i-1][p]=clampi(core[synth_i-1][p]+delta,0,100);
+            apply_current();
+        }
         return;
     }
     /* edit: step the current slot's value */

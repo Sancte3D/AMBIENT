@@ -56,7 +56,7 @@ static void go_note_on(int midi, float vel) {
     float f = dsp_midi_to_hz((float)midi);
     if (o.astate == O_IDLE || o.amp < 1.0e-3f) o.freq_cur = f;
     o.freq_tgt = f;
-    o.morph_base = 0.3f + 0.5f * dsp_clampf(vel,0,1);   /* harder = brighter table pos */
+    (void)vel; /* Host applies velocity; preserve the player's Wave Shape. */
     o.astate   = O_ATTACK;
 }
 static void go_note_off(void) { if (o.astate != O_IDLE) o.astate = O_RELEASE; }
