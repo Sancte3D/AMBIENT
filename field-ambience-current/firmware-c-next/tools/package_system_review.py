@@ -100,8 +100,11 @@ Musikalische Architektur: docs/audio/MUSICAL_SYSTEM_2026-09-09.md im Repository.
     (pack/'START_HIER.md').write_text(guide)
     archive=root/'Ambient_System_Hoerpaket.zip'
     with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_STORED) as z:
-        for p in sorted(pack.rglob('*')):
-            if p.is_file():z.write(p,p.relative_to(root))
+        # Explicit manifest: stale/interrupted .partial exports must never ship.
+        approved=[pack/r['file'] for r in rows]
+        approved += [logs/p.with_suffix('.json').name for p in paths]
+        approved += [pack/'START_HIER.md',pack/'Messwerte.json']
+        for p in sorted(approved):z.write(p,p.relative_to(root))
     with zipfile.ZipFile(archive) as z:
         if z.testzip():raise RuntimeError('ZIP CRC failure')
     result={'clips':len(rows),'seconds':sum(r['seconds'] for r in rows),'tour_seconds':pos,
