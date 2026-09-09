@@ -57,6 +57,8 @@ void composer_init(void);
 
 /* Advance the state clock. Call from the generative tick (any rate). */
 void composer_tick(uint32_t now_ms);
+/* Occupancy is a conservative pitch-memory measure, not microphone input. */
+void composer_listen(float occupied_0_1, int player_active);
 
 /* The current state's probability table (always valid). */
 const composer_params_t *composer_params(void);

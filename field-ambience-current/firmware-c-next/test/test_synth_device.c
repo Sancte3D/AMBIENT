@@ -35,7 +35,8 @@ static void be_panic   (void)                { synth_host_panic(); }
 static void be_render  (int16_t *b, int n)   { synth_host_render(b, n); }
 static void be_param(int slot, float value) { synth_host_set_param((synth_param_t)slot, value); }
 static const engine_synth_backend_t BE = {
-    be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param
+    be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param,
+    synth_host_note_on_hz, synth_host_set_macro
 };
 
 static int peak_of(const int16_t *b, int frames) {
@@ -61,7 +62,7 @@ static void observe_note(int note,float velocity) { (void)velocity; observed_not
 static void observe_off(void) { ++observed_offs; }
 static void test_playability(void) {
     engine_synth_backend_t probe=BE;
-    probe.note_on=observe_note; probe.note_off=observe_off;
+    probe.note_on_hz=NULL; probe.note_on=observe_note; probe.note_off=observe_off;
     engine_init(); synth_host_init(); engine_set_synth_backend(&probe); engine_set_synth(3);
     observed_offs=0;
     engine_note_on(0,220,0.2f); engine_note_on(1,330,0.4f);

@@ -45,6 +45,11 @@ void harmony_init(void);
  * else the major-pentatonic world (core {0,2,4,7,9}, color 11 — maj7).
  * Resets the state machine + voicing to state 0. */
 void harmony_set_world(int tonic_midi, int minor);
+/* Product modes share brain.c's scale definition. Core stays anhemitonic;
+ * one modal degree is reserved for sparse, collision-checked melody notes. */
+void harmony_set_mode(int tonic_midi, int mode);
+int harmony_in_core(int midi);
+int harmony_nearest_safe(int wanted, int lo, int hi, const int *sounding, int count);
 
 /* Advance the slow state clock (call from the generative tick, any rate).
  * States dwell 24..48 s (humanized, fixed seed), then MUTATE. */

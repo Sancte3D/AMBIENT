@@ -85,6 +85,8 @@ typedef struct {
     /* Product path: unmastered buses, sharing the ambient mixer and FX. */
     void (*render_mix)(float *dry_l, float *dry_r, float *send_l, float *send_r, int frames);
     void (*set_param)(int slot, float value);
+    void (*note_on_hz)(float hz, float vel01); /* optional; exact tuning */
+    void (*set_macro)(int slot, float value);
 } engine_synth_backend_t;
 void engine_set_synth_backend(const engine_synth_backend_t *be);
 void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */

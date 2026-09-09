@@ -12,6 +12,7 @@
  */
 #include "v2/synth_engine.h"
 #include "dsp.h"
+#include "shape.h"
 #include <math.h>
 #include <string.h>
 
@@ -21,6 +22,7 @@
 enum { O_IDLE = 0, O_ATTACK, O_DECAY, O_SUSTAIN, O_RELEASE };
 
 static struct {
+    float colour_scale, colour_res;
     float ph;
     float freq_cur, freq_tgt, glide_coef;
     int   astate;
@@ -32,6 +34,7 @@ static struct {
 
 static void go_init(void) {
     memset(&o, 0, sizeof o);
+    o.colour_scale = 1.0f;
     o.freq_cur = o.freq_tgt = 110.0f;
     o.glide_coef = dsp_smooth_coef(0.030f);
     o.atk_inc  = 1.0f / (0.010f * SR);
@@ -44,7 +47,7 @@ static void go_init(void) {
     o.morph_base  = 0.5f;
     o.level    = 0.7f;
     o.send     = 0.20f;
-    dsp_svf_reset(&o.lp); dsp_svf_set(&o.lp, o.cutoff, 0.707f);
+    dsp_svf_reset(&o.lp); dsp_svf_set(&o.lp, dsp_clampf(o.cutoff * o.colour_scale, 80.0f, 8000.0f), 0.707f + o.colour_res * 1.8f);
     o.astate = O_IDLE;
 }
 
@@ -52,7 +55,9 @@ static void go_activate(void)   { go_init(); }
 static void go_deactivate(void) { if (o.astate != O_IDLE) o.astate = O_RELEASE; }
 static void go_panic(void)      { o.amp = 0.0f; o.astate = O_IDLE; }
 
-static void go_note_on(int midi, float vel) {
+static void go_note_on(float midi, float vel) {
+    o.atk_inc = 1.0f / (0.01f * shape_attack_scale() * SR);
+    o.rel_coef = dsp_smooth_coef(0.35f * shape_release_scale());
     float f = dsp_midi_to_hz((float)midi);
     if (o.astate == O_IDLE || o.amp < 1.0e-3f) o.freq_cur = f;
     o.freq_tgt = f;
@@ -115,12 +120,16 @@ static void go_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
         float osc = morph_osc(o.ph, dt, morph);
         o.ph += dt; if (o.ph >= 1.0f) o.ph -= 1.0f;
 
-        if ((o.fctr++ % F_UPD) == 0) dsp_svf_set(&o.lp, o.cutoff, 0.707f);
+        if ((o.fctr++ % F_UPD) == 0) dsp_svf_set(&o.lp, dsp_clampf(o.cutoff * o.colour_scale, 80.0f, 8000.0f), 0.707f + o.colour_res * 1.8f);
         float lp = dsp_svf_lp(&o.lp, osc);
         float out = lp * o.amp * o.level;
         dL[n] += out;          dR[n] += out;
         sL[n] += out * o.send; sR[n] += out * o.send;
     }
+}
+
+static void go_set_colour(float scale, float res) {
+    o.colour_scale = scale; o.colour_res = res;
 }
 
 const synth_engine_t engine_glass_orbit = {
@@ -133,4 +142,5 @@ const synth_engine_t engine_glass_orbit = {
     .set_param   = go_set_param,
     .render_mix  = go_render_mix,
     .panic       = go_panic,
+    .set_colour  = go_set_colour,
 };

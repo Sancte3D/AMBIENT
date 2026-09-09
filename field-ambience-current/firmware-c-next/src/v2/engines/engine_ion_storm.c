@@ -12,6 +12,7 @@
  */
 #include "v2/synth_engine.h"
 #include "dsp.h"
+#include "shape.h"
 #include "dsp_ladder.h"
 #include <math.h>
 #include <string.h>
@@ -22,6 +23,7 @@
 enum { I_IDLE = 0, I_ATTACK, I_DECAY, I_SUSTAIN, I_RELEASE };
 
 static struct {
+    float colour_scale, colour_res;
     float saw1, saw2;            /* detuned saw phases */
     float pwa1, pwb1, pwa2, pwb2;/* pulse phases (a/b for the PWM difference) */
     float r_dn, r_up;            /* detune ratios */
@@ -36,6 +38,7 @@ static struct {
 
 static void is_init(void) {
     memset(&s, 0, sizeof s);
+    s.colour_scale = 1.0f;
     s.freq_cur = s.freq_tgt = 55.0f;       /* A1 */
     s.glide_coef = dsp_smooth_coef(0.020f);
     s.bend_coef  = dsp_smooth_coef(0.020f);
@@ -64,7 +67,9 @@ static void is_activate(void)   { is_init(); }
 static void is_deactivate(void) { if (s.astate != I_IDLE) s.astate = I_RELEASE; }
 static void is_panic(void)      { s.amp = 0.0f; s.astate = I_IDLE; }
 
-static void is_note_on(int midi, float vel) {
+static void is_note_on(float midi, float vel) {
+    s.atk_inc = 1.0f / (0.004f * shape_attack_scale() * SR);
+    s.rel_coef = dsp_smooth_coef(0.12f * shape_release_scale());
     float f = dsp_midi_to_hz((float)midi);
     if (s.astate == I_IDLE || s.amp < 1.0e-3f) s.freq_cur = f;
     s.freq_tgt = f;
@@ -129,12 +134,19 @@ static void is_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
 
         float mix = 0.32f * (saw1 + saw2) + 0.22f * (p1 + p2);
 
-        if ((s.fctr++ % F_UPD) == 0) dsp_ladder_set_freq(&s.lad, s.cutoff);
+        if ((s.fctr++ % F_UPD) == 0) {
+            dsp_ladder_set_freq(&s.lad, dsp_clampf(s.cutoff * s.colour_scale,80.0f,8000.0f));
+            dsp_ladder_set_res(&s.lad, s.res + s.colour_res * 1.1f);
+        }
         float lp  = dsp_ladder_process(&s.lad, mix);   /* ladder drive = the grit */
         float out = lp * s.amp * s.level;
         dL[n] += out;          dR[n] += out;
         sL[n] += out * s.send; sR[n] += out * s.send;
     }
+}
+
+static void is_set_colour(float scale, float res) {
+    s.colour_scale = scale; s.colour_res = res;
 }
 
 const synth_engine_t engine_ion_storm = {
@@ -147,4 +159,5 @@ const synth_engine_t engine_ion_storm = {
     .set_param   = is_set_param,
     .render_mix  = is_render_mix,
     .panic       = is_panic,
+    .set_colour  = is_set_colour,
 };

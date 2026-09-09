@@ -189,7 +189,8 @@ static void be_panic   (void)                { synth_host_panic(); }
 static void be_render  (int16_t *b, int n)   { synth_host_render(b, n); }
 static void be_param(int slot, float value) { synth_host_set_param((synth_param_t)slot, value); }
 static const engine_synth_backend_t s_v2_backend = {
-    be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param
+    be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param,
+    synth_host_note_on_hz, synth_host_set_macro
 };
 
 /* Klinke drin → NUR den PAM8406 muten (AMP_MUTE_N = PB15 LOW), Line-Out

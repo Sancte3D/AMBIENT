@@ -47,6 +47,7 @@ static struct {
     int fade_left;
     float target[SYNTH_COUNT][6], current[6];
     float velocity[SYNTH_COUNT], velocity_target[SYNTH_COUNT];
+    float macro_target[4], macro[4], sweep_phase, envelope;
 } H;
 
 static float dL[HBLOCK], dR[HBLOCK], sL[HBLOCK], sR[HBLOCK], wL[HBLOCK], wR[HBLOCK];
@@ -96,12 +97,23 @@ void synth_host_select(synth_id_t id) {
 synth_id_t  synth_host_active(void)      { return H.requested_id; }
 const char *synth_host_active_name(void) { return TABLE[H.requested_id]->name; }
 
-void synth_host_note_on(int midi, float vel) {
+static void note_on_pitch(float midi, float vel) {
+    if (!isfinite(midi) || !isfinite(vel) || vel <= 0.0f) return;
     vel=dsp_clampf(vel,0.0f,1.0f);
     /* Mist ignored velocity; FM/Orbit/Storm changed colour only. Give every
      * core a playable level response while retaining its native accent. */
     H.velocity_target[H.requested_id]=sqrtf(vel);
     if (TABLE[H.requested_id]->note_on) TABLE[H.requested_id]->note_on(midi,vel);
+}
+void synth_host_note_on(int midi, float vel) { note_on_pitch((float)midi,vel); }
+void synth_host_note_on_hz(float hz, float vel) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        note_on_pitch(69.0f + 12.0f * log2f(hz / 440.0f),vel);
+}
+void synth_host_set_macro(int slot, float value) {
+    if (slot < 0 || slot >= 4 || !isfinite(value)) return;
+    H.macro_target[slot] = slot == 0 ? dsp_clampf(value/800.0f,-0.75f,1.0f)
+                                          : dsp_clampf(value,0.0f,1.0f);
 }
 void synth_host_note_off(void) { if (TABLE[H.requested_id]->note_off) TABLE[H.requested_id]->note_off(); }
 void synth_host_set_param(synth_param_t p, float v) {
@@ -137,6 +149,15 @@ void synth_host_render_mix(float *l, float *r, float *sl, float *sr, int frames)
         /* Bounded control-rate updates, ~80 ms smoothing, no per-sample pow.
          * Unchanged parameters cost no coefficient recalculation. */
         float k=1.0f-expf(-(float)n/(0.080f*DSP_SAMPLE_RATE_HZ));
+        for (int m=0;m<4;++m) H.macro[m]+=k*(H.macro_target[m]-H.macro[m]);
+        H.sweep_phase += (float)n / (18.7f * DSP_SAMPLE_RATE_HZ);
+        if (H.sweep_phase >= 1.0f) H.sweep_phase -= 1.0f;
+        float oct = H.macro[0]*1.5f + H.macro[2]*1.5f*dsp_sin(H.sweep_phase)
+                    + H.macro[3]*2.0f*dsp_clampf(H.envelope*3.0f,0.0f,1.0f);
+        float colour_scale=exp2f(oct);
+        if (H.active->set_colour) H.active->set_colour(colour_scale,H.macro[1]);
+        if (H.previous && H.previous->set_colour)
+            H.previous->set_colour(colour_scale,H.macro[1]);
         for (int p=0;p<6;++p) {
             float delta=H.target[H.active_id][p]-H.current[p];
             if (fabsf(delta)>0.00001f && H.active && H.active->set_param) {
@@ -145,11 +166,15 @@ void synth_host_render_mix(float *l, float *r, float *sl, float *sr, int frames)
             }
         }
         if (H.active && H.active->render_mix) H.active->render_mix(dL,dR,sL,sR,n);
+        float peak=0.0f;
         for (int i=0;i<n;++i) {
             H.velocity[H.active_id]+=0.00283046f*(H.velocity_target[H.active_id]-H.velocity[H.active_id]);
             float gain=H.velocity[H.active_id];
             dL[i]*=gain; dR[i]*=gain; sL[i]*=gain; sR[i]*=gain;
+            float a=0.5f*(fabsf(dL[i])+fabsf(dR[i])); if(a>peak) peak=a;
         }
+        float ek=1.0f-expf(-(float)n/((peak>H.envelope ? 0.040f:0.5f)*DSP_SAMPLE_RATE_HZ));
+        H.envelope+=ek*(peak-H.envelope);
         if (H.previous) {
             memset(wL,0,sizeof(float)*n); memset(wR,0,sizeof(float)*n);
             memset(prevSL,0,sizeof(float)*n); memset(prevSR,0,sizeof(float)*n);

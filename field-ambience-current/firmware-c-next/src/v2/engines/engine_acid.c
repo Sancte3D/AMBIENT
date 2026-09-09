@@ -12,6 +12,7 @@
  */
 #include "v2/synth_engine.h"
 #include "dsp.h"
+#include "shape.h"
 #include "dsp_ladder.h"
 #include <math.h>
 #include <string.h>
@@ -22,6 +23,7 @@
 enum { A_IDLE = 0, A_ATTACK, A_DECAY, A_SUSTAIN, A_RELEASE };
 
 static struct {
+    float colour_scale, colour_res;
     /* oscillators */
     float phase, sq_phase;
     float freq_cur, freq_tgt;
@@ -49,6 +51,7 @@ static void recalc_decay(void) { a.fenv_coef = expf(-1.0f / (a.decay_s * SR)); }
 
 static void acid_init(void) {
     memset(&a, 0, sizeof a);
+    a.colour_scale = 1.0f;
     a.freq_cur = a.freq_tgt = 110.0f;        /* A2 */
     a.glide_coef = dsp_smooth_coef(0.030f);
     a.atk_inc    = 1.0f / (0.006f * SR);
@@ -74,7 +77,9 @@ static void acid_activate(void)   { acid_init(); }
 static void acid_deactivate(void) { if (a.astate != A_IDLE) a.astate = A_RELEASE; }
 static void acid_panic(void)      { a.amp = 0.0f; a.fenv = 0.0f; a.astate = A_IDLE; }
 
-static void acid_note_on(int midi, float vel) {
+static void acid_note_on(float midi, float vel) {
+    a.atk_inc = 1.0f / (0.006f * shape_attack_scale() * SR);
+    a.rel_coef = dsp_smooth_coef(0.06f * shape_release_scale());
     float f = dsp_midi_to_hz((float)midi);
     if (a.astate == A_IDLE || a.amp < 1.0e-3f) a.freq_cur = f;   /* snap from silence */
     a.freq_tgt = f;
@@ -119,8 +124,8 @@ static void acid_render_mix(float *dL, float *dR, float *sL, float *sR, int fram
 
         if ((a.fctr++ % FILT_UPDATE) == 0) {
             float cut = a.base_cut + (a.env_amt * (1.0f + a.accent * 0.8f)) * a.fenv;
-            dsp_ladder_set_freq(&a.lad, cut);
-            dsp_ladder_set_res(&a.lad, a.res + a.accent * 0.25f);   /* accent = more squelch */
+            dsp_ladder_set_freq(&a.lad, dsp_clampf(cut * a.colour_scale,80.0f,8000.0f));
+            dsp_ladder_set_res(&a.lad, dsp_clampf(a.res + a.accent * 0.25f + a.colour_res * 0.5f,0.0f,1.8f));   /* accent = more squelch */
         }
 
         const float dt = a.freq_cur / SR;
@@ -138,6 +143,10 @@ static void acid_render_mix(float *dL, float *dR, float *sL, float *sR, int fram
     }
 }
 
+static void acid_set_colour(float scale, float res) {
+    a.colour_scale = scale; a.colour_res = res;
+}
+
 const synth_engine_t engine_acid = {
     .name        = "ACID RAIN",
     .init        = acid_init,
@@ -148,4 +157,5 @@ const synth_engine_t engine_acid = {
     .set_param   = acid_set_param,
     .render_mix  = acid_render_mix,
     .panic       = acid_panic,
+    .set_colour  = acid_set_colour,
 };

@@ -64,6 +64,7 @@ static const engine_synth_backend_t *s_synth_be = 0;
 static float s_synth_blend;
 static uint8_t s_note_stack[MAX_SOURCES], s_note_count;
 static float s_note_amp[MAX_SOURCES];
+static float s_synth_macros[4];
 static volatile int s_synth_tgt = 0;       /* set at control rate            */
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
@@ -338,6 +339,7 @@ void engine_init(void) {
     eno_timing_valid = 0;
     s_synth_tgt = 0; s_synth_blend = 0.0f;
     s_note_count = 0;
+    memset(s_synth_macros,0,sizeof s_synth_macros);
     melody_voice = 0;                /* PAD — the bench-tuned reference */
     body_init();                     /* r18.94 modal body (per-world material) */
 
@@ -404,6 +406,14 @@ static inline float humanize_rand_unit(void){      /* in [-1, +1] */
     return ((int32_t)humanize_rng) * (1.0f / 2147483648.0f);
 }
 
+static void synth_note_hz(float hz, float amp) {
+    if (s_synth_be->note_on_hz) s_synth_be->note_on_hz(hz,amp);
+    else if (s_synth_be->note_on) {
+        int midi=(int)lrintf(69.0f+12.0f*log2f(hz/440.0f));
+        s_synth_be->note_on(midi<0 ? 0 : (midi>127 ? 127:midi),amp);
+    }
+}
+
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
     if (source>=MAX_SOURCES || !isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || amp<=0.0f) return;
     /* ±0.5 cent pitch jitter, ±0.3 % amp jitter. Bass / drone get the same
@@ -417,15 +427,12 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
      * pad. Generative/drone sources never reach V2 (it's a played mono synth). */
     if (s_synth_tgt > 0 && s_synth_be &&
         (source <= 4 || (source >= 9 && source <= 13))) {
-        int n = (int)lrintf(69.0f + 12.0f * log2f(freq_hz / 440.0f));
-        if (n < 0)   n = 0;
-        if (n > 127) n = 127;
         for (int i=0; i<s_note_count; ++i) if (s_note_stack[i] == source) {
             memmove(&s_note_stack[i], &s_note_stack[i+1], (size_t)(--s_note_count-i)); break;
         }
         s_note_stack[s_note_count++] = source;
         s_note_amp[source] = amp;
-        s_synth_be->note_on(n, dsp_clampf(amp, 0.0f, 1.0f));
+        synth_note_hz(freq_hz, dsp_clampf(amp, 0.0f, 1.0f));
         if (source < MAX_SOURCES) active_freq[source] = freq_hz;
         return;
     }
@@ -461,8 +468,7 @@ void engine_note_off(uint8_t source) {
             if (!s_note_count) s_synth_be->note_off();
             else {
                 int prev=s_note_stack[s_note_count-1];
-                int midi=(int)lrintf(69.0f+12.0f*log2f(active_freq[prev]/440.0f));
-                s_synth_be->note_on(midi, dsp_clampf(s_note_amp[prev],0.0f,1.0f));
+                synth_note_hz(active_freq[prev], dsp_clampf(s_note_amp[prev],0.0f,1.0f));
             }
         }
         if (source < MAX_SOURCES) active_freq[source] = 0.0f;
@@ -514,10 +520,15 @@ void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.
 void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_boot_mute(void)           { master_vol_cur  = master_vol_tgt = 0.0f; }
 void engine_set_drive(float v)        { drive_tgt       = dsp_clampf(v, 0.0f, 1.0f); }
+static void synth_macro(int slot, float value) {
+    s_synth_macros[slot]=value;
+    if(s_synth_be && s_synth_be->set_macro) s_synth_be->set_macro(slot,value);
+}
 /* r18.90 macro: one emotional dimension, three destinations. hz is the
  * legacy pad-cutoff offset (-600..+800); the hall and the plucks follow.
  * At hz=0 all trims are exactly 0 — the bench-tuned default is untouched. */
 void engine_set_brightness(float hz)  {
+    synth_macro(0,hz);
     pad_set_brightness(hz);
     bright_damp_trim = dsp_clampf(-hz * (0.18f / 800.0f), -0.135f, 0.18f);
     reverb_apply();
@@ -530,6 +541,7 @@ void engine_set_brightness(float hz)  {
 /* r19.59 RESONANCE — see docs/SYNTH_IDENTITY.md. The pad bus gets a real
  * resonant ladder; BRIGHT sweeps its cutoff, RESONANCE makes it sing. */
 void engine_set_resonance(float amount_0_1) {
+    synth_macro(1,amount_0_1);
     pad_set_resonance(dsp_clampf(amount_0_1, 0.0f, 1.0f));
 }
 float engine_resonance(void) { return pad_resonance(); }
@@ -539,8 +551,8 @@ void engine_set_attack (float v01) { shape_set_attack(v01); }
 void engine_set_release(float v01) { shape_set_release(v01); }
 
 /* r19.60 MOTION — LFO + envelope follower onto the pad-bus filter cutoff. */
-void engine_set_sweep (float v01) { pad_set_sweep(dsp_clampf(v01,0.0f,1.0f)); }
-void engine_set_envmod(float v01) { pad_set_envmod(dsp_clampf(v01,0.0f,1.0f)); }
+void engine_set_sweep (float v01) { synth_macro(2,v01); pad_set_sweep(dsp_clampf(v01,0.0f,1.0f)); }
+void engine_set_envmod(float v01) { synth_macro(3,v01); pad_set_envmod(dsp_clampf(v01,0.0f,1.0f)); }
 void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   {
     v = dsp_clampf(v, 0.0f, 1.0f);
@@ -622,19 +634,12 @@ const char *engine_fx_mode_name(int i) { return fx_master_mode_name(i); }
  * — matches the "sound darf nicht konkurrieren" rule for global params.
  * Also keeps the harmonic brain's view of mode/vibe in sync so cells played
  * after the change pick up the new harmony. */
-/* r19.0: the harmony core needs TONALITY, not the full mode. Dorian /
- * phrygian / aeolian read as minor pitch worlds; ionian / lydian /
- * mixolydian as major. */
-static int mode_is_minor(int mode_idx) {
-    return mode_idx == 1 || mode_idx == 2 || mode_idx == 5;
-}
-
 void engine_set_mode(int mode_idx) {
     if (mode_idx < 0)               mode_idx = 0;
     if (mode_idx >= RP_MODE_COUNT)  mode_idx = RP_MODE_COUNT - 1;
     musical_mode = mode_idx;
     brain_set_mode(mode_idx);
-    harmony_set_world(brain_get_key(), mode_is_minor(mode_idx));   /* r19.0 */
+    harmony_set_mode(brain_get_key(), mode_idx);   /* r19.0 */
     recompute_reverb_from_presets();
 }
 void engine_set_vibe(int vibe_idx) {
@@ -665,7 +670,7 @@ void engine_set_key_pc(int pc) {
 
 void engine_set_key(int tonic_midi) {
     brain_set_key(tonic_midi);
-    harmony_set_world(tonic_midi, mode_is_minor(musical_mode));    /* r19.0 */
+    harmony_set_mode(tonic_midi, musical_mode);    /* r19.0 */
     tuning_set_key(tonic_midi);        /* r19.6 anchor just intonation      */
     drone_set_root_midi(tonic_midi);   /* glides live if the drone is sounding */
 }
@@ -773,7 +778,7 @@ void engine_generative_new_field(uint32_t seed) {
     composer_reseed(seed ^ 0x9E3779B9u);
     harmony_reseed(seed ^ 0x85EBCA6Bu);
     /* restart the field at state 0 in the SAME pitch world (key/mode) */
-    harmony_set_world(brain_get_key(), mode_is_minor(musical_mode));
+    harmony_set_mode(brain_get_key(), musical_mode);
     composer_init();                 /* fresh intent clock; reseed below   */
     composer_reseed(seed ^ 0x9E3779B9u);
     gen_timing_valid = false;        /* strike fresh on the next tick */
@@ -1191,7 +1196,10 @@ static void render_master(int16_t *buf, int frames) {
 static int16_t s_v2buf[BLOCK * 2]; /* legacy backend compatibility */
 static float s_coreL[BLOCK], s_coreR[BLOCK], s_coreSL[BLOCK], s_coreSR[BLOCK];
 
-void engine_set_synth_backend(const engine_synth_backend_t *be) { s_synth_be = be; }
+void engine_set_synth_backend(const engine_synth_backend_t *be) {
+    s_synth_be = be;
+    if (be && be->set_macro) for (int i=0;i<4;++i) be->set_macro(i,s_synth_macros[i]);
+}
 void engine_set_synth_param(int slot, float value) {
     if (s_synth_tgt > 0 && s_synth_be && s_synth_be->set_param && slot >= 0 && slot < 6)
         s_synth_be->set_param(slot, dsp_clampf(value, 0.0f, 1.0f));

@@ -48,7 +48,12 @@ typedef struct {
     float    body_base, symp_gain;         /* colour-dependent            */
 } bvoice_t;
 
-static bvoice_t V[VMAX];
+static bvoice_t V[VMAX], pending[VMAX];
+/* Prepare off the audio path; at capacity fade the old voice for 8 ms,
+ * then start the prepared attack. Exactly VMAX voices render at any time. */
+#define HANDOVER_SAMPLES 353
+static volatile int queued[VMAX];
+static int fade_left[VMAX];
 static int      ctl;
 static int      s_colour = 0;
 
@@ -58,6 +63,8 @@ static inline float wnoise(uint32_t *r) {
 }
 
 void bowed_init(void) {
+    memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
+    memset(fade_left,0,sizeof fade_left);
     memset(V, 0, sizeof V);
     ctl = 0;
     s_colour = 0;
@@ -65,31 +72,27 @@ void bowed_init(void) {
 
 void bowed_set_colour(int colour) { s_colour = colour ? 1 : 0; }
 
-static int alloc_voice(void) {
-    int best = -1; float lo = 1e9f;
-    for (int i = 0; i < VMAX; ++i) {
-        if (V[i].stage == V_IDLE) return i;
-        if (V[i].env < lo) { lo = V[i].env; best = i; }
+static int alloc_voice(int source) {
+    int best=0; float lowest=1e9f;
+    for(int i=0;i<VMAX;++i) {
+        if(queued[i] && pending[i].source==source && source>=0) return i;
+        if(V[i].stage==V_IDLE && !queued[i]) return i;
+        /* Released voices yield first, then the quietest held voice. */
+        float score=V[i].env + (V[i].stage==V_RELEASE ? 0.0f:2.0f);
+        if(score<lowest) { lowest=score; best=i; }
     }
     return best;
 }
 
-static void start_note(int source, float freq_hz, float amp) {
-    if (freq_hz < 20.0f || amp <= 0.0f) return;
-    if (source >= 0) {
-        for (int j=0;j<VMAX;++j) if(V[j].stage!=V_IDLE && V[j].source==source)
-            V[j].stage=V_RELEASE;
-    }
-    int i = alloc_voice();
-    if (i < 0) return;
-    bvoice_t *v = &V[i];
+static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float amp) {
+    memset(v,0,sizeof *v);
     v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
     v->inc2 = freq_hz * 1.0041f / SR;         /* +7 cents ensemble detune  */
     v->dt   = v->inc;
-    if (V[i].stage == V_IDLE) { v->ph = 0.03f; v->ph2 = 0.51f; }  /* fresh phase */
+    if (v->stage == V_IDLE) { v->ph = 0.03f; v->ph2 = 0.51f; }  /* fresh phase */
     v->rng  = 0x9E3779B9u ^ (uint32_t)(freq_hz * 131.0f);
 
     /* colour: Open Sea = warmer/brighter body, moderate symp; Fjords = darker,
@@ -117,22 +120,36 @@ static void start_note(int source, float freq_hz, float amp) {
     v->stage = V_ATTACK;
 }
 
+static void start_note(int source, float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || freq_hz>8000.0f || amp<=0.0f) return;
+    if(source>=0) for(int j=0;j<VMAX;++j)
+        if(V[j].stage!=V_IDLE && V[j].source==source) V[j].stage=V_RELEASE;
+    int i=alloc_voice(source);
+    queued[i]=0;
+    prepare_note(&pending[i],i,source,freq_hz,amp);
+    if(V[i].stage!=V_IDLE && fade_left[i]==0) fade_left[i]=HANDOVER_SAMPLES;
+    __asm__ volatile("" ::: "memory");
+    queued[i]=1;
+}
+
 void bowed_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
 void bowed_note_on(int source,float freq_hz,float amp) {
     if(source>=0 && source<16) start_note(source,freq_hz,amp);
 }
 void bowed_note_off(int source) {
+    for(int i=0;i<VMAX;++i) if(queued[i] && pending[i].source==source) queued[i]=0;
     for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE && V[i].source==source) {
         V[i].source=-1; V[i].stage=V_RELEASE;
     }
 }
 void bowed_all_off(void) {
+    for(int i=0;i<VMAX;++i) queued[i]=0;
     for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
 }
 
 int bowed_active_count(void) {
     int c = 0;
-    for (int i = 0; i < VMAX; ++i) if (V[i].stage != V_IDLE) ++c;
+    for (int i = 0; i < VMAX; ++i) if (V[i].stage != V_IDLE || queued[i]) ++c;
     return c;
 }
 
@@ -145,6 +162,9 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 
         for (int i = 0; i < VMAX; ++i) {
             bvoice_t *v = &V[i];
+            if(queued[i] && v->stage==V_IDLE) {
+                *v=pending[i]; queued[i]=0; fade_left[i]=0;
+            }
             if (v->stage == V_IDLE) continue;
 
             if (do_ctl) {
@@ -200,6 +220,10 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             /* sympathetic resonators (fed lightly, ring back in) */
             float sy = dsp_svf_bp(&v->symp1, body) + dsp_svf_bp(&v->symp2, body);
             float out = (body + sy * v->symp_gain) * v->env * 0.5f;
+            if(fade_left[i]>0) {
+                out *= (float)fade_left[i]/HANDOVER_SAMPLES;
+                if(--fade_left[i]==0) v->stage=V_IDLE;
+            }
 
             L += out * v->panL;
             R += out * v->panR;

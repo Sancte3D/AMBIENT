@@ -32,6 +32,9 @@ synth_id_t  synth_host_active(void);
 const char *synth_host_active_name(void);
 
 void        synth_host_note_on(int midi, float vel);
+void        synth_host_note_on_hz(float hz, float vel);
+/* Slots: brightness (-600..800 Hz legacy offset), resonance, sweep, envmod. */
+void        synth_host_set_macro(int slot, float value);
 void        synth_host_note_off(void);
 void        synth_host_set_param(synth_param_t p, float v01);
 void        synth_host_panic(void);

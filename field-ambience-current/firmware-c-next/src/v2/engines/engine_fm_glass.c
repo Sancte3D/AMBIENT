@@ -18,6 +18,7 @@
  */
 #include "v2/synth_engine.h"
 #include "dsp.h"
+#include "shape.h"
 #include <math.h>
 #include <string.h>
 
@@ -27,6 +28,7 @@
 enum { G_IDLE = 0, G_ATTACK, G_DECAY, G_SUSTAIN, G_RELEASE };
 
 static struct {
+    float colour_scale, colour_res;
     float car_ph, mod_ph;
     float freq_cur, freq_tgt;
     float glide_coef;
@@ -46,6 +48,7 @@ static struct {
 
 static void fm_init(void) {
     memset(&g, 0, sizeof g);
+    g.colour_scale = 1.0f;
     g.freq_cur = g.freq_tgt = 110.0f;
     g.glide_coef = dsp_smooth_coef(0.030f);
     g.ratio      = 2;
@@ -59,7 +62,7 @@ static void fm_init(void) {
     g.cutoff_hz  = 4500.0f;
     g.level      = 0.9f;
     g.send       = 0.16f;        /* glassy → a bit more space than the bass */
-    dsp_svf_reset(&g.lp); dsp_svf_set(&g.lp, g.cutoff_hz, 0.707f);
+    dsp_svf_reset(&g.lp); dsp_svf_set(&g.lp, dsp_clampf(g.cutoff_hz * g.colour_scale, 80.0f, 8000.0f), 0.707f + g.colour_res * 1.8f);
     g.astate = G_IDLE;
 }
 
@@ -67,7 +70,9 @@ static void fm_activate(void)   { fm_init(); }
 static void fm_deactivate(void) { if (g.astate != G_IDLE) g.astate = G_RELEASE; }
 static void fm_panic(void)      { g.amp = 0.0f; g.idx_cur = 0.0f; g.astate = G_IDLE; }
 
-static void fm_note_on(int midi, float vel) {
+static void fm_note_on(float midi, float vel) {
+    g.atk_inc = 1.0f / (0.006f * shape_attack_scale() * SR);
+    g.rel_coef = dsp_smooth_coef(0.3f * shape_release_scale());
     float f = dsp_midi_to_hz((float)midi);
     if (g.astate == G_IDLE || g.amp < 1.0e-3f) g.freq_cur = f;   /* snap from silence */
     g.freq_tgt = f;
@@ -124,13 +129,17 @@ static void fm_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
         g.car_ph += dt_c; if (g.car_ph >= 1.0f) g.car_ph -= 1.0f;
         g.mod_ph += dt_m; if (g.mod_ph >= 1.0f) g.mod_ph -= 1.0f;
 
-        if ((g.tctr++ % TONE_UPDATE) == 0) dsp_svf_set(&g.lp, g.cutoff_hz, 0.707f);
+        if ((g.tctr++ % TONE_UPDATE) == 0) dsp_svf_set(&g.lp, dsp_clampf(g.cutoff_hz * g.colour_scale, 80.0f, 8000.0f), 0.707f + g.colour_res * 1.8f);
         float tone = dsp_svf_lp(&g.lp, c);
 
         float out = tone * g.amp * g.level;
         dL[n] += out;          dR[n] += out;
         sL[n] += out * g.send; sR[n] += out * g.send;
     }
+}
+
+static void fm_set_colour(float scale, float res) {
+    g.colour_scale = scale; g.colour_res = res;
 }
 
 const synth_engine_t engine_fm_glass = {
@@ -143,4 +152,5 @@ const synth_engine_t engine_fm_glass = {
     .set_param   = fm_set_param,
     .render_mix  = fm_render_mix,
     .panic       = fm_panic,
+    .set_colour  = fm_set_colour,
 };
