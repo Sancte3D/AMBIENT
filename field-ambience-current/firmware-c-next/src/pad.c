@@ -165,7 +165,12 @@ static float vmix_target;           /* requested voiceMix */
 static float saww_cur, pulsew_cur;  /* smoothed saw / pulse weights */
 static float vmix_coef;             /* per-control-block smoothing coef */
 
+static float source_gain[16], source_gain_target[16];
+void pad_set_source_gain(uint8_t source,float gain) {
+    if(source<16 && isfinite(gain)) source_gain_target[source]=dsp_clampf(gain,0.0f,1.5f);
+}
 void pad_init(void) {
+    for(int i=0;i<16;++i) source_gain[i]=source_gain_target[i]=1.0f;
     memset(voices, 0, sizeof voices);
     ctl_phase     = 0;
     bright_target = 0.0f;
@@ -496,6 +501,7 @@ static void render_block_float(float *outL, float *outR, int frames) {
     for (int n = 0; n < frames; ++n) {
         bool ctl = (ctl_phase == 0);
         if (ctl) {
+            for(int i=0;i<16;++i) source_gain[i]+=bright_coef*(source_gain_target[i]-source_gain[i]);
             bright_cur += bright_coef * (bright_target - bright_cur);
             /* Smooth the global timbre weights toward the requested voiceMix.
              * sawWeight = 1 - mix*0.5, pulseWeight = mix*0.5 (webapp). */
@@ -592,8 +598,9 @@ static void render_block_float(float *outL, float *outR, int frames) {
                 vR += delayed * s->panR;
             }
 
-            L += vL * v->env;
-            R += vR * v->env;
+            float gain=v->source<16 ? source_gain[v->source]:1.0f;
+            L += vL * v->env * gain;
+            R += vR * v->env * gain;
         }
 
         if (++ctl_phase >= CTL_DECIMATE) ctl_phase = 0;

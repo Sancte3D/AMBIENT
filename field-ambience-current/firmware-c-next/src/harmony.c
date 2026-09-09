@@ -251,7 +251,8 @@ int harmony_collision_ok(int midi, const int *sustained, int n_sus) {
     for (int i = 0; i < n_sus; ++i) {
         int ic = iclass(midi, sustained[i]);
         if (ic == 1 || ic == 6) return 0;
-        if (ic == 2 && (midi < REG_SECONDS_MIN ||
+        int distance=midi>sustained[i] ? midi-sustained[i]:sustained[i]-midi;
+        if (ic == 2 && distance<12 && (midi < REG_SECONDS_MIN ||
                         sustained[i] < REG_SECONDS_MIN)) return 0;
     }
     return 1;
@@ -341,4 +342,15 @@ int harmony_melody_next(int last_midi, const int *sustained, int n_sus,
             return cand[i];                /* first safe = next best      */
     }
     return -1;                             /* nothing safe → silence      */
+}
+
+int harmony_melody_move(int last_midi,const int *sounding,int count) {
+    int best=-1,distance=13;
+    for(int m=REG_MELODY_LO;m<=REG_MELODY_HI;++m) {
+        int d=m>last_midi ? m-last_midi:last_midi-m;
+        if(d>0 && d<distance && harmony_in_core(m) && harmony_collision_ok(m,sounding,count)) {
+            best=m;distance=d;
+        }
+    }
+    return best;
 }

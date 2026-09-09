@@ -50,7 +50,7 @@ static void is_init(void) {
     s.sustain  = 0.80f;
     s.rel_coef = dsp_smooth_coef(0.12f);
     s.cutoff   = 2200.0f;
-    s.pwm_inc  = 0.8f / SR;
+    s.pwm_inc  = 0.060f / SR;
     s.pwm_depth= 0.35f;
     s.drive    = 1.6f;
     s.res      = 0.55f;        /* ladder resonance = analog hoover body */
@@ -88,7 +88,7 @@ static void is_set_param(synth_param_t p, float v) {
         case SP_C: s.pwm_depth = v * 0.45f;                                  break; /* PWM    */
         case SP_D: s.drive = 1.0f + v * 3.0f; dsp_ladder_set_drive(&s.lad, s.drive); break; /* Drive */
         case SP_E: s.glide_coef = dsp_smooth_coef(0.008f + v * 0.15f);       break; /* Glide  */
-        case SP_F: s.pwm_inc = (0.1f + v * 2.0f) / SR;                       break; /* Motion */
+        case SP_F: s.pwm_inc = (0.025f + v * 0.100f) / SR;                       break; /* Motion */
         default: break;
     }
 }

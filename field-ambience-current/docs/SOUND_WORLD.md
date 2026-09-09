@@ -1,4 +1,4 @@
-# SOUND_WORLD.md — die klangliche Verfassung (v1, r18.90)
+# SOUND_WORLD.md — die klangliche Verfassung (v2, 2026-09-09)
 
 Bindend für jede Änderung an `firmware-c-next/src/` die Klang erzeugt.
 Wie `AI_READY_SCHEMATIC_STANDARD.md` für die Hardware: erst gegen dieses
@@ -24,153 +24,118 @@ Preset-Pack-Klang · **stationäres Dauerrauschen als „Atmosphäre"**
 (r18.97: Wind/Wellen/Regen sind EREIGNISSE mit Flauten und Pausen —
 gefiltertes Rauschen, das nie aufhört, ist ein Teppich, kein Wetter).
 
-## 3. Instrumentierung (drei Stimmen, nicht zwanzig)
+## 3. Rollen und Klangkerne
 
-| Stimme | Modul | Rolle | Register |
-|---|---|---|---|
-| **Pad-Bett** | pad.c + padsynth.c (Spektraltisch, Nasca-Modell) | der Raum, die Harmonie | ~MIDI 50–78 |
-| **Melodie** | pluck.c (KS-Saite) **oder** glass.c (2-op-FM, r18.98) → body.c (Modalkörper pro Welt) | die Erzählstimme über dem Bett — VOICE-Slot wählt String/Glass; bei String/Glass schlägt auch jeder Cell-Press sie an | ~MIDI 64–90 |
-| **Bass-Fundament** | bass.c (Sub + Deep) | Boden, folgt der tiefsten Note | −1/−2 Okt. unter Root |
+Drei musikalische Rollen: **Bett**, **Erzählstimme**, **Fundament**.
 
-VOICE ist eine WAHL, kein Layer: eine Melodiestimme klingt zur Zeit
-(Pad-Default = Referenzklang, Cells rein als Swell). KEY (12 Tonarten im
-Menü, r18.98) transponiert im Register MIDI 54–65 — nie Oktavsprünge.
-
-Dazu Nicht-Ton-Schichten: texture.c (Brown+Pink-Atem), ambience.c
-(Welt-Atmosphäre), tape.c (Hiss + Sättigung + Vinyl-Crackle), drone.c
-(Tonart-Pedal). **Keine neue Stimme ohne Streichung einer alten.**
-
-## 4. Harmonische Sprache — HARMONIC SAFETY CORE (r19.0, bindend)
-
-Der Autoplay-Composer denkt NICHT in Chord Progressions, sondern in einer
-**Pitch World** mit einem Sicherheitskern (harmony.c). Reihenfolge ist
-Gesetz — **Quality Gate zuerst, Randomness zuletzt**:
-
-1. **PITCH WORLD:** Pentatonik-CORE (Dur `C D E G A` · Moll `D F G A C`) —
-   strukturell KEIN Halbton, KEIN Tritonus im Set. + EINE Color-Note
-   (maj7 / 9) **nur oberhalb C4**.
-2. **REGISTER:** unter C3 nur Root/Quinte/Oktave; Terzen im Mittenband;
-   2nds/9ths/Color nur hoch. Bass 38–49 · Stimmen 55–79 · Melodie 62–86.
-3. **MUTATION statt Neu-Würfeln:** ein Zustandswechsel behält **≥3
-   gemeinsame Pitch-Classes und bewegt ≤2 Stimmen**; gemeinsame Töne
-   bleiben auf DERSELBEN Tonhöhe (parsimonious voice leading).
-4. **COLLISION-FILTER vor jedem Melodie-Ton:** gegen jede klingende Stimme
-   Halbton (1/11) + Tritonus (6) verboten, tiefe 2nds verboten → next-best.
-5. Wahrscheinlichkeit ganz zuletzt.
-
-**Verboten:** einen Akkord komplett neu würfeln · einen Halbton oder
-Tritonus zwischen gleichzeitig klingenden Stimmen · Color-Note tief · dichte
-Cluster unter C3. Messlatte: 0 % Halbtöne / 0 % Tritoni zwischen sounding
-voices (r19.0 über 80 000 Intervalle bestätigt). brain.c bleibt für die
-Live-Cell-Tonhöhen; **kein Modul erfindet eigene Skalen.**
-
-**Stimmung (r19.6, tuning.c — Menü-Slot Tuning):** *Equal* = gleichstufig
-(bench-Referenz, Default). *Just* = 5-Limit-Just-Intonation, an die KEY-
-Tonika verankert (Quinte 3:2, Terz 5:4, Sexte 5:3 …) — die Partialtöne
-gehaltener Töne fallen exakt zusammen, die stehende Harmonie rastet ohne
-Schweben ein (Sonicware Ø v1.5 „harmonies without beating"). ALLE tonalen
-Stimmen laufen durch dieselbe Stimmung — Mischen von ET und JI schwebt
-schlimmer als beides. Ideal für unser Gerät: ein tonales Zentrum, langsam.
-
-## 5. Bewegungs-Sprache (Motion)
-
-- Bewegung = **Drift, nie Wobble**: alle LFOs < 0,15 Hz, Raten pro Seite/
-  Stimme deliberately inkommensurabel (0.052/0.061/0.087/0.113 Hz …).
-- Juno-Prinzip (übertragen, nicht kopiert): Lebendigkeit kommt aus
-  **Phasen-Drift zwischen Fast-Unisono-Schichten** (r18.90 Breathing-Detune
-  ±1,8 Cent), nicht aus großem statischem Detune.
-- Zufall nur als Random-Walk mit Zeitkonstante (Drone-Drift τ=18 s), nie
-  als Sample-und-Halt-Springen.
-
-## 6. Melodie-Grammatik (die lange generative Stimme, r19.0)
-
-EINE lange Voice (kein Arpeggiator), gespeist aus dem Safety Core (§4).
-Zufall ist IMMER eingesperrt in diese Regeln (engine.c Tick + harmony.c):
-
-| Regel | Wert |
-|---|---|
-| Tonlänge | 4–16 s pro Note |
-| Stille | 1–8 s, + Atem 3–8 s nach jeder Phrase (Stille ist Komposition) |
-| Phrasenlänge | 2–5 Noten |
-| Tonvorrat | Pitch World §1 im Melodie-Register 62–86 |
-| Bewegung | repeat > Schritt > Quart/Quint > Sext/Oktave > Color (Tabelle) |
-| Kein Leap | > Oktave (per Register + Oktav-Fold) |
-| Collision | jeder Ton gegen alle klingenden Stimmen gefiltert (§4.4) |
-| Déjà-vu | 35 % Replay der letzten Phrase, jeder Ton erneut durch World + Filter |
-| Onset | zusätzlicher VOICE-Anschlag (String/Glass) vor dem Pad-Swell |
-
-**Blendwave (Liven Ambient Ø, gelernt — r19.5 ausgebaut):** ein gehaltener
-Ton lebt durch spektrale Bewegung, nicht durch neue Events. Zwei Ebenen:
-(1) globaler Brightness-Walk (Pad-Tilt, alle 400 ms); (2) **pro Stimme ein
-wandernder Formant** (korrelierter Walk über die Partial-Zone 220–1550 Hz),
-die zwei internen Oszillatoren **gegenläufig gespiegelt** (w vs 1−w =
-Yin/Yang) → der Ton morpht UND das Stereobild schimmert spektral. Tiefe an
-MOTION, bei 0 bit-exakt aus. Belegt: Spektral-Centroid-Bewegung ×2.8
-(host-getestet, CV 0.06 → 0.17).
-| Dynamik | Phrasen-Opener leicht lauter (0.075 vs 0.05–0.065) |
-| Timing | 20–60 % der Bar, humanisiert |
-
-**Verboten:** Arpeggiator-Muster, chromatische Töne, Intervalle > Oktave,
-mehr als ein neuer Ton pro Bar, Melodie während der User spielt.
-
-### 6b. Composer-Ebene (r18.96 — Atmoscapia/Eno-Prinzip)
-
-Über der Grammatik läuft ein Composer, der über Minuten Zustände wechselt
-und dabei **nur Wahrscheinlichkeiten** ändert — nie Noten setzt, nie den
-Audio-Pfad berührt. Zyklus CALM → OPEN → DEEP → EMPTY → RETURN, je
-40–80 s (humanisiert):
-
-| State | mel_density | rest_add | high_p | bed_amp | bass_depth |
-|---|---|---|---|---|---|
-| CALM   | 0.70 | +0.10 | 0.04 | 1.00 | 0.50 |
-| OPEN   | 1.30 | −0.10 | 0.15 | 1.05 | 0.40 |
-| DEEP   | 0.45 | +0.20 | 0.02 | 0.90 | 0.85 |
-| EMPTY  | 0.15 | +0.45 | 0.00 | 0.60 | 0.30 |
-| RETURN | 1.00 |  0.00 | 0.08 | 1.00 | 0.55 |
-
-Der High-Response (+1 Okt.) ist eine EIGENE antwortende Stimme — die
-Melodielinie führt am Basiston weiter (Leap-Regel bleibt hart). EMPTY ist
-nicht Stille: das Bett hält bei 0.6×, Texture/Atmos unberührt — der
-angehaltene Atem, der RETURN warm macht.
-
-## 7. Raum & Imperfektion
-
-- Ein Hall für alles (Sends 0.35–0.55) — der Raum ist Teil des Instruments,
-  kein Effekt danach. Plucks blühen mit 0.5 hinein.
-- Imperfektionen sind DOSIERT und GEALTERT über das Age-Makro: Hiss
-  (−46 dB…), Vinyl-Ticks (2,6-kHz-Resonator, age²), tanh-Sättigung.
-  Nie „kaputt", nie Bitcrush.
-- Master-Kette fix: Drive → DC-Block → Volume → Tape-Sättigung →
-  Soft-Limit. Reihenfolge ist Teil des Klangs — nicht umsortieren.
-
-## 8. Makro-Regeln (Bedienung = Emotion, nicht DSP)
-
-| Control | Emotion | interne Ziele |
+| Rolle | Umsetzung | Vertrag |
 |---|---|---|
-| DRIVE | „Wärme/Dichte" | Master-Sättiger + Reverb-Input-Drive (geslavt) |
-| BRIGHTNESS | „Licht" | Pad-Cutoff + Hall-Dämpfung + Pluck-Dämpfung |
-| SPACE | „Raumgröße" | Reverb size/decay/wet (Preset-Kurve) |
-| AGE | „Alter" | Hiss + Sättigung + Vinyl-Crackle (age²) |
-| MOTION | „Lebendigkeit" | Filter-LFO-Tiefe + Ensemble-Drift-Tiefe |
+| Bett | Pad/PADsynth, Basiston und drei langsame Eno-Loops | trägt Harmonie; kein ständig angeschlagener Akkord |
+| Erzählstimme | String, Glass, Bowed, Horn, Choir oder Guembri | VOICE wählt Charakter; kein Stapeln aller Instrumente |
+| Fundament | Bass und optionales Tonart-Pedal | Tiefe, keine konkurrierende Basslinie |
 
-Regel: Ein Encoder bewegt **mindestens zwei, höchstens vier** Ziele, alle
-in dieselbe emotionale Richtung; bei Mittelstellung/0 exakt der
-bench-getunte Referenzklang.
+Bowed/Horn/Choir behalten je drei Stimmen. Beim Ersetzen blendet die alte
+Stimme 8 ms aus; dann übernimmt eine vorbereitete neue Stimme. Gehaltene
+Töne gehören ihren Tasten; Loslassen beendet nur die zugehörige Stimme.
 
-## 9. Technische Verfassung (Echtzeit)
+SYNTH wählt alternativ Acid, FM Glass, Mist, Storm, Orbit oder Bamboo. Diese
+sechs Kerne sind monophon und teilen Master und Effektraum mit Ambient.
+Autoplay gehört zu Ambient. Keine neue Klangschicht ohne begründetes Rollen-
+und Ressourcenbudget.
 
-Kein Heap im Audio-Pfad · keine Blocking-Ops · transzendente Funktionen
-nur at control-rate oder als LUT (dsp_sin) · Parameter geglättet (≥80 ms)
-· Feedback geklemmt (rho<1, SVF-Clamps 80–8000 Hz) · Denormals: FTZ auf
-dem M7 (FPSCR+FPDSCR Bit 24) · fixe LCG-Seeds → jede Klangentscheidung
-ist im Host-Test bit-reproduzierbar · jede neue Klangeinheit kommt mit
-Test (Statistik/Autokorrelation, nicht nur „läuft").
+## 4. Harmonische Sprache
+
+**Tonvorrat → Register → klingender Kontext → Stimmführung → Wahrscheinlichkeit.**
+
+- Live-Spiel und Generator teilen die sechs Modi aus `pitch_modes.h`.
+- Das Bett verwendet einen Dur-/Moll-Pentatonikkern. Modalfarben gehören
+  sparsam nach oben: Ionian maj7, Dorian 6, Phrygian b2, Lydian #4,
+  Mixolydian b7, Aeolian b6.
+- Neue automatische Bett-, Eno- und Melodietöne prüfen gehaltene Töne,
+  Bass/Pedal und konservativ gespeicherte Ausklänge. Halbton- und
+  Tritonusklassen sowie enge Sekunden unter C4 sind ausgeschlossen.
+  Weite Nonen werden nicht allein wegen eines tiefen Grundtons blockiert.
+- Harmoniewechsel bewahren gemeinsame Töne und bewegen wenige Stimmen.
+  Tonart-/Moduswechsel releasen alte generative Stimmen und planen neu;
+  ihre Ausklänge bleiben geschützt.
+- Ohne passenden Ton folgt eine Pause. Modalfarbe wird nie erzwungen.
+  Vom Menschen gespielte Töne werden nicht vom Kollisionsfilter umgeschrieben.
+
+Equal oder tonikabezogene 5-Limit-Just-Intonation: Frequenzen bleiben auch in
+V2 als gebrochene MIDI-Tonhöhen erhalten. Just verzichtet auf zufälligen
+Pitch-Versatz beim Anschlag. Absichtliches Unisono, Chorus und Vibrato bleiben
+Klangmerkmale; reine Grundstimmung bedeutet nicht völlige Schwebungsfreiheit.
+
+## 5. Bewegung
+
+Bewegung soll als langsame Drift wirken. Globale Filterbewegung und Orbit/
+Storm-Morphing bleiben unter 0,15 Hz. Kleine Ensemble-Verzögerungsmodulation
+und verzögert einsetzendes Instrument-Vibrato sind eigene Charaktermerkmale.
+Zufallsbewegung bleibt begrenzt und korreliert. Ein gehaltener Ton darf sich
+entwickeln, ohne dafür neue Noten auszulösen.
+
+## 6. Phrasen und Composer
+
+- Eine Melodielinie: 4–16 s pro Ton, echte Pausen und Atem zwischen Phrasen.
+- 2–5 Töne pro Phrase; Sprünge maximal eine Oktave, auch bei Motiv-Replay.
+- Nach zwei gleichen Melodietönen: sicherer anderer Ton oder Pause.
+  Eintönige Phrasen werden nicht als wiederholbare Motive archiviert.
+- Alle automatischen Schichten teilen mindestens 1,4 s Einsatzabstand.
+- Physisches Spiel pausiert neue Einsätze; sanfte Rückkehr nach etwa 8 s.
+  Geplante Releases laufen währenddessen weiter.
+
+CALM, OPEN, DEEP, EMPTY und RETURN bilden einen gewichteten Graphen.
+Klangbelegung, kürzlich besuchte Zustände und lange nicht besuchte Ziele
+beeinflussen die Wahl. Spätestens beim sechsten Wechsel seit dem letzten
+Atem kommt EMPTY; EMPTY führt über RETURN zurück.
+
+| Zustand | Dichte | zusätzliche Pause | Farbtendenz | Bettpegel | Basstiefe |
+|---|---:|---:|---:|---:|---:|
+| CALM | 0,70 | +0,10 | 0,04 | 1,00 | 0,50 |
+| OPEN | 1,30 | −0,10 | 0,15 | 1,05 | 0,40 |
+| DEEP | 0,45 | +0,20 | 0,02 | 0,90 | 0,85 |
+| EMPTY | 0,15 | +0,45 | 0,00 | 0,60 | 0,30 |
+| RETURN | 1,00 | 0,00 | 0,08 | 1,00 | 0,55 |
+
+Ziele gleiten etwa vier Sekunden. Der Bettpegel verändert auch gehaltene
+Noten. EMPTY lässt Eno-Stimmen los und setzt sie aus; nachfolgende Einsätze
+bleiben gestaffelt. Raum und Restklang dürfen weiter atmen.
+
+## 7. Gemeinsamer Raum
+
+Ein zentraler Effektpfad mit getrennten Dry-/Send-Bussen verbindet die Stimmen.
+Sends bestimmen die Entfernung; Master und Mute greifen nach dem Raum.
+**Klangkerne → Drive → FX → DC-/Hochpass → Master → Soft-Limit**.
+Alle fünf Weltcharaktere haben eigene Raumparameter; Desert ist enger und näher.
+Hiss, Shimmer und Sättigung bleiben dosierte Färbungen. Kein dauernder
+Shimmer-Teppich oder übermäßiger Subbass.
+
+## 8. Regler
+
+BRIGHTNESS verändert den vorhandenen Klangfilter, RESONANCE dessen Betonung,
+SWEEP eine langsame Öffnung und ENVMOD die Öffnung durch die Klanghüllkurve.
+Diese Makros funktionieren in Ambient und allen sechs V2-Kernen. V2-Makros
+werden 80 ms geglättet und nutzen vorhandene Filter; keine zusätzlichen
+Filterketten. Die sechs eigenen Kernparameter bleiben erhalten.
+Attack/Release skalieren die natürliche Hüllkurve neuer Noten: Bamboo bleibt
+LPG-Schlag, Mist bleibt Pad. SPACE/ECHO/MOTION/AGE/BLUR/SHIMMER gestalten den
+Raum. Reglerrichtung verständlich halten, Instrumentcharakter erhalten.
+
+## 9. Technik und Abnahme
+
+Kein Heap/Blocking im Audiopfad; feste Stimmen-/Speicherbudgets. Live-Werte
+glätten, Transzendentale nur bei Initialisierung/Kontrollrate, kein heißer
+Puffer in PSRAM. `REALTIME_AUDIO_RULES.md` bleibt bindend. Reproduzierbare
+Seeds und hörbare Verhaltensregressionen gehören zur Entwicklung.
+
+Pitch-Memory schätzt Ausklänge zeitlich, analysiert den Hall nicht spektral.
+Host-Tests und Firmware-Render beweisen keine endgültige Klanggüte.
+DWT-Spitzenlast <60 %, Ausgänge und Lautsprecher/Kopfhörer müssen auf dem
+H743 gemessen und gehört werden. Hörentscheidungen bleiben Teil der Abnahme.
 
 ## 10. Referenz-Lernregel
 
-Von Legenden **Prinzipien** extrahieren (Juno = Phasen-Drift; OP-1 =
-begrenzte, immer musikalische Makros; Eno = Random-Walk statt Zufall;
-Lexicon/Dattorro = Hall als Instrument; **Nasca/PADsynth = Partialtöne
-als Rauschbänder, nicht als Linien; Gillet/Marbles = Zufall, der sich
-erinnern kann**) — nie Schaltungen, Samples oder Markenklänge nachbauen. Jede Übernahme wird im Code-Kommentar als
-„Prinzip X, gelernt aus Y, hier neu interpretiert als Z" dokumentiert.
+Prinzipien übernehmen: Eno — asynchrone Wiederkehr; Marbles — begrenzte
+Variation mit Gedächtnis; Juno — Ensemble durch kleine Unterschiede;
+OP-1 — wenige sinnvolle Regler; PADsynth — spektrale Fläche. Keine fremden
+Samples oder Markenklänge kopieren.

@@ -66,7 +66,7 @@ static void bc_note_on(float midi, float vel) {
     float f = dsp_midi_to_hz((float)midi);
     if (!b.active || b.env < 1.0e-3f) b.freq_cur = f;
     b.freq_tgt = f;
-    b.strike   = 0.4f + 0.6f * dsp_clampf(vel,0,1);    /* strike strength */
+    b.strike   = fmaxf(b.env,0.4f + 0.6f * dsp_clampf(vel,0,1));    /* strike strength */
     b.active   = 1;
 }
 static void bc_note_off(void) { /* LPG plucks ring out on their own; gate is a no-op */ }

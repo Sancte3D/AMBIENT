@@ -52,6 +52,69 @@
 #define GEN_SOURCE    8           /* reserved pad-voice source for the bed */
 #define GEN_VOICE_AMP 0.10f
 static float active_freq[MAX_SOURCES];
+/* Fixed pitch-indexed memory: no eviction of still-protected older tails.
+ * Envelope/FX horizons are conservative estimates, not spectral analysis. */
+static uint32_t sound_ms, sound_fraction, tail_until[128], source_tail_ms[MAX_SOURCES];
+static uint8_t tail_valid[128];
+static int bass_root_midi, drone_root_midi, memory_fx_mode;
+static bool drone_on, auto_has_onset;
+static float memory_space, memory_echo;
+static uint32_t auto_last_ms;
+static int pitch_of(float hz) {
+    return hz>1.0f ? (int)lrintf(69.0f+12.0f*log2f(hz/440.0f)):-1;
+}
+static uint32_t tail_horizon(void) {
+    uint32_t ms=(uint32_t)(8800.0f*shape_release_scale()+800.0f*shape_attack_scale());
+    int mode=fx_master_mode();
+    if((mode!=0 && mode!=3 && mode!=4) ||
+       (memory_fx_mode!=0 && memory_fx_mode!=3 && memory_fx_mode!=4))
+        ms+=(uint32_t)(6000.0f+memory_space*12000.0f+memory_echo*8000.0f);
+    return ms;
+}
+static void remember_pitch(int midi,uint32_t horizon) {
+    if(midi<0 || midi>127) return;
+    uint32_t until=sound_ms+horizon;
+    if(!tail_valid[midi] || (int32_t)(until-tail_until[midi])>0) tail_until[midi]=until;
+    tail_valid[midi]=1;
+}
+static void remember_source(int source) {
+    if(source<0 || source>=MAX_SOURCES || active_freq[source]<=0.0f) return;
+    uint32_t horizon=tail_horizon();
+    if(source_tail_ms[source]>horizon) horizon=source_tail_ms[source];
+    remember_pitch(pitch_of(active_freq[source]),horizon);
+}
+static void remember_bass(void) {
+    if(bass_root_midi>0) {
+        remember_pitch(bass_root_midi-12,tail_horizon());
+        remember_pitch(bass_root_midi-24,tail_horizon());
+    }
+}
+int engine_sounding_notes(int *out,int max) {
+    uint8_t present[128]={0};
+    for(int m=0;m<128;++m) present[m]=tail_valid[m] && (int32_t)(tail_until[m]-sound_ms)>0;
+    for(int i=0;i<MAX_SOURCES;++i) {
+        int m=pitch_of(active_freq[i]); if(m>=0 && m<128) present[m]=1;
+    }
+    if(bass_root_midi>=24 && bass_root_midi<128) {
+        present[bass_root_midi-12]=1; present[bass_root_midi-24]=1;
+    }
+    if(drone_on && drone_root_midi>=12 && drone_root_midi<128) {
+        present[drone_root_midi]=1; present[drone_root_midi-12]=1;
+    }
+    int n=0;
+    for(int m=0;m<128 && n<max;++m) if(present[m]) out[n++]=m;
+    return n;
+}
+static int safe_layer_pitch(int wanted,int lo,int hi) {
+    int sounding[128]; int n=engine_sounding_notes(sounding,128);
+    return harmony_nearest_safe(wanted,lo,hi,sounding,n);
+}
+static bool auto_ready(void) {
+    return !auto_has_onset || (uint32_t)(sound_ms-auto_last_ms)>=1400u;
+}
+static void auto_onset(void) { auto_last_ms=sound_ms; auto_has_onset=true; }
+static void release_generated(void);
+
 
 /* Optional note-event tap (MIDI out lives behind this so the engine keeps no
  * link dependency on midi.c — the product wires it in main_h743). on: 1=on,
@@ -114,6 +177,7 @@ static int      gen_state_seen   = -1;   /* bed re-strikes on state change */
 static uint32_t s_last_active_ms = 0;
 static bool     s_ever_active     = false;
 static bool     s_gen_suppressed  = false;
+static bool s_user_present = false;
 /* r19.34 — the two sparse single-tone autoplay layers, each toggleable so the
  * player can keep the evolving bed/pad without the lonely melodic events. */
 static bool     s_mel_enabled = true;    /* long lead melody voice           */
@@ -134,6 +198,7 @@ static uint32_t mel_off_ms;           /* scheduled note-off              */
 static int      mel_sounding;
 static int      mel_phrase_left;      /* notes left in current phrase    */
 static int      mel_last_midi;        /* voice-leading memory (0 = none) */
+static int      mel_repeat_run;
 static int      mel_note_count;       /* observability (tests/UI)        */
 
 /* déjà-vu phrase memory (Marbles concept, kept from r18.93): the last
@@ -175,16 +240,21 @@ static float lowest_held(void) {
  * engine stops auto-following the lowest held note. NOTE/LAND keep following. */
 static bool s_bass_follow = true;
 void engine_bass_follow(bool on) { s_bass_follow = on; }
-void engine_bass_set(float freq_hz) { if (freq_hz > 1.0f) bass_note(freq_hz); }
-void engine_bass_off(void)          { bass_release(); }
+void engine_bass_set(float freq_hz) {
+    if(!isfinite(freq_hz) || freq_hz<=1.0f) return;
+    int midi=pitch_of(freq_hz);
+    if(midi!=bass_root_midi) { remember_bass(); bass_root_midi=midi; }
+    bass_note(freq_hz);
+}
+void engine_bass_off(void) { remember_bass(); bass_root_midi=0; bass_release(); }
 void engine_bass_glide(float tau_s) { bass_set_glide(tau_s); }
 bool engine_bass_active(void)       { return bass_active(); }
 
 static void refresh_bass(void) {
     if (!s_bass_follow) return;                /* a cell mode drives it itself */
     float lo = lowest_held();
-    if (lo > 0.0f) bass_note(lo);
-    else           bass_release();
+    if (lo > 0.0f) engine_bass_set(lo);
+    else           engine_bass_off();
 }
 
 #define BLOCK     AUDIO_BUFFER_FRAMES
@@ -268,6 +338,10 @@ static void recompute_reverb_from_presets(void) {
 }
 
 void engine_init(void) {
+    sound_ms=sound_fraction=0; bass_root_midi=drone_root_midi=0; drone_on=false;
+    auto_has_onset=false; auto_last_ms=0; s_user_present=false; s_bass_follow=true;
+    memory_space=0.5f; memory_echo=0.0f; memory_fx_mode=8;
+    memset(tail_valid,0,sizeof tail_valid); memset(source_tail_ms,0,sizeof source_tail_ms);
     pad_init();
     reverb_init();      /* tank still owned by the V2 synth hosts (SYNTH mode) */
     texture_init();
@@ -310,7 +384,7 @@ void engine_init(void) {
     harmony_init();                  /* r19.0 harmonic safety core */
     gen_state_seen = -1;
     mel_next_ms = 0; mel_off_ms = 0; mel_sounding = 0;
-    mel_phrase_left = 0; mel_last_midi = 0; mel_note_count = 0;
+    mel_phrase_left = 0; mel_last_midi = 0; mel_repeat_run=0; mel_note_count = 0;
     mel_hist_len = mel_cur_len = 0;
     mel_replay = 0; mel_replay_idx = 0;
     mel_dejavu_count = 0;
@@ -418,10 +492,13 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     if (source>=MAX_SOURCES || !isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || amp<=0.0f) return;
     /* ±0.5 cent pitch jitter, ±0.3 % amp jitter. Bass / drone get the same
      * freq downstream (refresh_bass) so the jitter is consistent per press. */
-    float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);   /* cents */
+    float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);
+    if(tuning_mode()) pitch_jitter=0.0f; /* preserve the requested pure ratio */   /* cents */
     float amp_jitter   = humanize_rand_unit() * 0.003f;
     freq_hz *= 1.0f + pitch_jitter;                    /* 2^(jit) ≈ 1+jit at tiny jit */
     amp     *= 1.0f + amp_jitter;
+    remember_source(source);
+    source_tail_ms[source]=tail_horizon();
     if (s_note_hook) s_note_hook(1, source, freq_hz, amp);
     /* r19.16 SYNTH mode: played cells drive the V2 sound-core instead of the
      * pad. Generative/drone sources never reach V2 (it's a played mono synth). */
@@ -456,6 +533,7 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     refresh_bass();
 }
 void engine_note_off(uint8_t source) {
+    remember_source(source);
     if (s_note_hook && source < MAX_SOURCES)
         s_note_hook(0, source, active_freq[source], 0.0f);
     if (s_synth_tgt > 0 && s_synth_be &&
@@ -480,13 +558,14 @@ void engine_note_off(uint8_t source) {
     refresh_bass();
 }
 void engine_all_off(void) {
+    for(int i=0;i<MAX_SOURCES;++i) remember_source(i);
     s_note_count = 0;
     if (s_note_hook) s_note_hook(-1, 0, 0.0f, 0.0f);   /* all-off sentinel */
     if (s_synth_tgt > 0 && s_synth_be) s_synth_be->panic();
     bowed_all_off(); horn_all_off(); choir_all_off();
     pad_all_off();
     memset(active_freq, 0, sizeof active_freq);
-    bass_release();
+    engine_bass_off();
 }
 
 /* ADR-0013 — Hall cell sample → velocity note. The cell index doubles as the
@@ -612,6 +691,7 @@ void engine_set_shimmer(float v) {
 /* Echo macro. r19.41: filtered ping-pong delay inside the master-effects
  * engine (replaces the legacy echo.c tape-style delay). */
 void engine_set_echo(float v) {
+    memory_echo=dsp_clampf(v,0.0f,1.0f);
     fx_master_set_echo(dsp_clampf(v, 0.0f, 1.0f));
 }
 
@@ -623,7 +703,10 @@ void engine_set_blur(float v) {
 
 /* r19.41 FX effect page: 0=Bypass..8=Dream Chain (menu slot; Dream Chain is
  * the boot default, single modes stay selectable for A/B listening). */
-void engine_set_fx_mode(int idx)       { fx_master_set_mode(idx); }
+void engine_set_fx_mode(int idx) {
+    if(idx<0 || idx>=fx_master_mode_count()) return;
+    memory_fx_mode=idx; fx_master_set_mode(idx);
+}
 int  engine_fx_mode(void)              { return fx_master_mode(); }
 int  engine_fx_mode_count(void)        { return fx_master_mode_count(); }
 const char *engine_fx_mode_name(int i) { return fx_master_mode_name(i); }
@@ -635,6 +718,7 @@ const char *engine_fx_mode_name(int i) { return fx_master_mode_name(i); }
  * Also keeps the harmonic brain's view of mode/vibe in sync so cells played
  * after the change pick up the new harmony. */
 void engine_set_mode(int mode_idx) {
+    if(mode_idx!=musical_mode) release_generated();
     if (mode_idx < 0)               mode_idx = 0;
     if (mode_idx >= RP_MODE_COUNT)  mode_idx = RP_MODE_COUNT - 1;
     musical_mode = mode_idx;
@@ -651,6 +735,7 @@ void engine_set_vibe(int vibe_idx) {
 }
 void engine_set_space(float v) {
     musical_space = dsp_clampf(v, 0.0f, 1.0f);
+    memory_space=musical_space;
     recompute_reverb_from_presets();     /* V2 synth hosts still use the tank */
     fx_master_set_space(musical_space);  /* r19.41: master-effects room scale */
 }
@@ -669,12 +754,22 @@ void engine_set_key_pc(int pc) {
 }
 
 void engine_set_key(int tonic_midi) {
+    if(tonic_midi!=brain_get_key()) release_generated();
+    if(drone_on && tonic_midi!=drone_root_midi) {
+        remember_pitch(drone_root_midi,tail_horizon()); remember_pitch(drone_root_midi-12,tail_horizon());
+    }
+    drone_root_midi=tonic_midi;
     brain_set_key(tonic_midi);
     harmony_set_mode(tonic_midi, musical_mode);    /* r19.0 */
     tuning_set_key(tonic_midi);        /* r19.6 anchor just intonation      */
     drone_set_root_midi(tonic_midi);   /* glides live if the drone is sounding */
 }
-void engine_set_drone(bool on) { drone_enable(on); }
+void engine_set_drone(bool on) {
+    if(drone_on && !on) {
+        remember_pitch(drone_root_midi,tail_horizon()); remember_pitch(drone_root_midi-12,tail_horizon());
+    }
+    drone_on=on; drone_enable(on);
+}
 
 /* r19.6 — tuning: 0 = equal temperament (reference), 1 = just intonation. */
 void engine_set_tuning(int just) { tuning_set_mode(just); }
@@ -696,7 +791,6 @@ void engine_set_pad_voice(int voice_idx) {
  * while a finger is down the composer yields; latched voices are standing
  * texture the generator plays AROUND (their sources stay protected simply
  * because the generator only ever writes its own sources 8/14/15). */
-static bool s_user_present = false;
 void engine_set_user_presence(bool any_key_down) { s_user_present = any_key_down; }
 
 /* r19.33 — player takes priority (musical "listening"): the bed + melody hold
@@ -731,22 +825,20 @@ static float gen_rand01(void) {
     return (float)(gen_tick_rng >> 8) / 16777216.0f;
 }
 
-void engine_set_generative(bool on, int program) {
-    generative_set_program(program);
-    if (on && !gen_on) gen_timing_valid = false;   /* first tick plays NOW */
-    gen_on = on;
-    if (!on) {
-        engine_note_off(GEN_SOURCE);    /* release the bed voice */
-        snd_bed_midi = 0;
-        engine_note_off((uint8_t)MEL_SRC);   /* r19.0: melody voice too */
-        mel_sounding = 0;
-        for (int i = 0; i < ENO_LOOPS; ++i) {   /* r18.99: loops out too */
-            if (eno_on[i]) engine_note_off(ENO_SRC(i));
-            eno_on[i] = 0;
-            snd_eno_midi[i] = 0;
-        }
-        eno_timing_valid = 0;
+static void release_generated(void) {
+    if(active_freq[GEN_SOURCE]>0) engine_note_off(GEN_SOURCE);
+    if(active_freq[MEL_SRC]>0) engine_note_off(MEL_SRC);
+    for(int i=0;i<ENO_LOOPS;++i) {
+        if(active_freq[ENO_SRC(i)]>0) engine_note_off(ENO_SRC(i));
+        eno_on[i]=0; snd_eno_midi[i]=0;
     }
+    snd_bed_midi=0; mel_sounding=0; gen_state_seen=-1; gen_timing_valid=false; eno_timing_valid=0;
+    mel_phrase_left=mel_cur_len=mel_hist_len=0; mel_replay=0; mel_last_midi=mel_repeat_run=0;
+}
+void engine_set_generative(bool on,int program) {
+    generative_set_program(program);
+    if(on && !gen_on) gen_timing_valid=false;
+    gen_on=on; if(!on) release_generated();
 }
 
 /* r19.0: manual step = one harmonic-state MUTATION (≥3 common pitch
@@ -774,6 +866,7 @@ void engine_generative_nudge(int cell, uint32_t now_ms) {
 }
 
 void engine_generative_new_field(uint32_t seed) {
+    release_generated();
     engine_set_gen_seed(seed);
     composer_reseed(seed ^ 0x9E3779B9u);
     harmony_reseed(seed ^ 0x85EBCA6Bu);
@@ -786,14 +879,16 @@ void engine_generative_new_field(uint32_t seed) {
 }
 
 int engine_generative_advance(void) {
-    if (!gen_on) return -1;
+    if (!gen_on || s_synth_tgt>0 || !auto_ready()) return -1;
     if (s_user_present || s_gen_suppressed) return -1;   /* r19.33: player + return-delay */
     harmony_advance();
-    int midi = harmony_bass_midi() + 12;
-    snd_bed_midi = midi;
+    int midi=safe_layer_pitch(harmony_bass_midi()+12,50,61);
+    if(midi<0) return -1;
+    snd_bed_midi=midi;
     gen_state_seen = harmony_state_changes();
     engine_note_on((uint8_t)GEN_SOURCE, tuning_hz((float)midi),
-                   GEN_VOICE_AMP * composer_params()->bed_amp);
+                   GEN_VOICE_AMP);
+    auto_onset();
     return harmony_state_index() + 1;
 }
 
@@ -802,11 +897,19 @@ int engine_generative_melody_count(void)     { return mel_note_count; }
 int engine_generative_dejavu_count(void)     { return mel_dejavu_count; }
 
 void engine_generative_tick(uint32_t now_ms) {
-    if (!gen_on) return;
-    /* r18.96 — the COMPOSER above the grammar (Atmoscapia/Eno principle:
-     * a slow top-level intent that only re-weights probabilities; see
-     * composer.h). Ticks on the same clock as everything else. */
-    composer_tick(now_ms);
+    /* Control-only tests may advance time without rendering every sample. */
+    if((int32_t)(now_ms-sound_ms)>0) { sound_ms=now_ms; sound_fraction=0; }
+    if(!gen_on || s_synth_tgt>0) return;
+    int sounding[128]; int occupied=engine_sounding_notes(sounding,128);
+    composer_listen((float)occupied/12.0f,s_user_present); composer_tick(now_ms);
+    for(int i=5;i<=8;++i) pad_set_source_gain((uint8_t)i,composer_params()->bed_amp);
+    bass_set_depth(composer_params()->bass_depth);
+    /* Scheduled releases continue while the player takes over. */
+    for(int i=0;i<ENO_LOOPS;++i) {
+        if(eno_on[i] && (int32_t)(now_ms-eno_off_ms[i])>=0) {
+            engine_note_off(ENO_SRC(i)); eno_on[i]=0; snd_eno_midi[i]=0;
+        }
+    }
 
     /* r19.33 — player-priority "listening": suppressed while a key is down AND
      * for GEN_RETURN_MS after the last release, so the machine steps back and
@@ -849,7 +952,7 @@ void engine_generative_tick(uint32_t now_ms) {
      * old tone, sound THIS loop's chord member of the CURRENT harmony,
      * hold for 62 % of the period, rest for the remainder — the gaps are
      * where the recombination shows. */
-    if (!s_eno_enabled) {                /* r19.34: layer off → hush + re-arm */
+    if (!s_eno_enabled || composer_state()==COMPOSER_EMPTY) {                /* r19.34: layer off → hush + re-arm */
         for (int i = 0; i < ENO_LOOPS; ++i)
             if (eno_on[i]) { engine_note_off(ENO_SRC(i)); eno_on[i] = 0; snd_eno_midi[i] = 0; }
         eno_timing_valid = 0;
@@ -896,18 +999,18 @@ void engine_generative_tick(uint32_t now_ms) {
                 int midi = hv[i];
                 while (midi > 74) midi -= 12;    /* keep the choir mid-low */
                 while (midi < 50) midi += 12;
-                if (eno_on[i]) engine_note_off(ENO_SRC(i));
-                engine_note_on(ENO_SRC(i), tuning_hz((float)midi),
-                               ENO_AMP[i] * composer_params()->bed_amp);
-                eno_on[i]       = 1;
-                snd_eno_midi[i] = midi;
-                eno_off_ms[i] = now_ms + (uint32_t)(ENO_PERIOD_MS[i] * 0.62f);
+                midi=safe_layer_pitch(midi,50,74);
+                if(midi>=0 && auto_ready()) {
+                    if(eno_on[i]) engine_note_off(ENO_SRC(i));
+                    engine_note_on(ENO_SRC(i),tuning_hz((float)midi),ENO_AMP[i]);
+                    auto_onset(); eno_on[i]=1; snd_eno_midi[i]=midi;
+                    eno_off_ms[i]=now_ms+(uint32_t)(ENO_PERIOD_MS[i]*0.62f);
+                }
             }
             /* phase NEVER resets — the drift is the composition. The while
              * catches up after a long user hold (ticks pause under a
              * playing human) without machine-gunning retriggers. */
-            while ((int32_t)(now_ms - eno_next_ms[i]) >= 0)
-                eno_next_ms[i] += ENO_PERIOD_MS[i];
+            eno_next_ms[i] += ((now_ms-eno_next_ms[i])/ENO_PERIOD_MS[i]+1u)*ENO_PERIOD_MS[i];
             eno_swell_armed[i] = 0;      /* re-arm for the next known fire */
         }
     }
@@ -921,15 +1024,12 @@ void engine_generative_tick(uint32_t now_ms) {
      * brief: "Wir sollten Akkorde nicht auswählen, sondern den nächsten
      * harmonischen Zustand aus dem vorherigen mutieren"). */
     harmony_tick(now_ms);
-    bass_set_depth(composer_params()->bass_depth);
-    if (harmony_state_changes() != gen_state_seen) {
-        gen_state_seen = harmony_state_changes();
-        int midi = harmony_bass_midi() + 12;   /* pad bed over the bass reg;
-                                                * bass.c derives the low
-                                                * fundament via lowest_held */
-        snd_bed_midi = midi;
-        engine_note_on((uint8_t)GEN_SOURCE, tuning_hz((float)midi),
-                       GEN_VOICE_AMP * composer_params()->bed_amp);
+    if(harmony_state_changes()!=gen_state_seen && auto_ready()) {
+        int midi=safe_layer_pitch(harmony_bass_midi()+12,50,61);
+        if(midi>=0) {
+            gen_state_seen=harmony_state_changes(); snd_bed_midi=midi;
+            engine_note_on(GEN_SOURCE,tuning_hz((float)midi),GEN_VOICE_AMP); auto_onset();
+        }
     }
 
     /* --- r19.0 LONG MELODY VOICE -----------------------------------------
@@ -954,9 +1054,11 @@ void engine_generative_tick(uint32_t now_ms) {
             rest += 3.0f + gen_rand01() * 5.0f;               /* breath  */
         mel_next_ms = now_ms + (uint32_t)(rest * 1000.0f);
     }
-    if (!mel_sounding && (int32_t)(now_ms - mel_next_ms) >= 0) {
+    if (!mel_sounding && auto_ready() && (int32_t)(now_ms - mel_next_ms) >= 0) {
         if (mel_phrase_left <= 0) {
-            if (mel_cur_len >= 2) {              /* archive the phrase   */
+            bool varied=false;
+            for(int i=1;i<mel_cur_len;++i) if(mel_cur[i]!=mel_cur[0]) varied=true;
+            if(mel_cur_len>=2 && varied) { /* no stuck-note phrase in memory */
                 for (int i = 0; i < mel_cur_len; ++i) mel_hist[i] = mel_cur[i];
                 mel_hist_len = mel_cur_len;
             }
@@ -973,15 +1075,13 @@ void engine_generative_tick(uint32_t now_ms) {
         if (gen_rand01() < dsp_clampf(0.80f * composer_params()->mel_density,
                                       0.05f, 0.95f)) {
             /* everything currently sustaining, for the collision filter */
-            int sus[2 + ENO_LOOPS]; int nsus = 0;
-            if (snd_bed_midi) sus[nsus++] = snd_bed_midi;
-            for (int i = 0; i < ENO_LOOPS; ++i)
-                if (snd_eno_midi[i]) sus[nsus++] = snd_eno_midi[i];
+            int sus[128]; int nsus=engine_sounding_notes(sus,128);
 
             int tone = -1;
             if (mel_replay && mel_replay_idx < mel_hist_len) {
                 int want = mel_hist[mel_replay_idx++];
                 if (harmony_in_world(want) &&
+                    (!mel_last_midi || (want-mel_last_midi<=12 && mel_last_midi-want<=12)) &&
                     harmony_collision_ok(want, sus, nsus))
                     tone = want;                 /* the motif survives   */
             }
@@ -992,6 +1092,7 @@ void engine_generative_tick(uint32_t now_ms) {
                                            : (0.05f + composer_params()->high_p);
                 tone = harmony_melody_next(mel_last_midi, sus, nsus, hp);
             }
+            if(tone==mel_last_midi && mel_repeat_run>=2) tone=harmony_melody_move(mel_last_midi,sus,nsus);
             if (tone > 0) {
                 float hz  = tuning_hz((float)tone);
                 float amp = 0.062f + gen_rand01() * 0.014f;
@@ -1005,8 +1106,8 @@ void engine_generative_tick(uint32_t now_ms) {
                     engine_note_on((uint8_t)MEL_SRC, hz, amp);
                     melody_strike(hz, amp * 2.0f);   /* articulate the onset */
                 }
-                mel_sounding  = 1;
-                mel_last_midi = tone;
+                auto_onset(); mel_repeat_run=tone==mel_last_midi ? mel_repeat_run+1:1;
+                mel_sounding=1; mel_last_midi=tone;
                 ++mel_note_count;
                 if (mel_cur_len < MEL_PHRASE_MAX) mel_cur[mel_cur_len++] = tone;
                 --mel_phrase_left;
@@ -1207,10 +1308,10 @@ void engine_set_synth_param(int slot, float value) {
 void engine_set_synth(int idx) {
     if (idx < 0 || idx > 6 || (idx > 0 && !s_synth_be) || idx == s_synth_tgt) return;
     /* Release, don't panic: old core/ambient can decay during the crossfade. */
-    s_note_count = 0;
-    memset(active_freq, 0, sizeof active_freq);
-    bowed_all_off(); horn_all_off(); choir_all_off();
-    pad_all_off(); bass_release();
+    release_generated(); s_note_count=0;
+    for(int i=0;i<MAX_SOURCES;++i) remember_source(i);
+    memset(active_freq,0,sizeof active_freq);
+    bowed_all_off(); horn_all_off(); choir_all_off(); pad_all_off(); engine_bass_off();
     if (s_synth_tgt > 0 && s_synth_be->note_off) s_synth_be->note_off();
     if (idx > 0) s_synth_be->select(idx - 1);
     s_synth_tgt = idx;
@@ -1247,7 +1348,9 @@ void engine_render(int16_t *buf, int frames) {
             sendL[n]=a*sendL[n]+t*s_coreSL[n]; sendR[n]=a*sendR[n]+t*s_coreSR[n];
         }
     }
-    render_master(buf, frames);
+    render_master(buf,frames);
+    sound_fraction+=(uint32_t)frames*1000u;
+    sound_ms+=sound_fraction/DSP_SAMPLE_RATE_HZ; sound_fraction%=DSP_SAMPLE_RATE_HZ;
 }
 
 int engine_active_voices(void) { return pad_active_count(); }

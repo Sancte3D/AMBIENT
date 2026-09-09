@@ -17,6 +17,11 @@
 #include "bowed.h"
 #include "horn.h"
 #include "choir.h"
+#include "harmony.h"
+#include "composer.h"
+#include "tuning.h"
+#include "shape.h"
+#include "brain.h"
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>
@@ -161,6 +166,123 @@ static void test_sends(void) {
     }
 }
 
+
+static void setup_core(int core) {
+    engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
+    engine_set_tuning(1); engine_set_key(60); engine_set_fx_mode(0); engine_set_synth(core);
+    /* Narrow unison/chorus to isolate Mist's fundamental in the pitch test. */
+    if(core==3) { engine_set_synth_param(1,0); engine_set_synth_param(2,0); }
+    level_after(80);
+}
+static void capture(int16_t *out,int frames) {
+    for(int i=0;i<frames;i+=BLK) engine_render(out+2*i,frames-i<BLK?frames-i:BLK);
+}
+static double energy(const int16_t *x,int frames) {
+    double e=0; for(int i=0;i<frames*2;++i) e+=(double)x[i]*x[i]; return e;
+}
+static double spectral_power(const int16_t *x,int frames,double hz) {
+    double re=0,im=0;
+    for(int i=0;i<frames;++i) {
+        double w=0.5-0.5*cos(6.283185307179586*i/(frames-1));
+        double a=6.283185307179586*hz*i/44100.0;
+        re+=x[2*i]*w*cos(a); im+=x[2*i]*w*sin(a);
+    }
+    return re*re+im*im;
+}
+static void test_pitch_and_controls(void) {
+    enum {N=44100*3}; static int16_t ref[N*2],changed[N*2];
+    for(int core=1;core<=6;++core) {
+        setup_core(core);float hz=tuning_hz(64);engine_note_on(0,hz,0.65f);capture(ref,N);
+        double pure=spectral_power(ref,N,hz),rounded=spectral_power(ref,N,dsp_midi_to_hz(64));
+        printf("  core %d Just/rounded spectral energy %.2fx\n",core,pure/(rounded+1)); CHECK(pure>rounded*2);
+        for(int macro=0;macro<4;++macro) {
+            setup_core(core);
+            if(macro==0) engine_set_brightness(800);
+            if(macro==1) engine_set_resonance(0.85f);
+            if(macro==2) engine_set_sweep(1);
+            if(macro==3) engine_set_envmod(1);
+            engine_note_on(0,hz,0.65f);capture(changed,N);double diff=0;
+            for(int i=0;i<N*2;++i) {double d=(double)changed[i]-ref[i];diff+=d*d;}
+            CHECK(diff>energy(ref,N)*0.0001);CHECK(peak_of(changed,N)<32767);
+        }
+        double onset[2],tail[2];
+        for(int slow=0;slow<2;++slow) {
+            setup_core(core);engine_set_attack(slow?1:0);engine_set_release(0.5f);
+            engine_note_on(0,hz,0.65f);capture(changed,882);onset[slow]=energy(changed,882);
+            setup_core(core);engine_set_attack(0.5f);engine_set_release(slow?1:0);
+            engine_note_on(0,hz,0.65f);capture(changed,44100);engine_note_off(0);
+            capture(changed,N);tail[slow]=energy(changed,N);
+        }
+        CHECK(onset[0]>onset[1]*1.2);CHECK(tail[1]>tail[0]*1.2);
+    }
+    engine_set_tuning(0);
+}
+static int memory_has(int midi) {
+    int notes[128],n=engine_sounding_notes(notes,128);
+    for(int i=0;i<n;++i) if(notes[i]==midi) return 1;
+    return 0;
+}
+static int auto_checked,mel_prev,mel_run,auto_blocked;
+static uint32_t audit_ms,audit_last;
+static void audit_onset(int on,uint8_t source,float hz,float amp) {
+    (void)amp;if(on!=1 || !(source==8 || source==15 || (source>=5 && source<=7))) return;
+    int m=(int)lrintf(69+12*log2f(hz/440));int notes[128],n=engine_sounding_notes(notes,128);
+    CHECK(!auto_blocked);CHECK(harmony_in_world(m));CHECK(harmony_collision_ok(m,notes,n));
+    if(audit_last) CHECK(audit_ms-audit_last>=1400u);
+    audit_last=audit_ms;++auto_checked;
+    if(source==15) {
+        if(mel_prev) CHECK(abs(m-mel_prev)<=12);
+        mel_run=m==mel_prev?mel_run+1:1;mel_prev=m;CHECK(mel_run<=2);
+    }
+}
+static void test_pitch_memory(void) {
+    engine_init();engine_set_tuning(0);engine_set_fx_mode(8);
+    engine_note_on(0,dsp_midi_to_hz(60),0.2f);engine_note_off(0);
+    CHECK(memory_has(60));CHECK(memory_has(36));
+    engine_generative_tick(20000);CHECK(memory_has(60));
+    engine_generative_tick(90000);CHECK(!memory_has(60));
+    int root=brain_get_key();engine_set_drone(true);CHECK(memory_has(root));
+    engine_set_key(58);CHECK(memory_has(root)&&memory_has(58));engine_set_drone(false);CHECK(memory_has(58));
+    engine_generative_tick(180000);CHECK(!memory_has(58));
+    engine_set_release(1);engine_note_on(0,dsp_midi_to_hz(61),0.2f);
+    engine_set_release(0);engine_note_off(0);engine_generative_tick(200000);CHECK(memory_has(61));
+    auto_checked=0;
+    for(int mode=0;mode<6;++mode) for(int seed=1;seed<=3;++seed) {
+        engine_init();engine_set_tuning(0);engine_set_key(60);engine_set_mode(mode);
+        engine_generative_new_field((uint32_t)seed*1031u);mel_prev=mel_run=0;audit_last=0;auto_blocked=0;
+        engine_set_note_hook(audit_onset);engine_set_generative(true,-1);
+        for(audit_ms=0;audit_ms<1200000;audit_ms+=250) {
+            if(audit_ms==30000) engine_note_on(0,dsp_midi_to_hz(60),0.15f);
+            if(audit_ms==100000) {engine_set_user_presence(true);auto_blocked=1;}
+            if(audit_ms==110000) engine_set_user_presence(false);
+            if(audit_ms==117750) auto_blocked=0; /* 8 s after last occupied tick */
+            if(audit_ms==200000) engine_note_off(0);
+            if(audit_ms==600000) {engine_set_key(61);mel_prev=mel_run=0;}
+            engine_generative_tick(audit_ms);
+        }
+        engine_set_note_hook(NULL);engine_set_generative(false,-1);
+    }
+    CHECK(auto_checked>1500);printf("  %d automatic onsets: 6 modes x 3 seeds x 20 minutes\n",auto_checked);
+}
+static void test_handover(void) {
+    void (*init[])(void)={bowed_init,horn_init,choir_init};
+    void (*on[])(int,float,float)={bowed_note_on,horn_note_on,choir_note_on};
+    void (*render[])(float*,float*,float*,float*,int,float)={bowed_render_mix,horn_render_mix,choir_render_mix};
+    float l[BLK],r[BLK],sl[BLK],sr[BLK],baseline[2];shape_init();
+    for(int v=0;v<3;++v) for(int steal=0;steal<2;++steal) {
+        init[v]();for(int i=0;i<3;++i) on[v](i,220.0f+i*55,0.2f+i*0.1f);
+        for(int b=0;b<100;++b) {
+            memset(l,0,sizeof l);memset(r,0,sizeof r);memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
+            render[v](l,r,sl,sr,BLK,0.5f);
+        }
+        if(steal) on[v](3,660,0.5f);
+        memset(l,0,sizeof l);memset(r,0,sizeof r);memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
+        render[v](l,r,sl,sr,1,0.5f);
+        if(!steal) {baseline[0]=l[0];baseline[1]=r[0];}
+        else CHECK(l[0]==baseline[0] && r[0]==baseline[1]);
+    }
+}
+
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     static int16_t buf[BLK * 2];
@@ -238,6 +360,7 @@ int main(void) {
     CHECK(back > 500);
 
     test_playability(); test_voice_gates(); test_sends();
+    test_pitch_and_controls(); test_handover(); test_pitch_memory();
     printf("synth_device: %d checks, 0 failures\n", checks);
     return 0;
 }

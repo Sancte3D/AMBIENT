@@ -124,7 +124,7 @@ static const char *const k_mode_names[AMBIENT_FX_MODE_COUNT] = {
 };
 
 static const char *const k_world_names[AMBIENT_FX_WORLD_COUNT] = {
-    "TOKYO CITY", "CRYSTAL COAST", "MIDNIGHT DRIVE", "AFTER HOURS"
+    "TOKYO CITY", "CRYSTAL COAST", "MIDNIGHT DRIVE", "AFTER HOURS", "DESERT"
 };
 
 static float clampf(float x, float lo, float hi)
@@ -281,7 +281,8 @@ AmbientFxParameters ambient_fx_world_parameters(AmbientFxWorld world)
         {0.62f, 0.54f, 0.38f, 0.32f, 0.38f, 0.05f, 0.12f, 0.78f, 0.34f, 0.84f, 0.430f},
         {0.82f, 0.68f, 0.34f, 0.46f, 0.10f, 0.18f, 0.22f, 0.94f, 0.72f, 0.82f, 0.570f},
         {0.56f, 0.50f, 0.52f, 0.40f, 0.58f, 0.04f, 0.08f, 0.88f, 0.30f, 0.86f, 0.360f},
-        {0.88f, 0.72f, 0.44f, 0.30f, 0.66f, 0.07f, 0.18f, 0.84f, 0.26f, 0.80f, 0.500f}
+        {0.88f, 0.72f, 0.44f, 0.30f, 0.66f, 0.07f, 0.18f, 0.84f, 0.26f, 0.80f, 0.500f},
+        {0.58f,0.40f,0.24f,0.18f,0.32f,0.01f,0.06f,0.66f,0.43f,0.84f,0.315f}
     };
     if ((unsigned)world >= AMBIENT_FX_WORLD_COUNT) {
         world = AMBIENT_FX_TOKYO_CITY;

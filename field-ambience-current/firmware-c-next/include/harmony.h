@@ -49,6 +49,8 @@ void harmony_set_world(int tonic_midi, int minor);
  * one modal degree is reserved for sparse, collision-checked melody notes. */
 void harmony_set_mode(int tonic_midi, int mode);
 int harmony_in_core(int midi);
+/* Closest different safe core tone within an octave, or silence. */
+int harmony_melody_move(int last_midi, const int *sounding, int count);
 int harmony_nearest_safe(int wanted, int lo, int hi, const int *sounding, int count);
 
 /* Advance the slow state clock (call from the generative tick, any rate).

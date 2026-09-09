@@ -42,7 +42,7 @@ static void go_init(void) {
     o.sustain  = 0.7f;
     o.rel_coef = dsp_smooth_coef(0.35f);
     o.cutoff   = 4000.0f;
-    o.morph_inc   = 0.35f / SR;       /* slow orbit */
+    o.morph_inc   = 0.039f / SR;      /* ~26 s spectral orbit */
     o.morph_depth = 0.5f;
     o.morph_base  = 0.5f;
     o.level    = 0.7f;
@@ -70,7 +70,7 @@ static void go_set_param(synth_param_t p, float v) {
     v = dsp_clampf(v, 0.0f, 1.0f);
     switch (p) {
         case SP_A: o.morph_base = v;                                       break; /* Wavetable pos */
-        case SP_B: o.morph_inc  = (0.05f + v * 1.5f) / SR;                 break; /* Motion        */
+        case SP_B: o.morph_inc  = (0.015f + v * 0.120f) / SR;                 break; /* Motion        */
         case SP_C: o.cutoff     = 800.0f + v * 8000.0f;                    break; /* Brightness    */
         case SP_D: o.morph_depth= v * 0.5f;                                break; /* Spread        */
         case SP_E: o.glide_coef = dsp_smooth_coef(0.008f + v * 0.15f);     break; /* Glide         */

@@ -1,5 +1,12 @@
 # PROJECT STATUS
 
+> **2026-09-09 — Musical system development (host-verified).**
+> Fractional synth pitch/Just, global native macros and Shape, gentle three-voice
+> handovers, release/FX pitch memory, staggered automatic onsets, modal colours,
+> weighted composer graph and variation-aware phrase memory. Full host suite
+> passes; real-device DWT and listening remain open. Details:
+> `field-ambience-current/docs/audio/MUSICAL_SYSTEM_2026-09-09.md`.
+
 > **2026-09-05 — Sound/playability review (host-verified, hardware pending).**
 > Shared master/FX for Ambient and all six synths; restored per-voice sends;
 > held-note priority; 36 named/smoothed synth controls; expressive gated

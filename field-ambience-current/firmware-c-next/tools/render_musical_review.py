@@ -47,7 +47,7 @@ class Instrument:
         self.lib.engine_render.argtypes = [C.POINTER(C.c_int16), C.c_int]
         self.lib.engine_note_on.argtypes = [C.c_uint8, C.c_float, C.c_float]
         for name in ['master_volume','drive','brightness','space','atmosphere','motion','age',
-                     'echo','blur','shimmer','bass_depth','attack','release','send']:
+                     'echo','blur','shimmer','bass_depth','attack','release','send','resonance','sweep','envmod']:
             getattr(self.lib, 'engine_set_'+name).argtypes = [C.c_float]
         if hasattr(self.lib, 'engine_set_synth_param'):
             self.lib.engine_set_synth_param.argtypes = [C.c_int, C.c_float]

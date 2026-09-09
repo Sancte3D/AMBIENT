@@ -68,6 +68,8 @@ void engine_boot_mute(void);
  * Kept as a hook so the engine keeps no link dependency on midi.c. */
 typedef void (*engine_note_hook_t)(int on, uint8_t source, float freq_hz, float amp);
 void engine_set_note_hook(engine_note_hook_t h);
+/* Conservative held/released pitch occupancy, control-rate only; up to 128. */
+int engine_sounding_notes(int *out, int max);
 
 /* r19.16 — SYNTH mode: swappable V2 sound-cores behind the ambient engine.
  * mode 0 = ambient (default identity); 1..N = a V2 core rendered through the
