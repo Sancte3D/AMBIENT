@@ -357,6 +357,12 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 "$CC" "${CFLAGS[@]}" "$here/test_fm_controls.c" \
     "$src/src/dsp.c" "$src/src/shape.c" "$src/src/v2/engines/engine_fm_glass.c" \
     -lm -o "$tmp/fm_controls_test"
+
+# Storm ambient role: stable onset, envelope and bounded native controls.
+"$CC" "${CFLAGS[@]}" "$here/test_storm_role.c" \
+    "$src/src/dsp.c" "$src/src/dsp_ladder.c" "$src/src/shape.c" \
+    "$src/src/v2/engines/engine_ion_storm.c" -lm -o "$tmp/storm_role_test"
+"$tmp/storm_role_test"
 "$tmp/fm_controls_test"
 "$tmp/synth_host_test"
 

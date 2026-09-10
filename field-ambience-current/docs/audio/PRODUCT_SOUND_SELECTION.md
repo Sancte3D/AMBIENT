@@ -83,3 +83,10 @@ not their status.
 Source anchors: firmware-c-next/src/v2/engines/engine_*.c;
 include/synth_controls.h; src/engine.c (engine_set_synth, engine_render and
 generation guards); src/menu.c (SYNTH_NAMES, FX_NAMES); docs/SOUND_WORLD.md.
+
+## Storm implementation checkpoint
+
+STORM_ROLE_REVIEW.md records the first candidate: no attack pitch bend, softer
+amp envelope, narrower detune/PWM and drive, no additional buffers. Host tests
+pass. The original risk assessment remains a reason to compare its role with
+Mist/Orbit; this implementation alone does not justify keeping it in the palette.

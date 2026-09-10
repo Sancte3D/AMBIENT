@@ -11,9 +11,9 @@ from render_tuning_review import render_pcm
 from package_musical_review import measure, write
 
 
-def phrase(library):
+def phrase(library, core=2):
     inst = Instrument(library)
-    for key, value in [('set_synth', 2), ('set_tuning', 1), ('set_key', 60),
+    for key, value in [('set_synth', core), ('set_tuning', 1), ('set_key', 60),
                        ('set_fx_mode', 1), ('set_space', .3),
                        ('set_master_volume', .4)]:
         inst.call(key, value)

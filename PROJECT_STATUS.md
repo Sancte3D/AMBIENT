@@ -4,7 +4,8 @@
 > and a softer native attack corrected; host-verified, listening/device gates
 > open. Complete queue: `field-ambience-current/docs/audio/SOUND_REVIEW_QUEUE.md`.
 > Product selection review: `field-ambience-current/docs/audio/PRODUCT_SOUND_SELECTION.md`.
-> Next: Storm role/default assessment; FM Ratio and Ambient retuning remain open.
+> Storm sustained-pulse candidate implemented and host-tested: `field-ambience-current/docs/audio/STORM_ROLE_REVIEW.md`.
+> Next: judge its distinction from Mist/Orbit; FM Ratio and Ambient retuning remain open.
 
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR

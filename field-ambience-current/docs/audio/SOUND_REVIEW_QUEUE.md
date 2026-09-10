@@ -15,7 +15,8 @@ not establish this. Subjective acceptance is open for every sound until heard.
 See PRODUCT_SOUND_SELECTION.md: shipping the existing six-core roster is not
 an assumption. Mist/Orbit are primary candidates, Bamboo/FM supporting,
 Acid needs role-focused rework, Storm is the strongest redesign/drop candidate.
-Next bounded unit is Storm role/default assessment. FM Ratio/aliasing and
+Storm now has a host-tested sustained-pulse candidate (STORM_ROLE_REVIEW.md).
+Next bounded unit is its musical distinction from Mist/Orbit. FM Ratio/aliasing and
 Ambient retuning stay open; do not expand layers before resource/routing review.
 
 ## Progress and next units
@@ -26,6 +27,7 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 | Done | V2 Equal/Just | Six cores retune held notes without attack/priority reset |
 | Done | Listening export | 512-frame clamp handled; old 13 s tuning WAV withdrawn |
 | Done | FM Index / Body / attack | Coupled envelope, live Index and softer default; see FM_CONTROLS_REVIEW.md |
+| Current | Storm role | Candidate implemented; compare with Mist/Orbit before keep/drop decision |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |
 | Then | Remaining cores | One core at a time, starting Storm pitch bend/PWM/drive |
