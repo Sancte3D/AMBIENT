@@ -16,7 +16,8 @@
 
 typedef struct {
     float buf[BUF_LEN];
-    float N;              /* loop length in samples (fractional)  */
+    float N;              /* target period; read delay is N-damp  */
+    float damp;           /* smoothed loop-filter coefficient     */
     int   widx;           /* write index                          */
     float rho;            /* per-sample loop gain for the T60     */
     float y_prev;         /* averaging-lowpass memory             */
@@ -77,6 +78,7 @@ void pluck_note(float freq_hz, float amp) {
     pluck_voice_t *p = &v[i];
     p->N   = SR / freq_hz;
     if (p->N > (float)(BUF_LEN - 4)) p->N = (float)(BUF_LEN - 4);
+    p->damp = s_damp;
     p->rho = powf(0.001f, 1.0f / (freq_hz * T60_S * shape_release_scale())); /* r19.60 */
     p->widx   = 0;
     p->y_prev = 0.0f;
@@ -118,8 +120,13 @@ void pluck_render_mix(float *dry_L, float *dry_R,
 
         float env_track = p->env;
         for (int n = 0; n < frames; ++n) {
-            /* Fractional read `N` samples behind the write head. */
-            float rpos = (float)p->widx - p->N;
+            /* The two-tap damping FIR adds approximately damp samples of
+             * phase delay. Shorten the read by the same amount so BRIGHTNESS
+             * does not detune the string. Linear interpolation leaves a small
+             * frequency-dependent residual, covered by rendered-pitch tests.
+             * 80 ms smoothing follows live edits without a delay-head jump. */
+            p->damp += (s_damp - p->damp) * (1.0f / (0.080f * SR));
+            float rpos = (float)p->widx - (p->N - p->damp);
             if (rpos < 0.0f) rpos += (float)BUF_LEN;
             int   r0 = (int)rpos;
             float fr = rpos - (float)r0;
@@ -127,7 +134,7 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             float y  = p->buf[r0] + fr * (p->buf[r1] - p->buf[r0]);
 
             /* Damped feedback: averaging lowpass + T60 loop gain. */
-            float fb = p->rho * ((1.0f - s_damp) * y + s_damp * p->y_prev);
+            float fb = p->rho * ((1.0f - p->damp) * y + p->damp * p->y_prev);
             p->y_prev = y;
             p->buf[p->widx] = fb;
             if (++p->widx >= BUF_LEN) p->widx = 0;
