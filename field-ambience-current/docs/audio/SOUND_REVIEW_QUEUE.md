@@ -10,6 +10,14 @@ Desired result: distinct instruments that share a coherent harmonic context,
 usable registers/dynamics and a believable common space. Tuning tests alone do
 not establish this. Subjective acceptance is open for every sound until heard.
 
+## Product selection gate
+
+See PRODUCT_SOUND_SELECTION.md: shipping the existing six-core roster is not
+an assumption. Mist/Orbit are primary candidates, Bamboo/FM supporting,
+Acid needs role-focused rework, Storm is the strongest redesign/drop candidate.
+Next bounded unit is Storm role/default assessment. FM Ratio/aliasing and
+Ambient retuning stay open; do not expand layers before resource/routing review.
+
 ## Progress and next units
 
 | Order | Unit | State / next concrete question |
@@ -17,8 +25,8 @@ not establish this. Subjective acceptance is open for every sound until heard.
 | Done | String delay tuning | Filter-delay compensation tested; character/extreme ranges still open |
 | Done | V2 Equal/Just | Six cores retune held notes without attack/priority reset |
 | Done | Listening export | 512-frame clamp handled; old 13 s tuning WAV withdrawn |
-| Current | FM Index / Body / attack | Coupled envelope, live Index and softer default; see FM_CONTROLS_REVIEW.md |
-| Next | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
+| Done | FM Index / Body / attack | Coupled envelope, live Index and softer default; see FM_CONTROLS_REVIEW.md |
+| Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |
 | Then | Remaining cores | One core at a time, starting Storm pitch bend/PWM/drive |
 | Then | Ambient and natural layers | One source at a time, including their actual routing |
