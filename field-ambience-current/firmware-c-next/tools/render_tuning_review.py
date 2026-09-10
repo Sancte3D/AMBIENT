@@ -11,6 +11,16 @@ from render_musical_review import Instrument
 
 SR = 44100
 
+def render_pcm(inst, frames):
+    """engine_render consumes at most 512 frames, even for a larger request."""
+    data = np.zeros((frames, 2), dtype=np.int16)
+    for start in range(0, frames, 512):
+        count = min(512, frames - start)
+        inst.lib.engine_render(
+            data[start:].ctypes.data_as(C.POINTER(C.c_int16)), count)
+    return data.astype(np.float64) / 32768
+
+
 def section(library):
     inst = Instrument(library)
     for key, value in [('set_tuning', 1), ('set_key', 60), ('set_fx_mode', 0),
@@ -18,9 +28,7 @@ def section(library):
                        ('set_master_volume', 0.55)]:
         inst.call(key, value)
     def render(n):
-        data = np.zeros((n, 2), dtype=np.int16)
-        inst.lib.engine_render(data.ctypes.data_as(C.POINTER(C.c_int16)), n)
-        return data.astype(np.float64) / 32768
+        return render_pcm(inst, n)
     render(SR)
     inst.lib.engine_note_on(0, 523.2511306 * 1.25, 0.65)
     parts = []

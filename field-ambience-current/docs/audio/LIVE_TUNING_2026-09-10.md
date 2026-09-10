@@ -34,3 +34,22 @@ tools/render_tuning_review.py with old/new host libraries. First six seconds
 before; after starts at 7 s. Each section holds FM Glass E5 over a quiet C5
 reference: starts Just, changes to Equal after 2 s, back to Just after 4 s.
 Identical gain, no FX, peak 0.4375; host rendering, not a device recording.
+
+## Correction after playback feedback
+
+The original 13 s listening asset is WITHDRAWN as listening evidence. Its
+Python renderer passed whole seconds to engine_render, which consumes at most
+512 frames. Most of each section therefore contained only the separately
+added reference sine, punctuated by truncated synth bursts. This was an export
+bug, not intentional instrument behaviour. The C device tests used correctly
+chunked capture and remain valid; the faulty WAV did not demonstrate them.
+
+render_tuning_review.py now chunks every call to at most 512 frames.
+The real-library regression test_review_renderer.py verifies sustained PCM
+in all later windows and the partial final block. Firmware DSP is unchanged.
+Ambient_FM_Phrase_18s.wav replaces the example with an 18-second musical
+phrase, no reference sine, native FM settings, light room and constant output
+attenuation only. Reproduce using tools/render_short_phrase.py.
+All future user-facing samples are at most 30 seconds unless requested.
+Remaining: review FM attack/body control interaction and harshness on valid
+renders, then continue Ambient live retuning. No overall sound acceptance yet.
