@@ -352,6 +352,12 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/v2/engines/engine_chorus_mist.c" "$src/src/v2/engines/engine_ion_storm.c" \
     "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
     -lm -o "$tmp/synth_host_test"
+
+# FM Index/Body relationship and live control response (real dry PCM).
+"$CC" "${CFLAGS[@]}" "$here/test_fm_controls.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/v2/engines/engine_fm_glass.c" \
+    -lm -o "$tmp/fm_controls_test"
+"$tmp/fm_controls_test"
 "$tmp/synth_host_test"
 
 # r19.11: real-time render deadline profiler (pure accounting — deadline

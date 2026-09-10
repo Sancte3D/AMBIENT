@@ -6,7 +6,7 @@
 #define SYNTH_CONTROL_CORES 6
 static const unsigned char synth_control_defaults[6][6] = {
     {32,54,28,40,18,57}, /* Acid: cutoff, resonance, decay, drive, glide, env */
-    {59,20,33,45,18,56}, /* FM: index, integer ratio, decay, tone, glide, body */
+    {27,20,33,45,18,45}, /* FM: index, integer ratio, decay, tone, glide, body */
     {22,40,38,38,16,33}, /* Mist: cutoff, detune, chorus, rate, glide, attack */
     {27,40,78,20, 8,35}, /* Storm: cutoff, detune, PWM, drive, glide, rate */
     {50,20,40,100,15,67},/* Orbit: shape, rate, cutoff, spread, glide, sustain */

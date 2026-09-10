@@ -1,5 +1,10 @@
 # PROJECT STATUS
 
+> **Sound review in small units:** FM Glass Index/Body coupling, live Index
+> and a softer native attack corrected; host-verified, listening/device gates
+> open. Complete queue: `field-ambience-current/docs/audio/SOUND_REVIEW_QUEUE.md`.
+> Next: FM Ratio/upper register, then Ambient held-note retuning.
+
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR
 > unwanted transposition and Orbit fundamental cancellation corrected; gentler
