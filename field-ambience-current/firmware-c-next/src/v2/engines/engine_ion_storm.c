@@ -67,6 +67,12 @@ static void is_activate(void)   { is_init(); }
 static void is_deactivate(void) { if (s.astate != I_IDLE) s.astate = I_RELEASE; }
 static void is_panic(void)      { s.amp = 0.0f; s.astate = I_IDLE; }
 
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void is_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        s.freq_tgt = hz;
+}
+
 static void is_note_on(float midi, float vel) {
     s.atk_inc = 1.0f / (0.004f * shape_attack_scale() * SR);
     s.rel_coef = dsp_smooth_coef(0.12f * shape_release_scale());
@@ -160,4 +166,5 @@ const synth_engine_t engine_ion_storm = {
     .render_mix  = is_render_mix,
     .panic       = is_panic,
     .set_colour  = is_set_colour,
+    .retune_hz = is_retune_hz,
 };

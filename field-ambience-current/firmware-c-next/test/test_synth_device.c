@@ -41,7 +41,7 @@ static void be_render  (int16_t *b, int n)   { synth_host_render(b, n); }
 static void be_param(int slot, float value) { synth_host_set_param((synth_param_t)slot, value); }
 static const engine_synth_backend_t BE = {
     be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param,
-    synth_host_note_on_hz, synth_host_set_macro
+    synth_host_note_on_hz, synth_host_set_macro, synth_host_retune_hz
 };
 
 static int peak_of(const int16_t *b, int frames) {
@@ -217,6 +217,47 @@ static void test_pitch_and_controls(void) {
     }
     engine_set_tuning(0);
 }
+static int retune_calls, attack_calls;
+static float retuned_hz, attack_hz;
+static void observe_retune(float hz) { ++retune_calls; retuned_hz=hz; }
+static void observe_attack_hz(float hz,float vel) {
+    (void)vel; ++attack_calls; attack_hz=hz;
+}
+static void test_live_tuning(void) {
+    /* Non-numeric press order: tuning must not reorder last-note priority,
+     * emit note-on/off, or forget a covered held source's new pitch. */
+    engine_synth_backend_t probe=BE;
+    probe.retune_hz=observe_retune; probe.note_on_hz=observe_attack_hz;
+    setup_core(1); engine_set_synth_backend(&probe);
+    retune_calls=attack_calls=0;
+    engine_note_on(13,tuning_hz(64),0.4f);
+    engine_note_on(0,tuning_hz(67),0.7f);
+    engine_set_tuning(0);
+    CHECK(attack_calls==2); CHECK(retune_calls==1);
+    CHECK(fabsf(retuned_hz-dsp_midi_to_hz(67))<0.01f);
+    engine_set_tuning(0); CHECK(retune_calls==1);
+    engine_note_off(0);
+    CHECK(attack_calls==3); CHECK(fabsf(attack_hz-dsp_midi_to_hz(64))<0.01f);
+    engine_set_tuning(1);
+    CHECK(retune_calls==2); CHECK(attack_calls==3);
+    CHECK(fabsf(retuned_hz-tuning_hz(64))<0.01f);
+    engine_note_off(13); engine_set_tuning(0); CHECK(retune_calls==2);
+
+    /* Actual device PCM, both directions on all six native cores. */
+    enum { N=44100*2 }; static int16_t samples[N*2];
+    for(int core=1;core<=6;++core) for(int target=0;target<=1;++target) {
+        setup_core(core); engine_set_release(1);
+        engine_set_tuning(!target); float old=tuning_hz(64);
+        engine_note_on(0,old,0.65f); capture(samples,22050);
+        engine_set_tuning(target); float hz=tuning_hz(64);
+        capture(samples,22050); /* settle the existing native glide */
+        capture(samples,N);
+        double now=spectral_power(samples,N,hz), prior=spectral_power(samples,N,old);
+        printf("  core %d live tuning %d: target/old %.2fx\n",core,target,now/(prior+1));
+        CHECK(now>prior*2); CHECK(peak_of(samples,N)<32767);
+    }
+}
+
 static int memory_has(int midi) {
     int notes[128],n=engine_sounding_notes(notes,128);
     for(int i=0;i<n;++i) if(notes[i]==midi) return 1;
@@ -385,7 +426,7 @@ int main(void) {
     CHECK(back > 500);
 
     test_playability(); test_voice_gates(); test_sends();
-    test_pitch_and_controls(); test_handover(); test_pitch_memory();
+    test_pitch_and_controls(); test_live_tuning(); test_handover(); test_pitch_memory();
     printf("synth_device: %d checks, 0 failures\n", checks);
     return 0;
 }

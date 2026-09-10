@@ -77,6 +77,12 @@ static void acid_activate(void)   { acid_init(); }
 static void acid_deactivate(void) { if (a.astate != A_IDLE) a.astate = A_RELEASE; }
 static void acid_panic(void)      { a.amp = 0.0f; a.fenv = 0.0f; a.astate = A_IDLE; }
 
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void acid_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        a.freq_tgt = hz;
+}
+
 static void acid_note_on(float midi, float vel) {
     a.atk_inc = 1.0f / (0.006f * shape_attack_scale() * SR);
     a.rel_coef = dsp_smooth_coef(0.06f * shape_release_scale());
@@ -158,4 +164,5 @@ const synth_engine_t engine_acid = {
     .render_mix  = acid_render_mix,
     .panic       = acid_panic,
     .set_colour  = acid_set_colour,
+    .retune_hz = acid_retune_hz,
 };

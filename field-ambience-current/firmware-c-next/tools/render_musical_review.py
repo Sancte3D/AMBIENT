@@ -37,10 +37,10 @@ def build_engine(output):
 class Instrument:
     def __init__(self, library):
         self.lib = C.CDLL(str(Path(library).resolve()))
-        self.backend = (C.c_void_p * 9)()
+        self.backend = (C.c_void_p * 10)()
         for i, name in enumerate(['synth_host_select', 'synth_host_note_on', 'synth_host_note_off',
                                   'synth_host_panic', 'synth_host_render', 'synth_host_render_mix',
-                                  'synth_host_set_param', 'synth_host_note_on_hz', 'synth_host_set_macro']):
+                                  'synth_host_set_param', 'synth_host_note_on_hz', 'synth_host_set_macro', 'synth_host_retune_hz']):
             if hasattr(self.lib, name):
                 self.backend[i] = C.cast(getattr(self.lib, name), C.c_void_p).value
         self.lib.engine_set_synth_backend.argtypes = [C.c_void_p]

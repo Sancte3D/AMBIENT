@@ -66,6 +66,12 @@ static void cm_activate(void)   { cm_init(); }
 static void cm_deactivate(void) { if (c.astate != P_IDLE) c.astate = P_RELEASE; }
 static void cm_panic(void)      { c.amp = 0.0f; c.astate = P_IDLE; memset(c.buf,0,sizeof c.buf); }
 
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void cm_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        c.freq_tgt = hz;
+}
+
 static void cm_note_on(float midi, float vel) {
     c.atk_coef = dsp_smooth_coef(c.attack_s * shape_attack_scale());
     c.rel_coef = dsp_smooth_coef(0.50f * shape_release_scale());
@@ -153,4 +159,5 @@ const synth_engine_t engine_chorus_mist = {
     .render_mix  = cm_render_mix,
     .panic       = cm_panic,
     .set_colour  = cm_set_colour,
+    .retune_hz = cm_retune_hz,
 };

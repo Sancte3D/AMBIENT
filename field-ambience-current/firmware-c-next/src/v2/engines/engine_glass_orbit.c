@@ -55,6 +55,12 @@ static void go_activate(void)   { go_init(); }
 static void go_deactivate(void) { if (o.astate != O_IDLE) o.astate = O_RELEASE; }
 static void go_panic(void)      { o.amp = 0.0f; o.astate = O_IDLE; }
 
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void go_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        o.freq_tgt = hz;
+}
+
 static void go_note_on(float midi, float vel) {
     o.atk_inc = 1.0f / (0.01f * shape_attack_scale() * SR);
     o.rel_coef = dsp_smooth_coef(0.35f * shape_release_scale());
@@ -145,4 +151,5 @@ const synth_engine_t engine_glass_orbit = {
     .render_mix  = go_render_mix,
     .panic       = go_panic,
     .set_colour  = go_set_colour,
+    .retune_hz = go_retune_hz,
 };

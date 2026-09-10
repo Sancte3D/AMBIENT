@@ -89,6 +89,7 @@ typedef struct {
     void (*set_param)(int slot, float value);
     void (*note_on_hz)(float hz, float vel01); /* optional; exact tuning */
     void (*set_macro)(int slot, float value);
+    void (*retune_hz)(float hz); /* optional: pitch only, no new attack */
 } engine_synth_backend_t;
 void engine_set_synth_backend(const engine_synth_backend_t *be);
 void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */

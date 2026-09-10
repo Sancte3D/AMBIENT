@@ -772,7 +772,30 @@ void engine_set_drone(bool on) {
 }
 
 /* r19.6 — tuning: 0 = equal temperament (reference), 1 = just intonation. */
-void engine_set_tuning(int just) { tuning_set_mode(just); }
+void engine_set_tuning(int just) {
+    just = just ? 1 : 0;
+    if (just == tuning_mode()) return;
+    /* Preserve source order and velocity. Replaying note_on here would move
+     * stack priority and restart attacks. Snapshot the old tuning reference
+     * before changing mode; ratios preserve any fine detuning of the note.
+     * Ambient sustained-voice retuning is a separate implementation step. */
+    float old_hz[MAX_SOURCES];
+    int can_retune = s_synth_tgt > 0 && s_synth_be && s_synth_be->retune_hz;
+    if (can_retune) for (int i=0; i<s_note_count; ++i) {
+        int source=s_note_stack[i];
+        old_hz[i]=tuning_hz((float)pitch_of(active_freq[source]));
+    }
+    tuning_set_mode(just);
+    if (can_retune) {
+        for (int i=0; i<s_note_count; ++i) {
+            int source=s_note_stack[i];
+            float hz=tuning_hz((float)pitch_of(active_freq[source]));
+            active_freq[source] *= hz / old_hz[i];
+        }
+        if (s_note_count)
+            s_synth_be->retune_hz(active_freq[s_note_stack[s_note_count-1]]);
+    }
+}
 
 /* PAD_VOICE_MIXES from the webapp: warm / strings / brass. */
 void engine_set_pad_voice(int voice_idx) {

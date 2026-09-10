@@ -70,6 +70,12 @@ static void fm_activate(void)   { fm_init(); }
 static void fm_deactivate(void) { if (g.astate != G_IDLE) g.astate = G_RELEASE; }
 static void fm_panic(void)      { g.amp = 0.0f; g.idx_cur = 0.0f; g.astate = G_IDLE; }
 
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void fm_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        g.freq_tgt = hz;
+}
+
 static void fm_note_on(float midi, float vel) {
     g.atk_inc = 1.0f / (0.006f * shape_attack_scale() * SR);
     g.rel_coef = dsp_smooth_coef(0.3f * shape_release_scale());
@@ -153,4 +159,5 @@ const synth_engine_t engine_fm_glass = {
     .render_mix  = fm_render_mix,
     .panic       = fm_panic,
     .set_colour  = fm_set_colour,
+    .retune_hz = fm_retune_hz,
 };

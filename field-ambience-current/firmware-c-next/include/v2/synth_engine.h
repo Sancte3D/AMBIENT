@@ -35,6 +35,8 @@ typedef struct {
     void (*panic)(void);
     /* Host macros modulate the native filter without overwriting its knobs. */
     void (*set_colour)(float cutoff_scale, float resonance);
+    /* Pitch target only: preserve phase, envelopes, velocity and gate. */
+    void (*retune_hz)(float hz);
 } synth_engine_t;
 
 #endif /* FAM_V2_SYNTH_ENGINE_H */

@@ -60,6 +60,12 @@ static void bc_activate(void)   { bc_init(); }
 static void bc_deactivate(void) { b.env = b.strike = 0.0f; b.active = 0; }
 static void bc_panic(void)      { b.env = b.strike = 0.0f; b.active = 0; }
 
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void bc_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        b.freq_tgt = hz;
+}
+
 static void bc_note_on(float midi, float vel) {
     b.release_scale = shape_release_scale(); recalc();
     b.atk_inc = 1.0f / (0.002f * shape_attack_scale() * SR);
@@ -134,4 +140,5 @@ const synth_engine_t engine_bamboo_circuit = {
     .render_mix  = bc_render_mix,
     .panic       = bc_panic,
     .set_colour  = bc_set_colour,
+    .retune_hz = bc_retune_hz,
 };

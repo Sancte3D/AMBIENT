@@ -110,6 +110,11 @@ void synth_host_note_on_hz(float hz, float vel) {
     if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
         note_on_pitch(69.0f + 12.0f * log2f(hz / 440.0f),vel);
 }
+void synth_host_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f &&
+        TABLE[H.requested_id]->retune_hz)
+        TABLE[H.requested_id]->retune_hz(hz);
+}
 void synth_host_set_macro(int slot, float value) {
     if (slot < 0 || slot >= 4 || !isfinite(value)) return;
     H.macro_target[slot] = slot == 0 ? dsp_clampf(value/800.0f,-0.75f,1.0f)
