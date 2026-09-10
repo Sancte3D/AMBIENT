@@ -283,11 +283,36 @@ static void test_handover(void) {
     }
 }
 
+extern const synth_engine_t engine_glass_orbit;
+static void test_orbit_fundamental(void) {
+    const synth_engine_t *e=&engine_glass_orbit;
+    float minimum=1.0f;
+    for(int pos=0;pos<=36;++pos) {
+        e->init(); e->set_param(SP_A,(float)pos/36.0f); e->set_param(SP_D,0.0f);
+        e->note_on(57.0f,0.7f);
+        double re=0.0,im=0.0;
+        for(int n=0;n<88200;++n) {
+            float l=0,r=0,sl=0,sr=0;
+            e->render_mix(&l,&r,&sl,&sr,1);
+            if(n>=44100) {
+                double ph=6.283185307179586*220.0*n/44100.0;
+                re+=l*cos(ph); im+=l*sin(ph);
+            }
+        }
+        float fundamental=(float)(2.0*sqrt(re*re+im*im)/44100.0);
+        if(fundamental<minimum) minimum=fundamental;
+        CHECK(fundamental>0.15f);
+    }
+    e->panic();
+    printf("  Orbit minimum morph fundamental = %.4f\n",minimum);
+}
+
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     static int16_t buf[BLK * 2];
 
     dsp_init();
+    test_orbit_fundamental();
     engine_init();
     engine_set_world(0);
 

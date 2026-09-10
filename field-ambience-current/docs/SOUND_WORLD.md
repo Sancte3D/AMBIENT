@@ -71,6 +71,8 @@ Klangmerkmale; reine Grundstimmung bedeutet nicht völlige Schwebungsfreiheit.
 Bewegung soll als langsame Drift wirken. Globale Filterbewegung und Orbit/
 Storm-Morphing bleiben unter 0,15 Hz. Kleine Ensemble-Verzögerungsmodulation
 und verzögert einsetzendes Instrument-Vibrato sind eigene Charaktermerkmale.
+Wind und Noise nutzen unregelmäßige Druck- und Turbulenzverläufe ohne feste
+Filtersweeps oder Pfeifresonatoren. Rauschhöhen folgen den Flauten.
 Zufallsbewegung bleibt begrenzt und korreliert. Ein gehaltener Ton darf sich
 entwickeln, ohne dafür neue Noten auszulösen.
 
@@ -107,6 +109,9 @@ Ein zentraler Effektpfad mit getrennten Dry-/Send-Bussen verbindet die Stimmen.
 Sends bestimmen die Entfernung; Master und Mute greifen nach dem Raum.
 **Klangkerne → Drive → FX → DC-/Hochpass → Master → Soft-Limit**.
 Alle fünf Weltcharaktere haben eigene Raumparameter; Desert ist enger und näher.
+BLUR verwischt zeitlich bei unveränderter Leserate; es transponiert keine
+zusätzlichen Tonhöhen in die Harmonie. Wave-Morphs erhalten den Grundton
+durch angeglichene Phasen.
 Hiss, Shimmer und Sättigung bleiben dosierte Färbungen. Kein dauernder
 Shimmer-Teppich oder übermäßiger Subbass.
 

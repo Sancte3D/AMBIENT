@@ -131,8 +131,8 @@ static void cm_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
         c.lfo1 += c.lfo_inc; if (c.lfo1 >= 1.0f) c.lfo1 -= 1.0f;
 
         float a = c.amp * c.level;
-        float outL = (0.6f * v + 0.7f * wetL) * a;
-        float outR = (0.6f * v + 0.7f * wetR) * a;
+        float outL = (0.85f * v + 0.30f * wetL) * a;
+        float outR = (0.85f * v + 0.30f * wetR) * a;
         dL[n] += outL;            dR[n] += outR;
         sL[n] += outL * c.send;   sR[n] += outR * c.send;
     }

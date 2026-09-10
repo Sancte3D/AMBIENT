@@ -107,7 +107,7 @@ static void test_texture_blooms_and_is_stereo(void) {
 
     /* Independent L/R noise → channels must differ substantially. */
     double avg_diff = st.diff / (2.0 * SR);
-    CHECK(avg_diff > 1e-3, "texture not stereo (L≈R): avg|L-R|=%g", avg_diff);
+    CHECK(avg_diff > 0.2 * sqrt((st.e_l + st.e_r)/(4.0 * SR)), "texture not stereo (L≈R): avg|L-R|=%g", avg_diff);
 
     /* Both channels carry comparable energy (neither dead). */
     double rms_l = sqrt(st.e_l / (2.0 * SR));

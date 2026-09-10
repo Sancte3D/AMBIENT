@@ -86,8 +86,10 @@ static float morph_osc(float ph, float dt, float morph) {
     float fr = m - seg;
     float w0, w1;
     float sine = dsp_sin(ph);
-    float tri  = dsp_tri(ph);
-    float saw  = dsp_poly_saw(ph, dt);
+    /* Align fundamental phase before morphing: the old rising saw
+     * cancelled the pulse fundamental near Shape=7/9 (hollow octave). */
+    float tri  = dsp_tri(ph + 0.75f);
+    float saw  = -dsp_poly_saw(ph, dt);
     float pul  = dsp_poly_square(ph, dt);
     switch (seg) {
         case 0:  w0 = sine; w1 = tri; break;

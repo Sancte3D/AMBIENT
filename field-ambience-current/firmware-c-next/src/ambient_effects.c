@@ -778,7 +778,9 @@ static void process_blur(AmbientFx *fx, float in_l, float in_r,
     for (unsigned i = 0u; i < 2u; ++i) {
         FxBlurGrain *grain = &fx->grains[i];
         float window = smooth_window(grain->phase);
-        float travel = grain->phase * grain_frames * (0.18f + 0.22f * fx->current.motion);
+        /* Fixed-rate reads preserve pitch. Moving the read head by 0.18..0.40
+         * samples/sample transposed BLUR by 2.9..5.8 semitones, even in DREAM. */
+        float travel = 0.0f;
         float delay = clampf(grain->delay_frames - travel,
                              8.0f, (float)fx->blur.capacity - 2.0f);
         float left = read_stereo_ring(&fx->blur, 0u, delay);

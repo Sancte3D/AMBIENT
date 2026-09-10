@@ -148,8 +148,8 @@ static float spec_depth   = 0.0f;   /* r19.5 spectral-animator depth (Motion) */
  * SPEC_STEP control ticks ≈ how often a new walk target is picked. */
 #define SPEC_LO      220.0f
 #define SPEC_HI      1550.0f
-#define SPEC_Q       2.2f
-#define SPEC_GAIN    0.55f
+#define SPEC_Q       0.85f
+#define SPEC_GAIN    0.30f
 #define SPEC_STEP    170               /* ~1.0 s between targets @ SR/16 */
 
 /* Oscillator layout per side: 0,1,2 = saws (×1, ×freqMul, ×0.5),

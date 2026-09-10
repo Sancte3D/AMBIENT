@@ -1,5 +1,13 @@
 # PROJECT STATUS
 
+> **2026-09-10 — Sonic review after listening feedback.**
+> Irregular broadband wind/noise; less stationary landscape textures; BLUR
+> unwanted transposition and Orbit fundamental cancellation corrected; gentler
+> pad formant and direct-led Mist ensemble. No additional audio buffers.
+> Reproducible 38-render A/B protocol and dedicated audio regressions.
+> Subjective AAA acceptance and H743 DWT/outputs remain open. Details:
+> `field-ambience-current/docs/audio/SONIC_REVIEW_2026-09-10.md`.
+
 > **2026-09-09 — Musical system development (host-verified).**
 > Fractional synth pitch/Just, global native macros and Shape, gentle three-voice
 > handovers, release/FX pitch memory, staggered automatic onsets, modal colours,
