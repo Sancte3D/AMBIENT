@@ -34,16 +34,17 @@ static const synth_engine_t *const TABLE[SYNTH_COUNT] = {
 };
 
 /* Fixed output calibration, measured across C3..C5 and three velocities.
+ * Pluck uses its first 400 ms against the Ensemble body, not its silent tail.
  * Keep the envelope follower BEFORE these trims: Envmod must retain its
  * native response. Apply equal gain to dry/send and to both crossfade legs.
- * Remaining cores are not calibrated by this pass. No dynamic gain control. */
+ * Resonant/Pluck register differences still need voicing review. No AGC. */
 static const float CORE_OUTPUT_GAIN[SYNTH_COUNT] = {
-    [SYNTH_ACID] = 1.0f,
-    [SYNTH_FM_GLASS] = 1.0f,
+    [SYNTH_ACID] = 0.62373484f,       /* -4.1 dB */
+    [SYNTH_FM_GLASS] = 0.23988329f,   /* -12.4 dB */
     [SYNTH_CHORUS_MIST] = 1.0f,
     [SYNTH_ION_STORM] = 0.57543994f,    /* -4.8 dB */
     [SYNTH_GLASS_ORBIT] = 0.32359366f,  /* -9.8 dB */
-    [SYNTH_BAMBOO_CIRCUIT] = 1.0f,
+    [SYNTH_BAMBOO_CIRCUIT] = 0.45708819f, /* -6.8 dB */
 };
 
 #define HBLOCK 256

@@ -15,6 +15,7 @@
  * dsp.h only — no malloc, no samples, no per-sample powf. The host owns the FX.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
 #include "shape.h"
 #include <math.h>
@@ -157,7 +158,7 @@ static void fm_set_colour(float scale, float res) {
 }
 
 const synth_engine_t engine_fm_glass = {
-    .name        = "FM GLASS",
+    .name        = SYNTH_NAME_FM_GLASS,
     .init        = fm_init,
     .activate    = fm_activate,
     .deactivate  = fm_deactivate,

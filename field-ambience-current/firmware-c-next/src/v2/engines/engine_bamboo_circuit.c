@@ -12,6 +12,7 @@
  * (same envelope). Plucky, no sustain. dsp.h + dsp_ladder only.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
 #include "shape.h"
 #include "dsp_ladder.h"
@@ -130,7 +131,7 @@ static void bc_set_colour(float scale, float res) {
 }
 
 const synth_engine_t engine_bamboo_circuit = {
-    .name        = "BAMBOO CIRCUIT",
+    .name        = SYNTH_NAME_BAMBOO_CIRCUIT,
     .init        = bc_init,
     .activate    = bc_activate,
     .deactivate  = bc_deactivate,

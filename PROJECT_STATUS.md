@@ -7,7 +7,9 @@
 > Storm sustained-pulse candidate implemented and host-tested: `field-ambience-current/docs/audio/STORM_ROLE_REVIEW.md`.
 > Storm/Mist/Orbit role comparison: `field-ambience-current/docs/audio/CORE_ROLE_COMPARISON.md`.
 > Fixed Storm/Mist/Orbit output calibration: `field-ambience-current/docs/audio/CORE_LEVEL_CALIBRATION.md` (45 probes, worst spread 1.0 LU).
-> Next: remaining three core levels; FM Ratio and Ambient retuning remain open.
+> Remaining core trims are implemented: `field-ambience-current/docs/audio/SUPPORT_LEVEL_CALIBRATION.md` (60 probes per version; Keys within -0.8..+0.9 LU of Ensemble).
+> Display working labels are Resonant / Keys / Ensemble / Pulse / Morph / Pluck; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
+> Next: Resonant register/filter-envelope review, then Pluck attack consistency; FM Ratio and Ambient retuning remain open.
 
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR

@@ -11,6 +11,7 @@
  *   resonance high, input drive = grit) → amp ADSR. dsp.h + dsp_ladder only.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
 #include "shape.h"
 #include "dsp_ladder.h"
@@ -154,7 +155,7 @@ static void acid_set_colour(float scale, float res) {
 }
 
 const synth_engine_t engine_acid = {
-    .name        = "ACID RAIN",
+    .name        = SYNTH_NAME_ACID,
     .init        = acid_init,
     .activate    = acid_activate,
     .deactivate  = acid_deactivate,

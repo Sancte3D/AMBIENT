@@ -17,7 +17,7 @@ static const char *const synth_control_names[6][6] = {
     {"FM Index", "FM Ratio", "Index Decay", "Tone", "Glide", "FM Body"},
     {"Cutoff", "Detune", "Chorus", "Chorus Rate", "Glide", "Core Attack"},
     {"Cutoff", "Detune", "PWM Depth", "Core Drive", "Glide", "PWM Rate"},
-    {"Wave Shape", "Orbit Rate", "Cutoff", "Spread", "Glide", "Sustain"},
+    {"Wave Shape", "Morph Rate", "Cutoff", "Spread", "Glide", "Sustain"},
     {"Pluck Tone", "LPG Decay", "Metal", "Tone Floor", "Glide", "Send"}
 };
 #endif

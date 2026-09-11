@@ -12,6 +12,7 @@
 
 #include "menu.h"
 #include "synth_controls.h"
+#include "synth_names.h"
 #include "oled.h"
 #include "oled_color.h"
 #include "baked_font.h"
@@ -67,7 +68,8 @@ static const char * const VOICE_NAMES[7] = {
 };
 static const char * const TUNING_NAMES[2] = { "Equal", "Just" };
 static const char * const SYNTH_NAMES[7] = {
-    "Ambient", "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo"
+    "Ambient", SYNTH_NAME_ACID, SYNTH_NAME_FM_GLASS, SYNTH_NAME_CHORUS_MIST,
+    SYNTH_NAME_ION_STORM, SYNTH_NAME_GLASS_ORBIT, SYNTH_NAME_BAMBOO_CIRCUIT
 };
 static const char * const CELL_NAMES[3] = { "Note", "Harmony", "Land" };
 static const char * const BASS_NAMES[4] = { "Off", "Root", "Fifth", "Drift" };

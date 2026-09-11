@@ -11,6 +11,7 @@
  * taps); the host's reverb widens it further. dsp.h only.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
 #include "shape.h"
 #include <math.h>
@@ -149,7 +150,7 @@ static void cm_set_colour(float scale, float res) {
 }
 
 const synth_engine_t engine_chorus_mist = {
-    .name        = "CHORUS MIST",
+    .name        = SYNTH_NAME_CHORUS_MIST,
     .init        = cm_init,
     .activate    = cm_activate,
     .deactivate  = cm_deactivate,

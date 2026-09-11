@@ -6,6 +6,7 @@
  * Fixed mono state; host provides velocity level, shared room and master.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
 #include "shape.h"
 #include "dsp_ladder.h"
@@ -148,7 +149,7 @@ static void is_set_colour(float scale, float res) {
 }
 
 const synth_engine_t engine_ion_storm = {
-    .name        = "ION STORM",
+    .name        = SYNTH_NAME_ION_STORM,
     .init        = is_init,
     .activate    = is_activate,
     .deactivate  = is_deactivate,

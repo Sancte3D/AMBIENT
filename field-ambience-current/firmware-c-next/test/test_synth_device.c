@@ -259,10 +259,10 @@ static void test_live_tuning(void) {
 }
 
 static void test_core_level_balance(void) {
-    const int cores[]={3,4,5};
+    const int cores[]={2,3,4,5};
     for(int note=48;note<=72;note+=12) for(int hard=0;hard<2;++hard) {
         double lo=1e30,hi=0;
-        for(int i=0;i<3;++i) {
+        for(int i=0;i<4;++i) {
             setup_core(cores[i]);
             /* Native Mist width, not the pitch-test's narrowed chorus. */
             if(cores[i]==3) {
@@ -275,7 +275,7 @@ static void test_core_level_balance(void) {
             if(rms>hi)hi=rms;
         }
         printf("  core balance MIDI %d velocity %s: RMS spread %.2fx\n",note,hard?"hard":"soft",hi/lo);
-        CHECK(hi/lo<2.0); /* <6 dB RMS across the three distinct spectra. */
+        CHECK(hi/lo<2.0); /* <6 dB RMS; excludes naturally decaying Pluck/Resonant. */
     }
 }
 
@@ -415,7 +415,7 @@ int main(void) {
 
     /* 4) every V2 core is playable through the CELL path and bounded */
     static const char *names[6] =
-        { "Acid", "FM Glass", "Mist", "Storm", "Orbit", "Bamboo" };
+        { "Resonant", "Keys", "Ensemble", "Pulse", "Morph", "Pluck" };
     for (int core = 1; core <= 6; ++core) {
         engine_set_synth(core);
         for (int i = 0; i < 6; ++i) engine_render(buf, BLK);   /* settle fade */

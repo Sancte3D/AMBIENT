@@ -13,12 +13,15 @@ not establish this. Subjective acceptance is open for every sound until heard.
 ## Product selection gate
 
 See PRODUCT_SOUND_SELECTION.md: shipping the existing six-core roster is not
-an assumption. Mist/Orbit are primary candidates, Bamboo/FM supporting,
-Acid needs role-focused rework, Storm is the strongest redesign/drop candidate.
-Storm now has a host-tested sustained-pulse candidate (STORM_ROLE_REVIEW.md).
+an assumption. Ensemble/Morph are primary candidates, Pluck/Keys supporting,
+Resonant needs role-focused rework, Pulse is the strongest redesign/drop candidate.
+Pulse now has a host-tested sustained-pulse candidate (STORM_ROLE_REVIEW.md).
 The role comparison supports keeping it as a candidate; final listening approval
-is open. Storm/Mist/Orbit now use fixed output trims, verified across 45 probes
-(CORE_LEVEL_CALIBRATION.md). Next: Acid/FM/Bamboo levels and transient behaviour. FM Ratio/aliasing and
+is open. Pulse/Ensemble/Morph now use fixed output trims, verified across 45 probes
+(CORE_LEVEL_CALIBRATION.md). Resonant/Keys/Pluck fixed trims now follow in
+SUPPORT_LEVEL_CALIBRATION.md (60 probes per version). SOUND_NAMES.md records
+the descriptive working labels and unchanged IDs. Next: Resonant register/
+filter-envelope response, then Pluck's uneven attacks. FM Ratio/aliasing and
 Ambient retuning stay open; do not expand layers before resource/routing review.
 
 ## Progress and next units
@@ -29,12 +32,15 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 | Done | V2 Equal/Just | Six cores retune held notes without attack/priority reset |
 | Done | Listening export | 512-frame clamp handled; old 13 s tuning WAV withdrawn |
 | Done | FM Index / Body / attack | Coupled envelope, live Index and softer default; see FM_CONTROLS_REVIEW.md |
-| Reviewed | Storm role | Architecturally distinct candidate; musical keep/drop remains open |
-| Done | Three-core output balance | Storm/Mist/Orbit fixed trims, 45 probes; no AGC |
-| Next | Remaining core levels | Acid/FM Glass/Bamboo compared with same reference; preserve transient roles |
+| Reviewed | Pulse role | Architecturally distinct candidate; musical keep/drop remains open |
+| Done | Three-core output balance | Pulse/Ensemble/Morph fixed trims, 45 probes; no AGC |
+| Done | Remaining core levels | Fixed trims; separate Pluck attack measurement preserves transient role |
+| Done | Sound type labels | Six shared descriptive working names; scene IDs unchanged; final branding open |
+| Next | Resonant register / defaults | Fixed filter floor, fast filter envelope and intended musical role |
+| Then | Pluck attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |
-| Then | Remaining cores | One core at a time, starting Storm pitch bend/PWM/drive |
+| Then | Remaining core controls | One core at a time; verify useful ranges and interactions |
 | Then | Ambient and natural layers | One source at a time, including their actual routing |
 | Then | Effects individually | Dry/send/wet response and tails, then combinations |
 | Final | Whole instrument | Five worlds, scene/hold/clear transitions, mix balance and device limits |
@@ -43,7 +49,7 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 
 | Area | Items to work through | Specific focus |
 |---|---|---|
-| Six synths | FM Glass, Storm, Acid, Mist, Orbit, Bamboo | Each core's A–F names/defaults from synth_controls.h; attack/body/release, pitch, useful register, velocity, live changes |
+| Six synths | Keys, Pulse, Resonant, Ensemble, Morph, Pluck | Each core's A–F names/defaults from synth_controls.h; attack/body/release, pitch, useful register, velocity, live changes |
 | Ambient sustained | Pad/PADsynth, Bowed, Horn, Choir | Held tuning, independent identity, formants without hollow/tubular dominance, overlaps and voice steals |
 | Ambient transients | String/pluck + Body, Ember, Glass, Guembri | Fundamental vs partials, excitation noise, strike balance, decay, register floor; verify what VOICE actually routes to |
 | Foundation | Bass, harmonic bass modes, drone/pedal | Native octaves, low-register spacing, tail pitch memory and speaker audibility |

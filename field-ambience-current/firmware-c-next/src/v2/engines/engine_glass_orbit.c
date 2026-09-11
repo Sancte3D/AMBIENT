@@ -11,6 +11,7 @@
  * dsp.h only; no actual wavetable RAM needed — the "table" is computed.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
 #include "shape.h"
 #include <math.h>
@@ -141,7 +142,7 @@ static void go_set_colour(float scale, float res) {
 }
 
 const synth_engine_t engine_glass_orbit = {
-    .name        = "GLASS ORBIT",
+    .name        = SYNTH_NAME_GLASS_ORBIT,
     .init        = go_init,
     .activate    = go_activate,
     .deactivate  = go_deactivate,
