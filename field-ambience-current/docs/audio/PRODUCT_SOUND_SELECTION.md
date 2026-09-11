@@ -74,9 +74,11 @@ controls, mono/stereo, room and one competing source. Verify signal behaviour
 and then obtain listening feedback. Files <=30 seconds; no diagnostic sine in
 a musical example. Hardware listening and H743 DWT/memory remain release gates.
 
-Next: Dew's uneven attacks (SUPPORT_LEVEL_CALIBRATION.md). Dusk's first
-candidate is implemented and host-tested (DUSK_REVIEW.md). FM Ratio/aliasing and Ambient
-held-note tuning remain open. Tide's keep/drop decision still needs listening;
+Next: the World/Character resource and routing unit in AMBIENT_CONCEPT_REVIEW.md.
+The user's wider concept review takes priority over the next solo timbre patch.
+Dusk's calmer correction is described in DUSK_CALM_REVIEW.md; user reports it
+is better. Dew's uneven attacks (SUPPORT_LEVEL_CALIBRATION.md), FM Ratio/aliasing
+and Ambient held-note tuning remain open. Tide's keep/drop decision still needs listening;
 its completed technical redesign does not alone justify shipping it.
 
 Source anchors: firmware-c-next/src/v2/engines/engine_*.c;

@@ -297,6 +297,33 @@ static void audit_onset(int on,uint8_t source,float hz,float amp) {
         mel_run=m==mel_prev?mel_run+1:1;mel_prev=m;CHECK(mel_run<=2);
     }
 }
+static int return_onsets;
+static void observe_return(int on, uint8_t source, float hz, float amp) {
+    (void)hz; (void)amp;
+    if(on==1 && (source==8 || source==15 || (source>=5 && source<=7))) ++return_onsets;
+}
+
+static void test_character_return_pause(void) {
+    /* A player can finish a Character phrase before returning to Ambient.
+     * The generator must remember that activity across the mode boundary. */
+    for(int core=1;core<=6;++core) {
+        engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
+        engine_set_note_hook(observe_return); engine_set_generative(true,-1);
+        engine_set_synth(core); return_onsets=0;
+        engine_set_user_presence(true); engine_generative_tick(1000);
+        engine_generative_tick(1750);
+        engine_set_user_presence(false); engine_generative_tick(2000);
+        CHECK(return_onsets==0); /* Character still has no automatic notes. */
+        engine_set_synth(0); engine_generative_tick(2250);
+        CHECK(engine_generative_suppressed()); CHECK(return_onsets==0);
+        engine_generative_tick(9500);
+        CHECK(engine_generative_suppressed()); CHECK(return_onsets==0);
+        engine_generative_tick(10000);
+        CHECK(!engine_generative_suppressed()); CHECK(return_onsets>0);
+        engine_set_note_hook(NULL);
+    }
+}
+
 static void test_pitch_memory(void) {
     engine_init();engine_set_tuning(0);engine_set_fx_mode(8);
     engine_note_on(0,dsp_midi_to_hz(60),0.2f);engine_note_off(0);
@@ -448,6 +475,7 @@ int main(void) {
 
     test_playability(); test_voice_gates(); test_sends();
     test_pitch_and_controls(); test_live_tuning(); test_core_level_balance(); test_handover(); test_pitch_memory();
+    test_character_return_pause();
     printf("synth_device: %d checks, 0 failures\n", checks);
     return 0;
 }

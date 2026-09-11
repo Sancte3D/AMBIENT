@@ -922,6 +922,9 @@ int engine_generative_dejavu_count(void)     { return mel_dejavu_count; }
 void engine_generative_tick(uint32_t now_ms) {
     /* Control-only tests may advance time without rendering every sample. */
     if((int32_t)(now_ms-sound_ms)>0) { sound_ms=now_ms; sound_fraction=0; }
+    /* Remember physical playing even in a Character or with Generate off.
+     * Returning to Ambient must respect the same quiet return interval. */
+    if (s_user_present) { s_last_active_ms = now_ms; s_ever_active = true; }
     if(!gen_on || s_synth_tgt>0) return;
     int sounding[128]; int occupied=engine_sounding_notes(sounding,128);
     composer_listen((float)occupied/12.0f,s_user_present); composer_tick(now_ms);
@@ -938,7 +941,6 @@ void engine_generative_tick(uint32_t now_ms) {
      * for GEN_RETURN_MS after the last release, so the machine steps back and
      * lets the player breathe, then returns gently (the re-arm below strikes
      * the bed and schedules the first melody note 1.5–4 s later). */
-    if (s_user_present) { s_last_active_ms = now_ms; s_ever_active = true; }
     bool suppressed = s_user_present ||
         (s_ever_active && (uint32_t)(now_ms - s_last_active_ms) < GEN_RETURN_MS);
     if (suppressed != s_gen_suppressed) {

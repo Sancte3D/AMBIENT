@@ -12,6 +12,11 @@ not establish this. Subjective acceptance is open for every sound until heard.
 
 ## Product selection gate
 
+AMBIENT_CONCEPT_REVIEW.md prioritizes World/Character continuity before the
+next solo timbre review. The lost return-pause history is fixed and host-tested;
+the Character still replaces the bed. Next: a concrete resource/routing plan
+for bed + one foreground role, without adding a second full engine or FX tank.
+
 See PRODUCT_SOUND_SELECTION.md: shipping the existing six-core roster is not
 an assumption. Mist/Horizon are primary candidates, Dew/Glimmer supporting,
 Dusk needs role-focused rework, Tide is the strongest redesign/drop candidate.
@@ -41,7 +46,9 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 | Done | Ambient naming | Six shared evocative atmosphere names; scene IDs unchanged; sound/imagery fit remains under review |
 | Done | Dusk register / defaults | Pitch-tracked filter, rounded bloom; body spread <0.5 dB; listening approval open |
 | Listening | Dusk calming character | Partial root cancellation corrected; gentler defaults; current device body spread ~1.1 dB |
-| Next | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
+| Done | Concept / return pause | Cross-mode presence history fixed; 28 s system probe; continuity gap remains |
+| Next | World / Character integration | Budget a minimal bed + one foreground role; source ownership, transition cost, dry/send routing |
+| Open | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |
 | Then | Remaining core controls | One core at a time; verify useful ranges and interactions |

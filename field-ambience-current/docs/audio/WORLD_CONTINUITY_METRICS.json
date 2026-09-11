@@ -1,0 +1,641 @@
+{
+  "baseline_commit": "2f4f7299ab564be81054186a2da160b321278830",
+  "change": "Record physical presence before the Character/Generate guard in engine_generative_tick.",
+  "before": {
+    "cases": [
+      {
+        "case": "dry_control",
+        "world": "Moss Fields",
+        "seed": 1031,
+        "seconds": 28,
+        "fx_mode": 0,
+        "automatic_onsets_0_10_20_28": [
+          2,
+          3,
+          1
+        ],
+        "windows": [
+          {
+            "start_s": 2,
+            "end_s": 10,
+            "rms_dbfs": -29.14,
+            "nonzero_samples": 705172
+          },
+          {
+            "start_s": 12,
+            "end_s": 20,
+            "rms_dbfs": -28.88,
+            "nonzero_samples": 705177
+          },
+          {
+            "start_s": 22,
+            "end_s": 28,
+            "rms_dbfs": -28.53,
+            "nonzero_samples": 528864
+          }
+        ],
+        "native_measurement": {
+          "integrated_lufs": -27.2,
+          "true_peak_dbfs": -17.1
+        },
+        "events": [
+          {
+            "seconds": 0.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.10005
+          },
+          {
+            "seconds": 5.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.05003
+          },
+          {
+            "seconds": 13.212154,
+            "on": 1,
+            "source": 6,
+            "hz": 349.267,
+            "amp": 0.044
+          },
+          {
+            "seconds": 13.990023,
+            "on": 0,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.0
+          },
+          {
+            "seconds": 14.616961,
+            "on": 1,
+            "source": 15,
+            "hz": 466.0665,
+            "amp": 0.07086
+          },
+          {
+            "seconds": 19.191293,
+            "on": 1,
+            "source": 5,
+            "hz": 311.0727,
+            "amp": 0.0499
+          },
+          {
+            "seconds": 26.424308,
+            "on": 0,
+            "source": 6,
+            "hz": 349.267,
+            "amp": 0.0
+          },
+          {
+            "seconds": 26.819048,
+            "on": 1,
+            "source": 7,
+            "hz": 392.0761,
+            "amp": 0.03807
+          },
+          {
+            "seconds": 27.457596,
+            "on": 0,
+            "source": 15,
+            "hz": 466.0665,
+            "amp": 0.0
+          },
+          {
+            "seconds": 27.689796,
+            "on": 0,
+            "source": 5,
+            "hz": 311.0727,
+            "amp": 0.0
+          }
+        ]
+      },
+      {
+        "case": "dry_switch",
+        "world": "Moss Fields",
+        "seed": 1031,
+        "seconds": 28,
+        "fx_mode": 0,
+        "automatic_onsets_0_10_20_28": [
+          2,
+          0,
+          3
+        ],
+        "windows": [
+          {
+            "start_s": 2,
+            "end_s": 10,
+            "rms_dbfs": -29.14,
+            "nonzero_samples": 705172
+          },
+          {
+            "start_s": 12,
+            "end_s": 20,
+            "rms_dbfs": null,
+            "nonzero_samples": 0
+          },
+          {
+            "start_s": 22,
+            "end_s": 28,
+            "rms_dbfs": -29.76,
+            "nonzero_samples": 528831
+          }
+        ],
+        "native_measurement": {
+          "integrated_lufs": -27.9,
+          "true_peak_dbfs": -18.6
+        },
+        "events": [
+          {
+            "seconds": 0.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.10005
+          },
+          {
+            "seconds": 5.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.05003
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.0
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.0
+          },
+          {
+            "seconds": 20.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6546,
+            "amp": 0.1
+          },
+          {
+            "seconds": 25.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.0621,
+            "amp": 0.04995
+          },
+          {
+            "seconds": 27.581315,
+            "on": 1,
+            "source": 8,
+            "hz": 155.5363,
+            "amp": 0.0998
+          }
+        ]
+      },
+      {
+        "case": "world_switch",
+        "world": "Moss Fields",
+        "seed": 1031,
+        "seconds": 28,
+        "fx_mode": 8,
+        "automatic_onsets_0_10_20_28": [
+          2,
+          0,
+          3
+        ],
+        "windows": [
+          {
+            "start_s": 2,
+            "end_s": 10,
+            "rms_dbfs": -34.42,
+            "nonzero_samples": 704734
+          },
+          {
+            "start_s": 12,
+            "end_s": 20,
+            "rms_dbfs": -39.88,
+            "nonzero_samples": 687838
+          },
+          {
+            "start_s": 22,
+            "end_s": 28,
+            "rms_dbfs": -34.88,
+            "nonzero_samples": 528512
+          }
+        ],
+        "native_measurement": {
+          "integrated_lufs": -33.6,
+          "true_peak_dbfs": -21.6
+        },
+        "events": [
+          {
+            "seconds": 0.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.10005
+          },
+          {
+            "seconds": 5.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.05003
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.0
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.0
+          },
+          {
+            "seconds": 11.0,
+            "on": 1,
+            "source": 0,
+            "hz": 261.6546,
+            "amp": 0.18
+          },
+          {
+            "seconds": 14.0,
+            "on": 0,
+            "source": 0,
+            "hz": 261.6546,
+            "amp": 0.0
+          },
+          {
+            "seconds": 16.0,
+            "on": 1,
+            "source": 0,
+            "hz": 391.9136,
+            "amp": 0.13985
+          },
+          {
+            "seconds": 18.0,
+            "on": 0,
+            "source": 0,
+            "hz": 391.9136,
+            "amp": 0.0
+          },
+          {
+            "seconds": 20.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.5799,
+            "amp": 0.0998
+          },
+          {
+            "seconds": 25.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.191,
+            "amp": 0.0501
+          },
+          {
+            "seconds": 27.581315,
+            "on": 1,
+            "source": 8,
+            "hz": 155.5899,
+            "amp": 0.09992
+          }
+        ]
+      }
+    ],
+    "preview": {
+      "file": "Ambient_World_Character_28s.wav",
+      "seconds": 28,
+      "constant_gain_db": 8.6,
+      "integrated_lufs": -25.0,
+      "true_peak_dbfs": -13.0
+    },
+    "limits": "Host render, no hardware timing or subjective acceptance; dry controls have no manual notes; wet clip has two Dusk notes."
+  },
+  "after": {
+    "cases": [
+      {
+        "case": "dry_control",
+        "world": "Moss Fields",
+        "seed": 1031,
+        "seconds": 28,
+        "fx_mode": 0,
+        "automatic_onsets_0_10_20_28": [
+          2,
+          3,
+          1
+        ],
+        "windows": [
+          {
+            "start_s": 2,
+            "end_s": 10,
+            "rms_dbfs": -29.14,
+            "nonzero_samples": 705172
+          },
+          {
+            "start_s": 12,
+            "end_s": 20,
+            "rms_dbfs": -28.88,
+            "nonzero_samples": 705177
+          },
+          {
+            "start_s": 22,
+            "end_s": 28,
+            "rms_dbfs": -28.53,
+            "nonzero_samples": 528864
+          }
+        ],
+        "native_measurement": {
+          "integrated_lufs": -27.2,
+          "true_peak_dbfs": -17.1
+        },
+        "events": [
+          {
+            "seconds": 0.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.10005
+          },
+          {
+            "seconds": 5.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.05003
+          },
+          {
+            "seconds": 13.212154,
+            "on": 1,
+            "source": 6,
+            "hz": 349.267,
+            "amp": 0.044
+          },
+          {
+            "seconds": 13.990023,
+            "on": 0,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.0
+          },
+          {
+            "seconds": 14.616961,
+            "on": 1,
+            "source": 15,
+            "hz": 466.0665,
+            "amp": 0.07086
+          },
+          {
+            "seconds": 19.191293,
+            "on": 1,
+            "source": 5,
+            "hz": 311.0727,
+            "amp": 0.0499
+          },
+          {
+            "seconds": 26.424308,
+            "on": 0,
+            "source": 6,
+            "hz": 349.267,
+            "amp": 0.0
+          },
+          {
+            "seconds": 26.819048,
+            "on": 1,
+            "source": 7,
+            "hz": 392.0761,
+            "amp": 0.03807
+          },
+          {
+            "seconds": 27.457596,
+            "on": 0,
+            "source": 15,
+            "hz": 466.0665,
+            "amp": 0.0
+          },
+          {
+            "seconds": 27.689796,
+            "on": 0,
+            "source": 5,
+            "hz": 311.0727,
+            "amp": 0.0
+          }
+        ]
+      },
+      {
+        "case": "dry_switch",
+        "world": "Moss Fields",
+        "seed": 1031,
+        "seconds": 28,
+        "fx_mode": 0,
+        "automatic_onsets_0_10_20_28": [
+          2,
+          0,
+          3
+        ],
+        "windows": [
+          {
+            "start_s": 2,
+            "end_s": 10,
+            "rms_dbfs": -29.14,
+            "nonzero_samples": 705172
+          },
+          {
+            "start_s": 12,
+            "end_s": 20,
+            "rms_dbfs": null,
+            "nonzero_samples": 0
+          },
+          {
+            "start_s": 22,
+            "end_s": 28,
+            "rms_dbfs": -29.76,
+            "nonzero_samples": 528831
+          }
+        ],
+        "native_measurement": {
+          "integrated_lufs": -27.9,
+          "true_peak_dbfs": -18.6
+        },
+        "events": [
+          {
+            "seconds": 0.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.10005
+          },
+          {
+            "seconds": 5.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.05003
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.0
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.0
+          },
+          {
+            "seconds": 20.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6546,
+            "amp": 0.1
+          },
+          {
+            "seconds": 25.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.0621,
+            "amp": 0.04995
+          },
+          {
+            "seconds": 27.581315,
+            "on": 1,
+            "source": 8,
+            "hz": 155.5363,
+            "amp": 0.0998
+          }
+        ]
+      },
+      {
+        "case": "world_switch",
+        "world": "Moss Fields",
+        "seed": 1031,
+        "seconds": 28,
+        "fx_mode": 8,
+        "automatic_onsets_0_10_20_28": [
+          2,
+          0,
+          2
+        ],
+        "windows": [
+          {
+            "start_s": 2,
+            "end_s": 10,
+            "rms_dbfs": -34.42,
+            "nonzero_samples": 704734
+          },
+          {
+            "start_s": 12,
+            "end_s": 20,
+            "rms_dbfs": -39.88,
+            "nonzero_samples": 687838
+          },
+          {
+            "start_s": 22,
+            "end_s": 28,
+            "rms_dbfs": -41.64,
+            "nonzero_samples": 524003
+          }
+        ],
+        "native_measurement": {
+          "integrated_lufs": -34.2,
+          "true_peak_dbfs": -21.6
+        },
+        "events": [
+          {
+            "seconds": 0.0,
+            "on": 1,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.10005
+          },
+          {
+            "seconds": 5.491519,
+            "on": 1,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.05003
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 8,
+            "hz": 261.6954,
+            "amp": 0.0
+          },
+          {
+            "seconds": 10.0,
+            "on": 0,
+            "source": 5,
+            "hz": 311.1726,
+            "amp": 0.0
+          },
+          {
+            "seconds": 11.0,
+            "on": 1,
+            "source": 0,
+            "hz": 261.6546,
+            "amp": 0.18
+          },
+          {
+            "seconds": 14.0,
+            "on": 0,
+            "source": 0,
+            "hz": 261.6546,
+            "amp": 0.0
+          },
+          {
+            "seconds": 16.0,
+            "on": 1,
+            "source": 0,
+            "hz": 391.9136,
+            "amp": 0.13985
+          },
+          {
+            "seconds": 18.0,
+            "on": 0,
+            "source": 0,
+            "hz": 391.9136,
+            "amp": 0.0
+          },
+          {
+            "seconds": 26.002358,
+            "on": 1,
+            "source": 8,
+            "hz": 261.5799,
+            "amp": 0.0998
+          },
+          {
+            "seconds": 27.581315,
+            "on": 1,
+            "source": 8,
+            "hz": 155.5955,
+            "amp": 0.1002
+          }
+        ]
+      }
+    ],
+    "preview": {
+      "file": "Ambient_World_Character_28s.wav",
+      "seconds": 28,
+      "constant_gain_db": 9.2,
+      "integrated_lufs": -25.0,
+      "true_peak_dbfs": -12.4
+    },
+    "limits": "Host render, no hardware timing or subjective acceptance; dry controls have no manual notes; wet clip has two Dusk notes."
+  }
+}

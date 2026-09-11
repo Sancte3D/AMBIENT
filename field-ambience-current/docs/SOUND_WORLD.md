@@ -48,6 +48,12 @@ CHARACTER dessen klangliche Färbung. SOUND_NAMES.md in docs/audio definiert
 Bild und Klangziel je Name. Synthesemethoden gehören in die technische
 Dokumentation; ein schöner Name ersetzt keine passende Klanggestaltung.
 
+Konzeptprüfung 2026-09-11: Die gemeinsame World-/Character-Sprache ist ein
+Produktziel; aktuell ersetzt Character das ganze Ambient-Bett. Nächster
+Architekturschritt ist ein budgetierter Austausch der Erzählstimme bei
+erhaltenem Bett, kein zusätzliches Vollinstrument. Belege und Reihenfolge:
+`docs/audio/AMBIENT_CONCEPT_REVIEW.md`.
+
 ## 4. Harmonische Sprache
 
 **Tonvorrat → Register → klingender Kontext → Stimmführung → Wahrscheinlichkeit.**
