@@ -5,7 +5,8 @@
 > open. Complete queue: `field-ambience-current/docs/audio/SOUND_REVIEW_QUEUE.md`.
 > Product selection review: `field-ambience-current/docs/audio/PRODUCT_SOUND_SELECTION.md`.
 > Storm sustained-pulse candidate implemented and host-tested: `field-ambience-current/docs/audio/STORM_ROLE_REVIEW.md`.
-> Next: judge its distinction from Mist/Orbit; FM Ratio and Ambient retuning remain open.
+> Storm/Mist/Orbit role comparison: `field-ambience-current/docs/audio/CORE_ROLE_COMPARISON.md`.
+> Next: calibrate their native output balance (11.3 LU gap on the test phrase); FM Ratio and Ambient retuning remain open.
 
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR

@@ -90,3 +90,10 @@ STORM_ROLE_REVIEW.md records the first candidate: no attack pitch bend, softer
 amp envelope, narrower detune/PWM and drive, no additional buffers. Host tests
 pass. The original risk assessment remains a reason to compare its role with
 Mist/Orbit; this implementation alone does not justify keeping it in the palette.
+
+## Three-core comparison checkpoint
+
+CORE_ROLE_COMPARISON.md documents matched short examples and separate dry
+measurements. Storm is technically distinguishable, but final listening
+approval is open. A native 11.3 LU Orbit/Mist gap on the same phrase is the
+next bounded calibration issue; do not equate the louder source with quality.
