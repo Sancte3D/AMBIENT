@@ -23,7 +23,7 @@ character. Reject duplication and effects used to conceal a weak dry source.
 | Horizon | Primary candidate: slowly evolving harmonic tone | Phase-related waveform morph with slow movement, distinct from ensemble width. Test useful morph range and upper-register harmonics after the cancellation fix. |
 | Dew | Supporting candidate: sparse woody events | Coupled LPG brightness/amplitude decay gives a distinct transient role. Judge against String/Guembri, including whether its independent mono mode is necessary. |
 | Glimmer | Supporting candidate: restrained tonal accents | FM Index/Body interaction corrected. Keep only if useful at ordinary settings without excessive filtering/reverb; Ratio changes and aliasing remain unresolved. |
-| Dusk | Warm, compact evening character; listening decision open | DUSK_REVIEW.md fixes the register/filter mismatch and softens the attack into a rounded bloom. Still compare its role against Ember/Bass/Horn; measured consistency alone does not justify selection. |
+| Dusk | Warm, compact evening character; listening decision open | First candidate remained too sci-fi for the user. DUSK_CALM_REVIEW.md corrects partial fundamental cancellation and reduces the default resonance/bloom/glide. Compare against Ember/Bass/Horn; measured consistency alone does not justify selection. |
 | Tide | Redesign candidate; keep/drop listening decision open | The original aggressive hoover/stab has been reworked into a softer sustained PWM texture without attack pitch bend. STORM_ROLE_REVIEW.md and CORE_ROLE_COMPARISON.md document it. Distinction from Mist/Horizon must still justify its place. |
 
 These are priorities and acceptance hypotheses. Nothing is silently removed,

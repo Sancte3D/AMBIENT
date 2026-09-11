@@ -48,17 +48,17 @@ static void acid_init(void) {
     memset(&a, 0, sizeof a);
     a.colour_scale = 1.0f;
     a.freq_cur = a.freq_tgt = 110.0f;        /* A2 */
-    a.glide_coef = dsp_smooth_coef(0.030f);
-    a.atk_inc    = 1.0f / (0.060f * SR);
+    a.glide_coef = dsp_smooth_coef(0.008f);
+    a.atk_inc    = 1.0f / (0.120f * SR);
     a.dec_coef   = dsp_smooth_coef(0.280f);
     a.sustain    = 0.80f;
-    a.rel_coef   = dsp_smooth_coef(0.300f);
+    a.rel_coef   = dsp_smooth_coef(0.400f);
     a.base_cut   = 650.0f;
-    a.env_amt    = 780.0f;
-    a.res        = 0.4825f;      /* restrained native resonance */
+    a.env_amt    = 312.0f;
+    a.res        = 0.1975f;      /* restrained native resonance */
     a.decay_s    = 0.62f;
-    a.drive      = 1.30f;        /* gentle native saturation */
-    a.level      = 0.85f;
+    a.drive      = 1.00f;        /* gentle native saturation */
+    a.level      = 0.50f;
     a.send       = 0.06f;
     recalc_decay();
     dsp_ladder_init(&a.lad, SR);
@@ -79,8 +79,8 @@ static void acid_retune_hz(float hz) {
 }
 
 static void acid_note_on(float midi, float vel) {
-    a.atk_inc = 1.0f / (0.060f * shape_attack_scale() * SR);
-    a.rel_coef = dsp_smooth_coef(0.30f * shape_release_scale());
+    a.atk_inc = 1.0f / (0.120f * shape_attack_scale() * SR);
+    a.rel_coef = dsp_smooth_coef(0.40f * shape_release_scale());
     float f = dsp_midi_to_hz((float)midi);
     if (a.astate == A_IDLE || a.amp < 1.0e-3f) a.freq_cur = f;   /* snap from silence */
     a.freq_tgt = f;
@@ -135,7 +135,10 @@ static void acid_render_mix(float *dL, float *dR, float *sL, float *sR, int fram
         const float dt = a.freq_cur / SR;
         float saw = dsp_poly_saw(a.phase, dt);
         float sq  = dsp_poly_square(a.sq_phase, dt);
-        float osc = 0.80f * saw + 0.20f * sq;
+        /* These DSP primitives have opposite fundamental polarity at the
+         * same phase. Subtract square so fundamentals reinforce; adding it
+         * suppressed the root and let the octave dominate the default tone. */
+        float osc = 0.80f * saw - 0.20f * sq;
         a.phase    += dt; if (a.phase    >= 1.0f) a.phase    -= 1.0f;
         a.sq_phase += dt; if (a.sq_phase >= 1.0f) a.sq_phase -= 1.0f;
 

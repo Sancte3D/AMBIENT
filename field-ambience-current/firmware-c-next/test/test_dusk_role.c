@@ -25,6 +25,15 @@ static void render(int frames,int save) {
 static double energy(int a,int b) {
     double e=0;for(int i=a;i<b;++i)e+=(double)x[i]*x[i];return e/(b-a);
 }
+static double partial_power(double hz) {
+    double re=0,im=0;
+    for(int i=0;i<SR;++i) {
+        double w=.5-.5*cos(6.283185307179586*i/(SR-1));
+        double ph=6.283185307179586*hz*i/SR;
+        re+=x[i]*w*cos(ph);im+=x[i]*w*sin(ph);
+    }
+    return re*re+im*im;
+}
 static void setup(void) {
     engine_acid.init();
     for(int p=0;p<6;++p)engine_acid.set_param((synth_param_t)p,synth_control_defaults[0][p]/100.0f);
@@ -40,6 +49,12 @@ int main(void) {
             assert(energy(0,441)<energy(4410,8820)*.1); /* first 10 ms are gentle */
             render(SR,1);double body=energy(0,17640);
             assert(body>1e-5);
+            if(notes[n]==60) {
+                double hz=dsp_midi_to_hz(60);
+                double octave=partial_power(2*hz)/partial_power(hz);
+                printf("Dusk octave/root v%d: %.1f dB\n",v,10*log10(octave));
+                assert(octave<.16); /* root dominates; reject cancellation/nasal default */
+            }
             if(body<lo)lo=body;
             if(body>hi)hi=body;
         }

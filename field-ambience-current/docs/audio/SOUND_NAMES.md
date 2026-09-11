@@ -45,8 +45,9 @@ that core above a continuing landscape bed. WORLD still supplies shared world
 parameters, but continuous bed + chosen foreground remains an open routing/
 resource design task in PRODUCT_SOUND_SELECTION.md. Naming cannot implement it.
 
-DUSK_REVIEW.md implements the first tracked-filter/rounded-bloom candidate;
-listening still determines whether it fits the image. Dew's uneven attacks,
+DUSK_REVIEW.md implements the first tracked-filter/rounded-bloom candidate.
+The user found it too sci-fi; DUSK_CALM_REVIEW.md records the next tonal revision.
+Listening still determines whether it fits the image. Dew's uneven attacks,
 Glimmer's high-ratio behaviour and the other acceptance gates stay open.
 The earlier output calibration remains intact; no new audio buffers/state.
 

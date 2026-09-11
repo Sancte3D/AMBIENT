@@ -10,7 +10,8 @@
 > Remaining core trims are implemented: `field-ambience-current/docs/audio/SUPPORT_LEVEL_CALIBRATION.md` (60 probes per version; Keys within -0.8..+0.9 LU of Ensemble).
 > User clarified evocative ambient imagery: display names are Dusk / Glimmer / Mist / Tide / Horizon / Dew; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
 > Dusk filter tracking and rounded bloom implemented: `field-ambience-current/docs/audio/DUSK_REVIEW.md` (body spread <0.5 dB across C3..C5; +4 bytes native state; host suite green).
-> Next: Dew (Bamboo/Pluck) attack consistency; Glimmer Ratio/aliasing and Ambient retuning remain open.
+> Dusk listening correction after "spicy sci fi" feedback: `field-ambience-current/docs/audio/DUSK_CALM_REVIEW.md` (fundamental polarity corrected; gentler defaults; current device body spread ~1.1 dB; host suite green).
+> Dusk calming character awaits listening feedback. Dew attack consistency, Glimmer Ratio/aliasing and Ambient retuning remain open.
 
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR
