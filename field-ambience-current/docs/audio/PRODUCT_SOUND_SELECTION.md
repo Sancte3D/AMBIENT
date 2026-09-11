@@ -23,7 +23,7 @@ character. Reject duplication and effects used to conceal a weak dry source.
 | Horizon | Primary candidate: slowly evolving harmonic tone | Phase-related waveform morph with slow movement, distinct from ensemble width. Test useful morph range and upper-register harmonics after the cancellation fix. |
 | Dew | Supporting candidate: sparse woody events | Coupled LPG brightness/amplitude decay gives a distinct transient role. Judge against String/Guembri, including whether its independent mono mode is necessary. |
 | Glimmer | Supporting candidate: restrained tonal accents | FM Index/Body interaction corrected. Keep only if useful at ordinary settings without excessive filtering/reverb; Ratio changes and aliasing remain unresolved. |
-| Dusk | Rework candidate: expressive dark reed/bass | Current design emphasizes resonant filter attacks, accent and drive. Subtractive synthesis is useful for ambient, but this particular default/identity must earn its role rather than survive as an imitation. Compare against Ember/Bass/Horn before deciding. |
+| Dusk | Warm, compact evening character; listening decision open | DUSK_REVIEW.md fixes the register/filter mismatch and softens the attack into a rounded bloom. Still compare its role against Ember/Bass/Horn; measured consistency alone does not justify selection. |
 | Tide | Redesign candidate; keep/drop listening decision open | The original aggressive hoover/stab has been reworked into a softer sustained PWM texture without attack pitch bend. STORM_ROLE_REVIEW.md and CORE_ROLE_COMPARISON.md document it. Distinction from Mist/Horizon must still justify its place. |
 
 These are priorities and acceptance hypotheses. Nothing is silently removed,
@@ -74,8 +74,8 @@ controls, mono/stereo, room and one competing source. Verify signal behaviour
 and then obtain listening feedback. Files <=30 seconds; no diagnostic sine in
 a musical example. Hardware listening and H743 DWT/memory remain release gates.
 
-Next: Dusk default filter/envelope and register response, then Dew's
-uneven attacks (SUPPORT_LEVEL_CALIBRATION.md). FM Ratio/aliasing and Ambient
+Next: Dew's uneven attacks (SUPPORT_LEVEL_CALIBRATION.md). Dusk's first
+candidate is implemented and host-tested (DUSK_REVIEW.md). FM Ratio/aliasing and Ambient
 held-note tuning remain open. Tide's keep/drop decision still needs listening;
 its completed technical redesign does not alone justify shipping it.
 

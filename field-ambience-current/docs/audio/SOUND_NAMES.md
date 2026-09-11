@@ -45,14 +45,14 @@ that core above a continuing landscape bed. WORLD still supplies shared world
 parameters, but continuous bed + chosen foreground remains an open routing/
 resource design task in PRODUCT_SOUND_SELECTION.md. Naming cannot implement it.
 
-Dusk's current resonant attack and uneven register response do not yet satisfy
-its target. That is the next bounded sound revision. Dew's uneven attacks,
+DUSK_REVIEW.md implements the first tracked-filter/rounded-bloom candidate;
+listening still determines whether it fits the image. Dew's uneven attacks,
 Glimmer's high-ratio behaviour and the other acceptance gates stay open.
 The earlier output calibration remains intact; no new audio buffers/state.
 
 Verification: full bash test/run_tests.sh passes after the label change
 (16436 device checks, 478860 effects checks, zero failures). No DSP changed.
-Next-review evidence from SUPPORT_LEVEL_METRICS.json: at velocity .5, dry
+Baseline evidence from SUPPORT_LEVEL_METRICS.json: at velocity .5, dry
 Dusk body RMS in the 1..1.4 s window is -25.44 dBFS at C3 and -42.06 dBFS
-at C5 (16.62 dB difference). This quantifies the register issue; its cause
-still needs a controlled filter/envelope test.
+at C5 (16.62 dB difference). The controlled intervention and fix
+are now documented in DUSK_REVIEW.md.

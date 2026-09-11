@@ -20,8 +20,8 @@ The role comparison supports keeping it as a candidate; final listening approval
 is open. Tide/Mist/Horizon now use fixed output trims, verified across 45 probes
 (CORE_LEVEL_CALIBRATION.md). Dusk/Glimmer/Dew fixed trims now follow in
 SUPPORT_LEVEL_CALIBRATION.md (60 probes per version). SOUND_NAMES.md records
-the evocative atmosphere names and unchanged IDs. Next: Dusk register/
-filter-envelope response, then Dew's uneven attacks. FM Ratio/aliasing and
+the evocative atmosphere names and unchanged IDs. DUSK_REVIEW.md confirms and
+fixes its register/filter mismatch with a rounded bloom. Next: Dew's uneven attacks. FM Ratio/aliasing and
 Ambient retuning stay open; do not expand layers before resource/routing review.
 
 ## Progress and next units
@@ -36,8 +36,8 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 | Done | Three-core output balance | Tide/Mist/Horizon fixed trims, 45 probes; no AGC |
 | Done | Remaining core levels | Fixed trims; separate Dew attack measurement preserves transient role |
 | Done | Ambient naming | Six shared evocative atmosphere names; scene IDs unchanged; sound/imagery fit remains under review |
-| Next | Dusk register / defaults | Fixed filter floor, fast filter envelope and intended musical role |
-| Then | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
+| Done | Dusk register / defaults | Pitch-tracked filter, rounded bloom; body spread <0.5 dB; listening approval open |
+| Next | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |
 | Then | Remaining core controls | One core at a time; verify useful ranges and interactions |

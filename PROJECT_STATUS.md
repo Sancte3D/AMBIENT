@@ -9,7 +9,8 @@
 > Fixed Storm/Mist/Orbit output calibration: `field-ambience-current/docs/audio/CORE_LEVEL_CALIBRATION.md` (45 probes, worst spread 1.0 LU).
 > Remaining core trims are implemented: `field-ambience-current/docs/audio/SUPPORT_LEVEL_CALIBRATION.md` (60 probes per version; Keys within -0.8..+0.9 LU of Ensemble).
 > User clarified evocative ambient imagery: display names are Dusk / Glimmer / Mist / Tide / Horizon / Dew; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
-> Next: Dusk (legacy Acid/Resonant) register/filter-envelope review, then Dew (Bamboo/Pluck) attack consistency; FM Ratio and Ambient retuning remain open.
+> Dusk filter tracking and rounded bloom implemented: `field-ambience-current/docs/audio/DUSK_REVIEW.md` (body spread <0.5 dB across C3..C5; +4 bytes native state; host suite green).
+> Next: Dew (Bamboo/Pluck) attack consistency; Glimmer Ratio/aliasing and Ambient retuning remain open.
 
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR

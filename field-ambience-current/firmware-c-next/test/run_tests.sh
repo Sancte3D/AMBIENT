@@ -353,6 +353,12 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
     -lm -o "$tmp/synth_host_test"
 
+# Dusk: register consistency, rounded envelope and control limits.
+"$CC" "${CFLAGS[@]}" "$here/test_dusk_role.c" \
+    "$src/src/dsp.c" "$src/src/dsp_ladder.c" "$src/src/shape.c" \
+    "$src/src/v2/engines/engine_acid.c" -lm -o "$tmp/dusk_role_test"
+"$tmp/dusk_role_test"
+
 # FM Index/Body relationship and live control response (real dry PCM).
 "$CC" "${CFLAGS[@]}" "$here/test_fm_controls.c" \
     "$src/src/dsp.c" "$src/src/shape.c" "$src/src/v2/engines/engine_fm_glass.c" \
