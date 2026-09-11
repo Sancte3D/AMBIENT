@@ -3,6 +3,7 @@
  */
 
 #include "harmony.h"
+#include "pitch_modes.h"
 
 /* --- the two pitch worlds (relative pitch classes) ----------------------- *
  * Major: core = major pentatonic, color = maj7 (high register only).
@@ -36,6 +37,12 @@ static const hstate_t STATES_MAJOR[4] = {
     { 9, { 9, 0, 2, 4, 7 } },
     { 7, { 7, 9, 0, 2, 4 } },
     { 2, { 2, 4, 7, 9, 0 } },
+};
+/* Modal beds contain core tones only. Color belongs to the foreground and
+ * must wait for space; it is never silently embedded in an Eno loop. */
+static const hstate_t STATES_MODAL_MINOR[4] = {
+    {0, {0,3,5,7,10}}, {3, {3,5,7,10,0}},
+    {10,{10,0,3,5,7}}, {5, {5,7,10,0,3}}
 };
 
 /* --- register rules ------------------------------------------------------ */
@@ -175,6 +182,17 @@ void harmony_set_world(int tonic_midi, int minor) {
     voice_initial();
 }
 
+void harmony_set_mode(int tonic_midi, int mode) {
+    if(mode<0 || mode>=6) mode=0;
+    harmony_set_world(tonic_midi,mode==1 || mode==2 || mode==5);
+    /* Ionian maj7, Dorian 6, Phrygian b2, Lydian #4, Mixolydian b7,
+     * Aeolian b6, derived from the same modal scale as the live controls. */
+    static const uint8_t degree[6]={6,5,1,3,6,5};
+    color_pc=PITCH_MODES[mode][degree[mode]];
+    if(is_minor) table=STATES_MODAL_MINOR;
+    voice_initial();
+}
+
 void harmony_advance(void) {
     /* neighbor walk: mostly ±1 through the curated cycle, sometimes
      * across — every pair already satisfies the common-tone contract */
@@ -216,10 +234,15 @@ int harmony_voices(int *out, int max) {
     return n;
 }
 
-int harmony_in_world(int midi) {
+int harmony_in_core(int midi) {
     int pc = wrap12(midi - tonic_pc);
     for (int i = 0; i < 5; ++i)
         if (core[i] == pc) return 1;
+    return 0;
+}
+int harmony_in_world(int midi) {
+    int pc = wrap12(midi - tonic_pc);
+    if(harmony_in_core(midi)) return 1;
     if (pc == color_pc) return midi >= REG_COLOR_MIN;
     return 0;
 }
@@ -228,10 +251,22 @@ int harmony_collision_ok(int midi, const int *sustained, int n_sus) {
     for (int i = 0; i < n_sus; ++i) {
         int ic = iclass(midi, sustained[i]);
         if (ic == 1 || ic == 6) return 0;
-        if (ic == 2 && (midi < REG_SECONDS_MIN ||
+        int distance=midi>sustained[i] ? midi-sustained[i]:sustained[i]-midi;
+        if (ic == 2 && distance<12 && (midi < REG_SECONDS_MIN ||
                         sustained[i] < REG_SECONDS_MIN)) return 0;
     }
     return 1;
+}
+
+int harmony_nearest_safe(int wanted, int lo, int hi, const int *sounding, int count) {
+    int best=-1, distance=999;
+    for(int m=lo;m<=hi;++m) {
+        int d=m>wanted ? m-wanted:wanted-m;
+        if(d<distance && harmony_in_core(m) && harmony_collision_ok(m,sounding,count)) {
+            best=m; distance=d;
+        }
+    }
+    return best;
 }
 
 /* melody candidates around `from`, best first, per the interval table:
@@ -239,12 +274,13 @@ int harmony_collision_ok(int midi, const int *sustained, int n_sus) {
 static int build_candidates(int from, float p_color, int *cand) {
     int n = 0;
     float r = rnd01();
+    int allow_color=rnd01()<p_color;
 
     /* the melodic universe: core pcs in the melody band + the color pc
      * above REG_COLOR_MIN. Collect the scale as sorted midi around from. */
     int scale[40]; int ns = 0;
     for (int m = REG_MELODY_LO; m <= REG_MELODY_HI && ns < 40; ++m)
-        if (harmony_in_world(m)) scale[ns++] = m;
+        if (harmony_in_core(m) || (allow_color && harmony_in_world(m))) scale[ns++] = m;
     if (ns == 0) return 0;
 
     /* index of `from` (or nearest) in the scale */
@@ -275,7 +311,7 @@ static int build_candidates(int from, float p_color, int *cand) {
             if (n >= 4) break;
         }
     }
-    if (rnd01() < p_color) {               /* color note, high register */
+    if (allow_color) {                     /* color note, high register */
         for (int m = REG_MELODY_HI; m >= REG_COLOR_MIN; --m)
             if (wrap12(m - tonic_pc) == color_pc &&
                 m >= REG_MELODY_LO) { cand[n++] = m; break; }
@@ -301,8 +337,20 @@ int harmony_melody_next(int last_midi, const int *sustained, int n_sus,
     int n = build_candidates(from, p_color, cand);
     for (int i = 0; i < n; ++i) {
         if (!harmony_in_world(cand[i])) continue;
+        if(cand[i]-from>12 || from-cand[i]>12) continue;
         if (harmony_collision_ok(cand[i], sustained, n_sus))
             return cand[i];                /* first safe = next best      */
     }
     return -1;                             /* nothing safe → silence      */
+}
+
+int harmony_melody_move(int last_midi,const int *sounding,int count) {
+    int best=-1,distance=13;
+    for(int m=REG_MELODY_LO;m<=REG_MELODY_HI;++m) {
+        int d=m>last_midi ? m-last_midi:last_midi-m;
+        if(d>0 && d<distance && harmony_in_core(m) && harmony_collision_ok(m,sounding,count)) {
+            best=m;distance=d;
+        }
+    }
+    return best;
 }

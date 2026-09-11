@@ -1,5 +1,43 @@
 # PROJECT STATUS
 
+> **Sound review in small units:** FM Glass Index/Body coupling, live Index
+> and a softer native attack corrected; host-verified, listening/device gates
+> open. Complete queue: `field-ambience-current/docs/audio/SOUND_REVIEW_QUEUE.md`.
+> Product selection review: `field-ambience-current/docs/audio/PRODUCT_SOUND_SELECTION.md`.
+> Storm sustained-pulse candidate implemented and host-tested: `field-ambience-current/docs/audio/STORM_ROLE_REVIEW.md`.
+> Storm/Mist/Orbit role comparison: `field-ambience-current/docs/audio/CORE_ROLE_COMPARISON.md`.
+> Fixed Storm/Mist/Orbit output calibration: `field-ambience-current/docs/audio/CORE_LEVEL_CALIBRATION.md` (45 probes, worst spread 1.0 LU).
+> Remaining core trims are implemented: `field-ambience-current/docs/audio/SUPPORT_LEVEL_CALIBRATION.md` (60 probes per version; Keys within -0.8..+0.9 LU of Ensemble).
+> User clarified evocative ambient imagery: display names are Dusk / Glimmer / Mist / Tide / Horizon / Dew; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
+> Dusk filter tracking and rounded bloom implemented: `field-ambience-current/docs/audio/DUSK_REVIEW.md` (body spread <0.5 dB across C3..C5; +4 bytes native state; host suite green).
+> Dusk listening correction after "spicy sci fi" feedback: `field-ambience-current/docs/audio/DUSK_CALM_REVIEW.md` (fundamental polarity corrected; gentler defaults; current device body spread ~1.1 dB; host suite green).
+> User reports the calmer Dusk direction is better; whole-instrument acceptance remains open.
+> Concept/continuity review: `field-ambience-current/docs/audio/AMBIENT_CONCEPT_REVIEW.md`. Character still replaces the Ambient bed. Fixed lost player-presence history across Character selection; automatic return now respects the ~8 s pause (red/green regression, full host suite green).
+> Next: budget/routing for a continuous bed + one foreground role. Dew attack consistency, Glimmer Ratio/aliasing and Ambient retuning remain open.
+
+> **2026-09-10 — Sonic review after listening feedback.**
+> Irregular broadband wind/noise; less stationary landscape textures; BLUR
+> unwanted transposition and Orbit fundamental cancellation corrected; gentler
+> pad formant and direct-led Mist ensemble. No additional audio buffers.
+> Reproducible 38-render A/B protocol and dedicated audio regressions.
+> Subjective AAA acceptance and H743 DWT/outputs remain open. Details:
+> `field-ambience-current/docs/audio/SONIC_REVIEW_2026-09-10.md`.
+
+> **2026-09-09 — Musical system development (host-verified).**
+> Fractional synth pitch/Just, global native macros and Shape, gentle three-voice
+> handovers, release/FX pitch memory, staggered automatic onsets, modal colours,
+> weighted composer graph and variation-aware phrase memory. Full host suite
+> passes; real-device DWT and listening remain open. Details:
+> `field-ambience-current/docs/audio/MUSICAL_SYSTEM_2026-09-09.md`.
+
+> **2026-09-05 — Sound/playability review (host-verified, hardware pending).**
+> Shared master/FX for Ambient and all six synths; restored per-voice sends;
+> held-note priority; 36 named/smoothed synth controls; expressive gated
+> Bowed/Horn/Choir; gentle foreground/pad balance; SCN5→SCN6 scene migration.
+> 31 firmware listening renders plus reproducible A/B packaging. Full host
+> suite passes; H743 build/map/DWT and listening on the real device remain
+> open. Details: `field-ambience-current/docs/audio/MUSICAL_PLAYABILITY_2026-09-05.md`.
+
 > **r19.65 (2026-07-26) — Pad-Mapping: 2 echte Defekte gefunden.** Der letzte
 > offene Punkt vor dem Layout ("landet jede Symbol-Pinnummer auf einem Pad?",
 > fuer 9 ICs als pinout-pending markiert) ist erledigt — und war nicht leer:

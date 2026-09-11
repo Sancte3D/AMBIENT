@@ -48,6 +48,8 @@ void pad_all_off(void);
  * (the BRIGHT encoder will drive this later; default 0). Smoothed internally
  * so turning it does not zipper. */
 void pad_set_brightness(float hz);
+/* Smooth live gain of a source, including sustained voices. */
+void pad_set_source_gain(uint8_t source, float gain);
 
 /* r19.59: RESONANCE of the Moog ladder on the pad bus. 0 = off/bypassed,
  * 1 = just under self-oscillation. Cutoff follows the BRIGHT macro. */

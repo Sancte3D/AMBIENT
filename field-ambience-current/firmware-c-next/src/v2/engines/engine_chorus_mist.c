@@ -11,7 +11,9 @@
  * taps); the host's reverb widens it further. dsp.h only.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
+#include "shape.h"
 #include <math.h>
 #include <string.h>
 
@@ -25,10 +27,11 @@ enum { P_IDLE = 0, P_ATTACK, P_SUSTAIN, P_RELEASE };
 static const float SPREAD[NVOX] = { -1.0f, -0.5f, 0.0f, 0.5f, 1.0f };
 
 static struct {
+    float colour_scale, colour_res;
     float ph[NVOX], ratio[NVOX];
     float freq_cur, freq_tgt, glide_coef;
     int   astate;
-    float amp, atk_coef, rel_coef;
+    float amp, atk_coef, rel_coef, attack_s;
     dsp_svf_t lp; int fctr; float cutoff;
     float buf[CH_LEN]; int wr;
     float lfo1, lfo2, lfo_inc, depth;
@@ -42,9 +45,11 @@ static void set_detune(float cents) {
 
 static void cm_init(void) {
     memset(&c, 0, sizeof c);
+    c.colour_scale = 1.0f;
     c.freq_cur = c.freq_tgt = 65.41f;     /* C2 */
     c.glide_coef = dsp_smooth_coef(0.040f);
-    c.atk_coef = dsp_smooth_coef(0.30f);  /* slow pad attack */
+    c.attack_s = 0.30f;
+    c.atk_coef = dsp_smooth_coef(c.attack_s);  /* slow pad attack */
     c.rel_coef = dsp_smooth_coef(0.50f);
     c.cutoff   = 1600.0f;
     c.detune   = 14.0f;                   /* cents */
@@ -54,7 +59,7 @@ static void cm_init(void) {
     c.level    = 0.5f;                    /* a stacked pad is loud — headroom */
     c.send     = 0.18f;
     set_detune(c.detune);
-    dsp_svf_reset(&c.lp); dsp_svf_set(&c.lp, c.cutoff, 0.707f);
+    dsp_svf_reset(&c.lp); dsp_svf_set(&c.lp, dsp_clampf(c.cutoff * c.colour_scale, 80.0f, 8000.0f), 0.707f + c.colour_res * 1.8f);
     c.astate = P_IDLE;
 }
 
@@ -62,7 +67,15 @@ static void cm_activate(void)   { cm_init(); }
 static void cm_deactivate(void) { if (c.astate != P_IDLE) c.astate = P_RELEASE; }
 static void cm_panic(void)      { c.amp = 0.0f; c.astate = P_IDLE; memset(c.buf,0,sizeof c.buf); }
 
-static void cm_note_on(int midi, float vel) {
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void cm_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        c.freq_tgt = hz;
+}
+
+static void cm_note_on(float midi, float vel) {
+    c.atk_coef = dsp_smooth_coef(c.attack_s * shape_attack_scale());
+    c.rel_coef = dsp_smooth_coef(0.50f * shape_release_scale());
     (void)vel;
     float f = dsp_midi_to_hz((float)midi);
     if (c.astate == P_IDLE || c.amp < 1.0e-3f) c.freq_cur = f;
@@ -79,7 +92,8 @@ static void cm_set_param(synth_param_t p, float v) {
         case SP_C: c.depth   = 0.001f + v * 0.008f;                     break; /* Chorus   */
         case SP_D: c.lfo_inc = (0.15f + v * 1.2f) / SR;                 break; /* Motion   */
         case SP_E: c.glide_coef = dsp_smooth_coef(0.008f + v * 0.20f);  break; /* Glide    */
-        case SP_F: c.atk_coef = dsp_smooth_coef(0.04f + v * 0.8f);      break; /* Attack   */
+        case SP_F: c.attack_s = 0.04f + v * 0.8f;
+                   c.atk_coef = dsp_smooth_coef(c.attack_s * shape_attack_scale());      break; /* Attack   */
         default: break;
     }
 }
@@ -114,7 +128,7 @@ static void cm_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
         }
         saws *= (1.0f / NVOX);
 
-        if ((c.fctr++ % F_UPD) == 0) dsp_svf_set(&c.lp, c.cutoff, 0.707f);
+        if ((c.fctr++ % F_UPD) == 0) dsp_svf_set(&c.lp, dsp_clampf(c.cutoff * c.colour_scale, 80.0f, 8000.0f), 0.707f + c.colour_res * 1.8f);
         float v = dsp_svf_lp(&c.lp, saws);
 
         c.buf[c.wr] = v;
@@ -124,15 +138,19 @@ static void cm_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
         c.lfo1 += c.lfo_inc; if (c.lfo1 >= 1.0f) c.lfo1 -= 1.0f;
 
         float a = c.amp * c.level;
-        float outL = (0.6f * v + 0.7f * wetL) * a;
-        float outR = (0.6f * v + 0.7f * wetR) * a;
+        float outL = (0.85f * v + 0.30f * wetL) * a;
+        float outR = (0.85f * v + 0.30f * wetR) * a;
         dL[n] += outL;            dR[n] += outR;
         sL[n] += outL * c.send;   sR[n] += outR * c.send;
     }
 }
 
+static void cm_set_colour(float scale, float res) {
+    c.colour_scale = scale; c.colour_res = res;
+}
+
 const synth_engine_t engine_chorus_mist = {
-    .name        = "CHORUS MIST",
+    .name        = SYNTH_NAME_CHORUS_MIST,
     .init        = cm_init,
     .activate    = cm_activate,
     .deactivate  = cm_deactivate,
@@ -141,4 +159,6 @@ const synth_engine_t engine_chorus_mist = {
     .set_param   = cm_set_param,
     .render_mix  = cm_render_mix,
     .panic       = cm_panic,
+    .set_colour  = cm_set_colour,
+    .retune_hz = cm_retune_hz,
 };

@@ -18,6 +18,10 @@ void bowed_init(void);
 
 /* Start one bow stroke at freq_hz, peak amplitude amp (0..1). Allocates a
  * voice (steals the quietest if full). The stroke completes on its own. */
+/* Played sources sustain until release; note() remains a timed one-shot. */
+void bowed_note_on(int source, float freq_hz, float amp);
+void bowed_note_off(int source);
+void bowed_all_off(void);
 void bowed_note(float freq_hz, float amp);
 
 /* Optional "colour" per world: 0 = Open Sea lyra (warm, mid body), 1 = Fjords

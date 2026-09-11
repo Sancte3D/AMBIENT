@@ -12,7 +12,9 @@
  * (same envelope). Plucky, no sustain. dsp.h + dsp_ladder only.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
+#include "shape.h"
 #include "dsp_ladder.h"
 #include <math.h>
 #include <string.h>
@@ -21,9 +23,10 @@
 #define F_UPD 8                 /* the gate moves fast → update the filter often */
 
 static struct {
+    float colour_scale, colour_res;
     float car_ph, mod_ph;
     float freq_cur, freq_tgt, glide_coef;
-    float env, env_coef;        /* the single LPG envelope (exp decay) */
+    float env, env_coef, strike, atk_inc, release_scale;        /* the single LPG envelope (exp decay) */
     int   active;
     float fm_amt;               /* wood↔metal */
     float decay_s;
@@ -32,13 +35,15 @@ static struct {
     float level, send;
 } b;
 
-static void recalc(void) { b.env_coef = expf(-1.0f / (b.decay_s * SR)); }
+static void recalc(void) { b.env_coef = expf(-1.0f / (b.decay_s * b.release_scale * SR)); }
 
 static void bc_init(void) {
     memset(&b, 0, sizeof b);
+    b.colour_scale = 1.0f;
     b.freq_cur = b.freq_tgt = 110.0f;
     b.glide_coef = dsp_smooth_coef(0.020f);
     b.fm_amt   = 0.12f;
+    b.release_scale = 1.0f;
     b.decay_s  = 0.18f;          /* short pluck */
     b.cut_base = 200.0f;
     b.cut_range= 5000.0f;
@@ -53,14 +58,22 @@ static void bc_init(void) {
 }
 
 static void bc_activate(void)   { bc_init(); }
-static void bc_deactivate(void) { b.env = 0.0f; b.active = 0; }
-static void bc_panic(void)      { b.env = 0.0f; b.active = 0; }
+static void bc_deactivate(void) { b.env = b.strike = 0.0f; b.active = 0; }
+static void bc_panic(void)      { b.env = b.strike = 0.0f; b.active = 0; }
 
-static void bc_note_on(int midi, float vel) {
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void bc_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        b.freq_tgt = hz;
+}
+
+static void bc_note_on(float midi, float vel) {
+    b.release_scale = shape_release_scale(); recalc();
+    b.atk_inc = 1.0f / (0.002f * shape_attack_scale() * SR);
     float f = dsp_midi_to_hz((float)midi);
     if (!b.active || b.env < 1.0e-3f) b.freq_cur = f;
     b.freq_tgt = f;
-    b.env      = 0.4f + 0.6f * dsp_clampf(vel,0,1);    /* strike strength */
+    b.strike   = fmaxf(b.env,0.4f + 0.6f * dsp_clampf(vel,0,1));    /* strike strength */
     b.active   = 1;
 }
 static void bc_note_off(void) { /* LPG plucks ring out on their own; gate is a no-op */ }
@@ -84,8 +97,11 @@ static void bc_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
     for (int n = 0; n < frames; ++n) {
         b.freq_cur += b.glide_coef * (b.freq_tgt - b.freq_cur);
 
-        b.env *= b.env_coef;                       /* the LPG envelope */
-        if (b.env < 1.0e-4f) { b.env = 0.0f; b.active = 0; }
+        if (b.strike > 0.0f) {
+            b.env += b.atk_inc;
+            if (b.env >= b.strike) { b.env = b.strike; b.strike = 0.0f; }
+        } else b.env *= b.env_coef;                       /* the LPG envelope */
+        if (b.env < 1.0e-4f) { b.env = b.strike = 0.0f; b.active = 0; }
 
         /* osc: sine + a little FM for wood/metal character */
         float dt_c = b.freq_cur / SR;
@@ -98,8 +114,10 @@ static void bc_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
         b.mod_ph += dt_m; if (b.mod_ph >= 1.0f) b.mod_ph -= 1.0f;
 
         /* LPG: cutoff AND amp both follow b.env (filter+amp close together) */
-        if ((b.fctr++ % F_UPD) == 0)
-            dsp_ladder_set_freq(&b.lad, b.cut_base + b.cut_range * b.env);
+        if ((b.fctr++ % F_UPD) == 0) {
+            dsp_ladder_set_freq(&b.lad, dsp_clampf((b.cut_base + b.cut_range * b.env) * b.colour_scale,80.0f,8000.0f));
+            dsp_ladder_set_res(&b.lad, b.res + b.colour_res * 1.1f);
+        }
         float lp  = dsp_ladder_process(&b.lad, osc);
         float out = lp * b.env * b.level;
 
@@ -108,8 +126,12 @@ static void bc_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
     }
 }
 
+static void bc_set_colour(float scale, float res) {
+    b.colour_scale = scale; b.colour_res = res;
+}
+
 const synth_engine_t engine_bamboo_circuit = {
-    .name        = "BAMBOO CIRCUIT",
+    .name        = SYNTH_NAME_BAMBOO_CIRCUIT,
     .init        = bc_init,
     .activate    = bc_activate,
     .deactivate  = bc_deactivate,
@@ -118,4 +140,6 @@ const synth_engine_t engine_bamboo_circuit = {
     .set_param   = bc_set_param,
     .render_mix  = bc_render_mix,
     .panic       = bc_panic,
+    .set_colour  = bc_set_colour,
+    .retune_hz = bc_retune_hz,
 };
