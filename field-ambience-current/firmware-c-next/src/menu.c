@@ -306,7 +306,7 @@ const char *menu_current_label(void) {
         return synth_i ? synth_control_names[synth_i-1][cur-MP_CORE_A] : "Core";
     static const char * const LABELS[MP_COUNT] = {
         "World","Key","Tuning","Voice","Space","Shimmer","Atmosphere","Motion",
-        "Age","Echo","Blur","Synth","Cell","Bass","Color","FX","Resonance",
+        "Age","Echo","Blur","Character","Cell","Bass","Color","FX","Resonance",
         "Attack","Release","Sweep","EnvMod"
     };
     return LABELS[cur];

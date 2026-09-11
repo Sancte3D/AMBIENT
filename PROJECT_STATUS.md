@@ -8,8 +8,8 @@
 > Storm/Mist/Orbit role comparison: `field-ambience-current/docs/audio/CORE_ROLE_COMPARISON.md`.
 > Fixed Storm/Mist/Orbit output calibration: `field-ambience-current/docs/audio/CORE_LEVEL_CALIBRATION.md` (45 probes, worst spread 1.0 LU).
 > Remaining core trims are implemented: `field-ambience-current/docs/audio/SUPPORT_LEVEL_CALIBRATION.md` (60 probes per version; Keys within -0.8..+0.9 LU of Ensemble).
-> Display working labels are Resonant / Keys / Ensemble / Pulse / Morph / Pluck; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
-> Next: Resonant register/filter-envelope review, then Pluck attack consistency; FM Ratio and Ambient retuning remain open.
+> User clarified evocative ambient imagery: display names are Dusk / Glimmer / Mist / Tide / Horizon / Dew; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
+> Next: Dusk (legacy Acid/Resonant) register/filter-envelope review, then Dew (Bamboo/Pluck) attack consistency; FM Ratio and Ambient retuning remain open.
 
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR

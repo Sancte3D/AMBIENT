@@ -38,10 +38,15 @@ Bowed/Horn/Choir behalten je drei Stimmen. Beim Ersetzen blendet die alte
 Stimme 8 ms aus; dann übernimmt eine vorbereitete neue Stimme. Gehaltene
 Töne gehören ihren Tasten; Loslassen beendet nur die zugehörige Stimme.
 
-SYNTH wählt alternativ Resonant, Keys, Ensemble, Pulse, Morph oder Pluck. Diese
+CHARACTER wählt alternativ Dusk, Glimmer, Mist, Tide, Horizon oder Dew. Diese
 sechs Kerne sind monophon und teilen Master und Effektraum mit Ambient.
 Autoplay gehört zu Ambient. Keine neue Klangschicht ohne begründetes Rollen-
 und Ressourcenbudget.
+
+Die Namenssprache beschreibt Orte und Atmosphären: WORLD gibt den Ort vor,
+CHARACTER dessen klangliche Färbung. SOUND_NAMES.md in docs/audio definiert
+Bild und Klangziel je Name. Synthesemethoden gehören in die technische
+Dokumentation; ein schöner Name ersetzt keine passende Klanggestaltung.
 
 ## 4. Harmonische Sprache
 
@@ -68,8 +73,8 @@ Klangmerkmale; reine Grundstimmung bedeutet nicht völlige Schwebungsfreiheit.
 
 ## 5. Bewegung
 
-Bewegung soll als langsame Drift wirken. Globale Filterbewegung und Morph/
-Pulse-Morphing bleiben unter 0,15 Hz. Kleine Ensemble-Verzögerungsmodulation
+Bewegung soll als langsame Drift wirken. Globale Filterbewegung und Horizon/
+Tide-Morphing bleiben unter 0,15 Hz. Kleine Ensemble-Verzögerungsmodulation
 und verzögert einsetzendes Instrument-Vibrato sind eigene Charaktermerkmale.
 Wind und Noise nutzen unregelmäßige Druck- und Turbulenzverläufe ohne feste
 Filtersweeps oder Pfeifresonatoren. Rauschhöhen folgen den Flauten.
@@ -122,8 +127,8 @@ SWEEP eine langsame Öffnung und ENVMOD die Öffnung durch die Klanghüllkurve.
 Diese Makros funktionieren in Ambient und allen sechs V2-Kernen. V2-Makros
 werden 80 ms geglättet und nutzen vorhandene Filter; keine zusätzlichen
 Filterketten. Die sechs eigenen Kernparameter bleiben erhalten.
-Attack/Release skalieren die natürliche Hüllkurve neuer Noten: Pluck bleibt
-LPG-Schlag, Ensemble bleibt Pad. SPACE/ECHO/MOTION/AGE/BLUR/SHIMMER gestalten den
+Attack/Release skalieren die natürliche Hüllkurve neuer Noten: Dew bleibt
+LPG-Schlag, Mist bleibt Pad. SPACE/ECHO/MOTION/AGE/BLUR/SHIMMER gestalten den
 Raum. Reglerrichtung verständlich halten, Instrumentcharakter erhalten.
 
 ## 9. Technik und Abnahme

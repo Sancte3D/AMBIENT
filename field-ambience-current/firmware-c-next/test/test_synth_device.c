@@ -415,7 +415,7 @@ int main(void) {
 
     /* 4) every V2 core is playable through the CELL path and bounded */
     static const char *names[6] =
-        { "Resonant", "Keys", "Ensemble", "Pulse", "Morph", "Pluck" };
+        { "Dusk", "Glimmer", "Mist", "Tide", "Horizon", "Dew" };
     for (int core = 1; core <= 6; ++core) {
         engine_set_synth(core);
         for (int i = 0; i < 6; ++i) engine_render(buf, BLK);   /* settle fade */

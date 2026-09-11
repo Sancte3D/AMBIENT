@@ -96,12 +96,12 @@ static int host_peak_over(double secs){
 static void test_host_select(void){
     synth_host_init();
     CHECK(synth_host_active()==SYNTH_ACID, "default engine not ACID");
-    CHECK(strcmp(synth_host_active_name(),"Resonant")==0, "name=%s", synth_host_active_name());
+    CHECK(strcmp(synth_host_active_name(),"Dusk")==0, "name=%s", synth_host_active_name());
     synth_host_select((synth_id_t)999);          /* invalid → unchanged */
     CHECK(synth_host_active()==SYNTH_ACID, "invalid select changed engine");
     synth_host_select(SYNTH_FM_GLASS);           /* swap the sound-core */
     CHECK(synth_host_active()==SYNTH_FM_GLASS, "select FM_GLASS failed");
-    CHECK(strcmp(synth_host_active_name(),"Keys")==0, "name=%s", synth_host_active_name());
+    CHECK(strcmp(synth_host_active_name(),"Glimmer")==0, "name=%s", synth_host_active_name());
     synth_host_select(SYNTH_ACID);
     CHECK(synth_host_active()==SYNTH_ACID, "select back to ACID failed");
     printf("  host select: ACID <-> FM GLASS ok\n");

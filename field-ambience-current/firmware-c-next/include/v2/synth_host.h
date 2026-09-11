@@ -16,12 +16,12 @@
  * synth_names.h; renaming a sound type must never reorder these values.
  */
 typedef enum {
-    SYNTH_ACID = 0,         /* Resonant: subtractive ladder-filter tone */
-    SYNTH_FM_GLASS,         /* Keys: 2-op FM attack/body tone */
-    SYNTH_CHORUS_MIST,      /* Ensemble: detuned saw pad + chorus */
-    SYNTH_ION_STORM,        /* Pulse: sustained PWM stack */
-    SYNTH_GLASS_ORBIT,      /* Morph: phase-related waveform morph */
-    SYNTH_BAMBOO_CIRCUIT,   /* Pluck: coupled LPG amplitude/brightness decay */
+    SYNTH_ACID = 0,         /* Dusk: subtractive ladder-filter tone */
+    SYNTH_FM_GLASS,         /* Glimmer: 2-op FM attack/body tone */
+    SYNTH_CHORUS_MIST,      /* Mist: detuned saw pad + chorus */
+    SYNTH_ION_STORM,        /* Tide: sustained PWM stack */
+    SYNTH_GLASS_ORBIT,      /* Horizon: phase-related waveform morph */
+    SYNTH_BAMBOO_CIRCUIT,   /* Dew: coupled LPG amplitude/brightness decay */
     SYNTH_COUNT
 } synth_id_t;
 
