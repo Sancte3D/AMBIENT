@@ -33,6 +33,19 @@ static const synth_engine_t *const TABLE[SYNTH_COUNT] = {
     [SYNTH_BAMBOO_CIRCUIT] = &engine_bamboo_circuit,
 };
 
+/* Fixed output calibration, measured across C3..C5 and three velocities.
+ * Keep the envelope follower BEFORE these trims: Envmod must retain its
+ * native response. Apply equal gain to dry/send and to both crossfade legs.
+ * Remaining cores are not calibrated by this pass. No dynamic gain control. */
+static const float CORE_OUTPUT_GAIN[SYNTH_COUNT] = {
+    [SYNTH_ACID] = 1.0f,
+    [SYNTH_FM_GLASS] = 1.0f,
+    [SYNTH_CHORUS_MIST] = 1.0f,
+    [SYNTH_ION_STORM] = 0.57543994f,    /* -4.8 dB */
+    [SYNTH_GLASS_ORBIT] = 0.32359366f,  /* -9.8 dB */
+    [SYNTH_BAMBOO_CIRCUIT] = 1.0f,
+};
+
 #define HBLOCK 256
 
 static struct {
@@ -175,8 +188,10 @@ void synth_host_render_mix(float *l, float *r, float *sl, float *sr, int frames)
         for (int i=0;i<n;++i) {
             H.velocity[H.active_id]+=0.00283046f*(H.velocity_target[H.active_id]-H.velocity[H.active_id]);
             float gain=H.velocity[H.active_id];
+            float a=0.5f*(fabsf(dL[i])+fabsf(dR[i]))*gain;
+            if(a>peak) peak=a;
+            gain*=CORE_OUTPUT_GAIN[H.active_id];
             dL[i]*=gain; dR[i]*=gain; sL[i]*=gain; sR[i]*=gain;
-            float a=0.5f*(fabsf(dL[i])+fabsf(dR[i])); if(a>peak) peak=a;
         }
         float ek=1.0f-expf(-(float)n/((peak>H.envelope ? 0.040f:0.5f)*DSP_SAMPLE_RATE_HZ));
         H.envelope+=ek*(peak-H.envelope);
@@ -185,7 +200,7 @@ void synth_host_render_mix(float *l, float *r, float *sl, float *sr, int frames)
             memset(prevSL,0,sizeof(float)*n); memset(prevSR,0,sizeof(float)*n);
             H.previous->render_mix(wL,wR,prevSL,prevSR,n);
             for (int i=0;i<n;++i) {
-                float gain=H.velocity[H.previous_id];
+                float gain=H.velocity[H.previous_id]*CORE_OUTPUT_GAIN[H.previous_id];
                 wL[i]*=gain; wR[i]*=gain; prevSL[i]*=gain; prevSR[i]*=gain;
                 float old=H.fade_left>0 ? H.fade_left/662.0f : 0.0f;
                 if(H.fade_left>0) --H.fade_left;

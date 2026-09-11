@@ -258,6 +258,27 @@ static void test_live_tuning(void) {
     }
 }
 
+static void test_core_level_balance(void) {
+    const int cores[]={3,4,5};
+    for(int note=48;note<=72;note+=12) for(int hard=0;hard<2;++hard) {
+        double lo=1e30,hi=0;
+        for(int i=0;i<3;++i) {
+            setup_core(cores[i]);
+            /* Native Mist width, not the pitch-test's narrowed chorus. */
+            if(cores[i]==3) {
+                engine_set_synth_param(1,.40f);engine_set_synth_param(2,.38f);
+            }
+            engine_note_on(0,dsp_midi_to_hz((float)note),hard?.85f:.2f);
+            double rms=level_after(180);
+            CHECK(rms>10);
+            if(rms<lo)lo=rms;
+            if(rms>hi)hi=rms;
+        }
+        printf("  core balance MIDI %d velocity %s: RMS spread %.2fx\n",note,hard?"hard":"soft",hi/lo);
+        CHECK(hi/lo<2.0); /* <6 dB RMS across the three distinct spectra. */
+    }
+}
+
 static int memory_has(int midi) {
     int notes[128],n=engine_sounding_notes(notes,128);
     for(int i=0;i<n;++i) if(notes[i]==midi) return 1;
@@ -426,7 +447,7 @@ int main(void) {
     CHECK(back > 500);
 
     test_playability(); test_voice_gates(); test_sends();
-    test_pitch_and_controls(); test_live_tuning(); test_handover(); test_pitch_memory();
+    test_pitch_and_controls(); test_live_tuning(); test_core_level_balance(); test_handover(); test_pitch_memory();
     printf("synth_device: %d checks, 0 failures\n", checks);
     return 0;
 }
