@@ -52,7 +52,7 @@ static void test_browse_navigates_through_all_params(void) {
     CHECK(menu_current() == MP_WORLD,    "init param != WORLD");
     CHECK(menu_mode()    == MENU_BROWSE, "init mode != BROWSE");
 
-    for (int i = 1; i < MP_COUNT; ++i) {
+    for (int i = 1; i < MP_CORE_A; ++i) {
         menu_rotate(1);
         CHECK(menu_current() == (menu_param_t)i, "step %d landed on %d", i, menu_current());
     }
@@ -60,7 +60,7 @@ static void test_browse_navigates_through_all_params(void) {
     CHECK(menu_current() == MP_WORLD, "wrap-around forward broke (got %d)", menu_current());
 
     menu_rotate(-1);
-    CHECK(menu_current() == MP_COUNT - 1, "wrap-around backward broke (got %d)", menu_current());
+    CHECK(menu_current() == MP_CORE_A - 1, "wrap-around backward broke (got %d)", menu_current());
 }
 
 static void test_push_toggles_mode(void) {

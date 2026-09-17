@@ -54,8 +54,45 @@ static float run_rms(float level) {
     return (n > 0) ? (float)sqrt(sumsq / (double)n) : 0.0f;
 }
 
+static void test_wind_weather(void) {
+    float l[256],r[256],sl[256],sr[256];
+    float lo=1.0f,hi=0.0f; double sum=0.0,sum2=0.0;
+    ambience_init(); ambience_set_level(1.0f);
+    for(int second=0;second<120;++second) {
+        double energy=0.0;
+        for(int n=0;n<44100;n+=256) {
+            int count=44100-n<256 ? 44100-n : 256;
+            memset(l,0,sizeof l);memset(r,0,sizeof r);
+            memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
+            ambience_render_mix(l,r,sl,sr,count,0.0f);
+            for(int i=0;i<count;++i) energy+=(double)l[i]*l[i];
+        }
+        float rms=(float)sqrt(energy/44100.0);
+        if(second>=5) { if(rms<lo)lo=rms;if(rms>hi)hi=rms;sum+=rms;sum2+=rms*rms; }
+    }
+    double mean=sum/115.0,cv=sqrt(sum2/115.0-mean*mean)/mean;
+    printf("wind 120s: quiet/loud %.5f/%.5f, envelope CV %.3f\n",lo,hi,cv);
+    CHECK(hi>lo*8.0f,"wind lacks deep lulls");
+    CHECK(cv>0.35,"wind remains a stationary noise floor");
+    /* Same PCM for 64/256 frames: weather and macro smoothing follow samples. */
+    static float reference[44100];
+    for(int pass=0;pass<2;++pass) {
+        int block=pass ? 64 : 256;
+        ambience_init();ambience_set_level(0.7f);
+        for(int n=0;n<44100;n+=block) {
+            int count=44100-n<block ? 44100-n : block;
+            memset(l,0,sizeof l);memset(r,0,sizeof r);
+            memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
+            ambience_render_mix(l,r,sl,sr,count,0.3f);
+            if(!pass) memcpy(reference+n,l,count*sizeof(float));
+            else CHECK(memcmp(reference+n,l,count*sizeof(float))==0,"wind depends on block size");
+        }
+    }
+}
+
 int main(void) {
     dsp_init();
+    test_wind_weather();
     ambience_init();
 
     /* 1: level 0 must converge to silence (within a tight epsilon). */

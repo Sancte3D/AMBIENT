@@ -18,6 +18,7 @@
 static AmbientFxStorage s_storage;
 static unsigned char s_arena[AMBIENT_FX_DEFAULT_ARENA_BUDGET_BYTES]
     __attribute__((aligned(32)));
+static float s_send[AUDIO_BUFFER_FRAMES * 2];
 static float s_buf[AUDIO_BUFFER_FRAMES * 2];   /* interleave scratch */
 
 static AmbientFx           *s_fx = 0;
@@ -50,6 +51,17 @@ void fx_master_process(float *outL, float *outR, int frames) {
     }
 }
 
+void fx_master_process_buses(float *l, float *r, const float *sl, const float *sr, int frames) {
+    if (!s_ok || frames <= 0) return;
+    if (frames > AUDIO_BUFFER_FRAMES) frames = AUDIO_BUFFER_FRAMES;
+    for (int n = 0; n < frames; ++n) {
+        s_buf[2*n] = l[n]; s_buf[2*n+1] = r[n];
+        s_send[2*n] = sl[n]; s_send[2*n+1] = sr[n];
+    }
+    ambient_fx_process_buses_f32(s_fx, s_buf, s_send, (size_t)frames);
+    for (int n = 0; n < frames; ++n) { l[n] = s_buf[2*n]; r[n] = s_buf[2*n+1]; }
+}
+
 static float clamp01(float v) {
     return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
 }
@@ -70,10 +82,7 @@ void fx_master_set_tone(float v)       { s_params.tone       = clamp01(v); push(
 void fx_master_set_world(int idx) {
     if (!s_ok) return;
     if (idx < 0) idx = 0;
-    /* r19.44: the product has 5 landscape worlds; the vendored effects engine
-     * still carries 4 per-world voicings. Map the 5th (Desert, idx 4) onto the
-     * softest/darkest fx voicing (idx 3) rather than clamp to 0 — a documented
-     * fallback until the fx engine gains a 5th world row. */
+    /* Five product worlds, including a closer and narrower Desert room. */
     if (idx >= (int)AMBIENT_FX_WORLD_COUNT) idx = (int)AMBIENT_FX_WORLD_COUNT - 1;
     AmbientFxWorld w = (AmbientFxWorld)idx;
     /* Engine voicing first, then the parameter set for that world. The

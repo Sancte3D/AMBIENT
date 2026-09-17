@@ -1,0 +1,58 @@
+{
+  "duration_s": 26,
+  "target_lufs": -25,
+  "cores": [
+    {
+      "name": "Storm",
+      "start_s": 0,
+      "raw": {
+        "integrated_lufs": -25.1,
+        "true_peak_dbfs": -18.1
+      },
+      "gain_db": 0.10000000000000142,
+      "matched": {
+        "integrated_lufs": -25.0,
+        "true_peak_dbfs": -18.0
+      },
+      "dry_centroid_hz": 352.5262334775211,
+      "dry_side_to_mid_db": null,
+      "early_50ms_to_steady_db": -3.76237091319278
+    },
+    {
+      "name": "Mist",
+      "start_s": 9,
+      "raw": {
+        "integrated_lufs": -29.6,
+        "true_peak_dbfs": -15.6
+      },
+      "gain_db": 4.600000000000001,
+      "matched": {
+        "integrated_lufs": -25.0,
+        "true_peak_dbfs": -11.0
+      },
+      "dry_centroid_hz": 478.8327429960267,
+      "dry_side_to_mid_db": -13.34907213135893,
+      "early_50ms_to_steady_db": -16.502289406311295
+    },
+    {
+      "name": "Orbit",
+      "start_s": 18,
+      "raw": {
+        "integrated_lufs": -18.3,
+        "true_peak_dbfs": -12.0
+      },
+      "gain_db": -6.699999999999999,
+      "matched": {
+        "integrated_lufs": -25.0,
+        "true_peak_dbfs": -18.7
+      },
+      "dry_centroid_hz": 524.1444154974008,
+      "dry_side_to_mid_db": null,
+      "early_50ms_to_steady_db": 1.8936169406061076
+    }
+  ],
+  "output": {
+    "integrated_lufs": -25.1,
+    "true_peak_dbfs": -11.0
+  }
+}

@@ -53,6 +53,12 @@ static void clear_all_holds(void) {
     }
 }
 
+void controls_release_cells(void) {
+    clear_all_holds();
+    s_cells_down = 0;
+    engine_set_user_presence(false);
+}
+
 void controls_modifier(mod_id_t mod, bool pressed) {
     if (mod >= MOD_COUNT) return;
     switch (mod) {

@@ -47,6 +47,7 @@ typedef enum AmbientFxWorld {
     AMBIENT_FX_CRYSTAL_COAST,
     AMBIENT_FX_MIDNIGHT_DRIVE,
     AMBIENT_FX_AFTER_HOURS,
+    AMBIENT_FX_DESERT,
     AMBIENT_FX_WORLD_COUNT
 } AmbientFxWorld;
 
@@ -112,6 +113,11 @@ AmbientFxParameters ambient_fx_parameters(const AmbientFx *fx);
 size_t ambient_fx_latency_frames(const AmbientFx *fx, AmbientFxMode mode);
 
 /* In-place stereo processing. Float samples use the normal -1..+1 range. */
+/* External send bus: inserts affect dry; delay/reverb receive send only.
+ * No final limiter/DC stage: the caller owns those and post-FX volume. */
+void ambient_fx_process_buses_f32(AmbientFx *fx, float *dry_stereo,
+                                 const float *send_stereo, size_t frames);
+
 void ambient_fx_process_f32(AmbientFx *fx,
                             float *interleaved_stereo,
                             size_t frames);

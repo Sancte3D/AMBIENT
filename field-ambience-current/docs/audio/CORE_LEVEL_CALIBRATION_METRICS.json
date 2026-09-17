@@ -1,0 +1,746 @@
+{
+  "baseline_commit": "1bafbd727ee89a960cf3a4fe61fefc2f387fe44d",
+  "trim_db": {
+    "Storm": -4.8,
+    "Mist": 0,
+    "Orbit": -9.8
+  },
+  "before": {
+    "rows": [
+      {
+        "core": "Storm",
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -26.707119100695405,
+        "integrated_lufs": -25.5,
+        "true_peak_dbfs": -15.6
+      },
+      {
+        "core": "Storm",
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -22.7282215902131,
+        "integrated_lufs": -21.5,
+        "true_peak_dbfs": -11.6
+      },
+      {
+        "core": "Storm",
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -20.42587931151059,
+        "integrated_lufs": -19.2,
+        "true_peak_dbfs": -9.3
+      },
+      {
+        "core": "Storm",
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -26.10671894795372,
+        "integrated_lufs": -24.7,
+        "true_peak_dbfs": -16.7
+      },
+      {
+        "core": "Storm",
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -22.13651866215452,
+        "integrated_lufs": -20.7,
+        "true_peak_dbfs": -12.7
+      },
+      {
+        "core": "Storm",
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -19.80720565509217,
+        "integrated_lufs": -18.4,
+        "true_peak_dbfs": -10.4
+      },
+      {
+        "core": "Storm",
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -26.52574789888842,
+        "integrated_lufs": -24.8,
+        "true_peak_dbfs": -17.6
+      },
+      {
+        "core": "Storm",
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -22.54277476905166,
+        "integrated_lufs": -20.8,
+        "true_peak_dbfs": -13.6
+      },
+      {
+        "core": "Storm",
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -20.22691113216289,
+        "integrated_lufs": -18.5,
+        "true_peak_dbfs": -11.3
+      },
+      {
+        "core": "Storm",
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -26.484022879257402,
+        "integrated_lufs": -24.7,
+        "true_peak_dbfs": -18.9
+      },
+      {
+        "core": "Storm",
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -22.51163290928578,
+        "integrated_lufs": -20.7,
+        "true_peak_dbfs": -14.9
+      },
+      {
+        "core": "Storm",
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -20.2080435351397,
+        "integrated_lufs": -18.4,
+        "true_peak_dbfs": -12.6
+      },
+      {
+        "core": "Storm",
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -26.374476544432426,
+        "integrated_lufs": -24.6,
+        "true_peak_dbfs": -19.5
+      },
+      {
+        "core": "Storm",
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -22.387730059323047,
+        "integrated_lufs": -20.6,
+        "true_peak_dbfs": -15.5
+      },
+      {
+        "core": "Storm",
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -20.08175134832783,
+        "integrated_lufs": -18.3,
+        "true_peak_dbfs": -13.2
+      },
+      {
+        "core": "Mist",
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.094187912778455,
+        "integrated_lufs": -30.0,
+        "true_peak_dbfs": -13.1
+      },
+      {
+        "core": "Mist",
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.09209067684093,
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -9.0
+      },
+      {
+        "core": "Mist",
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -23.792519559431945,
+        "integrated_lufs": -23.7,
+        "true_peak_dbfs": -6.8
+      },
+      {
+        "core": "Mist",
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.059617215205666,
+        "integrated_lufs": -30.5,
+        "true_peak_dbfs": -16.1
+      },
+      {
+        "core": "Mist",
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.07325986750206,
+        "integrated_lufs": -26.5,
+        "true_peak_dbfs": -12.1
+      },
+      {
+        "core": "Mist",
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.761928030000373,
+        "integrated_lufs": -24.2,
+        "true_peak_dbfs": -9.8
+      },
+      {
+        "core": "Mist",
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.323368380792587,
+        "integrated_lufs": -29.2,
+        "true_peak_dbfs": -15.1
+      },
+      {
+        "core": "Mist",
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.360809527900557,
+        "integrated_lufs": -25.2,
+        "true_peak_dbfs": -11.1
+      },
+      {
+        "core": "Mist",
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.063648039451127,
+        "integrated_lufs": -22.9,
+        "true_peak_dbfs": -8.8
+      },
+      {
+        "core": "Mist",
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.206875776842008,
+        "integrated_lufs": -28.9,
+        "true_peak_dbfs": -16.5
+      },
+      {
+        "core": "Mist",
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.20930271228911,
+        "integrated_lufs": -24.9,
+        "true_peak_dbfs": -12.5
+      },
+      {
+        "core": "Mist",
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.89859391818975,
+        "integrated_lufs": -22.6,
+        "true_peak_dbfs": -10.2
+      },
+      {
+        "core": "Mist",
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.379867028240835,
+        "integrated_lufs": -29.5,
+        "true_peak_dbfs": -17.5
+      },
+      {
+        "core": "Mist",
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.41844719451045,
+        "integrated_lufs": -25.5,
+        "true_peak_dbfs": -13.5
+      },
+      {
+        "core": "Mist",
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.088132592521784,
+        "integrated_lufs": -23.2,
+        "true_peak_dbfs": -11.2
+      },
+      {
+        "core": "Orbit",
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -22.19132028391428,
+        "integrated_lufs": -20.8,
+        "true_peak_dbfs": -12.5
+      },
+      {
+        "core": "Orbit",
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -18.18681621149658,
+        "integrated_lufs": -16.8,
+        "true_peak_dbfs": -8.6
+      },
+      {
+        "core": "Orbit",
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -15.896676040532396,
+        "integrated_lufs": -14.5,
+        "true_peak_dbfs": -6.3
+      },
+      {
+        "core": "Orbit",
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -21.771803507848496,
+        "integrated_lufs": -20.0,
+        "true_peak_dbfs": -12.6
+      },
+      {
+        "core": "Orbit",
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -17.78033892906643,
+        "integrated_lufs": -16.0,
+        "true_peak_dbfs": -9.6
+      },
+      {
+        "core": "Orbit",
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -15.473048548185552,
+        "integrated_lufs": -13.7,
+        "true_peak_dbfs": -7.3
+      },
+      {
+        "core": "Orbit",
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -21.62540439506463,
+        "integrated_lufs": -19.7,
+        "true_peak_dbfs": -13.6
+      },
+      {
+        "core": "Orbit",
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -17.649928244746388,
+        "integrated_lufs": -15.7,
+        "true_peak_dbfs": -10.4
+      },
+      {
+        "core": "Orbit",
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -15.346934494446693,
+        "integrated_lufs": -13.4,
+        "true_peak_dbfs": -8.1
+      },
+      {
+        "core": "Orbit",
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -21.583678859773986,
+        "integrated_lufs": -19.4,
+        "true_peak_dbfs": -14.2
+      },
+      {
+        "core": "Orbit",
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -17.613631117628316,
+        "integrated_lufs": -15.4,
+        "true_peak_dbfs": -11.3
+      },
+      {
+        "core": "Orbit",
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -15.313099570570996,
+        "integrated_lufs": -13.1,
+        "true_peak_dbfs": -9.0
+      },
+      {
+        "core": "Orbit",
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -21.628812160342182,
+        "integrated_lufs": -19.3,
+        "true_peak_dbfs": -14.7
+      },
+      {
+        "core": "Orbit",
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -17.6364373364433,
+        "integrated_lufs": -15.3,
+        "true_peak_dbfs": -11.9
+      },
+      {
+        "core": "Orbit",
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -15.351575601841216,
+        "integrated_lufs": -13.0,
+        "true_peak_dbfs": -9.6
+      }
+    ],
+    "summary": {
+      "median_spread_lu": 9.5,
+      "max_spread_lu": 10.5,
+      "max_true_peak_dbfs": -6.3
+    }
+  },
+  "after": {
+    "rows": [
+      {
+        "core": "Storm",
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.50880946606211,
+        "integrated_lufs": -30.3,
+        "true_peak_dbfs": -20.4
+      },
+      {
+        "core": "Storm",
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.529289510372283,
+        "integrated_lufs": -26.3,
+        "true_peak_dbfs": -16.4
+      },
+      {
+        "core": "Storm",
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.226684696462446,
+        "integrated_lufs": -24.0,
+        "true_peak_dbfs": -14.1
+      },
+      {
+        "core": "Storm",
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.908366245980105,
+        "integrated_lufs": -29.5,
+        "true_peak_dbfs": -21.5
+      },
+      {
+        "core": "Storm",
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.93756133585194,
+        "integrated_lufs": -25.5,
+        "true_peak_dbfs": -17.5
+      },
+      {
+        "core": "Storm",
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.608001357235874,
+        "integrated_lufs": -23.2,
+        "true_peak_dbfs": -15.2
+      },
+      {
+        "core": "Storm",
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.327467014344073,
+        "integrated_lufs": -29.6,
+        "true_peak_dbfs": -22.4
+      },
+      {
+        "core": "Storm",
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.343863871654403,
+        "integrated_lufs": -25.6,
+        "true_peak_dbfs": -18.4
+      },
+      {
+        "core": "Storm",
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.027740210412542,
+        "integrated_lufs": -23.3,
+        "true_peak_dbfs": -16.1
+      },
+      {
+        "core": "Storm",
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.285717732972728,
+        "integrated_lufs": -29.5,
+        "true_peak_dbfs": -23.7
+      },
+      {
+        "core": "Storm",
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.312719819338916,
+        "integrated_lufs": -25.5,
+        "true_peak_dbfs": -19.7
+      },
+      {
+        "core": "Storm",
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.008880073924598,
+        "integrated_lufs": -23.2,
+        "true_peak_dbfs": -17.4
+      },
+      {
+        "core": "Storm",
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.17619377425987,
+        "integrated_lufs": -29.4,
+        "true_peak_dbfs": -24.3
+      },
+      {
+        "core": "Storm",
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.188802845881934,
+        "integrated_lufs": -25.4,
+        "true_peak_dbfs": -20.3
+      },
+      {
+        "core": "Storm",
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.88257010273031,
+        "integrated_lufs": -23.1,
+        "true_peak_dbfs": -18.0
+      },
+      {
+        "core": "Mist",
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.094187912778455,
+        "integrated_lufs": -30.0,
+        "true_peak_dbfs": -13.1
+      },
+      {
+        "core": "Mist",
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.09209067684093,
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -9.0
+      },
+      {
+        "core": "Mist",
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -23.792519559431945,
+        "integrated_lufs": -23.7,
+        "true_peak_dbfs": -6.8
+      },
+      {
+        "core": "Mist",
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.059617215205666,
+        "integrated_lufs": -30.5,
+        "true_peak_dbfs": -16.1
+      },
+      {
+        "core": "Mist",
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.07325986750206,
+        "integrated_lufs": -26.5,
+        "true_peak_dbfs": -12.1
+      },
+      {
+        "core": "Mist",
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.761928030000373,
+        "integrated_lufs": -24.2,
+        "true_peak_dbfs": -9.8
+      },
+      {
+        "core": "Mist",
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.323368380792587,
+        "integrated_lufs": -29.2,
+        "true_peak_dbfs": -15.1
+      },
+      {
+        "core": "Mist",
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.360809527900557,
+        "integrated_lufs": -25.2,
+        "true_peak_dbfs": -11.1
+      },
+      {
+        "core": "Mist",
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.063648039451127,
+        "integrated_lufs": -22.9,
+        "true_peak_dbfs": -8.8
+      },
+      {
+        "core": "Mist",
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.206875776842008,
+        "integrated_lufs": -28.9,
+        "true_peak_dbfs": -16.5
+      },
+      {
+        "core": "Mist",
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.20930271228911,
+        "integrated_lufs": -24.9,
+        "true_peak_dbfs": -12.5
+      },
+      {
+        "core": "Mist",
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.89859391818975,
+        "integrated_lufs": -22.6,
+        "true_peak_dbfs": -10.2
+      },
+      {
+        "core": "Mist",
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.379867028240835,
+        "integrated_lufs": -29.5,
+        "true_peak_dbfs": -17.5
+      },
+      {
+        "core": "Mist",
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.41844719451045,
+        "integrated_lufs": -25.5,
+        "true_peak_dbfs": -13.5
+      },
+      {
+        "core": "Mist",
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.088132592521784,
+        "integrated_lufs": -23.2,
+        "true_peak_dbfs": -11.2
+      },
+      {
+        "core": "Orbit",
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.994181687228096,
+        "integrated_lufs": -30.6,
+        "true_peak_dbfs": -22.3
+      },
+      {
+        "core": "Orbit",
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.98861892747115,
+        "integrated_lufs": -26.6,
+        "true_peak_dbfs": -18.4
+      },
+      {
+        "core": "Orbit",
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.6980584696395,
+        "integrated_lufs": -24.3,
+        "true_peak_dbfs": -16.1
+      },
+      {
+        "core": "Orbit",
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.574709239815675,
+        "integrated_lufs": -29.8,
+        "true_peak_dbfs": -22.4
+      },
+      {
+        "core": "Orbit",
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.582194446791533,
+        "integrated_lufs": -25.8,
+        "true_peak_dbfs": -19.4
+      },
+      {
+        "core": "Orbit",
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.274455185131828,
+        "integrated_lufs": -23.5,
+        "true_peak_dbfs": -17.1
+      },
+      {
+        "core": "Orbit",
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.42834965258797,
+        "integrated_lufs": -29.5,
+        "true_peak_dbfs": -23.4
+      },
+      {
+        "core": "Orbit",
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.451799070254875,
+        "integrated_lufs": -25.5,
+        "true_peak_dbfs": -20.2
+      },
+      {
+        "core": "Orbit",
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.148376263083293,
+        "integrated_lufs": -23.2,
+        "true_peak_dbfs": -17.9
+      },
+      {
+        "core": "Orbit",
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.386674056647443,
+        "integrated_lufs": -29.2,
+        "true_peak_dbfs": -24.0
+      },
+      {
+        "core": "Orbit",
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.415532755860205,
+        "integrated_lufs": -25.2,
+        "true_peak_dbfs": -21.1
+      },
+      {
+        "core": "Orbit",
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.1145576219195,
+        "integrated_lufs": -22.9,
+        "true_peak_dbfs": -18.8
+      },
+      {
+        "core": "Orbit",
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.431829087061807,
+        "integrated_lufs": -29.1,
+        "true_peak_dbfs": -24.5
+      },
+      {
+        "core": "Orbit",
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.438362255503684,
+        "integrated_lufs": -25.1,
+        "true_peak_dbfs": -21.7
+      },
+      {
+        "core": "Orbit",
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.153055753389232,
+        "integrated_lufs": -22.8,
+        "true_peak_dbfs": -19.4
+      }
+    ],
+    "summary": {
+      "median_spread_lu": 0.6000000000000014,
+      "max_spread_lu": 1.0,
+      "max_true_peak_dbfs": -6.8
+    }
+  }
+}

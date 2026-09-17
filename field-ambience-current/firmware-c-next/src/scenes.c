@@ -4,6 +4,7 @@
 
 #include "scenes.h"
 #include "menu.h"
+#include "synth_controls.h"
 #include "params.h"
 #include "engine.h"
 #include "oled.h"
@@ -11,7 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define SCENE_MAGIC 0x53434E35u   /* "SCN5" — r19.41: menu_state_t + FX page */
+#define SCENE_MAGIC 0x53434E36u   /* SCN6: shape and six controls per synth */
 
 typedef struct {
     uint32_t     magic;           /* SCENE_MAGIC = belegt                  */
@@ -25,6 +26,15 @@ typedef struct {
     uint32_t     magic;           /* Store-Gueltigkeit                     */
     scene_slot_t slot[SCENES_COUNT];
 } scene_store_t;
+_Static_assert(sizeof(scene_store_t)<=512, "Scene store exceeds flash staging buffer");
+
+/* Exact SCN5 wire layout. Read only; old presets gain neutral shape/core
+ * defaults and are written as SCN6 only when the player next saves. */
+typedef struct { uint8_t values[16]; uint16_t locks; } legacy_menu_t;
+typedef struct {
+    uint32_t magic; legacy_menu_t menu; int8_t drive_pct; int16_t bright_hz; uint32_t gen_seed;
+} legacy_slot_t;
+typedef struct { uint32_t magic; legacy_slot_t slot[SCENES_COUNT]; } legacy_store_t;
 
 static scene_store_t   s_store;
 static scenes_write_fn s_write;
@@ -46,6 +56,18 @@ void scenes_init(scenes_write_fn write_fn, scenes_read_fn read_fn) {
     } else {
         memset(&s_store, 0, sizeof s_store);
         s_store.magic = SCENE_MAGIC;
+        legacy_store_t old;
+        if (s_read && s_read(&old, sizeof old) && old.magic == 0x53434E35u) {
+            for (int i=0;i<SCENES_COUNT;++i) if (old.slot[i].magic == 0x53434E35u) {
+                scene_slot_t *sl=&s_store.slot[i];
+                sl->magic=SCENE_MAGIC;
+                memcpy(&sl->menu, &old.slot[i].menu, sizeof(legacy_menu_t));
+                sl->menu.attack=sl->menu.release=50;
+                memcpy(sl->menu.core, synth_control_defaults, sizeof sl->menu.core);
+                sl->drive_pct=old.slot[i].drive_pct; sl->bright_hz=old.slot[i].bright_hz;
+                sl->gen_seed=old.slot[i].gen_seed;
+            }
+        }
     }
 }
 

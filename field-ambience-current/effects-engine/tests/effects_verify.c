@@ -361,8 +361,35 @@ static void verify_stress(void)
     fixture_destroy(&fixture);
 }
 
+/* A stationary sine stays at its pitch through BLUR. A second-order sine
+ * predictor rejects that pitch but exposes the old continuously transposed
+ * grains; short grain envelopes leave only a small residual. */
+static void verify_blur_pitch(void) {
+    Fixture f; fixture_create(&f,1234u);
+    CHECK(f.fx!=NULL,"blur fixture"); if(!f.fx) return;
+    AmbientFxParameters p=ambient_fx_world_parameters(AMBIENT_FX_TOKYO_CITY);
+    p.blur=1.0f; p.motion=0.5f; p.tone=1.0f;
+    ambient_fx_set_parameters(f.fx,p);
+    ambient_fx_set_mode(f.fx,AMBIENT_FX_BLUR);
+    double err=0.0,energy=0.0;
+    float z1=0.0f,z2=0.0f;
+    float k=2.0f*cosf(6.28318530718f*4000.0f/44100.0f);
+    for(int n=0;n<44100*6;++n) {
+        float x=0.10f*sinf((float)(6.283185307179586*4000.0*n/44100.0));
+        float stereo[2]={x,x},send[2]={0,0};
+        ambient_fx_process_buses_f32(f.fx,stereo,send,1);
+        float y=stereo[0],e=y-k*z1+z2;
+        if(n>44100) { err+=(double)e*e; energy+=(double)y*y; }
+        z2=z1; z1=y;
+    }
+    printf("blur pitch predictor residual: %.6f\n",sqrt(err/energy));
+    CHECK(sqrt(err/energy)<0.01,"BLUR adds transposed partials to a stationary pitch");
+    fixture_destroy(&f);
+}
+
 int main(void)
 {
+    verify_blur_pitch();
     verify_basics();
     verify_bypass();
     for (int mode = AMBIENT_FX_DARK_REVERB; mode < AMBIENT_FX_MODE_COUNT; ++mode) {

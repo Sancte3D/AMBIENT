@@ -68,6 +68,8 @@ void engine_boot_mute(void);
  * Kept as a hook so the engine keeps no link dependency on midi.c. */
 typedef void (*engine_note_hook_t)(int on, uint8_t source, float freq_hz, float amp);
 void engine_set_note_hook(engine_note_hook_t h);
+/* Conservative held/released pitch occupancy, control-rate only; up to 128. */
+int engine_sounding_notes(int *out, int max);
 
 /* r19.16 — SYNTH mode: swappable V2 sound-cores behind the ambient engine.
  * mode 0 = ambient (default identity); 1..N = a V2 core rendered through the
@@ -82,10 +84,17 @@ typedef struct {
     void (*note_off) (void);
     void (*panic)    (void);
     void (*render)   (int16_t *buf, int frames);   /* interleaved stereo   */
+    /* Product path: unmastered buses, sharing the ambient mixer and FX. */
+    void (*render_mix)(float *dry_l, float *dry_r, float *send_l, float *send_r, int frames);
+    void (*set_param)(int slot, float value);
+    void (*note_on_hz)(float hz, float vel01); /* optional; exact tuning */
+    void (*set_macro)(int slot, float value);
+    void (*retune_hz)(float hz); /* optional: pitch only, no new attack */
 } engine_synth_backend_t;
 void engine_set_synth_backend(const engine_synth_backend_t *be);
 void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */
 int  engine_synth(void);
+void engine_set_synth_param(int slot, float value);
 
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
  * for cell `cell` (0..4) at `now_ms`. The cell-velocity model (cells.c) turns
@@ -192,13 +201,12 @@ void engine_set_generative(bool on, int program);
  * engine_generative_tick(). */
 int engine_generative_advance(void);
 
-/* r18.88 — generative AUTOPLAY. Call frequently from the UI loop (any rate
- * ≥ ~20 Hz); all timing derives from now_ms. Plays the bed by itself:
- * immediate first note after enabling, humanized ±10 % bars (base 8 s),
- * plus 0-2 quiet chord-tone "sparkles" an octave up per bar (r18.89:
- * Karplus-Strong PLUCKS — see pluck.h — that self-decay in ~3 s). While the
- * user holds any note, no new bed/sparkle notes start; the bed resumes on
- * the tick after release. */
+/* Generative AUTOPLAY. Call from the UI loop at ≥ ~20 Hz, including while
+ * Generate is off or a Character is selected: physical playing must remain
+ * in the return-pause history. Timing derives from now_ms.
+ * Ambient schedules the harmonic bed, sparse melody and Eno loops. Physical
+ * playing suppresses new automatic onsets; return waits about 8 s after the
+ * last occupied tick. Character modes record presence but do not generate. */
 void engine_generative_tick(uint32_t now_ms);
 
 /* r19.22 (Scenes): reproduzierbarer Generator-Zustand. Der Seed treibt die
@@ -207,8 +215,8 @@ void engine_generative_tick(uint32_t now_ms);
 uint32_t engine_gen_seed(void);
 void     engine_set_gen_seed(uint32_t seed);
 
-/* r19.24 interactive GENERATE — a cell press while GENERATE is on STEERS the
- * autoplay instead of pausing it. cell 0..4 maps to a composer intent
+/* Explicit composer-intent API (not the physical cells' Generate behaviour).
+ * The product cells remain playable with Generate on. cell 0..4 maps to intent
  * (0 Home→RETURN, 1 Lift→OPEN, 2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY)
  * and mutates the harmony now so the piece audibly answers. No-op unless
  * generative is on; deliberately does NOT mark user-presence (the generator
