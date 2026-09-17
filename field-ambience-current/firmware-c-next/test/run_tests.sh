@@ -13,6 +13,9 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Exercise the product HAL's actual cell dispatch, including mode transitions.
+CC="$CC" python3 "$here/test_cell_routing.py"
+
 # Step 7: dsp + voice pool
 "$CC" "${CFLAGS[@]}" \
     "$here/test_dsp_voices.c" \

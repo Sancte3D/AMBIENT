@@ -222,6 +222,23 @@ int main(void) {
     CHECK(!controls_any_cell_down(), "latched cell does NOT count as key-down");
     CHECK(controls_hold_base(4),     "latch survived the release");
 
+    /* Leave Note mode without stale latches or resetting global modifiers. */
+    controls_modifier(MOD_GENERATE, true);
+    controls_modifier(MOD_SHIFT, true);
+    controls_cell_press(3, 0.15f);
+    controls_release_cells();
+    CHECK(!controls_any_cell_down(), "mode exit clears physical presence");
+    for(uint8_t c=0;c<CTRL_CELL_COUNT;++c) {
+        CHECK(!controls_hold_base(c), "mode exit clears base latch %u", c);
+        CHECK(!controls_hold_shift(c), "mode exit clears shifted latch %u", c);
+    }
+    CHECK(controls_modifier_active(MOD_GENERATE), "mode exit preserves Generate");
+    CHECK(controls_modifier_active(MOD_HOLD), "mode exit preserves Hold");
+    CHECK(controls_modifier_active(MOD_SHIFT), "mode exit preserves Shift");
+    controls_cell_press(3, 0.15f);
+    CHECK(controls_hold_shift(3), "first new press latches on, not stale off");
+    controls_release_cells();
+
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");
     return fails ? 1 : 0;

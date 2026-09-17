@@ -73,6 +73,10 @@ void controls_cell_press(uint8_t cell, float velocity_amp);
  * — releases the momentary note. Held cells are unaffected. */
 void controls_cell_release(uint8_t cell);
 
+/* Leave Note mode: release momentary/latched sources and physical presence,
+ * preserving Shift/Hold/Drone/Generate settings. No engine-wide panic. */
+void controls_release_cells(void);
+
 /* Observability — used by LED renderer + UI. */
 bool controls_any_cell_down(void);   /* r19.20: any cell key physically held */
 bool controls_hold_base (uint8_t cell);

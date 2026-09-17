@@ -89,6 +89,12 @@ entwickeln, ohne dafür neue Noten auszulösen.
 
 ## 6. Phrasen und Composer
 
+- Generate entwickelt die Welt weiter, ohne die gewählte Spielweise der
+  Spielflächen umzudeuten. Druck und Loslassen gehören zum selben Empfänger.
+  Die frühere automatische Steer-Belegung ist im Produktpfad entfernt.
+  Note/Harmony/Land bleiben vorerst eigene, noch zu reduzierende Spielweisen;
+  Character/Bett-Koexistenz ist noch nicht umgesetzt. Arbeitsfolge:
+  `docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
 - Eine Melodielinie: 4–16 s pro Ton, echte Pausen und Atem zwischen Phrasen.
 - 2–5 Töne pro Phrase; Sprünge maximal eine Oktave, auch bei Motiv-Replay.
 - Nach zwei gleichen Melodietönen: sicherer anderer Ton oder Pause.

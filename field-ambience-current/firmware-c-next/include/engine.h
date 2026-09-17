@@ -215,8 +215,8 @@ void engine_generative_tick(uint32_t now_ms);
 uint32_t engine_gen_seed(void);
 void     engine_set_gen_seed(uint32_t seed);
 
-/* r19.24 interactive GENERATE — a cell press while GENERATE is on STEERS the
- * autoplay instead of pausing it. cell 0..4 maps to a composer intent
+/* Explicit composer-intent API (not the physical cells' Generate behaviour).
+ * The product cells remain playable with Generate on. cell 0..4 maps to intent
  * (0 Home→RETURN, 1 Lift→OPEN, 2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY)
  * and mutates the harmony now so the piece audibly answers. No-op unless
  * generative is on; deliberately does NOT mark user-presence (the generator

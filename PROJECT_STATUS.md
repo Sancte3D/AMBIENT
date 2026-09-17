@@ -15,6 +15,13 @@
 > Concept/continuity review: `field-ambience-current/docs/audio/AMBIENT_CONCEPT_REVIEW.md`. Character still replaces the Ambient bed. Fixed lost player-presence history across Character selection; automatic return now respects the ~8 s pause (red/green regression, full host suite green).
 > Next: budget/routing for a continuous bed + one foreground role. Dew attack consistency, Glimmer Ratio/aliasing and Ambient retuning remain open.
 
+> **2026-09-17 — Product review, package 1:** Generate no longer repurposes
+> the physical cells as Steer commands. Press/release ownership survives
+> routing changes; exiting Note clears stale latches while preserving modifiers.
+> Actual HAL routing red/green test + full host suite pass; +5 bytes control
+> state, no additional audio processing. Character/bed coexistence remains open.
+> Decisions, six work packages and device gates: `field-ambience-current/docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
+
 > **2026-09-10 — Sonic review after listening feedback.**
 > Irregular broadband wind/noise; less stationary landscape textures; BLUR
 > unwanted transposition and Orbit fundamental cancellation corrected; gentler
