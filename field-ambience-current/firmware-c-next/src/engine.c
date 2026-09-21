@@ -129,6 +129,8 @@ static uint8_t s_note_stack[MAX_SOURCES], s_note_count;
 static float s_note_amp[MAX_SOURCES];
 static float s_synth_macros[4];
 static volatile int s_synth_tgt = 0;       /* set at control rate            */
+static int s_manual_synth, s_world_index;
+static void activate_synth(int idx, bool force);
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
 /* r18.99 ENO LOOPS — the Music-for-Airports principle (studied via the
@@ -411,7 +413,7 @@ void engine_init(void) {
     memset(eno_on,      0, sizeof eno_on);
     memset(eno_swell_armed, 0, sizeof eno_swell_armed);
     eno_timing_valid = 0;
-    s_synth_tgt = 0; s_synth_blend = 0.0f;
+    s_synth_tgt = 0; s_synth_blend = 0.0f; s_manual_synth = 0;
     s_note_count = 0;
     memset(s_synth_macros,0,sizeof s_synth_macros);
     melody_voice = 0;                /* PAD — the bench-tuned reference */
@@ -439,6 +441,15 @@ void engine_set_voice(int voice_idx) {
 
 /* Fire the selected melody voice (used by cell presses + sparkles). */
 static void melody_strike(float freq_hz, float amp) {
+    int voice = gen_on ? worlds_get(s_world_index)->voice : melody_voice;
+    /* Sustained World voices belong to the melody source: its scheduled
+     * release, suppression and Generate stop must release the same voice.
+     * Plucked sources retain their natural self-decay. */
+    if (gen_on) {
+        if (voice == 5) { choir_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.32f, 0.55f)); return; }
+        if (voice == 4) { horn_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f)); return; }
+        if (voice == 3) { bowed_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f)); return; }
+    }
     /* r19.47: the bowed lyra is a full CHARACTER voice, not a sparkle under the
      * pad — the generative melody amp (~0.06) would make it a whisper. Scale it
      * up (and floor it) so it sits forward, near the audition level the design
@@ -447,11 +458,11 @@ static void melody_strike(float freq_hz, float amp) {
      * menu. Voices renumbered: 0 Pad / 1 String / 2 Ember / 3 Bowed.
      * r19.53: 4 = Horn (alphorn/brass, Alps). Like bowed it is a full CHARACTER
      * voice, so the tiny generative amp is scaled + floored to sit forward. */
-    if      (melody_voice == 6) guembri_note(freq_hz, dsp_clampf(amp * 2.8f, 0.35f, 0.60f));
-    else if (melody_voice == 5) choir_note  (freq_hz, dsp_clampf(amp * 2.6f, 0.32f, 0.55f));
-    else if (melody_voice == 4) horn_note (freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f));
-    else if (melody_voice == 3) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
-    else if (melody_voice == 2) ember_note(freq_hz, amp);   /* r19.28 analog */
+    if      (voice == 6) guembri_note(freq_hz, dsp_clampf(amp * 2.8f, 0.35f, 0.60f));
+    else if (voice == 5) choir_note  (freq_hz, dsp_clampf(amp * 2.6f, 0.32f, 0.55f));
+    else if (voice == 4) horn_note (freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f));
+    else if (voice == 3) bowed_note(freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f));
+    else if (voice == 2) ember_note(freq_hz, amp);   /* r19.28 analog */
     else                        pluck_note(freq_hz, amp);   /* 0 Pad / 1 String */
 }
 
@@ -644,6 +655,9 @@ void engine_set_atmosphere(float v)   {
  * drone follows the root, and the reverb character shifts via the per-mode/
  * vibe preset table. Values live in worlds.c (audition-derived). */
 void engine_set_world(int idx) {
+    if (idx < 0) idx = 0;
+    if (idx >= WORLD_COUNT) idx = WORLD_COUNT - 1;
+    s_world_index = idx;
     ambience_set_world(idx);
     /* r18.93: (re)build the PADsynth bed table for the world's timbre
      * profile. Blocking a few ms — worlds change from the UI loop, never
@@ -860,8 +874,18 @@ static void release_generated(void) {
 }
 void engine_set_generative(bool on,int program) {
     generative_set_program(program);
-    if(on && !gen_on) gen_timing_valid=false;
-    gen_on=on; if(!on) release_generated();
+    if (on == gen_on) return;
+    if (on) {
+        /* Listening owns the World engine; remember the manual Character.
+         * Release old sources and reuse the existing bounded crossfade. */
+        activate_synth(0, true);
+        s_user_present = s_ever_active = s_gen_suppressed = false;
+        gen_on = true;
+    } else {
+        gen_on = false;
+        release_generated();
+        activate_synth(s_manual_synth, false);
+    }
 }
 
 /* r19.0: manual step = one harmonic-state MUTATION (≥3 common pitch
@@ -926,6 +950,7 @@ void engine_generative_tick(uint32_t now_ms) {
      * Returning to Ambient must respect the same quiet return interval. */
     if (s_user_present) { s_last_active_ms = now_ms; s_ever_active = true; }
     if(!gen_on || s_synth_tgt>0) return;
+    const world_phrase_t *phrase = worlds_phrase(s_world_index);
     int sounding[128]; int occupied=engine_sounding_notes(sounding,128);
     composer_listen((float)occupied/12.0f,s_user_present); composer_tick(now_ms);
     for(int i=5;i<=8;++i) pad_set_source_gain((uint8_t)i,composer_params()->bed_amp);
@@ -1058,22 +1083,21 @@ void engine_generative_tick(uint32_t now_ms) {
     }
 
     /* --- r19.0 LONG MELODY VOICE -----------------------------------------
-     * One voice. Long tones (4-16 s), real silences (1-8 s, stretched by
+     * One voice. World-specific long tones and real silences (stretched by
      * the composer's rest_add), phrases of 2-5 notes with a longer breath
      * after each phrase. EVERY tone runs the full safety chain in
      * harmony_melody_next: pitch world → register mask → interval table →
      * collision filter against everything sustaining → next-best
      * fallback. Probability is the LAST stage, not the first. The onset
-     * is doubled by the selected VOICE strike (string/glass) so the tone
-     * has an attack in front of the pad swell — not an arpeggiator, a
-     * slow cinematic line. */
+     * shares its source/release with the curated sustained World voice;
+     * plucked voices decay naturally in front of the pad swell. */
     if (!s_mel_enabled) {                /* r19.34: melody layer off */
         if (mel_sounding) { engine_note_off((uint8_t)MEL_SRC); mel_sounding = 0; }
     } else {
     if (mel_sounding && (int32_t)(now_ms - mel_off_ms) >= 0) {
         engine_note_off((uint8_t)MEL_SRC);
         mel_sounding = 0;
-        float rest = 1.0f + gen_rand01() * 7.0f;              /* 1-8 s   */
+        float rest = phrase->rest_min + gen_rand01() * (phrase->rest_max - phrase->rest_min);
         rest *= 1.0f + composer_params()->rest_add * 2.0f;    /* composer */
         if (mel_phrase_left <= 0)
             rest += 3.0f + gen_rand01() * 5.0f;               /* breath  */
@@ -1097,7 +1121,7 @@ void engine_generative_tick(uint32_t now_ms) {
              * breath (a reset caused over-octave leaps between phrases —
              * caught by the grammar audit). */
         }
-        if (gen_rand01() < dsp_clampf(0.80f * composer_params()->mel_density,
+        if (gen_rand01() < dsp_clampf(0.01f * phrase->density_pct * composer_params()->mel_density,
                                       0.05f, 0.95f)) {
             /* everything currently sustaining, for the collision filter */
             int sus[128]; int nsus=engine_sounding_notes(sus,128);
@@ -1136,8 +1160,8 @@ void engine_generative_tick(uint32_t now_ms) {
                 ++mel_note_count;
                 if (mel_cur_len < MEL_PHRASE_MAX) mel_cur[mel_cur_len++] = tone;
                 --mel_phrase_left;
-                mel_off_ms = now_ms + 4000u +
-                             (uint32_t)(gen_rand01() * 12000.0f);   /* 4-16 s */
+                mel_off_ms = now_ms + (uint32_t)(1000.0f * (phrase->note_min +
+                             gen_rand01() * (phrase->note_max - phrase->note_min)));
             } else {
                 /* nothing SAFE right now — silence is the correct note */
                 mel_next_ms = now_ms + 2000u +
@@ -1327,11 +1351,18 @@ void engine_set_synth_backend(const engine_synth_backend_t *be) {
     if (be && be->set_macro) for (int i=0;i<4;++i) be->set_macro(i,s_synth_macros[i]);
 }
 void engine_set_synth_param(int slot, float value) {
-    if (s_synth_tgt > 0 && s_synth_be && s_synth_be->set_param && slot >= 0 && slot < 6)
+    if (s_manual_synth > 0 && s_synth_be && s_synth_be->set_param && slot >= 0 && slot < 6) {
+        s_synth_be->select(s_manual_synth - 1);
         s_synth_be->set_param(slot, dsp_clampf(value, 0.0f, 1.0f));
+    }
 }
 void engine_set_synth(int idx) {
-    if (idx < 0 || idx > 6 || (idx > 0 && !s_synth_be) || idx == s_synth_tgt) return;
+    if (idx < 0 || idx > 6 || (idx > 0 && !s_synth_be)) return;
+    s_manual_synth = idx;
+    if (!gen_on) activate_synth(idx, false);
+}
+static void activate_synth(int idx, bool force) {
+    if (!force && idx == s_synth_tgt) return;
     /* Release, don't panic: old core/ambient can decay during the crossfade. */
     release_generated(); s_note_count=0;
     for(int i=0;i<MAX_SOURCES;++i) remember_source(i);

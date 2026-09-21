@@ -35,9 +35,9 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 ## Progress and next units
 
 The detailed product execution order is now in PRODUCT_REVIEW_EXECUTION.md.
-Package 1 removes implicit Generate/Steer rerouting and fixes press/release
-ownership and Note-mode latch cleanup. Source/FX inventory below remains open;
-the next architecture unit must also cover actual physical input and gestures.
+The user subsequently selected autonomous listening with locked cells.
+LISTENING_WORLD_REVIEW.md supersedes simultaneous Generate/play as the contract.
+The ownership cleanup remains; source/FX inventory below remains open.
 
 | Order | Unit | State / next concrete question |
 |---|---|---|
@@ -52,8 +52,9 @@ the next architecture unit must also cover actual physical input and gestures.
 | Done | Dusk register / defaults | Pitch-tracked filter, rounded bloom; body spread <0.5 dB; listening approval open |
 | Listening | Dusk calming character | Partial root cancellation corrected; gentler defaults; current device body spread ~1.1 dB |
 | Done | Concept / return pause | Cross-mode presence history fixed; 28 s system probe; continuity gap remains |
-| Done | Generate / cell ownership | Cells remain playable; original release recipient remembered; Note latches cleaned on mode exit; host suite green |
-| Next | World / Character integration | Budget a minimal bed + one foreground role; source ownership, transition cost, dry/send routing |
+| Done | Generate / listening | Cells/Hold/Drone locked; manual Character remembered; World voice and phrasing; 4 s LED pulse; host verification |
+| Next | Listening exit and quiet UI | Preserve complete source releases on Character return; 15 min human-idle display timer; wake without a musical action |
+| Next sound | World voice and space | Audit sustained foreground/bed balance, World transitions, Mono; reduce overlapping FX before adding sound layers |
 | Open | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |

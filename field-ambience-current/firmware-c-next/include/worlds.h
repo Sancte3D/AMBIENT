@@ -1,26 +1,20 @@
 #ifndef FAM_WORLDS_H
 #define FAM_WORLDS_H
 
-/*
- * Worlds — single source of truth for the 4 curated worlds (ADR-0017 Phase 1).
- *
- * A "world" is a high-level preset the user thinks in pictures (night city,
- * sunset coast, night highway, jazz bar) rather than synth-engine parameters.
- * Each world bundles:
- *   - human-facing identity (name, flavour subtitle)
- *   - the display accent colour (UI tint, used by oled_color)
- *   - the default values for the four global macros (space / tone / atmos)
- *   - (header slots reserved for Phase 2/3 ambience + drums config)
- *
- * Why this module exists: until r18.47 the four per-world tables
- * (WORLD_NAMES, WORLD_SUBTITLE, WORLD_PRESET, WORLD_ACCENT) were scattered
- * across menu.c. Future per-world ambience (Phase 2) and drums (Phase 3)
- * need a sane place to live; that's this file.
- */
+/* Five curated landscape Worlds: identity, harmonic context, visual accent,
+ * macro defaults and foreground voice. Autonomous phrasing is kept in a
+ * separate const table; the existing World/scene descriptor stays unchanged. */
 
 #include <stdint.h>
 
 #define WORLD_COUNT 5   /* r19.44: 5 landscape worlds (was 4 city worlds) */
+
+/* Autonomous phrasing, in seconds. Composer adds its existing rest/density
+ * variation; these profiles give each place a different breathing pattern. */
+typedef struct {
+    uint8_t note_min, note_max, rest_min, rest_max, density_pct;
+} world_phrase_t;
+const world_phrase_t *worlds_phrase(int index);
 
 typedef struct {
     const char *name;              /* short display name (<=13 chars)         */
@@ -50,7 +44,7 @@ typedef struct {
      * world-change (like the macros; the user can override via the VOICE menu).
      * This is the first step of the location brief's per-world "instrument DNA":
      * a world sounds like its place, not just like a filtered version of one
-     * pad. 0 Pad / 1 String / 2 Glass / 3 Ember / 4 Bowed (lyra/Hardanger). */
+     * pad. 0 Pad / 1 String / 2 Ember / 3 Bowed / 4 Horn / 5 Choir / 6 Guembri. */
     uint8_t     voice;
     /* r19.45: per-world brightness (pad filter cutoff + fx tone + reverb
      * damping), Hz offset in [-600, +800]. THE strongest timbral lever — dark
@@ -60,7 +54,7 @@ typedef struct {
 } world_t;
 
 /* Get the immutable descriptor for a world index. Index is clamped to
- * [0, WORLD_COUNT) — out-of-range returns world 0. */
+ * [0, WORLD_COUNT): below zero returns first, above range returns last. */
 const world_t *worlds_get(int index);
 
 /* Total worlds known to the firmware. Always == WORLD_COUNT today, kept as

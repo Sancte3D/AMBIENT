@@ -195,9 +195,9 @@ int main(void) {
     controls_modifier(MOD_CLEAR, false);
     controls_modifier(MOD_SHIFT, false);
     CHECK(!controls_hold_base(0),                       "flush wiped the latch");
-    CHECK(controls_modifier_active(MOD_DRONE),          "flush keeps DRONE running");
-    CHECK(controls_modifier_active(MOD_GENERATE),       "flush keeps GENERATE running");
-    CHECK(controls_modifier_active(MOD_HOLD),           "flush keeps HOLD armed");
+    CHECK(!controls_modifier_active(MOD_DRONE),         "listening takes ownership of foundation");
+    CHECK(!controls_modifier_active(MOD_GENERATE),      "Clear exits listening even with Shift");
+    CHECK(!controls_modifier_active(MOD_HOLD),          "listening clears manual Hold");
     /* plain CLEAR: everything off */
     controls_cell_press(1, 0.15f);                       /* latch again */
     controls_modifier(MOD_CLEAR, true);
@@ -223,7 +223,6 @@ int main(void) {
     CHECK(controls_hold_base(4),     "latch survived the release");
 
     /* Leave Note mode without stale latches or resetting global modifiers. */
-    controls_modifier(MOD_GENERATE, true);
     controls_modifier(MOD_SHIFT, true);
     controls_cell_press(3, 0.15f);
     controls_release_cells();
@@ -232,12 +231,23 @@ int main(void) {
         CHECK(!controls_hold_base(c), "mode exit clears base latch %u", c);
         CHECK(!controls_hold_shift(c), "mode exit clears shifted latch %u", c);
     }
-    CHECK(controls_modifier_active(MOD_GENERATE), "mode exit preserves Generate");
+    CHECK(!controls_modifier_active(MOD_GENERATE), "mode exit does not enable Generate");
     CHECK(controls_modifier_active(MOD_HOLD), "mode exit preserves Hold");
     CHECK(controls_modifier_active(MOD_SHIFT), "mode exit preserves Shift");
     controls_cell_press(3, 0.15f);
     CHECK(controls_hold_shift(3), "first new press latches on, not stale off");
     controls_release_cells();
+
+    controls_modifier(MOD_GENERATE,true);
+    controls_modifier(MOD_HOLD,true);controls_modifier(MOD_DRONE,true);
+    controls_cell_press(0,.3f);
+    CHECK(!controls_any_cell_down(), "locked cells do not suppress the composer");
+    CHECK(!controls_hold_base(0) && !controls_modifier_active(MOD_HOLD), "Hold locked while listening");
+    CHECK(!controls_modifier_active(MOD_DRONE), "Drone locked while listening");
+    controls_modifier(MOD_GENERATE,true);
+    controls_cell_press(0,.3f);
+    CHECK(controls_any_cell_down(), "manual playing returns after listening");
+    controls_cell_release(0);
 
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");

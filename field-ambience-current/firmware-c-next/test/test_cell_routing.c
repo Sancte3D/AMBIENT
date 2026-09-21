@@ -22,6 +22,7 @@ static void landscape_press(uint8_t c,bool h,uint32_t t) { (void)h;(void)t;++on[
 static void landscape_release(uint8_t c,uint32_t t) { (void)t;++off[2][c]; }
 static void bloom_all_off(void) {}
 static void landscape_all_off(uint32_t t) { (void)t; }
+static void gesture_clear(uint32_t t) { (void)t; }
 static void engine_all_off(void) {}
 static void engine_bass_follow(bool enabled) { (void)enabled; }
 static uint32_t HAL_GetTick(void) { return 250; }
@@ -42,7 +43,7 @@ int main(void) {
     for(int mode=0;mode<3;++mode) {
         reset();s_cell_mode=mode;generate=1;
         route_cell(1,true,100);generate=0;route_cell(1,false,200);
-        assert(on[mode][1]==1 && off[mode][1]==1 && nudges==0);
+        assert(on[mode][1]==0 && off[mode][1]==0 && nudges==0);
     }
     /* Up must reach its original recipient even if the requested mode moved. */
     for(int old=0;old<3;++old) for(int next=0;next<3;++next) {
@@ -62,6 +63,9 @@ int main(void) {
     route_cell(0,false,150);route_cell(255,true,160);route_cell(255,false,170);
     assert(on[0][0]==2 && off[0][0]==2);
     assert(sizeof(cell_router_t)==5);
-    puts("cell routing PASS: Generate, 9 ownership transitions, cleanup and stray edges; 5-byte state");
+    reset();route_cell(0,true,100);prepare_listening(120);generate=1;
+    route_cell(0,false,140);route_cell(1,true,150);
+    assert(off[0][0]==1 && on[0][1]==0 && cleared==1);
+    puts("cell routing PASS: listening lock, 9 ownership transitions, cleanup and stray edges; 5-byte state");
     return 0;
 }

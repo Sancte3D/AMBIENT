@@ -304,8 +304,8 @@ static void observe_return(int on, uint8_t source, float hz, float amp) {
 }
 
 static void test_character_return_pause(void) {
-    /* A player can finish a Character phrase before returning to Ambient.
-     * The generator must remember that activity across the mode boundary. */
+    /* Low-level presence injection retains the return pause even if the
+     * pending manual Character changes. Physical cells are locked in listening. */
     for(int core=1;core<=6;++core) {
         engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
         engine_set_note_hook(observe_return); engine_set_generative(true,-1);
@@ -313,7 +313,7 @@ static void test_character_return_pause(void) {
         engine_set_user_presence(true); engine_generative_tick(1000);
         engine_generative_tick(1750);
         engine_set_user_presence(false); engine_generative_tick(2000);
-        CHECK(return_onsets==0); /* Character still has no automatic notes. */
+        CHECK(return_onsets==0); /* Explicit presence still suppresses automatic notes. */
         engine_set_synth(0); engine_generative_tick(2250);
         CHECK(engine_generative_suppressed()); CHECK(return_onsets==0);
         engine_generative_tick(9500);
@@ -321,6 +321,48 @@ static void test_character_return_pause(void) {
         engine_generative_tick(10000);
         CHECK(!engine_generative_suppressed()); CHECK(return_onsets>0);
         engine_set_note_hook(NULL);
+    }
+}
+
+static void test_listening_from_character(void) {
+    for(int core=1;core<=6;++core) {
+        engine_init();synth_host_init();engine_set_synth_backend(&BE);
+        engine_set_synth(core);CHECK(engine_synth()==core);
+        engine_note_on(0,261.6256f,.2f);
+        engine_set_user_presence(true);
+        engine_set_note_hook(observe_return);return_onsets=0;
+        engine_set_generative(true,-1);
+        CHECK(engine_synth()==0);
+        engine_generative_tick(1000);CHECK(return_onsets>0);
+        CHECK(level_after(80)>1.0);
+        engine_set_generative(false,-1);CHECK(engine_synth()==core);
+        engine_set_generative(true,-1);
+        int next=core%6+1;
+        engine_set_synth(next);engine_set_synth_param(0,.4f);
+        CHECK(engine_synth()==0); /* preparing manual choice cannot stop the world */
+        engine_set_generative(false,-1);CHECK(engine_synth()==next);
+        engine_set_note_hook(NULL);
+    }
+}
+
+static void test_world_voice_ownership(void) {
+    int (*count[])(void)={horn_active_count,bowed_active_count,bowed_active_count,choir_active_count};
+    for(int world=0;world<4;++world) {
+        engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
+        engine_set_world(world); engine_set_voice(1); /* manual override must not replace the World */
+        engine_set_generative(true,-1);
+        uint32_t t=1000;
+        while(!engine_generative_melody_count() && t<301000) {
+            engine_generative_tick(t); t+=100;
+        }
+        CHECK(engine_generative_melody_count()>0);
+        /* Stop control ticks, keep audio running beyond any legacy one-shot
+         * envelope. A source-owned voice stays until its actual release. */
+        (void)level_after((25 * 44100 + BLK - 1) / BLK);
+        CHECK(count[world]()>0);
+        engine_set_generative(false,-1);
+        (void)level_after((25 * 44100 + BLK - 1) / BLK);
+        CHECK(count[world]()==0);
     }
 }
 
@@ -476,6 +518,8 @@ int main(void) {
     test_playability(); test_voice_gates(); test_sends();
     test_pitch_and_controls(); test_live_tuning(); test_core_level_balance(); test_handover(); test_pitch_memory();
     test_character_return_pause();
+    test_listening_from_character();
+    test_world_voice_ownership();
     printf("synth_device: %d checks, 0 failures\n", checks);
     return 0;
 }

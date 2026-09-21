@@ -89,19 +89,24 @@ entwickeln, ohne dafür neue Noten auszulösen.
 
 ## 6. Phrasen und Composer
 
-- Generate entwickelt die Welt weiter, ohne die gewählte Spielweise der
-  Spielflächen umzudeuten. Druck und Loslassen gehören zum selben Empfänger.
-  Die frühere automatische Steer-Belegung ist im Produktpfad entfernt.
-  Note/Harmony/Land bleiben vorerst eigene, noch zu reduzierende Spielweisen;
-  Character/Bett-Koexistenz ist noch nicht umgesetzt. Arbeitsfolge:
-  `docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
-- Eine Melodielinie: 4–16 s pro Ton, echte Pausen und Atem zwischen Phrasen.
+- Generate ist ein autonomer Hörmodus. Die fünf Flächen, Hold und Drone sind
+  gesperrt; die World übernimmt Stimmen und Fundament. Kein Steer-Modus.
+  Generate erneut oder Clear beendet den Hörmodus. Volume bleibt erreichbar.
+- Generate verwendet immer die Ambient-Engine mit der kuratierten World-Stimme.
+  Die manuelle Character-Auswahl wird gemerkt und beim Ausstieg wiederhergestellt.
+  Gleichzeitiges Character-Spiel mit automatischem Bett ist kein Produktziel mehr.
+- Die Worlds unterscheiden sich auch im Zeitverlauf: lange verbundene Töne in
+  Open Sea, größere Pausen in Fjords, vereinzelte Ereignisse in Desert.
+  Haltezeiten und Grundpausen: `docs/audio/LISTENING_WORLD_REVIEW.md`.
+  Bowed/Horn/Choir folgen demselben Phrasen-Release wie die Melodie-Padstimme;
+  gezupfte Stimmen klingen weiterhin eigenständig ab.
 - 2–5 Töne pro Phrase; Sprünge maximal eine Oktave, auch bei Motiv-Replay.
 - Nach zwei gleichen Melodietönen: sicherer anderer Ton oder Pause.
   Eintönige Phrasen werden nicht als wiederholbare Motive archiviert.
 - Alle automatischen Schichten teilen mindestens 1,4 s Einsatzabstand.
-- Physisches Spiel pausiert neue Einsätze; sanfte Rückkehr nach etwa 8 s.
-  Geplante Releases laufen währenddessen weiter.
+- Die vorhandene Low-Level-Presence-Sperre mit etwa 8 s Rückkehrpause bleibt
+  für explizite Engine-Aufrufer erhalten. Gesperrte Gerätetasten setzen sie
+  im Hörmodus nicht. Geplante Releases laufen bei einer Sperre weiter.
 
 CALM, OPEN, DEEP, EMPTY und RETURN bilden einen gewichteten Graphen.
 Klangbelegung, kürzlich besuchte Zustände und lange nicht besuchte Ziele

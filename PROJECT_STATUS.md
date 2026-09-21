@@ -1,5 +1,19 @@
 # PROJECT STATUS
 
+> **2026-09-21 — Generate / autonome Klangwelten:** Die ausdrückliche neue
+> Produktentscheidung ersetzt „Generate bleibt gleichzeitig spielbar“:
+> Generate sperrt die fünf Flächen sowie Hold/Drone und übernimmt die Ambient-
+> World unabhängig vom vorherigen Character. Manuelle Auswahl wird gemerkt.
+> World-Stimme und Phrasierung folgen der gewählten Landschaft; Bowed/Horn/Choir
+> teilen den tatsächlichen Melodie-Release. Ruhiger 4-s-Generate-Lichtpuls.
+> Host-Prüfung und 28-s-Open-Sea-Probe: `field-ambience-current/docs/audio/LISTENING_WORLD_REVIEW.md`.
+> **Offen:** vollständige Quell-Tails bei Rückkehr zu einem Character; Display
+> nach 15 min menschlicher Inaktivität aus + klangneutrales Aufwecken;
+> Manual-only-Menükennzeichnung; Hörfreigabe und aktueller H743-Nachweis.
+> Aktuelle Reihenfolge: `field-ambience-current/docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
+> Ältere Einträge darunter sind Historie; gemeinsame Character/Bett-Wiedergabe
+> ist durch den separaten Hörmodus als nächstes Architekturziel abgelöst.
+
 > **Sound review in small units:** FM Glass Index/Body coupling, live Index
 > and a softer native attack corrected; host-verified, listening/device gates
 > open. Complete queue: `field-ambience-current/docs/audio/SOUND_REVIEW_QUEUE.md`.

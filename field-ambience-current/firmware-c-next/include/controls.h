@@ -20,12 +20,13 @@
  *                naturally on a panel with no dedicated shift LED lock)
  *   hold       — toggle-on-press; without it cell taps are momentary
  *   drone      — toggle; engine_set_drone(); root drone follows brain key
- *   generate   — toggle; engine_set_generative(true,…)
+ *   generate   — autonomous listening; releases cells, clears Hold/Drone,
+ *                locks new cell/Hold/Drone input until exit
  *   clear      — momentary FULL STOP: wipes all hold bits, silences all
  *                voices (engine_all_off — natural releases, no hard cut),
  *                and turns HOLD/DRONE/GENERATE off
- *   shift+clear— FLUSH: silence the voices only; HOLD/DRONE/GENERATE keep
- *                running (drone re-swells, the generator plays on)
+ *   shift+clear— FLUSH outside listening (Hold/Drone stay); during listening
+ *                Clear always exits Generate, including with Shift
  *
  * Tap semantics (Hold latched + cell c tapped):
  *   shift OFF → toggle hold_base[c]:  if turning ON  → engine_note_on(c, root)
@@ -61,7 +62,7 @@ void controls_init(void);
 /* Modifier press edge (pressed=true) / release edge (pressed=false).
  * SHIFT is momentary (r19.20) — feed BOTH edges. HOLD/DRONE/GENERATE latch
  * on press (next press toggles off). CLEAR acts on press: full stop, or
- * voice-flush when SHIFT is held. */
+ * voice-flush when SHIFT is held. Clear always exits active Generate. */
 void controls_modifier(mod_id_t mod, bool pressed);
 
 /* Cell tap (momentary press edge with velocity amp 0..1, ADR-0013). Velocity

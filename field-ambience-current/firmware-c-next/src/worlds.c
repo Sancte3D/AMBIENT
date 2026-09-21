@@ -31,6 +31,20 @@
 
 #include "worlds.h"
 
+static const world_phrase_t PHRASES[WORLD_COUNT] = {
+    {8,16,5,12,65},   /* Alps: long calls with space between them. */
+    {9,16,3, 8,75},   /* Open Sea: sustained, more connected swells. */
+    {10,16,6,14,55},  /* Fjords: long suspended tones, wider rests. */
+    {8,14,6,12,60},   /* Moss Fields: quiet, unhurried, absorbed. */
+    {4, 8,8,16,45},  /* Desert: isolated plucked events, open intervals. */
+};
+
+const world_phrase_t *worlds_phrase(int index) {
+    if (index < 0) index = 0;
+    if (index >= WORLD_COUNT) index = WORLD_COUNT - 1;
+    return &PHRASES[index];
+}
+
 static const world_t WORLDS[WORLD_COUNT] = {
     {
         .name = "Alps",

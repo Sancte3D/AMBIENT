@@ -92,8 +92,9 @@ typedef struct {
     void (*retune_hz)(float hz); /* optional: pitch only, no new attack */
 } engine_synth_backend_t;
 void engine_set_synth_backend(const engine_synth_backend_t *be);
+/* Manual Character choice. While Generate is on, defer until listening ends. */
 void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */
-int  engine_synth(void);
+int  engine_synth(void); /* effective engine: 0 throughout listening */
 void engine_set_synth_param(int slot, float value);
 
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
@@ -189,7 +190,10 @@ void engine_set_drone(bool on);
  * brass never leaves the two timbres competing in the air. */
 void engine_set_pad_voice(int voice_idx);
 
-/* Step 12b #4 — generative bed. on=false stops it (releases its voice).
+/* Autonomous listening: enter Ambient, release old sources, remember manual
+ * Character; on=false releases generated sources and restores that choice.
+ * Character restoration uses the existing short crossfade (FX tails survive;
+ * full Ambient source tails across this switch remain a separate task).
  * program <0 selects Markov auto, >=0 selects a fixed progression index. */
 void engine_set_generative(bool on, int program);
 
@@ -201,12 +205,11 @@ void engine_set_generative(bool on, int program);
  * engine_generative_tick(). */
 int engine_generative_advance(void);
 
-/* Generative AUTOPLAY. Call from the UI loop at ≥ ~20 Hz, including while
- * Generate is off or a Character is selected: physical playing must remain
- * in the return-pause history. Timing derives from now_ms.
- * Ambient schedules the harmonic bed, sparse melody and Eno loops. Physical
- * playing suppresses new automatic onsets; return waits about 8 s after the
- * last occupied tick. Character modes record presence but do not generate. */
+/* Autonomous scheduler. Call from the UI loop at >= ~20 Hz, including while
+ * Generate is off, so low-level presence history stays current. Listening
+ * selects the World's voice/phrasing and always uses the Ambient engine.
+ * Device cells are locked; explicit low-level presence callers still get the
+ * ~8 s return pause. Timing derives from now_ms. */
 void engine_generative_tick(uint32_t now_ms);
 
 /* r19.22 (Scenes): reproduzierbarer Generator-Zustand. Der Seed treibt die
@@ -216,7 +219,7 @@ uint32_t engine_gen_seed(void);
 void     engine_set_gen_seed(uint32_t seed);
 
 /* Explicit composer-intent API (not the physical cells' Generate behaviour).
- * The product cells remain playable with Generate on. cell 0..4 maps to intent
+ * Product cells are locked with Generate on. Explicit cell 0..4 maps to intent
  * (0 Home→RETURN, 1 Lift→OPEN, 2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY)
  * and mutates the harmony now so the piece audibly answers. No-op unless
  * generative is on; deliberately does NOT mark user-presence (the generator

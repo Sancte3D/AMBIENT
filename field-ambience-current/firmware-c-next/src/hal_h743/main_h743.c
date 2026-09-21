@@ -145,8 +145,7 @@ static const landscape_iface_t s_ls_iface = {
     ls_drone, ls_bed, ls_motif, ls_atmos, ls_memory
 };
 
-/* Generate develops the field; it never repurposes the player's cells.
- * Keep down/up ownership across setting changes and gesture playback. */
+/* Listening locks new cell presses; previously owned releases still arrive. */
 static void dispatch_cell(int mode, uint8_t c, bool pressed, uint32_t now) {
     if (mode == CELL_HARMONY) {
         if (pressed) bloom_press(c, CELL_TAP_AMP,
@@ -161,7 +160,15 @@ static void dispatch_cell(int mode, uint8_t c, bool pressed, uint32_t now) {
     }
 }
 static void route_cell(uint8_t c, bool pressed, uint32_t now) {
+    if (pressed && controls_modifier_active(MOD_GENERATE)) return;
     cell_router_event(&s_cell_router, s_cell_mode, c, pressed, now, dispatch_cell);
+}
+static void prepare_listening(uint32_t now) {
+    cell_router_release_all(&s_cell_router, now, dispatch_cell);
+    controls_release_cells();
+    bloom_all_off();
+    landscape_all_off(now);
+    gesture_clear(now);
 }
 static void hal_set_cell(int mode) {
     if (mode < CELL_NOTE || mode > CELL_LAND) mode = CELL_NOTE;
@@ -460,7 +467,7 @@ int main(void) {
              * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
             for (uint8_t c = 0; c < 5; ++c) {
                 uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
-                if (scenes_ui_active()) {
+                if (scenes_ui_active() && !controls_modifier_active(MOD_GENERATE)) {
                     if (fell & m)
                         scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
                                        now);
@@ -486,7 +493,7 @@ int main(void) {
              * confirm-flash that existed since r18.64 but was never wired. */
             if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
             if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
-            if (fell & (1u<<MCP_BIT_MOD_HOLD)) {
+            if ((fell & (1u<<MCP_BIT_MOD_HOLD)) && !controls_modifier_active(MOD_GENERATE)) {
                 if (controls_modifier_active(MOD_SHIFT)) {
                     /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.
                      * (Mischis SHIFT+GENERATE ist seit r19.24 New Field.) */
@@ -503,6 +510,7 @@ int main(void) {
             if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
             if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
             if (fell & (1u<<MCP_BIT_MOD_GENERATE)) {
+                if (!controls_modifier_active(MOD_GENERATE)) prepare_listening(now);
                 if (controls_modifier_active(MOD_SHIFT)) {
                     /* r19.24: SHIFT+GENERATE = New Field — sicher AN + neuer,
                      * reproduzierbarer Seed (via engine_gen_seed scene-bar). */
@@ -512,6 +520,8 @@ int main(void) {
                     overlay_show("GENERATE", "NEW FIELD", now, 0);
                 } else {
                     controls_modifier(MOD_GENERATE, true);   /* normaler Toggle */
+                    overlay_show("GENERATE", controls_modifier_active(MOD_GENERATE)
+                                 ? "LISTENING" : "PLAY", now, 0);
                 }
             }
             if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
