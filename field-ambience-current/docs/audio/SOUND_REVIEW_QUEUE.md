@@ -34,6 +34,12 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 
 ## Progress and next units
 
+**User priority 2026-09-22: sound first; defer display idle.**
+Open Sea dry voice / pad / Dream diagnosis is in OPEN_SEA_SOUND_REVIEW.md.
+Fixed periodic fundamental cancellation in the shared Bowed voice without
+raising its average level. Next: chorus/blur contribution and an intelligible
+Shimmer range; no blanket effect boost or extra sound layer.
+
 The detailed product execution order is now in PRODUCT_REVIEW_EXECUTION.md.
 The user subsequently selected autonomous listening with locked cells.
 LISTENING_WORLD_REVIEW.md supersedes simultaneous Generate/play as the contract.
@@ -54,8 +60,9 @@ The ownership cleanup remains; source/FX inventory below remains open.
 | Done | Concept / return pause | Cross-mode presence history fixed; 28 s system probe; continuity gap remains |
 | Done | Generate / listening | Cells/Hold/Drone locked; manual Character remembered; World voice and phrasing; 4 s LED pulse; host verification |
 | Done / device gate | Listening exit | Independent source drain, two-second background fade, immediate manual Character; Harmony→Generate bass ownership corrected; see LISTENING_EXIT_REVIEW.md |
-| Next | Quiet UI | 15 min human-idle display timer; wake without a musical action; Volume/Generate/Clear immediate |
-| Next sound | World voice and space | Audit sustained foreground/bed balance, World transitions, Mono; reduce overlapping FX before adding sound layers |
+| Deferred | Quiet UI | Sound takes priority; 15 min human-idle display timer and neutral wake still required |
+| Done / listening | Open Sea dry Bowed | Periodic root collapse corrected; same average level; both colours and four pitches; 28.25 s stem A/B |
+| Next sound | Open Sea space and movement | Compare chorus/blur against simpler room; default Shimmer has tiny measured contribution in diagnostic scene; range and feedback audit before keep/reduce/remove |
 | Open | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |

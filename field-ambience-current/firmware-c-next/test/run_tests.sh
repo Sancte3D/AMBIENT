@@ -16,6 +16,11 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 # Exercise the product HAL's actual cell dispatch, including mode transitions.
 CC="$CC" python3 "$here/test_cell_routing.py"
 
+"$CC" "${CFLAGS[@]}" "$here/test_bowed_balance.c" \
+    "$src/src/bowed.c" "$src/src/shape.c" "$src/src/dsp.c" \
+    -lm -o "$tmp/bowed_balance_test"
+"$tmp/bowed_balance_test"
+
 # Step 7: dsp + voice pool
 "$CC" "${CFLAGS[@]}" \
     "$here/test_dsp_voices.c" \

@@ -203,11 +203,15 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             v->vibPh += v->vibInc; if (v->vibPh >= 1.0f) v->vibPh -= 1.0f;
             v->bodyPh += v->bodyInc; if (v->bodyPh >= 1.0f) v->bodyPh -= 1.0f;
 
-            /* string: two detuned band-limited saws */
+            /* Stable root with a quieter detuned string. The former 0.6/0.4
+             * mix nearly cancelled its fundamental once per beat cycle,
+             * leaving the second harmonic dominant (hollow periodic colour).
+             * 85/15 balance, scaled to preserve the former long-term oscillator
+             * power: .71^2 + .125^2 ~= .6^2 + .4^2. No master gain correction. */
             float inc  = v->inc  * (1.0f + vib);
             float inc2 = v->inc2 * (1.0f + vib);
-            float s = dsp_poly_saw(v->ph,  inc)  * 0.6f
-                    + dsp_poly_saw(v->ph2, inc2) * 0.4f;
+            float s = dsp_poly_saw(v->ph,  inc)  * 0.71f
+                    + dsp_poly_saw(v->ph2, inc2) * 0.125f;
             v->ph  += inc;  if (v->ph  >= 1.0f) v->ph  -= 1.0f;
             v->ph2 += inc2; if (v->ph2 >= 1.0f) v->ph2 -= 1.0f;
 

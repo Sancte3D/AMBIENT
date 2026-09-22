@@ -1,5 +1,17 @@
 # PROJECT STATUS
 
+> **2026-09-22 — Sound wieder priorisiert, Open Sea / Bowed:** Messbare
+> Grundton-Einbrüche bereits in der trockenen Stimme korrigiert. Die bisherige
+> 60/40-Oszillatormischung erzeugte bis ca. 13 dB Grundtonschwankung und ließ
+> zeitweise den zweiten Oberton dominieren. Dominante Hauptsaite + leisere
+> Verstimmung, bei praktisch gleichem Mittelpegel: jetzt ca. 3 dB Schwankung.
+> Acht Register-/Farb-Probes rot/grün, volle Host-Suite grün; keine zusätzlichen
+> DSP-Operationen oder Zustandsdaten. Gemeinsame Bowed-Stimme betrifft auch Fjords.
+> Zerlegung Stimme / Pad / Dream plus FX-Abtrag und 28,25-s-A/B:
+> `field-ambience-current/docs/audio/OPEN_SEA_SOUND_REVIEW.md`.
+> **Nächste Einheit: Klang.** Chorus/Blur gegen einen einfacheren Raum prüfen;
+> Shimmer-Nutzen und Parameterwirkung belegen. Displaytimer bewusst nachgeordnet.
+
 > **2026-09-22 — Generate-Ausstieg:** Freigegebene Ambient-Stimmen klingen
 > beim Zurückwechseln zum manuellen Character jetzt unabhängig aus. Wind und
 > Dauertexturen blenden in etwa 2 s aus; der Character ist sofort spielbar.
@@ -8,7 +20,7 @@
 > Außerdem: Generate besitzt sein Bassfundament jetzt auch nach Harmony und
 > gibt es beim Ausstieg frei, ohne die manuelle Bass-Zuordnung zu verändern.
 > Details/Geräte-Gates: `field-ambience-current/docs/audio/LISTENING_EXIT_REVIEW.md`.
-> **Nächste offene Einheit:** 15-Minuten-Displayruhe + klangneutrales Wake.
+> **Weiter offen, inzwischen nachgeordnet:** 15-Minuten-Displayruhe + klangneutrales Wake.
 > Klangbalance World-Stimme/Pad/Raum und aktueller H743-Lastnachweis bleiben offen.
 
 > **2026-09-21 — Generate / autonome Klangwelten:** Die ausdrückliche neue
