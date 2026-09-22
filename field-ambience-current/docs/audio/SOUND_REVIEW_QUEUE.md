@@ -6,6 +6,10 @@ checkpoint. User-facing audio is at most 30 seconds unless explicitly requested.
 Use correctly chunked firmware rendering, no diagnostic reference tone in a
 musical demo, and constant loudness matching for tonal A/B comparisons.
 
+Binding direction 2026-09-22: calming, warm and usually low-mid; no attention-grabbing
+alarm/siren/beep character. Bright detail is allowed only as restrained texture,
+not an exposed notification-like lead. Register limits alone cannot certify this.
+
 Desired result: distinct instruments that share a coherent harmonic context,
 usable registers/dynamics and a believable common space. Tuning tests alone do
 not establish this. Subjective acceptance is open for every sound until heard.
@@ -37,8 +41,10 @@ Ambient retuning stay open; do not expand layers before resource/routing review.
 **User priority 2026-09-22: sound first; defer display idle.**
 Open Sea dry voice / pad / Dream diagnosis is in OPEN_SEA_SOUND_REVIEW.md.
 Fixed periodic fundamental cancellation in the shared Bowed voice without
-raising its average level. Next: chorus/blur contribution and an intelligible
-Shimmer range; no blanket effect boost or extra sound layer.
+raising its average level. CALM_REGISTER_REVIEW.md then lowers the automatic
+foreground to D3..A4 with tonic-centred openings and intact collision checks.
+Next: chorus/blur and combined pitch movement, followed by Horn/Bowed resonance
+at the new register. Shimmer must justify its role; no blanket brightness boost.
 
 The detailed product execution order is now in PRODUCT_REVIEW_EXECUTION.md.
 The user subsequently selected autonomous listening with locked cells.
@@ -62,6 +68,7 @@ The ownership cleanup remains; source/FX inventory below remains open.
 | Done / device gate | Listening exit | Independent source drain, two-second background fade, immediate manual Character; Harmony→Generate bass ownership corrected; see LISTENING_EXIT_REVIEW.md |
 | Deferred | Quiet UI | Sound takes priority; 15 min human-idle display timer and neutral wake still required |
 | Done / listening | Open Sea dry Bowed | Periodic root collapse corrected; same average level; both colours and four pitches; 28.25 s stem A/B |
+| Done / listening | Calming automatic register | D3..A4; tonic-centred opening; 72 key/mode regression, actual Generate A/B; manual/FX registers still open |
 | Next sound | Open Sea space and movement | Compare chorus/blur against simpler room; default Shimmer has tiny measured contribution in diagnostic scene; range and feedback audit before keep/reduce/remove |
 | Open | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |

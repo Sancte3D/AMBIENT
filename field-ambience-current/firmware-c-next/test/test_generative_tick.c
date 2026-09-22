@@ -235,7 +235,7 @@ int main(void) {
         }
         CHECK(notes >= 40, "melody actually sings (%d notes in ~206 bars)", notes);
         CHECK(notes <= 190, "melody leaves space — rests exist (%d notes)", notes);
-        CHECK(lo >= 52 && hi <= 98, "register inside the voiced band (%d..%d)", lo, hi);
+        CHECK(lo >= 50 && hi <= 69, "autonomous melody stays in the calm band (%d..%d)", lo, hi);
         CHECK(big_leaps == 0, "no leap beyond an octave (%d)", big_leaps);
         CHECK(reps >= 3, "repetition happens — it's a motif, not a walk (%d)", reps);
         CHECK(small_steps >= notes / 5,

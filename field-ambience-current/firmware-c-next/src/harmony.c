@@ -50,8 +50,11 @@ static const hstate_t STATES_MODAL_MINOR[4] = {
 #define REG_BASS_HI   49
 #define REG_VOICE_LO  55            /* upper voices ~G3..G5, wide         */
 #define REG_VOICE_HI  79
-#define REG_MELODY_LO 62
-#define REG_MELODY_HI 86
+/* The autonomous foreground belongs inside the landscape, not above it.
+ * D3..A4 keeps a low-mid body; colour still obeys the C4 floor and every
+ * candidate still passes the collision filter. Do not transpose after it. */
+#define REG_MELODY_LO 50
+#define REG_MELODY_HI 69
 #define REG_COLOR_MIN 60            /* color pc only above C4             */
 #define REG_SECONDS_MIN 60          /* 2nds rejected below C4             */
 
@@ -328,10 +331,9 @@ int harmony_melody_next(int last_midi, const int *sustained, int n_sus,
                         float p_color) {
     int from = last_midi;
     if (from < REG_MELODY_LO || from > REG_MELODY_HI) {
-        /* phrase opening: start near the top harmony voice */
-        from = voices[HARMONY_VOICES - 1];
-        while (from < REG_MELODY_LO) from += 12;
-        while (from > REG_MELODY_HI) from -= 12;
+        /* Start around the World's tonic near A3, rather than using the
+         * highest accompaniment as a launch point for an exposed lead. */
+        from = nearest_in_band(tonic_pc, 57, REG_MELODY_LO, REG_MELODY_HI);
     }
     int cand[24];
     int n = build_candidates(from, p_color, cand);

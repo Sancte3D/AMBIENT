@@ -85,7 +85,7 @@ int harmony_voices(int *out_midi, int max);
 /* Pick the next melody note. last_midi 0 = phrase opening. sustained[] =
  * every currently sounding pitch (bed, voices, drone, user notes) for the
  * collision filter. Returns a MIDI note inside the pitch world and the
- * melody register (62..86), or -1 if nothing safe exists (rare — caller
+ * calm melody register (50..69, D3..A4), or -1 if nothing safe exists (caller
  * treats it as silence). p_color 0..1 biases the color-note option. */
 int harmony_melody_next(int last_midi, const int *sustained, int n_sus,
                         float p_color);

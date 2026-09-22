@@ -6,7 +6,9 @@ Planung „Generate bleibt gleichzeitig spielbar“. Der Router-Fix vom
 2026-09-17 bleibt gültig; paralleles Character-Spiel mit automatischem Bett
 ist kein notwendiger nächster Ausbau mehr.
 
-**Aktuelle Arbeitspriorität: Sound vor Display.** Open Sea wird als erste
+**Aktuelle Arbeitspriorität: Sound vor Display; beruhigend statt aufmerksamkeitsfordernd.**
+Automatisches Register und Einstiegslogik sind in `CALM_REGISTER_REVIEW.md`
+reduziert; Alarm-/Sirenen-/Pieptoncharakter bleibt ein Ausschlusskriterium. Open Sea wird als erste
 vollständige Klangwelt auseinandergenommen; Quellenkorrektur und Abtrag von
 Effekten stehen in `OPEN_SEA_SOUND_REVIEW.md`. Die Ruhe-UI bleibt erforderlich,
 wartet aber auf die nächsten abgeschlossenen Klangbausteine.
@@ -58,7 +60,7 @@ nicht durch diese Prinzipien freigegeben.
 | Hörmodus und World-Phrasen | Zellen/Hold/Drone sperren; manuelle Engine merken; kuratierte World-Stimme, eigene Zeitprofile; ruhiger Generate-Puls. | Implementiert, Host-geprüft; `LISTENING_WORLD_REVIEW.md`. |
 | Ausstieg | World-Quellen ausklingen lassen, Hintergrund über 2 s ausblenden, Character sofort verfügbar; keine zusätzlichen Audiopuffer. | Host-geprüft; H743-Last und Hörfreigabe offen. |
 | Ruhe | Display nach 15 min menschlichem Idle dunkel; erste Wake-Bedienung klangneutral. Generate/Volume/Clear unmittelbar; keine Generator-Ereignisse als Aktivität. | Nachgeordnet: Sound hat Vorrang. |
-| Klangwelt | Open-Sea-Grundton korrigiert und Stimme/Pad/Raum getrennt verglichen. Jetzt Chorus/Blur und Shimmer-Nutzen prüfen; danach World-Wechsel, Register, Mono und Dichte. | Aktive Priorität; keine zusätzlichen Synths. |
+| Klangwelt | Open-Sea-Grundton korrigiert und Stimme/Pad/Raum getrennt verglichen. Automatisches Register auf D3..A4 gesenkt. Jetzt Chorus/Blur und kombinierte Tonhöhenbewegung prüfen, dann Quellresonanzen und Shimmer-Nutzen. | Aktive Priorität; keine zusätzlichen Synths. |
 | Einzelstimmen | Dew-Attack, Glimmer-Ratio/oberes Register, Ambient-Retuning; nacheinander Hüllkurven und brauchbare Reglerbereiche. | Offen; `SOUND_REVIEW_QUEUE.md`. |
 | Raum und Natur | Jeweils Effektstufen entfernen und vergleichen; gemeinsame Raumlogik. Wind/Noise über mehrere unabhängige 20–30-s-Ausschnitte auf periodische Bewegung und homogene Textur prüfen. | Offen; frühere Korrekturen sind keine Hörfreigabe. |
 | Physisches Produkt | CAD/PCB/Bilder, Displayhierarchie, Sichtbarkeit, Haptik und echte Ausgänge. | Aktuelle Evidenz und Prototyp nötig. |

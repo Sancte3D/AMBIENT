@@ -1,9 +1,21 @@
 # PROJECT STATUS
 
+
+> **2026-09-22 — Calming als Klangvertrag, automatisches Register:** Nutzer
+> will beruhigend/mitteltief, ohne Alarm-, Sirenen- oder Pieptoncharakter.
+> Automatische Melodie D4..D6 → D3..A4, Einstieg nahe World-Grundton statt
+> oberster Begleitstimme. Farbnoten und Anti-Repeat bleiben im selben Band;
+> Kollisionsprüfung bleibt am tatsächlichen Ton. Keine neuen DSP-Puffer/States.
+> 72 Tonart/Modus-Kombinationen geprüft; Details und 27,5-s-Generate-A/B:
+> `field-ambience-current/docs/audio/CALM_REGISTER_REVIEW.md`.
+> **Nächste Einheit:** Chorus/Blur und kombinierte Tonhöhenbewegung, dann
+> Horn/Bowed-Resonanzen im neuen Register. Keine allgemeine Hörfreigabe;
+> manuelle Character, Natur und Extreme bleiben offen. Display nachgeordnet.
+
 > **2026-09-22 — Sound wieder priorisiert, Open Sea / Bowed:** Messbare
 > Grundton-Einbrüche bereits in der trockenen Stimme korrigiert. Die bisherige
 > 60/40-Oszillatormischung erzeugte bis ca. 13 dB Grundtonschwankung und ließ
-> zeitweise den zweiten Oberton dominieren. Dominante Hauptsaite + leisere
+> zeitweise die zweite Harmonische (Oktave) dominieren. Dominante Hauptsaite + leisere
 > Verstimmung, bei praktisch gleichem Mittelpegel: jetzt ca. 3 dB Schwankung.
 > Acht Register-/Farb-Probes rot/grün, volle Host-Suite grün; keine zusätzlichen
 > DSP-Operationen oder Zustandsdaten. Gemeinsame Bowed-Stimme betrifft auch Fjords.
