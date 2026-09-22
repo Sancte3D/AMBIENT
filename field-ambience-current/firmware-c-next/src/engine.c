@@ -125,6 +125,11 @@ void engine_set_note_hook(engine_note_hook_t h) { s_note_hook = h; }
 /* r19.16 SYNTH-mode state (logic lives beside engine_render below). */
 static const engine_synth_backend_t *s_synth_be = 0;
 static float s_synth_blend;
+/* Audio-owned gains; control only requests a bounded release overlap. */
+static float s_ambient_gain, s_background_gain;
+static volatile uint32_t s_ambient_tail_frames;
+static uint32_t s_tail_quiet_frames;
+#define AMBIENT_TAIL_MAX_FRAMES (64u * DSP_SAMPLE_RATE_HZ)
 static uint8_t s_note_stack[MAX_SOURCES], s_note_count;
 static float s_note_amp[MAX_SOURCES];
 static float s_synth_macros[4];
@@ -253,7 +258,7 @@ void engine_bass_glide(float tau_s) { bass_set_glide(tau_s); }
 bool engine_bass_active(void)       { return bass_active(); }
 
 static void refresh_bass(void) {
-    if (!s_bass_follow) return;                /* a cell mode drives it itself */
+    if (!s_bass_follow && !gen_on) return; /* manual cell mode owns bass; listening owns its foundation */
     float lo = lowest_held();
     if (lo > 0.0f) engine_bass_set(lo);
     else           engine_bass_off();
@@ -414,6 +419,8 @@ void engine_init(void) {
     memset(eno_swell_armed, 0, sizeof eno_swell_armed);
     eno_timing_valid = 0;
     s_synth_tgt = 0; s_synth_blend = 0.0f; s_manual_synth = 0;
+    s_ambient_gain = s_background_gain = 1.0f;
+    s_ambient_tail_frames = s_tail_quiet_frames = 0;
     s_note_count = 0;
     memset(s_synth_macros,0,sizeof s_synth_macros);
     melody_voice = 0;                /* PAD — the bench-tuned reference */
@@ -878,12 +885,17 @@ void engine_set_generative(bool on,int program) {
     if (on) {
         /* Listening owns the World engine; remember the manual Character.
          * Release old sources and reuse the existing bounded crossfade. */
+        s_ambient_tail_frames = 0;
         activate_synth(0, true);
         s_user_present = s_ever_active = s_gen_suppressed = false;
         gen_on = true;
     } else {
         gen_on = false;
         release_generated();
+        engine_bass_off(); /* also when manual Harmony has disabled bass-follow */
+        /* Keep released World sources audible while manual notes immediately
+         * reach their Character. Do not fade these sources with the core. */
+        if (s_manual_synth > 0) s_ambient_tail_frames = AMBIENT_TAIL_MAX_FRAMES;
         activate_synth(s_manual_synth, false);
     }
 }
@@ -1186,7 +1198,9 @@ void engine_generative_tick(uint32_t now_ms) {
     }
 }
 
-static void render_ambient(int frames) {
+static void render_ambient(int frames, bool retiring) {
+    /* Reused for the background transition and bass; no additional buffer. */
+    static float subL[BLOCK], subR[BLOCK], subJL[BLOCK], subJR[BLOCK];
     /* audio.c always calls with frames == AUDIO_BUFFER_FRAMES, but be safe. */
     if (frames > BLOCK) frames = BLOCK;
 
@@ -1209,8 +1223,23 @@ static void render_ambient(int frames) {
         bed_gain+=k*(bed_target-bed_gain);
         dryL[n]*=bed_gain; dryR[n]*=bed_gain; sendL[n]*=bed_gain; sendR[n]*=bed_gain;
     }
-    texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
-    ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
+    if (!retiring && s_background_gain >= 1.0f) {
+        texture_render_mix(dryL, dryR, sendL, sendR, frames, TEXTURE_SEND);
+        ambience_render_mix(dryL, dryR, sendL, sendR, frames, AMBIENCE_SEND);
+    } else if (!retiring || s_background_gain > 0.0f) {
+        memset(subL, 0, sizeof(float) * frames); memset(subR, 0, sizeof(float) * frames);
+        memset(subJL, 0, sizeof(float) * frames); memset(subJR, 0, sizeof(float) * frames);
+        texture_render_mix(subL, subR, subJL, subJR, frames, TEXTURE_SEND);
+        ambience_render_mix(subL, subR, subJL, subJR, frames, AMBIENCE_SEND);
+        for (int n=0;n<frames;++n) {
+            /* Two-second fade on both buses; a quick re-entry reverses it
+             * from the current gain without touching the user's settings. */
+            s_background_gain = dsp_clampf(s_background_gain +
+                (retiring ? -1.0f : 1.0f) / (2.0f * DSP_SAMPLE_RATE_HZ), 0.0f, 1.0f);
+            dryL[n]+=subL[n]*s_background_gain; dryR[n]+=subR[n]*s_background_gain;
+            sendL[n]+=subJL[n]*s_background_gain; sendR[n]+=subJR[n]*s_background_gain;
+        }
+    }
     /* r19.52: the AUDIT found the low end (bass + drone) was ~90 % of the mix
      * energy — masking every mid voice and pulling the stereo image to mono.
      * The real culprit is the BASS (spectral centroid ~25 Hz, deep sub the
@@ -1219,7 +1248,6 @@ static void render_ambient(int frames) {
      * level — it is a musical ~110 Hz voice the player deliberately holds, not
      * mud. The master high-pass (HP2 above) cleans both. */
     {
-        static float subL[BLOCK], subR[BLOCK], subJL[BLOCK], subJR[BLOCK];
         memset(subL, 0, sizeof(float) * (size_t)frames);
         memset(subR, 0, sizeof(float) * (size_t)frames);
         memset(subJL, 0, sizeof(float) * (size_t)frames);
@@ -1339,8 +1367,10 @@ static void render_master(int16_t *buf, int frames) {
  * main — the engine keeps NO link dependency on src/v2, so every existing
  * host test still links). Switching crossfades ~15 ms with complementary gains between
  * the two rendered paths (REALTIME_AUDIO_RULES §4: algorithm changes need a
- * crossfade, never a hard swap). During the fade both paths render (bounded,
- * a handful of blocks); in steady state only the active one runs. */
+ * crossfade, never a hard swap). Generate exit additionally drains released
+ * Ambient sources without fading them with the core. Both paths run during
+ * this bounded overlap; after it only the selected path runs. Shared FX
+ * continue throughout. */
 #define SYNTH_XFADE_SAMPLES 662            /* ~15 ms at 44.1 kHz */
 
 static int16_t s_v2buf[BLOCK * 2]; /* legacy backend compatibility */
@@ -1362,6 +1392,7 @@ void engine_set_synth(int idx) {
     if (!gen_on) activate_synth(idx, false);
 }
 static void activate_synth(int idx, bool force) {
+    if (idx == 0) s_ambient_tail_frames = 0;
     if (!force && idx == s_synth_tgt) return;
     /* Release, don't panic: old core/ambient can decay during the crossfade. */
     release_generated(); s_note_count=0;
@@ -1373,18 +1404,45 @@ static void activate_synth(int idx, bool force) {
     s_synth_tgt = idx;
 }
 int engine_synth(void) { return s_synth_tgt; }
+bool engine_listening_tail_active(void) { return s_ambient_tail_frames > 0; }
+
+static bool ambient_sources_active(void) {
+    return pad_active_count() || bowed_active_count() || horn_active_count() ||
+           choir_active_count() || guembri_active_count() || pluck_active_count() ||
+           ember_active_count() || bass_active() || drone_active();
+}
 
 void engine_render(int16_t *buf, int frames) {
     if (frames <= 0) return;
     if (frames > BLOCK) frames = BLOCK;
     int tgt = s_synth_tgt;
-    bool need_v1 = tgt == 0 || s_synth_blend < 1.0f;
+    bool retiring = tgt > 0 && s_ambient_tail_frames > 0;
+    bool need_v1 = tgt == 0 || s_ambient_gain > 0.0f || retiring;
     bool need_v2 = tgt > 0 || s_synth_blend > 0.0f;
-    if (need_v1) render_ambient(frames);
+    if (need_v1) render_ambient(frames, retiring || tgt > 0);
     else {
         memset(dryL, 0, sizeof(float)*frames); memset(dryR, 0, sizeof(float)*frames);
         memset(sendL, 0, sizeof(float)*frames); memset(sendR, 0, sizeof(float)*frames);
     }
+    float ambient_target = tgt == 0 || retiring ? 1.0f : 0.0f;
+    if (retiring) {
+        /* Envelope idleness alone misses the modal body's residual ringing.
+         * Observe dry AND send before adding the new core; its notes cannot
+         * keep this drain alive. 50 ms of quiet avoids a zero-crossing exit. */
+        bool quiet = !ambient_sources_active() && s_background_gain == 0.0f;
+        if (quiet) for (int n=0;n<frames;++n) {
+            if (fabsf(dryL[n])+fabsf(dryR[n])+fabsf(sendL[n])+fabsf(sendR[n]) > 0.000001f) {
+                quiet = false; break;
+            }
+        }
+        s_tail_quiet_frames = quiet ? s_tail_quiet_frames + (uint32_t)frames : 0;
+        uint32_t left = s_ambient_tail_frames;
+        /* Fault containment for a future source that fails to retire. Current
+         * maximum Shape releases complete before 64 s. Fade the last second. */
+        if (left < DSP_SAMPLE_RATE_HZ) ambient_target = (float)left / DSP_SAMPLE_RATE_HZ;
+        s_ambient_tail_frames = left > (uint32_t)frames ? left - (uint32_t)frames : 0;
+        if (s_tail_quiet_frames >= DSP_SAMPLE_RATE_HZ / 20u) s_ambient_tail_frames = 0;
+    } else s_tail_quiet_frames = 0;
     if (need_v2 && s_synth_be) {
         memset(s_coreL, 0, sizeof(float)*frames); memset(s_coreR, 0, sizeof(float)*frames);
         memset(s_coreSL, 0, sizeof(float)*frames); memset(s_coreSR, 0, sizeof(float)*frames);
@@ -1399,9 +1457,19 @@ void engine_render(int16_t *buf, int frames) {
         for (int n=0; n<frames; ++n) {
             s_synth_blend = dsp_clampf(s_synth_blend + (tgt > 0 ? 1.0f : -1.0f) /
                                        SYNTH_XFADE_SAMPLES, 0.0f, 1.0f);
-            float t=s_synth_blend, a=1.0f-t;
+            float step=1.0f/SYNTH_XFADE_SAMPLES;
+            if (s_ambient_gain < ambient_target) s_ambient_gain=fminf(ambient_target,s_ambient_gain+step);
+            else if (s_ambient_gain > ambient_target) s_ambient_gain=fmaxf(ambient_target,s_ambient_gain-step);
+            float t=s_synth_blend, a=s_ambient_gain;
             dryL[n]=a*dryL[n]+t*s_coreL[n]; dryR[n]=a*dryR[n]+t*s_coreR[n];
             sendL[n]=a*sendL[n]+t*s_coreSL[n]; sendR[n]=a*sendR[n]+t*s_coreSR[n];
+        }
+    } else if (s_ambient_gain < 1.0f) {
+        /* A reversal can finish the native fade before Ambient reaches unity. */
+        for (int n=0;n<frames;++n) {
+            s_ambient_gain=fminf(1.0f,s_ambient_gain+1.0f/SYNTH_XFADE_SAMPLES);
+            dryL[n]*=s_ambient_gain; dryR[n]*=s_ambient_gain;
+            sendL[n]*=s_ambient_gain; sendR[n]*=s_ambient_gain;
         }
     }
     render_master(buf,frames);

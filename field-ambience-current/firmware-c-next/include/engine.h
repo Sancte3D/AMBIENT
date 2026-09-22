@@ -95,6 +95,8 @@ void engine_set_synth_backend(const engine_synth_backend_t *be);
 /* Manual Character choice. While Generate is on, defer until listening ends. */
 void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */
 int  engine_synth(void); /* effective engine: 0 throughout listening */
+/* True while released World sources are still being drained into shared FX. */
+bool engine_listening_tail_active(void);
 void engine_set_synth_param(int slot, float value);
 
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
@@ -192,8 +194,8 @@ void engine_set_pad_voice(int voice_idx);
 
 /* Autonomous listening: enter Ambient, release old sources, remember manual
  * Character; on=false releases generated sources and restores that choice.
- * Character restoration uses the existing short crossfade (FX tails survive;
- * full Ambient source tails across this switch remain a separate task).
+ * Character is immediately playable on exit; released World sources drain
+ * independently, with background textures fading out over two seconds.
  * program <0 selects Markov auto, >=0 selects a fixed progression index. */
 void engine_set_generative(bool on, int program);
 

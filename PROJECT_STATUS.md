@@ -1,5 +1,16 @@
 # PROJECT STATUS
 
+> **2026-09-22 — Generate-Ausstieg:** Freigegebene Ambient-Stimmen klingen
+> beim Zurückwechseln zum manuellen Character jetzt unabhängig aus. Wind und
+> Dauertexturen blenden in etwa 2 s aus; der Character ist sofort spielbar.
+> Vorhandene Audiopuffer werden wiederverwendet; temporäre Doppelverarbeitung
+> endet nach Stimmenruhe, mit 64-s-Fehlergrenze. Host-Suite grün; 26,5-s-A/B.
+> Außerdem: Generate besitzt sein Bassfundament jetzt auch nach Harmony und
+> gibt es beim Ausstieg frei, ohne die manuelle Bass-Zuordnung zu verändern.
+> Details/Geräte-Gates: `field-ambience-current/docs/audio/LISTENING_EXIT_REVIEW.md`.
+> **Nächste offene Einheit:** 15-Minuten-Displayruhe + klangneutrales Wake.
+> Klangbalance World-Stimme/Pad/Raum und aktueller H743-Lastnachweis bleiben offen.
+
 > **2026-09-21 — Generate / autonome Klangwelten:** Die ausdrückliche neue
 > Produktentscheidung ersetzt „Generate bleibt gleichzeitig spielbar“:
 > Generate sperrt die fünf Flächen sowie Hold/Drone und übernimmt die Ambient-
@@ -7,7 +18,7 @@
 > World-Stimme und Phrasierung folgen der gewählten Landschaft; Bowed/Horn/Choir
 > teilen den tatsächlichen Melodie-Release. Ruhiger 4-s-Generate-Lichtpuls.
 > Host-Prüfung und 28-s-Open-Sea-Probe: `field-ambience-current/docs/audio/LISTENING_WORLD_REVIEW.md`.
-> **Offen:** vollständige Quell-Tails bei Rückkehr zu einem Character; Display
+> **Damals offen, Quell-Tails inzwischen korrigiert (siehe 2026-09-22):** Display
 > nach 15 min menschlicher Inaktivität aus + klangneutrales Aufwecken;
 > Manual-only-Menükennzeichnung; Hörfreigabe und aktueller H743-Nachweis.
 > Aktuelle Reihenfolge: `field-ambience-current/docs/audio/PRODUCT_REVIEW_EXECUTION.md`.

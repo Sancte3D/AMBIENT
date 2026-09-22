@@ -1,6 +1,6 @@
 # AMBIENT — Produktreview und nächste abgeschlossene Pakete
 
-Stand: 2026-09-21, PR #129. Die ausdrückliche Nutzerentscheidung für einen
+Stand: 2026-09-22, PR #129. Die ausdrückliche Nutzerentscheidung für einen
 **autonomen Hörmodus mit gesperrten Spielflächen** ersetzt die vorherige
 Planung „Generate bleibt gleichzeitig spielbar“. Der Router-Fix vom
 2026-09-17 bleibt gültig; paralleles Character-Spiel mit automatischem Bett
@@ -25,9 +25,9 @@ würden diese Lücke derzeit vergrößern.
 
 ## NOCH NICHT SELBSTVERSTÄNDLICH
 
-- Rückkehr aus Generate zu einem Character blendet die Ambient-Quellen bisher
-  über etwa 15 ms weg. Der gemeinsame FX-Raum klingt weiter, aber vollständige
-  Quell-Releases sind damit nicht gewährleistet. Zuerst diese Grenze lösen.
+- Rückkehr aus Generate erhält jetzt die Quell-Releases und lässt den
+  Character sofort spielen. Host-Nachweis: `LISTENING_EXIT_REVIEW.md`.
+  Die temporär längere Parallelverarbeitung braucht noch den H743-Lastnachweis.
 - Character/Voice-Einstellungen wirken während Generate auf die manuelle
   Auswahl bzw. erst nach Rückkehr. Die Oberfläche kennzeichnet das noch nicht.
 - Display-Ruhe nach 15 Minuten menschlicher Inaktivität und klangneutrales
@@ -51,7 +51,8 @@ nicht durch diese Prinzipien freigegeben.
 | Paket | Entscheidung / Nachweis | Stand |
 |---|---|---|
 | Hörmodus und World-Phrasen | Zellen/Hold/Drone sperren; manuelle Engine merken; kuratierte World-Stimme, eigene Zeitprofile; ruhiger Generate-Puls. | Implementiert, Host-geprüft; `LISTENING_WORLD_REVIEW.md`. |
-| Ausstieg und Ruhe | Quell-Releases bei Character-Rückkehr; Display nach 15 min menschlichem Idle dunkel; erste Wake-Bedienung klangneutral. Generate/Volume/Clear unmittelbar; keine Generator-Ereignisse als Aktivität. | Nächste Interaktions-/Architektureinheit. |
+| Ausstieg | World-Quellen ausklingen lassen, Hintergrund über 2 s ausblenden, Character sofort verfügbar; keine zusätzlichen Audiopuffer. | Host-geprüft; H743-Last und Hörfreigabe offen. |
+| Ruhe | Display nach 15 min menschlichem Idle dunkel; erste Wake-Bedienung klangneutral. Generate/Volume/Clear unmittelbar; keine Generator-Ereignisse als Aktivität. | Nächste Interaktionseinheit. |
 | Klangwelt | Eine Vordergrundstimme, Fundament und Raum gegeneinander hören. World-Wechsel, Register, Mono und Dichte zuerst. Keine zusätzlichen Synths vor diesem Nachweis. | Nächste Klangeinheit. |
 | Einzelstimmen | Dew-Attack, Glimmer-Ratio/oberes Register, Ambient-Retuning; nacheinander Hüllkurven und brauchbare Reglerbereiche. | Offen; `SOUND_REVIEW_QUEUE.md`. |
 | Raum und Natur | Jeweils Effektstufen entfernen und vergleichen; gemeinsame Raumlogik. Wind/Noise über mehrere unabhängige 20–30-s-Ausschnitte auf periodische Bewegung und homogene Textur prüfen. | Offen; frühere Korrekturen sind keine Hörfreigabe. |
@@ -80,8 +81,8 @@ aber dieselbe Qualität bei Pegel, Übergängen und Raum.
    Klang, keine hängenbleibenden alten Töne. Alle fünf Zellen, Hold, Drone,
    Shift+Hold und Scene-Zellen dürfen keine neuen Noten/Modi auslösen.
 2. Generate erneut und Clear (auch mit Shift): kein neuer automatischer Ton;
-   Übergang und Release getrennt trocken/mit Raum prüfen. Aktuellen kurzen
-   Character-Crossfade nicht als vollständigen Release akzeptieren.
+   Übergang und Release getrennt trocken/mit Raum prüfen. Quell-Releases müssen
+   trotz sofortiger manueller Noten weiterlaufen; maximale Shape-Dauer testen.
 3. Generate-Licht im dunklen Raum beurteilen: Aktivität sichtbar, keine
    Alarmwirkung, keine Blendung, beim Ausstieg vollständig aus.
 4. Nach Timer-Implementierung: 15 Minuten ohne menschliche Eingabe, während

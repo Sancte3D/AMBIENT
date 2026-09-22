@@ -366,6 +366,78 @@ static void test_world_voice_ownership(void) {
     }
 }
 
+static void test_listening_exit_tails(void) {
+    /* Dry output must retain its own released source, not just a reverb tail.
+     * A silent native backend isolates the World while still exercising the
+     * real mixer and immediate manual routing. */
+    for(int core=1;core<=6;++core) {
+        engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
+        engine_set_synth(core); engine_set_generative(true,-1);
+        engine_set_fx_mode(0); engine_set_atmosphere(0); engine_set_texture(0);
+        engine_generative_tick(1000); (void)level_after(180);
+        engine_set_generative(false,-1);
+        CHECK(engine_synth()==core); CHECK(engine_listening_tail_active());
+        double released=level_after(35);
+        CHECK(released>3.0); /* ~0.4 s later: old 15 ms fade erased this */
+        engine_note_on(0,220,.35f);
+        CHECK(level_after(20)>3.0); CHECK(engine_listening_tail_active());
+        engine_note_off(0);
+        int blocks=0;
+        while(engine_listening_tail_active() && blocks<5600) {
+            (void)level_after(10); blocks+=10;
+        }
+        CHECK(!engine_listening_tail_active());
+        CHECK(blocks<5000); /* retire naturally, not via the 64 s fault cap */
+        CHECK(engine_active_voices()==0);
+        printf("  core %d: dry release %.1f PCM RMS, overlap ended before %.2f s\n",
+               core,released,(blocks+55)*BLK/44100.0);
+    }
+    /* Longest release, nonzero background, and a manual voice held throughout
+     * must still allow the Ambient renderer to retire independently. */
+    engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
+    engine_set_release(1); engine_set_synth(3); engine_set_generative(true,-1);
+    engine_set_atmosphere(.7f); engine_set_texture(.4f);
+    engine_generative_tick(1000); (void)level_after(180);
+    engine_set_generative(false,-1); engine_note_on(0,220,.2f);
+    (void)level_after(300); CHECK(engine_listening_tail_active());
+    int blocks=300;
+    while(engine_listening_tail_active() && blocks<5600) {
+        (void)level_after(10); blocks+=10;
+    }
+    CHECK(!engine_listening_tail_active()); CHECK(blocks<5000);
+    printf("  maximum Shape release: overlap ended before %.2f s\n",blocks*BLK/44100.0);
+    CHECK(engine_active_voices()==0); CHECK(level_after(20)>1.0);
+    engine_note_off(0);
+    /* Rapid reversals, including before a full crossfade block. */
+    int16_t b[64*2]; int previous=0, max_jump=0;
+    for(int i=0;i<100;++i) {
+        for(int phase=0;phase<2;++phase) {
+            engine_set_generative(phase==0,-1);
+            if(phase==0) engine_generative_tick(100000+i*20);
+            engine_render(b,64);
+            for(int n=0;n<64;++n) {
+                int d=abs(b[n*2]-previous); if(d>max_jump) max_jump=d;
+                previous=b[n*2];
+            }
+        }
+    }
+    CHECK(max_jump<6000);
+    engine_set_generative(true,-1); CHECK(!engine_listening_tail_active());
+    engine_set_generative(false,-1);
+    engine_set_synth(0); CHECK(!engine_listening_tail_active());
+
+    /* Harmony's manual bass ownership must not remove Generate's foundation
+     * or leave it sustained on exit. The manual preference survives. */
+    engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
+    engine_bass_follow(false);
+    engine_set_generative(true,-1); engine_generative_tick(1000);
+    CHECK(engine_bass_active()); (void)level_after(180);
+    engine_set_generative(false,-1); (void)level_after(1600);
+    CHECK(!engine_bass_active());
+    engine_note_on(0,220,.2f); CHECK(!engine_bass_active());
+    engine_note_off(0);
+}
+
 static void test_pitch_memory(void) {
     engine_init();engine_set_tuning(0);engine_set_fx_mode(8);
     engine_note_on(0,dsp_midi_to_hz(60),0.2f);engine_note_off(0);
@@ -520,6 +592,7 @@ int main(void) {
     test_character_return_pause();
     test_listening_from_character();
     test_world_voice_ownership();
+    test_listening_exit_tails();
     printf("synth_device: %d checks, 0 failures\n", checks);
     return 0;
 }

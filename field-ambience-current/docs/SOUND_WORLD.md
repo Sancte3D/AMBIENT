@@ -95,6 +95,12 @@ entwickeln, ohne dafür neue Noten auszulösen.
 - Generate verwendet immer die Ambient-Engine mit der kuratierten World-Stimme.
   Die manuelle Character-Auswahl wird gemerkt und beim Ausstieg wiederhergestellt.
   Gleichzeitiges Character-Spiel mit automatischem Bett ist kein Produktziel mehr.
+- Beim Ausstieg zu einem Character bleiben nur bereits freigegebene World-
+  Stimmen zum Ausklingen aktiv; Wind/Dauertexturen blenden über etwa 2 s aus.
+  Der Character ist sofort spielbar. Gemeinsame FX laufen weiter. Die
+  temporäre Parallelverarbeitung ist begrenzt, keine zweite laufende Komposition.
+- Generate besitzt sein Bassfundament unabhängig von der vorherigen manuellen
+  Spielweise. Nach dem Ausstieg gilt wieder deren ursprüngliche Bass-Zuordnung.
 - Die Worlds unterscheiden sich auch im Zeitverlauf: lange verbundene Töne in
   Open Sea, größere Pausen in Fjords, vereinzelte Ereignisse in Desert.
   Haltezeiten und Grundpausen: `docs/audio/LISTENING_WORLD_REVIEW.md`.

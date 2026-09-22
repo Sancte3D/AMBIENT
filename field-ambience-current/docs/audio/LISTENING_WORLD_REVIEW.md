@@ -1,5 +1,9 @@
 # Generate — autonome Klangwelten, Paket 2026-09-21
 
+> Historischer Paketbericht. Der hier noch offene Quell-Release beim Character-
+> Ausstieg ist im Folgepaket `LISTENING_EXIT_REVIEW.md` korrigiert (2026-09-22).
+> Displaytimer, Klangfreigabe und H743-Nachweise bleiben offen.
+
 ## KERNURTEIL
 
 Generate folgt jetzt der bewusst gewählten World statt einer zufällig zuvor
