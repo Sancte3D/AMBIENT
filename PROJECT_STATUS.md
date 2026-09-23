@@ -1,6 +1,17 @@
 # PROJECT STATUS
 
 
+> **2026-09-23 — Naturorte statt Störklang, Age ohne Eigenrauschen:**
+> Verbindliches World-Konzept und Grenzen des Beruhigungsversprechens:
+> `field-ambience-current/docs/audio/NATURE_WORLD_CONTRACT.md`.
+> Künstliches 50-Hz-Brummen und Bandrauschen aus aktivem Tape/Dream entfernt;
+> Klangfärbung bleibt, kein Gate. 12/12 Idle-Probes vorher rot, nachher exakt
+> still; gespieltes Signal bleibt. Volle Host-Suite grün; FX-State im Host
+> 680 → 672 Byte, keine neuen Puffer. Der bisherige Default-Anteil war sehr
+> leise; instrumentales Summen und echtes Hardwarebrummen bleiben getrennte
+> Prüfungen. Als Nächstes Horn/Bowed, dann Choir/Forest und Guembri/Desert.
+
+
 > **2026-09-23 — Chorus/Blur: direkten Tonkörper erhalten.** Effektbedingte
 > Auslöschung im tatsächlichen Buspfad nachgewiesen: maximale Pegelschwankung
 > im gehaltenen Referenzton bei Blur 22,49 → 4,44 dB; Chorus 8,82 → 3,20 dB.

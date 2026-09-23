@@ -6,7 +6,11 @@ checkpoint. User-facing audio is at most 30 seconds unless explicitly requested.
 Use correctly chunked firmware rendering, no diagnostic reference tone in a
 musical demo, and constant loudness matching for tonal A/B comparisons.
 
-Binding direction 2026-09-22: calming, warm and usually low-mid; no attention-grabbing
+Binding direction 2026-09-23: English, imaginable natural places; no electrical
+hum, intrusive buzzing or instrument stereotypes. NATURE_WORLD_CONTRACT.md is
+the current design contract; calming is a goal, not a universal health claim.
+
+Direction 2026-09-22: calming, warm and usually low-mid; no attention-grabbing
 alarm/siren/beep character. Bright detail is allowed only as restrained texture,
 not an exposed notification-like lead. Register limits alone cannot certify this.
 
@@ -72,6 +76,7 @@ The ownership cleanup remains; source/FX inventory below remains open.
 | Done / listening | Open Sea dry Bowed | Periodic root collapse corrected; same average level; both colours and four pitches; 28.25 s stem A/B |
 | Done / listening | Calming automatic register | D3..A4; tonic-centred opening; 72 key/mode regression, actual Generate A/B; manual/FX registers still open |
 | Done / listening | Chorus/Blur direct body | 27 bus probes; maximum Blur swing 22.49 → 4.44 dB, level-matched 27.5 s A/B; distinct effect roles still need listening |
+| Done | Age idle noise | Injected 50 Hz hum and hiss removed, silent-input regression, coloration retained; NATURE_WORLD_CONTRACT.md |
 | Next sound | Horn/Bowed body and vibrato | Review source resonances at D3..A4; cumulative tape/pitch movement follows |
 | Listening | Open Sea space and movement | Compare chorus/blur against simpler room; default Shimmer has tiny measured contribution in diagnostic scene; range and feedback audit before keep/reduce/remove |
 | Open | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |

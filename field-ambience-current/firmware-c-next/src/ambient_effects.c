@@ -58,7 +58,6 @@ struct AmbientFx {
 
     float tape_wow_phase;
     float tape_flutter_phase;
-    float tape_hum_phase;
     float tape_drift;
     float tape_lp_l;
     float tape_lp_r;
@@ -456,7 +455,6 @@ void ambient_fx_reset(AmbientFx *fx)
 
     fx->tape_wow_phase = 0.0f;
     fx->tape_flutter_phase = 0.19f;
-    fx->tape_hum_phase = 0.0f;
     fx->tape_drift = 0.0f;
     fx->tape_lp_l = 0.0f;
     fx->tape_lp_r = 0.0f;
@@ -554,7 +552,6 @@ static void process_tape(AmbientFx *fx, float in_l, float in_r,
     float sr = (float)fx->config.sample_rate;
     advance_phase(&fx->tape_wow_phase, (0.31f + 0.10f * fx->current.motion) / sr);
     advance_phase(&fx->tape_flutter_phase, (5.70f + 0.80f * fx->current.motion) / sr);
-    advance_phase(&fx->tape_hum_phase, 50.0f / sr);
 
     float random = random_bipolar(fx);
     fx->tape_drift += (random - fx->tape_drift) * 0.000075f;
@@ -579,10 +576,8 @@ static void process_tape(AmbientFx *fx, float in_l, float in_r,
     float drive = 1.0f + 1.45f * age;
     colored_l = soft_clip(colored_l * drive) * (1.0f - 0.12f * age);
     colored_r = soft_clip(colored_r * drive) * (1.0f - 0.12f * age);
-    float hiss = random_bipolar(fx) * (0.00145f * age * age);
-    float hum = fast_sine(fx->tape_hum_phase) * (0.00032f * age * age);
-    colored_l += hiss + hum;
-    colored_r += hiss * 0.91f + hum;
+    /* Age colours existing notes. No synthetic mains hum or idle hiss:
+     * silence stays silent without a gate that could truncate quiet tails. */
 
     float mix = 0.88f * age;
     *out_l = in_l * (1.0f - mix) + colored_l * mix;

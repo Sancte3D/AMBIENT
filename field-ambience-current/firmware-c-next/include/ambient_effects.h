@@ -67,7 +67,7 @@ typedef struct AmbientFxParameters {
     float atmosphere;    /* global spatial send: 0 dry .. 1 enveloping */
     float echo;          /* ping-pong amount and safe feedback */
     float motion;        /* chorus depth and slow modulation */
-    float age;           /* wow, flutter, bandwidth loss, saturation, hiss */
+    float age;           /* wow, flutter, bandwidth loss, saturation; no added noise */
     float shimmer;       /* restrained octave regeneration */
     float blur;          /* overlapping time-grain smear */
     float width;         /* stereo field */

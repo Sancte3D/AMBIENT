@@ -697,7 +697,7 @@ void engine_set_motion(float v) {
     fx_master_set_motion(v);             /* r19.41: chorus/slow modulation */
 }
 void engine_set_age(float v) {
-    /* r19.41: wow, flutter, bandwidth loss, saturation, hiss and hum all
+    /* r19.41: wow, flutter, bandwidth loss and saturation all
      * live in the master-effects engine now (its `age` parameter) — the
      * legacy tape module left the audio path with the engine swap. */
     fx_master_set_age(dsp_clampf(v, 0.0f, 1.0f));

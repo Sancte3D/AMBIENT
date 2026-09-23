@@ -440,8 +440,43 @@ static void verify_motion_body(void) {
     }
 }
 
+/* Age colours played material; it must not create an electrical noise bed.
+ * Test idle signal through both public APIs without suppressing live tails. */
+static void verify_age_silence(void) {
+    const float ages[]={0.0f,0.20f,1.0f};
+    const int modes[]={AMBIENT_FX_TAPE_AGE,AMBIENT_FX_DREAM_CHAIN};
+    for(unsigned a=0;a<3;++a) for(unsigned m=0;m<2;++m) for(int buses=0;buses<2;++buses) {
+        Fixture f;fixture_create(&f,9876u);
+        CHECK(f.fx!=NULL,"Age silence fixture");if(!f.fx)return;
+        AmbientFxParameters p=ambient_fx_world_parameters(AMBIENT_FX_CRYSTAL_COAST);
+        p.age=ages[a];ambient_fx_set_parameters(f.fx,p);
+        ambient_fx_set_mode(f.fx,(AmbientFxMode)modes[m]);
+        float block[256],send[256]={0},peak=0; double energy=0;
+        for(int frame=0;frame<3*44100;frame+=128) {
+            int n=3*44100-frame;if(n>128)n=128;
+            memset(block,0,sizeof block);
+            if(buses)ambient_fx_process_buses_f32(f.fx,block,send,(size_t)n);
+            else ambient_fx_process_f32(f.fx,block,(size_t)n);
+            for(int i=0;i<n*2;++i) {
+                float v=fabsf(block[i]);if(v>peak)peak=v;
+                energy+=(double)block[i]*block[i];
+            }
+        }
+        printf("Age idle mode %d bus %d amount %.2f: peak %.9f RMS %.9f\n",
+               modes[m],buses,ages[a],peak,sqrt(energy/(3*44100*2)));
+        CHECK(peak==0.0f && energy==0.0,"Age must not synthesize hum/hiss from silence");
+        /* Silence must come from removing the generator, not from muting Age. */
+        for(int i=0;i<128;++i)block[2*i]=block[2*i+1]=.1f*sinf(6.28318530718f*220*i/44100);
+        if(buses)ambient_fx_process_buses_f32(f.fx,block,send,128);
+        else ambient_fx_process_f32(f.fx,block,128);
+        CHECK(signal_energy(block,0,128)>1e-5,"played material remains audible with Age");
+        check_guards(&f);fixture_destroy(&f);
+    }
+}
+
 int main(void)
 {
+    verify_age_silence();
     verify_motion_body();
     verify_blur_pitch();
     verify_basics();

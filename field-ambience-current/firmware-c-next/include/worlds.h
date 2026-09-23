@@ -25,7 +25,7 @@ typedef struct {
     uint8_t     space_pct;         /* macro defaults (0..100) — loaded on    */
     uint8_t     atmos_pct;         /* world-change; user can then nudge from  */
     uint8_t     motion_pct;        /* LFO-Depth / Pad-Movement (Reddit Motion)*/
-    uint8_t     age_pct;           /* Tape-Hiss + Saturation (Reddit Age)     */
+    uint8_t     age_pct;           /* Tape colour + saturation (Age)     */
     uint8_t     echo_pct;          /* Tape-style stereo delay (Reddit Echo)   */
     uint8_t     blur_pct;          /* Granular cloud / smear (Reddit Blur)    */
     uint8_t     shimmer_pct;       /* r18.99: octave-up hall regeneration      */

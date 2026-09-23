@@ -13,6 +13,11 @@ vollständige Klangwelt auseinandergenommen; Quellenkorrektur und Abtrag von
 Effekten stehen in `OPEN_SEA_SOUND_REVIEW.md`. Die Ruhe-UI bleibt erforderlich,
 wartet aber auf die nächsten abgeschlossenen Klangbausteine.
 
+**Naturraum-Vertrag:** `NATURE_WORLD_CONTRACT.md`. Worlds müssen einen ruhigen
+Naturort tragen; elektrische Störassoziationen ausschließen. Keine universelle
+Beruhigungs-/Heilwirkung behaupten. Age erzeugt kein eigenes Brummen/Rauschen
+mehr; Horn/Bowed und die geografischen Voice-Klischees bleiben zu prüfen.
+
 ## KERNURTEIL
 
 Eine bewusst gewählte Landschaft, die selbstständig musikalisch weiterlebt,

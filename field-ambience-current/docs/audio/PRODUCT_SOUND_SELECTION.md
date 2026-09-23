@@ -55,7 +55,7 @@ Do not assume that six mono engines equal six usable ambient instruments.
 | Foundation | Dark reverb / shared room | Depth without persistent tonal ringing, washed-out attacks or low-mid accumulation; coherent dry/send balance. |
 | Supporting | Delay | Space and sparse repetition; bounded feedback, usable timing and old-tail behaviour through harmonic changes. |
 | Source-dependent | Chorus / detune | Mist when the source benefits. Mist already has chorus: check combined phase cancellation and pitch spread. |
-| Optional colour | Tape / Age | Restrained bandwidth/drive/drift. Hiss and wow must not become unavoidable features of every world. |
+| Optional colour | Tape / Age | Restrained bandwidth/drive/drift. Injected hum/hiss removed (NATURE_WORLD_CONTRACT.md); wow/flutter still needs a calming range review. |
 | Optional gesture | Blur / reverse swell | A clear musical use beyond making everything diffuse; preserve intended pitch, onset timing and control responsiveness. |
 | Accent | Shimmer | Occasional register lift, not a permanent treble layer; assess source-pitch interaction and feedback. |
 | Curated combinations | Dream Chain | Evaluate as a musically chosen combination; technical availability of the full chain is not a reason to make it the strongest/default product sound. |
