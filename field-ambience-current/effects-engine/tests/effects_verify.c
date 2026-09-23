@@ -387,8 +387,62 @@ static void verify_blur_pitch(void) {
     fixture_destroy(&f);
 }
 
+/* The direct tone must keep its body under slow chorus/grain interference.
+ * Actual product bus API, no limiter or final DC filter. A quiet stationary
+ * tone isolates effect-created pumping from source envelopes and loudness.
+ * These are product bounds, not a perceptual guarantee of relaxation. */
+static void verify_motion_body(void) {
+    const float hz[] = {146.83238f, 220.0f, 440.0f};
+    const float amount[] = {0.0f, 0.65f, 1.0f};
+    const int modes[] = {AMBIENT_FX_CHORUS_DETUNE, AMBIENT_FX_BLUR, AMBIENT_FX_DREAM_CHAIN};
+    const int window = 4410; /* 100 ms RMS; inspect seconds 2..12 */
+    const float input_rms = 0.10f / 1.41421356237f;
+    for (unsigned m=0; m<3; ++m) for (unsigned a=0; a<3; ++a)
+    for (unsigned h=0; h<3; ++h) {
+        Fixture f; fixture_create(&f, 1234u);
+        CHECK(f.fx!=NULL,"motion body fixture"); if(!f.fx) return;
+        AmbientFxParameters p=ambient_fx_world_parameters(AMBIENT_FX_CRYSTAL_COAST);
+        p.motion=amount[a]; p.blur=amount[a]; p.age=p.echo=p.atmosphere=p.shimmer=0;
+        p.tone=1; p.width=1;
+        ambient_fx_set_parameters(f.fx,p); ambient_fx_set_mode(f.fx,(AmbientFxMode)modes[m]);
+        double energy[3]={0}; float lo=10,hi=0;
+        float block[2*128],send[2*128]={0}; int in_window=0;
+        for(int frame=0;frame<12*44100;frame+=128) {
+            int count=12*44100-frame; if(count>128) count=128;
+            for(int i=0;i<count;++i) {
+                float v=0.1f*sinf(6.28318530718f*hz[h]*(float)(frame+i)/44100.0f);
+                block[2*i]=block[2*i+1]=v;
+            }
+            ambient_fx_process_buses_f32(f.fx,block,send,(size_t)count);
+            for(int i=0;i<count;++i) if(frame+i>=2*44100) {
+                float l=block[2*i],r=block[2*i+1],mono=.5f*(l+r);
+                energy[0]+=l*l; energy[1]+=r*r; energy[2]+=mono*mono;
+                if(++in_window==window) {
+                    for(int c=0;c<3;++c) {
+                        float gain=(float)sqrt(energy[c]/window)/input_rms;
+                        CHECK(isfinite(gain),"finite motion window");
+                        if(gain<lo)lo=gain;
+                        if(gain>hi)hi=gain;
+                        energy[c]=0;
+                    }
+                    in_window=0;
+                }
+            }
+        }
+        float swing=20.0f*log10f(hi/lo);
+        printf("motion body mode %d amount %.2f %.0f Hz: floor %.2f dB, swing %.2f dB\n",
+               modes[m],amount[a],hz[h],20.0f*log10f(lo),swing);
+        CHECK(lo>=(m==2 ? .48f:.65f),"direct body survives effect interference in L/R/mono");
+        CHECK(swing<=(m==2 ? 8.0f:5.0f),"motion does not become deep cyclic pumping");
+        CHECK(hi<=1.35f,"bounded additive motion gain");
+        if(a==0) CHECK(lo>.99f && hi<1.01f,"zero insert amounts preserve direct gain");
+        check_guards(&f);fixture_destroy(&f);
+    }
+}
+
 int main(void)
 {
+    verify_motion_body();
     verify_blur_pitch();
     verify_basics();
     verify_bypass();

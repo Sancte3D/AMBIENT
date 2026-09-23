@@ -43,8 +43,10 @@ Open Sea dry voice / pad / Dream diagnosis is in OPEN_SEA_SOUND_REVIEW.md.
 Fixed periodic fundamental cancellation in the shared Bowed voice without
 raising its average level. CALM_REGISTER_REVIEW.md then lowers the automatic
 foreground to D3..A4 with tonic-centred openings and intact collision checks.
-Next: chorus/blur and combined pitch movement, followed by Horn/Bowed resonance
-at the new register. Shimmer must justify its role; no blanket brightness boost.
+CALM_MOTION_REVIEW.md bounds Chorus/Blur interference while keeping the direct
+body dominant. Next: Horn/Bowed resonance and vibrato at the new register, then
+combined tape/pitch movement. Listen against removing either insert before
+keeping both. Shimmer must justify its role; no blanket brightness boost.
 
 The detailed product execution order is now in PRODUCT_REVIEW_EXECUTION.md.
 The user subsequently selected autonomous listening with locked cells.
@@ -69,7 +71,9 @@ The ownership cleanup remains; source/FX inventory below remains open.
 | Deferred | Quiet UI | Sound takes priority; 15 min human-idle display timer and neutral wake still required |
 | Done / listening | Open Sea dry Bowed | Periodic root collapse corrected; same average level; both colours and four pitches; 28.25 s stem A/B |
 | Done / listening | Calming automatic register | D3..A4; tonic-centred opening; 72 key/mode regression, actual Generate A/B; manual/FX registers still open |
-| Next sound | Open Sea space and movement | Compare chorus/blur against simpler room; default Shimmer has tiny measured contribution in diagnostic scene; range and feedback audit before keep/reduce/remove |
+| Done / listening | Chorus/Blur direct body | 27 bus probes; maximum Blur swing 22.49 → 4.44 dB, level-matched 27.5 s A/B; distinct effect roles still need listening |
+| Next sound | Horn/Bowed body and vibrato | Review source resonances at D3..A4; cumulative tape/pitch movement follows |
+| Listening | Open Sea space and movement | Compare chorus/blur against simpler room; default Shimmer has tiny measured contribution in diagnostic scene; range and feedback audit before keep/reduce/remove |
 | Open | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |
 | Then | Ambient live tuning | Pad/Bowed/Horn/Choir, generated held notes, bass/pedal consistency |

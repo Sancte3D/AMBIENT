@@ -605,9 +605,12 @@ static void process_chorus(AmbientFx *fx, float in_l, float in_r,
     float width = fx->current.width;
     float field_l = wet_l * (1.0f - 0.55f * width) + wet_r * (0.55f * width);
     float field_r = wet_r * (1.0f - 0.55f * width) + wet_l * (0.55f * width);
-    float mix = 0.55f * motion;
-    *out_l = in_l * (1.0f - 0.38f * mix) + field_l * (0.72f * mix);
-    *out_r = in_r * (1.0f - 0.38f * mix) + field_r * (0.72f * mix);
+    /* Keep the direct body dominant at every knob position. At full Motion
+     * dry/wet gains are .94/.18; a delayed tone cannot approach a deep null.
+     * Pitch motion and stereo timing remain, as a supporting layer. */
+    float mix = 0.24f * motion;
+    *out_l = in_l * (1.0f - 0.25f * mix) + field_l * (0.75f * mix);
+    *out_r = in_r * (1.0f - 0.25f * mix) + field_r * (0.75f * mix);
 }
 
 static void process_delay_wet(AmbientFx *fx, float in_l, float in_r,
@@ -801,9 +804,12 @@ static void process_blur(AmbientFx *fx, float in_l, float in_r,
     float coefficient = one_pole_coefficient(2600.0f + 3400.0f * fx->current.tone, sr);
     fx->blur_lp_l += (wet_l - fx->blur_lp_l) * coefficient;
     fx->blur_lp_r += (wet_r - fx->blur_lp_r) * coefficient;
-    float mix = 0.78f * fx->current.blur;
-    *out_l = in_l * (1.0f - 0.58f * mix) + fx->blur_lp_l * (0.78f * mix);
-    *out_r = in_r * (1.0f - 0.58f * mix) + fx->blur_lp_r * (0.78f * mix);
+    /* A cloud around a stable note. The former .548/.608 dry/wet balance
+     * could nearly cancel held tones as grain phases changed. Full Blur is
+     * now .92/.24; it softens the trail without replacing the foreground. */
+    float mix = 0.40f * fx->current.blur;
+    *out_l = in_l * (1.0f - 0.20f * mix) + fx->blur_lp_l * (0.60f * mix);
+    *out_r = in_r * (1.0f - 0.20f * mix) + fx->blur_lp_r * (0.60f * mix);
 }
 
 void ambient_fx_trigger_reverse_swell(AmbientFx *fx,

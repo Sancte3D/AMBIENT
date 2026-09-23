@@ -1,6 +1,18 @@
 # PROJECT STATUS
 
 
+> **2026-09-23 — Chorus/Blur: direkten Tonkörper erhalten.** Effektbedingte
+> Auslöschung im tatsächlichen Buspfad nachgewiesen: maximale Pegelschwankung
+> im gehaltenen Referenzton bei Blur 22,49 → 4,44 dB; Chorus 8,82 → 3,20 dB.
+> Direktsignal dominiert jetzt den Effektanteil; auch in Dream. Keine neuen
+> DSP-Operationen/States/Puffer. 27 Probes rot/grün, volle Host-Suite grün;
+> 27,5-s-A/B bei gleicher
+> Lautheit. `field-ambience-current/docs/audio/CALM_MOTION_REVIEW.md`.
+> **Nächste Klangeinheit:** Horn/Bowed-Resonanzen und Vibrato im neuen Register.
+> Chorus/Blur-Nutzen im Hörvergleich bleibt offen; echte H743-Last weiterhin
+> ungemessen. Keine pauschale Soundfreigabe. Display bleibt nachgeordnet.
+
+
 > **2026-09-22 — Calming als Klangvertrag, automatisches Register:** Nutzer
 > will beruhigend/mitteltief, ohne Alarm-, Sirenen- oder Pieptoncharakter.
 > Automatische Melodie D4..D6 → D3..A4, Einstieg nahe World-Grundton statt
