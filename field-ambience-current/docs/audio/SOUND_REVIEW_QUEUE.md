@@ -20,10 +20,22 @@ not establish this. Subjective acceptance is open for every sound until heard.
 
 ## Product selection gate
 
-AMBIENT_CONCEPT_REVIEW.md prioritizes World/Character continuity before the
-next solo timbre review. The lost return-pause history is fixed and host-tested;
-the Character still replaces the bed. Next: a concrete resource/routing plan
-for bed + one foreground role, without adding a second full engine or FX tank.
+Current contract: Generate owns the World as an autonomous listening mode;
+NATURE_WORLD_CONTRACT.md defines calming natural places. Earlier parallel
+Character/bed plans in AMBIENT_CONCEPT_REVIEW.md are historical, not the next
+implementation task. No new engine/layer before source quality is established.
+
+Concrete next units, in order:
+1. **Bowed:** compare continuous bow noise and 5.1 Hz vibrato independently,
+   dry and in Open Sea/Fjords at D3..A4. Retain stable root; reject a buzzing
+   or mechanically trembling foreground. Deliver one <=30 s matched comparison.
+2. **Choir / Forest:** identify vowel peaks and humming/organ character;
+   keep only a soft body that suggests a sheltered natural space. Voice may
+   be redesigned or replaced; a new name alone does not complete the task.
+3. **Guembri / Desert:** isolate metal rattle and sharp excitation; compare
+   a rounded pluck without them. Keep/drop follows its musical role in Desert.
+Each unit needs a concrete finding/change, relevant regression, full host suite
+and a short listening artifact. Do not expand to UI or add more Worlds.
 
 See PRODUCT_SOUND_SELECTION.md: shipping the existing six-core roster is not
 an assumption. Mist/Horizon are primary candidates, Dew/Glimmer supporting,
@@ -77,7 +89,8 @@ The ownership cleanup remains; source/FX inventory below remains open.
 | Done / listening | Calming automatic register | D3..A4; tonic-centred opening; 72 key/mode regression, actual Generate A/B; manual/FX registers still open |
 | Done / listening | Chorus/Blur direct body | 27 bus probes; maximum Blur swing 22.49 → 4.44 dB, level-matched 27.5 s A/B; distinct effect roles still need listening |
 | Done | Age idle noise | Injected 50 Hz hum and hiss removed, silent-input regression, coloration retained; NATURE_WORLD_CONTRACT.md |
-| Next sound | Horn/Bowed body and vibrato | Review source resonances at D3..A4; cumulative tape/pitch movement follows |
+| Done / listening | Alps source body | Sub/formant removed, softer pitched source, 12 red/green probes; ALPS_BODY_REVIEW.md |
+| Next sound | Bowed grain/vibrato | Isolate continuous noise and regular pitch movement; preserve root stability |
 | Listening | Open Sea space and movement | Compare chorus/blur against simpler room; default Shimmer has tiny measured contribution in diagnostic scene; range and feedback audit before keep/reduce/remove |
 | Open | Dew attack consistency | Register-dependent attack level; excitation/filter cause still unverified |
 | Open | FM Ratio and upper register | Ratio 1–6 changes, harmonic balance, aliasing, Tone/Resonance/Index extremes |

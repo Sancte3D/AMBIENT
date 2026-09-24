@@ -21,6 +21,11 @@ CC="$CC" python3 "$here/test_cell_routing.py"
     -lm -o "$tmp/bowed_balance_test"
 "$tmp/bowed_balance_test"
 
+"$CC" "${CFLAGS[@]}" "$here/test_horn_body.c" \
+    "$src/src/horn.c" "$src/src/shape.c" "$src/src/dsp.c" \
+    -lm -o "$tmp/horn_body_test"
+"$tmp/horn_body_test"
+
 # Step 7: dsp + voice pool
 "$CC" "${CFLAGS[@]}" \
     "$here/test_dsp_voices.c" \

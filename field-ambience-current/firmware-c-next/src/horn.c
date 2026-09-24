@@ -1,20 +1,17 @@
 /*
- * horn.c — blown-brass / alphorn voice. See horn.h.
+ * horn.c — rounded, breath-shaped Alps tone (legacy Horn ID). See horn.h.
  *
  * Signal per voice:
- *   reed   : one band-limited saw (dsp_poly_saw) = the lip-reed buzz
- *   sub    : a quiet LUT sine one octave down = the horn's body weight
- *   blare  : a resonant SVF lowpass whose cutoff OVERSHOOTS on the attack and
- *            settles to a mellow sustain — the brass "blat" that opens bright
- *            and warms as the note holds (opposite envelope shape to a string)
- *   formant: one fixed SVF bandpass ≈ 950 Hz mixed in = the cupped-horn vowel
- *   chiff  : a short breath-noise burst through a high bandpass, ONLY at the
- *            onset (≈ 90 ms) = the air catching the reed, then gone
- *   drift  : very slow, shallow air-pressure tremor (alphorns barely vibrato)
+ *   body   : phase-aligned fundamental sine + quiet band-limited saw detail
+ *   filter : non-resonant, pitch-tracked lowpass with a gentle breath opening
+ *   air    : restrained 90-ms onset texture under a 450-ms amplitude bloom
+ *   drift  : shallow filter movement; no repeated pitch sweep
+ * No sub-octave oscillator or fixed cupped-horn formant. A geographic World
+ * does not require an imitation horn call; retain the source ID and ownership.
  *
  * Control-rate work (coeff/LFO updates) every CTL samples; per-sample stays
- * one saw + one sine + one LP + one BP + adds. Alias-free, no per-sample
- * transcendental.
+ * one saw + one LUT sine + one LP, plus onset-only noise/BP. No per-sample
+ * transcendental or added oscillator work.
  */
 #include "horn.h"
 #include "shape.h"
@@ -33,9 +30,7 @@ typedef struct {
     float expression, vibFade;
     float    freq, amp;
     float    ph, inc;                 /* reed saw                          */
-    float    subPh, subInc;           /* sub-octave body sine              */
-    dsp_svf_t blare;                  /* envelope-tracking brass lowpass   */
-    dsp_svf_t form;                   /* fixed horn formant bandpass       */
+    dsp_svf_t blare;                  /* breath-tracking body lowpass      */
     dsp_svf_t chiffbp;                /* attack air-chiff bandpass         */
     uint32_t rng;
 
@@ -86,16 +81,14 @@ static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float am
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
-    v->subInc = freq_hz * 0.5f / SR;
-    if (v->stage == V_IDLE) { v->ph = 0.02f; v->subPh = 0.0f; }
+    v->ph = 0.02f;
     v->rng = 0x51ED270Bu ^ (uint32_t)(freq_hz * 97.0f);
 
-    dsp_svf_reset(&v->blare);   dsp_svf_set(&v->blare, freq_hz * 3.0f, 1.6f);
-    dsp_svf_reset(&v->form);    dsp_svf_set(&v->form, 950.0f, 2.2f);
+    dsp_svf_reset(&v->blare);   dsp_svf_set(&v->blare, freq_hz * 2.2f, 0.707f);
     dsp_svf_reset(&v->chiffbp); dsp_svf_set(&v->chiffbp, 1700.0f, 1.1f);
 
     v->env = 0.0001f;
-    v->envInc  = v->amp / (0.13f * shape_attack_scale() * SR);  /* r19.60: 130 ms x SHAPE */
+    v->envInc  = v->amp / (0.45f * shape_attack_scale() * SR);  /* 450 ms x SHAPE */
     v->relCoef = dsp_smooth_coef(0.7f * shape_release_scale()); /* r19.60 */
     v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
     v->blareEnv  = 0.0f;
@@ -156,15 +149,12 @@ void horn_render_mix(float *dry_L, float *dry_R,
             if (v->stage == V_IDLE) continue;
 
             if (do_ctl) {
-                /* brass "blat": brightness overshoots during the attack
-                 * (blareEnv → toward 1.0), then settles to a mellow sustain
-                 * (~0.35). The cupped-horn cutoff rides that env HIGH and
-                 * warms as the note holds — the signature brass shape. */
+                /* Breath opens modestly; no resonant brass flare. */
                 float btgt = (v->stage == V_ATTACK) ? 1.0f : 0.35f;
                 v->blareEnv += (btgt - v->blareEnv) * 0.035f;
                 float drift = dsp_sin(v->driftPh);
-                float cut = v->freq * (3.0f + (4.0f+4.0f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift);
-                dsp_svf_set(&v->blare, dsp_clampf(cut, 120.0f, SR * 0.45f), 1.6f);
+                float cut = v->freq * (2.2f + (1.0f+1.2f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift);
+                dsp_svf_set(&v->blare, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.707f);
             }
 
             /* amp envelope */
@@ -186,22 +176,19 @@ void horn_render_mix(float *dry_L, float *dry_R,
 
             v->driftPh += v->driftInc; if (v->driftPh >= 1.0f) v->driftPh -= 1.0f;
 
-            /* reed saw + sub-octave body sine */
-            float reed = dsp_poly_saw(v->ph, v->inc);
+            /* The ramp's fundamental is NEGATIVE sine: align polarity to
+             * reinforce it, not cancel it. .45*(2/pi)+.35 ~= 2/pi preserves
+             * the old fundamental drive while reducing buzzy upper partials.
+             * Reuse the former sub oscillator's LUT work at the played pitch. */
+            float reed = 0.45f*dsp_poly_saw(v->ph, v->inc) - 0.35f*dsp_sin(v->ph);
             v->ph += v->inc; if (v->ph >= 1.0f) v->ph -= 1.0f;
-            float sub = dsp_sin(v->subPh) * 0.30f;
-            v->subPh += v->subInc; if (v->subPh >= 1.0f) v->subPh -= 1.0f;
-
-            /* brass body: reed through the blaring lowpass, + a touch of the
-             * fixed horn formant vowel for the cupped colour */
-            float brass = dsp_svf_lp(&v->blare, reed + sub);
-            brass += dsp_svf_bp(&v->form, reed) * 0.25f;
+            float brass = dsp_svf_lp(&v->blare, reed);
 
             /* attack air chiff (onset only) */
             if (v->chiff_left > 0) {
                 --v->chiff_left;
                 float a = (float)v->chiff_left / (0.09f * SR);   /* fade out */
-                brass += dsp_svf_bp(&v->chiffbp, wnoise(&v->rng)) * a * a * 0.5f;
+                brass += dsp_svf_bp(&v->chiffbp, wnoise(&v->rng)) * a * a * 0.12f;
             }
 
             float out = brass * v->env * 0.5f;

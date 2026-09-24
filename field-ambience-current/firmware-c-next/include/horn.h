@@ -1,18 +1,11 @@
 /*
- * horn.h — blown-brass / alphorn-inspired voice (Alps), r19.48 prototype.
+ * horn.h — rounded breath-shaped Alps source; Horn is its legacy internal ID.
  *
- * Deliberately a DIFFERENT synthesis family from bowed.c so the worlds do not
- * sound like one instrument re-coloured:
- *   bowed = detuned saw ensemble + continuous bow grain + resonant wood body
- *           + sympathetic string resonators (a stroked string).
- *   horn  = ONE reed saw whose filter BLARES open on the attack and mellows on
- *           the sustain (the brass "blat"), a fixed horn FORMANT vowel, a short
- *           AIR CHIFF at the onset only, a sub octave for body — NO sympathetic
- *           resonators, no continuous grain (a blown lip-reed, not a string).
- *
- * One horn_note() = one complete blown note (attack/hold/release baked in), so
- * sparse triggers overlap into a sustained alpine call. Alias-free
- * (dsp_poly_saw), LUT sines only (control-rate) — hot-path safe.
+ * Phase-aligned fundamental + restrained saw partials, gentle non-resonant
+ * breath filter and a short quiet air onset. No sub octave or fixed vowel.
+ * Distinct from Bowed's detuned strings and continuous bow grain.
+ * note_on/off owns a sustained source; note() is a timed one-shot.
+ * Three voices with bounded handovers. LUT oscillator work, no audio allocation.
  */
 #ifndef HORN_H
 #define HORN_H

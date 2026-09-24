@@ -1292,8 +1292,8 @@ static void render_ambient(int frames, bool retiring) {
      * loop early-outs), so it runs unconditionally regardless of the world. */
     bowed_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
 
-    /* r19.53: the alphorn/brass voice (Alps) — its own reed body + formant, no
-     * modal-body colour; idle voices early-out so it runs unconditionally. */
+    /* Rounded Alps source (legacy Horn ID), with its own body filter.
+     * No modal-body colour; idle voices early-out. */
     horn_render_mix(dryL, dryR, sendL, sendR, frames, 0.5f);
 
     /* r19.61: Moss-Chor und Desert-Guembri — eigene Koerper, daher wie

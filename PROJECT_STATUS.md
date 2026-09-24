@@ -1,6 +1,18 @@
 # PROJECT STATUS
 
 
+> **2026-09-23 — Alps-Quelle konkret umgebaut:** Horn-Suboktave und festen
+> 950-Hz-Formanten entfernt; Grundton + leisere Obertöne, nichtresonanter
+> Körperfilter und 450-ms-Einsatz. Zwölf Source-Probes rot/grün; Grundtonpegel
+> innerhalb ca. 0,5 dB, deutlich weniger obere Teiltonenergie. Volle Host-Suite
+> grün, Host-State −192 Byte. 27,5-s-A/B trocken und mit Pad/Dream:
+> `field-ambience-current/docs/audio/ALPS_BODY_REVIEW.md`.
+> **Nächste konkrete Schritte:** (1) Bowed-Bogenrauschen/Vibrato isoliert
+> vergleichen, (2) Choir auf Vokal-/Summcharakter für Forest prüfen,
+> (3) Guembri-Schnarren/Attack für Desert ersetzen oder begrenzen.
+> Hörfreigabe und aktueller H743-Nachweis bleiben offen.
+
+
 > **2026-09-23 — Naturorte statt Störklang, Age ohne Eigenrauschen:**
 > Verbindliches World-Konzept und Grenzen des Beruhigungsversprechens:
 > `field-ambience-current/docs/audio/NATURE_WORLD_CONTRACT.md`.
