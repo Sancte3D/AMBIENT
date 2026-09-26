@@ -97,6 +97,17 @@ int main(void) {
                   "worlds %d and %d are harmonically identical", a, b);
         }
 
+    for (int i = 0; i < WORLD_COUNT; ++i) {
+        const world_phrase_t *p = worlds_phrase(i);
+        CHECK(p->note_min >= 4 && p->note_max <= 16 && p->note_min <= p->note_max,
+              "world %d has bounded long-form holds", i);
+        CHECK(p->rest_min >= 3 && p->rest_min <= p->rest_max && p->rest_max <= 16,
+              "world %d leaves bounded base rests", i);
+        CHECK(p->density_pct > 0 && p->density_pct <= 100, "valid density %d", i);
+    }
+    CHECK(worlds_phrase(-1) == worlds_phrase(0), "phrase low clamp");
+    CHECK(worlds_phrase(WORLD_COUNT) == worlds_phrase(WORLD_COUNT-1), "phrase high clamp");
+
     /* out-of-range index must clamp, not crash */
     CHECK(worlds_get(-1) == worlds_get(0), "clamp -1 → 0");
     CHECK(worlds_get(99) == worlds_get(4), "clamp 99 → 4");

@@ -11,7 +11,9 @@
  * dsp.h only; no actual wavetable RAM needed — the "table" is computed.
  */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
+#include "shape.h"
 #include <math.h>
 #include <string.h>
 
@@ -21,6 +23,7 @@
 enum { O_IDLE = 0, O_ATTACK, O_DECAY, O_SUSTAIN, O_RELEASE };
 
 static struct {
+    float colour_scale, colour_res;
     float ph;
     float freq_cur, freq_tgt, glide_coef;
     int   astate;
@@ -32,6 +35,7 @@ static struct {
 
 static void go_init(void) {
     memset(&o, 0, sizeof o);
+    o.colour_scale = 1.0f;
     o.freq_cur = o.freq_tgt = 110.0f;
     o.glide_coef = dsp_smooth_coef(0.030f);
     o.atk_inc  = 1.0f / (0.010f * SR);
@@ -39,12 +43,12 @@ static void go_init(void) {
     o.sustain  = 0.7f;
     o.rel_coef = dsp_smooth_coef(0.35f);
     o.cutoff   = 4000.0f;
-    o.morph_inc   = 0.35f / SR;       /* slow orbit */
+    o.morph_inc   = 0.039f / SR;      /* ~26 s spectral orbit */
     o.morph_depth = 0.5f;
     o.morph_base  = 0.5f;
     o.level    = 0.7f;
     o.send     = 0.20f;
-    dsp_svf_reset(&o.lp); dsp_svf_set(&o.lp, o.cutoff, 0.707f);
+    dsp_svf_reset(&o.lp); dsp_svf_set(&o.lp, dsp_clampf(o.cutoff * o.colour_scale, 80.0f, 8000.0f), 0.707f + o.colour_res * 1.8f);
     o.astate = O_IDLE;
 }
 
@@ -52,11 +56,19 @@ static void go_activate(void)   { go_init(); }
 static void go_deactivate(void) { if (o.astate != O_IDLE) o.astate = O_RELEASE; }
 static void go_panic(void)      { o.amp = 0.0f; o.astate = O_IDLE; }
 
-static void go_note_on(int midi, float vel) {
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void go_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        o.freq_tgt = hz;
+}
+
+static void go_note_on(float midi, float vel) {
+    o.atk_inc = 1.0f / (0.01f * shape_attack_scale() * SR);
+    o.rel_coef = dsp_smooth_coef(0.35f * shape_release_scale());
     float f = dsp_midi_to_hz((float)midi);
     if (o.astate == O_IDLE || o.amp < 1.0e-3f) o.freq_cur = f;
     o.freq_tgt = f;
-    o.morph_base = 0.3f + 0.5f * dsp_clampf(vel,0,1);   /* harder = brighter table pos */
+    (void)vel; /* Host applies velocity; preserve the player's Wave Shape. */
     o.astate   = O_ATTACK;
 }
 static void go_note_off(void) { if (o.astate != O_IDLE) o.astate = O_RELEASE; }
@@ -65,7 +77,7 @@ static void go_set_param(synth_param_t p, float v) {
     v = dsp_clampf(v, 0.0f, 1.0f);
     switch (p) {
         case SP_A: o.morph_base = v;                                       break; /* Wavetable pos */
-        case SP_B: o.morph_inc  = (0.05f + v * 1.5f) / SR;                 break; /* Motion        */
+        case SP_B: o.morph_inc  = (0.015f + v * 0.120f) / SR;                 break; /* Motion        */
         case SP_C: o.cutoff     = 800.0f + v * 8000.0f;                    break; /* Brightness    */
         case SP_D: o.morph_depth= v * 0.5f;                                break; /* Spread        */
         case SP_E: o.glide_coef = dsp_smooth_coef(0.008f + v * 0.15f);     break; /* Glide         */
@@ -81,8 +93,10 @@ static float morph_osc(float ph, float dt, float morph) {
     float fr = m - seg;
     float w0, w1;
     float sine = dsp_sin(ph);
-    float tri  = dsp_tri(ph);
-    float saw  = dsp_poly_saw(ph, dt);
+    /* Align fundamental phase before morphing: the old rising saw
+     * cancelled the pulse fundamental near Shape=7/9 (hollow octave). */
+    float tri  = dsp_tri(ph + 0.75f);
+    float saw  = -dsp_poly_saw(ph, dt);
     float pul  = dsp_poly_square(ph, dt);
     switch (seg) {
         case 0:  w0 = sine; w1 = tri; break;
@@ -115,7 +129,7 @@ static void go_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
         float osc = morph_osc(o.ph, dt, morph);
         o.ph += dt; if (o.ph >= 1.0f) o.ph -= 1.0f;
 
-        if ((o.fctr++ % F_UPD) == 0) dsp_svf_set(&o.lp, o.cutoff, 0.707f);
+        if ((o.fctr++ % F_UPD) == 0) dsp_svf_set(&o.lp, dsp_clampf(o.cutoff * o.colour_scale, 80.0f, 8000.0f), 0.707f + o.colour_res * 1.8f);
         float lp = dsp_svf_lp(&o.lp, osc);
         float out = lp * o.amp * o.level;
         dL[n] += out;          dR[n] += out;
@@ -123,8 +137,12 @@ static void go_render_mix(float *dL, float *dR, float *sL, float *sR, int frames
     }
 }
 
+static void go_set_colour(float scale, float res) {
+    o.colour_scale = scale; o.colour_res = res;
+}
+
 const synth_engine_t engine_glass_orbit = {
-    .name        = "GLASS ORBIT",
+    .name        = SYNTH_NAME_GLASS_ORBIT,
     .init        = go_init,
     .activate    = go_activate,
     .deactivate  = go_deactivate,
@@ -133,4 +151,6 @@ const synth_engine_t engine_glass_orbit = {
     .set_param   = go_set_param,
     .render_mix  = go_render_mix,
     .panic       = go_panic,
+    .set_colour  = go_set_colour,
+    .retune_hz = go_retune_hz,
 };

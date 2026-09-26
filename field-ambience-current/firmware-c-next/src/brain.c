@@ -13,15 +13,7 @@
 
 #include "brain.h"
 
-/* 6 church modes, semitone intervals over the octave. */
-static const int8_t SCALES[BRAIN_MODE_COUNT][7] = {
-    { 0, 2, 4, 5, 7, 9, 11 },   /* ionian     */
-    { 0, 2, 3, 5, 7, 9, 10 },   /* dorian     */
-    { 0, 1, 3, 5, 7, 8, 10 },   /* phrygian   */
-    { 0, 2, 4, 6, 7, 9, 11 },   /* lydian     */
-    { 0, 2, 4, 5, 7, 9, 10 },   /* mixolydian */
-    { 0, 2, 3, 5, 7, 8, 10 },   /* aeolian    */
-};
+#include "pitch_modes.h"
 
 /* A chord-family step: a scale-step offset plus an optional chromatic
  * alteration in semitones (the webapp's [step, semi] form). */
@@ -65,7 +57,7 @@ int brain_get_key(void)  { return s_key; }
 
 /* Unvoiced chord at a degree (1-indexed) for the current key/mode/vibe. */
 static int chord_at_degree(int degree, int *out, int max) {
-    const int8_t *iv  = SCALES[s_mode];
+    const int8_t *iv  = PITCH_MODES[s_mode];
     const cstep_t *fam = VIBE_FAMILY[s_vibe];
     int n = VIBE_FAMILY_N[s_vibe];
     int d = degree - 1;
@@ -115,7 +107,7 @@ int brain_color_chord(int degree, int color, int *out, int max) {
     static const int CN[BRAIN_COLOR_COUNT] = { 3, 3, 4, 4 };
     if (color < 0 || color >= BRAIN_COLOR_COUNT) color = 0;
 
-    const int8_t *iv = SCALES[s_mode];
+    const int8_t *iv = PITCH_MODES[s_mode];
     const int8_t *st = CS[color];
     int n = CN[color];
     int d = degree - 1;

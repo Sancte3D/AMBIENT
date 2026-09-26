@@ -1,27 +1,24 @@
-/*
- * engine_acid.c — "ACID RAIN": a TB-303-style resonant acid bass.
- *
- * Now built on a real 4-pole Huovilainen ladder filter (dsp_ladder, MIT port of
- * DaisySP's LadderFilter) instead of a generic SVF — THAT is what gives the
- * squelchy, singing, slightly-overdriven acid character a plain SVF can't. The
- * per-note filter envelope sweeps the ladder cutoff (the squelch); the ladder's
- * own nonlinear drive + high resonance + accent give the bite.
- *
- * Signal: saw(+a little square) → ladder LP (cutoff swept by the note env,
- *   resonance high, input drive = grit) → amp ADSR. dsp.h + dsp_ladder only.
- */
+/* Dusk: a warm, compact subtractive voice with a rounded filter bloom.
+ * Legacy engine_acid symbol and scene slot are stable. Filter frequency is
+ * referenced to C4 and tracks the smoothed pitch, preserving harmonic balance
+ * across registers. One shared ladder; no new audio buffers or layers. */
 #include "v2/synth_engine.h"
+#include "synth_names.h"
 #include "dsp.h"
+#include "shape.h"
 #include "dsp_ladder.h"
 #include <math.h>
 #include <string.h>
 
 #define SR          ((float)DSP_SAMPLE_RATE_HZ)
+#define C4_HZ       261.625565f
+#define FENV_SMOOTH (1.0f / (0.060f * SR))
 #define FILT_UPDATE 8           /* control-rate cutoff refresh (samples) */
 
 enum { A_IDLE = 0, A_ATTACK, A_DECAY, A_SUSTAIN, A_RELEASE };
 
 static struct {
+    float colour_scale, colour_res;
     /* oscillators */
     float phase, sq_phase;
     float freq_cur, freq_tgt;
@@ -29,16 +26,16 @@ static struct {
     /* amp envelope: attack → decay → sustain (while gated) → release */
     int   astate;
     float amp, atk_inc, dec_coef, sustain, rel_coef;
-    /* per-note filter envelope (exp decay → the squelch) */
-    float fenv, fenv_coef;
+    /* Decaying excitation, smoothed before it reaches the filter. */
+    float fenv, fenv_coef, fenv_trigger;
     /* the real ladder filter */
     dsp_ladder_t lad;
     int   fctr;
     float accent;                /* 0..1 for the current note */
     /* parameters */
-    float base_cut;              /* Hz — filter floor */
-    float env_amt;               /* Hz — sweep height */
-    float res;                   /* resonance 0..1.7 */
+    float base_cut;              /* Hz at C4 — tracks current pitch */
+    float env_amt;               /* Hz at C4 — bloom height */
+    float res;                   /* native resonance 0.15..1.10 */
     float decay_s;               /* filter-env decay time */
     float drive;                 /* ladder input drive (grit) */
     float level;
@@ -49,18 +46,19 @@ static void recalc_decay(void) { a.fenv_coef = expf(-1.0f / (a.decay_s * SR)); }
 
 static void acid_init(void) {
     memset(&a, 0, sizeof a);
+    a.colour_scale = 1.0f;
     a.freq_cur = a.freq_tgt = 110.0f;        /* A2 */
-    a.glide_coef = dsp_smooth_coef(0.030f);
-    a.atk_inc    = 1.0f / (0.006f * SR);
-    a.dec_coef   = dsp_smooth_coef(0.080f);
+    a.glide_coef = dsp_smooth_coef(0.008f);
+    a.atk_inc    = 1.0f / (0.120f * SR);
+    a.dec_coef   = dsp_smooth_coef(0.280f);
     a.sustain    = 0.80f;
-    a.rel_coef   = dsp_smooth_coef(0.060f);
-    a.base_cut   = 320.0f;
-    a.env_amt    = 5500.0f;
-    a.res        = 1.05f;        /* strong resonance = the squelch */
-    a.decay_s    = 0.18f;
-    a.drive      = 1.8f;         /* ladder input drive = the acid grit */
-    a.level      = 0.85f;
+    a.rel_coef   = dsp_smooth_coef(0.400f);
+    a.base_cut   = 650.0f;
+    a.env_amt    = 312.0f;
+    a.res        = 0.1975f;      /* restrained native resonance */
+    a.decay_s    = 0.62f;
+    a.drive      = 1.00f;        /* gentle native saturation */
+    a.level      = 0.50f;
     a.send       = 0.06f;
     recalc_decay();
     dsp_ladder_init(&a.lad, SR);
@@ -72,14 +70,22 @@ static void acid_init(void) {
 
 static void acid_activate(void)   { acid_init(); }
 static void acid_deactivate(void) { if (a.astate != A_IDLE) a.astate = A_RELEASE; }
-static void acid_panic(void)      { a.amp = 0.0f; a.fenv = 0.0f; a.astate = A_IDLE; }
+static void acid_panic(void)      { a.amp = 0.0f; a.fenv = a.fenv_trigger = 0.0f; a.astate = A_IDLE; }
 
-static void acid_note_on(int midi, float vel) {
+/* Existing glide smooths this target; never re-trigger an envelope. */
+static void acid_retune_hz(float hz) {
+    if (isfinite(hz) && hz >= 20.0f && hz <= 16000.0f)
+        a.freq_tgt = hz;
+}
+
+static void acid_note_on(float midi, float vel) {
+    a.atk_inc = 1.0f / (0.120f * shape_attack_scale() * SR);
+    a.rel_coef = dsp_smooth_coef(0.40f * shape_release_scale());
     float f = dsp_midi_to_hz((float)midi);
     if (a.astate == A_IDLE || a.amp < 1.0e-3f) a.freq_cur = f;   /* snap from silence */
     a.freq_tgt = f;
     a.accent   = dsp_clampf(vel, 0.0f, 1.0f);
-    a.fenv     = 1.0f;
+    a.fenv_trigger = 1.0f;       /* preserve current filter state on reattack */
     a.astate   = A_ATTACK;
 }
 
@@ -89,11 +95,11 @@ static void acid_set_param(synth_param_t p, float v) {
     v = dsp_clampf(v, 0.0f, 1.0f);
     switch (p) {
         case SP_A: a.base_cut = 100.0f + v * v * 2200.0f;                  break; /* Cutoff   */
-        case SP_B: a.res = 0.30f + v * 1.40f;                             break; /* Resonance*/
-        case SP_C: a.decay_s = 0.04f + v * 0.50f; recalc_decay();          break; /* Decay    */
-        case SP_D: a.drive = 0.6f + v * 3.0f; dsp_ladder_set_drive(&a.lad, a.drive); break; /* Drive */
+        case SP_B: a.res = 0.15f + v * 0.95f;                             break; /* Resonance*/
+        case SP_C: a.decay_s = 0.20f + v * 1.20f; recalc_decay();          break; /* Decay    */
+        case SP_D: a.drive = 1.0f + v * 1.20f; dsp_ladder_set_drive(&a.lad, a.drive); break; /* Drive */
         case SP_E: a.glide_coef = dsp_smooth_coef(0.008f + v * 0.12f);     break; /* Glide    */
-        case SP_F: a.env_amt = 1500.0f + v * 7000.0f;                     break; /* Env amt  */
+        case SP_F: a.env_amt = v * 2600.0f;                     break; /* Env amt  */
         default: break;
     }
 }
@@ -115,18 +121,24 @@ static void acid_render_mix(float *dL, float *dR, float *sL, float *sR, int fram
             if (a.amp < 1.0e-4f) { a.amp = 0.0f; a.astate = A_IDLE; }
         }
 
-        a.fenv *= a.fenv_coef;
+        a.fenv_trigger *= a.fenv_coef;
+        a.fenv += FENV_SMOOTH * (a.fenv_trigger - a.fenv);
 
         if ((a.fctr++ % FILT_UPDATE) == 0) {
-            float cut = a.base_cut + (a.env_amt * (1.0f + a.accent * 0.8f)) * a.fenv;
-            dsp_ladder_set_freq(&a.lad, cut);
-            dsp_ladder_set_res(&a.lad, a.res + a.accent * 0.25f);   /* accent = more squelch */
+            /* Track smoothed pitch: a held retune must not jump the cutoff. */
+            float cut = (a.base_cut + a.env_amt * (1.0f + a.accent * 0.3f) * a.fenv)
+                        * (a.freq_cur / C4_HZ);
+            dsp_ladder_set_freq(&a.lad, dsp_clampf(cut * a.colour_scale,80.0f,8000.0f));
+            dsp_ladder_set_res(&a.lad, dsp_clampf(a.res + a.accent * 0.10f + a.colour_res * 0.5f,0.0f,1.8f));   /* gentle accent */
         }
 
         const float dt = a.freq_cur / SR;
         float saw = dsp_poly_saw(a.phase, dt);
         float sq  = dsp_poly_square(a.sq_phase, dt);
-        float osc = 0.80f * saw + 0.20f * sq;
+        /* These DSP primitives have opposite fundamental polarity at the
+         * same phase. Subtract square so fundamentals reinforce; adding it
+         * suppressed the root and let the octave dominate the default tone. */
+        float osc = 0.80f * saw - 0.20f * sq;
         a.phase    += dt; if (a.phase    >= 1.0f) a.phase    -= 1.0f;
         a.sq_phase += dt; if (a.sq_phase >= 1.0f) a.sq_phase -= 1.0f;
 
@@ -138,8 +150,12 @@ static void acid_render_mix(float *dL, float *dR, float *sL, float *sR, int fram
     }
 }
 
+static void acid_set_colour(float scale, float res) {
+    a.colour_scale = scale; a.colour_res = res;
+}
+
 const synth_engine_t engine_acid = {
-    .name        = "ACID RAIN",
+    .name        = SYNTH_NAME_ACID,
     .init        = acid_init,
     .activate    = acid_activate,
     .deactivate  = acid_deactivate,
@@ -148,4 +164,6 @@ const synth_engine_t engine_acid = {
     .set_param   = acid_set_param,
     .render_mix  = acid_render_mix,
     .panic       = acid_panic,
+    .set_colour  = acid_set_colour,
+    .retune_hz = acid_retune_hz,
 };

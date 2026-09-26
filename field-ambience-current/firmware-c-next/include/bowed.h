@@ -2,8 +2,9 @@
  * bowed.h — bowed-string voice (lyra / Hardanger-inspired), r19.46.
  *
  * A warm, sustained, self-completing "bow stroke": swells in, sings, fades —
- * band-limited saw string body + continuous bow-noise grain + a resonant wood
- * body + two sympathetic resonators + slow bow vibrato. Deliberately NOT a
+ * band-limited saw string body + restrained bow-noise grain + a resonant wood
+ * body + two sympathetic resonators. Stable pitch; movement from a quiet
+ * detuned companion and slow body breath. Deliberately NOT a
  * plucked "ding" and NOT a friction-model scrape (both forbidden by the
  * location brief) — it is a new synth voice *influenced* by bowed instruments.
  *
@@ -18,6 +19,10 @@ void bowed_init(void);
 
 /* Start one bow stroke at freq_hz, peak amplitude amp (0..1). Allocates a
  * voice (steals the quietest if full). The stroke completes on its own. */
+/* Played sources sustain until release; note() remains a timed one-shot. */
+void bowed_note_on(int source, float freq_hz, float amp);
+void bowed_note_off(int source);
+void bowed_all_off(void);
 void bowed_note(float freq_hz, float amp);
 
 /* Optional "colour" per world: 0 = Open Sea lyra (warm, mid body), 1 = Fjords

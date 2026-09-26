@@ -83,7 +83,12 @@ void leds_render(uint32_t now_ms, uint16_t dt_ms, uint16_t out[LED_CH_COUNT]) {
         }
     }
     target[CH_DRONE]    = controls_modifier_active(MOD_DRONE)    ? LED_DUTY_WHITE  : 0;
-    target[CH_GENERATE] = controls_modifier_active(MOD_GENERATE) ? LED_DUTY_WHITE  : 0;
+    if (controls_modifier_active(MOD_GENERATE)) {
+        /* Quiet four-second activity pulse, independent of musical timing. */
+        uint32_t phase = now_ms % 4000u;
+        uint32_t triangle = phase < 2000u ? phase : 4000u - phase;
+        target[CH_GENERATE] = (uint16_t)((LED_DUTY_WHITE / 3u) * triangle / 2000u);
+    }
     target[CH_CLEAR]    = (now_ms < s_clear_until)               ? LED_DUTY_WHITE  : 0;
 
     if (scenes_ui_active()) {

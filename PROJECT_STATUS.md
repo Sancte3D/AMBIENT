@@ -1,5 +1,151 @@
 # PROJECT STATUS
 
+> **VERBINDLICH 2026-09-26 — Konzept vor weiterer Umsetzung:** Nutzer stellt
+> die Reihenfolge klar: **Konzeptfreigabe → Sounddesign → UX/UI/Display →
+> Tests am echten Gerät**. Kein physischer Prototyp als Entscheidungsgrundlage
+> verfügbar. Weitere Soundänderungen (Choir/Forest, Guembri/Desert) pausieren.
+> Nächste Aufgabe: Produktzweck, Identität und Rolle von Natur/Kultur/Geschichte
+> schlüssig entscheiden. `field-ambience-current/docs/audio/CONCEPT_GATE.md`
+> hat Vorrang vor älteren Next-/Locked-Einträgen. Kulturansatz ist ein Vorschlag,
+> kein beschlossener Umbau. Konzeptfreigabe ist keine empirische Klangfreigabe.
+
+> **2026-09-26 — Bowed-Bewegung reduziert:** Gemeinsames 5,1-Hz-Vibrato
+> entfernt, Bogenrauschen um 12 dB gesenkt. 24 Register-/Pegel-/Farb-Probes
+> bestanden; Grundtonänderung unter 0,006 dB. Volle Host-Suite grün; keine
+> neuen DSP-Puffer. Trockener 27,5-s-A/B für beide Farben:
+> `field-ambience-current/docs/audio/BOWED_MOTION_REVIEW.md`.
+> **Als Nächstes:** Choir/Forest-Vokalresonanzen und Summcharakter; danach
+> Guembri/Desert. Bowed-Hörfreigabe und Integration mit Pad/Raum bleiben offen.
+
+
+> **2026-09-23 — Alps-Quelle konkret umgebaut:** Horn-Suboktave und festen
+> 950-Hz-Formanten entfernt; Grundton + leisere Obertöne, nichtresonanter
+> Körperfilter und 450-ms-Einsatz. Zwölf Source-Probes rot/grün; Grundtonpegel
+> innerhalb ca. 0,5 dB, deutlich weniger obere Teiltonenergie. Volle Host-Suite
+> grün, Host-State −192 Byte. 27,5-s-A/B trocken und mit Pad/Dream:
+> `field-ambience-current/docs/audio/ALPS_BODY_REVIEW.md`.
+> **Nächste konkrete Schritte:** (1) Bowed-Bogenrauschen/Vibrato isoliert
+> vergleichen, (2) Choir auf Vokal-/Summcharakter für Forest prüfen,
+> (3) Guembri-Schnarren/Attack für Desert ersetzen oder begrenzen.
+> Hörfreigabe und aktueller H743-Nachweis bleiben offen.
+
+
+> **2026-09-23 — Naturorte statt Störklang, Age ohne Eigenrauschen:**
+> Verbindliches World-Konzept und Grenzen des Beruhigungsversprechens:
+> `field-ambience-current/docs/audio/NATURE_WORLD_CONTRACT.md`.
+> Künstliches 50-Hz-Brummen und Bandrauschen aus aktivem Tape/Dream entfernt;
+> Klangfärbung bleibt, kein Gate. 12/12 Idle-Probes vorher rot, nachher exakt
+> still; gespieltes Signal bleibt. Volle Host-Suite grün; FX-State im Host
+> 680 → 672 Byte, keine neuen Puffer. Der bisherige Default-Anteil war sehr
+> leise; instrumentales Summen und echtes Hardwarebrummen bleiben getrennte
+> Prüfungen. Als Nächstes Horn/Bowed, dann Choir/Forest und Guembri/Desert.
+
+
+> **2026-09-23 — Chorus/Blur: direkten Tonkörper erhalten.** Effektbedingte
+> Auslöschung im tatsächlichen Buspfad nachgewiesen: maximale Pegelschwankung
+> im gehaltenen Referenzton bei Blur 22,49 → 4,44 dB; Chorus 8,82 → 3,20 dB.
+> Direktsignal dominiert jetzt den Effektanteil; auch in Dream. Keine neuen
+> DSP-Operationen/States/Puffer. 27 Probes rot/grün, volle Host-Suite grün;
+> 27,5-s-A/B bei gleicher
+> Lautheit. `field-ambience-current/docs/audio/CALM_MOTION_REVIEW.md`.
+> **Nächste Klangeinheit:** Horn/Bowed-Resonanzen und Vibrato im neuen Register.
+> Chorus/Blur-Nutzen im Hörvergleich bleibt offen; echte H743-Last weiterhin
+> ungemessen. Keine pauschale Soundfreigabe. Display bleibt nachgeordnet.
+
+
+> **2026-09-22 — Calming als Klangvertrag, automatisches Register:** Nutzer
+> will beruhigend/mitteltief, ohne Alarm-, Sirenen- oder Pieptoncharakter.
+> Automatische Melodie D4..D6 → D3..A4, Einstieg nahe World-Grundton statt
+> oberster Begleitstimme. Farbnoten und Anti-Repeat bleiben im selben Band;
+> Kollisionsprüfung bleibt am tatsächlichen Ton. Keine neuen DSP-Puffer/States.
+> 72 Tonart/Modus-Kombinationen geprüft; Details und 27,5-s-Generate-A/B:
+> `field-ambience-current/docs/audio/CALM_REGISTER_REVIEW.md`.
+> **Nächste Einheit:** Chorus/Blur und kombinierte Tonhöhenbewegung, dann
+> Horn/Bowed-Resonanzen im neuen Register. Keine allgemeine Hörfreigabe;
+> manuelle Character, Natur und Extreme bleiben offen. Display nachgeordnet.
+
+> **2026-09-22 — Sound wieder priorisiert, Open Sea / Bowed:** Messbare
+> Grundton-Einbrüche bereits in der trockenen Stimme korrigiert. Die bisherige
+> 60/40-Oszillatormischung erzeugte bis ca. 13 dB Grundtonschwankung und ließ
+> zeitweise die zweite Harmonische (Oktave) dominieren. Dominante Hauptsaite + leisere
+> Verstimmung, bei praktisch gleichem Mittelpegel: jetzt ca. 3 dB Schwankung.
+> Acht Register-/Farb-Probes rot/grün, volle Host-Suite grün; keine zusätzlichen
+> DSP-Operationen oder Zustandsdaten. Gemeinsame Bowed-Stimme betrifft auch Fjords.
+> Zerlegung Stimme / Pad / Dream plus FX-Abtrag und 28,25-s-A/B:
+> `field-ambience-current/docs/audio/OPEN_SEA_SOUND_REVIEW.md`.
+> **Nächste Einheit: Klang.** Chorus/Blur gegen einen einfacheren Raum prüfen;
+> Shimmer-Nutzen und Parameterwirkung belegen. Displaytimer bewusst nachgeordnet.
+
+> **2026-09-22 — Generate-Ausstieg:** Freigegebene Ambient-Stimmen klingen
+> beim Zurückwechseln zum manuellen Character jetzt unabhängig aus. Wind und
+> Dauertexturen blenden in etwa 2 s aus; der Character ist sofort spielbar.
+> Vorhandene Audiopuffer werden wiederverwendet; temporäre Doppelverarbeitung
+> endet nach Stimmenruhe, mit 64-s-Fehlergrenze. Host-Suite grün; 26,5-s-A/B.
+> Außerdem: Generate besitzt sein Bassfundament jetzt auch nach Harmony und
+> gibt es beim Ausstieg frei, ohne die manuelle Bass-Zuordnung zu verändern.
+> Details/Geräte-Gates: `field-ambience-current/docs/audio/LISTENING_EXIT_REVIEW.md`.
+> **Weiter offen, inzwischen nachgeordnet:** 15-Minuten-Displayruhe + klangneutrales Wake.
+> Klangbalance World-Stimme/Pad/Raum und aktueller H743-Lastnachweis bleiben offen.
+
+> **2026-09-21 — Generate / autonome Klangwelten:** Die ausdrückliche neue
+> Produktentscheidung ersetzt „Generate bleibt gleichzeitig spielbar“:
+> Generate sperrt die fünf Flächen sowie Hold/Drone und übernimmt die Ambient-
+> World unabhängig vom vorherigen Character. Manuelle Auswahl wird gemerkt.
+> World-Stimme und Phrasierung folgen der gewählten Landschaft; Bowed/Horn/Choir
+> teilen den tatsächlichen Melodie-Release. Ruhiger 4-s-Generate-Lichtpuls.
+> Host-Prüfung und 28-s-Open-Sea-Probe: `field-ambience-current/docs/audio/LISTENING_WORLD_REVIEW.md`.
+> **Damals offen, Quell-Tails inzwischen korrigiert (siehe 2026-09-22):** Display
+> nach 15 min menschlicher Inaktivität aus + klangneutrales Aufwecken;
+> Manual-only-Menükennzeichnung; Hörfreigabe und aktueller H743-Nachweis.
+> Aktuelle Reihenfolge: `field-ambience-current/docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
+> Ältere Einträge darunter sind Historie; gemeinsame Character/Bett-Wiedergabe
+> ist durch den separaten Hörmodus als nächstes Architekturziel abgelöst.
+
+> **Sound review in small units:** FM Glass Index/Body coupling, live Index
+> and a softer native attack corrected; host-verified, listening/device gates
+> open. Complete queue: `field-ambience-current/docs/audio/SOUND_REVIEW_QUEUE.md`.
+> Product selection review: `field-ambience-current/docs/audio/PRODUCT_SOUND_SELECTION.md`.
+> Storm sustained-pulse candidate implemented and host-tested: `field-ambience-current/docs/audio/STORM_ROLE_REVIEW.md`.
+> Storm/Mist/Orbit role comparison: `field-ambience-current/docs/audio/CORE_ROLE_COMPARISON.md`.
+> Fixed Storm/Mist/Orbit output calibration: `field-ambience-current/docs/audio/CORE_LEVEL_CALIBRATION.md` (45 probes, worst spread 1.0 LU).
+> Remaining core trims are implemented: `field-ambience-current/docs/audio/SUPPORT_LEVEL_CALIBRATION.md` (60 probes per version; Keys within -0.8..+0.9 LU of Ensemble).
+> User clarified evocative ambient imagery: display names are Dusk / Glimmer / Mist / Tide / Horizon / Dew; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
+> Dusk filter tracking and rounded bloom implemented: `field-ambience-current/docs/audio/DUSK_REVIEW.md` (body spread <0.5 dB across C3..C5; +4 bytes native state; host suite green).
+> Dusk listening correction after "spicy sci fi" feedback: `field-ambience-current/docs/audio/DUSK_CALM_REVIEW.md` (fundamental polarity corrected; gentler defaults; current device body spread ~1.1 dB; host suite green).
+> User reports the calmer Dusk direction is better; whole-instrument acceptance remains open.
+> Concept/continuity review: `field-ambience-current/docs/audio/AMBIENT_CONCEPT_REVIEW.md`. Character still replaces the Ambient bed. Fixed lost player-presence history across Character selection; automatic return now respects the ~8 s pause (red/green regression, full host suite green).
+> Next: budget/routing for a continuous bed + one foreground role. Dew attack consistency, Glimmer Ratio/aliasing and Ambient retuning remain open.
+
+> **2026-09-17 — Product review, package 1:** Generate no longer repurposes
+> the physical cells as Steer commands. Press/release ownership survives
+> routing changes; exiting Note clears stale latches while preserving modifiers.
+> Actual HAL routing red/green test + full host suite pass; +5 bytes control
+> state, no additional audio processing. Character/bed coexistence remains open.
+> Decisions, six work packages and device gates: `field-ambience-current/docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
+
+> **2026-09-10 — Sonic review after listening feedback.**
+> Irregular broadband wind/noise; less stationary landscape textures; BLUR
+> unwanted transposition and Orbit fundamental cancellation corrected; gentler
+> pad formant and direct-led Mist ensemble. No additional audio buffers.
+> Reproducible 38-render A/B protocol and dedicated audio regressions.
+> Subjective AAA acceptance and H743 DWT/outputs remain open. Details:
+> `field-ambience-current/docs/audio/SONIC_REVIEW_2026-09-10.md`.
+
+> **2026-09-09 — Musical system development (host-verified).**
+> Fractional synth pitch/Just, global native macros and Shape, gentle three-voice
+> handovers, release/FX pitch memory, staggered automatic onsets, modal colours,
+> weighted composer graph and variation-aware phrase memory. Full host suite
+> passes; real-device DWT and listening remain open. Details:
+> `field-ambience-current/docs/audio/MUSICAL_SYSTEM_2026-09-09.md`.
+
+> **2026-09-05 — Sound/playability review (host-verified, hardware pending).**
+> Shared master/FX for Ambient and all six synths; restored per-voice sends;
+> held-note priority; 36 named/smoothed synth controls; expressive gated
+> Bowed/Horn/Choir; gentle foreground/pad balance; SCN5→SCN6 scene migration.
+> 31 firmware listening renders plus reproducible A/B packaging. Full host
+> suite passes; H743 build/map/DWT and listening on the real device remain
+> open. Details: `field-ambience-current/docs/audio/MUSICAL_PLAYABILITY_2026-09-05.md`.
+
 > **r19.65 (2026-07-26) — Pad-Mapping: 2 echte Defekte gefunden.** Der letzte
 > offene Punkt vor dem Layout ("landet jede Symbol-Pinnummer auf einem Pad?",
 > fuer 9 ICs als pinout-pending markiert) ist erledigt — und war nicht leer:

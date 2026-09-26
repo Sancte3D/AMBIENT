@@ -1,0 +1,457 @@
+{
+  "notes": {
+    "bed_midi": 50,
+    "melody_midi": 62,
+    "note_on_s": 0.5,
+    "note_off_s": 11
+  },
+  "ablation_caveat": "no_chorus removes FX Motion (also tape/reverb modulation); room removes FX Motion+Blur. Pad Motion unchanged.",
+  "before": {
+    "dream": {
+      "rms_dbfs": -33.03969797861569,
+      "lr_correlation": 0.9635457683823888,
+      "peak_dbfs": -21.154387734175188,
+      "clipped_samples": 0
+    },
+    "no_chorus": {
+      "rms_dbfs": -31.796288592616015,
+      "lr_correlation": 0.9649018947986758,
+      "peak_dbfs": -19.98358104452086,
+      "clipped_samples": 0
+    },
+    "no_blur": {
+      "rms_dbfs": -31.975241673074887,
+      "lr_correlation": 0.9631108805583736,
+      "peak_dbfs": -19.717825238687013,
+      "clipped_samples": 0
+    },
+    "room": {
+      "rms_dbfs": -30.71604040254215,
+      "lr_correlation": 0.9644239820650508,
+      "peak_dbfs": -18.916839348181192,
+      "clipped_samples": 0
+    }
+  },
+  "after": {
+    "dream": {
+      "rms_dbfs": -31.278151159453337,
+      "lr_correlation": 0.9643404351955934,
+      "peak_dbfs": -19.17812452944505,
+      "clipped_samples": 0
+    },
+    "no_chorus": {
+      "rms_dbfs": -30.90108476742183,
+      "lr_correlation": 0.9646013323325122,
+      "peak_dbfs": -19.195020804737158,
+      "clipped_samples": 0
+    },
+    "no_blur": {
+      "rms_dbfs": -31.09556527477034,
+      "lr_correlation": 0.9641722178790233,
+      "peak_dbfs": -18.87249371830149,
+      "clipped_samples": 0
+    },
+    "room": {
+      "rms_dbfs": -30.71604040254215,
+      "lr_correlation": 0.9644239820650508,
+      "peak_dbfs": -18.916839348181192,
+      "clipped_samples": 0
+    }
+  },
+  "comparison": {
+    "seconds": 27.5,
+    "new_start_s": 14,
+    "fixed_gains_db": [
+      6.699999999999999,
+      5.0
+    ],
+    "target_lufs_per_excerpt": -25.0,
+    "integrated_lufs": -25.0,
+    "true_peak_dbfs": -14.2
+  },
+  "baseline_github_commit": "bdb3f1a5443063cb385f1e640b71d532fd0c23e1",
+  "isolated_probe": {
+    "before": [
+      {
+        "mode": 3.0,
+        "amount": 0.0,
+        "frequency_hz": 147.0,
+        "floor_db": -0.04,
+        "swing_db": 0.09
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.0,
+        "frequency_hz": 220.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.0,
+        "frequency_hz": 440.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.65,
+        "frequency_hz": 147.0,
+        "floor_db": -4.21,
+        "swing_db": 5.15
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.65,
+        "frequency_hz": 220.0,
+        "floor_db": -4.03,
+        "swing_db": 5.0
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.65,
+        "frequency_hz": 440.0,
+        "floor_db": -4.13,
+        "swing_db": 5.04
+      },
+      {
+        "mode": 3.0,
+        "amount": 1.0,
+        "frequency_hz": 147.0,
+        "floor_db": -7.1,
+        "swing_db": 8.51
+      },
+      {
+        "mode": 3.0,
+        "amount": 1.0,
+        "frequency_hz": 220.0,
+        "floor_db": -7.46,
+        "swing_db": 8.82
+      },
+      {
+        "mode": 3.0,
+        "amount": 1.0,
+        "frequency_hz": 440.0,
+        "floor_db": -6.89,
+        "swing_db": 8.21
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.0,
+        "frequency_hz": 147.0,
+        "floor_db": -0.04,
+        "swing_db": 0.09
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.0,
+        "frequency_hz": 220.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.0,
+        "frequency_hz": 440.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.65,
+        "frequency_hz": 147.0,
+        "floor_db": -9.2,
+        "swing_db": 9.75
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.65,
+        "frequency_hz": 220.0,
+        "floor_db": -8.55,
+        "swing_db": 8.91
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.65,
+        "frequency_hz": 440.0,
+        "floor_db": -9.87,
+        "swing_db": 10.45
+      },
+      {
+        "mode": 7.0,
+        "amount": 1.0,
+        "frequency_hz": 147.0,
+        "floor_db": -17.3,
+        "swing_db": 18.52
+      },
+      {
+        "mode": 7.0,
+        "amount": 1.0,
+        "frequency_hz": 220.0,
+        "floor_db": -17.05,
+        "swing_db": 18.07
+      },
+      {
+        "mode": 7.0,
+        "amount": 1.0,
+        "frequency_hz": 440.0,
+        "floor_db": -21.76,
+        "swing_db": 22.49
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.0,
+        "frequency_hz": 147.0,
+        "floor_db": -0.04,
+        "swing_db": 0.09
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.0,
+        "frequency_hz": 220.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.0,
+        "frequency_hz": 440.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.65,
+        "frequency_hz": 147.0,
+        "floor_db": -11.06,
+        "swing_db": 12.02
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.65,
+        "frequency_hz": 220.0,
+        "floor_db": -11.25,
+        "swing_db": 11.83
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.65,
+        "frequency_hz": 440.0,
+        "floor_db": -9.6,
+        "swing_db": 9.49
+      },
+      {
+        "mode": 8.0,
+        "amount": 1.0,
+        "frequency_hz": 147.0,
+        "floor_db": -19.05,
+        "swing_db": 20.49
+      },
+      {
+        "mode": 8.0,
+        "amount": 1.0,
+        "frequency_hz": 220.0,
+        "floor_db": -21.04,
+        "swing_db": 22.65
+      },
+      {
+        "mode": 8.0,
+        "amount": 1.0,
+        "frequency_hz": 440.0,
+        "floor_db": -18.1,
+        "swing_db": 18.13
+      }
+    ],
+    "after": [
+      {
+        "mode": 3.0,
+        "amount": 0.0,
+        "frequency_hz": 147.0,
+        "floor_db": -0.04,
+        "swing_db": 0.09
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.0,
+        "frequency_hz": 220.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.0,
+        "frequency_hz": 440.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.65,
+        "frequency_hz": 147.0,
+        "floor_db": -1.46,
+        "swing_db": 2.1
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.65,
+        "frequency_hz": 220.0,
+        "floor_db": -1.39,
+        "swing_db": 2.03
+      },
+      {
+        "mode": 3.0,
+        "amount": 0.65,
+        "frequency_hz": 440.0,
+        "floor_db": -1.41,
+        "swing_db": 2.02
+      },
+      {
+        "mode": 3.0,
+        "amount": 1.0,
+        "frequency_hz": 147.0,
+        "floor_db": -2.25,
+        "swing_db": 3.2
+      },
+      {
+        "mode": 3.0,
+        "amount": 1.0,
+        "frequency_hz": 220.0,
+        "floor_db": -2.25,
+        "swing_db": 3.17
+      },
+      {
+        "mode": 3.0,
+        "amount": 1.0,
+        "frequency_hz": 440.0,
+        "floor_db": -2.17,
+        "swing_db": 3.07
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.0,
+        "frequency_hz": 147.0,
+        "floor_db": -0.04,
+        "swing_db": 0.09
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.0,
+        "frequency_hz": 220.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.0,
+        "frequency_hz": 440.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.65,
+        "frequency_hz": 147.0,
+        "floor_db": -1.94,
+        "swing_db": 2.68
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.65,
+        "frequency_hz": 220.0,
+        "floor_db": -1.85,
+        "swing_db": 2.47
+      },
+      {
+        "mode": 7.0,
+        "amount": 0.65,
+        "frequency_hz": 440.0,
+        "floor_db": -1.99,
+        "swing_db": 2.74
+      },
+      {
+        "mode": 7.0,
+        "amount": 1.0,
+        "frequency_hz": 147.0,
+        "floor_db": -3.15,
+        "swing_db": 4.44
+      },
+      {
+        "mode": 7.0,
+        "amount": 1.0,
+        "frequency_hz": 220.0,
+        "floor_db": -3.12,
+        "swing_db": 4.27
+      },
+      {
+        "mode": 7.0,
+        "amount": 1.0,
+        "frequency_hz": 440.0,
+        "floor_db": -3.3,
+        "swing_db": 4.32
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.0,
+        "frequency_hz": 147.0,
+        "floor_db": -0.04,
+        "swing_db": 0.09
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.0,
+        "frequency_hz": 220.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.0,
+        "frequency_hz": 440.0,
+        "floor_db": -0.0,
+        "swing_db": 0.0
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.65,
+        "frequency_hz": 147.0,
+        "floor_db": -2.44,
+        "swing_db": 3.58
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.65,
+        "frequency_hz": 220.0,
+        "floor_db": -2.68,
+        "swing_db": 3.6
+      },
+      {
+        "mode": 8.0,
+        "amount": 0.65,
+        "frequency_hz": 440.0,
+        "floor_db": -2.46,
+        "swing_db": 3.12
+      },
+      {
+        "mode": 8.0,
+        "amount": 1.0,
+        "frequency_hz": 147.0,
+        "floor_db": -4.84,
+        "swing_db": 6.57
+      },
+      {
+        "mode": 8.0,
+        "amount": 1.0,
+        "frequency_hz": 220.0,
+        "floor_db": -4.29,
+        "swing_db": 5.93
+      },
+      {
+        "mode": 8.0,
+        "amount": 1.0,
+        "frequency_hz": 440.0,
+        "floor_db": -4.54,
+        "swing_db": 5.49
+      }
+    ]
+  }
+}

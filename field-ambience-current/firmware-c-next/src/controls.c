@@ -53,8 +53,15 @@ static void clear_all_holds(void) {
     }
 }
 
+void controls_release_cells(void) {
+    clear_all_holds();
+    s_cells_down = 0;
+    engine_set_user_presence(false);
+}
+
 void controls_modifier(mod_id_t mod, bool pressed) {
     if (mod >= MOD_COUNT) return;
+    if (s_mod[MOD_GENERATE] && (mod == MOD_HOLD || mod == MOD_DRONE)) return;
     switch (mod) {
         case MOD_SHIFT:
             s_mod[MOD_SHIFT] = pressed;   /* r19.20: momentary, both edges */
@@ -66,14 +73,26 @@ void controls_modifier(mod_id_t mod, bool pressed) {
             if (pressed) { s_mod[MOD_DRONE] = !s_mod[MOD_DRONE]; engine_set_drone(s_mod[MOD_DRONE]); }
             break;
         case MOD_GENERATE:
-            if (pressed) { s_mod[MOD_GENERATE] = !s_mod[MOD_GENERATE];
-                           engine_set_generative(s_mod[MOD_GENERATE], -1); }  /* -1 = Markov auto */
+            if (pressed) {
+                if (!s_mod[MOD_GENERATE]) {
+                    controls_release_cells();
+                    s_mod[MOD_HOLD] = s_mod[MOD_DRONE] = false;
+                    engine_set_drone(false);
+                }
+                s_mod[MOD_GENERATE] = !s_mod[MOD_GENERATE];
+                engine_set_generative(s_mod[MOD_GENERATE], -1);
+            }
             break;
         case MOD_CLEAR:
             if (!pressed) break;
+            if (s_mod[MOD_GENERATE]) {
+                s_mod[MOD_GENERATE] = false;
+                engine_set_generative(false, -1);
+            }
             if (s_mod[MOD_SHIFT]) {
                 /* r19.20 SHIFT+CLEAR — FLUSH: silence everything that is
-                 * sounding, but leave the modes running. The drone module
+                 * sounding, preserving manual Hold/Drone modes. Generate has
+                 * already exited above. The drone module
                  * is not touched by engine_all_off (own envelope), so it
                  * keeps sounding; the generator re-blooms on its next bar. */
                 clear_all_holds();
@@ -97,7 +116,7 @@ void controls_modifier(mod_id_t mod, bool pressed) {
 }
 
 void controls_cell_press(uint8_t cell, float velocity_amp) {
-    if (cell >= CTRL_CELL_COUNT) return;
+    if (cell >= CTRL_CELL_COUNT || s_mod[MOD_GENERATE]) return;
     s_cells_down |= (uint8_t)(1u << cell);      /* r19.20: physical key down */
     engine_set_user_presence(true);
     int   root = brain_cell_root(cell);

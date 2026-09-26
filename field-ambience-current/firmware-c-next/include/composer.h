@@ -14,7 +14,7 @@
  *   places a note and never touches the audio path; it only re-weights
  *   the decisions the melody grammar and the layers were already making.
  *
- * Five states, cycling over minutes (40–80 s each, humanized):
+ * Five intents in a weighted graph (40–80 s each, humanized):
  *
  *   CALM   → the piece breathes at its resting rate
  *   OPEN   → more light: melody denser, rare high answers appear
@@ -22,12 +22,15 @@
  *   EMPTY  → almost nothing: long rests, bed quiet — the held breath
  *   RETURN → coming home: normal density, warmth back
  *
- * Each state is ONLY this table:
+ * Occupancy, recent paths and destination age influence the next choice.
+ * Empty resolves via Return; a breath occurs by the sixth transition.
+ * Targets glide over ~4 s; physical player presence pauses the intent clock.
+ * Each state supplies these targets:
  *   mel_density  multiplier on the grammar's per-bar note probability
  *   rest_add     added to the 30 % rest-phrase probability
- *   high_p       chance a melody tone answers +2 octaves (very rare)
+ *   high_p       extra modal-colour probability, still subject to the octave leap gate
  *   bed_amp      multiplier on the generative bed voice amplitude
- *   bass_depth   target for the bass fundament (engine applies per bar)
+ *   bass_depth   target for the bass fundament (engine applies each tick)
  *
  * The module is pure (no engine calls, fixed-seed LCG, host-testable);
  * engine_generative_tick() reads the table and applies it. Active ONLY
@@ -48,7 +51,7 @@ typedef enum {
 typedef struct {
     float mel_density;   /* × on note probability      */
     float rest_add;      /* + on rest-phrase probability */
-    float high_p;        /* p of a +24 high answer       */
+    float high_p;        /* extra modal-colour probability */
     float bed_amp;       /* × on bed voice amplitude     */
     float bass_depth;    /* bass fundament target 0..1   */
 } composer_params_t;
@@ -57,6 +60,8 @@ void composer_init(void);
 
 /* Advance the state clock. Call from the generative tick (any rate). */
 void composer_tick(uint32_t now_ms);
+/* Occupancy is a conservative pitch-memory measure, not microphone input. */
+void composer_listen(float occupied_0_1, int player_active);
 
 /* The current state's probability table (always valid). */
 const composer_params_t *composer_params(void);
@@ -65,7 +70,7 @@ composer_state_t composer_state(void);
 const char      *composer_state_name(void);   /* for a future UI readout */
 
 /* r19.24 interactive GENERATE: jump to `target` now and hold it a full
- * dwell before the natural cycle resumes (a played cell steers the intent
+ * dwell before the natural graph resumes (a played cell steers the intent
  * instead of stopping the piece). */
 void composer_nudge(composer_state_t target, uint32_t now_ms);
 

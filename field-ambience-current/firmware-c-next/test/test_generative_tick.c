@@ -21,7 +21,8 @@
 #include "engine.h"
 #include "brain.h"
 #include "generative.h"
-#include "pluck.h"   /* r18.89: sparkles are KS plucks now */
+#include "horn.h"    /* default Alps World uses its curated horn */
+#include "worlds.h"
 #include "composer.h" /* r18.96: top-level intent states */
 #include "dsp.h"
 
@@ -43,6 +44,49 @@ static int render_ms(int ms) {
         }
     }
     return pk;
+}
+
+static uint32_t phrase_clock, phrase_started, phrase_ended;
+static int phrase_world, phrase_pairs, phrase_live, phrase_has_end;
+static void phrase_event(int on, uint8_t source, float hz, float amp) {
+    (void)hz; (void)amp;
+    if (source != 15) return;
+    const world_phrase_t *p = worlds_phrase(phrase_world);
+    if (on == 1) {
+        if (phrase_has_end) {
+            /* OPEN can shorten the base rest by 20%; other states and
+             * phrase boundaries only add space. Tick quantization: 100 ms. */
+            CHECK(phrase_clock - phrase_ended + 100 >= p->rest_min * 800u,
+                  "world %d has space between melodic holds", phrase_world);
+        }
+        phrase_started = phrase_clock; phrase_live = 1;
+    } else if (on == 0 && phrase_live) {
+        uint32_t hold = phrase_clock - phrase_started;
+        CHECK(hold >= p->note_min * 1000u && hold <= p->note_max * 1000u + 100u,
+              "world %d melodic hold %u ms matches its phrase", phrase_world, hold);
+        ++phrase_pairs; phrase_live = 0;
+        phrase_ended = phrase_clock; phrase_has_end = 1;
+    }
+}
+
+static void test_world_phrases(void) {
+    for (phrase_world = 0; phrase_world < WORLD_COUNT; ++phrase_world) {
+        engine_init(); engine_set_world(phrase_world);
+        engine_set_gen_seed(0x5EEDBA55u);
+        engine_set_generative(true, -1);
+        phrase_live = phrase_has_end = phrase_pairs = 0;
+        engine_set_note_hook(phrase_event);
+        /* This is a scheduler audit, not a long audio export. */
+        for (phrase_clock = 1000; phrase_clock < 901000; phrase_clock += 100) {
+            engine_generative_tick(phrase_clock);
+            if (phrase_clock % 1000 == 0) render_ms(20);
+        }
+        engine_set_note_hook(NULL); /* explicit stop may shorten a hold */
+        engine_set_generative(false, -1);
+        CHECK(phrase_pairs >= 5, "world %d completed enough phrases (%d)",
+              phrase_world, phrase_pairs);
+        printf("  World %d: %d completed melodic holds audited\n", phrase_world, phrase_pairs);
+    }
 }
 
 int main(void) {
@@ -67,14 +111,14 @@ int main(void) {
         CHECK(d >= 1 && d <= 7, "degree in range (%d)", d);
         int v = engine_active_voices();
         if (v > max_voices) max_voices = v;
-        if (pluck_active_count() > 0) sparkle_seen = 1;   /* r18.89: plucks */
+        if (horn_active_count() > 0) sparkle_seen = 1;   /* r18.89: plucks */
         if ((step & 63) == 0) {
             int p = render_ms(16 * 64);
             CHECK(p <= 32767, "bounded");
         }
         if (fails > 10) break;                  /* don't spam */
     }
-    CHECK(sparkle_seen, "sparkle PLUCKS actually played");
+    CHECK(sparkle_seen, "Alps melody voice actually played");
     /* r18.99: the bed is a CHOIR now — the three Eno loops join one by
      * one (staggered entries at 0.40/0.62/0.81 of their periods), so the
      * pad pool grows past the single bed voice but never past bed + 3. */
@@ -107,8 +151,8 @@ int main(void) {
      * the user plays — they neither retrigger nor release under a hold). */
     CHECK(engine_active_voices() >= 2 && engine_active_voices() <= 5,
           "user note + bed choir remain (have %d)", engine_active_voices());
-    CHECK(pluck_active_count() == 0, "plucks self-decayed under the user (%d)",
-          pluck_active_count());
+    CHECK(horn_active_count() == 0, "Alps voice self-decayed under the user (%d)",
+          horn_active_count());
 
     /* ---- 4. Release → bed movement resumes promptly ----
      * Drain the user note's release tail FIRST (no ticks), so the resume
@@ -126,12 +170,13 @@ int main(void) {
         * the window must span a state change so the resume is observable */
         now += 16;
         engine_generative_tick(now);
-        if (pluck_active_count() > 0) { resumed = 1; break; }
+        if (horn_active_count() > 0) { resumed = 1; break; }
         if ((step & 127) == 0) render_ms(16 * 128);
     }
     CHECK(resumed, "autoplay (sparkles) resumes after the user lets go");
 
-    /* ---- 4b. r19.20 HOLD+GENERATE regression: a LATCHED voice (note on,
+    /* ---- 4b. Low-level injected-note regression (physical cells are now
+     * locked during Generate). Former r19.20 HOLD+GENERATE regression: a LATCHED voice (note on,
      * finger UP → no presence) must NOT freeze the composer. Before r19.20
      * the gate was any_user_note(): one latched cell paused autoplay
      * forever. Now the generator keeps composing around the latch. */
@@ -140,7 +185,7 @@ int main(void) {
     for (int step = 0; step < 9500; ++step) {
         now += 16;
         engine_generative_tick(now);
-        if (pluck_active_count() > 0) { gen_moved = 1; break; }
+        if (horn_active_count() > 0) { gen_moved = 1; break; }
         if ((step & 127) == 0) render_ms(16 * 128);
     }
     CHECK(gen_moved, "generator keeps playing around a latched voice (r19.20)");
@@ -152,8 +197,8 @@ int main(void) {
     render_ms(12000);
     CHECK(engine_active_voices() == 0, "all gen voices gone after disable (%d)",
           engine_active_voices());
-    CHECK(pluck_active_count() == 0, "plucks rang out after disable (%d)",
-          pluck_active_count());
+    CHECK(horn_active_count() == 0, "Alps voice rang out after disable (%d)",
+          horn_active_count());
 
     /* ---- 6. r18.90 melody GRAMMAR: composes, not randomizes ----
      * Simulate ~200 bars with coarse 250 ms ticks (no audio needed to make
@@ -190,7 +235,7 @@ int main(void) {
         }
         CHECK(notes >= 40, "melody actually sings (%d notes in ~206 bars)", notes);
         CHECK(notes <= 190, "melody leaves space — rests exist (%d notes)", notes);
-        CHECK(lo >= 52 && hi <= 98, "register inside the voiced band (%d..%d)", lo, hi);
+        CHECK(lo >= 50 && hi <= 69, "autonomous melody stays in the calm band (%d..%d)", lo, hi);
         CHECK(big_leaps == 0, "no leap beyond an octave (%d)", big_leaps);
         CHECK(reps >= 3, "repetition happens — it's a motif, not a walk (%d)", reps);
         CHECK(small_steps >= notes / 5,
@@ -261,6 +306,7 @@ int main(void) {
         engine_set_generative(false, -1);
     }
 
+    test_world_phrases();
     printf("%d checks, %d failures\n", checks, fails);
     return fails ? 1 : 0;
 }
