@@ -9,7 +9,7 @@
  *            opens with bow pressure and breathes with a slow LFO
  *   symp   : two high-Q SVF bandpass resonators at the 5th and octave, lightly
  *            fed back = sympathetic strings (the lyra/Hardanger shimmer)
- *   vibrato: slow LUT-sine on the pitch, delayed onset (bowing settles first)
+ *   pitch  : stable main string; quiet detuned companion, no shared vibrato
  *
  * Control-rate work (coeff/LFO updates) every CTL samples; per-sample stays
  * two saws + one LP + two BP + adds. Alias-free, no per-sample transcendental.
@@ -29,7 +29,7 @@ typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
 typedef struct {
     vstage_t stage;
     int source;
-    float expression, vibFade;
+    float expression;
     float    freq, amp;
     float    ph, ph2, inc, inc2, dt;      /* two detuned saws            */
     dsp_svf_t body, symp1, symp2;
@@ -40,9 +40,7 @@ typedef struct {
     int      hold_left;                    /* samples of sustain left     */
     float    bow;                          /* bow-pressure env 0..1       */
 
-    float    vibPh, vibInc;                /* vibrato LFO (turns)         */
     float    bodyPh, bodyInc;              /* body-breath LFO             */
-    int      vibDelay;                     /* samples before vibrato fades in */
 
     float    panL, panR;
     float    body_base, symp_gain;         /* colour-dependent            */
@@ -86,7 +84,7 @@ static int alloc_voice(int source) {
 
 static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float amp) {
     memset(v,0,sizeof *v);
-    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
+    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f);
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
@@ -110,9 +108,7 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
     v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
     v->bow = 0.0f;
-    v->vibPh = 0.0f; v->vibInc = 5.1f / SR;    /* ~5.1 Hz vibrato           */
     v->bodyPh = 0.0f; v->bodyInc = 0.13f / SR; /* slow body breath          */
-    v->vibDelay = (int)(0.6f * SR);            /* vibrato fades in after 0.6 s */
     /* gentle stereo spread per voice */
     float pan = (i == 0) ? -0.25f : (i == 1) ? 0.25f : 0.0f;
     v->panL = 0.5f * (1.0f - pan);
@@ -172,7 +168,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                  * sustained value — the grain follows it. */
                 float target = (v->stage == V_ATTACK) ? 1.0f : 0.35f;
                 v->bow += (target - v->bow) * 0.02f;
-                /* vibrato depth fades in; body cutoff opens with bow + breath */
+                /* Body cutoff opens with bow pressure and slow breath. */
                 float breath = dsp_sin(v->bodyPh);
                 float cut = v->body_base * (1.0f + 0.35f * v->bow + 0.06f * breath);
                 dsp_svf_set(&v->body, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.9f);
@@ -195,12 +191,6 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             }
             if (v->stage == V_IDLE) continue;
 
-            /* vibrato (LUT sine, per sample is cheap — table lookup) */
-            v->vibFade += 0.00009f*((v->vibDelay<=0 ? 1.0f : 0.0f)-v->vibFade);
-            float vibAmt = v->vibFade;
-            if (v->vibDelay > 0) { --v->vibDelay; vibAmt = 0.0f; }
-            float vib = dsp_sin(v->vibPh) * 0.0035f * vibAmt;   /* ±~6 cents */
-            v->vibPh += v->vibInc; if (v->vibPh >= 1.0f) v->vibPh -= 1.0f;
             v->bodyPh += v->bodyInc; if (v->bodyPh >= 1.0f) v->bodyPh -= 1.0f;
 
             /* Stable root with a quieter detuned string. The former 0.6/0.4
@@ -208,15 +198,15 @@ void bowed_render_mix(float *dry_L, float *dry_R,
              * leaving the second harmonic dominant (hollow periodic colour).
              * 85/15 balance, scaled to preserve the former long-term oscillator
              * power: .71^2 + .125^2 ~= .6^2 + .4^2. No master gain correction. */
-            float inc  = v->inc  * (1.0f + vib);
-            float inc2 = v->inc2 * (1.0f + vib);
+            float inc  = v->inc;
+            float inc2 = v->inc2;
             float s = dsp_poly_saw(v->ph,  inc)  * 0.71f
                     + dsp_poly_saw(v->ph2, inc2) * 0.125f;
             v->ph  += inc;  if (v->ph  >= 1.0f) v->ph  -= 1.0f;
             v->ph2 += inc2; if (v->ph2 >= 1.0f) v->ph2 -= 1.0f;
 
-            /* bow-noise grain */
-            float bn = dsp_svf_bp(&v->bowbp, wnoise(&v->rng)) * (0.06f + 0.20f * v->bow);
+            /* Restrained grain: 12 dB below the former continuous bow noise. */
+            float bn = dsp_svf_bp(&v->bowbp, wnoise(&v->rng)) * (0.015f + 0.05f * v->bow);
 
             /* wooden body */
             float body = dsp_svf_lp(&v->body, s + bn);

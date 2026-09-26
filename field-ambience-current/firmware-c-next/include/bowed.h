@@ -2,8 +2,9 @@
  * bowed.h — bowed-string voice (lyra / Hardanger-inspired), r19.46.
  *
  * A warm, sustained, self-completing "bow stroke": swells in, sings, fades —
- * band-limited saw string body + continuous bow-noise grain + a resonant wood
- * body + two sympathetic resonators + slow bow vibrato. Deliberately NOT a
+ * band-limited saw string body + restrained bow-noise grain + a resonant wood
+ * body + two sympathetic resonators. Stable pitch; movement from a quiet
+ * detuned companion and slow body breath. Deliberately NOT a
  * plucked "ding" and NOT a friction-model scrape (both forbidden by the
  * location brief) — it is a new synth voice *influenced* by bowed instruments.
  *

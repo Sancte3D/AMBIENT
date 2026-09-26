@@ -1,5 +1,13 @@
 # PROJECT STATUS
 
+> **2026-09-26 — Bowed-Bewegung reduziert:** Gemeinsames 5,1-Hz-Vibrato
+> entfernt, Bogenrauschen um 12 dB gesenkt. 24 Register-/Pegel-/Farb-Probes
+> bestanden; Grundtonänderung unter 0,006 dB. Volle Host-Suite grün; keine
+> neuen DSP-Puffer. Trockener 27,5-s-A/B für beide Farben:
+> `field-ambience-current/docs/audio/BOWED_MOTION_REVIEW.md`.
+> **Als Nächstes:** Choir/Forest-Vokalresonanzen und Summcharakter; danach
+> Guembri/Desert. Bowed-Hörfreigabe und Integration mit Pad/Raum bleiben offen.
+
 
 > **2026-09-23 — Alps-Quelle konkret umgebaut:** Horn-Suboktave und festen
 > 950-Hz-Formanten entfernt; Grundton + leisere Obertöne, nichtresonanter
