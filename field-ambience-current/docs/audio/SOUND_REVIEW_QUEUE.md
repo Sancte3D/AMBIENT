@@ -1,5 +1,11 @@
 # Sound review queue
 
+> **PAUSED — user direction 2026-09-26:** Concept approval comes first, then
+> sound design, then UX/UI/display, then real-device testing. CONCEPT_GATE.md
+> governs the next task. The source queue below is retained for later; historical
+> instrument inspiration and the current nature-world roster are under concept
+> review. Do not resume timbre edits or require an audition to decide the concept.
+
 User direction: review every sound, effect and setting in small completed units.
 Each unit ends with a concrete change or finding, relevant verification and a
 checkpoint. User-facing audio is at most 30 seconds unless explicitly requested.
@@ -25,7 +31,7 @@ NATURE_WORLD_CONTRACT.md defines calming natural places. Earlier parallel
 Character/bed plans in AMBIENT_CONCEPT_REVIEW.md are historical, not the next
 implementation task. No new engine/layer before source quality is established.
 
-Concrete next units, in order:
+Deferred sound units, to reassess after concept approval:
 Bowed source unit completed: shared vibrato removed and grain reduced by 12 dB;
 24 measured comparisons, full suite green, 27.5 s dry A/B. See
 BOWED_MOTION_REVIEW.md. Listening approval and pad/room integration remain open.

@@ -1,12 +1,17 @@
 # AMBIENT — Produktreview und nächste abgeschlossene Pakete
 
+> **Prioritätswechsel 2026-09-26:** Konzeptfreigabe → Sounddesign →
+> UX/UI/Display → Tests am echten Gerät. Siehe CONCEPT_GATE.md. Die folgende
+> frühere Umsetzungsliste ist ein Backlog, keine aktuelle Arbeitsfreigabe.
+> Klangänderungen pausieren; ein Konzeptwechsel zu Kultur/Geschichte ist offen.
+
 Stand: 2026-09-22, PR #129. Die ausdrückliche Nutzerentscheidung für einen
 **autonomen Hörmodus mit gesperrten Spielflächen** ersetzt die vorherige
 Planung „Generate bleibt gleichzeitig spielbar“. Der Router-Fix vom
 2026-09-17 bleibt gültig; paralleles Character-Spiel mit automatischem Bett
 ist kein notwendiger nächster Ausbau mehr.
 
-**Aktuelle Arbeitspriorität: Sound vor Display; beruhigend statt aufmerksamkeitsfordernd.**
+**Bisherige Arbeitspriorität (jetzt nachgeordnet): Sound vor Display.**
 Automatisches Register und Einstiegslogik sind in `CALM_REGISTER_REVIEW.md`
 reduziert; Alarm-/Sirenen-/Pieptoncharakter bleibt ein Ausschlusskriterium. Open Sea wird als erste
 vollständige Klangwelt auseinandergenommen; Quellenkorrektur und Abtrag von

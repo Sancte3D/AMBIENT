@@ -1,5 +1,14 @@
 # PROJECT STATUS
 
+> **VERBINDLICH 2026-09-26 — Konzept vor weiterer Umsetzung:** Nutzer stellt
+> die Reihenfolge klar: **Konzeptfreigabe → Sounddesign → UX/UI/Display →
+> Tests am echten Gerät**. Kein physischer Prototyp als Entscheidungsgrundlage
+> verfügbar. Weitere Soundänderungen (Choir/Forest, Guembri/Desert) pausieren.
+> Nächste Aufgabe: Produktzweck, Identität und Rolle von Natur/Kultur/Geschichte
+> schlüssig entscheiden. `field-ambience-current/docs/audio/CONCEPT_GATE.md`
+> hat Vorrang vor älteren Next-/Locked-Einträgen. Kulturansatz ist ein Vorschlag,
+> kein beschlossener Umbau. Konzeptfreigabe ist keine empirische Klangfreigabe.
+
 > **2026-09-26 — Bowed-Bewegung reduziert:** Gemeinsames 5,1-Hz-Vibrato
 > entfernt, Bogenrauschen um 12 dB gesenkt. 24 Register-/Pegel-/Farb-Probes
 > bestanden; Grundtonänderung unter 0,006 dB. Volle Host-Suite grün; keine
