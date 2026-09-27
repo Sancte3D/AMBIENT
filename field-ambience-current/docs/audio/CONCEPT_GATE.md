@@ -34,6 +34,16 @@ Produkt versprochen wird, das nur durch ungeplante Hardwareänderungen entsteht.
 
 ## Ausgangspunkt, noch kein endgültiger Produktbrief
 
+Fortschreibung 2026-09-27: Der Nutzer konkretisiert das Erlebnis als ruhige,
+harmonische Ambient Worlds mit deutlich unterschiedlichem musikalischem
+Verhalten und beauftragt deren Ausbau. Der ausgearbeitete Entwurf steht in
+[AMBIENT_WORLD_SYSTEMS.md](AMBIENT_WORLD_SYSTEMS.md): drei Kandidaten,
+gemeinsame Harmonie, World-Grammatiken, Quellenrollen, Generate-Semantik,
+Übergänge und offene Machbarkeit. Natur ist die primäre vorstellbare Umgebung;
+Geschichte/Artefakte bleiben eine mögliche Identitätsebene. Die nächsten
+Entscheidungen unten sind dafür teilweise bearbeitet, keine Aufforderung zum
+Neustart der Diskussion. Als Nächstes Quellen-/Effektarchitektur konkretisieren.
+
 Ein eigenständiges physisches Ambient-Instrument ermöglicht musikalische
 Gestaltung ohne Leistungsdruck und einen bewusst gestarteten autonomen
 Hörmodus. Ruhige Entwicklung, harmonischer Zusammenhang und wenige direkte

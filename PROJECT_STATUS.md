@@ -1,5 +1,14 @@
 # PROJECT STATUS
 
+> **2026-09-27 — Drei World-Systeme als konkreter Konzeptentwurf:**
+> `field-ambience-current/docs/audio/AMBIENT_WORLD_SYSTEMS.md` beschreibt
+> COAST (Stimmenübergaben), WOODLAND (Motivantworten) und HIGHLANDS (Fragmente
+> und Pausen), gemeinsame Harmonie-/Belegungsregeln und begrenzte Übergänge.
+> Arbeitsnamen, keine Laufzeit-Umbenennung. Generate bleibt autonomer Hörmodus;
+> Variantenbildung ist davon getrennt. Firmware und Klangfreigabe unverändert.
+> Nächstes Konzeptpaket: minimale Quellen-/Effektarchitektur anhand vorhandener
+> Engines auswählen. `CONCEPT_GATE.md` bleibt maßgeblich für den Phasenwechsel.
+
 > **VERBINDLICH 2026-09-26 — Konzept vor weiterer Umsetzung:** Nutzer stellt
 > die Reihenfolge klar: **Konzeptfreigabe → Sounddesign → UX/UI/Display →
 > Tests am echten Gerät**. Kein physischer Prototyp als Entscheidungsgrundlage
