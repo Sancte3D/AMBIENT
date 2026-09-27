@@ -1,0 +1,180 @@
+{
+  "baseline_commit": "388be4a7559b880979dd526759b96059a925c048",
+  "partials": {
+    "before": {
+      "midi": 60,
+      "velocity": 0.5,
+      "harmonic_amplitudes_db_relative_root": [
+        0.0,
+        4.2019316349421585,
+        -14.917372094285481,
+        -20.260386958130177,
+        -46.18561628518549,
+        -36.205383006185926,
+        -47.83319966860113,
+        -46.70714992258056
+      ]
+    },
+    "after": {
+      "midi": 60,
+      "velocity": 0.5,
+      "harmonic_amplitudes_db_relative_root": [
+        0.0,
+        -13.6339283980928,
+        -22.185909190393694,
+        -37.31308854209294,
+        -39.103333810365505,
+        -51.377497214972166,
+        -52.64284750260637,
+        -63.1792555470072
+      ]
+    }
+  },
+  "device_grid": {
+    "rows": [
+      {
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -33.63185363109547,
+        "body_rms_dbfs": -33.5794538375469,
+        "onset_rms_dbfs": -55.29086047172652,
+        "integrated_lufs": -32.3,
+        "true_peak_dbfs": -25.9
+      },
+      {
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -28.790762696341417,
+        "body_rms_dbfs": -28.753492823974778,
+        "onset_rms_dbfs": -52.5521265928326,
+        "integrated_lufs": -27.4,
+        "true_peak_dbfs": -20.9
+      },
+      {
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.607662886481993,
+        "body_rms_dbfs": -25.585936652868888,
+        "onset_rms_dbfs": -50.33002267885088,
+        "integrated_lufs": -24.2,
+        "true_peak_dbfs": -17.5
+      },
+      {
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -33.03131923111273,
+        "body_rms_dbfs": -32.966780527158555,
+        "onset_rms_dbfs": -54.3810597660243,
+        "integrated_lufs": -31.3,
+        "true_peak_dbfs": -25.7
+      },
+      {
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -28.199256997739354,
+        "body_rms_dbfs": -28.14835877349129,
+        "onset_rms_dbfs": -51.792899115343616,
+        "integrated_lufs": -26.5,
+        "true_peak_dbfs": -20.7
+      },
+      {
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.99268004011816,
+        "body_rms_dbfs": -24.950150007035163,
+        "onset_rms_dbfs": -49.69147610643483,
+        "integrated_lufs": -23.3,
+        "true_peak_dbfs": -17.4
+      },
+      {
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -32.8013592335508,
+        "body_rms_dbfs": -32.73922648942317,
+        "onset_rms_dbfs": -53.80000331448123,
+        "integrated_lufs": -30.9,
+        "true_peak_dbfs": -25.8
+      },
+      {
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.959320833707658,
+        "body_rms_dbfs": -27.910266738231467,
+        "onset_rms_dbfs": -51.185101775085435,
+        "integrated_lufs": -26.1,
+        "true_peak_dbfs": -20.8
+      },
+      {
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.766777278309856,
+        "body_rms_dbfs": -24.74418784672633,
+        "onset_rms_dbfs": -49.06929477462295,
+        "integrated_lufs": -22.9,
+        "true_peak_dbfs": -17.4
+      },
+      {
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -32.621340746001025,
+        "body_rms_dbfs": -32.56149407009125,
+        "onset_rms_dbfs": -53.712188343968364,
+        "integrated_lufs": -30.6,
+        "true_peak_dbfs": -25.9
+      },
+      {
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.79553884814788,
+        "body_rms_dbfs": -27.75014224919236,
+        "onset_rms_dbfs": -51.09064698197276,
+        "integrated_lufs": -25.8,
+        "true_peak_dbfs": -20.9
+      },
+      {
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.613012204906035,
+        "body_rms_dbfs": -24.583599670979513,
+        "onset_rms_dbfs": -48.97313172668997,
+        "integrated_lufs": -22.6,
+        "true_peak_dbfs": -17.5
+      },
+      {
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -32.58009655507768,
+        "body_rms_dbfs": -32.519581794893966,
+        "onset_rms_dbfs": -53.72234672337031,
+        "integrated_lufs": -30.5,
+        "true_peak_dbfs": -26.0
+      },
+      {
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.730423937923852,
+        "body_rms_dbfs": -27.68196081946925,
+        "onset_rms_dbfs": -51.118623577286286,
+        "integrated_lufs": -25.6,
+        "true_peak_dbfs": -21.0
+      },
+      {
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.54882367608006,
+        "body_rms_dbfs": -24.521030333736327,
+        "onset_rms_dbfs": -49.03300310395981,
+        "integrated_lufs": -22.5,
+        "true_peak_dbfs": -17.6
+      }
+    ],
+    "summary": {
+      "body_spread_db": {
+        "0.2": 1.059872042652934,
+        "0.5": 1.0715320045055279,
+        "0.85": 1.064906319132561
+      },
+      "max_true_peak_dbfs": -17.4
+    }
+  }
+}

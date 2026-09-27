@@ -9,7 +9,7 @@
  *            opens with bow pressure and breathes with a slow LFO
  *   symp   : two high-Q SVF bandpass resonators at the 5th and octave, lightly
  *            fed back = sympathetic strings (the lyra/Hardanger shimmer)
- *   vibrato: slow LUT-sine on the pitch, delayed onset (bowing settles first)
+ *   pitch  : stable main string; quiet detuned companion, no shared vibrato
  *
  * Control-rate work (coeff/LFO updates) every CTL samples; per-sample stays
  * two saws + one LP + two BP + adds. Alias-free, no per-sample transcendental.
@@ -28,6 +28,8 @@ typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
 
 typedef struct {
     vstage_t stage;
+    int source;
+    float expression;
     float    freq, amp;
     float    ph, ph2, inc, inc2, dt;      /* two detuned saws            */
     dsp_svf_t body, symp1, symp2;
@@ -38,15 +40,18 @@ typedef struct {
     int      hold_left;                    /* samples of sustain left     */
     float    bow;                          /* bow-pressure env 0..1       */
 
-    float    vibPh, vibInc;                /* vibrato LFO (turns)         */
     float    bodyPh, bodyInc;              /* body-breath LFO             */
-    int      vibDelay;                     /* samples before vibrato fades in */
 
     float    panL, panR;
     float    body_base, symp_gain;         /* colour-dependent            */
 } bvoice_t;
 
-static bvoice_t V[VMAX];
+static bvoice_t V[VMAX], pending[VMAX];
+/* Prepare off the audio path; at capacity fade the old voice for 8 ms,
+ * then start the prepared attack. Exactly VMAX voices render at any time. */
+#define HANDOVER_SAMPLES 353
+static volatile int queued[VMAX];
+static int fade_left[VMAX];
 static int      ctl;
 static int      s_colour = 0;
 
@@ -56,6 +61,8 @@ static inline float wnoise(uint32_t *r) {
 }
 
 void bowed_init(void) {
+    memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
+    memset(fade_left,0,sizeof fade_left);
     memset(V, 0, sizeof V);
     ctl = 0;
     s_colour = 0;
@@ -63,31 +70,32 @@ void bowed_init(void) {
 
 void bowed_set_colour(int colour) { s_colour = colour ? 1 : 0; }
 
-static int alloc_voice(void) {
-    int best = -1; float lo = 1e9f;
-    for (int i = 0; i < VMAX; ++i) {
-        if (V[i].stage == V_IDLE) return i;
-        if (V[i].env < lo) { lo = V[i].env; best = i; }
+static int alloc_voice(int source) {
+    int best=0; float lowest=1e9f;
+    for(int i=0;i<VMAX;++i) {
+        if(queued[i] && pending[i].source==source && source>=0) return i;
+        if(V[i].stage==V_IDLE && !queued[i]) return i;
+        /* Released voices yield first, then the quietest held voice. */
+        float score=V[i].env + (V[i].stage==V_RELEASE ? 0.0f:2.0f);
+        if(score<lowest) { lowest=score; best=i; }
     }
     return best;
 }
 
-void bowed_note(float freq_hz, float amp) {
-    if (freq_hz < 20.0f) return;
-    int i = alloc_voice();
-    if (i < 0) return;
-    bvoice_t *v = &V[i];
+static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float amp) {
+    memset(v,0,sizeof *v);
+    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f);
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
     v->inc2 = freq_hz * 1.0041f / SR;         /* +7 cents ensemble detune  */
     v->dt   = v->inc;
-    if (V[i].stage == V_IDLE) { v->ph = 0.03f; v->ph2 = 0.51f; }  /* fresh phase */
+    if (v->stage == V_IDLE) { v->ph = 0.03f; v->ph2 = 0.51f; }  /* fresh phase */
     v->rng  = 0x9E3779B9u ^ (uint32_t)(freq_hz * 131.0f);
 
     /* colour: Open Sea = warmer/brighter body, moderate symp; Fjords = darker,
      * more sympathetic ring. */
-    v->body_base = (s_colour == 0) ? freq_hz * 6.5f : freq_hz * 4.2f;
+    v->body_base = ((s_colour == 0) ? freq_hz * 6.5f : freq_hz * 4.2f) * (0.75f+0.25f*v->expression);
     v->symp_gain = (s_colour == 0) ? 0.10f : 0.17f;
 
     dsp_svf_reset(&v->body);  dsp_svf_set(&v->body, v->body_base, 0.9f);
@@ -100,9 +108,7 @@ void bowed_note(float freq_hz, float amp) {
     v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
     v->bow = 0.0f;
-    v->vibPh = 0.0f; v->vibInc = 5.1f / SR;    /* ~5.1 Hz vibrato           */
     v->bodyPh = 0.0f; v->bodyInc = 0.13f / SR; /* slow body breath          */
-    v->vibDelay = (int)(0.6f * SR);            /* vibrato fades in after 0.6 s */
     /* gentle stereo spread per voice */
     float pan = (i == 0) ? -0.25f : (i == 1) ? 0.25f : 0.0f;
     v->panL = 0.5f * (1.0f - pan);
@@ -110,9 +116,36 @@ void bowed_note(float freq_hz, float amp) {
     v->stage = V_ATTACK;
 }
 
+static void start_note(int source, float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || freq_hz>8000.0f || amp<=0.0f) return;
+    if(source>=0) for(int j=0;j<VMAX;++j)
+        if(V[j].stage!=V_IDLE && V[j].source==source) V[j].stage=V_RELEASE;
+    int i=alloc_voice(source);
+    queued[i]=0;
+    prepare_note(&pending[i],i,source,freq_hz,amp);
+    if(V[i].stage!=V_IDLE && fade_left[i]==0) fade_left[i]=HANDOVER_SAMPLES;
+    __asm__ volatile("" ::: "memory");
+    queued[i]=1;
+}
+
+void bowed_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
+void bowed_note_on(int source,float freq_hz,float amp) {
+    if(source>=0 && source<16) start_note(source,freq_hz,amp);
+}
+void bowed_note_off(int source) {
+    for(int i=0;i<VMAX;++i) if(queued[i] && pending[i].source==source) queued[i]=0;
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE && V[i].source==source) {
+        V[i].source=-1; V[i].stage=V_RELEASE;
+    }
+}
+void bowed_all_off(void) {
+    for(int i=0;i<VMAX;++i) queued[i]=0;
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
+}
+
 int bowed_active_count(void) {
     int c = 0;
-    for (int i = 0; i < VMAX; ++i) if (V[i].stage != V_IDLE) ++c;
+    for (int i = 0; i < VMAX; ++i) if (V[i].stage != V_IDLE || queued[i]) ++c;
     return c;
 }
 
@@ -125,6 +158,9 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 
         for (int i = 0; i < VMAX; ++i) {
             bvoice_t *v = &V[i];
+            if(queued[i] && v->stage==V_IDLE) {
+                *v=pending[i]; queued[i]=0; fade_left[i]=0;
+            }
             if (v->stage == V_IDLE) continue;
 
             if (do_ctl) {
@@ -132,7 +168,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                  * sustained value — the grain follows it. */
                 float target = (v->stage == V_ATTACK) ? 1.0f : 0.35f;
                 v->bow += (target - v->bow) * 0.02f;
-                /* vibrato depth fades in; body cutoff opens with bow + breath */
+                /* Body cutoff opens with bow pressure and slow breath. */
                 float breath = dsp_sin(v->bodyPh);
                 float cut = v->body_base * (1.0f + 0.35f * v->bow + 0.06f * breath);
                 dsp_svf_set(&v->body, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.9f);
@@ -145,7 +181,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                     if (v->env >= v->amp) { v->env = v->amp; v->stage = V_HOLD; }
                     break;
                 case V_HOLD:
-                    if (--v->hold_left <= 0) v->stage = V_RELEASE;
+                    if (v->source < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
                     break;
                 case V_RELEASE:
                     v->env -= v->relCoef * v->env;
@@ -155,23 +191,22 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             }
             if (v->stage == V_IDLE) continue;
 
-            /* vibrato (LUT sine, per sample is cheap — table lookup) */
-            float vibAmt = 1.0f;
-            if (v->vibDelay > 0) { --v->vibDelay; vibAmt = 0.0f; }
-            float vib = dsp_sin(v->vibPh) * 0.0035f * vibAmt;   /* ±~6 cents */
-            v->vibPh += v->vibInc; if (v->vibPh >= 1.0f) v->vibPh -= 1.0f;
             v->bodyPh += v->bodyInc; if (v->bodyPh >= 1.0f) v->bodyPh -= 1.0f;
 
-            /* string: two detuned band-limited saws */
-            float inc  = v->inc  * (1.0f + vib);
-            float inc2 = v->inc2 * (1.0f + vib);
-            float s = dsp_poly_saw(v->ph,  inc)  * 0.6f
-                    + dsp_poly_saw(v->ph2, inc2) * 0.4f;
+            /* Stable root with a quieter detuned string. The former 0.6/0.4
+             * mix nearly cancelled its fundamental once per beat cycle,
+             * leaving the second harmonic dominant (hollow periodic colour).
+             * 85/15 balance, scaled to preserve the former long-term oscillator
+             * power: .71^2 + .125^2 ~= .6^2 + .4^2. No master gain correction. */
+            float inc  = v->inc;
+            float inc2 = v->inc2;
+            float s = dsp_poly_saw(v->ph,  inc)  * 0.71f
+                    + dsp_poly_saw(v->ph2, inc2) * 0.125f;
             v->ph  += inc;  if (v->ph  >= 1.0f) v->ph  -= 1.0f;
             v->ph2 += inc2; if (v->ph2 >= 1.0f) v->ph2 -= 1.0f;
 
-            /* bow-noise grain */
-            float bn = dsp_svf_bp(&v->bowbp, wnoise(&v->rng)) * (0.06f + 0.20f * v->bow);
+            /* Restrained grain: 12 dB below the former continuous bow noise. */
+            float bn = dsp_svf_bp(&v->bowbp, wnoise(&v->rng)) * (0.015f + 0.05f * v->bow);
 
             /* wooden body */
             float body = dsp_svf_lp(&v->body, s + bn);
@@ -179,6 +214,10 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             /* sympathetic resonators (fed lightly, ring back in) */
             float sy = dsp_svf_bp(&v->symp1, body) + dsp_svf_bp(&v->symp2, body);
             float out = (body + sy * v->symp_gain) * v->env * 0.5f;
+            if(fade_left[i]>0) {
+                out *= (float)fade_left[i]/HANDOVER_SAMPLES;
+                if(--fade_left[i]==0) v->stage=V_IDLE;
+            }
 
             L += out * v->panL;
             R += out * v->panR;

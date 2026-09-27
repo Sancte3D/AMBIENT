@@ -41,6 +41,7 @@
 #include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
+#include "cell_router.h"
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
 #include "menu.h"        /* menu state machine */
@@ -98,8 +99,7 @@ static void hal_set_envmod      (float v)   { engine_set_envmod(v); }          /
 enum { CELL_NOTE = 0, CELL_HARMONY = 1, CELL_LAND = 2 };
 static int s_cell_mode = CELL_NOTE;
 static uint32_t s_field_seed = 0x1234u;             /* r19.24: New-Field seed source */
-static const char *const STEER_NAME[5] =            /* r19.24: cell → intent */
-    { "HOME", "LIFT", "DARK", "OPEN", "TENSION" };
+static cell_router_t s_cell_router;
 
 /* r19.27 — Landscape layer callbacks: map the abstract role state machine
  * (landscape.c) onto the engine's existing layers. Bed/Motif pitches come
@@ -145,19 +145,13 @@ static const landscape_iface_t s_ls_iface = {
     ls_drone, ls_bed, ls_motif, ls_atmos, ls_memory
 };
 
-/* r19.25: the single cell-routing path — used by the physical buttons AND
- * by the gesture-loop playback, so a replayed cell behaves exactly like a
- * live one in the current mode (generate-steer / bloom / landscape / note). */
-static void route_cell(uint8_t c, bool pressed, uint32_t now) {
-    if (c >= 5) return;
-    if (controls_modifier_active(MOD_GENERATE)) {
-        if (pressed) { engine_generative_nudge(c, now);
-                       overlay_show("STEER", STEER_NAME[c], now, 0); }
-    } else if (s_cell_mode == CELL_HARMONY) {
+/* Listening locks new cell presses; previously owned releases still arrive. */
+static void dispatch_cell(int mode, uint8_t c, bool pressed, uint32_t now) {
+    if (mode == CELL_HARMONY) {
         if (pressed) bloom_press(c, CELL_TAP_AMP,
                                  controls_modifier_active(MOD_HOLD), now);
         else         bloom_release(c, now);
-    } else if (s_cell_mode == CELL_LAND) {
+    } else if (mode == CELL_LAND) {
         if (pressed) landscape_press(c, controls_modifier_active(MOD_HOLD), now);
         else         landscape_release(c, now);
     } else {
@@ -165,14 +159,26 @@ static void route_cell(uint8_t c, bool pressed, uint32_t now) {
         else         controls_cell_release(c);
     }
 }
+static void route_cell(uint8_t c, bool pressed, uint32_t now) {
+    if (pressed && controls_modifier_active(MOD_GENERATE)) return;
+    cell_router_event(&s_cell_router, s_cell_mode, c, pressed, now, dispatch_cell);
+}
+static void prepare_listening(uint32_t now) {
+    cell_router_release_all(&s_cell_router, now, dispatch_cell);
+    controls_release_cells();
+    bloom_all_off();
+    landscape_all_off(now);
+    gesture_clear(now);
+}
 static void hal_set_cell(int mode) {
     if (mode < CELL_NOTE || mode > CELL_LAND) mode = CELL_NOTE;
     if (mode == s_cell_mode) return;
+    cell_router_release_all(&s_cell_router, HAL_GetTick(), dispatch_cell);
     /* Modewechsel: die Stimmen/Latches des verlassenen Modus sauber beenden. */
     switch (s_cell_mode) {
         case CELL_HARMONY: bloom_all_off();          break;
         case CELL_LAND:  landscape_all_off(0);     break;
-        default:         engine_all_off();         break;   /* NOTE latches */
+        default:         controls_release_cells(); engine_all_off(); break;
     }
     /* r19.31: HARMONY owns the bass (own octave/glide per mode); NOTE/LAND let
      * the engine auto-follow the lowest held note again. */
@@ -187,8 +193,10 @@ static void be_note_on (int midi, float vel) { synth_host_note_on(midi, vel); }
 static void be_note_off(void)                { synth_host_note_off(); }
 static void be_panic   (void)                { synth_host_panic(); }
 static void be_render  (int16_t *b, int n)   { synth_host_render(b, n); }
+static void be_param(int slot, float value) { synth_host_set_param((synth_param_t)slot, value); }
 static const engine_synth_backend_t s_v2_backend = {
-    be_select, be_note_on, be_note_off, be_panic, be_render
+    be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param,
+    synth_host_note_on_hz, synth_host_set_macro, synth_host_retune_hz
 };
 
 /* Klinke drin → NUR den PAM8406 muten (AMP_MUTE_N = PB15 LOW), Line-Out
@@ -332,6 +340,7 @@ int main(void) {
         .set_release     = hal_set_release,
         .set_sweep       = hal_set_sweep,
         .set_envmod      = hal_set_envmod,
+        .set_synth_param = engine_set_synth_param,
         };
         menu_init(&cb);
     }
@@ -458,7 +467,7 @@ int main(void) {
              * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
             for (uint8_t c = 0; c < 5; ++c) {
                 uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
-                if (scenes_ui_active()) {
+                if (scenes_ui_active() && !controls_modifier_active(MOD_GENERATE)) {
                     if (fell & m)
                         scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
                                        now);
@@ -484,7 +493,7 @@ int main(void) {
              * confirm-flash that existed since r18.64 but was never wired. */
             if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
             if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
-            if (fell & (1u<<MCP_BIT_MOD_HOLD)) {
+            if ((fell & (1u<<MCP_BIT_MOD_HOLD)) && !controls_modifier_active(MOD_GENERATE)) {
                 if (controls_modifier_active(MOD_SHIFT)) {
                     /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.
                      * (Mischis SHIFT+GENERATE ist seit r19.24 New Field.) */
@@ -501,6 +510,7 @@ int main(void) {
             if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
             if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
             if (fell & (1u<<MCP_BIT_MOD_GENERATE)) {
+                if (!controls_modifier_active(MOD_GENERATE)) prepare_listening(now);
                 if (controls_modifier_active(MOD_SHIFT)) {
                     /* r19.24: SHIFT+GENERATE = New Field — sicher AN + neuer,
                      * reproduzierbarer Seed (via engine_gen_seed scene-bar). */
@@ -510,10 +520,13 @@ int main(void) {
                     overlay_show("GENERATE", "NEW FIELD", now, 0);
                 } else {
                     controls_modifier(MOD_GENERATE, true);   /* normaler Toggle */
+                    overlay_show("GENERATE", controls_modifier_active(MOD_GENERATE)
+                                 ? "LISTENING" : "PLAY", now, 0);
                 }
             }
             if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
-            if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { controls_modifier(MOD_CLEAR, true);
+            if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { cell_router_release_all(&s_cell_router, now, dispatch_cell);
+                                                   controls_modifier(MOD_CLEAR, true);
                                                    bloom_all_off();  /* r19.23 */
                                                    landscape_all_off(now); /* r19.27 */
                                                    gesture_clear(now); /* r19.25 */

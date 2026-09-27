@@ -1,12 +1,8 @@
 /*
- * famTexture — Step 10. Always-on brown-noise ambient bed.
- *
- * Port of the webapp `ensureTexture`. Per channel: brown noise feeds a
- * lowpassed "rumble" and a band-passed, slowly-swept "breath"; their mix is
- * warmed by a 4.5 kHz lowpass and scaled by a slow amplitude. L and R use
- * independent noise streams for a wide stereo bed; the two slow LFOs (BP
- * centre sweep, breath amplitude pulse) and the filter coefficients are
- * shared and updated at control rate.
+ * texture.c — broad, irregular air texture, separate from landscape weather.
+ * A bounded stochastic pressure envelope replaces the fixed 19/25 s LFOs.
+ * Broadband colour avoids a moving resonant vowel; the high band follows
+ * the same lulls instead of leaving permanent hiss. Fixed memory, no delay.
  */
 
 #include "texture.h"
@@ -47,8 +43,9 @@ static inline float air_white(air_t *a){
     return (float)((int32_t)a->lcg) / 2147483648.0f;
 }
 
-static float sweep_phase;            /* 0.052 Hz — BP centre sweep */
-static float breath_phase;           /* 0.04 Hz  — breath amp pulse */
+static uint32_t drift_rng;
+static int drift_until;
+static float drift, drift_target;
 static float breath_gain;            /* current breath gain (ctl-rate) */
 
 static float amp_cur, amp_tgt;       /* bed amplitude (smoothed) */
@@ -74,8 +71,7 @@ void texture_init(void) {
     airN[0].lcg = 0xBEEFFACEu; airN[1].lcg = 0xFACECAFEu;   /* decorrelated */
     dsp_pink_seed(&pink[0], 0x600DCAFEu);
     dsp_pink_seed(&pink[1], 0xBADD10DEu);
-    sweep_phase = 0.0f;
-    breath_phase = 0.0f;
+    drift_rng=0x238A71BCu; drift_until=0; drift=drift_target=0.5f;
     breath_gain = 0.5f;
     amp_cur = amp_tgt = 0.0f;          /* boots silent (SPEC §8) */
     /* ~2 s glide so the bed blooms in rather than snapping. */
@@ -88,19 +84,20 @@ void texture_set_amount(float amount_0_1) {
     amp_tgt = amount_0_1 * AMOUNT_SCALE;
 }
 
-/* Control-rate: advance the two LFOs, re-aim the breath bandpass centre and
- * the breath amplitude. */
+/* Control-rate stochastic colour and intensity, with independent RNG. */
 static void control_update(void) {
-    sweep_phase  += (0.052f / SR) * (float)CTL_DECIMATE;
-    if (sweep_phase  >= 1.0f) sweep_phase  -= 1.0f;
-    breath_phase += (0.040f / SR) * (float)CTL_DECIMATE;
-    if (breath_phase >= 1.0f) breath_phase -= 1.0f;
+    if (--drift_until<=0) {
+        drift_rng=drift_rng*1664525u+1013904223u;
+        float r=(float)(drift_rng>>8)*(1.0f/16777216.0f);
+        drift_target=r*r;
+        drift_rng=drift_rng*1664525u+1013904223u;
+        drift_until=(int)((SR/CTL_DECIMATE)*(2.0f+12.0f*(float)(drift_rng>>8)/16777216.0f));
+    }
+    drift+=0.00024f*(drift_target-drift);
+    float centre=800.0f+drift*1600.0f;
+    for (int c=0;c<2;++c) dsp_svf_set(&breathBP[c],centre,0.707f);
+    breath_gain=drift*drift;
 
-    float centre = 600.0f + dsp_sin(sweep_phase) * 260.0f;
-    if (centre < 80.0f) centre = 80.0f;
-    for (int c = 0; c < 2; ++c) dsp_svf_set(&breathBP[c], centre, 1.6f);
-
-    breath_gain = 0.5f + dsp_sin(breath_phase) * 0.22f;
 }
 
 void texture_render_mix(float *dry_L, float *dry_R,
@@ -121,11 +118,11 @@ void texture_render_mix(float *dry_L, float *dry_R,
              * "Brumm" the user heard at amount ≥ 0.12, keeps a hint of low
              * warmth so the bed isn't only breath. */
             float rumble = dsp_svf_lp(&rumbleLP[c], nz) * 0.10f;
-            float breath = dsp_svf_bp(&breathBP[c], breath_src) * breath_gain;
+            float breath = dsp_svf_lp(&breathBP[c], breath_src);
             float warm   = dsp_svf_lp(&warmLP[c], rumble + breath);
             /* Tier A #5 — air band, parallel (NOT through warmLP). */
             float air    = dsp_svf_hp(&airHP[c], air_white(&airN[c])) * 0.13f;
-            float out    = (warm + air) * amp_cur;
+            float out    = (warm * breath_gain + air * breath_gain * 0.3f) * amp_cur;
 
             if (c == 0) { dry_L[n] += out; send_L[n] += out * send_amount; }
             else        { dry_R[n] += out; send_R[n] += out * send_amount; }

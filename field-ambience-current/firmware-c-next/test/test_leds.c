@@ -88,6 +88,26 @@ int main(void) {
     CHECK(mid > 0 && mid < LED_DUTY_WHITE,
           "Drone mid-fade is in-between (%d, target %d)", mid, LED_DUTY_WHITE);
 
+    /* Listening status is quiet and moving, with no residual light on exit. */
+    controls_init(); leds_init();
+    controls_modifier(MOD_GENERATE, true);
+    int low = LED_PWM_MAX, high = 0, previous = 0, max_step = 0;
+    for (now = 0; now < 8000; now += 8) {
+        leds_render(now, 8, out);
+        if (out[3] < low) low = out[3];
+        if (out[3] > high) high = out[3];
+        int step = (int)out[3] - previous;
+        if (step < 0) step = -step;
+        if (step > max_step) max_step = step;
+        previous = out[3];
+    }
+    CHECK(high > 500 && high <= LED_DUTY_WHITE / 3, "quiet pulse ceiling %d", high);
+    CHECK(low < 50 && high - low > 500, "status visibly breathes %d..%d", low, high);
+    CHECK(max_step < 10, "no pulse edge/period jump (%d)", max_step);
+    controls_modifier(MOD_GENERATE, true);
+    settle(&now, out, 400);
+    CHECK(out[3] == 0, "Generate dark after exit");
+
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");
     return fails ? 1 : 0;

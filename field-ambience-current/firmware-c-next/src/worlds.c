@@ -24,14 +24,26 @@
  * Accent colour rule: at least one channel near 255 so whites stay bright in
  * the grey→RGB565 cast. See ADR-0015 Step 1.
  *
- * NB on modal identity: the generative core reads only tonality (major vs
- * minor pentatonic — mode_is_minor), so lydian/mixolydian/phrygian collapse to
- * major/minor in the auto-melody. The per-world distinction therefore comes
- * from key + macros + chord colour + bass + accent, NOT from true modal
- * harmony. Honest limitation; documented so nobody expects "real dorian".
+ * Modal identity shares the live scale table. Autoplay keeps a pentatonic
+ * bed; characteristic modal colour enters high only when pitch memory
+ * leaves room. A dense bed can legitimately suppress this colour.
  */
 
 #include "worlds.h"
+
+static const world_phrase_t PHRASES[WORLD_COUNT] = {
+    {8,16,5,12,65},   /* Alps: long calls with space between them. */
+    {9,16,3, 8,75},   /* Open Sea: sustained, more connected swells. */
+    {10,16,6,14,55},  /* Fjords: long suspended tones, wider rests. */
+    {8,14,6,12,60},   /* Moss Fields: quiet, unhurried, absorbed. */
+    {4, 8,8,16,45},  /* Desert: isolated plucked events, open intervals. */
+};
+
+const world_phrase_t *worlds_phrase(int index) {
+    if (index < 0) index = 0;
+    if (index >= WORLD_COUNT) index = WORLD_COUNT - 1;
+    return &PHRASES[index];
+}
 
 static const world_t WORLDS[WORLD_COUNT] = {
     {
