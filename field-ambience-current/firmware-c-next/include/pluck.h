@@ -20,11 +20,12 @@
  *   - damp blends in last sample = the classic averaging lowpass; higher
  *     damp = softer/darker pluck.
  *
- * Voices self-decay — there is no note-off. Fixed small pool, round-robin.
+ * Voices self-decay or take a 20 ms owned stop. Fixed pool; no hard stealing.
  * Hardware-independent, fixed seeds, host-tested (test_sound_upgrades.c).
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define PLUCK_VOICES 2
 #define PLUCK_MIN_HZ 60.0f      /* buffer sized for this floor */
@@ -32,8 +33,14 @@
 void pluck_init(void);
 
 /* Start a pluck: freq in Hz (clamped ≥ PLUCK_MIN_HZ), amp 0..1 peak-ish.
- * Steals the oldest voice when the pool is full. */
+ * Legacy unowned one-shot. A full pool declines it without truncating tails. */
 void pluck_note(float freq_hz, float amp);
+
+/* Source-owned start. False means invalid input, source still ringing, or
+ * no free slot; the caller must not register a successful onset in that case. */
+bool pluck_note_on(uint8_t source, float freq_hz, float amp);
+void pluck_note_off(uint8_t source);
+void pluck_all_off(void); /* affects owned and legacy one-shots */
 
 /* Voices still audibly ringing (energy above ~-72 dBFS). */
 int pluck_active_count(void);

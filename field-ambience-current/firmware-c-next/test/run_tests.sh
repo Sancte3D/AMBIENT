@@ -26,6 +26,12 @@ CC="$CC" python3 "$here/test_cell_routing.py"
     -lm -o "$tmp/horn_body_test"
 "$tmp/horn_body_test"
 
+# World source ownership / bounded soft-stop contract.
+"$CC" "${CFLAGS[@]}" "$here/test_pluck_ownership.c" \
+    "$src/src/pluck.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    -lm -o "$tmp/pluck_ownership_test"
+"$tmp/pluck_ownership_test"
+
 # Step 7: dsp + voice pool
 "$CC" "${CFLAGS[@]}" \
     "$here/test_dsp_voices.c" \

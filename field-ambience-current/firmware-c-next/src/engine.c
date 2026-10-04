@@ -548,6 +548,7 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
         if (melody_voice==3) bowed_note_on(source,freq_hz,dsp_clampf(amp*3.0f,0.0f,0.62f));
         else if (melody_voice==4) horn_note_on(source,freq_hz,dsp_clampf(amp*2.6f,0.0f,0.58f));
         else if (melody_voice==5) choir_note_on(source,freq_hz,dsp_clampf(amp*2.6f,0.0f,0.55f));
+        else if (melody_voice==1) (void)pluck_note_on(source, freq_hz, dsp_clampf(amp*1.4f,0.0f,0.30f));
         else if (melody_voice==6) guembri_note(freq_hz,dsp_clampf(amp*2.8f,0.0f,0.60f));
         else melody_strike(freq_hz,dsp_clampf(amp*1.4f,0.0f,0.30f));
     }
@@ -574,6 +575,7 @@ void engine_note_off(uint8_t source) {
         return;
     }
     bowed_note_off(source); horn_note_off(source); choir_note_off(source);
+    pluck_note_off(source);
     pad_note_off(source);
     if (source < MAX_SOURCES) active_freq[source] = 0.0f;
     refresh_bass();
@@ -583,7 +585,7 @@ void engine_all_off(void) {
     s_note_count = 0;
     if (s_note_hook) s_note_hook(-1, 0, 0.0f, 0.0f);   /* all-off sentinel */
     if (s_synth_tgt > 0 && s_synth_be) s_synth_be->panic();
-    bowed_all_off(); horn_all_off(); choir_all_off();
+    bowed_all_off(); horn_all_off(); choir_all_off(); pluck_all_off();
     pad_all_off();
     memset(active_freq, 0, sizeof active_freq);
     engine_bass_off();
@@ -1399,7 +1401,7 @@ static void activate_synth(int idx, bool force) {
     release_generated(); s_note_count=0;
     for(int i=0;i<MAX_SOURCES;++i) remember_source(i);
     memset(active_freq,0,sizeof active_freq);
-    bowed_all_off(); horn_all_off(); choir_all_off(); pad_all_off(); engine_bass_off();
+    bowed_all_off(); horn_all_off(); choir_all_off(); pluck_all_off(); pad_all_off(); engine_bass_off();
     if (s_synth_tgt > 0 && s_synth_be->note_off) s_synth_be->note_off();
     if (idx > 0) s_synth_be->select(idx - 1);
     s_synth_tgt = idx;

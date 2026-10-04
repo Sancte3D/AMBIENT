@@ -12,6 +12,7 @@
 #define BUF_LEN   1024                 /* > SR/PLUCK_MIN_HZ = 735 @44.1k */
 #define T60_S     3.2f                 /* ring time, pitch-independent   */
 #define VERB_SEND 0.50f                /* plucks bloom into the hall     */
+#define STOP_FRAMES ((uint32_t)(0.020f * SR)) /* bounded 20 ms soft stop */
 #define ENV_EPS   2.5e-4f              /* ≈ −72 dBFS → voice retires     */
 
 typedef struct {
@@ -23,14 +24,15 @@ typedef struct {
     float y_prev;         /* averaging-lowpass memory             */
     float env;            /* tracked peak envelope (for retiring) */
     float panL, panR;
-    int   active;
-    uint32_t age;         /* steal-the-oldest bookkeeping         */
+    volatile int active;
+    int owner;            /* 0..255 source; 256 = legacy one-shot */
+    float stop_gain;
+    volatile uint32_t stop_left;
 } pluck_voice_t;
 
 static pluck_voice_t v[PLUCK_VOICES];
 static float    s_damp = 0.42f;   /* averaging-LP blend: 0=bright (macro) */
 static int      next_voice;
-static uint32_t age_counter;
 static uint32_t burst_rng = 0x9E3779B9u;
 
 static inline float burst_white(void) {
@@ -48,31 +50,33 @@ void pluck_init(void) {
         v[i].panR = sinf(a);
     }
     next_voice  = 0;
-    age_counter = 0;
     burst_rng   = 0x9E3779B9u;
     s_damp      = 0.42f;
 }
 
 void pluck_set_damp(float damp) {
+    if (!isfinite(damp)) return;
     if (damp < 0.0f) damp = 0.0f;
     if (damp > 0.9f) damp = 0.9f;
     s_damp = damp;
 }
 
-void pluck_note(float freq_hz, float amp) {
+static bool start_note(int owner, float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz <= 0.0f ||
+        freq_hz >= SR * 0.5f || amp <= 0.0f) return false;
     if (freq_hz < PLUCK_MIN_HZ) freq_hz = PLUCK_MIN_HZ;
-    if (amp < 0.0f) amp = 0.0f;
     if (amp > 1.0f) amp = 1.0f;
-
-    /* Round-robin, but steal the OLDEST if the preferred slot still rings
-     * loudly (keeps overlapping sparkles from cutting each other hard). */
-    int i = next_voice;
-    if (v[i].active && v[i].env > 0.05f) {
-        int oldest = 0;
-        for (int k = 1; k < PLUCK_VOICES; ++k)
-            if (v[k].age < v[oldest].age) oldest = k;
-        i = oldest;
+    /* Never reset a ringing delay line. Releases occupy their slot too.
+     * A busy source or full pool declines the event without changing RNG. */
+    if (owner != 256)
+        for (int k = 0; k < PLUCK_VOICES; ++k)
+            if (v[k].active && v[k].owner == owner) return false;
+    int i = -1;
+    for (int k = 0; k < PLUCK_VOICES; ++k) {
+        int candidate = (next_voice + k) % PLUCK_VOICES;
+        if (!v[candidate].active) { i = candidate; break; }
     }
+    if (i < 0) return false;
     next_voice = (i + 1) % PLUCK_VOICES;
 
     pluck_voice_t *p = &v[i];
@@ -83,8 +87,9 @@ void pluck_note(float freq_hz, float amp) {
     p->widx   = 0;
     p->y_prev = 0.0f;
     p->env    = amp;
-    p->age    = ++age_counter;
-    p->active = 1;
+    p->owner = owner;
+    p->stop_gain = 1.0f;
+    p->stop_left = 0;
 
     /* Excitation: one loop-length of lowpassed noise (the classic KS burst;
      * the one-pole softens the attack from "snap" to "bell"). The write head
@@ -104,6 +109,27 @@ void pluck_note(float freq_hz, float amp) {
         }
     }
     p->widx = n;
+    /* The audio IRQ must never see a half-filled excitation buffer. */
+    __asm__ volatile("" ::: "memory");
+    p->active = 1;
+    return true;
+}
+
+bool pluck_note_on(uint8_t source, float freq_hz, float amp) {
+    return start_note((int)source, freq_hz, amp);
+}
+void pluck_note(float freq_hz, float amp) {
+    (void)start_note(256, freq_hz, amp);
+}
+static void release_voice(pluck_voice_t *p) {
+    if (p->active && !p->stop_left) p->stop_left = STOP_FRAMES;
+}
+void pluck_note_off(uint8_t source) {
+    for (int i = 0; i < PLUCK_VOICES; ++i)
+        if (v[i].owner == (int)source) release_voice(&v[i]);
+}
+void pluck_all_off(void) {
+    for (int i = 0; i < PLUCK_VOICES; ++i) release_voice(&v[i]);
 }
 
 int pluck_active_count(void) {
@@ -139,14 +165,23 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             p->buf[p->widx] = fb;
             if (++p->widx >= BUF_LEN) p->widx = 0;
 
-            dry_L[n]  += y * p->panL;
-            dry_R[n]  += y * p->panR;
-            send_L[n] += y * p->panL * VERB_SEND;
-            send_R[n] += y * p->panR * VERB_SEND;
+            /* Output and send share the ramp; the loop itself is untouched.
+             * First release sample keeps its gain, last reaches silence.
+             * Repeated stop requests cannot restart/prolong the release. */
+            float output = y * p->stop_gain;
+            if (p->stop_left) {
+                --p->stop_left;
+                p->stop_gain = (float)p->stop_left / (float)STOP_FRAMES;
+            }
+            dry_L[n]  += output * p->panL;
+            dry_R[n]  += output * p->panR;
+            send_L[n] += output * p->panL * VERB_SEND;
+            send_R[n] += output * p->panR * VERB_SEND;
 
             /* cheap peak tracker: instant up, slow down */
             float a = y < 0.0f ? -y : y;
             env_track = a > env_track ? a : env_track * 0.99995f;
+            if (p->stop_gain == 0.0f) { p->active = 0; break; }
         }
         p->env = env_track;
         if (p->env < ENV_EPS) p->active = 0;

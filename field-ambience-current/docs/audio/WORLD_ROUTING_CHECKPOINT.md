@@ -70,3 +70,39 @@ checks and 489,609 effect checks), plus source/hot-path regression gates.
 Effect arena reported 214,489 / 245,760 bytes, state 672 / 4,096 bytes.
 This is one subsystem's allocator accounting, not whole-chip RAM usage.
 No audible-quality or ARM performance result is inferred from these checks.
+
+## Follow-up unit: Pluck ownership and soft stop
+
+The full pool previously overwrote a live delay line; Clear did not release
+Pluck at all. Pluck now has a source-owned admission API returning success /
+failure. Duplicate owner and full pool decline without changing excitation RNG
+or another voice. Legacy one-shots also decline a full pool. This intentionally
+reduces dense retriggers instead of truncating an audible tail.
+
+Owned manual String notes release by source; Clear and core handover release
+both owned and unowned plucks. A 20 ms linear output ramp applies equally to
+dry and send. Release slots remain occupied until their ramp finishes. A
+repeated stop cannot extend it. The audio IRQ sees an active voice only after
+its excitation buffer is fully initialized. Invalid/zero/nonfinite inputs are
+rejected; damping ignores nonfinite values.
+
+The owned API is not yet a new WOODLAND grammar. The existing World catalog
+has no Pluck melody descriptor; future generated source admission must return
+success before committing harmony bookkeeping, counters and hook events.
+The manual pad accompaniment remains and is not misrepresented as removed.
+
+Regression evidence: full-pool rejection is waveform-identical to no attempted
+third onset; stop matches the unstopped waveform times the defined ramp;
+wrong-source release has no effect; repeated release preserves the 882-sample
+stop deadline; slots cannot free early; Clear stops both manual String and
+unowned sparkle through the real engine. Idle direct/send output is zero.
+Hot-path lint now explicitly includes Pluck, which was missing from its list.
+
+Host object static data: 8,288 -> 8,300 bytes (+12); voice pool 8,272 -> 8,288.
+This is object-level host accounting, not an ARM linker-map result. No new
+sample/delay buffer, allocation or per-sample transcendental call was added.
+The full H743 map, peak CPU and physical listening gates remain open.
+
+Verification after the Pluck unit: full host suite exit 0; dedicated ownership
+regression 0 failures; engine integration and all 489,609 effect checks pass.
+Hot-path lint: 26 modules, 0 forbidden calls. No listening verdict inferred.

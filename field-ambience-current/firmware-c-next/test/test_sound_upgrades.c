@@ -520,6 +520,15 @@ int main(void) {
         engine_set_voice(1);
         engine_note_on(0, 330.0f, 0.12f);
         CHECK(pluck_active_count() > 0, "VOICE=STRING strikes the pluck on a cell press");
+        engine_all_off();
+        CHECK(pluck_active_count() > 0, "Clear starts a release, does not hard-reset pluck");
+        { int16_t b[512]; for (int i = 0; i < 4; ++i) engine_render(b, 256); }
+        CHECK(pluck_active_count() == 0, "Clear stops pluck within 20 ms of rendered audio");
+        engine_sparkle_strike(330.0f, 0.12f); /* legacy unowned one-shot */
+        CHECK(pluck_active_count() == 1, "sparkle started");
+        engine_all_off();
+        { int16_t b[512]; for (int i = 0; i < 4; ++i) engine_render(b, 256); }
+        CHECK(pluck_active_count() == 0, "Clear also stops unowned sparkle");
         engine_note_off(0);
         { int16_t b[512]; for (int i = 0; i < 1200; ++i) engine_render(b, 256); }
         engine_set_voice(2);

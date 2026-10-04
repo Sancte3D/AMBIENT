@@ -115,3 +115,25 @@ S1 melody dispatch no longer allocates an implicit pad and no longer starts
 the World source twice. Bed/Eno sources and the global occupancy contract
 remain separate pending work; S0/S1 as a whole are not declared complete.
 See WORLD_ROUTING_CHECKPOINT.md.
+
+## Concrete next work — after owned Pluck stop
+
+Each row is a separate completed code/listening unit. Avoid simultaneous
+source, scheduler and room rewrites: their effects must stay attributable.
+
+| Order | Work | Acceptance evidence |
+|---|---|---|
+| 1 | A generated source-start transaction: check capacity and valid pitch, start DSP, then commit owner / harmony / hook / counters only on success | Failed admission changes no sounding-pitch state, event count or existing waveform; retry is delayed rather than retriggered every tick |
+| 2 | New autonomous World path without automatic Bed, Eno loops, bass or generated reverse swell | Source-event trace starts only the planned family; harmony advances independently of accompaniment; Stop releases its owners; real rests exist before room tails |
+| 3 | Common three-slot budget across actual source voices and release tails | Cross-world handover, maximum Shape release and repeated Generate cannot exceed the budget; when full, wait rather than hard-steal; account for both bass sub/deep if ever enabled, not just bass_active boolean |
+| 4 | WOODLAND dry Pluck articulation: excitation, sustain, damping and ownership | Low-mid pitch stability across damping, no hiss-like onset; a short motif plus silence is recognizable without body/hall; <=30 s A/B |
+| 5 | COAST dry Bowed: fundamental, detune, bow noise and motion | No stationary electrical buzz or octave dominance; slow overlap communicates motion without a fixed repeating sweep; <=30 s A/B |
+| 6 | HIGHLANDS dry Horn: onset, register, body and modulation | No whistle/alarm/tube association across supported range; reject the candidate if it cannot distinguish itself calmly from COAST; <=30 s A/B |
+| 7 | One shared room; modal body reviewed separately | Dry identity survives wet range and mono; no pitch-obscuring resonance, source loudness jump or unsafe feedback |
+| 8 | Separate World grammars and calibrated macro ranges | Equal seed/register/dry gain still produces different phrasing; macros never turn sparse worlds into continuous beds or expose alarm-like leads |
+| 9 | Manual World palette, explicit old-scene migration, unlink archive | Old scenes cannot silently choose new meanings; archived synth code is absent from product link; fresh H743 map proves actual resource reduction |
+
+20 ms Pluck stop is a technical control ramp, not its musical decay design.
+Natural self-decay remains; note-off semantics and soft-source transitions must
+be evaluated with later WOODLAND phrasing. Removing an old role does not justify
+adding three compensating effects. No new grammar may require SD streaming.

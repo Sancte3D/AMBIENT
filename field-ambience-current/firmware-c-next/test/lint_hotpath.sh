@@ -22,7 +22,7 @@ root="${1:?usage: lint_hotpath.sh <firmware-c-next-root>}"
 HOTPATH=(
   engine.c pad.c padsynth.c texture.c ambience.c
   ambient_effects.c fx_master.c
-  bass.c reverb.c bowed.c horn.c choir.c guembri.c harmonic_bass.c dsp.c dsp_ladder.c shape.c
+  pluck.c bass.c reverb.c bowed.c horn.c choir.c guembri.c harmonic_bass.c dsp.c dsp_ladder.c shape.c
   v2/synth_host.c v2/beauty_guard.c
   v2/Synths_Archive/engine_acid.c v2/Synths_Archive/engine_fm_glass.c
   v2/Synths_Archive/engine_chorus_mist.c v2/Synths_Archive/engine_ion_storm.c
