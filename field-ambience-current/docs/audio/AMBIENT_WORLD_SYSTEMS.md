@@ -310,6 +310,12 @@ nennen, nicht durch unterschiedliche Pegel oder Naturaufnahmen kaschieren.
 Langzeitverhalten kann intern länger untersucht werden; ausgegebene Hördateien
 bleiben ohne ausdrücklichen Nutzerwunsch höchstens 30 s lang.
 
-Für das nächste Konzeptpaket: die drei Quellenrollen auf die tatsächlich
-vorhandenen Engines abbilden, Kandidaten mit Risiko begründen und eine minimale
-Quellen-/Effektarchitektur auswählen. Keine weitere neue World vor dieser Auswahl.
+Quellen-/Effektarchitektur inzwischen ausgearbeitet:
+[AMBIENT_SOURCE_ARCHITECTURE.md](AMBIENT_SOURCE_ARCHITECTURE.md).
+Bowed, Pluck und Horn sind die drei Startkandidaten; gemeinsame Quellenverwaltung
+und ein reduzierter Raumweg ersetzen implizite Begleitung als Entwurfsprinzip.
+Vollständiger Nutzungsablauf inzwischen in
+[AMBIENT_PRODUCT_BRIEF.md](AMBIENT_PRODUCT_BRIEF.md), kleine Umsetzungspakete in
+[AMBIENT_IMPLEMENTATION_SEQUENCE.md](AMBIENT_IMPLEMENTATION_SEQUENCE.md).
+Neue manuelle Palette ist eine Empfehlung im Brief, keine rückwirkende
+Nutzerfreigabe. Keine weitere neue World vor Abschluss dieser Auswahl.

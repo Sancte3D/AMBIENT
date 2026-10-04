@@ -1,5 +1,12 @@
 # Sound review queue
 
+> **2026-10-04 — Next after concept approval:** The concrete proposal is
+> AMBIENT_PRODUCT_BRIEF.md, supported by AMBIENT_WORLD_SYSTEMS.md and
+> AMBIENT_SOURCE_ARCHITECTURE.md. Follow AMBIENT_IMPLEMENTATION_SEQUENCE.md
+> (source diagnosis, explicit routing, ownership/stop, dry sources, grammars,
+> harmony, reduced space, transitions). The legacy queue below is retained
+> history/backlog, not an automatic instruction to resume Choir or Guembri.
+
 > **PAUSED — user direction 2026-09-26:** Concept approval comes first, then
 > sound design, then UX/UI/display, then real-device testing. CONCEPT_GATE.md
 > governs the next task. The source queue below is retained for later; historical

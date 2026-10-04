@@ -5,6 +5,16 @@ Verbindliche Arbeitsreihenfolge des Nutzers, 2026-09-26:
 
 ## Was jetzt getan wird
 
+Stand 2026-10-04: Der vollständige, entscheidungsreife Entwurf liegt in
+[AMBIENT_PRODUCT_BRIEF.md](AMBIENT_PRODUCT_BRIEF.md). Er führt die drei
+World-Systeme, Quellen-/Raumarchitektur, Nutzung, Ruhe/Wake, Übergänge und
+Reduktion zusammen. Die Umsetzungspakete stehen in
+[AMBIENT_IMPLEMENTATION_SEQUENCE.md](AMBIENT_IMPLEMENTATION_SEQUENCE.md).
+Neue Empfehlung: dieselbe World-Klangfamilie für manuelles und autonomes
+Spielen, statt eines unabhängigen manuellen Synth-Katalogs. Diese Empfehlung
+ist noch keine ausdrückliche Nutzerentscheidung. Keine weitere offene
+Konzeptsuche anfangen; zunächst diesen konkreten Entwurf beurteilen.
+
 Das Produkt wird derzeit ohne verfügbaren physischen Testaufbau entwickelt.
 Die nächste Entscheidung wird daher anhand von Produktlogik, Quellen,
 Anwendungsfällen und technischer Plausibilität getroffen. Keine neue Hörprobe
@@ -42,7 +52,11 @@ gemeinsame Harmonie, World-Grammatiken, Quellenrollen, Generate-Semantik,
 Übergänge und offene Machbarkeit. Natur ist die primäre vorstellbare Umgebung;
 Geschichte/Artefakte bleiben eine mögliche Identitätsebene. Die nächsten
 Entscheidungen unten sind dafür teilweise bearbeitet, keine Aufforderung zum
-Neustart der Diskussion. Als Nächstes Quellen-/Effektarchitektur konkretisieren.
+Neustart der Diskussion. Die Quellen-/Effektarchitektur steht inzwischen in
+[AMBIENT_SOURCE_ARCHITECTURE.md](AMBIENT_SOURCE_ARCHITECTURE.md), mit Codebefunden,
+Startkandidaten und Ausschlüssen. Als Nächstes vollständigen Nutzungsablauf und
+Umfang sind im Produktbrief inzwischen zusammengeführt. Diese Vorarbeiten
+nicht erneut als offene Rechercheaufgaben behandeln.
 
 Ein eigenständiges physisches Ambient-Instrument ermöglicht musikalische
 Gestaltung ohne Leistungsdruck und einen bewusst gestarteten autonomen
@@ -78,8 +92,10 @@ ist noch nicht beschlossen; keine Umbenennung oder neue Synthese daraus ableiten
 - Das Produkt lässt sich ohne Featureliste in einem präzisen Satz erklären.
 - Die typische Nutzung und das Verhältnis von Spiel- zu Hörmodus sind eindeutig.
 - Natur/Kultur/Geschichte haben eine begründete gemeinsame Hierarchie.
-- Herkunft beeinflusst im Kulturansatz mindestens eine konkrete Klang- oder
-  Interaktionsregel; reine Beschriftung rechtfertigt keinen Konzeptwechsel.
+- Natur, Klang und eine optionale historische Identität passen zusammen.
+  Historische Instrumentenprinzipien können Klang beeinflussen; Bildmotive
+  dürfen eigenständigen emotionalen Wert besitzen. Reine Beschriftung belegt
+  keine andere musikalische Welt und keine authentische Rekonstruktion.
 - Jede vorgesehene Klangrolle und Funktion ist notwendig oder klar nützlich;
   vorhandene Implementierung allein ist keine Begründung.
 - Unterschiedlichkeit der Stimmen und gemeinsame ruhige Identität sind vereinbar.
@@ -88,5 +104,7 @@ ist noch nicht beschlossen; keine Umbenennung oder neue Synthese daraus ableiten
 - Es gibt eine ausdrücklich empfohlene Richtung und nachvollziehbare Gründe,
   warum die übrigen Richtungen nicht verfolgt werden.
 
-Aktueller Stand: **Konzeptfreigabe offen.** Erst diese Arbeit abschließen,
-bevor die frühere Choir/Forest- und Guembri/Desert-Queue wieder aufgenommen wird.
+Aktueller Stand: **Entwurf entscheidungsreif, gemeinsame Konzeptfreigabe offen.**
+Der nächste Phasenwechsel bezieht sich auf den konkreten Produktbrief, nicht
+auf eine weitere allgemeine Diskussion. Nach Freigabe gilt die neue Umsetzungsliste;
+die frühere Choir/Forest- und Guembri/Desert-Queue nicht automatisch wieder aufnehmen.
