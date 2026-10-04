@@ -21,6 +21,7 @@
 #include "engine.h"
 #include "brain.h"
 #include "generative.h"
+#include "pad.h"
 #include "horn.h"    /* default Alps World uses its curated horn */
 #include "worlds.h"
 #include "composer.h" /* r18.96: top-level intent states */
@@ -92,6 +93,17 @@ static void test_world_phrases(void) {
 int main(void) {
     printf("== generative autoplay (engine_generative_tick, r18.88) ==\n");
     dsp_init(); brain_init(); engine_init();
+    /* A generated world melody must not allocate a hidden pad. Its
+     * scheduled owner still participates in harmony and releases normally. */
+    engine_set_world(0); /* Horn / current Alps descriptor */
+    engine_set_generative(true, -1);
+    engine_note_on(15, 220.0f, 0.07f);
+    CHECK(horn_active_count() == 1, "melody starts the selected World source");
+    CHECK(pad_active_count() == 0, "melody does not duplicate into pad pool");
+    engine_note_off(15);
+    render_ms(10000);
+    CHECK(horn_active_count() == 0, "melody owner releases its World source");
+    engine_init();
     uint32_t now = 1000;
 
     /* ---- 1. Immediate first note ---- */

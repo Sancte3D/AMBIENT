@@ -10,17 +10,15 @@ Stand 2026-10-04: Der vollständige, entscheidungsreife Entwurf liegt in
 World-Systeme, Quellen-/Raumarchitektur, Nutzung, Ruhe/Wake, Übergänge und
 Reduktion zusammen. Die Umsetzungspakete stehen in
 [AMBIENT_IMPLEMENTATION_SEQUENCE.md](AMBIENT_IMPLEMENTATION_SEQUENCE.md).
-Neue Empfehlung: dieselbe World-Klangfamilie für manuelles und autonomes
-Spielen, statt eines unabhängigen manuellen Synth-Katalogs. Diese Empfehlung
-ist noch keine ausdrückliche Nutzerentscheidung. Keine weitere offene
-Konzeptsuche anfangen; zunächst diesen konkreten Entwurf beurteilen.
+Nutzerauftrag 2026-10-04: bisherigen manuellen Katalog als `Synths_Archive`
+archivieren; übrigen Code und Klang ausbauen und Chip-/Speichergrenzen prüfen.
+Damit ist die Arbeit an Sounddesign und Code in kleinen Paketen autorisiert.
+Die Archivierung ist keine Klangfreigabe der neuen Quellen. UX/UI bleibt danach,
+physische Qualitäts- und Realtime-Freigaben bleiben ohne Gerät offen.
 
-Das Produkt wird derzeit ohne verfügbaren physischen Testaufbau entwickelt.
-Die nächste Entscheidung wird daher anhand von Produktlogik, Quellen,
-Anwendungsfällen und technischer Plausibilität getroffen. Keine neue Hörprobe
-und kein Hardwareversuch sind Voraussetzungen für die Konzeptentscheidung.
-Vorhandene Host-Renderings und bestandene Tests ersetzen keinen Gerätetest.
-Weitere Timbre-Korrekturen pausieren; bisheriger Code bleibt erhalten.
+Erstes Paket: Quellarchiv mit Kompatibilität; autonome Melodie ohne impliziten
+Pad; dynamische Rückkehr ohne Pegeluntergrenze. Der bestehende Bed-/Eno-Pfad
+ist damit noch nicht entfernt. Details in WORLD_ROUTING_CHECKPOINT.md.
 
 Konzeptfreigabe bedeutet einen konsistenten, umsetzbaren Entwurfsauftrag.
 Sie ist keine externe Zertifizierung und beweist weder Beruhigung noch

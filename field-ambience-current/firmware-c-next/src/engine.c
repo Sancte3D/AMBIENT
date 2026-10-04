@@ -453,18 +453,13 @@ static void melody_strike(float freq_hz, float amp) {
      * release, suppression and Generate stop must release the same voice.
      * Plucked sources retain their natural self-decay. */
     if (gen_on) {
-        if (voice == 5) { choir_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.32f, 0.55f)); return; }
-        if (voice == 4) { horn_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f)); return; }
-        if (voice == 3) { bowed_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 3.0f, 0.38f, 0.62f)); return; }
+        if (voice == 5) { choir_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.0f, 0.55f)); return; }
+        if (voice == 4) { horn_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.0f, 0.58f)); return; }
+        if (voice == 3) { bowed_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 3.0f, 0.0f, 0.62f)); return; }
     }
-    /* r19.47: the bowed lyra is a full CHARACTER voice, not a sparkle under the
-     * pad — the generative melody amp (~0.06) would make it a whisper. Scale it
-     * up (and floor it) so it sits forward, near the audition level the design
-     * was approved at (~0.3..0.55).
-     * r19.51: Glass (FM bell) removed — inharmonic/harsh, cut from the VOICE
-     * menu. Voices renumbered: 0 Pad / 1 String / 2 Ember / 3 Bowed.
-     * r19.53: 4 = Horn (alphorn/brass, Alps). Like bowed it is a full CHARACTER
-     * voice, so the tiny generative amp is scaled + floored to sit forward. */
+    /* Legacy manual one-shots retain their compatibility gains. The
+     * generated sustained path above preserves dynamics down to silence;
+     * amplitude floors would defeat its deliberately softer return. */
     if      (voice == 6) guembri_note(freq_hz, dsp_clampf(amp * 2.8f, 0.35f, 0.60f));
     else if (voice == 5) choir_note  (freq_hz, dsp_clampf(amp * 2.6f, 0.32f, 0.55f));
     else if (voice == 4) horn_note (freq_hz, dsp_clampf(amp * 2.6f, 0.34f, 0.58f));
@@ -529,6 +524,14 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
         s_note_amp[source] = amp;
         synth_note_hz(freq_hz, dsp_clampf(amp, 0.0f, 1.0f));
         if (source < MAX_SOURCES) active_freq[source] = freq_hz;
+        return;
+    }
+    /* World melody owns exactly its selected source, never an implicit pad.
+     * Register the same humanized pitch before dispatch so hooks, release and
+     * the harmony collision filter describe the actual sounding source. */
+    if (gen_on && source == MEL_SRC) {
+        active_freq[source] = freq_hz;
+        melody_strike(freq_hz, amp * 2.0f);
         return;
     }
     pad_note_on(source, freq_hz, amp);
@@ -1158,14 +1161,12 @@ void engine_generative_tick(uint32_t now_ms) {
                 float hz  = tuning_hz((float)tone);
                 float amp = 0.062f + gen_rand01() * 0.014f;
                 if (s_gentle_return) {
-                    /* swell the piece back in: softer, and NO bright strike —
-                     * a pad swell, not the exposed "ding" the r19.33 silence
-                     * gap used to make of the first returning note. */
+                    /* Return through the same World source at half input level;
+                     * never substitute a pad for the first returning tone. */
                     engine_note_on((uint8_t)MEL_SRC, hz, amp * 0.5f);
                     s_gentle_return = false;
                 } else {
                     engine_note_on((uint8_t)MEL_SRC, hz, amp);
-                    melody_strike(hz, amp * 2.0f);   /* articulate the onset */
                 }
                 auto_onset(); mel_repeat_run=tone==mel_last_midi ? mel_repeat_run+1:1;
                 mel_sounding=1; mel_last_midi=tone;

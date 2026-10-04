@@ -1,17 +1,16 @@
 # Sound review queue
 
-> **2026-10-04 — Next after concept approval:** The concrete proposal is
+> **2026-10-04 — Implementation direction:** The concrete proposal is
 > AMBIENT_PRODUCT_BRIEF.md, supported by AMBIENT_WORLD_SYSTEMS.md and
 > AMBIENT_SOURCE_ARCHITECTURE.md. Follow AMBIENT_IMPLEMENTATION_SEQUENCE.md
 > (source diagnosis, explicit routing, ownership/stop, dry sources, grammars,
 > harmony, reduced space, transitions). The legacy queue below is retained
 > history/backlog, not an automatic instruction to resume Choir or Guembri.
 
-> **PAUSED — user direction 2026-09-26:** Concept approval comes first, then
-> sound design, then UX/UI/display, then real-device testing. CONCEPT_GATE.md
-> governs the next task. The source queue below is retained for later; historical
-> instrument inspiration and the current nature-world roster are under concept
-> review. Do not resume timbre edits or require an audition to decide the concept.
+> **ACTIVE — user direction 2026-10-04:** Archive the legacy synth catalog
+> as `Synths_Archive`; resume code and sound work in small completed units.
+> Check actual chip constraints. See WORLD_ROUTING_CHECKPOINT.md for the first
+> implementation and remaining compatibility/resource gates.
 
 User direction: review every sound, effect and setting in small completed units.
 Each unit ends with a concrete change or finding, relevant verification and a

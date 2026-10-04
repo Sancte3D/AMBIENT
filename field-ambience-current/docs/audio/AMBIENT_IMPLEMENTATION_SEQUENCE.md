@@ -1,9 +1,9 @@
 # AMBIENT — abgeschlossene Umsetzungspakete nach Konzeptfreigabe
 
 2026-10-04. Plan aus [AMBIENT_PRODUCT_BRIEF.md](AMBIENT_PRODUCT_BRIEF.md).
-Keine Freigabe zum Überspringen der Konzeptphase. Namen, Klanggrenzen und
-manuelle Palette sind im Brief als Entwurfsentscheidungen bzw. offene Empfehlungen
-gekennzeichnet. Hördateien bleiben je Datei höchstens 30 s lang.
+Nutzerauftrag 2026-10-04 autorisiert Archivierung und Code-/Soundentwicklung.
+Namen und klangliche Eignung bleiben überprüfbare Entwurfsannahmen; keine
+Hardware- oder Klangfreigabe. Hördateien bleiben je Datei höchstens 30 s lang.
 
 ## Reihenfolge und Abhängigkeiten
 
@@ -106,3 +106,12 @@ geprüft. Anschließend S0/S1: den echten autonomen Quellenpfad protokollieren u
 den impliziten Pad-Start von ausdrücklich gewählten Quellen entkoppeln.
 Diese Entkopplung hat einen klaren Zweck: erstmals jede World als ihr eigenes
 System hören können. Erst danach Quellen-Sounddesign in kurzen Einheiten.
+
+## Implementation checkpoint — 2026-10-04
+
+User authorized sound/code work and archiving the manual catalog. Source files
+are now under `src/v2/Synths_Archive`; compatibility links remain explicitly.
+S1 melody dispatch no longer allocates an implicit pad and no longer starts
+the World source twice. Bed/Eno sources and the global occupancy contract
+remain separate pending work; S0/S1 as a whole are not declared complete.
+See WORLD_ROUTING_CHECKPOINT.md.
