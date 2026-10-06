@@ -551,16 +551,13 @@ int main(void) {
         engine_set_key_pc(-3); CHECK(brain_get_key() == 57, "pc wraps below (%d)", brain_get_key());
     }
 
-    /* ---- 13. r18.99 SHIMMER + WOW/FLUTTER + ENO LOOPS ----
+    /* ---- 13. r18.99 SHIMMER + WOW/FLUTTER ----
      * (a) shimmer module: feed a pure 220 Hz sine, the return must be
      *     dominated by 440 Hz (one octave up) — Goertzel 440 vs 220;
      *     amount 0 adds NOTHING (bit-exact bypass);
      * (b) tape wow: depth 0 = bit-exact pass-through; depth 1 modulates
      *     the pitch of a 1 kHz sine (zero-crossing period variance > 0)
-     *     while staying bounded;
-     * (c) Eno loops: in autoplay the pad pool grows beyond the single bed
-     *     voice (loops join one by one) and never exceeds bed + 3;
-     *     disabling generative releases them all. */
+     *     while staying bounded. */
     {
         enum { SB = 256 };
         static float sL[SB], sR[SB], oL[SB], oR[SB];
@@ -648,27 +645,6 @@ int main(void) {
         CHECK(np > 1000 && var > 0.01,
               "wow modulates pitch (n=%d, period var %.4f)", np, var);
 
-        /* (c) Eno loops join the bed */
-        engine_init();
-        engine_set_generative(true, -1);
-        uint32_t t = 42000;
-        engine_generative_tick(t);
-        int16_t eb[512];
-        int maxv = 0;
-        for (int step = 0; step < 4000; ++step) {            /* 64 s */
-            t += 16;
-            engine_generative_tick(t);
-            int v = engine_active_voices();
-            if (v > maxv) maxv = v;
-            if ((step & 255) == 0)
-                for (int k = 0; k < 30; ++k) engine_render(eb, 256);
-        }
-        CHECK(maxv >= 2, "Eno loops joined the bed (max voices %d)", maxv);
-        CHECK(maxv <= 5, "never more than bed + 3 loops + melody (max %d)", maxv);
-        engine_set_generative(false, -1);
-        for (int k = 0; k < 2500; ++k) engine_render(eb, 256);   /* ~14.5 s */
-        CHECK(engine_active_voices() == 0,
-              "loops released on disable (%d)", engine_active_voices());
     }
 
     /* ---- 14. r19.5 Blendwave spectral animator ----

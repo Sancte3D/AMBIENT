@@ -49,8 +49,6 @@
 /* Active note tracking so the bass can follow the lowest held pitch. Sources
  * are cell indices today (0..4), with headroom for MIDI later. freq 0 = idle. */
 #define MAX_SOURCES   16
-#define GEN_SOURCE    8           /* reserved pad-voice source for the bed */
-#define GEN_VOICE_AMP 0.10f
 static float active_freq[MAX_SOURCES];
 /* Fixed pitch-indexed memory: no eviction of still-protected older tails.
  * Envelope/FX horizons are conservative estimates, not spectral analysis. */
@@ -105,10 +103,6 @@ int engine_sounding_notes(int *out,int max) {
     for(int m=0;m<128 && n<max;++m) if(present[m]) out[n++]=m;
     return n;
 }
-static int safe_layer_pitch(int wanted,int lo,int hi) {
-    int sounding[128]; int n=engine_sounding_notes(sounding,128);
-    return harmony_nearest_safe(wanted,lo,hi,sounding,n);
-}
 static bool auto_ready(void) {
     return !auto_has_onset || (uint32_t)(sound_ms-auto_last_ms)>=1400u;
 }
@@ -138,67 +132,25 @@ static int s_manual_synth, s_world_index;
 static void activate_synth(int idx, bool force);
 static int   melody_voice;          /* r18.98 VOICE: 0 PAD, 1 STRING, 2 GLASS */
 
-/* r18.99 ENO LOOPS — the Music-for-Airports principle (studied via the
- * teropa "loop" essay on Reich's It's Gonna Rain and Eno's airport loops;
- * technique reconstructed, nothing to copy): several long loops, ONE note
- * per loop, with INCOMMENSURATE periods that never re-align — the bed
- * stops being one held chord root and becomes a slowly recombining choir.
- * Three loops on pad sources 5..7, periods chosen pairwise non-multiple
- * (13.7 / 21.3 / 33.1 s — no common divisor within hours). Each cycle the
- * loop re-picks ITS chord member (root/third/fifth) from the CURRENT
- * harmony, so the recombination always lands inside the key. Autoplay
- * only — a playing human owns the bed. */
-#define ENO_LOOPS 3
-static const uint32_t ENO_PERIOD_MS[ENO_LOOPS] = { 13700u, 21300u, 33100u };
-static const float    ENO_AMP[ENO_LOOPS]       = { 0.050f, 0.044f, 0.038f };
-static uint32_t eno_next_ms[ENO_LOOPS];
-static uint32_t eno_off_ms[ENO_LOOPS];
-static uint8_t  eno_on[ENO_LOOPS];
-static int      eno_timing_valid;
-/* r19.41: reverse swell for SCHEDULED notes only (task rule — a live key
- * press cannot be preceded without look-ahead latency). The Eno loops are
- * the composer's genuinely pre-known events: after each fire the next fire
- * time is exact, so the swell triggers SWELL_LEAD_MS before it with the
- * same lead. One-shot per cycle. */
-#define ENO_SWELL_LEAD_MS 1500u
-static uint8_t  eno_swell_armed[ENO_LOOPS];
-/* r19.50: the reverse PRE-swell was a rising, mostly-NOISE whoosh (62 % noise
- * through an opening filter) that ended with a near-hard cut — heard as a loud
- * "zschhh" a second before each generative note, then an abrupt stop. It read
- * as a defect, not a breath. Disabled by default; the note's own attack is the
- * onset. (Kept the machinery so a gentler, mostly-pitched version can return.) */
-static const int ENO_SWELL_ENABLE = 0;
-#define ENO_SRC(i) ((uint8_t)(5 + (i)))
-
-/* Generative state (r19.0: rebuilt on the HARMONIC SAFETY CORE, see
- * harmony.h — pitch world → register rules → state mutation → collision
- * filter → long melody → probability LAST). The old per-bar chord walk +
- * sparkle scheduler is gone: the bed follows the harmonic STATE, the
- * melody is one LONG voice with real silences. */
+/* Autonomous World state: harmony evolves independently of sound. Only
+ * admitted World events create tones; no universal pad, bass or loop bed. */
 static bool     gen_on = false;
 static bool     gen_timing_valid = false;
 static uint32_t gen_tick_rng     = 0x5EEDBA55u;
-static int      gen_state_seen   = -1;   /* bed re-strikes on state change */
 /* r19.33 player-priority state (declared here so engine_init can reset it). */
 #define GEN_RETURN_MS   8000u            /* auto-content returns ~8 s after play */
 static uint32_t s_last_active_ms = 0;
 static bool     s_ever_active     = false;
 static bool     s_gen_suppressed  = false;
 static bool s_user_present = false;
-/* r19.34 — the two sparse single-tone autoplay layers, each toggleable so the
- * player can keep the evolving bed/pad without the lonely melodic events. */
-static bool     s_mel_enabled = true;    /* long lead melody voice           */
-static bool     s_eno_enabled = true;    /* three one-note Eno tape loops     */
+/* Explicit low-level World-event gate; disabling it adds no substitute bed. */
+static bool     s_mel_enabled = true;
 static bool     s_gentle_return = false; /* r19.34: first melody note after the
                                           * player-priority silence swells in
                                           * softly (no bright ding, low register) */
 void engine_set_autoplay_melody(int on) { s_mel_enabled = on ? true : false; }
-void engine_set_autoplay_eno   (int on) { s_eno_enabled = on ? true : false; }
 int  engine_autoplay_melody(void)        { return s_mel_enabled ? 1 : 0; }
-int  engine_autoplay_eno(void)           { return s_eno_enabled ? 1 : 0; }
-
-/* Long melody voice: pad source 15 sustains 4-16 s, the selected VOICE
- * (string/glass) strikes the onset. */
+/* Source 15 owns the World's tone, including its scheduled release. */
 #define MEL_SRC 15
 static uint32_t mel_next_ms;          /* next decision time              */
 static uint32_t mel_off_ms;           /* scheduled note-off              */
@@ -219,23 +171,10 @@ static int mel_cur [MEL_PHRASE_MAX]; static int mel_cur_len  = 0;
 static int mel_replay = 0, mel_replay_idx = 0;
 static int mel_dejavu_count = 0;
 
-/* sounding-note registry for the collision filter (0 = silent) */
-static int snd_bed_midi = 0;
-static int snd_eno_midi[ENO_LOOPS];
-
-/* r19.0 spectral undulation (Blendwave principle from the Liven Ambient
- * Ø study): a held tone must LIVE. Correlated random walk on the pad's
- * brightness tilt — small persistent steps, never a jump — so the bed
- * undulates without a single new note event. */
-static float    vmix_walk = 0.0f;
-static uint32_t vmix_next_ms = 0;
-
 /* Lowest currently-held frequency, or 0 if nothing is held. */
 static float lowest_held(void) {
     float lo = 0.0f;
     for (int i = 0; i < MAX_SOURCES; ++i) {
-        if (i >= 5 && i <= 7) continue;   /* r18.99: Eno loops are colour,
-                                           * not fundament — bass ignores them */
         float f = active_freq[i];
         if (f > 0.0f && (lo == 0.0f || f < lo)) lo = f;
     }
@@ -258,7 +197,9 @@ void engine_bass_glide(float tau_s) { bass_set_glide(tau_s); }
 bool engine_bass_active(void)       { return bass_active(); }
 
 static void refresh_bass(void) {
-    if (!s_bass_follow && !gen_on) return; /* manual cell mode owns bass; listening owns its foundation */
+    /* A World release must never wake a bass underneath another World tone.
+     * Manual bass-follow remains a separate preference, unchanged by listening. */
+    if (gen_on || !s_bass_follow) return;
     float lo = lowest_held();
     if (lo > 0.0f) engine_bass_set(lo);
     else           engine_bass_off();
@@ -384,20 +325,15 @@ void engine_init(void) {
     s_gen_suppressed = false;        /* r19.33 player-priority state reset */
     s_ever_active    = false;
     s_last_active_ms = 0;
-    s_mel_enabled    = true;         /* r19.34 autoplay layers on by default */
-    s_eno_enabled    = true;
+    s_mel_enabled    = true;
     s_gentle_return  = false;
     composer_init();                 /* r18.96 top-level intent reset   */
     harmony_init();                  /* r19.0 harmonic safety core */
-    gen_state_seen = -1;
     mel_next_ms = 0; mel_off_ms = 0; mel_sounding = 0;
     mel_phrase_left = 0; mel_last_midi = 0; mel_repeat_run=0; mel_note_count = 0;
     mel_hist_len = mel_cur_len = 0;
     mel_replay = 0; mel_replay_idx = 0;
     mel_dejavu_count = 0;
-    snd_bed_midi = 0;
-    memset(snd_eno_midi, 0, sizeof snd_eno_midi);
-    vmix_walk = 0.0f; vmix_next_ms = 0;
 
     /* Master stage: DC-block cleared, moderate default volume (no on-device
      * volume knob bound yet — keeps headphones from being slammed). */
@@ -413,11 +349,6 @@ void engine_init(void) {
     choir_init();                    /* r19.61 damp organ/choir (Moss)    */
     guembri_init();                  /* r19.61 plucked low lute (Desert)  */
     shape_init();                    /* r19.60 envelope shape (neutral)   */
-    memset(eno_next_ms, 0, sizeof eno_next_ms);
-    memset(eno_off_ms,  0, sizeof eno_off_ms);
-    memset(eno_on,      0, sizeof eno_on);
-    memset(eno_swell_armed, 0, sizeof eno_swell_armed);
-    eno_timing_valid = 0;
     s_synth_tgt = 0; s_synth_blend = 0.0f; s_manual_synth = 0;
     s_ambient_gain = s_background_gain = 1.0f;
     s_ambient_tail_frames = s_tail_quiet_frames = 0;
@@ -437,9 +368,8 @@ void engine_init(void) {
  * kann nicht genug"). 0 = PAD (reference sound, cells swell as before),
  * 1 = STRING, 2 = GLASS: every cell press ADDITIONALLY strikes the chosen
  * melody voice, so playing gets an articulate attack in front of the pad
- * swell — piano-into-pad feel. The generative sparkles follow the same
- * choice (GLASS replaces the KS string; PAD keeps the string — the bed
- * needs SOME second colour, that was the whole r18.89 point). */
+ * swell. This is the legacy manual palette; Generate uses the World
+ * descriptor directly and never adds this manual pad/attack combination. */
 void engine_set_voice(int voice_idx) {
     if (voice_idx < 0) voice_idx = 0;
     if (voice_idx > 6) voice_idx = 6;    /* r19.61: 5 Choir (Moss), 6 Guembri (Desert) */
@@ -487,7 +417,7 @@ static inline float humanize_rand_unit(void){      /* in [-1, +1] */
 
 int engine_world_source_count(void) {
     /* DSP slots, including releases and prepared onsets; not oscillator count.
-     * Legacy pad/bass/Eno accompaniment is still a separate pending removal. */
+     * Manual compatibility paths and shared FX remain outside this counter. */
     return bowed_active_count() + horn_active_count() + choir_active_count() +
            guembri_active_count() + pluck_active_count();
 }
@@ -564,10 +494,8 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     }
     pad_note_on(source, freq_hz, amp);
     if (source < MAX_SOURCES) active_freq[source] = freq_hz;
-    /* r18.98 VOICE: cell sources (base 0..4 + shift 9..13) also strike the
-     * selected melody voice — an articulate attack in front of the pad
-     * swell. The generative bed (8) and sparkles (14/15) are excluded:
-     * the bed must stay a bed. Amp is scaled to sit like the sparkles. */
+    /* Legacy manual cell sources also strike the selected voice in front
+     * of their pad. Autonomous source 15 already returned above. */
     if (melody_voice != 0 &&
         (source <= 4 || (source >= 9 && source <= 13)))
     {
@@ -698,6 +626,9 @@ void engine_set_atmosphere(float v)   {
 void engine_set_world(int idx) {
     if (idx < 0) idx = 0;
     if (idx >= WORLD_COUNT) idx = WORLD_COUNT - 1;
+    /* Release the old owner even if two Worlds happen to share key/mode.
+     * Existing releases retain their slots; no accompanying pad is started. */
+    if (gen_on && idx != s_world_index) release_generated();
     s_world_index = idx;
     ambience_set_world(idx);
     /* r18.93: (re)build the PADsynth bed table for the world's timbre
@@ -860,40 +791,20 @@ void engine_set_pad_voice(int voice_idx) {
     pad_set_voice_mix(MIX[voice_idx]);
 }
 
-/* r19.20 — the generative gate is PHYSICAL now. History: r18.88 gated on
- * "any active cell voice" (sources 0..4 + 9..13) so the bed would not play
- * over held notes. That fixed momentary playing but created the
- * HOLD+GENERATE deadlock: a hold-LATCHED voice keeps its source active
- * forever, so one latched drone note froze autoplay permanently. The gate
- * is now the physical key state fed by controls.c (press/release edges):
- * while a finger is down the composer yields; latched voices are standing
- * texture the generator plays AROUND (their sources stay protected simply
- * because the generator only ever writes its own sources 8/14/15). */
+/* Physical product cells are locked during Generate. Explicit low-level
+ * callers can still inject presence for musical priority: a finger pauses
+ * future events, a latched pitch only participates in the collision memory. */
 void engine_set_user_presence(bool any_key_down) { s_user_present = any_key_down; }
 
-/* r19.33 — player takes priority (musical "listening"): the bed + melody hold
+/* r19.33 — player takes priority: World events hold
  * off while the user plays AND for GEN_RETURN_MS after the last release, then
  * return gently. State lives up top so engine_init can reset it. */
 int engine_generative_suppressed(void) { return s_gen_suppressed ? 1 : 0; }
 
-/* --- Generative autoplay (r18.88) -----------------------------------------
- * The GENERATE modifier was always meant to make the instrument PLAY BY
- * ITSELF (passive mode = music without hands). The old wiring gave one
- * chord-root swell per fixed 8 s bar, with up to 8 s of silence after
- * enabling. engine_generative_tick() replaces the caller-side bar timer:
- *
- *   - the FIRST bed note sounds on the first tick after enabling (no wait),
- *   - bar length is humanized (±10 % per bar, LCG — never metronomic),
- *   - each bar scatters 0-2 "sparkle" chord tones an octave up (sources
- *     14/15, ~3 s ring, quiet), so the bed breathes as actual music,
- *   - live playing still overrides everything: while any user note is held
- *     (base or shift) no new bed/sparkle notes start; ringing sparkles are
- *     still released on schedule. When the user lets go, the bed resumes on
- *     the next tick.
- *
- * All timing derives from the passed now_ms — hardware-independent and
- * host-testable. The old engine_generative_advance() stays as the manual
- * step API (offline renderers, tests). State lives up by gen_on. */
+/* Control-rate World scheduler. The first decision follows an explicit
+ * Generate/field/World entry immediately; natural source attacks provide
+ * the onset. Later decisions follow World phrasing, composer density and
+ * pitch safety. Harmony changes create no additional audio sources. */
 
 uint32_t engine_gen_seed(void)          { return gen_tick_rng; }
 void     engine_set_gen_seed(uint32_t s) { gen_tick_rng = s ? s : 0x5EEDBA55u; }
@@ -904,13 +815,8 @@ static float gen_rand01(void) {
 }
 
 static void release_generated(void) {
-    if(active_freq[GEN_SOURCE]>0) engine_note_off(GEN_SOURCE);
     if(active_freq[MEL_SRC]>0) engine_note_off(MEL_SRC);
-    for(int i=0;i<ENO_LOOPS;++i) {
-        if(active_freq[ENO_SRC(i)]>0) engine_note_off(ENO_SRC(i));
-        eno_on[i]=0; snd_eno_midi[i]=0;
-    }
-    snd_bed_midi=0; mel_sounding=0; gen_state_seen=-1; gen_timing_valid=false; eno_timing_valid=0;
+    mel_sounding=0; gen_timing_valid=false;
     mel_phrase_left=mel_cur_len=mel_hist_len=0; mel_replay=0; mel_last_midi=mel_repeat_run=0;
 }
 void engine_set_generative(bool on,int program) {
@@ -920,13 +826,15 @@ void engine_set_generative(bool on,int program) {
         /* Listening owns the World engine; remember the manual Character.
          * Release old sources and reuse the existing bounded crossfade. */
         s_ambient_tail_frames = 0;
+        gen_on = true; /* suppress bass-follow throughout the release handover */
         activate_synth(0, true);
+        engine_set_drone(false);
         s_user_present = s_ever_active = s_gen_suppressed = false;
-        gen_on = true;
+        s_gentle_return = false;
     } else {
+        release_generated(); /* still listening: releases cannot restart bass */
+        engine_bass_off();
         gen_on = false;
-        release_generated();
-        engine_bass_off(); /* also when manual Harmony has disabled bass-follow */
         /* Keep released World sources audible while manual notes immediately
          * reach their Character. Do not fade these sources with the core. */
         if (s_manual_synth > 0) s_ambient_tail_frames = AMBIENT_TAIL_MAX_FRAMES;
@@ -934,10 +842,6 @@ void engine_set_generative(bool on,int program) {
     }
 }
 
-/* r19.0: manual step = one harmonic-state MUTATION (≥3 common pitch
- * classes, ≤2 voices move — harmony.c enforces the contract). The pad
- * bed voice sits an octave over the bass register; bass.c derives the
- * low fundament from it (lowest_held). Returns state index + 1 (1..4). */
 /* r19.24 — the five cells as composer intents (see engine.h). Deliberately
  * a MAPPING of gestures to the existing composer states, not a claim that
  * harmony pitch-picks encode tension: the directional FEEL comes from the
@@ -955,7 +859,6 @@ void engine_generative_nudge(int cell, uint32_t now_ms) {
     if (!gen_on || cell < 0 || cell > 4) return;
     composer_nudge(CELL_INTENT[cell], now_ms);
     harmony_advance();               /* move the harmonic state NOW */
-    gen_state_seen = -1;             /* re-sound the bed on the next tick */
 }
 
 void engine_generative_new_field(uint32_t seed) {
@@ -967,21 +870,14 @@ void engine_generative_new_field(uint32_t seed) {
     harmony_set_mode(brain_get_key(), musical_mode);
     composer_init();                 /* fresh intent clock; reseed below   */
     composer_reseed(seed ^ 0x9E3779B9u);
-    gen_timing_valid = false;        /* strike fresh on the next tick */
-    gen_state_seen   = -1;
+    gen_timing_valid = false;
+    s_gentle_return = false;
 }
 
 int engine_generative_advance(void) {
-    if (!gen_on || s_synth_tgt>0 || !auto_ready()) return -1;
+    if (!gen_on || s_synth_tgt>0) return -1;
     if (s_user_present || s_gen_suppressed) return -1;   /* r19.33: player + return-delay */
     harmony_advance();
-    int midi=safe_layer_pitch(harmony_bass_midi()+12,50,61);
-    if(midi<0) return -1;
-    snd_bed_midi=midi;
-    gen_state_seen = harmony_state_changes();
-    engine_note_on((uint8_t)GEN_SOURCE, tuning_hz((float)midi),
-                   GEN_VOICE_AMP);
-    auto_onset();
     return harmony_state_index() + 1;
 }
 
@@ -999,19 +895,10 @@ void engine_generative_tick(uint32_t now_ms) {
     const world_phrase_t *phrase = worlds_phrase(s_world_index);
     int sounding[128]; int occupied=engine_sounding_notes(sounding,128);
     composer_listen((float)occupied/12.0f,s_user_present); composer_tick(now_ms);
-    for(int i=5;i<=8;++i) pad_set_source_gain((uint8_t)i,composer_params()->bed_amp);
-    bass_set_depth(composer_params()->bass_depth);
-    /* Scheduled releases continue while the player takes over. */
-    for(int i=0;i<ENO_LOOPS;++i) {
-        if(eno_on[i] && (int32_t)(now_ms-eno_off_ms[i])>=0) {
-            engine_note_off(ENO_SRC(i)); eno_on[i]=0; snd_eno_midi[i]=0;
-        }
-    }
-
     /* r19.33 — player-priority "listening": suppressed while a key is down AND
      * for GEN_RETURN_MS after the last release, so the machine steps back and
-     * lets the player breathe, then returns gently (the re-arm below strikes
-     * the bed and schedules the first melody note 1.5–4 s later). */
+     * lets the player breathe, then schedules a softer World return 1.5–4 s
+     * later. No underlying tonal bed is sustained during that pause. */
     bool suppressed = s_user_present ||
         (s_ever_active && (uint32_t)(now_ms - s_last_active_ms) < GEN_RETURN_MS);
     if (suppressed != s_gen_suppressed) {
@@ -1030,10 +917,12 @@ void engine_generative_tick(uint32_t now_ms) {
         return;
     }
 
-    if (!gen_timing_valid) {           /* just enabled / just released */
+    bool opening = false;
+    if (!gen_timing_valid) {
         gen_timing_valid = true;
-        gen_state_seen = -1;           /* strike the bed on THIS tick   */
-        mel_next_ms = now_ms + 1500u + (uint32_t)(gen_rand01() * 2500.0f);
+        opening = !s_gentle_return;
+        mel_next_ms = opening ? now_ms :
+            now_ms + 1500u + (uint32_t)(gen_rand01() * 2500.0f);
         if (mel_sounding && (int32_t)(now_ms - mel_off_ms) >= 0) {
             engine_note_off((uint8_t)MEL_SRC);   /* stale note from before
                                                   * a long user hold      */
@@ -1041,92 +930,8 @@ void engine_generative_tick(uint32_t now_ms) {
         }
     }
 
-    /* --- r18.99 ENO LOOPS (see the block comment at the top) ------------
-     * Three one-note tape loops with incommensurate periods. Staggered
-     * first entries (0.4 / 0.62 / 0.81 of a period) so the choir fades in
-     * voice by voice instead of striking a chord. Each cycle: release the
-     * old tone, sound THIS loop's chord member of the CURRENT harmony,
-     * hold for 62 % of the period, rest for the remainder — the gaps are
-     * where the recombination shows. */
-    if (!s_eno_enabled || composer_state()==COMPOSER_EMPTY) {                /* r19.34: layer off → hush + re-arm */
-        for (int i = 0; i < ENO_LOOPS; ++i)
-            if (eno_on[i]) { engine_note_off(ENO_SRC(i)); eno_on[i] = 0; snd_eno_midi[i] = 0; }
-        eno_timing_valid = 0;
-    } else {
-    if (!eno_timing_valid) {
-        eno_next_ms[0] = now_ms + (uint32_t)(ENO_PERIOD_MS[0] * 0.40f);
-        eno_next_ms[1] = now_ms + (uint32_t)(ENO_PERIOD_MS[1] * 0.62f);
-        eno_next_ms[2] = now_ms + (uint32_t)(ENO_PERIOD_MS[2] * 0.81f);
-        for (int i = 0; i < ENO_LOOPS; ++i) { eno_on[i] = 0; eno_off_ms[i] = 0; }
-        eno_timing_valid = 1;
-    }
-    for (int i = 0; i < ENO_LOOPS; ++i) {
-        if (eno_on[i] && (int32_t)(now_ms - eno_off_ms[i]) >= 0) {
-            engine_note_off(ENO_SRC(i));
-            eno_on[i] = 0;
-            snd_eno_midi[i] = 0;
-        }
-        /* r19.41: the next fire time is exact — arm the reverse swell
-         * exactly ENO_SWELL_LEAD_MS ahead of it, once per cycle. */
-        if (ENO_SWELL_ENABLE && !eno_swell_armed[i] &&
-            (int32_t)(eno_next_ms[i] - now_ms) > 0 &&
-            (uint32_t)(eno_next_ms[i] - now_ms) <= ENO_SWELL_LEAD_MS) {
-            /* Predict the scheduled note from the CURRENT harmony with the
-             * same register rule the fire branch applies. A state mutation
-             * inside the lead window can shift it — the pre-tail is a
-             * spectral gesture, not a pitch guarantee. */
-            int hv[HARMONY_VOICES];
-            harmony_voices(hv, HARMONY_VOICES);
-            int midi = hv[i];
-            while (midi > 74) midi -= 12;
-            while (midi < 50) midi += 12;
-            fx_master_trigger_swell(tuning_hz((float)midi),
-                                    ENO_AMP[i] * composer_params()->bed_amp,
-                                    (float)ENO_SWELL_LEAD_MS / 1000.0f);
-            eno_swell_armed[i] = 1;
-        }
-        if ((int32_t)(now_ms - eno_next_ms[i]) >= 0) {
-            /* r19.0: each loop owns ONE voice of the harmonic STATE (the
-             * voiced, collision-safe upper harmony) — the recombination
-             * always lands inside the pitch world. */
-            int hv[HARMONY_VOICES];
-            harmony_voices(hv, HARMONY_VOICES);
-            {
-                int midi = hv[i];
-                while (midi > 74) midi -= 12;    /* keep the choir mid-low */
-                while (midi < 50) midi += 12;
-                midi=safe_layer_pitch(midi,50,74);
-                if(midi>=0 && auto_ready()) {
-                    if(eno_on[i]) engine_note_off(ENO_SRC(i));
-                    engine_note_on(ENO_SRC(i),tuning_hz((float)midi),ENO_AMP[i]);
-                    auto_onset(); eno_on[i]=1; snd_eno_midi[i]=midi;
-                    eno_off_ms[i]=now_ms+(uint32_t)(ENO_PERIOD_MS[i]*0.62f);
-                }
-            }
-            /* phase NEVER resets — the drift is the composition. The while
-             * catches up after a long user hold (ticks pause under a
-             * playing human) without machine-gunning retriggers. */
-            eno_next_ms[i] += ((now_ms-eno_next_ms[i])/ENO_PERIOD_MS[i]+1u)*ENO_PERIOD_MS[i];
-            eno_swell_armed[i] = 0;      /* re-arm for the next known fire */
-        }
-    }
-    }   /* r19.34: end of s_eno_enabled branch */
-
-    /* --- r19.0 HARMONIC STATE (harmony.h) -------------------------------
-     * The state machine dwells 24-48 s, then MUTATES: ≥3 common pitch
-     * classes, ≤2 voices move, common tones frozen at pitch. The bed
-     * re-sounds only when the state actually changed — held notes get
-     * REINTERPRETED by the new bass, not re-struck (the user's research
-     * brief: "Wir sollten Akkorde nicht auswählen, sondern den nächsten
-     * harmonischen Zustand aus dem vorherigen mutieren"). */
+    /* Harmony proposes future safe pitches; mutation itself stays silent. */
     harmony_tick(now_ms);
-    if(harmony_state_changes()!=gen_state_seen && auto_ready()) {
-        int midi=safe_layer_pitch(harmony_bass_midi()+12,50,61);
-        if(midi>=0) {
-            gen_state_seen=harmony_state_changes(); snd_bed_midi=midi;
-            engine_note_on(GEN_SOURCE,tuning_hz((float)midi),GEN_VOICE_AMP); auto_onset();
-        }
-    }
 
     /* --- r19.0 LONG MELODY VOICE -----------------------------------------
      * One voice. World-specific long tones and real silences (stretched by
@@ -1135,8 +940,8 @@ void engine_generative_tick(uint32_t now_ms) {
      * harmony_melody_next: pitch world → register mask → interval table →
      * collision filter against everything sustaining → next-best
      * fallback. Probability is the LAST stage, not the first. The onset
-     * shares its source/release with the curated sustained World voice;
-     * plucked voices decay naturally in front of the pad swell. */
+     * and release belong to the selected World family. Plucked sources
+     * decay naturally; there is no sustaining pad behind them. */
     if (!s_mel_enabled) {                /* r19.34: melody layer off */
         if (mel_sounding) { engine_note_off((uint8_t)MEL_SRC); mel_sounding = 0; }
     } else {
@@ -1166,7 +971,9 @@ void engine_generative_tick(uint32_t now_ms) {
              * breath (a reset caused over-octave leaps between phrases —
              * caught by the grammar audit). */
         }
-        if (gen_rand01() < dsp_clampf(0.01f * phrase->density_pct * composer_params()->mel_density,
+        /* Entry gets one immediate proposal, never a forced admission.
+         * All later proposals retain density, rest and collision rules. */
+        if (opening || gen_rand01() < dsp_clampf(0.01f * phrase->density_pct * composer_params()->mel_density,
                                       0.05f, 0.95f)) {
             /* everything currently sustaining, for the collision filter */
             int sus[128]; int nsus=engine_sounding_notes(sus,128);
@@ -1219,17 +1026,7 @@ void engine_generative_tick(uint32_t now_ms) {
     }
     }   /* r19.34: end of s_mel_enabled branch */
 
-    /* --- r19.0 spectral undulation (Blendwave principle) ------------------
-     * "Same note, evolve timbre": every 400 ms the pad brightness tilt
-     * takes one small CORRELATED step (bounded random walk: 20 21 23 26,
-     * never 20 97 4) — the bed undulates without new events. */
-    if ((int32_t)(now_ms - vmix_next_ms) >= 0) {
-        vmix_walk += (gen_rand01() - 0.5f) * 0.10f;
-        if (vmix_walk < -0.30f) vmix_walk = -0.30f;
-        if (vmix_walk >  0.50f) vmix_walk =  0.50f;
-        pad_set_voice_mix(0.45f + vmix_walk);
-        vmix_next_ms = now_ms + 400u;
-    }
+
 }
 
 static void render_ambient(int frames, bool retiring) {

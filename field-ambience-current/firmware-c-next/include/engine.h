@@ -74,7 +74,7 @@ int engine_sounding_notes(int *out, int max);
 #define ENGINE_WORLD_SOURCE_LIMIT 3
 /* Control-rate World admission: true commits the source/hook, false changes
  * no held pitch or existing voice. Generate must be enabled. No implicit pad.
- * World family slots include releases; legacy pad/bass are still separate. */
+ * World slots include releases; legacy manual pad/bass and FX are separate. */
 bool engine_try_world_note_on(uint8_t source, float freq_hz, float amp);
 int engine_world_source_count(void);
 
@@ -206,12 +206,11 @@ void engine_set_pad_voice(int voice_idx);
  * program <0 selects Markov auto, >=0 selects a fixed progression index. */
 void engine_set_generative(bool on, int program);
 
-/* Advance the generative bed one step: pick the next degree, sound its chord
- * root as a pad voice (a reserved source), and let the bass follow. Returns
- * the new degree (1..7) or -1 when generative is off. No-op while any USER
- * note is held (cells 0..4 or shift octaves 9..13) — live playing overrides
- * the bed. Manual step API for offline renderers/tests; the device uses
- * engine_generative_tick(). */
+/* Advance the harmonic state without creating an audio event. Returns the
+ * new state index + 1 (1..4), or -1 with Generate off/player suppression.
+ * Future World events use the new harmony; held/released sources keep their
+ * pitches. Offline step API; audio renderers must also call the scheduler.
+ * The device uses engine_generative_tick(). */
 int engine_generative_advance(void);
 
 /* Autonomous scheduler. Call from the UI loop at >= ~20 Hz, including while
@@ -244,12 +243,10 @@ void engine_generative_new_field(uint32_t seed);
  * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
 int engine_generative_suppressed(void);   /* r19.33: 1 = player-priority hold-off active */
 
-/* r19.34 — toggle the two sparse single-tone autoplay layers (evolving bed/pad
- * stays either way). Default on. */
+/* Low-level World-event gate, default on. Off releases its source and leaves
+ * no autonomous tonal bed. Shared FX and explicit atmosphere still decay/run. */
 void engine_set_autoplay_melody(int on);
-void engine_set_autoplay_eno(int on);
 int  engine_autoplay_melody(void);
-int  engine_autoplay_eno(void);
 int engine_generative_last_melody_midi(void);
 int engine_generative_melody_count(void);
 /* r18.93: phrases replayed by the déjà-vu memory (Marbles concept). */

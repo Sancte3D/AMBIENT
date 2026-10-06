@@ -124,7 +124,7 @@ source, scheduler and room rewrites: their effects must stay attributable.
 | Order | Work | Acceptance evidence |
 |---|---|---|
 | 1 — implemented 2026-10-06 | A generated source-start transaction: check capacity and valid pitch, start DSP, then commit owner / harmony / hook / counters only on success | Failed admission changes no sounding-pitch state, event count or existing waveform; retry is delayed rather than retriggered every tick |
-| 2 | New autonomous World path without automatic Bed, Eno loops, bass or generated reverse swell | Source-event trace starts only the planned family; harmony advances independently of accompaniment; Stop releases its owners; real rests exist before room tails |
+| 2 — implemented 2026-10-06 | New autonomous World path without automatic Bed, Eno loops, bass or generated reverse swell | Source-event trace starts only the planned family; harmony advances independently of accompaniment; Stop releases its owners; real rests exist before room tails |
 | 3 | Common three-slot budget across actual source voices and release tails | Cross-world handover, maximum Shape release and repeated Generate cannot exceed the budget; when full, wait rather than hard-steal; account for both bass sub/deep if ever enabled, not just bass_active boolean |
 | 4 | WOODLAND dry Pluck articulation: excitation, sustain, damping and ownership | Low-mid pitch stability across damping, no hiss-like onset; a short motif plus silence is recognizable without body/hall; <=30 s A/B |
 | 5 | COAST dry Bowed: fundamental, detune, bow noise and motion | No stationary electrical buzz or octave dominance; slow overlap communicates motion without a fixed repeating sweep; <=30 s A/B |
@@ -143,9 +143,9 @@ adding three compensating effects. No new grammar may require SD streaming.
 Generated starts now commit their pitch/event/phrase counters only on actual
 source admission. Three World-family DSP slots, including releases and queued
 onsets, govern this path. This is not yet a whole-product three-source limit:
-legacy accompaniment and legacy manual admissions remain outside that gate.
-Next: remove automatic Bed/Eno/bass from the autonomous path, then validate the
-complete occupancy contract and World transitions. H743 CI now explicitly
+legacy manual admissions remain outside that gate. Automatic Bed/Eno/bass
+have now been removed from Generate (checkpoint below); whole-product occupancy
+and source/room behavior during transitions remain the next validation. H743 CI now explicitly
 builds Release and retains image plus linker map; on-device DWT remains open.
 
 Release H743 verification completed for the 2026-10-06 admission code: linker
@@ -153,3 +153,29 @@ accepts all banks; Flash 12.98%, DTCM 91.13%, D1 79.62%, D2 87.52%. Exact bytes,
 tested code commit and run are in WORLD_ROUTING_CHECKPOINT.md. No CPU or
 physical sound-quality acceptance is implied. Further source/room work must
 reuse pools or justify new placement against the remaining per-bank capacity.
+
+### Autonomous accompaniment removed — 2026-10-06
+
+Generate now schedules only the selected World source. Automatic source-8 pad,
+source-5..7 loops, loop pre-swells, pad brightness walk and composer-driven
+bass depth/gains are removed, rather than hidden behind disabled defaults.
+The unused Eno gate API had no firmware/menu/scene callers and is removed;
+World IDs and SCN6 wire layout retain their meanings.
+
+The opening decision is immediate, subject to pitch safety, the existing onset
+spacing and strict admission. Source attacks provide the onset. Ordinary events
+retain density/rest decisions. The explicit harmonic-step API now changes
+harmony only; renderers need scheduler ticks to hear World events. Low-level
+player-priority return retains its softer delayed entry. Disabling World events
+leaves no substitute tonal bed; atmosphere and shared FX remain independent.
+
+Bass-follow is blocked throughout listening, including source releases and
+entry/exit handovers. Its manual preference survives. Generate entry releases
+manual drone; a World change releases the old scheduled owner explicitly,
+even if two future Worlds share key/mode. Maximum Shape releases remain in the
+three-slot gate; a saturated target change waits instead of stealing.
+
+Next completed unit: close source/transition occupancy against the actual
+entry/exit paths, then WOODLAND dry Pluck excitation and damping. Source sound
+quality and speaker/headphone behavior are still unapproved. No new pools,
+room instances, SD streaming or new per-sample calculations were added.

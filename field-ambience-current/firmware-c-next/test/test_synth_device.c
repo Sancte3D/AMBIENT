@@ -287,7 +287,9 @@ static int memory_has(int midi) {
 static int auto_checked,mel_prev,mel_run,auto_blocked;
 static uint32_t audit_ms,audit_last;
 static void audit_onset(int on,uint8_t source,float hz,float amp) {
-    (void)amp;if(on!=1 || !(source==8 || source==15 || (source>=5 && source<=7))) return;
+    (void)amp;if(on!=1) return;
+    CHECK(source<5 || source>8); /* retired autonomous bed/loop IDs */
+    if(source!=15) return;
     int m=(int)lrintf(69+12*log2f(hz/440));int notes[128],n=engine_sounding_notes(notes,128);
     CHECK(!auto_blocked);CHECK(harmony_in_world(m));CHECK(harmony_collision_ok(m,notes,n));
     if(audit_last) CHECK(audit_ms-audit_last>=1400u);
@@ -300,7 +302,7 @@ static void audit_onset(int on,uint8_t source,float hz,float amp) {
 static int return_onsets;
 static void observe_return(int on, uint8_t source, float hz, float amp) {
     (void)hz; (void)amp;
-    if(on==1 && (source==8 || source==15 || (source>=5 && source<=7))) ++return_onsets;
+    if(on==1 && source==15) ++return_onsets;
 }
 
 static void test_character_return_pause(void) {
@@ -319,7 +321,12 @@ static void test_character_return_pause(void) {
         engine_generative_tick(9500);
         CHECK(engine_generative_suppressed()); CHECK(return_onsets==0);
         engine_generative_tick(10000);
-        CHECK(!engine_generative_suppressed()); CHECK(return_onsets>0);
+        CHECK(!engine_generative_suppressed()); CHECK(return_onsets==0);
+        /* A quiet return now belongs to the World, not an instant pad.
+         * Allow its 1.5–4 s entry delay and ordinary sparse decisions. */
+        uint32_t t=10100;
+        while(!return_onsets && t<50000) {engine_generative_tick(t);t+=100;}
+        CHECK(return_onsets>0);CHECK(t>=11500);
         engine_set_note_hook(NULL);
     }
 }
@@ -426,16 +433,28 @@ static void test_listening_exit_tails(void) {
     engine_set_generative(false,-1);
     engine_set_synth(0); CHECK(!engine_listening_tail_active());
 
-    /* Harmony's manual bass ownership must not remove Generate's foundation
-     * or leave it sustained on exit. The manual preference survives. */
+    /* Generate does not supply a bass foundation. Manual explicit ownership
+     * must survive entry/exit without an automatic bass restart. */
     engine_init(); synth_host_init(); engine_set_synth_backend(&BE);
     engine_bass_follow(false);
     engine_set_generative(true,-1); engine_generative_tick(1000);
-    CHECK(engine_bass_active()); (void)level_after(180);
+    CHECK(!engine_bass_active()); (void)level_after(180);
     engine_set_generative(false,-1); (void)level_after(1600);
     CHECK(!engine_bass_active());
     engine_note_on(0,220,.2f); CHECK(!engine_bass_active());
     engine_note_off(0);
+}
+
+static void advance_audit_source(int ms) {
+    float l[BLK],r[BLK],sl[BLK],sr[BLK];
+    int remaining=ms*44100/1000;
+    while(remaining>0) {
+        int n=remaining>BLK?BLK:remaining;
+        memset(l,0,sizeof l);memset(r,0,sizeof r);
+        memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
+        horn_render_mix(l,r,sl,sr,n,.5f); /* engine_init's actual World */
+        remaining-=n;
+    }
 }
 
 static void test_pitch_memory(void) {
@@ -454,6 +473,7 @@ static void test_pitch_memory(void) {
         engine_init();engine_set_tuning(0);engine_set_key(60);engine_set_mode(mode);
         engine_generative_new_field((uint32_t)seed*1031u);mel_prev=mel_run=0;audit_last=0;auto_blocked=0;
         engine_set_note_hook(audit_onset);engine_set_generative(true,-1);
+        int checked_before=auto_checked;
         for(audit_ms=0;audit_ms<1200000;audit_ms+=250) {
             if(audit_ms==30000) engine_note_on(0,dsp_midi_to_hz(60),0.15f);
             if(audit_ms==100000) {engine_set_user_presence(true);auto_blocked=1;}
@@ -462,10 +482,12 @@ static void test_pitch_memory(void) {
             if(audit_ms==200000) engine_note_off(0);
             if(audit_ms==600000) {engine_set_key(61);mel_prev=mel_run=0;}
             engine_generative_tick(audit_ms);
+            advance_audit_source(250);
         }
+        CHECK(auto_checked-checked_before>=10); /* every mode/seed must compose */
         engine_set_note_hook(NULL);engine_set_generative(false,-1);
     }
-    CHECK(auto_checked>1500);printf("  %d automatic onsets: 6 modes x 3 seeds x 20 minutes\n",auto_checked);
+    printf("  %d admitted World onsets: 6 modes x 3 seeds x 20 minutes, matching source audio\n",auto_checked);
 }
 static void test_handover(void) {
     void (*init[])(void)={bowed_init,horn_init,choir_init};

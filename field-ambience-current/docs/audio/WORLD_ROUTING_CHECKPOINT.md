@@ -171,3 +171,38 @@ Unused D3/ITCM are not interchangeable with DMA-capable audio memory. Flash
 and PSRAM do not substitute for arbitrary hot internal buffers. The reserved
 stack size does not prove stack high-water use, and successful Release linking
 does not measure ISR deadline reserve. Real-device DWT/stack tests remain open.
+
+## 2026-10-06: Generate without a universal tonal bed
+
+Removed autonomous pad/Eno starts, generated reverse-swell scheduling, automatic
+pad-spectrum walk and composer-driven pad/bass gains. Harmony now mutates without
+creating an audio event; only admitted World events add tones. The initial
+Generate/field/World proposal is immediate and still subject to safety, onset
+spacing and actual DSP capacity. Later events retain World phrasing/density.
+The obsolete Eno toggle/API has no callers or serialized scene field and is
+removed. The low-level World-event toggle now leaves no substitute tonal layer.
+
+Found a second accompaniment bug: `refresh_bass` ran on World note-off and could
+wake bass underneath another still-held World owner. It now yields throughout
+Generate. Entry/exit releases execute while that guard is active; the manual
+bass-follow choice remains intact. Manual drone is released on Generate entry.
+World changes explicitly release the old scheduled owner; release slots remain
+occupied across families. No new DSP pool or room engine is introduced.
+
+Host evidence covers all five current World descriptors: only source-15
+onsets, silent harmonic steps, no autonomous pads/bass, dry silence after
+released sources, manual bass preference preservation, rapid World targets and
+maximum Shape release under saturated cross-family occupancy. The 6-mode x
+3-seed pitch-memory audit now renders matching source audio, rather than
+leaving pending voices frozen while advancing minutes of decisions. No WAV
+is exported by these long internal audits. Full host suite exits 0; the final
+focused generator run has 11,680 checks and 0 failures, the device-path audit
+5,388 checks and 0 failures with 714 admitted World onsets, and hot-path lint
+26 modules with 0 forbidden calls. Target Release results follow.
+
+Scope limits: this is not the new three-World catalog or dry-source redesign.
+Legacy manual pad/bass/Ember/drone paths remain linked and can contribute entry
+release tails; atmosphere/texture and the shared room remain distinct. Global
+manual admission, background semantics, body/FX transition behavior and on-device
+CPU/stack/listening acceptance remain separate work. No medical/calming efficacy
+or final timbral quality is inferred from software tests.
