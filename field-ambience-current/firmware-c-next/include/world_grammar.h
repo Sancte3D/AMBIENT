@@ -7,14 +7,17 @@
 enum { WORLD_COAST = 0, WORLD_WOODLAND, WORLD_HIGHLANDS, CORE_WORLD_COUNT };
 typedef struct {
     uint32_t rng, next_ms, episode_until;
-    uint32_t notes, episodes, answers;
-    int8_t last, motif[4];
+    uint32_t notes, episodes, answers, returns, heard_ms;
+    uint32_t rhythm[4], memory_rhythm[4];
+    int8_t last, motif[4], memory[4], transpose;
     uint8_t world, phase, pos, length, direction, timing_valid;
+    uint8_t episode_valid, memory_len, recalled, focus;
+    float time_spacing;
 } world_grammar_t;
 typedef struct {
     world_grammar_t next;
     uint32_t hold_ms, gap_ms;
-    float velocity;
+    float velocity, spacing;
     int index;
     uint8_t role, held_limit;
     bool rest;

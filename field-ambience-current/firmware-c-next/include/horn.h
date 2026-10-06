@@ -24,6 +24,10 @@ void horn_note_on(int source, float freq_hz, float amp);
 bool horn_try_note_on(int source, float freq_hz, float amp);
 void horn_note_off(int source);
 void horn_all_off(void);
+#ifdef FAM_SOUND_PRODUCT
+/* Audio-context only; natural tail remains in the shared room. */
+void horn_quiet_source(int source,int frames);
+#endif
 void horn_note(float freq_hz, float amp);
 
 int  horn_active_count(void);

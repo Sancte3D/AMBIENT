@@ -39,7 +39,7 @@ static int world,minor,tonic_pc,fx_mode,last_midi,note_count;
 static uint32_t seed,now_ms,last_user_ms,retry_ms,rejects;
 static bool generate,autoplay,user_present,user_seen,suppressed,clearing;
 static float activity,color,room,nature_amount;
-static _Atomic uint32_t release_mask,audio_mask,started_mask,audio_epoch,audio_frames,volume_bits,color_bits,limited,faults;
+static _Atomic uint32_t quick_mask,release_mask,audio_mask,started_mask,audio_epoch,audio_frames,volume_bits,color_bits,limited,faults;
 static _Atomic bool clear_request,clear_done,output_enabled,room_quiet;
 static float dry_l[BLOCK],dry_r[BLOCK],send_l[BLOCK],send_r[BLOCK];
 static float volume_cur,gate_cur,dc_l,dc_r;
@@ -147,10 +147,18 @@ int engine_sounding_notes(int *out,int max) {
     }
     return count;
 }
+static bool in_collection(float hz) {
+    int n=world_pitch_count(tonic_pc,minor!=0);
+    for(int i=0;i<n;++i) {
+        float allowed=tuning_hz((float)world_pitch_midi(i,tonic_pc,minor!=0));
+        if(fabsf(1200.0f*log2f(hz/allowed))<3) return true;
+    }
+    return false; /* Reject outside pitches; never silently clamp or transpose. */
+}
 static bool admit(uint8_t owner,float hz,float velocity) {
     reap();
     if(owner>=SOURCES || !isfinite(hz) || !isfinite(velocity) || velocity<=0 ||
-       hz<140 || hz>470 || clearing) return false;
+       hz<140 || hz>470 || clearing || !in_collection(hz)) return false;
     int empty=-1,local=0;
     for(int i=0;i<SLOTS;++i) {
         if(!slots[i].used) { if(empty<0) empty=i; continue; }
@@ -199,6 +207,14 @@ void engine_note_off(uint8_t owner) {
 static void release_all(void) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used) engine_note_off(slots[i].owner);
 }
+static void retire_context(bool all) {
+    for(int i=0;i<SLOTS;++i) if(slots[i].used &&
+       (all || slots[i].owner==6 || slots[i].owner==7 || slots[i].owner==15)) {
+        uint8_t owner=slots[i].owner;engine_note_off(owner);
+        atomic_fetch_or_explicit(&quick_mask,1u<<owner,memory_order_release);
+    }
+    pending=false;
+}
 static void release_generated(void) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used &&
        (slots[i].owner==6 || slots[i].owner==7 || slots[i].owner==15)) engine_note_off(slots[i].owner);
@@ -233,7 +249,7 @@ void engine_set_nature(float v) {
 }
 void engine_set_world(int i) {
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
-    reap(); release_generated(); pending=false; world=i; nature_set_world(world);
+    reap(); retire_context(false); pending=false; world=i; nature_set_world(world);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
 }
 int engine_product_world(void) { return world; }
@@ -265,7 +281,8 @@ void engine_set_user_presence(bool on) {
 }
 void engine_set_generative(bool on,int program) {
     (void)program; reap(); if(on==generate) return;
-    release_all(); pending=false; generate=on; suppressed=false; retry_ms=now_ms;
+    if(on)retire_context(true);else release_all();
+    pending=false; generate=on; suppressed=false; retry_ms=now_ms;
     if(on) world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u));
     nature_set_amount(on ? nature_amount : 0);
 }
@@ -273,7 +290,7 @@ void engine_set_autoplay_melody(int on) { autoplay=on!=0; if(!autoplay) release_
 int engine_autoplay_melody(void) { return autoplay; }
 uint32_t engine_gen_seed(void) { return seed; }
 void engine_set_gen_seed(uint32_t v) {
-    release_generated(); seed=v ? v : 0xA6B13E7Du; nature_set_seed(seed);
+    reap(); retire_context(false); seed=v ? v : 0xA6B13E7Du; nature_set_seed(seed);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
 }
 void engine_generative_new_field(uint32_t v) { engine_set_gen_seed(v); }
@@ -299,6 +316,7 @@ void engine_generative_tick(uint32_t ms) {
     }
     if(owner<0) { retry_ms=ms+250; return; }
     int count=world_pitch_count(tonic_pc,minor!=0);
+    if(count>8)count=8; /* Same eight degree indices as the bounded grammar. */
     int index=offer.index<count ? offer.index : count-1;
     int midi=world_pitch_midi(index,tonic_pc,minor!=0);
     float hz=tuning_hz((float)midi);
@@ -326,6 +344,8 @@ int engine_generative_suppressed(void) { return suppressed; }
 int engine_generative_last_melody_midi(void) { return last_midi; }
 int engine_generative_melody_count(void) { return note_count; }
 int engine_generative_dejavu_count(void) { return (int)grammar.answers; }
+uint32_t engine_generative_return_count(void) { return grammar.returns; }
+uint32_t engine_generative_episode_count(void) { return grammar.episodes; }
 uint32_t engine_admission_rejections(void) { return rejects; }
 uint32_t engine_output_limited_samples(void) { return atomic_load(&limited); }
 uint32_t engine_nonfinite_samples(void) { return atomic_load(&faults); }
@@ -382,7 +402,7 @@ void engine_init(void) {
     world=minor=0; tonic_pc=2; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=pending=false; autoplay=true;
     note_hook=0; fx_mode=1; last_midi=note_count=0;
-    atomic_store(&release_mask,0); atomic_store(&audio_mask,0); atomic_store(&started_mask,0);
+    atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&audio_mask,0); atomic_store(&started_mask,0);
     atomic_store(&audio_epoch,0); atomic_store(&audio_frames,0); atomic_store(&limited,0); atomic_store(&faults,0);
     atomic_store(&clear_request,false); atomic_store(&clear_done,false);
     atomic_store(&output_enabled,false); atomic_store(&room_quiet,true);
@@ -406,9 +426,12 @@ void engine_render(int16_t *out,int frames) {
     if(!out || frames<=0) return;
     while(frames>0) {
         int n=frames>BLOCK ? BLOCK : frames;
-        uint32_t off=atomic_exchange_explicit(&release_mask,0,memory_order_acquire);
+        uint32_t fast=atomic_exchange_explicit(&quick_mask,0,memory_order_acquire);
+        uint32_t off=atomic_exchange_explicit(&release_mask,0,memory_order_acquire)|fast;
         for(int i=0;i<SOURCES;++i) if(off&(1u<<i)) {
-            bowed_note_off(i); horn_note_off(i); pluck_note_off((uint8_t)i);
+            if(fast&(1u<<i)) {bowed_quiet_source(i,(int)(.100f*DSP_SAMPLE_RATE_HZ));horn_quiet_source(i,(int)(.100f*DSP_SAMPLE_RATE_HZ));}
+            else {bowed_note_off(i);horn_note_off(i);}
+            pluck_note_off((uint8_t)i);
         }
         memset(dry_l,0,n*sizeof(float)); memset(dry_r,0,n*sizeof(float));
         memset(send_l,0,n*sizeof(float)); memset(send_r,0,n*sizeof(float));
@@ -440,7 +463,7 @@ void engine_render(int16_t *out,int frames) {
             float c=value(atomic_load_explicit(&color_bits,memory_order_acquire));
             bowed_set_tone(c); horn_set_tone(c); pluck_set_damp(.65f-.35f*c);
             dc_l=dc_r=0; mask=0; quiet_frames=DSP_SAMPLE_RATE_HZ/4;
-            atomic_store(&release_mask,0); atomic_store(&started_mask,0); atomic_store(&room_quiet,true);
+            atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&started_mask,0); atomic_store(&room_quiet,true);
             atomic_store_explicit(&clear_done,true,memory_order_release);
         } else atomic_fetch_or_explicit(&started_mask,mask,memory_order_release);
         atomic_store_explicit(&audio_mask,mask,memory_order_release);

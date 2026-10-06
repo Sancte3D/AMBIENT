@@ -29,6 +29,10 @@ void bowed_note_on(int source, float freq_hz, float amp);
 bool bowed_try_note_on(int source, float freq_hz, float amp);
 void bowed_note_off(int source);
 void bowed_all_off(void);
+#ifdef FAM_SOUND_PRODUCT
+/* Audio-context only; natural tail remains in the shared room. */
+void bowed_quiet_source(int source,int frames);
+#endif
 void bowed_note(float freq_hz, float amp);
 
 /* Optional "colour" per world: 0 = Open Sea lyra (warm, mid body), 1 = Fjords

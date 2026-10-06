@@ -9,6 +9,8 @@ void engine_set_nature(float value);
 bool engine_try_note_on(uint8_t source,float actual_hz,float velocity);
 int engine_sounding_frequencies(float *out,int max);
 uint32_t engine_admission_rejections(void);
+uint32_t engine_generative_return_count(void);
+uint32_t engine_generative_episode_count(void);
 uint32_t engine_output_limited_samples(void);
 uint32_t engine_nonfinite_samples(void);
 int engine_product_world(void);

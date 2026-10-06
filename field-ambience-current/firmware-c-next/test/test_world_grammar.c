@@ -53,6 +53,35 @@ int main(void) {
     }
     world_offer_t answer=world_grammar_propose(&adjusted,adjusted.next_ms,0.5f);
     assert(answer.index==heard);
+    /* Heard intervals (including real admission delay) feed the answer.
+     * Rejected proposals neither manufacture memory nor advance return counts. */
+    assert(adjusted.memory_len==adjusted.length && adjusted.memory[0]==heard);
+    assert(adjusted.rhythm[0]>=1400);
+    uint32_t returns=0;
+    for(int w=1;w<CORE_WORLD_COUNT;++w) for(uint32_t seed=1;seed<=24;++seed) {
+        world_grammar_t g;world_grammar_init(&g,w,seed);
+        uint32_t now=0;
+        for(int i=0;i<400;++i) {
+            world_grammar_t before=g;
+            world_offer_t o=world_grammar_propose(&g,now,.5f);
+            assert(!memcmp(&before,&g,sizeof g));
+            if(g.phase==0 && g.pos==0 && o.next.recalled && !o.rest)
+                assert(o.index==g.memory[0]+o.next.transpose);
+            world_grammar_commit(&g,&o,o.index,now);
+            if(g.memory_len) {
+                assert(g.memory_len>=2 && g.memory_len<=4);
+                for(int k=0;k<g.memory_len;++k)assert(g.memory[k]>=0 && g.memory[k]<=7);
+            }
+            now=g.next_ms;
+        }
+        assert(g.returns>0);returns+=g.returns;
+    }
+    /* A real deadline equal to zero at wrap must not act as an init sentinel. */
+    world_grammar_t wrapped;world_grammar_init(&wrapped,WORLD_COAST,7);
+    wrapped.episode_valid=1;wrapped.episode_until=0;wrapped.phase=1;
+    world_offer_t rest=world_grammar_propose(&wrapped,0,.5f);
+    assert(rest.rest && rest.next.episodes==1);
+    printf("World memory: %u heard figure returns, interval memory and exact-zero timer wrap PASS\\n",returns);
     /* Activity changes time only, preserving pitch, contour and velocity. */
     for (int w=0;w<CORE_WORLD_COUNT;++w) {
         world_grammar_t g; world_grammar_init(&g,w,13);

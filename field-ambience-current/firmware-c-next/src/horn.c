@@ -50,7 +50,7 @@ static hvoice_t V[VMAX], pending[VMAX];
  * then start the prepared attack. Exactly VMAX voices render at any time. */
 #define HANDOVER_SAMPLES 353
 static _Atomic int queued[VMAX];
-static int fade_left[VMAX];
+static int fade_left[VMAX],fade_total[VMAX];
 static int      ctl;
 static _Atomic uint32_t tone_bits;
 static float tone_cur=0.5f;
@@ -82,7 +82,7 @@ static inline float wnoise(uint32_t *r) {
 
 void horn_init(void) {
     memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
-    memset(fade_left,0,sizeof fade_left);
+    memset(fade_left,0,sizeof fade_left); memset(fade_total,0,sizeof fade_total);
     memset(V, 0, sizeof V);
     ctl = 0; tone_cur=0.5f; horn_set_tone(0.5f);
 }
@@ -136,7 +136,9 @@ static void start_note(int source, float freq_hz, float amp) {
     int i=alloc_voice(source);
     queued[i]=0;
     prepare_note(&pending[i],i,source,freq_hz,amp);
-    if(V[i].stage!=V_IDLE && fade_left[i]==0) fade_left[i]=HANDOVER_SAMPLES;
+    if(V[i].stage!=V_IDLE && fade_left[i]==0) {
+        fade_total[i]=HANDOVER_SAMPLES; fade_left[i]=HANDOVER_SAMPLES;
+    }
     __asm__ volatile("" ::: "memory");
     queued[i]=1;
 }
@@ -167,6 +169,22 @@ void horn_note_off(int source) {
         V[i].source=-1; V[i].stage=V_RELEASE;
     }
 }
+#ifdef FAM_SOUND_PRODUCT
+/* Audio owner only: bounded context handover; no held manual voice stealing. */
+void horn_quiet_source(int source,int frames) {
+    if(frames<1)frames=1;
+    if(frames>(int)(.100f*SR))frames=(int)(.100f*SR);
+    for(int i=0;i<VMAX;++i) {
+        if(queued[i] && pending[i].owner_tag==source)queued[i]=0;
+        if(V[i].stage!=V_IDLE && V[i].owner_tag==source) {
+            V[i].source=-1; V[i].stage=V_RELEASE;
+            if(!fade_left[i] || fade_left[i]>frames) {
+                fade_total[i]=frames;fade_left[i]=frames;
+            }
+        }
+    }
+}
+#endif
 void horn_all_off(void) {
     for(int i=0;i<VMAX;++i) queued[i]=0;
     for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
@@ -242,7 +260,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
 
             float out = brass * v->env * 0.5f;
             if(fade_left[i]>0) {
-                out *= (float)fade_left[i]/HANDOVER_SAMPLES;
+                out *= (float)fade_left[i]/(float)fade_total[i];
                 if(--fade_left[i]==0) v->stage=V_IDLE;
             }
             L += out * v->panL;
