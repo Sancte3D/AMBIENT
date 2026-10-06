@@ -183,3 +183,22 @@ jobs:
             field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.map
           if-no-files-found: error
           retention-days: 14
+
+      - name: Cross-build reduced product sound candidate
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-product -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cat build-h743-product/CMakeFiles/field_ambience_h743.dir/flags.make
+          cmake --build build-h743-product -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-product
+
+      - name: Upload reduced sound candidate and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-product-candidate
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.map
+          if-no-files-found: error
+          retention-days: 14

@@ -26,7 +26,7 @@
 bool scenes_flash_write(const void *blob, unsigned len) {
     /* Auf Flashword-Granularitaet aufrunden, Rest mit 0xFF fuellen. */
     static uint8_t buf[512] __attribute__((aligned(32)));
-    if (len > sizeof buf) return false;
+    if (!blob || len == 0 || len > sizeof buf) return false;
     memset(buf, 0xFF, sizeof buf);
     memcpy(buf, blob, len);
     unsigned words = (len + FLASHWORD_BYTES - 1u) / FLASHWORD_BYTES;
@@ -46,7 +46,12 @@ bool scenes_flash_write(const void *blob, unsigned len) {
     }
 
     bool ok = true;
-    for (unsigned w = 0; w < words && ok; ++w) {
+    /* Commit the magic-containing first word last. Product SCN7 also has
+     * a store CRC; a failed/power-interrupted erase is not a successful Save.
+     * Atomic preservation of the preceding flash version needs a journal
+     * and remains a storage/device gate, not promised by this single sector. */
+    for (unsigned i = 0; i < words && ok; ++i) {
+        unsigned w = i + 1 < words ? i + 1 : 0;
         ok = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD,
                                SCENES_FLASH_ADDR + w * FLASHWORD_BYTES,
                                (uint32_t)(buf + w * FLASHWORD_BYTES)) == HAL_OK;
@@ -56,6 +61,7 @@ bool scenes_flash_write(const void *blob, unsigned len) {
 }
 
 bool scenes_flash_read(void *blob, unsigned len) {
+    if(!blob || len == 0 || len > 512) return false;
     /* Bank 2 ist memory-mapped — einfach kopieren. Ob der Inhalt gueltig
      * ist (Magic), entscheidet scenes.c. */
     memcpy(blob, (const void *)SCENES_FLASH_ADDR, len);

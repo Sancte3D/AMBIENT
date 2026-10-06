@@ -47,6 +47,16 @@ endif()
 set(FAM_TARGET "${_fam_default}" CACHE STRING "Build target: h743 | pico | host")
 set_property(CACHE FAM_TARGET PROPERTY STRINGS h743 pico host)
 
+# Reference remains the default until source hearing and device gates pass.
+set(FAM_SOUND_PROFILE "reference" CACHE STRING "Sound profile: reference | product")
+set_property(CACHE FAM_SOUND_PROFILE PROPERTY STRINGS reference product)
+if(NOT FAM_SOUND_PROFILE STREQUAL "reference" AND NOT FAM_SOUND_PROFILE STREQUAL "product")
+    message(FATAL_ERROR "Unknown FAM_SOUND_PROFILE '${FAM_SOUND_PROFILE}'")
+endif()
+if(FAM_SOUND_PROFILE STREQUAL "product")
+    add_compile_definitions(FAM_SOUND_PRODUCT)
+endif()
+
 # ---------------------------------------------------------------------------
 # Panel selection (ADR-0015 prep). Default = current 1.9" hardware (170×320).
 # Set FAM_LCD_PANEL=2_0inch when the proposed 2" 240×320 module is verified
@@ -176,6 +186,22 @@ set(V2_SOURCES
     src/v2/Synths_Archive/engine_bamboo_circuit.c  # west-coast LPG pluck
 )
 
+# Product candidate: selected at compile time, not an amount-zero archive.
+set(WORLD_SOURCE src/worlds.c)
+if(FAM_SOUND_PROFILE STREQUAL "product")
+    set(WORLD_SOURCE src/worlds_product.c)
+    set(V2_SOURCES)
+    set(DSP_SOURCES
+        src/dsp.c src/shape.c src/tuning.c src/brain.c src/cells.c
+        src/bowed.c src/horn.c src/pluck.c src/world_grammar.c
+        src/engine_product.c src/ambient_room.c src/nature.c
+        src/controls.c src/params.c src/knobs.c src/overlay.c src/scenes.c
+        src/bloom.c src/voicelead.c src/rolepatch.c src/landscape.c src/gesture.c
+        src/leds.c src/midi.c src/oled_draw.c src/oled_color.c
+        src/baked_font.c src/baked_font_data.c src/font_8x8.c
+        src/battery.c src/menu.c ${WORLD_SOURCE} src/audio_profiler.c)
+endif()
+
 # ---------------------------------------------------------------------------
 # Target-specific build dispatch.
 # ---------------------------------------------------------------------------
@@ -272,7 +298,7 @@ elseif(FAM_TARGET STREQUAL "pico")
         src/baked_font_data.c
         src/battery.c
         src/menu.c
-        src/worlds.c
+        ${WORLD_SOURCE}
     )
     target_include_directories(display_hw_test PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -311,6 +337,9 @@ elseif(FAM_TARGET STREQUAL "host")
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(field_ambience_dsp PUBLIC m)
+    if(FAM_SOUND_PROFILE STREQUAL "product")
+        target_compile_definitions(field_ambience_dsp PUBLIC FAM_SOUND_PRODUCT)
+    endif()
 
 else()
     message(FATAL_ERROR "Unknown FAM_TARGET '${FAM_TARGET}' — must be h743, pico, or host")

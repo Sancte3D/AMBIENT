@@ -12,6 +12,11 @@
 #include "brain.h"
 #include "dsp.h"
 #include "tuning.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "engine_product.h"
+#include "cells.h"
+#include <math.h>
+#endif
 
 #define SHIFT_SRC(c) ((uint8_t)((c) + 9))   /* shift-octave pad source */
 
@@ -119,6 +124,21 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
     if (cell >= CTRL_CELL_COUNT || s_mod[MOD_GENERATE]) return;
     s_cells_down |= (uint8_t)(1u << cell);      /* r19.20: physical key down */
     engine_set_user_presence(true);
+#ifdef FAM_SOUND_PRODUCT
+    if(!isfinite(velocity_amp) || velocity_amp<=0) return;
+    uint8_t src=s_mod[MOD_SHIFT] ? SHIFT_SRC(cell) : cell;
+    bool *held=s_mod[MOD_SHIFT] ? &s_hold_shift[cell] : &s_hold_base[cell];
+    float *amp=s_mod[MOD_SHIFT] ? &s_amp_shift[cell] : &s_amp_base[cell];
+    if(s_mod[MOD_HOLD] && *held) {
+        engine_note_off(src); *held=false; *amp=0; return;
+    }
+    float hz=tuning_hz((float)engine_product_cell_midi(cell,s_mod[MOD_SHIFT]));
+    if(engine_try_note_on(src,hz,velocity_amp/CELL_AMP_MAX)) {
+        if(s_mod[MOD_HOLD]) { *held=true; *amp=velocity_amp; }
+        else s_moment_src[cell]=(int8_t)src;
+    }
+    return;
+#else
     int   root = brain_cell_root(cell);
     float hz   = tuning_hz((float)root);
     float hz_s = tuning_hz((float)(root + 12));
@@ -144,6 +164,7 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
         engine_note_on(src, f, velocity_amp);
         s_moment_src[cell] = (int8_t)src;
     }
+#endif
 }
 
 void controls_cell_release(uint8_t cell) {
@@ -175,6 +196,10 @@ void controls_cell_release(uint8_t cell) {
  * engine_set_key. Momentary notes are left alone (they end in a moment
  * anyway, and re-pitching under a held finger feels wrong). */
 void controls_refresh_held_pitches(void) {
+#ifdef FAM_SOUND_PRODUCT
+    /* Held sources retain their actual pitch/owner; new notes use the context. */
+    return;
+#else
     for (uint8_t c = 0; c < CTRL_CELL_COUNT; ++c) {
         if (!s_hold_base[c] && !s_hold_shift[c]) continue;
         int root = brain_cell_root(c);
@@ -184,6 +209,7 @@ void controls_refresh_held_pitches(void) {
             engine_note_on(SHIFT_SRC(c), tuning_hz((float)(root + 12)),
                            s_amp_shift[c]);
     }
+#endif
 }
 
 bool controls_any_cell_down(void) { return s_cells_down != 0; }

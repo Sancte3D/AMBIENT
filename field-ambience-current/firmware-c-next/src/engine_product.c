@@ -226,10 +226,15 @@ void engine_set_room(float v) { if(isfinite(v)) { room=dsp_clampf(v,0,1); ambien
 void engine_set_nature(float v) { if(isfinite(v)) { nature_amount=dsp_clampf(v,0,1); nature_set_amount(nature_amount); } }
 void engine_set_world(int i) {
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
-    reap(); release_all(); pending=false; world=i; nature_set_world(world);
+    reap(); release_generated(); pending=false; world=i; nature_set_world(world);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
 }
 int engine_product_world(void) { return world; }
+int engine_product_collection(void) { return minor; }
+int engine_product_cell_midi(int cell,bool upper) {
+    if(cell<0 || cell>=CELL_COUNT) return -1;
+    return world_pitch_midi(cell+(upper ? 3 : 0),tonic_pc,minor!=0);
+}
 void engine_set_key_pc(int pc) {
     pc%=12; if(pc<0) pc+=12;
     /* Cancel an unacknowledged score proposal, preserve actual held pitches. */
@@ -244,7 +249,7 @@ void engine_set_release(float v) { if(isfinite(v)) shape_set_release(.35f+.30f*d
 bool engine_cell_sample(uint8_t cell,float position,uint32_t ms) {
     if(generate || !isfinite(position)) return false;
     cell_event_t e=cells_update(cell,position,ms);
-    if(e.kind==CELL_EVENT_PRESS) return engine_try_note_on(e.cell,tuning_hz((float)brain_cell_root(e.cell)),e.amp/CELL_AMP_MAX);
+    if(e.kind==CELL_EVENT_PRESS) return engine_try_note_on(e.cell,tuning_hz((float)engine_product_cell_midi(e.cell,false)),e.amp/CELL_AMP_MAX);
     if(e.kind==CELL_EVENT_RELEASE) { engine_note_off(e.cell); return true; }
     return false;
 }

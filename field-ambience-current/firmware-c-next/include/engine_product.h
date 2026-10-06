@@ -12,5 +12,8 @@ uint32_t engine_admission_rejections(void);
 uint32_t engine_output_limited_samples(void);
 uint32_t engine_nonfinite_samples(void);
 int engine_product_world(void);
+int engine_product_collection(void);
+/* Bounded lower/upper register choices. Upper is not a promised octave. */
+int engine_product_cell_midi(int cell,bool upper);
 bool engine_clear_pending(void);
 #endif

@@ -21,7 +21,9 @@
  */
 
 #include "engine.h"
+#ifndef FAM_SOUND_PRODUCT
 #include "v2/synth_host.h"
+#endif
 #include "brain.h"
 #include "dsp.h"
 #include "audio.h"
@@ -188,6 +190,7 @@ static void hal_set_cell(int mode) {
 
 /* r19.16 — V2 sound-core backend: thin adapters so the engine keeps no link
  * dependency on src/v2 (host tests link engine.c without it). */
+#ifndef FAM_SOUND_PRODUCT
 static void be_select  (int id)              { synth_host_select((synth_id_t)id); }
 static void be_note_on (int midi, float vel) { synth_host_note_on(midi, vel); }
 static void be_note_off(void)                { synth_host_note_off(); }
@@ -198,6 +201,7 @@ static const engine_synth_backend_t s_v2_backend = {
     be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param,
     synth_host_note_on_hz, synth_host_set_macro, synth_host_retune_hz
 };
+#endif
 
 /* Klinke drin → NUR den PAM8406 muten (AMP_MUTE_N = PB15 LOW), Line-Out
  * bleibt live — NICHT audio_mute() rufen (das wuerde auch XSMT ziehen und
@@ -313,8 +317,10 @@ int main(void) {
                                * sets the 30 % target → ~350 ms fade-in */
     for (int i = 0; i < 16; ++i) s_midi_src_note[i] = -1;
     engine_set_note_hook(midi_note_tap);   /* played cells → MIDI out */
+#ifndef FAM_SOUND_PRODUCT
     synth_host_init();
-    engine_set_synth_backend(&s_v2_backend);   /* r19.16: SYNTH menu slot live */
+    engine_set_synth_backend(&s_v2_backend);
+#endif
     {
         /* ADR-0017 Phase 4 + r18.58 Reddit-macro menu */
         menu_callbacks_t cb = {

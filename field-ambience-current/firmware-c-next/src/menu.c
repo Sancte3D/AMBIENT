@@ -56,8 +56,12 @@ static int           fx_i    = 8;         /* r19.41: FX page, default Dream Chai
 static uint16_t      s_locks  = 0;         /* r19.22: Bit = menu_param_t       */
 
 /* Sperrbar = was ein World-Wechsel ueberschreibt (menu.h r19.22). */
+#ifdef FAM_SOUND_PRODUCT
+#define LOCKABLE_MASK 0u /* World changes preserve all shared parameters. */
+#else
 #define LOCKABLE_MASK ((uint16_t)((1u<<MP_KEY)|(1u<<MP_SPACE)|(1u<<MP_SHIMMER)|\
     (1u<<MP_ATMOS)|(1u<<MP_MOTION)|(1u<<MP_AGE)|(1u<<MP_ECHO)|(1u<<MP_BLUR)))
+#endif
 
 static const char * const KEY_NAMES[12] = {
     "C","C#","D","D#","E","F","F#","G","G#","A","A#","B"
@@ -76,10 +80,14 @@ static const char * const BASS_NAMES[4] = { "Off", "Root", "Fifth", "Drift" };
 static const char * const COLOR_NAMES[4] = { "Pure", "Open", "Warm", "Deep" };
 /* r19.41: master-effects page. Dream = the complete chain (boot default);
  * the single modes stay selectable for A/B listening. */
+#ifdef FAM_SOUND_PRODUCT
+static const char * const FX_NAMES[2] = { "Dry", "Room" };
+#else
 static const char * const FX_NAMES[9] = {
     "Bypass", "Reverb", "Delay", "Chorus", "Tape", "Swell", "Shimmer",
     "Blur", "Dream"
 };
+#endif
 
 static int clampi(int v, int lo, int hi) { return v<lo?lo:(v>hi?hi:v); }
 static int wrapi (int v, int n)          { v %= n; if (v < 0) v += n; return v; }
@@ -133,6 +141,11 @@ static void apply_current(void) {
 /* Load a world's macro preset into the live macros + push them to the engine.
  * Called when the user changes the WORLD value. */
 static void load_world_preset(void) {
+#ifdef FAM_SOUND_PRODUCT
+    set_world_accent(true);
+    if (cb.set_world) cb.set_world(world_i);
+    return; /* Same Key, Color, Room, Nature and Activity across Worlds. */
+#else
     const world_t *w = worlds_get(world_i);
     /* r19.22 Parameter-Locks: nur UNgesperrte Werte folgen dem neuen
      * World-Preset — ein gesperrter Hallraum/Echo-Wert etc. bleibt beim
@@ -169,6 +182,7 @@ static void load_world_preset(void) {
     if (cb.set_echo)       cb.set_echo      (echo   / 100.0f);
     if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
     if (cb.set_key)        cb.set_key       (key_pc);
+#endif
 }
 
 /* --- r19.22 Locks + Scene-State-API (menu.h) --------------------------- */
@@ -199,6 +213,26 @@ void menu_get_state(menu_state_t *out) {
 }
 
 void menu_apply_state(const menu_state_t *st) {
+    if(!st) return;
+#ifdef FAM_SOUND_PRODUCT
+    world_i=clampi(st->world,0,WORLD_COUNT-1);
+    key_pc=clampi(st->key_pc,0,11); tuning_i=clampi(st->tuning,0,1);
+    space=clampi(st->space,0,100); atmos=clampi(st->atmos,0,100);
+    motion=clampi(st->motion,0,100); fx_i=clampi(st->fx,0,1);
+    atk_i=clampi(st->attack,0,100); rel_i=clampi(st->release,0,100);
+    voice_i=synth_i=cell_i=bass_i=color_i=shim=age=echo=blur=reso=sweep_i=envm_i=0;
+    s_locks=0; memset(core,0,sizeof core);
+    set_world_accent(true);
+    if(cb.set_world) cb.set_world(world_i);
+    if(cb.set_key) cb.set_key(key_pc);
+    if(cb.set_tuning) cb.set_tuning(tuning_i);
+    if(cb.set_space) cb.set_space(space/100.0f);
+    if(cb.set_atmosphere) cb.set_atmosphere(atmos/100.0f);
+    if(cb.set_motion) cb.set_motion(motion/100.0f);
+    if(cb.set_fx) cb.set_fx(fx_i);
+    if(cb.set_attack) cb.set_attack(atk_i/100.0f);
+    if(cb.set_release) cb.set_release(rel_i/100.0f);
+#else
     world_i  = clampi(st->world, 0, worlds_count() - 1);
     key_pc   = clampi(st->key_pc, 0, 11);
     tuning_i = clampi(st->tuning, 0, 1);
@@ -242,10 +276,21 @@ void menu_apply_state(const menu_state_t *st) {
     if (cb.set_fx)         cb.set_fx(fx_i);
     if (cb.set_bright)     cb.set_bright((float)worlds_get(world_i)->brightness_hz);
     if (cb.set_color)      cb.set_color(color_i);
+#endif
 }
 
 void menu_init(const menu_callbacks_t *cbs) {
     if (cbs) cb = *cbs; else memset(&cb, 0, sizeof cb);
+#ifdef FAM_SOUND_PRODUCT
+    memset(core,0,sizeof core);
+    synth_i=voice_i=cell_i=bass_i=color_i=shim=age=echo=blur=reso=sweep_i=envm_i=0;
+    tuning_i=0; atk_i=rel_i=50; fx_i=1; s_locks=0;
+    cur=MP_WORLD; mode=MENU_BROWSE; world_i=0;
+    key_pc=2; space=50; atmos=0; motion=50;
+    menu_state_t initial={.key_pc=2,.space=50,.motion=50,.fx=1,.attack=50,.release=50};
+    menu_apply_state(&initial);
+    set_world_accent(false);
+#else
     memcpy(core, synth_control_defaults, sizeof core);
     synth_i=0; tuning_i=0; cell_i=0; reso=sweep_i=envm_i=0; atk_i=rel_i=50; fx_i=8; s_locks=0;
     cur = MP_WORLD;
@@ -291,6 +336,7 @@ void menu_init(const menu_callbacks_t *cbs) {
         if (cb.set_blur)       cb.set_blur      (blur   / 100.0f);
         if (cb.set_key)        cb.set_key       (key_pc);
     }
+#endif
 }
 
 /* --- state queries ---------------------------------------------------- */
@@ -302,6 +348,11 @@ int          menu_world_index(void)    { return world_i; }
 const char  *menu_world_subtitle(void) { return worlds_get(world_i)->subtitle; }
 
 const char *menu_current_label(void) {
+#ifdef FAM_SOUND_PRODUCT
+    if(cur==MP_SPACE) return "Room";
+    if(cur==MP_ATMOS) return "Nature";
+    if(cur==MP_MOTION) return "Activity";
+#endif
     if (cur >= MP_CORE_A && cur <= MP_CORE_F)
         return synth_i ? synth_control_names[synth_i-1][cur-MP_CORE_A] : "Core";
     static const char * const LABELS[MP_COUNT] = {
@@ -358,7 +409,12 @@ int menu_value_count(menu_param_t p) {
         case MP_CELL:  return 3;
         case MP_BASS:  return 4;
         case MP_COLOR: return 4;
-        case MP_FX:    return 9;
+        case MP_FX:
+#ifdef FAM_SOUND_PRODUCT
+            return 2;
+#else
+            return 9;
+#endif
         default:       return 0;   /* SPACE / ATMOS / MOTION / AGE = % */
     }
 }
@@ -409,7 +465,14 @@ void menu_push(void) {
 void menu_rotate(int delta) {
     if (mode == MENU_BROWSE) {
         int dir = (delta > 0) - (delta < 0);
+#ifdef FAM_SOUND_PRODUCT
+        static const menu_param_t available[]={MP_WORLD,MP_KEY,MP_TUNING,MP_SPACE,MP_ATMOS,MP_MOTION,MP_FX,MP_ATTACK,MP_RELEASE};
+        int n=(int)(sizeof available/sizeof available[0]),i=0;
+        while(i<n && available[i]!=cur) ++i;
+        cur=available[wrapi((i<n ? i : 0)+dir,n)];
+#else
         cur = (menu_param_t)wrapi((int)cur + dir, synth_i ? MP_COUNT : MP_CORE_A);
+#endif
         return;
     }
     if (cur >= MP_CORE_A && cur <= MP_CORE_F) {
@@ -433,7 +496,7 @@ void menu_rotate(int delta) {
         case MP_CELL:   cell_i  = wrapi(cell_i  + delta, 3);  break;
         case MP_BASS:   bass_i  = wrapi(bass_i  + delta, 4);  break;
         case MP_COLOR:  color_i = wrapi(color_i + delta, 4);  break;
-        case MP_FX:     fx_i    = wrapi(fx_i    + delta, 9);  break;
+        case MP_FX:     fx_i    = wrapi(fx_i + delta, menu_value_count(MP_FX));  break;
         case MP_SPACE:  space  = clampi(space  + delta, 0, 100); break;
         case MP_SHIMMER:shim   = clampi(shim   + delta, 0, 100); break;
         case MP_ATMOS:  atmos  = clampi(atmos  + delta, 0, 100); break;
