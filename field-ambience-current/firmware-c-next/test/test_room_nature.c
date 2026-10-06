@@ -36,7 +36,7 @@ static void room_impulse(float amount) {
         }frame+=n;
     }
     assert(peak<.3f && late<energy*1e-6+1e-20);
-    if(amount>0)assert(energy>0 && mono/energy>.15);
+    if(amount>0)assert(energy>0 && mono/energy>.50);
     else assert(energy==0);
     printf("ROOM amount=%.1f nominal_T60=%.3f energy=%.9g mono_ratio=%.5f late9s_ratio=%.9g peak=%.7f\n",
         (double)amount,(double)ambient_room_tail_seconds(),energy,energy>0?mono/energy:1,energy>0?late/energy:0,(double)peak);

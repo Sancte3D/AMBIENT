@@ -93,8 +93,11 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
             if(++at[i]==lengths[i]) at[i]=0;
             offset+=lengths[i];
         }
-        float wl=.205f*(line[0]-line[1]+line[2]+line[4]-line[6]+line[7]);
-        float wr=.205f*(line[1]+line[3]-line[4]+line[5]+line[6]-line[7]);
+        /* Balanced orthogonal readouts. The previous six-tap rows shared
+         * four opposing signs (dot=-4, norm^2=6), weakening the mono room.
+         * Preserve each row's norm: .205*sqrt(6/8) = .1775352. */
+        float wl=.1775352f*(line[0]-line[1]+line[2]-line[3]+line[4]-line[5]+line[6]-line[7]);
+        float wr=.1775352f*(line[0]+line[1]-line[2]-line[3]+line[4]+line[5]-line[6]-line[7]);
         float mid=.5f*(wl+wr),side=.30f*(wl-wr);
         float wet=(.12f+.50f*amount_cur)*amount_cur*enable_cur;
         wl=(mid+side)*wet; wr=(mid-side)*wet;
