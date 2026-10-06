@@ -1,5 +1,13 @@
 # Sound review queue
 
+> **2026-10-06 — Primary sound backlog:**
+> [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md) supersedes the
+> priority/next-unit entries below. Next: SD02, dry COAST/Bowed. All reachable
+> sources, effects and settings receive KEEP/REMOVE/REFERENCE decisions; legacy
+> Choir/Guembri/V2 entries are reviewed further only if selected for the product.
+> UI and physical mappings remain deferred; software evidence is not device
+> or listening acceptance. The earlier queue remains historical evidence.
+
 > **2026-10-04 — Implementation direction:** The concrete proposal is
 > AMBIENT_PRODUCT_BRIEF.md, supported by AMBIENT_WORLD_SYSTEMS.md and
 > AMBIENT_SOURCE_ARCHITECTURE.md. Follow AMBIENT_IMPLEMENTATION_SEQUENCE.md

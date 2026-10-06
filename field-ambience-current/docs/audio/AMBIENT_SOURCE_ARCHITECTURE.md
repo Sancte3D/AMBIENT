@@ -1,5 +1,12 @@
 # AMBIENT — Quellen und Raum für drei Welten
 
+> **Standhinweis 2026-10-06:** Die folgende Diagnose ist auf 2026-09-27
+> datiert. Implizite autonome Begleitung, Pluck-Besitz/Stop und Generate-Zulassung
+> wurden seither geändert. Aktueller Implementierungsnachweis:
+> [WORLD_ROUTING_CHECKPOINT.md](WORLD_ROUTING_CHECKPOINT.md); verbindliche
+> weitere Entscheidungen/Abnahme: [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md).
+> Alte manuelle Begleitung und vollständige Klangabnahme bleiben offen.
+
 2026-09-27, Konzeptpaket 2. Ergänzt [AMBIENT_WORLD_SYSTEMS.md](AMBIENT_WORLD_SYSTEMS.md).
 Codeprüfung am lokalen Commit 97d9440; Firmware seit dem vorherigen Konzeptpaket
 unverändert. Codefakten, daraus abgeleitete Risiken und Entwurfsentscheidungen

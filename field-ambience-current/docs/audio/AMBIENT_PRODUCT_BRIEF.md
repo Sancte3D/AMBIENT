@@ -1,5 +1,14 @@
 # AMBIENT — vollständiger Produktentwurf v1.0
 
+> **Aktualisierung 2026-10-06:** Nutzer hat Sound-/Codeentwicklung,
+> Archivierung und gelegentliche Entwicklungsmerges autorisiert.
+> [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md) definiert den
+> aktuellen Soundauftrag und seine Abnahme. Die folgenden Freigabe-/Firmware-
+> Angaben beschreiben den Entwurf vom 2026-10-04, nicht den heutigen Code.
+> UI/Display und physische Tastenbelegung bleiben nachgeordnet und dürfen sich
+> ändern; musikalische Audioverträge werden vorher festgelegt. Kein fertiger
+> World-Klang und kein realer Hardwaretest ist dadurch bereits freigegeben.
+
 2026-10-04. Entscheidungsreifer Konzeptvorschlag, keine Nutzerfreigabe der neuen
 Einzelentscheidungen und keine Klang-/Hardwarezertifizierung. Setzt
 [AMBIENT_WORLD_SYSTEMS.md](AMBIENT_WORLD_SYSTEMS.md) und

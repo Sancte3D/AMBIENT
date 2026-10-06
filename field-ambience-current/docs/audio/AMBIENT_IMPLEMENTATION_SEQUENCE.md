@@ -1,5 +1,13 @@
 # AMBIENT — abgeschlossene Umsetzungspakete nach Konzeptfreigabe
 
+> **Aktuelle Arbeitsliste, 2026-10-06:**
+> [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md) ist maßgeblich.
+> Ihre IDs SD00–SD53 unterscheiden sich ausdrücklich von den historischen
+> Paket-IDs S0–S10 unten. Technisch erledigte Teilbefunde nicht erneut umsetzen.
+> Nächste Einheit: **SD02, COAST/Bowed trocken**. UI und physische Tastenbelegung
+> folgen dem Sound-Softwarestand und bleiben veränderbar. Entwicklungsmerge
+> autorisiert; Hör-/Gerätefreigabe weiterhin offen.
+
 2026-10-04. Plan aus [AMBIENT_PRODUCT_BRIEF.md](AMBIENT_PRODUCT_BRIEF.md).
 Nutzerauftrag 2026-10-04 autorisiert Archivierung und Code-/Soundentwicklung.
 Namen und klangliche Eignung bleiben überprüfbare Entwurfsannahmen; keine
@@ -99,13 +107,13 @@ Prüfung und offenen Hör-/Gerätegrenzen. Ein abgelehnter Klangkandidat ist ein
 gültiges Ergebnis. Erst die Ursache prüfen; keine zusätzlichen Layer oder
 Effekte aufsetzen, um unpassende Quellen zu überdecken.
 
-## Konkreter nächster Arbeitsschritt
+## Historischer nächster Arbeitsschritt — 2026-10-04
 
-Der Produktbrief und die neue manuelle Palette werden als Konzeptentscheidung
-geprüft. Anschließend S0/S1: den echten autonomen Quellenpfad protokollieren und
-den impliziten Pad-Start von ausdrücklich gewählten Quellen entkoppeln.
-Diese Entkopplung hat einen klaren Zweck: erstmals jede World als ihr eigenes
-System hören können. Erst danach Quellen-Sounddesign in kurzen Einheiten.
+Dieser Planungsstand ist durch die aktuelle Arbeitsliste und die folgenden
+Implementierungscheckpoints abgelöst. Damals vorgesehen: Produktbrief und
+manuelle Palette prüfen, dann S0/S1 mit Protokollierung und Entkopplung des
+impliziten Pad-Starts. Die autonome Entkopplung ist inzwischen implementiert;
+heutiger nächster Schritt ist SD02, COAST trocken.
 
 ## Implementation checkpoint — 2026-10-04
 

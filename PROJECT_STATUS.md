@@ -1,5 +1,22 @@
 # PROJECT STATUS
 
+> **2026-10-06 — Maßgeblicher Sounddesign-Masterplan:**
+> [AMBIENT_SOUND_DESIGN_TODO.md](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md)
+> legt die Zielarchitektur, sämtliche Quellen-/FX-/Natur-/Parameterentscheidungen
+> und 54 überprüfbare Aufgaben bis zur Geräteabnahme fest. Nutzer autorisiert
+> weitere Sound-/Codeentwicklung und gelegentliche Entwicklungsmerges.
+> UI/Display/physische Tastenbelegung bleiben nachgeordnet und veränderbar;
+> Audiozustände, Besitzer, Harmonie, Pegel und Stillwerden werden vorher geklärt.
+> Generative Starttransaktion, explizite autonome Quellen, Generate-Belegung,
+> Release-Retirement und die technische Pluck-Korrektur sind inzwischen
+> implementiert/Host- und H743-Release-geprüft. Drei neue World-Grammatiken,
+> globale manuelle Zulassung, vollständige Klang-/Raum-/Parameterabnahme und
+> reale CPU-/Ausgangsprüfung sind offen. Archivierte Synths sind noch gelinkt.
+> **Nächste Einheit: SD02 — COAST/Bowed trocken**, vor Grammatik/Raum/UI.
+> PR #129 ist ein Entwicklungscheckpoint in seiner bestehenden Basis;
+> ein Merge ist keine Produkt- oder Klangfreigabe. Die folgenden datierten
+> Einträge sind Historie, ihre alten Next-/Freigabeangaben gelten nicht fort.
+
 > **2026-10-04 — Vollständiger Produktentwurf und Umsetzungspakete:**
 > `field-ambience-current/docs/audio/AMBIENT_PRODUCT_BRIEF.md` verbindet
 > drei unterschiedliche World-Grammatiken, Quellen-/Raumarchitektur, Start,
