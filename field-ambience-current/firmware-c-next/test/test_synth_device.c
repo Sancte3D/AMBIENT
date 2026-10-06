@@ -17,6 +17,7 @@
 #include "bowed.h"
 #include "horn.h"
 #include "choir.h"
+#include "pad.h"
 #include "harmony.h"
 #include "composer.h"
 #include "tuning.h"
@@ -352,6 +353,39 @@ static void test_listening_from_character(void) {
     }
 }
 
+static void test_entry_after_real_native_crossfade(void) {
+    /* The outgoing native path may hold both the active and previous core.
+     * Let its existing fade finish before admitting any World source. */
+    for(int core=1;core<=6;++core) {
+        engine_init();synth_host_init();engine_set_synth_backend(&BE);
+        engine_set_fx_mode(0);engine_set_synth(core);engine_note_on(0,220,.2f);
+        (void)level_after(30);
+        engine_set_synth(core%6+1);engine_note_on(1,330,.2f); /* pending internal handover */
+        engine_set_generative(true,-1);
+        engine_set_note_hook(observe_return);return_onsets=0;
+        engine_generative_tick(1000);
+        CHECK(return_onsets==0);CHECK(engine_world_source_count()==0);
+        int16_t b[64*2];engine_render(b,64);engine_generative_tick(1002);
+        CHECK(return_onsets==0); /* fade still running, no source/RNG consumed */
+        for(int i=0;i<10;++i) engine_render(b,64); /* total 704 > 662 samples */
+        engine_generative_tick(1016);
+        CHECK(return_onsets==1);CHECK(engine_ambient_source_count()==1);
+        engine_set_note_hook(NULL);engine_set_generative(false,-1);
+    }
+    /* Previously the muted Ambient pool stopped advancing after 15 ms.
+     * A much later return could revive that old note and confuse admission. */
+    engine_init();synth_host_init();engine_set_synth_backend(&BE);
+    engine_set_fx_mode(0);engine_note_on(0,220,.15f);(void)level_after(100);
+    CHECK(engine_ambient_source_count()>=3);
+    engine_set_synth(3);CHECK(!engine_listening_tail_active());
+    (void)level_after(3000); /* ~35 s internal audit, no audio file */
+    CHECK(engine_ambient_source_count()==0);
+    engine_set_synth(0);
+    CHECK(level_after(150)<1.0); /* old Ambient attack/release does not reappear */
+    engine_set_generative(true,-1);engine_generative_tick(40000);
+    CHECK(engine_generative_melody_count()==1);
+}
+
 static void test_world_voice_ownership(void) {
     int (*count[])(void)={horn_active_count,bowed_active_count,bowed_active_count,choir_active_count};
     for(int world=0;world<4;++world) {
@@ -453,6 +487,7 @@ static void advance_audit_source(int ms) {
         memset(l,0,sizeof l);memset(r,0,sizeof r);
         memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
         horn_render_mix(l,r,sl,sr,n,.5f); /* engine_init's actual World */
+        pad_render_mix(l,r,sl,sr,n,.5f);  /* injected manual note and its release */
         remaining-=n;
     }
 }
@@ -613,6 +648,7 @@ int main(void) {
     test_pitch_and_controls(); test_live_tuning(); test_core_level_balance(); test_handover(); test_pitch_memory();
     test_character_return_pause();
     test_listening_from_character();
+    test_entry_after_real_native_crossfade();
     test_world_voice_ownership();
     test_listening_exit_tails();
     printf("synth_device: %d checks, 0 failures\n", checks);

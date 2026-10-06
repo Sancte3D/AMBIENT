@@ -125,7 +125,7 @@ source, scheduler and room rewrites: their effects must stay attributable.
 |---|---|---|
 | 1 — implemented 2026-10-06 | A generated source-start transaction: check capacity and valid pitch, start DSP, then commit owner / harmony / hook / counters only on success | Failed admission changes no sounding-pitch state, event count or existing waveform; retry is delayed rather than retriggered every tick |
 | 2 — implemented 2026-10-06 | New autonomous World path without automatic Bed, Eno loops, bass or generated reverse swell | Source-event trace starts only the planned family; harmony advances independently of accompaniment; Stop releases its owners; real rests exist before room tails |
-| 3 | Common three-slot budget across actual source voices and release tails | Cross-world handover, maximum Shape release and repeated Generate cannot exceed the budget; when full, wait rather than hard-steal; account for both bass sub/deep if ever enabled, not just bass_active boolean |
+| 3 — Generate admission implemented 2026-10-06 | Common three-slot budget across actual source voices and release tails | Cross-world handover, maximum Shape release and repeated Generate cannot exceed the budget; when full, wait rather than hard-steal; account for both bass sub/deep if ever enabled, not just bass_active boolean |
 | 4 | WOODLAND dry Pluck articulation: excitation, sustain, damping and ownership | Low-mid pitch stability across damping, no hiss-like onset; a short motif plus silence is recognizable without body/hall; <=30 s A/B |
 | 5 | COAST dry Bowed: fundamental, detune, bow noise and motion | No stationary electrical buzz or octave dominance; slow overlap communicates motion without a fixed repeating sweep; <=30 s A/B |
 | 6 | HIGHLANDS dry Horn: onset, register, body and modulation | No whistle/alarm/tube association across supported range; reject the candidate if it cannot distinguish itself calmly from COAST; <=30 s A/B |
@@ -185,3 +185,37 @@ all five CI jobs green; Flash 254,028 B, DTCM 119,440 B, D1 417,376 B, D2
 258,112 B. Actual reductions are 1,196 Flash bytes and 64 D1 bytes; inactive
 legacy pools are not counted as freed. Exact run and open device gates are in
 WORLD_ROUTING_CHECKPOINT.md.
+
+### Generate entry occupancy closed — 2026-10-06
+
+The World admission gate now counts every Ambient DSP slot: World families,
+legacy pads, Ember, both separately retiring bass layers and the single Drone
+voice. It also waits for the outgoing native mix to reach zero; active/previous
+archived cores therefore do not overlap a newly admitted World source. This
+is admission accounting, not a retroactive three-voice clamp on old manual
+scenes. Already dense manual releases may start above three; no new World is
+added until total capacity is available. Their natural transition duration
+must be judged later with the reduced manual palette, not hidden by hard cuts.
+
+Busy opening remains pending without pitch RNG, phrase commits or an arbitrary
+2-second retry. Harmony continues. The first free control tick makes the safe
+opening proposal. Ordinary accepted-event spacing and rejected-source retry
+rules remain. Source sound/grammar are unchanged by this unit.
+
+Ordinary manual Ambient→native switches now advance their released Ambient
+pool after its 15 ms fade, muted and bounded by 64 seconds/early quiet exit.
+Previously those envelopes could freeze until the next Ambient visit. The
+existing audible World release on Generate exit is separate and preserved.
+Shared FX are not reset; inactive pools are not reinterpreted as saved RAM.
+
+Host suite passes: generator 11,972 checks, device path 5,423 checks, hot-path
+lint 26 modules and no forbidden calls. Native handover tests cover all six
+archived cores including a pending internal switch. Dense manual entry and
+independent bass 2→1→0 release occupancy are exercised with running audio.
+On-device worst case must include the temporary muted Ambient+native workload.
+No new buffer, heap allocation or per-sample transcendental is introduced.
+
+Next sound unit is WOODLAND dry Pluck: excitation, damping and pitch stability,
+with short comparisons before Body/room. Manual admission limits, legacy
+one-shot pitch ownership, catalog migration and full FX/body transitions remain
+explicit later work; the current gate is not a complete product certification.

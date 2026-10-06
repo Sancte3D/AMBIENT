@@ -19,6 +19,7 @@
 #include "bowed.h"
 #include "choir.h"
 #include "guembri.h"
+#include "bass.h"
 #include "composer.h" /* r18.96: top-level intent states */
 #include "harmony.h"
 #include "dsp.h"
@@ -184,6 +185,78 @@ static void test_no_autonomous_bed(void) {
     engine_bass_follow(true);engine_init();
 }
 
+static int entry_onsets;
+static void entry_event(int on,uint8_t source,float hz,float amp) {
+    (void)hz;(void)amp;
+    if(on==1 && source==15) {
+        CHECK(engine_ambient_source_count()<=ENGINE_WORLD_SOURCE_LIMIT,
+              "admitted World includes all outgoing Ambient slots");
+        ++entry_onsets;
+    }
+}
+static void test_manual_entry_budget(void) {
+    /* Bass has two independently retiring envelopes, not one boolean slot. */
+    engine_init();engine_set_fx_mode(0);engine_bass_set(220);
+    CHECK(bass_active_count()==2 && engine_ambient_source_count()==2,
+          "both bass layers reserve a slot");
+    render_ms(4000);engine_bass_off();int one_layer=0;
+    for(int i=0;i<90;++i) {
+        render_ms(100);
+        if(bass_active_count()==1) one_layer=1;
+        CHECK(engine_ambient_source_count()==bass_active_count(),"count tracks independent bass releases");
+    }
+    CHECK(one_layer && bass_active_count()==0,"bass retires two, one, then zero layers");
+
+    /* Raw legacy voices can exist outside note-source tracking. They still
+     * occupy DSP slots and must block new World allocation. */
+    engine_init();engine_set_generative(true,-1);engine_set_note_hook(entry_event);entry_onsets=0;
+    for(int i=0;i<3;++i) engine_motif_strike(220,.1f);
+    CHECK(engine_ambient_source_count()==3,"unowned Ember voices count");
+    CHECK(!engine_try_world_note_on(15,220,.06f),"Ember saturation blocks a World");
+    CHECK(entry_onsets==0,"saturation emits no World event");
+    render_ms(6000);
+    CHECK(engine_try_world_note_on(15,220,.06f),"World enters after natural Ember decay");
+    engine_set_note_hook(NULL);
+
+    engine_init();engine_set_generative(true,-1);
+    engine_bass_set(220);engine_set_drone(true);
+    CHECK(engine_ambient_source_count()==3,"bass layers plus drone fill the budget");
+    CHECK(!engine_try_world_note_on(15,220,.06f),"bass/drone block a fourth source");
+    engine_set_drone(false);render_ms(12000);
+    CHECK(engine_ambient_source_count()==2,"released drone frees its slot");
+    CHECK(engine_try_world_note_on(15,220,.06f),"two bass layers allow only one World tone");
+    CHECK(engine_ambient_source_count()==3,"admission uses the last actual slot");
+
+    /* Dense old manual chords can exceed the new limit before Generate.
+     * Do not hard-cut them or add a fourth voice; entry stays pending while
+     * audio runs, with no rejected phrase history or artificial 2 s timer. */
+    engine_init();engine_set_fx_mode(0);engine_set_drone(true);
+    engine_note_on(0,dsp_midi_to_hz(55),.1f);
+    engine_note_on(1,dsp_midi_to_hz(59),.1f);
+    engine_note_on(2,dsp_midi_to_hz(62),.1f);
+    render_ms(1500);
+    CHECK(engine_ambient_source_count()==6,"three pads, two bass layers and drone are real old sources");
+    engine_set_generative(true,-1);engine_set_note_hook(entry_event);entry_onsets=0;
+    uint32_t seed=engine_gen_seed(),now=1500;
+    engine_generative_tick(now);
+    CHECK(entry_onsets==0,"dense manual tail defers the opening World tone");
+    for(int i=0;i<300 && !entry_onsets;++i) {
+        render_ms(100);now+=100;
+        int slots=engine_ambient_source_count();
+        engine_generative_tick(now);
+        if(slots>=3) {
+            CHECK(entry_onsets==0,"busy entry starts no additional source");
+            CHECK(engine_gen_seed()==seed,"busy entry consumes no pitch/phrase RNG");
+        } else CHECK(entry_onsets==1,"safe opening enters on the first free control tick");
+    }
+    CHECK(entry_onsets==1 && engine_generative_melody_count()==1,
+          "opening proposal survives the manual handover");
+    engine_set_note_hook(NULL);engine_set_generative(false,-1);
+    render_ms(12000);
+    CHECK(engine_ambient_source_count()==0,"manual and generated releases all retire");
+    engine_init();
+}
+
 static uint32_t phrase_clock, phrase_started, phrase_ended;
 static int phrase_world, phrase_pairs, phrase_live, phrase_has_end;
 static void phrase_event(int on, uint8_t source, float hz, float amp) {
@@ -243,6 +316,7 @@ int main(void) {
     engine_init();
     test_world_admission();
     test_no_autonomous_bed();
+    test_manual_entry_budget();
     uint32_t now = 1000;
 
     /* ---- 1. Immediate first note ---- */

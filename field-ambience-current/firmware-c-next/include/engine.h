@@ -74,9 +74,14 @@ int engine_sounding_notes(int *out, int max);
 #define ENGINE_WORLD_SOURCE_LIMIT 3
 /* Control-rate World admission: true commits the source/hook, false changes
  * no held pitch or existing voice. Generate must be enabled. No implicit pad.
- * World slots include releases; legacy manual pad/bass and FX are separate. */
+ * Admission counts all Ambient source slots, including legacy manual releases
+ * and both bass layers; it waits for an outgoing native crossfade to finish.
+ * Existing manual over-budget tails drain without admitting another World.
+ * Shared room/body residuals and non-tonal backgrounds are not source slots. */
 bool engine_try_world_note_on(uint8_t source, float freq_hz, float amp);
+/* World families only; all Ambient sources also include pad/Ember/bass/drone. */
 int engine_world_source_count(void);
+int engine_ambient_source_count(void);
 
 /* r19.16 — SYNTH mode: swappable V2 sound-cores behind the ambient engine.
  * mode 0 = ambient (default identity); 1..N = a V2 core rendered through the

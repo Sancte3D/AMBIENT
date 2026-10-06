@@ -122,6 +122,9 @@ static float s_synth_blend;
 /* Audio-owned gains; control only requests a bounded release overlap. */
 static float s_ambient_gain, s_background_gain;
 static volatile uint32_t s_ambient_tail_frames;
+static volatile uint32_t s_muted_tail_frames;
+/* Audio publishes once per block; control does not read a per-sample gain. */
+static volatile bool s_native_overlap;
 static uint32_t s_tail_quiet_frames;
 #define AMBIENT_TAIL_MAX_FRAMES (64u * DSP_SAMPLE_RATE_HZ)
 static uint8_t s_note_stack[MAX_SOURCES], s_note_count;
@@ -351,7 +354,8 @@ void engine_init(void) {
     shape_init();                    /* r19.60 envelope shape (neutral)   */
     s_synth_tgt = 0; s_synth_blend = 0.0f; s_manual_synth = 0;
     s_ambient_gain = s_background_gain = 1.0f;
-    s_ambient_tail_frames = s_tail_quiet_frames = 0;
+    s_ambient_tail_frames = s_muted_tail_frames = s_tail_quiet_frames = 0;
+    s_native_overlap = false;
     s_note_count = 0;
     memset(s_synth_macros,0,sizeof s_synth_macros);
     melody_voice = 0;                /* PAD — the bench-tuned reference */
@@ -416,17 +420,27 @@ static inline float humanize_rand_unit(void){      /* in [-1, +1] */
 }
 
 int engine_world_source_count(void) {
-    /* DSP slots, including releases and prepared onsets; not oscillator count.
-     * Manual compatibility paths and shared FX remain outside this counter. */
+    /* World-family DSP slots in any role, including releases and prepared
+     * onsets. Pad/Ember/bass/drone are added by the Ambient counter below. */
     return bowed_active_count() + horn_active_count() + choir_active_count() +
            guembri_active_count() + pluck_active_count();
+}
+
+int engine_ambient_source_count(void) {
+    return engine_world_source_count() + pad_active_count() + ember_active_count() +
+           bass_active_count() + (drone_active() ? 1 : 0);
+}
+
+static bool world_capacity_available(void) {
+    return engine_ambient_source_count() < ENGINE_WORLD_SOURCE_LIMIT &&
+           !(s_synth_be && s_native_overlap);
 }
 
 bool engine_try_world_note_on(uint8_t source, float freq_hz, float amp) {
     if (!gen_on || source >= MAX_SOURCES || !isfinite(freq_hz) ||
         !isfinite(amp) || freq_hz < 20.0f || freq_hz > 8000.0f || amp <= 0.0f ||
         active_freq[source] > 0.0f ||
-        engine_world_source_count() >= ENGINE_WORLD_SOURCE_LIMIT) return false;
+        !world_capacity_available()) return false;
     uint32_t previous_rng = humanize_rng;
     float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);
     if (tuning_mode()) pitch_jitter = 0.0f;
@@ -917,8 +931,14 @@ void engine_generative_tick(uint32_t now_ms) {
         return;
     }
 
+    /* Harmony continues while an entry waits for outgoing sources. */
+    harmony_tick(now_ms);
     bool opening = false;
     if (!gen_timing_valid) {
+        /* A busy entry is not a rejected musical event: keep its first
+         * decision pending without drawing pitches/RNG or starting a retry
+         * timer. The next control tick can enter when audio frees capacity. */
+        if (!s_gentle_return && (!world_capacity_available() || !auto_ready())) return;
         gen_timing_valid = true;
         opening = !s_gentle_return;
         mel_next_ms = opening ? now_ms :
@@ -929,9 +949,6 @@ void engine_generative_tick(uint32_t now_ms) {
             mel_sounding = 0;
         }
     }
-
-    /* Harmony proposes future safe pitches; mutation itself stays silent. */
-    harmony_tick(now_ms);
 
     /* --- r19.0 LONG MELODY VOICE -----------------------------------------
      * One voice. World-specific long tones and real silences (stretched by
@@ -1223,8 +1240,13 @@ void engine_set_synth(int idx) {
     if (!gen_on) activate_synth(idx, false);
 }
 static void activate_synth(int idx, bool force) {
-    if (idx == 0) s_ambient_tail_frames = 0;
+    if (idx == 0) s_ambient_tail_frames = s_muted_tail_frames = 0;
     if (!force && idx == s_synth_tgt) return;
+    /* A manual Ambient→native switch keeps its existing 15 ms crossfade.
+     * Continue advancing the released, muted pool afterwards; otherwise old
+     * envelopes freeze and reappear on the next Ambient/Generate visit. */
+    if (idx > 0 && s_synth_tgt == 0 && !s_ambient_tail_frames)
+        s_muted_tail_frames = AMBIENT_TAIL_MAX_FRAMES;
     /* Release, don't panic: old core/ambient can decay during the crossfade. */
     release_generated(); s_note_count=0;
     for(int i=0;i<MAX_SOURCES;++i) remember_source(i);
@@ -1248,7 +1270,8 @@ void engine_render(int16_t *buf, int frames) {
     if (frames > BLOCK) frames = BLOCK;
     int tgt = s_synth_tgt;
     bool retiring = tgt > 0 && s_ambient_tail_frames > 0;
-    bool need_v1 = tgt == 0 || s_ambient_gain > 0.0f || retiring;
+    bool muted_draining = tgt > 0 && !retiring && s_muted_tail_frames > 0;
+    bool need_v1 = tgt == 0 || s_ambient_gain > 0.0f || retiring || muted_draining;
     bool need_v2 = tgt > 0 || s_synth_blend > 0.0f;
     if (need_v1) render_ambient(frames, retiring || tgt > 0);
     else {
@@ -1256,7 +1279,7 @@ void engine_render(int16_t *buf, int frames) {
         memset(sendL, 0, sizeof(float)*frames); memset(sendR, 0, sizeof(float)*frames);
     }
     float ambient_target = tgt == 0 || retiring ? 1.0f : 0.0f;
-    if (retiring) {
+    if (retiring || muted_draining) {
         /* Envelope idleness alone misses the modal body's residual ringing.
          * Observe dry AND send before adding the new core; its notes cannot
          * keep this drain alive. 50 ms of quiet avoids a zero-crossing exit. */
@@ -1267,13 +1290,21 @@ void engine_render(int16_t *buf, int frames) {
             }
         }
         s_tail_quiet_frames = quiet ? s_tail_quiet_frames + (uint32_t)frames : 0;
-        uint32_t left = s_ambient_tail_frames;
+        uint32_t left = retiring ? s_ambient_tail_frames : s_muted_tail_frames;
         /* Fault containment for a future source that fails to retire. Current
          * maximum Shape releases complete before 64 s. Fade the last second. */
-        if (left < DSP_SAMPLE_RATE_HZ) ambient_target = (float)left / DSP_SAMPLE_RATE_HZ;
-        s_ambient_tail_frames = left > (uint32_t)frames ? left - (uint32_t)frames : 0;
-        if (s_tail_quiet_frames >= DSP_SAMPLE_RATE_HZ / 20u) s_ambient_tail_frames = 0;
+        if (retiring && left < DSP_SAMPLE_RATE_HZ) ambient_target = (float)left / DSP_SAMPLE_RATE_HZ;
+        uint32_t remaining = left > (uint32_t)frames ? left - (uint32_t)frames : 0;
+        if (s_tail_quiet_frames >= DSP_SAMPLE_RATE_HZ / 20u) remaining = 0;
+        if (retiring) s_ambient_tail_frames = remaining;
+        else s_muted_tail_frames = remaining;
     } else s_tail_quiet_frames = 0;
+    if (muted_draining && s_ambient_gain == 0.0f) {
+        /* Advance sources without sending any of this muted pool to shared FX.
+         * Clear explicitly rather than multiplying an invalid sample by zero. */
+        memset(dryL, 0, sizeof(float)*frames); memset(dryR, 0, sizeof(float)*frames);
+        memset(sendL, 0, sizeof(float)*frames); memset(sendR, 0, sizeof(float)*frames);
+    }
     if (need_v2 && s_synth_be) {
         memset(s_coreL, 0, sizeof(float)*frames); memset(s_coreR, 0, sizeof(float)*frames);
         memset(s_coreSL, 0, sizeof(float)*frames); memset(s_coreSR, 0, sizeof(float)*frames);
@@ -1303,6 +1334,7 @@ void engine_render(int16_t *buf, int frames) {
             sendL[n]*=s_ambient_gain; sendR[n]*=s_ambient_gain;
         }
     }
+    s_native_overlap = s_synth_be && s_synth_blend > 0.0f;
     render_master(buf,frames);
     sound_fraction+=(uint32_t)frames*1000u;
     sound_ms+=sound_fraction/DSP_SAMPLE_RATE_HZ; sound_fraction%=DSP_SAMPLE_RATE_HZ;

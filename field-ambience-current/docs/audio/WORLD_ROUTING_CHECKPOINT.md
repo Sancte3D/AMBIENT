@@ -227,3 +227,43 @@ The smaller scheduler saves static state/code; source pools and room buffers
 are retained. All configured banks link successfully. DTCM reserve is still
 limited. No CPU deadline, stack high-water or physical sound-quality result
 is implied by this build; those need the real instrument.
+
+## 2026-10-06: actual entry occupancy and muted source progression
+
+`engine_ambient_source_count` adds legacy Pad/Ember slots, each independently
+enveloped bass layer and Drone to the existing World-family counter. Generated
+admission uses this total. `bass_active_count` reports 0..2 through attack,
+sustain and independent releases; the old boolean remains compatible. Shared
+room/body residuals and non-tonal backgrounds are not new source slots.
+
+Native overlap is published once per audio block. Generate waits until the
+outgoing native gain reaches zero, covering both host legs without changing
+the backend ABI or guessing a single native voice. A busy initial decision
+stays pending before pitch RNG/history, rather than taking the rejected-note
+2-second timer; harmony still evolves. Real source rejection and regular
+scheduler onset spacing retain their existing contracts.
+
+Found a separate state-lifetime bug: after a normal manual Ambient→native
+crossfade, old released Ambient envelopes stopped rendering and could reappear
+on a later visit. The existing renderer now advances that muted pool for at
+most 64 seconds, retiring earlier after actual source/body/background quiet.
+Muted dry/send never re-enter the shared room; the existing 15 ms manual fade
+and audible World tail after Generate exit remain separate. This adds bounded
+transient DSP work, not a second engine/room instance or audio buffer. On-device
+CPU/stack validation must include this old-pool plus native worst case.
+
+Full host suite exits 0. Generator: 11,972 checks, including old dense chords,
+Ember, bass+Drone saturation, unchanged pitch RNG while busy, first-free-tick
+entry and real source retirement. Device: 5,423 checks, including all six native
+outgoing fades with a pending internal core switch, rapid Generate reversals,
+and no revived old Ambient sound after a long native interval. The pitch-memory
+audit now also advances its injected manual pad/release. Existing effects and
+hot-path lint pass; no audio files longer than 30 seconds are produced.
+
+This does not retroactively reduce a legacy manual scene already above three
+voices. It ensures generated admission cannot grow that over-budget pool, and
+only commits when the total Ambient count permits it. Legacy manual starts
+remain uncapped until the explicit palette/scene migration. Legacy unowned
+one-shot harmonic tracking and source/body/FX quality remain separate work.
+Next: dry WOODLAND source design, not another compensating accompaniment layer.
+Target Release verification follows below; no physical listening verdict.
