@@ -116,7 +116,13 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
                 int direction=n->direction ? 1 : -1;
                 /* Arc: a related step, then a return; no pitch sweep. */
                 if (n->pos==n->length-1) direction=-direction;
-                o.index=bound(n->last+direction*(int)between(n,1,2));
+                int step=n->last<5 ? 2 : (int)between(n,1,2);
+                int candidate=n->last+direction*step;
+                if(candidate<0 || candidate>7) {
+                    candidate=n->last-direction*step;
+                    n->direction^=1u;
+                }
+                o.index=bound(candidate);
             }
             o.hold_ms=between(n,1500,5000);
             o.gap_ms=o.hold_ms+between(n,900,2400);

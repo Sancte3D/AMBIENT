@@ -233,12 +233,12 @@ int engine_product_world(void) { return world; }
 void engine_set_key_pc(int pc) {
     pc%=12; if(pc<0) pc+=12;
     /* Cancel an unacknowledged score proposal, preserve actual held pitches. */
-    pending=false; tonic_pc=pc;
+    reap(); pending=false; tonic_pc=pc;
     int root=50+((pc-2+12)%12); brain_set_key(root); tuning_set_key(root);
 }
 void engine_set_key(int midi) { engine_set_key_pc(midi%12); }
-void engine_set_mode(int i) { if(i>=0 && i<=1) { pending=false; minor=i; brain_set_mode(minor ? 5 : 0); } }
-void engine_set_tuning(int just) { if(just==0 || just==1) { pending=false; tuning_set_mode(just); } }
+void engine_set_mode(int i) { if(i>=0 && i<=1) { reap(); pending=false; minor=i; brain_set_mode(minor ? 5 : 0); } }
+void engine_set_tuning(int just) { if(just==0 || just==1) { reap(); pending=false; tuning_set_mode(just); } }
 void engine_set_attack(float v) { if(isfinite(v)) shape_set_attack(.35f+.30f*dsp_clampf(v,0,1)); }
 void engine_set_release(float v) { if(isfinite(v)) shape_set_release(.35f+.30f*dsp_clampf(v,0,1)); }
 bool engine_cell_sample(uint8_t cell,float position,uint32_t ms) {
@@ -290,10 +290,14 @@ void engine_generative_tick(uint32_t ms) {
     int index=offer.index<count ? offer.index : count-1;
     int midi=world_pitch_midi(index,tonic_pc,minor!=0);
     float hz=tuning_hz((float)midi);
-    if(world==WORLD_COAST && !pitch_clear(hz)) {
+    if((world==WORLD_COAST || world==WORLD_HIGHLANDS) && !pitch_clear(hz)) {
         static const int offset[5]={-1,1,-2,2,0};
         for(int i=0;i<5;++i) {
             int candidate=index+offset[i]; if(candidate<0 || candidate>=count) continue;
+            if(world==WORLD_HIGHLANDS && grammar.last>=0) {
+                int direction=offer.index>grammar.last ? 1 : -1;
+                if((candidate-grammar.last)*direction<=0) continue;
+            }
             int m=world_pitch_midi(candidate,tonic_pc,minor!=0); float h=tuning_hz((float)m);
             if(pitch_clear(h)) { index=candidate; midi=m; hz=h; break; }
         }

@@ -65,6 +65,7 @@ static void one_world(int w,uint32_t seed,int duration) {
     }
     engine_generative_tick((uint32_t)((uint64_t)frames*1000/SR));
     assert(engine_generative_melody_count()>=3);
+    if(w==WORLD_HIGHLANDS) assert(engine_admission_rejections()<15);
     assert(peak>100 && peak<24576 && energy>100000);
     assert(engine_nonfinite_samples()==0 && engine_output_limited_samples()==0);
     printf("PRODUCT world=%d seed=%u duration=%d notes=%d answers=%d rejects=%u rms=%.7f peak=%.7f\n",
