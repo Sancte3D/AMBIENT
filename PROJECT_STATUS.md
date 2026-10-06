@@ -5,14 +5,16 @@
 > (Pluck zwei), tatsächlichen Besitzern/Hz/Tails, gehörten Motiven/Intervallen,
 > einem Float-Raum und getrennter optionaler Nature (boot aus).
 > Product-Profil cross-linkt auf H743; Reference bleibt Default.
-> Letzter vollständig grüner Vor-Release-Stand: PR136 Head
-> b5ddf4049fb627fe88ca8fe1d579f710e2bd1948, CI 37511549818, 6/6 bestanden.
+> PR136 inklusive PR135 ist gemerged: 476f4db068345c88469e141be2fa2f6dac81f6a3.
+> Geprüfter Head38f7d51b3f6e2dbe2c30026dc8cf26b8430dc364,
+> CI37515501334, 6/6 bestanden, Mergebaum exakt gleich.
 > 48 min tatsächlich gerendertes PCM plus Stress/Recovery, 64/512 exakt gleich,
-> keine NaN/Inf/Limiter; 24 Summenprobes mit mindestens 9,84 dB True-Peak-Reserve.
+> keine NaN/Inf/Limiter; 42 Summen-/Registerprobes mit mindestens 9,66 dB True-Peak-Reserve.
 > Natürliche Pluck-Key-up-Tails, samplegenaues Retirement, echte Mute/Clear-
 > Operationen, konservative Harmonie und vorbereitete Pitch-Kontextstornos.
-> ARM: FLASH 190684 B, DTCM 16384 B Stackreservierung, D1 65600 B, D2 60808 B.
-> Kleine Folgeänderung: Scene-Flash-Read-Cacheguard und voller Übergangstest.
+> ARM: FLASH 190724 B, DTCM 16384 B Stackreservierung, D1 65600 B, D2 60808 B.
+> Scene-Flash-Read-Cacheguard, Bank-1-Limit und volle Übergänge ebenfalls geprüft.
+> Hörpakete je 27 s stehen im verlinkten Checkpoint.
 > [54 Aufgaben mit Status](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md),
 > [exakter Softwarevertrag](field-ambience-current/docs/audio/PRODUCT_SOUND_SPEC.md),
 > [Build-/Hörnachweis und Restgates](field-ambience-current/docs/audio/PRODUCT_CORE_CHECKPOINT.md).

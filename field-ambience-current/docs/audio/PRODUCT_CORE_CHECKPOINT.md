@@ -59,12 +59,13 @@ Ziel ausschließlich `claude/hall-sensor-bom-pcb-update-a8xj82`; kein Main-Relea
 | [133](https://github.com/Sancte3D/AMBIENT/pull/133) | e8d37d52b392bb4384aea0584cca26a37bad9ed8 | reduzierter realer H743-Link, SCN7/SCN5/6-Migration und Produktcontrolintegration |
 | [134](https://github.com/Sancte3D/AMBIENT/pull/134) | abfe9c3eb3fa666fd9272c8f31ce42500a66946e | Room-Null/kalt, orthogonale Mono-Readouts, Nature/Seed/Scoretrennung, 27-s-Hörpacks |
 | [135](https://github.com/Sancte3D/AMBIENT/pull/135) | 1f4d435afbc3a890e826cac214f06de84044e5eb, in PR136 enthalten | echte Intervallerinnerung, spätere Figurenrückkehr, schnelle Kontextübergabe, zusätzliche 36 min PCM |
-| [136](https://github.com/Sancte3D/AMBIENT/pull/136) | letzter voller Zwischenstand b5ddf4049fb627fe88ca8fe1d579f710e2bd1948 | CI 37511549818, 6/6 grün; Mute, natürliche Plucks, Sample-Ende, Pitchkontexte, True Peak/Blind/Endpoints/Frames |
+| [136](https://github.com/Sancte3D/AMBIENT/pull/136) | Merge 476f4db068345c88469e141be2fa2f6dac81f6a3; geprüfter Head38f7d51b3f6e2dbe2c30026dc8cf26b8430dc364 | CI37515501334, 6/6 grün; Mute, natürliche Plucks, Sample-Ende, Pitchkontexte, True Peak/Blind/Endpoints/Frames |
 
-Finale Cache-/volle-Pool-Übergangsergänzungen erhalten erneute CI vor Merge.
-PR135 darf durch den vollständig geprüften Gesamtstand PR136 mit übernommen
-werden; ein hängender älterer Bench-Job ist keine Audiofreigabe und wird nicht
-als erfolgreich ausgegeben. Hör-/Gerätestatus bleiben in jeder Version offen.
+Alle letzten Cache-/vollen-Pool-/dichten Registerfälle haben die finale CI
+bestanden. Mergebaum `4d595cb424328964d0115a4713cf8c7a924ffde7` stimmt exakt mit
+dem geprüften Branchbaum überein. PR135 ist als vollständig in PR136
+übernommener Draft geschlossen; dessen älterer hängender Bench-Job wird nicht
+als erfolgreich behauptet. Hör-/Gerätestatus bleiben ausdrücklich offen.
 
 ### Ressourcen — tatsächlich gelinkter H743, keine Host-Schätzung
 
@@ -77,7 +78,8 @@ CI-/Codezustands; DTCM 16 KiB ist **Stackreservierung**, kein gemessener Stack.
 | PR134 Product | 188852 | 16384 | 65472 | 60808 |
 | PR135 Product | 189876 | 16384 | 65600 | 60808 |
 | PR136 b5dd / CI37511549818 Product | 190684 | 16384 | 65600 | 60808 |
-| derselbe geprüfte Reference | 256628 | 119440 | 417440 | 258112 |
+| **Final PR136 / CI37515501334 Product** | **190724** | **16384** | **65600** | **60808** |
+| finaler geprüfter Reference | 256668 | 119440 | 417440 | 258112 |
 | Linkerbudget | 1966080 | 131072 | 524288 | 294912 |
 
 Produkt-Audio braucht keine SD, Samplebank oder externe PSRAM. Keine zugesagte
@@ -85,7 +87,7 @@ SD-Nachrüstbarkeit. Ein zusätzlicher Bank-1-Loadimageguard (≤1048576 B) sch�
 die Bank-2-Scene-Schreibarchitektur; das größere Flash-Linkerbudget allein
 wäre dafür nicht ausreichend.
 
-Compilerframes im b5dd-Stand: engine_render 88 B, Room192 B, Nature136 B,
+Compilerframes im finalen Stand: engine_render 88 B, Room192 B, Nature136 B,
 GenerateTick176 B, SceneSave104 B; maximaler einzelner Coreframe192 B.
 Pluck-Wrapper 0 B bedeutet nicht null Stackbedarf seiner Callees.
 Keine Aussage über Callchain, IRQ/FPU-Stacking, libc oder tatsächlichen High-water.
@@ -103,8 +105,8 @@ DWT muss Cache/DMA-/HAL-Arbeit zusätzlich zum bestehenden Rendererfenster erfas
 - Wet-Mono-Energie beim Roomimpuls vorher ~0,34, danach 0,75126 bei Room0,5 /
   0,74651 bei Room1. Der Readoutumbau erhöht auch Wetimpulsenergie; kein
   behaupteter gleicher subjektiver Hallpegel.
-- 24 reale Summen-/Targetstep-Probes bei Volume1/Velocity1/Room1:
-  **worst true peak −9,84 dBFS**, schlechteste Monoenergie **0,93006**,
+- 42 reale Summen-/Register-/Targetstep-Probes bei Volume1/Velocity1/Room1:
+  **worst true peak −9,66 dBFS**, schlechteste Monoenergie **0,91874**,
   Mean-DC innerhalb 0,0002. Keine notwendigen Limiter-Eingriffe.
 - Hörpacks: RAW-Firmwarepegel + separate konstante Vergleichsgain,
   ≤+12 dB, Ziel −26 LUFS / TP-Decke−6. Nature bleibt bewusst viel leiser.
@@ -114,6 +116,26 @@ Quelle: actual-product Tests `test_product_sound.c`, `test_product_scene.c`,
 `test_product_stress.c`, `test_room_nature.c`, `test_world_grammar.c`;
 `review_product_audio.py` und `check_product_link.py`.
 Onsettrace bezeichnet Block-Acknowledgement, nicht sampleexakten Anfang.
+
+### Kurze Hörpakete aus der finalen CI
+
+In jeder ZIP: rohe Dateien und `listen`-Vergleichskopien, jede WAV genau
+27 s. Zuerst Dry/Register, dann Color/SHAPE, anschließend World/Nature/Blind.
+Hördateien sind Kandidaten und wurden nicht als angenehm abgenommen.
+Artefakte verfügbar bis 2026-11-05; danach reproduzierbar aus dem SHA/Renderer.
+Metadaten/Level und Sourcefingerprints liegen in den ZIPs.
+
+| Paket | Download |
+|---|---|
+| ambient-shape-27s | [ZIP](https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436538711) |
+| ambient-blind-worlds-27s | [ZIP](https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436493847) |
+| ambient-dry-sources-27s | [ZIP](https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436313867) |
+| ambient-worlds-27s | [ZIP](https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436288797) |
+| ambient-color-27s | [ZIP](https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436233894) |
+| ambient-nature-27s | [ZIP](https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11435979024) |
+
+[Finale CI](https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334)
+und [dauerhafte Software-Messwerte](PRODUCT_SOFTWARE_METRICS.json).
 
 ## REMOVE / MERGE / REDESIGN
 

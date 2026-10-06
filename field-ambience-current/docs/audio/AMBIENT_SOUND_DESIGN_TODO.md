@@ -275,13 +275,15 @@ PR135 liefert gehört bestätigte Motiv-/Intervallerinnerung und begrenzte
 Kontextübergaben. Sein Code ist Bestandteil von PR136. PR136 schließt
 natürliche Pluck-Key-up-Tails, samplegenaues Retirement, echten Mute,
 vorbereitete Pitch-Kontextstornos, Endpoint-/Blindpakete und Summen-/Frameaudits.
-Vollständig grüner Zwischenstand: Head b5ddf4049fb627fe88ca8fe1d579f710e2bd1948,
-CI 37511549818, sechs Jobs. Nachfolgender Cacheguard und der volle
-Übergangsfall müssen die finale CI ebenfalls bestehen.
+Final gemerged über PR136: 476f4db068345c88469e141be2fa2f6dac81f6a3.
+Geprüfter Head38f7d51b3f6e2dbe2c30026dc8cf26b8430dc364, CI37515501334,
+sechs Jobs bestanden. Cacheguard, volle Übergänge und dichte Registerfälle
+sind ebenfalls geprüft; PR135 ist als mitübernommener Draft geschlossen.
 
 Zwölf +36 Minuten tatsächliches PCM pro vollem Hostlauf, konservative Hz-Tails,
-64-/512-PCM exakt gleich; keine NaN/Inf oder Limiter-Eingriffe. 24 Summenprobes:
-mindestens 9,84 dB gemessene True-Peak-Reserve, schlechteste Monoenergie 0,93006.
+64-/512-PCM exakt gleich; keine NaN/Inf oder Limiter-Eingriffe. 42 Summen-/
+Registerprobes: mindestens 9,66 dB gemessene True-Peak-Reserve, schlechteste
+Monoenergie 0,91874.
 Hör-WAVs je 27 s, Raw und fixe Vergleichskopie; keine Lang-WAVs.
 
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) dokumentiert SHA,
@@ -339,7 +341,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
 | SD41 | Storage-/Gerätegate | Boot/Recall/Seed still und Volume erhalten; Flash-Cache gefixt; Live-Save/Mainstall/Power-loss offen |
-| SD42 | geschlossen softwareseitig | 24 Summenprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
+| SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
 | SD45 | Hörgate Langzeit | Mindestens 48 min tatsächliches PCM plus Recovery/Wrap; keine NaN/Limiter/Stuck; Form hören |
