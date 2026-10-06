@@ -171,7 +171,7 @@ static bool admit(uint8_t owner,float hz,float velocity) {
     return true;
 }
 bool engine_try_note_on(uint8_t owner,float hz,float v) {
-    if(generate) return false;
+    if(generate || !(owner<5 || (owner>=9 && owner<=13))) return false;
     bool ok=admit(owner,hz,v); if(!ok) ++rejects; return ok;
 }
 void engine_note_on(uint8_t owner,float hz,float legacy_amp) {
@@ -180,7 +180,7 @@ void engine_note_on(uint8_t owner,float hz,float legacy_amp) {
     if(isfinite(legacy_amp)) (void)engine_try_note_on(owner,hz,legacy_amp/CELL_AMP_MAX);
 }
 bool engine_try_world_note_on(uint8_t owner,float hz,float v) {
-    if(!generate || !autoplay || suppressed) return false;
+    if(!generate || !autoplay || suppressed || !(owner==6 || owner==7 || owner==15)) return false;
     bool ok=admit(owner,hz,v); if(!ok) ++rejects; return ok;
 }
 void engine_note_off(uint8_t owner) {

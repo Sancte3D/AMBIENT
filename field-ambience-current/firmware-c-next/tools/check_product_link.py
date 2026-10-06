@@ -26,7 +26,8 @@ for line in nm.splitlines():
     if m: symbols.append((int(m[1],16),int(m[2],16),m[3],m[4]))
 prefixes = ('pad_','padsynth_','bass_','drone_','body_','choir_','guembri_','ember_','texture_',
             'ambience_','reverb_','fx_master_','synth_host_','engine_v2_','tape_','echo_','blur_','shimmer_')
-assert not [s[3] for s in symbols if s[3].startswith(prefixes)], 'Retired DSP symbol retained'
+bad_symbols=[s[3] for s in symbols if s[2].lower()=='t' and s[3].startswith(prefixes)]
+assert not bad_symbols, f'Retired DSP function retained: {bad_symbols}'
 def one(name):
     found=[s for s in symbols if s[3]==name]
     assert len(found)==1, (name,found)

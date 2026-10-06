@@ -32,6 +32,10 @@ static uint8_t core[6][6];
 static menu_callbacks_t cb;
 static menu_param_t  cur     = MP_WORLD;
 static menu_mode_t   mode    = MENU_BROWSE;
+#ifdef FAM_SOUND_PRODUCT
+static const menu_param_t product_params[]={MP_WORLD,MP_KEY,MP_TUNING,MP_SPACE,MP_ATMOS,MP_MOTION,MP_FX,MP_ATTACK,MP_RELEASE};
+enum { PRODUCT_PARAM_COUNT=sizeof product_params/sizeof product_params[0] };
+#endif
 static int           world_i = 0;
 static int           key_pc  = 0;         /* tonic pitch class 0..11 (r18.98) */
 static int           tuning_i = 0;        /* 0 Equal / 1 Just (r19.6)          */
@@ -466,10 +470,9 @@ void menu_rotate(int delta) {
     if (mode == MENU_BROWSE) {
         int dir = (delta > 0) - (delta < 0);
 #ifdef FAM_SOUND_PRODUCT
-        static const menu_param_t available[]={MP_WORLD,MP_KEY,MP_TUNING,MP_SPACE,MP_ATMOS,MP_MOTION,MP_FX,MP_ATTACK,MP_RELEASE};
-        int n=(int)(sizeof available/sizeof available[0]),i=0;
-        while(i<n && available[i]!=cur) ++i;
-        cur=available[wrapi((i<n ? i : 0)+dir,n)];
+        int n=PRODUCT_PARAM_COUNT,i=0;
+        while(i<n && product_params[i]!=cur) ++i;
+        cur=product_params[wrapi((i<n ? i : 0)+dir,n)];
 #else
         cur = (menu_param_t)wrapi((int)cur + dir, synth_i ? MP_COUNT : MP_CORE_A);
 #endif
@@ -665,7 +668,12 @@ void menu_render(void) {
     render_value();
 
     if (mode == MENU_BROWSE) {
+#ifdef FAM_SOUND_PRODUCT
+        int i=0; while(i<PRODUCT_PARAM_COUNT && product_params[i]!=cur) ++i;
+        render_bar(PRODUCT_PARAM_COUNT,i<PRODUCT_PARAM_COUNT ? i : 0);
+#else
         render_bar(MP_COUNT, (int)cur);
+#endif
     } else {
         int n = menu_value_count(cur);
         if (n > 0) render_bar(n, menu_value_index(cur));
