@@ -192,7 +192,31 @@ static void pluck_tap_contract(void) {
     puts("PRODUCT PLUCK TAP PASS: natural key-up/Stop, owned tail, pre-start cancel and Clear");
 }
 
+
+static void pitch_context_contract(void) {
+    for(int world=0;world<3;++world)for(int operation=0;operation<3;++operation) {
+        engine_init();engine_set_world(world);onsets=0;engine_set_note_hook(hook);
+        engine_set_generative(true,-1);engine_generative_tick(0);
+        if(operation==0)engine_set_key_pc(5);
+        else if(operation==1)engine_set_mode(1);
+        else engine_set_tuning(1);
+        audio(.1);
+        assert(engine_active_voices()==0 && onsets==0 && engine_generative_melody_count()==0);
+        hook_now=100;engine_generative_tick(100);audio(.1);engine_generative_tick(200);
+        assert(engine_active_voices()==1 && onsets==1 && engine_generative_melody_count()==1);
+        float hz[24];assert(engine_sounding_frequencies(hz,24)==1);float actual=hz[0];
+        /* Reapplying the same settings is not another reset or pending loss. */
+        if(operation==0)engine_set_key_pc(5);
+        else if(operation==1)engine_set_mode(1);
+        else engine_set_tuning(1);
+        audio(.02);assert(engine_sounding_frequencies(hz,24)==1 && hz[0]==actual);
+        engine_all_off();audio(.1);
+    }
+    puts("PRODUCT PITCH CONTEXT PASS: prepared cancellation, fresh-context start, actual-Hz hold and idempotent targets");
+}
+
 int main(void) {
+    pitch_context_contract();
     pluck_tap_contract();
     mute_contract();
     transitions();

@@ -202,7 +202,7 @@ void engine_note_off(uint8_t owner) {
     reap();
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==owner && !slots[i].released) {
         source_slot_t *s=&slots[i]; s->held=s->timed=false; s->released=true;
-        /* A started pluck is a one-shot: key-up releases ownership/MIDI,
+        /* A started pluck is a one-shot: key-up releases the key/MIDI,
          * not its string. Cancel preparations before their first DSP sample.
          * Context handovers still use quick_mask; Clear/Mute gate all paths. */
         if(s->family!=WORLD_WOODLAND || !s->started)
@@ -286,15 +286,29 @@ int engine_product_cell_midi(int cell,bool upper) {
     if(cell<0 || cell>=CELL_COUNT) return -1;
     return world_pitch_midi(cell+(upper ? 3 : 0),tonic_pc,minor!=0);
 }
+static void reset_score_context(void) {
+    reap();
+    /* A prepared old-context note is not a newly heard new-context event.
+     * Already acknowledged voices keep their actual Hz. Forget degree memory
+     * when its collection/register meaning changes, rather than relabel it. */
+    if(pending)engine_note_off((uint8_t)pending_owner);
+    pending=false;
+    world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u));
+    retry_ms=now_ms;
+}
 void engine_set_key_pc(int pc) {
     pc%=12; if(pc<0) pc+=12;
-    /* Cancel an unacknowledged score proposal, preserve actual held pitches. */
-    reap(); pending=false; tonic_pc=pc;
-    int root=50+((pc-2+12)%12); brain_set_key(root); tuning_set_key(root);
+    if(pc==tonic_pc)return;
+    reset_score_context();tonic_pc=pc;
+    int root=50+((pc-2+12)%12);brain_set_key(root);tuning_set_key(root);
 }
 void engine_set_key(int midi) { engine_set_key_pc(midi%12); }
-void engine_set_mode(int i) { if(i>=0 && i<=1) { reap(); pending=false; minor=i; brain_set_mode(minor ? 5 : 0); } }
-void engine_set_tuning(int just) { if(just==0 || just==1) { reap(); pending=false; tuning_set_mode(just); } }
+void engine_set_mode(int i) {
+    if(i>=0 && i<=1 && i!=minor) {reset_score_context();minor=i;brain_set_mode(minor ? 5 : 0);}
+}
+void engine_set_tuning(int just) {
+    if((just==0 || just==1) && just!=tuning_mode()) {reset_score_context();tuning_set_mode(just);}
+}
 void engine_set_attack(float v) { if(isfinite(v)) shape_set_attack(.35f+.30f*dsp_clampf(v,0,1)); }
 void engine_set_release(float v) { if(isfinite(v)) shape_set_release(.35f+.30f*dsp_clampf(v,0,1)); }
 bool engine_cell_sample(uint8_t cell,float position,uint32_t ms) {
@@ -427,7 +441,7 @@ void engine_init(void) {
     dsp_init(); shape_init(); tuning_set_mode(0); brain_init(); cells_init();
     bowed_init(); horn_init(); pluck_init(); ambient_room_init(); nature_init();
     memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
-    world=minor=0; tonic_pc=2; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
+    world=minor=0; tonic_pc=-1; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=pending=false; autoplay=true;
     muted=resume_nature=false;
     note_hook=0; fx_mode=1; last_midi=note_count=0;
