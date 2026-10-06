@@ -20,6 +20,20 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/ambient_room.c" "$src/src/nature.c" \
     "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" \
     "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/product_sound_test"
+
+# Product catalogue, controls and exact Scene migration through the real core.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_product_scene.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" "$src/src/worlds_product.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+    "$src/src/ambient_room.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" \
+    "$src/src/controls.c" "$src/src/scenes.c" "$src/src/menu.c" "$src/src/params.c" "$src/src/battery.c" \
+    "$src/src/oled_draw.c" "$src/src/oled_color.c" "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" \
+    -lm -o "$tmp/product_scene_test"
+"$tmp/product_scene_test"
+
+cmake -S "$src" -B "$tmp/product-host" -DFAM_TARGET=host -DFAM_SOUND_PROFILE=product -DCMAKE_BUILD_TYPE=Release >"$tmp/product-host-configure.log"
+cmake --build "$tmp/product-host" -j2 >"$tmp/product-host-build.log"
 "$tmp/product_sound_test"
 
 # Candidate score logic, independent of source/room/preset implementations.

@@ -8,6 +8,7 @@
 #include "params.h"
 #include "engine.h"
 #include "worlds.h"
+#include <math.h>
 
 /* Tunables ---------------------------------------------------------------- */
 #define BRIGHT_MIN_HZ  (-600.0f)   /* darkest pad cutoff offset */
@@ -28,7 +29,11 @@ static float s_volume;   /* 0..1 */
 static bool  s_drive_byp;
 static bool  s_muted;
 
-#define DRIVE_DEFAULT 0.15f   /* engine_init-Referenz (gentle warmth) */
+#ifdef FAM_SOUND_PRODUCT
+#define DRIVE_DEFAULT 0.0f /* Retired physical assignment; UX comes later. */
+#else
+#define DRIVE_DEFAULT 0.15f
+#endif
 
 static void apply_drive(void) {
     float d = s_drive_byp ? 0.0f : s_drive;
@@ -61,7 +66,7 @@ void params_init(void) {
         s_acc[i].last_ms = 0; s_acc[i].first = 1;
     }
     /* Match engine_init() defaults so the readout is truthful at boot. */
-    s_drive  = 0.15f;   /* gentle warmth by default */
+    s_drive  = DRIVE_DEFAULT;
     s_bright = (float)worlds_get(0)->brightness_hz;  /* r19.45: boot world brightness */
     s_volume = 0.30f;   /* r19.20: SPEC boot rule — max 30 % at power-on
                          * (headphone-safe since the r19.19 TPA6132A2; the
@@ -79,13 +84,18 @@ void params_init(void) {
 }
 
 void params_encoder(uint8_t enc_id, int delta, uint32_t now_ms) {
-    if (delta == 0) return;
+    if (delta == 0 || enc_id < PARAM_ENC_DRIVE || enc_id > PARAM_ENC_VOLUME) return;
+    if(delta>100) delta=100;
+    if(delta< -100) delta=-100;
     int dir = delta > 0 ? 1 : -1;
     int n   = delta > 0 ? delta : -delta;
     int ticks = n * accel_mul(enc_id, now_ms);   /* accelerated detent count */
 
     switch (enc_id) {
         case PARAM_ENC_DRIVE:
+#ifdef FAM_SOUND_PRODUCT
+            break;
+#endif
             s_drive_byp = false;               /* r19.21: der Knopf nimmt den Wert */
             s_drive = clampf(s_drive + dir * ticks * 0.01f, 0.0f, 1.0f);
             apply_drive();
@@ -108,6 +118,9 @@ void params_encoder(uint8_t enc_id, int delta, uint32_t now_ms) {
 
 /* ---- r19.21: Push-Aktionen (knobs.c) ------------------------------------ */
 int  params_toggle_drive_bypass(void) {
+#ifdef FAM_SOUND_PRODUCT
+    return 0;
+#endif
     s_drive_byp = !s_drive_byp;
     apply_drive();
     return s_drive_byp ? 1 : 0;
@@ -128,8 +141,12 @@ int  params_toggle_mute(void) {
 bool params_muted(void) { return s_muted; }
 void params_apply_scene(int drive_pct, float bright_hz) {
     s_drive_byp = false;
+#ifdef FAM_SOUND_PRODUCT
+    (void)drive_pct; s_drive=0;
+#else
     s_drive  = clampf((float)drive_pct / 100.0f, 0.0f, 1.0f);
-    s_bright = clampf(bright_hz, BRIGHT_MIN_HZ, BRIGHT_MAX_HZ);
+#endif
+    if(isfinite(bright_hz)) s_bright = clampf(bright_hz, BRIGHT_MIN_HZ, BRIGHT_MAX_HZ);
     apply_drive();
     engine_set_brightness(s_bright);
 }
@@ -137,6 +154,7 @@ void params_apply_scene(int drive_pct, float bright_hz) {
 /* r19.45: world-change sets the per-world brightness base; the BRIGHT encoder
  * then nudges from here (keeps the encoder value in sync). */
 void params_set_bright(float hz) {
+    if(!isfinite(hz)) return;
     s_bright = clampf(hz, BRIGHT_MIN_HZ, BRIGHT_MAX_HZ);
     engine_set_brightness(s_bright);
 }

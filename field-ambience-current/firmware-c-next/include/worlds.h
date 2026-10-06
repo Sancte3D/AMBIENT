@@ -7,7 +7,11 @@
 
 #include <stdint.h>
 
-#define WORLD_COUNT 5   /* r19.44: 5 landscape worlds (was 4 city worlds) */
+#ifdef FAM_SOUND_PRODUCT
+#define WORLD_COUNT 3   /* SCN7: COAST, WOODLAND, HIGHLANDS candidates */
+#else
+#define WORLD_COUNT 5   /* SCN5/6 reference IDs remain unchanged */
+#endif
 
 /* Autonomous phrasing, in seconds. Composer adds its existing rest/density
  * variation; these profiles give each place a different breathing pattern. */

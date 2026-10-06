@@ -291,20 +291,21 @@ COAST-Dry-Maximalschwingung 3,102 → 0,049 dB in 24 PCM-Proben.
 SD02/SD07 bleiben als Gesamtaufgaben offen, bis ihre übrigen Hör-/Routing-
 und Produktverträge erfüllt sind.
 
-Der eigenständige Score-Baustein `world_grammar.c` enthält COAST, WOODLAND
-und HIGHLANDS als drei Kontrolllogik-Kandidaten. 11.520 deterministische
-Transaktionen, gehörte WOODLAND-Antworten, alle Keys und Timer-Überlauf
-lokal bestanden; Host-CI ergänzt. SD13–SD17 sind **Teilumsetzung**:
-keine Integration in den Produktpfad, keine tatsächliche World-PCM-Abnahme,
-keine Freigabe der HIGHLANDS-Quelle.
+PR131 liefert den reinen Score-Baustein; PR132 ist gemerged und bindet ihn
+an tatsächliche Quellen, globale manuelle/generative Zulassung, Release-/Hz-
+Gedächtnis und einen gemeinsamen Raum. Zwölf Minuten echtes PCM bestanden;
+64-/512-Frame-Ausgabe exakt identisch, keine NaN/Inf oder Limiter-Eingriffe.
+HIGHLANDS-Konturen kollidieren in beiden geprüften Seeds nicht mehr mit ihren
+eigenen Ausklängen. Die Quelle selbst bleibt ungehört und unfreigegeben.
 
-[PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) enthält exakten
-Merge-/Ressourcennachweis, Reduktionsentscheidung und die konkreten nächsten
-Korrekturen. Ein lokaler Integrationsentwurf ist ungeprüft; die Ausführungs-
-umgebung meldet `environment_offline`. Er wird deshalb nicht aktiviert.
-Soundarbeit wird bei verfügbarer Ausführung fortgesetzt; keine Checkbox wird
-aufgrund dieser Infrastrukturunterbrechung oder einer bloßen Planentscheidung
-geschlossen.
+PR133 ergänzt den expliziten reduzierten Produktbuild, einen neuen
+Drei-Welten-Katalog und SCN7 mit SCN5/6-Ersatzzuordnung. Referenz bleibt Default.
+Der erste Produkt-ARM-Link passt in internen Speicher; Symbol-/DMA-Prüfer
+und vollständige Integration werden vor dem Merge abgeschlossen.
+[PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) ist der aktuelle
+Implementierungsnachweis. Alle nachfolgenden Aufgaben bleiben hinsichtlich
+ihrer vollständigen Abnahme offen; Teilumsetzung ist kein Klang-Lock.
+Die lokale Ausführung ist offline; GitHub CI führt die tatsächlichen Tests aus.
 
 ## Verbindliche Arbeitsliste
 
@@ -731,6 +732,7 @@ jetzt ist definiert, was sie entscheiden muss:
 | Physische Ausgabe | Tatsächliche Ausgänge/Lasten/Stromzustände; Pegel/DC/Noise/Pops und reale Lautstärke | Keine elektrische oder akustische Störursache; digitale Headroom und physischer Pegel separat dokumentiert |
 | Langes Zuhören | Mehrere echte Sitzungen/Seeds ohne ständige Eingriffe; gezielte sensible Stellen protokollieren | Wiederkehr schafft Zusammenhang, Entwicklung bleibt ruhig; keine ungelösten störenden Stellen oder Wirkungsbehauptung |
 
-**Nächste Umsetzungseinheit: SD08–SD13 — gemeinsame Besitzer-/Zulassungslogik und tatsächliches Tail-Gedächtnis.** Der COAST-Begleitsägen-Fix ist gemerged; seine übrige Hörabnahme bleibt offen. Historischer Ausgang: Begleitsäge,
-Resonanzen und Register als einzelne Ursachen prüfen; höchstens eine gezielte
-Korrektur und ein kurzer Vergleich. Noch kein Grammatik-, Raum- oder UI-Umbau.
+**Aktuelle Einheiten: SD00/SD32/SD36/SD46 — reduzierte Produktauswahl und
+explizite Migration; danach Quellenhörproben, Room/Nature-Messung,
+langfristige Grammatik und Übergänge.** Quellen- und Gerätehörgates bleiben
+offen; Referenzhistorie wird nicht als Kandidaten-Laufzeit beschrieben.

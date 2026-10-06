@@ -7,17 +7,28 @@
 #include "synth_controls.h"
 #include "params.h"
 #include "engine.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "engine_product.h"
+#include <stddef.h>
+#endif
 #include "oled.h"
 #include "baked_font.h"
 #include <string.h>
 #include <stdio.h>
 
-#define SCENE_MAGIC 0x53434E36u   /* SCN6: shape and six controls per synth */
+#ifdef FAM_SOUND_PRODUCT
+#define SCENE_MAGIC 0x53434E37u /* SCN7: three Worlds, Dry/Room, collection */
+#else
+#define SCENE_MAGIC 0x53434E36u
+#endif
 
 typedef struct {
     uint32_t     magic;           /* SCENE_MAGIC = belegt                  */
     menu_state_t menu;
-    int8_t       drive_pct;       /* 0..100                                */
+    int8_t       drive_pct;
+#ifdef FAM_SOUND_PRODUCT
+    uint8_t      collection;      /* 0 Major / 1 Minor; occupies SCN6 padding */
+#endif
     int16_t      bright_hz;       /* -600..800                             */
     uint32_t     gen_seed;
 } scene_slot_t;
@@ -25,6 +36,9 @@ typedef struct {
 typedef struct {
     uint32_t     magic;           /* Store-Gueltigkeit                     */
     scene_slot_t slot[SCENES_COUNT];
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t checksum; /* Covers header and every slot, including fixed padding. */
+#endif
 } scene_store_t;
 _Static_assert(sizeof(scene_store_t)<=512, "Scene store exceeds flash staging buffer");
 
@@ -36,6 +50,52 @@ typedef struct {
 } legacy_slot_t;
 typedef struct { uint32_t magic; legacy_slot_t slot[SCENES_COUNT]; } legacy_store_t;
 
+#ifdef FAM_SOUND_PRODUCT
+/* Exact SCN6 ABI: never reinterpret legacy IDs as product IDs. */
+typedef struct {
+    uint8_t world,key_pc,tuning,voice,synth,cell,bass,color,fx;
+    uint8_t space,shimmer,atmos,motion,age,echo,blur;
+    uint16_t locks;
+    uint8_t reso,attack,release,sweep,envmod,core[6][6];
+} scn6_menu_t;
+typedef struct {
+    uint32_t magic; scn6_menu_t menu; int8_t drive_pct;
+    int16_t bright_hz; uint32_t gen_seed;
+} scn6_slot_t;
+typedef struct { uint32_t magic; scn6_slot_t slot[SCENES_COUNT]; } scn6_store_t;
+_Static_assert(sizeof(scn6_menu_t)==60 && sizeof(scn6_slot_t)==72, "SCN6 wire changed");
+_Static_assert(offsetof(scn6_slot_t,bright_hz)==66 && offsetof(scn6_slot_t,gen_seed)==68, "SCN6 offsets changed");
+_Static_assert(sizeof(legacy_slot_t)==32, "SCN5 wire changed");
+static uint8_t cap100(uint8_t v) { return v>100 ? 100 : v; }
+static void migrate_legacy(scene_slot_t *sl,int old_world) {
+    static const uint8_t world_map[5]={2,0,0,1,1};
+    sl->menu.world=old_world>=0 && old_world<5 ? world_map[old_world] : 0;
+    sl->collection=0x80u | ((old_world>=2 && old_world<=4) ? 1u : 0u);
+    sl->menu.fx=sl->menu.fx==0 ? 0 : 1;
+    sl->menu.key_pc=sl->menu.key_pc<12 ? sl->menu.key_pc : 2;
+    sl->menu.tuning=sl->menu.tuning==1 ? 1 : 0;
+    sl->menu.space=cap100(sl->menu.space);
+    sl->menu.atmos=0; sl->menu.motion=50; /* old noise/LFO targets aren't equivalent */
+    sl->menu.attack=cap100(sl->menu.attack); sl->menu.release=cap100(sl->menu.release);
+    sl->menu.voice=sl->menu.synth=sl->menu.cell=sl->menu.bass=sl->menu.color=0;
+    sl->menu.shimmer=sl->menu.age=sl->menu.echo=sl->menu.blur=0;
+    sl->menu.reso=sl->menu.sweep=sl->menu.envmod=0; sl->menu.locks=0;
+    memset(sl->menu.core,0,sizeof sl->menu.core);
+    sl->drive_pct=0;
+    if(sl->bright_hz < -600) sl->bright_hz=-600;
+    if(sl->bright_hz > 800) sl->bright_hz=800;
+    sl->magic=SCENE_MAGIC;
+}
+static uint32_t store_checksum(const scene_store_t *s) {
+    const uint8_t *p=(const uint8_t *)s; uint32_t crc=0xffffffffu;
+    for(unsigned i=0;i<offsetof(scene_store_t,checksum);++i) {
+        crc^=p[i];
+        for(int b=0;b<8;++b) crc=(crc>>1)^(0xedb88320u & (0u-(crc&1u)));
+    }
+    return ~crc;
+}
+#endif
+
 static scene_store_t   s_store;
 static scenes_write_fn s_write;
 static scenes_read_fn  s_read;
@@ -44,6 +104,35 @@ static int             s_active = -1;
 static bool     s_ui_on = false;
 static uint32_t s_ui_last;
 
+#ifdef FAM_SOUND_PRODUCT
+void scenes_init(scenes_write_fn write_fn, scenes_read_fn read_fn) {
+    s_write=write_fn; s_read=read_fn; s_active=-1; s_ui_on=false;
+    memset(&s_store,0,sizeof s_store);
+    if(s_read && s_read(&s_store,sizeof s_store) && s_store.magic==SCENE_MAGIC && s_store.checksum==store_checksum(&s_store)) return;
+    memset(&s_store,0,sizeof s_store); s_store.magic=SCENE_MAGIC;
+    scn6_store_t old6={0};
+    if(s_read && s_read(&old6,sizeof old6) && old6.magic==0x53434E36u) {
+        for(int i=0;i<SCENES_COUNT;++i) if(old6.slot[i].magic==0x53434E36u) {
+            scene_slot_t *sl=&s_store.slot[i];
+            memcpy(&sl->menu,&old6.slot[i].menu,sizeof sl->menu);
+            sl->bright_hz=old6.slot[i].bright_hz; sl->gen_seed=old6.slot[i].gen_seed;
+            migrate_legacy(sl,old6.slot[i].menu.world);
+        }
+        return;
+    }
+    legacy_store_t old5={0};
+    if(s_read && s_read(&old5,sizeof old5) && old5.magic==0x53434E35u) {
+        for(int i=0;i<SCENES_COUNT;++i) if(old5.slot[i].magic==0x53434E35u) {
+            scene_slot_t *sl=&s_store.slot[i];
+            memcpy(&sl->menu,&old5.slot[i].menu,sizeof old5.slot[i].menu);
+            sl->menu.attack=sl->menu.release=50;
+            sl->bright_hz=old5.slot[i].bright_hz; sl->gen_seed=old5.slot[i].gen_seed;
+            migrate_legacy(sl,old5.slot[i].menu.values[0]);
+        }
+    }
+}
+bool scenes_migrated(int slot) { return slot>=0 && slot<SCENES_COUNT && (s_store.slot[slot].collection & 0x80u)!=0; }
+#else
 void scenes_init(scenes_write_fn write_fn, scenes_read_fn read_fn) {
     s_write = write_fn;
     s_read  = read_fn;
@@ -70,6 +159,7 @@ void scenes_init(scenes_write_fn write_fn, scenes_read_fn read_fn) {
         }
     }
 }
+#endif
 
 bool scenes_used(int slot) {
     return slot >= 0 && slot < SCENES_COUNT &&
@@ -81,20 +171,36 @@ int scenes_active(void) { return s_active; }
 bool scenes_save(int slot, uint32_t now_ms) {
     if (slot < 0 || slot >= SCENES_COUNT) return false;
     scene_slot_t *sl = &s_store.slot[slot];
+    scene_slot_t previous=*sl;
     sl->magic = SCENE_MAGIC;
     menu_get_state(&sl->menu);
     sl->drive_pct = (int8_t)params_drive_pct();
     sl->bright_hz = (int16_t)params_bright_hz();
     sl->gen_seed  = engine_gen_seed();
+#ifdef FAM_SOUND_PRODUCT
+    sl->drive_pct=0;
+    sl->collection=(uint8_t)engine_product_collection();
+    uint32_t previous_checksum=s_store.checksum;
+    s_store.checksum=store_checksum(&s_store);
+#endif
+    if(s_write && !s_write(&s_store,sizeof s_store)) {
+        *sl=previous;
+#ifdef FAM_SOUND_PRODUCT
+        s_store.checksum=previous_checksum;
+#endif
+        return false;
+    }
     s_active  = slot;
     s_ui_last = now_ms;
-    if (s_write) (void)s_write(&s_store, sizeof s_store);
     return true;
 }
 
 bool scenes_recall(int slot, uint32_t now_ms) {
     if (!scenes_used(slot)) return false;
     const scene_slot_t *sl = &s_store.slot[slot];
+#ifdef FAM_SOUND_PRODUCT
+    engine_set_mode(sl->collection & 1u);
+#endif
     menu_apply_state(&sl->menu);
     params_apply_scene(sl->drive_pct, (float)sl->bright_hz);
     engine_set_gen_seed(sl->gen_seed);

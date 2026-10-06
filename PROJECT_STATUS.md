@@ -1,28 +1,19 @@
 # PROJECT STATUS
 
-> **2026-10-06 — Soundentwicklung, aktueller Checkpoint:**
-> [AMBIENT_SOUND_DESIGN_TODO.md](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md)
-> bleibt die vollständige Liste SD00–SD53; keine offene Hör-/Geräteabnahme
-> wird durch eine Codeprüfung ersetzt. UI/Display/Tastenbelegung folgen danach.
-> **PR130 ist gemerged:** COAST-Grundtonschwankung in 24 echten PCM-Proben
-> von maximal 3,102 auf 0,049 dB reduziert; ungültige Float-Parameter bewahren
-> den letzten gültigen Klangzustand; owned Pluck weist falsche Tonhöhen ab.
-> Alle fünf CI-Jobs inkl. H743 Release bestanden. Gemessener Link:
-> FLASH 255964 B, DTCM 119440 B, D1 417344 B, D2 258112 B.
-> **PR131 ergänzt drei getrennte Score-Kandidaten:** COAST-Übergaben,
-> WOODLAND-Figur/gehörte Antwort/Variation/Ruhe, HIGHLANDS-Fragmente/Ruhe.
-> 11.520 Transaktionen lokal bestanden, zusätzlich in Host-CI.
-> Der Produktpfad verwendet weiterhin den alten Katalog/Scheduler.
-> Quellenhörabnahme, globale manuelle Zulassung, tatsächliches Tail-Gedächtnis,
-> Score-/Raum-/Naturintegration, Parameterregister, Scene-Migration und
-> Auslinken der archivierten Synths sind offen. HIGHLANDS ist kein Sound-Lock.
-> [PRODUCT_CORE_CHECKPOINT.md](field-ambience-current/docs/audio/PRODUCT_CORE_CHECKPOINT.md)
-> enthält genaue Nachweise und nächste Korrekturen. Ein lokaler größerer
-> Integrationsentwurf bleibt ungeprüft und nicht aktiviert: Ausführungsumgebung
-> meldet `environment_offline`. Geprüfte Bausteine sind auf GitHub gesichert.
-> **Nächste Einheit: SD08–SD13**, gemeinsam mit den offenen trockenen Hörgates.
-> Die folgenden datierten Einträge sind Historie; ihre alten Next-/Freigaben
-> gelten nicht fort. Ein Entwicklungsmerge ist keine Produkt-Klangfreigabe.
+> **2026-10-06 — geprüfter Soundkern, PR132 gemerged:**
+> Drei gemeinsame Quellen-Slots für Manual/Generate, echte Besitzer bis
+> Release-Ende, tatsächliche Hz/Tails, drei getrennte Score-Kandidaten,
+> ein gemeinsamer Raum und optionale Natur (default aus).
+> Zwölf Minuten echtes PCM bestanden, keine NaN/Inf/Limiter-Eingriffe,
+> 64-/512-Frame-Trajektorien identisch. Merge aebdc4414bd4f7c09bd39e042641946813977ff3.
+> **PR133:** separater reduzierter H743-Produktkandidat und SCN7-Migration;
+> Referenz bleibt Default bis Quellen-/Geräteabnahme. Vollständige CI offen.
+> [Sound-To-do SD00–SD53](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md)
+> und [Implementierungsnachweis](field-ambience-current/docs/audio/PRODUCT_CORE_CHECKPOINT.md)
+> führen offene Klang-/Gerätegates weiter. Langfristige Motive, kurze Hörproben,
+> Kalibrierung, Raum/Natur, Übergänge und Software-Endwerte werden jetzt
+> abgearbeitet; UX/UI/physische Bindings danach. Keine Produkt-Klangfreigabe.
+> Nachfolgende datierte Einträge sind Historie, keine aktuelle Next-Queue.
 
 > **2026-10-04 — Vollständiger Produktentwurf und Umsetzungspakete:**
 > `field-ambience-current/docs/audio/AMBIENT_PRODUCT_BRIEF.md` verbindet

@@ -161,6 +161,7 @@ SECTIONS
     . = ALIGN(32);
     _sd2_bss = .;
     *fx_master.c.obj(.bss .bss* COMMON)
+    *ambient_room.c.obj(.bss .bss* COMMON) /* product: one CPU-only float room */
     . = ALIGN(4);
     _ed2_bss = .;
   } >RAM_D2
