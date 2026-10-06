@@ -57,16 +57,18 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
     static const float il[LINES]={1,-1,.72f,-.72f,.45f,-.45f,.88f,-.88f};
     static const float ir[LINES]={.45f,.88f,-1,-.72f,1,.72f,-.45f,-.88f};
     peak=0;
-    if(cold && on==0) {
+    if(cold && (on==0 || target==0)) {
         amount_cur=target; for(int i=0;i<LINES;++i) gains[i]=targets[i]; return;
     }
     cold=false;
     for(int n=0;n<frames;++n) {
-        amount_cur+=(target-amount_cur)*(1.0f/(.080f*DSP_SAMPLE_RATE_HZ));
+        float amount_step=1.0f/(.080f*DSP_SAMPLE_RATE_HZ);
+        if(amount_cur<target) amount_cur=fminf(target,amount_cur+amount_step);
+        else if(amount_cur>target) amount_cur=fmaxf(target,amount_cur-amount_step);
         float step=1.0f/(.040f*DSP_SAMPLE_RATE_HZ);
         if(enable_cur<on) enable_cur=fminf(on,enable_cur+step);
         else if(enable_cur>on) enable_cur=fmaxf(on,enable_cur-step);
-        if(on==0 && enable_cur==0) {
+        if((on==0 && enable_cur==0) || (target==0 && amount_cur==0)) {
             if(!cold) ambient_room_clear();
             continue; /* Completed Dry transition cannot reveal an old room later. */
         }

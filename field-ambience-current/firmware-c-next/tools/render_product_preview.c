@@ -31,6 +31,12 @@ static void setup(int world) {
     engine_set_attack(.5f);engine_set_release(.5f);engine_set_nature(0);
     engine_set_note_hook(hook);
 }
+static void dry_setup(int world) {
+    setup(world);engine_set_fx_mode(0);
+    int16_t silence[512*2];
+    for(int i=0;i<9;++i)engine_render(silence,512);
+    /* Complete the 40 ms Dry transition before exciting any source. */
+}
 int main(int argc,char **argv) {
     if(argc!=5) { fprintf(stderr,"WORLD SEED dry|world|nature OUT.wav\n");return 2; }
     int world=atoi(argv[1]);uint32_t seed=(uint32_t)strtoul(argv[2],0,0);
@@ -41,8 +47,8 @@ int main(int argc,char **argv) {
     char path[1024];if(snprintf(path,sizeof path,"%s.events.csv",argv[4])>=(int)sizeof path)return 2;
     trace=fopen(path,"w");if(!trace)return 2;
     fprintf(trace,"frame,on,owner,hz,velocity\n");
-    setup(world);engine_set_gen_seed(seed);
-    if(dry||nature)engine_set_fx_mode(0);
+    if(dry||nature)dry_setup(world);else setup(world);
+    engine_set_gen_seed(seed);
     if(nature)engine_set_nature(.7f);
     if(!dry&&!nature)engine_set_generative(true,-1);
     int segment=-1;bool released=false,cleared=false;
@@ -52,7 +58,7 @@ int main(int argc,char **argv) {
         if(dry) {
             int s=(int)(at/(SR*9));
             if(s!=segment) {
-                setup(world);engine_set_fx_mode(0);segment=s;released=cleared=false;
+                dry_setup(world);segment=s;released=cleared=false;
                 assert(engine_try_note_on(0,dsp_midi_to_hz((float)midi[s]),.75f));
             }
             uint32_t elapsed=at-(uint32_t)segment*SR*9;
