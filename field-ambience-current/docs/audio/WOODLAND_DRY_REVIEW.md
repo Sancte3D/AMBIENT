@@ -1,6 +1,6 @@
-# WOODLAND — trockener Saitenansatz, 2026-10-06
-
 ## KERNURTEIL
+
+WOODLAND — trockener Saitenansatz, geprüft am 2026-10-06.
 
 Eine runde, ausklingende Saite ist ein schlüssiger Kern für WOODLANDs nahe
 Details und kleine Antworten. Die alte Anregung war dafür unzuverlässig:
@@ -133,3 +133,10 @@ alten `pluck.c` als Referenz. Lange interne Tests exportieren keine langen WAVs.
 
 Nächster Quellenblock: COAST/Bowed trocken. WOODLAND-Grammatik, Body/Send,
 Pegelabgleich zwischen Quellen und das physische Hörurteil bleiben offen.
+
+Release-Nachweis: Code `1a00a24c809e582343a6fe87d7b0c09a3677d26b`,
+[CI 37471167987](https://github.com/Sancte3D/AMBIENT/actions/runs/37471167987),
+alle fünf Jobs erfolgreich. H743: Flash 255.316 B (+576), D1 417.408 B (+32),
+DTCM 119.440 B und D2 258.112 B unverändert. Keine neuen Audiopuffer.
+Die vier zusätzlichen Zustandswerte pro Stimme erklären die 32 D1-Bytes.
+Onset-Arbeit und Render-Spitzenlast sind damit noch nicht auf Silizium gemessen.

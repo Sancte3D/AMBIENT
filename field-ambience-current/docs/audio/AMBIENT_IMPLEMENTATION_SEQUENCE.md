@@ -246,3 +246,10 @@ Next source unit: COAST dry Bowed. WOODLAND event grammar, shared Body/room and
 cross-source gain calibration remain later units; listen to the dry source
 before calling its identity finished. Fresh H743 resource verification belongs
 to the checkpoint for this implementation, not the earlier entry-fix map.
+
+Release verification completed at code commit 1a00a24c809e582343a6fe87d7b0c09a3677d26b:
+all five CI jobs pass. Flash 255,316 B (+576 B), D1 417,408 B (+32 B);
+DTCM 119,440 B and D2 258,112 B remain unchanged. Existing source buffers are
+retained. Full host suite passes including generator 11,972 checks, device
+5,423 checks, effects 489,609 checks and clean hot-path lint. Exact map and
+remaining device gates are in WORLD_ROUTING_CHECKPOINT.md.

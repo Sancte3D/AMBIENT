@@ -315,3 +315,27 @@ overtone loss. Pitch audit: 35 static plus six live cases, worst static 0.034 ce
 A 26-second dry reference/candidate file uses fixed, matched excerpt loudness,
 with no Body, FX or background. Full scope, raw metrics, limits and open listening
 gates: [WOODLAND_DRY_REVIEW.md](WOODLAND_DRY_REVIEW.md).
+
+### Verified Release after WOODLAND source correction
+
+Tested code commit: `1a00a24c809e582343a6fe87d7b0c09a3677d26b`.
+CI: https://github.com/Sancte3D/AMBIENT/actions/runs/37471167987
+All five jobs succeeded; H743 job 112294728669 uses Cortex-M7 hard-float and
+`-O3 -DNDEBUG`. Full local host suite exits 0: generator 11,972 checks, device
+5,423 checks, effects 489,609 checks; lint covers 26 modules with zero forbidden
+calls. The 26-second audition fingerprint matches the tested Pluck source.
+
+| Region | Used bytes | Free bytes | Change from preceding Release |
+|---|---:|---:|---:|
+| Flash (scene sector excluded) | 255,316 | 1,710,764 | +576 |
+| DTCM | 119,440 | 11,632 | 0 |
+| D1 | 417,408 | 106,880 | +32 |
+| D2 | 258,112 | 36,800 | 0 |
+| D3 | 0 | 65,536 | 0 |
+| ITCM | 0 | 65,536 | 0 |
+
+All configured banks link. New state is exactly 32 D1 bytes; existing delay
+lines and the sine LUT are reused. Successful linking is not an MCU CPU,
+stack high-water or physical sound-quality measurement. DWT must include
+bounded excitation construction at note-on and the transient old Ambient plus
+native workload; target peak load remains below 0.60 with no deadline misses.
