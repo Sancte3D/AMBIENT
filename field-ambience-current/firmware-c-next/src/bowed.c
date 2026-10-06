@@ -19,6 +19,7 @@
 #include "dsp.h"
 #include <math.h>
 #include <string.h>
+#include <stdatomic.h>
 
 #define SR    ((float)DSP_SAMPLE_RATE_HZ)
 #define CTL   32
@@ -27,8 +28,9 @@
 typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
 
 typedef struct {
-    vstage_t stage;
-    int source;
+    _Atomic vstage_t stage;
+    _Atomic int source;
+    int owner_tag;
     float expression;
     float    freq, amp;
     float    ph, inc;                    /* stable band-limited string  */
@@ -50,9 +52,31 @@ static bvoice_t V[VMAX], pending[VMAX];
 /* Prepare off the audio path; at capacity fade the old voice for 8 ms,
  * then start the prepared attack. Exactly VMAX voices render at any time. */
 #define HANDOVER_SAMPLES 353
-static volatile int queued[VMAX];
+static _Atomic int queued[VMAX];
 static int fade_left[VMAX];
 static int      ctl;
+static _Atomic uint32_t tone_bits;
+static float tone_cur=0.5f;
+void bowed_set_tone(float v) {
+    if (!isfinite(v)) return;
+    v=dsp_clampf(v,0.0f,1.0f);
+    uint32_t b; memcpy(&b,&v,4);
+    atomic_store_explicit(&tone_bits,b,memory_order_release);
+}
+static float tone_target(void) {
+    uint32_t b=atomic_load_explicit(&tone_bits,memory_order_acquire);
+    float v; memcpy(&v,&b,4); return v;
+}
+uint16_t bowed_active_sources(void) {
+    uint16_t mask=0;
+    for (int i=0;i<VMAX;++i) {
+        if (queued[i] && pending[i].owner_tag>=0 && pending[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<pending[i].owner_tag);
+        if (V[i].stage!=V_IDLE && V[i].owner_tag>=0 && V[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<V[i].owner_tag);
+    }
+    return mask;
+}
 static int      s_colour = 0;
 
 static inline float wnoise(uint32_t *r) {
@@ -64,7 +88,7 @@ void bowed_init(void) {
     memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
     memset(fade_left,0,sizeof fade_left);
     memset(V, 0, sizeof V);
-    ctl = 0;
+    ctl = 0; tone_cur=0.5f; bowed_set_tone(0.5f);
     s_colour = 0;
 }
 
@@ -84,7 +108,7 @@ static int alloc_voice(int source) {
 
 static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float amp) {
     memset(v,0,sizeof *v);
-    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f);
+    v->source=source; v->owner_tag=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f);
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
@@ -106,7 +130,11 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
     v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
     v->bow = 0.0f;
-    v->bodyPh = 0.0f; v->bodyInc = 0.13f / SR; /* slow body breath          */
+    #ifdef FAM_SOUND_PRODUCT
+    v->bodyPh = 0.0f; v->bodyInc = 0.0f; /* articulation comes from the envelope */
+#else
+    v->bodyPh = 0.0f; v->bodyInc = 0.13f / SR;
+#endif
     /* gentle stereo spread per voice */
     float pan = (i == 0) ? -0.25f : (i == 1) ? 0.25f : 0.0f;
     v->panL = 0.5f * (1.0f - pan);
@@ -166,36 +194,41 @@ int bowed_active_count(void) {
 void bowed_render_mix(float *dry_L, float *dry_R,
                       float *send_L, float *send_R,
                       int frames, float send_amount) {
+    float colour=tone_target();
     for (int n = 0; n < frames; ++n) {
+        tone_cur+=(colour-tone_cur)*(1.0f/(0.080f*SR));
         float L = 0.0f, R = 0.0f;
         int do_ctl = (ctl == 0);
 
         for (int i = 0; i < VMAX; ++i) {
             bvoice_t *v = &V[i];
-            if(queued[i] && v->stage==V_IDLE) {
+            if(atomic_load_explicit(&queued[i],memory_order_relaxed) &&
+               atomic_load_explicit(&v->stage,memory_order_relaxed)==V_IDLE) {
+                atomic_thread_fence(memory_order_acquire);
                 *v=pending[i]; queued[i]=0; fade_left[i]=0;
             }
-            if (v->stage == V_IDLE) continue;
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
 
+            vstage_t stage=atomic_load_explicit(&v->stage,memory_order_relaxed);
             if (do_ctl) {
                 /* bow pressure: rises through the attack, settles to a low
                  * sustained value — the grain follows it. */
-                float target = (v->stage == V_ATTACK) ? 1.0f : 0.35f;
+                float target = (stage == V_ATTACK) ? 1.0f : 0.35f;
                 v->bow += (target - v->bow) * 0.02f;
                 /* Body cutoff opens with bow pressure and slow breath. */
                 float breath = dsp_sin(v->bodyPh);
-                float cut = v->body_base * (1.0f + 0.35f * v->bow + 0.06f * breath);
+                float cut = v->body_base * (1.0f + 0.35f * v->bow + 0.06f * breath) * (0.8f+0.4f*tone_cur);
                 dsp_svf_set(&v->body, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.9f);
             }
 
             /* amp envelope */
-            switch (v->stage) {
+            switch (stage) {
                 case V_ATTACK:
                     v->env += v->envInc;
                     if (v->env >= v->amp) { v->env = v->amp; v->stage = V_HOLD; }
                     break;
                 case V_HOLD:
-                    if (v->source < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
+                    if (atomic_load_explicit(&v->source,memory_order_relaxed) < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
                     break;
                 case V_RELEASE:
                     v->env -= v->relCoef * v->env;
@@ -203,7 +236,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                     break;
                 default: break;
             }
-            if (v->stage == V_IDLE) continue;
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
 
             v->bodyPh += v->bodyInc; if (v->bodyPh >= 1.0f) v->bodyPh -= 1.0f;
 

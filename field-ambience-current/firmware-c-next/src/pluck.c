@@ -6,6 +6,7 @@
 #include "shape.h"
 #include "dsp.h"
 #include <math.h>
+#include <stdatomic.h>
 #include <string.h>
 
 #define SR        ((float)DSP_SAMPLE_RATE_HZ)
@@ -27,7 +28,7 @@ typedef struct {
     float y_prev2;
     float env;            /* tracked peak envelope (for retiring) */
     float panL, panR;
-    volatile int active;
+    _Atomic int active;
     int owner;            /* 0..255 source; 256 = legacy one-shot */
     float stop_gain;
     float attack_phase, attack_step;
@@ -36,7 +37,7 @@ typedef struct {
 } pluck_voice_t;
 
 static pluck_voice_t v[PLUCK_VOICES];
-static float s_damp = 0.42f * (0.25f / 0.9f); /* FIR side weight: 0=bright */
+static _Atomic float s_damp = 0.42f * (0.25f / 0.9f); /* FIR side weight: 0=bright */
 static int      next_voice;
 static uint32_t excitation_rng = 0x9E3779B9u;
 
@@ -159,6 +160,11 @@ void pluck_note(float freq_hz, float amp) {
     (void)start_note(256, freq_hz, amp);
 }
 static void release_voice(pluck_voice_t *p) {
+#ifdef FAM_SOUND_PRODUCT
+    /* Product audio owner: a preparation cancelled before its first sample
+     * is not a 20 ms audible strike, MIDI event or heard score item. */
+    if (p->active && p->attack_phase==0.0f) { p->active=0; return; }
+#endif
     if (p->active && !p->stop_left) p->stop_left = STOP_FRAMES;
 }
 void pluck_note_off(uint8_t source) {
@@ -169,6 +175,12 @@ void pluck_all_off(void) {
     for (int i = 0; i < PLUCK_VOICES; ++i) release_voice(&v[i]);
 }
 
+uint16_t pluck_active_sources(void) {
+    uint16_t mask=0;
+    for(int i=0;i<PLUCK_VOICES;++i) if(v[i].active && v[i].owner>=0 && v[i].owner<16)
+        mask|=(uint16_t)(1u<<v[i].owner);
+    return mask;
+}
 int pluck_active_count(void) {
     int c = 0;
     for (int i = 0; i < PLUCK_VOICES; ++i) c += v[i].active ? 1 : 0;
@@ -177,6 +189,7 @@ int pluck_active_count(void) {
 
 void pluck_render_mix(float *dry_L, float *dry_R,
                       float *send_L, float *send_R, int frames) {
+    float damping=atomic_load_explicit(&s_damp,memory_order_relaxed);
     for (int i = 0; i < PLUCK_VOICES; ++i) {
         pluck_voice_t *p = &v[i];
         if (!p->active) continue;
@@ -188,7 +201,7 @@ void pluck_render_mix(float *dry_L, float *dry_R,
              * head therefore stays fixed when BRIGHTNESS changes. Only loss
              * follows the 80 ms smoother. Interpolation's small residual is
              * covered by rendered-pitch tests. */
-            p->damp += (s_damp - p->damp) * (1.0f / (0.080f * SR));
+            p->damp += (damping - p->damp) * (1.0f / (0.080f * SR));
             float rpos = (float)p->widx - (p->N - 1.0f);
             if (rpos < 0.0f) rpos += (float)BUF_LEN;
             int   r0 = (int)rpos;

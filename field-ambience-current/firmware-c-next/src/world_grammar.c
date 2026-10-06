@@ -82,7 +82,7 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
                 n->direction=(uint8_t)between(n,0,1);
             }
             if (n->phase==0) {
-                o.index=n->pos ? bound(n->last+(n->direction ? 1 : -1)) :
+                o.index=n->pos ? bound(n->last+(n->direction ? 1 : -1)*(n->last<5 ? 2 : 1)) :
                                  (int)between(n,2,5);
             } else {
                 o.index=n->motif[n->pos];
@@ -116,7 +116,13 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
                 int direction=n->direction ? 1 : -1;
                 /* Arc: a related step, then a return; no pitch sweep. */
                 if (n->pos==n->length-1) direction=-direction;
-                o.index=bound(n->last+direction*(int)between(n,1,2));
+                int step=n->last<5 ? 2 : (int)between(n,1,2);
+                int candidate=n->last+direction*step;
+                if(candidate<0 || candidate>7) {
+                    candidate=n->last-direction*step;
+                    n->direction^=1u;
+                }
+                o.index=bound(candidate);
             }
             o.hold_ms=between(n,1500,5000);
             o.gap_ms=o.hold_ms+between(n,900,2400);

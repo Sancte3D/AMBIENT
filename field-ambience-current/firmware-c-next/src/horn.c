@@ -17,6 +17,7 @@
 #include "shape.h"
 #include "dsp.h"
 #include <string.h>
+#include <stdatomic.h>
 
 #define SR    ((float)DSP_SAMPLE_RATE_HZ)
 #define CTL   32
@@ -25,8 +26,9 @@
 typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
 
 typedef struct {
-    vstage_t stage;
-    int source;
+    _Atomic vstage_t stage;
+    _Atomic int source;
+    int owner_tag;
     float expression, vibFade;
     float    freq, amp;
     float    ph, inc;                 /* reed saw                          */
@@ -47,9 +49,31 @@ static hvoice_t V[VMAX], pending[VMAX];
 /* Prepare off the audio path; at capacity fade the old voice for 8 ms,
  * then start the prepared attack. Exactly VMAX voices render at any time. */
 #define HANDOVER_SAMPLES 353
-static volatile int queued[VMAX];
+static _Atomic int queued[VMAX];
 static int fade_left[VMAX];
 static int      ctl;
+static _Atomic uint32_t tone_bits;
+static float tone_cur=0.5f;
+void horn_set_tone(float v) {
+    if (!isfinite(v)) return;
+    v=dsp_clampf(v,0.0f,1.0f);
+    uint32_t b; memcpy(&b,&v,4);
+    atomic_store_explicit(&tone_bits,b,memory_order_release);
+}
+static float tone_target(void) {
+    uint32_t b=atomic_load_explicit(&tone_bits,memory_order_acquire);
+    float v; memcpy(&v,&b,4); return v;
+}
+uint16_t horn_active_sources(void) {
+    uint16_t mask=0;
+    for (int i=0;i<VMAX;++i) {
+        if (queued[i] && pending[i].owner_tag>=0 && pending[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<pending[i].owner_tag);
+        if (V[i].stage!=V_IDLE && V[i].owner_tag>=0 && V[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<V[i].owner_tag);
+    }
+    return mask;
+}
 
 static inline float wnoise(uint32_t *r) {
     *r = (*r) * 1664525u + 1013904223u;
@@ -60,7 +84,7 @@ void horn_init(void) {
     memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
     memset(fade_left,0,sizeof fade_left);
     memset(V, 0, sizeof V);
-    ctl = 0;
+    ctl = 0; tone_cur=0.5f; horn_set_tone(0.5f);
 }
 
 static int alloc_voice(int source) {
@@ -77,7 +101,7 @@ static int alloc_voice(int source) {
 
 static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float amp) {
     memset(v,0,sizeof *v);
-    v->source=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
+    v->source=source; v->owner_tag=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
@@ -93,7 +117,11 @@ static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float am
     v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
     v->blareEnv  = 0.0f;
     v->chiff_left = (int)(0.09f * SR);         /* 90 ms of air at the onset          */
-    v->driftPh = 0.0f; v->driftInc = 0.9f / SR;/* ~0.9 Hz air tremor                 */
+    #ifdef FAM_SOUND_PRODUCT
+    v->driftPh = 0.0f; v->driftInc = 0.0f; /* no repeated wah in the product */
+#else
+    v->driftPh = 0.0f; v->driftInc = 0.9f / SR;
+#endif
     /* gentle stereo spread per voice */
     float pan = (i == 0) ? -0.2f : (i == 1) ? 0.2f : 0.0f;
     v->panL = 0.5f * (1.0f - pan);
@@ -153,34 +181,39 @@ int horn_active_count(void) {
 void horn_render_mix(float *dry_L, float *dry_R,
                      float *send_L, float *send_R,
                      int frames, float send_amount) {
+    float colour=tone_target();
     for (int n = 0; n < frames; ++n) {
+        tone_cur+=(colour-tone_cur)*(1.0f/(0.080f*SR));
         float L = 0.0f, R = 0.0f;
         int do_ctl = (ctl == 0);
 
         for (int i = 0; i < VMAX; ++i) {
             hvoice_t *v = &V[i];
-            if(queued[i] && v->stage==V_IDLE) {
+            if(atomic_load_explicit(&queued[i],memory_order_relaxed) &&
+               atomic_load_explicit(&v->stage,memory_order_relaxed)==V_IDLE) {
+                atomic_thread_fence(memory_order_acquire);
                 *v=pending[i]; queued[i]=0; fade_left[i]=0;
             }
-            if (v->stage == V_IDLE) continue;
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
 
+            vstage_t stage=atomic_load_explicit(&v->stage,memory_order_relaxed);
             if (do_ctl) {
                 /* Breath opens modestly; no resonant brass flare. */
-                float btgt = (v->stage == V_ATTACK) ? 1.0f : 0.35f;
+                float btgt = (stage == V_ATTACK) ? 1.0f : 0.35f;
                 v->blareEnv += (btgt - v->blareEnv) * 0.035f;
                 float drift = dsp_sin(v->driftPh);
-                float cut = v->freq * (2.2f + (1.0f+1.2f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift);
+                float cut = v->freq * (2.2f + (1.0f+1.2f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift) * (0.85f+0.3f*tone_cur);
                 dsp_svf_set(&v->blare, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.707f);
             }
 
             /* amp envelope */
-            switch (v->stage) {
+            switch (stage) {
                 case V_ATTACK:
                     v->env += v->envInc;
                     if (v->env >= v->amp) { v->env = v->amp; v->stage = V_HOLD; }
                     break;
                 case V_HOLD:
-                    if (v->source < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
+                    if (atomic_load_explicit(&v->source,memory_order_relaxed) < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
                     break;
                 case V_RELEASE:
                     v->env -= v->relCoef * v->env;
@@ -188,7 +221,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
                     break;
                 default: break;
             }
-            if (v->stage == V_IDLE) continue;
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
 
             v->driftPh += v->driftInc; if (v->driftPh >= 1.0f) v->driftPh -= 1.0f;
 

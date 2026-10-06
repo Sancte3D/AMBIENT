@@ -13,6 +13,15 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Reduced product candidate: actual source/room/nature/master PCM contract.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_product_sound.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+    "$src/src/ambient_room.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" \
+    "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/product_sound_test"
+"$tmp/product_sound_test"
+
 # Candidate score logic, independent of source/room/preset implementations.
 "$CC" "${CFLAGS[@]}" -Werror "$here/test_world_grammar.c" \
     "$src/src/world_grammar.c" -o "$tmp/world_grammar_test"

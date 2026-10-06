@@ -11,6 +11,7 @@
 #define HORN_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 void horn_init(void);
 
@@ -26,6 +27,9 @@ void horn_all_off(void);
 void horn_note(float freq_hz, float amp);
 
 int  horn_active_count(void);
+/* Audio-owned ticket query, including released sources and prepared starts. */
+uint16_t horn_active_sources(void);
+void horn_set_tone(float tone_0_1);
 
 /* Mixes the voices into dry (+ a copy into the reverb send). */
 void horn_render_mix(float *dry_L, float *dry_R,

@@ -47,6 +47,7 @@ void pluck_all_off(void); /* affects owned and legacy one-shots */
 
 /* Voices still audibly ringing (energy above ~-72 dBFS). */
 int pluck_active_count(void);
+uint16_t pluck_active_sources(void);
 
 /* r18.90 — loop-filter damping 0..0.9 (0.42 default). Driven by the
  * BRIGHTNESS macro controls the loss of upper modes, not an added hiss layer.
