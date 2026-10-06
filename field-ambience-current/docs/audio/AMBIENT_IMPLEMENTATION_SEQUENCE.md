@@ -219,3 +219,9 @@ Next sound unit is WOODLAND dry Pluck: excitation, damping and pitch stability,
 with short comparisons before Body/room. Manual admission limits, legacy
 one-shot pitch ownership, catalog migration and full FX/body transitions remain
 explicit later work; the current gate is not a complete product certification.
+
+Release verification for this entry unit succeeded at code commit
+3521d6b417653558c00ca4cd9e8f9b50fc387c7b: all five CI jobs green. Flash is
+254,740 B (+712 B); DTCM 119,440 B, D1 417,376 B and D2 258,112 B are
+unchanged. No source/room buffers were added. The run, per-bank reserve and
+remaining device gates are recorded in WORLD_ROUTING_CHECKPOINT.md.

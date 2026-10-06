@@ -267,3 +267,27 @@ remain uncapped until the explicit palette/scene migration. Legacy unowned
 one-shot harmonic tracking and source/body/FX quality remain separate work.
 Next: dry WOODLAND source design, not another compensating accompaniment layer.
 Target Release verification follows below; no physical listening verdict.
+
+### Verified Release after entry occupancy and muted progression
+
+Tested code commit: `3521d6b417653558c00ca4cd9e8f9b50fc387c7b`.
+CI: https://github.com/Sancte3D/AMBIENT/actions/runs/37465807469
+All five jobs succeeded, including full firmware-c-next host tests and H743
+job 112276408267. Target flags: Cortex-M7 hard-float, `-O3 -DNDEBUG`.
+
+| Region | Used bytes | Free bytes | Change from preceding Release |
+|---|---:|---:|---:|
+| Flash (scene sector excluded) | 254,740 | 1,711,340 | +712 |
+| DTCM | 119,440 | 11,632 | 0 |
+| D1 | 417,376 | 106,912 | 0 |
+| D2 | 258,112 | 36,800 | 0 |
+| D3 | 0 | 65,536 | 0 |
+| ITCM | 0 | 65,536 | 0 |
+
+All configured banks link successfully; aggregate RAM usage is unchanged.
+This does not measure the additional transient workload while the muted old
+Ambient pool retires alongside native audio. Real-device DWT must demonstrate
+peak load below 0.60 and zero deadline misses during dense/manual transitions;
+stack high-water, output and physical listening checks remain open. Neither
+linker success nor host tests certify calm timbre or the planned three-World
+product palette.
