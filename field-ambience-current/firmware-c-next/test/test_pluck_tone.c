@@ -99,9 +99,9 @@ int main(void) {
             previous = ratio;
         }
     }
-    /* Upper regression range and near-Nyquist inputs must remain finite and
-     * non-silent; only the low/mid register is a product sound candidate. */
-    const float edge[] = {1760, 19850, 22049};
+    /* Upper accepted source range remains finite and non-silent; product
+     * register selection is narrower. Out-of-contract pitches are refused. */
+    const float edge[] = {1760, 8000};
     for (unsigned f = 0; f < sizeof edge/sizeof edge[0]; ++f) {
         pluck_init(); CHECK(pluck_note_on(0, edge[f], 1)); render(4410);
         double energy = 0;
@@ -112,6 +112,11 @@ int main(void) {
         }
         CHECK(finite);
         CHECK(energy > 1e-8);
+    }
+    const float invalid_pitch[] = {20, 59.99f, 8000.1f, 19850, 22049, NAN, INFINITY};
+    for (unsigned f = 0; f < sizeof invalid_pitch / sizeof invalid_pitch[0]; ++f) {
+        pluck_init(); CHECK(!pluck_note_on(0, invalid_pitch[f], 1));
+        CHECK(pluck_active_count() == 0);
     }
     printf("pluck tone: %d checks, %d failures; repeat spread %.3f dB, "
            "window mean/RMS %.4f, fundamental/overtone >= %.2f\n",

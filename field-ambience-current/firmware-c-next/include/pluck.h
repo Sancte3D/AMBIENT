@@ -31,6 +31,7 @@
 
 #define PLUCK_VOICES 2
 #define PLUCK_MIN_HZ 60.0f      /* buffer sized for this floor */
+#define PLUCK_MAX_HZ 8000.0f    /* owned-source contract; no hidden pitch clamp */
 
 void pluck_init(void);
 
@@ -38,7 +39,7 @@ void pluck_init(void);
  * Legacy unowned one-shot. A full pool declines it without truncating tails. */
 void pluck_note(float freq_hz, float amp);
 
-/* Source-owned start. False means invalid input, source still ringing, or
+/* Source-owned start: 60..8000 Hz. False means invalid input, source still ringing, or
  * no free slot; the caller must not register a successful onset in that case. */
 bool pluck_note_on(uint8_t source, float freq_hz, float amp);
 void pluck_note_off(uint8_t source);

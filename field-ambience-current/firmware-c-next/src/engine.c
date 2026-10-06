@@ -441,6 +441,8 @@ bool engine_try_world_note_on(uint8_t source, float freq_hz, float amp) {
         !isfinite(amp) || freq_hz < 20.0f || freq_hz > 8000.0f || amp <= 0.0f ||
         active_freq[source] > 0.0f ||
         !world_capacity_available()) return false;
+    int family = worlds_get(s_world_index)->voice;
+    if ((family == 0 || family == 1) && freq_hz < PLUCK_MIN_HZ) return false;
     uint32_t previous_rng = humanize_rng;
     float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);
     if (tuning_mode()) pitch_jitter = 0.0f;
@@ -478,7 +480,8 @@ static void synth_note_hz(float hz, float amp) {
 }
 
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
-    if (source>=MAX_SOURCES || !isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || amp<=0.0f) return;
+    if (source>=MAX_SOURCES || !isfinite(freq_hz) || !isfinite(amp) ||
+        freq_hz<20.0f || freq_hz>8000.0f || amp<=0.0f) return;
     if (gen_on && source == MEL_SRC) {
         (void)engine_try_world_note_on(source, freq_hz, amp);
         return;
@@ -580,19 +583,31 @@ bool engine_cell_sample(uint8_t cell, float pos_0_1, uint32_t now_ms) {
 }
 
 void engine_set_reverb_size(float v) {
+    if (!isfinite(v)) return;
     reverb_size = dsp_clampf(v, 0.0f, 1.0f);
     reverb_apply();
 }
 void engine_set_reverb_damp(float v) {
+    if (!isfinite(v)) return;
     reverb_damp = dsp_clampf(v, 0.0f, 1.0f);
     reverb_apply();
 }
-void engine_set_reverb_drive(float v) { reverb_set_drive(dsp_clampf(v, 0.0f, 1.0f)); }
-void engine_set_wet_amp(float v)      { wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
-void engine_set_send(float v)         { send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
-void engine_set_master_volume(float v){ master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_set_reverb_drive(float v) {
+    if (!isfinite(v)) return;
+    reverb_set_drive(dsp_clampf(v, 0.0f, 1.0f)); }
+void engine_set_wet_amp(float v)      {
+    if (!isfinite(v)) return;
+    wet_amp_tgt    = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_set_send(float v)         {
+    if (!isfinite(v)) return;
+    send_amount_tgt = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_set_master_volume(float v){
+    if (!isfinite(v)) return;
+    master_vol_tgt  = dsp_clampf(v, 0.0f, 1.0f); }
 void engine_boot_mute(void)           { master_vol_cur  = master_vol_tgt = 0.0f; }
-void engine_set_drive(float v)        { drive_tgt       = dsp_clampf(v, 0.0f, 1.0f); }
+void engine_set_drive(float v)        {
+    if (!isfinite(v)) return;
+    drive_tgt       = dsp_clampf(v, 0.0f, 1.0f); }
 static void synth_macro(int slot, float value) {
     s_synth_macros[slot]=value;
     if(s_synth_be && s_synth_be->set_macro) s_synth_be->set_macro(slot,value);
@@ -601,6 +616,7 @@ static void synth_macro(int slot, float value) {
  * legacy pad-cutoff offset (-600..+800); the hall and the plucks follow.
  * At hz=0 all trims are exactly 0 — the bench-tuned default is untouched. */
 void engine_set_brightness(float hz)  {
+    if (!isfinite(hz)) return;
     synth_macro(0,hz);
     pad_set_brightness(hz);
     bright_damp_trim = dsp_clampf(-hz * (0.18f / 800.0f), -0.135f, 0.18f);
@@ -614,20 +630,34 @@ void engine_set_brightness(float hz)  {
 /* r19.59 RESONANCE — see docs/SYNTH_IDENTITY.md. The pad bus gets a real
  * resonant ladder; BRIGHT sweeps its cutoff, RESONANCE makes it sing. */
 void engine_set_resonance(float amount_0_1) {
+    if (!isfinite(amount_0_1)) return;
     synth_macro(1,amount_0_1);
     pad_set_resonance(dsp_clampf(amount_0_1, 0.0f, 1.0f));
 }
 float engine_resonance(void) { return pad_resonance(); }
 
 /* r19.60 SHAPE — global envelope scaling (see shape.c). */
-void engine_set_attack (float v01) { shape_set_attack(v01); }
-void engine_set_release(float v01) { shape_set_release(v01); }
+void engine_set_attack (float v01) {
+    if (!isfinite(v01)) return;
+    shape_set_attack(v01);
+}
+void engine_set_release(float v01) {
+    if (!isfinite(v01)) return;
+    shape_set_release(v01); }
 
 /* r19.60 MOTION — LFO + envelope follower onto the pad-bus filter cutoff. */
-void engine_set_sweep (float v01) { synth_macro(2,v01); pad_set_sweep(dsp_clampf(v01,0.0f,1.0f)); }
-void engine_set_envmod(float v01) { synth_macro(3,v01); pad_set_envmod(dsp_clampf(v01,0.0f,1.0f)); }
-void engine_set_texture(float v)      { texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
+void engine_set_sweep (float v01) {
+    if (!isfinite(v01)) return;
+    synth_macro(2,v01); pad_set_sweep(dsp_clampf(v01,0.0f,1.0f));
+}
+void engine_set_envmod(float v01) {
+    if (!isfinite(v01)) return;
+    synth_macro(3,v01); pad_set_envmod(dsp_clampf(v01,0.0f,1.0f)); }
+void engine_set_texture(float v)      {
+    if (!isfinite(v)) return;
+    texture_set_amount(dsp_clampf(v, 0.0f, 1.0f)); }
 void engine_set_atmosphere(float v)   {
+    if (!isfinite(v)) return;
     v = dsp_clampf(v, 0.0f, 1.0f);
     ambience_set_level(v);               /* per-world atmospheric sound layer */
     fx_master_set_atmosphere(v);         /* r19.41: global spatial send       */
@@ -666,16 +696,20 @@ void engine_set_world(int idx) {
      * curated width/tone/level/delay for the world. */
     fx_master_set_world(idx);
 }
-void engine_set_bass_depth(float v)   { bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
+void engine_set_bass_depth(float v)   {
+    if (!isfinite(v)) return;
+    bass_set_depth(dsp_clampf(v, 0.0f, 1.0f)); }
 
 /* Perform-macros: combine multiple internal params under one user knob. */
 void engine_set_motion(float v) {
+    if (!isfinite(v)) return;
     v = dsp_clampf(v, 0.0f, 1.0f);
     /* user 0..1 → pad-LFO depth 0..2 (centre 0.5 = default movement). */
     pad_set_motion(v * 2.0f);
     fx_master_set_motion(v);             /* r19.41: chorus/slow modulation */
 }
 void engine_set_age(float v) {
+    if (!isfinite(v)) return;
     /* r19.41: wow, flutter, bandwidth loss and saturation all
      * live in the master-effects engine now (its `age` parameter) — the
      * legacy tape module left the audio path with the engine swap. */
@@ -685,12 +719,14 @@ void engine_set_age(float v) {
 /* SHIMMER macro (menu slot). r19.41: restrained octave regeneration inside
  * the master-effects engine (replaces the legacy shimmer wrap-loop). */
 void engine_set_shimmer(float v) {
+    if (!isfinite(v)) return;
     fx_master_set_shimmer(dsp_clampf(v, 0.0f, 1.0f));
 }
 
 /* Echo macro. r19.41: filtered ping-pong delay inside the master-effects
  * engine (replaces the legacy echo.c tape-style delay). */
 void engine_set_echo(float v) {
+    if (!isfinite(v)) return;
     memory_echo=dsp_clampf(v,0.0f,1.0f);
     fx_master_set_echo(dsp_clampf(v, 0.0f, 1.0f));
 }
@@ -698,6 +734,7 @@ void engine_set_echo(float v) {
 /* Blur macro. r19.41: deterministic temporal blur inside the master-effects
  * engine (replaces the legacy blur.c granular cloud). */
 void engine_set_blur(float v) {
+    if (!isfinite(v)) return;
     fx_master_set_blur(dsp_clampf(v, 0.0f, 1.0f));
 }
 
@@ -734,12 +771,14 @@ void engine_set_vibe(int vibe_idx) {
     recompute_reverb_from_presets();
 }
 void engine_set_space(float v) {
+    if (!isfinite(v)) return;
     musical_space = dsp_clampf(v, 0.0f, 1.0f);
     memory_space=musical_space;
     recompute_reverb_from_presets();     /* V2 synth hosts still use the tank */
     fx_master_set_space(musical_space);  /* r19.41: master-effects room scale */
 }
 void engine_set_mood(float v) {
+    if (!isfinite(v)) return;
     musical_mood = dsp_clampf(v, 0.0f, 1.0f);
     recompute_reverb_from_presets();
 }
@@ -1229,6 +1268,7 @@ void engine_set_synth_backend(const engine_synth_backend_t *be) {
     if (be && be->set_macro) for (int i=0;i<4;++i) be->set_macro(i,s_synth_macros[i]);
 }
 void engine_set_synth_param(int slot, float value) {
+    if (!isfinite(value)) return;
     if (s_manual_synth > 0 && s_synth_be && s_synth_be->set_param && slot >= 0 && slot < 6) {
         s_synth_be->select(s_manual_synth - 1);
         s_synth_be->set_param(slot, dsp_clampf(value, 0.0f, 1.0f));

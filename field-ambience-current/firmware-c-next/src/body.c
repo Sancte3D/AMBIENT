@@ -90,6 +90,7 @@ void body_init(void) {
 }
 
 void body_set_amount(float v01) {
+    if (!isfinite(v01)) return;
     s_wet = dsp_clampf(v01, 0.0f, 1.0f);
 }
 
