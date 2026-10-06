@@ -14,6 +14,7 @@ static uint16_t at[LINES],diff_at[4];
 static float low[LINES],gains[LINES],hp_x[2],hp_y[2],amount_cur,enable_cur,peak;
 static _Atomic uint32_t gain_bits[LINES],amount_bits,t60_bits;
 static _Atomic bool enabled;
+static bool cold;
 static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
 void ambient_room_set(float amount) {
@@ -31,11 +32,11 @@ void ambient_room_enable(bool on) { atomic_store_explicit(&enabled,on,memory_ord
 void ambient_room_clear(void) {
     memset(tank,0,sizeof tank); memset(diffusion,0,sizeof diffusion);
     memset(at,0,sizeof at); memset(diff_at,0,sizeof diff_at);
-    memset(low,0,sizeof low); memset(hp_x,0,sizeof hp_x); memset(hp_y,0,sizeof hp_y); peak=0;
+    memset(low,0,sizeof low); memset(hp_x,0,sizeof hp_x); memset(hp_y,0,sizeof hp_y); peak=0; cold=true;
 }
 void ambient_room_init(void) {
     ambient_room_clear(); ambient_room_set(.5f); ambient_room_enable(true);
-    amount_cur=.5f; enable_cur=1;
+    amount_cur=.5f; enable_cur=1; cold=false;
     for(int i=0;i<LINES;++i) gains[i]=value(atomic_load(&gain_bits[i]));
 }
 float ambient_room_tail_seconds(void) { return value(atomic_load_explicit(&t60_bits,memory_order_acquire)); }
@@ -56,9 +57,21 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
     static const float il[LINES]={1,-1,.72f,-.72f,.45f,-.45f,.88f,-.88f};
     static const float ir[LINES]={.45f,.88f,-1,-.72f,1,.72f,-.45f,-.88f};
     peak=0;
+    if(cold && (on==0 || target==0)) {
+        amount_cur=target; for(int i=0;i<LINES;++i) gains[i]=targets[i]; return;
+    }
+    cold=false;
     for(int n=0;n<frames;++n) {
-        amount_cur+=(target-amount_cur)*(1.0f/(.080f*DSP_SAMPLE_RATE_HZ));
-        enable_cur+=(on-enable_cur)*(1.0f/(.040f*DSP_SAMPLE_RATE_HZ));
+        float amount_step=1.0f/(.080f*DSP_SAMPLE_RATE_HZ);
+        if(amount_cur<target) amount_cur=fminf(target,amount_cur+amount_step);
+        else if(amount_cur>target) amount_cur=fmaxf(target,amount_cur-amount_step);
+        float step=1.0f/(.040f*DSP_SAMPLE_RATE_HZ);
+        if(enable_cur<on) enable_cur=fminf(on,enable_cur+step);
+        else if(enable_cur>on) enable_cur=fmaxf(on,enable_cur-step);
+        if((on==0 && enable_cur==0) || (target==0 && amount_cur==0)) {
+            if(!cold) ambient_room_clear();
+            continue; /* Completed Dry transition cannot reveal an old room later. */
+        }
         float in[2]={sl[n]*enable_cur,sr[n]*enable_cur};
         for(int c=0;c<2;++c) {
             float y=in[c]-hp_x[c]+.98585f*hp_y[c];
@@ -80,8 +93,11 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
             if(++at[i]==lengths[i]) at[i]=0;
             offset+=lengths[i];
         }
-        float wl=.205f*(line[0]-line[1]+line[2]+line[4]-line[6]+line[7]);
-        float wr=.205f*(line[1]+line[3]-line[4]+line[5]+line[6]-line[7]);
+        /* Balanced orthogonal readouts. The previous six-tap rows shared
+         * four opposing signs (dot=-4, norm^2=6), weakening the mono room.
+         * Preserve each row's norm: .205*sqrt(6/8) = .1775352. */
+        float wl=.1775352f*(line[0]-line[1]+line[2]-line[3]+line[4]-line[5]+line[6]-line[7]);
+        float wr=.1775352f*(line[0]+line[1]-line[2]-line[3]+line[4]+line[5]-line[6]-line[7]);
         float mid=.5f*(wl+wr),side=.30f*(wl-wr);
         float wet=(.12f+.50f*amount_cur)*amount_cur*enable_cur;
         wl=(mid+side)*wet; wr=(mid-side)*wet;

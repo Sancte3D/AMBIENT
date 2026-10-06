@@ -36,6 +36,14 @@ cmake -S "$src" -B "$tmp/product-host" -DFAM_TARGET=host -DFAM_SOUND_PROFILE=pro
 cmake --build "$tmp/product-host" -j2 >"$tmp/product-host-build.log"
 "$tmp/product_sound_test"
 
+# Actual shared room/Nature, audio transitions and score independence.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_room_nature.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" "$src/src/ambient_room.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" \
+    -lm -o "$tmp/room_nature_test"
+"$tmp/room_nature_test"
+
 # Candidate score logic, independent of source/room/preset implementations.
 "$CC" "${CFLAGS[@]}" -Werror "$here/test_world_grammar.c" \
     "$src/src/world_grammar.c" -o "$tmp/world_grammar_test"
