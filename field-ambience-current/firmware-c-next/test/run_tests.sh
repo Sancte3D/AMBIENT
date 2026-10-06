@@ -32,6 +32,11 @@ CC="$CC" python3 "$here/test_cell_routing.py"
     -lm -o "$tmp/pluck_ownership_test"
 "$tmp/pluck_ownership_test"
 
+"$CC" "${CFLAGS[@]}" "$here/test_pluck_tone.c" \
+    "$src/src/pluck.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    -lm -o "$tmp/pluck_tone_test"
+"$tmp/pluck_tone_test"
+
 # Strict generated source starts preserve occupied/releasing slots.
 "$CC" "${CFLAGS[@]}" "$here/test_world_source_admission.c" \
     "$src/src/bowed.c" "$src/src/horn.c" "$src/src/choir.c" \

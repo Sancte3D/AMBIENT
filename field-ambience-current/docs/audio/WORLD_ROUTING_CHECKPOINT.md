@@ -291,3 +291,27 @@ peak load below 0.60 and zero deadline misses during dense/manual transitions;
 stack high-water, output and physical listening checks remain open. Neither
 linker success nor host tests certify calm timbre or the planned three-World
 product palette.
+
+## 2026-10-06: WOODLAND dry Pluck correction
+
+The old burst could produce weak fundamentals, arbitrary level changes and DC
+that outlasted audible modes. It is replaced by a peak-centred harmonic string
+displacement with bounded pluck-position variation and a short SHAPE onset.
+An output-only ~10 Hz tracker removes fractional-startup residual DC without
+changing loop tuning. The old two-tap damping could brighten again at the end;
+the new symmetric non-negative FIR has fixed one-sample phase delay and monotonic
+mode loss. Its smoothed side weight is 0..0.25; the read delay is always N-1.
+
+Two existing delay lines are retained. Four small state values per voice are
+added; no source/room/SD buffer or new per-sample transcendental is introduced.
+Control work is bounded by eight modes across at most 736 excitation samples.
+Physical onset/transition CPU peak, stack high-water and output remain unmeasured.
+Source ownership, saturated-pool refusal, note admission and 20 ms release ramp
+retain their existing contracts. No World IDs or scene layout are changed.
+
+Expanded Pluck regression: 1,347 checks, zero failures. Actual PCM verifies
+fundamental dominance, bounded repeated levels, low window mean and monotonic
+overtone loss. Pitch audit: 35 static plus six live cases, worst static 0.034 cents.
+A 26-second dry reference/candidate file uses fixed, matched excerpt loudness,
+with no Body, FX or background. Full scope, raw metrics, limits and open listening
+gates: [WOODLAND_DRY_REVIEW.md](WOODLAND_DRY_REVIEW.md).

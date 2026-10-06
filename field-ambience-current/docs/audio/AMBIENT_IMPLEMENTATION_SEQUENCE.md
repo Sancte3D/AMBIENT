@@ -126,7 +126,7 @@ source, scheduler and room rewrites: their effects must stay attributable.
 | 1 — implemented 2026-10-06 | A generated source-start transaction: check capacity and valid pitch, start DSP, then commit owner / harmony / hook / counters only on success | Failed admission changes no sounding-pitch state, event count or existing waveform; retry is delayed rather than retriggered every tick |
 | 2 — implemented 2026-10-06 | New autonomous World path without automatic Bed, Eno loops, bass or generated reverse swell | Source-event trace starts only the planned family; harmony advances independently of accompaniment; Stop releases its owners; real rests exist before room tails |
 | 3 — Generate admission implemented 2026-10-06 | Common three-slot budget across actual source voices and release tails | Cross-world handover, maximum Shape release and repeated Generate cannot exceed the budget; when full, wait rather than hard-steal; account for both bass sub/deep if ever enabled, not just bass_active boolean |
-| 4 | WOODLAND dry Pluck articulation: excitation, sustain, damping and ownership | Low-mid pitch stability across damping, no hiss-like onset; a short motif plus silence is recognizable without body/hall; <=30 s A/B |
+| 4 — source correction implemented 2026-10-06; listening open | WOODLAND dry Pluck articulation: excitation, sustain, damping and ownership | Low-mid pitch stability across damping, no noise-burst onset; <=30 s A/B without body/hall; audible World identity remains to be judged |
 | 5 | COAST dry Bowed: fundamental, detune, bow noise and motion | No stationary electrical buzz or octave dominance; slow overlap communicates motion without a fixed repeating sweep; <=30 s A/B |
 | 6 | HIGHLANDS dry Horn: onset, register, body and modulation | No whistle/alarm/tube association across supported range; reject the candidate if it cannot distinguish itself calmly from COAST; <=30 s A/B |
 | 7 | One shared room; modal body reviewed separately | Dry identity survives wet range and mono; no pitch-obscuring resonance, source loudness jump or unsafe feedback |
@@ -225,3 +225,24 @@ Release verification for this entry unit succeeded at code commit
 254,740 B (+712 B); DTCM 119,440 B, D1 417,376 B and D2 258,112 B are
 unchanged. No source/room buffers were added. The run, per-bank reserve and
 remaining device gates are recorded in WORLD_ROUTING_CHECKPOINT.md.
+
+### WOODLAND dry source correction — 2026-10-06
+
+Replaced unconstrained noise excitation with eight bounded harmonic displacement
+modes, slight seeded pluck-position variation, excitation centring/peak calibration,
+a 4..32 ms SHAPE onset and output-only DC removal. Replaced the non-monotonic
+two-tap damping blend with a symmetric three-tap filter whose fixed phase delay
+does not move with BRIGHTNESS. Existing pools, note ownership, natural ring and
+20 ms stop remain; no source layers, room instances or SD streaming are added.
+
+Default-damping PCM comparison across 60..440 Hz reduces repeat RMS spread from
+up to 10.01 dB to 0.09 dB and preserves a dominant fundamental. Expanded source
+regression passes 1,347 checks; 35 static plus six live pitch cases pass with
+worst static error 0.034 cents. Dry audition is 26 seconds, with constant excerpt
+level matching. This is measured source improvement, not a World/sensorial
+acceptance. Details and device tests: [WOODLAND_DRY_REVIEW.md](WOODLAND_DRY_REVIEW.md).
+
+Next source unit: COAST dry Bowed. WOODLAND event grammar, shared Body/room and
+cross-source gain calibration remain later units; listen to the dry source
+before calling its identity finished. Fresh H743 resource verification belongs
+to the checkpoint for this implementation, not the earlier entry-fix map.
