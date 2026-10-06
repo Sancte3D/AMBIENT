@@ -245,9 +245,11 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             /* cheap peak tracker: instant up, slow down */
             float a = audible < 0.0f ? -audible : audible;
             env_track = a > env_track ? a : env_track * 0.99995f;
-            if (p->stop_gain == 0.0f) { p->active = 0; break; }
+            /* Retire at the same actual sample for every caller block size.
+             * Checking ENV_EPS only after a block prolonged quiet strings by
+             * up to 511 frames and changed their room/DC tail trajectory. */
+            if (p->stop_gain == 0.0f || env_track < ENV_EPS) { p->active = 0; break; }
         }
         p->env = env_track;
-        if (p->env < ENV_EPS) p->active = 0;
     }
 }
