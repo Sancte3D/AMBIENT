@@ -1,21 +1,28 @@
 # PROJECT STATUS
 
-> **2026-10-06 — Maßgeblicher Sounddesign-Masterplan:**
+> **2026-10-06 — Soundentwicklung, aktueller Checkpoint:**
 > [AMBIENT_SOUND_DESIGN_TODO.md](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md)
-> legt die Zielarchitektur, sämtliche Quellen-/FX-/Natur-/Parameterentscheidungen
-> und 54 überprüfbare Aufgaben bis zur Geräteabnahme fest. Nutzer autorisiert
-> weitere Sound-/Codeentwicklung und gelegentliche Entwicklungsmerges.
-> UI/Display/physische Tastenbelegung bleiben nachgeordnet und veränderbar;
-> Audiozustände, Besitzer, Harmonie, Pegel und Stillwerden werden vorher geklärt.
-> Generative Starttransaktion, explizite autonome Quellen, Generate-Belegung,
-> Release-Retirement und die technische Pluck-Korrektur sind inzwischen
-> implementiert/Host- und H743-Release-geprüft. Drei neue World-Grammatiken,
-> globale manuelle Zulassung, vollständige Klang-/Raum-/Parameterabnahme und
-> reale CPU-/Ausgangsprüfung sind offen. Archivierte Synths sind noch gelinkt.
-> **Nächste Einheit: SD02 — COAST/Bowed trocken**, vor Grammatik/Raum/UI.
-> PR #129 ist ein Entwicklungscheckpoint in seiner bestehenden Basis;
-> ein Merge ist keine Produkt- oder Klangfreigabe. Die folgenden datierten
-> Einträge sind Historie, ihre alten Next-/Freigabeangaben gelten nicht fort.
+> bleibt die vollständige Liste SD00–SD53; keine offene Hör-/Geräteabnahme
+> wird durch eine Codeprüfung ersetzt. UI/Display/Tastenbelegung folgen danach.
+> **PR130 ist gemerged:** COAST-Grundtonschwankung in 24 echten PCM-Proben
+> von maximal 3,102 auf 0,049 dB reduziert; ungültige Float-Parameter bewahren
+> den letzten gültigen Klangzustand; owned Pluck weist falsche Tonhöhen ab.
+> Alle fünf CI-Jobs inkl. H743 Release bestanden. Gemessener Link:
+> FLASH 255964 B, DTCM 119440 B, D1 417344 B, D2 258112 B.
+> **PR131 ergänzt drei getrennte Score-Kandidaten:** COAST-Übergaben,
+> WOODLAND-Figur/gehörte Antwort/Variation/Ruhe, HIGHLANDS-Fragmente/Ruhe.
+> 11.520 Transaktionen lokal bestanden, zusätzlich in Host-CI.
+> Der Produktpfad verwendet weiterhin den alten Katalog/Scheduler.
+> Quellenhörabnahme, globale manuelle Zulassung, tatsächliches Tail-Gedächtnis,
+> Score-/Raum-/Naturintegration, Parameterregister, Scene-Migration und
+> Auslinken der archivierten Synths sind offen. HIGHLANDS ist kein Sound-Lock.
+> [PRODUCT_CORE_CHECKPOINT.md](field-ambience-current/docs/audio/PRODUCT_CORE_CHECKPOINT.md)
+> enthält genaue Nachweise und nächste Korrekturen. Ein lokaler größerer
+> Integrationsentwurf bleibt ungeprüft und nicht aktiviert: Ausführungsumgebung
+> meldet `environment_offline`. Geprüfte Bausteine sind auf GitHub gesichert.
+> **Nächste Einheit: SD08–SD13**, gemeinsam mit den offenen trockenen Hörgates.
+> Die folgenden datierten Einträge sind Historie; ihre alten Next-/Freigaben
+> gelten nicht fort. Ein Entwicklungsmerge ist keine Produkt-Klangfreigabe.
 
 > **2026-10-04 — Vollständiger Produktentwurf und Umsetzungspakete:**
 > `field-ambience-current/docs/audio/AMBIENT_PRODUCT_BRIEF.md` verbindet

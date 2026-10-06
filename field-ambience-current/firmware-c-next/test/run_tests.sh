@@ -13,6 +13,11 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Candidate score logic, independent of source/room/preset implementations.
+"$CC" "${CFLAGS[@]}" -Werror "$here/test_world_grammar.c" \
+    "$src/src/world_grammar.c" -o "$tmp/world_grammar_test"
+"$tmp/world_grammar_test"
+
 # Exercise the product HAL's actual cell dispatch, including mode transitions.
 CC="$CC" python3 "$here/test_cell_routing.py"
 
