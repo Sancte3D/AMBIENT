@@ -79,7 +79,7 @@ for mode in ('dry','world','nature','color','shape'):
 manifest['limit_probes']=[]
 with tempfile.TemporaryDirectory(prefix='ambient-limits-') as temp:
     for world,name in enumerate(('COAST','WOODLAND','HIGHLANDS')):
-        for case in range(8):
+        for case in (*range(8),8,15,16,23,24,31):
             raw=Path(temp)/f'{world}_{case}.wav'
             subprocess.run([str(binary),str(world),str(case),'limits',str(raw)],check=True,capture_output=True)
             data=probe(raw)
@@ -87,13 +87,14 @@ with tempfile.TemporaryDirectory(prefix='ambient-limits-') as temp:
             assert data['true_peak_dbfs']<=-6 and data['mono_energy_ratio']>.65,data
             assert max(abs(data['mean_L']),abs(data['mean_R']))<.0002,data
             manifest['limit_probes'].append({'world':name,'case':case,
+                'register_bank':case//8,
                 'controls':{'color':case&1,'attack':(case>>1)&1,'release':(case>>2)&1,
                             'room':1,'volume':1,'nature':case&1,'velocity':1},
-                'notes':[50,57] if world==1 else [50,57,62],
+                'notes':([50,57,62],[50,54,57],[62,66,69],[57,62,66])[case//8][:2 if world==1 else 3],
                 'steps_seconds':[2,4,5],'raw':data})
     worst=max(x['raw']['true_peak_dbfs'] for x in manifest['limit_probes'])
     mono=min(x['raw']['mono_energy_ratio'] for x in manifest['limit_probes'])
-    print(f"PRODUCT LIMITS 24: worst true peak={worst:.2f} dBFS; minimum mono energy={mono:.5f}",flush=True)
+    print(f"PRODUCT LIMITS 42: worst true peak={worst:.2f} dBFS; minimum mono energy={mono:.5f}",flush=True)
 # Unknown order, same key/collection and no spatial/nature identification.
 blind=out/'blind';blind.mkdir(exist_ok=True)
 blind_files=[];blind_key={}
@@ -130,7 +131,7 @@ nature: optional layer alone, amount .7, no phantom tonal source, Room off.
 color: one D4 per nine-second segment, Color 0/.5/1, Attack/Release .5.
 shape: one D4 per segment, Attack AND Release 0/.5/1, Color .5.
 These two endpoint packs use Dry, velocity .75; targets settle before note-on.
-limits: 24 eight-second internal PCM probes, only their metrics are retained.
+limits: 42 eight-second internal PCM probes, only their metrics are retained.
 blind: autonomous 27 s, seed 91267, unknown order, Room/Nature off.
 
 Questions: dry — alarm/tube/buzz or loss of body at any register?

@@ -45,7 +45,7 @@ int main(int argc,char **argv) {
     bool color=!strcmp(argv[3],"color"),shape=!strcmp(argv[3],"shape");
     bool score_dry=!strcmp(argv[3],"score_dry"),limits=!strcmp(argv[3],"limits");
     if(!dry && !nature && !color && !shape && !score_dry && !limits && strcmp(argv[3],"world"))return 2;
-    if(limits && seed>7)return 2;
+    if(limits && seed>31)return 2;
     int seconds=limits ? 8 : SECONDS;
     FILE *out=fopen(argv[4],"wb");if(!out)return 2; header(out,seconds);
     char path[1024];if(snprintf(path,sizeof path,"%s.events.csv",argv[4])>=(int)sizeof path)return 2;
@@ -59,7 +59,9 @@ int main(int argc,char **argv) {
         engine_set_master_volume(1);engine_set_room(1);
         engine_set_color(seed&1 ? 1 : 0);engine_set_nature(seed&1 ? 1 : 0);
         engine_set_attack(seed&2 ? 1 : 0);engine_set_release(seed&4 ? 1 : 0);
-        const int notes[3]={50,57,62};
+        /* Wide, low/dense, upper/dense and mixed-register summation. */
+        const int banks[4][3]={{50,57,62},{50,54,57},{62,66,69},{57,62,66}};
+        const int *notes=banks[seed/8];
         for(int i=0;i<(world==1?2:3);++i)
             assert(engine_try_note_on((uint8_t)i,dsp_midi_to_hz(notes[i]),1));
     }

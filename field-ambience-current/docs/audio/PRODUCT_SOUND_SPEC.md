@@ -276,8 +276,10 @@ kein behaupteter samplegenauer Attackbeginn.
 Dry: D3/D4/A4; Color: D4 bei 0/0,5/1; SHAPE: D4 mit Attack+Release gemeinsam
 0/0,5/1; World: echtes Anfangsstück; Nature: optionale Ebene allein;
 Blind: unbekannte Reihenfolge, gleiche D-Major/Equal, Dry/Nature0.
-24 achtsekündige Summenprobes messen True Peak/DC/Mono an behaltenen
-Parametergrenzen, WAVs werden danach verworfen. Antwortschlüssel getrennt.
+42 achtsekündige Summen-/Registerprobes messen True Peak/DC/Mono an behaltenen
+Parametergrenzen: 24 volle Endwertkombinationen im weiten Register plus 18
+gezielte niedrige/hohe/dichte Registerfälle (je min/max). Kein kartesischer
+Sweep; WAVs werden danach verworfen. Antwortschlüssel getrennt.
 
 Sound-Freeze erst nach trockener Familienauswahl, sinnvoller Nature-Entscheidung,
 Blindunterscheidung, längerer angenehmer Wahrnehmung und echter H743-/Ausgangs-
