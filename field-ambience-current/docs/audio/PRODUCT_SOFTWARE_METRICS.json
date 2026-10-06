@@ -1,0 +1,357 @@
+{
+  "candidate": "product-sound-candidate/0.3",
+  "date": "2026-10-06",
+  "repository": "Sancte3D/AMBIENT",
+  "profile": "product",
+  "checked_head": "38f7d51b3f6e2dbe2c30026dc8cf26b8430dc364",
+  "merge_commit": "476f4db068345c88469e141be2fa2f6dac81f6a3",
+  "tree": "4d595cb424328964d0115a4713cf8c7a924ffde7",
+  "ci_run": 37515501334,
+  "all_six_jobs_passed": true,
+  "resource_bytes": {
+    "FLASH": 190724,
+    "DTCM_stack_reservation": 16384,
+    "D1": 65600,
+    "D2": 60808
+  },
+  "reference_bytes": {
+    "FLASH": 256668,
+    "DTCM": 119440,
+    "D1": 417440,
+    "D2": 258112
+  },
+  "product_load_image_bank1_bytes": 190724,
+  "max_individual_core_compiler_frame_bytes": 192,
+  "pcm": {
+    "minimum_generated_minutes_per_full_host_run": 48,
+    "block64_vs512_max_delta": [
+      0,
+      0,
+      0
+    ],
+    "invalid_inputs_bit_identical": true,
+    "nonfinite_samples": 0,
+    "limited_samples": 0,
+    "selected_limit_probes": 42,
+    "worst_measured_true_peak_dbfs": -9.66,
+    "min_measured_mono_energy_ratio": 0.91874,
+    "absolute_mean_dc_verified_below": 0.0002,
+    "long_cases": [
+      {
+        "world": 0,
+        "case": 0,
+        "notes": 17,
+        "returns": 0,
+        "episodes": 2,
+        "rejects": 19,
+        "longest_gap_ms": 18425,
+        "sample_peak_dbfs": -14.446
+      },
+      {
+        "world": 0,
+        "case": 1,
+        "notes": 17,
+        "returns": 0,
+        "episodes": 2,
+        "rejects": 20,
+        "longest_gap_ms": 17612,
+        "sample_peak_dbfs": -14.994
+      },
+      {
+        "world": 0,
+        "case": 2,
+        "notes": 19,
+        "returns": 0,
+        "episodes": 2,
+        "rejects": 87,
+        "longest_gap_ms": 19528,
+        "sample_peak_dbfs": -14.624
+      },
+      {
+        "world": 0,
+        "case": 3,
+        "notes": 22,
+        "returns": 0,
+        "episodes": 2,
+        "rejects": 0,
+        "longest_gap_ms": 14338,
+        "sample_peak_dbfs": -14.678
+      },
+      {
+        "world": 1,
+        "case": 0,
+        "notes": 19,
+        "returns": 0,
+        "episodes": 2,
+        "rejects": 0,
+        "longest_gap_ms": 23069,
+        "sample_peak_dbfs": -15.921
+      },
+      {
+        "world": 1,
+        "case": 1,
+        "notes": 21,
+        "returns": 0,
+        "episodes": 1,
+        "rejects": 4,
+        "longest_gap_ms": 22662,
+        "sample_peak_dbfs": -16.006
+      },
+      {
+        "world": 1,
+        "case": 2,
+        "notes": 40,
+        "returns": 2,
+        "episodes": 2,
+        "rejects": 33,
+        "longest_gap_ms": 13769,
+        "sample_peak_dbfs": -15.747
+      },
+      {
+        "world": 1,
+        "case": 3,
+        "notes": 39,
+        "returns": 0,
+        "episodes": 2,
+        "rejects": 30,
+        "longest_gap_ms": 10670,
+        "sample_peak_dbfs": -15.84
+      },
+      {
+        "world": 2,
+        "case": 0,
+        "notes": 15,
+        "returns": 1,
+        "episodes": 1,
+        "rejects": 0,
+        "longest_gap_ms": 32532,
+        "sample_peak_dbfs": -21.73
+      },
+      {
+        "world": 2,
+        "case": 1,
+        "notes": 14,
+        "returns": 0,
+        "episodes": 1,
+        "rejects": 5,
+        "longest_gap_ms": 35759,
+        "sample_peak_dbfs": -21.307
+      },
+      {
+        "world": 2,
+        "case": 2,
+        "notes": 26,
+        "returns": 0,
+        "episodes": 1,
+        "rejects": 30,
+        "longest_gap_ms": 15059,
+        "sample_peak_dbfs": -20.575
+      },
+      {
+        "world": 2,
+        "case": 3,
+        "notes": 27,
+        "returns": 1,
+        "episodes": 1,
+        "rejects": 8,
+        "longest_gap_ms": 14919,
+        "sample_peak_dbfs": -20.23
+      }
+    ]
+  },
+  "hearing_wav_seconds": 27,
+  "levels": [
+    {
+      "world": "COAST",
+      "mode": "dry",
+      "raw_lufs": -31.18,
+      "raw_true_peak_dbfs": -23.95,
+      "constant_gain_db": 5.18,
+      "listen_lufs": -26.09,
+      "listen_true_peak_dbfs": -18.77
+    },
+    {
+      "world": "WOODLAND",
+      "mode": "dry",
+      "raw_lufs": -33.8,
+      "raw_true_peak_dbfs": -21.44,
+      "constant_gain_db": 7.8,
+      "listen_lufs": -26.12,
+      "listen_true_peak_dbfs": -13.64
+    },
+    {
+      "world": "HIGHLANDS",
+      "mode": "dry",
+      "raw_lufs": -30.72,
+      "raw_true_peak_dbfs": -26.99,
+      "constant_gain_db": 4.72,
+      "listen_lufs": -26.02,
+      "listen_true_peak_dbfs": -22.27
+    },
+    {
+      "world": "COAST",
+      "mode": "world",
+      "raw_lufs": -28.93,
+      "raw_true_peak_dbfs": -19.11,
+      "constant_gain_db": 2.93,
+      "listen_lufs": -26,
+      "listen_true_peak_dbfs": -16.18
+    },
+    {
+      "world": "WOODLAND",
+      "mode": "world",
+      "raw_lufs": -33.47,
+      "raw_true_peak_dbfs": -20.98,
+      "constant_gain_db": 7.47,
+      "listen_lufs": -26.23,
+      "listen_true_peak_dbfs": -13.51
+    },
+    {
+      "world": "HIGHLANDS",
+      "mode": "world",
+      "raw_lufs": -30.41,
+      "raw_true_peak_dbfs": -26.07,
+      "constant_gain_db": 4.41,
+      "listen_lufs": -26.01,
+      "listen_true_peak_dbfs": -21.66
+    },
+    {
+      "world": "COAST",
+      "mode": "nature",
+      "raw_lufs": -57.09,
+      "raw_true_peak_dbfs": -39.98,
+      "constant_gain_db": 12,
+      "listen_lufs": -45.11,
+      "listen_true_peak_dbfs": -27.98
+    },
+    {
+      "world": "WOODLAND",
+      "mode": "nature",
+      "raw_lufs": -61.72,
+      "raw_true_peak_dbfs": -45.83,
+      "constant_gain_db": 12,
+      "listen_lufs": -50.9,
+      "listen_true_peak_dbfs": -33.83
+    },
+    {
+      "world": "HIGHLANDS",
+      "mode": "nature",
+      "raw_lufs": -61.53,
+      "raw_true_peak_dbfs": -48.16,
+      "constant_gain_db": 12,
+      "listen_lufs": -49.63,
+      "listen_true_peak_dbfs": -36.15
+    },
+    {
+      "world": "COAST",
+      "mode": "color",
+      "raw_lufs": -31.21,
+      "raw_true_peak_dbfs": -24.05,
+      "constant_gain_db": 5.21,
+      "listen_lufs": -26,
+      "listen_true_peak_dbfs": -18.84
+    },
+    {
+      "world": "WOODLAND",
+      "mode": "color",
+      "raw_lufs": -33.7,
+      "raw_true_peak_dbfs": -21.81,
+      "constant_gain_db": 7.7,
+      "listen_lufs": -26.12,
+      "listen_true_peak_dbfs": -14.11
+    },
+    {
+      "world": "HIGHLANDS",
+      "mode": "color",
+      "raw_lufs": -30.61,
+      "raw_true_peak_dbfs": -27.16,
+      "constant_gain_db": 4.61,
+      "listen_lufs": -26.1,
+      "listen_true_peak_dbfs": -22.55
+    },
+    {
+      "world": "COAST",
+      "mode": "shape",
+      "raw_lufs": -31.28,
+      "raw_true_peak_dbfs": -24.18,
+      "constant_gain_db": 5.28,
+      "listen_lufs": -26.01,
+      "listen_true_peak_dbfs": -18.89
+    },
+    {
+      "world": "WOODLAND",
+      "mode": "shape",
+      "raw_lufs": -33.33,
+      "raw_true_peak_dbfs": -21.59,
+      "constant_gain_db": 7.33,
+      "listen_lufs": -26.22,
+      "listen_true_peak_dbfs": -14.26
+    },
+    {
+      "world": "HIGHLANDS",
+      "mode": "shape",
+      "raw_lufs": -30.76,
+      "raw_true_peak_dbfs": -27.16,
+      "constant_gain_db": 4.76,
+      "listen_lufs": -26,
+      "listen_true_peak_dbfs": -22.4
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "ambient-shape-27s",
+      "id": 11436538711,
+      "zip_sha256": "a13b5c79ba07fc32f97cf5ee2403b5d5e9734aa39c707c84f8af40207b8d79b6",
+      "bytes": 5429657,
+      "expires": "2026-11-05T19:00:44Z",
+      "url": "https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436538711"
+    },
+    {
+      "name": "ambient-blind-worlds-27s",
+      "id": 11436493847,
+      "zip_sha256": "bea0c8ee9ae3b59cfa9872da05e1f335ca5aaeac9fd5fafab3d7b00ab3c8cfaa",
+      "bytes": 10877220,
+      "expires": "2026-11-05T19:00:45Z",
+      "url": "https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436493847"
+    },
+    {
+      "name": "ambient-dry-sources-27s",
+      "id": 11436313867,
+      "zip_sha256": "66e573a99c03fad6f33aabc7253d0b639f448e22bf6ecbee26871134b01f07da",
+      "bytes": 5124675,
+      "expires": "2026-11-05T19:00:32Z",
+      "url": "https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436313867"
+    },
+    {
+      "name": "ambient-worlds-27s",
+      "id": 11436288797,
+      "zip_sha256": "76ee684c8ee118907df237e62c8b8910616157690dbcfe3de42b2ec2cd864390",
+      "bytes": 11845771,
+      "expires": "2026-11-05T19:00:39Z",
+      "url": "https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436288797"
+    },
+    {
+      "name": "ambient-color-27s",
+      "id": 11436233894,
+      "zip_sha256": "24a3ee63c332b7b060348fcc85099fd97fb1ff306cc7b2dc378d7b4975cf2b9b",
+      "bytes": 5374857,
+      "expires": "2026-11-05T19:00:42Z",
+      "url": "https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11436233894"
+    },
+    {
+      "name": "ambient-nature-27s",
+      "id": 11435979024,
+      "zip_sha256": "fab7c794261277a8e28aade1fa23921032f81e356aa2407a574100806242ea9f",
+      "bytes": 9885530,
+      "expires": "2026-11-05T19:00:41Z",
+      "url": "https://github.com/Sancte3D/AMBIENT/actions/runs/37515501334/artifacts/11435979024"
+    }
+  ],
+  "limitations": [
+    "Selected scenarios, not all possible seeds/control histories",
+    "Compiler frames are not actual call-chain/interrupt/runtime stack",
+    "No real H743 timing/output/storage/listening acceptance",
+    "Source/Nature/endpoint/World perception remains open",
+    "Current single-sector Save blocks Main and can lose prior state during interrupted erase"
+  ]
+}
