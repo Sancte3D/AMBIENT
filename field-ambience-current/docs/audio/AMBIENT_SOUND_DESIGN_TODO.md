@@ -2,76 +2,54 @@
 
 ## KERNURTEIL
 
-Die stärkste Grundlage ist inzwischen der explizite autonome Quellenstart:
-gehörte Ereignisse, Besitz, Harmonie und Belegung werden gemeinsam verwaltet,
-statt zu jedem Ton ungefragt Begleitung hinzuzufügen. WOODLAND besitzt außerdem
-einen technisch deutlich besser kontrollierten Pluck-Kandidaten. Die größte
-grundlegende Lücke: Die drei geplanten Welten sind noch keine drei musikalischen
-Systeme. Der aktuelle Katalog besteht weiterhin aus fünf Presets eines gemeinsam
-genutzten Ablaufs. Gute Einzelquellen, andere Namen und Hall schließen diese
-Lücke nicht.
+AMBIENT besitzt jetzt einen tatsächlich reduzierten Produktkandidaten: drei
+verschiedene Grammatiken, dieselbe Quellenzulassung für Manual/Generate,
+echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
+Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
+und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand: **2026-10-06**. Nutzerauftrag: Sounddesign vollständig durchdenken und in
-kleinen überprüfbaren Einheiten umsetzen; gelegentlich Entwicklungsstände mergen.
-Diese Datei ist die maßgebliche Arbeitsliste. Ältere Queue-/Next-Einträge sind
-Historie. **UI, Display, Namen der Bedienelemente und physische Tastenbelegung
-werden erst danach entschieden und dürfen sich ändern.** Audiozustände und
-musikalische Befehle benötigen trotzdem jetzt einen klaren Vertrag.
-
-Referenz: Remote-DSP-Commit `1a00a24c809e582343a6fe87d7b0c09a3677d26b`,
-Dokumentationsstand `389f7f577051cf0465d55698b6e293506546fcea`, PR #129.
-Der folgende Plan verändert noch keine Quelle und kein Laufzeitpreset.
+Stand **2026-10-06**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+[PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
+[PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
+physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
+`FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
+Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
 ## FUNDAMENTAL FALSCH
 
-- **Presetwechsel als World-System behandeln.** `worlds.c` definiert Alps,
-  Open Sea, Fjords, Moss Fields und Desert; COAST, WOODLAND und HIGHLANDS sind
-  Entwurfsnamen. Drei eigene Grammatiken sind noch zu implementieren.
-- **Zwei Produktpaletten mit unterschiedlichen Klangregeln.** Der alte manuelle
-  Ambient-Start fügt noch Pad/Bass hinzu und hat nicht die neue globale
-  Generate-Zulassung. Ein manueller Ton darf später nicht plötzlich ein anderes
-  Instrument mitsamt unsichtbarer Begleitung sein.
-- **Effekte oder Naturrauschen als Reparatur einer schlechten Quelle.** Eine
-  Quelle, die trocken alarmartig, summend, scharf oder hohl wirkt, scheidet aus
-  oder wird an ihrer Ursache korrigiert. Mehr Raum macht sie nicht geeignet.
-- **Beruhigung als Eigenschaft einer Tonleiter oder tiefer Frequenzen behaupten.**
-  Das musikalische Ziel ist Ruhe und Geborgenheit; eine Wirkung auf alle Menschen
-  oder eine heilende Wirkung ist damit nicht belegt. Hörurteil und tatsächliche
-  Ausgangslautstärke bleiben eigene Abnahmen.
+Die Referenzarchitektur mit fünf Presets, zusätzlichem Pad/Bass und neun FX
+als fertige neue Produktidee auszugeben wäre falsch. Diese Produktpfade sind
+im reduzierten Kandidaten tatsächlich ausgeschlossen und Scenes migriert.
+Eine trockene alarmartige/summende/hohle Quelle mit Nature oder Hall zu
+kaschieren bleibt ausgeschlossen. Harmonie-/Pegeltests belegen keine
+Beruhigung und keine allgemeine Verträglichkeit.
 
 ## NOCH NICHT SELBSTVERSTÄNDLICH
 
-Die Quellen besitzen unterschiedliche Pegeladapter und lokale Pools; globale
-Brightness-/Atmosphere-Mappings verbinden teilweise Quellenfarbe, Raum und
-Naturgeräusche. Body fügt feste Resonanzen hinzu und setzt beim Worldwechsel
-seinen Zustand zurück. Neun Effektmodi sind erreichbar, Dream Chain ist der
-Boot-Default. Ihre musikalischen Rollen sind damit noch nicht gerechtfertigt.
-Archivierte Synths sind weiterhin gelinkt. Ein grüner H743-Build belegt weder
-CPU-Spitzen noch akustische Qualität oder den Nutzen eines Parameters.
+Quellenregister, Color/SHAPE, Lautheitsbeziehung und Nutzen von Nature müssen
+gehört werden. Der dritte Tonkörper wird bei fehlender eigener ruhiger Rolle
+entfernt. Live-Save blockiert noch Main/Generate-Planung; Power-loss während
+Sector-Erase erhält keinen alten Save. Storage-/Geräteabnahme ist offen.
+Die vorläufige physische Drive-Zuweisung ist funktionslos und muss vor einer
+fertigen Produkt-UI verschwinden; die Audioarchitektur bekommt dafür kein FX.
 
 ## LOCKED
 
-Diese Elemente bleiben, solange konkrete neue Evidenz ihnen nicht widerspricht:
+Als geprüfter technischer/produktlogischer Vertrag, nicht als gehörte Klangwahl:
 
-- Ein autonomer Einsatz zählt erst nach erfolgreichem DSP-Start. Abgelehnte
-  Ereignisse erzeugen keine gehörte Tonhistorie, keinen Hook und keinen Besitzer.
-- Keine verpflichtende autonome Pad-, Bass-, Drone- oder Rauschbegleitung.
-  Echte musikalische Pausen sind Bestandteil des Instruments.
-- Ein gemeinsamer tonal verwalteter Zusammenhang und **ein gemeinsamer Raum**;
-  keine drei gestapelten Vollengines oder parallelen großen Hallarenen.
-- Ruhige Naturorte sind die vorstellbare Identität. Arbeitsnamen bleiben
-  veränderbar. Historische Objekte dürfen eine belegte Geschichte erzählen;
-  sie bestimmen nicht automatisch Klangfamilie, Skala oder vermeintliche Echtheit.
-- Keine harten Schnitte klingender Stimmen zugunsten neuer Generate-Ereignisse.
-  Ein belegter Slot darf eine neue Note verschieben oder verhindern.
-- User-facing Hördateien **maximal 30 Sekunden je Datei**, reproduzierbar und
-  mit festem Vergleichspegel. Lange interne Audits exportieren keine langen WAVs.
-- Konzept → Sounddesign → UX/UI/Display → reales Gerät. Chip-/PCB-Grenzen sind
-  schon während des Sounddesigns relevant; physische Abnahmen folgen am Gerät.
+- Erst tatsächlicher DSP-Start zählt in Hooks, Motiv und gehörter Historie.
+- Drei gemeinsame Slots für Manual/Generate; Pluck zwei; Releases zählen.
+- Originalbesitzer und angewandte Hz bleiben bis zum tatsächlichen Ende.
+- Keine implizite Pad/Bass/Drone-/Rauschbegleitung; Nature default aus.
+- Ein gemeinsamer interner Float-Raum; getrennte optionale Naturebene.
+- Kein harter held Steal und kein neues Hall-/Pitchgedächtnis pro World.
+- Hör-WAVs maximal 30 Sekunden, hier genau 27; rohe Pegel + feste Vergleichsgain.
+- Konzept → Sound → UX/UI/Display → reale Geräteabnahme bleibt die Reihenfolge.
 
-Das sind Produkt-/Architekturverträge. **Keine der drei Welten ist damit schon
-klanglich locked.** Die bestehende Drei-Slot-Prüfung gilt bisher für neue
-Generate-Zulassungen, nicht für sämtliche alten manuellen Starts.
+Die Tabellen A–E und Aufgabenbeschreibungen unten enthalten den ursprünglichen
+Entwurfs-/Referenzausgangspunkt. Ihre **aktuelle** Umsetzung/Entscheidung steht
+in der folgenden Statusmatrix und vollständig in der versionierten
+Produktspezifikation. Historische Kandidatenbereiche sind keine zweiten Defaults.
 
 ## REMOVE / MERGE / REDESIGN
 
@@ -244,7 +222,10 @@ Stackreserve im Worst Case. Das ist **noch nicht gemessen**. Linkerplatz sagt
 nichts über Note-on-Spitzen, gleichzeitig retirierende alte Engines, Stack,
 Interrupts oder die reale Ausgabekette.
 
-### F. Aktueller Nachweis — nicht erneut blind abarbeiten
+### F. Historischer Referenznachweis — nicht erneut blind abarbeiten
+
+Diese Tabelle beschreibt den Ausgangspunkt vor PR130–PR136; der aktuelle
+Produktstand ist die Statusmatrix unten, nicht der alte manuelle/FX-Pfad.
 
 | Ergebnis | Status und genaue Grenze |
 |---|---|
@@ -285,31 +266,96 @@ und die Migration geprüft sind; ein ungehörter Klang wird nicht abgehakt.
 
 ### Umsetzung am 2026-10-06 nach Erstellung der Roadmap
 
-PR130 ist gemerged: stabiler COAST-Grundton und sichere Float-/Pluck-Inputs,
-vollständige Host-Suite und tatsächlicher H743-Release-Link bestanden.
-COAST-Dry-Maximalschwingung 3,102 → 0,049 dB in 24 PCM-Proben.
-SD02/SD07 bleiben als Gesamtaufgaben offen, bis ihre übrigen Hör-/Routing-
-und Produktverträge erfüllt sind.
+PR130–PR134 sind in den Entwicklungsbranch gemerged: trockener COAST-/Inputfix,
+reiner Score, echter reduzierter Kern, H743-Product-Profil / SCN7 und
+Room-/Naturekorrekturen. Referenz bleibt Default, die drei Produktfamilien
+bleiben Hörkandidaten.
 
-PR131 liefert den reinen Score-Baustein; PR132 ist gemerged und bindet ihn
-an tatsächliche Quellen, globale manuelle/generative Zulassung, Release-/Hz-
-Gedächtnis und einen gemeinsamen Raum. Zwölf Minuten echtes PCM bestanden;
-64-/512-Frame-Ausgabe exakt identisch, keine NaN/Inf oder Limiter-Eingriffe.
-HIGHLANDS-Konturen kollidieren in beiden geprüften Seeds nicht mehr mit ihren
-eigenen Ausklängen. Die Quelle selbst bleibt ungehört und unfreigegeben.
+PR135 liefert gehört bestätigte Motiv-/Intervallerinnerung und begrenzte
+Kontextübergaben. Sein Code ist Bestandteil von PR136. PR136 schließt
+natürliche Pluck-Key-up-Tails, samplegenaues Retirement, echten Mute,
+vorbereitete Pitch-Kontextstornos, Endpoint-/Blindpakete und Summen-/Frameaudits.
+Vollständig grüner Zwischenstand: Head b5ddf4049fb627fe88ca8fe1d579f710e2bd1948,
+CI 37511549818, sechs Jobs. Nachfolgender Cacheguard und der volle
+Übergangsfall müssen die finale CI ebenfalls bestehen.
 
-PR133 ergänzt den expliziten reduzierten Produktbuild, einen neuen
-Drei-Welten-Katalog und SCN7 mit SCN5/6-Ersatzzuordnung. Referenz bleibt Default.
-Der erste Produkt-ARM-Link passt in internen Speicher; Symbol-/DMA-Prüfer
-und vollständige Integration werden vor dem Merge abgeschlossen.
-[PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) ist der aktuelle
-Implementierungsnachweis. Alle nachfolgenden Aufgaben bleiben hinsichtlich
-ihrer vollständigen Abnahme offen; Teilumsetzung ist kein Klang-Lock.
-Die lokale Ausführung ist offline; GitHub CI führt die tatsächlichen Tests aus.
+Zwölf +36 Minuten tatsächliches PCM pro vollem Hostlauf, konservative Hz-Tails,
+64-/512-PCM exakt gleich; keine NaN/Inf oder Limiter-Eingriffe. 24 Summenprobes:
+mindestens 9,84 dB gemessene True-Peak-Reserve, schlechteste Monoenergie 0,93006.
+Hör-WAVs je 27 s, Raw und fixe Vergleichskopie; keine Lang-WAVs.
+
+[PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) dokumentiert SHA,
+CI/Banken und Restgates. Die folgenden Checkboxes und Statusmatrix sind
+**aktuell**, nicht die historischen pauschalen Open-/Next-Einträge.
+
+### Aktuelle Statusmatrix — sämtliche 54 Aufgaben
+
+`geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist
+geprüft. Bei `Hörgate` ist der Code gebaut und softwareseitig auditiert, die
+zugehörige Klangwahl bleibt offen. Geräte-/UX-Aufgaben werden nicht als erledigt
+markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
+
+| Aufgabe | Gesamtstand | Konkreter Nachweis / nächster tatsächlicher Gate |
+|---|---|---|
+| SD00 | geschlossen | Produkt-Compile-/Symbolinventar, Spec; jeder Eingang zugeordnet |
+| SD01 | geschlossen | ARM-Banken/Compilerframes, keine zweite Arena; Gerätezeit separat SD48 |
+| SD02 | Hörgate | COAST-Detune entfernt, trockene D3/D4/A4- und Colorproben; 1,5f/2f/Grain hören |
+| SD03 | Hörgate | Produkt-Body-LFO aus, echte unabhängige Envelopes; keine behauptete Natürlichkeit |
+| SD04 | Hörgate / Keep-or-drop | HIGHLANDS trocken und gegen COAST vergleichen; zwei starke Worlds zulässig |
+| SD05 | Hörgate | Horn-LFO/Sub/Formant aus; Onset-Air und SHAPE-Endpunkte prüfen |
+| SD06 | Hörgate | Pluck pitch-/FIR-/Excitationfix, natürliche Key-up-Tails und samplegenaues Ende; Hörwahl offen |
+| SD07 | geschlossen | Finite Input, tatsächliche Hz/Velocity, Bereiche, rejected Starts ohne Source/Hook |
+| SD08 | geschlossen | Originalowner, DSP-Ack, Storno, tatsächliche One-shot-/Release-Enden |
+| SD09 | geschlossen | Drei globale Slots / zwei Plucks auch Manual, kein held Steal |
+| SD10 | geschlossen | Gemeinsame Familie/Admit ohne Pad/Bass/Archive; SCN7-Migration geprüft |
+| SD11 | Hörgate | Zwei Cores, 12 Keys, Equal/Just und niedrige Intervallgrenzen; Teiltonprüfung offen |
+| SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
+| SD13 | geschlossen | Drei begrenzte Transaktionsautomaten, genau acht autonome Gradindices |
+| SD14 | Hörgate | COAST individuelle Holds/Übergaben/Fokus/Episoden im realen Kern |
+| SD15 | Hörgate | WOODLAND gehörte Kontur/Intervalle, Antwort/Variation/Rückkehr im realen Kern |
+| SD16 | Hörgate | HIGHLANDS Fragmente/Bögen/echte Pausen; hängt von Quellenwahl SD04 ab |
+| SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
+| SD18 | geschlossen durch Remove | Body nicht kompiliert; kein Materialreset oder additive Röhrenfärbung |
+| SD19 | Hörgate | Ein FDN; Impuls/Decay/Mono geprüft und Mono-Auslöschung korrigiert |
+| SD20 | geschlossen | Source-Send 0,35, ein Room, unabhängige Nature, gemeinsame Userwerte erhalten |
+| SD21 | geschlossen durch Remove | Eigenständiger Echo-Pfad/Parameter/Scene-FX ausgeschlossen |
+| SD22 | geschlossen durch Remove | Chorus/zusätzlicher Detune ausgeschlossen |
+| SD23 | geschlossen durch Remove | Tape Age und Eigenhiss/-hum ausgeschlossen |
+| SD24 | geschlossen durch Remove | Blur/Arena/Altparameter ausgeschlossen |
+| SD25 | geschlossen durch Remove | Shimmer/Oktavregeneration ausgeschlossen |
+| SD26 | geschlossen durch Remove | Reverse-/Generate-Vorswell ausgeschlossen |
+| SD27 | geschlossen | Nur Dry/Room, exakte Null/kalt, kein Tankrevival; Scenes reaktivieren nichts |
+| SD28 | Hörgate / optional weglassen | Nature getrennt/default 0; echter Score bleibt mit/ohne identisch |
+| SD29 | Hörgate | Unregelmäßige Wetter-/Gustuhren und Seedstarts; Homogenität nicht numerisch freigeben |
+| SD30 | Hörgate | Nur neue leise Wellen/Tropfen, kein Sea-Hum oder Sampleloop; Nutzen hören |
+| SD31 | Hörgate verbleibender Wege | Alttexturen auslinkt; übrig nur deklarierte Nature/Quellenartikulation |
+| SD32 | geschlossen | Vollständiges normiertes Parameterregister samt Aliases/retired API und Priorität |
+| SD33 | Hörgate | Begrenzte Activity/Color/Room/SHAPE und kurze Endpointvergleiche |
+| SD34 | Hörgate | Feste .50/.22-Quellfaktoren, Raw/Listen getrennt; kein AGC; Lautheit final hören |
+| SD35 | Hörgate | 24 gezielte Endwertszenarien + lange Activity/Tuning/Key/Releasefälle; keine Exhaustivbehauptung |
+| SD36 | geschlossen | SCN5/6→SCN7, 368 B, CRC, Provenienz, fehlgeschlagener Save-RAM-Rollback |
+| SD37 | Hörgate | Alle sechs Richtungen, Pending/volle Pools/Releases/Room/Rapid Targets softwareseitig geprüft |
+| SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
+| SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
+| SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
+| SD41 | Storage-/Gerätegate | Boot/Recall/Seed still und Volume erhalten; Flash-Cache gefixt; Live-Save/Mainstall/Power-loss offen |
+| SD42 | geschlossen softwareseitig | 24 Summenprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
+| SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
+| SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
+| SD45 | Hörgate Langzeit | Mindestens 48 min tatsächliches PCM plus Recovery/Wrap; keine NaN/Limiter/Stuck; Form hören |
+| SD46 | geschlossen | Tatsächlicher ARM-Compile-/Funktionssymbol-/DMA-/Bank-Audit, Archive nicht nur umbenannt |
+| SD47 | Geräte-/Storagegate | Bounded Hotpath/Prep und Compilerframes dokumentiert; Main-Save-Stall und echte Spitzen offen |
+| SD48 | echtes Gerät | DWT <0,60, null Misses und realer Stack-High-water mit UI/MIDI/Storage |
+| SD49 | echtes Gerät | Gebauter Ausgang, Pegel/DC/Noise/Pops/Lasten/Clock/Power/Cache/Flash prüfen |
+| SD50 | echte Hörer + Gerät | Alarm/Tube/Buzz/Beep/Ermüdung konkret lösen, keine Heilbehauptung |
+| SD51 | Freeze-Gate | Software Candidate 0.3 dokumentiert; endgültige Endwerte erst nach Quellen-/Hör-/Geräteabnahme |
+| SD52 | spätere UX | Tasten/Encoder/Display/LED/15-min-Ruhe, Wake ohne Klangereignis |
+| SD53 | Produkt-DoD offen | Alle zutreffenden Gates bestehen; erst dann Sounddesign fertig nennen |
 
 ## Verbindliche Arbeitsliste
 
-**54 offene Aufgaben, SD00–SD53.** Bereits erledigte Teilbefunde stehen oben und
+**54 Aufgaben, SD00–SD53: 24 vollständig geschlossene Software-/Entfernungsaufgaben,
+30 Aufgaben mit offener Quellen-, Hör-, Geräte-, Storage- oder UX-Abnahme.** Bereits erledigte Teilbefunde stehen oben und
 in den entsprechenden Aufgaben. Jede Checkbox bleibt offen, bis die zugehörige
 Abnahme besteht oder der gesamte betroffene Produktpfad nachweislich entfernt
 wurde. Abhängigkeiten beschreiben die Reihenfolge, keine zusätzliche Architektur.
@@ -322,13 +368,13 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
 
 ### 1. Inventar, trockene Quellen, ehrliche Stimmenführung
 
-- [ ] **SD00 — Erreichbare Soundpfade abschließend klassifizieren.**
+- [x] **SD00 — Erreichbare Soundpfade abschließend klassifizieren.**
   Für obiges Inventar sämtliche Einstiegspunkte aus Manual, Generate, Scene,
   Makro/Hook und V2 erfassen; KEEP/REMOVE/REFERENCE mit Begründung zuweisen.
   **Abnahme:** Kein gelinkter, bedienbarer oder aus Scene ladbarer Klangweg ohne
   Zuordnung. Nicht ausgewählte Stimmen erhalten keine neue Sounddesignserie.
   Voraussetzung: aktueller Routingcheckpoint; vor SD10/SD27/SD31/SD46.
-- [ ] **SD01 — Ressourcenbaseline als fortlaufenden Vertrag führen.**
+- [x] **SD01 — Ressourcenbaseline als fortlaufenden Vertrag führen.**
   Obige gemessene Bankwerte und Compilerkonfiguration übernehmen; jede weitere
   Einheit mit State-/Flash-/Stack-/Bankdelta und Quelle des Nachweises erfassen.
   **Abnahme:** Tatsächlicher H743-Link statt Host-`sizeof`; keine nicht budgetierte
@@ -366,20 +412,20 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Erkennbarer sanfter Tonbeginn und nützlicher Ausklang ohne Rassel,
   Klick, dominantes Oberton-Piepen oder anonymen Swell. Referenz und rohe Pegel
   dokumentieren. Vor SD15/SD18.
-- [ ] **SD07 — Gemeinsamen Quellen-/Inputvertrag schließen.**
+- [x] **SD07 — Gemeinsamen Quellen-/Inputvertrag schließen.**
   Actual Pitch, erlaubte Frequenz, Velocity/Gain, Attack/Release und Status pro
   Familie definieren. Pluck-Minimum 60 Hz gegenüber World-API 20 Hz angleichen
   oder vor Zulassung ausdrücklich ablehnen. Float-Parameter finite-validieren;
-  `shape.c`-Clamp lässt derzeit NaN passieren.
+  `shape.c` verwirft inzwischen NaN/Inf; der gemeinsame Vertrag wird gegen echtes PCM geprüft.
   **Abnahme:** Ungültiger Input erzeugt weder Stimme noch Commit/Hook/RNG-Effekt;
   gültige Note wird mit ihrer tatsächlichen Frequenz eingetragen. Vor SD08–SD12.
-- [ ] **SD08 — Besitzer und sämtliche One-shot-Tails vollständig verfolgen.**
+- [x] **SD08 — Besitzer und sämtliche One-shot-Tails vollständig verfolgen.**
   Auch unowned Guembri-/Oneshot- und manuelle Hooks erfassen, solange erreichbar.
   Press → World/Modus wechseln → Release muss ursprüngliche Quelle treffen.
   **Abnahme:** Keine Phantomnote, hängenbleibende Quelle oder verlorene relevante
   Fahne; Hooks melden nur erfolgreiche reale Starts. Entfernte Pfade brauchen
   keine neue Stimmenarchitektur. Voraussetzung: SD00/SD07.
-- [ ] **SD09 — Globale Belegung auch manuell verbindlich machen.**
+- [x] **SD09 — Globale Belegung auch manuell verbindlich machen.**
   Drei-Slot-Ziel über alle verbleibenden Quellen, Releases und Übergänge; lokale
   Pluck-Grenze zwei zusätzlich. Generate-Gate ist bereits vorhanden. Für Manual
   höchstens eine definierte weiche Übergabe bereits losgelassener Quellen;
@@ -387,7 +433,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Full-pool/Press/Release/Wechsel kann Budget nicht umgehen. Alle
   held Slots voll bedeutet ehrlich abweisen; keine fünfte Quelle allein wegen
   fünf Eingabeflächen versprechen. Voraussetzung: SD07–SD08.
-- [ ] **SD10 — Manuelle Palette auf World-Quellen vereinheitlichen.**
+- [x] **SD10 — Manuelle Palette auf World-Quellen vereinheitlichen.**
   Manuell dieselbe ausgewählte Familie und Harmonik nutzen; implizites Pad,
   Bass-follow und konkurrierende Autoplay-Hooks aus diesem Produktweg entfernen.
   **Abnahme:** Ein manueller Einsatz startet genau den angekündigten Tonkörper;
@@ -410,7 +456,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   verbinden, alte leise Fahne sperrt nicht dauerhaft jeden neuen Ton. Ein
   abgewiesener Vorschlag verbraucht keine gehörte Historie. Voraussetzung: SD08/SD11;
   endgültige Tailwerte nach SD19–SD27 nachführen.
-- [ ] **SD13 — World-Datenmodell und begrenzte Ereigniszustände bauen.**
+- [x] **SD13 — World-Datenmodell und begrenzte Ereigniszustände bauen.**
   Je Welt kleine Zustandsmaschine, Motivspeicher, eigener Planungszustand/Seed,
   Quellenrollen und Defaults; gemeinsame Zulassung als Transaktion beibehalten.
   **Abnahme:** Vorschlag, Zulassung, Beginn, Ende und Ruhe getrennt; begrenzte
@@ -445,7 +491,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
 
 ### 3. Tonkörper, gemeinsamer Raum und sämtliche Effekte
 
-- [ ] **SD18 — Body mit/ohne entscheiden und Übergänge korrigieren.**
+- [x] **SD18 — Body mit/ohne entscheiden und Übergänge korrigieren.**
   Feste 4–6-Moden-Weltmaterialien, additive dry+wet-Wirkung, Amount 0,38,
   Links/Rechts-Versatz und State-Reset beim Worldwechsel isolieren.
   **Abnahme:** Klarer hörbarer Nutzen bei gleicher Lautheit, kein Tube-/Metallpeak,
@@ -459,48 +505,48 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Quelle bleibt ortbar und tragfähig, Raum verbindet alle Welten;
   Mono, Impuls, tiefer/mittlerer Sustain und volle drei Quellen stabil. Init-Fail
   bleibt definierter Dry-Fallback. Voraussetzung: SD18/SD12.
-- [ ] **SD20 — Dry/Send/Room und Natur voneinander entkoppeln.**
+- [x] **SD20 — Dry/Send/Room und Natur voneinander entkoppeln.**
   Alle Source-Sends, Wet-Amp/alte Reverbadapter, Atmosphere/Space und Tone-Pushes
   inventarisieren; einen eindeutigen Parameterbesitzer festlegen.
   **Abnahme:** Raumändern aktiviert kein Wind; Worldload überschreibt keine
   fremden Userwerte in undefinierter Reihenfolge. Drykörper und Master wirken
   über sämtliche Pfade. Livechanges zipperfrei und ohne tail reset. Voraussetzung: SD19.
-- [ ] **SD21 — Echo als räumliche Antwort prüfen oder entfernen.**
+- [x] **SD21 — Echo als räumliche Antwort prüfen oder entfernen.**
   Echolevel, Feedback, Delay Seconds, Ping-Pong, Zeitänderung und Nachklang prüfen.
   **Abnahme:** Kein rhythmischer Maschinenpuls, unharmonischer alter Ton oder
   zunehmende Rückkopplung; Zeitänderung erzeugt keine Sirene. Sustain und Stille
   bei maximal erlaubten Werten prüfen. Nur beibehalten, wenn Raum allein diesen
   Nutzen nicht erfüllt. Voraussetzung: SD12/SD19–SD20.
-- [ ] **SD22 — Chorus/Detune gegen Quellenbewegung abwägen.**
+- [x] **SD22 — Chorus/Detune gegen Quellenbewegung abwägen.**
   Breite/Modulation, vorhandene Bowed-Verstimmung und Mono-Summe vergleichen.
   **Abnahme:** Direkter Grundton bleibt, kein hohler Swirl oder hörbarer Vibrato-
   Ersatz. Frühere Gainkorrektur nicht als vollständige Klangabnahme werten.
   Wenn kein unabhängiger Nutzen: Produktweg entfernen. Voraussetzung: SD03/SD19.
-- [ ] **SD23 — Age auf sinnvolle Klangalterung reduzieren.**
+- [x] **SD23 — Age auf sinnvolle Klangalterung reduzieren.**
   Wow, Flutter, Bandverlust und Sättigung separat sowie gemeinsam prüfen.
   50-Hz-Hum/Bandrauschen sind im aktiven Master bereits entfernt.
   **Abnahme:** Tonzentrum und Dynamik bleiben ruhig, kein Eiern/Piepen/Fizz;
   Idle bleibt still. Redundanz zu Color/Motion/Blur führt zu Merge/Remove.
   Voraussetzung: SD19; keine neue Eigenrauschquelle.
-- [ ] **SD24 — Blur auf Grundton und musikalischen Nutzen prüfen.**
+- [x] **SD24 — Blur auf Grundton und musikalischen Nutzen prüfen.**
   Grainüberlappung, langes Eingangssignal, Artikulation, Quellewechsel und
   maximaler Amount; Output-/Send-/Tailerinnerung erfassen.
   **Abnahme:** Kein ausgedünnter Ton, fluktuierendes Loch oder homogenes Nebelrauschen;
   Wortlaut des Nutzens muss sich gegen gemeinsamen Raum abgrenzen lassen.
   Andernfalls entfernen. Voraussetzung: SD12/SD19.
-- [ ] **SD25 — Shimmer behalten oder vollständig aus Produkt entfernen.**
+- [x] **SD25 — Shimmer behalten oder vollständig aus Produkt entfernen.**
   Oktavregeneration und Feedback im zugelassenen Register, inklusive alter
   harmonischer Farben, hoher Spektralanteile und Worst-case-Tail.
   **Abnahme:** Kein Glasalarm oder schwebender Fremdton; Tail zählt harmonisch.
   Kein Nutzen ohne hohe Aufmerksamkeit: entfernen, nicht nur Default=0.
   Voraussetzung: SD12/SD19; keine neue Sample-/FFT-Engine als Ersatz.
-- [ ] **SD26 — Reverse Swell strikt auf Produktnutzen begrenzen.**
+- [x] **SD26 — Reverse Swell strikt auf Produktnutzen begrenzen.**
   Aktiver synthetischer Vorlauf und Offline-Reverse unterscheiden. Automatische
   Generate-Vorswells bleiben aus; Admission kann ein geplantes Event absagen.
   **Abnahme:** Kein Vorlauf zu einer später abgewiesenen Note, keine Stille-
   Verletzung, keine look-ahead-Latenz im manuellen Spielen. Wenn nicht klar
   erforderlich, aus Produktbefehlen entfernen. Voraussetzung: SD07/SD13/SD19.
-- [ ] **SD27 — Finale Effektpalette reduzieren und Moduswechsel prüfen.**
+- [x] **SD27 — Finale Effektpalette reduzieren und Moduswechsel prüfen.**
   Alle neun Modi auf SD19–SD26 abbilden. Dream Chain ist kein Qualitätsargument;
   benötigte Kombinationen explizit wählen. Modewechsel inklusive Bypass/Fallback
   mit vorhandenen Tails prüfen.
@@ -539,7 +585,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
 
 ### 5. Musikalische Einflussbereiche, Pegel und Zustandswechsel
 
-- [ ] **SD32 — Vollständiges versioniertes Parameterregister schreiben.**
+- [x] **SD32 — Vollständiges versioniertes Parameterregister schreiben.**
   Alle Familien aus Tabelle D mit den Pflichtfeldern erfassen, jeden öffentlichen
   Setter/Presetpush/native Slot zuordnen. Defaults nicht zwischen Quelle, Scene
   und World durch Reihenfolge entstehen lassen.
@@ -567,7 +613,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Keine Bandpeak-Alarme, Gainlöcher, Pitchfehler, Pumpen oder
   versteckte Dauerbelegung. Unbrauchbare Kombination begrenzen/entfernen;
   kein ungeplantes vollständiges kartesisches Sweep. Voraussetzung: SD32–SD34.
-- [ ] **SD36 — Katalog und Scenes ausdrücklich migrieren.**
+- [x] **SD36 — Katalog und Scenes ausdrücklich migrieren.**
   Fünf bestehende Worlds/sechs V2-Familien und SCN5/SCN6 kennen; neue World-IDs
   versionieren, Ersatzzuordnung und verworfene Parameter explizit dokumentieren.
   **Abnahme:** Alte ID bedeutet nicht unbemerkt etwas anderes; Recall konsistent,
@@ -579,21 +625,21 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Nur jüngstes Ziel geplant; bestehende Besitzer weich beendet,
   reale Belegung und harmonische Fahnen respektiert; kein Body-Resetknacks,
   frozen noise, Hallreset oder wiederkehrender alter Ton. Voraussetzung: SD12/SD27/SD36.
-- [ ] **SD38 — Autonomen Betrieb als Audiobefehl fertig definieren.**
+- [x] **SD38 — Autonomen Betrieb als Audiobefehl fertig definieren.**
   Start, Stop, erneuter Start, Einstieg aus dichtem Manual und fehlende zulässige
   Note; keine Taste/UI hier festschreiben. Bereits vorhandenes busy-opening
   pending/retry ohne Pitch-RNG-Verbrauch beibehalten.
   **Abnahme:** Start schafft zum frühestmöglichen musikalisch zulässigen Zeitpunkt
   einen Ton, Stop verhindert neue Pläne, Wiederstart dupliziert keine Besitzer;
   Ruhe bei Ablehnung ist begrenzt diagnostizierbar. Voraussetzung: SD09/SD13/SD37.
-- [ ] **SD39 — Stillwerden/Clear/Mute für die gesamte Kette bauen.**
+- [x] **SD39 — Stillwerden/Clear/Mute für die gesamte Kette bauen.**
   Quellen, Releases, Natur, Dry/Send, sämtliche Delay-/Raumtöne; musikalischen
   Stop von vollständigem Stillwerden trennen.
   **Abnahme:** Stillwerden endet weich innerhalb einer festgelegten, dokumentierten
   Zeit unabhängig von Sustain/Feedback; Mute wirkt sofort nach dem Raum ohne
   Click, kein Tail bei Unmute wiederbelebt. Audio-DMA läuft weiter; keine
   Audio-Unterbrechung als Workaround. Voraussetzung: SD27/SD31/SD38.
-- [ ] **SD40 — Live-Key/Mode/Tuning und Besitzerwechsel prüfen.**
+- [x] **SD40 — Live-Key/Mode/Tuning und Besitzerwechsel prüfen.**
   Retune während gehaltenem Ton, Release, maximaler Tail und manueller Eingabe;
   festlegen, ob neue Noten umgestellt oder bestehende Stimmen weich übergeben
   werden. Kein unfreiwilliges Portamento/Sirenenretune.
@@ -605,7 +651,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Kein Überraschungsstart oder Lautstärkesprung, kaputte/alte Scene
   führt in dokumentierten stillen Fallback; Reset beim laufenden Raum gezielt
   testen. Keine blockierende Speicherung im Audiopfad. Voraussetzung: SD36/SD39–SD40.
-- [ ] **SD42 — Ganze Ausgabekette gegen harte/hohle Ergebnisse absichern.**
+- [x] **SD42 — Ganze Ausgabekette gegen harte/hohle Ergebnisse absichern.**
   Pre-/Post-FX-Gain, DC, Limiter/PCM-Konversion, Stereo/Mono, volle Belegung und
   alle Quellen/Tails einschließlich Natur; keine falsche Float-/PCMskalierung.
   **Abnahme:** Keine NaN/Inf, Clipping/Intersample-Überraschung, anhaltender DC oder
@@ -615,7 +661,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
 
 ### 6. Nachweis, Produktreduktion und Abschluss
 
-- [ ] **SD43 — Hör-/Renderverfahren für die ganze Kette festlegen.**
+- [x] **SD43 — Hör-/Renderverfahren für die ganze Kette festlegen.**
   Firmware korrekt in zulässigen Blöcken (Engine höchstens 512 Frames) rendern;
   andere zulässige Blockgrößen gegen gleiche Seed-/Eventfolge vergleichen.
   **Abnahme:** Keine stille Überschreitung oder Referenztonkontamination, SHA,
@@ -637,7 +683,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   unerklärte Dauerstille, kurzer Dauermotifloop, NaN oder zunehmende Energie.
   Aus gewählten Zeitpunkten kurze Hörproben; kein langes WAV an Nutzer.
   Voraussetzung: SD37–SD43.
-- [ ] **SD46 — Entfernte Produktpfade tatsächlich auslinken.**
+- [x] **SD46 — Entfernte Produktpfade tatsächlich auslinken.**
   Nach Migration Archiv-/Altquellen, doppelte Raumwege und unbenötigte Buffer
   aus H743-Produktauswahl entfernen; Referenzcode nachvollziehbar behalten.
   **Abnahme:** Map/Callsites bestätigen Wegfall, kein Scene/Hook/Setter stellt

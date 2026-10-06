@@ -82,6 +82,26 @@ static void long_case(int world,int c) {
     for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0);
 }
 static void transitions(void) {
+    /* All six directions also at a full manual pool, extreme release and
+     * maximum room: held sources survive World selection, entry retires them,
+     * shared tails remain represented and rapid targets keep only the latest. */
+    for(int from=0;from<3;++from)for(int to=0;to<3;++to)if(from!=to) {
+        engine_init();engine_set_world(from);engine_set_room(1);
+        engine_set_attack(1);engine_set_release(1);engine_set_color(1);
+        int n=from==WORLD_WOODLAND ? 2 : 3;const int notes[3]={50,57,62};
+        for(int i=0;i<n;++i)assert(engine_try_note_on((uint8_t)i,dsp_midi_to_hz(notes[i]),1));
+        audio(.6);assert(engine_active_voices()==n);
+        float before[24],after[24];assert(engine_sounding_frequencies(before,24)==n);
+        engine_set_world(to);assert(engine_active_voices()==n);
+        assert(engine_sounding_frequencies(after,24)==n && !memcmp(before,after,(size_t)n*sizeof(float)));
+        engine_set_generative(true,-1);audio(.12);assert(engine_active_voices()==0);
+        assert(ambient_room_peak()>0 && engine_sounding_frequencies(after,24)>=n);
+        engine_set_world((to+1)%3);engine_set_world(to);assert(engine_product_world()==to);
+        engine_generative_tick(1000);audio(.05);
+        assert(engine_active_voices()<=3);
+        assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+        engine_all_off();audio(.1);assert(engine_active_voices()==0);
+    }
     for(int from=0;from<3;++from)for(int to=0;to<3;++to)if(from!=to) {
         engine_init();engine_set_world(from);engine_set_room(1);
         engine_set_generative(true,-1);engine_generative_tick(0);

@@ -38,7 +38,7 @@ static void dry_setup(int world) {
     /* Complete the 40 ms Dry transition before exciting any source. */
 }
 int main(int argc,char **argv) {
-    if(argc!=5) { fprintf(stderr,"WORLD SEED dry|world|nature OUT.wav\n");return 2; }
+    if(argc!=5) { fprintf(stderr,"WORLD SEED dry|world|score_dry|nature|color|shape|limits OUT.wav\n");return 2; }
     int world=atoi(argv[1]);uint32_t seed=(uint32_t)strtoul(argv[2],0,0);
     if(world<0||world>=CORE_WORLD_COUNT) return 2;
     bool dry=!strcmp(argv[3],"dry"),nature=!strcmp(argv[3],"nature");

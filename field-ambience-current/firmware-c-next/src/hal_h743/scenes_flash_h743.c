@@ -2,11 +2,11 @@
  * scenes_flash_h743.c — Scenes-Persistenz im internen STM32H743-Flash.
  *
  * Ablage: LETZTER Sektor von Bank 2 (0x081E0000, 128 KB) — die Firmware
- * (~203 KB) liegt komplett in Bank 1 (Sektoren 0..1). H7 ist dual-bank
- * read-while-write: Erase/Program in Bank 2 blockiert Code- und Daten-
- * zugriffe in Bank 1 NICHT — der Audio-ISR laeuft beim Speichern einer
- * Scene ununterbrochen weiter. Der Erase (~1-2 s) blockiert nur den
- * Main-Loop (UI friert kurz ein — akzeptiert, Scene-Save ist selten).
+ * wird im Product-Linkaudit vollstaendig in Bank 1 verlangt. Dual-bank
+ * read-while-write ist die Architektur fuer weiterhin bedienbare Audio-IRQs,
+ * kein gemessener Nachweis. Erase/Program blockiert weiterhin den Main-Loop:
+ * UI und Generate-Planung koennen sich verzoegern. Save-Latenz, Interrupt-
+ * Reserve und Power-loss-Verhalten bleiben ein Geraet-/Storage-Gate.
  *
  * Layout: das rohe scene_store_t-Blob, auf 32-Byte-Flashwords
  * aufgerundet. Gueltigkeit prueft scenes.c selbst (Magic).
@@ -64,6 +64,12 @@ bool scenes_flash_read(void *blob, unsigned len) {
     if(!blob || len == 0 || len > 512) return false;
     /* Bank 2 ist memory-mapped — einfach kopieren. Ob der Inhalt gueltig
      * ist (Magic), entscheidet scenes.c. */
+    /* Flash is memory-mapped with the M7 data cache enabled. A read after
+     * programming must not reuse a preceding cached Scene. Touch only the
+     * aligned reserved Flash range, never the audio DMA buffer. CMSIS defines
+     * this helper in vendor/CMSIS/Include/cachel1_armv7.h. */
+    SCB_InvalidateDCache_by_Addr((void *)SCENES_FLASH_ADDR,
+                               (int32_t)((len+31u)&~31u));
     memcpy(blob, (const void *)SCENES_FLASH_ADDR, len);
     return true;
 }

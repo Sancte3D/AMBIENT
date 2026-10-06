@@ -41,6 +41,11 @@ address,size,_,_=one('s_buffer')
 assert 0x24000000<=address and address+size<=0x24080000 and address%32==0,(hex(address),size)
 print(f'PRODUCT LINK audio DMA: 0x{address:08x}, {size} B, aligned internal D1')
 assert all('FAM_SOUND_PRODUCT' in c['command'] for c in compiled if Path(c['file']).name in required)
+# Live Bank-2 Scene writes require the complete firmware load image in Bank 1.
+# The larger linker Flash region alone would silently allow code/const spill.
+image=build/'field_ambience_h743.bin'
+assert image.stat().st_size<=1024*1024,'Firmware spills into Scene-write bank; revisit storage before shipping'
+print(f'PRODUCT LINK Bank-1 load image: {image.stat().st_size} B / 1048576 B')
 print('PRODUCT LINK PASS: reference DSP/archive excluded, one internal room, DMA placement verified')
 
 # Compiler-reported individual frames. This is deliberately not a call-chain,
