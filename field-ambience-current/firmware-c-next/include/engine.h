@@ -71,6 +71,13 @@ void engine_set_note_hook(engine_note_hook_t h);
 /* Conservative held/released pitch occupancy, control-rate only; up to 128. */
 int engine_sounding_notes(int *out, int max);
 
+#define ENGINE_WORLD_SOURCE_LIMIT 3
+/* Control-rate World admission: true commits the source/hook, false changes
+ * no held pitch or existing voice. Generate must be enabled. No implicit pad.
+ * World family slots include releases; legacy pad/bass are still separate. */
+bool engine_try_world_note_on(uint8_t source, float freq_hz, float amp);
+int engine_world_source_count(void);
+
 /* r19.16 — SYNTH mode: swappable V2 sound-cores behind the ambient engine.
  * mode 0 = ambient (default identity); 1..N = a V2 core rendered through the
  * registered backend. The engine has NO link dependency on src/v2 — the

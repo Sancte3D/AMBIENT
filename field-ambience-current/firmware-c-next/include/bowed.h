@@ -15,12 +15,17 @@
 #ifndef BOWED_H
 #define BOWED_H
 
+#include <stdbool.h>
+
 void bowed_init(void);
 
 /* Start one bow stroke at freq_hz, peak amplitude amp (0..1). Allocates a
  * voice (steals the quietest if full). The stroke completes on its own. */
 /* Played sources sustain until release; note() remains a timed one-shot. */
 void bowed_note_on(int source, float freq_hz, float amp);
+/* Strict World admission: idle slot only, releases/queued voices stay occupied.
+ * False leaves every live voice untouched. Legacy note_on keeps its handover. */
+bool bowed_try_note_on(int source, float freq_hz, float amp);
 void bowed_note_off(int source);
 void bowed_all_off(void);
 void bowed_note(float freq_hz, float amp);

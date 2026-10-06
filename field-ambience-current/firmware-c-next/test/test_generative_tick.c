@@ -18,12 +18,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <string.h>
 #include "engine.h"
 #include "brain.h"
 #include "generative.h"
 #include "pad.h"
 #include "horn.h"    /* default Alps World uses its curated horn */
 #include "worlds.h"
+#include "pluck.h"
+#include "shape.h"
+#include "bowed.h"
+#include "choir.h"
+#include "guembri.h"
 #include "composer.h" /* r18.96: top-level intent states */
 #include "dsp.h"
 
@@ -45,6 +51,65 @@ static int render_ms(int ms) {
         }
     }
     return pk;
+}
+
+/* A scheduler audit must advance source envelopes by the same elapsed time.
+ * Render the real World sources directly here; master/legacy bed behavior is
+ * covered by the engine tests. No WAV export or wall-clock wait. */
+static void advance_world_audio(int ms) {
+    float l[256],r[256],sl[256],sr[256];
+    int remaining=ms*44100/1000;
+    while(remaining>0) {
+        int n=remaining>256?256:remaining;
+        memset(l,0,sizeof l);memset(r,0,sizeof r);
+        memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
+        bowed_render_mix(l,r,sl,sr,n,.5f);horn_render_mix(l,r,sl,sr,n,.5f);
+        choir_render_mix(l,r,sl,sr,n,.5f);guembri_render_mix(l,r,sl,sr,n,.5f);
+        pluck_render_mix(l,r,sl,sr,n);
+        remaining-=n;
+    }
+}
+
+static int world_on_events;
+static void world_event(int on,uint8_t source,float hz,float amp) {
+    (void)hz;(void)amp;
+    if(on==1 && source==15) ++world_on_events;
+}
+static void test_world_admission(void) {
+    int before[128],after[128];
+    engine_init();engine_set_world(0);engine_set_fx_mode(0);
+    CHECK(!engine_try_world_note_on(15,220,.07f),"World admission requires Generate");
+    engine_set_generative(true,-1);engine_set_note_hook(world_event);world_on_events=0;
+    CHECK(!engine_try_world_note_on(255,220,.07f),"invalid source refused");
+    CHECK(!engine_try_world_note_on(15,NAN,.07f),"invalid pitch refused");
+    CHECK(!engine_try_world_note_on(15,220,0),"zero level refused");
+    /* A mixed-family full pool must block a fourth World tone as well. */
+    CHECK(horn_try_note_on(0,220,.3f),"reserve Horn");
+    CHECK(bowed_try_note_on(1,220,.3f),"reserve Bowed");
+    CHECK(choir_try_note_on(2,220,.3f),"reserve Choir");
+    CHECK(engine_world_source_count()==ENGINE_WORLD_SOURCE_LIMIT,"count pending mixed-family slots");
+    int n=engine_sounding_notes(before,128);
+    CHECK(!engine_try_world_note_on(15,330,.07f),"full pool refuses World tone");
+    CHECK(world_on_events==0,"refusal emits no MIDI onset");
+    int m=engine_sounding_notes(after,128);
+    CHECK(n==m && memcmp(before,after,(size_t)n*sizeof(int))==0,"refusal adds no phantom harmony pitch");
+    render_ms(1000);horn_note_off(0);render_ms(100);
+    CHECK(engine_world_source_count()==3,"release remains occupied");
+    CHECK(!engine_try_world_note_on(15,330,.07f),"release cannot be stolen");
+    /* Saturation cannot consume a phrase, increment melody count or log an onset. */
+    for(uint32_t now=2000;now<62000;now+=500) engine_generative_tick(now);
+    CHECK(engine_generative_melody_count()==0,"rejected scheduler starts do not increment melody count");
+    CHECK(engine_generative_last_melody_midi()==0,"rejected starts do not become phrase history");
+    CHECK(world_on_events==0,"scheduler emits no phantom World onset");
+    render_ms(18000);CHECK(engine_world_source_count()==2,"released Horn slot eventually frees");
+    CHECK(engine_try_world_note_on(15,330,.07f),"admission succeeds after real slot frees");
+    CHECK(engine_world_source_count()==3 && world_on_events==1,"accepted onset reserves slot and emits one event");
+    n=engine_sounding_notes(before,128);
+    CHECK(!engine_try_world_note_on(15,440,.07f),"held owner refuses retrigger");
+    m=engine_sounding_notes(after,128);
+    CHECK(n==m && memcmp(before,after,(size_t)n*sizeof(int))==0 && world_on_events==1,
+          "refused retrigger leaves actual pitch and MIDI unchanged");
+    engine_set_note_hook(NULL);engine_init();
 }
 
 static uint32_t phrase_clock, phrase_started, phrase_ended;
@@ -80,7 +145,7 @@ static void test_world_phrases(void) {
         /* This is a scheduler audit, not a long audio export. */
         for (phrase_clock = 1000; phrase_clock < 901000; phrase_clock += 100) {
             engine_generative_tick(phrase_clock);
-            if (phrase_clock % 1000 == 0) render_ms(20);
+            advance_world_audio(100);
         }
         engine_set_note_hook(NULL); /* explicit stop may shorten a hold */
         engine_set_generative(false, -1);
@@ -104,6 +169,7 @@ int main(void) {
     render_ms(10000);
     CHECK(horn_active_count() == 0, "melody owner releases its World source");
     engine_init();
+    test_world_admission();
     uint32_t now = 1000;
 
     /* ---- 1. Immediate first note ---- */
@@ -213,8 +279,8 @@ int main(void) {
           horn_active_count());
 
     /* ---- 6. r18.90 melody GRAMMAR: composes, not randomizes ----
-     * Simulate ~200 bars with coarse 250 ms ticks (no audio needed to make
-     * scheduling decisions; render occasionally to keep envelopes moving)
+     * Simulate ~200 bars with coarse 250 ms ticks and matching source audio
+     * (real release occupancy now governs whether an onset can succeed)
      * and audit the tone sequence via the observability getters against
      * SOUND_WORLD.md §6: register bounds, stepwise voice-leading,
      * repetitions present, rests present. */
@@ -243,7 +309,7 @@ int main(void) {
                 prev_count = c;
                 ++notes;
             }
-            if ((step & 255) == 0) render_ms(300);
+            advance_world_audio(250);
         }
         CHECK(notes >= 40, "melody actually sings (%d notes in ~206 bars)", notes);
         CHECK(notes <= 190, "melody leaves space — rests exist (%d notes)", notes);
@@ -280,7 +346,7 @@ int main(void) {
             ms_in[st] += 250.0;
             int c = engine_generative_melody_count();
             if (c != prev_notes) { notes_in[st] += c - prev_notes; prev_notes = c; }
-            if ((step & 255) == 0) render_ms(400);
+            advance_world_audio(250);
         }
         for (int k = 0; k < COMPOSER_STATE_COUNT; ++k)
             CHECK(seen[k], "composer visits state %d", k);

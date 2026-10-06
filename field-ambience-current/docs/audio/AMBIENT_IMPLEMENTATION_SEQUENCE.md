@@ -123,7 +123,7 @@ source, scheduler and room rewrites: their effects must stay attributable.
 
 | Order | Work | Acceptance evidence |
 |---|---|---|
-| 1 | A generated source-start transaction: check capacity and valid pitch, start DSP, then commit owner / harmony / hook / counters only on success | Failed admission changes no sounding-pitch state, event count or existing waveform; retry is delayed rather than retriggered every tick |
+| 1 — implemented 2026-10-06 | A generated source-start transaction: check capacity and valid pitch, start DSP, then commit owner / harmony / hook / counters only on success | Failed admission changes no sounding-pitch state, event count or existing waveform; retry is delayed rather than retriggered every tick |
 | 2 | New autonomous World path without automatic Bed, Eno loops, bass or generated reverse swell | Source-event trace starts only the planned family; harmony advances independently of accompaniment; Stop releases its owners; real rests exist before room tails |
 | 3 | Common three-slot budget across actual source voices and release tails | Cross-world handover, maximum Shape release and repeated Generate cannot exceed the budget; when full, wait rather than hard-steal; account for both bass sub/deep if ever enabled, not just bass_active boolean |
 | 4 | WOODLAND dry Pluck articulation: excitation, sustain, damping and ownership | Low-mid pitch stability across damping, no hiss-like onset; a short motif plus silence is recognizable without body/hall; <=30 s A/B |
@@ -137,3 +137,13 @@ source, scheduler and room rewrites: their effects must stay attributable.
 Natural self-decay remains; note-off semantics and soft-source transitions must
 be evaluated with later WOODLAND phrasing. Removing an old role does not justify
 adding three compensating effects. No new grammar may require SD streaming.
+
+### 2026-10-06 progress
+
+Generated starts now commit their pitch/event/phrase counters only on actual
+source admission. Three World-family DSP slots, including releases and queued
+onsets, govern this path. This is not yet a whole-product three-source limit:
+legacy accompaniment and legacy manual admissions remain outside that gate.
+Next: remove automatic Bed/Eno/bass from the autonomous path, then validate the
+complete occupancy contract and World transitions. H743 CI now explicitly
+builds Release and retains image plus linker map; on-device DWT remains open.

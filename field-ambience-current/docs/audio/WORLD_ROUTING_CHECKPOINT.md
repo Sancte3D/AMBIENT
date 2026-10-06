@@ -106,3 +106,45 @@ The full H743 map, peak CPU and physical listening gates remain open.
 Verification after the Pluck unit: full host suite exit 0; dedicated ownership
 regression 0 failures; engine integration and all 489,609 effect checks pass.
 Hot-path lint: 26 modules, 0 forbidden calls. No listening verdict inferred.
+
+## 2026-10-06: admitted sources, then musical state
+
+`engine_try_world_note_on` validates input and bounded World-family occupancy,
+then asks the actual source to start. Only success updates held pitch, tail
+horizon and note-on hook. Source rejection restores the micro-humanization RNG
+and emits no phantom MIDI. The scheduler commits last tone, note/phrase counts,
+replay count and gentle-return completion only for an accepted onset. A failed
+start preserves the motif cursor and waits 2 seconds before another attempt.
+Harmony selection remains the caller's job; the generator still passes its
+existing pitch-world/register/collision chain before calling admission.
+
+Bowed/Horn/Choir have a strict idle-slot API separate from legacy manual
+handovers. Releases and queued onsets occupy slots. Guembri compatibility
+one-shots also have a strict non-stealing start; their natural decay and old
+timbre are retained, not promoted to a new core World. Pluck uses its existing
+owned admission. Across these families, generated admission stops at three
+real DSP slots. This gate includes World-family manual tails too. It does not
+count legacy pad/bass/Eno/Ember/drone/effect tails and does not restrict all
+legacy entry points; removal of accompaniment and the global budget remain
+explicit next work. `engine_active_voices` is still the legacy pad statistic.
+
+Verification: 76 strict-source checks (full pool, pending reservations,
+waveform-identical rejected onsets, maximum Shape release); 7,982 generator
+checks including mixed-family saturation and no phantom MIDI/harmony/phrase
+history; full host suite exit 0, 489,609 effect checks; hot-path lint 26 modules
+and 0 forbidden calls. Long scheduler audits now render the actual World
+sources for matching elapsed time, rather than advancing minutes of decisions
+with milliseconds of envelope progression. No audio file over 30 s is exported.
+
+Object-level static data is unchanged in engine/Bowed/Horn/Choir/Guembri;
+no new pool, audio buffer, heap allocation or per-sample transcendental call.
+This is host object accounting; target linker and device timing remain distinct.
+
+The existing GitHub H743 job was found to cross-build successfully for the
+previous commit aab3c5dc826238ecd1e430aace6561f29e4442f5 (run 37233599865).
+Its link report: Flash 298,016 B; DTCM 119,440 B; D1 417,448 B; D2 258,100 B;
+D3/ITCM 0 B. It did not explicitly request Release, so those values are a
+previous-build baseline, not current optimized results or a CPU guarantee.
+H743 CI now sets CMAKE_BUILD_TYPE=Release, prints the compiler flags and retains
+.bin/.hex/.map artifacts for 14 days. New Release results are pending its run.
+No on-device deadline or stack high-water result is inferred from linking.

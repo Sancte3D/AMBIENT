@@ -448,15 +448,7 @@ void engine_set_voice(int voice_idx) {
 
 /* Fire the selected melody voice (used by cell presses + sparkles). */
 static void melody_strike(float freq_hz, float amp) {
-    int voice = gen_on ? worlds_get(s_world_index)->voice : melody_voice;
-    /* Sustained World voices belong to the melody source: its scheduled
-     * release, suppression and Generate stop must release the same voice.
-     * Plucked sources retain their natural self-decay. */
-    if (gen_on) {
-        if (voice == 5) { choir_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.0f, 0.55f)); return; }
-        if (voice == 4) { horn_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 2.6f, 0.0f, 0.58f)); return; }
-        if (voice == 3) { bowed_note_on(MEL_SRC, freq_hz, dsp_clampf(amp * 3.0f, 0.0f, 0.62f)); return; }
-    }
+    int voice = melody_voice;
     /* Legacy manual one-shots retain their compatibility gains. The
      * generated sustained path above preserves dynamics down to silence;
      * amplitude floors would defeat its deliberately softer return. */
@@ -493,6 +485,46 @@ static inline float humanize_rand_unit(void){      /* in [-1, +1] */
     return ((int32_t)humanize_rng) * (1.0f / 2147483648.0f);
 }
 
+int engine_world_source_count(void) {
+    /* DSP slots, including releases and prepared onsets; not oscillator count.
+     * Legacy pad/bass/Eno accompaniment is still a separate pending removal. */
+    return bowed_active_count() + horn_active_count() + choir_active_count() +
+           guembri_active_count() + pluck_active_count();
+}
+
+bool engine_try_world_note_on(uint8_t source, float freq_hz, float amp) {
+    if (!gen_on || source >= MAX_SOURCES || !isfinite(freq_hz) ||
+        !isfinite(amp) || freq_hz < 20.0f || freq_hz > 8000.0f || amp <= 0.0f ||
+        active_freq[source] > 0.0f ||
+        engine_world_source_count() >= ENGINE_WORLD_SOURCE_LIMIT) return false;
+    uint32_t previous_rng = humanize_rng;
+    float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);
+    if (tuning_mode()) pitch_jitter = 0.0f;
+    freq_hz *= 1.0f + pitch_jitter;
+    amp *= 1.0f + humanize_rand_unit() * 0.003f;
+    bool accepted = false;
+    switch (worlds_get(s_world_index)->voice) {
+    case 0: case 1:
+        accepted = pluck_note_on(source, freq_hz, dsp_clampf(amp*2.0f,0.0f,1.0f)); break;
+    case 3:
+        accepted = bowed_try_note_on(source, freq_hz, dsp_clampf(amp*6.0f,0.0f,0.62f)); break;
+    case 4:
+        accepted = horn_try_note_on(source, freq_hz, dsp_clampf(amp*5.2f,0.0f,0.58f)); break;
+    case 5:
+        accepted = choir_try_note_on(source, freq_hz, dsp_clampf(amp*5.2f,0.0f,0.55f)); break;
+    case 6:
+        /* Compatibility only: the Desert source remains a natural one-shot. */
+        accepted = guembri_try_note(freq_hz,dsp_clampf(amp*5.6f,0.35f,0.60f)); break;
+    default: break;
+    }
+    if (!accepted) { humanize_rng = previous_rng; return false; }
+    /* Commit only the admitted pitch. No pad, bass refresh, or phantom MIDI. */
+    source_tail_ms[source] = tail_horizon();
+    active_freq[source] = freq_hz;
+    if (s_note_hook) s_note_hook(1, source, freq_hz, amp);
+    return true;
+}
+
 static void synth_note_hz(float hz, float amp) {
     if (s_synth_be->note_on_hz) s_synth_be->note_on_hz(hz,amp);
     else if (s_synth_be->note_on) {
@@ -503,6 +535,10 @@ static void synth_note_hz(float hz, float amp) {
 
 void engine_note_on(uint8_t source, float freq_hz, float amp) {
     if (source>=MAX_SOURCES || !isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || amp<=0.0f) return;
+    if (gen_on && source == MEL_SRC) {
+        (void)engine_try_world_note_on(source, freq_hz, amp);
+        return;
+    }
     /* ±0.5 cent pitch jitter, ±0.3 % amp jitter. Bass / drone get the same
      * freq downstream (refresh_bass) so the jitter is consistent per press. */
     float pitch_jitter = humanize_rand_unit() * (0.5f / 1200.0f);
@@ -526,14 +562,6 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
         if (source < MAX_SOURCES) active_freq[source] = freq_hz;
         return;
     }
-    /* World melody owns exactly its selected source, never an implicit pad.
-     * Register the same humanized pitch before dispatch so hooks, release and
-     * the harmony collision filter describe the actual sounding source. */
-    if (gen_on && source == MEL_SRC) {
-        active_freq[source] = freq_hz;
-        melody_strike(freq_hz, amp * 2.0f);
-        return;
-    }
     pad_note_on(source, freq_hz, amp);
     if (source < MAX_SOURCES) active_freq[source] = freq_hz;
     /* r18.98 VOICE: cell sources (base 0..4 + shift 9..13) also strike the
@@ -555,6 +583,7 @@ void engine_note_on(uint8_t source, float freq_hz, float amp) {
     refresh_bass();
 }
 void engine_note_off(uint8_t source) {
+    if (source >= MAX_SOURCES) return;
     remember_source(source);
     if (s_note_hook && source < MAX_SOURCES)
         s_note_hook(0, source, active_freq[source], 0.0f);
@@ -1132,7 +1161,6 @@ void engine_generative_tick(uint32_t now_ms) {
             mel_phrase_left = 2 + (int)(gen_rand01() * 4.0f);   /* 2..5  */
             mel_replay = (mel_hist_len >= 2 && gen_rand01() < 0.35f);
             mel_replay_idx = 0;
-            if (mel_replay) ++mel_dejavu_count;
             /* mel_last_midi is NOT reset: the new phrase steps off from
              * where the old one ended, so voice-leading survives the
              * breath (a reset caused over-octave leaps between phrases —
@@ -1143,6 +1171,7 @@ void engine_generative_tick(uint32_t now_ms) {
             /* everything currently sustaining, for the collision filter */
             int sus[128]; int nsus=engine_sounding_notes(sus,128);
 
+            int replay_before = mel_replay_idx;
             int tone = -1;
             if (mel_replay && mel_replay_idx < mel_hist_len) {
                 int want = mel_hist[mel_replay_idx++];
@@ -1162,21 +1191,23 @@ void engine_generative_tick(uint32_t now_ms) {
             if (tone > 0) {
                 float hz  = tuning_hz((float)tone);
                 float amp = 0.062f + gen_rand01() * 0.014f;
-                if (s_gentle_return) {
-                    /* Return through the same World source at half input level;
-                     * never substitute a pad for the first returning tone. */
-                    engine_note_on((uint8_t)MEL_SRC, hz, amp * 0.5f);
-                    s_gentle_return = false;
+                float level = s_gentle_return ? amp * 0.5f : amp;
+                if (!engine_try_world_note_on(MEL_SRC, hz, level)) {
+                    /* Capacity is a musical rest, not a fast retry or a note.
+                     * Do not consume the remembered motif on a failed start. */
+                    mel_replay_idx = replay_before;
+                    mel_next_ms = now_ms + 2000u;
                 } else {
-                    engine_note_on((uint8_t)MEL_SRC, hz, amp);
-                }
-                auto_onset(); mel_repeat_run=tone==mel_last_midi ? mel_repeat_run+1:1;
-                mel_sounding=1; mel_last_midi=tone;
-                ++mel_note_count;
-                if (mel_cur_len < MEL_PHRASE_MAX) mel_cur[mel_cur_len++] = tone;
-                --mel_phrase_left;
-                mel_off_ms = now_ms + (uint32_t)(1000.0f * (phrase->note_min +
-                             gen_rand01() * (phrase->note_max - phrase->note_min)));
+                    s_gentle_return = false;
+                    if (mel_replay && mel_cur_len == 0) ++mel_dejavu_count;
+                    auto_onset(); mel_repeat_run=tone==mel_last_midi ? mel_repeat_run+1:1;
+                    mel_sounding=1; mel_last_midi=tone;
+                    ++mel_note_count;
+                    if (mel_cur_len < MEL_PHRASE_MAX) mel_cur[mel_cur_len++] = tone;
+                    --mel_phrase_left;
+                    mel_off_ms = now_ms + (uint32_t)(1000.0f * (phrase->note_min +
+                                 gen_rand01() * (phrase->note_max - phrase->note_min)));
+                } /* admitted note */
             } else {
                 /* nothing SAFE right now — silence is the correct note */
                 mel_next_ms = now_ms + 2000u +

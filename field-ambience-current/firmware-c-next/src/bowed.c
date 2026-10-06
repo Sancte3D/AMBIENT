@@ -128,6 +128,22 @@ static void start_note(int source, float freq_hz, float amp) {
     queued[i]=1;
 }
 
+bool bowed_try_note_on(int source, float freq_hz, float amp) {
+    if (source < 0 || source >= 16 || !isfinite(freq_hz) || !isfinite(amp) ||
+        freq_hz < 20.0f || freq_hz > 8000.0f || amp <= 0.0f) return false;
+    for (int i = 0; i < VMAX; ++i)
+        if ((queued[i] && pending[i].source == source) ||
+            (V[i].stage != V_IDLE && V[i].source == source)) return false;
+    for (int i = 0; i < VMAX; ++i) {
+        if (V[i].stage != V_IDLE || queued[i]) continue;
+        prepare_note(&pending[i], i, source, freq_hz, amp);
+        __asm__ volatile("" ::: "memory");
+        queued[i] = 1;
+        return true;
+    }
+    return false;
+}
+
 void bowed_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
 void bowed_note_on(int source,float freq_hz,float amp) {
     if(source>=0 && source<16) start_note(source,freq_hz,amp);

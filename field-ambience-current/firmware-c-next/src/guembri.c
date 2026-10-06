@@ -24,6 +24,7 @@
 #include "shape.h"
 #include "dsp.h"
 #include <string.h>
+#include <math.h>
 
 #define SR   ((float)DSP_SAMPLE_RATE_HZ)
 #define CTL  32
@@ -59,9 +60,8 @@ static int alloc_voice(void){
     return best;
 }
 
-void guembri_note(float freq_hz, float amp){
-    if (freq_hz < 20.0f) return;
-    int i=alloc_voice(); gvoice_t *v=&V[i];
+static void prepare_note(int i, float freq_hz, float amp){
+    gvoice_t *v=&V[i];
     v->freq=freq_hz; v->amp=dsp_clampf(amp,0.0f,1.0f);
     v->inc1=freq_hz/SR;
     v->inc2=freq_hz*1.0035f/SR;            /* slight detune = body      */
@@ -82,7 +82,23 @@ void guembri_note(float freq_hz, float amp){
 
     float pan=(i==0)?-0.15f:(i==1)?0.15f:0.0f;
     v->panL=0.5f*(1.0f-pan); v->panR=0.5f*(1.0f+pan);
+    __asm__ volatile("" ::: "memory");
     v->active=1;
+}
+
+void guembri_note(float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz < 20.0f ||
+        freq_hz > 8000.0f || amp <= 0.0f) return;
+    prepare_note(alloc_voice(), freq_hz, amp);
+}
+bool guembri_try_note(float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz < 20.0f ||
+        freq_hz > 8000.0f || amp <= 0.0f) return false;
+    for (int i = 0; i < VMAX; ++i) if (!V[i].active) {
+        prepare_note(i, freq_hz, amp);
+        return true;
+    }
+    return false;
 }
 
 int guembri_active_count(void){ int c=0; for(int i=0;i<VMAX;++i) c+=V[i].active?1:0; return c; }
