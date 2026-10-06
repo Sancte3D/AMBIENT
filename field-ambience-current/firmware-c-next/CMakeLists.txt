@@ -260,6 +260,10 @@ if(FAM_TARGET STREQUAL "h743")
         USE_HAL_DRIVER
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
+    if(FAM_SOUND_PROFILE STREQUAL "product")
+        # Static compiler frame sizes, not measured interrupt/high-water use.
+        target_compile_options(field_ambience_h743 PRIVATE -fstack-usage)
+    endif()
     # Quiet the vendored HAL only — our own code keeps full warnings.
     set_source_files_properties(${H743_HAL_SOURCES} PROPERTIES
         COMPILE_OPTIONS "-w")

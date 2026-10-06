@@ -77,6 +77,7 @@ static void one_world(int w,uint32_t seed,int duration) {
 int main(void) {
     configure(0); audio(.1); for(int i=0;i<1024;++i) assert(buffer[i]==0);
     assert(!engine_try_note_on(0,20,.8f)); assert(!engine_try_note_on(0,880,.8f));
+    assert(!engine_try_note_on(0,dsp_midi_to_hz(51),.8f)); /* valid Hz, outside D core */
     assert(!engine_try_note_on(16,220,.8f));
     assert(!engine_try_note_on(5,220,.8f) && !engine_try_note_on(8,220,.8f) && !engine_try_note_on(6,220,.8f));
     assert(engine_try_note_on(0,dsp_midi_to_hz(50),.7f));

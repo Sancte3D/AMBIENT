@@ -7,6 +7,9 @@
 
 #include "params.h"
 #include "engine.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "engine_product.h"
+#endif
 #include "worlds.h"
 #include <math.h>
 
@@ -41,7 +44,12 @@ static void apply_drive(void) {
     engine_set_reverb_drive(0.10f + 0.45f * d);
 }
 static void apply_volume(void) {
+#ifdef FAM_SOUND_PRODUCT
+    engine_set_master_volume(s_volume);
+    engine_set_muted(s_muted);
+#else
     engine_set_master_volume(s_muted ? 0.0f : s_volume);
+#endif
 }
 
 static int accel_mul(uint8_t id, uint32_t now) {
@@ -65,14 +73,11 @@ void params_init(void) {
     for (unsigned i = 0; i < sizeof s_acc / sizeof s_acc[0]; ++i) {
         s_acc[i].last_ms = 0; s_acc[i].first = 1;
     }
-    /* Match engine_init() defaults so the readout is truthful at boot. */
+    /* Device target starts at 30%; host engine_init retains its 60% reference. */
     s_drive  = DRIVE_DEFAULT;
     s_bright = (float)worlds_get(0)->brightness_hz;  /* r19.45: boot world brightness */
-    s_volume = 0.30f;   /* r19.20: SPEC boot rule — max 30 % at power-on
-                         * (headphone-safe since the r19.19 TPA6132A2; the
-                         * old 0.60 predates the phones jack). The device
-                         * boot additionally starts hard-muted and fades in
-                         * (engine_boot_mute + this target). */
+    s_volume = 0.30f;   /* Device boot target, not an acoustic safety claim.
+                         * Physical output level requires SD49. */
     s_drive_byp = false;
     s_muted     = false;
     /* r18.89: DRIVE = master drive stage + a slaved touch of reverb-input

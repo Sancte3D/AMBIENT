@@ -34,10 +34,29 @@ void world_grammar_init(world_grammar_t *g, int world, uint32_t seed) {
     memset(g,0,sizeof *g);
     g->world = world >= 0 && world < CORE_WORLD_COUNT ? world : WORLD_COAST;
     g->rng = seed ? seed : 0xA6B13E7Du;
-    g->last = -1;
+    g->last = -1; g->focus=2; g->time_spacing=1;
 }
 bool world_grammar_due(const world_grammar_t *g, uint32_t now) {
     return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
+}
+static void begin_figure(world_grammar_t *n,int maximum) {
+    n->recalled=n->memory_len && between(n,0,3)==0;
+    n->transpose=0;
+    if(n->recalled) {
+        n->length=n->memory_len;
+        int lo=7,hi=0;
+        for(int i=0;i<n->length;++i) {
+            if(n->memory[i]<lo)lo=n->memory[i];
+            if(n->memory[i]>hi)hi=n->memory[i];
+        }
+        int shift=(int)between(n,0,2)-1;
+        if(lo+shift<0 || hi+shift>7)shift=0;
+        n->transpose=(int8_t)shift;
+        n->direction=n->memory[1]>n->memory[0];
+    } else {
+        n->length=(uint8_t)between(n,2,(uint32_t)maximum);
+        n->direction=(uint8_t)between(n,0,1);
+    }
 }
 world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, float activity) {
     world_offer_t o;
@@ -46,8 +65,10 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
     world_grammar_t *n=&o.next;
     if (!(activity>=0.0f && activity<=1.0f)) activity=0.5f;
     /* Activity changes time, never register, brightness or amplitude. */
-    float spacing=1.35f-0.70f*activity;
-    if (!n->episode_until) n->episode_until=now+between(n,45000,120000);
+    float spacing=1.35f-0.70f*activity; o.spacing=spacing;
+    if (!n->episode_valid) {
+        n->episode_until=now+between(n,45000,120000); n->episode_valid=1;
+    }
     o.velocity=0.64f+(float)between(n,0,16)*0.01f;
     o.held_limit=1;
     if (n->world==WORLD_COAST) {
@@ -57,9 +78,10 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
             o.rest=true; o.gap_ms=between(n,4000,9000);
             n->episode_until=now+between(n,45000,120000); ++n->episodes;
             n->phase=0;
+            n->focus=(uint8_t)bound((int)n->focus+(between(n,0,1) ? 2 : -2));
         } else {
             int step=(int)between(n,0,4)-2;
-            o.index=n->last<0 ? 2 : bound(n->last+step);
+            o.index=(n->last<0 || !n->phase) ? n->focus : bound(n->last+step);
             /* A common tone can connect independent envelopes; avoid an
              * unbroken repeated root by changing after a zero step. */
             if (o.index==n->last && (n->notes%3u)==2u) o.index=bound(o.index+1);
@@ -78,12 +100,12 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
             }
         } else {
             if (!n->pos && !n->phase) {
-                n->length=(uint8_t)between(n,2,3);
-                n->direction=(uint8_t)between(n,0,1);
+                begin_figure(n,3);
             }
             if (n->phase==0) {
-                o.index=n->pos ? bound(n->last+(n->direction ? 1 : -1)*(n->last<5 ? 2 : 1)) :
-                                 (int)between(n,2,5);
+                o.index=n->recalled ? n->memory[n->pos]+n->transpose :
+                    n->pos ? bound(n->last+(n->direction ? 1 : -1)*(n->last<5 ? 2 : 1)) :
+                             (int)between(n,2,5);
             } else {
                 o.index=n->motif[n->pos];
                 /* Answer recalls the heard contour. Variation changes only
@@ -93,6 +115,10 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
             }
             o.hold_ms=0; /* natural source decay, never a hidden sustain */
             o.gap_ms=between(n,2000,6000);
+            if(n->pos+1<n->length) {
+                if(n->phase) o.gap_ms=n->rhythm[n->pos];
+                else if(n->recalled) o.gap_ms=n->memory_rhythm[n->pos];
+            }
             ++n->pos;
             if (n->pos==n->length) {
                 n->pos=0; ++n->phase;
@@ -109,9 +135,11 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
             }
         } else {
             if (!n->pos) {
-                n->length=(uint8_t)between(n,2,4);
-                n->direction=(uint8_t)between(n,0,1);
-                o.index=n->last<0 ? 2 : bound(n->last+(int)between(n,0,2)-1);
+                begin_figure(n,4);
+                o.index=n->recalled ? n->memory[0]+n->transpose :
+                        n->last<0 ? 2 : bound(n->last+(int)between(n,0,2)-1);
+            } else if(n->recalled) {
+                o.index=n->memory[n->pos]+n->transpose;
             } else {
                 int direction=n->direction ? 1 : -1;
                 /* Arc: a related step, then a return; no pitch sweep. */
@@ -138,8 +166,24 @@ void world_grammar_commit(world_grammar_t *g, const world_offer_t *o,
     /* All grammar state commits together only after actual admission. */
     world_grammar_t n=o->next;
     if (!o->rest) {
-        if (g->world==WORLD_WOODLAND && g->phase==0)
+        if(g->world==WORLD_COAST && !g->phase) n.focus=(uint8_t)heard;
+        if(g->world!=WORLD_COAST && g->phase==0) {
             n.motif[g->pos]=(int8_t)heard;
+            if(g->pos) {
+                uint32_t dt=now-g->heard_ms;
+                if(g->time_spacing>0)dt=(uint32_t)((float)dt/g->time_spacing);
+                if(dt<1400)dt=1400;
+                if(dt>10000)dt=10000;
+                n.rhythm[g->pos-1]=dt;
+            }
+            if(!g->pos && n.recalled) ++n.returns;
+            if(n.phase==1) {
+                memcpy(n.memory,n.motif,sizeof n.memory);
+                memcpy(n.memory_rhythm,n.rhythm,sizeof n.memory_rhythm);
+                n.memory_len=n.length;
+            }
+        }
+        n.heard_ms=now; n.time_spacing=o->spacing;
         if (g->world==WORLD_WOODLAND && g->phase==1 && !g->pos) ++n.answers;
         n.last=(int8_t)heard; ++n.notes;
     }

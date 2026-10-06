@@ -1,19 +1,25 @@
 # PROJECT STATUS
 
-> **2026-10-06 — geprüfter Soundkern, PR132 gemerged:**
-> Drei gemeinsame Quellen-Slots für Manual/Generate, echte Besitzer bis
-> Release-Ende, tatsächliche Hz/Tails, drei getrennte Score-Kandidaten,
-> ein gemeinsamer Raum und optionale Natur (default aus).
-> Zwölf Minuten echtes PCM bestanden, keine NaN/Inf/Limiter-Eingriffe,
-> 64-/512-Frame-Trajektorien identisch. Merge aebdc4414bd4f7c09bd39e042641946813977ff3.
-> **PR133:** separater reduzierter H743-Produktkandidat und SCN7-Migration;
-> Referenz bleibt Default bis Quellen-/Geräteabnahme. Vollständige CI offen.
-> [Sound-To-do SD00–SD53](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md)
-> und [Implementierungsnachweis](field-ambience-current/docs/audio/PRODUCT_CORE_CHECKPOINT.md)
-> führen offene Klang-/Gerätegates weiter. Langfristige Motive, kurze Hörproben,
-> Kalibrierung, Raum/Natur, Übergänge und Software-Endwerte werden jetzt
-> abgearbeitet; UX/UI/physische Bindings danach. Keine Produkt-Klangfreigabe.
-> Nachfolgende datierte Einträge sind Historie, keine aktuelle Next-Queue.
+> **2026-10-06 — reduzierter Sound Candidate 0.3:**
+> Produktkern mit COAST/WOODLAND/HIGHLANDS, drei gemeinsamen Quellen-Slots
+> (Pluck zwei), tatsächlichen Besitzern/Hz/Tails, gehörten Motiven/Intervallen,
+> einem Float-Raum und getrennter optionaler Nature (boot aus).
+> Product-Profil cross-linkt auf H743; Reference bleibt Default.
+> Letzter vollständig grüner Vor-Release-Stand: PR136 Head
+> b5ddf4049fb627fe88ca8fe1d579f710e2bd1948, CI 37511549818, 6/6 bestanden.
+> 48 min tatsächlich gerendertes PCM plus Stress/Recovery, 64/512 exakt gleich,
+> keine NaN/Inf/Limiter; 24 Summenprobes mit mindestens 9,84 dB True-Peak-Reserve.
+> Natürliche Pluck-Key-up-Tails, samplegenaues Retirement, echte Mute/Clear-
+> Operationen, konservative Harmonie und vorbereitete Pitch-Kontextstornos.
+> ARM: FLASH 190684 B, DTCM 16384 B Stackreservierung, D1 65600 B, D2 60808 B.
+> Kleine Folgeänderung: Scene-Flash-Read-Cacheguard und voller Übergangstest.
+> [54 Aufgaben mit Status](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md),
+> [exakter Softwarevertrag](field-ambience-current/docs/audio/PRODUCT_SOUND_SPEC.md),
+> [Build-/Hörnachweis und Restgates](field-ambience-current/docs/audio/PRODUCT_CORE_CHECKPOINT.md).
+> Klanglich bleiben Quellen/Nature/Endpoints/Blindvergleich/Langzeitwirkung offen.
+> Gerätezeit, Stack, tatsächliche Ausgänge und Storage-Save/Power-loss sind
+> nicht abgenommen. UI/Encoder/Tasten/Display/LED/15-min-Ruhe folgen danach.
+> Ältere datierte Next-/Locked-Einträge und die alte Soundidentität sind Historie.
 
 > **2026-10-04 — Vollständiger Produktentwurf und Umsetzungspakete:**
 > `field-ambience-current/docs/audio/AMBIENT_PRODUCT_BRIEF.md` verbindet

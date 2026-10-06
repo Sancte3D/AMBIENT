@@ -23,6 +23,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/* FAM_SOUND_PRODUCT has a separate, deliberately reduced contract:
+ * include engine_product.h and docs/audio/PRODUCT_SOUND_SPEC.md.
+ * Manual/Generate share Bowed/Pluck/Horn, 3 global slots (Pluck 2), one
+ * floating-point Room and optional Nature. Mode 0/1 = major/minor collection,
+ * FX 0/1 = Dry/Room; legacy layers/native synths/FX adapters are retired.
+ * Events acknowledge actual DSP starts; engine_all_off is a 40 ms whole-chain
+ * Clear. Volume is separate from engine_set_muted(). The older comments below
+ * describe the reference profile only where they conflict with that contract.
+ */
 void engine_init(void);
 
 /* Cell-tap forwarders (thin wrappers around pad_note_on/off for now;
