@@ -82,7 +82,7 @@ world_offer_t world_grammar_propose(const world_grammar_t *g, uint32_t now, floa
                 n->direction=(uint8_t)between(n,0,1);
             }
             if (n->phase==0) {
-                o.index=n->pos ? bound(n->last+(n->direction ? 1 : -1)) :
+                o.index=n->pos ? bound(n->last+(n->direction ? 1 : -1)*(n->last<5 ? 2 : 1)) :
                                  (int)between(n,2,5);
             } else {
                 o.index=n->motif[n->pos];

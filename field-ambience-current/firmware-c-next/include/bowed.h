@@ -16,6 +16,7 @@
 #define BOWED_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 void bowed_init(void);
 
@@ -35,6 +36,9 @@ void bowed_note(float freq_hz, float amp);
 void bowed_set_colour(int colour);
 
 int  bowed_active_count(void);
+/* Audio-owned ticket query, including released sources and prepared starts. */
+uint16_t bowed_active_sources(void);
+void bowed_set_tone(float tone_0_1);
 
 /* Mixes the voices into dry (+ a copy into the reverb send). */
 void bowed_render_mix(float *dry_L, float *dry_R,
