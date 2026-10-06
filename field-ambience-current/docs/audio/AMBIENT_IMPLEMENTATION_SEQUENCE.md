@@ -179,3 +179,9 @@ Next completed unit: close source/transition occupancy against the actual
 entry/exit paths, then WOODLAND dry Pluck excitation and damping. Source sound
 quality and speaker/headphone behavior are still unapproved. No new pools,
 room instances, SD streaming or new per-sample calculations were added.
+
+Release verification for this unit succeeded at code commit c76617cbecaadc572b82d594c3fe87fab3931507:
+all five CI jobs green; Flash 254,028 B, DTCM 119,440 B, D1 417,376 B, D2
+258,112 B. Actual reductions are 1,196 Flash bytes and 64 D1 bytes; inactive
+legacy pools are not counted as freed. Exact run and open device gates are in
+WORLD_ROUTING_CHECKPOINT.md.

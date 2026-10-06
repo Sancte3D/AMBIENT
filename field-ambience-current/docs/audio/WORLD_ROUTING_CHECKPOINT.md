@@ -206,3 +206,24 @@ release tails; atmosphere/texture and the shared room remain distinct. Global
 manual admission, background semantics, body/FX transition behavior and on-device
 CPU/stack/listening acceptance remain separate work. No medical/calming efficacy
 or final timbral quality is inferred from software tests.
+
+### Verified Release after accompaniment removal
+
+Tested code commit: `c76617cbecaadc572b82d594c3fe87fab3931507`.
+CI: https://github.com/Sancte3D/AMBIENT/actions/runs/37457660550
+All five jobs succeeded, including the full firmware-c-next host suite and
+H743 job 112249120145. Target flags remain Cortex-M7 hard-float, `-O3 -DNDEBUG`.
+
+| Region | Used bytes | Free bytes | Change from preceding Release |
+|---|---:|---:|---:|
+| Flash (scene sector excluded) | 254,028 | 1,712,052 | -1,196 |
+| DTCM | 119,440 | 11,632 | 0 |
+| D1 | 417,376 | 106,912 | -64 |
+| D2 | 258,112 | 36,800 | 0 |
+| D3 | 0 | 65,536 | 0 |
+| ITCM | 0 | 65,536 | 0 |
+
+The smaller scheduler saves static state/code; source pools and room buffers
+are retained. All configured banks link successfully. DTCM reserve is still
+limited. No CPU deadline, stack high-water or physical sound-quality result
+is implied by this build; those need the real instrument.
