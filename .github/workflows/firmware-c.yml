@@ -130,6 +130,28 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Upload Color endpoint hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-color-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/color
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload SHAPE endpoint hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-shape-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/shape
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload blind dry World comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-blind-worlds-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/blind
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest
@@ -234,5 +256,6 @@ jobs:
             field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.bin
             field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.hex
             field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-product/PRODUCT_BUILD_AUDIT.json
           if-no-files-found: error
           retention-days: 14

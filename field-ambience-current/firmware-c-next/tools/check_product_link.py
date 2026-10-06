@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Audit actual ARM ELF and compilation inputs, not host sizeof estimates."""
 import json
+import hashlib
 from pathlib import Path
 import re
 import subprocess
@@ -41,3 +42,33 @@ assert 0x24000000<=address and address+size<=0x24080000 and address%32==0,(hex(a
 print(f'PRODUCT LINK audio DMA: 0x{address:08x}, {size} B, aligned internal D1')
 assert all('FAM_SOUND_PRODUCT' in c['command'] for c in compiled if Path(c['file']).name in required)
 print('PRODUCT LINK PASS: reference DSP/archive excluded, one internal room, DMA placement verified')
+
+# Compiler-reported individual frames. This is deliberately not a call-chain,
+# ISR nesting or runtime high-water claim (those are SD48 on real hardware).
+frames=[]
+for path in build.rglob('*.su'):
+    for line in path.read_text().splitlines():
+        fields=line.split('\t')
+        if len(fields)!=3:continue
+        match=re.match(r'(.+):(\d+):(\d+):(.+)',fields[0])
+        if not match:continue
+        source=Path(match[1]);function=match[4]
+        if '/vendor/' in str(source):continue
+        frames.append({'source':source.name,'function':function,
+                       'bytes':int(fields[1]),'kind':fields[2]})
+assert frames,'-fstack-usage evidence missing'
+core={'engine_product.c','world_grammar.c','bowed.c','horn.c','pluck.c','nature.c','ambient_room.c'}
+core_frames=[r for r in frames if r['source'] in core]
+assert core_frames and max(r['bytes'] for r in core_frames)<=1024,core_frames
+assert all('unbounded' not in r['kind'] for r in core_frames),core_frames
+for function in ('engine_render','ambient_room_process','nature_render','engine_generative_tick','pluck_note_on','scenes_save'):
+    rows=[r for r in frames if r['function']==function or r['function'].startswith(function+'.')]
+    assert rows,function
+    print(f"PRODUCT FRAME {function}: {max(r['bytes'] for r in rows)} B (compiler, not stack high-water)")
+report={'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
+        'compiler':subprocess.check_output(['arm-none-eabi-gcc','--version'],text=True).splitlines()[0],
+        'profile':'product','individual_frames':sorted(frames,key=lambda r:r['bytes'],reverse=True),
+        'core_max_frame_bytes':max(r['bytes'] for r in core_frames),
+        'limitations':'Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48.'}
+(build/'PRODUCT_BUILD_AUDIT.json').write_text(json.dumps(report,indent=2)+'\n')
+print(f"PRODUCT FRAME PASS: {len(core_frames)} core frames, maximum {report['core_max_frame_bytes']} B")

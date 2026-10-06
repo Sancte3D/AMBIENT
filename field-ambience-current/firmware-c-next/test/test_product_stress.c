@@ -10,6 +10,7 @@
 #include <math.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 enum { SR=44100,BLOCK=512 };
 static int16_t pcm[BLOCK*2];
 static uint32_t hook_now,last_on,longest_gap,onsets,peak;
@@ -116,7 +117,53 @@ static void transitions(void) {
     assert(engine_generative_melody_count()>2);
     engine_all_off();audio(.1);
 }
+
+static void mute_contract(void) {
+    for(int world=0;world<3;++world) {
+        engine_init();engine_set_world(world);engine_set_room(1);
+        assert(engine_try_note_on(0,220,1));audio(.5);
+        assert(engine_active_voices()==1 && ambient_room_peak()>0);
+        engine_set_muted(true);assert(engine_muted());audio(.06);
+        assert(!engine_clear_pending() && engine_active_voices()==0);
+        assert(ambient_room_peak()==0);
+        for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0);
+        assert(!engine_try_note_on(1,220,1));
+        engine_set_world((world+1)%3);engine_set_gen_seed(321);
+        engine_set_color(1);engine_set_room(1);audio(.2);
+        for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0);
+        engine_set_muted(false);audio(.5);
+        assert(!engine_muted() && engine_active_voices()==0 && ambient_room_peak()==0);
+        for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0); /* no old room revival */
+
+        engine_init();engine_set_world(world);engine_set_nature(1);
+        engine_set_generative(true,-1);engine_generative_tick(0);audio(.1);
+        engine_generative_tick(100);int heard=engine_generative_melody_count();
+        assert(heard==1);
+        engine_set_muted(true);audio(.06);
+        engine_generative_tick(20000);assert(engine_active_voices()==0);
+        assert(engine_generative_melody_count()==heard);
+        for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0);
+        engine_set_nature(1);audio(.2); /* target edits do not defeat mute */
+        for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0);
+        engine_set_muted(false);engine_generative_tick(21000);audio(.1);
+        engine_generative_tick(21100);
+        assert(engine_generative_melody_count()==heard+1 && engine_active_voices()>0);
+        assert(engine_nonfinite_samples()==0 && engine_output_limited_samples()==0);
+        engine_all_off();audio(.1);
+
+        engine_init();engine_set_world(world);engine_set_nature(1);audio(.2);
+        engine_set_muted(true);audio(.005);engine_set_muted(false);
+        audio(.06);assert(!engine_clear_pending());audio(.2);
+        assert(engine_active_voices()==0 && ambient_room_peak()==0);
+        int p=0;for(int i=0;i<BLOCK*2;++i)if(abs(pcm[i])>p)p=abs(pcm[i]);
+        assert(p>0); /* fresh optional Nature after an early unmute */
+        engine_all_off();audio(.1);
+    }
+    puts("PRODUCT MUTE PASS: 40 ms exact zero, no tail revival, fresh Generate, protected targets and early unmute");
+}
+
 int main(void) {
+    mute_contract();
     transitions();
     for(int w=0;w<3;++w)for(int c=0;c<8;++c)source_limits(w,c);
     for(int w=0;w<3;++w)for(int c=0;c<4;++c)long_case(w,c);

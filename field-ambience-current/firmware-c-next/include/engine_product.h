@@ -18,4 +18,8 @@ int engine_product_collection(void);
 /* Bounded lower/upper register choices. Upper is not a promised octave. */
 int engine_product_cell_midi(int cell,bool upper);
 bool engine_clear_pending(void);
+/* Soft 40 ms whole-chain silence, preserves targets and Generate intent.
+ * Old sources/room are cleared behind zero; resume creates only fresh events. */
+void engine_set_muted(bool on);
+bool engine_muted(void);
 #endif

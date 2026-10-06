@@ -37,7 +37,7 @@ static int pending_index,pending_owner,pending_world;
 static engine_note_hook_t note_hook;
 static int world,minor,tonic_pc,fx_mode,last_midi,note_count;
 static uint32_t seed,now_ms,last_user_ms,retry_ms,rejects;
-static bool generate,autoplay,user_present,user_seen,suppressed,clearing;
+static bool generate,autoplay,user_present,user_seen,suppressed,clearing,muted,resume_nature;
 static float activity,color,room,nature_amount;
 static _Atomic uint32_t quick_mask,release_mask,audio_mask,started_mask,audio_epoch,audio_frames,volume_bits,color_bits,limited,faults;
 static _Atomic bool clear_request,clear_done,output_enabled,room_quiet;
@@ -63,6 +63,11 @@ static void reap(void) {
     if(clearing && atomic_load_explicit(&clear_done,memory_order_acquire)) {
         memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
         pending=false; clearing=false; atomic_store(&clear_request,false);
+        if(resume_nature && !muted) {
+            nature_set_amount(nature_amount);
+            if(nature_amount>0) atomic_store(&output_enabled,true);
+        }
+        resume_nature=false;
     }
     uint32_t frames=clock_frames();
     bool quiet=atomic_load_explicit(&room_quiet,memory_order_acquire);
@@ -158,7 +163,7 @@ static bool in_collection(float hz) {
 static bool admit(uint8_t owner,float hz,float velocity) {
     reap();
     if(owner>=SOURCES || !isfinite(hz) || !isfinite(velocity) || velocity<=0 ||
-       hz<140 || hz>470 || clearing || !in_collection(hz)) return false;
+       hz<140 || hz>470 || clearing || muted || !in_collection(hz)) return false;
     int empty=-1,local=0;
     for(int i=0;i<SLOTS;++i) {
         if(!slots[i].used) { if(empty<0) empty=i; continue; }
@@ -220,13 +225,32 @@ static void release_generated(void) {
        (slots[i].owner==6 || slots[i].owner==7 || slots[i].owner==15)) engine_note_off(slots[i].owner);
     pending=false;
 }
-void engine_all_off(void) {
-    reap(); generate=false; suppressed=false; pending=false;
+static void quiet_chain(void) {
+    pending=false; resume_nature=false;
     nature_set_amount(0); release_all(); clearing=true;
     atomic_store(&clear_done,false); atomic_store(&output_enabled,false);
     atomic_store_explicit(&clear_request,true,memory_order_release);
     if(note_hook) note_hook(-1,0,0,0);
 }
+void engine_all_off(void) {
+    reap(); generate=false; suppressed=false; quiet_chain();
+}
+void engine_set_muted(bool on) {
+    reap(); if(muted==on) return;
+    muted=on;
+    if(on) quiet_chain();
+    else {
+        /* Restore only the optional layer target; old tonal/room state is
+         * gone. Generate keeps intent and heard memory, and schedules a new
+         * event after clear acknowledgement. No held-key retrigger. */
+        resume_nature=clearing;
+        if(!clearing) {
+            nature_set_amount(nature_amount);
+            if(nature_amount>0) atomic_store(&output_enabled,true);
+        }
+    }
+}
+bool engine_muted(void) { return muted; }
 bool engine_clear_pending(void) { reap(); return clearing; }
 void engine_set_note_hook(engine_note_hook_t h) { note_hook=h; }
 void engine_set_master_volume(float v) {
@@ -242,10 +266,10 @@ void engine_set_activity(float v) { if(isfinite(v)) activity=dsp_clampf(v,0,1); 
 void engine_set_room(float v) { if(isfinite(v)) { room=dsp_clampf(v,0,1); ambient_room_set(room); } }
 void engine_set_nature(float v) {
     if(!isfinite(v)) return;
-    nature_amount=dsp_clampf(v,0,1); nature_set_amount(clearing ? 0 : nature_amount);
+    nature_amount=dsp_clampf(v,0,1); nature_set_amount(clearing || muted ? 0 : nature_amount);
     /* An explicit optional-Nature target is audible without a phantom note.
      * Init/boot/World defaults are zero; Clear still ends the whole session. */
-    if(nature_amount>0 && !clearing) atomic_store_explicit(&output_enabled,true,memory_order_release);
+    if(nature_amount>0 && !clearing && !muted) atomic_store_explicit(&output_enabled,true,memory_order_release);
 }
 void engine_set_world(int i) {
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
@@ -284,7 +308,7 @@ void engine_set_generative(bool on,int program) {
     if(on)retire_context(true);else release_all();
     pending=false; generate=on; suppressed=false; retry_ms=now_ms;
     if(on) world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u));
-    nature_set_amount(on ? nature_amount : 0);
+    nature_set_amount(on && !muted && !clearing ? nature_amount : 0);
 }
 void engine_set_autoplay_melody(int on) { autoplay=on!=0; if(!autoplay) release_generated(); }
 int engine_autoplay_melody(void) { return autoplay; }
@@ -302,7 +326,7 @@ void engine_generative_tick(uint32_t ms) {
     bool wait=user_seen && (user_present || (uint32_t)(ms-last_user_ms)<8000u);
     if(wait && !suppressed) release_generated();
     suppressed=wait;
-    if(!generate || !autoplay || suppressed || clearing || pending ||
+    if(!generate || !autoplay || suppressed || clearing || muted || pending ||
        (int32_t)(ms-retry_ms)<0 || !world_grammar_due(&grammar,ms)) return;
     world_offer_t offer=world_grammar_propose(&grammar,ms,activity);
     if(offer.rest) { world_grammar_commit(&grammar,&offer,offer.index,ms); return; }
@@ -401,6 +425,7 @@ void engine_init(void) {
     memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
     world=minor=0; tonic_pc=2; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=pending=false; autoplay=true;
+    muted=resume_nature=false;
     note_hook=0; fx_mode=1; last_midi=note_count=0;
     atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&audio_mask,0); atomic_store(&started_mask,0);
     atomic_store(&audio_epoch,0); atomic_store(&audio_frames,0); atomic_store(&limited,0); atomic_store(&faults,0);
