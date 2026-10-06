@@ -283,6 +283,29 @@ einem Hörvergleich vermischen. Keine Tests, die nur Tabellen abschreiben.
 Ein entferntes Feature schließt seine Aufgabe erst, wenn alle Eintrittspunkte
 und die Migration geprüft sind; ein ungehörter Klang wird nicht abgehakt.
 
+### Umsetzung am 2026-10-06 nach Erstellung der Roadmap
+
+PR130 ist gemerged: stabiler COAST-Grundton und sichere Float-/Pluck-Inputs,
+vollständige Host-Suite und tatsächlicher H743-Release-Link bestanden.
+COAST-Dry-Maximalschwingung 3,102 → 0,049 dB in 24 PCM-Proben.
+SD02/SD07 bleiben als Gesamtaufgaben offen, bis ihre übrigen Hör-/Routing-
+und Produktverträge erfüllt sind.
+
+Der eigenständige Score-Baustein `world_grammar.c` enthält COAST, WOODLAND
+und HIGHLANDS als drei Kontrolllogik-Kandidaten. 11.520 deterministische
+Transaktionen, gehörte WOODLAND-Antworten, alle Keys und Timer-Überlauf
+lokal bestanden; Host-CI ergänzt. SD13–SD17 sind **Teilumsetzung**:
+keine Integration in den Produktpfad, keine tatsächliche World-PCM-Abnahme,
+keine Freigabe der HIGHLANDS-Quelle.
+
+[PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) enthält exakten
+Merge-/Ressourcennachweis, Reduktionsentscheidung und die konkreten nächsten
+Korrekturen. Ein lokaler Integrationsentwurf ist ungeprüft; die Ausführungs-
+umgebung meldet `environment_offline`. Er wird deshalb nicht aktiviert.
+Soundarbeit wird bei verfügbarer Ausführung fortgesetzt; keine Checkbox wird
+aufgrund dieser Infrastrukturunterbrechung oder einer bloßen Planentscheidung
+geschlossen.
+
 ## Verbindliche Arbeitsliste
 
 **54 offene Aufgaben, SD00–SD53.** Bereits erledigte Teilbefunde stehen oben und
@@ -708,6 +731,6 @@ jetzt ist definiert, was sie entscheiden muss:
 | Physische Ausgabe | Tatsächliche Ausgänge/Lasten/Stromzustände; Pegel/DC/Noise/Pops und reale Lautstärke | Keine elektrische oder akustische Störursache; digitale Headroom und physischer Pegel separat dokumentiert |
 | Langes Zuhören | Mehrere echte Sitzungen/Seeds ohne ständige Eingriffe; gezielte sensible Stellen protokollieren | Wiederkehr schafft Zusammenhang, Entwicklung bleibt ruhig; keine ungelösten störenden Stellen oder Wirkungsbehauptung |
 
-**Nächste Umsetzungseinheit: SD02 — COAST/Bowed trocken.** Zuerst Begleitsäge,
+**Nächste Umsetzungseinheit: SD08–SD13 — gemeinsame Besitzer-/Zulassungslogik und tatsächliches Tail-Gedächtnis.** Der COAST-Begleitsägen-Fix ist gemerged; seine übrige Hörabnahme bleibt offen. Historischer Ausgang: Begleitsäge,
 Resonanzen und Register als einzelne Ursachen prüfen; höchstens eine gezielte
 Korrektur und ein kurzer Vergleich. Noch kein Grammatik-, Raum- oder UI-Umbau.
