@@ -58,7 +58,6 @@ struct AmbientFx {
 
     float tape_wow_phase;
     float tape_flutter_phase;
-    float tape_hum_phase;
     float tape_drift;
     float tape_lp_l;
     float tape_lp_r;
@@ -124,7 +123,7 @@ static const char *const k_mode_names[AMBIENT_FX_MODE_COUNT] = {
 };
 
 static const char *const k_world_names[AMBIENT_FX_WORLD_COUNT] = {
-    "TOKYO CITY", "CRYSTAL COAST", "MIDNIGHT DRIVE", "AFTER HOURS"
+    "TOKYO CITY", "CRYSTAL COAST", "MIDNIGHT DRIVE", "AFTER HOURS", "DESERT"
 };
 
 static float clampf(float x, float lo, float hi)
@@ -281,7 +280,8 @@ AmbientFxParameters ambient_fx_world_parameters(AmbientFxWorld world)
         {0.62f, 0.54f, 0.38f, 0.32f, 0.38f, 0.05f, 0.12f, 0.78f, 0.34f, 0.84f, 0.430f},
         {0.82f, 0.68f, 0.34f, 0.46f, 0.10f, 0.18f, 0.22f, 0.94f, 0.72f, 0.82f, 0.570f},
         {0.56f, 0.50f, 0.52f, 0.40f, 0.58f, 0.04f, 0.08f, 0.88f, 0.30f, 0.86f, 0.360f},
-        {0.88f, 0.72f, 0.44f, 0.30f, 0.66f, 0.07f, 0.18f, 0.84f, 0.26f, 0.80f, 0.500f}
+        {0.88f, 0.72f, 0.44f, 0.30f, 0.66f, 0.07f, 0.18f, 0.84f, 0.26f, 0.80f, 0.500f},
+        {0.58f,0.40f,0.24f,0.18f,0.32f,0.01f,0.06f,0.66f,0.43f,0.84f,0.315f}
     };
     if ((unsigned)world >= AMBIENT_FX_WORLD_COUNT) {
         world = AMBIENT_FX_TOKYO_CITY;
@@ -455,7 +455,6 @@ void ambient_fx_reset(AmbientFx *fx)
 
     fx->tape_wow_phase = 0.0f;
     fx->tape_flutter_phase = 0.19f;
-    fx->tape_hum_phase = 0.0f;
     fx->tape_drift = 0.0f;
     fx->tape_lp_l = 0.0f;
     fx->tape_lp_r = 0.0f;
@@ -553,7 +552,6 @@ static void process_tape(AmbientFx *fx, float in_l, float in_r,
     float sr = (float)fx->config.sample_rate;
     advance_phase(&fx->tape_wow_phase, (0.31f + 0.10f * fx->current.motion) / sr);
     advance_phase(&fx->tape_flutter_phase, (5.70f + 0.80f * fx->current.motion) / sr);
-    advance_phase(&fx->tape_hum_phase, 50.0f / sr);
 
     float random = random_bipolar(fx);
     fx->tape_drift += (random - fx->tape_drift) * 0.000075f;
@@ -578,10 +576,8 @@ static void process_tape(AmbientFx *fx, float in_l, float in_r,
     float drive = 1.0f + 1.45f * age;
     colored_l = soft_clip(colored_l * drive) * (1.0f - 0.12f * age);
     colored_r = soft_clip(colored_r * drive) * (1.0f - 0.12f * age);
-    float hiss = random_bipolar(fx) * (0.00145f * age * age);
-    float hum = fast_sine(fx->tape_hum_phase) * (0.00032f * age * age);
-    colored_l += hiss + hum;
-    colored_r += hiss * 0.91f + hum;
+    /* Age colours existing notes. No synthetic mains hum or idle hiss:
+     * silence stays silent without a gate that could truncate quiet tails. */
 
     float mix = 0.88f * age;
     *out_l = in_l * (1.0f - mix) + colored_l * mix;
@@ -604,9 +600,12 @@ static void process_chorus(AmbientFx *fx, float in_l, float in_r,
     float width = fx->current.width;
     float field_l = wet_l * (1.0f - 0.55f * width) + wet_r * (0.55f * width);
     float field_r = wet_r * (1.0f - 0.55f * width) + wet_l * (0.55f * width);
-    float mix = 0.55f * motion;
-    *out_l = in_l * (1.0f - 0.38f * mix) + field_l * (0.72f * mix);
-    *out_r = in_r * (1.0f - 0.38f * mix) + field_r * (0.72f * mix);
+    /* Keep the direct body dominant at every knob position. At full Motion
+     * dry/wet gains are .94/.18; a delayed tone cannot approach a deep null.
+     * Pitch motion and stereo timing remain, as a supporting layer. */
+    float mix = 0.24f * motion;
+    *out_l = in_l * (1.0f - 0.25f * mix) + field_l * (0.75f * mix);
+    *out_r = in_r * (1.0f - 0.25f * mix) + field_r * (0.75f * mix);
 }
 
 static void process_delay_wet(AmbientFx *fx, float in_l, float in_r,
@@ -777,7 +776,9 @@ static void process_blur(AmbientFx *fx, float in_l, float in_r,
     for (unsigned i = 0u; i < 2u; ++i) {
         FxBlurGrain *grain = &fx->grains[i];
         float window = smooth_window(grain->phase);
-        float travel = grain->phase * grain_frames * (0.18f + 0.22f * fx->current.motion);
+        /* Fixed-rate reads preserve pitch. Moving the read head by 0.18..0.40
+         * samples/sample transposed BLUR by 2.9..5.8 semitones, even in DREAM. */
+        float travel = 0.0f;
         float delay = clampf(grain->delay_frames - travel,
                              8.0f, (float)fx->blur.capacity - 2.0f);
         float left = read_stereo_ring(&fx->blur, 0u, delay);
@@ -798,9 +799,12 @@ static void process_blur(AmbientFx *fx, float in_l, float in_r,
     float coefficient = one_pole_coefficient(2600.0f + 3400.0f * fx->current.tone, sr);
     fx->blur_lp_l += (wet_l - fx->blur_lp_l) * coefficient;
     fx->blur_lp_r += (wet_r - fx->blur_lp_r) * coefficient;
-    float mix = 0.78f * fx->current.blur;
-    *out_l = in_l * (1.0f - 0.58f * mix) + fx->blur_lp_l * (0.78f * mix);
-    *out_r = in_r * (1.0f - 0.58f * mix) + fx->blur_lp_r * (0.78f * mix);
+    /* A cloud around a stable note. The former .548/.608 dry/wet balance
+     * could nearly cancel held tones as grain phases changed. Full Blur is
+     * now .92/.24; it softens the trail without replacing the foreground. */
+    float mix = 0.40f * fx->current.blur;
+    *out_l = in_l * (1.0f - 0.20f * mix) + fx->blur_lp_l * (0.60f * mix);
+    *out_r = in_r * (1.0f - 0.20f * mix) + fx->blur_lp_r * (0.60f * mix);
 }
 
 void ambient_fx_trigger_reverse_swell(AmbientFx *fx,
@@ -879,6 +883,7 @@ static float transition_gain(AmbientFx *fx)
 }
 
 static void process_frame(AmbientFx *fx, float in_l, float in_r,
+                          float send_l, float send_r, int buses,
                           float *out_l, float *out_r)
 {
     smooth_parameters(fx);
@@ -887,19 +892,24 @@ static void process_frame(AmbientFx *fx, float in_l, float in_r,
     AmbientFxMode mode = fx->mode;
     float left = in_l;
     float right = in_r;
+    /* Generator sends are nominally 0.35..0.55. The FDN's conservative
+     * injection/output gains need return makeup to keep Space audible.
+     * The legacy standalone API retains its original calibration. */
+    const float hall_return = buses ? 4.0f : 1.0f;
+    const float echo_return = buses ? 2.0f : 1.0f;
 
     if (mode == AMBIENT_FX_DARK_REVERB) {
         float wet_l, wet_r;
-        process_reverb_wet(fx, in_l, in_r, 0.0f, &wet_l, &wet_r);
-        float wet = fx->current.atmosphere * (0.16f + 0.54f * fx->current.space);
-        left = in_l * (1.0f - 0.24f * wet) + wet_l * wet;
-        right = in_r * (1.0f - 0.24f * wet) + wet_r * wet;
+        process_reverb_wet(fx, send_l, send_r, 0.0f, &wet_l, &wet_r);
+        float wet = fx->current.atmosphere * (0.16f + 0.54f * fx->current.space) * hall_return;
+        left = in_l * (1.0f - (buses ? 0.0f : 0.24f) * wet) + wet_l * wet;
+        right = in_r * (1.0f - (buses ? 0.0f : 0.24f) * wet) + wet_r * wet;
     } else if (mode == AMBIENT_FX_PING_PONG_DELAY) {
         float wet_l, wet_r;
-        process_delay_wet(fx, in_l, in_r, &wet_l, &wet_r);
-        float wet = 0.62f * fx->current.echo;
-        left = in_l * (1.0f - 0.14f * wet) + wet_l * wet;
-        right = in_r * (1.0f - 0.14f * wet) + wet_r * wet;
+        process_delay_wet(fx, send_l, send_r, &wet_l, &wet_r);
+        float wet = 0.62f * fx->current.echo * echo_return;
+        left = in_l * (1.0f - (buses ? 0.0f : 0.14f) * wet) + wet_l * wet;
+        right = in_r * (1.0f - (buses ? 0.0f : 0.14f) * wet) + wet_r * wet;
     } else if (mode == AMBIENT_FX_CHORUS_DETUNE) {
         process_chorus(fx, in_l, in_r, &left, &right);
     } else if (mode == AMBIENT_FX_TAPE_AGE) {
@@ -908,16 +918,16 @@ static void process_frame(AmbientFx *fx, float in_l, float in_r,
         float wet_l, wet_r;
         float source_l = in_l + swell_l;
         float source_r = in_r + swell_r;
-        process_reverb_wet(fx, source_l, source_r, 0.0f, &wet_l, &wet_r);
-        float wet = 0.48f * fx->current.atmosphere;
+        process_reverb_wet(fx, send_l + swell_l, send_r + swell_r, 0.0f, &wet_l, &wet_r);
+        float wet = 0.48f * fx->current.atmosphere * hall_return;
         left = source_l + wet_l * wet;
         right = source_r + wet_r * wet;
     } else if (mode == AMBIENT_FX_SHIMMER_REVERB) {
         float wet_l, wet_r;
-        process_reverb_wet(fx, in_l, in_r, fx->current.shimmer, &wet_l, &wet_r);
-        float wet = fx->current.atmosphere * (0.18f + 0.55f * fx->current.space);
-        left = in_l * (1.0f - 0.24f * wet) + wet_l * wet;
-        right = in_r * (1.0f - 0.24f * wet) + wet_r * wet;
+        process_reverb_wet(fx, send_l, send_r, fx->current.shimmer, &wet_l, &wet_r);
+        float wet = fx->current.atmosphere * (0.18f + 0.55f * fx->current.space) * hall_return;
+        left = in_l * (1.0f - (buses ? 0.0f : 0.24f) * wet) + wet_l * wet;
+        right = in_r * (1.0f - (buses ? 0.0f : 0.24f) * wet) + wet_r * wet;
     } else if (mode == AMBIENT_FX_BLUR) {
         process_blur(fx, in_l, in_r, &left, &right);
     } else if (mode == AMBIENT_FX_DREAM_CHAIN) {
@@ -929,20 +939,28 @@ static void process_frame(AmbientFx *fx, float in_l, float in_r,
         process_tape(fx, in_l, in_r, &tape_l, &tape_r);
         process_chorus(fx, tape_l, tape_r, &chorus_l, &chorus_r);
         process_blur(fx, chorus_l, chorus_r, &blur_l, &blur_r);
-        process_delay_wet(fx, blur_l, blur_r, &echo_l, &echo_r);
-        float echo_mix = 0.48f * fx->current.echo;
+        process_delay_wet(fx, buses ? send_l : blur_l, buses ? send_r : blur_r, &echo_l, &echo_r);
+        float echo_mix = 0.48f * fx->current.echo * echo_return;
         float spatial_l = blur_l + echo_l * echo_mix;
         float spatial_r = blur_r + echo_r * echo_mix;
         spatial_l += swell_l;
         spatial_r += swell_r;
-        process_reverb_wet(fx, spatial_l, spatial_r, fx->current.shimmer,
+        process_reverb_wet(fx, buses ? send_l + echo_l * echo_mix + swell_l : spatial_l,
+                           buses ? send_r + echo_r * echo_mix + swell_r : spatial_r, fx->current.shimmer,
                            &wet_l, &wet_r);
-        float wet = fx->current.atmosphere * (0.13f + 0.52f * fx->current.space);
-        left = spatial_l * (1.0f - 0.22f * wet) + wet_l * wet;
-        right = spatial_r * (1.0f - 0.22f * wet) + wet_r * wet;
+        float wet = fx->current.atmosphere * (0.13f + 0.52f * fx->current.space) * hall_return;
+        left = spatial_l * (1.0f - (buses ? 0.0f : 0.22f) * wet) + wet_l * wet;
+        right = spatial_r * (1.0f - (buses ? 0.0f : 0.22f) * wet) + wet_r * wet;
     }
 
     float mode_gain = transition_gain(fx);
+    if (buses) {
+        /* Fade the effect contribution; a mode change never mutes the note.
+         * Match bypass unity and leave the final safety stage to the mixer. */
+        *out_l = in_l + (left - in_l) * mode_gain;
+        *out_r = in_r + (right - in_r) * mode_gain;
+        return;
+    }
     left *= mode_gain;
     right *= mode_gain;
 
@@ -973,9 +991,21 @@ void ambient_fx_process_f32(AmbientFx *fx,
         float in_l = finite_audio(interleaved_stereo[i * 2u]);
         float in_r = finite_audio(interleaved_stereo[i * 2u + 1u]);
         float out_l, out_r;
-        process_frame(fx, in_l, in_r, &out_l, &out_r);
+        process_frame(fx, in_l, in_r, in_l, in_r, 0, &out_l, &out_r);
         interleaved_stereo[i * 2u] = out_l;
         interleaved_stereo[i * 2u + 1u] = out_r;
+    }
+}
+
+void ambient_fx_process_buses_f32(AmbientFx *fx, float *dry,
+                                  const float *send, size_t frames)
+{
+    if (!fx || !fx->initialized || !dry || !send) return;
+    for (size_t i = 0; i < frames; ++i) {
+        float l, r;
+        process_frame(fx, finite_audio(dry[2*i]), finite_audio(dry[2*i+1]),
+                      finite_audio(send[2*i]), finite_audio(send[2*i+1]), 1, &l, &r);
+        dry[2*i] = l; dry[2*i+1] = r;
     }
 }
 
@@ -994,7 +1024,7 @@ void ambient_fx_process_i16(AmbientFx *fx,
         float in_l = i16_to_float(interleaved_stereo[i * 2u]);
         float in_r = i16_to_float(interleaved_stereo[i * 2u + 1u]);
         float out_l, out_r;
-        process_frame(fx, in_l, in_r, &out_l, &out_r);
+        process_frame(fx, in_l, in_r, in_l, in_r, 0, &out_l, &out_r);
         interleaved_stereo[i * 2u] = float_to_i16(out_l);
         interleaved_stereo[i * 2u + 1u] = float_to_i16(out_r);
     }

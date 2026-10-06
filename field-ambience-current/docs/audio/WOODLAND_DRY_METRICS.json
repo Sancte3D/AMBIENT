@@ -1,0 +1,175 @@
+{
+  "duration_s": 26,
+  "reference_seconds": [
+    0,
+    12
+  ],
+  "silence_seconds": [
+    12,
+    14
+  ],
+  "candidate_seconds": [
+    14,
+    26
+  ],
+  "dry": true,
+  "body": false,
+  "effects": false,
+  "backgrounds": false,
+  "software_only": true,
+  "damping": 0.42,
+  "shape_attack": 0.5,
+  "shape_release": 0.5,
+  "phrase_hz": [
+    146.832383,
+    220.0,
+    164.813778
+  ],
+  "excerpt_target_lufs": -26.9,
+  "excerpt_gain_db": [
+    -2.8999999999999986,
+    -3.299999999999997
+  ],
+  "raw_excerpt_measurements": [
+    {
+      "integrated_lufs": -24.0,
+      "true_peak_dbfs": -7.1
+    },
+    {
+      "integrated_lufs": -23.6,
+      "true_peak_dbfs": -11.7
+    }
+  ],
+  "file_measurement": {
+    "integrated_lufs": -26.7,
+    "true_peak_dbfs": -10.0
+  },
+  "source_sha256": [
+    "9f1b7ef29ed83e1db2be2f6dc49c014d34cfc5b21c2c3febdca5e8fef1252027",
+    "aa4ac35bed9a5b8d9c26b39121c0b81be147339562dc6b5d827f34e1ed47b101"
+  ],
+  "reference": [
+    {
+      "hz": 60,
+      "repeats": 12,
+      "rms_spread_db": 1.6701279067811812,
+      "max_window_mean_over_rms": 0.3547768637698053,
+      "min_fundamental_over_strongest_overtone": 0.13418205648934606,
+      "max_first_sample": 0.26785622699347367,
+      "max_peak": 0.7521311943922752,
+      "max_first_50ms_sample_step": 0.4282141396617675
+    },
+    {
+      "hz": 110,
+      "repeats": 12,
+      "rms_spread_db": 3.62750666885105,
+      "max_window_mean_over_rms": 0.4510092353189117,
+      "min_fundamental_over_strongest_overtone": 0.053106171767857965,
+      "max_first_sample": 0.38420020780746517,
+      "max_peak": 0.7495089911008975,
+      "max_first_50ms_sample_step": 0.3977913402500502
+    },
+    {
+      "hz": 146.832,
+      "repeats": 12,
+      "rms_spread_db": 5.142314839089572,
+      "max_window_mean_over_rms": 0.5097822977215414,
+      "min_fundamental_over_strongest_overtone": 0.05992152092613912,
+      "max_first_sample": 0.21323040745211103,
+      "max_peak": 0.7766943377755905,
+      "max_first_50ms_sample_step": 0.46400850642269015
+    },
+    {
+      "hz": 220,
+      "repeats": 12,
+      "rms_spread_db": 4.939947586052524,
+      "max_window_mean_over_rms": 0.4750212791214172,
+      "min_fundamental_over_strongest_overtone": 0.1538975614705476,
+      "max_first_sample": 0.3913717236127262,
+      "max_peak": 0.699996730723542,
+      "max_first_50ms_sample_step": 0.4597231001902945
+    },
+    {
+      "hz": 440,
+      "repeats": 12,
+      "rms_spread_db": 10.012875896634883,
+      "max_window_mean_over_rms": 0.7154735467511139,
+      "min_fundamental_over_strongest_overtone": 0.40498092714243283,
+      "max_first_sample": 0.46316045049515486,
+      "max_peak": 0.6517645679850231,
+      "max_first_50ms_sample_step": 0.48308583455266696
+    },
+    {
+      "hz": 1760,
+      "repeats": 12,
+      "rms_spread_db": 22.36598353007936,
+      "max_window_mean_over_rms": 0.9554752141640038,
+      "min_fundamental_over_strongest_overtone": 28183.467008773103,
+      "max_first_sample": 0.2372711026662918,
+      "max_peak": 0.544575658759296,
+      "max_first_50ms_sample_step": 0.5017226255231371
+    }
+  ],
+  "candidate": [
+    {
+      "hz": 60,
+      "repeats": 12,
+      "rms_spread_db": 0.037207572647247396,
+      "max_window_mean_over_rms": 0.00894619268987725,
+      "min_fundamental_over_strongest_overtone": 2.6246614368157037,
+      "max_first_sample": 0.0,
+      "max_peak": 0.3938887409938518,
+      "max_first_50ms_sample_step": 0.006895747644739353
+    },
+    {
+      "hz": 110,
+      "repeats": 12,
+      "rms_spread_db": 0.04025463349986419,
+      "max_window_mean_over_rms": 0.004934513160020684,
+      "min_fundamental_over_strongest_overtone": 2.652269375432976,
+      "max_first_sample": 0.0,
+      "max_peak": 0.4017027141218884,
+      "max_first_50ms_sample_step": 0.010907848958683186
+    },
+    {
+      "hz": 146.832,
+      "repeats": 12,
+      "rms_spread_db": 0.041580038159766936,
+      "max_window_mean_over_rms": 0.002974909055383756,
+      "min_fundamental_over_strongest_overtone": 2.68358427633245,
+      "max_first_sample": 0.0,
+      "max_peak": 0.3920386162968343,
+      "max_first_50ms_sample_step": 0.014225168214417494
+    },
+    {
+      "hz": 220,
+      "repeats": 12,
+      "rms_spread_db": 0.0509577587248369,
+      "max_window_mean_over_rms": 0.0025532276702377207,
+      "min_fundamental_over_strongest_overtone": 2.787387565054892,
+      "max_first_sample": 0.0,
+      "max_peak": 0.39676116588855154,
+      "max_first_50ms_sample_step": 0.021213615869050545
+    },
+    {
+      "hz": 440,
+      "repeats": 12,
+      "rms_spread_db": 0.08808432387331083,
+      "max_window_mean_over_rms": 0.0015119951800619653,
+      "min_fundamental_over_strongest_overtone": 3.7400996255065944,
+      "max_first_sample": 0.0,
+      "max_peak": 0.390437399474035,
+      "max_first_50ms_sample_step": 0.04080266338048005
+    },
+    {
+      "hz": 1760,
+      "repeats": 12,
+      "rms_spread_db": 0.31895563982069564,
+      "max_window_mean_over_rms": 0.011862725903638516,
+      "min_fundamental_over_strongest_overtone": 10057.178208978732,
+      "max_first_sample": 0.0,
+      "max_peak": 0.3099297590658357,
+      "max_first_50ms_sample_step": 0.10957657971306549
+    }
+  ]
+}

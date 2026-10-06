@@ -8,7 +8,7 @@
  *
  *   cc -std=c11 -O2 -Iinclude tools/render_synth.c \
  *      src/dsp.c src/reverb.c src/v2/beauty_guard.c src/v2/synth_host.c \
- *      src/v2/engines/engine_acid.c -lm -o /tmp/render_synth
+ *      src/v2/Synths_Archive/engine_acid.c -lm -o /tmp/render_synth
  *   /tmp/render_synth /tmp/acid.wav
  */
 #include "dsp.h"

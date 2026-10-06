@@ -4,7 +4,7 @@
  *
  * WARUM SKALEN STATT ABSOLUTER ZEITEN
  * Jede Stimme hat eine *natürliche* Hüllkurve, die ihren Charakter ausmacht:
- * das Horn bläst in 130 ms an, der Bogen schwillt in 300 ms, das Pad blüht in
+ * der Alps-Ton schwillt in 450 ms an, der Bogen schwillt in 300 ms, das Pad blüht in
  * 800 ms. Absolute Attack-Zeiten würden diese Unterschiede plattmachen — alle
  * Stimmen klängen gleich. Stattdessen liefert dieses Modul einen FAKTOR, mit
  * dem jede Stimme ihre eigene Zeit multipliziert. Die relativen Verhältnisse

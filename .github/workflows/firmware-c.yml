@@ -167,7 +167,19 @@ jobs:
         run: |
           mkdir -p build-h743 && cd build-h743
           # CMakeLists auto-selects cmake/arm-none-eabi-m7.cmake for h743.
-          cmake .. -DFAM_TARGET=h743
+          cmake .. -DFAM_TARGET=h743 -DCMAKE_BUILD_TYPE=Release
+          cat CMakeFiles/field_ambience_h743.dir/flags.make
           make -j"$(nproc)"
           test -f field_ambience_h743 && echo "h743 cross-build linked OK"
           arm-none-eabi-size field_ambience_h743
+
+      - name: Upload H743 image and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-release
+          path: |
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.map
+          if-no-files-found: error
+          retention-days: 14

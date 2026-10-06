@@ -13,6 +13,37 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Exercise the product HAL's actual cell dispatch, including mode transitions.
+CC="$CC" python3 "$here/test_cell_routing.py"
+
+"$CC" "${CFLAGS[@]}" "$here/test_bowed_balance.c" \
+    "$src/src/bowed.c" "$src/src/shape.c" "$src/src/dsp.c" \
+    -lm -o "$tmp/bowed_balance_test"
+"$tmp/bowed_balance_test"
+
+"$CC" "${CFLAGS[@]}" "$here/test_horn_body.c" \
+    "$src/src/horn.c" "$src/src/shape.c" "$src/src/dsp.c" \
+    -lm -o "$tmp/horn_body_test"
+"$tmp/horn_body_test"
+
+# World source ownership / bounded soft-stop contract.
+"$CC" "${CFLAGS[@]}" "$here/test_pluck_ownership.c" \
+    "$src/src/pluck.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    -lm -o "$tmp/pluck_ownership_test"
+"$tmp/pluck_ownership_test"
+
+"$CC" "${CFLAGS[@]}" "$here/test_pluck_tone.c" \
+    "$src/src/pluck.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    -lm -o "$tmp/pluck_tone_test"
+"$tmp/pluck_tone_test"
+
+# Strict generated source starts preserve occupied/releasing slots.
+"$CC" "${CFLAGS[@]}" "$here/test_world_source_admission.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/choir.c" \
+    "$src/src/guembri.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    -lm -o "$tmp/world_admission_test"
+"$tmp/world_admission_test"
+
 # Step 7: dsp + voice pool
 "$CC" "${CFLAGS[@]}" \
     "$here/test_dsp_voices.c" \
@@ -348,10 +379,28 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$here/test_synth_host.c" \
     "$src/src/dsp.c" "$src/src/dsp_ladder.c" "$src/src/shape.c" "$src/src/reverb.c" "$src/src/v2/beauty_guard.c" \
     "$src/src/v2/synth_host.c" \
-    "$src/src/v2/engines/engine_acid.c" "$src/src/v2/engines/engine_fm_glass.c" \
-    "$src/src/v2/engines/engine_chorus_mist.c" "$src/src/v2/engines/engine_ion_storm.c" \
-    "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
+    "$src/src/v2/Synths_Archive/engine_acid.c" "$src/src/v2/Synths_Archive/engine_fm_glass.c" \
+    "$src/src/v2/Synths_Archive/engine_chorus_mist.c" "$src/src/v2/Synths_Archive/engine_ion_storm.c" \
+    "$src/src/v2/Synths_Archive/engine_glass_orbit.c" "$src/src/v2/Synths_Archive/engine_bamboo_circuit.c" \
     -lm -o "$tmp/synth_host_test"
+
+# Dusk: register consistency, rounded envelope and control limits.
+"$CC" "${CFLAGS[@]}" "$here/test_dusk_role.c" \
+    "$src/src/dsp.c" "$src/src/dsp_ladder.c" "$src/src/shape.c" \
+    "$src/src/v2/Synths_Archive/engine_acid.c" -lm -o "$tmp/dusk_role_test"
+"$tmp/dusk_role_test"
+
+# FM Index/Body relationship and live control response (real dry PCM).
+"$CC" "${CFLAGS[@]}" "$here/test_fm_controls.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/v2/Synths_Archive/engine_fm_glass.c" \
+    -lm -o "$tmp/fm_controls_test"
+
+# Storm ambient role: stable onset, envelope and bounded native controls.
+"$CC" "${CFLAGS[@]}" "$here/test_storm_role.c" \
+    "$src/src/dsp.c" "$src/src/dsp_ladder.c" "$src/src/shape.c" \
+    "$src/src/v2/Synths_Archive/engine_ion_storm.c" -lm -o "$tmp/storm_role_test"
+"$tmp/storm_role_test"
+"$tmp/fm_controls_test"
 "$tmp/synth_host_test"
 
 # r19.11: real-time render deadline profiler (pure accounting — deadline
@@ -395,8 +444,8 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/drone.c" "$src/src/reverb.c" "$src/src/reverb_presets.c" "$src/src/brain.c" "$src/src/worlds.c" "$src/src/generative.c" "$src/src/cells.c" "$src/src/engine.c" "$src/src/fx_master.c" "$src/src/ambient_effects.c" \
     "$src/src/body.c" "$src/src/composer.c" "$src/src/harmony.c" "$src/src/tuning.c" "$src/src/pluck.c" "$src/src/glass.c" "$src/src/ember.c" "$src/src/bowed.c" "$src/src/horn.c" "$src/src/choir.c" "$src/src/guembri.c" "$src/src/shimmer.c" \
     "$src/src/v2/beauty_guard.c" "$src/src/v2/synth_host.c" \
-    "$src/src/v2/engines/engine_acid.c" "$src/src/v2/engines/engine_fm_glass.c" "$src/src/v2/engines/engine_chorus_mist.c" \
-    "$src/src/v2/engines/engine_ion_storm.c" "$src/src/v2/engines/engine_glass_orbit.c" "$src/src/v2/engines/engine_bamboo_circuit.c" \
+    "$src/src/v2/Synths_Archive/engine_acid.c" "$src/src/v2/Synths_Archive/engine_fm_glass.c" "$src/src/v2/Synths_Archive/engine_chorus_mist.c" \
+    "$src/src/v2/Synths_Archive/engine_ion_storm.c" "$src/src/v2/Synths_Archive/engine_glass_orbit.c" "$src/src/v2/Synths_Archive/engine_bamboo_circuit.c" \
     -lm -o "$tmp/synth_device_test"
 "$tmp/synth_device_test"
 
