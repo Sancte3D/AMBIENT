@@ -40,6 +40,19 @@ int main(void) {
         if (world!=WORLD_COAST) assert(rests>10);
         if (world==WORLD_WOODLAND) assert(g.answers>5);
     }
+    /* If admission selects an adjusted pitch, the answer remembers what
+     * actually sounded rather than the unplayed proposed degree. */
+    world_grammar_t adjusted; world_grammar_init(&adjusted,WORLD_WOODLAND,9);
+    world_offer_t first=world_grammar_propose(&adjusted,0,0.5f);
+    int heard=first.index==7 ? 6 : first.index+1;
+    world_grammar_commit(&adjusted,&first,heard,0);
+    assert(adjusted.motif[0]==heard && adjusted.last==heard);
+    while(adjusted.phase==0) {
+        world_offer_t next=world_grammar_propose(&adjusted,adjusted.next_ms,0.5f);
+        world_grammar_commit(&adjusted,&next,next.index,adjusted.next_ms);
+    }
+    world_offer_t answer=world_grammar_propose(&adjusted,adjusted.next_ms,0.5f);
+    assert(answer.index==heard);
     /* Activity changes time only, preserving pitch, contour and velocity. */
     for (int w=0;w<CORE_WORLD_COUNT;++w) {
         world_grammar_t g; world_grammar_init(&g,w,13);
