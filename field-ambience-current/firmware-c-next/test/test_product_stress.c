@@ -153,10 +153,16 @@ static void mute_contract(void) {
 
         engine_init();engine_set_world(world);engine_set_nature(1);audio(.2);
         engine_set_muted(true);audio(.005);engine_set_muted(false);
-        audio(.06);assert(!engine_clear_pending());audio(.2);
+        audio(.06);assert(!engine_clear_pending());
         assert(engine_active_voices()==0 && ambient_room_peak()==0);
-        int p=0;for(int i=0;i<BLOCK*2;++i)if(abs(pcm[i])>p)p=abs(pcm[i]);
-        assert(p>0); /* fresh optional Nature after an early unmute */
+        /* Nature intentionally rises over 2 s and has irregular event gaps.
+         * A fresh start need not cross PCM16 quantisation after only 200 ms. */
+        int p=0;
+        for(int frame=0;frame<SR*6;frame+=BLOCK) {
+            engine_render(pcm,BLOCK);
+            for(int i=0;i<BLOCK*2;++i)if(abs(pcm[i])>p)p=abs(pcm[i]);
+        }
+        assert(p>0 && engine_active_voices()==0 && ambient_room_peak()==0);
         engine_all_off();audio(.1);
     }
     puts("PRODUCT MUTE PASS: 40 ms exact zero, no tail revival, fresh Generate, protected targets and early unmute");

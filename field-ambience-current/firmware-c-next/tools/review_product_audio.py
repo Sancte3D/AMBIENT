@@ -108,10 +108,10 @@ for letter,world in zip('ABC',(2,0,1)):
     blind_files.append({'label':letter,'raw':data,'listen':matched,'constant_gain_db':gain})
     blind_key[letter]=('COAST','WOODLAND','HIGHLANDS')[world]
 (blind/'BLIND_METRICS.json').write_text(json.dumps({'commit':manifest['commit'],
-    'source_sha256':manifest['source_sha256'],'seed':91267,'room':0,'nature':0,
-    'reference':manifest['reference'],'files':blind_files},indent=2,allow_nan=False)+'\\n')
-(out/'BLIND_KEY.json').write_text(json.dumps(blind_key,indent=2)+'\\n')
-(blind/'README.md').write_text("Three unknown Worlds. Listen to A/B/C listen files, then describe articulation, related notes and rests. All files 27 s, same D major/Equal, Room/Nature off, one documented constant listening gain. Raw files preserve firmware level. This pack has no answer key; BLIND_KEY.json is saved separately. No long-term or calming acceptance is implied.\\n")
+    'source_sha256':manifest['source_sha256'],'seed':91267,'room_enabled':False,'nature':0,
+    'reference':{**manifest['reference'],'fx':'Dry'},'files':blind_files},indent=2,allow_nan=False)+'\n')
+(out/'BLIND_KEY.json').write_text(json.dumps(blind_key,indent=2)+'\n')
+(blind/'README.md').write_text("Three unknown Worlds. Listen to A/B/C listen files, then describe articulation, related notes and rests. All files 27 s, same D major/Equal, Room/Nature off, one documented constant listening gain. Raw files preserve firmware level. This pack has no answer key; BLIND_KEY.json is saved separately. No long-term or calming acceptance is implied.\n")
 manifest['blind_files']=blind_files
 manifest['blind_key']=blind_key
 (out/'PRODUCT_AUDIO_METRICS.json').write_text(json.dumps(manifest,indent=2,allow_nan=False)+'\n')
@@ -140,6 +140,6 @@ Report filename and time of any objection. Hearing/device acceptance is open.
 Source hashes, exact commit, levels and constant gains are in the metrics JSON.
 '''
 (out/'README.md').write_text(readme)
-for mode in ('dry','world','nature'):
+for mode in ('dry','world','nature','color','shape'):
     shutil.copy2(out/'README.md',out/mode/'README.md')
     shutil.copy2(out/'PRODUCT_AUDIO_METRICS.json',out/mode/'PRODUCT_AUDIO_METRICS.json')
