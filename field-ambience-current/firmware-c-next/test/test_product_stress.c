@@ -168,7 +168,32 @@ static void mute_contract(void) {
     puts("PRODUCT MUTE PASS: 40 ms exact zero, no tail revival, fresh Generate, protected targets and early unmute");
 }
 
+
+static void pluck_tap_contract(void) {
+    engine_init();engine_set_world(WORLD_WOODLAND);engine_set_fx_mode(0);
+    audio(.05);assert(engine_try_note_on(0,220,1));audio(.03);
+    engine_note_off(0);audio(.1);
+    assert(engine_active_voices()==1); /* short tap retains the actual string */
+    int p=0;for(int i=0;i<BLOCK*2;++i)if(abs(pcm[i])>p)p=abs(pcm[i]);
+    assert(p>100); /* audible tonal release, not a 20 ms killed impulse */
+    assert(!engine_try_note_on(0,220,1)); /* owner still occupies its tail */
+    audio(10);assert(engine_active_voices()==0);
+
+    engine_init();engine_set_world(WORLD_WOODLAND);
+    assert(engine_try_note_on(0,220,1));engine_note_off(0);audio(.1);
+    assert(engine_active_voices()==0); /* pre-DSP cancellation remains silent */
+    for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0);
+
+    engine_init();engine_set_world(WORLD_WOODLAND);
+    engine_set_generative(true,-1);engine_generative_tick(0);audio(.1);
+    engine_set_generative(false,-1);audio(.1);
+    assert(engine_active_voices()==1); /* musical Stop preserves the one-shot */
+    engine_all_off();audio(.1);assert(engine_active_voices()==0);
+    puts("PRODUCT PLUCK TAP PASS: natural key-up/Stop, owned tail, pre-start cancel and Clear");
+}
+
 int main(void) {
+    pluck_tap_contract();
     mute_contract();
     transitions();
     for(int w=0;w<3;++w)for(int c=0;c<8;++c)source_limits(w,c);

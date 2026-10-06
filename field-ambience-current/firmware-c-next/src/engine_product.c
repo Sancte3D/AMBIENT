@@ -202,7 +202,11 @@ void engine_note_off(uint8_t owner) {
     reap();
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==owner && !slots[i].released) {
         source_slot_t *s=&slots[i]; s->held=s->timed=false; s->released=true;
-        atomic_fetch_or_explicit(&release_mask,1u<<owner,memory_order_release);
+        /* A started pluck is a one-shot: key-up releases ownership/MIDI,
+         * not its string. Cancel preparations before their first DSP sample.
+         * Context handovers still use quick_mask; Clear/Mute gate all paths. */
+        if(s->family!=WORLD_WOODLAND || !s->started)
+            atomic_fetch_or_explicit(&release_mask,1u<<owner,memory_order_release);
         if(s->on_sent && !s->off_sent) {
             if(note_hook) note_hook(0,owner,s->hz,0);
             s->off_sent=true;

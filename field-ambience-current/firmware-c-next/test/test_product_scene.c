@@ -73,6 +73,22 @@ int main(void) {
     engine_all_off(); for(int i=0;i<12;++i) tick();
 
     /* All old IDs are explicit approximations; no old backend can return. */
+    setup();int saved_volume=params_volume_pct();
+    engine_set_nature(0);assert(engine_try_note_on(0,220,.7f));tick();
+    assert(params_toggle_mute()==1 && params_muted() && engine_muted());
+    for(int i=0;i<12;++i)tick();
+    assert(!engine_clear_pending() && engine_active_voices()==0);
+    assert(params_volume_pct()==saved_volume);
+    assert(params_toggle_mute()==0 && !engine_muted() && !params_muted());
+    static int16_t silent[1024];
+    engine_render(silent,512);for(int i=0;i<1024;++i)assert(silent[i]==0);
+    assert(engine_try_note_on(0,220,.7f));tick();
+    (void)params_toggle_mute();for(int i=0;i<12;++i)tick();
+    params_encoder(PARAM_ENC_VOLUME,1,1); /* turning explicitly unmutes */
+    assert(!params_muted() && !engine_muted() && params_volume_pct()>saved_volume);
+    engine_all_off();for(int i=0;i<12;++i)tick();
+    setup();
+
     old6_store old6={0}; old6.magic=0x53434e36u;
     const int map[5]={2,0,0,1,1};
     for(int i=0;i<5;++i) {
