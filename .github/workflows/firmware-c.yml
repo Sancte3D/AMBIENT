@@ -96,6 +96,40 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  product-audio-review:
+    name: short product hearing pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install audio measurement tool
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      - name: Render and measure short hearing files
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_audio.py build-product-audio
+      - name: Upload dry source hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-dry-sources-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/dry
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload World hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-worlds-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/world
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Nature hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-nature-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/nature
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest

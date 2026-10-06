@@ -3,6 +3,10 @@
 #include "world_grammar.h"
 #include <stdatomic.h>
 #include <string.h>
+#include <stdbool.h>
+static _Atomic uint32_t requested_seed;
+static uint32_t current_seed;
+static bool idle;
 #define SR ((float)DSP_SAMPLE_RATE_HZ)
 static uint32_t wnd_rng_L, wnd_rng_R, wnd_weather;
 static dsp_svf_t wnd_lpL, wnd_lpR;
@@ -26,10 +30,13 @@ static inline float wnd_pink(uint32_t *rng, float *b0, float *b1, float *b2) {
     return (*b0 + *b1 + *b2 + w * 0.1848f) * 0.18f;
 }
 static void wind_reset(void) {
-    wnd_rng_L=0xACE12345u; wnd_rng_R=0x7B19F88Au; wnd_weather=0x91BC24E3u;
+    wnd_rng_L=0xACE12345u^current_seed;
+    wnd_rng_R=0x7B19F88Au^((current_seed<<13)|(current_seed>>19));
+    wnd_weather=0x91BC24E3u^current_seed;
     dsp_svf_reset(&wnd_lpL); dsp_svf_reset(&wnd_lpR);
-    wnd_gust_env=0.10f; wnd_gust_tgt=0.60f; wnd_slew=1.5e-5f;
-    wnd_gust_until=(int)(SR*3.0f); wnd_eddy_until=0; wnd_ctrl=0;
+    wnd_gust_tgt=.05f+.70f*wnd_random(); wnd_gust_env=.35f*wnd_gust_tgt;
+    wnd_slew=1.0f/(SR*(1.0f+2.0f*wnd_random()));
+    wnd_gust_until=(int)(SR*(2.0f+7.0f*wnd_random())); wnd_eddy_until=0; wnd_ctrl=0;
     wnd_eddy=wnd_eddy_tgt=wnd_dcL=wnd_dcR=0.0f;
     wnd_pink_L_b0=wnd_pink_L_b1=wnd_pink_L_b2=0.0f;
     wnd_pink_R_b0=wnd_pink_R_b1=wnd_pink_R_b2=0.0f;
@@ -80,11 +87,12 @@ static int drop_left[8];
 static uint32_t drop_rng[8];
 static uint32_t rnd(void) { events_rng=events_rng*1664525u+1013904223u; return events_rng>>8; }
 static float seconds(float lo,float range) { return lo+range*(float)rnd()/16777216.0f; }
-static void reset_events(int world) {
-    current_world=world; events_rng=0xC011A57u^(uint32_t)(world*7919);
+static void reset_events(int world,uint32_t seed) {
+    current_world=world; current_seed=seed;
+    events_rng=0xC011A57u^(uint32_t)(world*7919)^seed;
     wind_reset(); env=env_target=0; rise=1.0f/(SR*2); wave_phase=0;
     clock_left=(int)(SR*seconds(1,4)); dc_l=dc_r=0; drop_clock=0;
-    dsp_pink_seed(&pink_l,0x56ED12u); dsp_pink_seed(&pink_r,0x921CEu);
+    dsp_pink_seed(&pink_l,0x56ED12u^seed); dsp_pink_seed(&pink_r,0x921CEu^(seed*0x9e3779b9u));
     dsp_svf_reset(&water_l); dsp_svf_reset(&water_r);
     dsp_svf_set(&water_l,world==WORLD_COAST ? 600.0f : 1400.0f,.707f);
     dsp_svf_set(&water_r,world==WORLD_COAST ? 650.0f : 1500.0f,.707f);
@@ -99,18 +107,31 @@ void nature_set_amount(float v) {
 void nature_set_world(int world) {
     if(world>=0 && world<CORE_WORLD_COUNT) atomic_store_explicit(&requested_world,world,memory_order_release);
 }
-void nature_clear(void) { reset_events(current_world); amount_cur=transition=0; }
-void nature_init(void) { nature_set_amount(0); nature_set_world(WORLD_COAST); current_world=WORLD_COAST; nature_clear(); }
+void nature_set_seed(uint32_t seed) {
+    atomic_store_explicit(&requested_seed,seed ? seed : 0xA6B13E7Du,memory_order_release);
+}
+void nature_clear(void) { reset_events(current_world,current_seed); amount_cur=transition=0; idle=true; }
+void nature_init(void) {
+    nature_set_amount(0); nature_set_world(WORLD_COAST); nature_set_seed(0xA6B13E7Du);
+    current_world=WORLD_COAST; current_seed=0xA6B13E7Du; nature_clear();
+}
 void nature_render(float *l,float *r,int frames) {
     uint32_t bits=atomic_load_explicit(&amount_bits,memory_order_acquire);
     float target; memcpy(&target,&bits,4);
     int wanted=atomic_load_explicit(&requested_world,memory_order_acquire);
+    uint32_t wanted_seed=atomic_load_explicit(&requested_seed,memory_order_acquire);
+    if(idle && target==0) {
+        if(wanted!=current_world || wanted_seed!=current_seed) reset_events(wanted,wanted_seed);
+        return; /* No noise/filter/weather work while the optional path is cold. */
+    }
+    if(idle) { reset_events(wanted,wanted_seed); transition=0; idle=false; }
     for(int n=0;n<frames;++n) {
-        float t=wanted==current_world ? 1 : 0;
+        if(target==0 && amount_cur<1e-6f) { amount_cur=transition=0; idle=true; continue; }
+        float t=(wanted==current_world && wanted_seed==current_seed) ? 1 : 0;
         float step=1.0f/(SR*(t>0 ? 2 : .080f));
         if(transition<t) transition=fminf(t,transition+step);
         else if(transition>t) transition=fmaxf(t,transition-step);
-        if(transition==0 && wanted!=current_world) reset_events(wanted);
+        if(transition==0 && (wanted!=current_world || wanted_seed!=current_seed)) reset_events(wanted,wanted_seed);
         amount_cur+=(target-amount_cur)*(1.0f/(SR*2));
         float L=0,R=0; wind_tick(&L,&R); L*=.035f; R*=.035f;
         if(current_world==WORLD_COAST) {

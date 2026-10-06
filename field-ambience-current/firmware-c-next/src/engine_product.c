@@ -167,6 +167,7 @@ static bool admit(uint8_t owner,float hz,float velocity) {
     if(!ok) return false;
     slots[empty]=(source_slot_t){.hz=hz,.velocity=velocity,.owner=owner,.family=(uint8_t)world,
         .used=true,.held=world!=WORLD_WOODLAND,.issued_epoch=atomic_load(&audio_epoch)};
+    nature_set_amount(nature_amount);
     atomic_store_explicit(&output_enabled,true,memory_order_release);
     return true;
 }
@@ -205,7 +206,7 @@ static void release_generated(void) {
 }
 void engine_all_off(void) {
     reap(); generate=false; suppressed=false; pending=false;
-    release_all(); clearing=true;
+    nature_set_amount(0); release_all(); clearing=true;
     atomic_store(&clear_done,false); atomic_store(&output_enabled,false);
     atomic_store_explicit(&clear_request,true,memory_order_release);
     if(note_hook) note_hook(-1,0,0,0);
@@ -223,7 +224,13 @@ void engine_set_color(float v) {
 }
 void engine_set_activity(float v) { if(isfinite(v)) activity=dsp_clampf(v,0,1); }
 void engine_set_room(float v) { if(isfinite(v)) { room=dsp_clampf(v,0,1); ambient_room_set(room); } }
-void engine_set_nature(float v) { if(isfinite(v)) { nature_amount=dsp_clampf(v,0,1); nature_set_amount(nature_amount); } }
+void engine_set_nature(float v) {
+    if(!isfinite(v)) return;
+    nature_amount=dsp_clampf(v,0,1); nature_set_amount(clearing ? 0 : nature_amount);
+    /* An explicit optional-Nature target is audible without a phantom note.
+     * Init/boot/World defaults are zero; Clear still ends the whole session. */
+    if(nature_amount>0 && !clearing) atomic_store_explicit(&output_enabled,true,memory_order_release);
+}
 void engine_set_world(int i) {
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
     reap(); release_generated(); pending=false; world=i; nature_set_world(world);
@@ -266,7 +273,7 @@ void engine_set_autoplay_melody(int on) { autoplay=on!=0; if(!autoplay) release_
 int engine_autoplay_melody(void) { return autoplay; }
 uint32_t engine_gen_seed(void) { return seed; }
 void engine_set_gen_seed(uint32_t v) {
-    release_generated(); seed=v ? v : 0xA6B13E7Du;
+    release_generated(); seed=v ? v : 0xA6B13E7Du; nature_set_seed(seed);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
 }
 void engine_generative_new_field(uint32_t v) { engine_set_gen_seed(v); }
