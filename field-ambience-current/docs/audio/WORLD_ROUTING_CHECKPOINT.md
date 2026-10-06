@@ -146,5 +146,28 @@ Its link report: Flash 298,016 B; DTCM 119,440 B; D1 417,448 B; D2 258,100 B;
 D3/ITCM 0 B. It did not explicitly request Release, so those values are a
 previous-build baseline, not current optimized results or a CPU guarantee.
 H743 CI now sets CMAKE_BUILD_TYPE=Release, prints the compiler flags and retains
-.bin/.hex/.map artifacts for 14 days. New Release results are pending its run.
+.bin/.hex/.map artifacts for 14 days. New Release results are recorded below.
 No on-device deadline or stack high-water result is inferred from linking.
+
+### Verified H743 Release build — 2026-10-06
+
+Code commit: `964d99ed090c3aca003bbdfbdf779d6afb8d6537`.
+GitHub Actions run: https://github.com/Sancte3D/AMBIENT/actions/runs/37453991334
+H743 job 112237000067 completed successfully; compiler flags explicitly include
+Cortex-M7 hard-float, `-O3 -DNDEBUG -std=gnu11`.
+
+| Region | Used bytes | Capacity bytes | Free bytes | Used |
+|---|---:|---:|---:|---:|
+| Flash (scene sector excluded) | 255,224 | 1,966,080 | 1,710,856 | 12.98% |
+| DTCM | 119,440 | 131,072 | 11,632 | 91.13% |
+| D1 | 417,440 | 524,288 | 106,848 | 79.62% |
+| D2 | 258,112 | 294,912 | 36,800 | 87.52% |
+| D3 | 0 | 65,536 | 65,536 | 0% |
+| ITCM | 0 | 65,536 | 65,536 | 0% |
+
+The linker accepts this image within all configured banks. DTCM has limited
+spare capacity; do not add source/FX buffers without placement and map checks.
+Unused D3/ITCM are not interchangeable with DMA-capable audio memory. Flash
+and PSRAM do not substitute for arbitrary hot internal buffers. The reserved
+stack size does not prove stack high-water use, and successful Release linking
+does not measure ISR deadline reserve. Real-device DWT/stack tests remain open.

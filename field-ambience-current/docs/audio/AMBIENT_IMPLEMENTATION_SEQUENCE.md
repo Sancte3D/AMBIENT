@@ -147,3 +147,9 @@ legacy accompaniment and legacy manual admissions remain outside that gate.
 Next: remove automatic Bed/Eno/bass from the autonomous path, then validate the
 complete occupancy contract and World transitions. H743 CI now explicitly
 builds Release and retains image plus linker map; on-device DWT remains open.
+
+Release H743 verification completed for the 2026-10-06 admission code: linker
+accepts all banks; Flash 12.98%, DTCM 91.13%, D1 79.62%, D2 87.52%. Exact bytes,
+tested code commit and run are in WORLD_ROUTING_CHECKPOINT.md. No CPU or
+physical sound-quality acceptance is implied. Further source/room work must
+reuse pools or justify new placement against the remaining per-bank capacity.
