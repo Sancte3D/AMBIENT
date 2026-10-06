@@ -43,7 +43,7 @@ int main(void) {
         double swing=10*log10(high/low), floor=10*log10(ratio_low);
         printf("bowed color %d MIDI %d: root swing %.2f dB; root/octave floor %.2f dB\n",
                color,pitches[p],swing,floor);
-        if(!isfinite(swing) || swing>6.0 || floor<0.0) ++failed;
+        if(!isfinite(swing) || swing>0.20 || floor<0.0) ++failed;
     }
     printf("bowed balance: 8 probes, %d failures\n",failed);
     return failed ? 1:0;

@@ -151,6 +151,8 @@ static bool start_note(int owner, float freq_hz, float amp) {
 }
 
 bool pluck_note_on(uint8_t source, float freq_hz, float amp) {
+    /* Owned starts must not silently change the recorded pitch. */
+    if (freq_hz < PLUCK_MIN_HZ || freq_hz > PLUCK_MAX_HZ) return false;
     return start_note((int)source, freq_hz, amp);
 }
 void pluck_note(float freq_hz, float amp) {

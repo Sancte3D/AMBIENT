@@ -3,8 +3,8 @@
  *
  * A warm, sustained, self-completing "bow stroke": swells in, sings, fades —
  * band-limited saw string body + restrained bow-noise grain + a resonant wood
- * body + two sympathetic resonators. Stable pitch; movement from a quiet
- * detuned companion and slow body breath. Deliberately NOT a
+ * body + two sympathetic resonators. Stable pitch; slow body-colour breath
+ * without a detuned companion. Deliberately NOT a
  * plucked "ding" and NOT a friction-model scrape (both forbidden by the
  * location brief) — it is a new synth voice *influenced* by bowed instruments.
  *

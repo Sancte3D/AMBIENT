@@ -19,6 +19,12 @@
 #include "cells.h"
 #include "brain.h"
 #include "worlds.h"
+#include "shape.h"
+#include "bowed.h"
+#include "body.h"
+#include "ambience.h"
+#include "texture.h"
+#include "fx_master.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -426,6 +432,54 @@ static void test_engine_world_changes_key(void) {
     CHECK(brain_get_key() == worlds_get(0)->key_midi, "return-to-Tokyo key not restored");
 }
 
+/* Corrupt control values must preserve the audible last-valid trajectory,
+ * not merely avoid crashing or clamp everything back to a default. */
+static void test_invalid_audio_targets_preserve_pcm(void) {
+    enum { FRAMES = 2 * SR, BLOCK = 128 };
+    static int16_t reference[FRAMES * 2];
+    int16_t pcm[BLOCK * 2];
+    void (*setters[])(float) = {
+        engine_set_reverb_size, engine_set_reverb_damp, engine_set_reverb_drive,
+        engine_set_wet_amp, engine_set_send, engine_set_master_volume,
+        engine_set_drive, engine_set_brightness, engine_set_resonance,
+        engine_set_attack, engine_set_release, engine_set_sweep, engine_set_envmod,
+        engine_set_texture, engine_set_atmosphere, engine_set_bass_depth,
+        engine_set_motion, engine_set_age, engine_set_shimmer, engine_set_echo,
+        engine_set_blur, engine_set_space, engine_set_mood,
+        shape_set_attack, shape_set_release, body_set_amount, ambience_set_level,
+        texture_set_amount, fx_master_set_space, fx_master_set_atmosphere,
+        fx_master_set_echo, fx_master_set_motion, fx_master_set_age,
+        fx_master_set_shimmer, fx_master_set_blur, fx_master_set_tone
+    };
+    const float invalid[] = { NAN, INFINITY, -INFINITY };
+    int mismatches = 0, nonzero = 0;
+    for (int pass = 0; pass < 2; ++pass) {
+        engine_init(); engine_set_world(1); engine_set_master_volume(.4f);
+        engine_set_attack(.35f); engine_set_release(.65f);
+        engine_set_space(.42f); engine_set_echo(.15f);
+        bowed_note_on(0, 220, .4f);
+        for (int start = 0; start < FRAMES; start += BLOCK) {
+            int n = FRAMES - start; if (n > BLOCK) n = BLOCK;
+            if (pass) {
+                float bad = invalid[(start / BLOCK) % 3];
+                for (unsigned i = 0; i < sizeof setters / sizeof setters[0]; ++i)
+                    setters[i](bad);
+                engine_set_synth_param(0, bad);
+            }
+            engine_render(pcm, n);
+            if (!pass) {
+                memcpy(reference + start * 2, pcm, (size_t)n * 2 * sizeof *pcm);
+                for (int i = 0; i < n * 2; ++i) nonzero |= pcm[i] != 0;
+            } else if (memcmp(reference + start * 2, pcm,
+                              (size_t)n * 2 * sizeof *pcm)) ++mismatches;
+        }
+    }
+    CHECK(nonzero, "invalid-control reference is audibly non-silent");
+    CHECK(mismatches == 0, "invalid targets changed %d real PCM blocks", mismatches);
+    CHECK(isfinite(shape_attack_scale()) && isfinite(shape_release_scale()),
+          "SHAPE retains finite last-valid scales");
+}
+
 int main(void) {
     dsp_init();
 
@@ -442,6 +496,7 @@ int main(void) {
     test_engine_master_clean();
     test_engine_cell_velocity();
     test_engine_world_changes_key();
+    test_invalid_audio_targets_preserve_pcm();
 
     printf("\n%d checks, %d failures\n", g_checks, g_fails);
     if (g_fails) { printf("RESULT: FAIL\n"); return 1; }

@@ -10,6 +10,7 @@
 #include "audio.h"
 
 #include <stddef.h>
+#include <math.h>
 
 /* Storage + hot arena. The budget constant is the engine's documented upper
  * bound (240 KB); the actual requirement for the default config is 214,489 B
@@ -70,14 +71,30 @@ static void push(void) {
     if (s_ok) ambient_fx_set_parameters(s_fx, s_params);
 }
 
-void fx_master_set_space(float v)      { s_params.space      = clamp01(v); push(); }
-void fx_master_set_atmosphere(float v) { s_params.atmosphere = clamp01(v); push(); }
-void fx_master_set_echo(float v)       { s_params.echo       = clamp01(v); push(); }
-void fx_master_set_motion(float v)     { s_params.motion     = clamp01(v); push(); }
-void fx_master_set_age(float v)        { s_params.age        = clamp01(v); push(); }
-void fx_master_set_shimmer(float v)    { s_params.shimmer    = clamp01(v); push(); }
-void fx_master_set_blur(float v)       { s_params.blur       = clamp01(v); push(); }
-void fx_master_set_tone(float v)       { s_params.tone       = clamp01(v); push(); }
+void fx_master_set_space(float v)      {
+    if (!isfinite(v)) return;
+    s_params.space      = clamp01(v); push(); }
+void fx_master_set_atmosphere(float v) {
+    if (!isfinite(v)) return;
+    s_params.atmosphere = clamp01(v); push(); }
+void fx_master_set_echo(float v)       {
+    if (!isfinite(v)) return;
+    s_params.echo       = clamp01(v); push(); }
+void fx_master_set_motion(float v)     {
+    if (!isfinite(v)) return;
+    s_params.motion     = clamp01(v); push(); }
+void fx_master_set_age(float v)        {
+    if (!isfinite(v)) return;
+    s_params.age        = clamp01(v); push(); }
+void fx_master_set_shimmer(float v)    {
+    if (!isfinite(v)) return;
+    s_params.shimmer    = clamp01(v); push(); }
+void fx_master_set_blur(float v)       {
+    if (!isfinite(v)) return;
+    s_params.blur       = clamp01(v); push(); }
+void fx_master_set_tone(float v)       {
+    if (!isfinite(v)) return;
+    s_params.tone       = clamp01(v); push(); }
 
 void fx_master_set_world(int idx) {
     if (!s_ok) return;

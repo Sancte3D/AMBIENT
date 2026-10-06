@@ -32,10 +32,12 @@ void shape_init(void) {
 }
 
 void shape_set_attack(float v01) {
+    if (!isfinite(v01)) return;
     s_atk01 = clamp01(v01);
     s_atk_scale = geo(s_atk01, ATK_MIN, ATK_MAX);
 }
 void shape_set_release(float v01) {
+    if (!isfinite(v01)) return;
     s_rel01 = clamp01(v01);
     s_rel_scale = geo(s_rel01, REL_MIN, REL_MAX);
 }

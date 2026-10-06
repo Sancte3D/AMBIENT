@@ -635,6 +635,7 @@ void ambience_set_world(int idx) {
 }
 
 void ambience_set_level(float v) {
+    if (!isfinite(v)) return;
     if (v < 0.0f) v = 0.0f;
     if (v > 1.0f) v = 1.0f;
     level_tgt = v;

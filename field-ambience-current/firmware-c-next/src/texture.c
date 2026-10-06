@@ -80,6 +80,7 @@ void texture_init(void) {
 }
 
 void texture_set_amount(float amount_0_1) {
+    if (!isfinite(amount_0_1)) return;
     amount_0_1 = dsp_clampf(amount_0_1, 0.0f, 1.0f);
     amp_tgt = amount_0_1 * AMOUNT_SCALE;
 }

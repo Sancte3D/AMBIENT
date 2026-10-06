@@ -2,17 +2,17 @@
  * bowed.c — bowed-string voice. See bowed.h.
  *
  * Signal per voice:
- *   string : two detuned band-limited saws (dsp_poly_saw) = harmonic body
+ *   string : one stable band-limited saw (dsp_poly_saw) = harmonic body
  *   bow    : white noise → bandpass, level follows a bow-pressure envelope
  *            (grain swells on the attack, settles to a whisper on the sustain)
  *   body   : one resonant SVF lowpass = the wooden instrument body; its cutoff
  *            opens with bow pressure and breathes with a slow LFO
  *   symp   : two high-Q SVF bandpass resonators at the 5th and octave, lightly
  *            fed back = sympathetic strings (the lyra/Hardanger shimmer)
- *   pitch  : stable main string; quiet detuned companion, no shared vibrato
+ *   pitch  : stable string; no detune beat or shared vibrato
  *
  * Control-rate work (coeff/LFO updates) every CTL samples; per-sample stays
- * two saws + one LP + two BP + adds. Alias-free, no per-sample transcendental.
+ * one saw + one LP + two BP + adds. No per-sample transcendental.
  */
 #include "bowed.h"
 #include "shape.h"
@@ -31,7 +31,7 @@ typedef struct {
     int source;
     float expression;
     float    freq, amp;
-    float    ph, ph2, inc, inc2, dt;      /* two detuned saws            */
+    float    ph, inc;                    /* stable band-limited string  */
     dsp_svf_t body, symp1, symp2;
     uint32_t rng;
     dsp_svf_t bowbp;                       /* bow-noise bandpass          */
@@ -88,9 +88,7 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
-    v->inc2 = freq_hz * 1.0041f / SR;         /* +7 cents ensemble detune  */
-    v->dt   = v->inc;
-    if (v->stage == V_IDLE) { v->ph = 0.03f; v->ph2 = 0.51f; }  /* fresh phase */
+    v->ph = 0.03f;
     v->rng  = 0x9E3779B9u ^ (uint32_t)(freq_hz * 131.0f);
 
     /* colour: Open Sea = warmer/brighter body, moderate symp; Fjords = darker,
@@ -209,17 +207,12 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 
             v->bodyPh += v->bodyInc; if (v->bodyPh >= 1.0f) v->bodyPh -= 1.0f;
 
-            /* Stable root with a quieter detuned string. The former 0.6/0.4
-             * mix nearly cancelled its fundamental once per beat cycle,
-             * leaving the second harmonic dominant (hollow periodic colour).
-             * 85/15 balance, scaled to preserve the former long-term oscillator
-             * power: .71^2 + .125^2 ~= .6^2 + .4^2. No master gain correction. */
+            /* No detuned companion: even the quieter string caused up to
+             * 3.1 dB of periodic root beating. Preserve the former average
+             * oscillator power: sqrt(.71^2 + .125^2) ~= .721. */
             float inc  = v->inc;
-            float inc2 = v->inc2;
-            float s = dsp_poly_saw(v->ph,  inc)  * 0.71f
-                    + dsp_poly_saw(v->ph2, inc2) * 0.125f;
+            float s = dsp_poly_saw(v->ph, inc) * 0.721f;
             v->ph  += inc;  if (v->ph  >= 1.0f) v->ph  -= 1.0f;
-            v->ph2 += inc2; if (v->ph2 >= 1.0f) v->ph2 -= 1.0f;
 
             /* Restrained grain: 12 dB below the former continuous bow noise. */
             float bn = dsp_svf_bp(&v->bowbp, wnoise(&v->rng)) * (0.015f + 0.05f * v->bow);
