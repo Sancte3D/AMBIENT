@@ -160,6 +160,11 @@ void pluck_note(float freq_hz, float amp) {
     (void)start_note(256, freq_hz, amp);
 }
 static void release_voice(pluck_voice_t *p) {
+#ifdef FAM_SOUND_PRODUCT
+    /* Product audio owner: a preparation cancelled before its first sample
+     * is not a 20 ms audible strike, MIDI event or heard score item. */
+    if (p->active && p->attack_phase==0.0f) { p->active=0; return; }
+#endif
     if (p->active && !p->stop_left) p->stop_left = STOP_FRAMES;
 }
 void pluck_note_off(uint8_t source) {
