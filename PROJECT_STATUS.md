@@ -6,6 +6,9 @@
 > Naturpaare, sechs Worldwechsel, drei Blindrunden und Ausschnitte nach 18 min.
 > Grain/Sympathie/Onset-Air als einzelne Gegenmodelle; Produkt-DSP unveraendert.
 > [Abnahmeplan fuer alle 30 Punkte](field-ambience-current/docs/audio/SOUND_ACCEPTANCE_2026-10-07.md).
+> PR140 gemerged: 08a337069d006f7edc5af91fb514e24bbd1bda51.
+> [CI37610254166](https://github.com/Sancte3D/AMBIENT/actions/runs/37610254166), 6/6 Jobs gruen.
+> 66 Vergleiche / 132 WAVs, mindestens 131,10 min echtes PCM; ARM-Banken unveraendert.
 > Host-Suite und Exportregression bestanden; 22 Hoerurteile plus acht weitere
 > Gates bleiben offen. 24 geschlossen / 30 offen ist weiterhin der ehrliche Stand.
 > PR138 gemerged in den Entwicklungsbranch: d97824ec0039499969ef91353633b2c934818690.
