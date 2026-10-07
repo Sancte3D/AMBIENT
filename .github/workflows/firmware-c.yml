@@ -164,6 +164,19 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Verify SD03 COAST voice independence
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_coast_independence.py build-sd03-independence
+      - name: Upload SD03 COAST independence comparisons
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd03-coast-independence-27s
+          path: field-ambience-current/firmware-c-next/build-sd03-independence
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest

@@ -313,7 +313,13 @@ Fortsetzung einzeln ab dem ersten offenen Punkt: **SD02** hat jetzt getrennte
 einen bytegleichen vollständigen Kontrollrender. Kein Produkt-DSP geändert,
 keine Quellenwahl vorweggenommen. Messung und genaue Hörreihenfolge:
 [SD02_COAST_COMPONENT_CHECKPOINT.md](SD02_COAST_COMPONENT_CHECKPOINT.md).
-SD02 bleibt bis zur Hörentscheidung offen; danach folgt SD03.
+SD02 bleibt bis zur Hörentscheidung offen. Der nächste einzelne Durchlauf
+bereitet **SD03 am bestehenden Kandidaten** vor: echte gemeinsame Stimmen
+gegen separat gerenderte Summe, unabhängiges Grain, natürliche Releases und
+bytegleiches Product-PCM bei 64/512 Frames. Die endgültige SD03-Klangabnahme
+bleibt von SD02 abhängig; kein weiterer Sound-DSP-Umbau.
+[SD03_COAST_INDEPENDENCE_CHECKPOINT.md](SD03_COAST_INDEPENDENCE_CHECKPOINT.md).
+PR139 ist durch CI37608566520 (6/6 Jobs) vollständig software-/ARM-geprüft.
 
 `geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist
 geprüft. Bei `Hörgate` ist der Code gebaut und softwareseitig auditiert, die
@@ -325,7 +331,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD00 | geschlossen | Produkt-Compile-/Symbolinventar, Spec; jeder Eingang zugeordnet |
 | SD01 | geschlossen | ARM-Banken/Compilerframes, keine zweite Arena; Gerätezeit separat SD48 |
 | SD02 | Hörgate, isoliert vorbereitet | D3/D4/A4: voller Kontrollrender bytegleich; 1,5f/2f/Grain einzeln entfernt, 2×27-s-Montage; Quellenwahl offen |
-| SD03 | Hörgate | Produkt-Body-LFO aus, echte unabhängige Envelopes; keine behauptete Natürlichkeit |
+| SD03 | Hörgate, unabhängig geprüft | Summenrest ≤1,50e-8, Grain-Korrelation <0,006, Sustain-Swing <0,012 dB, natürliche Releases, 64/512 PCM exakt; SD02/Hörwahl offen |
 | SD04 | Hörgate / Keep-or-drop | HIGHLANDS trocken und gegen COAST vergleichen; zwei starke Worlds zulässig |
 | SD05 | Hörgate | Horn-LFO/Sub/Formant aus; Onset-Air und SHAPE-Endpunkte prüfen |
 | SD06 | Hörgate | Pluck pitch-/FIR-/Excitationfix, natürliche Key-up-Tails und samplegenaues Ende; Hörwahl offen |
@@ -420,6 +426,10 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Mehrere Stimmen beginnen/entwickeln sich eigenständig; keine
   mechanische gemeinsame Welle, störende Schwebung oder Rauschdecke. Gegen
   bewegungslose Referenz prüfen, nicht einfach zusätzliche Zufälligkeit einbauen.
+  **Fortsetzung 2026-10-07:** Drei echte Stimmen einschließlich sämtlicher
+  Releases gegen Einzelstimmensumme geprüft, aktuelles Grain gegen stationäre
+  no-Grain-Referenz, zwei volle 27-s-Passagen und kurze Montage. Product-PCM
+  bei 64/512 Frames bytegleich. SD03-Checkpoint; SD02-Auswahl/Hörabnahme offen.
   Voraussetzung: SD02.
 - [ ] **SD04 — HIGHLANDS-Tonkörper behalten oder verwerfen.**
   Horn trocken bei gematchtem Pegel gegen COAST: Grundton, Obertöne, Register,
