@@ -105,6 +105,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
       - name: Render and measure short hearing files
         working-directory: field-ambience-current/firmware-c-next
         run: python3 tools/review_product_audio.py build-product-audio
@@ -149,6 +150,17 @@ jobs:
         with:
           name: ambient-blind-worlds-27s
           path: field-ambience-current/firmware-c-next/build-product-audio/blind
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render isolated SD02 COAST components
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_coast_components.py build-sd02-components
+      - name: Upload SD02 COAST component comparisons
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd02-coast-components-27s
+          path: field-ambience-current/firmware-c-next/build-sd02-components
           if-no-files-found: error
           retention-days: 30
 

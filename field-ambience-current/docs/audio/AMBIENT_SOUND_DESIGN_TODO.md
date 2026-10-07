@@ -304,9 +304,16 @@ und nichtblockierendes Save sind noch offen. Siehe
 Getesteter Code-Head `9768966cc6a3881ea9ea56cb9e8c2eff2b959a8a`,
 [CI37602680211](https://github.com/Sancte3D/AMBIENT/actions/runs/37602680211):
 6/6 Jobs bestanden, inklusive Default/Product/Journal-H743 und vollständiger
-Host-Suite. Der Kandidat liegt separat in
-[Draft PR138](https://github.com/Sancte3D/AMBIENT/pull/138); die Hardware-Gates
+Host-Suite. Der Kandidat liegt im
+[gemergten PR138](https://github.com/Sancte3D/AMBIENT/pull/138); die Hardware-Gates
 und die 24/30-Zählung ändern sich dadurch nicht.
+
+Fortsetzung einzeln ab dem ersten offenen Punkt: **SD02** hat jetzt getrennte
+27-s-Gegenproben für 1,5f, 2f und Grain, beide Quellenkonstruktionen sowie
+einen bytegleichen vollständigen Kontrollrender. Kein Produkt-DSP geändert,
+keine Quellenwahl vorweggenommen. Messung und genaue Hörreihenfolge:
+[SD02_COAST_COMPONENT_CHECKPOINT.md](SD02_COAST_COMPONENT_CHECKPOINT.md).
+SD02 bleibt bis zur Hörentscheidung offen; danach folgt SD03.
 
 `geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist
 geprüft. Bei `Hörgate` ist der Code gebaut und softwareseitig auditiert, die
@@ -317,7 +324,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 |---|---|---|
 | SD00 | geschlossen | Produkt-Compile-/Symbolinventar, Spec; jeder Eingang zugeordnet |
 | SD01 | geschlossen | ARM-Banken/Compilerframes, keine zweite Arena; Gerätezeit separat SD48 |
-| SD02 | Hörgate | COAST-Detune entfernt, trockene D3/D4/A4- und Colorproben; 1,5f/2f/Grain hören |
+| SD02 | Hörgate, isoliert vorbereitet | D3/D4/A4: voller Kontrollrender bytegleich; 1,5f/2f/Grain einzeln entfernt, 2×27-s-Montage; Quellenwahl offen |
 | SD03 | Hörgate | Produkt-Body-LFO aus, echte unabhängige Envelopes; keine behauptete Natürlichkeit |
 | SD04 | Hörgate / Keep-or-drop | HIGHLANDS trocken und gegen COAST vergleichen; zwei starke Worlds zulässig |
 | SD05 | Hörgate | Horn-LFO/Sub/Formant aus; Onset-Air und SHAPE-Endpunkte prüfen |
@@ -403,6 +410,9 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   harmonische/raue Wahrnehmung prüfen; keine pauschale Resonanzverstärkung.
   **Abnahme:** Tragfähiger eigener Ton über das gewählte Register, gleicher
   Pegel in beiden Farben, Mono erhalten; weder Pfeifen noch Orgel/Buzz/Tube.
+  **Fortsetzung 2026-10-07:** Zehn getrennte Komponenten-/Registerproben und
+  zwei 27-s-Hörmontagen, volle Kontrollquelle bytegleich, rohe Pegel und
+  konstante Hörgains dokumentiert. Siehe SD02-Checkpoint; nicht als gehört abgehakt.
   Nächste konkrete Quelle; vor SD14/SD18.
 - [ ] **SD03 — COAST-Bewegung von der Quelle aus ordnen.**
   Wiederkehrende 0,13-Hz-Körperphase, identischen Startwert und Grain getrennt
