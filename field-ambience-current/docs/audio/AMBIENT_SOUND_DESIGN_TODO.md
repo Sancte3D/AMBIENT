@@ -15,6 +15,14 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+Die weitere Arbeit an allen 30 offenen Aufgaben steht in
+[SOUND_ACCEPTANCE_2026-10-07.md](SOUND_ACCEPTANCE_2026-10-07.md): 22 konkrete
+Hörabnahmen mit kontinuierlichen kurzen PCM-Exporten und acht explizite
+Storage-/Geräte-/Freeze-/UX-/Abschlussgates. Ein neues Offline-Hörpaket
+verbindet die Aufgaben mit Quellen-/Komponenten-/Regler-/Tail-/Natur-/
+Worldwechsel-/Blind-/Spätverlauf-Vergleichen. Kein Hörurteil wird automatisch
+durch Messwerte ersetzt; die 24/30-Zählung bleibt erhalten.
+
 ## FUNDAMENTAL FALSCH
 
 Die Referenzarchitektur mit fünf Presets, zusätzlichem Pad/Bass und neun FX
@@ -304,8 +312,8 @@ und nichtblockierendes Save sind noch offen. Siehe
 Getesteter Code-Head `9768966cc6a3881ea9ea56cb9e8c2eff2b959a8a`,
 [CI37602680211](https://github.com/Sancte3D/AMBIENT/actions/runs/37602680211):
 6/6 Jobs bestanden, inklusive Default/Product/Journal-H743 und vollständiger
-Host-Suite. Der Kandidat liegt separat in
-[Draft PR138](https://github.com/Sancte3D/AMBIENT/pull/138); die Hardware-Gates
+Host-Suite. [PR138](https://github.com/Sancte3D/AMBIENT/pull/138) ist im
+Entwicklungsbranch gemerged: `d97824ec0039499969ef91353633b2c934818690`; die Hardware-Gates
 und die 24/30-Zählung ändern sich dadurch nicht.
 
 `geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist

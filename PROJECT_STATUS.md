@@ -1,5 +1,16 @@
 # PROJECT STATUS
 
+> **2026-10-07 — alle 30 offenen Abnahmen konkret vorbereitet:**
+> Neue kontinuierliche PCM-Exporte, isolierte Attack-/Release-Grenzen,
+> Activity 0/1, ungekuerzte Tails, zwei Natur-Seeds, identische musikalische
+> Naturpaare, sechs Worldwechsel, drei Blindrunden und Ausschnitte nach 18 min.
+> Grain/Sympathie/Onset-Air als einzelne Gegenmodelle; Produkt-DSP unveraendert.
+> [Abnahmeplan fuer alle 30 Punkte](field-ambience-current/docs/audio/SOUND_ACCEPTANCE_2026-10-07.md).
+> Host-Suite und Exportregression bestanden; 22 Hoerurteile plus acht weitere
+> Gates bleiben offen. 24 geschlossen / 30 offen ist weiterhin der ehrliche Stand.
+> PR138 gemerged in den Entwicklungsbranch: d97824ec0039499969ef91353633b2c934818690.
+> Journal bleibt OFF; Hardware, Save-Latenz und nichtblockierender Storage folgen.
+
 > **2026-10-07 — Scene-Journal als separater Softwarekandidat:**
 > Zwei Bank-2-Sektoren, CRC-gepruefte Datensaetze, Commit-Flashword zuletzt;
 > der vorige gueltige Datensatz bleibt im Flash-Modell bei abgebrochenem
@@ -12,7 +23,7 @@
 > `FAM_SCENE_JOURNAL_CANDIDATE` bleibt OFF: ECC-sichere H743-Reads, echte
 > Power-cuts, Spannung und Save-/IRQ-Latenzen fehlen. Main-Save bleibt synchron.
 > [Journal-Nachweis und Grenzen](field-ambience-current/docs/audio/SCENE_JOURNAL_CHECKPOINT.md).
-> Separater [Draft PR138](https://github.com/Sancte3D/AMBIENT/pull/138).
+> [PR138](https://github.com/Sancte3D/AMBIENT/pull/138) ist im Entwicklungsbranch gemerged.
 > To-do aus altem Chat abgeglichen: weiterhin 24 geschlossen / 30 offene Gates.
 
 > **2026-10-06 — reduzierter Sound Candidate 0.3:**
