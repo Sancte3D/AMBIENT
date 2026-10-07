@@ -31,13 +31,13 @@ Die getrennte Antwortdatei gehört nicht in den Blindvergleich.
 |---|---:|---|
 | Trockene Quellen | 3 | D3/D4/A4, je 9 s; drei Sekunden halten, Clear bei 8,75 s |
 | Color, Attack, Release | 9 | Nur benannter Parameter 0/0,5/1; D4 und gleiche übrige Werte |
-| Activity | 6 | Je World 0/1 mit gleichem Seed23891; Ausschnitt nach 90 s |
+| Activity | 6 | Je World 0/1 mit gleichem Seed 23891; Ausschnitt nach 90 s |
 | Natürliche Tails | 6 | Einsekündiger D4, maximaler Release; Dry oder maximaler Room; kein Clear |
-| Natur allein | 6 | Seed1234 ab 0 s und Seed23891 ab 45 s; Amount0,7 |
-| Natur im Zusammenhang | 6 | Gleiche World/Seed1234 ab 90 s; Amount0 oder0,7; Ereignis-CSV identisch |
+| Natur allein | 6 | Seed 1234 ab 0 s und Seed 23891 ab 45 s; Amount 0,7 |
+| Natur im Zusammenhang | 6 | Gleiche World/Seed 1234 ab 90 s; Amount 0 oder 0,7; Ereignis-CSV identisch |
 | Gerichtete Worldwechsel | 6 | Alle Richtungen bei 12 s mit maximalem Room/Release |
-| Blind: Dry/Room | 18 | Drei Seeds91267/23891/67431 ab45/90/150 s; Buchstaben pro Runde neu zugeordnet |
-| Später Verlauf | 3 | Seed38291, ab1080 s; alle vorherigen Samples tatsächlich gerendert |
+| Blind: Dry/Room | 18 | Drei Seeds 91267/23891/67431 ab 45/90/150 s; Buchstaben pro Runde neu zugeordnet |
+| Später Verlauf | 3 | Seed 38291, ab 1080 s; alle vorherigen Samples tatsächlich gerendert |
 | Komponenten A/B/A/B | 3 | D4: Grain aus, Sympathie aus oder Onset-Air aus; jeweils nur eine Änderung |
 | Gesamt | 66 | 132 WAVs: Original und Vergleich pro Fixture |
 
@@ -48,20 +48,20 @@ eines Teilblocks, für alle Worlds und beide Activity-Grenzen. Natur muss das PC
 ändern und gleichzeitig die tatsächlichen musikalischen Ereignisse bewahren.
 Ungültige Fixture-Aufrufe werden vor dem Schreiben verworfen.
 
-Vergleichskopien bekommen einen konstanten Gain mit Ziel−26 LUFS und maximal
+Vergleichskopien bekommen einen konstanten Gain mit Ziel −26 LUFS und maximal
 −6 dBFS True Peak. Mitglieder von Dry/Room-, Activity- und Naturpaaren bekommen
 denselben Gain; ihre Pegelrelation bleibt bestehen. Das ergibt keine exakt
 gleiche Einzeldatei-Lautheit über alle unbekannten Worlds. Für SD34 die
 Originalpegel verwenden. Kein AGC und keine neue DSP-Kalibrierung.
 
-Die drei Komponenten-Montagen enthalten A aktuell bei0–6/14–20 s, B mit genau
-dem bezeichneten Bestandteil entfernt bei7–13/21–27 s; je eine Sekunde Ruhe.
+Die drei Komponenten-Montagen enthalten A aktuell bei 0–6/14–20 s, B mit genau
+dem bezeichneten Bestandteil entfernt bei 7–13/21–27 s; je eine Sekunde Ruhe.
 20-ms-Blenden sind Schnittbearbeitung, keine neue Firmware-Envelope.
 Die Literaländerungen und beide Quellhashes stehen im Messprotokoll. Temporäre
 Gegenmodelle ändern weder den Quellcode noch das Product-/Reference-Profil.
 
 Teiltoninventar: echte trockene Hold-Fenster von einer Sekunde mit Hann-Fenster,
-Goertzel-Proben um1f,1,5f und2f–8f. Die relativen Bandwerte sind weder exakte
+Goertzel-Proben um 1f, 1,5f und 2f–8f. Die relativen Bandwerte sind weder exakte
 Harmonischenamplituden noch ein validierter Rauigkeits-/Beruhigungswert.
 SD11 benötigt weiter konkrete gehörte Konflikte und danach eine begründete
 Regelentscheidung. Es wurde keine Resonanz allein aufgrund einer Zahl entfernt.
@@ -93,12 +93,12 @@ nicht allein wegen eines identischen Renderers.
 | SD29 | Natur solo bei zwei Seeds: unregelmäßiger Wind ohne Pfeifen/Rumpeln |
 | SD30 | Dieselben Natur- und Kontextclips: Tropfen/Wellen ohne nervöse Wiederholung |
 | SD31 | Natur- und Komponentenvergleiche: jedes verbliebene Geräusch einzeln begründen |
-| SD33 | Isolierte Color/Attack/Release-Grenzen plus Activity0/1: brauchbare gesamte Makrospanne |
+| SD33 | Isolierte Color/Attack/Release-Grenzen plus Activity 0/1: brauchbare gesamte Makrospanne |
 | SD34 | Originale Quellpegel und tatsächliche Übergänge: störende Lautheitssprünge entscheiden |
 | SD35 | Diese Grenzen plus vorhandene Stressfälle: konkrete Zeitstelle statt pauschaler Freigabe |
 | SD37 | Alle sechs gerichteten Wechsel: musikalischer Zusammenhang bei vollständigen Tails |
 | SD44 | Unbekannte Worlds erst trocken beschreiben, dann Room; getrennten Schlüssel erst danach öffnen |
-| SD45 | Späte Ausschnitte nach18 min plus echte längere Sitzung: Form und Ermüdung unterscheiden |
+| SD45 | Späte Ausschnitte nach 18 min plus echte längere Sitzung: Form und Ermüdung unterscheiden |
 
 ## Acht weitere Gates mit konkretem Abnahmeablauf
 
@@ -110,11 +110,11 @@ nicht allein wegen eines identischen Renderers.
 | SD49 | Gebauten Ausgang aufnehmen: still/typisch/dicht, Boot/Stop/Clear/Mute/Recall/Powerwechsel und erlaubte Lasten. Pegel/DC/Noise/Pops, Clock/Cache und Stromzustand mit Boardrevision, Firmware-SHA und Ausgangskette protokollieren |
 | SD50 | Echte längere Sitzungen leise/typisch, mit Hörerkontext und konkreten Zeitstellen: Alarm/Tube/Buzz/Beep/Ermüdung bearbeiten. Dateien und Messwerte ergeben allein kein Nutzerurteil |
 | SD51 | Nach Quellen-/Hör-/Gerätebefunden exakte Parametergrenzen, Pegel, Tails, Naturwahl und Quellenpalette versioniert einfrieren |
-| SD52 | Nach dem Soundstand physische Tasten/Encoder, Display/LED und15-min-Ruhe an dieselben Audiooperationen anbinden. Wake mit Audioaufnahme auf zusätzliches Ereignis/Tankreset prüfen |
+| SD52 | Nach dem Soundstand physische Tasten/Encoder, Display/LED und 15-min-Ruhe an dieselben Audiooperationen anbinden. Wake mit Audioaufnahme auf zusätzliches Ereignis/Tankreset prüfen |
 | SD53 | Pro zutreffendem Gate Befund, SHA, Fixture/Board und Ergebnis einsammeln; erst nach vollständiger Abnahme Sounddesign fertig nennen |
 
 SD48-Diagnose existiert bereits in `diag_h743.c` (CELL1 beim Einschalten halten).
-Ihre Prozentanzeige rundet; die0,60-Grenze gegen den tatsächlichen Float prüfen.
+Ihre Prozentanzeige rundet; die 0,60-Grenze gegen den tatsächlichen Float prüfen.
 16 KiB reservierter Stack und Compilerframes sind kein High-water. Ein niedriger
 IRQ-Renderwert beweist zudem keine rechtzeitige Main-/Generate-Planung während
 Save. Keine Hardwaremessung wurde aus dem Hostlauf abgeleitet.
@@ -124,8 +124,55 @@ Save. Keine Hardwaremessung wurde aus dem Hostlauf abgeleitet.
 Volle Firmware-Host-Suite bestanden; nach Ergänzung der Activity-Fixtures die
 gezielte Exportregression erneut bestanden. Die CI erzeugt zusätzlich zum
 bestehenden kurzen Paket dieses vollständige Archiv und den getrennten
-Blindschlüssel. Der H743-Job prüft weiter Default, Product und den deaktivierten
-Journal-Kandidaten; die finalen CI-/Linkdaten werden nach diesem Lauf ergänzt.
+Blindschlüssel. [PR140](https://github.com/Sancte3D/AMBIENT/pull/140) ist im
+Entwicklungsbranch gemerged: `08a337069d006f7edc5af91fb514e24bbd1bda51`.
+
+Geprüfter Code-Head `d0f7ca0130d7b86ef50c05e7d8e57e1f2379f565`, Tree
+`0760190bc06bde2cd4311eadcd5b49f52d708812`, exakt gleich zum lokal geprüften Tree.
+[CI37610254166](https://github.com/Sancte3D/AMBIENT/actions/runs/37610254166):
+**alle sechs Jobs bestanden**. Beide Host-Suites, beide Pico-Ziele, Hörpakete
+und der H743-Job `112755520286` mit Default/Product/Journal sind erfolgreich.
+
+| Tatsächlicher H743-Link | Flash B | DTCM B | D1 B | D2 B |
+|---|---:|---:|---:|---:|
+| Reference, Default | 256668 | 119440 | 417440 | 258112 |
+| Product | 190724 | 16384 | 65600 | 60808 |
+| Product + Journal-Kandidat | 192748 | 16384 | 65696 | 60808 |
+
+Alle Werte sind unverändert zum Journal-Checkpoint. Product-DTCM ist die
+Stackreservierung; tatsächliche Bank-1-Image-, Room-/Diffusion-/DMA- und
+Compilerframe-Audits bestehen. Daraus folgt keine Geräte-/High-water-Abnahme.
+
+Der lokal ausgelieferte Vergleich enthält 66 Fixtures / 132 WAVs und mindestens
+131,10 Minuten tatsächliche Haupt-Renderstrecke; Settle-Blöcke und Gegenmodelle
+sind in dieser Minutenangabe nicht enthalten. Bei Referenzvolume 0,6 beträgt
+der höchste rohe True Peak −18,71 dBFS, die kleinste tonale Monoenergieratio
+0,92598. Isolierte Stereo-Natur wird separat ausgewiesen und nicht an der
+Monoenergieratio tonaler Signale freigegeben. Die früheren dichten Volume 1-
+Stressfälle bleiben ein eigener Nachweis.
+
+Raw-/Listen-Prüfsummen, Paar-Gains, alle 132 WAV-Längen, 30 Aufgaben und die
+Trennung des Blindschlüssels wurden geprüft; ZIP-CRC und JavaScript-Syntaxcheck
+bestanden. Der Offline-Player wurde nicht in einem echten Browser abgenommen.
+Notizen lassen sich bei blockiertem lokalem Browser-Speicher weiterhin als
+JSON exportieren.
+
+Quellenregister: COAST-1,5f-Bandschätzung relativ zum Grundton bei D3/D4/A4:
+−66,10/−65,77/−66,96 dB. Das ist ein lokales schmalbandiges Inventar; weder eine
+exakte Resonanzamplitude noch ein automatisches Hörurteil.
+
+Herkunft des lokalen ZIP: Basis `d97824ec0039499969ef91353633b2c934818690`
+mit noch nicht committeten Exportwerkzeugen (`workspace_dirty=true` im JSON).
+Alle zwölf Product-C-Quellen, Renderer und Builder sind dort per SHA256
+festgehalten und stimmen mit dem geprüften Code überein. Die CI erzeugt ihr
+Archiv am sauberen öffentlichen Code-Head mit eigener Blindzuordnung.
+Lokale und CI-Blindschlüssel dürfen nicht vertauscht werden.
+
+Lokale Review-ID: `b6c6ec7e8350b19c026f03f8b6dc40072a15916b5329691c0c978414e35f43bc`.
+ZIP-SHA256: `f3ab2ebb9e4a8da8953a8b4ea600779967f7cd3b82ee185e260cc594a04b213b`.
+Die vorangegangenen fehlgeschlagenen Workspace-Exporte werden nicht als
+Hörevidenz ausgeliefert. Weitere Änderungen dieses Nachweises sind ausschließlich
+Dokumentation; Klang- und Exportcode bleiben unverändert.
 
 Die Hör-Checkboxen sind bewusst weiter offen, bis ein konkreter Hörbefund
-vorliegt. Die Liste bleibt **24 geschlossen /30 offene Gesamtgates**.
+vorliegt. Die Liste bleibt **24 geschlossen / 30 offene Gesamtgates**.

@@ -22,6 +22,13 @@ Storage-/Geräte-/Freeze-/UX-/Abschlussgates. Ein neues Offline-Hörpaket
 verbindet die Aufgaben mit Quellen-/Komponenten-/Regler-/Tail-/Natur-/
 Worldwechsel-/Blind-/Spätverlauf-Vergleichen. Kein Hörurteil wird automatisch
 durch Messwerte ersetzt; die 24/30-Zählung bleibt erhalten.
+[PR140](https://github.com/Sancte3D/AMBIENT/pull/140) ist im Entwicklungsbranch
+übernommen; geprüfter Head `d0f7ca0130d7b86ef50c05e7d8e57e1f2379f565`,
+[CI37610254166](https://github.com/Sancte3D/AMBIENT/actions/runs/37610254166),
+6/6 Jobs bestanden. Das lokale Hörpaket besitzt 66 Vergleiche / 132 WAVs à 27 s,
+mindestens 131,10 min tatsächlich gerendertes PCM und eigene getrennte Blindkeys.
+Quellen-, Regler-, Tail-, Natur-, Wechsel- und Mehrseed-Abnahmen sind vorbereitet.
+Speicherbedarf und Produkt-DSP bleiben unverändert.
 
 ## FUNDAMENTAL FALSCH
 
@@ -325,17 +332,17 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 |---|---|---|
 | SD00 | geschlossen | Produkt-Compile-/Symbolinventar, Spec; jeder Eingang zugeordnet |
 | SD01 | geschlossen | ARM-Banken/Compilerframes, keine zweite Arena; Gerätezeit separat SD48 |
-| SD02 | Hörgate | COAST-Detune entfernt, trockene D3/D4/A4- und Colorproben; 1,5f/2f/Grain hören |
-| SD03 | Hörgate | Produkt-Body-LFO aus, echte unabhängige Envelopes; keine behauptete Natürlichkeit |
-| SD04 | Hörgate / Keep-or-drop | HIGHLANDS trocken und gegen COAST vergleichen; zwei starke Worlds zulässig |
-| SD05 | Hörgate | Horn-LFO/Sub/Formant aus; Onset-Air und SHAPE-Endpunkte prüfen |
-| SD06 | Hörgate | Pluck pitch-/FIR-/Excitationfix, natürliche Key-up-Tails und samplegenaues Ende; Hörwahl offen |
+| SD02 | Hörgate | COAST trocken D3/D4/A4, Grain-/Sympathie-A/B und Bandinventar vorhanden; konkretes Hörurteil fehlt |
+| SD03 | Hörgate | Produkt-Body-LFO aus; Grain-A/B, Mehrseed-/Spätverlauf vorhanden; Entwicklung konkret hören |
+| SD04 | Hörgate / Keep-or-drop | HIGHLANDS trocken gegen COAST und drei unbekannte Seedrunden; Keep-or-drop-Urteil fehlt |
+| SD05 | Hörgate | Horn-LFO/Sub/Formant aus; Onset-Air-A/B und isolierte Attack-/Release-Grenzen vorhanden |
+| SD06 | Hörgate | Pluck technisch geprüft; trockenes Register, einzelne Reglergrenzen und ungekappte Dry/Room-Tails hören |
 | SD07 | geschlossen | Finite Input, tatsächliche Hz/Velocity, Bereiche, rejected Starts ohne Source/Hook |
 | SD08 | geschlossen | Originalowner, DSP-Ack, Storno, tatsächliche One-shot-/Release-Enden |
 | SD09 | geschlossen | Drei globale Slots / zwei Plucks auch Manual, kein held Steal |
 | SD10 | geschlossen | Gemeinsame Familie/Admit ohne Pad/Bass/Archive; SCN7-Migration geprüft |
-| SD11 | Hörgate | Zwei Cores, 12 Keys, Equal/Just und niedrige Intervallgrenzen; Teiltonprüfung offen |
-| SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
+| SD11 | Hörgate | Cores/Keys/Equal/Just geprüft; echtes Bandinventar und Ereignis-CSV vorhanden; relevante gehörte Konflikte offen |
+| SD12 | Hörgate | Reale Releases/Hz-Tails geprüft; maximale Dry/Room-Ausklänge ohne Clear zum Kalibrieren vorhanden |
 | SD13 | geschlossen | Drei begrenzte Transaktionsautomaten, genau acht autonome Gradindices |
 | SD14 | Hörgate | COAST individuelle Holds/Übergaben/Fokus/Episoden im realen Kern |
 | SD15 | Hörgate | WOODLAND gehörte Kontur/Intervalle, Antwort/Variation/Rückkehr im realen Kern |
@@ -351,24 +358,24 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD25 | geschlossen durch Remove | Shimmer/Oktavregeneration ausgeschlossen |
 | SD26 | geschlossen durch Remove | Reverse-/Generate-Vorswell ausgeschlossen |
 | SD27 | geschlossen | Nur Dry/Room, exakte Null/kalt, kein Tankrevival; Scenes reaktivieren nichts |
-| SD28 | Hörgate / optional weglassen | Nature getrennt/default 0; echter Score bleibt mit/ohne identisch |
-| SD29 | Hörgate | Unregelmäßige Wetter-/Gustuhren und Seedstarts; Homogenität nicht numerisch freigeben |
-| SD30 | Hörgate | Nur neue leise Wellen/Tropfen, kein Sea-Hum oder Sampleloop; Nutzen hören |
-| SD31 | Hörgate verbleibender Wege | Alttexturen auslinkt; übrig nur deklarierte Nature/Quellenartikulation |
+| SD28 | Hörgate / optional weglassen | Nature default 0/getrennt; spätere Paare mit identischen Ereignis-CSV und gemeinsamem Gain; Nutzen hören |
+| SD29 | Hörgate | Natur allein bei zwei Seeds inklusive späterem Verlauf; Unregelmäßigkeit/Pfeifen/Rumpeln hören |
+| SD30 | Hörgate | Tropfen/Wellen solo und bei gleichem Score mit/ohne Natur; Nutzen und störende Wiederholung hören |
+| SD31 | Hörgate verbleibender Wege | Verbleibende Nature und Quellenartikulation einzeln vergleichbar; jedes Geräusch konkret begründen |
 | SD32 | geschlossen | Vollständiges normiertes Parameterregister samt Aliases/retired API und Priorität |
-| SD33 | Hörgate | Begrenzte Activity/Color/Room/SHAPE und kurze Endpointvergleiche |
-| SD34 | Hörgate | Feste .50/.22-Quellfaktoren, Raw/Listen getrennt; kein AGC; Lautheit final hören |
-| SD35 | Hörgate | 24 gezielte Endwertszenarien + lange Activity/Tuning/Key/Releasefälle; keine Exhaustivbehauptung |
+| SD33 | Hörgate | Isolierte Color/Attack/Release 0/.5/1 plus Activity 0/1 nach 90 s; gesamte Makrospanne hören |
+| SD34 | Hörgate | Raw/Listen und feste Pair-Gains getrennt; Originalpegel von Quellen/Wechseln final beurteilen |
+| SD35 | Hörgate | Stress/gezielte Endwerte geprüft; einzelne Regler-/Activity-Grenzen als Hörproben vorhanden |
 | SD36 | geschlossen | SCN5/6→SCN7, 368 B, CRC, Provenienz, fehlgeschlagener Save-RAM-Rollback |
-| SD37 | Hörgate | Alle sechs Richtungen, Pending/volle Pools/Releases/Room/Rapid Targets softwareseitig geprüft |
+| SD37 | Hörgate | Alle sechs Richtungen softwareseitig und als Wechselclips bei 12 s, max Room/Release; Zusammenhang hören |
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
 | SD41 | Storage-/Gerätegate | Boot/Recall/Seed/Cache geprüft; Journal-Modell erhält vorige Daten bei Abbruch; Kandidat OFF, ECC/H743/Live-Save offen |
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
-| SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
-| SD45 | Hörgate Langzeit | Mindestens 48 min tatsächliches PCM plus Recovery/Wrap; keine NaN/Limiter/Stuck; Form hören |
+| SD44 | Hörgate | Drei Blindrunden mit drei Seeds/späteren Dry/Room-Paaren; Schlüssel außerhalb des Hör-ZIP |
+| SD45 | Hörgate Langzeit | 48 min Stress plus neues Paket mit mindestens 131,10 min PCM, Exzerpte nach 18 min; echte Langzeit-Hörwirkung offen |
 | SD46 | geschlossen | Tatsächlicher ARM-Compile-/Funktionssymbol-/DMA-/Bank-Audit, Archive nicht nur umbenannt |
 | SD47 | Geräte-/Storagegate | Bounded Hotpath/Prep und Compilerframes dokumentiert; Journal außerhalb Audio-IRQ, Main-Save-Stall und echte Spitzen offen |
 | SD48 | echtes Gerät | DWT <0,60, null Misses und realer Stack-High-water mit UI/MIDI/Storage |
