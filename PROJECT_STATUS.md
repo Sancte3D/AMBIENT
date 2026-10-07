@@ -1,5 +1,16 @@
 # PROJECT STATUS
 
+> **2026-10-07 — Scene-Journal als separater Softwarekandidat:**
+> Zwei Bank-2-Sektoren, CRC-gepruefte Datensaetze, Commit-Flashword zuletzt;
+> der vorige gueltige Datensatz bleibt im Flash-Modell bei abgebrochenem
+> Schreiben/Erase erreichbar. Recovery schreibt erst nach Erase des anderen
+> Sektors; keine Wiederverwendung unsicherer Flashwords nach Reset.
+> Host-Abbruch-/Korruptionstests und volle Firmware-Host-Suite bestanden.
+> `FAM_SCENE_JOURNAL_CANDIDATE` bleibt OFF: ECC-sichere H743-Reads, echte
+> Power-cuts, Spannung und Save-/IRQ-Latenzen fehlen. Main-Save bleibt synchron.
+> [Journal-Nachweis und Grenzen](field-ambience-current/docs/audio/SCENE_JOURNAL_CHECKPOINT.md).
+> To-do aus altem Chat abgeglichen: weiterhin 24 geschlossen / 30 offene Gates.
+
 > **2026-10-06 — reduzierter Sound Candidate 0.3:**
 > Produktkern mit COAST/WOODLAND/HIGHLANDS, drei gemeinsamen Quellen-Slots
 > (Pluck zwei), tatsächlichen Besitzern/Hz/Tails, gehörten Motiven/Intervallen,

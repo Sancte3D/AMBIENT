@@ -8,7 +8,7 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-06**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-07**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
@@ -28,8 +28,11 @@ Beruhigung und keine allgemeine Verträglichkeit.
 
 Quellenregister, Color/SHAPE, Lautheitsbeziehung und Nutzen von Nature müssen
 gehört werden. Der dritte Tonkörper wird bei fehlender eigener ruhiger Rolle
-entfernt. Live-Save blockiert noch Main/Generate-Planung; Power-loss während
-Sector-Erase erhält keinen alten Save. Storage-/Geräteabnahme ist offen.
+entfernt. Live-Save blockiert noch Main/Generate-Planung; der Default erhält
+bei Power-loss während Sector-Erase keinen alten Save. Ein separat geprüfter
+[Journal-Kandidat](SCENE_JOURNAL_CHECKPOINT.md) erhält den vorherigen Datensatz
+im Flash-Modell, bleibt aber bis zu ECC-/Geräteabnahme deaktiviert.
+Storage-/Geräteabnahme ist offen.
 Die vorläufige physische Drive-Zuweisung ist funktionslos und muss vor einer
 fertigen Produkt-UI verschwinden; die Audioarchitektur bekommt dafür kein FX.
 
@@ -292,6 +295,13 @@ CI/Banken und Restgates. Die folgenden Checkboxes und Statusmatrix sind
 
 ### Aktuelle Statusmatrix — sämtliche 54 Aufgaben
 
+Abgleich mit der wiedergefundenen PR129-To-do am 2026-10-07: deren pauschale
+54 offenen Checkboxen sind überholt. PR130–PR136 liefern den unten belegten
+Stand. Als nächster Softwareteil von SD41 liegt ein Zwei-Sektor-Journal mit
+Abbruch-/Korruptionstests und Legacy-Erhalt vor; Aktivierung, ECC-sichere Reads
+und nichtblockierendes Save sind noch offen. Siehe
+[SCENE_JOURNAL_CHECKPOINT.md](SCENE_JOURNAL_CHECKPOINT.md).
+
 `geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist
 geprüft. Bei `Hörgate` ist der Code gebaut und softwareseitig auditiert, die
 zugehörige Klangwahl bleibt offen. Geräte-/UX-Aufgaben werden nicht als erledigt
@@ -340,13 +350,13 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
-| SD41 | Storage-/Gerätegate | Boot/Recall/Seed still und Volume erhalten; Flash-Cache gefixt; Live-Save/Mainstall/Power-loss offen |
+| SD41 | Storage-/Gerätegate | Boot/Recall/Seed/Cache geprüft; Journal-Modell erhält vorige Daten bei Abbruch; Kandidat OFF, ECC/H743/Live-Save offen |
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
 | SD45 | Hörgate Langzeit | Mindestens 48 min tatsächliches PCM plus Recovery/Wrap; keine NaN/Limiter/Stuck; Form hören |
 | SD46 | geschlossen | Tatsächlicher ARM-Compile-/Funktionssymbol-/DMA-/Bank-Audit, Archive nicht nur umbenannt |
-| SD47 | Geräte-/Storagegate | Bounded Hotpath/Prep und Compilerframes dokumentiert; Main-Save-Stall und echte Spitzen offen |
+| SD47 | Geräte-/Storagegate | Bounded Hotpath/Prep und Compilerframes dokumentiert; Journal außerhalb Audio-IRQ, Main-Save-Stall und echte Spitzen offen |
 | SD48 | echtes Gerät | DWT <0,60, null Misses und realer Stack-High-water mit UI/MIDI/Storage |
 | SD49 | echtes Gerät | Gebauter Ausgang, Pegel/DC/Noise/Pops/Lasten/Clock/Power/Cache/Flash prüfen |
 | SD50 | echte Hörer + Gerät | Alarm/Tube/Buzz/Beep/Ermüdung konkret lösen, keine Heilbehauptung |

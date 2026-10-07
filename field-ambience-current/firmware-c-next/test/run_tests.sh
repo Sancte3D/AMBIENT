@@ -13,6 +13,11 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Recoverable Scene-store candidate, including interruption at every word byte.
+"$CC" "${CFLAGS[@]}" -Werror "$here/test_scenes_journal.c" \
+    "$src/src/scenes_journal.c" -o "$tmp/scenes_journal_test"
+"$tmp/scenes_journal_test"
+
 # Reduced product candidate: actual source/room/nature/master PCM contract.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_product_sound.c" \
     "$src/src/engine_product.c" "$src/src/world_grammar.c" \
