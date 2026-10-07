@@ -117,7 +117,11 @@ void bass_release(void) {
 }
 
 bool bass_active(void) {
-    return sub.state != ENV_IDLE || deep.state != ENV_IDLE;
+    return bass_active_count() > 0;
+}
+
+int bass_active_count(void) {
+    return (sub.state != ENV_IDLE) + (deep.state != ENV_IDLE);
 }
 
 /* Advance a linear-attack / exponential-release envelope one sample. */

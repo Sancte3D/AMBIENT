@@ -1,0 +1,2715 @@
+{
+  "baseline_commit": "f83bad19ab24737f631015f2f5620a8711b8171b",
+  "trim_db": {
+    "Resonant": -4.1,
+    "Keys": -12.4,
+    "Pluck": -6.8,
+    "Ensemble": 0
+  },
+  "before": {
+    "rows": [
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -26.42079436630333,
+        "full": {
+          "rms_dbfs": -27.93351739998897,
+          "integrated_lufs": -24.7,
+          "true_peak_dbfs": -11.5
+        },
+        "attack": {
+          "rms_dbfs": -27.437840761140325,
+          "integrated_lufs": -24.4,
+          "true_peak_dbfs": -11.5
+        },
+        "body": {
+          "rms_dbfs": -26.24632998319973,
+          "integrated_lufs": -24.1,
+          "true_peak_dbfs": -20.9
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -21.514531379989723,
+        "full": {
+          "rms_dbfs": -23.065402651478948,
+          "integrated_lufs": -19.8,
+          "true_peak_dbfs": -8.8
+        },
+        "attack": {
+          "rms_dbfs": -22.619869630612985,
+          "integrated_lufs": -19.2,
+          "true_peak_dbfs": -8.8
+        },
+        "body": {
+          "rms_dbfs": -21.334789182229773,
+          "integrated_lufs": -19.2,
+          "true_peak_dbfs": -16.1
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -18.256065490581094,
+        "full": {
+          "rms_dbfs": -19.826109367136006,
+          "integrated_lufs": -16.5,
+          "true_peak_dbfs": -6.9
+        },
+        "attack": {
+          "rms_dbfs": -19.33158963095312,
+          "integrated_lufs": -15.6,
+          "true_peak_dbfs": -6.9
+        },
+        "body": {
+          "rms_dbfs": -18.103166722778894,
+          "integrated_lufs": -16.0,
+          "true_peak_dbfs": -12.9
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -29.273868134075755,
+        "full": {
+          "rms_dbfs": -29.82540152271177,
+          "integrated_lufs": -26.7,
+          "true_peak_dbfs": -12.7
+        },
+        "attack": {
+          "rms_dbfs": -27.185350350784553,
+          "integrated_lufs": -23.9,
+          "true_peak_dbfs": -12.7
+        },
+        "body": {
+          "rms_dbfs": -29.44081973549007,
+          "integrated_lufs": -27.3,
+          "true_peak_dbfs": -23.9
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -24.54809578638935,
+        "full": {
+          "rms_dbfs": -25.040534497714894,
+          "integrated_lufs": -21.8,
+          "true_peak_dbfs": -10.1
+        },
+        "attack": {
+          "rms_dbfs": -22.402289892096185,
+          "integrated_lufs": -18.8,
+          "true_peak_dbfs": -10.1
+        },
+        "body": {
+          "rms_dbfs": -24.716548314894272,
+          "integrated_lufs": -22.6,
+          "true_peak_dbfs": -19.1
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -21.435340960320637,
+        "full": {
+          "rms_dbfs": -21.839944590853246,
+          "integrated_lufs": -18.5,
+          "true_peak_dbfs": -7.8
+        },
+        "attack": {
+          "rms_dbfs": -19.142498796590854,
+          "integrated_lufs": -15.3,
+          "true_peak_dbfs": -7.8
+        },
+        "body": {
+          "rms_dbfs": -21.57635818848182,
+          "integrated_lufs": -19.5,
+          "true_peak_dbfs": -15.7
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -27.18762834333489,
+        "full": {
+          "rms_dbfs": -28.43196837995402,
+          "integrated_lufs": -25.1,
+          "true_peak_dbfs": -12.9
+        },
+        "attack": {
+          "rms_dbfs": -27.031149646157875,
+          "integrated_lufs": -23.6,
+          "true_peak_dbfs": -12.9
+        },
+        "body": {
+          "rms_dbfs": -26.907574206811535,
+          "integrated_lufs": -24.7,
+          "true_peak_dbfs": -23.1
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -22.227274066627224,
+        "full": {
+          "rms_dbfs": -23.537164963090767,
+          "integrated_lufs": -20.2,
+          "true_peak_dbfs": -10.3
+        },
+        "attack": {
+          "rms_dbfs": -22.279440443671827,
+          "integrated_lufs": -18.6,
+          "true_peak_dbfs": -10.3
+        },
+        "body": {
+          "rms_dbfs": -21.903076667465378,
+          "integrated_lufs": -19.7,
+          "true_peak_dbfs": -18.0
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -18.888222858223262,
+        "full": {
+          "rms_dbfs": -20.249409148605633,
+          "integrated_lufs": -16.9,
+          "true_peak_dbfs": -8.0
+        },
+        "attack": {
+          "rms_dbfs": -19.075779335376883,
+          "integrated_lufs": -15.1,
+          "true_peak_dbfs": -8.0
+        },
+        "body": {
+          "rms_dbfs": -18.530031880032904,
+          "integrated_lufs": -16.4,
+          "true_peak_dbfs": -14.7
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -35.489748051148396,
+        "full": {
+          "rms_dbfs": -32.63036522190513,
+          "integrated_lufs": -29.4,
+          "true_peak_dbfs": -13.4
+        },
+        "attack": {
+          "rms_dbfs": -26.828285980984184,
+          "integrated_lufs": -23.1,
+          "true_peak_dbfs": -13.4
+        },
+        "body": {
+          "rms_dbfs": -34.82988868149759,
+          "integrated_lufs": -32.5,
+          "true_peak_dbfs": -30.3
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -30.455379984203475,
+        "full": {
+          "rms_dbfs": -27.6921908678818,
+          "integrated_lufs": -24.4,
+          "true_peak_dbfs": -10.9
+        },
+        "attack": {
+          "rms_dbfs": -22.237737705789474,
+          "integrated_lufs": -18.3,
+          "true_peak_dbfs": -10.9
+        },
+        "body": {
+          "rms_dbfs": -29.66593149263374,
+          "integrated_lufs": -27.4,
+          "true_peak_dbfs": -24.9
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -27.00448901867338,
+        "full": {
+          "rms_dbfs": -24.320296299959914,
+          "integrated_lufs": -20.9,
+          "true_peak_dbfs": -8.5
+        },
+        "attack": {
+          "rms_dbfs": -19.02781684143646,
+          "integrated_lufs": -14.8,
+          "true_peak_dbfs": -8.5
+        },
+        "body": {
+          "rms_dbfs": -26.083051501787487,
+          "integrated_lufs": -23.8,
+          "true_peak_dbfs": -21.2
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -43.90038741219159,
+        "full": {
+          "rms_dbfs": -34.65818958404756,
+          "integrated_lufs": -31.1,
+          "true_peak_dbfs": -13.3
+        },
+        "attack": {
+          "rms_dbfs": -26.75097839816134,
+          "integrated_lufs": -22.8,
+          "true_peak_dbfs": -13.3
+        },
+        "body": {
+          "rms_dbfs": -43.188242052263334,
+          "integrated_lufs": -40.8,
+          "true_peak_dbfs": -38.6
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -38.81856807297008,
+        "full": {
+          "rms_dbfs": -29.671609164992695,
+          "integrated_lufs": -23.5,
+          "true_peak_dbfs": -11.2
+        },
+        "attack": {
+          "rms_dbfs": -21.992767259481653,
+          "integrated_lufs": -17.9,
+          "true_peak_dbfs": -11.2
+        },
+        "body": {
+          "rms_dbfs": -37.954853389099604,
+          "integrated_lufs": -35.6,
+          "true_peak_dbfs": -33.2
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -30.052902749530897,
+        "full": {
+          "rms_dbfs": -25.67639507483905,
+          "integrated_lufs": -21.8,
+          "true_peak_dbfs": -9.2
+        },
+        "attack": {
+          "rms_dbfs": -18.937381402116394,
+          "integrated_lufs": -14.6,
+          "true_peak_dbfs": -9.2
+        },
+        "body": {
+          "rms_dbfs": -34.32123671132516,
+          "integrated_lufs": -31.9,
+          "true_peak_dbfs": -29.3
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -20.318170226484252,
+        "full": {
+          "rms_dbfs": -20.516393561267158,
+          "integrated_lufs": -18.5,
+          "true_peak_dbfs": -8.6
+        },
+        "attack": {
+          "rms_dbfs": -16.552300064753407,
+          "integrated_lufs": -14.9,
+          "true_peak_dbfs": -8.6
+        },
+        "body": {
+          "rms_dbfs": -20.234507242776736,
+          "integrated_lufs": -18.6,
+          "true_peak_dbfs": -16.3
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -16.084302239451155,
+        "full": {
+          "rms_dbfs": -16.368584209875902,
+          "integrated_lufs": -14.3,
+          "true_peak_dbfs": -5.0
+        },
+        "attack": {
+          "rms_dbfs": -12.667197608016389,
+          "integrated_lufs": -10.9,
+          "true_peak_dbfs": -5.0
+        },
+        "body": {
+          "rms_dbfs": -15.991572680037166,
+          "integrated_lufs": -14.3,
+          "true_peak_dbfs": -11.8
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -13.573758339259342,
+        "full": {
+          "rms_dbfs": -13.985211474239135,
+          "integrated_lufs": -11.9,
+          "true_peak_dbfs": -2.9
+        },
+        "attack": {
+          "rms_dbfs": -10.6840552340814,
+          "integrated_lufs": -8.9,
+          "true_peak_dbfs": -2.9
+        },
+        "body": {
+          "rms_dbfs": -13.488264687526133,
+          "integrated_lufs": -11.8,
+          "true_peak_dbfs": -9.1
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -19.69783080607474,
+        "full": {
+          "rms_dbfs": -19.90619447908652,
+          "integrated_lufs": -17.4,
+          "true_peak_dbfs": -8.8
+        },
+        "attack": {
+          "rms_dbfs": -15.962551343896985,
+          "integrated_lufs": -13.9,
+          "true_peak_dbfs": -8.8
+        },
+        "body": {
+          "rms_dbfs": -19.609038374208385,
+          "integrated_lufs": -17.6,
+          "true_peak_dbfs": -16.3
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -15.489385293116227,
+        "full": {
+          "rms_dbfs": -15.785412879302092,
+          "integrated_lufs": -13.4,
+          "true_peak_dbfs": -5.4
+        },
+        "attack": {
+          "rms_dbfs": -12.108423807477042,
+          "integrated_lufs": -10.0,
+          "true_peak_dbfs": -5.4
+        },
+        "body": {
+          "rms_dbfs": -15.398988421073991,
+          "integrated_lufs": -13.4,
+          "true_peak_dbfs": -11.9
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -12.971975150675213,
+        "full": {
+          "rms_dbfs": -13.398745783482354,
+          "integrated_lufs": -10.9,
+          "true_peak_dbfs": -3.3
+        },
+        "attack": {
+          "rms_dbfs": -10.136015783730315,
+          "integrated_lufs": -8.0,
+          "true_peak_dbfs": -3.3
+        },
+        "body": {
+          "rms_dbfs": -12.884888967083683,
+          "integrated_lufs": -10.8,
+          "true_peak_dbfs": -9.3
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -19.44582336494206,
+        "full": {
+          "rms_dbfs": -19.6581434010061,
+          "integrated_lufs": -17.0,
+          "true_peak_dbfs": -9.2
+        },
+        "attack": {
+          "rms_dbfs": -15.721965298841932,
+          "integrated_lufs": -13.5,
+          "true_peak_dbfs": -9.2
+        },
+        "body": {
+          "rms_dbfs": -19.357851956750192,
+          "integrated_lufs": -17.2,
+          "true_peak_dbfs": -16.4
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -15.256969745469426,
+        "full": {
+          "rms_dbfs": -15.556085982259589,
+          "integrated_lufs": -13.0,
+          "true_peak_dbfs": -5.7
+        },
+        "attack": {
+          "rms_dbfs": -11.887833013653143,
+          "integrated_lufs": -9.6,
+          "true_peak_dbfs": -5.7
+        },
+        "body": {
+          "rms_dbfs": -15.17160607219398,
+          "integrated_lufs": -13.0,
+          "true_peak_dbfs": -12.1
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -12.753874632429534,
+        "full": {
+          "rms_dbfs": -13.184219927207968,
+          "integrated_lufs": -10.5,
+          "true_peak_dbfs": -3.7
+        },
+        "attack": {
+          "rms_dbfs": -9.932082459860682,
+          "integrated_lufs": -7.6,
+          "true_peak_dbfs": -3.7
+        },
+        "body": {
+          "rms_dbfs": -12.672969691152446,
+          "integrated_lufs": -10.5,
+          "true_peak_dbfs": -9.5
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -19.300296653178155,
+        "full": {
+          "rms_dbfs": -19.51389358938224,
+          "integrated_lufs": -16.7,
+          "true_peak_dbfs": -9.6
+        },
+        "attack": {
+          "rms_dbfs": -15.581004878735975,
+          "integrated_lufs": -13.2,
+          "true_peak_dbfs": -9.6
+        },
+        "body": {
+          "rms_dbfs": -19.212875886987703,
+          "integrated_lufs": -16.9,
+          "true_peak_dbfs": -16.7
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -15.08337820574095,
+        "full": {
+          "rms_dbfs": -15.386597274659206,
+          "integrated_lufs": -12.7,
+          "true_peak_dbfs": -6.2
+        },
+        "attack": {
+          "rms_dbfs": -11.727103300849757,
+          "integrated_lufs": -9.3,
+          "true_peak_dbfs": -6.2
+        },
+        "body": {
+          "rms_dbfs": -14.997577463001834,
+          "integrated_lufs": -12.6,
+          "true_peak_dbfs": -12.4
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -12.572515096368662,
+        "full": {
+          "rms_dbfs": -13.00890603920977,
+          "integrated_lufs": -10.2,
+          "true_peak_dbfs": -4.3
+        },
+        "attack": {
+          "rms_dbfs": -9.774643201973394,
+          "integrated_lufs": -7.2,
+          "true_peak_dbfs": -4.3
+        },
+        "body": {
+          "rms_dbfs": -12.491357284367403,
+          "integrated_lufs": -10.1,
+          "true_peak_dbfs": -9.9
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -19.217460755237035,
+        "full": {
+          "rms_dbfs": -19.433358195207507,
+          "integrated_lufs": -16.5,
+          "true_peak_dbfs": -9.9
+        },
+        "attack": {
+          "rms_dbfs": -15.506000579435499,
+          "integrated_lufs": -12.9,
+          "true_peak_dbfs": -9.9
+        },
+        "body": {
+          "rms_dbfs": -19.131368669942546,
+          "integrated_lufs": -16.7,
+          "true_peak_dbfs": -16.8
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -15.040386112435906,
+        "full": {
+          "rms_dbfs": -15.345392620058192,
+          "integrated_lufs": -12.5,
+          "true_peak_dbfs": -6.5
+        },
+        "attack": {
+          "rms_dbfs": -11.69187688343818,
+          "integrated_lufs": -9.0,
+          "true_peak_dbfs": -6.5
+        },
+        "body": {
+          "rms_dbfs": -14.95479105747833,
+          "integrated_lufs": -12.5,
+          "true_peak_dbfs": -12.6
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -12.510472553335621,
+        "full": {
+          "rms_dbfs": -12.95115524212502,
+          "integrated_lufs": -10.0,
+          "true_peak_dbfs": -4.6
+        },
+        "attack": {
+          "rms_dbfs": -9.732798920100599,
+          "integrated_lufs": -6.9,
+          "true_peak_dbfs": -4.6
+        },
+        "body": {
+          "rms_dbfs": -12.429662564257367,
+          "integrated_lufs": -9.9,
+          "true_peak_dbfs": -10.1
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.09547142391358,
+        "full": {
+          "rms_dbfs": -32.24741560827378,
+          "integrated_lufs": -30.0,
+          "true_peak_dbfs": -13.1
+        },
+        "attack": {
+          "rms_dbfs": -37.031346760830644,
+          "integrated_lufs": -35.2,
+          "true_peak_dbfs": -29.1
+        },
+        "body": {
+          "rms_dbfs": -35.478001068068934,
+          "integrated_lufs": -33.1,
+          "true_peak_dbfs": -24.8
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.09180624029884,
+        "full": {
+          "rms_dbfs": -28.24142265881197,
+          "integrated_lufs": -26.0,
+          "true_peak_dbfs": -9.0
+        },
+        "attack": {
+          "rms_dbfs": -33.03620534948237,
+          "integrated_lufs": -31.2,
+          "true_peak_dbfs": -25.1
+        },
+        "body": {
+          "rms_dbfs": -31.484270316190894,
+          "integrated_lufs": -29.1,
+          "true_peak_dbfs": -20.8
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -23.80062835083666,
+        "full": {
+          "rms_dbfs": -25.95032004542955,
+          "integrated_lufs": -23.7,
+          "true_peak_dbfs": -6.8
+        },
+        "attack": {
+          "rms_dbfs": -30.745446070456342,
+          "integrated_lufs": -28.9,
+          "true_peak_dbfs": -22.8
+        },
+        "body": {
+          "rms_dbfs": -29.193579746477,
+          "integrated_lufs": -26.8,
+          "true_peak_dbfs": -18.5
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.056637088721807,
+        "full": {
+          "rms_dbfs": -33.07897621307355,
+          "integrated_lufs": -30.5,
+          "true_peak_dbfs": -16.1
+        },
+        "attack": {
+          "rms_dbfs": -39.21543576771955,
+          "integrated_lufs": -36.9,
+          "true_peak_dbfs": -29.9
+        },
+        "body": {
+          "rms_dbfs": -28.310516057494112,
+          "integrated_lufs": -26.1,
+          "true_peak_dbfs": -16.1
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.06465659880873,
+        "full": {
+          "rms_dbfs": -29.086936026454303,
+          "integrated_lufs": -26.5,
+          "true_peak_dbfs": -12.1
+        },
+        "attack": {
+          "rms_dbfs": -35.226381427514255,
+          "integrated_lufs": -32.9,
+          "true_peak_dbfs": -25.9
+        },
+        "body": {
+          "rms_dbfs": -24.31943326986435,
+          "integrated_lufs": -22.2,
+          "true_peak_dbfs": -12.1
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.758086578639563,
+        "full": {
+          "rms_dbfs": -26.780165005737985,
+          "integrated_lufs": -24.2,
+          "true_peak_dbfs": -9.8
+        },
+        "attack": {
+          "rms_dbfs": -32.9227333296653,
+          "integrated_lufs": -30.6,
+          "true_peak_dbfs": -23.6
+        },
+        "body": {
+          "rms_dbfs": -22.01012337015017,
+          "integrated_lufs": -19.8,
+          "true_peak_dbfs": -9.8
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.32583238366979,
+        "full": {
+          "rms_dbfs": -32.1097593271969,
+          "integrated_lufs": -29.2,
+          "true_peak_dbfs": -15.1
+        },
+        "attack": {
+          "rms_dbfs": -40.85136384197491,
+          "integrated_lufs": -38.2,
+          "true_peak_dbfs": -30.5
+        },
+        "body": {
+          "rms_dbfs": -33.975831703241084,
+          "integrated_lufs": -31.5,
+          "true_peak_dbfs": -22.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.350300008110583,
+        "full": {
+          "rms_dbfs": -28.134694647963435,
+          "integrated_lufs": -25.2,
+          "true_peak_dbfs": -11.1
+        },
+        "attack": {
+          "rms_dbfs": -36.88136575607663,
+          "integrated_lufs": -34.2,
+          "true_peak_dbfs": -26.6
+        },
+        "body": {
+          "rms_dbfs": -30.00115607961734,
+          "integrated_lufs": -27.5,
+          "true_peak_dbfs": -18.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.05288150394034,
+        "full": {
+          "rms_dbfs": -25.83777910780999,
+          "integrated_lufs": -22.9,
+          "true_peak_dbfs": -8.8
+        },
+        "attack": {
+          "rms_dbfs": -34.581521854772035,
+          "integrated_lufs": -31.9,
+          "true_peak_dbfs": -24.2
+        },
+        "body": {
+          "rms_dbfs": -27.71663280255848,
+          "integrated_lufs": -25.2,
+          "true_peak_dbfs": -16.3
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.19100676058032,
+        "full": {
+          "rms_dbfs": -32.26740087793458,
+          "integrated_lufs": -28.9,
+          "true_peak_dbfs": -16.4
+        },
+        "attack": {
+          "rms_dbfs": -41.83505438188333,
+          "integrated_lufs": -38.8,
+          "true_peak_dbfs": -28.8
+        },
+        "body": {
+          "rms_dbfs": -30.806090739093726,
+          "integrated_lufs": -28.3,
+          "true_peak_dbfs": -18.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.218220687008767,
+        "full": {
+          "rms_dbfs": -28.298488335784814,
+          "integrated_lufs": -25.0,
+          "true_peak_dbfs": -12.5
+        },
+        "attack": {
+          "rms_dbfs": -37.862985622958966,
+          "integrated_lufs": -34.8,
+          "true_peak_dbfs": -24.9
+        },
+        "body": {
+          "rms_dbfs": -26.852660339616207,
+          "integrated_lufs": -24.3,
+          "true_peak_dbfs": -14.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.91871647007408,
+        "full": {
+          "rms_dbfs": -25.997432450226285,
+          "integrated_lufs": -22.7,
+          "true_peak_dbfs": -10.2
+        },
+        "attack": {
+          "rms_dbfs": -35.566923009573024,
+          "integrated_lufs": -32.5,
+          "true_peak_dbfs": -22.6
+        },
+        "body": {
+          "rms_dbfs": -24.54625675930285,
+          "integrated_lufs": -22.0,
+          "true_peak_dbfs": -12.3
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.388616321889238,
+        "full": {
+          "rms_dbfs": -32.868592542981446,
+          "integrated_lufs": -29.5,
+          "true_peak_dbfs": -17.5
+        },
+        "attack": {
+          "rms_dbfs": -42.528559460847944,
+          "integrated_lufs": -39.1,
+          "true_peak_dbfs": -29.2
+        },
+        "body": {
+          "rms_dbfs": -34.815372480757894,
+          "integrated_lufs": -31.9,
+          "true_peak_dbfs": -19.0
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.39336371710963,
+        "full": {
+          "rms_dbfs": -28.874269801934304,
+          "integrated_lufs": -25.5,
+          "true_peak_dbfs": -13.5
+        },
+        "attack": {
+          "rms_dbfs": -38.54865092925349,
+          "integrated_lufs": -35.1,
+          "true_peak_dbfs": -25.2
+        },
+        "body": {
+          "rms_dbfs": -30.823557188541155,
+          "integrated_lufs": -27.9,
+          "true_peak_dbfs": -14.9
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.106952938545536,
+        "full": {
+          "rms_dbfs": -26.587327319161858,
+          "integrated_lufs": -23.2,
+          "true_peak_dbfs": -11.2
+        },
+        "attack": {
+          "rms_dbfs": -36.25887563620878,
+          "integrated_lufs": -32.8,
+          "true_peak_dbfs": -22.9
+        },
+        "body": {
+          "rms_dbfs": -28.5269268765676,
+          "integrated_lufs": -25.6,
+          "true_peak_dbfs": -12.6
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -87.56218509319308,
+        "full": {
+          "rms_dbfs": -38.4091885118793,
+          "integrated_lufs": -31.3,
+          "true_peak_dbfs": -13.3
+        },
+        "attack": {
+          "rms_dbfs": -28.450477828269886,
+          "integrated_lufs": -26.8,
+          "true_peak_dbfs": -13.3
+        },
+        "body": {
+          "rms_dbfs": -80.57455216564253,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -70.2
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -80.34822737363726,
+        "full": {
+          "rms_dbfs": -32.49245576456837,
+          "integrated_lufs": -25.2,
+          "true_peak_dbfs": -9.8
+        },
+        "attack": {
+          "rms_dbfs": -22.541995661333893,
+          "integrated_lufs": -20.8,
+          "true_peak_dbfs": -9.8
+        },
+        "body": {
+          "rms_dbfs": -73.37934112364846,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -63.8
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -75.41810727857103,
+        "full": {
+          "rms_dbfs": -28.136759813742195,
+          "integrated_lufs": -20.8,
+          "true_peak_dbfs": -7.0
+        },
+        "attack": {
+          "rms_dbfs": -18.19060768860009,
+          "integrated_lufs": -16.5,
+          "true_peak_dbfs": -7.0
+        },
+        "body": {
+          "rms_dbfs": -68.45673085916876,
+          "integrated_lufs": -66.8,
+          "true_peak_dbfs": -58.9
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -93.0059011337717,
+        "full": {
+          "rms_dbfs": -37.74948155893313,
+          "integrated_lufs": -30.3,
+          "true_peak_dbfs": -12.7
+        },
+        "attack": {
+          "rms_dbfs": -27.783186582894754,
+          "integrated_lufs": -25.7,
+          "true_peak_dbfs": -12.7
+        },
+        "body": {
+          "rms_dbfs": -86.01620109041151,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -74.5
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -85.32411151726207,
+        "full": {
+          "rms_dbfs": -31.83433042146403,
+          "integrated_lufs": -24.2,
+          "true_peak_dbfs": -9.7
+        },
+        "attack": {
+          "rms_dbfs": -21.877919146146503,
+          "integrated_lufs": -19.8,
+          "true_peak_dbfs": -9.7
+        },
+        "body": {
+          "rms_dbfs": -78.3451279819558,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -67.9
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -80.17613505182166,
+        "full": {
+          "rms_dbfs": -27.50473492145924,
+          "integrated_lufs": -19.8,
+          "true_peak_dbfs": -7.2
+        },
+        "attack": {
+          "rms_dbfs": -17.55356828193733,
+          "integrated_lufs": -15.5,
+          "true_peak_dbfs": -7.2
+        },
+        "body": {
+          "rms_dbfs": -73.20423673328601,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -63.0
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -99.83373356619914,
+        "full": {
+          "rms_dbfs": -37.520801604770924,
+          "integrated_lufs": -30.0,
+          "true_peak_dbfs": -12.7
+        },
+        "attack": {
+          "rms_dbfs": -27.542383826885825,
+          "integrated_lufs": -25.3,
+          "true_peak_dbfs": -12.7
+        },
+        "body": {
+          "rms_dbfs": -92.84403352283896,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -80.4
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -91.41877812063059,
+        "full": {
+          "rms_dbfs": -31.62658031003861,
+          "integrated_lufs": -23.9,
+          "true_peak_dbfs": -10.0
+        },
+        "attack": {
+          "rms_dbfs": -21.660025660241658,
+          "integrated_lufs": -19.4,
+          "true_peak_dbfs": -10.0
+        },
+        "body": {
+          "rms_dbfs": -84.4290780772704,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -73.2
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -85.8880601316562,
+        "full": {
+          "rms_dbfs": -27.271455826610016,
+          "integrated_lufs": -19.4,
+          "true_peak_dbfs": -7.3
+        },
+        "attack": {
+          "rms_dbfs": -17.313317955188232,
+          "integrated_lufs": -15.1,
+          "true_peak_dbfs": -7.3
+        },
+        "body": {
+          "rms_dbfs": -78.90373656301934,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -68.5
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -125.61395107080438,
+        "full": {
+          "rms_dbfs": -37.43520801229685,
+          "integrated_lufs": -28.7,
+          "true_peak_dbfs": -12.7
+        },
+        "attack": {
+          "rms_dbfs": -27.44185624607092,
+          "integrated_lufs": -25.1,
+          "true_peak_dbfs": -12.7
+        },
+        "body": {
+          "rms_dbfs": -118.62425102744419,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -88.9
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -104.03380746853051,
+        "full": {
+          "rms_dbfs": -31.486592622661288,
+          "integrated_lufs": -23.6,
+          "true_peak_dbfs": -10.2
+        },
+        "attack": {
+          "rms_dbfs": -21.500232620656504,
+          "integrated_lufs": -19.1,
+          "true_peak_dbfs": -10.2
+        },
+        "body": {
+          "rms_dbfs": -97.04410742517032,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -83.7
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -97.33603477299158,
+        "full": {
+          "rms_dbfs": -27.110987613855848,
+          "integrated_lufs": -19.1,
+          "true_peak_dbfs": -7.4
+        },
+        "attack": {
+          "rms_dbfs": -17.133450380062033,
+          "integrated_lufs": -14.7,
+          "true_peak_dbfs": -7.4
+        },
+        "body": {
+          "rms_dbfs": -90.3463347296314,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -77.9
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": null,
+        "full": {
+          "rms_dbfs": -37.55414850544939,
+          "integrated_lufs": -28.8,
+          "true_peak_dbfs": -12.8
+        },
+        "attack": {
+          "rms_dbfs": -27.556124874583414,
+          "integrated_lufs": -25.1,
+          "true_peak_dbfs": -12.8
+        },
+        "body": {
+          "rms_dbfs": null,
+          "integrated_lufs": null,
+          "true_peak_dbfs": null,
+          "pcm_silent": true
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": null,
+        "full": {
+          "rms_dbfs": -31.48229811086423,
+          "integrated_lufs": -22.4,
+          "true_peak_dbfs": -9.9
+        },
+        "attack": {
+          "rms_dbfs": -21.487217350832797,
+          "integrated_lufs": -19.0,
+          "true_peak_dbfs": -9.9
+        },
+        "body": {
+          "rms_dbfs": null,
+          "integrated_lufs": null,
+          "true_peak_dbfs": null,
+          "pcm_silent": true
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -108.64098686633986,
+        "full": {
+          "rms_dbfs": -27.09362146443615,
+          "integrated_lufs": -17.9,
+          "true_peak_dbfs": -7.7
+        },
+        "attack": {
+          "rms_dbfs": -17.103362671532665,
+          "integrated_lufs": -14.6,
+          "true_peak_dbfs": -7.7
+        },
+        "body": {
+          "rms_dbfs": -101.65128682297967,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -88.3
+        }
+      }
+    ],
+    "summary": {
+      "Resonant": {
+        "median_offset_lu": 4.099999999999998,
+        "min_offset_lu": -1.6000000000000014,
+        "max_offset_lu": 7.199999999999999,
+        "max_true_peak_dbfs": -6.9
+      },
+      "Keys": {
+        "median_offset_lu": 12.399999999999999,
+        "min_offset_lu": 11.5,
+        "max_offset_lu": 13.299999999999999,
+        "max_true_peak_dbfs": -2.9
+      },
+      "Ensemble": {
+        "median_offset_lu": 0.0,
+        "min_offset_lu": 0.0,
+        "max_offset_lu": 0.0,
+        "max_true_peak_dbfs": -6.8
+      },
+      "Pluck": {
+        "median_offset_lu": 6.799999999999997,
+        "min_offset_lu": 0.40000000000000213,
+        "max_offset_lu": 11.000000000000002,
+        "max_true_peak_dbfs": -7.0
+      }
+    }
+  },
+  "after": {
+    "rows": [
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.522258729543296,
+        "full": {
+          "rms_dbfs": -32.03500841516773,
+          "integrated_lufs": -28.8,
+          "true_peak_dbfs": -15.6
+        },
+        "attack": {
+          "rms_dbfs": -31.539265306954867,
+          "integrated_lufs": -28.5,
+          "true_peak_dbfs": -15.6
+        },
+        "body": {
+          "rms_dbfs": -30.34772807664791,
+          "integrated_lufs": -28.2,
+          "true_peak_dbfs": -25.0
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -25.615361987829694,
+        "full": {
+          "rms_dbfs": -27.16624790986753,
+          "integrated_lufs": -23.9,
+          "true_peak_dbfs": -12.9
+        },
+        "attack": {
+          "rms_dbfs": -26.720691499153943,
+          "integrated_lufs": -23.3,
+          "true_peak_dbfs": -12.9
+        },
+        "body": {
+          "rms_dbfs": -25.435601348781,
+          "integrated_lufs": -23.3,
+          "true_peak_dbfs": -20.2
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -22.35663491605848,
+        "full": {
+          "rms_dbfs": -23.926693125567112,
+          "integrated_lufs": -20.6,
+          "true_peak_dbfs": -11.0
+        },
+        "attack": {
+          "rms_dbfs": -23.432169210104696,
+          "integrated_lufs": -19.7,
+          "true_peak_dbfs": -11.0
+        },
+        "body": {
+          "rms_dbfs": -22.20372394425361,
+          "integrated_lufs": -20.1,
+          "true_peak_dbfs": -17.0
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -33.3759006382394,
+        "full": {
+          "rms_dbfs": -33.92724532470971,
+          "integrated_lufs": -30.8,
+          "true_peak_dbfs": -16.8
+        },
+        "attack": {
+          "rms_dbfs": -31.28678731817752,
+          "integrated_lufs": -28.0,
+          "true_peak_dbfs": -16.8
+        },
+        "body": {
+          "rms_dbfs": -33.542869657615356,
+          "integrated_lufs": -31.5,
+          "true_peak_dbfs": -28.0
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -28.649277296135057,
+        "full": {
+          "rms_dbfs": -29.141602925970403,
+          "integrated_lufs": -25.9,
+          "true_peak_dbfs": -14.2
+        },
+        "attack": {
+          "rms_dbfs": -26.503153634276746,
+          "integrated_lufs": -22.9,
+          "true_peak_dbfs": -14.2
+        },
+        "body": {
+          "rms_dbfs": -28.8177587774208,
+          "integrated_lufs": -26.7,
+          "true_peak_dbfs": -23.2
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.536160532010605,
+        "full": {
+          "rms_dbfs": -25.940674609743546,
+          "integrated_lufs": -22.6,
+          "true_peak_dbfs": -11.9
+        },
+        "attack": {
+          "rms_dbfs": -23.243079198346585,
+          "integrated_lufs": -19.4,
+          "true_peak_dbfs": -11.9
+        },
+        "body": {
+          "rms_dbfs": -25.67718438609066,
+          "integrated_lufs": -23.6,
+          "true_peak_dbfs": -19.8
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.28925011260879,
+        "full": {
+          "rms_dbfs": -32.53359016628422,
+          "integrated_lufs": -29.2,
+          "true_peak_dbfs": -17.0
+        },
+        "attack": {
+          "rms_dbfs": -31.132611132231194,
+          "integrated_lufs": -27.7,
+          "true_peak_dbfs": -17.0
+        },
+        "body": {
+          "rms_dbfs": -31.009156057335574,
+          "integrated_lufs": -28.8,
+          "true_peak_dbfs": -27.2
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.32820924552984,
+        "full": {
+          "rms_dbfs": -27.63809638573401,
+          "integrated_lufs": -24.3,
+          "true_peak_dbfs": -14.4
+        },
+        "attack": {
+          "rms_dbfs": -26.380278948479223,
+          "integrated_lufs": -22.7,
+          "true_peak_dbfs": -14.4
+        },
+        "body": {
+          "rms_dbfs": -26.003979813895096,
+          "integrated_lufs": -23.8,
+          "true_peak_dbfs": -22.1
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -22.988855279668,
+        "full": {
+          "rms_dbfs": -24.350048305287594,
+          "integrated_lufs": -21.0,
+          "true_peak_dbfs": -12.1
+        },
+        "attack": {
+          "rms_dbfs": -23.176387083618152,
+          "integrated_lufs": -19.2,
+          "true_peak_dbfs": -12.1
+        },
+        "body": {
+          "rms_dbfs": -22.630652298435685,
+          "integrated_lufs": -20.5,
+          "true_peak_dbfs": -18.8
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -39.59402866841903,
+        "full": {
+          "rms_dbfs": -36.7327441254,
+          "integrated_lufs": -33.5,
+          "true_peak_dbfs": -17.5
+        },
+        "attack": {
+          "rms_dbfs": -30.929697408078077,
+          "integrated_lufs": -27.2,
+          "true_peak_dbfs": -17.5
+        },
+        "body": {
+          "rms_dbfs": -38.933875659473564,
+          "integrated_lufs": -36.6,
+          "true_peak_dbfs": -34.4
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -34.55773014260002,
+        "full": {
+          "rms_dbfs": -31.793518834956398,
+          "integrated_lufs": -28.5,
+          "true_peak_dbfs": -15.0
+        },
+        "attack": {
+          "rms_dbfs": -26.338585688258274,
+          "integrated_lufs": -22.4,
+          "true_peak_dbfs": -15.0
+        },
+        "body": {
+          "rms_dbfs": -33.768107065214195,
+          "integrated_lufs": -31.5,
+          "true_peak_dbfs": -29.0
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -31.106087399094196,
+        "full": {
+          "rms_dbfs": -28.42120685571374,
+          "integrated_lufs": -25.0,
+          "true_peak_dbfs": -12.6
+        },
+        "attack": {
+          "rms_dbfs": -23.12838858097781,
+          "integrated_lufs": -18.9,
+          "true_peak_dbfs": -12.6
+        },
+        "body": {
+          "rms_dbfs": -30.184476780989243,
+          "integrated_lufs": -27.9,
+          "true_peak_dbfs": -25.3
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -48.011464298731084,
+        "full": {
+          "rms_dbfs": -38.76052120523774,
+          "integrated_lufs": -32.8,
+          "true_peak_dbfs": -17.4
+        },
+        "attack": {
+          "rms_dbfs": -30.852423795238188,
+          "integrated_lufs": -26.9,
+          "true_peak_dbfs": -17.4
+        },
+        "body": {
+          "rms_dbfs": -47.29863564228977,
+          "integrated_lufs": -44.9,
+          "true_peak_dbfs": -42.7
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -42.92483540406502,
+        "full": {
+          "rms_dbfs": -33.77293170783604,
+          "integrated_lufs": -27.6,
+          "true_peak_dbfs": -15.3
+        },
+        "attack": {
+          "rms_dbfs": -26.093591290084657,
+          "integrated_lufs": -22.0,
+          "true_peak_dbfs": -15.3
+        },
+        "body": {
+          "rms_dbfs": -42.06065931962459,
+          "integrated_lufs": -39.7,
+          "true_peak_dbfs": -37.3
+        }
+      },
+      {
+        "core": "Resonant",
+        "device_id": 1,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -34.155007616564966,
+        "full": {
+          "rms_dbfs": -29.777346326165578,
+          "integrated_lufs": -25.7,
+          "true_peak_dbfs": -13.3
+        },
+        "attack": {
+          "rms_dbfs": -23.037972792789404,
+          "integrated_lufs": -18.7,
+          "true_peak_dbfs": -13.3
+        },
+        "body": {
+          "rms_dbfs": -38.42509916135557,
+          "integrated_lufs": -36.0,
+          "true_peak_dbfs": -33.4
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -32.72201035610323,
+        "full": {
+          "rms_dbfs": -32.91995034270704,
+          "integrated_lufs": -30.8,
+          "true_peak_dbfs": -21.0
+        },
+        "attack": {
+          "rms_dbfs": -28.95471194181534,
+          "integrated_lufs": -27.2,
+          "true_peak_dbfs": -21.0
+        },
+        "body": {
+          "rms_dbfs": -32.6382892981267,
+          "integrated_lufs": -31.0,
+          "true_peak_dbfs": -28.7
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -28.486644400766252,
+        "full": {
+          "rms_dbfs": -28.770784007398195,
+          "integrated_lufs": -26.7,
+          "true_peak_dbfs": -17.4
+        },
+        "attack": {
+          "rms_dbfs": -25.068726890416432,
+          "integrated_lufs": -23.3,
+          "true_peak_dbfs": -17.4
+        },
+        "body": {
+          "rms_dbfs": -28.393896516687725,
+          "integrated_lufs": -26.7,
+          "true_peak_dbfs": -24.2
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.975500860444853,
+        "full": {
+          "rms_dbfs": -26.38688071978637,
+          "integrated_lufs": -24.3,
+          "true_peak_dbfs": -15.3
+        },
+        "attack": {
+          "rms_dbfs": -23.08526155454335,
+          "integrated_lufs": -21.3,
+          "true_peak_dbfs": -15.3
+        },
+        "body": {
+          "rms_dbfs": -25.88998701395194,
+          "integrated_lufs": -24.2,
+          "true_peak_dbfs": -21.5
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -32.10151303918251,
+        "full": {
+          "rms_dbfs": -32.30963139437152,
+          "integrated_lufs": -29.8,
+          "true_peak_dbfs": -21.2
+        },
+        "attack": {
+          "rms_dbfs": -28.364938854305308,
+          "integrated_lufs": -26.3,
+          "true_peak_dbfs": -21.2
+        },
+        "body": {
+          "rms_dbfs": -32.012670929417354,
+          "integrated_lufs": -30.0,
+          "true_peak_dbfs": -28.7
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.89165260056194,
+        "full": {
+          "rms_dbfs": -28.18756148354083,
+          "integrated_lufs": -25.8,
+          "true_peak_dbfs": -17.8
+        },
+        "attack": {
+          "rms_dbfs": -24.509948985300845,
+          "integrated_lufs": -22.4,
+          "true_peak_dbfs": -17.8
+        },
+        "body": {
+          "rms_dbfs": -27.801210816697065,
+          "integrated_lufs": -25.8,
+          "true_peak_dbfs": -24.3
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.37368410354565,
+        "full": {
+          "rms_dbfs": -25.800388436296814,
+          "integrated_lufs": -23.3,
+          "true_peak_dbfs": -15.7
+        },
+        "attack": {
+          "rms_dbfs": -22.53721993699643,
+          "integrated_lufs": -20.4,
+          "true_peak_dbfs": -15.7
+        },
+        "body": {
+          "rms_dbfs": -25.2865704255658,
+          "integrated_lufs": -23.2,
+          "true_peak_dbfs": -21.7
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.849441248938017,
+        "full": {
+          "rms_dbfs": -32.061531779727034,
+          "integrated_lufs": -29.4,
+          "true_peak_dbfs": -21.6
+        },
+        "attack": {
+          "rms_dbfs": -28.12433847157866,
+          "integrated_lufs": -25.9,
+          "true_peak_dbfs": -21.6
+        },
+        "body": {
+          "rms_dbfs": -31.761481455745756,
+          "integrated_lufs": -29.6,
+          "true_peak_dbfs": -28.8
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.659212119241616,
+        "full": {
+          "rms_dbfs": -27.958200269620512,
+          "integrated_lufs": -25.4,
+          "true_peak_dbfs": -18.1
+        },
+        "attack": {
+          "rms_dbfs": -24.289330050853096,
+          "integrated_lufs": -22.0,
+          "true_peak_dbfs": -18.1
+        },
+        "body": {
+          "rms_dbfs": -27.573819956494305,
+          "integrated_lufs": -25.4,
+          "true_peak_dbfs": -24.5
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.155565069341243,
+        "full": {
+          "rms_dbfs": -25.58585145218807,
+          "integrated_lufs": -22.9,
+          "true_peak_dbfs": -16.1
+        },
+        "attack": {
+          "rms_dbfs": -22.333293884589644,
+          "integrated_lufs": -20.0,
+          "true_peak_dbfs": -16.1
+        },
+        "body": {
+          "rms_dbfs": -25.074639833565847,
+          "integrated_lufs": -22.9,
+          "true_peak_dbfs": -21.9
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.70389301239007,
+        "full": {
+          "rms_dbfs": -31.91725750463041,
+          "integrated_lufs": -29.1,
+          "true_peak_dbfs": -22.0
+        },
+        "attack": {
+          "rms_dbfs": -27.98335395959091,
+          "integrated_lufs": -25.6,
+          "true_peak_dbfs": -22.0
+        },
+        "body": {
+          "rms_dbfs": -31.61642634939463,
+          "integrated_lufs": -29.3,
+          "true_peak_dbfs": -29.1
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.485608142398213,
+        "full": {
+          "rms_dbfs": -27.78871122777204,
+          "integrated_lufs": -25.1,
+          "true_peak_dbfs": -18.6
+        },
+        "attack": {
+          "rms_dbfs": -24.128627841411806,
+          "integrated_lufs": -21.7,
+          "true_peak_dbfs": -18.6
+        },
+        "body": {
+          "rms_dbfs": -27.39978171188357,
+          "integrated_lufs": -25.1,
+          "true_peak_dbfs": -24.8
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.974162294237374,
+        "full": {
+          "rms_dbfs": -25.41051088952996,
+          "integrated_lufs": -22.6,
+          "true_peak_dbfs": -16.7
+        },
+        "attack": {
+          "rms_dbfs": -22.17587928979969,
+          "integrated_lufs": -19.6,
+          "true_peak_dbfs": -16.7
+        },
+        "body": {
+          "rms_dbfs": -24.89300156152337,
+          "integrated_lufs": -22.5,
+          "true_peak_dbfs": -22.3
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.62102060723363,
+        "full": {
+          "rms_dbfs": -31.836706670859293,
+          "integrated_lufs": -28.9,
+          "true_peak_dbfs": -22.3
+        },
+        "attack": {
+          "rms_dbfs": -27.908351001744336,
+          "integrated_lufs": -25.3,
+          "true_peak_dbfs": -22.3
+        },
+        "body": {
+          "rms_dbfs": -31.534890077911374,
+          "integrated_lufs": -29.1,
+          "true_peak_dbfs": -29.2
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.442620270354844,
+        "full": {
+          "rms_dbfs": -27.74751182741829,
+          "integrated_lufs": -24.8,
+          "true_peak_dbfs": -18.9
+        },
+        "attack": {
+          "rms_dbfs": -24.093401009696592,
+          "integrated_lufs": -21.4,
+          "true_peak_dbfs": -18.9
+        },
+        "body": {
+          "rms_dbfs": -27.356970956116953,
+          "integrated_lufs": -24.9,
+          "true_peak_dbfs": -25.0
+        }
+      },
+      {
+        "core": "Keys",
+        "device_id": 2,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.91214393574584,
+        "full": {
+          "rms_dbfs": -25.352771938688065,
+          "integrated_lufs": -22.4,
+          "true_peak_dbfs": -17.0
+        },
+        "attack": {
+          "rms_dbfs": -22.13401289470508,
+          "integrated_lufs": -19.3,
+          "true_peak_dbfs": -17.0
+        },
+        "body": {
+          "rms_dbfs": -24.83133535576843,
+          "integrated_lufs": -22.3,
+          "true_peak_dbfs": -22.5
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.09547142391358,
+        "full": {
+          "rms_dbfs": -32.24741560827378,
+          "integrated_lufs": -30.0,
+          "true_peak_dbfs": -13.1
+        },
+        "attack": {
+          "rms_dbfs": -37.031346760830644,
+          "integrated_lufs": -35.2,
+          "true_peak_dbfs": -29.1
+        },
+        "body": {
+          "rms_dbfs": -35.478001068068934,
+          "integrated_lufs": -33.1,
+          "true_peak_dbfs": -24.8
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.09180624029884,
+        "full": {
+          "rms_dbfs": -28.24142265881197,
+          "integrated_lufs": -26.0,
+          "true_peak_dbfs": -9.0
+        },
+        "attack": {
+          "rms_dbfs": -33.03620534948237,
+          "integrated_lufs": -31.2,
+          "true_peak_dbfs": -25.1
+        },
+        "body": {
+          "rms_dbfs": -31.484270316190894,
+          "integrated_lufs": -29.1,
+          "true_peak_dbfs": -20.8
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -23.80062835083666,
+        "full": {
+          "rms_dbfs": -25.95032004542955,
+          "integrated_lufs": -23.7,
+          "true_peak_dbfs": -6.8
+        },
+        "attack": {
+          "rms_dbfs": -30.745446070456342,
+          "integrated_lufs": -28.9,
+          "true_peak_dbfs": -22.8
+        },
+        "body": {
+          "rms_dbfs": -29.193579746477,
+          "integrated_lufs": -26.8,
+          "true_peak_dbfs": -18.5
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.056637088721807,
+        "full": {
+          "rms_dbfs": -33.07897621307355,
+          "integrated_lufs": -30.5,
+          "true_peak_dbfs": -16.1
+        },
+        "attack": {
+          "rms_dbfs": -39.21543576771955,
+          "integrated_lufs": -36.9,
+          "true_peak_dbfs": -29.9
+        },
+        "body": {
+          "rms_dbfs": -28.310516057494112,
+          "integrated_lufs": -26.1,
+          "true_peak_dbfs": -16.1
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.06465659880873,
+        "full": {
+          "rms_dbfs": -29.086936026454303,
+          "integrated_lufs": -26.5,
+          "true_peak_dbfs": -12.1
+        },
+        "attack": {
+          "rms_dbfs": -35.226381427514255,
+          "integrated_lufs": -32.9,
+          "true_peak_dbfs": -25.9
+        },
+        "body": {
+          "rms_dbfs": -24.31943326986435,
+          "integrated_lufs": -22.2,
+          "true_peak_dbfs": -12.1
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.758086578639563,
+        "full": {
+          "rms_dbfs": -26.780165005737985,
+          "integrated_lufs": -24.2,
+          "true_peak_dbfs": -9.8
+        },
+        "attack": {
+          "rms_dbfs": -32.9227333296653,
+          "integrated_lufs": -30.6,
+          "true_peak_dbfs": -23.6
+        },
+        "body": {
+          "rms_dbfs": -22.01012337015017,
+          "integrated_lufs": -19.8,
+          "true_peak_dbfs": -9.8
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -30.32583238366979,
+        "full": {
+          "rms_dbfs": -32.1097593271969,
+          "integrated_lufs": -29.2,
+          "true_peak_dbfs": -15.1
+        },
+        "attack": {
+          "rms_dbfs": -40.85136384197491,
+          "integrated_lufs": -38.2,
+          "true_peak_dbfs": -30.5
+        },
+        "body": {
+          "rms_dbfs": -33.975831703241084,
+          "integrated_lufs": -31.5,
+          "true_peak_dbfs": -22.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -26.350300008110583,
+        "full": {
+          "rms_dbfs": -28.134694647963435,
+          "integrated_lufs": -25.2,
+          "true_peak_dbfs": -11.1
+        },
+        "attack": {
+          "rms_dbfs": -36.88136575607663,
+          "integrated_lufs": -34.2,
+          "true_peak_dbfs": -26.6
+        },
+        "body": {
+          "rms_dbfs": -30.00115607961734,
+          "integrated_lufs": -27.5,
+          "true_peak_dbfs": -18.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.05288150394034,
+        "full": {
+          "rms_dbfs": -25.83777910780999,
+          "integrated_lufs": -22.9,
+          "true_peak_dbfs": -8.8
+        },
+        "attack": {
+          "rms_dbfs": -34.581521854772035,
+          "integrated_lufs": -31.9,
+          "true_peak_dbfs": -24.2
+        },
+        "body": {
+          "rms_dbfs": -27.71663280255848,
+          "integrated_lufs": -25.2,
+          "true_peak_dbfs": -16.3
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.19100676058032,
+        "full": {
+          "rms_dbfs": -32.26740087793458,
+          "integrated_lufs": -28.9,
+          "true_peak_dbfs": -16.4
+        },
+        "attack": {
+          "rms_dbfs": -41.83505438188333,
+          "integrated_lufs": -38.8,
+          "true_peak_dbfs": -28.8
+        },
+        "body": {
+          "rms_dbfs": -30.806090739093726,
+          "integrated_lufs": -28.3,
+          "true_peak_dbfs": -18.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.218220687008767,
+        "full": {
+          "rms_dbfs": -28.298488335784814,
+          "integrated_lufs": -25.0,
+          "true_peak_dbfs": -12.5
+        },
+        "attack": {
+          "rms_dbfs": -37.862985622958966,
+          "integrated_lufs": -34.8,
+          "true_peak_dbfs": -24.9
+        },
+        "body": {
+          "rms_dbfs": -26.852660339616207,
+          "integrated_lufs": -24.3,
+          "true_peak_dbfs": -14.6
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -24.91871647007408,
+        "full": {
+          "rms_dbfs": -25.997432450226285,
+          "integrated_lufs": -22.7,
+          "true_peak_dbfs": -10.2
+        },
+        "attack": {
+          "rms_dbfs": -35.566923009573024,
+          "integrated_lufs": -32.5,
+          "true_peak_dbfs": -22.6
+        },
+        "body": {
+          "rms_dbfs": -24.54625675930285,
+          "integrated_lufs": -22.0,
+          "true_peak_dbfs": -12.3
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -31.388616321889238,
+        "full": {
+          "rms_dbfs": -32.868592542981446,
+          "integrated_lufs": -29.5,
+          "true_peak_dbfs": -17.5
+        },
+        "attack": {
+          "rms_dbfs": -42.528559460847944,
+          "integrated_lufs": -39.1,
+          "true_peak_dbfs": -29.2
+        },
+        "body": {
+          "rms_dbfs": -34.815372480757894,
+          "integrated_lufs": -31.9,
+          "true_peak_dbfs": -19.0
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -27.39336371710963,
+        "full": {
+          "rms_dbfs": -28.874269801934304,
+          "integrated_lufs": -25.5,
+          "true_peak_dbfs": -13.5
+        },
+        "attack": {
+          "rms_dbfs": -38.54865092925349,
+          "integrated_lufs": -35.1,
+          "true_peak_dbfs": -25.2
+        },
+        "body": {
+          "rms_dbfs": -30.823557188541155,
+          "integrated_lufs": -27.9,
+          "true_peak_dbfs": -14.9
+        }
+      },
+      {
+        "core": "Ensemble",
+        "device_id": 3,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -25.106952938545536,
+        "full": {
+          "rms_dbfs": -26.587327319161858,
+          "integrated_lufs": -23.2,
+          "true_peak_dbfs": -11.2
+        },
+        "attack": {
+          "rms_dbfs": -36.25887563620878,
+          "integrated_lufs": -32.8,
+          "true_peak_dbfs": -22.9
+        },
+        "body": {
+          "rms_dbfs": -28.5269268765676,
+          "integrated_lufs": -25.6,
+          "true_peak_dbfs": -12.6
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 48,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -95.4402461377053,
+        "full": {
+          "rms_dbfs": -45.21239575684309,
+          "integrated_lufs": -38.1,
+          "true_peak_dbfs": -20.1
+        },
+        "attack": {
+          "rms_dbfs": -35.25338936214139,
+          "integrated_lufs": -33.6,
+          "true_peak_dbfs": -20.1
+        },
+        "body": {
+          "rms_dbfs": -88.45054609434511,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -78.0
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 48,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -87.68185171997663,
+        "full": {
+          "rms_dbfs": -39.29413346344659,
+          "integrated_lufs": -32.0,
+          "true_peak_dbfs": -16.6
+        },
+        "attack": {
+          "rms_dbfs": -29.343512998095157,
+          "integrated_lufs": -27.6,
+          "true_peak_dbfs": -16.6
+        },
+        "body": {
+          "rms_dbfs": -80.69333502567838,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -71.1
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 48,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -82.53512506875009,
+        "full": {
+          "rms_dbfs": -34.937792010704605,
+          "integrated_lufs": -27.6,
+          "true_peak_dbfs": -13.8
+        },
+        "attack": {
+          "rms_dbfs": -24.991538779703983,
+          "integrated_lufs": -23.3,
+          "true_peak_dbfs": -13.8
+        },
+        "body": {
+          "rms_dbfs": -75.56245130949338,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -65.6
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 55,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -101.56627157778246,
+        "full": {
+          "rms_dbfs": -44.55254772187932,
+          "integrated_lufs": -37.1,
+          "true_peak_dbfs": -19.5
+        },
+        "attack": {
+          "rms_dbfs": -34.586021260422825,
+          "integrated_lufs": -32.5,
+          "true_peak_dbfs": -19.5
+        },
+        "body": {
+          "rms_dbfs": -94.57657153442227,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -83.7
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 55,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -92.9887100213768,
+        "full": {
+          "rms_dbfs": -38.63599138474828,
+          "integrated_lufs": -31.0,
+          "true_peak_dbfs": -16.5
+        },
+        "attack": {
+          "rms_dbfs": -28.679445047726805,
+          "integrated_lufs": -26.6,
+          "true_peak_dbfs": -16.5
+        },
+        "body": {
+          "rms_dbfs": -85.99900997801662,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -74.5
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 55,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -87.48481750437583,
+        "full": {
+          "rms_dbfs": -34.30572701430559,
+          "integrated_lufs": -26.6,
+          "true_peak_dbfs": -14.0
+        },
+        "attack": {
+          "rms_dbfs": -24.354474472864784,
+          "integrated_lufs": -22.3,
+          "true_peak_dbfs": -14.0
+        },
+        "body": {
+          "rms_dbfs": -80.495811359702,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -70.2
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 60,
+        "velocity": 0.2,
+        "steady_rms_dbfs": -109.56421773372413,
+        "full": {
+          "rms_dbfs": -44.323726565093835,
+          "integrated_lufs": -35.6,
+          "true_peak_dbfs": -19.5
+        },
+        "attack": {
+          "rms_dbfs": -34.34514517256299,
+          "integrated_lufs": -32.1,
+          "true_peak_dbfs": -19.5
+        },
+        "body": {
+          "rms_dbfs": -102.57451769036395,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -89.1
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 60,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -99.74115975130717,
+        "full": {
+          "rms_dbfs": -38.42818570681344,
+          "integrated_lufs": -30.7,
+          "true_peak_dbfs": -16.8
+        },
+        "attack": {
+          "rms_dbfs": -28.461525624498044,
+          "integrated_lufs": -26.2,
+          "true_peak_dbfs": -16.8
+        },
+        "body": {
+          "rms_dbfs": -92.75145970794698,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -80.3
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 60,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -93.58425020222283,
+        "full": {
+          "rms_dbfs": -34.07244663453974,
+          "integrated_lufs": -26.2,
+          "true_peak_dbfs": -14.1
+        },
+        "attack": {
+          "rms_dbfs": -24.114236590764826,
+          "integrated_lufs": -21.9,
+          "true_peak_dbfs": -14.1
+        },
+        "body": {
+          "rms_dbfs": -86.59455015886265,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -76.1
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 67,
+        "velocity": 0.2,
+        "steady_rms_dbfs": null,
+        "full": {
+          "rms_dbfs": -44.23793410816687,
+          "integrated_lufs": -35.5,
+          "true_peak_dbfs": -19.5
+        },
+        "attack": {
+          "rms_dbfs": -34.24450036257736,
+          "integrated_lufs": -31.9,
+          "true_peak_dbfs": -19.5
+        },
+        "body": {
+          "rms_dbfs": null,
+          "integrated_lufs": null,
+          "true_peak_dbfs": null,
+          "pcm_silent": true
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 67,
+        "velocity": 0.5,
+        "steady_rms_dbfs": -121.19035958619988,
+        "full": {
+          "rms_dbfs": -38.288073049656916,
+          "integrated_lufs": -29.3,
+          "true_peak_dbfs": -17.0
+        },
+        "attack": {
+          "rms_dbfs": -28.3016545130744,
+          "integrated_lufs": -25.9,
+          "true_peak_dbfs": -17.0
+        },
+        "body": {
+          "rms_dbfs": -114.20065954283969,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -88.9
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 67,
+        "velocity": 0.85,
+        "steady_rms_dbfs": -106.77297195023846,
+        "full": {
+          "rms_dbfs": -33.911922953566254,
+          "integrated_lufs": -25.9,
+          "true_peak_dbfs": -14.2
+        },
+        "attack": {
+          "rms_dbfs": -23.93433973297869,
+          "integrated_lufs": -21.5,
+          "true_peak_dbfs": -14.2
+        },
+        "body": {
+          "rms_dbfs": -99.78327190687827,
+          "integrated_lufs": -70.0,
+          "true_peak_dbfs": -88.9
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 72,
+        "velocity": 0.2,
+        "steady_rms_dbfs": null,
+        "full": {
+          "rms_dbfs": -44.356801376657835,
+          "integrated_lufs": -35.6,
+          "true_peak_dbfs": -19.6
+        },
+        "attack": {
+          "rms_dbfs": -34.358735194908064,
+          "integrated_lufs": -31.9,
+          "true_peak_dbfs": -19.6
+        },
+        "body": {
+          "rms_dbfs": null,
+          "integrated_lufs": null,
+          "true_peak_dbfs": null,
+          "pcm_silent": true
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 72,
+        "velocity": 0.5,
+        "steady_rms_dbfs": null,
+        "full": {
+          "rms_dbfs": -38.28371931768399,
+          "integrated_lufs": -29.2,
+          "true_peak_dbfs": -16.7
+        },
+        "attack": {
+          "rms_dbfs": -28.288604470630318,
+          "integrated_lufs": -25.8,
+          "true_peak_dbfs": -16.7
+        },
+        "body": {
+          "rms_dbfs": null,
+          "integrated_lufs": null,
+          "true_peak_dbfs": null,
+          "pcm_silent": true
+        }
+      },
+      {
+        "core": "Pluck",
+        "device_id": 6,
+        "midi": 72,
+        "velocity": 0.85,
+        "steady_rms_dbfs": null,
+        "full": {
+          "rms_dbfs": -33.89454116994263,
+          "integrated_lufs": -24.7,
+          "true_peak_dbfs": -14.5
+        },
+        "attack": {
+          "rms_dbfs": -23.904253491758784,
+          "integrated_lufs": -21.4,
+          "true_peak_dbfs": -14.5
+        },
+        "body": {
+          "rms_dbfs": null,
+          "integrated_lufs": null,
+          "true_peak_dbfs": null,
+          "pcm_silent": true
+        }
+      }
+    ],
+    "summary": {
+      "Resonant": {
+        "median_offset_lu": 0.0,
+        "min_offset_lu": -4.600000000000001,
+        "max_offset_lu": 3.099999999999998,
+        "max_true_peak_dbfs": -11.0
+      },
+      "Keys": {
+        "median_offset_lu": 0.0,
+        "min_offset_lu": -0.8000000000000007,
+        "max_offset_lu": 0.8999999999999986,
+        "max_true_peak_dbfs": -15.3
+      },
+      "Ensemble": {
+        "median_offset_lu": 0.0,
+        "min_offset_lu": 0.0,
+        "max_offset_lu": 0.0,
+        "max_true_peak_dbfs": -6.8
+      },
+      "Pluck": {
+        "median_offset_lu": 0.0,
+        "min_offset_lu": -6.399999999999999,
+        "max_offset_lu": 4.200000000000003,
+        "max_true_peak_dbfs": -13.8
+      }
+    }
+  }
+}

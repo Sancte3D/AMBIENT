@@ -43,6 +43,10 @@ bool scenes_save(int slot, uint32_t now_ms);
 bool scenes_recall(int slot, uint32_t now_ms);
 
 bool scenes_used(int slot);
+#ifdef FAM_SOUND_PRODUCT
+/* True for a loaded approximation until it is explicitly saved as SCN7. */
+bool scenes_migrated(int slot);
+#endif
 int  scenes_active(void);        /* zuletzt geladener/gespeicherter Slot, -1 */
 
 /* --- Scenes-UI-Modus ---------------------------------------------------- */

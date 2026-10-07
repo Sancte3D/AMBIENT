@@ -18,7 +18,7 @@ Schritt.
 |---|---|---|---|
 | MCU + Clock | STM32H743VIT6 + 8 MHz Crystal | — | [BOM §1](../../../BOM_MASTER.md) |
 | Power | USB-C, BQ24074 Power-Path (r19.18, ADR-0023), Boost (TPS61089), LDO (AP7361C) | — | [BOM §2](../../../BOM_MASTER.md) |
-| Audio | PCM5102A DAC → PAM8403 Amp → 2 Speaker + PJ-320D Line-out | 2 Spk | [BOM §3](../../../BOM_MASTER.md) |
+| Audio | PCM5102A DAC → PAM8406 Amp → 2 Speaker + PJ-320D Line-out | 2 Spk | [BOM §3](../../../BOM_MASTER.md) |
 | I/O + LED | MCP23017 (GPIO) + PCA9685 U6 (PWM) → 15 Mono-Status-LEDs | 15 LED | [BOM §4/§9](../../../BOM_MASTER.md) |
 | Display | Waveshare 1.9″ ST7789 (Steckmodul, 8-Pin J3) | 1 | [BOM §5](../../../BOM_MASTER.md) |
 | **Encoder** | **4× ALPS EC11E18244AU — alle Push-Encoder.** Alle 4 Push-Switches verdrahtet: DISPLAY (PE3), VOL (MCP-GPB5), DRIVE (PE0), BRIGHT (PE1) | 4 | [BOM §6](../../../BOM_MASTER.md) · [ADR-0012](../decisions/ADR-0012-encoder-strategy.md) |

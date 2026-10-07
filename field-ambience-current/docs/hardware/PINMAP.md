@@ -82,8 +82,8 @@ Rev-B.
 | 50 | VDD | +3V3 | dedicated | Power | +3V3 + decoupling |
 | 51 | PB12 | (free) | — | — | free |
 | 52 | PB13 | (free) | — | — | free |
-| 53 | PB14 | AMP_nSHDN | GPIO (active-low) | Audio | PAM8403 `/SHDN` + 10 kΩ PD |
-| 54 | PB15 | AMP_nMUTE | GPIO (active-low) | Audio | PAM8403 `/MUTE` + 10 kΩ PD |
+| 53 | PB14 | AMP_SHDN_N | GPIO (active-low) | Audio | PAM8406 `/SHDN` + 10 kΩ PD |
+| 54 | PB15 | AMP_MUTE_N | GPIO (active-low) | Audio | PAM8406 `/MUTE` + 10 kΩ PD |
 | 55 | PD8 | NC_PD8_RSVD | GPIO | — | free (r18.87: STATUS_LED/heartbeat removed; Rev-B reserve) |
 | 56 | PD9 | (free) | USART3_RX | — | free |
 | 57 | PD10 | (free) | — | — | free |
@@ -108,7 +108,7 @@ Rev-B.
 | 76 | PA14 | SWCLK | JTCK/SWCLK | MCU/SWD | SWD header J4 pin 2 |
 | 77 | PA15 | (free) | JTDI / TIM2_CH1 | — | free |
 | 78 | PC10 | (free) | — | — | free |
-| 79 | PC11 | QSPI_NCS | QUADSPI_BK2_NCS (AF9) | PSRAM | U9 `CE#` (pin 1) — ADR-0022 |
+| 79 | PC11 | QSPI_CS_N | QUADSPI_BK2_NCS (AF9) | PSRAM | U9 `CE#` (pin 1) — ADR-0022 |
 | 80 | PC12 | (free) | — | — | free |
 | 81 | PD0 | (free) | — | — | free |
 | 82 | PD1 | (free) | — | — | free |
@@ -152,7 +152,7 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 | `VBUS_FUSED` | USB-C VBUS → F1 polyfuse (r19.18, ADR-0023) | BQ24074 IN (Pin 13), D2 SMAJ5.0A TVS, C_CHG_IN 4,7 µF, LED_CHRG-Anode |
 | `VSYS` | BQ24074 OUT (DPPM: 4,4 V @USB / VBAT @Akku — immer versorgt) | TPS61089 VIN + L1, SW_PWR Throw A (Pull-Quelle), BQ EN2, C_SYS1/C_SYS_HF, TP_VSYS |
 | `PWR_ON` | SW_PWR COM (Throw A = VSYS; R_PWR_PD 100k = Default AUS) | U8 TPS61089 EN (r19.18 — Schalter tötet den Boost) + U_PWR ON |
-| `+5V_RAIL` | **einzige Quelle (r19.18):** TPS61089-Boost (4,97 V) via D3 | PAM8403 PVDD (UNgeschaltet, R_SHDN_PD hält Amp im Aus), U_PWR VIN, LED-Anoden (globales +5V-Flag, r18.81) |
+| `+5V_RAIL` | **einzige Quelle (r19.18):** TPS61089-Boost (4,97 V) via D3 | PAM8406 PVDD (UNgeschaltet, R_SHDN_PD hält Amp im Aus), U_PWR VIN, LED-Anoden (globales +5V-Flag, r18.81) |
 | `+5V_SW` | **U_PWR TPS22918** (r18.81, ADR-0016): +5V_RAIL → VOUT, geschaltet von SW_PWR via `PWR_ON` (R_PWR_PD 100k = Default AUS) | AP7361C LDO IN (= gesamte 3V3-Domäne: MCU, MCP, 2× PCA9685, LCD) |
 | `+3V3` | AP7361C-33 LDO OUT (r18.79: Doku-Drift „AP7361A-33ER“ korrigiert — BOM/Schematic haben AP7361C-33Y5-13) | MCU VDD×5+VBAT, MCP23017, PCA9685, PCM5102A, LCD module, encoders' pull-ups |
 | `VDDA` | +3V3 via FB1 ferrite | MCU pin 21 (+ 1 µF‖100 nF) |
@@ -168,7 +168,7 @@ This is the "welche Pin mit welcher, alle Leitungen, pro Modul" view.
 | `SWDIO`/`SWCLK`/`SWO` | MCU PA13/PA14/PB3 | SWD header J4 (Tag-Connect TC2030) |
 | `USB_DM`/`USB_DP` | MCU PA11/PA12 | USBLC6-2SC6 → USB-C D−/D+ |
 | `QSPI_CLK` | MCU PB2 | U9 `SCLK` (pin 6) — QUADSPI BK2, ADR-0022 |
-| `QSPI_NCS` | MCU PC11 | U9 `CE#` (pin 1) — QUADSPI BK2 |
+| `QSPI_CS_N` | MCU PC11 | U9 `CE#` (pin 1) — QUADSPI BK2 |
 | `QSPI_IO0`/`IO1`/`IO2`/`IO3` | MCU PE7/PE8/PE9/PE10 | U9 `SIO0/SIO1/SIO2/SIO3` (pins 5/2/3/7) |
 | U9 `VCC`/`VSS` | +3V3 / GND | +100 nF (C_QSPI) + 10 µF (C_QSPI2) decoupling |
 
@@ -207,9 +207,9 @@ Each A/B has a 10 kΩ pull-up + 100 nF RC debounce; switches pull-up + tactile-t
 | Net | From | To |
 |---|---|---|
 | `I2S_LRCK`/`I2S_BCK`/`I2S_DOUT` | MCU SAI1 (PE4/PE5/PE6) | PCM5102A LRCK/BCK/DIN |
-| PCM5102A analog L/R | DAC OUT | PAM8403 IN + U11 TPA6132A2 HP-Amp → J8 PHONES/LINE-OUT (r19.19) |
-| `AMP_nSHDN`/`AMP_nMUTE` | MCU PB14/PB15 (+10 kΩ PD) | PAM8403 /SHDN, /MUTE |
-| speaker out | PAM8403 BTL | J6 (L+/L−), J7 (R+/R−) → 2× speaker |
+| PCM5102A analog L/R | DAC OUT | PAM8406 IN + U11 TPA6132A2 HP-Amp → J8 PHONES/LINE-OUT (r19.19) |
+| `AMP_SHDN_N`/`AMP_MUTE_N` | MCU PB14/PB15 (+10 kΩ PD) | PAM8406 /SHDN, /MUTE |
+| speaker out | PAM8406 BTL | J6 (L+/L−), J7 (R+/R−) → 2× speaker |
 | jack-detect | J8 insertion-detect | MCP23017 (auto-mute speakers) |
 | `MIDI_TX` | MCU PD5 | **J10** MIDI jack (3.5 mm TRS, via 2× 220 Ω) |
 
@@ -233,7 +233,7 @@ PC10(78), PC12(80), PD0–PD4(81–85), PD6(87), PD7(88), PB4(90), PB5(91),
 PB8(95), PB9(96).
 
 > **Not free (r19.10, ADR-0022):** PB2(36), PE7–PE10(37–40), PC11(79) now
-> carry the QSPI-PSRAM bus (`QSPI_CLK`/`QSPI_IO0-3`/`QSPI_NCS`, QUADSPI BK2).
+> carry the QSPI-PSRAM bus (`QSPI_CLK`/`QSPI_IO0-3`/`QSPI_CS_N`, QUADSPI BK2).
 
 > *PE2 is the candidate for `LSW_EN` **if** the ADR-0016 sleep load-switch is
 > added (currently not). **PA8/PA9 are NOT free** — they're VOL_A/VOL_B.

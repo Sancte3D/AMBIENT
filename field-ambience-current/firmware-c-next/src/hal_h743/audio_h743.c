@@ -9,7 +9,7 @@
  *
  * Pins (AF6, NETS-verified r18.83): PE4 SAI1_FS_A → LRCK (DAC 15),
  * PE5 SAI1_SCK_A → BCK (DAC 13), PE6 SAI1_SD_A → DIN (DAC 14).
- * Amp control: PB14 = AMP_nSHDN, PB15 = AMP_nMUTE (hardware pulldowns keep
+ * Amp control: PB14 = AMP_SHDN_N, PB15 = AMP_MUTE_N (hardware pulldowns keep
  * both LOW through boot — SPEC §8.3 pop-suppression).
  *
  * Pump: one ping-pong buffer (2 × AUDIO_BUFFER_FRAMES stereo frames),

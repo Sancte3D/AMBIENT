@@ -16,7 +16,8 @@ The PCB is blocked by **a small number of high-risk parts that still need target
 - **POWER_CRITICAL (2):** U8 TPS61089 (VQFN-HR HotRod, custom FP — datasheet layout review not yet done) and L1 Sunlord SWPA6045 (custom FP, current path matters).
 - **MECH_CRITICAL (10):** USB-C J1, Audio Jack J8, Battery JST J_BAT, Display Header J3, Encoders EN1–EN4, Cell Keyswitches SW1–SW5 (Kailh Choc V1, direct-solder, digital, r18.75), Modifier Buttons SW6–SW10, Service Buttons SW11 + SW_BOOT, Cell-LEDs (15× under cell-cap windows). None has a *1:1 print or CAD overlay against the enclosure recorded*.
 - **EXACT_MODEL_SAFE electrically, MECH_CRITICAL physically (overlap):** all connectors above.
-- **PACKAGE_SAFE pinout-pending (9):** U1 STM32H743, U2 MCP23017, U3 PCM5102A, U4 PAM8403H, U5 AP7361C LDO, U6 PCA9685, U7 BQ24074 (r19.18: pin map verified against TI SLUS810N + JLC land pattern, ERC double-check remains cheap), D1 USBLC6, Q2 2N7002. Symbol↔footprint pin mapping must be checked once in KiCad ERC. (Q1 removed r18.79; diode-OR D3B removed r19.18 — single-source rail per ADR-0023.)
+- **PAD MAPPING VERIFIED (r19.65, was “PACKAGE_SAFE pinout-pending (9)”):** `scripts/check_footprints.py` now compares the symbol pin numbers of **every** placed part against the real `.kicad_mod` pad numbers. All 38 symbol/footprint pairs match — including the 9 that were pending: U1 STM32H743 (100), U2 MCP23017 (28), U3 PCM5102A (20), U4 PAM8406 (16), U5 AP7361C (5), U6 PCA9685 (28), U7 BQ24074 (16+EP), D1 USBLC6 (6), Q2 2N7002 (3); plus U8 TPS61089 (11), U9 APS6404L (8), U11 TPA6132A2 (16+EP). Two real defects fell out of this and are fixed: **J1 USB-C shield** (symbol pin `S1` vs. footprint pad `SH` — the shell would have been off-net although the schematic ties it to GND) and **C_BULK** (footprint `Capacitor_SMD:CP_Tantalum_Case-E_EIA-7343-43_Reflow` exists in no KiCad library → `Capacitor_Tantalum_SMD:CP_EIA-7343-43_Kemet-X`).
+  ⚠ **What this does NOT cover:** that pin *n* carries the datasheet's *function* for pin *n*. Numbers matching is necessary, not sufficient — the function map still wants one human pass per IC against the datasheet. (Q1 removed r18.79; diode-OR D3B removed r19.18 — single-source rail per ADR-0023.)
 - **UNKNOWN (0):** r18.74 briefly reopened this at 1 (a Kailh Choc hot-swap
   socket with no clean manufacturer/LCSC part number). **r18.75 closed it**:
   switched to direct-solder Kailh Choc V1 (CPG135001D01, LCSC C400229) — a
@@ -70,7 +71,7 @@ KiCad-Standard libraries (`Package_QFP`, `Package_SO`, `Package_TO_SOT_SMD`, `Re
 | **C_BULK2** | MLCC 100 µF/10 V 1210 | LMK325ABJ107MM-T | C2880380 | `Capacitor_SMD:C_1210_3225Metric` | DEFAULT_SAFE | Pkg | OK | No | Parallel to C_BULK to handle transient ESR |
 | **J_BAT** | JST-PH 2-pin SMT | S2B-PH-SM4-TB(LF)(SN) | C295747 | `Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | Orientation vs LiPo pouch slot in bottom case | Electrical OK | YES (mech) | Bottom-case slot per ADR-0011 (LiPo 503759, 2000 mAh) |
 | **U3** | DAC | PCM5102APWR | C107671 | `Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm` | PACKAGE_SAFE | Pin 1, I²S pins (BCK/LRCK/DIN), power, analog out, mode pins (FMT/FLT/DEMP/XSMT) | OK pkg | No | Verify mode pin pull strategy in ERC |
-| **U4** | Class-D amp | PAM8403DR-H | C17337 | `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` | PACKAGE_SAFE | Pin 1, OUT_L+/–, OUT_R+/–, power | OK pkg | No | BTL outputs — never short to GND |
+| **U4** | Class-D amp | PAM8406DR | C86270 | `Package_SO:SOIC-16_3.9x9.9mm_P1.27mm` | PACKAGE_SAFE | Pin 1, OUT_L+/–, OUT_R+/–, power, **pin 9 = MODE (tied +5V = Class-D)** | OK pkg | No | BTL outputs — never short to GND |
 | **FB1 / FB2** | Ferrite 0603 600 Ω | BLM18AG601SN1D | C19330/C84094 | `Inductor_SMD:L_0603_1608Metric` | DEFAULT_SAFE | Pkg | OK | No | Power-supply decoupling |
 | **J8** | 3.5 mm TRS jack | PJ-320D (SHOU HAN) | C431535 | `field_ambience:Jack_3.5mm_PJ-320D_SMT` | EXACT_MODEL_SAFE + **MECH_CRITICAL** | 4 SMD + 2 NPTH pad layout, switch contact, board-edge | EasyEDA r18.19 vendored | YES (mech) | Cutout must match exact PJ-320D — generic SJ-3523 was wrong, do not regress |
 | ~~J9~~ | MIDI jack DNP | – | – | s. J8 | N/A | – | DNP per ADR-0004 r18.30 | No | FP + edge cutout conserved for later reactivation |
@@ -113,7 +114,7 @@ These pass a generic KiCad ERC + a one-time human eyeball comparing symbol pin o
 - **U1 STM32H743VIT6** — LQFP-100, 100 pins; the highest-leverage one to ERC because of VCAP/VBAT/BOOT0/VREF+/PA13/PA14 (SWD) wiring.
 - **U2 MCP23017** — SSOP-28, I²C address pins A0/A1/A2.
 - **U3 PCM5102A** — TSSOP-20, mode pins (FMT/FLT/DEMP/XSMT) need explicit pull strategy.
-- **U4 PAM8403H** — SOIC-16, BTL outputs OUTL±/OUTR±.
+- **U4 PAM8406** — SOIC-16, BTL outputs OUTL±/OUTR±.
 - **U5 AP7361C** — SOT-89-5, non-standard pin order 1=EN/2=GND/3=ADJ/4=IN/5=OUT (DS-verified r18.6, easy to wire wrong).
 - **U6 PCA9685** — TSSOP-28, 16 LED outputs + I²C address.
 - **U7 BQ24074** — VQFN-16 3×3 EP; ISET/ILIM/TS resistors set charge/input current (r19.18).

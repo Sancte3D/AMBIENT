@@ -25,7 +25,8 @@ MEMORY
    * (SCENES_FLASH_ADDR). Shrinking FLASH by that sector keeps the linker from
    * ever placing code/data into it (firmware is ~203 KB today, far below, but
    * this guards against future growth silently colliding with the store). */
-  FLASH   (rx)  : ORIGIN = 0x08000000, LENGTH = 1920K   /* 2048K - 128K scenes */
+  /* The experimental journal reserves Bank-2 sectors 6 and 7. */
+  FLASH   (rx)  : ORIGIN = 0x08000000, LENGTH = DEFINED(__scene_journal_candidate) ? 1792K : 1920K
   DTCMRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 128K
   RAM_D1  (xrw) : ORIGIN = 0x24000000, LENGTH = 512K
   RAM_D2  (xrw) : ORIGIN = 0x30000000, LENGTH = 288K
@@ -161,6 +162,7 @@ SECTIONS
     . = ALIGN(32);
     _sd2_bss = .;
     *fx_master.c.obj(.bss .bss* COMMON)
+    *ambient_room.c.obj(.bss .bss* COMMON) /* product: one CPU-only float room */
     . = ALIGN(4);
     _ed2_bss = .;
   } >RAM_D2

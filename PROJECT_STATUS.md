@@ -1,5 +1,284 @@
 # PROJECT STATUS
 
+> **2026-10-07 — alle 30 offenen Abnahmen konkret vorbereitet:**
+> Neue kontinuierliche PCM-Exporte, isolierte Attack-/Release-Grenzen,
+> Activity 0/1, ungekuerzte Tails, zwei Natur-Seeds, identische musikalische
+> Naturpaare, sechs Worldwechsel, drei Blindrunden und Ausschnitte nach 18 min.
+> Grain/Sympathie/Onset-Air als einzelne Gegenmodelle; Produkt-DSP unveraendert.
+> [Abnahmeplan fuer alle 30 Punkte](field-ambience-current/docs/audio/SOUND_ACCEPTANCE_2026-10-07.md).
+> PR140 gemerged: 08a337069d006f7edc5af91fb514e24bbd1bda51.
+> [CI37610254166](https://github.com/Sancte3D/AMBIENT/actions/runs/37610254166), 6/6 Jobs gruen.
+> 66 Vergleiche / 132 WAVs, mindestens 131,10 min echtes PCM; ARM-Banken unveraendert.
+> Host-Suite und Exportregression bestanden; 22 Hoerurteile plus acht weitere
+> Gates bleiben offen. 24 geschlossen / 30 offen ist weiterhin der ehrliche Stand.
+> PR138 gemerged in den Entwicklungsbranch: d97824ec0039499969ef91353633b2c934818690.
+> Journal bleibt OFF; Hardware, Save-Latenz und nichtblockierender Storage folgen.
+
+> **2026-10-07 — Scene-Journal als separater Softwarekandidat:**
+> Zwei Bank-2-Sektoren, CRC-gepruefte Datensaetze, Commit-Flashword zuletzt;
+> der vorige gueltige Datensatz bleibt im Flash-Modell bei abgebrochenem
+> Schreiben/Erase erreichbar. Recovery schreibt erst nach Erase des anderen
+> Sektors; keine Wiederverwendung unsicherer Flashwords nach Reset.
+> Host-Abbruch-/Korruptionstests und volle Firmware-Host-Suite bestanden.
+> CI37602680211, alle sechs Jobs gruen, gepruefter Head
+> 9768966cc6a3881ea9ea56cb9e8c2eff2b959a8a; Default/Product/Journal cross-linken.
+> Journal-Product: Flash 192748 B, D1 65696 B; Delta +2024/+96 B.
+> `FAM_SCENE_JOURNAL_CANDIDATE` bleibt OFF: ECC-sichere H743-Reads, echte
+> Power-cuts, Spannung und Save-/IRQ-Latenzen fehlen. Main-Save bleibt synchron.
+> [Journal-Nachweis und Grenzen](field-ambience-current/docs/audio/SCENE_JOURNAL_CHECKPOINT.md).
+> [PR138](https://github.com/Sancte3D/AMBIENT/pull/138) ist im Entwicklungsbranch gemerged.
+> To-do aus altem Chat abgeglichen: weiterhin 24 geschlossen / 30 offene Gates.
+
+> **2026-10-06 — reduzierter Sound Candidate 0.3:**
+> Produktkern mit COAST/WOODLAND/HIGHLANDS, drei gemeinsamen Quellen-Slots
+> (Pluck zwei), tatsächlichen Besitzern/Hz/Tails, gehörten Motiven/Intervallen,
+> einem Float-Raum und getrennter optionaler Nature (boot aus).
+> Product-Profil cross-linkt auf H743; Reference bleibt Default.
+> PR136 inklusive PR135 ist gemerged: 476f4db068345c88469e141be2fa2f6dac81f6a3.
+> Geprüfter Head38f7d51b3f6e2dbe2c30026dc8cf26b8430dc364,
+> CI37515501334, 6/6 bestanden, Mergebaum exakt gleich.
+> 48 min tatsächlich gerendertes PCM plus Stress/Recovery, 64/512 exakt gleich,
+> keine NaN/Inf/Limiter; 42 Summen-/Registerprobes mit mindestens 9,66 dB True-Peak-Reserve.
+> Natürliche Pluck-Key-up-Tails, samplegenaues Retirement, echte Mute/Clear-
+> Operationen, konservative Harmonie und vorbereitete Pitch-Kontextstornos.
+> ARM: FLASH 190724 B, DTCM 16384 B Stackreservierung, D1 65600 B, D2 60808 B.
+> Scene-Flash-Read-Cacheguard, Bank-1-Limit und volle Übergänge ebenfalls geprüft.
+> Hörpakete je 27 s stehen im verlinkten Checkpoint.
+> [54 Aufgaben mit Status](field-ambience-current/docs/audio/AMBIENT_SOUND_DESIGN_TODO.md),
+> [exakter Softwarevertrag](field-ambience-current/docs/audio/PRODUCT_SOUND_SPEC.md),
+> [Build-/Hörnachweis und Restgates](field-ambience-current/docs/audio/PRODUCT_CORE_CHECKPOINT.md).
+> Klanglich bleiben Quellen/Nature/Endpoints/Blindvergleich/Langzeitwirkung offen.
+> Gerätezeit, Stack, tatsächliche Ausgänge und Storage-Save/Power-loss sind
+> nicht abgenommen. UI/Encoder/Tasten/Display/LED/15-min-Ruhe folgen danach.
+> Ältere datierte Next-/Locked-Einträge und die alte Soundidentität sind Historie.
+
+> **2026-10-04 — Vollständiger Produktentwurf und Umsetzungspakete:**
+> `field-ambience-current/docs/audio/AMBIENT_PRODUCT_BRIEF.md` verbindet
+> drei unterschiedliche World-Grammatiken, Quellen-/Raumarchitektur, Start,
+> Generate, Worldwechsel, Stillwerden, 15-Minuten-Displayruhe und klangneutrales
+> Wake. `AMBIENT_SOURCE_ARCHITECTURE.md` ist anhand des Codes ausgearbeitet;
+> implizite Pad-Dopplung, Quellenallokation, Body-Färbung und periodische innere
+> Bewegung sind konkrete nächste Risiken. Neue Empfehlung: manuell dieselbe
+> World-Palette nutzen; bestehender Synth-Katalog bleibt bis zur Entscheidung
+> erhalten. Entwurf entscheidungsreif, gemeinsame Konzeptfreigabe offen.
+> Firmware seit dem letzten Soundstand unverändert. Nach Freigabe gilt
+> `AMBIENT_IMPLEMENTATION_SEQUENCE.md`, beginnend mit Quellen-Diagnose und
+> explizitem Routing; ältere Choir/Guembri-Queue nicht automatisch fortsetzen.
+
+> **2026-09-27 — Drei World-Systeme als konkreter Konzeptentwurf:**
+> `field-ambience-current/docs/audio/AMBIENT_WORLD_SYSTEMS.md` beschreibt
+> COAST (Stimmenübergaben), WOODLAND (Motivantworten) und HIGHLANDS (Fragmente
+> und Pausen), gemeinsame Harmonie-/Belegungsregeln und begrenzte Übergänge.
+> Arbeitsnamen, keine Laufzeit-Umbenennung. Generate bleibt autonomer Hörmodus;
+> Variantenbildung ist davon getrennt. Firmware und Klangfreigabe unverändert.
+> Quellen-/Effektarchitektur jetzt in `AMBIENT_SOURCE_ARCHITECTURE.md` im selben
+> Ordner: Bowed/Pluck/Horn als Kandidaten, explizite Quellenbelegung statt
+> implizitem Pad und ein reduzierter Raumweg. Firmware weiterhin unverändert.
+> Nächstes Konzeptpaket: abschließender Produktbrief mit vollständigem Ablauf.
+> `CONCEPT_GATE.md` bleibt maßgeblich für den Phasenwechsel.
+
+> **VERBINDLICH 2026-09-26 — Konzept vor weiterer Umsetzung:** Nutzer stellt
+> die Reihenfolge klar: **Konzeptfreigabe → Sounddesign → UX/UI/Display →
+> Tests am echten Gerät**. Kein physischer Prototyp als Entscheidungsgrundlage
+> verfügbar. Weitere Soundänderungen (Choir/Forest, Guembri/Desert) pausieren.
+> Nächste Aufgabe: Produktzweck, Identität und Rolle von Natur/Kultur/Geschichte
+> schlüssig entscheiden. `field-ambience-current/docs/audio/CONCEPT_GATE.md`
+> hat Vorrang vor älteren Next-/Locked-Einträgen. Kulturansatz ist ein Vorschlag,
+> kein beschlossener Umbau. Konzeptfreigabe ist keine empirische Klangfreigabe.
+
+> **2026-09-26 — Bowed-Bewegung reduziert:** Gemeinsames 5,1-Hz-Vibrato
+> entfernt, Bogenrauschen um 12 dB gesenkt. 24 Register-/Pegel-/Farb-Probes
+> bestanden; Grundtonänderung unter 0,006 dB. Volle Host-Suite grün; keine
+> neuen DSP-Puffer. Trockener 27,5-s-A/B für beide Farben:
+> `field-ambience-current/docs/audio/BOWED_MOTION_REVIEW.md`.
+> **Als Nächstes:** Choir/Forest-Vokalresonanzen und Summcharakter; danach
+> Guembri/Desert. Bowed-Hörfreigabe und Integration mit Pad/Raum bleiben offen.
+
+
+> **2026-09-23 — Alps-Quelle konkret umgebaut:** Horn-Suboktave und festen
+> 950-Hz-Formanten entfernt; Grundton + leisere Obertöne, nichtresonanter
+> Körperfilter und 450-ms-Einsatz. Zwölf Source-Probes rot/grün; Grundtonpegel
+> innerhalb ca. 0,5 dB, deutlich weniger obere Teiltonenergie. Volle Host-Suite
+> grün, Host-State −192 Byte. 27,5-s-A/B trocken und mit Pad/Dream:
+> `field-ambience-current/docs/audio/ALPS_BODY_REVIEW.md`.
+> **Nächste konkrete Schritte:** (1) Bowed-Bogenrauschen/Vibrato isoliert
+> vergleichen, (2) Choir auf Vokal-/Summcharakter für Forest prüfen,
+> (3) Guembri-Schnarren/Attack für Desert ersetzen oder begrenzen.
+> Hörfreigabe und aktueller H743-Nachweis bleiben offen.
+
+
+> **2026-09-23 — Naturorte statt Störklang, Age ohne Eigenrauschen:**
+> Verbindliches World-Konzept und Grenzen des Beruhigungsversprechens:
+> `field-ambience-current/docs/audio/NATURE_WORLD_CONTRACT.md`.
+> Künstliches 50-Hz-Brummen und Bandrauschen aus aktivem Tape/Dream entfernt;
+> Klangfärbung bleibt, kein Gate. 12/12 Idle-Probes vorher rot, nachher exakt
+> still; gespieltes Signal bleibt. Volle Host-Suite grün; FX-State im Host
+> 680 → 672 Byte, keine neuen Puffer. Der bisherige Default-Anteil war sehr
+> leise; instrumentales Summen und echtes Hardwarebrummen bleiben getrennte
+> Prüfungen. Als Nächstes Horn/Bowed, dann Choir/Forest und Guembri/Desert.
+
+
+> **2026-09-23 — Chorus/Blur: direkten Tonkörper erhalten.** Effektbedingte
+> Auslöschung im tatsächlichen Buspfad nachgewiesen: maximale Pegelschwankung
+> im gehaltenen Referenzton bei Blur 22,49 → 4,44 dB; Chorus 8,82 → 3,20 dB.
+> Direktsignal dominiert jetzt den Effektanteil; auch in Dream. Keine neuen
+> DSP-Operationen/States/Puffer. 27 Probes rot/grün, volle Host-Suite grün;
+> 27,5-s-A/B bei gleicher
+> Lautheit. `field-ambience-current/docs/audio/CALM_MOTION_REVIEW.md`.
+> **Nächste Klangeinheit:** Horn/Bowed-Resonanzen und Vibrato im neuen Register.
+> Chorus/Blur-Nutzen im Hörvergleich bleibt offen; echte H743-Last weiterhin
+> ungemessen. Keine pauschale Soundfreigabe. Display bleibt nachgeordnet.
+
+
+> **2026-09-22 — Calming als Klangvertrag, automatisches Register:** Nutzer
+> will beruhigend/mitteltief, ohne Alarm-, Sirenen- oder Pieptoncharakter.
+> Automatische Melodie D4..D6 → D3..A4, Einstieg nahe World-Grundton statt
+> oberster Begleitstimme. Farbnoten und Anti-Repeat bleiben im selben Band;
+> Kollisionsprüfung bleibt am tatsächlichen Ton. Keine neuen DSP-Puffer/States.
+> 72 Tonart/Modus-Kombinationen geprüft; Details und 27,5-s-Generate-A/B:
+> `field-ambience-current/docs/audio/CALM_REGISTER_REVIEW.md`.
+> **Nächste Einheit:** Chorus/Blur und kombinierte Tonhöhenbewegung, dann
+> Horn/Bowed-Resonanzen im neuen Register. Keine allgemeine Hörfreigabe;
+> manuelle Character, Natur und Extreme bleiben offen. Display nachgeordnet.
+
+> **2026-09-22 — Sound wieder priorisiert, Open Sea / Bowed:** Messbare
+> Grundton-Einbrüche bereits in der trockenen Stimme korrigiert. Die bisherige
+> 60/40-Oszillatormischung erzeugte bis ca. 13 dB Grundtonschwankung und ließ
+> zeitweise die zweite Harmonische (Oktave) dominieren. Dominante Hauptsaite + leisere
+> Verstimmung, bei praktisch gleichem Mittelpegel: jetzt ca. 3 dB Schwankung.
+> Acht Register-/Farb-Probes rot/grün, volle Host-Suite grün; keine zusätzlichen
+> DSP-Operationen oder Zustandsdaten. Gemeinsame Bowed-Stimme betrifft auch Fjords.
+> Zerlegung Stimme / Pad / Dream plus FX-Abtrag und 28,25-s-A/B:
+> `field-ambience-current/docs/audio/OPEN_SEA_SOUND_REVIEW.md`.
+> **Nächste Einheit: Klang.** Chorus/Blur gegen einen einfacheren Raum prüfen;
+> Shimmer-Nutzen und Parameterwirkung belegen. Displaytimer bewusst nachgeordnet.
+
+> **2026-09-22 — Generate-Ausstieg:** Freigegebene Ambient-Stimmen klingen
+> beim Zurückwechseln zum manuellen Character jetzt unabhängig aus. Wind und
+> Dauertexturen blenden in etwa 2 s aus; der Character ist sofort spielbar.
+> Vorhandene Audiopuffer werden wiederverwendet; temporäre Doppelverarbeitung
+> endet nach Stimmenruhe, mit 64-s-Fehlergrenze. Host-Suite grün; 26,5-s-A/B.
+> Außerdem: Generate besitzt sein Bassfundament jetzt auch nach Harmony und
+> gibt es beim Ausstieg frei, ohne die manuelle Bass-Zuordnung zu verändern.
+> Details/Geräte-Gates: `field-ambience-current/docs/audio/LISTENING_EXIT_REVIEW.md`.
+> **Weiter offen, inzwischen nachgeordnet:** 15-Minuten-Displayruhe + klangneutrales Wake.
+> Klangbalance World-Stimme/Pad/Raum und aktueller H743-Lastnachweis bleiben offen.
+
+> **2026-09-21 — Generate / autonome Klangwelten:** Die ausdrückliche neue
+> Produktentscheidung ersetzt „Generate bleibt gleichzeitig spielbar“:
+> Generate sperrt die fünf Flächen sowie Hold/Drone und übernimmt die Ambient-
+> World unabhängig vom vorherigen Character. Manuelle Auswahl wird gemerkt.
+> World-Stimme und Phrasierung folgen der gewählten Landschaft; Bowed/Horn/Choir
+> teilen den tatsächlichen Melodie-Release. Ruhiger 4-s-Generate-Lichtpuls.
+> Host-Prüfung und 28-s-Open-Sea-Probe: `field-ambience-current/docs/audio/LISTENING_WORLD_REVIEW.md`.
+> **Damals offen, Quell-Tails inzwischen korrigiert (siehe 2026-09-22):** Display
+> nach 15 min menschlicher Inaktivität aus + klangneutrales Aufwecken;
+> Manual-only-Menükennzeichnung; Hörfreigabe und aktueller H743-Nachweis.
+> Aktuelle Reihenfolge: `field-ambience-current/docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
+> Ältere Einträge darunter sind Historie; gemeinsame Character/Bett-Wiedergabe
+> ist durch den separaten Hörmodus als nächstes Architekturziel abgelöst.
+
+> **Sound review in small units:** FM Glass Index/Body coupling, live Index
+> and a softer native attack corrected; host-verified, listening/device gates
+> open. Complete queue: `field-ambience-current/docs/audio/SOUND_REVIEW_QUEUE.md`.
+> Product selection review: `field-ambience-current/docs/audio/PRODUCT_SOUND_SELECTION.md`.
+> Storm sustained-pulse candidate implemented and host-tested: `field-ambience-current/docs/audio/STORM_ROLE_REVIEW.md`.
+> Storm/Mist/Orbit role comparison: `field-ambience-current/docs/audio/CORE_ROLE_COMPARISON.md`.
+> Fixed Storm/Mist/Orbit output calibration: `field-ambience-current/docs/audio/CORE_LEVEL_CALIBRATION.md` (45 probes, worst spread 1.0 LU).
+> Remaining core trims are implemented: `field-ambience-current/docs/audio/SUPPORT_LEVEL_CALIBRATION.md` (60 probes per version; Keys within -0.8..+0.9 LU of Ensemble).
+> User clarified evocative ambient imagery: display names are Dusk / Glimmer / Mist / Tide / Horizon / Dew; `field-ambience-current/docs/audio/SOUND_NAMES.md` maps legacy names/IDs.
+> Dusk filter tracking and rounded bloom implemented: `field-ambience-current/docs/audio/DUSK_REVIEW.md` (body spread <0.5 dB across C3..C5; +4 bytes native state; host suite green).
+> Dusk listening correction after "spicy sci fi" feedback: `field-ambience-current/docs/audio/DUSK_CALM_REVIEW.md` (fundamental polarity corrected; gentler defaults; current device body spread ~1.1 dB; host suite green).
+> User reports the calmer Dusk direction is better; whole-instrument acceptance remains open.
+> Concept/continuity review: `field-ambience-current/docs/audio/AMBIENT_CONCEPT_REVIEW.md`. Character still replaces the Ambient bed. Fixed lost player-presence history across Character selection; automatic return now respects the ~8 s pause (red/green regression, full host suite green).
+> Next: budget/routing for a continuous bed + one foreground role. Dew attack consistency, Glimmer Ratio/aliasing and Ambient retuning remain open.
+
+> **2026-09-17 — Product review, package 1:** Generate no longer repurposes
+> the physical cells as Steer commands. Press/release ownership survives
+> routing changes; exiting Note clears stale latches while preserving modifiers.
+> Actual HAL routing red/green test + full host suite pass; +5 bytes control
+> state, no additional audio processing. Character/bed coexistence remains open.
+> Decisions, six work packages and device gates: `field-ambience-current/docs/audio/PRODUCT_REVIEW_EXECUTION.md`.
+
+> **2026-09-10 — Sonic review after listening feedback.**
+> Irregular broadband wind/noise; less stationary landscape textures; BLUR
+> unwanted transposition and Orbit fundamental cancellation corrected; gentler
+> pad formant and direct-led Mist ensemble. No additional audio buffers.
+> Reproducible 38-render A/B protocol and dedicated audio regressions.
+> Subjective AAA acceptance and H743 DWT/outputs remain open. Details:
+> `field-ambience-current/docs/audio/SONIC_REVIEW_2026-09-10.md`.
+
+> **2026-09-09 — Musical system development (host-verified).**
+> Fractional synth pitch/Just, global native macros and Shape, gentle three-voice
+> handovers, release/FX pitch memory, staggered automatic onsets, modal colours,
+> weighted composer graph and variation-aware phrase memory. Full host suite
+> passes; real-device DWT and listening remain open. Details:
+> `field-ambience-current/docs/audio/MUSICAL_SYSTEM_2026-09-09.md`.
+
+> **2026-09-05 — Sound/playability review (host-verified, hardware pending).**
+> Shared master/FX for Ambient and all six synths; restored per-voice sends;
+> held-note priority; 36 named/smoothed synth controls; expressive gated
+> Bowed/Horn/Choir; gentle foreground/pad balance; SCN5→SCN6 scene migration.
+> 31 firmware listening renders plus reproducible A/B packaging. Full host
+> suite passes; H743 build/map/DWT and listening on the real device remain
+> open. Details: `field-ambience-current/docs/audio/MUSICAL_PLAYABILITY_2026-09-05.md`.
+
+> **r19.65 (2026-07-26) — Pad-Mapping: 2 echte Defekte gefunden.** Der letzte
+> offene Punkt vor dem Layout ("landet jede Symbol-Pinnummer auf einem Pad?",
+> fuer 9 ICs als pinout-pending markiert) ist erledigt — und war nicht leer:
+> (1) **J1 USB-C Schirm** haette an nichts gehangen (Symbol-Pin `S1` vs.
+> Footprint-Pad `SH`), obwohl das Schematic ihn auf GND legt. (2) **C_BULK**
+> zeigte auf einen Footprint, den es in keiner KiCad-Library gibt — der Name
+> war erfunden; KiCad haette "footprint not found" gemeldet und der 470-µF-
+> Polymer-Tantal (laut ADR-0010 der wichtigste Hebel gegen kratzigen Klang)
+> waere nicht platzierbar gewesen. Beides behoben; das ist die einzige
+> BOM-Zeile, die sich geaendert hat. `scripts/check_footprints.py` prueft das
+> jetzt fuer **alle 38** Symbol/Footprint-Paare automatisch statt fuer eine
+> handgepflegte Liste aus 4 Teilen, mit Exit-Code und gegen einen injizierten
+> Fehler getestet. **Nicht** abgedeckt: dass Pin *n* die Datenblatt-*Funktion*
+> von Pin *n* traegt — das bleibt ein menschlicher Durchgang je IC.
+
+> **r19.64 (2026-07-26) — BOM-/Schematic-Audit Runde 2:** Arons 40-Pin-Frage
+> als Anlass fuer einen kompletten Durchlauf. **Die BOM ist byte-identisch
+> geblieben** (kein Bauteil/LCSC/Menge geaendert) — gefunden wurden drei andere
+> Klassen: (1) drei weitere *nie platzierte* Symbole in der eingebetteten
+> Library jedes Sheets, darunter `MCU:Pico2` = ein **40-Pin-Symbol** und damit
+> die zweite moegliche Quelle von Arons Sichtung (+ ~880 Zeilen toter
+> Generator-Code); die Library enthaelt jetzt exakt 37 Symbole = 37 platzierte
+> Teile, null Waisen. (2) **17 ERC-Richtungskonflikte** zwischen Root-Sheet-Pins
+> und Hier-Labels — vor allem alle 11 Encoder-Signale, die von MCU- *und*
+> Encoder-Sheet als `output` deklariert waren (zwei Treiber auf einem Netz),
+> plus USB/I2C/VSYS; alle 7 Sheets stimmen jetzt exakt ueberein. (3)
+> **Netznamen** gegen den AI-Ready-Standard: Slash raus (`GPA5/XSMT`,
+> `GPA6/JACKDET`), Active-Low auf `_N` (`AMP_SHDN_N`, `AMP_MUTE_N`,
+> `QSPI_CS_N`) inkl. Firmware + Docs. Dazu: mehrere **bestellrelevante**
+> Dokumente fuehrten noch den NRND-`PAM8403DR-H C17337` statt des seit r19.37
+> verbauten **PAM8406DR C86270** — korrigiert. Host-Tests gruen.
+
+> **r19.44 (2026-07-21) — Landschafts-Welten (Location-Brief, kritisch gefiltert):**
+> Die 4 Nacht-/Stadt-Welten wurden zu 5 global lesbaren LANDSCHAFTEN
+> umbenannt + im Mood verschoben: **Alps · Open Sea · Fjords · Moss Fields ·
+> Desert** (nur mit vorhandenen Hebeln: Key/Mode/Vibe/Makros/Farbe/Bass/Accent
+> + PADsynth-Timbre + Modal-Body). Ambience-Texturen mitverschoben: RAIN →
+> Moss (damp·fog), WAVES → Open Sea, Vinyl raus. 5. Welt sauber ergänzt
+> (WORLD_COUNT 4→5; body/padsynth/fx-Fallback erweitert). Cross-Build grün
+> (FLASH 11 %, RAM unverändert). Golden-Value-Tests (worlds/menu/ambience) auf
+> die neuen Presets aktualisiert, alle Suiten grün. **Bewusst NICHT gemacht:**
+> die per-Welt Instrumenten-DNA-Engines aus dem Brief (Alphorn/Hardanger/Lyra/
+> Guembri) — die kollidieren mit dem gemessenen RAM/CPU-Budget und sind ein
+> eigenes Roadmap-Item, kein Preset-Wechsel.
+
+> **r19.43 (2026-07-21) — Cell-Lebenszyklus (Ambient-Chill-Analyse):** Die
+> 250-Track-Referenzanalyse verlangt Cells als fünf spielbare Töne mit
+> überlappenden Tails. Umgesetzt in pad.c: (1) erneuter Druck auf eine
+> RELEASENDE Cell startet eine NEUE Stimme, der alte Tail klingt weiter
+> (nur Player-Sources 0-4/9-13; Generativ behält sein Voice-Budget);
+> (2) kurzer Tap blüht erst zum Körper (0,35·amp) und released dann —
+> vollständiger Ton statt dünnem Blip; (3) Voice-Steal ist amplituden- und
+> phasenkontinuierlich (kein Hard-Reset-Klick mehr). Alle Suiten grün.
+> Offen aus der Analyse: Oktav-Entclusterung simultaner Cells, Attack/
+> Release-Ranges pro World, Density-Makro.
+
 **Updated: 2026-07-20 (r19.41 — Master-Effects-Engine integriert; davor r19.38–r19.40 Realtime-Safety, r19.37 PAM8406-Endstufe + Gain-Staging)**
 
 > **r19.41 (2026-07-20) — Master-Effects-Integration:** Die gelieferte
@@ -103,7 +382,7 @@
 
 > **r19.19 (2026-07-13) — Kopfhoerer rein (User: "ja das muss rein!!!").**
 > U11 TPA6132A2 (C69901) zwischen DAC und J8: DirectPath, Gain −6 dB,
-> EN=AMP_nSHDN. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
+> EN=AMP_SHDN_N. Kopfhoerer 16 Ω+ UND Line-Out jetzt in-Spec aus einer
 > Buchse; Auto-Mute-Verhalten unveraendert (Speaker muten beim Einstecken,
 > J8 bleibt live). Netzliste 165/649/0-floating, alle Teile live-verifiziert.
 > Details: CHANGELOG r19.19 + ADR-0024.

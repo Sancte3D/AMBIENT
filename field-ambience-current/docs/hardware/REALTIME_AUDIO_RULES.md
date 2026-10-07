@@ -114,7 +114,7 @@ die dieses Dokument verhindert.
   Speaker-Traces, Display-SPI-Clock, LED-Return-Pfade.
 - Gemeinsamer Ground (TI-Empfehlung), aber **physische Partitionierung**:
   digitale Clock-/Interface-Traces weg von den Analog-Outputs.
-- PAM8403: 1 µF Low-ESR dicht an VDD + ≥20 µF nahe dem Amp; C_BYP kritisch für
+- PAM8406: 1 µF Low-ESR dicht an VDD + ≥20 µF nahe dem Amp; C_BYP kritisch für
   Noise/THD. Turn-on-Pop hängt am Eingangs-Koppel-C + Mute-Sequenz.
 - Mute-Sequenz auf Hardware mit Oszi über **jeden** State-Übergang messen
   (Power on/off, USB rein/raus, Jack rein/raus, Reset, Brownout).

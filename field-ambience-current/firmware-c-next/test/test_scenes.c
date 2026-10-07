@@ -12,6 +12,7 @@
 #include <string.h>
 #include "scenes.h"
 #include "menu.h"
+#include "synth_controls.h"
 #include "params.h"
 #include "engine.h"
 #include "brain.h"
@@ -107,7 +108,13 @@ int main(void) {
     menu_state_t before;
     params_apply_scene(37, 240.0f);
     engine_set_gen_seed(0xABCD1234u);
+    goto_slot(MP_ATTACK); menu_push(); menu_rotate(23); menu_push();
+    goto_slot(MP_SYNTH); menu_push(); menu_rotate(3); menu_push();
+    goto_slot(MP_CORE_A);
+    CHECK(strcmp(menu_current_label(),"Cutoff")==0,"Mist parameter has a musical name");
+    menu_push(); menu_rotate(17); menu_push();
     menu_get_state(&before);
+    CHECK(before.attack==73 && before.core[2][0]==39,"shape and per-core edits captured");
     CHECK(scenes_save(2, 1000), "save to slot 2");
     CHECK(scenes_used(2), "slot 2 used");
     CHECK(scenes_active() == 2, "slot 2 active");
@@ -159,6 +166,26 @@ int main(void) {
     scenes_ui_render();
     scenes_ui_close();
     CHECK(1, "scenes render smoke");
+
+    /* Read an actual SCN5-sized fixture; preserve old fields without writing
+     * flash on boot. The SCN6 roundtrip above also checks the new fields. */
+    typedef struct { uint8_t v[16]; uint16_t locks; } old_menu;
+    typedef struct { uint32_t magic; old_menu menu; int8_t drive; int16_t bright; uint32_t seed; } old_slot;
+    struct { uint32_t magic; old_slot slot[5]; } old={0};
+    old.magic=old.slot[1].magic=0x53434E35u;
+    old.slot[1].menu.v[0]=2; old.slot[1].menu.v[4]=3; old.slot[1].menu.v[8]=8;
+    old.slot[1].drive=37; old.slot[1].bright=-220; old.slot[1].seed=0x9876u;
+    memcpy(s_blob,&old,sizeof old); s_blob_len=sizeof old;
+    int writes_before=s_writes;
+    scenes_init(ram_write,ram_read);
+    CHECK(scenes_used(1) && !scenes_used(0),"SCN5 occupied slots migrate");
+    CHECK(s_writes==writes_before,"migration does not write flash at boot");
+    CHECK(scenes_recall(1,9000),"migrated preset is playable");
+    menu_state_t migrated; menu_get_state(&migrated);
+    CHECK(migrated.world==2 && migrated.synth==3 && migrated.attack==50 && migrated.release==50,
+          "legacy identity preserved with neutral shape");
+    CHECK(memcmp(migrated.core,synth_control_defaults,sizeof migrated.core)==0,"legacy cores get defaults");
+    CHECK(params_drive_pct()==37 && params_bright_hz()==-220 && engine_gen_seed()==0x9876u,"legacy knobs/seed preserved");
 
     printf("\n%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");

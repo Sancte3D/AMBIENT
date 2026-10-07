@@ -15,6 +15,9 @@
 #define FX_MASTER_H
 
 #include <stdbool.h>
+
+void fx_master_process_buses(float *dry_l, float *dry_r,
+                            const float *send_l, const float *send_r, int frames);
 #include <stdint.h>
 
 void fx_master_init(void);
@@ -34,8 +37,8 @@ void fx_master_set_shimmer(float v);
 void fx_master_set_blur(float v);
 void fx_master_set_tone(float v);
 
-/* World voicing: product world index 0..3 maps 1:1 onto the engine worlds
- * (Tokyo City / Crystal Coast / Midnight Drive / After Hours). Loads the
+/* World voicing: product world index 0..4 maps 1:1 onto the engine worlds
+ * (Alps / Open Sea / Fjords / Moss / Desert; first four legacy IDs retained). Loads the
  * engine's per-world parameter set; the menu's macro pushes then overwrite
  * the user-facing fields on top (same order as a manual world load). */
 void fx_master_set_world(int idx);

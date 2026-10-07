@@ -1,26 +1,24 @@
 #ifndef FAM_WORLDS_H
 #define FAM_WORLDS_H
 
-/*
- * Worlds — single source of truth for the 4 curated worlds (ADR-0017 Phase 1).
- *
- * A "world" is a high-level preset the user thinks in pictures (night city,
- * sunset coast, night highway, jazz bar) rather than synth-engine parameters.
- * Each world bundles:
- *   - human-facing identity (name, flavour subtitle)
- *   - the display accent colour (UI tint, used by oled_color)
- *   - the default values for the four global macros (space / tone / atmos)
- *   - (header slots reserved for Phase 2/3 ambience + drums config)
- *
- * Why this module exists: until r18.47 the four per-world tables
- * (WORLD_NAMES, WORLD_SUBTITLE, WORLD_PRESET, WORLD_ACCENT) were scattered
- * across menu.c. Future per-world ambience (Phase 2) and drums (Phase 3)
- * need a sane place to live; that's this file.
- */
+/* Five curated landscape Worlds: identity, harmonic context, visual accent,
+ * macro defaults and foreground voice. Autonomous phrasing is kept in a
+ * separate const table; the existing World/scene descriptor stays unchanged. */
 
 #include <stdint.h>
 
-#define WORLD_COUNT 4
+#ifdef FAM_SOUND_PRODUCT
+#define WORLD_COUNT 3   /* SCN7: COAST, WOODLAND, HIGHLANDS candidates */
+#else
+#define WORLD_COUNT 5   /* SCN5/6 reference IDs remain unchanged */
+#endif
+
+/* Autonomous phrasing, in seconds. Composer adds its existing rest/density
+ * variation; these profiles give each place a different breathing pattern. */
+typedef struct {
+    uint8_t note_min, note_max, rest_min, rest_max, density_pct;
+} world_phrase_t;
+const world_phrase_t *worlds_phrase(int index);
 
 typedef struct {
     const char *name;              /* short display name (<=13 chars)         */
@@ -31,7 +29,7 @@ typedef struct {
     uint8_t     space_pct;         /* macro defaults (0..100) — loaded on    */
     uint8_t     atmos_pct;         /* world-change; user can then nudge from  */
     uint8_t     motion_pct;        /* LFO-Depth / Pad-Movement (Reddit Motion)*/
-    uint8_t     age_pct;           /* Tape-Hiss + Saturation (Reddit Age)     */
+    uint8_t     age_pct;           /* Tape colour + saturation (Age)     */
     uint8_t     echo_pct;          /* Tape-style stereo delay (Reddit Echo)   */
     uint8_t     blur_pct;          /* Granular cloud / smear (Reddit Blur)    */
     uint8_t     shimmer_pct;       /* r18.99: octave-up hall regeneration      */
@@ -46,10 +44,21 @@ typedef struct {
      * Makes the four worlds feel harmonically distinct, not just texturally. */
     uint8_t     chord_color;       /* 0 Pure / 1 Open / 2 Warm / 3 Deep       */
     uint8_t     bass_mode;         /* 0 Off / 1 Root / 2 Fifth / 3 Drift      */
+    /* r19.47: per-world CHARACTER VOICE — the melody instrument loaded on
+     * world-change (like the macros; the user can override via the VOICE menu).
+     * This is the first step of the location brief's per-world "instrument DNA":
+     * a world sounds like its place, not just like a filtered version of one
+     * pad. 0 Pad / 1 String / 2 Ember / 3 Bowed / 4 Horn / 5 Choir / 6 Guembri. */
+    uint8_t     voice;
+    /* r19.45: per-world brightness (pad filter cutoff + fx tone + reverb
+     * damping), Hz offset in [-600, +800]. THE strongest timbral lever — dark
+     * worlds go negative, bright/open worlds positive. Loaded on world-change
+     * like the macros; the BRIGHT encoder then nudges from here. */
+    int16_t     brightness_hz;
 } world_t;
 
 /* Get the immutable descriptor for a world index. Index is clamped to
- * [0, WORLD_COUNT) — out-of-range returns world 0. */
+ * [0, WORLD_COUNT): below zero returns first, above range returns last. */
 const world_t *worlds_get(int index);
 
 /* Total worlds known to the firmware. Always == WORLD_COUNT today, kept as

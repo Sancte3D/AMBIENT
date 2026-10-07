@@ -114,7 +114,7 @@ Parts + order links: `BOM_MASTER.md`.
    ┌───────────────────────── +3V3 ───────────┴───────────────────────┐
    │                                                                    │
    STM32H743 (U1, LQFP-100)                                             │
-   │  ├─ SAI1 (I²S) ──► PCM5102A DAC (U3) ──► PAM8403 amp (U4) ──► SPK L/R (J6/J7)
+   │  ├─ SAI1 (I²S) ──► PCM5102A DAC (U3) ──► PAM8406 amp (U4) ──► SPK L/R (J6/J7)
    │  │                                            └─ Line-Out jack (J8, mutes spk)
    │  ├─ SPI1 ──────► ST7789 LCD (J3 header)
    │  ├─ I²C1 ──┬──► MCP23017 (U2) ──► 10 buttons (5 cell + 5 modifier) + jack-detect
@@ -148,8 +148,8 @@ Parts + order links: `BOM_MASTER.md`.
 | DRIVE/BRIGHT/DISPLAY_SW | 97/98/2 | PE0/PE1/PE3 | encoder push switches (EN4_SW on MCP GPB5) |
 | CELL1..5_BTN | MCP23017 GPA0–4 | (over I²C) | 5 cell tactile switches SW1–5 → GND (r18.73; PC0/PC1/PA4/PB0/PB1 now free) |
 | BAT_SENSE | 25 | PA3 | 100k/100k divider off battery (ADC) |
-| AMP_nSHDN | 53 | PB14 | PAM8403 /SHDN (10 kΩ pull-down) |
-| AMP_nMUTE | 54 | PB15 | PAM8403 /MUTE (10 kΩ pull-down) |
+| AMP_SHDN_N | 53 | PB14 | PAM8406 /SHDN (10 kΩ pull-down) |
+| AMP_MUTE_N | 54 | PB15 | PAM8406 /MUTE (10 kΩ pull-down) |
 | STATUS_LED | 55 | PD8 | heartbeat LED |
 | MIDI_TX | 86 | PD5 | TRS jack (DNP) |
 | USB_DM/DP | 70/71 | PA11/PA12 | USB-C data via D1 ESD |

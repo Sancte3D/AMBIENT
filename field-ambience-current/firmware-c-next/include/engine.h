@@ -23,6 +23,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/* FAM_SOUND_PRODUCT has a separate, deliberately reduced contract:
+ * include engine_product.h and docs/audio/PRODUCT_SOUND_SPEC.md.
+ * Manual/Generate share Bowed/Pluck/Horn, 3 global slots (Pluck 2), one
+ * floating-point Room and optional Nature. Mode 0/1 = major/minor collection,
+ * FX 0/1 = Dry/Room; legacy layers/native synths/FX adapters are retired.
+ * Events acknowledge actual DSP starts; engine_all_off is a 40 ms whole-chain
+ * Clear. Volume is separate from engine_set_muted(). The older comments below
+ * describe the reference profile only where they conflict with that contract.
+ */
 void engine_init(void);
 
 /* Cell-tap forwarders (thin wrappers around pad_note_on/off for now;
@@ -68,6 +77,20 @@ void engine_boot_mute(void);
  * Kept as a hook so the engine keeps no link dependency on midi.c. */
 typedef void (*engine_note_hook_t)(int on, uint8_t source, float freq_hz, float amp);
 void engine_set_note_hook(engine_note_hook_t h);
+/* Conservative held/released pitch occupancy, control-rate only; up to 128. */
+int engine_sounding_notes(int *out, int max);
+
+#define ENGINE_WORLD_SOURCE_LIMIT 3
+/* Control-rate World admission: true commits the source/hook, false changes
+ * no held pitch or existing voice. Generate must be enabled. No implicit pad.
+ * Admission counts all Ambient source slots, including legacy manual releases
+ * and both bass layers; it waits for an outgoing native crossfade to finish.
+ * Existing manual over-budget tails drain without admitting another World.
+ * Shared room/body residuals and non-tonal backgrounds are not source slots. */
+bool engine_try_world_note_on(uint8_t source, float freq_hz, float amp);
+/* World families only; all Ambient sources also include pad/Ember/bass/drone. */
+int engine_world_source_count(void);
+int engine_ambient_source_count(void);
 
 /* r19.16 — SYNTH mode: swappable V2 sound-cores behind the ambient engine.
  * mode 0 = ambient (default identity); 1..N = a V2 core rendered through the
@@ -82,10 +105,20 @@ typedef struct {
     void (*note_off) (void);
     void (*panic)    (void);
     void (*render)   (int16_t *buf, int frames);   /* interleaved stereo   */
+    /* Product path: unmastered buses, sharing the ambient mixer and FX. */
+    void (*render_mix)(float *dry_l, float *dry_r, float *send_l, float *send_r, int frames);
+    void (*set_param)(int slot, float value);
+    void (*note_on_hz)(float hz, float vel01); /* optional; exact tuning */
+    void (*set_macro)(int slot, float value);
+    void (*retune_hz)(float hz); /* optional: pitch only, no new attack */
 } engine_synth_backend_t;
 void engine_set_synth_backend(const engine_synth_backend_t *be);
+/* Manual Character choice. While Generate is on, defer until listening ends. */
 void engine_set_synth(int idx);                /* 0 ambient, 1..N = core   */
-int  engine_synth(void);
+int  engine_synth(void); /* effective engine: 0 throughout listening */
+/* True while released World sources are still being drained into shared FX. */
+bool engine_listening_tail_active(void);
+void engine_set_synth_param(int slot, float value);
 
 /* ADR-0013 — feed one normalised Hall position sample (0=rest, 1=bottom-out)
  * for cell `cell` (0..4) at `now_ms`. The cell-velocity model (cells.c) turns
@@ -110,6 +143,23 @@ void engine_set_master_volume(float vol_0_1);  /* master level (VOLUME encoder) 
  * just the reverb input. */
 void engine_set_drive(float drive_0_1);
 void engine_set_brightness(float hz);          /* pass-through to pad */
+/* r19.59 RESONANCE (0..1): the Moog ladder on the pad bus. 0 = off (the
+ * pre-r19.59 sound), 1 = just under self-oscillation. With BRIGHT it turns the
+ * tone control into a played filter (see docs/SYNTH_IDENTITY.md). */
+void engine_set_resonance(float amount_0_1);
+float engine_resonance(void);
+/* r19.60 SHAPE (0..1, 0.5 = neutral): skaliert die natuerliche Attack- bzw.
+ * Release-Zeit ALLER Stimmen. Erhaelt den Charakter jeder Stimme (relative
+ * Verhaeltnisse bleiben), schiebt aber das ganze Instrument Richtung perkussiv
+ * oder atmend. Siehe docs/SYNTH_IDENTITY.md, Saeule SHAPE. */
+void engine_set_attack(float v01);
+void engine_set_release(float v01);
+/* r19.60 MOTION (0..1): Modulation auf den Bus-Filter. SWEEP = langsamer LFO
+ * (der Filter atmet von selbst), ENVMOD = Huellkurvenfolger (der Filter oeffnet
+ * beim Spielen — das TD-3-"EnvMod"). Beide engagieren den Filter auch ohne
+ * Resonanz. Siehe docs/SYNTH_IDENTITY.md, Saeule MOTION. */
+void engine_set_sweep(float v01);
+void engine_set_envmod(float v01);
 void engine_set_texture(float amount_0_1);     /* famTexture bed amount */
 void engine_set_atmosphere(float amount_0_1);  /* per-world ambience layer (ADR-0017) */
 void engine_set_motion(float amount_0_1);      /* Pad LFO depth (perform macro) */
@@ -163,25 +213,25 @@ void engine_set_drone(bool on);
  * brass never leaves the two timbres competing in the air. */
 void engine_set_pad_voice(int voice_idx);
 
-/* Step 12b #4 — generative bed. on=false stops it (releases its voice).
+/* Autonomous listening: enter Ambient, release old sources, remember manual
+ * Character; on=false releases generated sources and restores that choice.
+ * Character is immediately playable on exit; released World sources drain
+ * independently, with background textures fading out over two seconds.
  * program <0 selects Markov auto, >=0 selects a fixed progression index. */
 void engine_set_generative(bool on, int program);
 
-/* Advance the generative bed one step: pick the next degree, sound its chord
- * root as a pad voice (a reserved source), and let the bass follow. Returns
- * the new degree (1..7) or -1 when generative is off. No-op while any USER
- * note is held (cells 0..4 or shift octaves 9..13) — live playing overrides
- * the bed. Manual step API for offline renderers/tests; the device uses
- * engine_generative_tick(). */
+/* Advance the harmonic state without creating an audio event. Returns the
+ * new state index + 1 (1..4), or -1 with Generate off/player suppression.
+ * Future World events use the new harmony; held/released sources keep their
+ * pitches. Offline step API; audio renderers must also call the scheduler.
+ * The device uses engine_generative_tick(). */
 int engine_generative_advance(void);
 
-/* r18.88 — generative AUTOPLAY. Call frequently from the UI loop (any rate
- * ≥ ~20 Hz); all timing derives from now_ms. Plays the bed by itself:
- * immediate first note after enabling, humanized ±10 % bars (base 8 s),
- * plus 0-2 quiet chord-tone "sparkles" an octave up per bar (r18.89:
- * Karplus-Strong PLUCKS — see pluck.h — that self-decay in ~3 s). While the
- * user holds any note, no new bed/sparkle notes start; the bed resumes on
- * the tick after release. */
+/* Autonomous scheduler. Call from the UI loop at >= ~20 Hz, including while
+ * Generate is off, so low-level presence history stays current. Listening
+ * selects the World's voice/phrasing and always uses the Ambient engine.
+ * Device cells are locked; explicit low-level presence callers still get the
+ * ~8 s return pause. Timing derives from now_ms. */
 void engine_generative_tick(uint32_t now_ms);
 
 /* r19.22 (Scenes): reproduzierbarer Generator-Zustand. Der Seed treibt die
@@ -190,8 +240,8 @@ void engine_generative_tick(uint32_t now_ms);
 uint32_t engine_gen_seed(void);
 void     engine_set_gen_seed(uint32_t seed);
 
-/* r19.24 interactive GENERATE — a cell press while GENERATE is on STEERS the
- * autoplay instead of pausing it. cell 0..4 maps to a composer intent
+/* Explicit composer-intent API (not the physical cells' Generate behaviour).
+ * Product cells are locked with Generate on. Explicit cell 0..4 maps to intent
  * (0 Home→RETURN, 1 Lift→OPEN, 2 Dark→DEEP, 3 Open→CALM, 4 Tension→EMPTY)
  * and mutates the harmony now so the piece audibly answers. No-op unless
  * generative is on; deliberately does NOT mark user-presence (the generator
@@ -207,12 +257,10 @@ void engine_generative_new_field(uint32_t seed);
  * last melody tone (MIDI, 0 = none yet) and total scheduled melody notes. */
 int engine_generative_suppressed(void);   /* r19.33: 1 = player-priority hold-off active */
 
-/* r19.34 — toggle the two sparse single-tone autoplay layers (evolving bed/pad
- * stays either way). Default on. */
+/* Low-level World-event gate, default on. Off releases its source and leaves
+ * no autonomous tonal bed. Shared FX and explicit atmosphere still decay/run. */
 void engine_set_autoplay_melody(int on);
-void engine_set_autoplay_eno(int on);
 int  engine_autoplay_melody(void);
-int  engine_autoplay_eno(void);
 int engine_generative_last_melody_midi(void);
 int engine_generative_melody_count(void);
 /* r18.93: phrases replayed by the déjà-vu memory (Marbles concept). */

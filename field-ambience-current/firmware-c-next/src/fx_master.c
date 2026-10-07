@@ -10,6 +10,7 @@
 #include "audio.h"
 
 #include <stddef.h>
+#include <math.h>
 
 /* Storage + hot arena. The budget constant is the engine's documented upper
  * bound (240 KB); the actual requirement for the default config is 214,489 B
@@ -18,6 +19,7 @@
 static AmbientFxStorage s_storage;
 static unsigned char s_arena[AMBIENT_FX_DEFAULT_ARENA_BUDGET_BYTES]
     __attribute__((aligned(32)));
+static float s_send[AUDIO_BUFFER_FRAMES * 2];
 static float s_buf[AUDIO_BUFFER_FRAMES * 2];   /* interleave scratch */
 
 static AmbientFx           *s_fx = 0;
@@ -50,6 +52,17 @@ void fx_master_process(float *outL, float *outR, int frames) {
     }
 }
 
+void fx_master_process_buses(float *l, float *r, const float *sl, const float *sr, int frames) {
+    if (!s_ok || frames <= 0) return;
+    if (frames > AUDIO_BUFFER_FRAMES) frames = AUDIO_BUFFER_FRAMES;
+    for (int n = 0; n < frames; ++n) {
+        s_buf[2*n] = l[n]; s_buf[2*n+1] = r[n];
+        s_send[2*n] = sl[n]; s_send[2*n+1] = sr[n];
+    }
+    ambient_fx_process_buses_f32(s_fx, s_buf, s_send, (size_t)frames);
+    for (int n = 0; n < frames; ++n) { l[n] = s_buf[2*n]; r[n] = s_buf[2*n+1]; }
+}
+
 static float clamp01(float v) {
     return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
 }
@@ -58,18 +71,36 @@ static void push(void) {
     if (s_ok) ambient_fx_set_parameters(s_fx, s_params);
 }
 
-void fx_master_set_space(float v)      { s_params.space      = clamp01(v); push(); }
-void fx_master_set_atmosphere(float v) { s_params.atmosphere = clamp01(v); push(); }
-void fx_master_set_echo(float v)       { s_params.echo       = clamp01(v); push(); }
-void fx_master_set_motion(float v)     { s_params.motion     = clamp01(v); push(); }
-void fx_master_set_age(float v)        { s_params.age        = clamp01(v); push(); }
-void fx_master_set_shimmer(float v)    { s_params.shimmer    = clamp01(v); push(); }
-void fx_master_set_blur(float v)       { s_params.blur       = clamp01(v); push(); }
-void fx_master_set_tone(float v)       { s_params.tone       = clamp01(v); push(); }
+void fx_master_set_space(float v)      {
+    if (!isfinite(v)) return;
+    s_params.space      = clamp01(v); push(); }
+void fx_master_set_atmosphere(float v) {
+    if (!isfinite(v)) return;
+    s_params.atmosphere = clamp01(v); push(); }
+void fx_master_set_echo(float v)       {
+    if (!isfinite(v)) return;
+    s_params.echo       = clamp01(v); push(); }
+void fx_master_set_motion(float v)     {
+    if (!isfinite(v)) return;
+    s_params.motion     = clamp01(v); push(); }
+void fx_master_set_age(float v)        {
+    if (!isfinite(v)) return;
+    s_params.age        = clamp01(v); push(); }
+void fx_master_set_shimmer(float v)    {
+    if (!isfinite(v)) return;
+    s_params.shimmer    = clamp01(v); push(); }
+void fx_master_set_blur(float v)       {
+    if (!isfinite(v)) return;
+    s_params.blur       = clamp01(v); push(); }
+void fx_master_set_tone(float v)       {
+    if (!isfinite(v)) return;
+    s_params.tone       = clamp01(v); push(); }
 
 void fx_master_set_world(int idx) {
     if (!s_ok) return;
-    if (idx < 0 || idx >= (int)AMBIENT_FX_WORLD_COUNT) idx = 0;
+    if (idx < 0) idx = 0;
+    /* Five product worlds, including a closer and narrower Desert room. */
+    if (idx >= (int)AMBIENT_FX_WORLD_COUNT) idx = (int)AMBIENT_FX_WORLD_COUNT - 1;
     AmbientFxWorld w = (AmbientFxWorld)idx;
     /* Engine voicing first, then the parameter set for that world. The
      * product's world load pushes its own macro values right after this

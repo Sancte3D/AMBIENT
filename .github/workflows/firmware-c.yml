@@ -96,6 +96,80 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  product-audio-review:
+    name: short product hearing packs and open gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install audio measurement tool
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      - name: Render and measure short hearing files
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_audio.py build-product-audio
+      - name: Render open-gate comparisons from continuous firmware PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/build_sound_acceptance.py build-sound-acceptance/review
+      - name: Upload complete open-gate audition archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sound-acceptance-27s
+          path: field-ambience-current/firmware-c-next/build-sound-acceptance/AMBIENT_Sound_Review_2026-10-07.zip
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+      - name: Upload separate blind answer key
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sound-acceptance-answer-key-open-after-listening
+          path: field-ambience-current/firmware-c-next/build-sound-acceptance/AMBIENT_PRIVATE_BLIND_KEY.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload dry source hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-dry-sources-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/dry
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload World hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-worlds-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/world
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Nature hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-nature-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/nature
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Color endpoint hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-color-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/color
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload SHAPE endpoint hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-shape-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/shape
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload blind dry World comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-blind-worlds-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/blind
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest
@@ -167,7 +241,60 @@ jobs:
         run: |
           mkdir -p build-h743 && cd build-h743
           # CMakeLists auto-selects cmake/arm-none-eabi-m7.cmake for h743.
-          cmake .. -DFAM_TARGET=h743
+          cmake .. -DFAM_TARGET=h743 -DCMAKE_BUILD_TYPE=Release
+          cat CMakeFiles/field_ambience_h743.dir/flags.make
           make -j"$(nproc)"
           test -f field_ambience_h743 && echo "h743 cross-build linked OK"
           arm-none-eabi-size field_ambience_h743
+
+      - name: Upload H743 image and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-release
+          path: |
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.map
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Cross-build reduced product sound candidate
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-product -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cat build-h743-product/CMakeFiles/field_ambience_h743.dir/flags.make
+          cmake --build build-h743-product -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-product
+
+      - name: Upload reduced sound candidate and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-product-candidate
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-product/PRODUCT_BUILD_AUDIT.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Cross-build experimental recoverable Scene journal
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-journal -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SCENE_JOURNAL_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-journal -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-journal
+          grep -q 'src/scenes_journal.c' build-h743-journal/compile_commands.json
+          grep -q 'scene_journal_write' build-h743-journal/field_ambience_h743.map
+
+      - name: Upload experimental Scene journal and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-scene-journal-experimental
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-journal/PRODUCT_BUILD_AUDIT.json
+          if-no-files-found: error
+          retention-days: 14

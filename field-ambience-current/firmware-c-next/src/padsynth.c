@@ -95,23 +95,31 @@ static void ifft_complex(float *re, float *im, int n) {
  * The model gives us two levers per world: the harmonic rolloff (how dark)
  * and small emphasis patterns (what "material" the bed suggests). Values
  * are this instrument's tuning, matched to the worlds' identities. */
+/* r19.44: world order = 0 Alps · 1 Open Sea · 2 Fjords · 3 Moss · 4 Desert.
+ * The existing profiles already matched the new landscapes' character; only
+ * Desert (4) is new. */
 static float harmonic_amp(int world, int h) {
-    float a = 1.0f / powf((float)h, world == 2 ? 2.2f :   /* Drive: darkest */
-                                    world == 1 ? 1.9f :   /* Coast: glassy  */
-                                    world == 3 ? 1.7f :   /* Hours: dusty   */
-                                                 1.6f);   /* Tokyo: warm    */
+    float a = 1.0f / powf((float)h, world == 2 ? 2.2f :   /* Fjords: darkest */
+                                    world == 4 ? 2.0f :   /* Desert: dark-warm */
+                                    world == 1 ? 1.9f :   /* Open Sea: glassy  */
+                                    world == 3 ? 1.7f :   /* Moss: dusty       */
+                                                 1.6f);   /* Alps: warm/clear  */
     switch (world) {
-        case 0:  /* Tokyo — warm, slight odd-harmonic glow (reedy dusk)    */
+        case 0:  /* Alps — warm, slight odd-harmonic glow (reedy horn air)  */
             if (h & 1) a *= 1.25f;
             break;
-        case 1:  /* Coast — glassy: lifted 2nd/4th, thin mids              */
+        case 1:  /* Open Sea — glassy: lifted 2nd/4th, thin mids            */
             if (h == 2 || h == 4) a *= 1.6f;
             if (h >= 5 && h <= 9) a *= 0.7f;
             break;
-        case 2:  /* Drive — dark body, gentle 3rd for motion               */
+        case 2:  /* Fjords — dark body, gentle 3rd for bowed motion         */
             if (h == 3) a *= 1.3f;
             break;
-        default: /* Hours — dusty: soft even emphasis, rounded top          */
+        case 4:  /* Desert — strong low-mid body, restrained top (dry heat) */
+            if (h <= 3) a *= 1.3f;
+            if (h > 14) a *= 0.5f;
+            break;
+        default: /* Moss (3) — dusty: soft even emphasis, rounded top       */
             if (!(h & 1)) a *= 1.2f;
             if (h > 20) a *= 0.6f;
             break;
@@ -121,7 +129,7 @@ static float harmonic_amp(int world, int h) {
 
 void padsynth_build(int world_idx, uint32_t seed) {
     if (world_idx < 0) world_idx = 0;
-    if (world_idx > 3) world_idx = 3;
+    if (world_idx > 4) world_idx = 4;   /* r19.44: 5 worlds (seed only) */
     s_rng = seed ? seed : (0xBED0000u + (uint32_t)world_idx);
 
     memset(s_xr, 0, sizeof s_xr);

@@ -26,7 +26,7 @@ Eingangs-Constraints des Designs (aus Schematic-Walkthrough + ADRs):
   durchgehende GND-Referenz-Plane darunter (USBLC6 + USB-C-Stecker)
 - **SAI1 I²S an PCM5102A** — BCK 1,4 MHz × Oversampling → ~MHz-Edges,
   Audio-Analog daneben, EMI-Empfindlichkeit
-- **PAM8403 Class-D-Switching** — Carrier ~250 kHz, EMI-Quelle. Ferrit +
+- **PAM8406 Class-D-Switching** — Carrier ~250 kHz, EMI-Quelle. Ferrit +
   Bulk-Cap helfen, aber GND-Plane unter dem Switching-Knoten ist Pflicht
 - **TPS61089 Boost** — Switching auf der Akku-Seite, ähnliche EMI-Sorge
 - **ST7789 SPI 24–32 MHz** + **PCA9685 + MCP23017 I²C** — Mittel-Frequenz,
@@ -66,7 +66,7 @@ Mit **4 Layer**:
 |---|---|---|
 | 1 (Top) | Signal + Bauteile | Standard-Platzierung; hochfrequente Signale (USB, SPI, I²S) primär hier |
 | 2 | **GND solid plane** (durchgehend) | Return-Current-Reference für ALLE Signale auf Layer 1 + Layer 3. Niemals splitten. |
-| 3 | Power-Plane (+3V3 / +5V) + sekundäre Signale | +3V3 als grosse Fläche, +5V-Insel um PAM8403 + Boost-Output. Frei verbleibend für unkritische Signale (LED-PWM, Button-Lines). |
+| 3 | Power-Plane (+3V3 / +5V) + sekundäre Signale | +3V3 als grosse Fläche, +5V-Insel um PAM8406 + Boost-Output. Frei verbleibend für unkritische Signale (LED-PWM, Button-Lines). |
 | 4 (Bottom) | Signal + ggf. Bauteile (Q2, Hall-Sensoren, kleine Passive) | Frei für Crossings + sekundäre Routes |
 
 ### Material + Dicke
@@ -83,7 +83,7 @@ Mit **4 Layer**:
 1. **GND-Plane auf Layer 2 NIEMALS schneiden.** Vias überall durchstossbar.
 2. **USB-D±** zueinander parallel + gleiche Länge, *direkt über GND-Plane*,
    keine Power-Plane darunter. Kürzest möglich von `J1` zum MCU.
-3. **Class-D-Speaker-Ausgänge** (PAM8403 Outputs) am unteren Boardrand,
+3. **Class-D-Speaker-Ausgänge** (PAM8406 Outputs) am unteren Boardrand,
    *weit weg* von Analog-Audio-Pfad (PCM5102A → J8). Bulk-Cap < 5 mm von
    PVDD-Pin (ADR-0010 §4).
 4. **Crystal Y1 + Caps** direkt am MCU, < 3 mm Trace, kein
@@ -107,7 +107,7 @@ Mit **4 Layer**:
 
 **Negativ:**
 - **+~$5/Board** bei JLCPCB 5er-Run → +25 $ Materialkosten gesamt. Im
-  Verhältnis zur Audio-Endhardware (PCM5102A + PAM8403 + Speaker + Akku)
+  Verhältnis zur Audio-Endhardware (PCM5102A + PAM8406 + Speaker + Akku)
   vernachlässigbar.
 - Reflow/Rework leicht aufwendiger (innere Layer kann man nicht "fixen"
   ohne Re-Spin) — gleichzeitig Grund mehr für saubere Pre-Layout-Reviews
