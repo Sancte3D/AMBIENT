@@ -259,3 +259,24 @@ jobs:
             field-ambience-current/firmware-c-next/build-h743-product/PRODUCT_BUILD_AUDIT.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Cross-build experimental recoverable Scene journal
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-journal -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SCENE_JOURNAL_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-journal -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-journal
+          grep -q 'src/scenes_journal.c' build-h743-journal/compile_commands.json
+          grep -q 'scene_journal_write' build-h743-journal/field_ambience_h743.map
+
+      - name: Upload experimental Scene journal and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-scene-journal-experimental
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-journal/PRODUCT_BUILD_AUDIT.json
+          if-no-files-found: error
+          retention-days: 14

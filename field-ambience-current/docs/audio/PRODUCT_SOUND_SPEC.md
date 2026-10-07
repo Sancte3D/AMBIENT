@@ -226,11 +226,20 @@ werden nicht gespeichert; Recall startet Generate nicht aus einem Off-Zustand.
 
 Flash: reservierter Bank-2-Sektor ab 0x081E0000, maximal 512-B-Staging.
 Magic-Flashword zuletzt; M7-Cache vor Read gezielt invalidieren.
-**Kein Journal:** Stromverlust während Erase kann den vorherigen Save verlieren.
+**Default ohne Journal:** Stromverlust während Erase kann den vorherigen Save verlieren.
 Eine gültige vorherige Flashversion wird nicht atomar erhalten. Zudem blockiert
 Erase/Program den Main-Loop, also auch Generate-Planung; das ist kein
 zertifizierter Live-Save. Bank-1-Imageguard schützt gegen Firmware-Spill in
 die Schreibbank. Save-Latenz, ECC/Power-loss und Storage-UX bleiben Gates.
+
+Seit 2026-10-07 gibt es einen expliziten, standardmäßig deaktivierten
+`FAM_SCENE_JOURNAL_CANDIDATE`: zwei reservierte Bank-2-Sektoren, unverändertes
+Scene-Blob in CRC-geprüften Transaktionen, Commit zuletzt und Legacy-Read bis
+zum ersten gültigen Journal. Abbruch-/Korruptionstests belegen den
+Softwarealgorithmus im NOR-Modell. Der H743-Adapter hat noch keine sichere
+ECC-Fault-Behandlung und Save bleibt synchron; daher keine neue Gerätegarantie.
+[SCENE_JOURNAL_CHECKPOINT.md](SCENE_JOURNAL_CHECKPOINT.md) beschreibt Vertrag,
+Tests und ausstehende Aktivierung.
 
 ## Ressourcen und zeitlicher Vertrag
 

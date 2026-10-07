@@ -50,6 +50,7 @@ set_property(CACHE FAM_TARGET PROPERTY STRINGS h743 pico host)
 # Reference remains the default until source hearing and device gates pass.
 set(FAM_SOUND_PROFILE "reference" CACHE STRING "Sound profile: reference | product")
 set_property(CACHE FAM_SOUND_PROFILE PROPERTY STRINGS reference product)
+option(FAM_SCENE_JOURNAL_CANDIDATE "Experimental two-sector Scene journal; ECC/device acceptance pending" OFF)
 if(NOT FAM_SOUND_PROFILE STREQUAL "reference" AND NOT FAM_SOUND_PROFILE STREQUAL "product")
     message(FATAL_ERROR "Unknown FAM_SOUND_PROFILE '${FAM_SOUND_PROFILE}'")
 endif()
@@ -260,6 +261,12 @@ if(FAM_TARGET STREQUAL "h743")
         USE_HAL_DRIVER
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
+    if(FAM_SCENE_JOURNAL_CANDIDATE)
+        target_sources(field_ambience_h743 PRIVATE src/scenes_journal.c)
+        target_compile_definitions(field_ambience_h743 PRIVATE FAM_SCENE_JOURNAL_CANDIDATE)
+        target_link_options(field_ambience_h743 PRIVATE -Wl,--defsym=__scene_journal_candidate=1)
+        message(STATUS "Experimental Scene journal: ECC-safe reads and device acceptance remain open")
+    endif()
     if(FAM_SOUND_PROFILE STREQUAL "product")
         # Static compiler frame sizes, not measured interrupt/high-water use.
         target_compile_options(field_ambience_h743 PRIVATE -fstack-usage)

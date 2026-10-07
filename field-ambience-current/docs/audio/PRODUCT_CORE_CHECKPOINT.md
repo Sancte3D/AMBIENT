@@ -23,8 +23,10 @@ Es gibt keine belegte Heilwirkung und keinen universellen Neurodivergenzclaim.
 - Optionales Nature muss einen Ort beitragen; kein Default-Rauschen erzwingen.
 - Color/SHAPE/Room-Enden und feste Quellenlautheit brauchen Urteil am Ton,
   anschließend an tatsächlicher Ausgangslautstärke.
-- Flash-Save blockiert Main/Generate-Planung; kein Journal erhält einen alten
-  Save während unterbrochenem Erase. Cache-/Bankguard ersetzt kein Gerätetest.
+- Flash-Save blockiert Main/Generate-Planung; der Default erhält einen alten
+  Save während unterbrochenem Erase nicht. Seit 2026-10-07 ist ein separater
+  [Journal-Kandidat](SCENE_JOURNAL_CHECKPOINT.md) im Flash-Modell geprüft;
+  Aktivierung und ECC-/Gerätenachweis bleiben offen.
 - Physischer Drive/Altmodi sind vorläufige UX-Kompatibilität, keine fertige
   Bedienung. Die spätere Oberfläche darf keine funktionslosen Klangregler zeigen.
 
