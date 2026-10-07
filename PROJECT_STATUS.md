@@ -6,9 +6,13 @@
 > Schreiben/Erase erreichbar. Recovery schreibt erst nach Erase des anderen
 > Sektors; keine Wiederverwendung unsicherer Flashwords nach Reset.
 > Host-Abbruch-/Korruptionstests und volle Firmware-Host-Suite bestanden.
+> CI37602680211, alle sechs Jobs gruen, gepruefter Head
+> 9768966cc6a3881ea9ea56cb9e8c2eff2b959a8a; Default/Product/Journal cross-linken.
+> Journal-Product: Flash 192748 B, D1 65696 B; Delta +2024/+96 B.
 > `FAM_SCENE_JOURNAL_CANDIDATE` bleibt OFF: ECC-sichere H743-Reads, echte
 > Power-cuts, Spannung und Save-/IRQ-Latenzen fehlen. Main-Save bleibt synchron.
 > [Journal-Nachweis und Grenzen](field-ambience-current/docs/audio/SCENE_JOURNAL_CHECKPOINT.md).
+> Separater [Draft PR138](https://github.com/Sancte3D/AMBIENT/pull/138).
 > To-do aus altem Chat abgeglichen: weiterhin 24 geschlossen / 30 offene Gates.
 
 > **2026-10-06 — reduzierter Sound Candidate 0.3:**

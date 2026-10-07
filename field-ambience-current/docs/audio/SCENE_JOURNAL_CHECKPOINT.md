@@ -12,6 +12,7 @@ Basis: Entwicklungsbranch `claude/hall-sensor-bom-pcb-update-a8xj82`,
 Commit `43729f26d9265417c1db610d58809993c2e27255`.
 Arbeit: `codex/scenes-journal-2026-10-07`. Sound-DSP und Scene-Wireformate
 bleiben gleich; 24 von 54 Aufgaben geschlossen, 30 Gesamtgates offen.
+Separater [Draft PR138](https://github.com/Sancte3D/AMBIENT/pull/138).
 
 `FAM_SCENE_JOURNAL_CANDIDATE` ist **standardmäßig OFF**. Der experimentelle
 H743-Adapter verwendet noch gewöhnliche memory-mapped Reads. Ein beschädigtes
@@ -71,7 +72,35 @@ ARM-Nachweis erfolgt im erweiterten bestehenden H743-CI-Job: Default,
 Product sowie experimentelles Product+Journal, jeweils mit echten Linker-Maps.
 Der Journal-Build muss zusätzlich `check_product_link.py` bestehen und
 `scene_journal_write` sowie `src/scenes_journal.c` tatsächlich enthalten.
-CI-Ergebnis wird nach dem Lauf ergänzt.
+
+## Tatsächlicher CI-/ARM-Nachweis
+
+Geprüfter Code-Head `9768966cc6a3881ea9ea56cb9e8c2eff2b959a8a`, Tree
+`e32fba155f0451813504da9256369296706c874d` (identisch zum lokal geprüften Tree).
+[CI37602680211](https://github.com/Sancte3D/AMBIENT/actions/runs/37602680211):
+**alle sechs Jobs bestanden** — beide Host-Suites, beide Pico-Builds,
+kurzes Product-Hörpaket und H743-Crossbuild. Der H743-Job
+`112730608025` enthält alle drei tatsächlichen ARM-Links und deren Map-/Audit-Artefakte.
+Nachfolgende Ergänzungen dieses Nachweises betreffen ausschließlich Dokumentation.
+
+| H743-Build | Flash B | DTCM B | D1 B | D2 B | reserviertes Scene-Flash |
+|---|---:|---:|---:|---:|---:|
+| Reference, Default | 256668 | 119440 | 417440 | 258112 | 128 KiB |
+| Product, Default | 190724 | 16384 | 65600 | 60808 | 128 KiB |
+| Product + Journal-Kandidat | 192748 | 16384 | 65696 | 60808 | 256 KiB |
+| Journal-Delta zum Product | +2024 | 0 | +96 | 0 | +128 KiB |
+
+Product-DTCM ist hier die **16-KiB-Stackreservierung**, kein gemessener
+High-water. Bank-1-Imageguard und Ausschluss alter Produktpfade bestehen
+auch mit Journal. Compilerframes der unveränderten Klangkette:
+`engine_render` 88 B, Room 192 B, Nature 136 B, Generate-Tick 176 B;
+`scenes_save` 104 B. Diese Einzelwerte ersetzen keine verschachtelte
+Main-/Interrupt-Stackmessung am Gerät.
+
+[Experimentelles CI-Artefakt](https://github.com/Sancte3D/AMBIENT/actions/runs/37602680211/artifacts/11473427883)
+enthält BIN/HEX/Map und `PRODUCT_BUILD_AUDIT.json` (14 Tage Retention).
+Die Software-/Linkprüfung ist abgeschlossen; die nachfolgenden Geräte-Gates
+bleiben offen.
 
 ## Verbleibende Gates
 

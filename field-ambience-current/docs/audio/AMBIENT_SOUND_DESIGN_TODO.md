@@ -301,6 +301,12 @@ Stand. Als nächster Softwareteil von SD41 liegt ein Zwei-Sektor-Journal mit
 Abbruch-/Korruptionstests und Legacy-Erhalt vor; Aktivierung, ECC-sichere Reads
 und nichtblockierendes Save sind noch offen. Siehe
 [SCENE_JOURNAL_CHECKPOINT.md](SCENE_JOURNAL_CHECKPOINT.md).
+Getesteter Code-Head `9768966cc6a3881ea9ea56cb9e8c2eff2b959a8a`,
+[CI37602680211](https://github.com/Sancte3D/AMBIENT/actions/runs/37602680211):
+6/6 Jobs bestanden, inklusive Default/Product/Journal-H743 und vollständiger
+Host-Suite. Der Kandidat liegt separat in
+[Draft PR138](https://github.com/Sancte3D/AMBIENT/pull/138); die Hardware-Gates
+und die 24/30-Zählung ändern sich dadurch nicht.
 
 `geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist
 geprüft. Bei `Hörgate` ist der Code gebaut und softwareseitig auditiert, die
