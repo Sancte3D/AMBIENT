@@ -32,6 +32,10 @@ static source_slot_t slots[SLOTS];
 static pitch_tail_t tails[TAILS];
 static world_grammar_t grammar;
 static world_offer_t pending_offer;
+static coast_phrase_t coast;
+static coast_offer_t coast_tickets[3];
+static uint8_t coast_pending;
+static const uint8_t coast_owners[3]={6,7,15};
 static bool pending;
 static int pending_index,pending_owner,pending_world;
 static engine_note_hook_t note_hook;
@@ -62,7 +66,7 @@ static void remember(float hz) {
 static void reap(void) {
     if(clearing && atomic_load_explicit(&clear_done,memory_order_acquire)) {
         memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
-        pending=false; clearing=false; atomic_store(&clear_request,false);
+        pending=false; coast_pending=0; clearing=false; atomic_store(&clear_request,false);
         if(resume_nature && !muted) {
             nature_set_amount(nature_amount);
             if(nature_amount>0) atomic_store(&output_enabled,true);
@@ -96,11 +100,27 @@ static void reap(void) {
                 }
                 pending=false;
             }
+            for(int role=0;role<3;++role) if(s->owner==coast_owners[role] &&
+                                          (coast_pending&(1u<<role))) {
+                coast_offer_t *o=&coast_tickets[role];
+                coast_pending&=(uint8_t)~(1u<<role);
+                if(!clearing && !muted && !suppressed && generate && autoplay &&
+                   world==WORLD_COAST && coast_phrase_heard(&coast,o,now_ms)) {
+                    last_midi=o->midi; ++note_count;
+                    if(o->hold_ms) {s->timed=true; s->off_ms=now_ms+o->hold_ms;}
+                    if(o->phase==3) for(int k=0;k<SLOTS;++k)
+                        if(slots[k].used && slots[k].owner==coast_owners[2] && !slots[k].released) {
+                            slots[k].timed=true; slots[k].off_ms=now_ms+o->hold_ms;
+                        }
+                }
+            }
         }
         if(epoch!=s->issued_epoch && !(mask&(1u<<s->owner))) {
             if(s->on_sent && !s->off_sent && note_hook) note_hook(0,s->owner,s->hz,0);
             if(s->started) remember(s->hz);
             if(pending && pending_owner==s->owner) pending=false;
+            for(int role=0;role<3;++role) if(s->owner==coast_owners[role])
+                coast_pending&=(uint8_t)~(1u<<role);
             s->used=false;
         }
     }
@@ -152,7 +172,14 @@ int engine_sounding_notes(int *out,int max) {
     }
     return count;
 }
-static bool in_collection(float hz) {
+static bool in_collection(float hz,bool phrase) {
+    if(phrase) {
+        for(int m=45;m<=80;++m) if(coast_phrase_pitch_allowed(m,tonic_pc,minor!=0)) {
+            float allowed=tuning_hz((float)m);
+            if(fabsf(1200.0f*log2f(hz/allowed))<3)return true;
+        }
+        return false;
+    }
     int n=world_pitch_count(tonic_pc,minor!=0);
     for(int i=0;i<n;++i) {
         float allowed=tuning_hz((float)world_pitch_midi(i,tonic_pc,minor!=0));
@@ -160,10 +187,11 @@ static bool in_collection(float hz) {
     }
     return false; /* Reject outside pitches; never silently clamp or transpose. */
 }
-static bool admit(uint8_t owner,float hz,float velocity) {
+static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     reap();
     if(owner>=SOURCES || !isfinite(hz) || !isfinite(velocity) || velocity<=0 ||
-       hz<140 || hz>470 || clearing || muted || !in_collection(hz)) return false;
+       hz<(phrase ? 105 : 140) || hz>(phrase ? 850 : 470) || clearing || muted ||
+       !in_collection(hz,phrase)) return false;
     int empty=-1,local=0;
     for(int i=0;i<SLOTS;++i) {
         if(!slots[i].used) { if(empty<0) empty=i; continue; }
@@ -186,7 +214,7 @@ static bool admit(uint8_t owner,float hz,float velocity) {
 }
 bool engine_try_note_on(uint8_t owner,float hz,float v) {
     if(generate || !(owner<5 || (owner>=9 && owner<=13))) return false;
-    bool ok=admit(owner,hz,v); if(!ok) ++rejects; return ok;
+    bool ok=admit(owner,hz,v,false); if(!ok) ++rejects; return ok;
 }
 void engine_note_on(uint8_t owner,float hz,float legacy_amp) {
     /* Existing Hall/MIDI adapters pass CELL_AMP_MIN..MAX. Product API above
@@ -195,7 +223,7 @@ void engine_note_on(uint8_t owner,float hz,float legacy_amp) {
 }
 bool engine_try_world_note_on(uint8_t owner,float hz,float v) {
     if(!generate || !autoplay || suppressed || !(owner==6 || owner==7 || owner==15)) return false;
-    bool ok=admit(owner,hz,v); if(!ok) ++rejects; return ok;
+    bool ok=admit(owner,hz,v,false); if(!ok) ++rejects; return ok;
 }
 void engine_note_off(uint8_t owner) {
     if(owner>=SOURCES) return;
@@ -227,10 +255,10 @@ static void retire_context(bool all) {
 static void release_generated(void) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used &&
        (slots[i].owner==6 || slots[i].owner==7 || slots[i].owner==15)) engine_note_off(slots[i].owner);
-    pending=false;
+    pending=false; coast_pending=0; coast_phrase_restart(&coast);
 }
 static void quiet_chain(void) {
-    pending=false; resume_nature=false;
+    pending=false; coast_pending=0; coast_phrase_restart(&coast); resume_nature=false;
     nature_set_amount(0); release_all(); clearing=true;
     atomic_store(&clear_done,false); atomic_store(&output_enabled,false);
     atomic_store_explicit(&clear_request,true,memory_order_release);
@@ -279,6 +307,7 @@ void engine_set_world(int i) {
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
     reap(); retire_context(false); pending=false; world=i; nature_set_world(world);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
+    coast_pending=0; coast_phrase_init(&coast,seed);
 }
 int engine_product_world(void) { return world; }
 int engine_product_collection(void) { return minor; }
@@ -292,8 +321,10 @@ static void reset_score_context(void) {
      * Already acknowledged voices keep their actual Hz. Forget degree memory
      * when its collection/register meaning changes, rather than relabel it. */
     if(pending)engine_note_off((uint8_t)pending_owner);
+    if(world==WORLD_COAST)release_generated();
     pending=false;
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u));
+    coast_pending=0; coast_phrase_init(&coast,seed);
     retry_ms=now_ms;
 }
 void engine_set_key_pc(int pc) {
@@ -326,6 +357,8 @@ void engine_set_generative(bool on,int program) {
     if(on)retire_context(true);else release_all();
     pending=false; generate=on; suppressed=false; retry_ms=now_ms;
     if(on) world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u));
+    coast_pending=0;
+    if(on)coast_phrase_init(&coast,seed);else coast_phrase_restart(&coast);
     nature_set_amount(on && !muted && !clearing ? nature_amount : 0);
 }
 void engine_set_autoplay_melody(int on) { autoplay=on!=0; if(!autoplay) release_generated(); }
@@ -334,8 +367,50 @@ uint32_t engine_gen_seed(void) { return seed; }
 void engine_set_gen_seed(uint32_t v) {
     reap(); retire_context(false); seed=v ? v : 0xA6B13E7Du; nature_set_seed(seed);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
+    coast_pending=0; coast_phrase_init(&coast,seed);
 }
 void engine_generative_new_field(uint32_t v) { engine_set_gen_seed(v); }
+static bool coast_owner_free(int role) {
+    for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==coast_owners[role])return false;
+    return true;
+}
+static bool coast_start(const coast_offer_t *o) {
+    float hz=tuning_hz((float)o->midi);
+    if(!admit(coast_owners[o->role],hz,o->velocity,true)) {++rejects;return false;}
+    coast_tickets[o->role]=*o; coast_pending|=(uint8_t)(1u<<o->role);
+    return true;
+}
+static void coast_tick(uint32_t ms) {
+    if(coast_pending || !coast_phrase_due(&coast,ms))return;
+    if(coast.phase==4) {
+        for(int role=0;role<3;++role) if(!coast_owner_free(role)) {retry_ms=ms+250;return;}
+        coast_phrase_restart(&coast);
+    }
+    if(coast.phase==0 && (coast.heard_mask&3u)==3u) {
+        if((int32_t)(ms-(coast.phase_ms+700u))<0)return;
+        coast_offer_t o=coast_phrase_propose(&coast,2,tonic_pc,minor!=0,activity);
+        if(!coast_owner_free(2) || !coast_start(&o))retry_ms=ms+250;
+        return;
+    }
+    if(coast.phase==3) {
+        coast_offer_t o=coast_phrase_propose(&coast,0,tonic_pc,minor!=0,activity);
+        /* Both outer source slots, including releases, must have retired.
+         * Their shared destination is issued once, never as two unisons. */
+        if(!coast_owner_free(0) || !coast_owner_free(1) || !coast_start(&o))retry_ms=ms+250;
+        return;
+    }
+    coast_offer_t a=coast_phrase_propose(&coast,0,tonic_pc,minor!=0,activity);
+    coast_offer_t b=coast_phrase_propose(&coast,1,tonic_pc,minor!=0,activity);
+    int free=0;for(int i=0;i<SLOTS;++i)free+=!slots[i].used;
+    if(!coast.heard_mask && (free<2 || !coast_owner_free(0) || !coast_owner_free(1) ||
+       !pitch_clear(tuning_hz((float)a.midi)) || !pitch_clear(tuning_hz((float)b.midi)))) {
+        retry_ms=ms+250; return;
+    }
+    /* Bounded pair preparation in Main. State commits only at audio ack.
+     * A partial cancellation retries just its unheard role. */
+    if(!(coast.heard_mask&1u) && !coast_start(&a)) {retry_ms=ms+250;return;}
+    if(!(coast.heard_mask&2u) && !coast_start(&b))retry_ms=ms+250;
+}
 void engine_generative_tick(uint32_t ms) {
     now_ms=ms; reap();
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].timed &&
@@ -345,7 +420,9 @@ void engine_generative_tick(uint32_t ms) {
     if(wait && !suppressed) release_generated();
     suppressed=wait;
     if(!generate || !autoplay || suppressed || clearing || muted || pending ||
-       (int32_t)(ms-retry_ms)<0 || !world_grammar_due(&grammar,ms)) return;
+       (int32_t)(ms-retry_ms)<0) return;
+    if(world==WORLD_COAST) {coast_tick(ms);return;}
+    if(!world_grammar_due(&grammar,ms))return;
     world_offer_t offer=world_grammar_propose(&grammar,ms,activity);
     if(offer.rest) { world_grammar_commit(&grammar,&offer,offer.index,ms); return; }
     int held=0; for(int i=0;i<SLOTS;++i) held+=slots[i].used && slots[i].held;
@@ -380,14 +457,15 @@ void engine_generative_tick(uint32_t ms) {
     }
     pending_offer=offer; pending_index=index; pending_owner=owner; pending_world=world; pending=true;
 }
-int engine_generative_advance(void) { return generate && !suppressed ? (int)(grammar.episodes%4u)+1 : -1; }
+int engine_generative_advance(void) { return generate && !suppressed ?
+    (int)((world==WORLD_COAST ? coast.episodes : grammar.episodes)%4u)+1 : -1; }
 void engine_generative_nudge(int cell,uint32_t ms) { (void)cell; (void)ms; }
 int engine_generative_suppressed(void) { return suppressed; }
 int engine_generative_last_melody_midi(void) { return last_midi; }
 int engine_generative_melody_count(void) { return note_count; }
 int engine_generative_dejavu_count(void) { return (int)grammar.answers; }
-uint32_t engine_generative_return_count(void) { return grammar.returns; }
-uint32_t engine_generative_episode_count(void) { return grammar.episodes; }
+uint32_t engine_generative_return_count(void) { return world==WORLD_COAST ? coast.returns : grammar.returns; }
+uint32_t engine_generative_episode_count(void) { return world==WORLD_COAST ? coast.episodes : grammar.episodes; }
 uint32_t engine_admission_rejections(void) { return rejects; }
 uint32_t engine_output_limited_samples(void) { return atomic_load(&limited); }
 uint32_t engine_nonfinite_samples(void) { return atomic_load(&faults); }
@@ -453,6 +531,7 @@ void engine_init(void) {
     engine_set_master_volume(.6f); engine_set_key_pc(2); engine_set_activity(.5f);
     engine_set_color(.5f); engine_set_room(.5f); engine_set_nature(0);
     engine_set_attack(.5f); engine_set_release(.5f); world_grammar_init(&grammar,world,seed);
+    coast_pending=0; coast_phrase_init(&coast,seed);
 }
 static float protect(float x) {
     if(!isfinite(x)) { atomic_fetch_add_explicit(&faults,1,memory_order_relaxed); return 0; }

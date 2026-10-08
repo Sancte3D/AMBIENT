@@ -18,7 +18,11 @@ static int16_t reference[N*2],trial[N*2],buffer[2048*2];
 static int ons,offs;
 static void hook(int on,uint8_t owner,float hz,float v) {
     (void)owner; (void)v;
-    if(on>0) { ++ons; assert(hz>=140 && hz<=470); }
+    if(on>0) {
+        ++ons;
+        bool phrase=engine_product_world()==WORLD_COAST && (owner==6 || owner==7 || owner==15);
+        assert(hz>=(phrase ? 105 : 140) && hz<=(phrase ? 850 : 470));
+    }
     if(on==0) { ++offs; assert(hz>0); }
 }
 static void audio(double seconds) {

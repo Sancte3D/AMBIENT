@@ -3,7 +3,7 @@
 ## KERNURTEIL
 
 AMBIENT besitzt jetzt einen tatsächlich reduzierten Produktkandidaten: drei
-verschiedene Grammatiken, dieselbe Quellenzulassung für Manual/Generate,
+verschiedene Grammatiken, gemeinsame Quellen-/Besitz-/Harmonieprüfung,
 echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
@@ -34,7 +34,14 @@ HIGHLANDS-Akkord/Pause/Rückkehr (44 s) ist ebenfalls als Host-Algorithmus
 vorbereitet. Die kurze WOODLAND-Ruf/Antwort-Probe wurde als zu gezupft verworfen.
 Ein neuer langer Saiten-Kandidat (45 s, weicher Einsatz, lange Überlagerung)
 ist gerendert und zeitlich/technisch geprüft; seine Hörwahl bleibt offen. Siehe [WORLD_ENSEMBLE_ALGORITHMS.md](WORLD_ENSEMBLE_ALGORITHMS.md).
-Die Generatorintegration und abschließende World-Abnahme bleiben offen.
+COAST ist jetzt im echten Product-Generator integriert: zwei gegenläufige
+Außenstimmen, gehaltener gemeinsamer Akkordton und ein einzelner Zielton.
+48 vollständige Engine-Phrasen über alle Keys, Collections und Stimmungen,
+Host-Suite und H743-Build bestehen. Die70-s-Firmwareprobe erreicht mit den
+normalen Hüllkurven die Mitte bei43,8 s; sie braucht noch ein eigenes Hörurteil.
+Siehe [COAST_GENERATOR_CHECKPOINT.md](COAST_GENERATOR_CHECKPOINT.md).
+WOODLAND-/HIGHLANDS-Generatorintegration und abschließende World-Abnahme
+bleiben offen. Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
 ## FUNDAMENTAL FALSCH
 
@@ -67,7 +74,8 @@ Als geprüfter technischer/produktlogischer Vertrag, nicht als gehörte Klangwah
 - Keine implizite Pad/Bass/Drone-/Rauschbegleitung; Nature default aus.
 - Ein gemeinsamer interner Float-Raum; getrennte optionale Naturebene.
 - Kein harter held Steal und kein neues Hall-/Pitchgedächtnis pro World.
-- Hör-WAVs maximal 30 Sekunden, hier genau 27; rohe Pegel + feste Vergleichsgain.
+- Kurze Quellenvergleiche bleiben kompakt; vollständige lange Ensemble-Phrasen
+  dürfen45/70 s zeigen. Rohe Pegel und fester Hörgain sind getrennt dokumentiert.
 - Konzept → Sound → UX/UI/Display → reale Geräteabnahme bleibt die Reihenfolge.
 
 Die Tabellen A–E und Aufgabenbeschreibungen unten enthalten den ursprünglichen
@@ -367,10 +375,10 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD08 | geschlossen | Originalowner, DSP-Ack, Storno, tatsächliche One-shot-/Release-Enden |
 | SD09 | geschlossen | Drei globale Slots / zwei Plucks auch Manual, kein held Steal |
 | SD10 | geschlossen | Gemeinsame Familie/Admit ohne Pad/Bass/Archive; SCN7-Migration geprüft |
-| SD11 | Hörgate | Zwei Cores, 12 Keys, Equal/Just und niedrige Intervallgrenzen; Teiltonprüfung offen |
+| SD11 | Hörgate | Zwei Cores, 12 Keys, Equal/Just und niedrige Intervallgrenzen; internes COAST-Register45..80 in48 echten Phrasen geprüft; Teilton-/Registerhörwahl offen |
 | SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
-| SD13 | geschlossen | Drei begrenzte Transaktionsautomaten, genau acht autonome Gradindices |
-| SD14 | Richtung positiv gehört, Algorithmus vorbereitet | Ensemble-Referenz bestätigt; COAST-Gegenbewegung mit Seed, geteiltem Mittelton und 27-s-Probe; echter Generator-/Besitz-/Tail-Vertrag offen |
+| SD13 | geschlossen | COAST: begrenzter Rollen-/Phrasenzustand mit DSP-Ack; WOODLAND/HIGHLANDS: bisherige Transaktionsautomaten mit höchstens acht Gradindices |
+| SD14 | Generator integriert; Hör-/Gerätegate offen | Gegenbewegung, gemeinsamer Akkordton, einmaliger Mittelton; echte Besitzer/Releases/Tails,48 Engine-Phrasen, volle Host-Suite und H743 geprüft; neue70-s-Probe noch hören |
 | SD15 | Kurze Richtung verworfen, langer Kandidat vorbereitet | WOODLAND braucht lange/gestreckte Töne; 45-s-Saiten-Kandidat mit weichen Einsätzen/Überlagerung geprüft; Quellen-/Generator-/Hörabnahme offen |
 | SD16 | Algorithmus/Hörprobe vorbereitet | HIGHLANDS-Akkordbogen mit gehaltenem F#4, realem Horn, Pausen/Rückkehr; Generator-/Geräte-/Hörabnahme offen |
 | SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
@@ -540,9 +548,13 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   sinnvolle Pausen und begrenzte Rollen. Auch ohne Pan/Hall hörbare Kontinuität.
   **Neue Priorität 2026-10-08:** Ein hörbarer Akkord-/Voicing-Bogen mit
   gemeinsamen gehaltenen Tönen, gezieltem Registerwechsel und eigenen Dauern
-  fehlt. Der kompakte komponierte Ensemble-Entwurf verwendet die echten
-  C-Quellen; Übertragung in den autonomen Generator ist noch offen. SD11 muss
-  dafür funktionale Tonvorräte und Übergänge zulassen. Siehe Ensemble-Direction.
+  wurde als Richtung positiv gehört. Die COAST-Gegenbewegung ist jetzt im
+  autonomen Product-Generator mit drei Rollen und acht tatsächlichen Starts
+  integriert. Der Mittelton wird einmal gestartet; Slots und unveränderte
+  Raumhistory warten echte Releases ab. Alle12 Keys, beide Collections und
+  Stimmungen, Host-Suite und H743-Build geprüft. Neue70-s-Firmwareprobe und
+  endgültige Quellen-/Gerätewahl bleiben offen; deshalb kein Gesamt-Haken.
+  Siehe COAST-Generator-Checkpoint und Ensemble-Direction.
   Voraussetzung: SD02–SD03/SD13; technische Basis ist keine musikalische Abnahme.
 - [ ] **SD15 — WOODLAND-Grammatik implementieren.**
   Seed-Figur mit Kontur/Abstandsmerkmalen; Antwort bewahrt ausgewählte Merkmale,
@@ -742,7 +754,9 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Keine stille Überschreitung oder Referenztonkontamination, SHA,
   Sample-Rate, Sourcefingerprint, Seed, Parameter, Onsettrace und feste Gainwerte
   vorhanden. Rohe Pegel plus gematchte Hörkopie; kein sampleweises Normalisieren.
-  Jedes exportierte WAV <=30 s. Bestehende passende Harnesses weiterverwenden.
+  Kurze Vergleiche kompakt halten; vollständige lange Phrasen als solche
+  kennzeichnen statt sie vor der musikalischen Auflösung abzuschneiden.
+  Bestehende passende Harnesses weiterverwenden.
 - [ ] **SD44 — World-Unterschied ohne Labels prüfen.**
   Gleiche Tonart/Stimmung, vergleichbarer Registerbereich, gleiche feste
   Referenzlautheit; Quellen-/Grammatikvergleich zunächst ohne Nature/FX, danach

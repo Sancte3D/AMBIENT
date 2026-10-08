@@ -10,7 +10,7 @@ Regel. Die Regeln werden einzeln umgesetzt und gehört.
 
 | World | Musikalischer Algorithmus | Konkreter Stand |
 |---|---|---|
-| COAST | Zwei äußere Register nähern sich in Gegenbewegung einer gemeinsamen Mitte; ein Akkordton verbindet die Schritte | Seed-gesteuerter Host-Algorithmus und tatsächliche C-DSP-Hörprobe vorbereitet |
+| COAST | Zwei äußere Register nähern sich in Gegenbewegung einer gemeinsamen Mitte; ein Akkordton verbindet die Schritte | Jetzt im tatsächlichen Product-Generator integriert;48 Engine-Phrasen, Host-Suite, H743 und70-s-Firmwareprobe geprüft |
 | WOODLAND | Eine kleine Akkordfigur stellt eine Idee vor; eine andere Stimme antwortet mit verwandter Kontur und verändertem Register; Variation und Ruhe | Kurzer Pluck-Entwurf vom Nutzer verworfen; neuer langer Saiten-Kandidat mit 45-s-Probe |
 | HIGHLANDS | Weit verteilte gehaltene Stimmen verändern einzelne Akkordtöne mit eigenen Dauern; längere offene Pausen und Rückkehr | Seed-gesteuerter Akkord-/Pausen-Host-Algorithmus, reale Horn-Hörprobe mit 44 s |
 
@@ -20,6 +20,33 @@ ist keine World-Identität. Unterschiedliche Regeln für Zusammenhang und Zeit
 werden nicht mit denselben Zufallsereignissen und anderem Filter vorgetäuscht.
 
 ## COAST — Zusammenlaufen
+
+### Aktuell: tatsächlicher Product-Generator
+
+`engine_product.c` verwendet jetzt einen begrenzten COAST-Phrasenzustand aus
+`world_grammar.c`. Acht bestätigte Starts je Durchlauf: äußeres Paar, leiser
+gemeinsamer Akkordton, zwei gegenläufige Paare, ein gemeinsamer Mittelton.
+Owners6/7/15 und tatsächliche Quellenreleases bleiben im globalen Drei-Slot-
+Budget. Der gehaltene Akkordton wird beim Ziel nicht neu gestartet; sein Ende
+wird erst nach dem tatsächlichen DSP-Beginn des Zieltons geplant. Kein doppelt
+phasendes Zielunisono. Seed variiert obere Route, Haltezeiten und Akzente;
+alle vorgeschlagenen Töne bleiben im gewählten Major-/Minor-Core.
+
+Das erweiterte MIDI45..80-/105..850-Hz-Register ist nur intern für diese
+COAST-Phrase freigegeben. Manual/öffentliche World-Note-API und die beiden
+anderen Generatoren behalten ihre bisherigen Grenzen. Quellen-DSP,
+Attack-/Release-Makrobereiche und7,2-s-Tailhistory sind unverändert.
+Wirkliche Quellenenden und harmonische Fahnen können geplante Einsätze
+verzögern: die vollständige D-Dur/Equal/Seed1234-Probe trifft sich bei43,8 s.
+`review_coast_generator.py` rendert70 s über die echte Engine mit10-ms-
+Main-Steuerung, Dry/Room bei64/512 Frames jeweils bytegleich. Alle Quellen
+enden natürlich; kein Clear, Schlussfade, SHAPE-Bypass oder direkter Quellenstart.
+LISTEN−23LUFS/−10,3dBFS True Peak, fester Gain. Die ursprüngliche positive
+Host-Probe bleibt Referenz; diese neue Firmwareprobe braucht ein eigenes
+Hörurteil. Vollständige Prüfungen und Ressourcen:
+[COAST_GENERATOR_CHECKPOINT.md](COAST_GENERATOR_CHECKPOINT.md).
+
+### Positiv gehörte Host-Referenz aus PR145
 
 Der Nutzer beschreibt zwei gleichzeitig gespielte äußere Oktaven: unten steigt
 es, oben fällt es, bis die Linien in einer mittleren Lage zusammenfinden.
@@ -45,7 +72,7 @@ Die ursprüngliche komponierte Ensemble-Probe bleibt als positiv bewertete
 Referenz erhalten. Dieser neue COAST-Verlauf ist ein eigenständiger Algorithmus,
 kein Ersatz-WAV unter derselben Identität.
 
-## Prüfbefund
+## Prüfbefund der ursprünglichen27-s-Host-Referenz
 
 - Ausgewählter Seed1234: acht angenommene tatsächliche Quellenstarts;
   maximal drei reale Stimmen einschließlich Releases; alle Quellen enden
@@ -60,20 +87,18 @@ kein Ersatz-WAV unter derselben Identität.
 - C mit `-Wall -Wextra -Werror`, Python, Workflow und Diff geprüft;
   Source-/Header-/Tool-Hashes und der temporäre C-Score sind nachvollziehbar.
 
-## Grenzen und nächste Arbeit
+## Grenzen der Host-Referenz und nächste Arbeit
 
-Das ist ein **Host-World-Algorithmus**, noch nicht in den autonomen Product-
-Generator integriert. D5/B4 erweitern den bisherigen Produktregister-Kandidaten;
+PR145 war ein **Host-World-Algorithmus**. Seine direkte Hörprobe verwendet ein
+weiteres Register und eigene kürzere Hüllkurven. D5/B4 erweiterten den damaligen Produktregister-Kandidaten;
 pro Rolle werden direkte Attackwerte und kurzer SHAPE-Release=0 verwendet.
 Produktquellen, Header, Defaults und UI wurden nicht geändert. Der Raum darf
 am Dateiende einen leisen Resttail enthalten; kein vollständiges Room-Ende
 behauptet. Die COAST-Richtung wurde erneut positiv gehört; abschließende Geräteabnahme bleibt offen.
 
-Die Integration braucht Chord-/Voicing-Zustand, erweiterte geprüfte Register,
-Rollenbesitz beim gemeinsamen Ziel und einen planbaren Umgang mit tatsächlichen
-Releases und Raumgedächtnis. Die bisherige pauschale Intervall-/Tail-Sperre darf
-beabsichtigte Stimmführung nicht unbemerkt in Stillstand verwandeln. WOODLAND
-und HIGHLANDS sind ebenfalls als getrennte Host-Algorithmen unten beschrieben.
+COAST erfüllt jetzt den Rollen-/Voicing-/Register-Vertrag im realen Generator;
+Releases und Raumgedächtnis bleiben ausdrücklich wirksam. WOODLAND und
+HIGHLANDS sind weiterhin getrennte Host-Algorithmen, unten beschrieben.
 Weiterhin 24 technisch geschlossene / 30 offene Gesamtgates.
 
 
@@ -114,11 +139,12 @@ Volume0,6, Quellenkalibrierung0,5. Der Raum darf am Dateiende noch leise klingen
 `WOODLAND_ENSEMBLE_METRICS.json` und `HIGHLANDS_ENSEMBLE_METRICS.json` dokumentieren
 Seed1234; alternative Seeds liegen separat im CI-Artefakt.
 
-Alle drei musikalischen Algorithmen sind damit als reproduzierbare Host-
-Kandidaten ausgebaut. Ihre gemeinsame Produktionsintegration ist weiter offen:
+Die WOODLAND-/HIGHLANDS-Ensembles sind reproduzierbare Host-Kandidaten.
+Ihre Produktionsintegration ist weiter offen; COAST ist inzwischen integriert:
 
-1. `engine_product.c:admit` begrenzt aktuell auf 140..470 Hz und den engen
-   pentatonischen Vorrat. COAST/WOODLAND benötigen geprüfte obere Register.
+1. Manual und öffentliche World-Note-API begrenzen auf140..470 Hz und den engen
+   Core-Vorrat. Die private COAST-Erweiterung gilt nicht für WOODLAND/HIGHLANDS;
+   deren Zielregister muss eigenständig gewählt und geprüft werden.
 2. `world_grammar_propose` liefert nur einzelne Ereignisse ohne Akkord-/Voicing-
    Vertrag; HIGHLANDS erlaubt bisher nur eine gehaltene Stimme. Der neue
    Akkordplan muss ausdrücklich mehrere Rollen und gemeinsame Töne verwalten.
@@ -128,8 +154,10 @@ Kandidaten ausgebaut. Ihre gemeinsame Produktionsintegration ist weiter offen:
 4. Direct-SHAPE-Werte müssen in geprüfte Produkt-Makrogrenzen überführt werden;
    Dry/Room-Proben ersetzen keine echten Generator-/Übergangs-/Gerätechecks.
 
-Keine Produktionsquelle, Header, Default oder UI geändert. Keine neuen
-Gesamtgates geschlossen; die abschließende WOODLAND-/HIGHLANDS-Hörabnahme fehlt.
+Die Host-Proben ändern keine Produktionsquelle oder Defaults. Die spätere
+COAST-Integration ändert Engine/Grammatik/Header, aber keine Quellen-DSP-/Makro-
+Defaults oder UI. Keine neuen Gesamtgates geschlossen; die abschließende
+WOODLAND-/HIGHLANDS-Hörabnahme fehlt.
 
 
 ## WOODLAND — lange Saiten nach Nutzerkorrektur
