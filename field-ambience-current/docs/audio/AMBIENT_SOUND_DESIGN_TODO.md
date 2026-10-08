@@ -26,6 +26,12 @@ Entwurf mit unseren echten C-Quellen ist vorbereitet; er ist noch kein autonomer
 Generator und bestätigt keine isolierte Familienwahl aus SD02–SD04. Siehe
 [MUSICAL_ENSEMBLE_DIRECTION.md](MUSICAL_ENSEMBLE_DIRECTION.md).
 Weitere reine Quellen-/SHAPE-Pakete folgen nach diesem musikalischen Fundament.
+**Nutzerurteil:** Die Ensemble-Probe wurde positiv gehört („ja besser!!!!“).
+Gewünscht sind jetzt verschiedene musikalische Algorithmen pro World. COAST
+hat einen seed-gesteuerten Gegenbewegungs-Entwurf: D3/D5 treffen sich in D4,
+verbunden durch einen gehaltenen Akkordton. WOODLAND-Antworten und HIGHLANDS-
+Weite folgen einzeln. Siehe [WORLD_ENSEMBLE_ALGORITHMS.md](WORLD_ENSEMBLE_ALGORITHMS.md).
+Die Generatorintegration und abschließende World-Abnahme bleiben offen.
 
 ## FUNDAMENTAL FALSCH
 
@@ -361,7 +367,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD11 | Hörgate | Zwei Cores, 12 Keys, Equal/Just und niedrige Intervallgrenzen; Teiltonprüfung offen |
 | SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
 | SD13 | geschlossen | Drei begrenzte Transaktionsautomaten, genau acht autonome Gradindices |
-| SD14 | musikalisches Redesign, priorisiert | Nutzerurteil: Einzelereignisse tragen nicht; 27-s-Ensemble-Entwurf vorhanden, echter Akkord-/Voicing-Zustand im Generator noch offen |
+| SD14 | Richtung positiv gehört, Algorithmus vorbereitet | Ensemble-Referenz bestätigt; COAST-Gegenbewegung mit Seed, geteiltem Mittelton und 27-s-Probe; echter Generator-/Besitz-/Tail-Vertrag offen |
 | SD15 | Hörgate | WOODLAND gehörte Kontur/Intervalle, Antwort/Variation/Rückkehr im realen Kern |
 | SD16 | Hörgate | HIGHLANDS Fragmente/Bögen/echte Pausen; hängt von Quellenwahl SD04 ab |
 | SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
