@@ -12,7 +12,7 @@ Regel. Die Regeln werden einzeln umgesetzt und gehört.
 |---|---|---|
 | COAST | Zwei äußere Register nähern sich in Gegenbewegung einer gemeinsamen Mitte; ein Akkordton verbindet die Schritte | Jetzt im tatsächlichen Product-Generator integriert;48 Engine-Phrasen, Host-Suite, H743 und70-s-Firmwareprobe geprüft |
 | WOODLAND | Zwei lange Saiten ersetzen einzelne Akkordtöne, während ein gemeinsamer Ton stehen bleibt; eigene Dauern, Antwort und Ruhe | Lange Quelle und Generator integriert;48 echte Phrasen und50-s-Engineprobe geprüft; neue Hörwahl offen |
-| HIGHLANDS | Weit verteilte gehaltene Stimmen verändern einzelne Akkordtöne mit eigenen Dauern; längere offene Pausen und Rückkehr | Seed-gesteuerter Akkord-/Pausen-Host-Algorithmus, reale Horn-Hörprobe mit 44 s |
+| HIGHLANDS | Weiter Akkord → verwandte Lage mit gleichem gehaltenem Ton → tatsächliches Quellenende → offene Pause → Rückkehr | Acht-Schritt-Generator integriert;48 vollständige Keys/Collections/Stimmungen +4 Seed/Timerwrap-Phrasen,65-s-Engineprobe, Host und H743 geprüft; Hörwahl offen |
 
 Gemeinsamer Vertrag: begrenzter harmonischer Plan, klare Stimmrollen, echte
 Hz-/Besitzerhistorie, bewusste Spannungen/Auflösungen. Die Klangfamilie allein
@@ -33,8 +33,8 @@ phasendes Zielunisono. Seed variiert obere Route, Haltezeiten und Akzente;
 alle vorgeschlagenen Töne bleiben im gewählten Major-/Minor-Core.
 
 Das erweiterte MIDI45..80-/105..850-Hz-Register ist nur intern für diese
-COAST-Phrase freigegeben. Manual/öffentliche World-Note-API und die beiden
-anderen Generatoren behalten ihre bisherigen Grenzen. Quellen-DSP,
+COAST-Phrase freigegeben. Manual/öffentliche World-Note-API behält ihre Grenzen;
+WOODLAND und HIGHLANDS besitzen eigene geprüfte Privatregister. COAST-Quellen-DSP,
 Attack-/Release-Makrobereiche und7,2-s-Tailhistory sind unverändert.
 Wirkliche Quellenenden und harmonische Fahnen können geplante Einsätze
 verzögern: die vollständige D-Dur/Equal/Seed1234-Probe trifft sich bei43,8 s.
@@ -96,9 +96,9 @@ Produktquellen, Header, Defaults und UI wurden nicht geändert. Der Raum darf
 am Dateiende einen leisen Resttail enthalten; kein vollständiges Room-Ende
 behauptet. Die COAST-Richtung wurde erneut positiv gehört; abschließende Geräteabnahme bleibt offen.
 
-COAST und langes WOODLAND erfüllen jetzt ihren Rollen-/Register-Vertrag im
-realen Generator; Releases und Raumgedächtnis bleiben ausdrücklich wirksam.
-HIGHLANDS bleibt ein getrennter Host-Algorithmus. Die historischen Quellenproben
+Alle drei Worlds erfüllen jetzt ihre unterschiedlichen Rollen-/Register-Verträge
+im realen Generator; Releases und Raumgedächtnis bleiben ausdrücklich wirksam.
+Die historischen Quellenproben
 unten behalten ihre jeweils dokumentierte direkte Artikulation.
 Weiterhin 24 technisch geschlossene / 30 offene Gesamtgates.
 
@@ -116,7 +116,7 @@ liegt acht Sekunden nach dem Ruf. Echte Besitzerwechsel haben mindestens
 keine Note-Off-Kürzung der Saiten, natürliches Quellenende innerhalb von 30 s.
 Direkter SHAPE-Release0,60; hier bedeutet Release natürliche Saitenabklingzeit.
 
-## HIGHLANDS — weiter Akkord, gemeinsamer Ton, Pause, Rückkehr
+## HIGHLANDS — historischer44-s-Host-Entwurf (PR146)
 
 D3/A4/F#4 öffnen mit versetzten Einsätzen einen weiten D-Dur-Akkord.
 F#4 bleibt in derselben realen Stimme von 1,6 bis 18,6 Sekunden stehen;
@@ -140,27 +140,10 @@ Volume0,6, Quellenkalibrierung0,5. Der Raum darf am Dateiende noch leise klingen
 `WOODLAND_ENSEMBLE_METRICS.json` und `HIGHLANDS_ENSEMBLE_METRICS.json` dokumentieren
 Seed1234; alternative Seeds liegen separat im CI-Artefakt.
 
-Die kurzen WOODLAND-/HIGHLANDS-Ensembles unten dokumentieren PR146.
-Kurzes WOODLAND ist verworfen und durch die lange integrierte Richtung ersetzt.
-Die folgenden Integrationsgrenzen gelten jetzt noch für HIGHLANDS:
-
-1. Manual und öffentliche World-Note-API begrenzen auf140..470 Hz und den engen
-   Core-Vorrat. Private COAST-/WOODLAND-Erweiterungen gelten nicht für HIGHLANDS;
-   dessen Zielregister muss eigenständig gewählt und geprüft werden.
-2. `world_grammar_propose` liefert nur einzelne Ereignisse ohne Akkord-/Voicing-
-   Vertrag; HIGHLANDS erlaubt bisher nur eine gehaltene Stimme. Der neue
-   Akkordplan muss ausdrücklich mehrere Rollen und gemeinsame Töne verwalten.
-3. Reale Releases und das 7,2-s-Raumgedächtnis dürfen Rollen nicht unplanbar
-   blockieren. Gemeinsame Ziele müssen einmal klingen, Besitzer dürfen erst
-   nach tatsächlichem Quellenausklang wiederverwendet werden.
-4. Direct-SHAPE-Werte müssen in geprüfte Produkt-Makrogrenzen überführt werden;
-   Dry/Room-Proben ersetzen keine echten Generator-/Übergangs-/Gerätechecks.
-
-Die Host-Proben ändern keine Produktionsquelle oder Defaults. Die spätere
-COAST-Integration ändert Engine/Grammatik/Header, aber keine Quellen-DSP-/Makro-
-Defaults oder UI. Keine neuen Gesamtgates geschlossen; die abschließende
-WOODLAND-/HIGHLANDS-Hörabnahme fehlt.
-
+Die bisherigen WOODLAND-/HIGHLANDS-Ensembles dokumentieren PR146 und ihre
+direkten SHAPE-Werte. Kurzes WOODLAND ist verworfen. Beide neuen Rollenpläne
+sind inzwischen in den echten Product-Generator übertragen; die historischen
+Hörproben bleiben als Vergleich erhalten. Quellen- und Hörwahl bleiben offen.
 
 ## WOODLAND — lange Saiten nach Nutzerkorrektur
 
@@ -235,3 +218,36 @@ LISTEN−23LUFS/−12,2dBFS True Peak, ein konstanter Gain. Die neue Probe brauc
 noch ein Hörurteil.48 vollständige Engine-Phrasen einschließlich realer gemeinsamer
 Töne und aktuelle H743-Ressourcen:
 [WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md).
+
+## HIGHLANDS — tatsächlicher Product-Generator
+
+Der Acht-Schritt-Zustand startet D3/A4/F#4 versetzt, ersetzt die äußeren Partner
+nach deren vollständigem Ausklang durch B3/D4 und hält F#4 im selben Owner15.
+Erst der tatsächliche Start des zweiten Partners plant das gemeinsame Ende.
+Normale Horn-Artikulation, Attack/Release/Color und Kalibrierung bleiben.
+Nach echter Retirement aller drei Quellen beginnt die offene Pause; Raum und
+Pitchhistory laufen natürlich weiter. Danach kehrt D3/A4/F#4 mit eigenen,
+ungleichen Holds und Akzenten zurück. Kein erneuter Anschlag gemeinsamer Töne,
+kein Quellensteal, neuer Hall oder Kontextretune. Major variiert den Zwischenbass
+zwischen verwandter Sext und unterer Quinte; Minor verwendet Terz und Quinte.
+
+Basis-Holds6..7,75 s, Versätze0,8/0,8/8,4/1 s und1/1 s in der Reprise;
+Activity verändert kommende Abstände und die nach Retirement beginnende
+Pause12..14 s (geklemmt auf mindestens8 s nach Activity). Private Core-MIDI45..75,
+105..650 Hz. Public/Manual bleibt140..470 Hz/MIDI50..69. Jeder DSP-Ack bestätigt
+eine Phase/RNG/Deadline; canceled Pending zählt nicht. Alle Stop-/Presence-/
+Mute-/Clear-/Seed-/World-/Pitchkontexte sind in denselben Pfaden berücksichtigt.
+
+Aktuelle65-s-Engineprobe: acht Starts, maximal drei reale Quellen inklusive
+Releases; letzter erster Akkordquellenausklang29,38 s, Pause13,86 s,
+Reprise43,24 s, letzte Note45,26 s, tatsächliches Ende aller Quellen59,65 s.
+Dry/Room-PCM und Traces64/512 bytegleich auf demselben10-ms-Main-Raster.
+Hörkopien−23LUFS durch festen+7dB-Gain, RAW−30LUFS; kein künstlicher Schluss.
+48 vollständige Keys/Collections/Stimmungen plus4 tatsächliche Seed/Timerwrap-
+Phrasen, reine12×2×32-Seed-Verträge und10 canceled-start-Pfade bestehen.
+Vollständige Host-Suite und H743 Product Release bestehen. Aktuelles COAST und
+WOODLAND erzeugen exakt die bisherigen Dry/Room-RAW-/LISTEN-Dateien und Traces.
+Details: [HIGHLANDS_GENERATOR_CHECKPOINT.md](HIGHLANDS_GENERATOR_CHECKPOINT.md).
+
+Die drei musikalischen Rollenregeln sind implementiert. Langfristige Entwicklung
+SD17, finaler Quellen-/World-Hörbefund und Gerät bleiben eigenständige offene Gates.
