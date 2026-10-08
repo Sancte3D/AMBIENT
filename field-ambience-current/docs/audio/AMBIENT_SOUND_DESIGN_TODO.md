@@ -29,8 +29,9 @@ Weitere reine Quellen-/SHAPE-Pakete folgen nach diesem musikalischen Fundament.
 **Nutzerurteil:** Die Ensemble-Probe wurde positiv gehört („ja besser!!!!“).
 Gewünscht sind jetzt verschiedene musikalische Algorithmen pro World. COAST
 hat einen seed-gesteuerten Gegenbewegungs-Entwurf: D3/D5 treffen sich in D4,
-verbunden durch einen gehaltenen Akkordton. WOODLAND-Antworten und HIGHLANDS-
-Weite folgen einzeln. Siehe [WORLD_ENSEMBLE_ALGORITHMS.md](WORLD_ENSEMBLE_ALGORITHMS.md).
+verbunden durch einen gehaltenen Akkordton und erneut positiv gehört.
+WOODLAND-Ruf/Antwort (30 s) und HIGHLANDS-Akkord/Pause/Rückkehr (44 s) sind
+jetzt ebenfalls seed-gesteuerte Host-Algorithmen mit echten C-Quellen. Siehe [WORLD_ENSEMBLE_ALGORITHMS.md](WORLD_ENSEMBLE_ALGORITHMS.md).
 Die Generatorintegration und abschließende World-Abnahme bleiben offen.
 
 ## FUNDAMENTAL FALSCH
@@ -368,8 +369,8 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
 | SD13 | geschlossen | Drei begrenzte Transaktionsautomaten, genau acht autonome Gradindices |
 | SD14 | Richtung positiv gehört, Algorithmus vorbereitet | Ensemble-Referenz bestätigt; COAST-Gegenbewegung mit Seed, geteiltem Mittelton und 27-s-Probe; echter Generator-/Besitz-/Tail-Vertrag offen |
-| SD15 | Hörgate | WOODLAND gehörte Kontur/Intervalle, Antwort/Variation/Rückkehr im realen Kern |
-| SD16 | Hörgate | HIGHLANDS Fragmente/Bögen/echte Pausen; hängt von Quellenwahl SD04 ab |
+| SD15 | Algorithmus/Hörprobe vorbereitet | WOODLAND-Ruf/obere Antwort/Rückkehr mit realem Pluck; Generatorintegration und Hörabnahme offen |
+| SD16 | Algorithmus/Hörprobe vorbereitet | HIGHLANDS-Akkordbogen mit gehaltenem F#4, realem Horn, Pausen/Rückkehr; Generator-/Geräte-/Hörabnahme offen |
 | SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
 | SD18 | geschlossen durch Remove | Body nicht kompiliert; kein Materialreset oder additive Röhrenfärbung |
 | SD19 | Hörgate | Ein FDN; Impuls/Decay/Mono geprüft und Mono-Auslöschung korrigiert |

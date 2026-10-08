@@ -216,6 +216,22 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Render distinct WOODLAND and HIGHLANDS ensemble algorithms
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          python3 tools/review_world_ensembles.py build-world-ensembles
+          python3 tools/review_world_ensembles.py build-world-ensembles/seed-1 --seed 1
+          python3 tools/review_world_ensembles.py build-world-ensembles/seed-42 --seed 42
+      - name: Upload distinct World ensemble probes
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-highlands-ensembles
+          path: field-ambience-current/firmware-c-next/build-world-ensembles
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest
