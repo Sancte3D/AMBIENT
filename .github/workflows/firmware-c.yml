@@ -258,6 +258,19 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Render actual long WOODLAND generator
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_woodland_generator.py build-woodland-generator
+      - name: Upload integrated WOODLAND firmware phrase
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-generator-50s
+          path: field-ambience-current/firmware-c-next/build-woodland-generator
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest

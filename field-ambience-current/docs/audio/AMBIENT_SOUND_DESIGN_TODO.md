@@ -40,8 +40,14 @@ Außenstimmen, gehaltener gemeinsamer Akkordton und ein einzelner Zielton.
 Host-Suite und H743-Build bestehen. Die70-s-Firmwareprobe erreicht mit den
 normalen Hüllkurven die Mitte bei43,8 s; sie braucht noch ein eigenes Hörurteil.
 Siehe [COAST_GENERATOR_CHECKPOINT.md](COAST_GENERATOR_CHECKPOINT.md).
-WOODLAND-/HIGHLANDS-Generatorintegration und abschließende World-Abnahme
-bleiben offen. Weiterhin eine konkrete Arbeitseinheit nach der anderen.
+Auch WOODLAND ist jetzt als lange Saite mit eigener Akkordrollen-Regel im
+Product-Generator integriert. Zwei vorhandene Saiten, sechs weiche Einsätze,
+ungleiche Halteabsichten und echte gemeinsame Akkordtöne. Die50-s-Probe
+verwendet die normale Engine;48 vollständige Phrasen und H743 sind geprüft.
+Neue Quellen-/Firmware-Hörwahl bleibt offen. Siehe
+[WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md).
+HIGHLANDS-Generatorintegration und abschließende World-Abnahme bleiben offen.
+Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
 ## FUNDAMENTAL FALSCH
 
@@ -75,7 +81,7 @@ Als geprüfter technischer/produktlogischer Vertrag, nicht als gehörte Klangwah
 - Ein gemeinsamer interner Float-Raum; getrennte optionale Naturebene.
 - Kein harter held Steal und kein neues Hall-/Pitchgedächtnis pro World.
 - Kurze Quellenvergleiche bleiben kompakt; vollständige lange Ensemble-Phrasen
-  dürfen45/70 s zeigen. Rohe Pegel und fester Hörgain sind getrennt dokumentiert.
+  dürfen45/50/70 s zeigen. Rohe Pegel und fester Hörgain sind getrennt dokumentiert.
 - Konzept → Sound → UX/UI/Display → reale Geräteabnahme bleibt die Reihenfolge.
 
 Die Tabellen A–E und Aufgabenbeschreibungen unten enthalten den ursprünglichen
@@ -370,16 +376,16 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD03 | Hörgate, unabhängig geprüft | Summenrest ≤1,50e-8, Grain-Korrelation <0,006, Sustain-Swing <0,012 dB, natürliche Releases, 64/512 PCM exakt; SD02/Hörwahl offen |
 | SD04 | Hörgate / Keep-or-drop, vorbereitet | COAST/HIGHLANDS D3/D4/A4, identische Ereignisse, fixe −26-LUFS-Kopien und 27-s-A/B; Quellenwahl offen, zwei starke Worlds zulässig |
 | SD05 | Hörgate | Horn-LFO/Sub/Formant aus; Onset-Air und SHAPE-Endpunkte prüfen |
-| SD06 | Hörgate | Pluck pitch-/FIR-/Excitationfix, natürliche Key-up-Tails und samplegenaues Ende; Hörwahl offen |
+| SD06 | Lange Quelle integriert; Hörgate | Product-Saite36-s-Nominaldecay,0,8-s-Attackbasis, eigener weicher Release; Default-Onset/Body0,031 und8-s/Body0,298, natürliche Manual-Tails; Quellenhörwahl offen |
 | SD07 | geschlossen | Finite Input, tatsächliche Hz/Velocity, Bereiche, rejected Starts ohne Source/Hook |
 | SD08 | geschlossen | Originalowner, DSP-Ack, Storno, tatsächliche One-shot-/Release-Enden |
 | SD09 | geschlossen | Drei globale Slots / zwei Plucks auch Manual, kein held Steal |
 | SD10 | geschlossen | Gemeinsame Familie/Admit ohne Pad/Bass/Archive; SCN7-Migration geprüft |
-| SD11 | Hörgate | Zwei Cores, 12 Keys, Equal/Just und niedrige Intervallgrenzen; internes COAST-Register45..80 in48 echten Phrasen geprüft; Teilton-/Registerhörwahl offen |
+| SD11 | Hörgate | Zwei Cores,12 Keys, Equal/Just und niedrige Intervallgrenzen; COAST45..80 und WOODLAND45..68 jeweils in48 echten Phrasen geprüft; Teilton-/Registerhörwahl offen |
 | SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
-| SD13 | geschlossen | COAST: begrenzter Rollen-/Phrasenzustand mit DSP-Ack; WOODLAND/HIGHLANDS: bisherige Transaktionsautomaten mit höchstens acht Gradindices |
+| SD13 | geschlossen | COAST/WOODLAND: eigene begrenzte Rollen-/Phrasenzustände mit DSP-Ack; HIGHLANDS: bisheriger Transaktionsautomat mit höchstens acht Gradindices |
 | SD14 | Generator integriert; Hör-/Gerätegate offen | Gegenbewegung, gemeinsamer Akkordton, einmaliger Mittelton; echte Besitzer/Releases/Tails,48 Engine-Phrasen, volle Host-Suite und H743 geprüft; neue70-s-Probe noch hören |
-| SD15 | Kurze Richtung verworfen, langer Kandidat vorbereitet | WOODLAND braucht lange/gestreckte Töne; 45-s-Saiten-Kandidat mit weichen Einsätzen/Überlagerung geprüft; Quellen-/Generator-/Hörabnahme offen |
+| SD15 | Lange Quelle und Generator integriert; Hör-/Gerätegate offen | Sechs lange Akkordrollen-Starts mit real gehaltenen gemeinsamen Tönen, zwei Saiten inklusive Release,48 echte Phrasen und50-s-Engineprobe; kein Wiederanschlag gemeinsamer Töne; neue Hörwahl offen |
 | SD16 | Algorithmus/Hörprobe vorbereitet | HIGHLANDS-Akkordbogen mit gehaltenem F#4, realem Horn, Pausen/Rückkehr; Generator-/Geräte-/Hörabnahme offen |
 | SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
 | SD18 | geschlossen durch Remove | Body nicht kompiliert; kein Materialreset oder additive Röhrenfärbung |
@@ -562,6 +568,13 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Antworten sind aus gehörten Figuren ableitbar, fehlgeschlagene
   Starts nicht als Motiv gespeichert; kein regelmäßiger Zufallsarp oder
   endloses Einzelton-Ping. Zwei lokale Slots berücksichtigen. Voraussetzung: SD06/SD13.
+  **Aktuell nach Nutzerkorrektur:** Die kurze gezupfte Richtung ist verworfen.
+  Lange Saite und eigene Sechs-Schritt-Akkordrolle sind jetzt integriert:
+  weicher Anfang, gehaltene gemeinsame Töne, individuelle Halteabsichten,
+  eigener weicher Release und Wiederkehr erst nach echter Freigabe der Besitzer.
+  Default-Dry/Room-Probe50 s,48 echte Engine-Phrasen über Keys/Collections/
+  Stimmungen und H743 geprüft. Neue Quellen-/World-Hörwahl und Geräteabnahme
+  bleiben offen; Gesamt-Haken folgt daraus noch nicht.
 - [ ] **SD16 — HIGHLANDS-Grammatik implementieren.**
   Kurze zusammenhängende Fragmente, variierte Kontur, danach lange offene Pause;
   kein festes hin/her zweier Töne oder dauerhaft gerufener Grundton.

@@ -194,6 +194,47 @@ void world_grammar_commit(world_grammar_t *g, const world_offer_t *o,
 bool coast_phrase_pitch_allowed(int midi, int key, bool minor) {
     return midi>=45 && midi<=80 && core(midi,key,minor);
 }
+
+bool woodland_phrase_pitch_allowed(int midi,int key,bool minor) {
+    return midi>=45 && midi<=68 && core(midi,key,minor);
+}
+void woodland_phrase_init(woodland_phrase_t *g,uint32_t seed) {
+    memset(g,0,sizeof *g);g->rng=seed ? seed : 0xA6B13E7Du;
+    g->variant=(uint8_t)(g->rng&1u);
+}
+void woodland_phrase_restart(woodland_phrase_t *g) {
+    g->phase=g->timing_valid=0;g->variant=(uint8_t)((g->rng>>8)&1u);
+}
+bool woodland_phrase_due(const woodland_phrase_t *g,uint32_t now) {
+    return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
+}
+woodland_offer_t woodland_phrase_propose(const woodland_phrase_t *g,
+                                       int key,bool minor,float activity) {
+    woodland_offer_t o;memset(&o,0,sizeof o);o.midi=-1;o.phase=g->phase;
+    if(g->phase>=6)return o;
+    int center=60+wrap12(key);if(center>68)center-=12;
+    int third=minor ? -9 : -8,sixth=minor ? -2 : -3;
+    int pitch[6]={-12,third,sixth,0,third,g->variant ? sixth : -5};
+    static const uint32_t holds[6]={11000,18000,10000,8000,9000,6000};
+    static const uint32_t gaps[6]={2000,12000,9000,4000,7000,0};
+    uint32_t h=g->rng*1664525u+1013904223u;
+    o.role=g->phase&1u;o.midi=center+pitch[g->phase];
+    o.velocity=(o.role ? .48f : .58f)+(float)((h>>8)%5u)*.01f;
+    o.hold_ms=holds[g->phase]+(h%501u);
+    if(!(activity>=0 && activity<=1))activity=.5f;
+    o.gap_ms=(uint32_t)((float)gaps[g->phase]*(1.35f-.70f*activity));
+    if(o.gap_ms<1400)o.gap_ms=1400;
+    if(g->phase==5)o.gap_ms=o.hold_ms+5000u+(h%4001u);
+    return o;
+}
+bool woodland_phrase_heard(woodland_phrase_t *g,const woodland_offer_t *o,uint32_t now) {
+    if(g->phase>=6 || o->phase!=g->phase || o->role!=(g->phase&1u) || o->midi<0)return false;
+    if(g->phase==0 && g->episodes)++g->returns;
+    if(g->phase==2)++g->answers;
+    g->rng=g->rng*1664525u+1013904223u;++g->notes;
+    if(++g->phase==6)++g->episodes;
+    g->next_ms=now+o->gap_ms;g->timing_valid=1;return true;
+}
 void coast_phrase_init(coast_phrase_t *g, uint32_t seed) {
     memset(g,0,sizeof *g);
     g->rng=seed ? seed : 0xA6B13E7Du;
