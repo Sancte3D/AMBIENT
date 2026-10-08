@@ -50,6 +50,15 @@ cmake --build "$tmp/product-host" -j2 >"$tmp/product-host-build.log"
     "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/coast_generator_test"
 "$tmp/coast_generator_test"
 
+# Long WOODLAND source and actual chord-role generator, not a direct score.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_woodland_generator.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+    "$src/src/ambient_room.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" \
+    "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/woodland_generator_test"
+"$tmp/woodland_generator_test"
+
 # Actual shared room/Nature, audio transitions and score independence.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_room_nature.c" \
     "$src/src/engine_product.c" "$src/src/world_grammar.c" \

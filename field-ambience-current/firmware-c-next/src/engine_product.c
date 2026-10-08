@@ -36,6 +36,9 @@ static coast_phrase_t coast;
 static coast_offer_t coast_tickets[3];
 static uint8_t coast_pending;
 static const uint8_t coast_owners[3]={6,7,15};
+static woodland_phrase_t woodland;
+static woodland_offer_t woodland_ticket;
+static bool woodland_pending;
 static bool pending;
 static int pending_index,pending_owner,pending_world;
 static engine_note_hook_t note_hook;
@@ -66,7 +69,8 @@ static void remember(float hz) {
 static void reap(void) {
     if(clearing && atomic_load_explicit(&clear_done,memory_order_acquire)) {
         memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
-        pending=false; coast_pending=0; clearing=false; atomic_store(&clear_request,false);
+        pending=false; coast_pending=0; woodland_pending=false;
+        clearing=false; atomic_store(&clear_request,false);
         if(resume_nature && !muted) {
             nature_set_amount(nature_amount);
             if(nature_amount>0) atomic_store(&output_enabled,true);
@@ -114,6 +118,14 @@ static void reap(void) {
                         }
                 }
             }
+            if(woodland_pending && s->owner==coast_owners[woodland_ticket.role]) {
+                woodland_pending=false;
+                if(!clearing && !muted && !suppressed && generate && autoplay &&
+                   world==WORLD_WOODLAND && woodland_phrase_heard(&woodland,&woodland_ticket,now_ms)) {
+                    last_midi=woodland_ticket.midi;++note_count;
+                    s->timed=true;s->off_ms=now_ms+woodland_ticket.hold_ms;
+                }
+            }
         }
         if(epoch!=s->issued_epoch && !(mask&(1u<<s->owner))) {
             if(s->on_sent && !s->off_sent && note_hook) note_hook(0,s->owner,s->hz,0);
@@ -121,6 +133,7 @@ static void reap(void) {
             if(pending && pending_owner==s->owner) pending=false;
             for(int role=0;role<3;++role) if(s->owner==coast_owners[role])
                 coast_pending&=(uint8_t)~(1u<<role);
+            if(woodland_pending && s->owner==coast_owners[woodland_ticket.role])woodland_pending=false;
             s->used=false;
         }
     }
@@ -174,7 +187,9 @@ int engine_sounding_notes(int *out,int max) {
 }
 static bool in_collection(float hz,bool phrase) {
     if(phrase) {
-        for(int m=45;m<=80;++m) if(coast_phrase_pitch_allowed(m,tonic_pc,minor!=0)) {
+        int top=world==WORLD_WOODLAND ? 68 : 80;
+        for(int m=45;m<=top;++m) if(world==WORLD_WOODLAND ?
+                woodland_phrase_pitch_allowed(m,tonic_pc,minor!=0) : coast_phrase_pitch_allowed(m,tonic_pc,minor!=0)) {
             float allowed=tuning_hz((float)m);
             if(fabsf(1200.0f*log2f(hz/allowed))<3)return true;
         }
@@ -190,7 +205,7 @@ static bool in_collection(float hz,bool phrase) {
 static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     reap();
     if(owner>=SOURCES || !isfinite(hz) || !isfinite(velocity) || velocity<=0 ||
-       hz<(phrase ? 105 : 140) || hz>(phrase ? 850 : 470) || clearing || muted ||
+       hz<(phrase ? 105 : 140) || hz>(phrase && world==WORLD_COAST ? 850 : 470) || clearing || muted ||
        !in_collection(hz,phrase)) return false;
     int empty=-1,local=0;
     for(int i=0;i<SLOTS;++i) {
@@ -230,10 +245,11 @@ void engine_note_off(uint8_t owner) {
     reap();
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==owner && !slots[i].released) {
         source_slot_t *s=&slots[i]; s->held=s->timed=false; s->released=true;
-        /* A started pluck is a one-shot: key-up releases the key/MIDI,
-         * not its string. Cancel preparations before their first DSP sample.
+        /* Manual string key-up retains its natural ring. Generate's long
+         * chord holds end with the source's own soft musical release.
+         * Cancel preparations before their first DSP sample.
          * Context handovers still use quick_mask; Clear/Mute gate all paths. */
-        if(s->family!=WORLD_WOODLAND || !s->started)
+        if(s->family!=WORLD_WOODLAND || !s->started || owner==6 || owner==7 || owner==15)
             atomic_fetch_or_explicit(&release_mask,1u<<owner,memory_order_release);
         if(s->on_sent && !s->off_sent) {
             if(note_hook) note_hook(0,owner,s->hz,0);
@@ -250,15 +266,17 @@ static void retire_context(bool all) {
         uint8_t owner=slots[i].owner;engine_note_off(owner);
         atomic_fetch_or_explicit(&quick_mask,1u<<owner,memory_order_release);
     }
-    pending=false;
+    pending=false;woodland_pending=false;
 }
 static void release_generated(void) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used &&
        (slots[i].owner==6 || slots[i].owner==7 || slots[i].owner==15)) engine_note_off(slots[i].owner);
     pending=false; coast_pending=0; coast_phrase_restart(&coast);
+    woodland_pending=false;woodland_phrase_restart(&woodland);
 }
 static void quiet_chain(void) {
     pending=false; coast_pending=0; coast_phrase_restart(&coast); resume_nature=false;
+    woodland_pending=false;woodland_phrase_restart(&woodland);
     nature_set_amount(0); release_all(); clearing=true;
     atomic_store(&clear_done,false); atomic_store(&output_enabled,false);
     atomic_store_explicit(&clear_request,true,memory_order_release);
@@ -292,7 +310,7 @@ void engine_boot_mute(void) { volume_cur=0; engine_set_master_volume(0); } /* be
 void engine_set_color(float v) {
     if(!isfinite(v)) return;
     color=dsp_clampf(v,0,1); atomic_store(&color_bits,bits(color));
-    bowed_set_tone(color); horn_set_tone(color); pluck_set_damp(.65f-.35f*color);
+    bowed_set_tone(color); horn_set_tone(color); pluck_set_damp(.025f-.020f*color);
 }
 void engine_set_activity(float v) { if(isfinite(v)) activity=dsp_clampf(v,0,1); }
 void engine_set_room(float v) { if(isfinite(v)) { room=dsp_clampf(v,0,1); ambient_room_set(room); } }
@@ -308,6 +326,7 @@ void engine_set_world(int i) {
     reap(); retire_context(false); pending=false; world=i; nature_set_world(world);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
     coast_pending=0; coast_phrase_init(&coast,seed);
+    woodland_pending=false;woodland_phrase_init(&woodland,seed);
 }
 int engine_product_world(void) { return world; }
 int engine_product_collection(void) { return minor; }
@@ -321,10 +340,11 @@ static void reset_score_context(void) {
      * Already acknowledged voices keep their actual Hz. Forget degree memory
      * when its collection/register meaning changes, rather than relabel it. */
     if(pending)engine_note_off((uint8_t)pending_owner);
-    if(world==WORLD_COAST)release_generated();
+    if(world==WORLD_COAST || world==WORLD_WOODLAND)release_generated();
     pending=false;
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u));
     coast_pending=0; coast_phrase_init(&coast,seed);
+    woodland_pending=false;woodland_phrase_init(&woodland,seed);
     retry_ms=now_ms;
 }
 void engine_set_key_pc(int pc) {
@@ -359,6 +379,8 @@ void engine_set_generative(bool on,int program) {
     if(on) world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u));
     coast_pending=0;
     if(on)coast_phrase_init(&coast,seed);else coast_phrase_restart(&coast);
+    woodland_pending=false;
+    if(on)woodland_phrase_init(&woodland,seed);else woodland_phrase_restart(&woodland);
     nature_set_amount(on && !muted && !clearing ? nature_amount : 0);
 }
 void engine_set_autoplay_melody(int on) { autoplay=on!=0; if(!autoplay) release_generated(); }
@@ -368,6 +390,7 @@ void engine_set_gen_seed(uint32_t v) {
     reap(); retire_context(false); seed=v ? v : 0xA6B13E7Du; nature_set_seed(seed);
     world_grammar_init(&grammar,world,seed^(uint32_t)(world*0x9E3779B9u)); retry_ms=now_ms;
     coast_pending=0; coast_phrase_init(&coast,seed);
+    woodland_pending=false;woodland_phrase_init(&woodland,seed);
 }
 void engine_generative_new_field(uint32_t v) { engine_set_gen_seed(v); }
 static bool coast_owner_free(int role) {
@@ -411,6 +434,18 @@ static void coast_tick(uint32_t ms) {
     if(!(coast.heard_mask&1u) && !coast_start(&a)) {retry_ms=ms+250;return;}
     if(!(coast.heard_mask&2u) && !coast_start(&b))retry_ms=ms+250;
 }
+static void woodland_tick(uint32_t ms) {
+    if(woodland_pending || !woodland_phrase_due(&woodland,ms))return;
+    if(woodland.phase==6) {
+        if(!coast_owner_free(0) || !coast_owner_free(1)) {retry_ms=ms+250;return;}
+        woodland_phrase_restart(&woodland);
+    }
+    woodland_offer_t o=woodland_phrase_propose(&woodland,tonic_pc,minor!=0,activity);
+    if(!coast_owner_free(o.role) || !admit(coast_owners[o.role],tuning_hz((float)o.midi),o.velocity,true)) {
+        ++rejects;retry_ms=ms+250;return;
+    }
+    woodland_ticket=o;woodland_pending=true;
+}
 void engine_generative_tick(uint32_t ms) {
     now_ms=ms; reap();
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].timed &&
@@ -422,6 +457,7 @@ void engine_generative_tick(uint32_t ms) {
     if(!generate || !autoplay || suppressed || clearing || muted || pending ||
        (int32_t)(ms-retry_ms)<0) return;
     if(world==WORLD_COAST) {coast_tick(ms);return;}
+    if(world==WORLD_WOODLAND) {woodland_tick(ms);return;}
     if(!world_grammar_due(&grammar,ms))return;
     world_offer_t offer=world_grammar_propose(&grammar,ms,activity);
     if(offer.rest) { world_grammar_commit(&grammar,&offer,offer.index,ms); return; }
@@ -458,14 +494,14 @@ void engine_generative_tick(uint32_t ms) {
     pending_offer=offer; pending_index=index; pending_owner=owner; pending_world=world; pending=true;
 }
 int engine_generative_advance(void) { return generate && !suppressed ?
-    (int)((world==WORLD_COAST ? coast.episodes : grammar.episodes)%4u)+1 : -1; }
+    (int)((world==WORLD_COAST ? coast.episodes : world==WORLD_WOODLAND ? woodland.episodes : grammar.episodes)%4u)+1 : -1; }
 void engine_generative_nudge(int cell,uint32_t ms) { (void)cell; (void)ms; }
 int engine_generative_suppressed(void) { return suppressed; }
 int engine_generative_last_melody_midi(void) { return last_midi; }
 int engine_generative_melody_count(void) { return note_count; }
-int engine_generative_dejavu_count(void) { return (int)grammar.answers; }
-uint32_t engine_generative_return_count(void) { return world==WORLD_COAST ? coast.returns : grammar.returns; }
-uint32_t engine_generative_episode_count(void) { return world==WORLD_COAST ? coast.episodes : grammar.episodes; }
+int engine_generative_dejavu_count(void) { return (int)(world==WORLD_WOODLAND ? woodland.answers : grammar.answers); }
+uint32_t engine_generative_return_count(void) { return world==WORLD_COAST ? coast.returns : world==WORLD_WOODLAND ? woodland.returns : grammar.returns; }
+uint32_t engine_generative_episode_count(void) { return world==WORLD_COAST ? coast.episodes : world==WORLD_WOODLAND ? woodland.episodes : grammar.episodes; }
 uint32_t engine_admission_rejections(void) { return rejects; }
 uint32_t engine_output_limited_samples(void) { return atomic_load(&limited); }
 uint32_t engine_nonfinite_samples(void) { return atomic_load(&faults); }
@@ -532,6 +568,7 @@ void engine_init(void) {
     engine_set_color(.5f); engine_set_room(.5f); engine_set_nature(0);
     engine_set_attack(.5f); engine_set_release(.5f); world_grammar_init(&grammar,world,seed);
     coast_pending=0; coast_phrase_init(&coast,seed);
+    woodland_pending=false;woodland_phrase_init(&woodland,seed);pluck_set_ambient(true);
 }
 static float protect(float x) {
     if(!isfinite(x)) { atomic_fetch_add_explicit(&faults,1,memory_order_relaxed); return 0; }
@@ -553,7 +590,8 @@ void engine_render(int16_t *out,int frames) {
         for(int i=0;i<SOURCES;++i) if(off&(1u<<i)) {
             if(fast&(1u<<i)) {bowed_quiet_source(i,(int)(.100f*DSP_SAMPLE_RATE_HZ));horn_quiet_source(i,(int)(.100f*DSP_SAMPLE_RATE_HZ));}
             else {bowed_note_off(i);horn_note_off(i);}
-            pluck_note_off((uint8_t)i);
+            if(fast&(1u<<i))pluck_quiet_source((uint8_t)i,(uint32_t)(.100f*DSP_SAMPLE_RATE_HZ));
+            else pluck_note_off((uint8_t)i);
         }
         memset(dry_l,0,n*sizeof(float)); memset(dry_r,0,n*sizeof(float));
         memset(send_l,0,n*sizeof(float)); memset(send_r,0,n*sizeof(float));
@@ -582,8 +620,9 @@ void engine_render(int16_t *out,int frames) {
         atomic_store_explicit(&room_quiet,quiet_frames>=DSP_SAMPLE_RATE_HZ/4,memory_order_release);
         if(clear && gate_cur==0 && !atomic_load(&clear_done)) {
             bowed_init(); horn_init(); pluck_init(); ambient_room_clear(); nature_clear();
+            pluck_set_ambient(true);
             float c=value(atomic_load_explicit(&color_bits,memory_order_acquire));
-            bowed_set_tone(c); horn_set_tone(c); pluck_set_damp(.65f-.35f*c);
+            bowed_set_tone(c); horn_set_tone(c); pluck_set_damp(.025f-.020f*c);
             dc_l=dc_r=0; mask=0; quiet_frames=DSP_SAMPLE_RATE_HZ/4;
             atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&started_mask,0); atomic_store(&room_quiet,true);
             atomic_store_explicit(&clear_done,true,memory_order_release);

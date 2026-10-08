@@ -35,6 +35,11 @@
 
 void pluck_init(void);
 
+/* Fixed Product WOODLAND articulation, captured by each new note. Reference
+ * and direct historical probes retain the short source after pluck_init().
+ * No extra voices or delay lines; not a user-facing World/FX parameter. */
+void pluck_set_ambient(bool on);
+
 /* Start a pluck: freq in Hz (clamped ≥ PLUCK_MIN_HZ), amp 0..1 excitation peak.
  * Legacy unowned one-shot. A full pool declines it without truncating tails. */
 void pluck_note(float freq_hz, float amp);
@@ -44,6 +49,8 @@ void pluck_note(float freq_hz, float amp);
 bool pluck_note_on(uint8_t source, float freq_hz, float amp);
 void pluck_note_off(uint8_t source);
 void pluck_all_off(void); /* affects owned and legacy one-shots */
+/* Context handover only: shorten an existing release, never extend it. */
+void pluck_quiet_source(uint8_t source, uint32_t frames);
 
 /* Voices still audibly ringing (energy above ~-72 dBFS). */
 int pluck_active_count(void);

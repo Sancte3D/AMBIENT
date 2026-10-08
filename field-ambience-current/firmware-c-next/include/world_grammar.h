@@ -54,4 +54,25 @@ coast_offer_t coast_phrase_propose(const coast_phrase_t *g, int role,
 bool coast_phrase_heard(coast_phrase_t *g, const coast_offer_t *offer,
                         uint32_t now_ms);
 bool coast_phrase_pitch_allowed(int midi, int key_pc, bool minor);
+
+/* WOODLAND: two long owned strings; replace one chord tone while the other
+ * stays. Six heard starts, then rest. Offers/acks are Main-only and bounded. */
+typedef struct {
+    uint32_t rng,next_ms,notes,episodes,answers,returns;
+    uint8_t phase,timing_valid,variant;
+} woodland_phrase_t;
+typedef struct {
+    uint32_t hold_ms,gap_ms;
+    int midi;
+    float velocity;
+    uint8_t phase,role;
+} woodland_offer_t;
+void woodland_phrase_init(woodland_phrase_t *g,uint32_t seed);
+void woodland_phrase_restart(woodland_phrase_t *g);
+bool woodland_phrase_due(const woodland_phrase_t *g,uint32_t now_ms);
+woodland_offer_t woodland_phrase_propose(const woodland_phrase_t *g,
+                                       int key_pc,bool minor,float activity);
+bool woodland_phrase_heard(woodland_phrase_t *g,const woodland_offer_t *o,
+                          uint32_t now_ms);
+bool woodland_phrase_pitch_allowed(int midi,int key_pc,bool minor);
 #endif

@@ -11,7 +11,7 @@ Regel. Die Regeln werden einzeln umgesetzt und gehört.
 | World | Musikalischer Algorithmus | Konkreter Stand |
 |---|---|---|
 | COAST | Zwei äußere Register nähern sich in Gegenbewegung einer gemeinsamen Mitte; ein Akkordton verbindet die Schritte | Jetzt im tatsächlichen Product-Generator integriert;48 Engine-Phrasen, Host-Suite, H743 und70-s-Firmwareprobe geprüft |
-| WOODLAND | Eine kleine Akkordfigur stellt eine Idee vor; eine andere Stimme antwortet mit verwandter Kontur und verändertem Register; Variation und Ruhe | Kurzer Pluck-Entwurf vom Nutzer verworfen; neuer langer Saiten-Kandidat mit 45-s-Probe |
+| WOODLAND | Zwei lange Saiten ersetzen einzelne Akkordtöne, während ein gemeinsamer Ton stehen bleibt; eigene Dauern, Antwort und Ruhe | Lange Quelle und Generator integriert;48 echte Phrasen und50-s-Engineprobe geprüft; neue Hörwahl offen |
 | HIGHLANDS | Weit verteilte gehaltene Stimmen verändern einzelne Akkordtöne mit eigenen Dauern; längere offene Pausen und Rückkehr | Seed-gesteuerter Akkord-/Pausen-Host-Algorithmus, reale Horn-Hörprobe mit 44 s |
 
 Gemeinsamer Vertrag: begrenzter harmonischer Plan, klare Stimmrollen, echte
@@ -96,9 +96,10 @@ Produktquellen, Header, Defaults und UI wurden nicht geändert. Der Raum darf
 am Dateiende einen leisen Resttail enthalten; kein vollständiges Room-Ende
 behauptet. Die COAST-Richtung wurde erneut positiv gehört; abschließende Geräteabnahme bleibt offen.
 
-COAST erfüllt jetzt den Rollen-/Voicing-/Register-Vertrag im realen Generator;
-Releases und Raumgedächtnis bleiben ausdrücklich wirksam. WOODLAND und
-HIGHLANDS sind weiterhin getrennte Host-Algorithmen, unten beschrieben.
+COAST und langes WOODLAND erfüllen jetzt ihren Rollen-/Register-Vertrag im
+realen Generator; Releases und Raumgedächtnis bleiben ausdrücklich wirksam.
+HIGHLANDS bleibt ein getrennter Host-Algorithmus. Die historischen Quellenproben
+unten behalten ihre jeweils dokumentierte direkte Artikulation.
 Weiterhin 24 technisch geschlossene / 30 offene Gesamtgates.
 
 
@@ -139,12 +140,13 @@ Volume0,6, Quellenkalibrierung0,5. Der Raum darf am Dateiende noch leise klingen
 `WOODLAND_ENSEMBLE_METRICS.json` und `HIGHLANDS_ENSEMBLE_METRICS.json` dokumentieren
 Seed1234; alternative Seeds liegen separat im CI-Artefakt.
 
-Die WOODLAND-/HIGHLANDS-Ensembles sind reproduzierbare Host-Kandidaten.
-Ihre Produktionsintegration ist weiter offen; COAST ist inzwischen integriert:
+Die kurzen WOODLAND-/HIGHLANDS-Ensembles unten dokumentieren PR146.
+Kurzes WOODLAND ist verworfen und durch die lange integrierte Richtung ersetzt.
+Die folgenden Integrationsgrenzen gelten jetzt noch für HIGHLANDS:
 
 1. Manual und öffentliche World-Note-API begrenzen auf140..470 Hz und den engen
-   Core-Vorrat. Die private COAST-Erweiterung gilt nicht für WOODLAND/HIGHLANDS;
-   deren Zielregister muss eigenständig gewählt und geprüft werden.
+   Core-Vorrat. Private COAST-/WOODLAND-Erweiterungen gelten nicht für HIGHLANDS;
+   dessen Zielregister muss eigenständig gewählt und geprüft werden.
 2. `world_grammar_propose` liefert nur einzelne Ereignisse ohne Akkord-/Voicing-
    Vertrag; HIGHLANDS erlaubt bisher nur eine gehaltene Stimme. Der neue
    Akkordplan muss ausdrücklich mehrere Rollen und gemeinsame Töne verwalten.
@@ -196,5 +198,40 @@ True Peak−12,9dBFS. Room0,24, Nature0, Volume0,6; Raumtail darf noch leise ste
 Zuerst `AMBIENT_WOODLAND_Long_room_listen_45s.wav` hören; Dry ist dieselbe Folge.
 `WOODLAND_LONG_METRICS.json` dokumentiert Original-/Kandidatenhashes,
 Parameter, Score, isolierte RMS-Verhältnisse und vollständige Renderbefunde.
-Die ursprüngliche WOODLAND-Quelle und Generatorintegration bleiben offen:
-kurze Pluck-Figuren werden nicht mehr als bestätigte Richtung vorausgesetzt.
+Die45-s-Probe war ein isolierter Quellenentwurf aus PR147; sie wird nicht als
+bestätigte Hörwahl vorausgesetzt. Die echte Integration ist nun unten beschrieben.
+
+## WOODLAND — tatsächliche lange Quelle und Akkordrollen
+
+Die Product-Engine wählt jetzt nach Init und Clear dieselbe lange
+Karplus-Strong-Artikulation für Manual/Generate: nominaler T6036 s, Attackbasis
+0,8 s und musikalischer Stop2 s, jeweils innerhalb der normalen Produktmakros.
+Color begrenzt die Schleifendämpfung auf0,025..0,005, default0,015.
+Die zwei vorhandenen Delay-Linien bleiben; keine weitere Fläche oder
+Wiederanregung. Manual-Key-up lässt den tatsächlichen Saitenton natürlich aus.
+Generate plant lange Halteabsichten und ihren eigenen weichen Release.
+Kontextwechsel können Releases auf100 ms verkürzen; Clear/Mute leeren die
+gesamte Kette nach ihrem40-ms-Mastergate. Eine kürzere Rampe wird nie verlängert.
+
+Der neue Main-Phrasenzustand plant sechs bestätigte Starts. Seed1234/D-Dur:
+D3/F#3 → B3/F#3 → B3/D4 → F#3/D4 → F#3/A3. Gemeinsame Akkordtöne behalten
+ihre realen Besitzer; pro Schritt wird nur eine Saite ersetzt. Halteabsichten
+6..18,5 s, geplante ungleiche Zwischenräume2/12/9/4/7 s. Activity verändert
+kommende Zwischenräume, nicht Haltezeit/Pegel/Color; tatsächliche Releases
+und Pitchhistory können Schritte verlängern. Seed variiert kleine Akzente,
+Haltezeiten und den Schluss zwischen Quinte und verwandtem Ton.
+
+Nur echte DSP-Startbestätigung schaltet Phase/RNG weiter. Owner6/7 werden erst
+nach tatsächlichem Ende wiederbelegt; Ruhe/Wiederkehr wartet beide Quellen ab.
+Interner Generatorbereich MIDI45..68/105..470 Hz, gewählter Major-/Minor-Core;
+Manual/öffentliche Note-API bleibt im bisherigen Register. HIGHLANDS- und
+COAST-Algorithmen werden dadurch nicht vereinheitlicht.
+
+Neue50-s-Dry/Room-Probe aus der tatsächlichen Engine, normale Makros,
+keine direkten Quellenstarts oder temporäre DSP-Kopie: sechs Starts, max zwei
+reale Quellen einschließlich Releases und natürliche Freigabe vor Dateiende.
+64/512-Frame-PCM und Traces bei gleicher10-ms-Main-Steuerung bytegleich.
+LISTEN−23LUFS/−12,2dBFS True Peak, ein konstanter Gain. Die neue Probe braucht
+noch ein Hörurteil.48 vollständige Engine-Phrasen einschließlich realer gemeinsamer
+Töne und aktuelle H743-Ressourcen:
+[WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md).

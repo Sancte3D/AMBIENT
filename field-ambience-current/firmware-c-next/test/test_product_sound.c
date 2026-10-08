@@ -20,8 +20,8 @@ static void hook(int on,uint8_t owner,float hz,float v) {
     (void)owner; (void)v;
     if(on>0) {
         ++ons;
-        bool phrase=engine_product_world()==WORLD_COAST && (owner==6 || owner==7 || owner==15);
-        assert(hz>=(phrase ? 105 : 140) && hz<=(phrase ? 850 : 470));
+        bool phrase=engine_product_world()!=WORLD_HIGHLANDS && (owner==6 || owner==7 || owner==15);
+        assert(hz>=(phrase ? 105 : 140) && hz<=(phrase && engine_product_world()==WORLD_COAST ? 850 : 470));
     }
     if(on==0) { ++offs; assert(hz>0); }
 }

@@ -31,13 +31,17 @@ typedef struct {
     _Atomic int active;
     int owner;            /* 0..255 source; 256 = legacy one-shot */
     float stop_gain;
+    float stop_start;
     float attack_phase, attack_step;
     float dc;
+    uint32_t release_frames;
+    uint32_t stop_total;
     volatile uint32_t stop_left;
 } pluck_voice_t;
 
 static pluck_voice_t v[PLUCK_VOICES];
 static _Atomic float s_damp = 0.42f * (0.25f / 0.9f); /* FIR side weight: 0=bright */
+static _Atomic bool s_ambient;
 static int      next_voice;
 static uint32_t excitation_rng = 0x9E3779B9u;
 
@@ -58,7 +62,10 @@ void pluck_init(void) {
     next_voice  = 0;
     excitation_rng = 0x9E3779B9u;
     s_damp      = 0.42f * (0.25f / 0.9f);
+    s_ambient   = false;
 }
+
+void pluck_set_ambient(bool on) { atomic_store(&s_ambient,on); }
 
 void pluck_set_damp(float damp) {
     if (!isfinite(damp)) return;
@@ -88,17 +95,21 @@ static bool start_note(int owner, float freq_hz, float amp) {
     next_voice = (i + 1) % PLUCK_VOICES;
 
     pluck_voice_t *p = &v[i];
+    bool ambient=atomic_load(&s_ambient);
     p->N   = SR / freq_hz;
     if (p->N > (float)(BUF_LEN - 4)) p->N = (float)(BUF_LEN - 4);
     p->damp = s_damp;
-    p->rho = powf(0.001f, 1.0f / (freq_hz * T60_S * shape_release_scale())); /* r19.60 */
+    p->rho = powf(0.001f, 1.0f / (freq_hz * (ambient ? 36.0f : T60_S) * shape_release_scale()));
     p->widx   = 0;
     p->y_prev = p->y_prev2 = 0.0f;
     p->env    = amp;
     p->owner = owner;
     p->stop_gain = 1.0f;
+    p->stop_start = 1.0f;
     p->stop_left = 0;
-    float attack_s = dsp_clampf(0.008f * shape_attack_scale(), 0.004f, 0.032f);
+    p->release_frames=ambient ? (uint32_t)(2.0f*shape_release_scale()*SR) : STOP_FRAMES;
+    float attack_s = ambient ? dsp_clampf(0.8f*shape_attack_scale(),0.4f,2.4f) :
+        dsp_clampf(0.008f * shape_attack_scale(), 0.004f, 0.032f);
     p->attack_phase = 0.0f;
     p->attack_step = 1.0f / (attack_s * SR);
     p->dc = 0.0f;
@@ -159,20 +170,27 @@ bool pluck_note_on(uint8_t source, float freq_hz, float amp) {
 void pluck_note(float freq_hz, float amp) {
     (void)start_note(256, freq_hz, amp);
 }
-static void release_voice(pluck_voice_t *p) {
+static void release_voice(pluck_voice_t *p,uint32_t frames) {
 #ifdef FAM_SOUND_PRODUCT
     /* Product audio owner: a preparation cancelled before its first sample
      * is not a 20 ms audible strike, MIDI event or heard score item. */
     if (p->active && p->attack_phase==0.0f) { p->active=0; return; }
 #endif
-    if (p->active && !p->stop_left) p->stop_left = STOP_FRAMES;
+    if(frames==0)frames=1;
+    if(p->active && (!p->stop_left || frames<p->stop_left)) {
+        p->stop_left=p->stop_total=frames;p->stop_start=p->stop_gain;
+    }
 }
 void pluck_note_off(uint8_t source) {
     for (int i = 0; i < PLUCK_VOICES; ++i)
-        if (v[i].owner == (int)source) release_voice(&v[i]);
+        if (v[i].owner == (int)source) release_voice(&v[i],v[i].release_frames);
 }
 void pluck_all_off(void) {
-    for (int i = 0; i < PLUCK_VOICES; ++i) release_voice(&v[i]);
+    for (int i = 0; i < PLUCK_VOICES; ++i) release_voice(&v[i],v[i].release_frames);
+}
+void pluck_quiet_source(uint8_t source,uint32_t frames) {
+    for(int i=0;i<PLUCK_VOICES;++i)
+        if(v[i].owner==(int)source)release_voice(&v[i],frames);
 }
 
 uint16_t pluck_active_sources(void) {
@@ -235,7 +253,7 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             float output = audible * attack * p->stop_gain;
             if (p->stop_left) {
                 --p->stop_left;
-                p->stop_gain = (float)p->stop_left / (float)STOP_FRAMES;
+                p->stop_gain=p->stop_start*(float)p->stop_left/(float)p->stop_total;
             }
             dry_L[n]  += output * p->panL;
             dry_R[n]  += output * p->panR;
