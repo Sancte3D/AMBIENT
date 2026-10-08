@@ -11,8 +11,8 @@ Regel. Die Regeln werden einzeln umgesetzt und gehört.
 | World | Musikalischer Algorithmus | Konkreter Stand |
 |---|---|---|
 | COAST | Zwei äußere Register nähern sich in Gegenbewegung einer gemeinsamen Mitte; ein Akkordton verbindet die Schritte | Seed-gesteuerter Host-Algorithmus und tatsächliche C-DSP-Hörprobe vorbereitet |
-| WOODLAND | Eine kleine Akkordfigur stellt eine Idee vor; eine andere Stimme antwortet mit verwandter Kontur und verändertem Register; Variation und Ruhe | Nächster eigener Entwurf, noch nicht durch diese Änderung implementiert |
-| HIGHLANDS | Weit verteilte gehaltene Stimmen verändern einzelne Akkordtöne mit eigenen Dauern; längere offene Pausen und Rückkehr | Geplanter eigener Algorithmus; keine heutige Implementierung behauptet |
+| WOODLAND | Eine kleine Akkordfigur stellt eine Idee vor; eine andere Stimme antwortet mit verwandter Kontur und verändertem Register; Variation und Ruhe | Seed-gesteuerter Ruf/Antwort-Host-Algorithmus, reale Pluck-Hörprobe mit 30 s |
+| HIGHLANDS | Weit verteilte gehaltene Stimmen verändern einzelne Akkordtöne mit eigenen Dauern; längere offene Pausen und Rückkehr | Seed-gesteuerter Akkord-/Pausen-Host-Algorithmus, reale Horn-Hörprobe mit 44 s |
 
 Gemeinsamer Vertrag: begrenzter harmonischer Plan, klare Stimmrollen, echte
 Hz-/Besitzerhistorie, bewusste Spannungen/Auflösungen. Die Klangfamilie allein
@@ -67,11 +67,66 @@ Generator integriert. D5/B4 erweitern den bisherigen Produktregister-Kandidaten;
 pro Rolle werden direkte Attackwerte und kurzer SHAPE-Release=0 verwendet.
 Produktquellen, Header, Defaults und UI wurden nicht geändert. Der Raum darf
 am Dateiende einen leisen Resttail enthalten; kein vollständiges Room-Ende
-behauptet. Neue COAST-Hörwahl und Geräteabnahme sind offen.
+behauptet. Die COAST-Richtung wurde erneut positiv gehört; abschließende Geräteabnahme bleibt offen.
 
 Die Integration braucht Chord-/Voicing-Zustand, erweiterte geprüfte Register,
 Rollenbesitz beim gemeinsamen Ziel und einen planbaren Umgang mit tatsächlichen
 Releases und Raumgedächtnis. Die bisherige pauschale Intervall-/Tail-Sperre darf
 beabsichtigte Stimmführung nicht unbemerkt in Stillstand verwandeln. WOODLAND
-bekommt anschließend seinen Antwort-Algorithmus als eigenen kleinen Durchlauf.
+und HIGHLANDS sind ebenfalls als getrennte Host-Algorithmen unten beschrieben.
 Weiterhin 24 technisch geschlossene / 30 offene Gesamtgates.
+
+
+## WOODLAND — Ruf, obere Antwort, verwandte Rückkehr
+
+`review_world_ensembles.py` erzeugt drei Figuren mit demselben erkennbaren
+Rhythmus, ungleichen Zwischenräumen und eigenen Akzenten. Seed1234 in D:
+D4–F#4–A4 (Ruf), D5–B4–F#4 (obere Antwort), B3–D4–F#4 (ruhigere Rückkehr).
+Die Verbindung ist D-Dur zu h-Moll, mit F# als gemeinsamer Tonklasse. Keine
+zusätzliche Fläche: zwei echte Karplus-Strong-Saiten klingen natürlich aus.
+Seed verändert Transposition, Rhythmus und Attack; der jeweilige Antwortbeginn
+liegt acht Sekunden nach dem Ruf. Echte Besitzerwechsel haben mindestens
+4,9 Sekunden Abstand. Neun Starts, maximal zwei Quellen einschließlich Tails,
+keine Note-Off-Kürzung der Saiten, natürliches Quellenende innerhalb von 30 s.
+Direkter SHAPE-Release0,60; hier bedeutet Release natürliche Saitenabklingzeit.
+
+## HIGHLANDS — weiter Akkord, gemeinsamer Ton, Pause, Rückkehr
+
+D3/A4/F#4 öffnen mit versetzten Einsätzen einen weiten D-Dur-Akkord.
+F#4 bleibt in derselben realen Stimme von 1,6 bis 18,6 Sekunden stehen;
+D3 und A4 enden unabhängig. Erst nach ihren Quellenausklängen treten B3
+und D4 hinzu: h-Moll mit demselben F#4. Danach enden alle Quellen natürlich.
+Ab 28 Sekunden kehrt der weite D-Dur-Akkord mit eigenen Dauern zurück.
+Acht Starts, maximal drei Quellen inklusive Releases, 44 Sekunden Hörprobe.
+Seed verändert die gemeinsame Tonlage und den Zeitpunkt der inneren Übergabe;
+kein Vibrato-/Filtertrick ersetzt den musikalischen Akkordwechsel.
+Direkter kurzer SHAPE-Release0 wie im positiv gehörten Ensemble-Entwurf.
+
+## Neue Prüfungen und Produktionsübergabe
+
+Für beide neuen Worlds: 100 Plan-Seeds geprüft. Seeds1,42,1234 zusätzlich
+vollständig als Dry/Room mit tatsächlichem C-DSP gerendert; auch hier 64/512
+Frames bytegleich, Quellenzulassung strikt, Quellenausklang natürlich.
+C-Warnings-as-errors, finite PCM, Format, Headroom, Mono/DC, feste LISTEN-
+Pegel und Datei-/Quellenhashes geprüft. LISTEN liegt bei etwa −23 LUFS;
+keine Kompression und keine zusätzlichen Effekte. Room0,24, Nature0,
+Volume0,6, Quellenkalibrierung0,5. Der Raum darf am Dateiende noch leise klingen.
+`WOODLAND_ENSEMBLE_METRICS.json` und `HIGHLANDS_ENSEMBLE_METRICS.json` dokumentieren
+Seed1234; alternative Seeds liegen separat im CI-Artefakt.
+
+Alle drei musikalischen Algorithmen sind damit als reproduzierbare Host-
+Kandidaten ausgebaut. Ihre gemeinsame Produktionsintegration ist weiter offen:
+
+1. `engine_product.c:admit` begrenzt aktuell auf 140..470 Hz und den engen
+   pentatonischen Vorrat. COAST/WOODLAND benötigen geprüfte obere Register.
+2. `world_grammar_propose` liefert nur einzelne Ereignisse ohne Akkord-/Voicing-
+   Vertrag; HIGHLANDS erlaubt bisher nur eine gehaltene Stimme. Der neue
+   Akkordplan muss ausdrücklich mehrere Rollen und gemeinsame Töne verwalten.
+3. Reale Releases und das 7,2-s-Raumgedächtnis dürfen Rollen nicht unplanbar
+   blockieren. Gemeinsame Ziele müssen einmal klingen, Besitzer dürfen erst
+   nach tatsächlichem Quellenausklang wiederverwendet werden.
+4. Direct-SHAPE-Werte müssen in geprüfte Produkt-Makrogrenzen überführt werden;
+   Dry/Room-Proben ersetzen keine echten Generator-/Übergangs-/Gerätechecks.
+
+Keine Produktionsquelle, Header, Default oder UI geändert. Keine neuen
+Gesamtgates geschlossen; die abschließende WOODLAND-/HIGHLANDS-Hörabnahme fehlt.
