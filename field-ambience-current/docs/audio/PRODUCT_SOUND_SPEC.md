@@ -1,4 +1,4 @@
-# AMBIENT — Product Sound Candidate 0.5
+# AMBIENT — Product Sound Candidate 0.6
 
 Stand 2026-10-08. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
 `FAM_SOUND_PRODUCT`, Wireformat SCN7. Dies ist der reproduzierbare
@@ -7,7 +7,8 @@ Stand 2026-10-08. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
 Der aktuelle Nachweis und die offenen Gates stehen in
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) und
 [COAST_GENERATOR_CHECKPOINT.md](COAST_GENERATOR_CHECKPOINT.md) sowie
-[WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md), die vollständige
+[WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md) und
+[HIGHLANDS_GENERATOR_CHECKPOINT.md](HIGHLANDS_GENERATOR_CHECKPOINT.md), die vollständige
 Arbeitsliste in [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md).
 
 ## Produktidee und bewusst kleiner Umfang
@@ -15,10 +16,11 @@ Arbeitsliste in [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md).
 Drei Naturorte unterscheiden sich durch Tonkörper und musikalische Zeit:
 COAST führt zwei äußere Stimmen zu einem gemeinsamen Ziel. WOODLAND verbindet
 lange Saitentöne durch gemeinsame Akkordtöne und ersetzt jeweils eine Stimme;
-HIGHLANDS lässt zwischen Fragmenten Raum. COAST und langes WOODLAND sind
-integriert; das neue HIGHLANDS-Ensemble ist noch ein Host-Kandidat. Manual und
+HIGHLANDS verbindet weite Akkorde durch einen gehaltenen Ton und kehrt nach
+einer offenen Pause zurück. Alle drei Rollenalgorithmen sind integriert;
+ihre abschließende Hörwahl bleibt offen. Manual und
 Generate verwenden dieselbe Familienartikulation, Belegungs- und Harmonieprüfung;
-die internen COAST-/WOODLAND-Phrasen erhalten ihre ausdrücklich geprüften
+die internen Phrasen erhalten ihre jeweils ausdrücklich geprüften
 Register. Gemeinsame Harmonik und ein Raum verbinden
 sie. Nature ist eine getrennte, optionale Ortsandeutung, bootmäßig aus.
 
@@ -57,8 +59,9 @@ Der bloße Archivordner oder Amount=0 gilt ausdrücklich nicht als Entfernung.
 
 - Manual und öffentliche World-Note-API: 140..470 Hz, MIDI 50..69. Nur der
   interne COAST-Generator:105..850 Hz, Core-Noten MIDI45..80. Interner
-  WOODLAND-Generator:105..470 Hz, Core-Noten MIDI45..68. Kein öffentlicher
-  Bypass; HIGHLANDS behält sein bisheriges Register. Major-Core
+  WOODLAND-Generator:105..470 Hz, Core-Noten MIDI45..68. Interner
+  HIGHLANDS-Generator:105..650 Hz, Core-Noten MIDI45..75. Kein öffentlicher
+  Bypass. Major-Core
   `{0,2,4,7,9}`, Minor-Core `{0,3,5,7,10}`, relativ zur gewählten Tonart.
   Es gibt zwei Sammlungen, keine sechs dekorativen Modi.
 - Equal oder 5-limit Just relativ zum aktuellen Key. MIDI-Root
@@ -92,8 +95,10 @@ Der bloße Archivordner oder Amount=0 gilt ausdrücklich nicht als Entfernung.
 ## Drei deterministische, begrenzte Grammatiken
 
 Nur bestätigte Töne werden gespeichert. Ein Vorschlag verändert den lebenden
-Score/RNG nicht. Initialseed bei 0: 0xA6B13E7D; World-Seed
-`seed XOR (world*0x9E3779B9)`. Nature verwendet einen eigenen RNG/Seedkanal.
+Score/RNG nicht. Initialseed bei 0: 0xA6B13E7D; die drei separaten
+Phrasenzustände beginnen mit demselben expliziten Seed. Nature verwendet
+einen eigenen RNG/Seedkanal. Der alte reine `world_grammar_t`-Testhelfer
+bleibt reproduzierbar, wird im Product-Generator nicht mehr dispatcht.
 Dies reproduziert bei derselben zeitlichen Eingabefolge Entscheidungen und
 PCM; es verspricht keine identische Aufnahme nach beliebigem Bedienverlauf.
 
@@ -101,22 +106,13 @@ PCM; es verspricht keine identische Aufnahme nach beliebigem Bedienverlauf.
 |---|---|---|---|
 | COAST | Außenstimmen Hold 2,8..3,1 s; geplante Schritte 5,8..6,2 s; Ziel Hold 5..5,5 s und Ruhe 4..8 s; tatsächliche Releases können Schritte verlängern | Gegenläufige Core-Wege um eine mittlere Tonika, Seed variiert obere Route, Dauern und Akzente; leiser gemeinsamer Akkordton bleibt bis nach dem Ziel | drei feste Rollen, acht bestätigte Starts pro Phrase; Ziel einmal in Owner6, keine doppelte Unisonoquelle; weiterhin drei Slots inklusive Release |
 | WOODLAND | sechs Starts; Hold je Rolle6..18,5 s; Basisabstände2/12/9/4/7 s vor Activity; Schlussruhe5..9 s nach letztem Hold | weiche Tonika/Terz → verwandter Akkord mit erhaltener Terz → höhere Antwort → gemeinsame D4-/Terz-Verbindung → Quinte oder verwandter Schluss; Seed variiert Schluss, Akzente und Dauern | zwei echte lang abklingende Saiten; Owner6/7 warten reale Releases ab, kein Wiederanschlagen des gehaltenen gemeinsamen Tons |
-| HIGHLANDS | 2..4 Töne; Hold 1,5..5 s; Abstand Hold +0,9..2,4 s; Ruhe 8..20 s | kurzer Bogen mit Rückbezug, später gelegentlich gehörtes Fragment wieder aufnehmen | höchstens 1 gehaltene Stimme; Releases zählen weiter im gemeinsamen Budget |
+| HIGHLANDS | acht Starts; Partner-Holds6..7,75 s; Basisversatz0,8/0,8/8,4/1 s; Reprise1/1 s; offene Pause12..14 s vor Activity, mindestens8 s nach tatsächlichem Quellenende | weiter Akkord → verwandte Lage mit gleicher gehaltener Terz → offene Pause → weiter Akkord kehrt mit eigenen Dauern zurück; Seed variiert Akzente/Holds und Dur-Zwischenbass | drei feste Besitzer6/7/15 einschließlich Releases; gemeinsamer Ton ohne Wiederanschlag; Pause erst nach tatsächlichem Ende aller Besitzer |
 
-HIGHLANDS: Episodeninitialisierung45..120 s, mit expliziter Gültigkeit auch bei einer
-Deadline genau 0 am Timerwrap. Keine periodische Audio-/Quellenresetpflicht.
-HIGHLANDS erinnert höchstens eine Figur und deren tatsächlich gehörte,
-auf Activity normierte Abstände (1,4..10 s). Bei 1:4 Wiederkehrentscheidung
-bleibt die gesamte verschobene Figur im Register; kein nachträgliches Clamp,
-das die Kontur zerdrückt. Nicht jedes kurze Exzerpt enthält eine Wiederkehr.
-
-Activity-Abstandsfaktor `1.35 - 0.70*a`, minimale Lücke 1,4 s bei
-HIGHLANDS. Holdzeiten werden davon nicht skaliert. Dessen
-Rollenvelocity bleibt 0,64..0,80.
-Gen-Abweisung wartet 250 ms bei Belegung / 500 ms nach fehlender Tonzulassung.
-HIGHLANDS sucht höchstens fünf nahe Alternativen. Gehört wird die erfolgreiche
-tatsächliche Alternative, nicht der ursprüngliche Wunsch. HIGHLANDS verwendet höchstens acht
-Grade, auch wenn eine Transposition neun zulässige Registertöne ergibt.
+Alle Rollenautomaten haben explizite Timing-Gültigkeit, auch bei einer
+Deadline genau0 am Timerwrap. Activity-Faktor `1.35 - 0.70*a` skaliert
+kommende Abstände, keine Holds, Gain oder Farbe. Belegung/Tail-Zulassung
+kann Einsätze verlängern; Wiederholung wartet250 ms und verändert weder
+RNG noch gehörte Historie. Kein Ersatzton durch nahe Alternativsuche.
 
 COAST besitzt einen eigenen begrenzten Phrasenzustand. Erste Außenstimmen
 werden gemeinsam vorbereitet, Owner15 beginnt 700 ms nach deren bestätigtem
@@ -144,6 +140,24 @@ oben0,48..0,52. Activity skaliert kommende Zwischenräume, weder Tonlängen noch
 Gain/Color. Der wirkliche Saitenausklang kann geplante Abstände verlängern.
 Die sechs Schritte sind keine unbegrenzte gleichförmige Notenwarteschlange;
 langfristige musikalische Entwicklung und Hörwahl bleiben offene Gates.
+
+HIGHLANDS besitzt einen Acht-Schritt-Zustand. Seed1234/D-Dur öffnet mit
+D3/A4/F#4, wechselt nur die Partner zu B3/D4 und behält F#4 im selben Owner15.
+Erst der DSP-Start des zweiten neuen Partners plant das Ende des gemeinsamen
+Tons mit dessen Hold. Alle Quellen enden über den normalen Horn-Release;
+Horn-DSP und Attack-/Release-Makrogrenzen bleiben unverändert. Nach tatsächlicher
+Retirement aller drei beginnt eine8..18,9-s-Quellenpause (12..14 s vor Activity).
+Der Raum läuft natürlich weiter und behält seine Pitchhistory. Danach D3/A4/F#4
+mit neuen Akzenten und ungleichen Holds. Minor benutzt die Terz3 und den
+Zwischenbass auf der Quinte unterhalb der Tonika; Dur kann abhängig vom Seed
+zwischen verwandter Sext und unterer Quinte wechseln. Velocities pro Start
+0,55..0,59 /0,41..0,45 /0,45..0,49 /0,48..0,52 /0,50..0,54 /0,52..0,56 /
+0,38..0,42 /0,44..0,48. Phase/RNG/Timer erst nach DSP-Ack; offene Starts und
+generierte Holds werden bei Pitch-Kontextwechsel ebenfalls verworfen, manuelle
+gehaltene Hz bleiben. Nach der Reprise erneut vollständige Retirement und Pause,
+kein periodischer DSP-Reset. Default-Reprise43,24 s, letzter Einsatz45,26 s,
+letztes tatsächliches Quellenende59,65 s in der65-s-Engineprobe. Die automatische
+Rückkehr zählt als gehört; langfristige Entwicklung bleibt SD17, kein finaler Loop-Lock.
 
 ## Versioniertes Parameterregister
 
@@ -296,7 +310,8 @@ natürliches Pluck-Ende sind samplebasiert. 64-vs-512-PCM und ungültige
 Eingaben werden gegen den tatsächlichen Kern geprüft.
 
 Kein Heap, kein I/O und keine Quellenanregung im Audio-Render. Drei feste
-Slots, 16 Tails, eine Figur, fünf Alternative-Pitches, keine unbounded Suche.
+Slots,16 Tails, drei feste Phrasenzustände und begrenzte Core-Registertabellen;
+höchstens zwei Vorbereitungen pro COAST-Tick, sonst eine, keine unbounded Suche.
 Pluck-Vorbereitung: fixer 1024-Float-Loop, höchstens acht harmonische Moden;
 im Produkt N≤315, keine große Stacktable. Sourcefilterkoeffizienten maximal
 alle 32 Samples pro aktiver Bowed/Horn-Quelle; `tanf` bleibt ein echter
@@ -322,7 +337,10 @@ Stackreserve mit Display/LED/MIDI/Storage. Kein CPU-Versprechen aus Hostzeit.
 `tools/review_product_audio.py`: reale Quellen/Kette, RAW-Firmwarepegel plus
 separate **eine konstante Gainänderung je Vergleichsdatei**, Ziel −26 LUFS,
 max +12 dB, True-Peak-Decke −6 dBFS. Keine Dynamikautomatik.
-Jede Hör-WAV exakt 27 s; lange PCM-Läufe bleiben interne Messung.
+Quellen-/Grenzvergleiche27 s. Vollständige integrierte musikalische Phrasen
+COAST70 s, WOODLAND50 s und HIGHLANDS65 s, ohne Clear/Schlussfade; getrennte
+RAW-Messung und eine feste LISTEN-Gainänderung mit Ziel−23LUFS. Längere
+Langzeitläufe bleiben interne Messung mit kurzen ausgewählten Exzerpten.
 Commit, Sourcehashes, Parameter, Seed, Frame-acknowledgement-Trace, rohe/matched
 LUFS/True-Peak/DC/Mono sind gespeichert. Hookframe ist ein DSP-Acknowledgement,
 kein behaupteter samplegenauer Attackbeginn.

@@ -46,7 +46,13 @@ ungleiche Halteabsichten und echte gemeinsame Akkordtöne. Die50-s-Probe
 verwendet die normale Engine;48 vollständige Phrasen und H743 sind geprüft.
 Neue Quellen-/Firmware-Hörwahl bleibt offen. Siehe
 [WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md).
-HIGHLANDS-Generatorintegration und abschließende World-Abnahme bleiben offen.
+HIGHLANDS ist jetzt ebenfalls im echten Generator integriert: weiter Akkord,
+gehaltener gemeinsamer Ton, verwandte Lage, tatsächliches Quellenende und
+offene Pause vor der Rückkehr.48 vollständige Keys/Collections/Stimmungen
+plus4 echte Seed-/Timerwrap-Phrasen, Host-Suite und H743 bestehen. Die65-s-
+Engineprobe zeigt die Rückkehr bei43,24 s; neue Quellen-/World-Hörabnahme
+bleibt offen. Siehe [HIGHLANDS_GENERATOR_CHECKPOINT.md](HIGHLANDS_GENERATOR_CHECKPOINT.md).
+Nächste einzelne Einheit: SD17, langfristige Entwicklung dieser Rollenregeln.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
 ## FUNDAMENTAL FALSCH
@@ -381,12 +387,12 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD08 | geschlossen | Originalowner, DSP-Ack, Storno, tatsächliche One-shot-/Release-Enden |
 | SD09 | geschlossen | Drei globale Slots / zwei Plucks auch Manual, kein held Steal |
 | SD10 | geschlossen | Gemeinsame Familie/Admit ohne Pad/Bass/Archive; SCN7-Migration geprüft |
-| SD11 | Hörgate | Zwei Cores,12 Keys, Equal/Just und niedrige Intervallgrenzen; COAST45..80 und WOODLAND45..68 jeweils in48 echten Phrasen geprüft; Teilton-/Registerhörwahl offen |
+| SD11 | Hörgate | Zwei Cores,12 Keys, Equal/Just und niedrige Intervallgrenzen; COAST45..80, WOODLAND45..68 und HIGHLANDS45..75 jeweils in48 echten Phrasen geprüft; HIGHLANDS zusätzlich4 Seed/Wrap-Phrasen; Teilton-/Registerhörwahl offen |
 | SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
-| SD13 | geschlossen | COAST/WOODLAND: eigene begrenzte Rollen-/Phrasenzustände mit DSP-Ack; HIGHLANDS: bisheriger Transaktionsautomat mit höchstens acht Gradindices |
+| SD13 | geschlossen | Alle drei Worlds: eigene begrenzte Rollen-/Phrasenzustände mit DSP-Ack; alte Einzeltickets/Alternativsuche im Product ersetzt; cancel/retry/Timer gültig, kein gehörtes Motiv ohne Start |
 | SD14 | Generator integriert; Hör-/Gerätegate offen | Gegenbewegung, gemeinsamer Akkordton, einmaliger Mittelton; echte Besitzer/Releases/Tails,48 Engine-Phrasen, volle Host-Suite und H743 geprüft; neue70-s-Probe noch hören |
 | SD15 | Lange Quelle und Generator integriert; Hör-/Gerätegate offen | Sechs lange Akkordrollen-Starts mit real gehaltenen gemeinsamen Tönen, zwei Saiten inklusive Release,48 echte Phrasen und50-s-Engineprobe; kein Wiederanschlag gemeinsamer Töne; neue Hörwahl offen |
-| SD16 | Algorithmus/Hörprobe vorbereitet | HIGHLANDS-Akkordbogen mit gehaltenem F#4, realem Horn, Pausen/Rückkehr; Generator-/Geräte-/Hörabnahme offen |
+| SD16 | Generator integriert; Hör-/Gerätegate offen | Weiter Akkord mit demselben gehaltenen Ton, Pause erst nach tatsächlichem Ende aller drei, verwandte Rückkehr;48 echte Phrasen +4 Seed/Wrap,65-s-Engineprobe, volle Host-Suite und H743 bestehen; finale Quellen-/Hörwahl offen |
 | SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
 | SD18 | geschlossen durch Remove | Body nicht kompiliert; kein Materialreset oder additive Röhrenfärbung |
 | SD19 | Hörgate | Ein FDN; Impuls/Decay/Mono geprüft und Mono-Auslöschung korrigiert |
@@ -581,6 +587,13 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Eigenes Zeitempfinden ohne Naturebene, Pitch-Sweep oder extremen
   Hall; Ruhe wirkt beabsichtigt. Nur implementieren, wenn SD04–SD05 bestehen;
   sonst produktseitig zurückstellen. Voraussetzung: SD13.
+  **Aktueller Kandidat:** Acht-Schritt-Akkordrollen jetzt im Product-Generator:
+  D3/A4/F#4 → B3/D4 mit gehaltenem F#4 → tatsächliches Quellenende → offene
+  Pause → verwandte weite Rückkehr. Normale Horn-/Makroartikulation, private
+  Core-MIDI45..75/105..650 Hz, öffentliche Grenzen bleiben.48 vollständige
+  Keys/Collections/Stimmungen plus4 echte Seed/Timerwrap-Phrasen, zehn
+  canceled-start-Pfade, volle Host-Suite und H743 geprüft. Neue65-s-Engineprobe
+  braucht Hörurteil; Quelle/Hör-/Gerätegate bleibt offen, kein Gesamt-Haken.
 - [ ] **SD17 — Langfristige Entwicklung mit Wiedererkennbarkeit bauen.**
   Ereignisse zu Episoden ordnen; Ausgangskandidat 45–120 s, ohne periodischen
   Pflichtreset. Wiederkehr, lokale Variation und Ruhe in musikalischer Reihenfolge;

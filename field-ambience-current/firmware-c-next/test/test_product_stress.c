@@ -18,8 +18,8 @@ static double energy,mono;static uint32_t measured;
 static void hook(int on,uint8_t source,float hz,float velocity) {
     (void)source;(void)velocity;
     if(on>0) {
-        bool phrase=engine_product_world()!=WORLD_HIGHLANDS && (source==6 || source==7 || source==15);
-        assert(isfinite(hz)&&hz>=(phrase ? 105 : 140)&&hz<=(phrase && engine_product_world()==WORLD_COAST ? 850 : 470));
+        bool phrase=(source==6 || source==7 || source==15);
+        assert(isfinite(hz)&&hz>=(phrase ? 105 : 140)&&hz<=(phrase ? (engine_product_world()==WORLD_COAST ? 850 : engine_product_world()==WORLD_HIGHLANDS ? 650 : 470) : 470));
         uint32_t gap=hook_now-last_on;if(onsets && gap>longest_gap)longest_gap=gap;
         last_on=hook_now;++onsets;
     }

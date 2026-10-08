@@ -75,4 +75,28 @@ woodland_offer_t woodland_phrase_propose(const woodland_phrase_t *g,
 bool woodland_phrase_heard(woodland_phrase_t *g,const woodland_offer_t *o,
                           uint32_t now_ms);
 bool woodland_phrase_pitch_allowed(int midi,int key_pc,bool minor);
+
+/* HIGHLANDS: wide chord -> related voicing with the same held third ->
+ * actual retirement, open pause, reprise. Eight starts, three owned roles.
+ * Main acknowledges starts and begins silence only after all owners retire. */
+typedef struct {
+    uint32_t rng,next_ms,notes,episodes,returns;
+    uint8_t phase,timing_valid,rest_valid,variant;
+} highlands_phrase_t;
+typedef struct {
+    uint32_t hold_ms,gap_ms;
+    int midi;
+    float velocity;
+    uint8_t phase,role;
+} highlands_offer_t;
+void highlands_phrase_init(highlands_phrase_t *g,uint32_t seed);
+void highlands_phrase_restart(highlands_phrase_t *g);
+bool highlands_phrase_due(const highlands_phrase_t *g,uint32_t now_ms);
+highlands_offer_t highlands_phrase_propose(const highlands_phrase_t *g,
+                                         int key_pc,bool minor,float activity);
+bool highlands_phrase_heard(highlands_phrase_t *g,const highlands_offer_t *o,
+                           uint32_t now_ms);
+/* Engine calls only at phase 5/8 after actual sources have retired. */
+bool highlands_phrase_pause(highlands_phrase_t *g,uint32_t now_ms,float activity);
+bool highlands_phrase_pitch_allowed(int midi,int key_pc,bool minor);
 #endif

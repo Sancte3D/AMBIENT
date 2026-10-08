@@ -235,6 +235,57 @@ bool woodland_phrase_heard(woodland_phrase_t *g,const woodland_offer_t *o,uint32
     if(++g->phase==6)++g->episodes;
     g->next_ms=now+o->gap_ms;g->timing_valid=1;return true;
 }
+bool highlands_phrase_pitch_allowed(int midi,int key,bool minor) {
+    return midi>=45 && midi<=75 && core(midi,key,minor);
+}
+void highlands_phrase_init(highlands_phrase_t *g,uint32_t seed) {
+    memset(g,0,sizeof *g);g->rng=seed ? seed : 0xA6B13E7Du;
+    g->variant=(uint8_t)(g->rng&1u);
+}
+void highlands_phrase_restart(highlands_phrase_t *g) {
+    g->phase=g->timing_valid=g->rest_valid=0;
+    g->variant=(uint8_t)((g->rng>>8)&1u);
+}
+bool highlands_phrase_due(const highlands_phrase_t *g,uint32_t now) {
+    return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
+}
+highlands_offer_t highlands_phrase_propose(const highlands_phrase_t *g,
+                                         int key,bool minor,float activity) {
+    highlands_offer_t o;memset(&o,0,sizeof o);o.midi=-1;o.phase=g->phase;
+    if(g->phase>=8 || (g->phase==5 && !g->rest_valid))return o;
+    int center=60+wrap12(key);if(center>68)center-=12;
+    int pitch[8]={-12,7,minor ? 3 : 4,minor || g->variant ? -5 : -3,
+                  0,-12,7,minor ? 3 : 4};
+    static const uint8_t roles[8]={0,1,2,0,1,0,1,2};
+    static const uint32_t holds[8]={6000,7000,0,7000,7000,7500,7200,7200};
+    static const uint32_t gaps[8]={800,800,8400,1000,0,1000,1000,0};
+    uint32_t h=g->rng*1664525u+1013904223u;
+    o.role=roles[g->phase];o.midi=center+pitch[g->phase];
+    static const float accents[8]={.55f,.41f,.45f,.48f,.50f,.52f,.38f,.44f};
+    o.velocity=accents[g->phase]+(float)((h>>8)%5u)*.01f;
+    o.hold_ms=holds[g->phase] ? holds[g->phase]+h%251u : 0;
+    if(!(activity>=0 && activity<=1))activity=.5f;
+    o.gap_ms=(uint32_t)((float)gaps[g->phase]*(1.35f-.70f*activity));
+    if(gaps[g->phase] && o.gap_ms<500)o.gap_ms=500;
+    return o;
+}
+bool highlands_phrase_heard(highlands_phrase_t *g,const highlands_offer_t *o,uint32_t now) {
+    static const uint8_t roles[8]={0,1,2,0,1,0,1,2};
+    if(g->phase>=8 || o->phase!=g->phase || o->role!=roles[g->phase] || o->midi<0 ||
+       (g->phase==5 && !g->rest_valid))return false;
+    if(g->phase==5)++g->returns;
+    g->rng=g->rng*1664525u+1013904223u;++g->notes;
+    if(++g->phase==8)++g->episodes;
+    if(g->phase==5 || g->phase==8)g->rest_valid=0;
+    g->next_ms=now+o->gap_ms;g->timing_valid=1;return true;
+}
+bool highlands_phrase_pause(highlands_phrase_t *g,uint32_t now,float activity) {
+    if((g->phase!=5 && g->phase!=8) || g->rest_valid)return false;
+    if(!(activity>=0 && activity<=1))activity=.5f;
+    uint32_t rest=(uint32_t)((float)(12000u+g->rng%2001u)*(1.35f-.70f*activity));
+    if(rest<8000)rest=8000;
+    g->next_ms=now+rest;g->timing_valid=g->rest_valid=1;return true;
+}
 void coast_phrase_init(coast_phrase_t *g, uint32_t seed) {
     memset(g,0,sizeof *g);
     g->rng=seed ? seed : 0xA6B13E7Du;
