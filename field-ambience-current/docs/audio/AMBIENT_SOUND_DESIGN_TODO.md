@@ -8,7 +8,7 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-07**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-08**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
@@ -313,13 +313,18 @@ Fortsetzung einzeln ab dem ersten offenen Punkt: **SD02** hat jetzt getrennte
 einen bytegleichen vollständigen Kontrollrender. Kein Produkt-DSP geändert,
 keine Quellenwahl vorweggenommen. Messung und genaue Hörreihenfolge:
 [SD02_COAST_COMPONENT_CHECKPOINT.md](SD02_COAST_COMPONENT_CHECKPOINT.md).
-SD02 bleibt bis zur Hörentscheidung offen. Der nächste einzelne Durchlauf
-bereitet **SD03 am bestehenden Kandidaten** vor: echte gemeinsame Stimmen
+SD02 bleibt bis zur Hörentscheidung offen. Ein einzelner Durchlauf
+hat **SD03 am bestehenden Kandidaten** geprüft: echte gemeinsame Stimmen
 gegen separat gerenderte Summe, unabhängiges Grain, natürliche Releases und
 bytegleiches Product-PCM bei 64/512 Frames. Die endgültige SD03-Klangabnahme
 bleibt von SD02 abhängig; kein weiterer Sound-DSP-Umbau.
 [SD03_COAST_INDEPENDENCE_CHECKPOINT.md](SD03_COAST_INDEPENDENCE_CHECKPOINT.md).
 PR139 ist durch CI37608566520 (6/6 Jobs) vollständig software-/ARM-geprüft.
+PR141 ist inzwischen durch CI37611452027 vollständig geprüft. **SD04** hat
+jetzt einen trockenen, fest pegelgematchten COAST/HIGHLANDS-Vergleich über
+D3/D4/A4, bytegleiche Ereignistraces und eine 27-s-Montage. Keine Klangwahl
+oder neue Horn-Fassung vorweggenommen. Siehe
+[SD04_HIGHLANDS_COAST_CHECKPOINT.md](SD04_HIGHLANDS_COAST_CHECKPOINT.md).
 
 `geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist
 geprüft. Bei `Hörgate` ist der Code gebaut und softwareseitig auditiert, die
@@ -332,7 +337,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD01 | geschlossen | ARM-Banken/Compilerframes, keine zweite Arena; Gerätezeit separat SD48 |
 | SD02 | Hörgate, isoliert vorbereitet | D3/D4/A4: voller Kontrollrender bytegleich; 1,5f/2f/Grain einzeln entfernt, 2×27-s-Montage; Quellenwahl offen |
 | SD03 | Hörgate, unabhängig geprüft | Summenrest ≤1,50e-8, Grain-Korrelation <0,006, Sustain-Swing <0,012 dB, natürliche Releases, 64/512 PCM exakt; SD02/Hörwahl offen |
-| SD04 | Hörgate / Keep-or-drop | HIGHLANDS trocken und gegen COAST vergleichen; zwei starke Worlds zulässig |
+| SD04 | Hörgate / Keep-or-drop, vorbereitet | COAST/HIGHLANDS D3/D4/A4, identische Ereignisse, fixe −26-LUFS-Kopien und 27-s-A/B; Quellenwahl offen, zwei starke Worlds zulässig |
 | SD05 | Hörgate | Horn-LFO/Sub/Formant aus; Onset-Air und SHAPE-Endpunkte prüfen |
 | SD06 | Hörgate | Pluck pitch-/FIR-/Excitationfix, natürliche Key-up-Tails und samplegenaues Ende; Hörwahl offen |
 | SD07 | geschlossen | Finite Input, tatsächliche Hz/Velocity, Bereiche, rejected Starts ohne Source/Hook |
@@ -436,6 +441,10 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Filterkörper. Keine Suboktave/festen 950-Hz-Formanten wieder hinzufügen.
   **Abnahme:** Eigenständige warme Artikulation ohne Signal-/Röhrencharakter.
   Bei Scheitern gilt die Abbruchregel oben; keine Umbenennung als Ersatz.
+  **Fortsetzung 2026-10-08:** Echter trockener Product-Renderer, bytegleiche
+  Ereignistraces, D3/D4/A4 in RAW und fest pegelgematchten LISTEN-Kopien sowie
+  sechs kurze A/B-Ausschnitte in 27 s. SD04-Checkpoint; KEEP/REMOVE bleibt offen.
+  Clear-/Ausschnittgrenzen sind dokumentiert, keine natürliche Release-Freigabe.
   Vor SD16; nicht mit Raum kaschieren.
 - [ ] **SD05 — HIGHLANDS-Artikulation und Atembewegung begrenzen.**
   Verbleibende ungefähr 0,9-Hz-Filterbewegung und kurze Breath-Textur isolieren;
