@@ -15,6 +15,18 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+## Hörfeedback 2026-10-08 — musikalische Priorität
+
+Der Nutzer bewertet die bisherigen trockenen Einzelquellenbeispiele als RAW,
+langweilig, zu ähnlich und ohne musikalische Besonderheiten. Gewünscht ist ein
+Ensemble aus gehaltenen Akkordtönen mit gemeinsamen Tönen, Oktavwechseln,
+verschiedenen Dauern sowie hörbarer Spannung und Auflösung.
+**Zuerst SD11/SD14: Akkordbogen und Stimmführung.** Ein komponierter 27-s-
+Entwurf mit unseren echten C-Quellen ist vorbereitet; er ist noch kein autonomer
+Generator und bestätigt keine isolierte Familienwahl aus SD02–SD04. Siehe
+[MUSICAL_ENSEMBLE_DIRECTION.md](MUSICAL_ENSEMBLE_DIRECTION.md).
+Weitere reine Quellen-/SHAPE-Pakete folgen nach diesem musikalischen Fundament.
+
 ## FUNDAMENTAL FALSCH
 
 Die Referenzarchitektur mit fünf Presets, zusätzlichem Pad/Bass und neun FX
@@ -325,6 +337,8 @@ jetzt einen trockenen, fest pegelgematchten COAST/HIGHLANDS-Vergleich über
 D3/D4/A4, bytegleiche Ereignistraces und eine 27-s-Montage. Keine Klangwahl
 oder neue Horn-Fassung vorweggenommen. Siehe
 [SD04_HIGHLANDS_COAST_CHECKPOINT.md](SD04_HIGHLANDS_COAST_CHECKPOINT.md).
+PR143 ist durch CI37783241714 vollständig geprüft. Das neue Nutzerfeedback
+priorisiert jetzt den musikalischen Ensemble-Entwurf und seine Generatorübertragung.
 
 `geschlossen` bedeutet: das genannte technische/Entfernungs-Kriterium ist
 geprüft. Bei `Hörgate` ist der Code gebaut und softwareseitig auditiert, die
@@ -347,7 +361,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD11 | Hörgate | Zwei Cores, 12 Keys, Equal/Just und niedrige Intervallgrenzen; Teiltonprüfung offen |
 | SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
 | SD13 | geschlossen | Drei begrenzte Transaktionsautomaten, genau acht autonome Gradindices |
-| SD14 | Hörgate | COAST individuelle Holds/Übergaben/Fokus/Episoden im realen Kern |
+| SD14 | musikalisches Redesign, priorisiert | Nutzerurteil: Einzelereignisse tragen nicht; 27-s-Ensemble-Entwurf vorhanden, echter Akkord-/Voicing-Zustand im Generator noch offen |
 | SD15 | Hörgate | WOODLAND gehörte Kontur/Intervalle, Antwort/Variation/Rückkehr im realen Kern |
 | SD16 | Hörgate | HIGHLANDS Fragmente/Bögen/echte Pausen; hängt von Quellenwahl SD04 ab |
 | SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
@@ -515,7 +529,12 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   statt dieselbe Fläche in festen Abständen neu zu starten.
   **Abnahme:** Dry-Eventtrace zeigt eigenständige Hüllkurven/überlappende Übergaben,
   sinnvolle Pausen und begrenzte Rollen. Auch ohne Pan/Hall hörbare Kontinuität.
-  Voraussetzung: SD02–SD03/SD13.
+  **Neue Priorität 2026-10-08:** Ein hörbarer Akkord-/Voicing-Bogen mit
+  gemeinsamen gehaltenen Tönen, gezieltem Registerwechsel und eigenen Dauern
+  fehlt. Der kompakte komponierte Ensemble-Entwurf verwendet die echten
+  C-Quellen; Übertragung in den autonomen Generator ist noch offen. SD11 muss
+  dafür funktionale Tonvorräte und Übergänge zulassen. Siehe Ensemble-Direction.
+  Voraussetzung: SD02–SD03/SD13; technische Basis ist keine musikalische Abnahme.
 - [ ] **SD15 — WOODLAND-Grammatik implementieren.**
   Seed-Figur mit Kontur/Abstandsmerkmalen; Antwort bewahrt ausgewählte Merkmale,
   Variation verändert nur begrenzte Eigenschaften; dann wirkliche Ruhe.

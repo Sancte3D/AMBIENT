@@ -190,6 +190,19 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Render musical ensemble direction sketch
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_ensemble_sketch.py build-ensemble-sketch
+      - name: Upload composed ensemble sketch
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-musical-ensemble-sketch-27s
+          path: field-ambience-current/firmware-c-next/build-ensemble-sketch
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest
