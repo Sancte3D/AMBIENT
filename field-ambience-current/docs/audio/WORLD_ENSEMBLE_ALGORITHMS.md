@@ -11,7 +11,7 @@ Regel. Die Regeln werden einzeln umgesetzt und gehört.
 | World | Musikalischer Algorithmus | Konkreter Stand |
 |---|---|---|
 | COAST | Zwei äußere Register nähern sich in Gegenbewegung einer gemeinsamen Mitte; ein Akkordton verbindet die Schritte | Seed-gesteuerter Host-Algorithmus und tatsächliche C-DSP-Hörprobe vorbereitet |
-| WOODLAND | Eine kleine Akkordfigur stellt eine Idee vor; eine andere Stimme antwortet mit verwandter Kontur und verändertem Register; Variation und Ruhe | Seed-gesteuerter Ruf/Antwort-Host-Algorithmus, reale Pluck-Hörprobe mit 30 s |
+| WOODLAND | Eine kleine Akkordfigur stellt eine Idee vor; eine andere Stimme antwortet mit verwandter Kontur und verändertem Register; Variation und Ruhe | Kurzer Pluck-Entwurf vom Nutzer verworfen; neuer langer Saiten-Kandidat mit 45-s-Probe |
 | HIGHLANDS | Weit verteilte gehaltene Stimmen verändern einzelne Akkordtöne mit eigenen Dauern; längere offene Pausen und Rückkehr | Seed-gesteuerter Akkord-/Pausen-Host-Algorithmus, reale Horn-Hörprobe mit 44 s |
 
 Gemeinsamer Vertrag: begrenzter harmonischer Plan, klare Stimmrollen, echte
@@ -77,7 +77,7 @@ und HIGHLANDS sind ebenfalls als getrennte Host-Algorithmen unten beschrieben.
 Weiterhin 24 technisch geschlossene / 30 offene Gesamtgates.
 
 
-## WOODLAND — Ruf, obere Antwort, verwandte Rückkehr
+## WOODLAND — verworfene kurze Ruf/Antwort-Probe (PR146)
 
 `review_world_ensembles.py` erzeugt drei Figuren mit demselben erkennbaren
 Rhythmus, ungleichen Zwischenräumen und eigenen Akzenten. Seed1234 in D:
@@ -130,3 +130,43 @@ Kandidaten ausgebaut. Ihre gemeinsame Produktionsintegration ist weiter offen:
 
 Keine Produktionsquelle, Header, Default oder UI geändert. Keine neuen
 Gesamtgates geschlossen; die abschließende WOODLAND-/HIGHLANDS-Hörabnahme fehlt.
+
+
+## WOODLAND — lange Saiten nach Nutzerkorrektur
+
+Nutzerurteil am 8. Oktober: Die 30-s-Probe ist zu kurz artikuliert und zu
+gezupft. Ambient braucht lange bzw. gestreckte Töne. Die kurze WOODLAND-
+Ruf/Antwort-Probe ist damit als musikalische Richtung verworfen; HIGHLANDS
+und COAST werden durch diese Korrektur nicht verändert.
+
+`review_woodland_long.py` erstellt einen isolierten Saiten-Kandidaten und eine
+45-s-Hörprobe: D3/F#3 öffnen langsam, F#3 verbindet den Wechsel zu B3,
+D4 bildet mit B3 h-Moll; anschließend F#3/D4 und F#3/A3. Nur sechs Einsätze,
+versetzte Haltezeiten von 6 bis 18 Sekunden, zwei tatsächliche Saiten mit
+Überlagerung. Es ist ein langer natürlich abklingender Saitenton, kein endloser
+konstant gehaltener Oszillator und kein Zeitstrecken einer Audiodatei.
+
+Drei klar begrenzte Änderungen in einer temporären Kopie von `pluck.c`:
+nominaler T60 von 3,2 auf 36 Sekunden, Attackbasis von 8 auf 800 ms
+(begrenzter Kandidatenbereich 0,4..2,4 s), weicher eigener Stop von 20 ms
+auf 2 Sekunden. Loop-Dämpfung0,015 statt0,42; direkter SHAPE-Release0,50.
+Delay-Länge, Stimmenpool, Phasen-/Tonhöhenverfahren und Raum bleiben bestehen.
+Keine Wiederanregung, Kompression, neue Fläche oder neue FX. Diese Änderungen
+sind ausdrücklich kein neuer Product-Default; ursprüngliche Quelldateien
+werden weder überschrieben noch als unverändert klingender Render behauptet.
+
+Prüfung: Ein isolierter D3-Test weist eine deutlich weichere erste100-ms-Phase
+und einen noch tragenden Klangkörper bei8..9s nach. Der spätere RMS muss
+mindestens20% des RMS bei2..3s betragen; dies ist eine Zeit-/Energieprüfung,
+keine Hörabnahme. Der volle45-s-Score hat sechs strikt angenommene Starts,
+maximal zwei reale Quellen inklusive der langen Releases und Quellenende
+vor Dateiende. Kein Stealing oder Clear. Dry/Room-PCM und Traces bei64/512
+Frames bytegleich; finite/Format/Peak/Mono/DC, C-Warnings-as-errors, Python,
+Workflow und Quellen-/Tool-Hashes geprüft. Fester Gain auf−23LUFS,
+True Peak−12,9dBFS. Room0,24, Nature0, Volume0,6; Raumtail darf noch leise stehen.
+
+Zuerst `AMBIENT_WOODLAND_Long_room_listen_45s.wav` hören; Dry ist dieselbe Folge.
+`WOODLAND_LONG_METRICS.json` dokumentiert Original-/Kandidatenhashes,
+Parameter, Score, isolierte RMS-Verhältnisse und vollständige Renderbefunde.
+Die ursprüngliche WOODLAND-Quelle und Generatorintegration bleiben offen:
+kurze Pluck-Figuren werden nicht mehr als bestätigte Richtung vorausgesetzt.
