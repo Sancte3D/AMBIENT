@@ -18,7 +18,8 @@ static double energy,mono;static uint32_t measured;
 static void hook(int on,uint8_t source,float hz,float velocity) {
     (void)source;(void)velocity;
     if(on>0) {
-        assert(isfinite(hz)&&hz>=140&&hz<=470);
+        bool phrase=engine_product_world()==WORLD_COAST && (source==6 || source==7 || source==15);
+        assert(isfinite(hz)&&hz>=(phrase ? 105 : 140)&&hz<=(phrase ? 850 : 470));
         uint32_t gap=hook_now-last_on;if(onsets && gap>longest_gap)longest_gap=gap;
         last_on=hook_now;++onsets;
     }
@@ -105,7 +106,7 @@ static void transitions(void) {
     for(int from=0;from<3;++from)for(int to=0;to<3;++to)if(from!=to) {
         engine_init();engine_set_world(from);engine_set_room(1);
         engine_set_generative(true,-1);engine_generative_tick(0);
-        audio(.08);assert(engine_active_voices()==1);
+        audio(.08);assert(engine_active_voices()==(from==WORLD_COAST ? 2 : 1));
         engine_set_world(to);assert(engine_product_world()==to);
         audio(.12);assert(engine_active_voices()==0);
         assert(ambient_room_peak()>0); /* No World room reset. */
@@ -158,7 +159,8 @@ static void mute_contract(void) {
         engine_init();engine_set_world(world);engine_set_nature(1);
         engine_set_generative(true,-1);engine_generative_tick(0);audio(.1);
         engine_generative_tick(100);int heard=engine_generative_melody_count();
-        assert(heard==1);
+        int initial=world==WORLD_COAST ? 2 : 1;
+        assert(heard==initial);
         engine_set_muted(true);audio(.06);
         engine_generative_tick(20000);assert(engine_active_voices()==0);
         assert(engine_generative_melody_count()==heard);
@@ -167,7 +169,7 @@ static void mute_contract(void) {
         for(int i=0;i<BLOCK*2;++i)assert(pcm[i]==0);
         engine_set_muted(false);engine_generative_tick(21000);audio(.1);
         engine_generative_tick(21100);
-        assert(engine_generative_melody_count()==heard+1 && engine_active_voices()>0);
+        assert(engine_generative_melody_count()==heard+initial && engine_active_voices()>0);
         assert(engine_nonfinite_samples()==0 && engine_output_limited_samples()==0);
         engine_all_off();audio(.1);
 
@@ -223,13 +225,15 @@ static void pitch_context_contract(void) {
         audio(.1);
         assert(engine_active_voices()==0 && onsets==0 && engine_generative_melody_count()==0);
         hook_now=100;engine_generative_tick(100);audio(.1);engine_generative_tick(200);
-        assert(engine_active_voices()==1 && onsets==1 && engine_generative_melody_count()==1);
-        float hz[24];assert(engine_sounding_frequencies(hz,24)==1);float actual=hz[0];
+        int initial=world==WORLD_COAST ? 2 : 1;
+        assert(engine_active_voices()==initial && onsets==(uint32_t)initial && engine_generative_melody_count()==initial);
+        float hz[24];assert(engine_sounding_frequencies(hz,24)==initial);
+        float actual[2]={hz[0],hz[initial-1]};
         /* Reapplying the same settings is not another reset or pending loss. */
         if(operation==0)engine_set_key_pc(5);
         else if(operation==1)engine_set_mode(1);
         else engine_set_tuning(1);
-        audio(.02);assert(engine_sounding_frequencies(hz,24)==1 && hz[0]==actual);
+        audio(.02);assert(engine_sounding_frequencies(hz,24)==initial && hz[0]==actual[0] && hz[initial-1]==actual[1]);
         engine_all_off();audio(.1);
     }
     puts("PRODUCT PITCH CONTEXT PASS: prepared cancellation, fresh-context start, actual-Hz hold and idempotent targets");

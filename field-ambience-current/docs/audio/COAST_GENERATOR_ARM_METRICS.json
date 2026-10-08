@@ -1,0 +1,45 @@
+{
+  "scope": "Same-compiler H743 Product Release comparison; default Journal OFF. Link/source/DMA/frame audit passes on both builds. No runtime CPU/stack acceptance.",
+  "baseline_local_commit": "4d677c633af28fddf5fc005ecfba867dc73b2669",
+  "baseline_remote_commit": "d14203c7339b286f05a456ac8de284a4e6290b7d",
+  "baseline": {
+    "elf_sha256": "44f98fe57f3e1a57bfabb51f57c73e83cf68a58abbd0a4017b732c969818acf5",
+    "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+    "profile": "product",
+    "core_max_frame_bytes": 192,
+    "limitations": "Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48."
+  },
+  "integrated": {
+    "elf_sha256": "1431d67a81b1182ea8b5fea7c29c162d176c6ead2bfd429d0e760aac92b08757",
+    "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+    "profile": "product",
+    "core_max_frame_bytes": 216,
+    "limitations": "Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48."
+  },
+  "banks_bytes": {
+    "bank1_load_image": {
+      "baseline": 190724,
+      "integrated": 193360,
+      "delta": 2636
+    },
+    "ram_d1": {
+      "baseline": 65600,
+      "integrated": 65696,
+      "delta": 96
+    },
+    "ram_d2": {
+      "baseline": 60808,
+      "integrated": 60808,
+      "delta": 0
+    },
+    "dtcm_stack_reserved": {
+      "baseline": 16384,
+      "integrated": 16384,
+      "delta": 0
+    }
+  },
+  "internal_room_tank_bytes": 55352,
+  "internal_room_diffusion_bytes": 5296,
+  "aligned_d1_audio_dma_bytes": 4096,
+  "full_host_log_sha256": "483c25dff41937c07729985c5381d3b9f147ce4dbe4e4cf850783938d7fd8829"
+}

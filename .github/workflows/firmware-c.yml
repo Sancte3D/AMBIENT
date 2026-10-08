@@ -245,6 +245,19 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Render actual integrated COAST generator
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_coast_generator.py build-coast-generator
+      - name: Upload integrated COAST firmware phrase
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-coast-generator-70s
+          path: field-ambience-current/firmware-c-next/build-coast-generator
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest

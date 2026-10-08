@@ -190,3 +190,60 @@ void world_grammar_commit(world_grammar_t *g, const world_offer_t *o,
     n.next_ms=now+o->gap_ms; n.timing_valid=1;
     *g=n;
 }
+
+bool coast_phrase_pitch_allowed(int midi, int key, bool minor) {
+    return midi>=45 && midi<=80 && core(midi,key,minor);
+}
+void coast_phrase_init(coast_phrase_t *g, uint32_t seed) {
+    memset(g,0,sizeof *g);
+    g->rng=seed ? seed : 0xA6B13E7Du;
+    g->variant=(uint8_t)(g->rng&1u);
+}
+void coast_phrase_restart(coast_phrase_t *g) {
+    g->phase=g->heard_mask=g->timing_valid=0;
+    g->variant=(uint8_t)((g->rng>>8)&1u);
+}
+bool coast_phrase_due(const coast_phrase_t *g, uint32_t now) {
+    return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
+}
+coast_offer_t coast_phrase_propose(const coast_phrase_t *g,int role,
+                                  int key,bool minor,float activity) {
+    coast_offer_t o;
+    memset(&o,0,sizeof o);
+    o.phase=g->phase; o.role=(uint8_t)role; o.midi=-1;
+    if(role<0 || role>2 || g->phase>3 ||
+       (role==2 && g->phase!=0) || (g->phase==3 && role!=0)) return o;
+    int center=60+wrap12(key); if(center>68)center-=12;
+    int lower[4]={-12,-5,minor ? -2 : -3,0};
+    int upper[3]={12,g->variant ? 7 : (minor ? 10 : 9),
+                       g->variant ? (minor ? 5 : 2) : (minor ? 3 : 4)};
+    o.midi=center+(role==2 ? (minor ? -9 : -8) :
+                          role==0 ? lower[g->phase] : upper[g->phase]);
+    uint32_t h=g->rng^(uint32_t)(role*0x9E3779B9u);
+    h=h*1664525u+1013904223u;
+    o.velocity=(role==0 ? .55f : role==1 ? .44f : .32f)+(float)((h>>8)%6u)*.01f;
+    o.hold_ms=role==2 ? 0u : g->phase==3 ? 5000u+(h%501u) : 2800u+(h%301u);
+    if(!(activity>=0 && activity<=1))activity=.5f;
+    float spacing=1.35f-.70f*activity;
+    o.gap_ms=(uint32_t)((float)(5800u+g->rng%401u)*spacing);
+    if(g->phase==3)o.gap_ms=o.hold_ms+4000u+g->rng%4001u;
+    return o;
+}
+bool coast_phrase_heard(coast_phrase_t *g,const coast_offer_t *o,uint32_t now) {
+    if(o->phase!=g->phase || o->midi<0 || g->phase>3 || o->role>2) return false;
+    uint8_t required=g->phase==0 ? 7u : g->phase==3 ? 1u : 3u;
+    uint8_t bit=(uint8_t)(1u<<o->role);
+    if(!(required&bit) || (g->heard_mask&bit))return false;
+    if(!g->heard_mask) {
+        g->phase_ms=now;
+        if(g->phase==0 && g->episodes)++g->returns;
+    }
+    g->heard_mask|=bit; ++g->notes;
+    if(g->heard_mask==required) {
+        g->next_ms=(g->phase==3 ? now : g->phase_ms)+o->gap_ms;
+        if(g->phase==3)++g->episodes;
+        ++g->phase; g->heard_mask=0; g->timing_valid=1;
+        g->rng=g->rng*1664525u+1013904223u;
+    }
+    return true;
+}

@@ -32,4 +32,26 @@ void world_grammar_commit(world_grammar_t *g, const world_offer_t *offer,
                           int heard_index, uint32_t now_ms);
 int world_pitch_count(int key_pc, bool minor);
 int world_pitch_midi(int index, int key_pc, bool minor);
+
+/* COAST's explicit three-role phrase. Main-only, pure proposals; only a real
+ * audio-start acknowledgement advances heard state. Phases 0..2 are outer
+ * pairs, phase 3 coalesces their destination, phase 4 is a bounded rest. */
+typedef struct {
+    uint32_t rng, next_ms, phase_ms, notes, episodes, returns;
+    uint8_t phase, heard_mask, timing_valid, variant;
+} coast_phrase_t;
+typedef struct {
+    uint32_t hold_ms, gap_ms;
+    int midi;
+    float velocity;
+    uint8_t phase, role;
+} coast_offer_t;
+void coast_phrase_init(coast_phrase_t *g, uint32_t seed);
+void coast_phrase_restart(coast_phrase_t *g);
+bool coast_phrase_due(const coast_phrase_t *g, uint32_t now_ms);
+coast_offer_t coast_phrase_propose(const coast_phrase_t *g, int role,
+                                  int key_pc, bool minor, float activity);
+bool coast_phrase_heard(coast_phrase_t *g, const coast_offer_t *offer,
+                        uint32_t now_ms);
+bool coast_phrase_pitch_allowed(int midi, int key_pc, bool minor);
 #endif
