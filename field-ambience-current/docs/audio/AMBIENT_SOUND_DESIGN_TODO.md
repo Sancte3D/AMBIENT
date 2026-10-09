@@ -8,7 +8,7 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-08**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-09**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
@@ -52,7 +52,15 @@ offene Pause vor der Rückkehr.48 vollständige Keys/Collections/Stimmungen
 plus4 echte Seed-/Timerwrap-Phrasen, Host-Suite und H743 bestehen. Die65-s-
 Engineprobe zeigt die Rückkehr bei43,24 s; neue Quellen-/World-Hörabnahme
 bleibt offen. Siehe [HIGHLANDS_GENERATOR_CHECKPOINT.md](HIGHLANDS_GENERATOR_CHECKPOINT.md).
-Nächste einzelne Einheit: SD17, langfristige Entwicklung dieser Rollenregeln.
+SD17 ist jetzt auf diese tatsächlichen Generatoren übertragen: vollständige
+Ausgangsphrase, begrenzte Variation, relative Major-/Minor-Akkordlage und
+erinnerte Rückkehr mit seedabhängig2–4 Zwischenphrasen.2304 Pure-Cases über
+je16 Phrasen und90 Minuten echte Engine-Läufe bestehen; drei29,5-s-Vergleiche
+zeigen gehörte spätere Abschnitte aus Minute2–4. Gemeinsame Besitzer/Tails,
+normale Quellen-/Makrogrenzen und eigener World-Verlauf bleiben wirksam.
+Software-/H743-Nachweis: [PHRASE_DEVELOPMENT_CHECKPOINT.md](PHRASE_DEVELOPMENT_CHECKPOINT.md).
+Wiedererkennbarkeit und Langzeitwirkung sind noch nicht vom Nutzer abgenommen.
+Nächste einzelne Vorbereitung: SD19, gemeinsamer Raum mit diesen Ensembles.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
 ## FUNDAMENTAL FALSCH
@@ -393,7 +401,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD14 | Generator integriert; Hör-/Gerätegate offen | Gegenbewegung, gemeinsamer Akkordton, einmaliger Mittelton; echte Besitzer/Releases/Tails,48 Engine-Phrasen, volle Host-Suite und H743 geprüft; neue70-s-Probe noch hören |
 | SD15 | Lange Quelle und Generator integriert; Hör-/Gerätegate offen | Sechs lange Akkordrollen-Starts mit real gehaltenen gemeinsamen Tönen, zwei Saiten inklusive Release,48 echte Phrasen und50-s-Engineprobe; kein Wiederanschlag gemeinsamer Töne; neue Hörwahl offen |
 | SD16 | Generator integriert; Hör-/Gerätegate offen | Weiter Akkord mit demselben gehaltenen Ton, Pause erst nach tatsächlichem Ende aller drei, verwandte Rückkehr;48 echte Phrasen +4 Seed/Wrap,65-s-Engineprobe, volle Host-Suite und H743 bestehen; finale Quellen-/Hörwahl offen |
-| SD17 | Hörgate | 859 Pure-Score-Wiederkehren, tatsächliche Intervallerinnerung; Langzeitwirkung hören |
+| SD17 | Rollenentwicklung integriert; Hörgate |2304 Pure-Cases×16 Phrasen,90min tatsächliches Engine-PCM und30min64/512-genaue Traces je Partition; Home/Variation/relative Lage/erinnerte Rückkehr, begrenztes Gedächtnis,3 kurze spätere Vergleiche; Form und Wiedererkennbarkeit hören |
 | SD18 | geschlossen durch Remove | Body nicht kompiliert; kein Materialreset oder additive Röhrenfärbung |
 | SD19 | Hörgate | Ein FDN; Impuls/Decay/Mono geprüft und Mono-Auslöschung korrigiert |
 | SD20 | geschlossen | Source-Send 0,35, ein Room, unabhängige Nature, gemeinsame Userwerte erhalten |
@@ -421,7 +429,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
-| SD45 | Hörgate Langzeit | Mindestens 48 min tatsächliches PCM plus Recovery/Wrap; keine NaN/Limiter/Stuck; Form hören |
+| SD45 | Hörgate Langzeit | Bisherige48min plus90min echte Phrasenentwicklung/mehrere Seeds/Grenzen; keine NaN/Limiter/Stuck, alle tatsächlichen Rückkehrstufen und Ende nach Stop; Langzeitform hören |
 | SD46 | geschlossen | Tatsächlicher ARM-Compile-/Funktionssymbol-/DMA-/Bank-Audit, Archive nicht nur umbenannt |
 | SD47 | Geräte-/Storagegate | Bounded Hotpath/Prep und Compilerframes dokumentiert; Journal außerhalb Audio-IRQ, Main-Save-Stall und echte Spitzen offen |
 | SD48 | echtes Gerät | DWT <0,60, null Misses und realer Stack-High-water mit UI/MIDI/Storage |
@@ -601,6 +609,14 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Mehrere Seeds erzeugen weder erkennbare kurze Endlosschleife noch
   orientierungslosen Wandel, unbegrenzte Dichte oder permanenten Halt. Gedächtnis
   und Suchaufwand bleiben begrenzt. Voraussetzung: SD14–SD16 bzw. ausgewählte Welten.
+  **Aktueller Kandidat:**24B Heard-Memory pro World; erste vollständige Phrase
+  lernen, lokal variieren, relativ revoicen, erste Ton-/Rollen-/Akzentfolge mit
+  veränderter Zeitabsicht zurückholen.2–4 Zwischenphrasen, lebender RNG ohne
+  Reset, normale Besitzer-/Tailprüfung, keine neue Audiostimme.2304 Pure-Cases
+  über je16 Phrasen, neun10-Minuten-Engine-Läufe und drei600-s-Kontrollrender
+  bei64/512 bestehen. Kurze29,5-s-Vergleiche zeigen Anfang/verwandte Lage/
+  Rückkehr. Volle Host-Suite und H743 geprüft; endgültige Hör-/Langzeitabnahme
+  bleibt offen, Gesamt-Haken wird nicht aus Testzahlen abgeleitet.
 
 ### 3. Tonkörper, gemeinsamer Raum und sämtliche Effekte
 

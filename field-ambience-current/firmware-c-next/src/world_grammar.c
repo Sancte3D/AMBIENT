@@ -10,6 +10,50 @@ static uint32_t between(world_grammar_t *g, uint32_t lo, uint32_t hi) {
 }
 static int bound(int i) { return i < 0 ? 0 : (i > 7 ? 7 : i); }
 static int wrap12(int i) { i %= 12; return i < 0 ? i + 12 : i; }
+static void development_init(phrase_development_t *d,uint32_t seed) {
+    memset(d,0,sizeof *d);d->phrase_seed=seed;d->span=2;
+}
+static void development_complete(phrase_development_t *d,uint8_t variant,uint32_t rng) {
+    if(!d->completed) {d->home_seed=d->phrase_seed;d->home_variant=variant;}
+    if(d->kind==PHRASE_RETURN)++d->recalls;
+    ++d->completed;
+    if(d->kind==PHRASE_HOME)d->next_kind=PHRASE_VARIATION;
+    else if(d->kind==PHRASE_RETURN) {
+        d->pos=0;d->span=(uint8_t)(2u+((rng>>8)%3u));d->next_kind=PHRASE_VARIATION;
+    } else {
+        ++d->pos;
+        d->next_kind=d->pos>=d->span ? PHRASE_RETURN :
+            d->kind==PHRASE_VARIATION ? PHRASE_RELATED : PHRASE_VARIATION;
+    }
+}
+static uint8_t development_begin(phrase_development_t *d,uint32_t rng) {
+    d->kind=d->next_kind;d->phrase_seed=rng;
+    return d->kind==PHRASE_VARIATION ? (uint8_t)(d->home_variant^1u) :
+           d->kind==PHRASE_RETURN ? d->home_variant : (uint8_t)((rng>>8)&1u);
+}
+static uint32_t development_seed(const phrase_development_t *d,uint32_t rng,int phase) {
+    if(d->kind!=PHRASE_RETURN)return rng;
+    /* Reconstruct only the complete heard first phrase's bounded intent.
+     * Actual onsets still wait owners/tails; the separate live RNG advances. */
+    uint32_t h=d->home_seed;
+    for(int i=0;i<phase;++i)h=h*1664525u+1013904223u;
+    return h;
+}
+static float development_time(const phrase_development_t *d) {
+    return d->kind==PHRASE_VARIATION ? 1.08f : d->kind==PHRASE_RELATED ? 1.12f :
+           d->kind==PHRASE_RETURN ? .96f : 1.0f;
+}
+static int development_center(const phrase_development_t *d,int key,bool *minor) {
+    int center=60+wrap12(key);if(center>68)center-=12;
+    if(d->kind==PHRASE_RELATED) {
+        /* The relative major/minor pentatonic has exactly the same pitch
+         * classes. Revoice new notes; never change engine Key or live Hz. */
+        center+=*minor ? 3 : -3;*minor=!*minor;
+        if(center<57)center+=12;
+        if(center>68)center-=12;
+    }
+    return center;
+}
 static bool core(int midi, int key, bool minor) {
     static const uint8_t major[5] = {0, 2, 4, 7, 9};
     static const uint8_t dark[5] = {0, 3, 5, 7, 10};
@@ -201,9 +245,12 @@ bool woodland_phrase_pitch_allowed(int midi,int key,bool minor) {
 void woodland_phrase_init(woodland_phrase_t *g,uint32_t seed) {
     memset(g,0,sizeof *g);g->rng=seed ? seed : 0xA6B13E7Du;
     g->variant=(uint8_t)(g->rng&1u);
+    development_init(&g->development,g->rng);
 }
 void woodland_phrase_restart(woodland_phrase_t *g) {
-    g->phase=g->timing_valid=0;g->variant=(uint8_t)((g->rng>>8)&1u);
+    if(g->phase==6)g->variant=development_begin(&g->development,g->rng);
+    else g->development.phrase_seed=g->rng;
+    g->phase=g->timing_valid=0;
 }
 bool woodland_phrase_due(const woodland_phrase_t *g,uint32_t now) {
     return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
@@ -212,12 +259,12 @@ woodland_offer_t woodland_phrase_propose(const woodland_phrase_t *g,
                                        int key,bool minor,float activity) {
     woodland_offer_t o;memset(&o,0,sizeof o);o.midi=-1;o.phase=g->phase;
     if(g->phase>=6)return o;
-    int center=60+wrap12(key);if(center>68)center-=12;
+    int center=development_center(&g->development,key,&minor);
     int third=minor ? -9 : -8,sixth=minor ? -2 : -3;
     int pitch[6]={-12,third,sixth,0,third,g->variant ? sixth : -5};
     static const uint32_t holds[6]={11000,18000,10000,8000,9000,6000};
     static const uint32_t gaps[6]={2000,12000,9000,4000,7000,0};
-    uint32_t h=g->rng*1664525u+1013904223u;
+    uint32_t h=development_seed(&g->development,g->rng,g->phase)*1664525u+1013904223u;
     o.role=g->phase&1u;o.midi=center+pitch[g->phase];
     o.velocity=(o.role ? .48f : .58f)+(float)((h>>8)%5u)*.01f;
     o.hold_ms=holds[g->phase]+(h%501u);
@@ -225,6 +272,8 @@ woodland_offer_t woodland_phrase_propose(const woodland_phrase_t *g,
     o.gap_ms=(uint32_t)((float)gaps[g->phase]*(1.35f-.70f*activity));
     if(o.gap_ms<1400)o.gap_ms=1400;
     if(g->phase==5)o.gap_ms=o.hold_ms+5000u+(h%4001u);
+    float time=development_time(&g->development);
+    o.hold_ms=(uint32_t)((float)o.hold_ms*time);o.gap_ms=(uint32_t)((float)o.gap_ms*time);
     return o;
 }
 bool woodland_phrase_heard(woodland_phrase_t *g,const woodland_offer_t *o,uint32_t now) {
@@ -232,7 +281,7 @@ bool woodland_phrase_heard(woodland_phrase_t *g,const woodland_offer_t *o,uint32
     if(g->phase==0 && g->episodes)++g->returns;
     if(g->phase==2)++g->answers;
     g->rng=g->rng*1664525u+1013904223u;++g->notes;
-    if(++g->phase==6)++g->episodes;
+    if(++g->phase==6) {++g->episodes;development_complete(&g->development,g->variant,g->rng);}
     g->next_ms=now+o->gap_ms;g->timing_valid=1;return true;
 }
 bool highlands_phrase_pitch_allowed(int midi,int key,bool minor) {
@@ -241,10 +290,12 @@ bool highlands_phrase_pitch_allowed(int midi,int key,bool minor) {
 void highlands_phrase_init(highlands_phrase_t *g,uint32_t seed) {
     memset(g,0,sizeof *g);g->rng=seed ? seed : 0xA6B13E7Du;
     g->variant=(uint8_t)(g->rng&1u);
+    development_init(&g->development,g->rng);
 }
 void highlands_phrase_restart(highlands_phrase_t *g) {
+    if(g->phase==8)g->variant=development_begin(&g->development,g->rng);
+    else g->development.phrase_seed=g->rng;
     g->phase=g->timing_valid=g->rest_valid=0;
-    g->variant=(uint8_t)((g->rng>>8)&1u);
 }
 bool highlands_phrase_due(const highlands_phrase_t *g,uint32_t now) {
     return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
@@ -253,19 +304,27 @@ highlands_offer_t highlands_phrase_propose(const highlands_phrase_t *g,
                                          int key,bool minor,float activity) {
     highlands_offer_t o;memset(&o,0,sizeof o);o.midi=-1;o.phase=g->phase;
     if(g->phase>=8 || (g->phase==5 && !g->rest_valid))return o;
-    int center=60+wrap12(key);if(center>68)center-=12;
-    int pitch[8]={-12,7,minor ? 3 : 4,minor || g->variant ? -5 : -3,
-                  0,-12,7,minor ? 3 : 4};
+    int center=development_center(&g->development,key,&minor);
+    bool compact=g->development.kind==PHRASE_VARIATION;
+    int fifth=compact ? -5 : 7;
+    /* In the compact voicing the old A3 remains in the tail ledger. Use
+     * that exact tuned fifth after its owner retires, rather than B3 only
+     * two semitones above the low tail. The normal live-unison guard waits. */
+    int pitch[8]={-12,fifth,minor ? 3 : 4,compact || minor || g->variant ? -5 : -3,
+                  0,-12,fifth,minor ? 3 : 4};
     static const uint8_t roles[8]={0,1,2,0,1,0,1,2};
     static const uint32_t holds[8]={6000,7000,0,7000,7000,7500,7200,7200};
     static const uint32_t gaps[8]={800,800,8400,1000,0,1000,1000,0};
-    uint32_t h=g->rng*1664525u+1013904223u;
+    uint32_t h=development_seed(&g->development,g->rng,g->phase)*1664525u+1013904223u;
     o.role=roles[g->phase];o.midi=center+pitch[g->phase];
     static const float accents[8]={.55f,.41f,.45f,.48f,.50f,.52f,.38f,.44f};
     o.velocity=accents[g->phase]+(float)((h>>8)%5u)*.01f;
     o.hold_ms=holds[g->phase] ? holds[g->phase]+h%251u : 0;
     if(!(activity>=0 && activity<=1))activity=.5f;
     o.gap_ms=(uint32_t)((float)gaps[g->phase]*(1.35f-.70f*activity));
+    if(gaps[g->phase] && o.gap_ms<500)o.gap_ms=500;
+    float time=development_time(&g->development);
+    o.hold_ms=(uint32_t)((float)o.hold_ms*time);o.gap_ms=(uint32_t)((float)o.gap_ms*time);
     if(gaps[g->phase] && o.gap_ms<500)o.gap_ms=500;
     return o;
 }
@@ -275,7 +334,7 @@ bool highlands_phrase_heard(highlands_phrase_t *g,const highlands_offer_t *o,uin
        (g->phase==5 && !g->rest_valid))return false;
     if(g->phase==5)++g->returns;
     g->rng=g->rng*1664525u+1013904223u;++g->notes;
-    if(++g->phase==8)++g->episodes;
+    if(++g->phase==8) {++g->episodes;development_complete(&g->development,g->variant,g->rng);}
     if(g->phase==5 || g->phase==8)g->rest_valid=0;
     g->next_ms=now+o->gap_ms;g->timing_valid=1;return true;
 }
@@ -290,10 +349,12 @@ void coast_phrase_init(coast_phrase_t *g, uint32_t seed) {
     memset(g,0,sizeof *g);
     g->rng=seed ? seed : 0xA6B13E7Du;
     g->variant=(uint8_t)(g->rng&1u);
+    development_init(&g->development,g->rng);
 }
 void coast_phrase_restart(coast_phrase_t *g) {
+    if(g->phase==4)g->variant=development_begin(&g->development,g->rng);
+    else g->development.phrase_seed=g->rng;
     g->phase=g->heard_mask=g->timing_valid=0;
-    g->variant=(uint8_t)((g->rng>>8)&1u);
 }
 bool coast_phrase_due(const coast_phrase_t *g, uint32_t now) {
     return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
@@ -305,20 +366,23 @@ coast_offer_t coast_phrase_propose(const coast_phrase_t *g,int role,
     o.phase=g->phase; o.role=(uint8_t)role; o.midi=-1;
     if(role<0 || role>2 || g->phase>3 ||
        (role==2 && g->phase!=0) || (g->phase==3 && role!=0)) return o;
-    int center=60+wrap12(key); if(center>68)center-=12;
+    int center=development_center(&g->development,key,&minor);
     int lower[4]={-12,-5,minor ? -2 : -3,0};
     int upper[3]={12,g->variant ? 7 : (minor ? 10 : 9),
                        g->variant ? (minor ? 5 : 2) : (minor ? 3 : 4)};
     o.midi=center+(role==2 ? (minor ? -9 : -8) :
                           role==0 ? lower[g->phase] : upper[g->phase]);
-    uint32_t h=g->rng^(uint32_t)(role*0x9E3779B9u);
+    uint32_t intent=development_seed(&g->development,g->rng,g->phase);
+    uint32_t h=intent^(uint32_t)(role*0x9E3779B9u);
     h=h*1664525u+1013904223u;
     o.velocity=(role==0 ? .55f : role==1 ? .44f : .32f)+(float)((h>>8)%6u)*.01f;
     o.hold_ms=role==2 ? 0u : g->phase==3 ? 5000u+(h%501u) : 2800u+(h%301u);
     if(!(activity>=0 && activity<=1))activity=.5f;
     float spacing=1.35f-.70f*activity;
-    o.gap_ms=(uint32_t)((float)(5800u+g->rng%401u)*spacing);
-    if(g->phase==3)o.gap_ms=o.hold_ms+4000u+g->rng%4001u;
+    o.gap_ms=(uint32_t)((float)(5800u+intent%401u)*spacing);
+    if(g->phase==3)o.gap_ms=o.hold_ms+4000u+intent%4001u;
+    float time=development_time(&g->development);
+    o.hold_ms=(uint32_t)((float)o.hold_ms*time);o.gap_ms=(uint32_t)((float)o.gap_ms*time);
     return o;
 }
 bool coast_phrase_heard(coast_phrase_t *g,const coast_offer_t *o,uint32_t now) {
@@ -336,6 +400,7 @@ bool coast_phrase_heard(coast_phrase_t *g,const coast_offer_t *o,uint32_t now) {
         if(g->phase==3)++g->episodes;
         ++g->phase; g->heard_mask=0; g->timing_valid=1;
         g->rng=g->rng*1664525u+1013904223u;
+        if(g->phase==4)development_complete(&g->development,g->variant,g->rng);
     }
     return true;
 }

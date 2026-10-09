@@ -33,12 +33,23 @@ void world_grammar_commit(world_grammar_t *g, const world_offer_t *offer,
 int world_pitch_count(int key_pc, bool minor);
 int world_pitch_midi(int index, int key_pc, bool minor);
 
+/* Heard phrase memory, no extra source or user parameter. A complete first
+ * phrase learns its seed/contour. Variation and relative-key voicings lead
+ * back to that memory after two to four intervening complete phrases.
+ * The live RNG continues; recalling an intent never resets the audio/RNG. */
+enum { PHRASE_HOME=0,PHRASE_VARIATION,PHRASE_RELATED,PHRASE_RETURN };
+typedef struct {
+    uint32_t home_seed,phrase_seed,completed,recalls;
+    uint8_t kind,next_kind,span,pos,home_variant;
+} phrase_development_t;
+
 /* COAST's explicit three-role phrase. Main-only, pure proposals; only a real
  * audio-start acknowledgement advances heard state. Phases 0..2 are outer
  * pairs, phase 3 coalesces their destination, phase 4 is a bounded rest. */
 typedef struct {
     uint32_t rng, next_ms, phase_ms, notes, episodes, returns;
     uint8_t phase, heard_mask, timing_valid, variant;
+    phrase_development_t development;
 } coast_phrase_t;
 typedef struct {
     uint32_t hold_ms, gap_ms;
@@ -60,6 +71,7 @@ bool coast_phrase_pitch_allowed(int midi, int key_pc, bool minor);
 typedef struct {
     uint32_t rng,next_ms,notes,episodes,answers,returns;
     uint8_t phase,timing_valid,variant;
+    phrase_development_t development;
 } woodland_phrase_t;
 typedef struct {
     uint32_t hold_ms,gap_ms;
@@ -82,6 +94,7 @@ bool woodland_phrase_pitch_allowed(int midi,int key_pc,bool minor);
 typedef struct {
     uint32_t rng,next_ms,notes,episodes,returns;
     uint8_t phase,timing_valid,rest_valid,variant;
+    phrase_development_t development;
 } highlands_phrase_t;
 typedef struct {
     uint32_t hold_ms,gap_ms;

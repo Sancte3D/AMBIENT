@@ -1,0 +1,49 @@
+{
+  "scope": "H743 Product Release; same verified GCC13.2.1/Newlib4.4 toolchain comparison to PR150; Journal OFF. Link/frame/DMA audit passes; device CPU/high-water/hearing open.",
+  "baseline_remote_commit": "df69a1ab8a2162b770bc34388184386b594f238e",
+  "baseline": {
+    "elf_sha256": "7a7aa47a35dfaa27d68ea0b24ed82ff4330ceb4413cb4020605d6a0ad8762cb3",
+    "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+    "profile": "product",
+    "core_max_frame_bytes": 192,
+    "limitations": "Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48."
+  },
+  "integrated": {
+    "elf_sha256": "c6e67d391826b4a51ed685445230580a278ed0151c44cc29fe0de107a809f130",
+    "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+    "profile": "product",
+    "core_max_frame_bytes": 192,
+    "limitations": "Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48."
+  },
+  "banks_bytes": {
+    "FLASH": {
+      "baseline": 194316,
+      "integrated": 195936,
+      "delta": 1620
+    },
+    "DTCMRAM": {
+      "baseline": 16384,
+      "integrated": 16384,
+      "delta": 0
+    },
+    "RAM_D1": {
+      "baseline": 65600,
+      "integrated": 65664,
+      "delta": 64
+    },
+    "RAM_D2": {
+      "baseline": 60808,
+      "integrated": 60808,
+      "delta": 0
+    },
+    "bank1_load_image": {
+      "baseline": 194316,
+      "integrated": 195936,
+      "delta": 1620
+    }
+  },
+  "memory_bytes_per_world": 24,
+  "room_tank_bytes": 55352,
+  "room_diffusion_bytes": 5296,
+  "audio_dma_bytes": 4096
+}

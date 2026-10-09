@@ -1,0 +1,401 @@
+{
+  "scope": "Actual Product Main/owner/tail/audio-start paths, 600s per World. Short montage: Home, Related, Return, each 9.5s with two 0.5s labelled comparison gaps. No invented continuous transition.",
+  "parameters": {
+    "seed": 1234,
+    "key": "D",
+    "collection": "major",
+    "tuning": "equal",
+    "activity": 0.5,
+    "color": 0.5,
+    "attack": 0.5,
+    "release": 0.5,
+    "volume": 0.6,
+    "room": 0.24,
+    "nature": 0
+  },
+  "control_tick_ms": 10,
+  "source_sha256": {
+    "src/engine_product.c": "f2e2393d0b2429412826de2b07d6f2c348c0efbeb14a61b190f8e417b1956d17",
+    "src/world_grammar.c": "a5076b6cedf56b6ea9154300366dd846308aa593b1ffec47e76492b522a90397",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "af50ea44971a41e2af647a44d08db09ce2d3cd81ae65c4b626de76557467cc9b",
+    "src/ambient_room.c": "04c3bc83fdaa0938503a81c9270a068d9f4c36ca6401630155146616aded89ef",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "tools/render_phrase_development.c": "71ef939d7ca696e92beee49710261f57c02a68eb33a6085bcd9c959f9ef0ead8",
+    "tools/review_phrase_development.py": "d09f2bf147b32b4c004b8cf329e19402532514171c7bac2138868883f8192d50",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "f9ce41e7407a52b0a49515b190aaa2dd611f3b174d4d43e2c94cb769547fb92e",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "68d587c4cb05bd89257e3044714227a55c079542a7d4fd3a09f0a061256d20b9",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "69099bed083bfff91aba015c823f0efd1b250fb680c9b5705edd59125f51aa54",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6"
+  },
+  "worlds": [
+    {
+      "world": "COAST",
+      "renderer_report": "world=0 seed=1234 starts=80 phrases=10 memory_returns=2 max_sources=3 final_sources=0 peak=0.09307861",
+      "raw": {
+        "integrated_lufs": -33.3,
+        "true_peak_dbfs": -20.6
+      },
+      "mono": 0.9713364913824555,
+      "dc": [
+        -7.786249808082955e-09,
+        -3.553464028840703e-09
+      ],
+      "pcm_64_512_identical": true,
+      "raw_sha256": "5ce94b088f1b682b1ba77c7ee58041c354f4a2fcd0e81f0a36c849549287eaa0",
+      "trace_sha256": "678c360fe96ef2ab5bb3e750b17014af7a026a7a719bb9bba09846f727665de3",
+      "phrase_openings": [
+        {
+          "kind": 0,
+          "completed": 0,
+          "seconds": 0.01
+        },
+        {
+          "kind": 1,
+          "completed": 1,
+          "seconds": 58.19
+        },
+        {
+          "kind": 2,
+          "completed": 2,
+          "seconds": 117.78
+        },
+        {
+          "kind": 3,
+          "completed": 3,
+          "seconds": 178.23
+        },
+        {
+          "kind": 1,
+          "completed": 4,
+          "seconds": 236.03
+        },
+        {
+          "kind": 2,
+          "completed": 5,
+          "seconds": 295.85
+        },
+        {
+          "kind": 1,
+          "completed": 6,
+          "seconds": 355.94
+        },
+        {
+          "kind": 2,
+          "completed": 7,
+          "seconds": 416.01
+        },
+        {
+          "kind": 3,
+          "completed": 8,
+          "seconds": 476.28
+        },
+        {
+          "kind": 1,
+          "completed": 9,
+          "seconds": 534.08
+        }
+      ],
+      "listen_file": "AMBIENT_COAST_Development_compare_29s.wav",
+      "listen": {
+        "integrated_lufs": -22.2,
+        "true_peak_dbfs": -11.6
+      },
+      "listen_sha256": "2419694d7bcd42bcd3e52f5e41cd53a9db9541f4bd0dd7bd361b2dabe740f1fd",
+      "constant_gain_db": 10.299999999999997,
+      "segments": [
+        {
+          "kind": "home",
+          "start_seconds": 0.0,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 0.01
+        },
+        {
+          "kind": "related",
+          "start_seconds": 117.68,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 117.78
+        },
+        {
+          "kind": "return",
+          "start_seconds": 178.13,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 178.23
+        }
+      ],
+      "comparison_gap_seconds": 0.5
+    },
+    {
+      "world": "WOODLAND",
+      "renderer_report": "world=1 seed=1234 starts=70 phrases=11 memory_returns=2 max_sources=2 final_sources=0 peak=0.07611084",
+      "raw": {
+        "integrated_lufs": -33.7,
+        "true_peak_dbfs": -22.4
+      },
+      "mono": 0.9264517942756573,
+      "dc": [
+        4.221252303004535e-10,
+        1.3182763339710885e-09
+      ],
+      "pcm_64_512_identical": true,
+      "raw_sha256": "70bb84dd52ff21d518ca8b201afd1abc91d09da403d94ee952297544995cad74",
+      "trace_sha256": "dd48c9ba1f7a54f4c742e9f191b2f2a8b5c92a19b8cbdf92a9ec17d199da3bb2",
+      "phrase_openings": [
+        {
+          "kind": 0,
+          "completed": 0,
+          "seconds": 0.01
+        },
+        {
+          "kind": 1,
+          "completed": 1,
+          "seconds": 46.62
+        },
+        {
+          "kind": 2,
+          "completed": 2,
+          "seconds": 95.54
+        },
+        {
+          "kind": 3,
+          "completed": 3,
+          "seconds": 149.63
+        },
+        {
+          "kind": 1,
+          "completed": 4,
+          "seconds": 194.63
+        },
+        {
+          "kind": 2,
+          "completed": 5,
+          "seconds": 244.18
+        },
+        {
+          "kind": 1,
+          "completed": 6,
+          "seconds": 306.58
+        },
+        {
+          "kind": 3,
+          "completed": 7,
+          "seconds": 359.04
+        },
+        {
+          "kind": 1,
+          "completed": 8,
+          "seconds": 404.04
+        },
+        {
+          "kind": 2,
+          "completed": 9,
+          "seconds": 453.46
+        },
+        {
+          "kind": 1,
+          "completed": 10,
+          "seconds": 513.6
+        },
+        {
+          "kind": 3,
+          "completed": 11,
+          "seconds": 565.78
+        }
+      ],
+      "listen_file": "AMBIENT_WOODLAND_Development_compare_29s.wav",
+      "listen": {
+        "integrated_lufs": -21.2,
+        "true_peak_dbfs": -11.7
+      },
+      "listen_sha256": "0da9a4de68eceff3fc898c2822db2e1a01c4fcb1e57d489ab8663274fa46036a",
+      "constant_gain_db": 10.700000000000003,
+      "segments": [
+        {
+          "kind": "home",
+          "start_seconds": 0.0,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 0.01
+        },
+        {
+          "kind": "related",
+          "start_seconds": 95.44,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 95.54
+        },
+        {
+          "kind": "return",
+          "start_seconds": 149.53,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 149.63
+        }
+      ],
+      "comparison_gap_seconds": 0.5
+    },
+    {
+      "world": "HIGHLANDS",
+      "renderer_report": "world=2 seed=1234 starts=64 phrases=8 memory_returns=1 max_sources=3 final_sources=0 peak=0.07528687",
+      "raw": {
+        "integrated_lufs": -30.0,
+        "true_peak_dbfs": -22.5
+      },
+      "mono": 0.9751093646739325,
+      "dc": [
+        -5.409200355489418e-10,
+        -8.073433366402116e-12
+      ],
+      "pcm_64_512_identical": true,
+      "raw_sha256": "40b5c4ae2c4f78c01933bfee9b3fa2c95a668eb6572c665df3e01b5a22dc79b1",
+      "trace_sha256": "a09dc5c65d0183e5312bdad006695695e611a1586033ffb40a655bfe70a293bf",
+      "phrase_openings": [
+        {
+          "kind": 0,
+          "completed": 0,
+          "seconds": 0.01
+        },
+        {
+          "kind": 1,
+          "completed": 1,
+          "seconds": 72.23
+        },
+        {
+          "kind": 2,
+          "completed": 2,
+          "seconds": 147.23
+        },
+        {
+          "kind": 3,
+          "completed": 3,
+          "seconds": 223.08
+        },
+        {
+          "kind": 1,
+          "completed": 4,
+          "seconds": 294.6
+        },
+        {
+          "kind": 2,
+          "completed": 5,
+          "seconds": 370.04
+        },
+        {
+          "kind": 1,
+          "completed": 6,
+          "seconds": 446.88
+        },
+        {
+          "kind": 2,
+          "completed": 7,
+          "seconds": 522.73
+        }
+      ],
+      "listen_file": "AMBIENT_HIGHLANDS_Development_compare_29s.wav",
+      "listen": {
+        "integrated_lufs": -22.7,
+        "true_peak_dbfs": -15.5
+      },
+      "listen_sha256": "febff5444c9e810c81ca6f5f225701d16422dfcda826fdfd81879fecd152eda8",
+      "constant_gain_db": 7.0,
+      "segments": [
+        {
+          "kind": "home",
+          "start_seconds": 0.0,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 0.01
+        },
+        {
+          "kind": "related",
+          "start_seconds": 147.13,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 147.23
+        },
+        {
+          "kind": "return",
+          "start_seconds": 222.98,
+          "duration_seconds": 9.5,
+          "cut_edge_fade_ms": 40,
+          "first_ack_seconds": 223.08
+        }
+      ],
+      "comparison_gap_seconds": 0.5
+    }
+  ]
+}

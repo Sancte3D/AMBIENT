@@ -284,6 +284,22 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Verify actual long-form phrase memory and render short comparisons
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_phrase_development.py build-phrase-development
+      - name: Upload later-phrase hearing comparisons and long traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-phrase-development-29s
+          path: |
+            field-ambience-current/firmware-c-next/build-phrase-development/AMBIENT_*_Development_compare_29s.wav
+            field-ambience-current/firmware-c-next/build-phrase-development/PHRASE_DEVELOPMENT_METRICS.json
+            field-ambience-current/firmware-c-next/build-phrase-development/*.events.csv
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest
