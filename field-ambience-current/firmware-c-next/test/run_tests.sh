@@ -68,6 +68,15 @@ cmake --build "$tmp/product-host" -j2 >"$tmp/product-host-build.log"
     "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/highlands_generator_test"
 "$tmp/highlands_generator_test"
 
+# Heard development across complete phrases and actual ten-minute engine runs.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_phrase_development.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+    "$src/src/ambient_room.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" \
+    "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/phrase_development_test"
+"$tmp/phrase_development_test"
+
 # Actual shared room/Nature, audio transitions and score independence.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_room_nature.c" \
     "$src/src/engine_product.c" "$src/src/world_grammar.c" \

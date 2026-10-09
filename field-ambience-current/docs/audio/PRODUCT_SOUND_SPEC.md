@@ -1,6 +1,6 @@
-# AMBIENT — Product Sound Candidate 0.6
+# AMBIENT — Product Sound Candidate 0.7
 
-Stand 2026-10-08. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
+Stand 2026-10-09. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
 `FAM_SOUND_PRODUCT`, Wireformat SCN7. Dies ist der reproduzierbare
 **Softwarevertrag**, keine endgültige Klang- oder Gerätefreigabe.
 `reference` bleibt der CMake-Default; historische Beschreibungen gelten dafür.
@@ -8,7 +8,8 @@ Der aktuelle Nachweis und die offenen Gates stehen in
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md) und
 [COAST_GENERATOR_CHECKPOINT.md](COAST_GENERATOR_CHECKPOINT.md) sowie
 [WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md) und
-[HIGHLANDS_GENERATOR_CHECKPOINT.md](HIGHLANDS_GENERATOR_CHECKPOINT.md), die vollständige
+[HIGHLANDS_GENERATOR_CHECKPOINT.md](HIGHLANDS_GENERATOR_CHECKPOINT.md) und
+[PHRASE_DEVELOPMENT_CHECKPOINT.md](PHRASE_DEVELOPMENT_CHECKPOINT.md), die vollständige
 Arbeitsliste in [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md).
 
 ## Produktidee und bewusst kleiner Umfang
@@ -139,7 +140,8 @@ Quinte und verwandter Sext/Septim wechseln. Velocity unten0,58..0,62,
 oben0,48..0,52. Activity skaliert kommende Zwischenräume, weder Tonlängen noch
 Gain/Color. Der wirkliche Saitenausklang kann geplante Abstände verlängern.
 Die sechs Schritte sind keine unbegrenzte gleichförmige Notenwarteschlange;
-langfristige musikalische Entwicklung und Hörwahl bleiben offene Gates.
+die langfristige Entwicklung folgt dem gemeinsamen begrenzten Phrasengedächtnis
+unten. Quellen-/World-Hörwahl bleibt offen.
 
 HIGHLANDS besitzt einen Acht-Schritt-Zustand. Seed1234/D-Dur öffnet mit
 D3/A4/F#4, wechselt nur die Partner zu B3/D4 und behält F#4 im selben Owner15.
@@ -157,7 +159,44 @@ generierte Holds werden bei Pitch-Kontextwechsel ebenfalls verworfen, manuelle
 gehaltene Hz bleiben. Nach der Reprise erneut vollständige Retirement und Pause,
 kein periodischer DSP-Reset. Default-Reprise43,24 s, letzter Einsatz45,26 s,
 letztes tatsächliches Quellenende59,65 s in der65-s-Engineprobe. Die automatische
-Rückkehr zählt als gehört; langfristige Entwicklung bleibt SD17, kein finaler Loop-Lock.
+Rückkehr zählt als gehört; die langfristige Entwicklung folgt ebenfalls der
+unten beschriebenen Erinnerung. Kein finaler musikalischer Loop-Lock.
+
+### Entwicklung über mehrere vollständige Phrasen
+
+Die ersten vollständigen Rollenphrasen sind gegenüber Candidate0.6 bytegleich.
+Danach folgt **Ausgangsphrase → Variation → verwandte Akkordlage → Erinnerung**.
+Nach der ersten Erinnerung liegen seedabhängig zwei bis vier vollständige
+Variations-/Verwandtschaftsphrasen zwischen den Rückkehren. Der lebende RNG
+läuft weiter, keine Source-/Room-/Pitchhistorie wird dafür zurückgesetzt.
+
+Pro World existiert `phrase_development_t`:24B fester Main-State, vier32-Bit-
+Werte plus fünf8-Bit-Werte/Alignment; keine Notenwarteschlange. Erst die letzte
+bestätigte Rolle lernt die erste vollständige Phrase über Opening-Seed und
+Route. Abgebrochene Teilphrasen lernen nichts; ihre neue Öffnung erhält den
+aktuellen Seed. Nur ein kompletter gehörter Durchlauf zählt als Erinnerung.
+Eine erinnerte Phrase rekonstruiert ihre damaligen Tonhöhen, Rollen, Akzente und
+Halte-/Abstandsabsichten mit höchstens sieben LCG-Schritten. Tatsächliche
+Abstände berücksichtigen die aktuelle Activity, auch bei Erinnerung. Reale
+Einsätze warten weiterhin reale Besitzer/Tails ab; sie werden nicht als feste
+Audiozeiten wiedergegeben. Pitch-Kontext/World/Seed-Neustart erzeugt einen neuen
+Phrasenzustand; Mute/Präsenz/Stop lernen keine Teilphrasen. Erneutes Generate-On startet
+mit einer neuen Ausgangsphrase; es stellt keinen Audiostate wieder her.
+
+| Funktion | Tonführung | Zeitabsicht relativ zur Ausgangsphrase |
+|---|---|---|
+| Variation | COAST nimmt die andere obere Route; WOODLAND den anderen Schluss; HIGHLANDS die Quinte eine Oktave tiefer und anschließend deren exakte gestimmte Lage statt eines engen B3/A3-Nachklangpaars | Hold und geplante Abstände×1,08 |
+| Verwandte Lage | Relative Minor-Pentatonik bei Major, relative Major-Pentatonik bei Minor; exakt dieselben erlaubten Pitch Classes, nur neue Tonika/Lage. D-Dur ergibt eine B-Moll-Lage. Kein globaler Key-/Tuningwechsel und kein Live-Retune | Hold und geplante Abstände×1,12 |
+| Erinnerung | Tonfolge, Rollen und Akzente der vollständig gehörten ersten Phrase; gemeinsame reale Eigentümer bleiben nach den bestehenden World-Regeln stehen | erinnerte Hold-/Abstandsabsicht×0,96; keine identische Zeit-/Audio-Schleife |
+
+Activity bleibt ausschließlich ein Abstand-/Pausenfaktor. Die Entwicklungs-
+funktion skaliert die nominalen Holds separat; sie verändert keine SHAPE-/Color-
+Makrogrenze. HIGHLANDS-Quellenpausen behalten ihren gewöhnlichen Activity-/Seed-
+Wert und beginnen erst nach vollständiger Retirement. Alle privaten Register,
+drei globalen/zwei lokalen Slots und Harmonie-/Release-Grenzen bleiben wirksam.
+Die30-Minuten-Engine-Traces und neun10-Minuten-Langläufe prüfen tatsächliche
+Fortschritte, vollständige Rückkehr, endliche Ausgabe und Ende nach Stop;
+Wiedererkennbarkeit, musikalische Ruhe und Langzeitwirkung bleiben SD17-Hörgates.
 
 ## Versioniertes Parameterregister
 

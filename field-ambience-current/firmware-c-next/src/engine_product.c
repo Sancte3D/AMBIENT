@@ -496,6 +496,11 @@ int engine_generative_melody_count(void) { return note_count; }
 int engine_generative_dejavu_count(void) { return (int)(world==WORLD_WOODLAND ? woodland.answers : 0); }
 uint32_t engine_generative_return_count(void) { return world==WORLD_COAST ? coast.returns : world==WORLD_WOODLAND ? woodland.returns : highlands.returns; }
 uint32_t engine_generative_episode_count(void) { return world==WORLD_COAST ? coast.episodes : world==WORLD_WOODLAND ? woodland.episodes : highlands.episodes; }
+static const phrase_development_t *current_development(void) {
+    return world==WORLD_COAST ? &coast.development : world==WORLD_WOODLAND ? &woodland.development : &highlands.development;
+}
+int engine_generative_phrase_kind(void) { return current_development()->kind; }
+uint32_t engine_generative_memory_return_count(void) { return current_development()->recalls; }
 uint32_t engine_admission_rejections(void) { return rejects; }
 uint32_t engine_output_limited_samples(void) { return atomic_load(&limited); }
 uint32_t engine_nonfinite_samples(void) { return atomic_load(&faults); }

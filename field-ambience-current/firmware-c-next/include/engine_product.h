@@ -11,6 +11,9 @@ int engine_sounding_frequencies(float *out,int max);
 uint32_t engine_admission_rejections(void);
 uint32_t engine_generative_return_count(void);
 uint32_t engine_generative_episode_count(void);
+/* Main-only observations of acknowledged phrase development; not controls. */
+int engine_generative_phrase_kind(void);
+uint32_t engine_generative_memory_return_count(void);
 uint32_t engine_output_limited_samples(void);
 uint32_t engine_nonfinite_samples(void);
 int engine_product_world(void);
