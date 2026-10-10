@@ -1,6 +1,6 @@
-# AMBIENT — Product Sound Candidate 0.7
+# AMBIENT — Product Sound Candidate 0.8
 
-Stand 2026-10-09. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
+Stand 2026-10-11. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
 `FAM_SOUND_PRODUCT`, Wireformat SCN7. Dies ist der reproduzierbare
 **Softwarevertrag**, keine endgültige Klang- oder Gerätefreigabe.
 `reference` bleibt der CMake-Default; historische Beschreibungen gelten dafür.
@@ -9,7 +9,8 @@ Der aktuelle Nachweis und die offenen Gates stehen in
 [COAST_GENERATOR_CHECKPOINT.md](COAST_GENERATOR_CHECKPOINT.md) sowie
 [WOODLAND_GENERATOR_CHECKPOINT.md](WOODLAND_GENERATOR_CHECKPOINT.md) und
 [HIGHLANDS_GENERATOR_CHECKPOINT.md](HIGHLANDS_GENERATOR_CHECKPOINT.md) und
-[PHRASE_DEVELOPMENT_CHECKPOINT.md](PHRASE_DEVELOPMENT_CHECKPOINT.md), die vollständige
+[PHRASE_DEVELOPMENT_CHECKPOINT.md](PHRASE_DEVELOPMENT_CHECKPOINT.md) und
+[SD19_ROOM_CALIBRATION_CHECKPOINT.md](SD19_ROOM_CALIBRATION_CHECKPOINT.md), die vollständige
 Arbeitsliste in [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md).
 
 ## Produktidee und bewusst kleiner Umfang
@@ -215,7 +216,7 @@ Scene-Werte sind Parameter, keine Besitzer-/Envelope-/Raumsnapshots.
 | Activity | Score, 0 / 0,5 / 1 | Faktor 1,35..0,65, nur kommende Angebote; weder Gain/Color/Key noch zusätzliche Quellen | SCN7; 0 ist langsame aktive Welt, kein Stop |
 | Attack | neue Quelle, 0 / 0,5 / 1 | SHAPE x=0,35+0,30*a; Faktor 0,125×64^x = 0,5359 / 1 / 1,8661; note-on only | SCN7; keine rückwirkende Hüllkurvenänderung |
 | Release | neue Quelle, 0 / 0,5 / 1 | x=0,35+0,30*r; Faktor 0,25×16^x = 0,6598 / 1 / 1,5157; note-on only | SCN7; 0 bleibt musikalischer Release |
-| Room | gemeinsamer Raum, 0 / 0,5 / 1 | nominal T60=1,2+3,6*r² s; Wet=(0,12+0,50*r)*r; Amount linear 80 ms über vollen Bereich, Feedback 120-ms-Zeitkonstante | SCN7; 0 nach Rampe exakt Dry, kalter Pfad und Tank leer; World leert Tank nicht |
+| Room | gemeinsamer Raum, 0 / 0,5 / 1 | nominal T60=1,2+3,6*r² s; kalibrierter Rücklauf Wet=5*r, zusätzlich Enable; Amount linear 80 ms über vollen Bereich, Feedback 120-ms-Zeitkonstante | SCN7; 0 nach Rampe exakt Dry, kalter Pfad und Tank leer; World leert Tank nicht |
 | Dry/Room | Raum, ID 0 / Room=1 / 1 | Enable linear 40 ms, danach echter kalter Dry-Pfad | SCN7; nur zwei Fälle, kein Archiv-FX-Rückweg |
 | Nature | separater Ort, 0 / 0 / 1 | Amount 2-s-Zeitkonstante; World/Seed-Fade down 80 ms / up 2 s; unabhängig von Room und Score-RNG | SCN7; 0 kalt, kein Wetter-/Filterwork; positiv explizit auch ohne Phantomton hörbar |
 | Generate | Laufabsicht, false / false / true | Eintritt alte Manualquellen weich ≤100 ms beenden; Ton erst nach Budget-/Harmoniezulassung; Stop natürliche Releases + Nature-Target 0 | nicht persistiert; keine Wiederherstellung alter Besitzer |
@@ -290,12 +291,18 @@ Delaylängen und damit keine durch Room-Zeit verursachte Pitchfahrt.
 Float-Tank 55.352 B + Diffusion 5.296 B = 60.648 B zuzüglich kleiner States.
 D2-Gesamtbelegung ist davon getrennt im ARM-Linknachweis ausgewiesen.
 
-SD19-Hörvorbereitung vom 2026-10-10: identische tatsächliche Ensemble-Passagen
-mit Room 0/0,24/0,50/1,00, 27,5-s-Vergleich pro World. Stereo/Mono, Float-Impuls,
-Ausklang und gleiche echte Noten-/Besitzerverläufe sind geprüft. Der aktuelle
-Raumanteil bleibt selbst bei Maximum klein; keine finale Raumwahl oder Änderung
-von Default, Send, Breite, Dämpfung und Feedback. Details und nächster konkreter
-Kalibrierbedarf: [SD19_ROOM_CHECKPOINT.md](SD19_ROOM_CHECKPOINT.md).
+SD19-Ausgangsstand PR152/Spec0.7: Wet=(0,12+0,50*r)*r ergab bei Room0,5
+nur0,66–1,04% RMS-Differenz zum identischen trockenen Ensemble-Ausschnitt.
+Spec0.8 kalibriert ausschließlich den Ausgangsrücklauf auf5*r. Bei gleichem
+Room0,5 entstehen8,86–13,99%, bei Maximum22,72–38,87%; dies sind gemessene
+PCM-RMS-Verhältnisse, keine Wet-Energieprozente oder finalen Hörurteile.
+Send, feste Delays, Diffusion, Dämpfung, Breite und Feedback bleiben gleich.
+Die normierte gespeicherte Roomposition und der nominale Decay bleiben SCN7;
+der Rücklauf an derselben Position ist im Kandidaten jetzt stärker. Das ist
+eine ausdrücklich versionierte Kalibrieränderung, keine finale Raumfreigabe.
+Die frühere0.7-Audiofassung ist über PR152 reproduzierbar. Neue echte, fest
+lautheitsangepasste Held/Release-Vergleiche und Host/H743-Nachweis:
+[SD19_ROOM_CALIBRATION_CHECKPOINT.md](SD19_ROOM_CALIBRATION_CHECKPOINT.md).
 
 ## Kontextwechsel und Persistenz
 

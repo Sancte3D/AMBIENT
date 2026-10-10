@@ -85,7 +85,7 @@ def main():
     inputs = [*sources, driver, Path(__file__), ROOT/'tools/package_musical_review.py',
               ROOT/'test/test_room_nature.c',
               *sorted((ROOT/'include').glob('*.h'))]
-    manifest = dict(scope='Actual Product engine. Four fixed Room amounts; no firmware changes. '
+    manifest = dict(scope='Actual Product engine. Four fixed Room amounts; normal core, no source or generator substitutes. '
         '27.5s montage per World: identical 3.0–9.5s excerpt repeated with 0/.24/.50/1 Room, '
         'three 0.5s editorial gaps and 40ms excerpt-edge fades. No continuous transition.',
         parameters=dict(seed=1234, key='D', collection='major', tuning='equal', activity=.5,

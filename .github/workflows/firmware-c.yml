@@ -316,6 +316,24 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Compare calibrated Room with exact PR152 baseline
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          git fetch --no-tags --depth=1 origin 09319610912b81a8c71860479a6eeba754f53427
+          python3 tools/review_room_calibration.py build-room-calibration --candidate-audit build-room-comparison
+      - name: Upload matched held and release Room comparisons
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-room-calibration-27p5s
+          path: |
+            field-ambience-current/firmware-c-next/build-room-calibration/AMBIENT_*_Room_Calibrated_AB_27p5s.wav
+            field-ambience-current/firmware-c-next/build-room-calibration/SD19_ROOM_CALIBRATION_METRICS.json
+            field-ambience-current/firmware-c-next/build-room-calibration/*.events.csv
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest

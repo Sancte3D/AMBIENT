@@ -1,0 +1,83 @@
+{
+  "scope": "Real H743 Product Release baseline and calibrated-return candidate, same verified GCC13.2.1/Newlib4.4. Individual compiler frames are not actual stack high-water/CPU.",
+  "baseline_remote_commit": "09319610912b81a8c71860479a6eeba754f53427",
+  "build_exit_code": 0,
+  "full_host_runner_exit_code": 0,
+  "host_log_sha256": "f8e760acd5a258a4a53302bb6bda371dc6b46474bb23e17afb0ee35e4a6c4e7b",
+  "arm_log_sha256": "535d17be774f33a2e05d271fdba8c7e4e54ad5455dc2e44d33c68774c66fcc5c",
+  "toolchain_packages": [
+    {
+      "package": "gcc-arm-none-eabi",
+      "size": 57521126,
+      "sha256": "519a5d0e5292a4b4861f69ae96e8918149bfd1646072ca53451ccfb8c5a91948"
+    },
+    {
+      "package": "binutils-arm-none-eabi",
+      "size": 3136884,
+      "sha256": "2aab2d6a7e4c21ce33462f8b52b972e2a8e4597e79b5add5502e2d1f3e543472"
+    },
+    {
+      "package": "libnewlib-arm-none-eabi",
+      "size": 49181424,
+      "sha256": "9af508599193d07c9460897d01a36af46a2707765bd6941e27c6d0747859b0eb"
+    },
+    {
+      "package": "libnewlib-dev",
+      "size": 139892,
+      "sha256": "f945b12c3abc844e76eebc28cf7d99e9aefd7caec39583116ef29556b3c52414"
+    }
+  ],
+  "baseline": {
+    "elf_sha256": "c6e67d391826b4a51ed685445230580a278ed0151c44cc29fe0de107a809f130",
+    "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+    "profile": "product",
+    "core_max_frame_bytes": 192,
+    "limitations": "Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48.",
+    "bank1_load_image_bytes": 195936,
+    "map_sha256": "1bb3964d3dd4ee80ebdfbab61cd260bd1692fd139c5b574c7b457758deb15f1c",
+    "compile_commands_sha256": "2a459315420294389b5bc127dcd590525e6a60d5d59143e83bb11ee9f21d5136"
+  },
+  "candidate": {
+    "elf_sha256": "9dff333c483d849357250246b755dd466278802f982504edd6ef194ad84c039a",
+    "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+    "profile": "product",
+    "core_max_frame_bytes": 192,
+    "limitations": "Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48.",
+    "bank1_load_image_bytes": 195928,
+    "map_sha256": "35c37da476c6d7f691afeb53aa21c71813d3a1b40e4fae75baa703ded4246976",
+    "compile_commands_sha256": "fb5f168cc3c5fb3bd04dc8000012d0325d7de7efe68f99c8718e31eb9553cedf"
+  },
+  "banks_bytes": {
+    "FLASH": {
+      "baseline": 195936,
+      "candidate": 195928,
+      "delta": -8
+    },
+    "DTCMRAM": {
+      "baseline": 16384,
+      "candidate": 16384,
+      "delta": 0
+    },
+    "RAM_D1": {
+      "baseline": 65664,
+      "candidate": 65664,
+      "delta": 0
+    },
+    "RAM_D2": {
+      "baseline": 60808,
+      "candidate": 60808,
+      "delta": 0
+    }
+  },
+  "core_frame_count": 182,
+  "core_max_individual_frame_bytes": 192,
+  "room_tank_bytes": 55352,
+  "room_tank_address": "0x30001550",
+  "room_diffusion_bytes": 5296,
+  "room_diffusion_address": "0x300000a0",
+  "audio_dma_bytes": 4096,
+  "audio_dma_address": "0x2400d400",
+  "candidate_room_source_sha256": "0f54bfbe08b83ba08034b587f20923b326594e9b4bd4d5038b84ad166acf85ee",
+  "hearing_accepted": false,
+  "device_cpu_isr_stack_high_water_accepted": false
+}
