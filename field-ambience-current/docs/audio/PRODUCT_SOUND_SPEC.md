@@ -290,6 +290,13 @@ Delaylängen und damit keine durch Room-Zeit verursachte Pitchfahrt.
 Float-Tank 55.352 B + Diffusion 5.296 B = 60.648 B zuzüglich kleiner States.
 D2-Gesamtbelegung ist davon getrennt im ARM-Linknachweis ausgewiesen.
 
+SD19-Hörvorbereitung vom 2026-10-10: identische tatsächliche Ensemble-Passagen
+mit Room 0/0,24/0,50/1,00, 27,5-s-Vergleich pro World. Stereo/Mono, Float-Impuls,
+Ausklang und gleiche echte Noten-/Besitzerverläufe sind geprüft. Der aktuelle
+Raumanteil bleibt selbst bei Maximum klein; keine finale Raumwahl oder Änderung
+von Default, Send, Breite, Dämpfung und Feedback. Details und nächster konkreter
+Kalibrierbedarf: [SD19_ROOM_CHECKPOINT.md](SD19_ROOM_CHECKPOINT.md).
+
 ## Kontextwechsel und Persistenz
 
 World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms (Pluck 20 ms),

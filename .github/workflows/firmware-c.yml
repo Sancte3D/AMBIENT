@@ -300,6 +300,22 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Verify matched actual-ensemble Room amounts and float decay
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_room_comparison.py build-room-comparison
+      - name: Upload compact Room comparisons and actual note histories
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-room-comparison-27p5s
+          path: |
+            field-ambience-current/firmware-c-next/build-room-comparison/AMBIENT_*_Room_AB_27p5s.wav
+            field-ambience-current/firmware-c-next/build-room-comparison/SD19_ROOM_METRICS.json
+            field-ambience-current/firmware-c-next/build-room-comparison/*.events.csv
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest
