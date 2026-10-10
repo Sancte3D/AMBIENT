@@ -99,7 +99,11 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
         float wl=.1775352f*(line[0]-line[1]+line[2]-line[3]+line[4]-line[5]+line[6]-line[7]);
         float wr=.1775352f*(line[0]+line[1]-line[2]-line[3]+line[4]+line[5]-line[6]-line[7]);
         float mid=.5f*(wl+wr),side=.30f*(wl-wr);
-        float wet=(.12f+.50f*amount_cur)*amount_cur*enable_cur;
+        /* Calibrated return: the former low quadratic curve left <1.1% of
+         * Dry RMS in normal held ensembles at Amount .5. Linear gain keeps
+         * the same tank/decay, a smooth zero, and a bounded maximum of 5.
+         * This is output calibration, not feedback gain or another arena. */
+        float wet=5.0f*amount_cur*enable_cur;
         wl=(mid+side)*wet; wr=(mid-side)*wet;
         peak=fmaxf(peak,fmaxf(fabsf(wl),fabsf(wr)));
         l[n]+=wl; r[n]+=wr;

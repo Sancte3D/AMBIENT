@@ -96,7 +96,7 @@ static void performance(FILE *out,const char *path,int world,float amount,int bl
     assert(engine_nonfinite_samples()==0 && engine_output_limited_samples()==0);
     fprintf(stderr,"ROOM ENGINE world=%d amount=%.2f frames=%u starts=%d max_sources=%d final_sources=0 final_ms=%u peak=%.8f\n",
         world,(double)amount,at,starts,maximum,final_ms,(double)peak/32768);
-    assert(!fclose(trace));
+    int error=ferror(trace);if(fclose(trace))error=1;assert(!error);
 }
 int main(int argc,char **argv) {
     if(argc!=6)return 2;
@@ -111,5 +111,6 @@ int main(int argc,char **argv) {
     FILE *out=fopen(argv[5],"wb");if(!out)return 2;header(out,diagnostic);
     if(diagnostic)impulse(out,amount,(int)block);
     else performance(out,argv[5],(int)world,amount,(int)block);
-    return fclose(out) ? 2 : 0;
+    /* A failed fputc may set the error flag before fclose itself succeeds. */
+    int error=ferror(out);if(fclose(out))error=1;return error ? 2 : 0;
 }

@@ -8,7 +8,7 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-10**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-11**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
@@ -67,8 +67,18 @@ bestehen. Der aktuelle Raum ist messbar sehr zurückhaltend: bei0,24/0,50
 etwa0,2–1,0% RMS-Differenz zum trockenen Ausschnitt, selbst Maximum2,8–4,8%.
 Dies ist ein Kalibrierbefund, keine positive Hörabnahme. Quelle, Default,
 Send und Raum-DSP sind unverändert. Siehe [SD19_ROOM_CHECKPOINT.md](SD19_ROOM_CHECKPOINT.md).
-Nächste einzelne Arbeit: SD19-Raumkörper kalibrieren; eine begrenzte Fassung
-desselben Raums gegen diesen gematchten Ausgangsstand vergleichen. Nature bleibt0.
+SD19 ist jetzt als begrenzter Kandidat kalibriert: Rücklauf5*r statt der
+bisherigen leisen Kurve; gleicher FDN, gleiche Quellen/Delays/Dämpfung/Feedback.
+Bei Room0,5 steigt die tatsächliche RMS-Differenz zum trockenen Ensemble von
+0,66–1,04% auf8,86–13,99%. Drei27,5-s-Vorher/Nachher-Dateien enthalten dieselbe
+gehaltene Passage und denselben echten Stop-Ausklang. Noten-/Besitzertraces
+identisch, normierter Float-Decay/Mono unverändert, Dry exakt. Volle Host-Suite
+und H743-Baseline/Kandidat mit identischer verifizierter Toolchain bestehen;
+Flash−8B, RAM unverändert. Spec0.8; noch keine positive Hörwahl oder SD19-Haken.
+Siehe [SD19_ROOM_CALIBRATION_CHECKPOINT.md](SD19_ROOM_CALIBRATION_CHECKPOINT.md).
+Nächste unabhängige Vorbereitung: SD28, optionale Natur mit/ohne bei identischem
+musikalischen Verlauf. Die musikalische Quellen-/Raum-Hörwahl bleibt Voraussetzung
+für ihre endgültige Auswahl; Nature bleibt im Default0. Keine UI vor Soundabnahme.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
 ## FUNDAMENTAL FALSCH
@@ -411,7 +421,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD16 | Generator integriert; Hör-/Gerätegate offen | Weiter Akkord mit demselben gehaltenen Ton, Pause erst nach tatsächlichem Ende aller drei, verwandte Rückkehr;48 echte Phrasen +4 Seed/Wrap,65-s-Engineprobe, volle Host-Suite und H743 bestehen; finale Quellen-/Hörwahl offen |
 | SD17 | Rollenentwicklung integriert; Hörgate |2304 Pure-Cases×16 Phrasen,90min tatsächliches Engine-PCM und30min64/512-genaue Traces je Partition; Home/Variation/relative Lage/erinnerte Rückkehr, begrenztes Gedächtnis,3 kurze spätere Vergleiche; Form und Wiedererkennbarkeit hören |
 | SD18 | geschlossen durch Remove | Body nicht kompiliert; kein Materialreset oder additive Röhrenfärbung |
-| SD19 | Vergleich vorbereitet; Kalibrier-/Hörgate | Drei27,5-s-Ensemble-Vergleiche mit0/.24/.50/1, identische echte Note-on/off und64/512-PCM; Float-Impulse/Mono/Decay geprüft; aktueller Raumanteil klein, noch keine finale Raumwahl |
+| SD19 | Kalibrierung integriert; Hörgate | Rücklauf5*r, Room0,5 jetzt8,86–13,99% statt0,66–1,04% RMS/Dry; echte Held/Release-A/B-Traces identisch, Float-Decay/Mono stabil, volle Host-Suite/H743, RAM gleich; finale Raumwahl offen |
 | SD20 | geschlossen | Source-Send 0,35, ein Room, unabhängige Nature, gemeinsame Userwerte erhalten |
 | SD21 | geschlossen durch Remove | Eigenständiger Echo-Pfad/Parameter/Scene-FX ausgeschlossen |
 | SD22 | geschlossen durch Remove | Chorus/zusätzlicher Detune ausgeschlossen |
@@ -653,6 +663,19 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Der kleine tatsächliche Raumanteil braucht gezielte Kalibrierung und Hörwahl.
   Noch kein Haken und kein neuer ARM-Build für dieses reine Tool-/Dokumentpaket;
   identische Firmwareinputs zum vollständig grünen PR151 sind nachgewiesen.
+  **Kalibrierung2026-10-11:** ausschließlich Wet-Rücklauf auf5*r geändert;
+  normales Amount/Enable-Smoothing und Null/Dry bleiben, kein Feedbackboost.
+  Drei neue27,5-s-Vergleiche bei Room0,5: alter/neuer gehaltener Ausschnitt
+  3,0–9,5s, danach alter/neuer Stop-Ausklang16,0–22,5s. Festgain je Fassung
+  aus der gehaltenen Passage, derselbe Gain auf ihren Ausklang; keine AGC.
+  Vollständige32-s-Noten-/Besitzertraces alt/neu identisch, kein künstliches
+  Quellenende. Alle zwölf aktuellen Room-PCM/Traces64/512 bytegleich; vier
+  Float-Impulse, reale Low-Sustain/Dry-revival/Clear/Mute/Worldwechsel und
+  lange Maximalfälle bestehen. Vollständige Host-Suite und H743 mit exakt
+  gleicherGCC13.2.1/Newlib4.4-Toolchain geprüft: Flash195928B(−8), D165664B/
+  D260808B unverändert, maximaler einzelner Core-Compilerframe192B unverändert.
+  Spec0.8 dokumentiert stärkeren Rücklauf bei gleicher SCN7-Roomposition;
+  finale Hör-/Geräteabnahme bleibt offen, 24/30-Zählung unverändert.
 - [x] **SD20 — Dry/Send/Room und Natur voneinander entkoppeln.**
   Alle Source-Sends, Wet-Amp/alte Reverbadapter, Atmosphere/Space und Tone-Pushes
   inventarisieren; einen eindeutigen Parameterbesitzer festlegen.
