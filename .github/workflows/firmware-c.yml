@@ -353,6 +353,25 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Verify actual Activity ranges and held musical roles
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          git fetch --no-tags --depth=1 origin 9f9aafc3fc44ba53a8496f6ec8e501e6efdd4def
+          python3 tools/review_activity_comparison.py build-activity-comparison
+      - name: Upload compact Activity comparisons and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-activity-comparison-38p5s
+          path: |
+            field-ambience-current/firmware-c-next/build-activity-comparison/AMBIENT_*_Activity_0_50_100_38p5s.wav
+            field-ambience-current/firmware-c-next/build-activity-comparison/SD33_ACTIVITY_METRICS.json
+            field-ambience-current/firmware-c-next/build-activity-comparison/*.events.csv
+            field-ambience-current/firmware-c-next/build-activity-comparison/*.state.csv
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest

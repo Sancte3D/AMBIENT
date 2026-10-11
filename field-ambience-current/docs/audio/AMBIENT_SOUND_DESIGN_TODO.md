@@ -85,9 +85,21 @@ Quellenstopp, WOODLANDs Vergleich enthält 4,49 s Quellenpause, HIGHLANDS ist im
 späten Ausschnitt vollständig quellenfrei. Keine künstliche Pause, kein AGC.
 Firmware und Spec0.8-Klang bleiben exakt PR153; Default Nature bleibt0, SD28 offen.
 Siehe [SD28_NATURE_CHECKPOINT.md](SD28_NATURE_CHECKPOINT.md).
-Nächste unabhängige Vorbereitung: SD33, Activity min/default/max in den echten
-musikalischen Welten. Finale Quellen-/Raum-/Nature-Hörwahl bleibt erforderlich;
-SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
+SD33 Activity ist jetzt mit den echten musikalischen Worlds als einzelne
+Vorbereitung geprüft:21 vollständige6-min-Fälle einschließlich Live-Wechseln,
+jeweils64/512 bytegleiche PCM/Noten-/Statusdaten. Min/default/max behalten die
+gehörte Ton-/Rollenfolge und lange Haltezeiten; vier Entwicklungsstufen und
+vollständig erinnerte Rückkehr bleiben erreichbar. Drei38,5-s-Dateien vergleichen
+0/0,5/1 mit festem Gain. HIGHLANDS zeigt bewusst die echte Pause und Rückkehr.
+WOODLAND33/39/41 beziehungsweise32/39/41 Einsätze; HIGHLANDS32/37/43 bei beiden
+Seeds. COAST47/47/47 und fast gleiche Rückkehrzeiten: die nominelle Activity-
+Kennlinie wirkt dort wegen realer Quellen-/Tailgrenzen noch zu schwach. Das ist
+ein offener Softwarebefund, keine geeignete Reglerkennlinie oder Hörabnahme.
+Firmware und Spec0.8 bleiben unverändert. Siehe [SD33_ACTIVITY_CHECKPOINT.md](SD33_ACTIVITY_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD33 COAST-Activity-Kennlinie für Übergaben und
+Ruhe gezielt kalibrieren, mit unveränderten Halteabsichten und sicheren Besitzern.
+Color und weitere Punkte danach; finale Quellen-/Raum-/Nature-Hörwahl bleibt
+erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
@@ -793,6 +805,23 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Kein Bereich wird Alarm, sinnlos dicht oder leer durch Fehler;
   mittlere/default/äußerste Werte haben klaren musikalischen Nutzen. Lautstärke
   bleibt separat. Physische Zuweisung offen. Voraussetzung: SD17/SD20/SD32.
+  **Activity-Vorbereitung 2026-10-11:** reale lange COAST/WOODLAND/HIGHLANDS,
+  Werte0/0,5/1, Seeds1234/42;18 vollständige360-s-Fälle plus drei Live-Wechsel-
+  Läufe, jeder64/512 bytegleich auf10-ms-Main-Raster.42 Performances/252min PCM.
+  576 Pure-Cases über acht Phrasen/33792 Intents prüfen unveränderte Tonhöhe,
+  Rollen/Velocity/Halteabsichten, Memory und Timerwrap;1536 Pausenabsichten≥8s.
+  Reale Tonfolge und Haltezeiten stimmen im gemeinsamen gehörten Präfix der
+  festen Werte überein; bei Live-Wechseln41/36/28 abgeschlossene Rollenhaltezeiten
+  exakt unverändert. Besitzer3/2/3, vier Phrasenarten und≥1 erinnerte Rückkehr,
+  NaN/Limiter0; Stop328s, spätestens336,84s alle Besitzer frei, letzte Sekunde still.
+  Drei38,5-s-Vergleiche zeigen0/0,5/1; ein Gain je World, echte HIGHLANDS-Ruhe.
+  **Befund:** COAST47 Einsätze/fünf Phrasen bei allen Werten und beiden Seeds,
+  Rückkehrzeiten fast gleich. Nominelle Abstände werden von realen Quellen/Tails
+  begrenzt. Nächster einzelner Schritt: nur diese COAST-Kennlinie kalibrieren.
+  WOODLAND33/39/41 und32/39/41; HIGHLANDS32/37/43, längste Quellenpause bei
+  Seed1234 von18,83 auf9,16s. Musikalischer Nutzen/Color/Room bleiben ungehört.
+  Alle Firmwareinputs unverändert zum grünen PR154/PR153; gezielte Hostprüfung,
+  kein behaupteter neuer vollständiger Host-Runner oder ARM-Build, kein SD33-Haken.
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen

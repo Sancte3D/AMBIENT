@@ -1,0 +1,2479 @@
+{
+  "scope": "SD33 Activity only. Normal actual Product Engine and musical Worlds. Activity changes upcoming spacing and genuine pauses; active hold intentions, pitches, velocity and heard phrase memory are retained. Actual admission/retirement can limit density.",
+  "baseline_commit": "9f9aafc3fc44ba53a8496f6ec8e501e6efdd4def",
+  "baseline_tree": "31a3a0a1511c63d637ce12227bca133cae7086cd",
+  "sound_inputs_unchanged_from_pr153": true,
+  "source_sha256": {
+    "src/engine_product.c": "f2e2393d0b2429412826de2b07d6f2c348c0efbeb14a61b190f8e417b1956d17",
+    "src/world_grammar.c": "a5076b6cedf56b6ea9154300366dd846308aa593b1ffec47e76492b522a90397",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "af50ea44971a41e2af647a44d08db09ce2d3cd81ae65c4b626de76557467cc9b",
+    "src/ambient_room.c": "0f54bfbe08b83ba08034b587f20923b326594e9b4bd4d5038b84ad166acf85ee",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "tools/render_activity_comparison.c": "382b0dce09efc27f973fb6c45cd1624b9166decacf0e9e0f87685accaab881b1",
+    "test/test_activity_ranges.c": "51cb59d3b7e93c1b479e3f20586dfd4b0a7523bc4e4640510a7b78f0dbe720c5",
+    "tools/review_activity_comparison.py": "4fdd2c12e4131dbba094811e579b9c3ad36648e993067fa8f0e2f72d4ff78017",
+    "tools/review_room_comparison.py": "1760c798fcb4df166e0bcf0c0b39323762f20164cf086ee3ca47f511750d6eba",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "f9ce41e7407a52b0a49515b190aaa2dd611f3b174d4d43e2c94cb769547fb92e",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "68d587c4cb05bd89257e3044714227a55c079542a7d4fd3a09f0a061256d20b9",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "69099bed083bfff91aba015c823f0efd1b250fb680c9b5705edd59125f51aa54",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6"
+  },
+  "parameters": {
+    "activity_values": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "default_activity": 0.5,
+    "color": 0.5,
+    "room": 0.5,
+    "nature": 0,
+    "attack": 0.5,
+    "release": 0.5,
+    "volume": 0.6,
+    "key": "D",
+    "collection": "major",
+    "tuning": "equal",
+    "seeds": [
+      1234,
+      42
+    ]
+  },
+  "raw_seconds": 360,
+  "generate_stop_seconds": 328,
+  "silent_settling_seconds": 1,
+  "control_tick_ms": 10,
+  "block_sizes": [
+    64,
+    512
+  ],
+  "hearing_accepted": false,
+  "range_usefulness_accepted": false,
+  "firmware_changed": false,
+  "full_pcm_retained": false,
+  "worlds": [
+    {
+      "world": "COAST",
+      "cases": [
+        {
+          "seed": 1234,
+          "initial_activity": 0.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=0 seed=1234 initial=0.00 live=0 frames=15876000 starts=47 phrases=5 memory_returns=1 max_sources=3 final_ms=336770 nonfinite=0 limited=0 peak=0.09921265",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -20.1
+          },
+          "mono_energy_ratio": 0.9692156301725412,
+          "dc": [
+            -2.7718787891313933e-09,
+            -6.7566948292627235e-09
+          ],
+          "starts": 47,
+          "starts_per_minute": 8.597560975609756,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.5127134146341463,
+          "source_free_seconds": 0.38,
+          "longest_actual_source_free_interval_seconds": 0.21000000000000796,
+          "largest_actual_onset_gap_seconds": 19.98999999999998,
+          "full_owner_retirement_after_stop_seconds": 336.77,
+          "held_role_on_off_seconds_range": [
+            2.7,
+            5.83
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 58.16
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 117.55
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 178.31
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 236.08
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 296.02
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              58.14,
+              58.15
+            ],
+            [
+              117.33,
+              117.54
+            ],
+            [
+              178.2,
+              178.3
+            ],
+            [
+              236.01,
+              236.07
+            ]
+          ],
+          "raw_sha256": "1c8d0a0802d6af9d0ca65e6c0fc6bac75ee64d8b5daacad044c520591c9ab017",
+          "events_sha256": "5a578c584bb0fa3a1cf8ec5ee275f61998f8f2bd6ae0b55ce72c4502e7d323b4",
+          "state_sha256": "6e34291e4db1a6446d526b9644ad7ad029be6a78c5b1858b58787a5a7f63c837",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 47,
+          "unchanged_actual_held_roles_checked": 41
+        },
+        {
+          "seed": 1234,
+          "initial_activity": 0.5,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=0 seed=1234 initial=0.50 live=0 frames=15876000 starts=47 phrases=5 memory_returns=1 max_sources=3 final_ms=336770 nonfinite=0 limited=0 peak=0.09613037",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -20.3
+          },
+          "mono_energy_ratio": 0.9690262069336204,
+          "dc": [
+            -3.017926282202696e-09,
+            -6.90086328223419e-10
+          ],
+          "starts": 47,
+          "starts_per_minute": 8.597560975609756,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.5152134146341463,
+          "source_free_seconds": 0.38,
+          "longest_actual_source_free_interval_seconds": 0.20999999999999375,
+          "largest_actual_onset_gap_seconds": 19.97,
+          "full_owner_retirement_after_stop_seconds": 336.77,
+          "held_role_on_off_seconds_range": [
+            2.7,
+            5.83
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 58.19
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 117.78
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 178.23
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 236.03
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 295.85
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              58.17,
+              58.18
+            ],
+            [
+              117.56,
+              117.77
+            ],
+            [
+              178.12,
+              178.22
+            ],
+            [
+              235.96,
+              236.02
+            ]
+          ],
+          "raw_sha256": "d7b3259f8fb89a939d0d23abbc1424aacdf9685cc3c22648836ec583dec5dfcd",
+          "events_sha256": "b8be9f4485bf5f15efae9cef717ba6885215f99b6c1156145c8462888b9fbb2d",
+          "state_sha256": "78fa1e02fa3400ba99ee5b98478b35cfa45e1253f14d2d639ba197eb51281f97",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 47,
+          "unchanged_actual_held_roles_checked": 41
+        },
+        {
+          "seed": 1234,
+          "initial_activity": 1.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=0 seed=1234 initial=1.00 live=0 frames=15876000 starts=47 phrases=5 memory_returns=1 max_sources=3 final_ms=336770 nonfinite=0 limited=0 peak=0.09838867",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -20.1
+          },
+          "mono_energy_ratio": 0.969368432085577,
+          "dc": [
+            -6.233843906486206e-09,
+            -1.8165225074404762e-09
+          ],
+          "starts": 47,
+          "starts_per_minute": 8.597560975609756,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.511432926829268,
+          "source_free_seconds": 0.38,
+          "longest_actual_source_free_interval_seconds": 0.20999999999999375,
+          "largest_actual_onset_gap_seconds": 19.95999999999998,
+          "full_owner_retirement_after_stop_seconds": 336.77,
+          "held_role_on_off_seconds_range": [
+            2.7,
+            5.83
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 57.97
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 117.76
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 178.38
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 236.23
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 296.2
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              57.95,
+              57.96
+            ],
+            [
+              117.54,
+              117.75
+            ],
+            [
+              178.27,
+              178.37
+            ],
+            [
+              236.16,
+              236.22
+            ]
+          ],
+          "raw_sha256": "a835ae1092943b7e01dcab0173e982e3a2849d9ade55fe6b77157bc9f5e906ed",
+          "events_sha256": "295bb0a0d8baca3fd7c6176729262b0c90411541e6a65cedd0b2317b3debda78",
+          "state_sha256": "0aa466044cc5edb48c7026af46a5915823a9e34e126c05ad6f805b363305dca3",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 47,
+          "unchanged_actual_held_roles_checked": 41
+        },
+        {
+          "seed": 42,
+          "initial_activity": 0.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=0 seed=42 initial=0.00 live=0 frames=15876000 starts=47 phrases=5 memory_returns=1 max_sources=3 final_ms=336840 nonfinite=0 limited=0 peak=0.09506226",
+          "raw_level": {
+            "integrated_lufs": -32.8,
+            "true_peak_dbfs": -20.4
+          },
+          "mono_energy_ratio": 0.9705816879860392,
+          "dc": [
+            -3.788746944090136e-09,
+            -3.496565546067964e-09
+          ],
+          "starts": 47,
+          "starts_per_minute": 8.597560975609756,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.502591463414634,
+          "source_free_seconds": 0.68,
+          "longest_actual_source_free_interval_seconds": 0.2400000000000091,
+          "largest_actual_onset_gap_seconds": 19.950000000000017,
+          "full_owner_retirement_after_stop_seconds": 336.84,
+          "held_role_on_off_seconds_range": [
+            2.7,
+            5.78
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 58.99
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 118.8
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 179.31
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 237.68
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 297.9
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              58.82,
+              58.98
+            ],
+            [
+              118.64,
+              118.79
+            ],
+            [
+              179.17,
+              179.3
+            ],
+            [
+              297.65,
+              297.89
+            ]
+          ],
+          "raw_sha256": "cf74c2408c038c05911f7987b316b5684f4df43d9bccc25835fb6ab845989dc6",
+          "events_sha256": "c12c941afaf634960a03f789a1fc73e490e3bab540104d350c29b587db1e3874",
+          "state_sha256": "607cc01d6db2fe94ead516b9a36cf3cd606e3aa50e4274e41f655a5532cd2b9a",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 47,
+          "unchanged_actual_held_roles_checked": 41
+        },
+        {
+          "seed": 42,
+          "initial_activity": 0.5,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=0 seed=42 initial=0.50 live=0 frames=15876000 starts=47 phrases=5 memory_returns=1 max_sources=3 final_ms=336840 nonfinite=0 limited=0 peak=0.09570312",
+          "raw_level": {
+            "integrated_lufs": -32.8,
+            "true_peak_dbfs": -20.4
+          },
+          "mono_energy_ratio": 0.9709411689527128,
+          "dc": [
+            2.3585958906131896e-09,
+            -5.762893626779416e-09
+          ],
+          "starts": 47,
+          "starts_per_minute": 8.597560975609756,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.5064939024390243,
+          "source_free_seconds": 0.68,
+          "longest_actual_source_free_interval_seconds": 0.2400000000000091,
+          "largest_actual_onset_gap_seconds": 19.889999999999986,
+          "full_owner_retirement_after_stop_seconds": 336.84,
+          "held_role_on_off_seconds_range": [
+            2.7,
+            5.78
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 58.93
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 118.51
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 178.99
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 237.3
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 297.48
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              58.76,
+              58.92
+            ],
+            [
+              118.35,
+              118.5
+            ],
+            [
+              178.85,
+              178.98
+            ],
+            [
+              297.23,
+              297.47
+            ]
+          ],
+          "raw_sha256": "cae05677be5f974e6010e928fade0ebf56088e9144b29cca905e238ff3a7e0e1",
+          "events_sha256": "7c0e41906576da35a2e0ed51279af2b2ec51bf0ad03136d79ead51ebf699ac76",
+          "state_sha256": "d1aaa1be77bbbf4dcc18bfe57101fbc3da96f9a358adc66c2ec90e5253a9c5e7",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 47,
+          "unchanged_actual_held_roles_checked": 41
+        },
+        {
+          "seed": 42,
+          "initial_activity": 1.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=0 seed=42 initial=1.00 live=0 frames=15876000 starts=47 phrases=5 memory_returns=1 max_sources=3 final_ms=336840 nonfinite=0 limited=0 peak=0.09524536",
+          "raw_level": {
+            "integrated_lufs": -32.9,
+            "true_peak_dbfs": -20.4
+          },
+          "mono_energy_ratio": 0.9703154310511041,
+          "dc": [
+            -2.52967578813933e-09,
+            -4.965161520337302e-09
+          ],
+          "starts": 47,
+          "starts_per_minute": 8.597560975609756,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.5074085365853658,
+          "source_free_seconds": 0.68,
+          "longest_actual_source_free_interval_seconds": 0.2400000000000091,
+          "largest_actual_onset_gap_seconds": 20.069999999999993,
+          "full_owner_retirement_after_stop_seconds": 336.84,
+          "held_role_on_off_seconds_range": [
+            2.7,
+            5.78
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 58.86
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 118.22
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 178.91
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 237.16
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 297.31
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              58.69,
+              58.85
+            ],
+            [
+              118.06,
+              118.21
+            ],
+            [
+              178.77,
+              178.9
+            ],
+            [
+              297.06,
+              297.3
+            ]
+          ],
+          "raw_sha256": "494fafd1b361b86878c3404951341fd537f1187684f257bef8c2d0d2f2497511",
+          "events_sha256": "2e96983f3c260fc261b6d27645693b92416d829176153647c12e803c632010af",
+          "state_sha256": "32db1b94292bc468a780048d42522b2d20e269876d84cae5e946d5b04453f3d0",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 47,
+          "unchanged_actual_held_roles_checked": 41
+        }
+      ],
+      "listen_file": "AMBIENT_COAST_Activity_0_50_100_38p5s.wav",
+      "listen_sha256": "aec4f9e3c844bc301b8b7140187cf6302f5b0ce55d1a7210391e1cacb2b54ff4",
+      "listen": {
+        "integrated_lufs": -23.1,
+        "true_peak_dbfs": -10.7
+      },
+      "identical_fixed_gain_db_all_sections": 9.899999999999999,
+      "sections": [
+        {
+          "activity": 0.0,
+          "output_seconds": [
+            0.0,
+            12.5
+          ],
+          "source_seconds": [
+            8.0,
+            20.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -10.7
+          }
+        },
+        {
+          "activity": 0.5,
+          "output_seconds": [
+            13.0,
+            25.5
+          ],
+          "source_seconds": [
+            8.0,
+            20.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -10.7
+          }
+        },
+        {
+          "activity": 1.0,
+          "output_seconds": [
+            26.0,
+            38.5
+          ],
+          "source_seconds": [
+            8.0,
+            20.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -10.8
+          }
+        }
+      ],
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "coast_weak_activity_range_requires_calibration": true
+    },
+    {
+      "world": "WOODLAND",
+      "cases": [
+        {
+          "seed": 1234,
+          "initial_activity": 0.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=1 seed=1234 initial=0.00 live=0 frames=15876000 starts=33 phrases=5 memory_returns=1 max_sources=2 final_ms=330000 nonfinite=0 limited=0 peak=0.07562256",
+          "raw_level": {
+            "integrated_lufs": -33.7,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.9300012357978985,
+          "dc": [
+            1.5185743712994456e-09,
+            -1.7492438960537918e-10
+          ],
+          "starts": 33,
+          "starts_per_minute": 6.036585365853658,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 2,
+          "mean_actual_sources": 1.320640243902439,
+          "source_free_seconds": 20.98,
+          "longest_actual_source_free_interval_seconds": 4.489999999999995,
+          "largest_actual_onset_gap_seconds": 18.160000000000025,
+          "full_owner_retirement_after_stop_seconds": 330.0,
+          "held_role_on_off_seconds_range": [
+            5.82,
+            20.5
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 58.52
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 120.32
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 185.01
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 241.22
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 303.65
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              54.02,
+              58.51
+            ],
+            [
+              91.97,
+              92.09
+            ],
+            [
+              116.88,
+              120.31
+            ],
+            [
+              154.77,
+              155.88
+            ],
+            [
+              181.39,
+              185.0
+            ],
+            [
+              236.98,
+              241.21
+            ],
+            [
+              274.77,
+              274.79
+            ],
+            [
+              299.67,
+              303.64
+            ]
+          ],
+          "raw_sha256": "68ad0508c97239d4a633e2f0c37a0d7bfcb0438585089becb63fb4c3a2023ff5",
+          "events_sha256": "90d22ee5eff763cef86ecffe2daf0f0c18d5b4a26463c9de4978b3cf5435c5ce",
+          "state_sha256": "0039c7c089f51dc718bed7b1b3dad20373f1e0dd2d84b1ab3a9af7b644228033",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 33,
+          "unchanged_actual_held_roles_checked": 32
+        },
+        {
+          "seed": 1234,
+          "initial_activity": 0.5,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=1 seed=1234 initial=0.50 live=0 frames=15876000 starts=39 phrases=6 memory_returns=1 max_sources=2 final_ms=330000 nonfinite=0 limited=0 peak=0.07885742",
+          "raw_level": {
+            "integrated_lufs": -33.3,
+            "true_peak_dbfs": -22.1
+          },
+          "mono_energy_ratio": 0.9305621817752782,
+          "dc": [
+            3.017926282202696e-10,
+            -3.6522674752771477e-11
+          ],
+          "starts": 39,
+          "starts_per_minute": 7.134146341463414,
+          "completed_phrases": 6,
+          "memory_returns": 1,
+          "maximum_actual_sources": 2,
+          "mean_actual_sources": 1.562378048780488,
+          "source_free_seconds": 29.99,
+          "longest_actual_source_free_interval_seconds": 6.96999999999997,
+          "largest_actual_onset_gap_seconds": 15.769999999999982,
+          "full_owner_retirement_after_stop_seconds": 330.0,
+          "held_role_on_off_seconds_range": [
+            5.82,
+            20.5
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 46.62
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 95.54
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 150.38
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 195.38
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 244.93
+            },
+            {
+              "episode": 6,
+              "kind": 1,
+              "seconds": 308.83
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              42.12,
+              46.61
+            ],
+            [
+              92.1,
+              95.53
+            ],
+            [
+              124.49,
+              125.57
+            ],
+            [
+              146.76,
+              150.37
+            ],
+            [
+              191.14,
+              195.37
+            ],
+            [
+              240.95,
+              244.92
+            ],
+            [
+              274.17,
+              275.21
+            ],
+            [
+              291.88,
+              293.05
+            ],
+            [
+              301.85,
+              308.82
+            ]
+          ],
+          "raw_sha256": "d6ccf3bebddc1fb036bc36562e6cddfb268ae46216124d5896fc7bea338dbd6a",
+          "events_sha256": "247548175bc772fcdb43f1c34581b139ff43c8d136485d08874462b20fb9b05b",
+          "state_sha256": "a930695827b1793ee9b9d248d6cb6680960f3922d5acf10eecb20f324145a70c",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 33,
+          "unchanged_actual_held_roles_checked": 32
+        },
+        {
+          "seed": 1234,
+          "initial_activity": 1.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=1 seed=1234 initial=1.00 live=0 frames=15876000 starts=41 phrases=6 memory_returns=1 max_sources=2 final_ms=330000 nonfinite=0 limited=0 peak=0.08193970",
+          "raw_level": {
+            "integrated_lufs": -33.2,
+            "true_peak_dbfs": -21.7
+          },
+          "mono_energy_ratio": 0.9302880222501199,
+          "dc": [
+            -1.9222460396195515e-10,
+            -3.1697837193326404e-09
+          ],
+          "starts": 41,
+          "starts_per_minute": 7.5,
+          "completed_phrases": 6,
+          "memory_returns": 1,
+          "maximum_actual_sources": 2,
+          "mean_actual_sources": 1.6276829268292683,
+          "source_free_seconds": 29.96,
+          "longest_actual_source_free_interval_seconds": 6.96999999999997,
+          "largest_actual_onset_gap_seconds": 15.769999999999982,
+          "full_owner_retirement_after_stop_seconds": 330.0,
+          "held_role_on_off_seconds_range": [
+            5.82,
+            20.5
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 46.07
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 92.27
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 145.67
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 190.11
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 237.19
+            },
+            {
+              "episode": 6,
+              "kind": 1,
+              "seconds": 298.65
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              41.57,
+              46.06
+            ],
+            [
+              88.83,
+              92.26
+            ],
+            [
+              120.6,
+              121.66
+            ],
+            [
+              142.05,
+              145.66
+            ],
+            [
+              185.87,
+              190.1
+            ],
+            [
+              233.21,
+              237.18
+            ],
+            [
+              265.56,
+              266.58
+            ],
+            [
+              281.69,
+              282.87
+            ],
+            [
+              291.67,
+              298.64
+            ]
+          ],
+          "raw_sha256": "849471228c46d1d56fe18216524194c1a67cd80382d7689ba57158985d58be9e",
+          "events_sha256": "ed78aeb7b85a20506723585c06face725a555c910aa776ba41eb83beafdaf820",
+          "state_sha256": "74fe0b148231ed37efcac0bd50601cd510504de1713882ede799a138d26c0534",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 33,
+          "unchanged_actual_held_roles_checked": 32
+        },
+        {
+          "seed": 42,
+          "initial_activity": 0.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=1 seed=42 initial=0.00 live=0 frames=15876000 starts=32 phrases=5 memory_returns=1 max_sources=2 final_ms=330000 nonfinite=0 limited=0 peak=0.07455444",
+          "raw_level": {
+            "integrated_lufs": -33.7,
+            "true_peak_dbfs": -22.6
+          },
+          "mono_energy_ratio": 0.9310621978161273,
+          "dc": [
+            -1.3205830292186318e-09,
+            1.0860690123850466e-09
+          ],
+          "starts": 32,
+          "starts_per_minute": 5.853658536585366,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 2,
+          "mean_actual_sources": 1.291371951219512,
+          "source_free_seconds": 27.25,
+          "longest_actual_source_free_interval_seconds": 6.449999999999989,
+          "largest_actual_onset_gap_seconds": 18.159999999999997,
+          "full_owner_retirement_after_stop_seconds": 330.0,
+          "held_role_on_off_seconds_range": [
+            5.88,
+            20.24
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 59.18
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 123.86
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 191.31
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 248.15
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 310.08
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              54.09,
+              59.17
+            ],
+            [
+              92.71,
+              92.75
+            ],
+            [
+              117.4,
+              123.85
+            ],
+            [
+              158.57,
+              159.67
+            ],
+            [
+              185.25,
+              191.3
+            ],
+            [
+              243.34,
+              248.14
+            ],
+            [
+              306.34,
+              310.07
+            ]
+          ],
+          "raw_sha256": "75942b1ec5aa1885c1b26feb241be6c53ecc6ce2bdd3acbde67468e935faef1d",
+          "events_sha256": "ad0871fbaf8d7b3bee2df111d6e7c2553ca03423a7752a477f00c4e7f68d6cd5",
+          "state_sha256": "b1a4e70a1cea9a434a21b6f52778a0cdd74d12329e5d86873d7f3be079cfcfcc",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 31
+        },
+        {
+          "seed": 42,
+          "initial_activity": 0.5,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=1 seed=42 initial=0.50 live=0 frames=15876000 starts=39 phrases=6 memory_returns=1 max_sources=2 final_ms=330000 nonfinite=0 limited=0 peak=0.07772827",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.2
+          },
+          "mono_energy_ratio": 0.9303056953812872,
+          "dc": [
+            1.9126348094214537e-09,
+            -1.2398486955546106e-09
+          ],
+          "starts": 39,
+          "starts_per_minute": 7.134146341463414,
+          "completed_phrases": 6,
+          "memory_returns": 1,
+          "maximum_actual_sources": 2,
+          "mean_actual_sources": 1.5596036585365853,
+          "source_free_seconds": 35.14,
+          "longest_actual_source_free_interval_seconds": 6.71999999999997,
+          "largest_actual_onset_gap_seconds": 15.860000000000014,
+          "full_owner_retirement_after_stop_seconds": 330.0,
+          "held_role_on_off_seconds_range": [
+            5.88,
+            20.32
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 47.28
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 99.08
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 156.68
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 202.31
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 251.36
+            },
+            {
+              "episode": 6,
+              "kind": 3,
+              "seconds": 309.85
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              42.19,
+              47.27
+            ],
+            [
+              92.62,
+              99.07
+            ],
+            [
+              128.29,
+              129.36
+            ],
+            [
+              150.62,
+              156.67
+            ],
+            [
+              197.5,
+              202.3
+            ],
+            [
+              247.62,
+              251.35
+            ],
+            [
+              280.4,
+              281.64
+            ],
+            [
+              303.12,
+              309.84
+            ]
+          ],
+          "raw_sha256": "93839c2aacbca1a97d60d5ffb15539e5161ccce69c441e03955dcd0e84a9a178",
+          "events_sha256": "105064ffb54084cefa7db4bdc82ac10feb208079d6a9aec421958cebbcb406a3",
+          "state_sha256": "0559eed6f51a2e54039911dca2724cbbf8f29005d6aed4f52c5793ed8bd7c050",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 31
+        },
+        {
+          "seed": 42,
+          "initial_activity": 1.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=1 seed=42 initial=1.00 live=0 frames=15876000 starts=41 phrases=6 memory_returns=1 max_sources=2 final_ms=330000 nonfinite=0 limited=0 peak=0.08169556",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -21.8
+          },
+          "mono_energy_ratio": 0.9300893590972416,
+          "dc": [
+            1.966457698530801e-09,
+            -2.0202805876401488e-09
+          ],
+          "starts": 41,
+          "starts_per_minute": 7.5,
+          "completed_phrases": 6,
+          "memory_returns": 1,
+          "maximum_actual_sources": 2,
+          "mean_actual_sources": 1.613140243902439,
+          "source_free_seconds": 35.1,
+          "longest_actual_source_free_interval_seconds": 6.720000000000027,
+          "largest_actual_onset_gap_seconds": 15.860000000000014,
+          "full_owner_retirement_after_stop_seconds": 330.0,
+          "held_role_on_off_seconds_range": [
+            5.88,
+            20.32
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 46.73
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 96.56
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 152.47
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 197.54
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 244.37
+            },
+            {
+              "episode": 6,
+              "kind": 3,
+              "seconds": 301.42
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              41.64,
+              46.72
+            ],
+            [
+              90.1,
+              96.55
+            ],
+            [
+              124.9,
+              125.95
+            ],
+            [
+              146.41,
+              152.46
+            ],
+            [
+              192.73,
+              197.53
+            ],
+            [
+              240.63,
+              244.36
+            ],
+            [
+              272.79,
+              274.01
+            ],
+            [
+              294.69,
+              301.41
+            ]
+          ],
+          "raw_sha256": "9f2dccc397766607b7c4920b5ec28748ece2208c2d252e4f3ff8d84265e1dc2d",
+          "events_sha256": "2c81f6f6cf6f026bf4876906b8138e83838fcbe49105fc4f2fbcd486ff05eb30",
+          "state_sha256": "b1cf3fdafe872641525c0cd7225c3f3750d9d7cfe2d4ff485612642c9ff46f13",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 31
+        }
+      ],
+      "listen_file": "AMBIENT_WOODLAND_Activity_0_50_100_38p5s.wav",
+      "listen_sha256": "8777e52a4b9f71b9b04f63004d2e00e1b38707aa1aa0ae507a9f71a01765f78b",
+      "listen": {
+        "integrated_lufs": -23.4,
+        "true_peak_dbfs": -12.6
+      },
+      "identical_fixed_gain_db_all_sections": 11.600000000000001,
+      "sections": [
+        {
+          "activity": 0.0,
+          "output_seconds": [
+            0.0,
+            12.5
+          ],
+          "source_seconds": [
+            8.0,
+            20.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -24.5,
+            "true_peak_dbfs": -12.7
+          }
+        },
+        {
+          "activity": 0.5,
+          "output_seconds": [
+            13.0,
+            25.5
+          ],
+          "source_seconds": [
+            8.0,
+            20.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -12.6
+          }
+        },
+        {
+          "activity": 1.0,
+          "output_seconds": [
+            26.0,
+            38.5
+          ],
+          "source_seconds": [
+            8.0,
+            20.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.1,
+            "true_peak_dbfs": -12.6
+          }
+        }
+      ],
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "coast_weak_activity_range_requires_calibration": false
+    },
+    {
+      "world": "HIGHLANDS",
+      "cases": [
+        {
+          "seed": 1234,
+          "initial_activity": 0.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=2 seed=1234 initial=0.00 live=0 frames=15876000 starts=32 phrases=4 memory_returns=1 max_sources=3 final_ms=328000 nonfinite=0 limited=0 peak=0.07818604",
+          "raw_level": {
+            "integrated_lufs": -29.7,
+            "true_peak_dbfs": -22.1
+          },
+          "mono_energy_ratio": 0.976039143418521,
+          "dc": [
+            1.4685959742693373e-09,
+            7.016198044611364e-10
+          ],
+          "starts": 32,
+          "starts_per_minute": 5.853658536585366,
+          "completed_phrases": 4,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 1.5835365853658536,
+          "source_free_seconds": 134.92,
+          "longest_actual_source_free_interval_seconds": 18.829999999999984,
+          "largest_actual_onset_gap_seconds": 33.920000000000016,
+          "full_owner_retirement_after_stop_seconds": 328.0,
+          "held_role_on_off_seconds_range": [
+            5.77,
+            8.53
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 82.43
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 167.8
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 254.44
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              29.73,
+              48.37
+            ],
+            [
+              65.49,
+              82.42
+            ],
+            [
+              114.82,
+              133.13
+            ],
+            [
+              151.16,
+              167.79
+            ],
+            [
+              199.56,
+              218.39
+            ],
+            [
+              236.58,
+              254.43
+            ],
+            [
+              283.54,
+              300.94
+            ],
+            [
+              317.67,
+              328.0
+            ]
+          ],
+          "raw_sha256": "97dcfa7ebdb712768bc0fd0ad00ad05959cc3c3ff4e4ffb0aeefb9faed969e12",
+          "events_sha256": "4235a31d11ff383a8d502869976f69f3fd94819221fda25d71d5d4caa1a46785",
+          "state_sha256": "b55cb82957e45214037a31f8b0c1703d03333450b50a6caa8b7c39e3461eb946",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 24
+        },
+        {
+          "seed": 1234,
+          "initial_activity": 0.5,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=2 seed=1234 initial=0.50 live=0 frames=15876000 starts=37 phrases=4 memory_returns=1 max_sources=3 final_ms=328000 nonfinite=0 limited=0 peak=0.07818604",
+          "raw_level": {
+            "integrated_lufs": -29.5,
+            "true_peak_dbfs": -22.1
+          },
+          "mono_energy_ratio": 0.9754558020634146,
+          "dc": [
+            1.951079730213845e-09,
+            -9.226780990173847e-10
+          ],
+          "starts": 37,
+          "starts_per_minute": 6.7682926829268295,
+          "completed_phrases": 4,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 1.8532317073170732,
+          "source_free_seconds": 108.07,
+          "longest_actual_source_free_interval_seconds": 13.98999999999998,
+          "largest_actual_onset_gap_seconds": 29.080000000000013,
+          "full_owner_retirement_after_stop_seconds": 328.0,
+          "held_role_on_off_seconds_range": [
+            5.77,
+            8.53
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 72.23
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 147.23
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 223.08
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 294.6
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              29.38,
+              43.23
+            ],
+            [
+              59.65,
+              72.22
+            ],
+            [
+              103.97,
+              117.59
+            ],
+            [
+              134.86,
+              147.22
+            ],
+            [
+              178.43,
+              192.42
+            ],
+            [
+              209.81,
+              223.07
+            ],
+            [
+              251.73,
+              264.67
+            ],
+            [
+              280.72,
+              294.59
+            ],
+            [
+              326.39,
+              328.0
+            ]
+          ],
+          "raw_sha256": "0ff659dc45c761e35a9d5078377fd12939647a36e50bba0495ddb77857d18e3e",
+          "events_sha256": "39c203eef9ff82df633e3074a5a56996f0902b375c0520b495b26860d89bd1f6",
+          "state_sha256": "f88115088958f2af58e1734cf794f294f845546a2485e89272fdb7be311a8713",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 24
+        },
+        {
+          "seed": 1234,
+          "initial_activity": 1.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=2 seed=1234 initial=1.00 live=0 frames=15876000 starts=43 phrases=5 memory_returns=1 max_sources=3 final_ms=335030 nonfinite=0 limited=0 peak=0.07818604",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.1
+          },
+          "mono_energy_ratio": 0.9759387710514884,
+          "dc": [
+            -1.1514253777321114e-09,
+            -1.791533308925422e-09
+          ],
+          "starts": 43,
+          "starts_per_minute": 7.865853658536585,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.076128048780488,
+          "source_free_seconds": 87.07,
+          "longest_actual_source_free_interval_seconds": 9.159999999999997,
+          "largest_actual_onset_gap_seconds": 24.25,
+          "full_owner_retirement_after_stop_seconds": 335.03,
+          "held_role_on_off_seconds_range": [
+            5.77,
+            8.53
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 62.04
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 126.76
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 192.11
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 253.53
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 318.37
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              29.03,
+              38.1
+            ],
+            [
+              53.82,
+              62.03
+            ],
+            [
+              93.13,
+              102.05
+            ],
+            [
+              118.58,
+              126.75
+            ],
+            [
+              157.66,
+              166.82
+            ],
+            [
+              183.43,
+              192.1
+            ],
+            [
+              220.57,
+              229.06
+            ],
+            [
+              244.45,
+              253.52
+            ],
+            [
+              284.67,
+              293.41
+            ],
+            [
+              309.79,
+              318.36
+            ]
+          ],
+          "raw_sha256": "e2bfda3d9ba6579626511bf6638fcf1856ea414d45eaa8478dd5e994bc43f41d",
+          "events_sha256": "93b45e53008d47b25f645f9271e70666d4d5d5ea3c303c9da05521a976693799",
+          "state_sha256": "f325a10c374737f704b0728b60db5953cf30a7bd163d6d4d2634d00fe855996c",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 24
+        },
+        {
+          "seed": 42,
+          "initial_activity": 0.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=2 seed=42 initial=0.00 live=0 frames=15876000 starts=32 phrases=4 memory_returns=1 max_sources=3 final_ms=328000 nonfinite=0 limited=0 peak=0.07675171",
+          "raw_level": {
+            "integrated_lufs": -29.7,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9760048733297957,
+          "dc": [
+            2.077947968828735e-09,
+            -1.7223324514991182e-09
+          ],
+          "starts": 32,
+          "starts_per_minute": 5.853658536585366,
+          "completed_phrases": 4,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 1.5834451219512196,
+          "source_free_seconds": 135.22,
+          "longest_actual_source_free_interval_seconds": 19.0,
+          "largest_actual_onset_gap_seconds": 33.92999999999998,
+          "full_owner_retirement_after_stop_seconds": 328.0,
+          "held_role_on_off_seconds_range": [
+            5.8,
+            8.45
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 84.3
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 168.43
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 253.66
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              29.72,
+              48.72
+            ],
+            [
+              65.8,
+              84.29
+            ],
+            [
+              116.36,
+              134.04
+            ],
+            [
+              151.94,
+              168.42
+            ],
+            [
+              200.32,
+              219.03
+            ],
+            [
+              237.35,
+              253.65
+            ],
+            [
+              282.75,
+              301.55
+            ],
+            [
+              318.24,
+              328.0
+            ]
+          ],
+          "raw_sha256": "26bfada21d2077fe0791cff858d3039d2588b902a7e11b1da4f377ac7a94bf6f",
+          "events_sha256": "570526a0d341dbc43a749fc3f50d1d088957b630e3da05b87461927f6f5d894f",
+          "state_sha256": "eaa919b5459a751c5accb7abb8e148c83320abf5fe81de7e2694772148fb4792",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 24
+        },
+        {
+          "seed": 42,
+          "initial_activity": 0.5,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=2 seed=42 initial=0.50 live=0 frames=15876000 starts=37 phrases=4 memory_returns=1 max_sources=3 final_ms=328000 nonfinite=0 limited=0 peak=0.07745361",
+          "raw_level": {
+            "integrated_lufs": -29.6,
+            "true_peak_dbfs": -22.2
+          },
+          "mono_energy_ratio": 0.9757960008050957,
+          "dc": [
+            -3.709934856465734e-10,
+            -5.22850922776518e-10
+          ],
+          "starts": 37,
+          "starts_per_minute": 6.7682926829268295,
+          "completed_phrases": 4,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 1.854969512195122,
+          "source_free_seconds": 107.96,
+          "longest_actual_source_free_interval_seconds": 14.129999999999999,
+          "largest_actual_onset_gap_seconds": 29.090000000000003,
+          "full_owner_retirement_after_stop_seconds": 328.0,
+          "held_role_on_off_seconds_range": [
+            5.8,
+            8.45
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 73.87
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 147.76
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 222.57
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 294.12
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              29.62,
+              43.75
+            ],
+            [
+              60.13,
+              73.86
+            ],
+            [
+              105.28,
+              118.39
+            ],
+            [
+              135.53,
+              147.75
+            ],
+            [
+              179.09,
+              192.96
+            ],
+            [
+              210.48,
+              222.56
+            ],
+            [
+              251.46,
+              265.44
+            ],
+            [
+              281.45,
+              294.11
+            ],
+            [
+              325.82,
+              328.0
+            ]
+          ],
+          "raw_sha256": "b10cde2f24475fc9407247095b94d3966f69241e9c84925704e261e09d312fc5",
+          "events_sha256": "6c9188f747b5ddb533e52c01a66658e29bf50aebf32c40a710b69129c60360f5",
+          "state_sha256": "914c21ac387780a34c9d22303656029eb76bd9fa4b8db6ac0cebd4c4dd7373b3",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 24
+        },
+        {
+          "seed": 42,
+          "initial_activity": 1.0,
+          "live_changes": false,
+          "renderer_report": "ACTIVITY world=2 seed=42 initial=1.00 live=0 frames=15876000 starts=43 phrases=5 memory_returns=1 max_sources=3 final_ms=335060 nonfinite=0 limited=0 peak=0.07745361",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.2
+          },
+          "mono_energy_ratio": 0.9762196793253247,
+          "dc": [
+            -1.624297903478521e-09,
+            -1.0783800282265685e-09
+          ],
+          "starts": 43,
+          "starts_per_minute": 7.865853658536585,
+          "completed_phrases": 5,
+          "memory_returns": 1,
+          "maximum_actual_sources": 3,
+          "mean_actual_sources": 2.0778658536585364,
+          "source_free_seconds": 87.01,
+          "longest_actual_source_free_interval_seconds": 9.300000000000011,
+          "largest_actual_onset_gap_seconds": 24.25,
+          "full_owner_retirement_after_stop_seconds": 335.06,
+          "held_role_on_off_seconds_range": [
+            5.8,
+            8.45
+          ],
+          "phrase_openings": [
+            {
+              "episode": 0,
+              "kind": 0,
+              "seconds": 0.01
+            },
+            {
+              "episode": 1,
+              "kind": 1,
+              "seconds": 63.19
+            },
+            {
+              "episode": 2,
+              "kind": 2,
+              "seconds": 126.94
+            },
+            {
+              "episode": 3,
+              "kind": 3,
+              "seconds": 191.75
+            },
+            {
+              "episode": 4,
+              "kind": 1,
+              "seconds": 253.28
+            },
+            {
+              "episode": 5,
+              "kind": 2,
+              "seconds": 318.34
+            }
+          ],
+          "actual_source_free_intervals_seconds": [
+            [
+              29.27,
+              38.52
+            ],
+            [
+              54.2,
+              63.18
+            ],
+            [
+              93.95,
+              102.48
+            ],
+            [
+              118.88,
+              126.93
+            ],
+            [
+              157.97,
+              167.0
+            ],
+            [
+              183.74,
+              191.74
+            ],
+            [
+              220.45,
+              229.62
+            ],
+            [
+              244.97,
+              253.27
+            ],
+            [
+              284.33,
+              293.63
+            ],
+            [
+              309.93,
+              318.33
+            ]
+          ],
+          "raw_sha256": "01e212a187ea68720f7bfde72d3d98fc2ce3c3867228618a4225d440ee7cd17d",
+          "events_sha256": "5f579e36fc243440583d8e0d82d28668d3f9de75e0977ebc30533af87056e54a",
+          "state_sha256": "b4404522c326bfa517f5db56ca1138ed62c142133abfee57bc9110550fec6283",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_activity_values_ordered_heard_prefix_identical": true,
+          "matched_heard_prefix_start_count": 32,
+          "unchanged_actual_held_roles_checked": 24
+        }
+      ],
+      "listen_file": "AMBIENT_HIGHLANDS_Activity_0_50_100_38p5s.wav",
+      "listen_sha256": "064b3eea539e4a438ecea3f4eb4d45e2480b00ee2f7a60717390ac94db0e9407",
+      "listen": {
+        "integrated_lufs": -23.4,
+        "true_peak_dbfs": -17.1
+      },
+      "identical_fixed_gain_db_all_sections": 5.699999999999999,
+      "sections": [
+        {
+          "activity": 0.0,
+          "output_seconds": [
+            0.0,
+            12.5
+          ],
+          "source_seconds": [
+            34.0,
+            46.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": null,
+            "true_peak_dbfs": null,
+            "exact_silence": true
+          }
+        },
+        {
+          "activity": 0.5,
+          "output_seconds": [
+            13.0,
+            25.5
+          ],
+          "source_seconds": [
+            34.0,
+            46.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -24.5,
+            "true_peak_dbfs": -17.2
+          }
+        },
+        {
+          "activity": 1.0,
+          "output_seconds": [
+            26.0,
+            38.5
+          ],
+          "source_seconds": [
+            34.0,
+            46.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -17.1
+          }
+        }
+      ],
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "coast_weak_activity_range_requires_calibration": false
+    }
+  ],
+  "live": [
+    {
+      "seed": 1234,
+      "initial_activity": 0.5,
+      "live_changes": true,
+      "renderer_report": "ACTIVITY world=0 seed=1234 initial=0.50 live=1 frames=15876000 starts=47 phrases=5 memory_returns=1 max_sources=3 final_ms=336770 nonfinite=0 limited=0 peak=0.09613037",
+      "raw_level": {
+        "integrated_lufs": -32.9,
+        "true_peak_dbfs": -20.3
+      },
+      "mono_energy_ratio": 0.9695270818235402,
+      "dc": [
+        -1.6877320227859662e-09,
+        -2.620021352001449e-09
+      ],
+      "starts": 47,
+      "starts_per_minute": 8.597560975609756,
+      "completed_phrases": 5,
+      "memory_returns": 1,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.5133841463414632,
+      "source_free_seconds": 0.38,
+      "longest_actual_source_free_interval_seconds": 0.20999999999999375,
+      "largest_actual_onset_gap_seconds": 19.97,
+      "full_owner_retirement_after_stop_seconds": 336.77,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.83
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.12
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 117.92
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 178.53
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 236.33
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 296.15
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.1,
+          58.11
+        ],
+        [
+          117.7,
+          117.91
+        ],
+        [
+          178.42,
+          178.52
+        ],
+        [
+          236.26,
+          236.32
+        ]
+      ],
+      "raw_sha256": "08fe526ce4b0f1fc00b204f8acb84064303ed4624cb1edb66db7b08fd5aab8e9",
+      "events_sha256": "3fe436b27498f5ea43dbc6c71d7a6b00e1a230e81b10ac32d43aac28dfaccbd0",
+      "state_sha256": "8ca6dc17785c47f0547b33603a1e90f02049a29cba7b520941c5316d8acd6adc",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "live_ordered_heard_prefix_starts": 47,
+      "live_unchanged_actual_held_roles": 41,
+      "live_maximum_held_duration_difference_seconds": 0.0,
+      "world": "COAST",
+      "target_changes_seconds_values": [
+        [
+          10,
+          0
+        ],
+        [
+          32,
+          1
+        ],
+        [
+          64,
+          0.5
+        ],
+        [
+          96,
+          0
+        ],
+        [
+          128,
+          1
+        ],
+        [
+          160,
+          0.5
+        ]
+      ],
+      "setter_caused_immediate_note_hook": false
+    },
+    {
+      "seed": 1234,
+      "initial_activity": 0.5,
+      "live_changes": true,
+      "renderer_report": "ACTIVITY world=1 seed=1234 initial=0.50 live=1 frames=15876000 starts=38 phrases=6 memory_returns=1 max_sources=2 final_ms=330000 nonfinite=0 limited=0 peak=0.07992554",
+      "raw_level": {
+        "integrated_lufs": -33.3,
+        "true_peak_dbfs": -21.9
+      },
+      "mono_energy_ratio": 0.9304072740551165,
+      "dc": [
+        1.7107989752614009e-09,
+        -7.535204475308642e-10
+      ],
+      "starts": 38,
+      "starts_per_minute": 6.951219512195122,
+      "completed_phrases": 6,
+      "memory_returns": 1,
+      "maximum_actual_sources": 2,
+      "mean_actual_sources": 1.498810975609756,
+      "source_free_seconds": 30.02,
+      "longest_actual_source_free_interval_seconds": 6.96999999999997,
+      "largest_actual_onset_gap_seconds": 18.159999999999997,
+      "full_owner_retirement_after_stop_seconds": 330.0,
+      "held_role_on_off_seconds_range": [
+        5.82,
+        20.5
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 53.62
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 101.62
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 161.19
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 206.19
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 255.74
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 319.64
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          49.12,
+          53.61
+        ],
+        [
+          98.18,
+          101.61
+        ],
+        [
+          136.07,
+          137.18
+        ],
+        [
+          157.57,
+          161.18
+        ],
+        [
+          201.95,
+          206.18
+        ],
+        [
+          251.76,
+          255.73
+        ],
+        [
+          284.98,
+          286.02
+        ],
+        [
+          302.69,
+          303.86
+        ],
+        [
+          312.66,
+          319.63
+        ]
+      ],
+      "raw_sha256": "81d2fc721dfefb6245bf968085cc51a43c078cf525bc9c8f881b64b97994e5a9",
+      "events_sha256": "fd2f3e42bad2959fa591d98570f6e38e0a75bc42b297d08e000a7b3e457cafcd",
+      "state_sha256": "3bfe977c36fcc80badfa0c5024070db95d2a692b4ba167621e91abfb535210f0",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "live_ordered_heard_prefix_starts": 38,
+      "live_unchanged_actual_held_roles": 36,
+      "live_maximum_held_duration_difference_seconds": 0.0,
+      "world": "WOODLAND",
+      "target_changes_seconds_values": [
+        [
+          10,
+          0
+        ],
+        [
+          32,
+          1
+        ],
+        [
+          64,
+          0.5
+        ],
+        [
+          96,
+          0
+        ],
+        [
+          128,
+          1
+        ],
+        [
+          160,
+          0.5
+        ]
+      ],
+      "setter_caused_immediate_note_hook": false
+    },
+    {
+      "seed": 1234,
+      "initial_activity": 0.5,
+      "live_changes": true,
+      "renderer_report": "ACTIVITY world=2 seed=1234 initial=0.50 live=1 frames=15876000 starts=37 phrases=4 memory_returns=1 max_sources=3 final_ms=328000 nonfinite=0 limited=0 peak=0.07818604",
+      "raw_level": {
+        "integrated_lufs": -29.5,
+        "true_peak_dbfs": -22.1
+      },
+      "mono_energy_ratio": 0.9754457572477782,
+      "dc": [
+        3.5503884351773115e-09,
+        -1.7492438960537918e-10
+      ],
+      "starts": 37,
+      "starts_per_minute": 6.7682926829268295,
+      "completed_phrases": 4,
+      "memory_returns": 1,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 1.8534146341463416,
+      "source_free_seconds": 108.57,
+      "longest_actual_source_free_interval_seconds": 18.639999999999997,
+      "largest_actual_onset_gap_seconds": 33.120000000000005,
+      "full_owner_retirement_after_stop_seconds": 328.0,
+      "held_role_on_off_seconds_range": [
+        5.77,
+        8.53
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 71.81
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 148.07
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 223.51
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 295.03
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          29.23,
+          47.87
+        ],
+        [
+          63.59,
+          71.8
+        ],
+        [
+          103.55,
+          121.86
+        ],
+        [
+          139.89,
+          148.06
+        ],
+        [
+          178.86,
+          192.85
+        ],
+        [
+          210.24,
+          223.5
+        ],
+        [
+          252.16,
+          265.1
+        ],
+        [
+          281.15,
+          295.02
+        ],
+        [
+          326.82,
+          328.0
+        ]
+      ],
+      "raw_sha256": "32185031f2dd1d876f883a87f43823bbcac65a392620fe61db2aadada455fd81",
+      "events_sha256": "9f804b7219618e1e277863d5372e1392f0b4d77222ad5431946f4eacaaddb1c6",
+      "state_sha256": "9ddf009395ddde333366af351bb193d76194ea91b37dfb67646cb6ac86af5009",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "live_ordered_heard_prefix_starts": 37,
+      "live_unchanged_actual_held_roles": 28,
+      "live_maximum_held_duration_difference_seconds": 0.0,
+      "world": "HIGHLANDS",
+      "target_changes_seconds_values": [
+        [
+          10,
+          0
+        ],
+        [
+          32,
+          1
+        ],
+        [
+          64,
+          0.5
+        ],
+        [
+          96,
+          0
+        ],
+        [
+          128,
+          1
+        ],
+        [
+          160,
+          0.5
+        ]
+      ],
+      "setter_caused_immediate_note_hook": false
+    }
+  ],
+  "pure_regression": "ACTIVITY PURE PASS: 576 key/collection/seed cases, 33792 heard intents across eight phrases, min/default/max preserve pitch/role/velocity/hold and memory; 1536 post-retirement pause intents >=8s, timer wrap"
+}
