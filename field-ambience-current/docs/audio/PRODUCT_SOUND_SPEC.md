@@ -304,6 +304,17 @@ Die frühere0.7-Audiofassung ist über PR152 reproduzierbar. Neue echte, fest
 lautheitsangepasste Held/Release-Vergleiche und Host/H743-Nachweis:
 [SD19_ROOM_CALIBRATION_CHECKPOINT.md](SD19_ROOM_CALIBRATION_CHECKPOINT.md).
 
+SD28-Hörvorbereitung 2026-10-11: drei echte Mit/Ohne-Vergleiche bei Nature0/0,35
+und Room0,5, jeweils gehaltenes Ensemble plus späterer Übergang/Quellenpause.
+Dieser optionale Kandidat enthält Wind in allen drei Worlds, COAST zusätzlich
+Wellen und WOODLAND Tropfen; Default Nature bleibt0. Kein Familien-/Ortsnutzen
+oder Ruhegewinn ist dadurch freigegeben. Dieselben Noten, Besitzer und Phrasen
+bei zwei Seeds und Nature0/0,35/1, echtes Stop-Ende und Room-Unabhängigkeit sind
+geprüft. Gleiches Gain für alle vier Abschnitte; kein Anheben der Natur/Pause.
+Klang, Schema und Firmwareinputs bleiben exakt PR153/Spec0.8. Einzelne Worlds
+dürfen nach der Hörwahl vollständig ohne Natur bleiben. Details:
+[SD28_NATURE_CHECKPOINT.md](SD28_NATURE_CHECKPOINT.md).
+
 ## Kontextwechsel und Persistenz
 
 World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms (Pluck 20 ms),
