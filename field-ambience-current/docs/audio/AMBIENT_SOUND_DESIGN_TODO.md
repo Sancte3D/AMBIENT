@@ -96,10 +96,19 @@ Seeds. COAST47/47/47 und fast gleiche Rückkehrzeiten: die nominelle Activity-
 Kennlinie wirkt dort wegen realer Quellen-/Tailgrenzen noch zu schwach. Das ist
 ein offener Softwarebefund, keine geeignete Reglerkennlinie oder Hörabnahme.
 Firmware und Spec0.8 bleiben unverändert. Siehe [SD33_ACTIVITY_CHECKPOINT.md](SD33_ACTIVITY_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD33 COAST-Activity-Kennlinie für Übergaben und
-Ruhe gezielt kalibrieren, mit unveränderten Halteabsichten und sicheren Besitzern.
-Color und weitere Punkte danach; finale Quellen-/Raum-/Nature-Hörwahl bleibt
-erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
+SD33 COAST ist jetzt als einzelne Spec0.9-Kalibrierung umgesetzt: Activity0/0,5/1
+wartet nach tatsächlichem Außenquellenende6/3/0s, nach Ende aller Quellen10/5,5/1s,
+jeweils mit Entwicklungsfaktor. Gemeinsamer Owner15 bleibt stehen; bestätigte
+Holds, gehörte Ton-/Rollenfolge und Memory bleiben erhalten. Beide Seeds zeigen
+56/64/77 statt79/79/79 Einsätze bis568s.44 volle Renderläufe/309,87min, identische
+64/512-PCM-/Score-/Statusdaten, Livewechsel, echte Waits/Stop und bytegleiche
+WOODLAND/HIGHLANDS bestehen. Eine neue38,5-s-COAST-WAV zeigt0/0,5/1 bei gleichem
+Gain. Volle Host-Suite und exakt reproduzierter Baseline-/neuer H743-Build:
+Flash+456B, D1/D2 RAM unverändert. SCN7/Default0,5 bleiben, COAST-Zeitsemantik
+ist bewusst geändert. Noch kein Hörurteil oder SD33-Haken. Siehe
+[SD33_COAST_ACTIVITY_CHECKPOINT.md](SD33_COAST_ACTIVITY_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD33 Color0/0,5/1 in den echten musikalischen
+Worlds vorbereiten. Finale Quellen-/Raum-/Nature-Hörwahl bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
@@ -815,13 +824,29 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   exakt unverändert. Besitzer3/2/3, vier Phrasenarten und≥1 erinnerte Rückkehr,
   NaN/Limiter0; Stop328s, spätestens336,84s alle Besitzer frei, letzte Sekunde still.
   Drei38,5-s-Vergleiche zeigen0/0,5/1; ein Gain je World, echte HIGHLANDS-Ruhe.
-  **Befund:** COAST47 Einsätze/fünf Phrasen bei allen Werten und beiden Seeds,
+  **Befund der Spec0.8-Vorbereitung:** COAST47 Einsätze/fünf Phrasen bei allen Werten und beiden Seeds,
   Rückkehrzeiten fast gleich. Nominelle Abstände werden von realen Quellen/Tails
-  begrenzt. Nächster einzelner Schritt: nur diese COAST-Kennlinie kalibrieren.
+  begrenzt. Dieser COAST-Softwarebefund ist jetzt mit Spec0.9 bearbeitet (unten).
   WOODLAND33/39/41 und32/39/41; HIGHLANDS32/37/43, längste Quellenpause bei
   Seed1234 von18,83 auf9,16s. Musikalischer Nutzen/Color/Room bleiben ungehört.
   Alle Firmwareinputs unverändert zum grünen PR154/PR153; gezielte Hostprüfung,
   kein behaupteter neuer vollständiger Host-Runner oder ARM-Build, kein SD33-Haken.
+  **COAST-Kalibrierung Spec0.9, 2026-10-11:** zusätzliche Partnerwait6/3/0s
+  und Schlusswait10/5,5/1s nach tatsächlichem Besitzerende, mit Entwicklungsfaktor.
+  Gemeinsamer Ton bleibt stehen; laufende Waits/Holds und Memory/RNG bleiben.
+  12 feste600-s-Fälle plus zwei Livefälle, je64/512 bytegleich; vier112-s-
+  Gegenproben je Baseline/Kandidat und Blockgröße belegen unverändertes WOODLAND
+  und HIGHLANDS.44 Render/309,87min; echte Waits, drei Quellen, NaN/Limiter0,
+  Stop568s und final still. Seeds1234/42 beide56/64/77 statt79/79/79 Starts,
+  Rückkehr248,66/215,13/181,58s beziehungsweise249,66/215,89/182,11s.
+  Eine38,5-s-WAV, festes Gain+9,9dB,0/0,5/1. Volle Host-Suite und echte
+  Baseline-/Kandidat-H743-Releasebuilds mit identischer verifizierter Toolchain;
+  Baseline-ELF exakt reproduziert, Flash+456B, gemessene D1/D2-Gesamtbelegung
+  gleich, COAST-Zustand+4B. Spec0.9 ändert zeitliche Bedeutung desselben SCN7-
+  Activitywerts; Schema/Default bleiben. Historische Hörpacks bleiben PR155,
+  aktuelle COAST-Prüfung separat. Hörnutzen/Color/Room weiter offen; kein Haken.
+  Details: [SD33_COAST_ACTIVITY_CHECKPOINT.md](SD33_COAST_ACTIVITY_CHECKPOINT.md).
+  Nächster einzelner Schritt: Color0/0,5/1 in den tatsächlichen Worlds.
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen

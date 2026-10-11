@@ -354,10 +354,20 @@ void coast_phrase_init(coast_phrase_t *g, uint32_t seed) {
 void coast_phrase_restart(coast_phrase_t *g) {
     if(g->phase==4)g->variant=development_begin(&g->development,g->rng);
     else g->development.phrase_seed=g->rng;
-    g->phase=g->heard_mask=g->timing_valid=0;
+    g->phase=g->heard_mask=g->timing_valid=g->wait_valid=0;
 }
 bool coast_phrase_due(const coast_phrase_t *g, uint32_t now) {
     return !g->timing_valid || (int32_t)(now-g->next_ms)>=0;
+}
+bool coast_phrase_wait_after_retirement(coast_phrase_t *g,uint32_t now,float activity) {
+    if(g->phase<1 || g->phase>4 || g->heard_mask || g->wait_valid)return false;
+    if(!(activity>=0 && activity<=1))activity=.5f;
+    /* Count musical space after real retirement, rather than hiding it
+     * inside a nominal onset gap already consumed by the source release. */
+    float wait=g->phase==4 ? 1000.0f+9000.0f*(1.0f-activity) : 6000.0f*(1.0f-activity);
+    g->next_ms=now+(uint32_t)(wait*development_time(&g->development));
+    g->timing_valid=g->wait_valid=1;
+    return true;
 }
 coast_offer_t coast_phrase_propose(const coast_phrase_t *g,int role,
                                   int key,bool minor,float activity) {
@@ -398,7 +408,7 @@ bool coast_phrase_heard(coast_phrase_t *g,const coast_offer_t *o,uint32_t now) {
     if(g->heard_mask==required) {
         g->next_ms=(g->phase==3 ? now : g->phase_ms)+o->gap_ms;
         if(g->phase==3)++g->episodes;
-        ++g->phase; g->heard_mask=0; g->timing_valid=1;
+        ++g->phase; g->heard_mask=g->wait_valid=0; g->timing_valid=1;
         g->rng=g->rng*1664525u+1013904223u;
         if(g->phase==4)development_complete(&g->development,g->variant,g->rng);
     }

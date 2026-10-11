@@ -1,4 +1,4 @@
-# AMBIENT — Product Sound Candidate 0.8
+# AMBIENT — Product Sound Candidate 0.9
 
 Stand 2026-10-11. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
 `FAM_SOUND_PRODUCT`, Wireformat SCN7. Dies ist der reproduzierbare
@@ -106,7 +106,7 @@ PCM; es verspricht keine identische Aufnahme nach beliebigem Bedienverlauf.
 
 | Welt | Timing vor Activity | Erinnerung / Variation | Grenze |
 |---|---|---|---|
-| COAST | Außenstimmen Hold 2,8..3,1 s; geplante Schritte 5,8..6,2 s; Ziel Hold 5..5,5 s und Ruhe 4..8 s; tatsächliche Releases können Schritte verlängern | Gegenläufige Core-Wege um eine mittlere Tonika, Seed variiert obere Route, Dauern und Akzente; leiser gemeinsamer Akkordton bleibt bis nach dem Ziel | drei feste Rollen, acht bestätigte Starts pro Phrase; Ziel einmal in Owner6, keine doppelte Unisonoquelle; weiterhin drei Slots inklusive Release |
+| COAST | Außenstimmen Hold 2,8..3,1 s; früheste geplante Schritte 5,8..6,2 s; zusätzlich nach wirklichem Außenquellenende 6*(1-Activity) s; Ziel Hold 5..5,5 s, danach zusätzliche Schlussruhe 1+9*(1-Activity) s ab Ende aller Quellen; Entwicklungsfaktor 1/1,08/1,12/0,96 | Gegenläufige Core-Wege um eine mittlere Tonika, Seed variiert obere Route, Dauern und Akzente; leiser gemeinsamer Akkordton bleibt während Partnerwartezeiten bis nach dem Ziel | drei feste Rollen, acht bestätigte Starts pro Phrase; Ziel einmal in Owner6, keine doppelte Unisonoquelle; weiterhin drei Slots inklusive Release |
 | WOODLAND | sechs Starts; Hold je Rolle6..18,5 s; Basisabstände2/12/9/4/7 s vor Activity; Schlussruhe5..9 s nach letztem Hold | weiche Tonika/Terz → verwandter Akkord mit erhaltener Terz → höhere Antwort → gemeinsame D4-/Terz-Verbindung → Quinte oder verwandter Schluss; Seed variiert Schluss, Akzente und Dauern | zwei echte lang abklingende Saiten; Owner6/7 warten reale Releases ab, kein Wiederanschlagen des gehaltenen gemeinsamen Tons |
 | HIGHLANDS | acht Starts; Partner-Holds6..7,75 s; Basisversatz0,8/0,8/8,4/1 s; Reprise1/1 s; offene Pause12..14 s vor Activity, mindestens8 s nach tatsächlichem Quellenende | weiter Akkord → verwandte Lage mit gleicher gehaltener Terz → offene Pause → weiter Akkord kehrt mit eigenen Dauern zurück; Seed variiert Akzente/Holds und Dur-Zwischenbass | drei feste Besitzer6/7/15 einschließlich Releases; gemeinsamer Ton ohne Wiederanschlag; Pause erst nach tatsächlichem Ende aller Besitzer |
 
@@ -115,6 +115,20 @@ Deadline genau0 am Timerwrap. Activity-Faktor `1.35 - 0.70*a` skaliert
 kommende Abstände, keine Holds, Gain oder Farbe. Belegung/Tail-Zulassung
 kann Einsätze verlängern; Wiederholung wartet250 ms und verändert weder
 RNG noch gehörte Historie. Kein Ersatzton durch nahe Alternativsuche.
+
+Spec0.9 ergänzt ausschließlich bei COAST Wartezeiten nach tatsächlichem
+Retirement. Partner warten bei Activity0/0,5/1 zusätzlich6/3/0 s,
+die nächste Phrase nach Ende aller Quellen10/5,5/1 s, jeweils mit dem
+Entwicklungsfaktor. Die nächste Wartezeit wird einmal mit der aktuellen
+Activity geplant; eine bereits laufende Wartezeit und klingende Holds bleiben
+bei Bedienänderungen erhalten. Pitch-/Room-History kann den folgenden Start
+weiter verzögern. Die Schlusswartezeit beginnt nach dem bisherigen frühesten
+Phrasentermin und Quellenende; sie ersetzt keine Releasezeit.
+Default Activity0,5 und SCN7-Werte/Schema bleiben erhalten, derselbe gespeicherte
+COAST-Activitywert bedeutet ab Spec0.9 diese neue zeitliche Kennlinie.
+Die historischen Spec0.8-Hörpakete bleiben auf PR155 eingefroren; die aktuelle
+Kennlinie wird separat gegen dessen unveränderten Core geprüft:
+[SD33_COAST_ACTIVITY_CHECKPOINT.md](SD33_COAST_ACTIVITY_CHECKPOINT.md).
 
 COAST besitzt einen eigenen begrenzten Phrasenzustand. Erste Außenstimmen
 werden gemeinsam vorbereitet, Owner15 beginnt 700 ms nach deren bestätigtem
@@ -213,7 +227,7 @@ Scene-Werte sind Parameter, keine Besitzer-/Envelope-/Raumsnapshots.
 | Collection | Harmonie, 0 Major / 0 / 1 Minor | zwei obige Cores; nur neue Einsätze | SCN7-Collection; keine alte Mode-ID still umdeuten |
 | Tuning | Harmonie, 0 Equal / 0 / 1 Just | neue Hz; alte angewandte Hz/Fahnen geschützt | SCN7; keine Pitchrampe |
 | Color | Quelle, normiert 0 / 0,5 / 1 | Bowed-Cutofffaktor0,8..1,2; Horn0,85..1,15; lange WOODLAND-Saite Damp0,025..0,005, default0,015, FIR-Seitengewicht Damp×0,25/0,9; 80-ms-Zeitkonstante, auch live | via Brightnessadapter in SCN7; World verändert Color nicht |
-| Activity | Score, 0 / 0,5 / 1 | Faktor 1,35..0,65, nur kommende Angebote; weder Gain/Color/Key noch zusätzliche Quellen | SCN7; 0 ist langsame aktive Welt, kein Stop |
+| Activity | Score, 0 / 0,5 / 1 | Faktor 1,35..0,65 für kommende Angebote; COAST zusätzlich Partnerwait6/3/0 s und Schlusswait10/5,5/1 s nach tatsächlichem Quellenende, mit Entwicklungsfaktor; laufende Waits/Holds bleiben stehen; weder Gain/Color/Key noch zusätzliche Quellen | SCN7 unverändert; COAST-Zeitsemantik ab Spec0.9 geändert; 0 ist langsame aktive Welt, kein Stop |
 | Attack | neue Quelle, 0 / 0,5 / 1 | SHAPE x=0,35+0,30*a; Faktor 0,125×64^x = 0,5359 / 1 / 1,8661; note-on only | SCN7; keine rückwirkende Hüllkurvenänderung |
 | Release | neue Quelle, 0 / 0,5 / 1 | x=0,35+0,30*r; Faktor 0,25×16^x = 0,6598 / 1 / 1,5157; note-on only | SCN7; 0 bleibt musikalischer Release |
 | Room | gemeinsamer Raum, 0 / 0,5 / 1 | nominal T60=1,2+3,6*r² s; kalibrierter Rücklauf Wet=5*r, zusätzlich Enable; Amount linear 80 ms über vollen Bereich, Feedback 120-ms-Zeitkonstante | SCN7; 0 nach Rampe exakt Dry, kalter Pfad und Tank leer; World leert Tank nicht |

@@ -1,0 +1,119 @@
+{
+  "baseline_commit": "4de325a0d4c6255909801e02e0cfe62889a6777e",
+  "baseline_tree": "f515c8c68420ceec81d4ff26f80b3e40c8b8a69b",
+  "scope": "Exact baseline and Spec0.9 COAST Activity Product H743 Release, Journal OFF. Same independently SHA256-verified GCC13.2.1/Newlib4.4 packages.",
+  "packages": [
+    {
+      "package": "binutils-arm-none-eabi",
+      "version": "2.42-1ubuntu1+23",
+      "size": 3136884,
+      "sha256": "2aab2d6a7e4c21ce33462f8b52b972e2a8e4597e79b5add5502e2d1f3e543472"
+    },
+    {
+      "package": "gcc-arm-none-eabi",
+      "version": "15:13.2.rel1-2",
+      "size": 57521126,
+      "sha256": "519a5d0e5292a4b4861f69ae96e8918149bfd1646072ca53451ccfb8c5a91948"
+    },
+    {
+      "package": "libnewlib-arm-none-eabi",
+      "version": "4.4.0.20231231-2",
+      "size": 49181424,
+      "sha256": "9af508599193d07c9460897d01a36af46a2707765bd6941e27c6d0747859b0eb"
+    },
+    {
+      "package": "libnewlib-dev",
+      "version": "4.4.0.20231231-2",
+      "size": 139892,
+      "sha256": "f945b12c3abc844e76eebc28cf7d99e9aefd7caec39583116ef29556b3c52414"
+    }
+  ],
+  "cmake_version": "3.31.6",
+  "product_link_audit_pass": true,
+  "full_host_runner_pass": true,
+  "host_log_sha256": "6ca5a74be014e18c87cd0b4a4d498bfbf466ae7c82ff22628ab50de1000d4449",
+  "device_cpu_or_stack_highwater_measured": false,
+  "limitations": "Compiler frames are individual functions, not nested/interrupt/runtime stack high-water. DWT CPU, underruns, actual sound/controls and hardware acceptance remain open.",
+  "builds": {
+    "baseline": {
+      "elf_sha256": "9dff333c483d849357250246b755dd466278802f982504edd6ef194ad84c039a",
+      "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+      "bank1_load_image_bytes": 195928,
+      "memory_region_used_bytes": {
+        "DTCMRAM": 16384,
+        "RAM_D1": 65664,
+        "RAM_D2": 60808,
+        "RAM_D3": 0,
+        "ITCMRAM": 0,
+        "FLASH": 195928
+      },
+      "core_individual_frame_count": 182,
+      "core_max_individual_frame_bytes": 192,
+      "selected_individual_frames_bytes": {
+        "engine_render": 88,
+        "engine_generative_tick": 80,
+        "nature_render": 136,
+        "ambient_room_process": 192
+      },
+      "internal_symbols": {
+        "coast": {
+          "address": "24005c28",
+          "bytes": 52
+        },
+        "tank": {
+          "address": "30001550",
+          "bytes": 55352
+        },
+        "diffusion": {
+          "address": "300000a0",
+          "bytes": 5296
+        },
+        "s_buffer": {
+          "address": "2400d400",
+          "bytes": 4096
+        }
+      }
+    },
+    "calibrated": {
+      "elf_sha256": "d99fb5c0b0536c2e376fe2447a25542287356f93f41cd143f5a1f675f4d18105",
+      "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+      "bank1_load_image_bytes": 196384,
+      "memory_region_used_bytes": {
+        "DTCMRAM": 16384,
+        "RAM_D1": 65664,
+        "RAM_D2": 60808,
+        "RAM_D3": 0,
+        "ITCMRAM": 0,
+        "FLASH": 196384
+      },
+      "core_individual_frame_count": 183,
+      "core_max_individual_frame_bytes": 192,
+      "selected_individual_frames_bytes": {
+        "engine_render": 88,
+        "engine_generative_tick": 80,
+        "nature_render": 136,
+        "ambient_room_process": 192,
+        "coast_phrase_wait_after_retirement": 4
+      },
+      "internal_symbols": {
+        "coast": {
+          "address": "24005c28",
+          "bytes": 56
+        },
+        "tank": {
+          "address": "30001550",
+          "bytes": 55352
+        },
+        "diffusion": {
+          "address": "300000a0",
+          "bytes": 5296
+        },
+        "s_buffer": {
+          "address": "2400d400",
+          "bytes": 4096
+        }
+      }
+    }
+  },
+  "bank1_load_delta_bytes": 456
+}

@@ -415,6 +415,14 @@ static bool coast_start(const coast_offer_t *o) {
 }
 static void coast_tick(uint32_t ms) {
     if(coast_pending || !coast_phrase_due(&coast,ms))return;
+    if(coast.phase && !coast.wait_valid) {
+        int outgoing=coast.phase==4 ? 3 : 2;
+        for(int role=0;role<outgoing;++role)if(!coast_owner_free(role)) {
+            retry_ms=ms+250;return;
+        }
+        (void)coast_phrase_wait_after_retirement(&coast,ms,activity);
+        if(!coast_phrase_due(&coast,ms))return;
+    }
     if(coast.phase==4) {
         for(int role=0;role<3;++role) if(!coast_owner_free(role)) {retry_ms=ms+250;return;}
         coast_phrase_restart(&coast);
