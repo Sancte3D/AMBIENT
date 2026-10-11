@@ -27,7 +27,40 @@ static void heard(phrases_t *p,int w,const offer_t *o,uint32_t now) {
     assert(w==0 ? coast_phrase_heard(&p->c,&o->c,now) : w==1 ?
         woodland_phrase_heard(&p->w,&o->w,now) : highlands_phrase_heard(&p->h,&o->h,now));
 }
+static void coast_retirement_waits(void) {
+    coast_phrase_t initial;coast_phrase_init(&initial,1234);
+    assert(!coast_phrase_wait_after_retirement(&initial,123,0));
+    for(int ph=1;ph<=4;++ph)for(int kind=0;kind<4;++kind) {
+        coast_phrase_t g[3];uint32_t delay[3];
+        for(int a=0;a<3;++a) {
+            g[a]=initial;g[a].phase=(uint8_t)ph;g[a].development.kind=(uint8_t)kind;
+            coast_phrase_t before=g[a];
+            uint32_t now=0xFFFFF000u;
+            assert(coast_phrase_wait_after_retirement(&g[a],now,(float)a/2));
+            delay[a]=g[a].next_ms-now;
+            assert(!memcmp(&g[a].development,&before.development,sizeof before.development));
+            assert(g[a].rng==before.rng && g[a].notes==before.notes && g[a].phase==before.phase);
+            assert(g[a].wait_valid && g[a].timing_valid && !g[a].heard_mask);
+            if(delay[a])assert(!coast_phrase_due(&g[a],g[a].next_ms-1));
+            assert(coast_phrase_due(&g[a],g[a].next_ms));
+            before=g[a];assert(!coast_phrase_wait_after_retirement(&g[a],now,1));
+            assert(!memcmp(&g[a],&before,sizeof before));
+        }
+        assert(delay[0]>delay[1] && delay[1]>delay[2]);
+        assert(ph==4 ? delay[2]>=960u : delay[2]==0);
+    }
+    initial.phase=1;initial.heard_mask=1;
+    coast_phrase_t before=initial;
+    assert(!coast_phrase_wait_after_retirement(&initial,0,.5f));
+    assert(!memcmp(&initial,&before,sizeof before));
+    initial.heard_mask=0;
+    assert(coast_phrase_wait_after_retirement(&initial,(uint32_t)-3000,.5f));
+    assert(initial.next_ms==0 && !coast_phrase_due(&initial,UINT32_MAX));
+    assert(coast_phrase_due(&initial,0));
+    coast_phrase_restart(&initial);assert(!initial.wait_valid && !initial.timing_valid && !initial.phase);
+}
 int main(void) {
+    coast_retirement_waits();
     unsigned cases=0,offers=0,changed[3]={0},pauses=0;
     for(int w=0;w<3;++w)for(int key=0;key<12;++key)for(int minor=0;minor<2;++minor)for(uint32_t seed=1;seed<=8;++seed) {
         phrases_t p={0};coast_phrase_init(&p.c,seed);woodland_phrase_init(&p.w,seed);highlands_phrase_init(&p.h,seed);

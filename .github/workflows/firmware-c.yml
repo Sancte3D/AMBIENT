@@ -97,10 +97,14 @@ jobs:
         run: ./run_tests.sh
 
   product-audio-review:
-    name: short product hearing pack
+    name: archived Spec0.8 hearing packs (PR155)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Historical hearing packs assert their published source hashes.
+          # New musical changes get a separate current-source audit below.
+          ref: 4de325a0d4c6255909801e02e0cfe62889a6777e
       - name: Install audio measurement tool
         run: |
           sudo apt-get update -qq
@@ -369,6 +373,31 @@ jobs:
             field-ambience-current/firmware-c-next/build-activity-comparison/SD33_ACTIVITY_METRICS.json
             field-ambience-current/firmware-c-next/build-activity-comparison/*.events.csv
             field-ambience-current/firmware-c-next/build-activity-comparison/*.state.csv
+          if-no-files-found: error
+          retention-days: 30
+
+  coast-activity-review:
+    name: current COAST Activity calibration (Spec0.9)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact comparison baseline
+        run: git fetch --no-tags --depth=1 origin 4de325a0d4c6255909801e02e0cfe62889a6777e
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify real COAST waits, music and unchanged other Worlds
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_coast_activity_calibration.py build-coast-activity-calibration
+      - name: Upload one short COAST WAV and complete audit traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-coast-activity-calibrated-38p5s
+          path: field-ambience-current/firmware-c-next/build-coast-activity-calibration
           if-no-files-found: error
           retention-days: 30
 

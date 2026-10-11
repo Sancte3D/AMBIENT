@@ -48,7 +48,7 @@ typedef struct {
  * pairs, phase 3 coalesces their destination, phase 4 is a bounded rest. */
 typedef struct {
     uint32_t rng, next_ms, phase_ms, notes, episodes, returns;
-    uint8_t phase, heard_mask, timing_valid, variant;
+    uint8_t phase, heard_mask, timing_valid, variant, wait_valid;
     phrase_development_t development;
 } coast_phrase_t;
 typedef struct {
@@ -65,6 +65,10 @@ coast_offer_t coast_phrase_propose(const coast_phrase_t *g, int role,
 bool coast_phrase_heard(coast_phrase_t *g, const coast_offer_t *offer,
                         uint32_t now_ms);
 bool coast_phrase_pitch_allowed(int midi, int key_pc, bool minor);
+/* Main calls only after outgoing owners retire. Keep the held common role
+ * across partner waits; the closing wait begins after all three owners end. */
+bool coast_phrase_wait_after_retirement(coast_phrase_t *g, uint32_t now_ms,
+                                       float activity);
 
 /* WOODLAND: two long owned strings; replace one chord tone while the other
  * stays. Six heard starts, then rest. Offers/acks are Main-only and bounded. */

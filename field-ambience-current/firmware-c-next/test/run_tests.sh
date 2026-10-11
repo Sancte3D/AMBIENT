@@ -98,6 +98,11 @@ cmake --build "$tmp/product-host" -j2 >"$tmp/product-host-build.log"
     "$src/src/world_grammar.c" -o "$tmp/world_grammar_test"
 "$tmp/world_grammar_test"
 
+# Actual-retirement Activity waits, heard intent retention and timer wrap.
+"$CC" "${CFLAGS[@]}" -Werror "$here/test_activity_ranges.c" \
+    "$src/src/world_grammar.c" -o "$tmp/activity_ranges_test"
+"$tmp/activity_ranges_test"
+
 # Exercise the product HAL's actual cell dispatch, including mode transitions.
 CC="$CC" python3 "$here/test_cell_routing.py"
 
