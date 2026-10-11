@@ -107,8 +107,22 @@ Gain. Volle Host-Suite und exakt reproduzierter Baseline-/neuer H743-Build:
 Flash+456B, D1/D2 RAM unverändert. SCN7/Default0,5 bleiben, COAST-Zeitsemantik
 ist bewusst geändert. Noch kein Hörurteil oder SD33-Haken. Siehe
 [SD33_COAST_ACTIVITY_CHECKPOINT.md](SD33_COAST_ACTIVITY_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD33 Color0/0,5/1 in den echten musikalischen
-Worlds vorbereiten. Finale Quellen-/Raum-/Nature-Hörwahl bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
+SD33 Color ist jetzt im tatsächlich gehaltenen Ensemble vorbereitet: drei
+38,5-s-WAVs vergleichen0/0,5/1 mit gleichen musikalischen Abläufen und einem
+festen Gain pro World.18 feste112-s-Fälle plus drei Livefälle sind jeweils
+64/512 bytegleich in vollständigem PCM/Noten/Status; zwischen Colorwerten und
+bei Liveänderungen bleiben sämtliche Noten, Haltezeiten und Übergaben erhalten.
+Sechs normale Defaultkontrollen sind exakt;48 volle Render/89,6min plus echter
+Product-Vertragscheck bestehen.251 Firmware-Kerninputs bytegleich gegen grünen
+PR156; Spec0.9/Core unverändert, keine neue ARM-/vollständige Hostbehauptung.
+**Konkreter Befund:** WOODLANDs bestehendes Color verändert den echten gehaltenen
+Klang nur um0,203/0,204% RMS zum Default; FFT-Leistungszentrum181,08→181,46Hz.
+Die Kennlinie ist zu schwach für einen belegten musikalischen Endwertnutzen.
+COAST/HIGHLANDS zeigen größere messbare Farbänderungen, Hörnutzen bleibt offen.
+Siehe [SD33_COLOR_CHECKPOINT.md](SD33_COLOR_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: nur WOODLAND-Color kalibrieren, mit erhaltenem
+langen Ton, Tonhöhe und sicheren Besitzern. Finale Quellen-/Raum-/Nature-Hörwahl
+bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
@@ -846,7 +860,23 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Activitywerts; Schema/Default bleiben. Historische Hörpacks bleiben PR155,
   aktuelle COAST-Prüfung separat. Hörnutzen/Color/Room weiter offen; kein Haken.
   Details: [SD33_COAST_ACTIVITY_CHECKPOINT.md](SD33_COAST_ACTIVITY_CHECKPOINT.md).
-  Nächster einzelner Schritt: Color0/0,5/1 in den tatsächlichen Worlds.
+  **Color-Vorbereitung 2026-10-11:** drei echte musikalische Worlds,
+  Color0/0,5/1, zwei Seeds;18 feste112-s-Fälle und drei Livefälle bei64/512,
+  sechs vollständige normale Defaultkontrollen.48 Render/89,6min PCM.
+  Vollständige PCMbytes blockgleich; alle Color- und Liveereignisse/Statusdaten
+  identisch, Noten/Holds/Hz/Owner/Phrasen/Übergaben unverändert. NaN/Limiter0,
+  Quellen3/2/3, Stop80s, spätestens88,84s Besitzer frei, finale Sekunde still.
+  Zusätzlicher echter Product-Vertrag inkl. Invalid-Inputs und zwölf Minuten
+  Musik besteht.251 getrackte Core-/Header-/Startup-/Linker-/CMake-Inputs exakt
+  PR156, dessen CI38145968039/run687 jetzt frisch completed/success.
+  Spec0.9/Firmware unverändert, kein neuer voller Hostrunner/ARM-Build behauptet.
+  Drei38,5-s-WAVs vergleichen dieselbe Passage3–15,5s, ein Gain je World.
+  COAST Color0/1 RMS-Differenz14,44/10,63%, HIGHLANDS11,28/8,50% zum Default;
+  WOODLAND nur0,203/0,204%, FFT-Center181,08/181,27/181,46Hz (beide Seeds
+  gleiche schwache monotone Richtung). Sample-/FFTbefund ist keine Hörabnahme.
+  Nächster einzelner Schritt: nur WOODLAND-Color kalibrieren, mit langem Ton
+  und unveränderter Tonhöhe/Halteabsicht/Besitzersicherheit. Kein SD33-Haken.
+  Details: [SD33_COLOR_CHECKPOINT.md](SD33_COLOR_CHECKPOINT.md).
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen

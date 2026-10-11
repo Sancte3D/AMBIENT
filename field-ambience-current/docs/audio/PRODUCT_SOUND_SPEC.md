@@ -329,6 +329,15 @@ Klang, Schema und Firmwareinputs bleiben exakt PR153/Spec0.8. Einzelne Worlds
 dürfen nach der Hörwahl vollständig ohne Natur bleiben. Details:
 [SD28_NATURE_CHECKPOINT.md](SD28_NATURE_CHECKPOINT.md).
 
+SD33-Color-Hörvorbereitung 2026-10-11: drei38,5-s-Ensemblevergleiche bei
+0/0,5/1, mit gleichen vollständigen musikalischen Ereignissen/Statusdaten
+über beide Seeds und Livewechsel. DefaultPCM entspricht dem normalen Renderer
+exakt; Firmwareinputs bleiben PR156/Spec0.9. WOODLANDs vorhandener Dampbereich
+ändert diese gehaltene Passage nur um0,203/0,204% RMS zum Default; sein Color-
+Bereich benötigt eine eigene Kalibrierung bei erhaltenem langen Ton.
+RMS/FFT belegen keinen musikalischen Nutzen; kein Color-/SD33-Hörhaken.
+Details: [SD33_COLOR_CHECKPOINT.md](SD33_COLOR_CHECKPOINT.md).
+
 ## Kontextwechsel und Persistenz
 
 World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms (Pluck 20 ms),
