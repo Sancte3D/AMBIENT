@@ -76,9 +76,19 @@ identisch, normierter Float-Decay/Mono unverändert, Dry exakt. Volle Host-Suite
 und H743-Baseline/Kandidat mit identischer verifizierter Toolchain bestehen;
 Flash−8B, RAM unverändert. Spec0.8; noch keine positive Hörwahl oder SD19-Haken.
 Siehe [SD19_ROOM_CALIBRATION_CHECKPOINT.md](SD19_ROOM_CALIBRATION_CHECKPOINT.md).
-Nächste unabhängige Vorbereitung: SD28, optionale Natur mit/ohne bei identischem
-musikalischen Verlauf. Die musikalische Quellen-/Raum-Hörwahl bleibt Voraussetzung
-für ihre endgültige Auswahl; Nature bleibt im Default0. Keine UI vor Soundabnahme.
+SD28 ist jetzt als Hörvergleich vorbereitet: drei 27,5-s-Dateien mit/ohne Nature
+0,35 bei identischem tatsächlichem Ensemble und späterem leisen Verlauf. Zwei
+Seeds, Nature 0/0,35/1 und beide Blockgrößen ergeben 18 vollständige 112-s-Fälle
+mit gleichen Noten-/Besitzer-/Phrasenverläufen; echtes Stillwerden nach Stop,
+Pegel/Mono und Unabhängigkeit vom Room bestehen. COAST hat keinen langen
+Quellenstopp, WOODLANDs Vergleich enthält 4,49 s Quellenpause, HIGHLANDS ist im
+späten Ausschnitt vollständig quellenfrei. Keine künstliche Pause, kein AGC.
+Firmware und Spec0.8-Klang bleiben exakt PR153; Default Nature bleibt0, SD28 offen.
+Siehe [SD28_NATURE_CHECKPOINT.md](SD28_NATURE_CHECKPOINT.md).
+Nächste unabhängige Vorbereitung: SD33, Activity min/default/max in den echten
+musikalischen Welten. Finale Quellen-/Raum-/Nature-Hörwahl bleibt erforderlich;
+SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
+Keine UI vor Soundabnahme.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
 
 ## FUNDAMENTAL FALSCH
@@ -430,7 +440,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD25 | geschlossen durch Remove | Shimmer/Oktavregeneration ausgeschlossen |
 | SD26 | geschlossen durch Remove | Reverse-/Generate-Vorswell ausgeschlossen |
 | SD27 | geschlossen | Nur Dry/Room, exakte Null/kalt, kein Tankrevival; Scenes reaktivieren nichts |
-| SD28 | Hörgate / optional weglassen | Nature getrennt/default 0; echter Score bleibt mit/ohne identisch |
+| SD28 | Vergleich vorbereitet; Hörgate | Drei 27,5-s-Mit/Ohne-Proben, 18×112 s echte Fälle mit zwei Seeds und Nature0/.35/1; Noten/Besitzer/Phrasen64/512 gleich, Room unabhängig, Stop still; Nutzen und Weglassen offen |
 | SD29 | Hörgate | Unregelmäßige Wetter-/Gustuhren und Seedstarts; Homogenität nicht numerisch freigeben |
 | SD30 | Hörgate | Nur neue leise Wellen/Tropfen, kein Sea-Hum oder Sampleloop; Nutzen hören |
 | SD31 | Hörgate verbleibender Wege | Alttexturen auslinkt; übrig nur deklarierte Nature/Quellenartikulation |
@@ -733,6 +743,20 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Die trockene musikalische Welt ist vorher eigenständig; Nature
   erhöht Ortsgefühl im Vergleich, ohne Töne/Pausen zu maskieren. Kein Wind-
   Default für alle Welten und keine Kopplung an Room. Voraussetzung: SD14–SD16/SD20.
+  **Vorbereitung 2026-10-11:** tatsächliche Engine mit Room0,5, gleichen normalen
+  Makros und Nature0/0,35; gehaltene Passage6–12,5s sowie echter späterer Verlauf.
+  Alle vier Abschnitte pro Datei mit demselben festen Gain, Pause nicht angehoben.
+  COAST: leiser Übergang51,69–58,19s ohne lange Quellenpause; WOODLAND:
+  40,32–46,82s mit4,49s echten freien Quellen; HIGHLANDS: Pause29,38–35,88s,
+  ohne Nature dort PCM exakt Null. Quelle/Phrasenform wird nicht für Natur geändert.
+  18 vollständige112-s-Fälle (zwei Seeds×drei Worlds×Nature0/.35/1), jeweils64/512
+  bytegleiche PCM/Noten-/Statusdaten; Nature verändert keinen tatsächlichen Score,
+  reale Belegung oder Phrasenzähler. Stop80s, spätestens88,84s alle Quellen frei,
+  letzte Sekunde112s exakt still, NaN/Limiter0. Raw True Peak≤−20dBFS, Mono≥0,93079.
+  Nature-only durch echte Engine mit Room0/1 bytegleich, keine Phantomstimme.
+  Firmwareinputs unverändert zum vollständig grünen PR153 einschließlich H743;
+  dies ist ein Tool-/Hörpaket, kein neuer ARM-Build oder Haken. Gemeinsamer Wind,
+  Wellen/Tropfen und finale Entscheidung zum Weglassen bleiben ungehört.
 - [ ] **SD29 — Wind nach vorhandenem Irregularitätsumbau hören.**
   Bestehende unabhängige Weather-/Eddy-Zufallsuhren und variable Gust-Zeiten
   erhalten; mehrere Zustände/Seeds getrennt auswählen. Spektrale Homogenität,

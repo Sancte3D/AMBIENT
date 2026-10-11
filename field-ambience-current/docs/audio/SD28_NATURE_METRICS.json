@@ -1,0 +1,818 @@
+{
+  "scope": "Normal actual Product Engine; optional Nature changes only. Same notes, owners, actual source counts and phrase histories. Hearing remains open.",
+  "baseline_commit": "e34bcf372637c6e3db239849550d7bd4bb015bdc",
+  "baseline_tree": "f43cda115e55bca5e2652b71160bf1685be1c6d9",
+  "sound_inputs_unchanged_from_pr153": true,
+  "source_sha256": {
+    "src/engine_product.c": "f2e2393d0b2429412826de2b07d6f2c348c0efbeb14a61b190f8e417b1956d17",
+    "src/world_grammar.c": "a5076b6cedf56b6ea9154300366dd846308aa593b1ffec47e76492b522a90397",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "af50ea44971a41e2af647a44d08db09ce2d3cd81ae65c4b626de76557467cc9b",
+    "src/ambient_room.c": "0f54bfbe08b83ba08034b587f20923b326594e9b4bd4d5038b84ad166acf85ee",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "tools/render_nature_comparison.c": "decd3414cd82572b9b57205133b361f0651f4398f67a3e4da942cff4be1d2c00",
+    "tools/review_nature_comparison.py": "81c0b9d4b85270f402086092a7ab9130face472891e48b63754f199649920b80",
+    "tools/review_room_comparison.py": "1760c798fcb4df166e0bcf0c0b39323762f20164cf086ee3ca47f511750d6eba",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1",
+    "test/test_room_nature.c": "be551e72f29f2f6c8ae2a7c5ba0fcbc4917f4274b28f4c2c76b66913d8f306f6",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "f9ce41e7407a52b0a49515b190aaa2dd611f3b174d4d43e2c94cb769547fb92e",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "68d587c4cb05bd89257e3044714227a55c079542a7d4fd3a09f0a061256d20b9",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "69099bed083bfff91aba015c823f0efd1b250fb680c9b5705edd59125f51aa54",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6"
+  },
+  "parameters": {
+    "room": 0.5,
+    "nature_candidate": 0.35,
+    "nature_extreme": 1.0,
+    "volume": 0.6,
+    "activity": 0.5,
+    "color": 0.5,
+    "attack": 0.5,
+    "release": 0.5,
+    "key": "D",
+    "collection": "major",
+    "tuning": "equal",
+    "seeds": [
+      1234,
+      42
+    ]
+  },
+  "raw_seconds": 112,
+  "generate_stop_seconds": 80,
+  "silent_settling_seconds": 1,
+  "control_tick_ms": 10,
+  "block_sizes": [
+    64,
+    512
+  ],
+  "hearing_accepted": false,
+  "nature_default": 0,
+  "worlds": [
+    {
+      "world": "COAST",
+      "cases": [
+        {
+          "seed": 1234,
+          "amount": 0.0,
+          "renderer_report": "NATURE ENGINE world=0 seed=1234 amount=0.00 room=0.50 frames=4939200 starts=13 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09359741",
+          "raw_level": {
+            "integrated_lufs": -32.9,
+            "true_peak_dbfs": -20.6
+          },
+          "mono_energy_ratio": 0.969393057761704,
+          "dc": [
+            -9.156756313016278e-09,
+            -1.1430498771309119e-08
+          ],
+          "raw_sha256": "c4da4dfd6f2f0eb5c3dc38b7e39f212fada77e1abea08c13abc53dd3e10607d8",
+          "events_sha256": "c340572b63024cf054b86a37ce49a351f28b3153d8be2f891ff4e9414871edd5",
+          "state_sha256": "2fc892138e5769e5866aabd40cce784b7663682dcfc9d55cac1578049927c4a2",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 1234,
+          "amount": 0.35,
+          "renderer_report": "NATURE ENGINE world=0 seed=1234 amount=0.35 room=0.50 frames=4939200 starts=13 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09390259",
+          "raw_level": {
+            "integrated_lufs": -32.9,
+            "true_peak_dbfs": -20.5
+          },
+          "mono_energy_ratio": 0.9690275042747389,
+          "dc": [
+            -1.4285034140144153e-08,
+            -9.33593710456653e-09
+          ],
+          "raw_sha256": "f619215f4b1723d6efe3fccd8759519e24e81d2d69ccfc1166be14c8723fd0d7",
+          "events_sha256": "c340572b63024cf054b86a37ce49a351f28b3153d8be2f891ff4e9414871edd5",
+          "state_sha256": "2fc892138e5769e5866aabd40cce784b7663682dcfc9d55cac1578049927c4a2",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 1234,
+          "amount": 1.0,
+          "renderer_report": "NATURE ENGINE world=0 seed=1234 amount=1.00 room=0.50 frames=4939200 starts=13 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09448242",
+          "raw_level": {
+            "integrated_lufs": -32.9,
+            "true_peak_dbfs": -20.5
+          },
+          "mono_energy_ratio": 0.9664652371433492,
+          "dc": [
+            -5.047955403329487e-09,
+            -3.6948314947258664e-09
+          ],
+          "raw_sha256": "e816e203c01bf3e303562336ff4a8e90c2177c9c3474d622d4839acde5f834e5",
+          "events_sha256": "c340572b63024cf054b86a37ce49a351f28b3153d8be2f891ff4e9414871edd5",
+          "state_sha256": "2fc892138e5769e5866aabd40cce784b7663682dcfc9d55cac1578049927c4a2",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 0.0,
+          "renderer_report": "NATURE ENGINE world=0 seed=42 amount=0.00 room=0.50 frames=4939200 starts=13 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09570312",
+          "raw_level": {
+            "integrated_lufs": -32.5,
+            "true_peak_dbfs": -20.4
+          },
+          "mono_energy_ratio": 0.9713992218703915,
+          "dc": [
+            -6.8521206148009796e-09,
+            -1.2913374287587058e-08
+          ],
+          "raw_sha256": "48ded185a26e60550f944e4f2106a8a466006adfee5741836905bc2b1fe5e5fc",
+          "events_sha256": "05b100014425e0970605ba4196f32bb594a79c09609497e25e288ece90439d26",
+          "state_sha256": "269986322dfcb99762244ea609a3c61b059355f5937c4c11bf78e3c59b3fcc40",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 0.35,
+          "renderer_report": "NATURE ENGINE world=0 seed=42 amount=0.35 room=0.50 frames=4939200 starts=13 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09704590",
+          "raw_level": {
+            "integrated_lufs": -32.5,
+            "true_peak_dbfs": -20.3
+          },
+          "mono_energy_ratio": 0.9707351169133217,
+          "dc": [
+            3.5774371830205297e-09,
+            -3.7071887906948494e-11
+          ],
+          "raw_sha256": "e0d7099280ff03a1088ecba7ce6e7156aa5c2834b92bc311250a039b76f1c896",
+          "events_sha256": "05b100014425e0970605ba4196f32bb594a79c09609497e25e288ece90439d26",
+          "state_sha256": "269986322dfcb99762244ea609a3c61b059355f5937c4c11bf78e3c59b3fcc40",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 1.0,
+          "renderer_report": "NATURE ENGINE world=0 seed=42 amount=1.00 room=0.50 frames=4939200 starts=13 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.10012817",
+          "raw_level": {
+            "integrated_lufs": -32.5,
+            "true_peak_dbfs": -20.0
+          },
+          "mono_energy_ratio": 0.9662190249989021,
+          "dc": [
+            -2.1192762586805556e-09,
+            2.5147097296880062e-09
+          ],
+          "raw_sha256": "5ceda9ba31f9a4abfc2feba61bac3aaa85625d337db97fa9783367162d6e783d",
+          "events_sha256": "05b100014425e0970605ba4196f32bb594a79c09609497e25e288ece90439d26",
+          "state_sha256": "269986322dfcb99762244ea609a3c61b059355f5937c4c11bf78e3c59b3fcc40",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        }
+      ],
+      "held_excerpt_seconds": [
+        6.0,
+        12.5
+      ],
+      "quiet_comparison": {
+        "selection": "quietest actual later 6.5s music transition, not a complete source pause",
+        "longest_actual_source_free_interval_seconds": [
+          58.17,
+          58.18
+        ],
+        "excerpt_seconds": [
+          51.69,
+          58.19
+        ],
+        "entire_excerpt_source_free": false,
+        "source_free_seconds_in_excerpt": 0.01,
+        "actual_source_count_range": [
+          0,
+          2
+        ]
+      },
+      "held_nature_difference_to_music_rms_ratio": 0.026165240034233834,
+      "nature_difference_held": {
+        "rms_dbfs": -69.92093621705277,
+        "peak": 0.001983642578125,
+        "mono_energy_ratio": 0.5044210947949103,
+        "dc": [
+          1.405309720041863e-08,
+          4.9079377343886274e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.1502171179813572,
+          "100_1000_hz": 0.7083175961332182,
+          "1000_4000_hz": 0.13786917103014032,
+          "above_4000_hz": 0.003596114855284048
+        }
+      },
+      "nature_difference_quiet": {
+        "rms_dbfs": -70.70192247009703,
+        "peak": 0.001739501953125,
+        "mono_energy_ratio": 0.5115489070893894,
+        "dc": [
+          8.304102891156462e-08,
+          9.35808518118786e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.15483848739169898,
+          "100_1000_hz": 0.6696222348607842,
+          "1000_4000_hz": 0.1710518006229344,
+          "above_4000_hz": 0.004487477124582309
+        }
+      },
+      "identical_fixed_gain_db_all_sections": 13.399999999999999,
+      "delivered_sections": [
+        {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -8.3
+        },
+        {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -8.3
+        },
+        {
+          "integrated_lufs": -51.8,
+          "true_peak_dbfs": -37.1
+        },
+        {
+          "integrated_lufs": -52.8,
+          "true_peak_dbfs": -36.8
+        }
+      ],
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "listen_file": "AMBIENT_COAST_Nature_AB_27p5s.wav",
+      "listen_sha256": "7fc8c775d4b5ef4a00227eb31a7a73534f310816f1836dc07dfdea0ef14b9bb4",
+      "listen": {
+        "integrated_lufs": -22.8,
+        "true_peak_dbfs": -8.3
+      }
+    },
+    {
+      "world": "WOODLAND",
+      "cases": [
+        {
+          "seed": 1234,
+          "amount": 0.0,
+          "renderer_report": "NATURE ENGINE world=1 seed=1234 amount=0.00 room=0.50 frames=4939200 starts=11 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07580566",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.9318080182179287,
+          "dc": [
+            -2.7680342970521543e-09,
+            -3.954334710074506e-10
+          ],
+          "raw_sha256": "829c72846ae14ce6a41946615f471d84be98ec457a448669563e84871e58365f",
+          "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+          "state_sha256": "7b5ace8e4cf6c0fefab52d89e67263d17fab6053e9780d9dfa4db239d7f6bc34",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 1234,
+          "amount": 0.35,
+          "renderer_report": "NATURE ENGINE world=1 seed=1234 amount=0.35 room=0.50 frames=4939200 starts=11 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07580566",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.9317551453451285,
+          "dc": [
+            1.4828755162779398e-09,
+            8.007527787900875e-09
+          ],
+          "raw_sha256": "3e41543074ece0c996d4378d22f054ef28d38342d7e738d1c95e2325dfb798f2",
+          "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+          "state_sha256": "7b5ace8e4cf6c0fefab52d89e67263d17fab6053e9780d9dfa4db239d7f6bc34",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 1234,
+          "amount": 1.0,
+          "renderer_report": "NATURE ENGINE world=1 seed=1234 amount=1.00 room=0.50 frames=4939200 starts=11 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07577515",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.9312737108841154,
+          "dc": [
+            -2.7865702410056283e-09,
+            6.6420465833282715e-09
+          ],
+          "raw_sha256": "f621cf93d1b27b90de79b3cc957d5062f1cab5d89a0ba13dcc05402958cf9436",
+          "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+          "state_sha256": "7b5ace8e4cf6c0fefab52d89e67263d17fab6053e9780d9dfa4db239d7f6bc34",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 0.0,
+          "renderer_report": "NATURE ENGINE world=1 seed=42 amount=0.00 room=0.50 frames=4939200 starts=11 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07479858",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -22.5
+          },
+          "mono_energy_ratio": 0.9319899257666192,
+          "dc": [
+            1.5693765880608195e-09,
+            -2.8483567208505424e-09
+          ],
+          "raw_sha256": "6bb2d79d7f0c846cdd1843473100eec9a06b09d630268f835753befcae9674bc",
+          "events_sha256": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+          "state_sha256": "e88c80fe19633cf7b1af4c8c64c10bf8cbc990d428bb09317d6fe03a4c86426a",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 0.35,
+          "renderer_report": "NATURE ENGINE world=1 seed=42 amount=0.35 room=0.50 frames=4939200 starts=11 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07492065",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -22.5
+          },
+          "mono_energy_ratio": 0.9318233196537109,
+          "dc": [
+            3.948156062090015e-09,
+            4.924382443639658e-09
+          ],
+          "raw_sha256": "4be7b50d49e46a3414aa3f8373debed122bb99fa21f60a318fb83caa06ba2747",
+          "events_sha256": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+          "state_sha256": "e88c80fe19633cf7b1af4c8c64c10bf8cbc990d428bb09317d6fe03a4c86426a",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 1.0,
+          "renderer_report": "NATURE ENGINE world=1 seed=42 amount=1.00 room=0.50 frames=4939200 starts=11 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07516479",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.5
+          },
+          "mono_energy_ratio": 0.9307985093802605,
+          "dc": [
+            -2.3231716421687723e-09,
+            1.1059779892239634e-09
+          ],
+          "raw_sha256": "2afacb0d010a6d27e4d72a97e07933049734211023ccfc9b716ae5a6b4d0faf9",
+          "events_sha256": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+          "state_sha256": "e88c80fe19633cf7b1af4c8c64c10bf8cbc990d428bb09317d6fe03a4c86426a",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        }
+      ],
+      "held_excerpt_seconds": [
+        6.0,
+        12.5
+      ],
+      "quiet_comparison": {
+        "selection": "quietest actual later 6.5s music transition, not a complete source pause",
+        "longest_actual_source_free_interval_seconds": [
+          42.12,
+          46.61
+        ],
+        "excerpt_seconds": [
+          40.32,
+          46.82
+        ],
+        "entire_excerpt_source_free": false,
+        "source_free_seconds_in_excerpt": 4.49,
+        "actual_source_count_range": [
+          0,
+          1
+        ]
+      },
+      "held_nature_difference_to_music_rms_ratio": 0.029774995889191115,
+      "nature_difference_held": {
+        "rms_dbfs": -70.71314592260597,
+        "peak": 0.002349853515625,
+        "mono_energy_ratio": 0.5424720453507675,
+        "dc": [
+          -4.812121162567591e-08,
+          -3.023545155241584e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.14512441949858848,
+          "100_1000_hz": 0.6543229674371995,
+          "1000_4000_hz": 0.19526998745565133,
+          "above_4000_hz": 0.005282625608560923
+        }
+      },
+      "nature_difference_quiet": {
+        "rms_dbfs": -76.23547955760925,
+        "peak": 0.002227783203125,
+        "mono_energy_ratio": 0.6504028266138668,
+        "dc": [
+          8.091177175998605e-08,
+          -2.7467417255363682e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.12446812861311767,
+          "100_1000_hz": 0.6512369467746982,
+          "1000_4000_hz": 0.2170064362452958,
+          "above_4000_hz": 0.007288488366888315
+        }
+      },
+      "identical_fixed_gain_db_all_sections": 15.399999999999999,
+      "delivered_sections": [
+        {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -13.4
+        },
+        {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -13.4
+        },
+        {
+          "integrated_lufs": -33.8,
+          "true_peak_dbfs": -24.7
+        },
+        {
+          "integrated_lufs": -34.6,
+          "true_peak_dbfs": -24.5
+        }
+      ],
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "listen_file": "AMBIENT_WOODLAND_Nature_AB_27p5s.wav",
+      "listen_sha256": "c4c719509b26b5ed578c06e0b79a96782f1f4b80657a52e8ac410af091215763",
+      "listen": {
+        "integrated_lufs": -23.5,
+        "true_peak_dbfs": -13.4
+      }
+    },
+    {
+      "world": "HIGHLANDS",
+      "cases": [
+        {
+          "seed": 1234,
+          "amount": 0.0,
+          "renderer_report": "NATURE ENGINE world=2 seed=1234 amount=0.00 room=0.50 frames=4939200 starts=11 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07666016",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770540825567335,
+          "dc": [
+            1.9957032989907274e-09,
+            -1.4210890364330255e-09
+          ],
+          "raw_sha256": "de6bae31b69bef3ee2ffcfa91545cc2c0063ea7f78c832c47986a8ae6bffc5ec",
+          "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+          "state_sha256": "a90be84c850034fdcfe92855a92b6f3e32ac01c3b35539224ff4698d98cc0d3b",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 1234,
+          "amount": 0.35,
+          "renderer_report": "NATURE ENGINE world=2 seed=1234 amount=0.35 room=0.50 frames=4939200 starts=11 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07669067",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770069241598011,
+          "dc": [
+            2.1316335546495383e-09,
+            2.9410364406179137e-09
+          ],
+          "raw_sha256": "fd808bf9ab3e7cbcbd86b5a9563473cd2877be3a7fdd479e97e8fc862b8d63d5",
+          "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+          "state_sha256": "a90be84c850034fdcfe92855a92b6f3e32ac01c3b35539224ff4698d98cc0d3b",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 1234,
+          "amount": 1.0,
+          "renderer_report": "NATURE ENGINE world=2 seed=1234 amount=1.00 room=0.50 frames=4939200 starts=11 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07891846",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.1
+          },
+          "mono_energy_ratio": 0.9766249037236087,
+          "dc": [
+            -1.3284093166656544e-09,
+            3.6206877189119696e-09
+          ],
+          "raw_sha256": "dcc81f418bfdefbad1b37ebdc4554d906b24841f66e03308a182d0926f0e76c4",
+          "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+          "state_sha256": "a90be84c850034fdcfe92855a92b6f3e32ac01c3b35539224ff4698d98cc0d3b",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 0.0,
+          "renderer_report": "NATURE ENGINE world=2 seed=42 amount=0.00 room=0.50 frames=4939200 starts=11 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07678223",
+          "raw_level": {
+            "integrated_lufs": -29.3,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770329819090432,
+          "dc": [
+            1.8041652114714935e-09,
+            -4.127336853640266e-09
+          ],
+          "raw_sha256": "3bee479a079a7a655f0b61a1fc09ecba0b221aea44c3f4b84aff9f66f147839d",
+          "events_sha256": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+          "state_sha256": "c9eb060f54eb40d91941e16851edfdb9e2db4a1bfc2a2fb955f8e739530f3856",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 0.35,
+          "renderer_report": "NATURE ENGINE world=2 seed=42 amount=0.35 room=0.50 frames=4939200 starts=11 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07666016",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9769236777223144,
+          "dc": [
+            4.355946829066448e-09,
+            9.082612537202381e-10
+          ],
+          "raw_sha256": "8b839ab26bb8a729766b6d85bd21fc197c0dc4c04badb58dd9a891712a549784",
+          "events_sha256": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+          "state_sha256": "c9eb060f54eb40d91941e16851edfdb9e2db4a1bfc2a2fb955f8e739530f3856",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        },
+        {
+          "seed": 42,
+          "amount": 1.0,
+          "renderer_report": "NATURE ENGINE world=2 seed=42 amount=1.00 room=0.50 frames=4939200 starts=11 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07778931",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.2
+          },
+          "mono_energy_ratio": 0.9761571181064548,
+          "dc": [
+            5.1962429549572805e-09,
+            -7.173410309994534e-09
+          ],
+          "raw_sha256": "43a450157b4b1a8999f6d71edb0410110d8fd140d2c19b800a8974b756371e75",
+          "events_sha256": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+          "state_sha256": "c9eb060f54eb40d91941e16851edfdb9e2db4a1bfc2a2fb955f8e739530f3856",
+          "pcm_events_state_64_512_identical": true,
+          "all_nature_amounts_score_state_identical": true,
+          "final_second_exact_silence": true
+        }
+      ],
+      "held_excerpt_seconds": [
+        6.0,
+        12.5
+      ],
+      "quiet_comparison": {
+        "selection": "actual complete source pause; Room may still ring",
+        "longest_actual_source_free_interval_seconds": [
+          29.38,
+          43.23
+        ],
+        "excerpt_seconds": [
+          29.38,
+          35.88
+        ],
+        "entire_excerpt_source_free": true,
+        "source_free_seconds_in_excerpt": 6.5,
+        "actual_source_count_range": [
+          0,
+          0
+        ]
+      },
+      "held_nature_difference_to_music_rms_ratio": 0.013838256026502604,
+      "nature_difference_held": {
+        "rms_dbfs": -71.1973542948108,
+        "peak": 0.00128173828125,
+        "mono_energy_ratio": 0.4995633357399841,
+        "dc": [
+          -6.813622885051456e-08,
+          -5.2912040216727717e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.15009188954978828,
+          "100_1000_hz": 0.6635695914727977,
+          "1000_4000_hz": 0.18146213268683634,
+          "above_4000_hz": 0.004876386290577788
+        }
+      },
+      "nature_difference_quiet": {
+        "rms_dbfs": -73.11409876672154,
+        "peak": 0.001007080078125,
+        "mono_energy_ratio": 0.49511921043261825,
+        "dc": [
+          -1.4478948630734344e-08,
+          1.618235435199721e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.15988988179050592,
+          "100_1000_hz": 0.659718177084905,
+          "1000_4000_hz": 0.17647180408699525,
+          "above_4000_hz": 0.003920137037593816
+        }
+      },
+      "identical_fixed_gain_db_all_sections": 8.899999999999999,
+      "delivered_sections": [
+        {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -13.7
+        },
+        {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -13.6
+        },
+        {
+          "integrated_lufs": null,
+          "true_peak_dbfs": null,
+          "exact_silence": true
+        },
+        {
+          "integrated_lufs": -61.8,
+          "true_peak_dbfs": -51.0
+        }
+      ],
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "listen_file": "AMBIENT_HIGHLANDS_Nature_AB_27p5s.wav",
+      "listen_sha256": "cf770c132cc8ed08c96050ca1d2b6c83989e488caf25716309379073b107db80",
+      "listen": {
+        "integrated_lufs": -23.1,
+        "true_peak_dbfs": -13.6
+      }
+    }
+  ],
+  "location": [
+    {
+      "world": "COAST",
+      "renderer_report": "NATURE LOCATION world=0 seed=1234 amount=0.35 room=0.00 frames=1411200 starts=0 max_sources=0 final_ms=16000 nonfinite=0 limited=0 peak=0.00500488",
+      "raw_sha256": "9a68f4f254d370fcc580ebfc75b81986fbc6ca0060d892f83db82d6735b346f1",
+      "level": {
+        "integrated_lufs": -63.2,
+        "true_peak_dbfs": -46.0
+      },
+      "room0_1_and_64_512_identical": true,
+      "phantom_note_count": 0,
+      "nature_only_metrics": {
+        "rms_dbfs": -69.87593318814059,
+        "peak": 0.001983642578125,
+        "mono_energy_ratio": 0.5048476890279321,
+        "dc": [
+          9.861122183248299e-08,
+          -2.052958770313681e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.1517223890036446,
+          "100_1000_hz": 0.7107821750575376,
+          "1000_4000_hz": 0.13453936313737933,
+          "above_4000_hz": 0.0029560728014385355
+        }
+      }
+    },
+    {
+      "world": "WOODLAND",
+      "renderer_report": "NATURE LOCATION world=1 seed=1234 amount=0.35 room=0.00 frames=1411200 starts=0 max_sources=0 final_ms=16000 nonfinite=0 limited=0 peak=0.00234985",
+      "raw_sha256": "753ad8cec6e44b062f4823a92ebd7b206e521fcb64277dcc673b1c0ad12fedfe",
+      "level": {
+        "integrated_lufs": -66.9,
+        "true_peak_dbfs": -52.6
+      },
+      "room0_1_and_64_512_identical": true,
+      "phantom_note_count": 0,
+      "nature_only_metrics": {
+        "rms_dbfs": -70.73968974919187,
+        "peak": 0.002349853515625,
+        "mono_energy_ratio": 0.54549181394283,
+        "dc": [
+          9.780387849584278e-08,
+          -7.646694745606576e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.1466252150824606,
+          "100_1000_hz": 0.6539400722681761,
+          "1000_4000_hz": 0.19490130130752412,
+          "above_4000_hz": 0.004533411341839181
+        }
+      }
+    },
+    {
+      "world": "HIGHLANDS",
+      "renderer_report": "NATURE LOCATION world=2 seed=1234 amount=0.35 room=0.00 frames=1411200 starts=0 max_sources=0 final_ms=16000 nonfinite=0 limited=0 peak=0.00186157",
+      "raw_sha256": "875d4496273860577dc46d8e6d21f179440efc171db5671f99165847f679180e",
+      "level": {
+        "integrated_lufs": -67.0,
+        "true_peak_dbfs": -54.6
+      },
+      "room0_1_and_64_512_identical": true,
+      "phantom_note_count": 0,
+      "nature_only_metrics": {
+        "rms_dbfs": -71.25938920918922,
+        "peak": 0.00128173828125,
+        "mono_energy_ratio": 0.4994349555522279,
+        "dc": [
+          1.148734233276644e-07,
+          -7.762029507983749e-08
+        ],
+        "windowed_band_energy_fractions": {
+          "below_100_hz": 0.15213827540027758,
+          "100_1000_hz": 0.6636967988591098,
+          "1000_4000_hz": 0.1801128065749448,
+          "above_4000_hz": 0.004052119165667857
+        }
+      }
+    }
+  ],
+  "full_pcm_retained": false,
+  "export_scope": "Three short WAVs, metrics, complete note and owner/phrase traces. Full PCM verified in temporary storage.",
+  "room_nature_regression": "ROOM amount=0.0 nominal_T60=1.200 energy=0 mono_ratio=1.00000 late9s_ratio=0 peak=0.0000000\nROOM amount=0.5 nominal_T60=2.100 energy=0.000878000591 mono_ratio=0.75126 late9s_ratio=1.06988543e-27 peak=0.0025903\nROOM amount=1.0 nominal_T60=4.800 energy=0.00515558268 mono_ratio=0.74651 late9s_ratio=3.46541524e-13 peak=0.0051787\nROOM/NATURE PASS: impulse/decay/mono, no Dry revival, seed/block/input invariance, cold idle, independent score and real Clear"
+}
