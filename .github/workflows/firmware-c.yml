@@ -401,6 +401,31 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  color-ensemble-review:
+    name: actual musical Color ranges (Spec0.9)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin c89bc630fec5a9e193f06a4e08d8e6752a16b3b2
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify Color endpoints and live controls through actual ensembles
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_color_comparison.py build-color-ensemble-review
+      - name: Upload three short Color WAVs and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-color-ensembles-38p5s
+          path: field-ambience-current/firmware-c-next/build-color-ensemble-review
+          if-no-files-found: error
+          retention-days: 30
+
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
     runs-on: ubuntu-latest
