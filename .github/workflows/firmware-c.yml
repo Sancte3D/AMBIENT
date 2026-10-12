@@ -458,10 +458,12 @@ jobs:
           retention-days: 30
 
   attack-ensemble-review:
-    name: current musical Attack ranges (Spec0.10)
+    name: archived musical Attack ranges (PR159)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 4cd07cd63c82b251320bce3be8676473a2ee9e3e
       - name: Fetch exact unchanged sound baseline
         run: git fetch --no-tags --depth=1 origin 1f21ade3c78acc2a1c513eefaa4fa1ba1561dd95
       - name: Install audio measurement tools
@@ -479,6 +481,31 @@ jobs:
         with:
           name: ambient-attack-ensembles-38p5s
           path: field-ambience-current/firmware-c-next/build-attack-ensemble-review
+          if-no-files-found: error
+          retention-days: 30
+
+  release-ensemble-review:
+    name: current musical Release and physical handovers (Spec0.10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin 4cd07cd63c82b251320bce3be8676473a2ee9e3e
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify captured Release, physical retirement and matched tails
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_release_comparison.py build-release-ensemble-review
+      - name: Upload three short Release WAVs and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-release-ensembles-38p5s
+          path: field-ambience-current/firmware-c-next/build-release-ensemble-review
           if-no-files-found: error
           retention-days: 30
 

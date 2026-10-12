@@ -358,8 +358,23 @@ COAST0,161/0,300/0,560s, WOODLAND0,429/0,800/1,493s, HIGHLANDS0,241/0,450/0,840s
 48 volle Render/89,6min,64/512, gleiche ganze musikalische Ereignisse/Statusdaten,
 gültige Live-/Future-/Clamp-/Invalidinputverträge und natürliche Enden bestehen.
 Beginn bleibt ungefadet, ein Gain je World. Quellen/Core/Spec0.10 exakt PR158;
-kein neuer Klang-/Geräte-/SD33-Hörhaken. Release wird separat vorbereitet.
+kein neuer Klang-/Geräte-/SD33-Hörhaken. Release ist separat geprüft (unten).
 Details: [SD33_ATTACK_CHECKPOINT.md](SD33_ATTACK_CHECKPOINT.md).
+
+SD33-Release-Hörvorbereitung2026-10-12: drei38,5-s-Vergleiche enthalten die
+gleichen tatsächlichen Anfangstöne und NoteOffs bei0/0,5/1 und Attack0,5.
+Ausgabe2–14,5s des32-s-Renders,Generate-Stop4s;ein Gain je World,
+40-ms-Ausschnittkanten und0,5-s-Vergleichslücken. Ganze Ausklänge bis zur Stille
+sind geprüft; keine künstliche Stop-Hüllkurve. Quellenfreiheit nach Stop:
+COAST5,82/8,82/13,37s,WOODLAND1,32/2,00/3,04s,HIGHLANDS4,76/7,22/10,91s.
+66 ganze WAV-Render/99,2min bestätigen64/512,Default-PCM und tatsächliche
+physische Reservierung aller250 Starts nach Freigabe des alten Quellenplatzes.
+18 Änderungen nach Vorbereitung/während Hold/Release lassen ganze6s-PCM exakt;
+erst neue Töne übernehmen den Faktor0,65975392/1/1,51571643. Größere Releasewerte
+dürfen Partnerübergaben und Keeper-Holds verlängern,ohne gehaltene Töne neu
+anzuschlagen. Lange WOODLAND-Schwingung und natürliche Manual-Tails bleiben.
+251 Firmwareinputs exakt PR159,Spec0.10 unverändert; SD33/Hören bleiben offen.
+Details: [SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
 
 ## Kontextwechsel und Persistenz
 
