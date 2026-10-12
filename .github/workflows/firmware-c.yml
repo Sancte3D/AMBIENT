@@ -431,10 +431,12 @@ jobs:
           retention-days: 30
 
   woodland-color-review:
-    name: current long WOODLAND Color calibration (Spec0.10)
+    name: archived long WOODLAND Color calibration (PR158)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 1f21ade3c78acc2a1c513eefaa4fa1ba1561dd95
       - name: Fetch exact comparison baseline
         run: git fetch --no-tags --depth=1 origin ab673f49de056154d985290d5bc1f8a7f5bf43a5
       - name: Install audio measurement tools
@@ -452,6 +454,31 @@ jobs:
         with:
           name: ambient-woodland-color-calibrated
           path: field-ambience-current/firmware-c-next/build-woodland-color-calibration
+          if-no-files-found: error
+          retention-days: 30
+
+  attack-ensemble-review:
+    name: current musical Attack ranges (Spec0.10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin 1f21ade3c78acc2a1c513eefaa4fa1ba1561dd95
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify Attack openings, prepared holds and future note controls
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_attack_comparison.py build-attack-ensemble-review
+      - name: Upload three short Attack WAVs and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-attack-ensembles-38p5s
+          path: field-ambience-current/firmware-c-next/build-attack-ensemble-review
           if-no-files-found: error
           retention-days: 30
 

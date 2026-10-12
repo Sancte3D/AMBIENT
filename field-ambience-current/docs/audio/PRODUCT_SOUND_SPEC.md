@@ -350,6 +350,17 @@ neue Klangfarbe. Filterbedingte Pegelunterschiede bleiben bewusst gemessen,
 keine AGC oder individuelle Hörclip-Normalisierung. Hören/SD33 bleiben offen.
 Details: [SD33_WOODLAND_COLOR_CHECKPOINT.md](SD33_WOODLAND_COLOR_CHECKPOINT.md).
 
+SD33-Attack-Hörvorbereitung2026-10-12: drei38,5-s-Ensemblevergleiche enthalten
+den tatsächlichen Anfang0–12,5s bei0/0,5/1 und Release0,5. Capture bei neuer
+Tonvorbereitung ist mit PCM belegt: bestehende vorbereitete/held Stimmen werden
+durch Drehen nicht rückwirkend verändert. Nominale Sourceattacks:
+COAST0,161/0,300/0,560s, WOODLAND0,429/0,800/1,493s, HIGHLANDS0,241/0,450/0,840s.
+48 volle Render/89,6min,64/512, gleiche ganze musikalische Ereignisse/Statusdaten,
+gültige Live-/Future-/Clamp-/Invalidinputverträge und natürliche Enden bestehen.
+Beginn bleibt ungefadet, ein Gain je World. Quellen/Core/Spec0.10 exakt PR158;
+kein neuer Klang-/Geräte-/SD33-Hörhaken. Release wird separat vorbereitet.
+Details: [SD33_ATTACK_CHECKPOINT.md](SD33_ATTACK_CHECKPOINT.md).
+
 ## Kontextwechsel und Persistenz
 
 World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms (Pluck 20 ms),

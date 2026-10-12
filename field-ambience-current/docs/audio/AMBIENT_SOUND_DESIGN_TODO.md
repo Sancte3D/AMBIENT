@@ -15,6 +15,22 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+## Offener Arbeitsstand 2026-10-12
+
+54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
+14 technische Blöcke:12 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
+enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
+Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
+zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
+
+| Einteilung | Offen | Punkte |
+|---|---:|---|
+|Software-/Prüfblöcke|12|SD11, SD12, SD31, SD33, SD34, SD35, SD37, SD41, SD45, SD47, SD51, SD52|
+|Prüfungen am echten Gerät|2|SD48, SD49|
+|Hör-/Klangentscheidungen|15|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD44, SD50|
+|Abschließender Gesamtcheck|1|SD53|
+
 ## Hörfeedback 2026-10-08 — musikalische Priorität
 
 Der Nutzer bewertet die bisherigen trockenen Einzelquellenbeispiele als RAW,
@@ -131,8 +147,17 @@ Pegelunterschiede bleiben. Voller Hostrunner und exakt reproduzierter Baseline-
 sowie neuer H743-Build bestehen: Flash+236B,D1+32B,
 D2+0B,DTCM+0B. Musikalischer Hörnutzen bleibt offen.
 Siehe [SD33_WOODLAND_COLOR_CHECKPOINT.md](SD33_WOODLAND_COLOR_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: Attack-Endwerte im echten Ensemble prüfen;
-Release folgt getrennt. Finale Quellen-/Raum-/Nature-Hörwahl
+SD33 Attack ist jetzt als einzelner Ensemblevergleich vorbereitet:0/0,5/1
+vergleichen tatsächliche Tonanfänge, Release bleibt0,5.48 volle Render/89,6min,
+zwei Seeds,64/512 identisch und vollständige identische musikalische Abläufe.
+Bereits vorbereitete/held Töne bleiben beim Drehen im echten PCM unverändert;
+erst zukünftige Einsätze übernehmen Attack. Drei38,5-s-WAVs haben keinen
+Anfangsfade und denselben festen Gain pro World. Nominale Einsätze COAST
+0,161/0,300/0,560s, WOODLAND0,429/0,800/1,493s, HIGHLANDS0,241/0,450/0,840s.
+251 Coreinputs exakt zum inzwischen vollständig grünen PR158, Spec0.10 gleich.
+Details: [SD33_ATTACK_CHECKPOINT.md](SD33_ATTACK_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: Release-Endwerte getrennt prüfen.
+Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
@@ -906,7 +931,25 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   SCN7/Default0,5/Reference-Default/Journal-OFF erhalten; WOODLAND-Endwert-
   Klangsemantik bewusst neu.248/251 Coreinputs unverändert, nur drei geändert.
   Details: [SD33_WOODLAND_COLOR_CHECKPOINT.md](SD33_WOODLAND_COLOR_CHECKPOINT.md).
-  Nächste einzelne Vorbereitung: Attack0/0,5/1 im Ensemble; Release getrennt danach.
+  Die Attack-Vorbereitung ist jetzt geprüft (unten); Release folgt als nächste Einzelaufgabe.
+  **Attack-Vorbereitung2026-10-12:**18 feste112-s-Fälle plus drei Livefälle,
+  jeweils64/512, sechs komplette Defaultkontrollen:48 Render/89,6min PCM.
+  Alle vollständigen Noten/Holds/Hz/Owner/Phrasen/Memory/Zulassung/Retirements
+  und Übergaben über Attackwerte/Live identisch; alle PCM/Events/Status blockgleich.
+  Sourcefaktor0,5358867/1/1,8660657 ergibt COAST0,161/0,300/0,560s,
+  WOODLAND0,429/0,800/1,493s und HIGHLANDS0,241/0,450/0,840s nominale Attack.
+  Tatsächlich normierte frühe Energie nimmt bei beiden Seeds in jeder World ab.
+  Zwölf bereits vorbereitete/held Änderungen bleiben im echten viersekündigen
+  PCM exakt, neun zukünftige Starts64/512, sechs Clampfälle/Invalidinputs bestehen.
+  Release bleibt getrennt0,5/Faktor1. Setter keine Sofortnote; Quellen3/2/3,
+  NaN/Limiter0, Raw−20,4dBTP, Mono≥0,93175, Stop80s, letzte Sekunde still.
+  Drei38,5-s-WAVs: gleicher tatsächlicher Anfang0–12,5s, kein Anfangsfade,
+  nur40-ms-Endschnitt und0,5-s-Vergleichslücken; ein Gain je World, keine AGC.
+  Zusätzlich echter Product-Vertragscheck mit12min Musik besteht.251 Coreinputs
+  exakt PR158, CI38284802990/run691 frisch completed/success; Spec0.10 gleich.
+  Kein neuer voller Host-/ARM-Nachweis behauptet, kein Geräte-/Hörhaken.
+  Details: [SD33_ATTACK_CHECKPOINT.md](SD33_ATTACK_CHECKPOINT.md).
+  Nächste einzelne Vorbereitung: Release0/0,5/1 im Ensemble, getrennt von Attack.
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen
