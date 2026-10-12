@@ -156,7 +156,18 @@ Anfangsfade und denselben festen Gain pro World. Nominale Einsätze COAST
 0,161/0,300/0,560s, WOODLAND0,429/0,800/1,493s, HIGHLANDS0,241/0,450/0,840s.
 251 Coreinputs exakt zum inzwischen vollständig grünen PR158, Spec0.10 gleich.
 Details: [SD33_ATTACK_CHECKPOINT.md](SD33_ATTACK_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: Release-Endwerte getrennt prüfen.
+SD33 Release ist jetzt separat im Ensemble geprüft: 66 ganze Render/99,2 min,
+zwei Seeds, 64/512 exakt, neun Stop-Gegenproben mit identischen Anfangstönen
+und Holds. Größere Werte verlängern tatsächliche Belegung und Ausklangenergie.
+Alle 250 Starts sind mit frischen physischen Quellenreservierungen verknüpft;
+Übergaben warten bis nach dem echten Ende der vorherigen Quelle. Bereits
+vorbereitete/held/releasing Töne bleiben bei 18 Liveänderungen sechs Sekunden
+PCM exakt; neue Töne übernehmen Release. Drei 38,5-s-WAVs vergleichen 0/0,5/1
+mit einem festen Gain je World. 251 Firmwareinputs exakt zum grünen PR159.
+Keine Klang-/Geräte-/SD33-Gesamtabnahme. Details:
+[SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD34 Quellen-/Rollenpegel im tatsächlichen PCM
+über Register und erlaubte Summen prüfen.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -931,7 +942,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   SCN7/Default0,5/Reference-Default/Journal-OFF erhalten; WOODLAND-Endwert-
   Klangsemantik bewusst neu.248/251 Coreinputs unverändert, nur drei geändert.
   Details: [SD33_WOODLAND_COLOR_CHECKPOINT.md](SD33_WOODLAND_COLOR_CHECKPOINT.md).
-  Die Attack-Vorbereitung ist jetzt geprüft (unten); Release folgt als nächste Einzelaufgabe.
+  Die Attack- und getrennte Release-Vorbereitung sind jetzt geprüft (unten).
   **Attack-Vorbereitung2026-10-12:**18 feste112-s-Fälle plus drei Livefälle,
   jeweils64/512, sechs komplette Defaultkontrollen:48 Render/89,6min PCM.
   Alle vollständigen Noten/Holds/Hz/Owner/Phrasen/Memory/Zulassung/Retirements
@@ -949,7 +960,32 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   exakt PR158, CI38284802990/run691 frisch completed/success; Spec0.10 gleich.
   Kein neuer voller Host-/ARM-Nachweis behauptet, kein Geräte-/Hörhaken.
   Details: [SD33_ATTACK_CHECKPOINT.md](SD33_ATTACK_CHECKPOINT.md).
-  Nächste einzelne Vorbereitung: Release0/0,5/1 im Ensemble, getrennt von Attack.
+  **Release-Vorbereitung2026-10-12:**18 feste112-s-Fälle plus drei Livefälle
+  jeweils64/512, sechs volle Defaultkontrollen und neun32-s-Stop-Gegenproben
+  jeweils64/512:66 vollständige Render/99,2min PCM. Ganze PCM/Events/Status
+  blockgenau; Defaultaudio und gemeinsame Statusfelder zum normalen Renderer exakt.
+  Gleiche Stop-Gegenproben-Noten/Hz/Velocity/Owner/Holds, streng steigende
+  tatsächliche Quellenbelegung und Stereoenergie nach Stop bei0/0,5/1.
+  Stop bis alle Quellen frei:COAST5,82/8,82/13,37s,
+  WOODLAND1,32/2,00/3,04s,HIGHLANDS4,76/7,22/10,91s,10-ms-Auflösung.
+  Releasefaktor0,65975392/1/1,51571643; Attack bleibt0,5/Faktor1.
+  250 bestätigte Starts mit jeweils frischer vorangehender physischer Reservierung;
+  wiederverwendeter Owner vorher tatsächlich frei, nicht nur NoteOff gemeldet.
+  Autonome Übergabezeit und Keeper-Holds dürfen sich mit Release ändern;
+  gemeinsame geordnete Note-on-Folgen bei beiden Seeds erhalten. Kein Steal.
+  18 vorbereitete/held/releasing Änderungen bleiben volle sechs Sekunden PCM
+  exakt; neun zukünftige Starts64/512, sechs Clamp-/Invalidinputverträge bestehen.
+  Setter keine Sofortnote; Quellen3/2/3,NaN/Limiter0,Raw≤−20,4dBTP,
+  Mono≥0,93058,Stop80s,alle Besitzer bis93,20s frei,letzte Sekunde exakt still.
+  Drei38,5-s-WAVs:gleicher tatsächlicher Abschnitt2–14,5s,Stop nach4s,
+  40-ms-Ausschnittkanten,0,5-s-Vergleichslücken,ein Gain je World,keine AGC.
+  Lange WOODLAND-Quelle/Color erhalten; kontrollierter kurzer Stop ersetzt
+  keine lange Phrase. Zusätzlich Product-Vertragscheck mit12min Musik besteht.
+  251 Coreinputs exakt PR159,CI38286641272/run693 frisch completed/success;
+  kein neuer ganzer lokaler Host-/ARM-Nachweis oder Geräte-/Hörhaken behauptet.
+  Details:[SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
+  Nächste einzelne Arbeitseinheit:SD34 Quellen-/Rollenpegel über Register und
+  erlaubte Summen mit tatsächlichem PCM prüfen. SD33 bleibt für Hören/Nutzen offen.
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen
