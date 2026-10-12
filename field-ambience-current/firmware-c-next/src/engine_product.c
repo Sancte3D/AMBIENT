@@ -320,7 +320,8 @@ void engine_boot_mute(void) { volume_cur=0; engine_set_master_volume(0); } /* be
 void engine_set_color(float v) {
     if(!isfinite(v)) return;
     color=dsp_clampf(v,0,1); atomic_store(&color_bits,bits(color));
-    bowed_set_tone(color); horn_set_tone(color); pluck_set_damp(.025f-.020f*color);
+    bowed_set_tone(color); horn_set_tone(color);
+    pluck_set_damp(.025f-.020f*.5f); pluck_set_color(color);
 }
 void engine_set_activity(float v) { if(isfinite(v)) activity=dsp_clampf(v,0,1); }
 void engine_set_room(float v) { if(isfinite(v)) { room=dsp_clampf(v,0,1); ambient_room_set(room); } }
@@ -630,7 +631,8 @@ void engine_render(int16_t *out,int frames) {
             bowed_init(); horn_init(); pluck_init(); ambient_room_clear(); nature_clear();
             pluck_set_ambient(true);
             float c=value(atomic_load_explicit(&color_bits,memory_order_acquire));
-            bowed_set_tone(c); horn_set_tone(c); pluck_set_damp(.025f-.020f*c);
+            bowed_set_tone(c); horn_set_tone(c);
+            pluck_set_damp(.025f-.020f*.5f); pluck_set_color(c);
             dc_l=dc_r=0; mask=0; quiet_frames=DSP_SAMPLE_RATE_HZ/4;
             atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&started_mask,0); atomic_store(&room_quiet,true);
             atomic_store_explicit(&clear_done,true,memory_order_release);

@@ -127,6 +127,12 @@ CC="$CC" python3 "$here/test_cell_routing.py"
     -lm -o "$tmp/pluck_tone_test"
 "$tmp/pluck_tone_test"
 
+# Product output Color changes upper modes without shortening the long string.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_pluck_color.c" \
+    "$src/src/pluck.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    -lm -o "$tmp/pluck_color_test"
+"$tmp/pluck_color_test"
+
 # Strict generated source starts preserve occupied/releasing slots.
 "$CC" "${CFLAGS[@]}" "$here/test_world_source_admission.c" \
     "$src/src/bowed.c" "$src/src/horn.c" "$src/src/choir.c" \

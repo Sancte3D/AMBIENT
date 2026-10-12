@@ -1,6 +1,6 @@
-# AMBIENT — Product Sound Candidate 0.9
+# AMBIENT — Product Sound Candidate 0.10
 
-Stand 2026-10-11. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
+Stand 2026-10-12. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
 `FAM_SOUND_PRODUCT`, Wireformat SCN7. Dies ist der reproduzierbare
 **Softwarevertrag**, keine endgültige Klang- oder Gerätefreigabe.
 `reference` bleibt der CMake-Default; historische Beschreibungen gelten dafür.
@@ -226,7 +226,7 @@ Scene-Werte sind Parameter, keine Besitzer-/Envelope-/Raumsnapshots.
 | Key | Harmonie, Pitch Class 0 / D=2 / 11 | mod12, begrenzter Registerroot; nur neue Einsätze | SCN7; idempotent, kein Retune klingender Quellen |
 | Collection | Harmonie, 0 Major / 0 / 1 Minor | zwei obige Cores; nur neue Einsätze | SCN7-Collection; keine alte Mode-ID still umdeuten |
 | Tuning | Harmonie, 0 Equal / 0 / 1 Just | neue Hz; alte angewandte Hz/Fahnen geschützt | SCN7; keine Pitchrampe |
-| Color | Quelle, normiert 0 / 0,5 / 1 | Bowed-Cutofffaktor0,8..1,2; Horn0,85..1,15; lange WOODLAND-Saite Damp0,025..0,005, default0,015, FIR-Seitengewicht Damp×0,25/0,9; 80-ms-Zeitkonstante, auch live | via Brightnessadapter in SCN7; World verändert Color nicht |
+| Color | Quelle, normiert 0 / 0,5 / 1 | Bowed-Cutofffaktor0,8..1,2; Horn0,85..1,15; lange WOODLAND-Saite: fester bisheriger Default-Loop-Damp≈0,015; Ausgangsfarbe x+(2Color−1)·(x−LP), LP-Cutoff2f (≤0,45SR), 0 dunkel/0,5 exakt neutral/1 hell; 80-ms-Zeitkonstante auch live | via Brightnessadapter in SCN7; WOODLAND-Endwertsemantik ab Spec0.10 geändert, Default0,5 exakt erhalten; World verändert Color nicht |
 | Activity | Score, 0 / 0,5 / 1 | Faktor 1,35..0,65 für kommende Angebote; COAST zusätzlich Partnerwait6/3/0 s und Schlusswait10/5,5/1 s nach tatsächlichem Quellenende, mit Entwicklungsfaktor; laufende Waits/Holds bleiben stehen; weder Gain/Color/Key noch zusätzliche Quellen | SCN7 unverändert; COAST-Zeitsemantik ab Spec0.9 geändert; 0 ist langsame aktive Welt, kein Stop |
 | Attack | neue Quelle, 0 / 0,5 / 1 | SHAPE x=0,35+0,30*a; Faktor 0,125×64^x = 0,5359 / 1 / 1,8661; note-on only | SCN7; keine rückwirkende Hüllkurvenänderung |
 | Release | neue Quelle, 0 / 0,5 / 1 | x=0,35+0,30*r; Faktor 0,25×16^x = 0,6598 / 1 / 1,5157; note-on only | SCN7; 0 bleibt musikalischer Release |
@@ -337,6 +337,18 @@ exakt; Firmwareinputs bleiben PR156/Spec0.9. WOODLANDs vorhandener Dampbereich
 Bereich benötigt eine eigene Kalibrierung bei erhaltenem langen Ton.
 RMS/FFT belegen keinen musikalischen Nutzen; kein Color-/SD33-Hörhaken.
 Details: [SD33_COLOR_CHECKPOINT.md](SD33_COLOR_CHECKPOINT.md).
+
+SD33-WOODLAND-Color-Kalibrierung2026-10-12, Spec0.10: nur die lange Product-Saite
+erhält eine Ausgangsfarbe. Loop, Tonhöhe, Hold-/Releaseabsicht und tatsächliches
+Quellenende bleiben erhalten; Default0,5 ist exakt der bisherige Klang.
+Endwerte unterscheiden jetzt tatsächlich die Obertöne: FFT-Center175,67/181,27/
+188,86Hz statt181,08/181,27/181,46Hz.63 volle Render/117,6min,24 Float-Solos,
+gleiche vollständige musikalische Historie/Statusdaten, Neutral/andere Worlds
+bytegleich, Hostrunner und echte Baseline/Kandidat-H743-Linkaudits bestehen.
+SCN7/Brightnessadapter bleiben; gespeicherte WOODLAND-Endwerte bekommen die
+neue Klangfarbe. Filterbedingte Pegelunterschiede bleiben bewusst gemessen,
+keine AGC oder individuelle Hörclip-Normalisierung. Hören/SD33 bleiben offen.
+Details: [SD33_WOODLAND_COLOR_CHECKPOINT.md](SD33_WOODLAND_COLOR_CHECKPOINT.md).
 
 ## Kontextwechsel und Persistenz
 

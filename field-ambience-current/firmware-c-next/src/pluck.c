@@ -34,6 +34,11 @@ typedef struct {
     float stop_start;
     float attack_phase, attack_step;
     float dc;
+#ifdef FAM_SOUND_PRODUCT
+    /* Output color never changes the circulating string or retirement. */
+    float color, color_lp, color_a;
+    bool colored;
+#endif
     uint32_t release_frames;
     uint32_t stop_total;
     volatile uint32_t stop_left;
@@ -42,6 +47,9 @@ typedef struct {
 static pluck_voice_t v[PLUCK_VOICES];
 static _Atomic float s_damp = 0.42f * (0.25f / 0.9f); /* FIR side weight: 0=bright */
 static _Atomic bool s_ambient;
+#ifdef FAM_SOUND_PRODUCT
+static _Atomic float s_color = 0.5f;
+#endif
 static int      next_voice;
 static uint32_t excitation_rng = 0x9E3779B9u;
 
@@ -63,9 +71,19 @@ void pluck_init(void) {
     excitation_rng = 0x9E3779B9u;
     s_damp      = 0.42f * (0.25f / 0.9f);
     s_ambient   = false;
+#ifdef FAM_SOUND_PRODUCT
+    s_color = 0.5f;
+#endif
 }
 
 void pluck_set_ambient(bool on) { atomic_store(&s_ambient,on); }
+
+#ifdef FAM_SOUND_PRODUCT
+void pluck_set_color(float color) {
+    if (!isfinite(color)) return;
+    atomic_store_explicit(&s_color, dsp_clampf(color, 0.0f, 1.0f), memory_order_relaxed);
+}
+#endif
 
 void pluck_set_damp(float damp) {
     if (!isfinite(damp)) return;
@@ -113,6 +131,16 @@ static bool start_note(int owner, float freq_hz, float amp) {
     p->attack_phase = 0.0f;
     p->attack_step = 1.0f / (attack_s * SR);
     p->dc = 0.0f;
+#ifdef FAM_SOUND_PRODUCT
+    p->colored = ambient;
+    p->color = atomic_load_explicit(&s_color, memory_order_relaxed);
+    p->color_lp = 0.0f;
+    /* Pitch-relative nonresonant source shelf: dark takes the low band,
+     * bright adds the complementary upper band. Neutral is exactly dry.
+     * Coefficient work is bounded at note-on, never per audio sample. */
+    float cutoff = fminf(2.0f * freq_hz, 0.45f * SR);
+    p->color_a = 1.0f - expf(-6.283185307f * cutoff / SR);
+#endif
 
     /* A plucked displacement, rather than a randomly missing fundamental.
      * Eight harmonic modes approximate a triangular string displacement:
@@ -208,6 +236,9 @@ int pluck_active_count(void) {
 void pluck_render_mix(float *dry_L, float *dry_R,
                       float *send_L, float *send_R, int frames) {
     float damping=atomic_load_explicit(&s_damp,memory_order_relaxed);
+#ifdef FAM_SOUND_PRODUCT
+    float color = atomic_load_explicit(&s_color, memory_order_relaxed);
+#endif
     for (int i = 0; i < PLUCK_VOICES; ++i) {
         pluck_voice_t *p = &v[i];
         if (!p->active) continue;
@@ -250,7 +281,18 @@ void pluck_render_mix(float *dry_L, float *dry_R,
              * Remove it outside the feedback: loop pitch/decay are unchanged. */
             p->dc += DC_COEF * (y - p->dc);
             float audible = y - p->dc;
-            float output = audible * attack * p->stop_gain;
+            float colored = audible;
+#ifdef FAM_SOUND_PRODUCT
+            if (p->colored) {
+                /* Track at neutral for warm state during live edits. Dry
+                 * and Room send hear the same color. Ownership/decay still
+                 * track the uncolored string below. */
+                p->color += (color - p->color) * (1.0f / (0.080f * SR));
+                p->color_lp += p->color_a * (audible - p->color_lp);
+                colored += (2.0f * p->color - 1.0f) * (audible - p->color_lp);
+            }
+#endif
+            float output = colored * attack * p->stop_gain;
             if (p->stop_left) {
                 --p->stop_left;
                 p->stop_gain=p->stop_start*(float)p->stop_left/(float)p->stop_total;
