@@ -8,7 +8,7 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-11**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-12**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
@@ -120,8 +120,19 @@ Klang nur um0,203/0,204% RMS zum Default; FFT-Leistungszentrum181,08→181,46Hz.
 Die Kennlinie ist zu schwach für einen belegten musikalischen Endwertnutzen.
 COAST/HIGHLANDS zeigen größere messbare Farbänderungen, Hörnutzen bleibt offen.
 Siehe [SD33_COLOR_CHECKPOINT.md](SD33_COLOR_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: nur WOODLAND-Color kalibrieren, mit erhaltenem
-langen Ton, Tonhöhe und sicheren Besitzern. Finale Quellen-/Raum-/Nature-Hörwahl
+SD33 WOODLAND-Color ist jetzt als einzelne Spec0.10-Kalibrierung umgesetzt:
+Ausgangsfarbe statt veränderter Loop-Dämpfung; Neutral0,5 exakt bisheriger Klang,
+lange Schwingung, Tonhöhe und Halte-/Besitzerverlauf erhalten. Beide Seeds zeigen
+jetzt etwa7,27% FFT-Endwertspanne statt0,21%.63 volle Render/117,6min PCM,
+24 tatsächliche Float-Solo-Pitch-/Decayfälle und derselbe natürliche Retirement-
+Block bestehen. COAST/HIGHLANDS inklusive Livewechsel vollständig bytegleich.
+Zwei kurze WAVs vergleichen0/0,5/1 undalt/neu; ein Gain je Datei, reale Farb-/
+Pegelunterschiede bleiben. Voller Hostrunner und exakt reproduzierter Baseline-
+sowie neuer H743-Build bestehen: Flash+236B,D1+32B,
+D2+0B,DTCM+0B. Musikalischer Hörnutzen bleibt offen.
+Siehe [SD33_WOODLAND_COLOR_CHECKPOINT.md](SD33_WOODLAND_COLOR_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: Attack-Endwerte im echten Ensemble prüfen;
+Release folgt getrennt. Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
 Weiterhin eine konkrete Arbeitseinheit nach der anderen.
@@ -874,9 +885,28 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   COAST Color0/1 RMS-Differenz14,44/10,63%, HIGHLANDS11,28/8,50% zum Default;
   WOODLAND nur0,203/0,204%, FFT-Center181,08/181,27/181,46Hz (beide Seeds
   gleiche schwache monotone Richtung). Sample-/FFTbefund ist keine Hörabnahme.
-  Nächster einzelner Schritt: nur WOODLAND-Color kalibrieren, mit langem Ton
-  und unveränderter Tonhöhe/Halteabsicht/Besitzersicherheit. Kein SD33-Haken.
+  Dieser Softwarebefund ist mit Spec0.10 bearbeitet (unten). Kein SD33-Haken.
   Details: [SD33_COLOR_CHECKPOINT.md](SD33_COLOR_CHECKPOINT.md).
+  **WOODLAND-Color-Kalibrierung Spec0.10,2026-10-12:** nur Ausgangsfarbe der
+  langen Product-Saite; fester Defaultloop, Neutral0,5 exakt bisheriger Klang.
+  Obertöne statt verkürzter Schwingung,80-ms-Livesmoother; Clear erhält Zielwert.
+  Beide Seeds zeigen175,67/181,27/188,86Hz beziehungsweise175,24/180,82/188,37Hz;
+  relative Min/Max-Spanne7,278/7,263% statt0,208/0,207%. Zwei kurze WAVs,
+  echte Pegelunterschiede erhalten (−26,4/−25,3/−23,0LUFS), kein AGC.
+  42 Kandidaten- plus21 Baseline-Render:117,6min PCM. Alle vollständigen
+  Noten/Holds/Hz/Owner/Phrasen/Retirements/Zulassungen gegen Baseline identisch;
+  64/512 PCM/Status/Events exakt, WOODLAND Default und andere Worlds bytegleich.
+  24 Float-Solos: Pitchfehler≤0,03369Cent, Fundamentaldecayvergleich≤0,00151%
+  Abweichung, alle acht Neutralaufnahmen exakt. Ungesteuerte110-Hz-Saite wird
+  bei allen drei Werten im selben512-Block bei37,849s inaktiv; kurze Quelle
+  unverändert. NaN/Inf/Clamp, Sourcebudgets, Stop/Clear, letzte Sekunde still.
+  Voller Hostrunner und Baseline/Kandidat H743 mit identischer geprüfter Toolchain
+  bestehen; BaselineELF exakt reproduziert, Flash+236B,D1+32B,
+  D2+0B,DTCM+0B. Kein CPU-/ISR-Stack-/Hörnachweis.
+  SCN7/Default0,5/Reference-Default/Journal-OFF erhalten; WOODLAND-Endwert-
+  Klangsemantik bewusst neu.248/251 Coreinputs unverändert, nur drei geändert.
+  Details: [SD33_WOODLAND_COLOR_CHECKPOINT.md](SD33_WOODLAND_COLOR_CHECKPOINT.md).
+  Nächste einzelne Vorbereitung: Attack0/0,5/1 im Ensemble; Release getrennt danach.
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen

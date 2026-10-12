@@ -1,0 +1,98 @@
+{
+  "baseline_commit": "ab673f49de056154d985290d5bc1f8a7f5bf43a5",
+  "scope": "Same verified GCC13.2.1/Newlib4.4; Product H743 Release, Journal OFF.",
+  "packages": [
+    {
+      "package": "binutils-arm-none-eabi",
+      "version": "2.42-1ubuntu1+23",
+      "size": 3136884,
+      "sha256": "2aab2d6a7e4c21ce33462f8b52b972e2a8e4597e79b5add5502e2d1f3e543472"
+    },
+    {
+      "package": "gcc-arm-none-eabi",
+      "version": "15:13.2.rel1-2",
+      "size": 57521126,
+      "sha256": "519a5d0e5292a4b4861f69ae96e8918149bfd1646072ca53451ccfb8c5a91948"
+    },
+    {
+      "package": "libnewlib-arm-none-eabi",
+      "version": "4.4.0.20231231-2",
+      "size": 49181424,
+      "sha256": "9af508599193d07c9460897d01a36af46a2707765bd6941e27c6d0747859b0eb"
+    },
+    {
+      "package": "libnewlib-dev",
+      "version": "4.4.0.20231231-2",
+      "size": 139892,
+      "sha256": "f945b12c3abc844e76eebc28cf7d99e9aefd7caec39583116ef29556b3c52414"
+    }
+  ],
+  "cmake_version": "3.31.6",
+  "device_cpu_or_stack_highwater_measured": false,
+  "builds": {
+    "baseline": {
+      "elf_sha256": "d99fb5c0b0536c2e376fe2447a25542287356f93f41cd143f5a1f675f4d18105",
+      "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+      "memory_region_used_bytes": {
+        "DTCMRAM": 16384,
+        "RAM_D1": 65664,
+        "RAM_D2": 60808,
+        "RAM_D3": 0,
+        "ITCMRAM": 0,
+        "FLASH": 196384
+      },
+      "bank1_load_image_bytes": 196384,
+      "core_max_individual_frame_bytes": 192,
+      "internal_symbols": {
+        "tank": {
+          "address": "30001550",
+          "bytes": 55352
+        },
+        "diffusion": {
+          "address": "300000a0",
+          "bytes": 5296
+        },
+        "s_buffer": {
+          "address": "2400d400",
+          "bytes": 4096
+        }
+      }
+    },
+    "calibrated": {
+      "elf_sha256": "cfa75d06ce81c4ebb1c2c0641633fb096d2eadd2b7a2fb598f15c8c372d08b01",
+      "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+      "memory_region_used_bytes": {
+        "DTCMRAM": 16384,
+        "RAM_D1": 65696,
+        "RAM_D2": 60808,
+        "RAM_D3": 0,
+        "ITCMRAM": 0,
+        "FLASH": 196620
+      },
+      "bank1_load_image_bytes": 196620,
+      "core_max_individual_frame_bytes": 192,
+      "internal_symbols": {
+        "tank": {
+          "address": "30001550",
+          "bytes": 55352
+        },
+        "diffusion": {
+          "address": "300000a0",
+          "bytes": 5296
+        },
+        "s_buffer": {
+          "address": "2400d420",
+          "bytes": 4096
+        }
+      }
+    }
+  },
+  "bank1_load_delta_bytes": 236,
+  "memory_region_delta_bytes": {
+    "RAM_D1": 32,
+    "RAM_D2": 0,
+    "DTCMRAM": 0
+  },
+  "full_host_runner_pass": true,
+  "host_log_sha256": "5c5a2f8a5c2051f0f1d2e2612247c38f2485ab4cb2a629d50669f6a6a3f9383b"
+}

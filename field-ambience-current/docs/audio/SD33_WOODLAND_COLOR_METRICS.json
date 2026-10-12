@@ -1,0 +1,1851 @@
+{
+  "scope": "Spec0.10 candidate: only long WOODLAND output Color; exact neutral/other Worlds.",
+  "baseline_commit": "ab673f49de056154d985290d5bc1f8a7f5bf43a5",
+  "baseline_tree": "f76ba92fa14a90846b3804b21704cf26f2b98888",
+  "hearing_accepted": false,
+  "musical_usefulness_accepted": false,
+  "changed_core_inputs": [
+    "include/pluck.h",
+    "src/engine_product.c",
+    "src/pluck.c"
+  ],
+  "tracked_compilation_input_count": 251,
+  "unchanged_core_input_count": 248,
+  "source_sha256": {
+    "src/engine_product.c": "ea60725d88b03e0140d02454efa3fd5fb02bbd47cce8fa8e304eb187b013586b",
+    "src/world_grammar.c": "a90cea1f8c86728a9136dc3b2332bda2c69393db9bab2fbfd0cbc19d092e6f78",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "5e13ddfe5dc4717a770e336fa8838e4f4bce4f1019aae4cd7ac4db9f95b79317",
+    "src/ambient_room.c": "0f54bfbe08b83ba08034b587f20923b326594e9b4bd4d5038b84ad166acf85ee",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "f9ce41e7407a52b0a49515b190aaa2dd611f3b174d4d43e2c94cb769547fb92e",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "7ec745e4bf31371739e1fc1e7eb245c0358a3f65d4f3cec572965713ad36119c",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "4051e5460af6bb26dee1c5dcc24e8c9f515c48fb6075f976c3d133971635ebdd",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6",
+    "tools/review_woodland_color_calibration.py": "9b58e1a9e4308e40b3b35f40b87e70aac49db9dccaca14bac3162cd7f8d59d20",
+    "tools/render_color_comparison.c": "ee74e4dd7ca5e10e764c0b973df5662cb9d296d1c0b2eab08799aeded5d1c6c2",
+    "tools/review_color_comparison.py": "b97e26fb9eef668cb19c38f16f693d971809727d55d798fc5e0a676cc77a2698",
+    "tools/review_activity_comparison.py": "4fdd2c12e4131dbba094811e579b9c3ad36648e993067fa8f0e2f72d4ff78017",
+    "tools/review_room_comparison.py": "1760c798fcb4df166e0bcf0c0b39323762f20164cf086ee3ca47f511750d6eba",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1",
+    "tools/check_pluck_tuning.py": "9f084d4901bd1b1d91defaf9908e4bb2c75b99affa8885850f73f43c70c50f9d",
+    "test/test_pluck_color.c": "2c0b7371f377f6a40e81ac88683dedd85c60f2034bf2f0b9b1c64d78a74d0a2d"
+  },
+  "parameters": {
+    "colors": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "seeds": [
+      1234,
+      42
+    ],
+    "activity": 0.5,
+    "room": 0.5,
+    "nature": 0,
+    "attack": 0.5,
+    "release": 0.5,
+    "volume": 0.6,
+    "key": "D",
+    "collection": "major",
+    "tuning": "equal"
+  },
+  "raw_seconds": 112,
+  "generate_stop_seconds": 80,
+  "worlds": [
+    {
+      "world": "COAST",
+      "cases": [
+        {
+          "seed": 1234,
+          "color": 0.0,
+          "live": false,
+          "renderer_report": "COLOR world=0 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09066772 max_step=599",
+          "raw_level": {
+            "integrated_lufs": -33.4,
+            "true_peak_dbfs": -20.8
+          },
+          "mono_energy_ratio": 0.9695171309025061,
+          "dc": [
+            -1.0849705860766926e-08,
+            -4.621628692399579e-09
+          ],
+          "full_sha256": {
+            "": "de229ae2ed8f9ca249a0402a81acb06326945b80e94985b59e02f9f5127d9e51",
+            ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+            ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.71,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 310.5186354695507,
+            "energy_fraction_above_1000_hz": 0.013053573297075311,
+            "energy_fraction_above_4000_hz": 1.1997072505815371e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 0.0,
+            "live": false,
+            "renderer_report": "COLOR world=0 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09066772 max_step=599",
+            "raw_level": {
+              "integrated_lufs": -33.4,
+              "true_peak_dbfs": -20.8
+            },
+            "mono_energy_ratio": 0.9695171309025061,
+            "dc": [
+              -1.0849705860766926e-08,
+              -4.621628692399579e-09
+            ],
+            "full_sha256": {
+              "": "de229ae2ed8f9ca249a0402a81acb06326945b80e94985b59e02f9f5127d9e51",
+              ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+              ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 88.71,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 310.5186354695507,
+              "energy_fraction_above_1000_hz": 0.013053573297075311,
+              "energy_fraction_above_4000_hz": 1.1997072505815371e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 1234,
+          "color": 0.5,
+          "live": false,
+          "renderer_report": "COLOR world=0 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09329224 max_step=713",
+          "raw_level": {
+            "integrated_lufs": -33.3,
+            "true_peak_dbfs": -20.6
+          },
+          "mono_energy_ratio": 0.9697907760218385,
+          "dc": [
+            -1.0837348564797943e-08,
+            -6.1724693365069245e-09
+          ],
+          "full_sha256": {
+            "": "733d8ebf07f5d1bd435d1be93f4ff293884c7c8a5c936d62dcd24a4daac7f441",
+            ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+            ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.71,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 330.9842585029282,
+            "energy_fraction_above_1000_hz": 0.026289357100964403,
+            "energy_fraction_above_4000_hz": 2.8670079290734475e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 0.5,
+            "live": false,
+            "renderer_report": "COLOR world=0 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09329224 max_step=713",
+            "raw_level": {
+              "integrated_lufs": -33.3,
+              "true_peak_dbfs": -20.6
+            },
+            "mono_energy_ratio": 0.9697907760218385,
+            "dc": [
+              -1.0837348564797943e-08,
+              -6.1724693365069245e-09
+            ],
+            "full_sha256": {
+              "": "733d8ebf07f5d1bd435d1be93f4ff293884c7c8a5c936d62dcd24a4daac7f441",
+              ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+              ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 88.71,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 330.9842585029282,
+              "energy_fraction_above_1000_hz": 0.026289357100964403,
+              "energy_fraction_above_4000_hz": 2.8670079290734475e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 1234,
+          "color": 1.0,
+          "live": false,
+          "renderer_report": "COLOR world=0 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09439087 max_step=846",
+          "raw_level": {
+            "integrated_lufs": -33.2,
+            "true_peak_dbfs": -20.5
+          },
+          "mono_energy_ratio": 0.9698941942924453,
+          "dc": [
+            -8.64392853030349e-09,
+            -3.373541799532313e-09
+          ],
+          "full_sha256": {
+            "": "118785120bc29932a95219615586bbc9fdbcf959305c910869726d0f8b052f42",
+            ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+            ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.71,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 347.9331024540598,
+            "energy_fraction_above_1000_hz": 0.039839332990240645,
+            "energy_fraction_above_4000_hz": 5.920567934803728e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 1.0,
+            "live": false,
+            "renderer_report": "COLOR world=0 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09439087 max_step=846",
+            "raw_level": {
+              "integrated_lufs": -33.2,
+              "true_peak_dbfs": -20.5
+            },
+            "mono_energy_ratio": 0.9698941942924453,
+            "dc": [
+              -8.64392853030349e-09,
+              -3.373541799532313e-09
+            ],
+            "full_sha256": {
+              "": "118785120bc29932a95219615586bbc9fdbcf959305c910869726d0f8b052f42",
+              ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+              ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 88.71,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 347.9331024540598,
+              "energy_fraction_above_1000_hz": 0.039839332990240645,
+              "energy_fraction_above_4000_hz": 5.920567934803728e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 42,
+          "color": 0.0,
+          "live": false,
+          "renderer_report": "COLOR world=0 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09280396 max_step=606",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -20.6
+          },
+          "mono_energy_ratio": 0.9712892475494858,
+          "dc": [
+            -8.180529931466635e-09,
+            -8.03224237983884e-09
+          ],
+          "full_sha256": {
+            "": "94562ff1361e7db5d610cd693b58a3c08cd2ddaa972cf3a5b7ce48357c4ab9e0",
+            ".events.csv": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+            ".state.csv": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.84,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 310.5501356540071,
+            "energy_fraction_above_1000_hz": 0.013072746187911056,
+            "energy_fraction_above_4000_hz": 1.2343895637269165e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 0.0,
+            "live": false,
+            "renderer_report": "COLOR world=0 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09280396 max_step=606",
+            "raw_level": {
+              "integrated_lufs": -33.1,
+              "true_peak_dbfs": -20.6
+            },
+            "mono_energy_ratio": 0.9712892475494858,
+            "dc": [
+              -8.180529931466635e-09,
+              -8.03224237983884e-09
+            ],
+            "full_sha256": {
+              "": "94562ff1361e7db5d610cd693b58a3c08cd2ddaa972cf3a5b7ce48357c4ab9e0",
+              ".events.csv": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+              ".state.csv": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 88.84,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 310.5501356540071,
+              "energy_fraction_above_1000_hz": 0.013072746187911056,
+              "energy_fraction_above_4000_hz": 1.2343895637269165e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 42,
+          "color": 0.5,
+          "live": false,
+          "renderer_report": "COLOR world=0 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09548950 max_step=726",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -20.4
+          },
+          "mono_energy_ratio": 0.9715387087237566,
+          "dc": [
+            -1.0627274533325235e-08,
+            -1.2641513776269436e-08
+          ],
+          "full_sha256": {
+            "": "f427487fb006a87b5b1f0a13ad3a49c33a93ad363b0fc443e412135c8717d8c5",
+            ".events.csv": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+            ".state.csv": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.84,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 331.0199930388631,
+            "energy_fraction_above_1000_hz": 0.026309704459091462,
+            "energy_fraction_above_4000_hz": 2.9461587136406508e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 0.5,
+            "live": false,
+            "renderer_report": "COLOR world=0 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09548950 max_step=726",
+            "raw_level": {
+              "integrated_lufs": -33.0,
+              "true_peak_dbfs": -20.4
+            },
+            "mono_energy_ratio": 0.9715387087237566,
+            "dc": [
+              -1.0627274533325235e-08,
+              -1.2641513776269436e-08
+            ],
+            "full_sha256": {
+              "": "f427487fb006a87b5b1f0a13ad3a49c33a93ad363b0fc443e412135c8717d8c5",
+              ".events.csv": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+              ".state.csv": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 88.84,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 331.0199930388631,
+              "energy_fraction_above_1000_hz": 0.026309704459091462,
+              "energy_fraction_above_4000_hz": 2.9461587136406508e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 42,
+          "color": 1.0,
+          "live": false,
+          "renderer_report": "COLOR world=0 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09698486 max_step=862",
+          "raw_level": {
+            "integrated_lufs": -32.9,
+            "true_peak_dbfs": -20.3
+          },
+          "mono_energy_ratio": 0.9716224492169421,
+          "dc": [
+            -1.2141043289525632e-08,
+            -2.693890521238257e-09
+          ],
+          "full_sha256": {
+            "": "7a66e2e68b52c1c75a93ac666e3960c3bc30b589d74a6494c947034a1ded97bd",
+            ".events.csv": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+            ".state.csv": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.84,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 347.97233457115186,
+            "energy_fraction_above_1000_hz": 0.03985953404510298,
+            "energy_fraction_above_4000_hz": 6.0557839015890025e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 1.0,
+            "live": false,
+            "renderer_report": "COLOR world=0 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09698486 max_step=862",
+            "raw_level": {
+              "integrated_lufs": -32.9,
+              "true_peak_dbfs": -20.3
+            },
+            "mono_energy_ratio": 0.9716224492169421,
+            "dc": [
+              -1.2141043289525632e-08,
+              -2.693890521238257e-09
+            ],
+            "full_sha256": {
+              "": "7a66e2e68b52c1c75a93ac666e3960c3bc30b589d74a6494c947034a1ded97bd",
+              ".events.csv": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+              ".state.csv": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 88.84,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 347.97233457115186,
+              "energy_fraction_above_1000_hz": 0.03985953404510298,
+              "energy_fraction_above_4000_hz": 6.0557839015890025e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        }
+      ]
+    },
+    {
+      "world": "WOODLAND",
+      "cases": [
+        {
+          "seed": 1234,
+          "color": 0.0,
+          "live": false,
+          "renderer_report": "COLOR world=1 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.06134033 max_step=84",
+          "raw_level": {
+            "integrated_lufs": -34.2,
+            "true_peak_dbfs": -24.2
+          },
+          "mono_energy_ratio": 0.9317510544267591,
+          "dc": [
+            2.063668426820133e-09,
+            4.75755894805839e-10
+          ],
+          "full_sha256": {
+            "": "37746b02075cc0564ac94244f164be03a043ab762fc96147019b2d58dbef2b4f",
+            ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+            ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 175.66749701257808,
+            "energy_fraction_above_1000_hz": 1.4115168593371954e-06,
+            "energy_fraction_above_4000_hz": 8.344692905277941e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 0.0,
+            "live": false,
+            "renderer_report": "COLOR world=1 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07574463 max_step=101",
+            "raw_level": {
+              "integrated_lufs": -33.1,
+              "true_peak_dbfs": -22.4
+            },
+            "mono_energy_ratio": 0.931813335940255,
+            "dc": [
+              -7.939562660071469e-09,
+              -6.178647984491416e-10
+            ],
+            "full_sha256": {
+              "": "1973e96e9b1cd21c634e1e4f6f57b6d5f010be39e0b26f967ac8ee1c5592bae1",
+              ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+              ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 2,
+            "full_owner_retirement_after_stop_seconds": 82.0,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 181.0844469648538,
+              "energy_fraction_above_1000_hz": 3.943666807237786e-06,
+              "energy_fraction_above_4000_hz": 6.509543427724412e-07,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": false
+        },
+        {
+          "seed": 1234,
+          "color": 0.5,
+          "live": false,
+          "renderer_report": "COLOR world=1 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07580566 max_step=101",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.9318080182179287,
+          "dc": [
+            -2.7680342970521543e-09,
+            -3.954334710074506e-10
+          ],
+          "full_sha256": {
+            "": "829c72846ae14ce6a41946615f471d84be98ec457a448669563e84871e58365f",
+            ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+            ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 181.27152989213386,
+            "energy_fraction_above_1000_hz": 4.331032838640536e-06,
+            "energy_fraction_above_4000_hz": 6.481829850494918e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 0.5,
+            "live": false,
+            "renderer_report": "COLOR world=1 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07580566 max_step=101",
+            "raw_level": {
+              "integrated_lufs": -33.1,
+              "true_peak_dbfs": -22.4
+            },
+            "mono_energy_ratio": 0.9318080182179287,
+            "dc": [
+              -2.7680342970521543e-09,
+              -3.954334710074506e-10
+            ],
+            "full_sha256": {
+              "": "829c72846ae14ce6a41946615f471d84be98ec457a448669563e84871e58365f",
+              ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+              ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 2,
+            "full_owner_retirement_after_stop_seconds": 82.0,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 181.27152989213386,
+              "energy_fraction_above_1000_hz": 4.331032838640536e-06,
+              "energy_fraction_above_4000_hz": 6.481829850494918e-07,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 1234,
+          "color": 1.0,
+          "live": false,
+          "renderer_report": "COLOR world=1 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.11373901 max_step=153",
+          "raw_level": {
+            "integrated_lufs": -30.8,
+            "true_peak_dbfs": -18.9
+          },
+          "mono_energy_ratio": 0.9318950069801164,
+          "dc": [
+            -1.1986577089913347e-09,
+            -5.307458618678126e-09
+          ],
+          "full_sha256": {
+            "": "42b72207769f9104c763961cd0af292b851812834be9eb352b45d0b9024fc5df",
+            ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+            ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 188.86124806388167,
+            "energy_fraction_above_1000_hz": 8.296650187984119e-06,
+            "energy_fraction_above_4000_hz": 3.909227372872622e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 1.0,
+            "live": false,
+            "renderer_report": "COLOR world=1 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07589722 max_step=101",
+            "raw_level": {
+              "integrated_lufs": -33.1,
+              "true_peak_dbfs": -22.4
+            },
+            "mono_energy_ratio": 0.9318024399161055,
+            "dc": [
+              -2.4158513619361436e-09,
+              1.130692581161929e-09
+            ],
+            "full_sha256": {
+              "": "2a329bb6d297068daacf681badf6c41b581708256f5d07c71a964cd8c6305412",
+              ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+              ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 2,
+            "full_owner_retirement_after_stop_seconds": 82.0,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 181.4616460025322,
+              "energy_fraction_above_1000_hz": 4.76754536499899e-06,
+              "energy_fraction_above_4000_hz": 6.416360508127674e-07,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": false
+        },
+        {
+          "seed": 42,
+          "color": 0.0,
+          "live": false,
+          "renderer_report": "COLOR world=1 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.06158447 max_step=87",
+          "raw_level": {
+            "integrated_lufs": -34.2,
+            "true_peak_dbfs": -24.2
+          },
+          "mono_energy_ratio": 0.9319427021266612,
+          "dc": [
+            -6.697654415188694e-09,
+            -3.460042871315193e-10
+          ],
+          "full_sha256": {
+            "": "6c43e7fd46a1c51f05b067f76b035798974ce70de9c7ab165010170671fa061c",
+            ".events.csv": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+            ".state.csv": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 175.23890430789965,
+            "energy_fraction_above_1000_hz": 1.4272303149228313e-06,
+            "energy_fraction_above_4000_hz": 8.553911443123105e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 0.0,
+            "live": false,
+            "renderer_report": "COLOR world=1 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07473755 max_step=103",
+            "raw_level": {
+              "integrated_lufs": -33.0,
+              "true_peak_dbfs": -22.5
+            },
+            "mono_energy_ratio": 0.9319954685776104,
+            "dc": [
+              -5.344530506585074e-09,
+              -4.084086317748826e-09
+            ],
+            "full_sha256": {
+              "": "c02c93232a95adb4542d5642f0140197ab0c49d322c7656ebbaddf12c213684a",
+              ".events.csv": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+              ".state.csv": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 2,
+            "full_owner_retirement_after_stop_seconds": 82.0,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 180.6304035146976,
+              "energy_fraction_above_1000_hz": 3.927339414131993e-06,
+              "energy_fraction_above_4000_hz": 6.642431838649981e-07,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": false
+        },
+        {
+          "seed": 42,
+          "color": 0.5,
+          "live": false,
+          "renderer_report": "COLOR world=1 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07479858 max_step=103",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -22.5
+          },
+          "mono_energy_ratio": 0.9319899257666192,
+          "dc": [
+            1.5693765880608195e-09,
+            -2.8483567208505424e-09
+          ],
+          "full_sha256": {
+            "": "6bb2d79d7f0c846cdd1843473100eec9a06b09d630268f835753befcae9674bc",
+            ".events.csv": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+            ".state.csv": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 180.81608180662906,
+            "energy_fraction_above_1000_hz": 4.307306166550011e-06,
+            "energy_fraction_above_4000_hz": 6.604675976934853e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 0.5,
+            "live": false,
+            "renderer_report": "COLOR world=1 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07479858 max_step=103",
+            "raw_level": {
+              "integrated_lufs": -33.0,
+              "true_peak_dbfs": -22.5
+            },
+            "mono_energy_ratio": 0.9319899257666192,
+            "dc": [
+              1.5693765880608195e-09,
+              -2.8483567208505424e-09
+            ],
+            "full_sha256": {
+              "": "6bb2d79d7f0c846cdd1843473100eec9a06b09d630268f835753befcae9674bc",
+              ".events.csv": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+              ".state.csv": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 2,
+            "full_owner_retirement_after_stop_seconds": 82.0,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 180.81608180662906,
+              "energy_fraction_above_1000_hz": 4.307306166550011e-06,
+              "energy_fraction_above_4000_hz": 6.604675976934853e-07,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 42,
+          "color": 1.0,
+          "live": false,
+          "renderer_report": "COLOR world=1 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.11221313 max_step=155",
+          "raw_level": {
+            "integrated_lufs": -30.8,
+            "true_peak_dbfs": -19.0
+          },
+          "mono_energy_ratio": 0.9320648548479139,
+          "dc": [
+            1.8535943953474246e-09,
+            -2.2984570502308068e-09
+          ],
+          "full_sha256": {
+            "": "4e46fe415566eecbbd9932ba6ef08867fea37c1fb85ed69f76926766a1353cfa",
+            ".events.csv": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+            ".state.csv": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 188.37230310257212,
+            "energy_fraction_above_1000_hz": 8.242806033514944e-06,
+            "energy_fraction_above_4000_hz": 4.0063225533738914e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 1.0,
+            "live": false,
+            "renderer_report": "COLOR world=1 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07489014 max_step=104",
+            "raw_level": {
+              "integrated_lufs": -33.0,
+              "true_peak_dbfs": -22.5
+            },
+            "mono_energy_ratio": 0.9319844207316276,
+            "dc": [
+              -5.437210226352446e-10,
+              -1.96481005906827e-09
+            ],
+            "full_sha256": {
+              "": "3bdb9f95fe06b4cd5da91bb8221aa8629f52d5256bee80a8fd2d88001d1b7cce",
+              ".events.csv": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+              ".state.csv": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 2,
+            "full_owner_retirement_after_stop_seconds": 82.0,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 181.0049489601126,
+              "energy_fraction_above_1000_hz": 4.751276678211027e-06,
+              "energy_fraction_above_4000_hz": 6.600231569887468e-07,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": false
+        }
+      ]
+    },
+    {
+      "world": "HIGHLANDS",
+      "cases": [
+        {
+          "seed": 1234,
+          "color": 0.0,
+          "live": false,
+          "renderer_report": "COLOR world=2 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07644653 max_step=198",
+          "raw_level": {
+            "integrated_lufs": -29.5,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770530702602261,
+          "dc": [
+            7.414377581389699e-10,
+            -3.4724001672841756e-09
+          ],
+          "full_sha256": {
+            "": "547cda7f8863c6f2c4c268031c3ad204d7f8b5f6be851fa78e9b3b174d74dfea",
+            ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+            ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.07,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 384.0072965416922,
+            "energy_fraction_above_1000_hz": 0.005948436773024071,
+            "energy_fraction_above_4000_hz": 6.494386960352029e-06,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 0.0,
+            "live": false,
+            "renderer_report": "COLOR world=2 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07644653 max_step=198",
+            "raw_level": {
+              "integrated_lufs": -29.5,
+              "true_peak_dbfs": -22.3
+            },
+            "mono_energy_ratio": 0.9770530702602261,
+            "dc": [
+              7.414377581389699e-10,
+              -3.4724001672841756e-09
+            ],
+            "full_sha256": {
+              "": "547cda7f8863c6f2c4c268031c3ad204d7f8b5f6be851fa78e9b3b174d74dfea",
+              ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+              ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 87.07,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 384.0072965416922,
+              "energy_fraction_above_1000_hz": 0.005948436773024071,
+              "energy_fraction_above_4000_hz": 6.494386960352029e-06,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 1234,
+          "color": 0.5,
+          "live": false,
+          "renderer_report": "COLOR world=2 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07666016 max_step=224",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770540825567335,
+          "dc": [
+            1.9957032989907274e-09,
+            -1.4210890364330255e-09
+          ],
+          "full_sha256": {
+            "": "de6bae31b69bef3ee2ffcfa91545cc2c0063ea7f78c832c47986a8ae6bffc5ec",
+            ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+            ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.07,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 389.23846026922286,
+            "energy_fraction_above_1000_hz": 0.00936937854578337,
+            "energy_fraction_above_4000_hz": 1.2019944580964969e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 0.5,
+            "live": false,
+            "renderer_report": "COLOR world=2 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07666016 max_step=224",
+            "raw_level": {
+              "integrated_lufs": -29.4,
+              "true_peak_dbfs": -22.3
+            },
+            "mono_energy_ratio": 0.9770540825567335,
+            "dc": [
+              1.9957032989907274e-09,
+              -1.4210890364330255e-09
+            ],
+            "full_sha256": {
+              "": "de6bae31b69bef3ee2ffcfa91545cc2c0063ea7f78c832c47986a8ae6bffc5ec",
+              ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+              ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 87.07,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 389.23846026922286,
+              "energy_fraction_above_1000_hz": 0.00936937854578337,
+              "energy_fraction_above_4000_hz": 1.2019944580964969e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 1234,
+          "color": 1.0,
+          "live": false,
+          "renderer_report": "COLOR world=2 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07672119 max_step=251",
+          "raw_level": {
+            "integrated_lufs": -29.3,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.977049870487618,
+          "dc": [
+            -2.9657510325558796e-09,
+            5.820286401390914e-09
+          ],
+          "full_sha256": {
+            "": "326c698b8cc1f4be58bc092a8c834f2cda9c733e3f204c4469604d2400ef5bb4",
+            ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+            ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.07,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 394.22938175193315,
+            "energy_fraction_above_1000_hz": 0.01308641110575144,
+            "energy_fraction_above_4000_hz": 2.0614648487349648e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 1234,
+            "color": 1.0,
+            "live": false,
+            "renderer_report": "COLOR world=2 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07672119 max_step=251",
+            "raw_level": {
+              "integrated_lufs": -29.3,
+              "true_peak_dbfs": -22.3
+            },
+            "mono_energy_ratio": 0.977049870487618,
+            "dc": [
+              -2.9657510325558796e-09,
+              5.820286401390914e-09
+            ],
+            "full_sha256": {
+              "": "326c698b8cc1f4be58bc092a8c834f2cda9c733e3f204c4469604d2400ef5bb4",
+              ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+              ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 87.07,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 394.22938175193315,
+              "energy_fraction_above_1000_hz": 0.01308641110575144,
+              "energy_fraction_above_4000_hz": 2.0614648487349648e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 42,
+          "color": 0.0,
+          "live": false,
+          "renderer_report": "COLOR world=2 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07656860 max_step=198",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770315203935405,
+          "dc": [
+            4.491877084725259e-09,
+            -2.106918962711573e-09
+          ],
+          "full_sha256": {
+            "": "b1f4350ec450f2e8169f2e12a428d8a688cff6064868245e3dae04a7b16d6c2c",
+            ".events.csv": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+            ".state.csv": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.18,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 383.44251714270405,
+            "energy_fraction_above_1000_hz": 0.005942505448435178,
+            "energy_fraction_above_4000_hz": 6.481117971039283e-06,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 0.0,
+            "live": false,
+            "renderer_report": "COLOR world=2 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07656860 max_step=198",
+            "raw_level": {
+              "integrated_lufs": -29.4,
+              "true_peak_dbfs": -22.3
+            },
+            "mono_energy_ratio": 0.9770315203935405,
+            "dc": [
+              4.491877084725259e-09,
+              -2.106918962711573e-09
+            ],
+            "full_sha256": {
+              "": "b1f4350ec450f2e8169f2e12a428d8a688cff6064868245e3dae04a7b16d6c2c",
+              ".events.csv": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+              ".state.csv": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 87.18,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 383.44251714270405,
+              "energy_fraction_above_1000_hz": 0.005942505448435178,
+              "energy_fraction_above_4000_hz": 6.481117971039283e-06,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 42,
+          "color": 0.5,
+          "live": false,
+          "renderer_report": "COLOR world=2 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07678223 max_step=223",
+          "raw_level": {
+            "integrated_lufs": -29.3,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770329819090432,
+          "dc": [
+            1.8041652114714935e-09,
+            -4.127336853640266e-09
+          ],
+          "full_sha256": {
+            "": "3bee479a079a7a655f0b61a1fc09ecba0b221aea44c3f4b84aff9f66f147839d",
+            ".events.csv": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+            ".state.csv": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.18,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 388.66968065516164,
+            "energy_fraction_above_1000_hz": 0.009357991045980691,
+            "energy_fraction_above_4000_hz": 1.19965127760599e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 0.5,
+            "live": false,
+            "renderer_report": "COLOR world=2 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07678223 max_step=223",
+            "raw_level": {
+              "integrated_lufs": -29.3,
+              "true_peak_dbfs": -22.3
+            },
+            "mono_energy_ratio": 0.9770329819090432,
+            "dc": [
+              1.8041652114714935e-09,
+              -4.127336853640266e-09
+            ],
+            "full_sha256": {
+              "": "3bee479a079a7a655f0b61a1fc09ecba0b221aea44c3f4b84aff9f66f147839d",
+              ".events.csv": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+              ".state.csv": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 87.18,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 388.66968065516164,
+              "energy_fraction_above_1000_hz": 0.009357991045980691,
+              "energy_fraction_above_4000_hz": 1.19965127760599e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        },
+        {
+          "seed": 42,
+          "color": 1.0,
+          "live": false,
+          "renderer_report": "COLOR world=2 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07641602 max_step=250",
+          "raw_level": {
+            "integrated_lufs": -29.3,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770292328936073,
+          "dc": [
+            -2.6259253934088516e-09,
+            8.711893658132896e-10
+          ],
+          "full_sha256": {
+            "": "24c9ae7de9f44513ea30d9ae1e392e1c6a1fca88aaec1ef2c805c0704031d21c",
+            ".events.csv": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+            ".state.csv": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa"
+          },
+          "starts": 11,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.18,
+          "held_spectrum": {
+            "power_weighted_centroid_hz": 393.6560405958497,
+            "energy_fraction_above_1000_hz": 0.013067317804000927,
+            "energy_fraction_above_4000_hz": 2.0593748586304148e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "candidate_pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "baseline": {
+            "seed": 42,
+            "color": 1.0,
+            "live": false,
+            "renderer_report": "COLOR world=2 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07641602 max_step=250",
+            "raw_level": {
+              "integrated_lufs": -29.3,
+              "true_peak_dbfs": -22.3
+            },
+            "mono_energy_ratio": 0.9770292328936073,
+            "dc": [
+              -2.6259253934088516e-09,
+              8.711893658132896e-10
+            ],
+            "full_sha256": {
+              "": "24c9ae7de9f44513ea30d9ae1e392e1c6a1fca88aaec1ef2c805c0704031d21c",
+              ".events.csv": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+              ".state.csv": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa"
+            },
+            "starts": 11,
+            "maximum_actual_sources": 3,
+            "full_owner_retirement_after_stop_seconds": 87.18,
+            "held_spectrum": {
+              "power_weighted_centroid_hz": 393.6560405958497,
+              "energy_fraction_above_1000_hz": 0.013067317804000927,
+              "energy_fraction_above_4000_hz": 2.0593748586304148e-05,
+              "diagnostic_only_not_hearing_acceptance": true
+            },
+            "candidate_pcm_events_state_64_512_identical": false,
+            "final_second_exact_silence": true
+          },
+          "full_music_state_identical_to_baseline": true,
+          "full_pcm_identical_to_baseline": true
+        }
+      ]
+    }
+  ],
+  "live": [
+    {
+      "seed": 1234,
+      "color": 0.5,
+      "live": true,
+      "renderer_report": "COLOR world=0 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09066772 max_step=846",
+      "raw_level": {
+        "integrated_lufs": -33.3,
+        "true_peak_dbfs": -20.8
+      },
+      "mono_energy_ratio": 0.9698139050809241,
+      "dc": [
+        -9.879658127201773e-09,
+        -4.6463432843375445e-09
+      ],
+      "full_sha256": {
+        "": "5ac077cd835f8d9c8b8c93f706461315cc69ecbc7ea816734d93364e95de1471",
+        ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+        ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+      },
+      "starts": 11,
+      "maximum_actual_sources": 3,
+      "full_owner_retirement_after_stop_seconds": 88.71,
+      "held_spectrum": {
+        "power_weighted_centroid_hz": 323.87926714845105,
+        "energy_fraction_above_1000_hz": 0.021666985176713616,
+        "energy_fraction_above_4000_hz": 2.312552218240121e-05,
+        "diagnostic_only_not_hearing_acceptance": true
+      },
+      "candidate_pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "live_change_maximum_adjacent_steps": [
+        0.003143310546875,
+        0.0030517578125,
+        0.003753662109375,
+        0.003143310546875,
+        0.0,
+        0.023895263671875
+      ],
+      "world": "COAST",
+      "baseline": {
+        "seed": 1234,
+        "color": 0.5,
+        "live": true,
+        "renderer_report": "COLOR world=0 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09066772 max_step=846",
+        "raw_level": {
+          "integrated_lufs": -33.3,
+          "true_peak_dbfs": -20.8
+        },
+        "mono_energy_ratio": 0.9698139050809241,
+        "dc": [
+          -9.879658127201773e-09,
+          -4.6463432843375445e-09
+        ],
+        "full_sha256": {
+          "": "5ac077cd835f8d9c8b8c93f706461315cc69ecbc7ea816734d93364e95de1471",
+          ".events.csv": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+          ".state.csv": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb"
+        },
+        "starts": 11,
+        "maximum_actual_sources": 3,
+        "full_owner_retirement_after_stop_seconds": 88.71,
+        "held_spectrum": {
+          "power_weighted_centroid_hz": 323.87926714845105,
+          "energy_fraction_above_1000_hz": 0.021666985176713616,
+          "energy_fraction_above_4000_hz": 2.312552218240121e-05,
+          "diagnostic_only_not_hearing_acceptance": true
+        },
+        "candidate_pcm_events_state_64_512_identical": false,
+        "final_second_exact_silence": true
+      },
+      "full_live_music_state_identical": true
+    },
+    {
+      "seed": 1234,
+      "color": 0.5,
+      "live": true,
+      "renderer_report": "COLOR world=1 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.10507202 max_step=153",
+      "raw_level": {
+        "integrated_lufs": -32.8,
+        "true_peak_dbfs": -19.6
+      },
+      "mono_energy_ratio": 0.9309038053795734,
+      "dc": [
+        -2.09456166674259e-09,
+        -1.7176641396886135e-09
+      ],
+      "full_sha256": {
+        "": "242f8a8de18819072a46d24257fd7c3882828a0e7fc47ed5f53a90c3ec7dafb3",
+        ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+        ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+      },
+      "starts": 11,
+      "maximum_actual_sources": 2,
+      "full_owner_retirement_after_stop_seconds": 82.0,
+      "held_spectrum": {
+        "power_weighted_centroid_hz": 180.92571348414103,
+        "energy_fraction_above_1000_hz": 4.42625953404521e-06,
+        "energy_fraction_above_4000_hz": 6.623689656300744e-07,
+        "diagnostic_only_not_hearing_acceptance": true
+      },
+      "candidate_pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "live_change_maximum_adjacent_steps": [
+        0.00054931640625,
+        0.000640869140625,
+        0.001434326171875,
+        0.001800537109375,
+        0.001800537109375,
+        0.003509521484375
+      ],
+      "world": "WOODLAND",
+      "baseline": {
+        "seed": 1234,
+        "color": 0.5,
+        "live": true,
+        "renderer_report": "COLOR world=1 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07580566 max_step=101",
+        "raw_level": {
+          "integrated_lufs": -33.1,
+          "true_peak_dbfs": -22.4
+        },
+        "mono_energy_ratio": 0.9317964961919027,
+        "dc": [
+          -1.946274115114796e-09,
+          1.1121566372084549e-10
+        ],
+        "full_sha256": {
+          "": "994d97aee2cd70fba6ad036942a79343b717c5b0b5658c5c562b0eceb8d0d0ed",
+          ".events.csv": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+          ".state.csv": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29"
+        },
+        "starts": 11,
+        "maximum_actual_sources": 2,
+        "full_owner_retirement_after_stop_seconds": 82.0,
+        "held_spectrum": {
+          "power_weighted_centroid_hz": 181.26916940702597,
+          "energy_fraction_above_1000_hz": 4.330968947030296e-06,
+          "energy_fraction_above_4000_hz": 6.476416024299958e-07,
+          "diagnostic_only_not_hearing_acceptance": true
+        },
+        "candidate_pcm_events_state_64_512_identical": false,
+        "final_second_exact_silence": true
+      },
+      "full_live_music_state_identical": true
+    },
+    {
+      "seed": 1234,
+      "color": 0.5,
+      "live": true,
+      "renderer_report": "COLOR world=2 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07666016 max_step=224",
+      "raw_level": {
+        "integrated_lufs": -29.4,
+        "true_peak_dbfs": -22.3
+      },
+      "mono_energy_ratio": 0.9770279641767394,
+      "dc": [
+        3.898726878214083e-09,
+        -1.6620563078281908e-09
+      ],
+      "full_sha256": {
+        "": "12cec2d98fb22c4d779b7ab266a4164fa5521d9ae3e717b68f74e26b9224a514",
+        ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+        ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+      },
+      "starts": 11,
+      "maximum_actual_sources": 3,
+      "full_owner_retirement_after_stop_seconds": 87.07,
+      "held_spectrum": {
+        "power_weighted_centroid_hz": 387.9788748397717,
+        "energy_fraction_above_1000_hz": 0.008489459848889701,
+        "energy_fraction_above_4000_hz": 1.0803232371362882e-05,
+        "diagnostic_only_not_hearing_acceptance": true
+      },
+      "candidate_pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "live_change_maximum_adjacent_steps": [
+        0.00262451171875,
+        0.0045166015625,
+        0.0,
+        0.005126953125,
+        0.0,
+        0.0
+      ],
+      "world": "HIGHLANDS",
+      "baseline": {
+        "seed": 1234,
+        "color": 0.5,
+        "live": true,
+        "renderer_report": "COLOR world=2 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07666016 max_step=224",
+        "raw_level": {
+          "integrated_lufs": -29.4,
+          "true_peak_dbfs": -22.3
+        },
+        "mono_energy_ratio": 0.9770279641767394,
+        "dc": [
+          3.898726878214083e-09,
+          -1.6620563078281908e-09
+        ],
+        "full_sha256": {
+          "": "12cec2d98fb22c4d779b7ab266a4164fa5521d9ae3e717b68f74e26b9224a514",
+          ".events.csv": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+          ".state.csv": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f"
+        },
+        "starts": 11,
+        "maximum_actual_sources": 3,
+        "full_owner_retirement_after_stop_seconds": 87.07,
+        "held_spectrum": {
+          "power_weighted_centroid_hz": 387.9788748397717,
+          "energy_fraction_above_1000_hz": 0.008489459848889701,
+          "energy_fraction_above_4000_hz": 1.0803232371362882e-05,
+          "diagnostic_only_not_hearing_acceptance": true
+        },
+        "candidate_pcm_events_state_64_512_identical": false,
+        "final_second_exact_silence": true
+      },
+      "full_live_music_state_identical": true
+    }
+  ],
+  "solo": [
+    {
+      "hz": 60,
+      "color": 0.0,
+      "measured_fundamental_cents": 0.0006410356229752706,
+      "fundamental_decay_two_window_estimate_seconds": 71.99391454525976,
+      "decay_ratio_to_baseline_default": 1.000000235302268,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 60,
+      "color": 0.5,
+      "measured_fundamental_cents": 0.0008365569783449298,
+      "fundamental_decay_two_window_estimate_seconds": 71.99389760493237,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 60,
+      "color": 1.0,
+      "measured_fundamental_cents": 0.0009074579287334341,
+      "fundamental_decay_two_window_estimate_seconds": 71.99389445533222,
+      "decay_ratio_to_baseline_default": 0.9999999562518456,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 110,
+      "color": 0.0,
+      "measured_fundamental_cents": 0.0001263655433856722,
+      "fundamental_decay_two_window_estimate_seconds": 71.54289826191416,
+      "decay_ratio_to_baseline_default": 0.9999998771958067,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 110,
+      "color": 0.5,
+      "measured_fundamental_cents": 0.00014129187125101918,
+      "fundamental_decay_two_window_estimate_seconds": 71.54290704768314,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 110,
+      "color": 1.0,
+      "measured_fundamental_cents": 0.0001470829836858901,
+      "fundamental_decay_two_window_estimate_seconds": 71.54291439090913,
+      "decay_ratio_to_baseline_default": 1.0000001026408667,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 146.832,
+      "color": 0.0,
+      "measured_fundamental_cents": -3.7946066631839205e-05,
+      "fundamental_decay_two_window_estimate_seconds": 69.28825421888551,
+      "decay_ratio_to_baseline_default": 1.0000150957534137,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 146.832,
+      "color": 0.5,
+      "measured_fundamental_cents": -4.1210638101129966e-05,
+      "fundamental_decay_two_window_estimate_seconds": 69.28720827627464,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 146.832,
+      "color": 1.0,
+      "measured_fundamental_cents": -4.3030138334291585e-05,
+      "fundamental_decay_two_window_estimate_seconds": 69.2863017334507,
+      "decay_ratio_to_baseline_default": 0.9999869161588915,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 220,
+      "color": 0.0,
+      "measured_fundamental_cents": 0.0001348480286633242,
+      "fundamental_decay_two_window_estimate_seconds": 62.91717489100979,
+      "decay_ratio_to_baseline_default": 0.9999999826583064,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 220,
+      "color": 0.5,
+      "measured_fundamental_cents": 0.00013598138421390662,
+      "fundamental_decay_two_window_estimate_seconds": 62.91717598210018,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 220,
+      "color": 1.0,
+      "measured_fundamental_cents": 0.00013640847230560893,
+      "fundamental_decay_two_window_estimate_seconds": 62.917175968380235,
+      "decay_ratio_to_baseline_default": 0.9999999997819363,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 440,
+      "color": 0.0,
+      "measured_fundamental_cents": 0.0009225963828327493,
+      "fundamental_decay_two_window_estimate_seconds": 39.36817916052463,
+      "decay_ratio_to_baseline_default": 1.0000000296389882,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 440,
+      "color": 0.5,
+      "measured_fundamental_cents": 0.0009226474268441435,
+      "fundamental_decay_two_window_estimate_seconds": 39.368177993691674,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 440,
+      "color": 1.0,
+      "measured_fundamental_cents": 0.00092265823763401,
+      "fundamental_decay_two_window_estimate_seconds": 39.36817816087646,
+      "decay_ratio_to_baseline_default": 1.0000000042466985,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 880,
+      "color": 0.0,
+      "measured_fundamental_cents": 0.006706840000747196,
+      "fundamental_decay_two_window_estimate_seconds": 14.606923778842205,
+      "decay_ratio_to_baseline_default": 0.9999999923130009,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 880,
+      "color": 0.5,
+      "measured_fundamental_cents": 0.006706839323032911,
+      "fundamental_decay_two_window_estimate_seconds": 14.606923891125616,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 880,
+      "color": 1.0,
+      "measured_fundamental_cents": 0.006706837483248129,
+      "fundamental_decay_two_window_estimate_seconds": 14.606923898547398,
+      "decay_ratio_to_baseline_default": 1.0000000005081002,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 1320,
+      "color": 0.0,
+      "measured_fundamental_cents": 0.011035728147506819,
+      "fundamental_decay_two_window_estimate_seconds": 2.288581163824858,
+      "decay_ratio_to_baseline_default": 0.9999999999643263,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 1320,
+      "color": 0.5,
+      "measured_fundamental_cents": 0.011035728184025649,
+      "fundamental_decay_two_window_estimate_seconds": 2.2885811639065,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 1320,
+      "color": 1.0,
+      "measured_fundamental_cents": 0.0110357265130009,
+      "fundamental_decay_two_window_estimate_seconds": 2.2885811643581504,
+      "decay_ratio_to_baseline_default": 1.0000000001973495,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 1760,
+      "color": 0.0,
+      "measured_fundamental_cents": 0.03368928978044724,
+      "fundamental_decay_two_window_estimate_seconds": 3.831273818918479,
+      "decay_ratio_to_baseline_default": 1.0000000001484604,
+      "neutral_float_exact": false
+    },
+    {
+      "hz": 1760,
+      "color": 0.5,
+      "measured_fundamental_cents": 0.03368928883827377,
+      "fundamental_decay_two_window_estimate_seconds": 3.8312738183496866,
+      "decay_ratio_to_baseline_default": 1.0,
+      "neutral_float_exact": true
+    },
+    {
+      "hz": 1760,
+      "color": 1.0,
+      "measured_fundamental_cents": 0.03368928974469769,
+      "fundamental_decay_two_window_estimate_seconds": 3.8312738194692204,
+      "decay_ratio_to_baseline_default": 1.0000000002922094,
+      "neutral_float_exact": false
+    }
+  ],
+  "listening": [
+    {
+      "file": "AMBIENT_WOODLAND_Color_calibrated_0_50_100_38p5s.wav",
+      "sha256": "4942f1237b36712a153b07fa718c5ad69795f82cce7fdbdeaa6abc98bafea560",
+      "level": {
+        "integrated_lufs": -24.5,
+        "true_peak_dbfs": -11.3
+      },
+      "fixed_gain_db_all_sections": 8.2,
+      "sections": [
+        {
+          "checkpoint": "after",
+          "color": 0.0,
+          "source_seconds": [
+            3,
+            15.5
+          ],
+          "output_seconds": [
+            0.0,
+            12.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -26.4,
+            "true_peak_dbfs": -16.7
+          }
+        },
+        {
+          "checkpoint": "after",
+          "color": 0.5,
+          "source_seconds": [
+            3,
+            15.5
+          ],
+          "output_seconds": [
+            13.0,
+            25.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -25.3,
+            "true_peak_dbfs": -14.8
+          }
+        },
+        {
+          "checkpoint": "after",
+          "color": 1.0,
+          "source_seconds": [
+            3,
+            15.5
+          ],
+          "output_seconds": [
+            26.0,
+            38.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -11.3
+          }
+        }
+      ],
+      "cut_edge_fade_ms": 40,
+      "comparison_gap_seconds": 0.5
+    },
+    {
+      "file": "AMBIENT_WOODLAND_Color_Before_After_27p5s.wav",
+      "sha256": "23e9736242367595aca31f1fc762571b867066a253f96ed4dbcbaec7623946d5",
+      "level": {
+        "integrated_lufs": -24.8,
+        "true_peak_dbfs": -11.8
+      },
+      "fixed_gain_db_all_sections": 7.699999999999999,
+      "sections": [
+        {
+          "checkpoint": "before",
+          "color": 0,
+          "source_seconds": [
+            3,
+            9.5
+          ],
+          "output_seconds": [
+            0.0,
+            6.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -25.2,
+            "true_peak_dbfs": -15.3
+          }
+        },
+        {
+          "checkpoint": "after",
+          "color": 0,
+          "source_seconds": [
+            3,
+            9.5
+          ],
+          "output_seconds": [
+            7.0,
+            13.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -26.4,
+            "true_peak_dbfs": -17.2
+          }
+        },
+        {
+          "checkpoint": "before",
+          "color": 1,
+          "source_seconds": [
+            3,
+            9.5
+          ],
+          "output_seconds": [
+            14.0,
+            20.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -25.2,
+            "true_peak_dbfs": -15.3
+          }
+        },
+        {
+          "checkpoint": "after",
+          "color": 1,
+          "source_seconds": [
+            3,
+            9.5
+          ],
+          "output_seconds": [
+            21.0,
+            27.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -11.8
+          }
+        }
+      ],
+      "cut_edge_fade_ms": 40,
+      "comparison_gap_seconds": 0.5
+    }
+  ],
+  "float_contract": "pluck Color PASS: full float64/512, invalid/clamped inputs, historical short source, upper/fundamental 0.06189 -> 0.15325, same natural retirement 37.849s",
+  "candidate_full_renders": 42,
+  "baseline_full_renders": 21,
+  "total_full_render_minutes": 117.6
+}

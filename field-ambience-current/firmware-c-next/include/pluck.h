@@ -61,6 +61,13 @@ uint16_t pluck_active_sources(void);
  * Live edits use 80 ms smoothing; the compensated delay stays fixed. */
 void pluck_set_damp(float damp);
 
+#ifdef FAM_SOUND_PRODUCT
+/* Long Product strings only: pitch-relative output color, dark0/neutral0.5/
+ * bright1. 80-ms live smoothing; neutral preserves original PCM. Loop loss,
+ * pitch, held ownership and natural retirement stay unchanged. */
+void pluck_set_color(float color);
+#endif
+
 /* Mix into the engine's dry + reverb-send accumulators. Stereo: voice 0
  * sits slightly left, voice 1 slightly right (alternating round-robin →
  * call-answer movement). */
