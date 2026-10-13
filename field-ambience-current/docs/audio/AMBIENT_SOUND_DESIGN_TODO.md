@@ -8,27 +8,29 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-12**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-13**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-12
+## Offener Arbeitsstand 2026-10-13
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-14 technische Blöcke:12 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+13 technische Blöcke:11 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
+SD34 ist softwareseitig geprüft und bleibt für die finale gehörte Lautheitsbalance
+offen. Es zählt jetzt zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|12|SD11, SD12, SD31, SD33, SD34, SD35, SD37, SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|11|SD11, SD12, SD31, SD33, SD35, SD37, SD41, SD45, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|15|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD44, SD50|
+|Hör-/Klangentscheidungen|16|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
 
 ## Hörfeedback 2026-10-08 — musikalische Priorität
@@ -166,8 +168,15 @@ PCM exakt; neue Töne übernehmen Release. Drei 38,5-s-WAVs vergleichen 0/0,5/1
 mit einem festen Gain je World. 251 Firmwareinputs exakt zum grünen PR159.
 Keine Klang-/Geräte-/SD33-Gesamtabnahme. Details:
 [SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD34 Quellen-/Rollenpegel im tatsächlichen PCM
-über Register und erlaubte Summen prüfen.
+SD34 ist nun softwareseitig geprüft:105 Solo-,162 Maximalsummen- und24
+Generatefälle bei64/512 plus volle Default-/Referenzkontrollen:596 WAV-Render,
+209,2min. Gleiche Tonhöhe maximal2,329dB Körperunterschied; kleiner Velocityschritt
+0,50→0,55 ergibt0,828–0,831dB. Feste Gains0,50/0,22/0,50 und lange WOODLAND-
+Schwingung bleiben, alle251 Coreinputs exakt grüner PR160. Stärkste Summe9,5dB
+Reserve bei Referenzmaster0,6,5,1dB bei Master1; kein Limiter/NaN. Ein40-s-WAV
+erhält echte Worldunterschiede mit einem Gain. Finale Lautheitsbalance/SD34
+bleibt offen. Details:[SD34_GAIN_CHECKPOINT.md](SD34_GAIN_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD35 kritische Parameterkombinationen prüfen.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -528,7 +537,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD31 | Hörgate verbleibender Wege | Alttexturen auslinkt; übrig nur deklarierte Nature/Quellenartikulation |
 | SD32 | geschlossen | Vollständiges normiertes Parameterregister samt Aliases/retired API und Priorität |
 | SD33 | Hörgate | Begrenzte Activity/Color/Room/SHAPE und kurze Endpointvergleiche |
-| SD34 | Hörgate | Feste .50/.22-Quellfaktoren, Raw/Listen getrennt; kein AGC; Lautheit final hören |
+| SD34 | Softwareprüfung abgeschlossen; Hörgate | 596 Render/209,2min;105 Solos/162 Summen/24 Genfälle; feste Gains,9,5dB Referenz-/5,1dB Maxreserve; Lautheitsbalance hören |
 | SD35 | Hörgate | 24 gezielte Endwertszenarien + lange Activity/Tuning/Key/Releasefälle; keine Exhaustivbehauptung |
 | SD36 | geschlossen | SCN5/6→SCN7, 368 B, CRC, Provenienz, fehlgeschlagener Save-RAM-Rollback |
 | SD37 | Hörgate | Alle sechs Richtungen, Pending/volle Pools/Releases/Room/Rapid Targets softwareseitig geprüft |
@@ -984,8 +993,8 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   251 Coreinputs exakt PR159,CI38286641272/run693 frisch completed/success;
   kein neuer ganzer lokaler Host-/ARM-Nachweis oder Geräte-/Hörhaken behauptet.
   Details:[SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
-  Nächste einzelne Arbeitseinheit:SD34 Quellen-/Rollenpegel über Register und
-  erlaubte Summen mit tatsächlichem PCM prüfen. SD33 bleibt für Hören/Nutzen offen.
+  Die anschließende SD34-Softwareprüfung ist abgeschlossen (unten).
+  SD33 bleibt für Hören/Nutzen offen.
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen
@@ -994,6 +1003,32 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Unterschied bleibt kontrolliert. Feste Gainkurve statt nachträglicher AGC.
   Defaultwelt und extremste erlaubte Summe haben dokumentierte Headroom.
   Voraussetzung: SD18–SD20/SD32.
+  **Softwareprüfung2026-10-13 abgeschlossen:**105 echte Solo-PCM-Fälle,
+  sämtliche20 Manualtonhöhen MIDI50..69 bei Velocity0,5 und drei Lagen bei
+  0,01/0,25/0,5/0,55/0,75/1. Körper1,5–2,5s und spätes PCM8–9s getrennt.
+  Registerspanne COAST0,027dB,WOODLAND3,149dB,HIGHLANDS0,045dB; gleiche Tonhöhe
+  maximal2,329dB Quellenunterschied. Kleiner Velocityschritt0,50→0,55:
+  0,828–0,831dB,alle geprüften Werte streng monoton. Keine Decay-/Gainkompensation.
+  162 Maximalsummen:26 zulässige geordnete Dreifamilienmischungen in zwei Lagen
+  und drei Colors plus Zwei-Saitenfälle; Velocity/Room/Nature/Master1.
+  Worldwechsel erhalten Manualquellen; zusätzliche zulässige Note abgewiesen,
+  global3/lokal2 ohne Steal. Stärkster TruePeak−5,1dBFS bei Master1.
+  Stärkste Summe und drei reine Familienmaxima bei Referenzmaster0,6 wiederholt:
+  mindestens9,5dB Reserve,≥6dB-SD42-Ziel erfüllt. Ganze Events/Status über Masterwerte gleich.
+  24 echte112-s-Genfälle einschließlich äußerer Register/Major/Minor/Seeds/Maxpegel;
+  bestätigte Rollen/Frequenzen/Velocities, sechs ganze Defaultkontrollen exakt.
+  Zusammen596 Render/209,2min,ganze64/512 PCM/Events/Status exakt,NaN/Limiter0,
+  Mono≥0,79865,DC≤9,54e−7,stille letzte Sekunden. Kein vollständiger Parametergitter-Sweep.
+  Drei Ceiling-,sechs Legacy-,sechs Manual/Worldverträge erhalten4s-PCM exakt;
+  15 Invalidinputs still abgewiesen, zusätzlicher12-min-Productvertrag besteht.
+  Sourceinput0,50/0,22/0,50 undSend0,35 bleiben; Hookvelocity ist kein DSP-Peak.
+  Choir/Guembri im Product ausgeschlossen. Alle251 Coreinputs exakt PR160,
+  CI38305233488/run695 frisch completed/success;Spec0.10/SCN7/Defaults gleich.
+  Ein40-s-WAV:echte verschiedene GenanfängeCOAST/WOODLAND/HIGHLANDS,ein Gain,
+  keine AGC. Lange WOODLAND-Quelle/Color erhalten. Finale Lautheitsbalance hören;
+  SD34 bleibt unchecked und zählt jetzt zur Hörgruppe,13 technische Hauptblöcke.
+  Details:[SD34_GAIN_CHECKPOINT.md](SD34_GAIN_CHECKPOINT.md).
+  Nächste einzelne Arbeitseinheit:SD35 kritische Parameterkombinationen prüfen.
 - [ ] **SD35 — Kritische Parameterkombinationen prüfen.**
   Gezielt: Excitation×Damp, Color×Resonance/Drive, SHAPE×Activity, Room×Feedback,
   Width×Chorus×Bowed-Detune, Age×Blur, Shimmer×Mode/Register. Dazu sämtliche
