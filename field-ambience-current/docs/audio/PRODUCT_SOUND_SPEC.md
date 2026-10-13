@@ -407,10 +407,28 @@ Details: [SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
 
 ## Kontextwechsel und Persistenz
 
-World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms (Pluck 20 ms),
-storniert vorbereitete alte Angebote, erhält manuelle klingende Frequenzen
+World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms einschließlich
+der langen WOODLAND-Saite. Die ältere20-ms-Angabe gilt für den kurzen
+Referenz-Pluck und wird hier als Dokumentationskorrektur ersetzt. Der
+vorhandene Product-Kontextstop bleibt100 ms; kürzere laufende Stops
+werden nicht verlängert.
+Der Wechsel storniert vorbereitete alte Angebote, erhält manuelle klingende Frequenzen
 und den gemeinsamen Raum. Nur das jüngste Ziel wird geplant. Auf Entry in
 Generate gilt dieselbe begrenzte Übergabe für alte Manualquellen.
+
+SD37-Nachweis2026-10-13:54 aktuelle Fälle in allen sechs Richtungen bei64/512,
+108 ganze Render/220,8min PCM.670 DSP-Starts an678 frischen physischen
+Reservierungen;acht unbegonnene alte Starts bleiben ohne Audio/Hook/History.
+Volle Belegung/Pending/Release/Batch/Rapid/Nature/Timerwrap und27 gepaarte4-s-
+PCM-Fälle bestätigen Quellenbesitz, weiterklingenden gemeinsamen Raum und nur
+die jüngste Ziel-Familie. Manuelle Hz/Artikulation bleiben bei Worldwahl erhalten.
+Erzeugte100-ms-Enden werden bei schnellen weiteren Wahlen nicht verlängert.
+Ganze Audio-/Event-/physische Besitzer-/Zielverläufe blockgleich; Quiet-History-
+Diagnose bei78 leeren Beobachtungen um einen10-ms-Tick verschieden, keine
+Audio-/Ereignisabweichung. SD12-Hörkalibrierung bleibt separat offen.
+Firmware251 Inputs exakt PR162;dieser Abschnitt korrigiert nur die veraltete
+20-ms-Beschreibung. Finale musikalische Worldübergänge und Hardware bleiben offen.
+Details:[SD37_WORLD_TRANSITION_CHECKPOINT.md](SD37_WORLD_TRANSITION_CHECKPOINT.md).
 
 Key/Collection/Tuning betreffen neue Töne. Bereits bestätigte Besitzer/Hz
 bleiben stehen; ungehörte alte Vorbereitungen werden storniert. Gradgedächtnis
