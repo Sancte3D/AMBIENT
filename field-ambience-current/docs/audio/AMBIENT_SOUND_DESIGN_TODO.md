@@ -18,19 +18,20 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 ## Offener Arbeitsstand 2026-10-13
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-13 technische Blöcke:11 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+12 technische Blöcke:10 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD34 ist softwareseitig geprüft und bleibt für die finale gehörte Lautheitsbalance
-offen. Es zählt jetzt zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
+SD34 und SD35 sind softwareseitig geprüft und bleiben für die finale gehörte
+Lautheitsbalance beziehungsweise musikalische Endwertwahl offen. Sie zählen
+zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|11|SD11, SD12, SD31, SD33, SD35, SD37, SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|10|SD11, SD12, SD31, SD33, SD37, SD41, SD45, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|16|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD44, SD50|
+|Hör-/Klangentscheidungen|17|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
 
 ## Hörfeedback 2026-10-08 — musikalische Priorität
@@ -176,7 +177,20 @@ Schwingung bleiben, alle251 Coreinputs exakt grüner PR160. Stärkste Summe9,5dB
 Reserve bei Referenzmaster0,6,5,1dB bei Master1; kein Limiter/NaN. Ein40-s-WAV
 erhält echte Worldunterschiede mit einem Gain. Finale Lautheitsbalance/SD34
 bleibt offen. Details:[SD34_GAIN_CHECKPOINT.md](SD34_GAIN_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD35 kritische Parameterkombinationen prüfen.
+SD35 ist jetzt softwareseitig geprüft:48 feste und drei Live-Generatefälle,
+20 manuelle volle Belegungen und sechs manuelle Livefälle bei64/512 plus
+drei Defaultgegenproben:157 ganze Render/429,067min PCM. Acht gezielte Profile,
+zwei musikalische Kontexte; sämtliche PCM/Events/Status/Controls blockgenau.
+1049 echte Starts mit frischen physischen Reservierungen; Quellen3/2, natürliche
+Enden ohne Clear, manuelle WOODLAND-Fahnen35,68–45,04s nach Key-up erhalten.
+18 kombinierte Activity/Attack/Release-Änderungen erhalten6s PCM; zwölf gepaarte
+volle Akkordwechsel maximal3 PCM-Stufen zusätzlich im ersten Sample.
+Pegel/Mono/DC/NaN/Limiter bestehen. Alle251 Coreinputs exakt grüner PR161.
+Ein40-s-WAV zeigt reale Referenz-/Extremzustände mit einem Gain; musikalische
+Helligkeit/Buzz/Pumpen und Endwertnutzen bleiben offen. SD35 zählt nun zur
+Hörgruppe;12 technische Hauptblöcke, weiterhin24 erledigt/30 offen.
+Details:[SD35_PARAMETER_CHECKPOINT.md](SD35_PARAMETER_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD37 sechs gerichtete Worldwechsel prüfen.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -538,7 +552,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD32 | geschlossen | Vollständiges normiertes Parameterregister samt Aliases/retired API und Priorität |
 | SD33 | Hörgate | Begrenzte Activity/Color/Room/SHAPE und kurze Endpointvergleiche |
 | SD34 | Softwareprüfung abgeschlossen; Hörgate | 596 Render/209,2min;105 Solos/162 Summen/24 Genfälle; feste Gains,9,5dB Referenz-/5,1dB Maxreserve; Lautheitsbalance hören |
-| SD35 | Hörgate | 24 gezielte Endwertszenarien + lange Activity/Tuning/Key/Releasefälle; keine Exhaustivbehauptung |
+| SD35 | Softwareprüfung abgeschlossen; Hörgate | 77 aktuelle Szenarien/157 Render;1049 echte Quellenreservierungen,64/512 exakt, schnelle Regler/volle natürliche Tails; musikalische Endwertwahl offen |
 | SD36 | geschlossen | SCN5/6→SCN7, 368 B, CRC, Provenienz, fehlgeschlagener Save-RAM-Rollback |
 | SD37 | Hörgate | Alle sechs Richtungen, Pending/volle Pools/Releases/Room/Rapid Targets softwareseitig geprüft |
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
@@ -1026,16 +1040,41 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   CI38305233488/run695 frisch completed/success;Spec0.10/SCN7/Defaults gleich.
   Ein40-s-WAV:echte verschiedene GenanfängeCOAST/WOODLAND/HIGHLANDS,ein Gain,
   keine AGC. Lange WOODLAND-Quelle/Color erhalten. Finale Lautheitsbalance hören;
-  SD34 bleibt unchecked und zählt jetzt zur Hörgruppe,13 technische Hauptblöcke.
+  SD34 bleibt unchecked und wurde beim Pegelcheckpoint zur Hörgruppe zugeordnet.
   Details:[SD34_GAIN_CHECKPOINT.md](SD34_GAIN_CHECKPOINT.md).
-  Nächste einzelne Arbeitseinheit:SD35 kritische Parameterkombinationen prüfen.
+  SD35-Softwareprüfung ist anschließend abgeschlossen (unten).
 - [ ] **SD35 — Kritische Parameterkombinationen prüfen.**
-  Gezielt: Excitation×Damp, Color×Resonance/Drive, SHAPE×Activity, Room×Feedback,
-  Width×Chorus×Bowed-Detune, Age×Blur, Shimmer×Mode/Register. Dazu sämtliche
-  erlaubten Einzelgrenzen und sprung-/schnellbewegte Zielwerte.
-  **Abnahme:** Keine Bandpeak-Alarme, Gainlöcher, Pitchfehler, Pumpen oder
-  versteckte Dauerbelegung. Unbrauchbare Kombination begrenzen/entfernen;
-  kein ungeplantes vollständiges kartesisches Sweep. Voraussetzung: SD32–SD34.
+  Erreichbare Spec0.10-Regler: Activity×Attack×Release,
+  Color×Room×Nature×Volume, Dry/Room und erlaubte Register-/Pitch-Kontexte.
+  Excitation/Damp, Resonance/Drive, Width/Chorus/Detune, Age/Blur und Shimmer
+  sind entfernt; Feedback folgt Room und ist kein freier Regler.
+  **Softwareprüfung2026-10-13 abgeschlossen:**48 feste192-s-Generatefälle
+  (acht Profile, drei Worlds, D-Major/Equal1234 und A-Minor/Just42), drei
+  Live-Generatefälle,20 manuelle112-s-Maxbelegungen in fünf Familienmischungen
+  und zwei Lagen plus sechs manuelle Livefälle. Je64/512 plus drei bestehende
+  Defaultkontrollen:157 ganze Render/429,067min. Ganze PCM/Events/Status/Controls
+  exakt;1049 Starts an frischen wirklichen Quellenreservierungen, Wiederbelegung
+  erst nach Retirement. Alle Quellen/letzte PCM-Sekunden still; kein Clear/Mute.
+  Global3/lokal2, weitere Eingabe abgewiesen, tatsächliche Hz/Core/Tuning geprüft.
+  Manuelle WOODLAND-Enden35,68–45,04s nach Key-up; Generate0–3,04s nach Stop.
+  18 simultane Activity/Attack/Release-Edits vorbereitet/held/releasing erhalten6s
+  PCM exakt. Sechs Endpoint-/sechs Clamp-/sechs Invalid-/retired-API-Fälle bestehen.
+  Neun Livefälle mit100 Zieländerungen/s,0,5-/1-s-Rampen und Volume0/1;
+  2469 Controlfenster. Zwölf gepaarte volle tiefe/hohe Akkordgegenproben maximal
+  3/32768 zusätzliche Erstsampleänderung, Hz/Slots/Hooks erhalten.
+  Natürlicher Samplegradient0,106781 in unveränderter heller hoher COAST-Summe
+  wird protokolliert; kein automatisches Knackurteil aus einem Wellenformgefälle.
+  Diese Auswahl maximal−6,8dBTP/Master1, Mono≥0,79576, DC≤1,694e−8,
+  NaN/Limiter0. Allgemeines SD34-Maximum/Referenz−5,1/−9,5dBTP bleibt gültig.
+  Alle251 Coreinputs exakt grüner PR161; Spec0.10/SCN7/Gains unverändert.
+  Ein40-s-WAV: je World Referenz dann dicht/lang/hell/Room/Nature/Volume1,
+  gemeinsamer Gain+1,9dB; tatsächliche unterschiedliche Pegel/Notenabläufe.
+  **Abnahme offen:** Musikalische Endwertwahl, störende Bandpeaks/Buzz/Pumpen
+  und wahrgenommene Gainlöcher hören. Messwerte sind keine Klangfreigabe;
+  SD35 bleibt unchecked und zählt jetzt zur Hörgruppe. Kein vollständiger
+  Parameter-/Pitch-Sweep oder Gerätebeleg. Voraussetzung: SD32–SD34.
+  Details:[SD35_PARAMETER_CHECKPOINT.md](SD35_PARAMETER_CHECKPOINT.md).
+  Nächste einzelne Arbeitseinheit:SD37 sechs gerichtete Worldwechsel.
 - [x] **SD36 — Katalog und Scenes ausdrücklich migrieren.**
   Fünf bestehende Worlds/sechs V2-Familien und SCN5/SCN6 kennen; neue World-IDs
   versionieren, Ersatzzuordnung und verworfene Parameter explizit dokumentieren.

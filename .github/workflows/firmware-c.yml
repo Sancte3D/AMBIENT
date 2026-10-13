@@ -512,10 +512,12 @@ jobs:
           retention-days: 30
 
   product-level-review:
-    name: current Product gains and admitted source sums (Spec0.10)
+    name: archived Product gains and admitted source sums (PR161)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 9bde4de2646bafb027f1e76d6b7b683c32a56798
       - name: Fetch exact unchanged sound baseline
         run: git fetch --no-tags --depth=1 origin a13d01949b425f3cec966573544639bf8ec49b5f
       - name: Install audio measurement tools
@@ -533,6 +535,31 @@ jobs:
         with:
           name: ambient-product-levels-40s
           path: field-ambience-current/firmware-c-next/build-product-level-review
+          if-no-files-found: error
+          retention-days: 30
+
+  parameter-combination-review:
+    name: current reachable parameter combinations (SD35)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin 9bde4de2646bafb027f1e76d6b7b683c32a56798
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify directed combinations, control transitions and actual retirement
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_parameter_combinations.py build-parameter-combination-review
+      - name: Upload short parameter comparison and complete audit traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-parameter-combinations-40s
+          path: field-ambience-current/firmware-c-next/build-parameter-combination-review
           if-no-files-found: error
           retention-days: 30
 
