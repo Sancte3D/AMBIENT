@@ -455,6 +455,21 @@ Persistenz: leere stille Scene-Liste, keine Wiedergabe. Save-Fehler stellt
 RAM-Slot/CRC/Active/Zeitanzeige wieder her. Volume und Generate-Besitzer
 werden nicht gespeichert; Recall startet Generate nicht aus einem Off-Zustand.
 
+Aktueller SD41-Nachweis2026-10-13 mit unverändertem langen Klangkern:
+sechs zuvor laute Bootzustände,380 gerichtete Native-Fallbacks,zehn Legacy-
+und20 native Off-Recalls einschließlich aller fünf Slotindizes und Volume/Mute.
+Zwölf Manual-/drei Savefehler-/neun Seed-Triplets erhalten ganze8s PCM und
+Hooks bei512/64; neun Timerwrap-Paare ebenfalls ganz exakt. Native-Recall
+stellt keinen gehaltenen/erzeugten Besitzer wieder her. Ausdrücklich positives
+Nature im Scene-Recall bleibt eine hörbare optionale Schicht ohne Phantomton;
+Boot und gemutete/Volume0-Ausgabe bleiben still. Laufender Generate-Seed-Recall
+erhält seine bereits aktive Absicht, Room und alte Hz-History, beendet alte
+erzeugte Quellen100ms und hebt Autoplay-Gate0 nicht auf. Neue Seeds reproduzieren
+bei frischem Init den geprüften8-s-Anfang; laufender Room macht einen Live-
+Neustart nicht zu demselben frischen PCM. RAM-Backend, keine Flash-/HAL-/IRQ-
+Simulation, keine neue Gerätefreigabe.
+[SD41_BOOT_RECALL_CHECKPOINT.md](SD41_BOOT_RECALL_CHECKPOINT.md).
+
 Flash: reservierter Bank-2-Sektor ab 0x081E0000, maximal 512-B-Staging.
 Magic-Flashword zuletzt; M7-Cache vor Read gezielt invalidieren.
 **Default ohne Journal:** Stromverlust während Erase kann den vorherigen Save verlieren.
