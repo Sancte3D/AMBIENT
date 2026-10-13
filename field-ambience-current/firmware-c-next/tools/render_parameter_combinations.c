@@ -136,7 +136,7 @@ int main(int argc,char **argv) {
                 }
             }
             if(!generated && tick==10) {
-                rejected=!engine_try_note_on(3,tuning_hz(66),1);assert(rejected);
+                rejected=!engine_try_note_on(3,tuning_hz(context ? 57 : 66),1);assert(rejected);
             }
             int active=engine_active_voices();assert(active<=3 && pluck_active_count()<=2);
             if(generated)assert(active<=(world==1 ? 2 : 3));

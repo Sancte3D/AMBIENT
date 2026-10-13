@@ -38,13 +38,46 @@ static void capture(int world,float x,int when,int block,int16_t *out,bool inval
     }
     assert(ons==1 && offs==1 && !engine_nonfinite_samples() && !engine_output_limited_samples());
 }
+static void pool_hook(int on,uint8_t owner,float hz,float velocity) {
+    assert(owner<3 && hz>=140 && hz<=470 && velocity==1);
+    if(on)++ons;else ++offs;
+}
+static void transition(int world,int high,float initial,bool changed,int16_t first[2]) {
+    engine_init();engine_set_world(world);targets(initial,true);
+    engine_set_fx_mode(initial>0);engine_set_nature(0);
+    for(int i=0;i<SR;) {int n=SR-i;if(n>512)n=512;engine_render(buffer,n);i+=n;}
+    ons=offs=0;engine_set_note_hook(pool_hook);engine_set_nature(initial);
+    const int low[3]={50,54,57},upper[3]={62,66,69};int count=world==1 ? 2 : 3;
+    for(int i=0;i<count;++i) {
+        int midi=high ? upper[i] : low[i];if(world==1 && high && i==1)midi=69;
+        assert(engine_try_note_on((uint8_t)i,dsp_midi_to_hz((float)midi),1));
+    }
+    for(int i=0;i<SR;) {int n=SR-i;if(n>512)n=512;engine_render(buffer,n);i+=n;}
+    assert(engine_active_voices()==count && ons==count && !offs);
+    float before[24],after[24];int size=engine_sounding_frequencies(before,24);
+    if(changed) {targets(1-initial,true);engine_set_fx_mode(initial==0);}
+    assert(engine_active_voices()==count && ons==count && !offs);
+    engine_render(first,1);
+    assert(engine_sounding_frequencies(after,24)==size && !memcmp(before,after,(size_t)size*sizeof *before));
+    assert(engine_active_voices()==count && !engine_nonfinite_samples() && !engine_output_limited_samples());
+}
 int main(void) {
-    const int when[]={0,SR,4*SR};int livecases=0,blocks=0,clamps=0,invariants=0;
+    const int when[]={0,SR,4*SR};int livecases=0,blocks=0,clamps=0,invariants=0,steps=0,max_delta=0;
     for(int world=0;world<3;++world) {
         capture(world,.5f,-1,512,reference,false,false);
         for(int t=0;t<3;++t)for(int v=0;v<2;++v) {
             capture(world,(float)v,when[t],64,candidate,false,false);
             assert(!memcmp(reference,candidate,sizeof reference));++livecases;
+        }
+        for(int high=0;high<2;++high)for(int initial=0;initial<2;++initial) {
+            int16_t normal[2],moved[2];
+            transition(world,high,(float)initial,false,normal);
+            transition(world,high,(float)initial,true,moved);
+            for(int channel=0;channel<2;++channel) {
+                int delta=(int)normal[channel]-(int)moved[channel];if(delta<0)delta=-delta;
+                assert(delta<=33);if(delta>max_delta)max_delta=delta;
+            }
+            ++steps;
         }
         for(int v=0;v<2;++v) {
             capture(world,(float)v,-1,512,reference,false,false);
@@ -59,4 +92,6 @@ int main(void) {
     printf("COMBINATION OWNER PASS: %d simultaneous Activity/Attack/Release edits on prepared/held/releasing notes "
         "preserve6s complete PCM; %d all-control endpoint64/512 cases, %d clamped cases, "
         "%d invalid/retired-API invariance cases; setters start/stop no note\n",livecases,blocks,clamps,invariants);
+    printf("COMBINATION TRANSITION PASS: %d low/high full-pool0-to1/1-to0 paired first-sample controls; "
+        "max additional PCM delta=%d/32768 (limit33/32768); actual Hz/slots/hooks unchanged\n",steps,max_delta);
 }
