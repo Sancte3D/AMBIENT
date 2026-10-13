@@ -407,8 +407,12 @@ Details: [SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
 
 ## Kontextwechsel und Persistenz
 
-World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms (Pluck 20 ms),
-storniert vorbereitete alte Angebote, erhält manuelle klingende Frequenzen
+World-/Seedwechsel beendet nur erzeugte Quellen ≤100 ms einschließlich
+der langen WOODLAND-Saite. Die ältere20-ms-Angabe gilt für den kurzen
+Referenz-Pluck und wird hier als Dokumentationskorrektur ersetzt. Der
+vorhandene Product-Kontextstop bleibt100 ms; kürzere laufende Stops
+werden nicht verlängert.
+Der Wechsel storniert vorbereitete alte Angebote, erhält manuelle klingende Frequenzen
 und den gemeinsamen Raum. Nur das jüngste Ziel wird geplant. Auf Entry in
 Generate gilt dieselbe begrenzte Übergabe für alte Manualquellen.
 
