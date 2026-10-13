@@ -311,6 +311,21 @@ Ein40-s-WAV mit echten unterschiedlichen Worldanfängen und gemeinsamem Gain+6,9
 Finale gehörte Lautheitsbalance/SD34 bleibt offen.
 Details:[SD34_GAIN_CHECKPOINT.md](SD34_GAIN_CHECKPOINT.md).
 
+SD35-Kombinationsprüfung2026-10-13:77 gezielte aktuelle Szenarien bei64/512
+plus drei Defaultgegenproben,157 ganze Render/429,067min PCM. Acht Profile
+für Activity/Attack/Release/Color/Room/Nature/Volume, zwei musikalische
+Kontexte, volle manuelle Belegungen und schnelle Ziele.1049 tatsächliche
+Starts mit frischen physischen Reservierungen, Budget3/2 und natürliche
+Enden ohne Clear; manuelle lange Saiten bleiben35,68–45,04s nach Key-up.
+PCM und ganze Events/Status/Controls blockgenau. Gepaarte volle Akkordwechsel
+verursachen maximal3/32768 zusätzliche Erstsampleänderung;18 kombinierte
+Activity/SHAPE-Edits erhalten vorbereitete/held/releasing Quellen6s PCM exakt.
+NaN/Limiter0, Mono/DC bestehen. In dieser Auswahl−6,8dBTP bei Master1;
+SD34 enthält weiterhin das breitere Maximum−5,1dBTP/Referenz−9,5dBTP.
+Alle251 Coreinputs exakt grüner PR161, kein neuer Klangvertrag. SD35 bleibt
+für musikalische Endwertwahl/Bandpeak-/Buzz-/Pumpen-Hörurteil offen.
+Details:[SD35_PARAMETER_CHECKPOINT.md](SD35_PARAMETER_CHECKPOINT.md).
+
 Room: 8 feste Delaylinien 1117/1277/1429/1601/1789/1999/2203/2423 Samples,
 vier Allpässe 239/389/277/419, Householder-Feedback, 0,25 Dämpfung.
 Input-HP ca. 100 Hz (kein Feedback-HP), feste Stereo-Seitengewichtung 0,30,
