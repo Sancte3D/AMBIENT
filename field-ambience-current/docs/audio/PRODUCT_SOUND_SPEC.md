@@ -297,6 +297,20 @@ Master-DC-Tracker 0,00228 pro Sample (ca. 16 Hz), Volume und 40-ms-Gate,
 Peakschutz ab |x|>0,75, PCM16. Schutz-/NaN-Counter sind im normalen
 geprüften Lastfall 0; ein Limiter ersetzt keine gesunde Gainstruktur.
 
+SD34-Pegelprüfung2026-10-13:Quellfaktoren0,50/0,22/0,50 undSend0,35 bleiben.
+105 Solo-,162 Maximalsummen- und24 Generatefälle bei64/512 plus vollständige
+Default-/Referenzkontrollen:596 WAV-Render/209,2min. Alle20 Manualtonhöhen
+MIDI50..69 bei Velocity0,5:gleiche Tonhöhe zwischen Quellen≤2,329dB Körperunterschied;
+Velocity0,50→0,55 ergibt0,828–0,831dB. Keine Kompensation des WOODLAND-Decays.
+26 erlaubte geordnete Dreifamilienmischungen/Zwei-Saitenfälle haltenBudget3/2;
+weitere Note wird abgewiesen. Größter TruePeak−5,1dBFS bei Master1;
+dieselbe Summe bei definiertem Referenzmaster0,6:−9,5dBFS,≥6dB-SD42-Ziel erfüllt.
+NaN/Limiter0,DC/Mono/stille Enden; Legacy/Manual/Worldverträge erhalten4s-PCM.
+251 Coreinputs exakt PR160,Spec0.10/SCN7/Defaults unverändert.
+Ein40-s-WAV mit echten unterschiedlichen Worldanfängen und gemeinsamem Gain+6,9dB.
+Finale gehörte Lautheitsbalance/SD34 bleibt offen.
+Details:[SD34_GAIN_CHECKPOINT.md](SD34_GAIN_CHECKPOINT.md).
+
 Room: 8 feste Delaylinien 1117/1277/1429/1601/1789/1999/2203/2423 Samples,
 vier Allpässe 239/389/277/419, Householder-Feedback, 0,25 Dämpfung.
 Input-HP ca. 100 Hz (kein Feedback-HP), feste Stereo-Seitengewichtung 0,30,
