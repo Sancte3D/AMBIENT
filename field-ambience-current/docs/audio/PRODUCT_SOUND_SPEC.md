@@ -416,6 +416,20 @@ Der Wechsel storniert vorbereitete alte Angebote, erhält manuelle klingende Fre
 und den gemeinsamen Raum. Nur das jüngste Ziel wird geplant. Auf Entry in
 Generate gilt dieselbe begrenzte Übergabe für alte Manualquellen.
 
+SD37-Nachweis2026-10-13:54 aktuelle Fälle in allen sechs Richtungen bei64/512,
+108 ganze Render/220,8min PCM.670 DSP-Starts an678 frischen physischen
+Reservierungen;acht unbegonnene alte Starts bleiben ohne Audio/Hook/History.
+Volle Belegung/Pending/Release/Batch/Rapid/Nature/Timerwrap und27 gepaarte4-s-
+PCM-Fälle bestätigen Quellenbesitz, weiterklingenden gemeinsamen Raum und nur
+die jüngste Ziel-Familie. Manuelle Hz/Artikulation bleiben bei Worldwahl erhalten.
+Erzeugte100-ms-Enden werden bei schnellen weiteren Wahlen nicht verlängert.
+Ganze Audio-/Event-/physische Besitzer-/Zielverläufe blockgleich; Quiet-History-
+Diagnose bei78 leeren Beobachtungen um einen10-ms-Tick verschieden, keine
+Audio-/Ereignisabweichung. SD12-Hörkalibrierung bleibt separat offen.
+Firmware251 Inputs exakt PR162;dieser Abschnitt korrigiert nur die veraltete
+20-ms-Beschreibung. Finale musikalische Worldübergänge und Hardware bleiben offen.
+Details:[SD37_WORLD_TRANSITION_CHECKPOINT.md](SD37_WORLD_TRANSITION_CHECKPOINT.md).
+
 Key/Collection/Tuning betreffen neue Töne. Bereits bestätigte Besitzer/Hz
 bleiben stehen; ungehörte alte Vorbereitungen werden storniert. Gradgedächtnis
 wird im neuen Kontext neu begonnen statt rückwirkend umgedeutet. Derselbe

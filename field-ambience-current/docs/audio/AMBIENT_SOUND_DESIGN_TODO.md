@@ -18,20 +18,20 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 ## Offener Arbeitsstand 2026-10-13
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-12 technische Blöcke:10 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+11 technische Blöcke:9 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD34 und SD35 sind softwareseitig geprüft und bleiben für die finale gehörte
-Lautheitsbalance beziehungsweise musikalische Endwertwahl offen. Sie zählen
+SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale gehörte
+Lautheitsbalance, musikalische Endwertwahl beziehungsweise Worldübergänge offen. Sie zählen
 zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|10|SD11, SD12, SD31, SD33, SD37, SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|9|SD11, SD12, SD31, SD33, SD41, SD45, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|17|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD44, SD50|
+|Hör-/Klangentscheidungen|18|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
 
 ## Hörfeedback 2026-10-08 — musikalische Priorität
@@ -188,9 +188,24 @@ volle Akkordwechsel maximal3 PCM-Stufen zusätzlich im ersten Sample.
 Pegel/Mono/DC/NaN/Limiter bestehen. Alle251 Coreinputs exakt grüner PR161.
 Ein40-s-WAV zeigt reale Referenz-/Extremzustände mit einem Gain; musikalische
 Helligkeit/Buzz/Pumpen und Endwertnutzen bleiben offen. SD35 zählt nun zur
-Hörgruppe;12 technische Hauptblöcke, weiterhin24 erledigt/30 offen.
+Hörgruppe;beim damaligen Checkpoint12 technische Hauptblöcke,24 erledigt/30 offen.
 Details:[SD35_PARAMETER_CHECKPOINT.md](SD35_PARAMETER_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD37 sechs gerichtete Worldwechsel prüfen.
+SD37 ist jetzt softwareseitig geprüft:54 aktuelle Fälle in allen sechs
+Richtungen bei64/512,108 ganze Render/220,8min PCM. Volle erzeugte/manuelle
+Pools,Pending,Release,Mehrfachziele mit/ohne Audio,Nature und Timerwrap.
+670 DSP-Starts an678 frischen physischen Reservierungen; acht unbegonnene
+alte Starts bleiben ohne PCM/Hook/History. Erzeugte Übergaben100ms,
+nur jüngste Ziel-Familie startet; ganze Audio-/Event-/Besitzverläufe exakt.
+27 gepaarte4-s-Fälle erhalten ganze manuelle Held/Release-,Source-free-Room-,
+Latest-Nature- und idempotente Generate-PCMbytes. Kein Clear/Mute.
+Leere Quiet-History-Diagnose bei78 Beobachtungen um einen10-ms-Tick verschieden;
+keine Audio-/Ereignis-/Besitzabweichung. SD12-Hörkalibrierung bleibt offen.
+Ein50,5-s-WAV zeigt alle sechs tatsächlichen Worldaufträge ohne zusätzliche
+Überblendung. Die alte Pluck20-ms-Specstelle ist auf vorhandene100ms berichtigt;
+alle251 Firmwareinputs exakt grüner PR162. Musikalische Worldübergänge noch hören.
+SD37 zählt nun zur Hörgruppe;11 technische Hauptblöcke,24 erledigt/30 offen.
+Details:[SD37_WORLD_TRANSITION_CHECKPOINT.md](SD37_WORLD_TRANSITION_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD41 Boot/Recall/Seed prüfen.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -554,7 +569,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD34 | Softwareprüfung abgeschlossen; Hörgate | 596 Render/209,2min;105 Solos/162 Summen/24 Genfälle; feste Gains,9,5dB Referenz-/5,1dB Maxreserve; Lautheitsbalance hören |
 | SD35 | Softwareprüfung abgeschlossen; Hörgate | 77 aktuelle Szenarien/157 Render;1049 echte Quellenreservierungen,64/512 exakt, schnelle Regler/volle natürliche Tails; musikalische Endwertwahl offen |
 | SD36 | geschlossen | SCN5/6→SCN7, 368 B, CRC, Provenienz, fehlgeschlagener Save-RAM-Rollback |
-| SD37 | Hörgate | Alle sechs Richtungen, Pending/volle Pools/Releases/Room/Rapid Targets softwareseitig geprüft |
+| SD37 | Aktuelle Softwareprüfung abgeschlossen; Hörgate | 54 Fälle/108 Render;670 echte Starts,678 Reservierungen,alle sechs Richtungen/volle Pools/Pending/Rapid/Room/Nature/Wrap; tatsächliche Übergänge hören |
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
@@ -1074,7 +1089,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   SD35 bleibt unchecked und zählt jetzt zur Hörgruppe. Kein vollständiger
   Parameter-/Pitch-Sweep oder Gerätebeleg. Voraussetzung: SD32–SD34.
   Details:[SD35_PARAMETER_CHECKPOINT.md](SD35_PARAMETER_CHECKPOINT.md).
-  Nächste einzelne Arbeitseinheit:SD37 sechs gerichtete Worldwechsel.
+  SD37-Softwareprüfung ist anschließend abgeschlossen (unten).
 - [x] **SD36 — Katalog und Scenes ausdrücklich migrieren.**
   Fünf bestehende Worlds/sechs V2-Familien und SCN5/SCN6 kennen; neue World-IDs
   versionieren, Ersatzzuordnung und verworfene Parameter explizit dokumentieren.
@@ -1084,6 +1099,33 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
 - [ ] **SD37 — Sämtliche Worldwechsel musikalisch schließen.**
   Bei drei Welten sechs gerichtete Wechsel, einschließlich voller Releases,
   maximalem Raum, schneller mehrfacher Zieländerung und Pending-Ereignis.
+  **Aktuelle Softwareprüfung2026-10-13 abgeschlossen:**54 Spec0.10-Szenarien,
+  je64/512,108 ganze WAV-Render/220,8min. Je Richtung volle Generatebelegung
+  in D-Major/Equal1234 und A-Minor/Just42;Pending0s,gehörte Belegung2,7s,
+  Release/Stop2,7s→World2,71s→GenerateOn3,3s,Mehrfachziele ohne Audio,
+  zehn Ziele mit10-ms-Audio,natürliche manuelle Key-ups4s,Nature1 undTimerwrap.
+  Erzeugte Quellen wirklich nach100ms frei;Pending nach höchstens einem10-ms-Tick
+  storniert. Neue Zielnote normal260ms nach letzter Wahl bestätigt; nur jüngste
+  Familie/Score,keine alten Wiederstarts.670 Starts an678 frischen Reservierungen,
+  acht alte unbegonnene Starts ohne Hook/PCM/History; global3/lokal2 ohne Steal.
+  Manuelle Quellen bleiben überWorldwahl bei originalen Hz/Familien; ursprünglicher
+  Key-up endet sie natürlich (WOODLAND42,91s nach Key-up). Freier dritter Slot
+  aus alterWOODLAND-Belegung zulässig,volle Pools weisen weitere Eingabe ab.
+  Ganze PCM/Events/physische Besitzer-/Zielstates64/512 exakt. Batch/direct und
+  Wrap/Clock0 ganz exakt; Nature erhält ganzen Score/Besitz.27 gepaarte4-s-
+  Fälle erhalten ManualHeld/Release,Source-free-Room,LatestNature undSameWorld.
+  Room bleibt positiv beim Wechsel,alte Hz-history erhalten;kein Clear/Mute.
+  Letzte Sekunden/alleSources0,NaN/Limiter0,Mono≥0,88248,DC≤3,355e−8.
+  Last-block-Roompeaks sind blockabhängige Beobachtungsfenster;Quiet-History-
+  Diagnose unterscheidet sich78mal um einen10-ms-Tick ausschließlich bei
+  leeren Quellen. Audio/Ereignisse/Besitz/Ziel bleiben exakt;SD12-Hörgate offen.
+  Alle251 Coreinputs exakt grünerPR162. Keine Firmwareänderung; altePluck20-ms-
+  Specstelle ist auf bestehenden100-ms-Kontextstop berichtigt.50,5-s-WAV
+  zeigt sechs echte Wechsel mit einemGain+4dB,ohne Überblendung am Worldauftrag.
+  Noch keine musikalische/Knack-/Nature-/Geräteabnahme;SD37 bleibtunchecked und
+  zählt jetzt zurHörgruppe. Keine vollständige Timing-/Key-/ISRbehauptung.
+  Details:[SD37_WORLD_TRANSITION_CHECKPOINT.md](SD37_WORLD_TRANSITION_CHECKPOINT.md).
+  Nächste einzelne Arbeitseinheit:SD41 Boot/Recall/Seed.
   **Abnahme:** Nur jüngstes Ziel geplant; bestehende Besitzer weich beendet,
   reale Belegung und harmonische Fahnen respektiert; kein Body-Resetknacks,
   frozen noise, Hallreset oder wiederkehrender alter Ton. Voraussetzung: SD12/SD27/SD36.
