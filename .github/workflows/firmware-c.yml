@@ -96,6 +96,24 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  boot-recall-review:
+    name: current Product boot, Scene recall and seed openings (SD41)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags origin 67b4ac83f42e5af7b5190db812005ed8c4d693ae
+      - name: Verify actual boot silence, recalled owners and complete PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_boot_recall.py build-boot-recall-review
+      - name: Upload bounded boot, recall and seed proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-boot-recall-seed-proof
+          path: field-ambience-current/firmware-c-next/build-boot-recall-review/SD41_BOOT_RECALL_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
   product-audio-review:
     name: archived Spec0.8 hearing packs (PR155)
     runs-on: ubuntu-latest

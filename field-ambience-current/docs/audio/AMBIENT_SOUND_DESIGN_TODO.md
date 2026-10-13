@@ -205,7 +205,20 @@ Ein50,5-s-WAV zeigt alle sechs tatsächlichen Worldaufträge ohne zusätzliche
 alle251 Firmwareinputs exakt grüner PR162. Musikalische Worldübergänge noch hören.
 SD37 zählt nun zur Hörgruppe;11 technische Hauptblöcke,24 erledigt/30 offen.
 Details:[SD37_WORLD_TRANSITION_CHECKPOINT.md](SD37_WORLD_TRANSITION_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD41 Boot/Recall/Seed prüfen.
+SD41 besitzt jetzt den aktuellen echten Boot-/Recall-/Seednachweis: sechs
+Boots aus vorher lauten Manual-/Generatezuständen,380 Native-Store-Fallbacks,
+zehn Legacy- und20 Off-Recalls. Alle fünf nativen Slotindizes, Volume0/30/100
+und Mute; kein restaurierter Ton-/Generate-/HOLD-Besitzer. Positives Nature
+ist beim ausdrücklichen Recall weiterhin optional hörbar, Boot bleibt still.
+Zwölf manuelle und drei fehlgeschlagene-Save-Triplets erhalten ganze8s PCM
+und Hooks bei512/64; lange Saite und Original-Key-up bleiben erhalten.
+Neun frische Seed-Triplets und neun Timerwrap-Paare sind ebenfalls ganz exakt;
+laufender Seed-Recall beendet erzeugte Quellen100ms, erhält Room/Hz-History
+und respektiert Autoplay-Gate0.14,3933min getrenntes PCM, alle251 Coreinputs
+exakt grünerPR163. Keine DSP-/Storageaktivierung oder neue musikalische Freigabe.
+SD41 bleibt Storage-/Gerätegate;11 technische Hauptblöcke,24 erledigt/30 offen.
+Details:[SD41_BOOT_RECALL_CHECKPOINT.md](SD41_BOOT_RECALL_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD41 nichtblockierendes Speichern vorbereiten.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -573,7 +586,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
-| SD41 | Storage-/Gerätegate | Boot/Recall/Seed/Cache geprüft; Journal-Modell erhält vorige Daten bei Abbruch; Kandidat OFF, ECC/H743/Live-Save offen |
+| SD41 | Storage-/Gerätegate | Aktueller Boot-/Recall-/Seed-PCMnachweis, alle Slotindizes/Volume/Mute, Originalbesitzer und Seedstarts geprüft; Journal OFF, ECC/Power-cut/nichtblockierendes Save offen |
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
@@ -1125,7 +1138,7 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Noch keine musikalische/Knack-/Nature-/Geräteabnahme;SD37 bleibtunchecked und
   zählt jetzt zurHörgruppe. Keine vollständige Timing-/Key-/ISRbehauptung.
   Details:[SD37_WORLD_TRANSITION_CHECKPOINT.md](SD37_WORLD_TRANSITION_CHECKPOINT.md).
-  Nächste einzelne Arbeitseinheit:SD41 Boot/Recall/Seed.
+  Aktueller nächster SD41-Teil steht im SD41-Eintrag; keine Hörfreigabe daraus.
   **Abnahme:** Nur jüngstes Ziel geplant; bestehende Besitzer weich beendet,
   reale Belegung und harmonische Fahnen respektiert; kein Body-Resetknacks,
   frozen noise, Hallreset oder wiederkehrender alter Ton. Voraussetzung: SD12/SD27/SD36.
@@ -1152,6 +1165,16 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
 - [ ] **SD41 — Boot/Recall/Seed ohne ungewollte Ausgabe schließen.**
   Boot still, Scene-Lautstärke/Worldtargets und Seedstart definiert; vorhandene
   held/generative Besitzer nicht blind aus Persistenz wiederherstellen.
+  **Aktueller Softwarebeleg2026-10-13:** Sechs zuvor laute Bootzustände,380
+  gerichtete Native-Fallbacks,zehn SCN5/6-Recalls und20 native Off-Recalls
+  einschließlich aller fünf Slotindizes und Volume/Mute. Keine restaurierten
+  Besitzer/Generate; nur ausdrücklich positives Nature kann beim Recall hörbar
+  werden. Zwölf Manual-/drei Savefehler-/neun Seed-Triplets bei512/64 erhalten
+  ganze8s PCM/Hooks; neun Wrap-Paare exakt. Erzeugter Live-Seed-Recall100ms,
+  Room/alte Hz-History erhalten, Autoplay-Gate0 bleibt.14,3933min gerichtetes
+  PCM, Core251 Inputs unverändert; keine Geräte-/ECC-/Live-Save-Freigabe.
+  [SD41_BOOT_RECALL_CHECKPOINT.md](SD41_BOOT_RECALL_CHECKPOINT.md).
+  Nächster einzelner Softwareteil: nichtblockierendes Main-Speichern.
   **Abnahme:** Kein Überraschungsstart oder Lautstärkesprung, kaputte/alte Scene
   führt in dokumentierten stillen Fallback; Reset beim laufenden Raum gezielt
   testen. Keine blockierende Speicherung im Audiopfad. Voraussetzung: SD36/SD39–SD40.
