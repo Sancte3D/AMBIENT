@@ -230,8 +230,21 @@ das sind keine gemessenen Flashzeiten. Alle251 bisherigen Firmwareinputs
 bleiben exakt PR164. Der neue Schreiber ist noch nicht an Scene/H743 angeschlossen,
 Live-Save bleibt synchron und Journal OFF; SD41 bleibt offen, Zählung unverändert.
 Details:[SD41_ASYNC_JOURNAL_CHECKPOINT.md](SD41_ASYNC_JOURNAL_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD41 begrenzte, schrittweise Journal-Recovery
-vorbereiten; nach Fehlern darf ein neuer Save keinen synchronen Vollscan auslösen.
+SD41 hat jetzt auch eine separat vorbereitete schrittweise Recovery: Begin ohne
+I/O, je Step höchstens ein32-B-Read und32-B-CRC, keine Record-/Sektorschleife.
+Cacheverfügbarkeit wird beim Begin gesperrt; bestätigte Metadaten bleiben bis
+zum ganzen erfolgreichen Scan erhalten. Fehler/Cancel veröffentlichen keinen
+Teilfund.7288 Gegenproben zum alten Scanner,4983 Cut-/Retryfälle und35 Cancel-
+Zustände bestehen;2.239.290 Checks, feste128-B-Hoststruktur, keine Flashmutation.
+Neun tatsächliche12-s-PCM-Triplets in allen drei Worlds erhalten sämtliche
+Audio-/Hookbytes bei64/512: Recovery, partieller Writefehler und Readfehler mit
+erneutem Scan/Save. Drei Baselines werden geteilt;21 Render/252s getrenntes PCM.
+Alle253 bisherigen Inputs einschließlich des vorbereiteten Writers exakt PR165,
+darunter251 unveränderte Laufzeitinputs. Kein Scene-/H743-/CMake-Anschluss;
+Live-Save bleibt synchron, Journal OFF und SD41 offen. Zählung unverändert.
+Details:[SD41_JOURNAL_RECOVERY_CHECKPOINT.md](SD41_JOURNAL_RECOVERY_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD41 Scene-Save-API für eine ausstehende
+Transaktion und erst nach Rückleseprüfung bestätigten Save vorbereiten.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -599,7 +612,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
-| SD41 | Storage-/Gerätegate | Boot-/Recall-/Seed-PCM geprüft; separater schrittweiser Journal-Schreiber mit Fehler-/Abbruch-/PCMnachweis vorbereitet; Recovery/Scene-/H743-Anschluss/ECC/Power-cut offen, Journal OFF |
+| SD41 | Storage-/Gerätegate | Boot-/Recall-/Seed-PCM geprüft; Schreiber und schrittweise Recovery separat mit Fehler-/Abbruch-/Retry-/PCMnachweis vorbereitet; Scene-/H743-Anschluss/ECC/Power-cut offen, Journal OFF |
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
@@ -1193,8 +1206,14 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   79 Abbruchzustände,511 Saves und drei ganze8s-PCM-Triplets bei512/64 bestehen.
   Kein Scene-/H743-Anschluss, bestehendes Live-Save bleibt synchron; Journal OFF.
   [SD41_ASYNC_JOURNAL_CHECKPOINT.md](SD41_ASYNC_JOURNAL_CHECKPOINT.md).
-  Nächster einzelner Softwareteil: begrenzte schrittweise Journal-Recovery,
-  anschließend Scene-Frontend und sicherer H743-I/O-/ECC-Anschluss mit Geräteprüfung.
+  **Vorbereitete Recovery2026-10-14:** Je Step maximal ein32-B-Read und32-B-CRC;
+  Cache während des Scans gesperrt, kein Teilfund bei Fehler/Cancel.7288 Scanner-
+  Gegenproben,4983 Cut-/Retryfälle,35 Cancelzustände und neun volle12-s-PCM-
+  Triplets bei64/512 bestehen.253 bisherige Inputs unverändert. Noch kein
+  Scene-/H743-Anschluss und keine Gerätezeitmessung; bestehendes Save synchron.
+  [SD41_JOURNAL_RECOVERY_CHECKPOINT.md](SD41_JOURNAL_RECOVERY_CHECKPOINT.md).
+  Nächster einzelner Softwareteil: Scene-Save-API mit ausstehender Transaktion
+  und bestätigtem Abschluss, danach sicherer H743-I/O-/ECC-Anschluss/Geräteprüfung.
   **Abnahme:** Kein Überraschungsstart oder Lautstärkesprung, kaputte/alte Scene
   führt in dokumentierten stillen Fallback; Reset beim laufenden Raum gezielt
   testen. Keine blockierende Speicherung im Audiopfad. Voraussetzung: SD36/SD39–SD40.

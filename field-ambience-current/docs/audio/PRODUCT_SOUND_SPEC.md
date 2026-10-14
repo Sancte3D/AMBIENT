@@ -498,9 +498,30 @@ erzwingt ein Fehler neue Recovery; Begin versteckt keinen synchronen Vollscan.
 5252 Modellfehlerfälle,79 Abbruchzustände,511 Saves und drei echte Product-
 PCM-Triplets bei512/64 bestehen. Die72s getrennte Ausgabe und sämtliche Hooks
 sind ganz bytegleich; Busy-Latenzen sind modelliert, keine Gerätezeitmessung.
-Alle251 bisherigen Firmwareinputs bleiben PR164. Begrenzte Recovery, bestätigtes
-Scene-Save sowie sicherer Flash-/ECC-Anschluss und Geräteabnahme sind offen;
+Alle251 damaligen Firmwareinputs bleiben PR164. Die unten beschriebene separate
+Recovery ergänzt diese Vorbereitung. Bestätigtes Scene-Save sowie sicherer
+Flash-/ECC-Anschluss und Geräteabnahme sind offen;
 Journal bleibt OFF. [SD41_ASYNC_JOURNAL_CHECKPOINT.md](SD41_ASYNC_JOURNAL_CHECKPOINT.md).
+
+Ebenfalls seit2026-10-14 ist eine separate schrittweise Recovery vorbereitet,
+ohne Scene-/H743-/CMake-Anschluss. Begin macht kein I/O und sperrt die
+Cacheverfügbarkeit. Je Step höchstens ein Read von32 B und CRC über32 B;
+keine Record-/Sektorschleife. Journal/Medium gehören während BUSY exklusiv
+diesem Scanner. Bestätigte Metadaten und Basisstaging bleiben während des Scans
+erhalten; erst der vollständige erfolgreiche Scan veröffentlicht Gewinner oder
+gültiges leeres Journal mit Pflicht zum frischen Erase im anderen Sektor.
+CORRUPT überspringt den Record, ERROR/Cancel lassen den Cache unverfügbar;
+kein Teilfund oder versteckter Scan beim Writer-Begin. Ein sicherer rascher
+Readcallback bleibt Adapterpflicht, keine gemessene Flash-/IRQ-/ECC-Garantie.
+7288 Gegenproben zum alten Scanner,4983 Cut-/Retryfälle und35 Cancelzustände
+bestehen. Neun12-s-Product-PCM-Triplets für Recovery, partiellen Writefehler und
+Readfehler mit erneutem Scan/Save sind bei64/512 ganz exakt;21 Render/252s mit
+drei geteilten Baselines, keine vollständigen musikalischen Langphrasen.
+Alle253 bisherigen Inputs bleiben PR165, einschließlich des unveränderten
+vorbereiteten Writers;251 Laufzeitinputs unverändert. Bestehende synchrone
+Scene-Read-/Savewege bleiben. Nächster Softwareteil ist die ausstehende und
+bestätigte Scene-Save-Transaktion; Journal OFF und Geräteabnahme bleiben.
+[SD41_JOURNAL_RECOVERY_CHECKPOINT.md](SD41_JOURNAL_RECOVERY_CHECKPOINT.md).
 
 ## Ressourcen und zeitlicher Vertrag
 

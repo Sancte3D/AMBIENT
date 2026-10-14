@@ -96,6 +96,24 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  journal-recovery-review:
+    name: prepared yielding Scene recovery and save retry PCM (SD41)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged runtime and writer baseline
+        run: git fetch --no-tags origin 6c380a62be0a3fd54e1725995ad619de9ab51396
+      - name: Verify bounded recovery, cancellation, corrupt reads and actual retry PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_journal_recovery.py build-journal-recovery-review
+      - name: Upload yielding recovery and retry proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-journal-recovery-proof
+          path: field-ambience-current/firmware-c-next/build-journal-recovery-review/SD41_JOURNAL_RECOVERY_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
   async-journal-review:
     name: prepared async Scene journal and actual Product PCM (SD41)
     runs-on: ubuntu-latest
@@ -704,6 +722,20 @@ jobs:
         with:
           name: ambient-async-journal-arm-component
           path: field-ambience-current/firmware-c-next/build-async-journal-arm
+          if-no-files-found: error
+          retention-days: 30
+      - name: Compile prepared yielding recovery for Cortex-M7 (not integrated)
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build-journal-recovery-arm
+          arm-none-eabi-gcc -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -fstack-usage -Iinclude -c src/scenes_journal_recovery.c -o build-journal-recovery-arm/scenes_journal_recovery.o
+          arm-none-eabi-nm build-journal-recovery-arm/scenes_journal_recovery.o
+          test -s build-journal-recovery-arm/scenes_journal_recovery.su
+      - name: Upload standalone ARM recovery component and stack report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-journal-recovery-arm-component
+          path: field-ambience-current/firmware-c-next/build-journal-recovery-arm
           if-no-files-found: error
           retention-days: 30
       - name: Cross-build h743 (FAM_TARGET=h743)
