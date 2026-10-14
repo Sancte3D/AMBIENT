@@ -1,0 +1,84 @@
+{
+  "scope": "SD41 prepared Main-only writer. No H743 flash, Scene frontend or UI integration; no ECC/IRQ/timing/device guarantee. Callbacks must be nonblocking and classify safe reads; cancellation drains in-flight operations. Boot recovery remains separate.",
+  "baseline_commit": "6e5be3d663a54d3e1e08d77683b23563fae0da09",
+  "existing_firmware_inputs_byte_equal": 251,
+  "existing_jsc1_scn7_format_unchanged": true,
+  "device_default_changed": false,
+  "audio_code_changed": false,
+  "journal_candidate_default": "OFF",
+  "source_sha256": {
+    "include/scenes_journal_async.h": "c268159ace0c4334ce8f39ff9998592becfabcccb89cb04aca8d038b1877cf6b",
+    "src/scenes_journal_async.c": "82715799be2cfa0d0c43d02855db792417285e3b3bd9526b964026bcbe761d51",
+    "src/scenes_journal.c": "80ae94fe0b1d03cd8b50d4cd9dc67317ae898fc32859a5edb8dd42cc9fc10c7a",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "test/test_scenes_journal_async.c": "7b0343e5053176500742021d6179230fd93a001813b4892ddfebf5555b57ea97",
+    "test/test_product_async_journal.c": "3ccc9504f5ed42c9165084f426c653e95cb8ef879c2e9040d63cf1a99218732e",
+    "tools/review_async_journal.py": "1403bf0aadedf7b2a6ad0bd87b2aad4eac2afe40c973718ea4b1bd74336065b2"
+  },
+  "model": {
+    "status": "passed",
+    "checks": 1126722,
+    "fault_cases": 5252,
+    "cancel_states": 79,
+    "completed_saves": 511,
+    "writer_bytes": 672,
+    "max_io_callbacks_per_step": 1
+  },
+  "actual_pcm": [
+    {
+      "world": 0,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "steps": 333,
+      "completed_ms": 6020,
+      "programmed_words": 13
+    },
+    {
+      "world": 0,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "steps": 333,
+      "completed_ms": 6020,
+      "programmed_words": 13
+    },
+    {
+      "world": 1,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "steps": 333,
+      "completed_ms": 6020,
+      "programmed_words": 13
+    },
+    {
+      "world": 1,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "steps": 333,
+      "completed_ms": 6020,
+      "programmed_words": 13
+    },
+    {
+      "world": 2,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "steps": 333,
+      "completed_ms": 6020,
+      "programmed_words": 13
+    },
+    {
+      "world": 2,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "steps": 333,
+      "completed_ms": 6020,
+      "programmed_words": 13
+    },
+    {
+      "status": "passed",
+      "pcm_triplets": 3,
+      "rendered_stereo_frames": 3175200,
+      "control_tick_ms": 10,
+      "capture_seconds": 8
+    }
+  ]
+}

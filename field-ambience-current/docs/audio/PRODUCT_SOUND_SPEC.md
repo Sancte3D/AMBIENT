@@ -487,6 +487,21 @@ ECC-Fault-Behandlung und Save bleibt synchron; daher keine neue Gerätegarantie.
 [SCENE_JOURNAL_CHECKPOINT.md](SCENE_JOURNAL_CHECKPOINT.md) beschreibt Vertrag,
 Tests und ausstehende Aktivierung.
 
+Seit2026-10-14 ist ein separater Main-Journal-Schreiber vorbereitet, noch ohne
+Scene-/H743-Anschluss und ohne Änderung des synchronen Live-Save-Defaults.
+Begin übernimmt höchstens512 B und führt kein I/O/Recovery aus. Ein Step startet
+oder pollt höchstens einen I/O oder liest32 B; keine Warte-/Scanloops. Payload
+zuerst, unveränderter JSC1-Commit zuletzt; Cache erst nach bestätigter Header-
+und vollständiger Payload-Rückleseprüfung. Ein Abbruch hält laufende Operation
+und geliehenen Puffer bis zum terminalen Poll fest. Nach möglicher Mutation
+erzwingt ein Fehler neue Recovery; Begin versteckt keinen synchronen Vollscan.
+5252 Modellfehlerfälle,79 Abbruchzustände,511 Saves und drei echte Product-
+PCM-Triplets bei512/64 bestehen. Die72s getrennte Ausgabe und sämtliche Hooks
+sind ganz bytegleich; Busy-Latenzen sind modelliert, keine Gerätezeitmessung.
+Alle251 bisherigen Firmwareinputs bleiben PR164. Begrenzte Recovery, bestätigtes
+Scene-Save sowie sicherer Flash-/ECC-Anschluss und Geräteabnahme sind offen;
+Journal bleibt OFF. [SD41_ASYNC_JOURNAL_CHECKPOINT.md](SD41_ASYNC_JOURNAL_CHECKPOINT.md).
+
 ## Ressourcen und zeitlicher Vertrag
 
 44100 Hz, Stereo PCM16, H743-Renderblock 512 Frames (=11,61 ms); beliebige
