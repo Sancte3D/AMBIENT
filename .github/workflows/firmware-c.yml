@@ -96,6 +96,24 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  async-journal-review:
+    name: prepared async Scene journal and actual Product PCM (SD41)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged runtime baseline
+        run: git fetch --no-tags origin 6e5be3d663a54d3e1e08d77683b23563fae0da09
+      - name: Verify bounded writer, drains, readback and whole PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_async_journal.py build-async-journal-review
+      - name: Upload async transaction proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-async-journal-proof
+          path: field-ambience-current/firmware-c-next/build-async-journal-review/SD41_ASYNC_JOURNAL_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
   boot-recall-review:
     name: current Product boot, Scene recall and seed openings (SD41)
     runs-on: ubuntu-latest
@@ -674,6 +692,20 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq gcc-arm-none-eabi cmake build-essential
+      - name: Compile prepared async journal for Cortex-M7 (not integrated)
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build-async-journal-arm
+          arm-none-eabi-gcc -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -fstack-usage -Iinclude -c src/scenes_journal_async.c -o build-async-journal-arm/scenes_journal_async.o
+          arm-none-eabi-nm build-async-journal-arm/scenes_journal_async.o
+          test -s build-async-journal-arm/scenes_journal_async.su
+      - name: Upload standalone ARM component and stack report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-async-journal-arm-component
+          path: field-ambience-current/firmware-c-next/build-async-journal-arm
+          if-no-files-found: error
+          retention-days: 30
       - name: Cross-build h743 (FAM_TARGET=h743)
         working-directory: field-ambience-current/firmware-c-next
         run: |

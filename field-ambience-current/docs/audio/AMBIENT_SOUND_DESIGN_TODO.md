@@ -8,14 +8,14 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-13**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-14**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-13
+## Offener Arbeitsstand 2026-10-14
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
 11 technische Blöcke:9 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
@@ -218,7 +218,20 @@ und respektiert Autoplay-Gate0.14,3933min getrenntes PCM, alle251 Coreinputs
 exakt grünerPR163. Keine DSP-/Storageaktivierung oder neue musikalische Freigabe.
 SD41 bleibt Storage-/Gerätegate;11 technische Hauptblöcke,24 erledigt/30 offen.
 Details:[SD41_BOOT_RECALL_CHECKPOINT.md](SD41_BOOT_RECALL_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD41 nichtblockierendes Speichern vorbereiten.
+SD41 hat jetzt einen separat vorbereiteten Main-Journal-Schreiber: Begin ohne
+I/O/Recovery, pro Step höchstens ein Start/Poll/32-B-Read, kein Warte- oder Scanloop.
+Payload vor Commit; Cache erst nach vollständiger bestätigter Rückleseprüfung.
+Abbruch hält einen laufenden I/O und seinen Puffer bis zum terminalen Poll fest.
+1.126.722 Modellchecks,5252 gerichtete Fehlerfälle,79 Abbruchzustände und511
+vollständige Saves bestehen; acht Längen sind bytegleich zum bestehenden JSC1.
+Drei echte Product-PCM-Triplets bei512/64 erhalten sämtliche8s Audio/Hooks,
+insgesamt72s. Modellierte20 Busy-Ticks pro I/O,333 Steps pro SCN7-Save;
+das sind keine gemessenen Flashzeiten. Alle251 bisherigen Firmwareinputs
+bleiben exakt PR164. Der neue Schreiber ist noch nicht an Scene/H743 angeschlossen,
+Live-Save bleibt synchron und Journal OFF; SD41 bleibt offen, Zählung unverändert.
+Details:[SD41_ASYNC_JOURNAL_CHECKPOINT.md](SD41_ASYNC_JOURNAL_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: SD41 begrenzte, schrittweise Journal-Recovery
+vorbereiten; nach Fehlern darf ein neuer Save keinen synchronen Vollscan auslösen.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -586,7 +599,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
-| SD41 | Storage-/Gerätegate | Aktueller Boot-/Recall-/Seed-PCMnachweis, alle Slotindizes/Volume/Mute, Originalbesitzer und Seedstarts geprüft; Journal OFF, ECC/Power-cut/nichtblockierendes Save offen |
+| SD41 | Storage-/Gerätegate | Boot-/Recall-/Seed-PCM geprüft; separater schrittweiser Journal-Schreiber mit Fehler-/Abbruch-/PCMnachweis vorbereitet; Recovery/Scene-/H743-Anschluss/ECC/Power-cut offen, Journal OFF |
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
@@ -1174,7 +1187,14 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Room/alte Hz-History erhalten, Autoplay-Gate0 bleibt.14,3933min gerichtetes
   PCM, Core251 Inputs unverändert; keine Geräte-/ECC-/Live-Save-Freigabe.
   [SD41_BOOT_RECALL_CHECKPOINT.md](SD41_BOOT_RECALL_CHECKPOINT.md).
-  Nächster einzelner Softwareteil: nichtblockierendes Main-Speichern.
+  **Vorbereiteter Softwareteil2026-10-14:** Separater Main-Journal-Schreiber
+  ohne versteckten Scan/Wait, höchstens ein I/O je Step; vollständige Rückleseprüfung,
+  sichere Pufferbindung bis Ende eines abgebrochenen I/O.5252 Modellfehler,
+  79 Abbruchzustände,511 Saves und drei ganze8s-PCM-Triplets bei512/64 bestehen.
+  Kein Scene-/H743-Anschluss, bestehendes Live-Save bleibt synchron; Journal OFF.
+  [SD41_ASYNC_JOURNAL_CHECKPOINT.md](SD41_ASYNC_JOURNAL_CHECKPOINT.md).
+  Nächster einzelner Softwareteil: begrenzte schrittweise Journal-Recovery,
+  anschließend Scene-Frontend und sicherer H743-I/O-/ECC-Anschluss mit Geräteprüfung.
   **Abnahme:** Kein Überraschungsstart oder Lautstärkesprung, kaputte/alte Scene
   führt in dokumentierten stillen Fallback; Reset beim laufenden Raum gezielt
   testen. Keine blockierende Speicherung im Audiopfad. Voraussetzung: SD36/SD39–SD40.

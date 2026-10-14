@@ -18,6 +18,21 @@ CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
     "$src/src/scenes_journal.c" -o "$tmp/scenes_journal_test"
 "$tmp/scenes_journal_test"
 
+# Prepared async journal state machine; no default device/Scene activation.
+"$CC" "${CFLAGS[@]}" -Werror "$here/test_scenes_journal_async.c" \
+    "$src/src/scenes_journal.c" "$src/src/scenes_journal_async.c" -o "$tmp/scenes_journal_async_test"
+"$tmp/scenes_journal_async_test"
+
+# Complete actual PCM/hooks while the async writer yields to control ticks.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_product_async_journal.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" "$src/src/worlds_product.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" "$src/src/ambient_room.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" \
+    "$src/src/controls.c" "$src/src/scenes.c" "$src/src/scenes_journal.c" "$src/src/scenes_journal_async.c" \
+    "$src/src/menu.c" "$src/src/params.c" "$src/src/battery.c" "$src/src/oled_draw.c" "$src/src/oled_color.c" \
+    "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" -lm -o "$tmp/product_async_journal_test"
+"$tmp/product_async_journal_test"
+
 # Reduced product candidate: actual source/room/nature/master PCM contract.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_product_sound.c" \
     "$src/src/engine_product.c" "$src/src/world_grammar.c" \
