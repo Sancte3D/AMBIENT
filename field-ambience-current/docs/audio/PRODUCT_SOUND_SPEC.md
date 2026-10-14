@@ -523,6 +523,28 @@ Scene-Read-/Savewege bleiben. Nächster Softwareteil ist die ausstehende und
 bestätigte Scene-Save-Transaktion; Journal OFF und Geräteabnahme bleiben.
 [SD41_JOURNAL_RECOVERY_CHECKPOINT.md](SD41_JOURNAL_RECOVERY_CHECKPOINT.md).
 
+
+Seit2026-10-14 ist die Scene-Save-API separat mit Product und
+`FAM_SCENE_SAVE_ASYNC_PREPARED` vorbereitet: echter368-B-SCN7-Snapshot beim
+Begin ohne I/O; späteres Drehen verändert ihn nicht. „Speichern läuft“ bedeutet
+angenommen, „gespeichert“ erst nach kompletter Writer-Rückleseprüfung mit
+Veröffentlichung bestätigter Slots/aktiver Scene. Während BUSY kein Sync-Save/
+Recall/Init; fehlgeschlagene oder abgebrochene Aufträge bestätigen keinen neuen
+RAM-Stand. Ein vollständiger physischer Commit kann trotzdem recoverbar sein.
+Cancel drainiert geliehenen I/O; unsicherer Cache verlangt vor Retry schrittweise
+Recovery. Neuer Versuch übernimmt neue aktuelle Werte. Je Main-Step höchstens
+ein Start/Poll/Read≤32B; feste Snapshot-/Start-/Publikationsarbeit≤512B ist keine
+gesamte32-B-CPU- oder gemessene Geräte-WCET-Grenze.
+337 native Fälle/283.584 Checks,alle51 Append-/53 Fresh-Writer-I/O-Fehler,
+20 Recovery-Readfehler und206 Cancelpositionen bestehen.15 komplette12-s-Product-
+PCM-Triplets in allen Worlds bei64/512 exakt;33 Render/396s mit geteilten Baselines.
+Bestehende Scene-/Legacy-/Boot-/Recalltests bestehen auch mit vorbereitetem Flag.
+254/255 alte Inputs exakt; nur scenes.c erhält ausgeschaltete Hooks, unaktivierte
+Reference-/Product-Übersetzungseinheiten präprozessiert vollständig gleich.
+Kein UI-/H743-/CMake-/Defaultanschluss; bestehendes Live-Save synchron und Journal
+OFF. Offen bleiben sicherer Start/Poll/Read-/ECC-Adapter und physische Prüfung.
+[SD41_SCENE_SAVE_CHECKPOINT.md](SD41_SCENE_SAVE_CHECKPOINT.md).
+
 ## Ressourcen und zeitlicher Vertrag
 
 44100 Hz, Stereo PCM16, H743-Renderblock 512 Frames (=11,61 ms); beliebige

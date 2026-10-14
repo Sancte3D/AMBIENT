@@ -15,6 +15,12 @@
 #include "baked_font.h"
 #include <string.h>
 #include <stdio.h>
+#ifdef FAM_SCENE_SAVE_ASYNC_PREPARED
+#include "scenes_save_async_internal.h"
+#ifndef FAM_SOUND_PRODUCT
+#error "Prepared Scene save is Product-only"
+#endif
+#endif
 
 #ifdef FAM_SOUND_PRODUCT
 #define SCENE_MAGIC 0x53434E37u /* SCN7: three Worlds, Dry/Room, collection */
@@ -104,8 +110,28 @@ static int             s_active = -1;
 static bool     s_ui_on = false;
 static uint32_t s_ui_last;
 
+#ifdef FAM_SCENE_SAVE_ASYNC_PREPARED
+static scene_store_t s_pending;
+const void *scenes_save_snapshot(int slot,unsigned *length) {
+    if(slot<0 || slot>=SCENES_COUNT || !length) return NULL;
+    s_pending=s_store;
+    scene_slot_t *sl=&s_pending.slot[slot];
+    sl->magic=SCENE_MAGIC; menu_get_state(&sl->menu);
+    sl->drive_pct=0; sl->bright_hz=(int16_t)params_bright_hz();
+    sl->gen_seed=engine_gen_seed(); sl->collection=(uint8_t)engine_product_collection();
+    s_pending.checksum=store_checksum(&s_pending);
+    *length=sizeof s_pending; return &s_pending;
+}
+void scenes_save_publish(int slot,uint32_t now_ms) {
+    s_store=s_pending; s_active=slot; s_ui_last=now_ms;
+}
+#endif
+
 #ifdef FAM_SOUND_PRODUCT
 void scenes_init(scenes_write_fn write_fn, scenes_read_fn read_fn) {
+#ifdef FAM_SCENE_SAVE_ASYNC_PREPARED
+    if(!scenes_save_async_configure(NULL,NULL)) return;
+#endif
     s_write=write_fn; s_read=read_fn; s_active=-1; s_ui_on=false;
     memset(&s_store,0,sizeof s_store);
     if(s_read && s_read(&s_store,sizeof s_store) && s_store.magic==SCENE_MAGIC && s_store.checksum==store_checksum(&s_store)) return;
@@ -169,6 +195,9 @@ bool scenes_used(int slot) {
 int scenes_active(void) { return s_active; }
 
 bool scenes_save(int slot, uint32_t now_ms) {
+#ifdef FAM_SCENE_SAVE_ASYNC_PREPARED
+    if(scenes_save_info().status==SCENES_SAVE_BUSY) return false;
+#endif
     if (slot < 0 || slot >= SCENES_COUNT) return false;
     scene_slot_t *sl = &s_store.slot[slot];
     scene_slot_t previous=*sl;
@@ -196,6 +225,9 @@ bool scenes_save(int slot, uint32_t now_ms) {
 }
 
 bool scenes_recall(int slot, uint32_t now_ms) {
+#ifdef FAM_SCENE_SAVE_ASYNC_PREPARED
+    if(scenes_save_info().status==SCENES_SAVE_BUSY) return false;
+#endif
     if (!scenes_used(slot)) return false;
     const scene_slot_t *sl = &s_store.slot[slot];
 #ifdef FAM_SOUND_PRODUCT

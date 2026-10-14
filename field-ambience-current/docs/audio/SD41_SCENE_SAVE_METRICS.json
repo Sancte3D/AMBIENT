@@ -1,0 +1,320 @@
+{
+  "scope": "Prepared Product-only Scene Save API. Begin snapshots genuine SCN7 without IO, then optional yielding recovery and writer with <=1 IO/32B read per Main step. RAM/active Scene publish only after complete verification; cancellation drains IO. FAILED may leave a recoverable physical commit. No UI/H743/CMake/default activation or device timing proof.",
+  "baseline_commit": "6c1316bea9dc5ced80dafcde29872ac4eb2b784e",
+  "default_scene_guard": {
+    "existing_inputs_byte_equal": 254,
+    "changed_inputs": [
+      "src/scenes.c"
+    ],
+    "disabled_scene_translation_units_equal": [
+      "reference",
+      "product"
+    ],
+    "prepared_flag": "FAM_SCENE_SAVE_ASYNC_PREPARED",
+    "prepared_flag_default": false
+  },
+  "existing_runtime_inputs_byte_equal": 250,
+  "previous_prepared_inputs_byte_equal": 4,
+  "scn7_jsc1_unchanged": true,
+  "prepared_flag_default": false,
+  "journal_candidate_default": "OFF",
+  "device_accepted": false,
+  "hearing_accepted": false,
+  "source_sha256": {
+    "include/scenes_save_async.h": "c201e9f2044b803c7d25b93e2b1b0e6fd138b4467eeb80da7a3ea59539b81185",
+    "src/scenes_save_async_internal.h": "0c2edff88086482b06cfcebfd9d07086b0b74452447026fb641b8fea487308f4",
+    "src/scenes_save_async.c": "bfe54a37911511739dbb1b48be84bff7ee3a86415f3eeb6e9838262474f667a3",
+    "src/scenes.c": "59d5b358d397ab7ee071f9ad4785cfd1d586ab7c30a15d8eb525fcd54414d09e",
+    "test/test_product_scene_save.c": "6a287fbac1031a49a66402cab068bad9a19d8d2d43fef9bc512b8bbcfef05b4f",
+    "tools/review_scene_save.py": "b12c54854f6dee0ea25ad0b40d00d750b9730ae653cfd7a544c663b25c83575f",
+    "tools/check_prepared_scenes.py": "de6eb9fc1f60fc766a362d7bb33551172a2c3cdc5a1f50a2855b78c9ce5b862d"
+  },
+  "frontend": {
+    "category": "frontend",
+    "status": "passed",
+    "cases": 337,
+    "checks": 283584,
+    "append_writer_io_fault_positions": 51,
+    "fresh_writer_io_fault_positions": 53,
+    "recovery_read_fault_positions": 20,
+    "writer_steps_no_busy": 51,
+    "append_writer_cancel_positions": 90,
+    "fresh_writer_cancel_positions": 95,
+    "recovery_cancel_positions": 21,
+    "late_failures_with_recoverable_commit": 13,
+    "max_io_per_step": 1,
+    "native_bytes": 368
+  },
+  "actual_pcm": [
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 1,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 4600
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 1,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 4600
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 2,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9750
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 2,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9750
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 3,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 3,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 4,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9800
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 4,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9800
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 5,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 0,
+      "mode": 5,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 1,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 4600
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 1,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 4600
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 2,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9750
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 2,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9750
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 3,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 3,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 4,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9800
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 4,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9800
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 5,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 1,
+      "mode": 5,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 1,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 4600
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 1,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 4600
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 2,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9750
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 2,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9750
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 3,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 3,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 4,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9800
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 4,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9800
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 5,
+      "block": 64,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "pcm",
+      "world": 2,
+      "mode": 5,
+      "block": 512,
+      "whole_pcm_and_hooks_equal": true,
+      "completed_ms": 9970
+    },
+    {
+      "category": "summary",
+      "status": "passed",
+      "matched_triplets": 15,
+      "shared_baselines": 3,
+      "captures": 33,
+      "capture_seconds": 12,
+      "rendered_stereo_frames": 17463600,
+      "control_tick_ms": 10
+    }
+  ],
+  "prepared_scene_legacy_regression": {
+    "exit_code": 0,
+    "stdout_sha256": "b0919b4e091f0809cfd9f3c04d7e438d7383a94b8e0aa1227850468b71e21881"
+  },
+  "prepared_boot_recall_regression": {
+    "category": "summary",
+    "status": "passed",
+    "boot_restarts": 6,
+    "bad_store_fallbacks": 380,
+    "legacy_recalls": 10,
+    "off_recalls": 20,
+    "manual_pcm_triplets": 12,
+    "failed_save_pcm_triplets": 3,
+    "seed_pcm_triplets": 9,
+    "seed_wrap_pairs": 9,
+    "pending_cancellations": 3,
+    "live_seed_recalls": 3,
+    "autoplay_gates": 3,
+    "rendered_stereo_frames": 38084760
+  }
+}

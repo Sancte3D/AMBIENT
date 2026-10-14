@@ -243,8 +243,22 @@ Alle253 bisherigen Inputs einschließlich des vorbereiteten Writers exakt PR165,
 darunter251 unveränderte Laufzeitinputs. Kein Scene-/H743-/CMake-Anschluss;
 Live-Save bleibt synchron, Journal OFF und SD41 offen. Zählung unverändert.
 Details:[SD41_JOURNAL_RECOVERY_CHECKPOINT.md](SD41_JOURNAL_RECOVERY_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: SD41 Scene-Save-API für eine ausstehende
-Transaktion und erst nach Rückleseprüfung bestätigten Save vorbereiten.
+SD41 hat jetzt die vorbereitete Scene-Save-API: „Speichern läuft“ heißt angenommen,
+„gespeichert“ erst nach vollständiger Rückleseprüfung. Echter368-B-SCN7-Snapshot
+bei Begin ohne I/O; Regleränderungen während BUSY ändern ihn nicht. Bestätigte
+Slots/aktive Scene bleiben bis DONE alt; Fehler/Cancel bestätigen keinen neuen
+RAM-Stand. Ein physischer Commit kann trotz fehlgeschlagener Bestätigung bestehen;
+vor Retry läuft bei unsicherem Cache die schrittweise Recovery, neuer Versuch
+übernimmt aktuelle Werte.337 native Fälle/283.584 Checks,104 Writer-I/O-Fehler,
+20 Recovery-Readfehler und206 Cancelpositionen bestehen.15 ganze12-s-PCM-Triplets
+in allen Worlds bei64/512 sind exakt;33 Render/396s mit drei geteilten Baselines.
+254/255 bisherige Inputs bytegleich; nur scenes.c enthält ausgeschaltete Hooks,
+unaktivierte Reference-/Product-Übersetzungseinheiten vollständig exakt.
+Product-only mit FAM_SCENE_SAVE_ASYNC_PREPARED separat geprüft; kein UI-/H743-/
+CMake-/Defaultanschluss, Live-Save weiterhin synchron, Journal OFF. SD41 offen,
+Zählung unverändert. Details:[SD41_SCENE_SAVE_CHECKPOINT.md](SD41_SCENE_SAVE_CHECKPOINT.md).
+Nächste einzelne Arbeitseinheit: sicherer H743-Start/Poll/Read-/ECC-Adapter für
+die vorbereiteten Scene-/Journalkomponenten, danach physische Geräteprüfung.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -1212,8 +1226,18 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Triplets bei64/512 bestehen.253 bisherige Inputs unverändert. Noch kein
   Scene-/H743-Anschluss und keine Gerätezeitmessung; bestehendes Save synchron.
   [SD41_JOURNAL_RECOVERY_CHECKPOINT.md](SD41_JOURNAL_RECOVERY_CHECKPOINT.md).
-  Nächster einzelner Softwareteil: Scene-Save-API mit ausstehender Transaktion
-  und bestätigtem Abschluss, danach sicherer H743-I/O-/ECC-Anschluss/Geräteprüfung.
+  **Vorbereitete Scene-API2026-10-14:** Fester nativer Snapshot, Begin ohne I/O;
+  BUSY bedeutet Speichern läuft, DONE erst nach ganzer bestätigter Rückleseprüfung.
+  RAM/aktive Scene bei Fehler/Cancel unverändert; physischer Commit kann dennoch
+  recoverbar sein. Neuer Versuch scannt bei unsicherem Cache und übernimmt neue
+  Reglerwerte.337 native Fälle,104 Writer-/20 Recovery-I/O-Fehler und206
+  Abbruchpositionen;15 volle12-s-PCM-Triplets/33 Render sind exakt bei64/512.
+  Neue API nur separat mit Product/Prepared-Flag, bestehendes Save synchron und
+  Journal OFF; kein UI-/H743-/CMake-/Defaultanschluss.254 bisherige Inputs exakt,
+  ausgeschaltete Scene-Übersetzungseinheiten Reference/Product vollständig gleich.
+  [SD41_SCENE_SAVE_CHECKPOINT.md](SD41_SCENE_SAVE_CHECKPOINT.md).
+  Nächster einzelner Softwareteil: sicherer H743-Start/Poll/Read-/ECC-Adapter,
+  anschließend physische Power-cut-/IRQ-/Geräteprüfung.
   **Abnahme:** Kein Überraschungsstart oder Lautstärkesprung, kaputte/alte Scene
   führt in dokumentierten stillen Fallback; Reset beim laufenden Raum gezielt
   testen. Keine blockierende Speicherung im Audiopfad. Voraussetzung: SD36/SD39–SD40.

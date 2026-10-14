@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+from check_prepared_scenes import compare_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ('engine_product world_grammar worlds_product bowed horn pluck ambient_room nature dsp '
@@ -26,8 +27,7 @@ def main():
     compiled = [p for p in tracked if Path(p).suffix.lower() in ('.c', '.h', '.s', '.ld', '.cmake')
                 or Path(p).name == 'CMakeLists.txt']
     assert len(compiled) == 251
-    for p in compiled:
-        assert (repo/p).read_bytes() == subprocess.check_output(['git', 'show', f'{base}:{p}'], cwd=repo)
+    default_guard = compare_inputs(repo, ROOT, base, compiled)
     with tempfile.TemporaryDirectory(prefix='async-journal-review-') as directory:
         tmp = Path(directory)
         flags = ['cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-I'+str(ROOT/'include')]
@@ -50,7 +50,8 @@ def main():
     manifest = dict(scope='SD41 prepared Main-only writer. No H743 flash, Scene frontend or UI '
         'integration; no ECC/IRQ/timing/device guarantee. Callbacks must be nonblocking and '
         'classify safe reads; cancellation drains in-flight operations. Boot recovery remains separate.',
-        baseline_commit=base, existing_firmware_inputs_byte_equal=251,
+        baseline_commit=base, existing_firmware_inputs_byte_equal=default_guard['existing_inputs_byte_equal'],
+        default_scene_guard=default_guard,
         existing_jsc1_scn7_format_unchanged=True, device_default_changed=False,
         audio_code_changed=False, journal_candidate_default='OFF',
         source_sha256={p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in inputs},

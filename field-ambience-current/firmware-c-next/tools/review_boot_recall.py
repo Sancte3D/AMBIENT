@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+from check_prepared_scenes import compare_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = '67b4ac83f42e5af7b5190db812005ed8c4d693ae'
@@ -33,8 +34,7 @@ def main():
     compiled = [p for p in tracked if Path(p).suffix.lower() in ('.c', '.h', '.s', '.ld', '.cmake')
                 or Path(p).name == 'CMakeLists.txt']
     assert len(compiled) == 251
-    for relative in compiled:
-        assert (repo/relative).read_bytes() == subprocess.check_output(['git', 'show', f'{BASE}:{relative}'], cwd=repo)
+    default_guard = compare_inputs(repo, ROOT, BASE, compiled)
     with tempfile.TemporaryDirectory(prefix='boot-recall-review-') as directory:
         binary = Path(directory)/'contract'
         subprocess.run(['cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-DFAM_SOUND_PRODUCT',
@@ -53,8 +53,9 @@ def main():
     manifest = dict(scope='SD41 only: current real Product boot, Scene recall and bounded eight-second '
         'seed openings. Same pre-DMA API initialization order as H743; RAM persistence backend. '
         'Not HAL/flash/ECC/IRQ, full-phrase, arbitrary corruption or acoustic acceptance.',
-        baseline_commit=BASE, baseline_tree=TREE, firmware_changed=False,
-        unchanged_firmware_input_count=len(compiled),
+        baseline_commit=BASE, baseline_tree=TREE, default_runtime_changed=False, prepared_scene_hooks_changed=True,
+        unchanged_firmware_input_count=default_guard['existing_inputs_byte_equal'],
+        default_scene_guard=default_guard,
         firmware_input_sha256={str(Path(p).relative_to(prefix)): sha(repo/p) for p in compiled},
         audit_input_sha256={p: sha(ROOT/p) for p in ('test/test_product_boot_recall.c', 'tools/review_boot_recall.py')},
         block_sizes=[64, 512], control_tick_ms=10, sample_rate_hz=44100,
