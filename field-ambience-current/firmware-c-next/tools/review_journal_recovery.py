@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+from check_prepared_scenes import compare_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = '6c380a62be0a3fd54e1725995ad619de9ab51396'
@@ -27,8 +28,7 @@ def main():
     compiled = [p for p in tracked if Path(p).suffix.lower() in ('.c', '.h', '.s', '.ld', '.cmake')
                 or Path(p).name == 'CMakeLists.txt']
     assert len(compiled) == 253
-    for p in compiled:
-        assert (repo/p).read_bytes() == subprocess.check_output(['git', 'show', f'{BASE}:{p}'], cwd=repo)
+    default_guard = compare_inputs(repo, ROOT, BASE, compiled)
     with tempfile.TemporaryDirectory(prefix='journal-recovery-review-') as directory:
         tmp = Path(directory)
         flags = ['cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-I'+str(ROOT/'include')]
@@ -54,8 +54,9 @@ def main():
         'availability invalidated at Begin, no partially published cache. Read callbacks must '
         'return promptly and safely classify corrupt/unavailable memory. No Scene frontend, '
         'H743/ECC/IRQ/timing or default activation. Existing synchronous Scene read/save remains.',
-        baseline_commit=BASE, existing_compiled_inputs_byte_equal=253,
-        existing_runtime_core_inputs_byte_equal=251, previous_unlinked_writer_inputs_byte_equal=2,
+        baseline_commit=BASE, existing_compiled_inputs_byte_equal=default_guard['existing_inputs_byte_equal'],
+        default_scene_guard=default_guard,
+        existing_runtime_core_inputs_byte_equal=250, previous_unlinked_writer_inputs_byte_equal=2,
         existing_jsc1_scn7_format_unchanged=True, audio_code_changed=False,
         device_default_changed=False, journal_candidate_default='OFF',
         source_sha256={p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in inputs},

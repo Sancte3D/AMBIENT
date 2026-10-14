@@ -96,6 +96,24 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  scene-save-review:
+    name: prepared confirmed Scene Save API and real Product PCM (SD41)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact default-source baseline
+        run: git fetch --no-tags origin 6c1316bea9dc5ced80dafcde29872ac4eb2b784e
+      - name: Verify snapshot publication, all IO faults, cancellation and complete PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_scene_save.py build-scene-save-review --sanitize-model
+      - name: Upload confirmed Scene API proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-scene-save-proof
+          path: field-ambience-current/firmware-c-next/build-scene-save-review/SD41_SCENE_SAVE_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
   journal-recovery-review:
     name: prepared yielding Scene recovery and save retry PCM (SD41)
     runs-on: ubuntu-latest
@@ -736,6 +754,27 @@ jobs:
         with:
           name: ambient-journal-recovery-arm-component
           path: field-ambience-current/firmware-c-next/build-journal-recovery-arm
+          if-no-files-found: error
+          retention-days: 30
+      - name: Compile and partially link prepared Scene Save for Cortex-M7
+        # The prepared API is a separate component, never a default image option.
+        # Compile both sides of its private SCN7 bridge and partially link them.
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build-scene-save-arm
+          for source in scenes scenes_save_async scenes_journal scenes_journal_async scenes_journal_recovery; do
+            arm-none-eabi-gcc -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DFAM_SOUND_PRODUCT -DFAM_SCENE_SAVE_ASYNC_PREPARED -fstack-usage -Iinclude -c "src/$source.c" -o "build-scene-save-arm/$source.o"
+          done
+          arm-none-eabi-ld -r build-scene-save-arm/*.o -o build-scene-save-arm/prepared_scene_save.o
+          arm-none-eabi-nm -S build-scene-save-arm/prepared_scene_save.o > build-scene-save-arm/prepared_scene_save.nm
+          test -s build-scene-save-arm/scenes_save_async.su
+          test -s build-scene-save-arm/scenes.su
+          ! grep -E ' U scenes_save_' build-scene-save-arm/prepared_scene_save.nm
+      - name: Upload prepared ARM Scene Save component and stack reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-scene-save-arm-component
+          path: field-ambience-current/firmware-c-next/build-scene-save-arm
           if-no-files-found: error
           retention-days: 30
       - name: Cross-build h743 (FAM_TARGET=h743)

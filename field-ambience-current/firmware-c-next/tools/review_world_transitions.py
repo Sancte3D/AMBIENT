@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from check_prepared_scenes import compare_inputs
 
 import numpy as np
 from package_musical_review import measure
@@ -89,8 +90,7 @@ def main():
         str(prefix/'src'), str(prefix/'include'), str(prefix/'cmake'), str(prefix/'CMakeLists.txt')], cwd=repo, text=True).splitlines()
     compiled = [p for p in tracked if Path(p).suffix.lower() in ('.c', '.h', '.s', '.ld', '.cmake') or Path(p).name == 'CMakeLists.txt']
     assert len(compiled) == 251
-    for relative in compiled:
-        assert (repo/relative).read_bytes() == subprocess.check_output(['git', 'show', f'{BASE}:{relative}'], cwd=repo)
+    default_guard = compare_inputs(repo, ROOT, BASE, compiled)
     sources = [ROOT/'src'/f'{name}.c' for name in SOURCES]
     inputs = [*sources, *sorted((ROOT/'include').glob('*.h')), Path(__file__),
         ROOT/'tools/render_world_transitions.c', ROOT/'tools/check_world_transitions.c',
@@ -99,8 +99,10 @@ def main():
     manifest = dict(scope='SD37 only: all six directed actual Product World changes; full generated '
         'and manual pools, pending cancellation, released sources, latest targets and shared Room. '
         'Directed scenarios, not every key/tuning/timing combination, continuous long-run or device ISR proof.',
-        baseline_commit=BASE, baseline_tree=TREE, firmware_changed=False,
-        compilation_inputs_unchanged_from_pr162=True, compilation_input_count=251,
+        baseline_commit=BASE, baseline_tree=TREE, default_runtime_changed=False, prepared_scene_hooks_changed=True,
+        compilation_inputs_unchanged_from_pr162=False, compilation_input_count=251,
+        byte_equal_compilation_input_count=default_guard['existing_inputs_byte_equal'],
+        default_scene_guard=default_guard,
         source_sha256={str(p.relative_to(ROOT)): sha(p) for p in inputs},
         hearing_accepted=False, hardware_accepted=False, full_pcm_retained=False,
         block_sizes=[64, 512], control_tick_ms=10, silent_settling_seconds=1,
