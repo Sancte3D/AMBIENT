@@ -13,6 +13,15 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Prepared STM32H743 journal adapter: exact host model of bounded reads,
+# interrupt completion and corrupt/error classification. No device activation.
+"$CC" "${CFLAGS[@]}" -Werror -DSCENES_FLASH_H743_HOST_MODEL -I"$src/src/hal_h743" \
+    "$here/test_scenes_flash_h743_async.c" \
+    "$src/src/hal_h743/scenes_flash_h743_async.c" "$src/src/hal_h743/scenes_flash_h743_fault.c" \
+    "$src/src/scenes_journal.c" "$src/src/scenes_journal_async.c" "$src/src/scenes_journal_recovery.c" \
+    -o "$tmp/scenes_flash_h743_async_test"
+"$tmp/scenes_flash_h743_async_test"
+
 # Recoverable Scene-store candidate, including interruption at every word byte.
 "$CC" "${CFLAGS[@]}" -Werror "$here/test_scenes_journal.c" \
     "$src/src/scenes_journal.c" -o "$tmp/scenes_journal_test"

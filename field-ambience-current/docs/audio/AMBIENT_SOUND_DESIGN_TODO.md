@@ -8,14 +8,14 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-14**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-15**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-14
+## Offener Arbeitsstand 2026-10-15
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
 11 technische Blöcke:9 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
@@ -257,8 +257,21 @@ unaktivierte Reference-/Product-Übersetzungseinheiten vollständig exakt.
 Product-only mit FAM_SCENE_SAVE_ASYNC_PREPARED separat geprüft; kein UI-/H743-/
 CMake-/Defaultanschluss, Live-Save weiterhin synchron, Journal OFF. SD41 offen,
 Zählung unverändert. Details:[SD41_SCENE_SAVE_CHECKPOINT.md](SD41_SCENE_SAVE_CHECKPOINT.md).
-Nächste einzelne Arbeitseinheit: sicherer H743-Start/Poll/Read-/ECC-Adapter für
-die vorbereiteten Scene-/Journalkomponenten, danach physische Geräteprüfung.
+SD41 hat jetzt den separat vorbereiteten H743-Adapter: Bank-2-Erase/Program
+per ST-HAL-Interrupt, DONE/ERROR erst nach quieszentem terminalem Poll. Bei
+kombiniertem Erfolg/Fehler gewinnt der Fehler; Puffer und Besitz bleiben bis
+zum Poll geschützt. Reads≤32B publizieren bei Fehler keine Teilbytes. Ein
+begrenzter BusFault-Kandidat prüft genaue Leseinstruktion, präzisen Status,
+BFAR und passende Bank-2-ECC-Adresse; andere Fehler werden nicht verschluckt.
+328 echte Architektur-Framefälle (MSP/PSP, mit/ohne FPU),4480 Lesevarianten,
+insgesamt70740 Checks sowie echte Recovery/Write/Cancel über denselben Adapter
+bestehen, einschließlich ASan/UBSan. Cortex-M7 kompiliert und partiell mit den
+Scene-Komponenten und echter ST-HAL gelinkt; geschütztes LDR/BX binär geprüft.
+Alle258 bisherigen Firmwareinputs exakt PR167. Noch kein CMake-/Main-/Vektor-/
+UI-Anschluss: Live-Save synchron, Journal OFF, keine reale ECC-/Zeitabnahme.
+Details:[SD41_H743_SCENE_IO_CHECKPOINT.md](SD41_H743_SCENE_IO_CHECKPOINT.md).
+Nächste einzelne Einheit: isolierter Geräte-Testbuild mit explizitem Vektor-/
+Adapteranschluss; anschließend echte ECC-/Power-cut-/IRQ-Abnahme.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
@@ -626,7 +639,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD38 | geschlossen | Entry ≤100 ms, Stop natürliche Releases, begrenztes Retry, echte Onsets |
 | SD39 | geschlossen | Clear/Mute ≤40 ms exakt Null, kein alter Tank bei Unmute, Targets bewahrt |
 | SD40 | geschlossen | Held Hz unverändert; neue Key/Mode/Tuning, ungehörte Vorbereitung storniert, Setter idempotent |
-| SD41 | Storage-/Gerätegate | Boot-/Recall-/Seed-PCM geprüft; Schreiber und schrittweise Recovery separat mit Fehler-/Abbruch-/Retry-/PCMnachweis vorbereitet; Scene-/H743-Anschluss/ECC/Power-cut offen, Journal OFF |
+| SD41 | Storage-/Gerätegate | Boot/Recall, bestätigte Save-API, Writer/Recovery und H743-IO separat geprüft; isolierter Gerätebuild/Vektoranschluss und reale ECC-/Power-cut-/IRQ-Abnahme offen, Journal OFF |
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
@@ -1236,8 +1249,14 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Journal OFF; kein UI-/H743-/CMake-/Defaultanschluss.254 bisherige Inputs exakt,
   ausgeschaltete Scene-Übersetzungseinheiten Reference/Product vollständig gleich.
   [SD41_SCENE_SAVE_CHECKPOINT.md](SD41_SCENE_SAVE_CHECKPOINT.md).
-  Nächster einzelner Softwareteil: sicherer H743-Start/Poll/Read-/ECC-Adapter,
-  anschließend physische Power-cut-/IRQ-/Geräteprüfung.
+  **Vorbereiteter H743-Adapter2026-10-15:** Bank-2-Interruptstart und quieszenter
+  Poll, Fehler gewinnt über EOP; begrenzte Reads und strenge präzise ECC-Fault-
+  Zuordnung.70740 Checks/4480 Reads/328 Framefälle, ASan/UBSan und echter
+  Cortex-M7/ST-HAL-Teillink bestehen. Alle258 bisherigen Inputs bytegleich.
+  Eigenständige Komponente, keine Main-/Vektor-/UI-Aktivierung oder Siliziumabnahme.
+  [SD41_H743_SCENE_IO_CHECKPOINT.md](SD41_H743_SCENE_IO_CHECKPOINT.md).
+  Nächste einzelne Einheit: isolierter Geräte-Testbuild mit explizitem Anschluss,
+  anschließend physische ECC-/Power-cut-/IRQ-/Geräteprüfung.
   **Abnahme:** Kein Überraschungsstart oder Lautstärkesprung, kaputte/alte Scene
   führt in dokumentierten stillen Fallback; Reset beim laufenden Raum gezielt
   testen. Keine blockierende Speicherung im Audiopfad. Voraussetzung: SD36/SD39–SD40.

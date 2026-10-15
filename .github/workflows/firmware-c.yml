@@ -114,6 +114,28 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  h743-scene-io-review:
+    name: prepared H743 Scene IO and ECC recovery (SD41)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged firmware baseline
+        run: git fetch --no-tags origin 45a71dc9615271e596aa984a4c89cb8403e91686
+      - name: Install Cortex-M7 compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi
+      - name: Verify native fault model and real Cortex-M7 handlers
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_h743_scene_io.py build-h743-scene-io-review --sanitize-model
+      - name: Upload H743 Scene IO proof and ARM object
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-h743-scene-io-proof
+          path: field-ambience-current/firmware-c-next/build-h743-scene-io-review
+          if-no-files-found: error
+          retention-days: 30
+
   journal-recovery-review:
     name: prepared yielding Scene recovery and save retry PCM (SD41)
     runs-on: ubuntu-latest
