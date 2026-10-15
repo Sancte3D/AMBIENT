@@ -542,8 +542,30 @@ Bestehende Scene-/Legacy-/Boot-/Recalltests bestehen auch mit vorbereitetem Flag
 254/255 alte Inputs exakt; nur scenes.c erhält ausgeschaltete Hooks, unaktivierte
 Reference-/Product-Übersetzungseinheiten präprozessiert vollständig gleich.
 Kein UI-/H743-/CMake-/Defaultanschluss; bestehendes Live-Save synchron und Journal
-OFF. Offen bleiben sicherer Start/Poll/Read-/ECC-Adapter und physische Prüfung.
-[SD41_SCENE_SAVE_CHECKPOINT.md](SD41_SCENE_SAVE_CHECKPOINT.md).
+OFF. Der folgende Stand ergänzt den isolierten H743-Adapter; physische Prüfung
+bleibt offen. [SD41_SCENE_SAVE_CHECKPOINT.md](SD41_SCENE_SAVE_CHECKPOINT.md).
+
+Seit2026-10-15 ist der H743-Start/Poll/Read-Adapter separat vorbereitet. Er
+benutzt echte ST-HAL-Interruptoperationen für Bank2/Sektoren6–7; das geliehene
+Programword liegt als feste32-B-Kopie bis zum terminalen Poll. EOP- und
+Fehlercallback im selben IRQ ergeben ERROR. Terminal bedeutet Hardware plus
+HAL quieszent und Bank2 wieder gesperrt, niemals bloß ein Callbackflag. Ein
+ungültiger Kontext oder weiterhin laufender I/O hält Poll auf BUSY.
+Read≤32B invalidiert nur die betroffenen Flashcachelines, kopiert höchstens
+neun ausgerichtete32-bit-Worte und publiziert erst bei vollständig gültigem
+Read. Präziser BusFault wird nur bei aktivem Guard, exaktem LDR-PC/BFAR und
+passender Bank2-Doppel-ECC-Adresse zur festen Rückkehrstelle geleitet.
+MSP/PSP und beide FPU-Frameformen benutzen R0–xPSR am Stackanfang (PM0253
+Fig11); keine willkürliche PC-Inkrementierung, keine allgemeinen Faults ignoriert.
+70740 native Checks mit4480 Reads und328 Framefällen sowie tatsächliche
+Recovery/Write/Cancel über den Adapter bestehen. C11/O2/Werror, ASan/UBSan,
+Cortex-M7-Kompilierung mit echtem HAL-/Scene-Teillink und binäre Guardprüfung
+bestehen. Alle258 bisherigen Firmwareinputs sind exakt PR167; keine Klangänderung.
+Die Komponente ist noch nicht an CMake/Main/Vektoren oder UI angeschlossen.
+Ein isolierter Geräte-Testbuild muss die dokumentierten Bank-/Vektor-/Besitz-
+Voraussetzungen erfüllen; erst reale ECC-Injektion, Power-cut und IRQ-/Latenz-
+Messungen können die Geräteverträge abnehmen. Journal bleibt OFF und Live-Save
+synchron. [SD41_H743_SCENE_IO_CHECKPOINT.md](SD41_H743_SCENE_IO_CHECKPOINT.md).
 
 ## Ressourcen und zeitlicher Vertrag
 

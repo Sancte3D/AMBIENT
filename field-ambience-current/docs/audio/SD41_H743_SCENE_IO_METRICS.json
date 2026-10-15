@@ -1,0 +1,62 @@
+{
+  "scope": "Prepared standalone H743 Bank-2 IO; no CMake/main/vector/UI activation. Actual HAL interrupt erase/program, quiescent terminal poll, <=32B guarded read. No real-silicon ECC/latency/power-cut proof.",
+  "baseline_commit": "45a71dc9615271e596aa984a4c89cb8403e91686",
+  "existing_firmware_inputs_byte_equal": 258,
+  "changed_existing_firmware_inputs": [],
+  "default_connected": false,
+  "ui_connected": false,
+  "device_accepted": false,
+  "busfault_scope": "active fixed load + precise-only CFSR + exact BFAR/PC + Thread basic/FP frame + matching Bank2 double-ECC word",
+  "host_model": {
+    "checks": 70740,
+    "read_cases": 4480,
+    "fault_frame_cases": 328,
+    "erase_starts": 5,
+    "program_starts": 15,
+    "status": "passed"
+  },
+  "sanitized_model": true,
+  "component_sources": [
+    "src/hal_h743/scenes_flash_h743_async.c",
+    "src/hal_h743/scenes_flash_h743_fault.c",
+    "src/hal_h743/scenes_flash_h743_guard.S",
+    "src/scenes.c",
+    "src/scenes_save_async.c",
+    "src/scenes_journal.c",
+    "src/scenes_journal_async.c",
+    "src/scenes_journal_recovery.c",
+    "src/hal_h743/vendor/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash.c",
+    "src/hal_h743/vendor/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash_ex.c"
+  ],
+  "guard_instructions_hex": "00687047",
+  "arm_partial_link_bytes": 20152,
+  "arm_static_frames_bytes": {
+    "platform_context_ready": 0,
+    "unsupported_sync_erase": 0,
+    "unsupported_sync_program": 0,
+    "adapter_start_program": 24,
+    "adapter_poll": 8,
+    "adapter_start_erase": 40,
+    "adapter_read": 96,
+    "scenes_flash_h743_async_complete": 0,
+    "scenes_flash_h743_async_error": 0,
+    "scenes_flash_h743_async_init": 24,
+    "scenes_flash_h743_async_make_io": 4,
+    "scenes_flash_h743_async_flash_irq": 0,
+    "scenes_flash_h743_async_busfault": 40,
+    "scenes_flash_h743_busfault_dispatch": 8,
+    "HAL_FLASH_EndOfOperationCallback": 0,
+    "HAL_FLASH_OperationErrorCallback": 0,
+    "scenes_flash_h743_fault_fixup": 12
+  },
+  "stack_scope": "individual compiler frames; excludes transitive/IRQ/device use",
+  "source_sha256": {
+    "include/scenes_flash_h743_async.h": "eb9b790139db77354f1408527453c7349b99b36c70590ff58770589a52554c4c",
+    "src/hal_h743/scenes_flash_h743_async.c": "6642c69721df8d10f9e6af6b91b4ef27def882e5a03ca30a02a5086bde0380be",
+    "src/hal_h743/scenes_flash_h743_fault.h": "a3a91c2d6381aa3cd922e50e74f400cd69aaf4bd87b0f9ec68ba1afe5741f35f",
+    "src/hal_h743/scenes_flash_h743_fault.c": "ae35be4e772d38cfcdf16e9574a717a53f1d15ee3052d50d86dfe8359bec7e01",
+    "src/hal_h743/scenes_flash_h743_guard.S": "4a899a87e7c316785091a6860be650bfbd90dbc70512d22eaf1ad8f568765020",
+    "test/test_scenes_flash_h743_async.c": "942d43bc25001d9b5fa866a8db329bd3307b5fead7427f10ee564c2fdb976652",
+    "tools/review_h743_scene_io.py": "269c8b22fcbba7b3e8d9ce52cb8796a8e417c920add43da6e409d8c39670af9c"
+  }
+}
