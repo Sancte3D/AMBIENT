@@ -96,11 +96,36 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
-  scene-save-review:
-    name: prepared confirmed Scene Save API and real Product PCM (SD41)
+  room-handoff-review:
+    name: current coherent Room handoff and real Product PCM (SD47)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch exact pre-fix baseline
+        run: git fetch --no-tags origin e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Install Cortex-M7 compiler and Newlib
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi cmake
+      - name: Verify preemption counterexample and unchanged Product PCM and ARM delta
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_room_handoff.py build-room-handoff-review --sanitize --arm
+      - name: Upload current Room proof and Product ARM image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-room-handoff-proof
+          path: field-ambience-current/firmware-c-next/build-room-handoff-review/artifact
+          if-no-files-found: error
+          retention-days: 30
+
+  scene-save-review:
+    name: archived confirmed Scene Save API (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Fetch exact default-source baseline
         run: git fetch --no-tags origin 6c1316bea9dc5ced80dafcde29872ac4eb2b784e
       - name: Verify snapshot publication, all IO faults, cancellation and complete PCM
@@ -115,10 +140,13 @@ jobs:
           retention-days: 30
 
   h743-scene-io-review:
-    name: prepared H743 Scene IO and ECC recovery (SD41)
+    name: archived H743 Scene IO and ECC recovery (PR169)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Fetch exact unchanged firmware baseline
         run: git fetch --no-tags origin 45a71dc9615271e596aa984a4c89cb8403e91686
       - name: Install Cortex-M7 compiler
@@ -137,10 +165,13 @@ jobs:
           retention-days: 30
 
   h743-scene-bench-review:
-    name: isolated H743 Scene bench image and real vectors (SD41)
+    name: archived isolated H743 Scene bench (PR169)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Fetch exact unchanged firmware baseline
         run: git fetch --no-tags origin 70ddde32dfaeaffe3399a9ee5c1f83b65cde40e3
       - name: Install Cortex-M7 compiler and Newlib
@@ -159,10 +190,13 @@ jobs:
           retention-days: 30
 
   journal-recovery-review:
-    name: prepared yielding Scene recovery and save retry PCM (SD41)
+    name: archived yielding Scene recovery (PR169)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Fetch exact unchanged runtime and writer baseline
         run: git fetch --no-tags origin 6c380a62be0a3fd54e1725995ad619de9ab51396
       - name: Verify bounded recovery, cancellation, corrupt reads and actual retry PCM
@@ -177,10 +211,13 @@ jobs:
           retention-days: 30
 
   async-journal-review:
-    name: prepared async Scene journal and actual Product PCM (SD41)
+    name: archived async Scene journal PCM (PR169)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Fetch exact unchanged runtime baseline
         run: git fetch --no-tags origin 6e5be3d663a54d3e1e08d77683b23563fae0da09
       - name: Verify bounded writer, drains, readback and whole PCM
@@ -195,10 +232,13 @@ jobs:
           retention-days: 30
 
   boot-recall-review:
-    name: current Product boot, Scene recall and seed openings (SD41)
+    name: archived Product boot and Scene recall (PR169)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Fetch exact unchanged sound baseline
         run: git fetch --no-tags origin 67b4ac83f42e5af7b5190db812005ed8c4d693ae
       - name: Verify actual boot silence, recalled owners and complete PCM
@@ -682,10 +722,13 @@ jobs:
           retention-days: 30
 
   world-transition-review:
-    name: current six directed Product World changes (SD37)
+    name: archived directed Product World changes (PR169)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Fetch exact unchanged sound baseline
         run: git fetch --no-tags --depth=1 origin 4c784f64de8f27686be6539b228be578d147620e
       - name: Install audio measurement tools
