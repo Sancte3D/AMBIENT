@@ -136,6 +136,28 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  h743-scene-bench-review:
+    name: isolated H743 Scene bench image and real vectors (SD41)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged firmware baseline
+        run: git fetch --no-tags origin 70ddde32dfaeaffe3399a9ee5c1f83b65cde40e3
+      - name: Install Cortex-M7 compiler and Newlib
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi cmake
+      - name: Verify native commands and full ARM ELF vectors and memory
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_h743_scene_bench.py build-h743-scene-bench-review --sanitize-model
+      - name: Upload isolated H743 bench image and proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-h743-scene-bench-proof
+          path: field-ambience-current/firmware-c-next/build-h743-scene-bench-review/artifact
+          if-no-files-found: error
+          retention-days: 30
+
   journal-recovery-review:
     name: prepared yielding Scene recovery and save retry PCM (SD41)
     runs-on: ubuntu-latest
