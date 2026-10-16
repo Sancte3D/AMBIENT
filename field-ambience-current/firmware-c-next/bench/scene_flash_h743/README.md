@@ -134,7 +134,8 @@ Das gebaute Image und die nativen Modelle sind keine Geräteabnahme:
   einen separaten gezielten Gerätefall; native Framefixtures ersetzen ihn nicht.
 - Bestätigten Record A behalten; Save B an Erase/Payload/Commit/Verify gezielt
   abbrechen oder Versorgung unterbrechen. Nach Neustart nur einen vollständig
-  gültigen Record wählen; A oder bereits vollständig bestätigtes B, kein Teil-B.
+  gültigen Record wählen; A oder vollständig gültiges B, kein Teil-B. Ein
+  kompletter Commit kann trotz fehlender DONE-Rückmeldung wiedergefunden werden.
 - Start/Poll/Read separat mit DWT erfassen, Mainfortschritt und IRQ-Reaktion
   beobachten. `max_step_cycles` allein reicht dafür nicht. Audio-/Display-/LED-
   Last, echte Stackreserve und spätere Scene-UI-Integration bleiben eigene
