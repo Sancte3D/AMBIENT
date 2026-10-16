@@ -282,6 +282,21 @@ Audio-/UI-/Produktanschluss. Vorheriger PR168 abschließend19/19 CI grün.
 Details:[SD41_H743_SCENE_BENCH_CHECKPOINT.md](SD41_H743_SCENE_BENCH_CHECKPOINT.md).
 Nächste Grenze: echte ECC-/Power-cut-/IRQ-Abnahme; ohne Gerät als nächste
 einzelne unabhängige Softwareeinheit SD47. SD41 bleibt offen, Zählung unverändert.
+SD47 Room-Übergabe ist jetzt als einzelner Softwarebefund behoben: Main
+veröffentlicht alle Feedbackziele und Amount unter einer gemeinsamen Generation.
+Audio übernimmt nur einen vollständigen Stand, mit einem Versuch ohne Warten;
+max11 atomare Wortloads, bei laufendem Write der letzte gültige Zielcache.
+Alter Teilpublikationsfehler reproduziert;335 gezielte Fälle/325 Unterbrechungen,
+zehn Leser-Interleavings, Wrap/Invalid/Burstedits und ASan/UBSan bestehen.
+24 ganze12-s-Product-Vergleiche über alle Worlds,Manual/Generate,Nature0/1 und
+64/512 sind mit dem bisherigen Stand in PCM und echten Notenereignissen exakt.
+Vollständiger gepaarter H743-Product-Link: Flash+80B,D2+40B,D1/DTCM gleich;
+Compilerframes sind keine reale Stack-/Zeitabnahme. Alle262 anderen bisherigen
+Firmwareinputs unverändert. Voriger PR169 jetzt vollständig20/20 CI erfolgreich.
+Details:[SD47_ROOM_HANDOFF_CHECKPOINT.md](SD47_ROOM_HANDOFF_CHECKPOINT.md).
+SD47 bleibt offen für die übrigen Hotpath-/Quellenübergaben; nächste einzelne
+Einheit: Quellenvorbereitung/Start-Ack/Retirement bei gezielter Main-Audio-
+Unterbrechung. Weiterhin24/54 geschlossen,30 offen,11 technische Blöcke.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.

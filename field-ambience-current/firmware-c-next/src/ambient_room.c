@@ -13,6 +13,22 @@ static float tank[SAMPLES],diffusion[DIFF_SAMPLES];
 static uint16_t at[LINES],diff_at[4];
 static float low[LINES],gains[LINES],hp_x[2],hp_y[2],amount_cur,enable_cur,peak;
 static _Atomic uint32_t gain_bits[LINES],amount_bits,t60_bits;
+/* Single Main writer, single audio reader. Each reader makes ONE attempt;
+ * preemption of an unfinished publication retains the last whole target.
+ * SC payload/version words give a total order even in a C11 thread model.
+ * No spin, IRQ masking, coefficient calculation or heap on the reader. */
+static _Atomic uint32_t target_version;
+static float accepted_gains[LINES],accepted_amount; /* audio owned */
+_Static_assert(ATOMIC_INT_LOCK_FREE==2,"Room publication needs lock-free words");
+#ifdef FAM_ROOM_HANDOFF_TEST
+extern void ambient_room_publish_probe(unsigned point);
+extern void ambient_room_accept_probe(unsigned point);
+#define PUBLISH_POINT(p) ambient_room_publish_probe(p)
+#define ACCEPT_POINT(p) ambient_room_accept_probe(p)
+#else
+#define PUBLISH_POINT(p) ((void)0)
+#define ACCEPT_POINT(p) ((void)0)
+#endif
 static _Atomic bool enabled;
 static bool cold;
 static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
@@ -21,12 +37,37 @@ void ambient_room_set(float amount) {
     if(!isfinite(amount)) return;
     amount=dsp_clampf(amount,0,1);
     float t60=1.2f+3.6f*amount*amount;
+    uint32_t next[LINES];
+    for(int i=0;i<LINES;++i)
+        next[i]=bits(expf(-6.9077553f*(float)lengths[i]/(DSP_SAMPLE_RATE_HZ*t60)));
+    PUBLISH_POINT(0);
+    uint32_t version=atomic_load_explicit(&target_version,memory_order_seq_cst);
+    atomic_store_explicit(&target_version,version+1u,memory_order_seq_cst);
+    PUBLISH_POINT(1);
     for(int i=0;i<LINES;++i) {
-        float g=expf(-6.9077553f*(float)lengths[i]/(DSP_SAMPLE_RATE_HZ*t60));
-        atomic_store_explicit(&gain_bits[i],bits(g),memory_order_release);
+        atomic_store_explicit(&gain_bits[i],next[i],memory_order_seq_cst);
+        PUBLISH_POINT((unsigned)i+2u);
     }
-    atomic_store_explicit(&amount_bits,bits(amount),memory_order_release);
-    atomic_store_explicit(&t60_bits,bits(t60),memory_order_release);
+    atomic_store_explicit(&amount_bits,bits(amount),memory_order_seq_cst);
+    PUBLISH_POINT(10);
+    atomic_store_explicit(&t60_bits,bits(t60),memory_order_seq_cst);
+    PUBLISH_POINT(11);
+    atomic_store_explicit(&target_version,version+2u,memory_order_seq_cst);
+    PUBLISH_POINT(12);
+}
+static void accept_targets(void) {
+    uint32_t before=atomic_load_explicit(&target_version,memory_order_seq_cst);
+    ACCEPT_POINT(0);
+    if(before&1u)return;
+    float next[LINES];
+    for(int i=0;i<LINES;++i) {
+        next[i]=value(atomic_load_explicit(&gain_bits[i],memory_order_seq_cst));
+        ACCEPT_POINT((unsigned)i+1u);
+    }
+    float amount=value(atomic_load_explicit(&amount_bits,memory_order_seq_cst));
+    ACCEPT_POINT(9);
+    if(before!=atomic_load_explicit(&target_version,memory_order_seq_cst))return;
+    memcpy(accepted_gains,next,sizeof next);accepted_amount=amount;
 }
 void ambient_room_enable(bool on) { atomic_store_explicit(&enabled,on,memory_order_release); }
 void ambient_room_clear(void) {
@@ -37,7 +78,8 @@ void ambient_room_clear(void) {
 void ambient_room_init(void) {
     ambient_room_clear(); ambient_room_set(.5f); ambient_room_enable(true);
     amount_cur=.5f; enable_cur=1; cold=false;
-    for(int i=0;i<LINES;++i) gains[i]=value(atomic_load(&gain_bits[i]));
+    accept_targets();
+    for(int i=0;i<LINES;++i) gains[i]=accepted_gains[i];
 }
 float ambient_room_tail_seconds(void) { return value(atomic_load_explicit(&t60_bits,memory_order_acquire)); }
 float ambient_room_peak(void) { return peak; }
@@ -50,9 +92,9 @@ static float allpass(int k,float x) {
     return y;
 }
 void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int frames) {
-    float targets[LINES];
-    for(int i=0;i<LINES;++i) targets[i]=value(atomic_load_explicit(&gain_bits[i],memory_order_acquire));
-    float target=value(atomic_load_explicit(&amount_bits,memory_order_acquire));
+    accept_targets();
+    const float *targets=accepted_gains;
+    float target=accepted_amount;
     float on=atomic_load_explicit(&enabled,memory_order_acquire) ? 1 : 0;
     static const float il[LINES]={1,-1,.72f,-.72f,.45f,-.45f,.88f,-.88f};
     static const float ir[LINES]={.45f,.88f,-1,-.72f,1,.72f,-.45f,-.88f};

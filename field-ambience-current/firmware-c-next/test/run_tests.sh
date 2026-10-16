@@ -13,6 +13,10 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Real Room under Main/audio preemption; no mixed coefficient publication.
+"$CC" "${CFLAGS[@]}" -Werror "$here/test_room_handoff.c" -lm -o "$tmp/room_handoff_test"
+"$tmp/room_handoff_test"
+
 # Prepared STM32H743 journal adapter: exact host model of bounded reads,
 # interrupt completion and corrupt/error classification. No device activation.
 "$CC" "${CFLAGS[@]}" -Werror -DSCENES_FLASH_H743_HOST_MODEL -I"$src/src/hal_h743" \

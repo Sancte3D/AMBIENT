@@ -587,6 +587,15 @@ kaltes Room/Nature überspringt DSP, Zero-Übergang leert einmalig den Tank.
 Clear-Init/Memset im Audiokontext, kalte Cachepfade und DMA-Clean gehören
 zur späteren Spitzenlastmessung.
 
+Roomziele werden von genau einem Main-Schreiber als vollständige Generation
+veröffentlicht. Der Audio-Leser versucht höchstens einmal pro Renderabschnitt,
+mit maximal elf atomaren Wortloads und ohne Retry/Spin. Bei laufender oder
+geänderter Publikation behält er seinen letzten vollständigen Zielstand.
+Die acht unveränderten `expf`-Berechnungen bleiben vor der Publikation in Main;
+Audio-Zielcache36B plus Version4B. Gezielte Preemptionfälle und ganze normale
+PCM sind geprüft; tatsächliche IRQ-/Cachelatenz bleibt SD48. Details:
+[SD47_ROOM_HANDOFF_CHECKPOINT.md](SD47_ROOM_HANDOFF_CHECKPOINT.md).
+
 ARM `-fstack-usage` dokumentiert individuelle Compilerframes in
 `PRODUCT_BUILD_AUDIT.json`. Kein Beleg für ganze Callchains, Bibliotheks-
 Callees, Interruptstapel oder realen High-water. Der vorhandene DWT-Profiler
