@@ -1,0 +1,86 @@
+{
+  "scope": "Standalone H743 journal test image only; not Product Scene/UI/audio integration. Boot reads only; explicit one-shot SWD arming precedes pattern writes.",
+  "baseline_commit": "70ddde32dfaeaffe3399a9ee5c1f83b65cde40e3",
+  "existing_firmware_inputs_byte_equal": 263,
+  "device_accepted": false,
+  "hardware_timing_measured": false,
+  "audio_load_measured": false,
+  "native": {
+    "status": "passed",
+    "checks": 27752,
+    "ticks": 2529,
+    "erase_starts": 2,
+    "program_starts": 13,
+    "max_io_per_tick": 1
+  },
+  "sanitized_model": true,
+  "elf_machine": "ELF32 little-endian ARM",
+  "executable_bank": "Bank1 only",
+  "mailbox_memory": "DTCM",
+  "load_segments": [
+    {
+      "vaddr": 134217728,
+      "paddr": 134217728,
+      "file_bytes": 8652,
+      "memory_bytes": 8652,
+      "flags": 7
+    },
+    {
+      "vaddr": 536870912,
+      "paddr": 134226380,
+      "file_bytes": 16,
+      "memory_bytes": 16,
+      "flags": 6
+    },
+    {
+      "vaddr": 536870944,
+      "paddr": 134226396,
+      "file_bytes": 0,
+      "memory_bytes": 2040,
+      "flags": 6
+    }
+  ],
+  "vector_indices": {
+    "reset": 1,
+    "busfault": 5,
+    "systick": 15,
+    "flash": 20
+  },
+  "vector_targets": {
+    "reset": 134223233,
+    "busfault": 134219937,
+    "systick": 134219897,
+    "flash": 134219901
+  },
+  "initial_stack": 537001984,
+  "bin_bytes": 8668,
+  "bin_sha256": "b2fff3f68e4d2c0757b5fbf3ee3a0eddd36360f16d3923d8e91c0c3e7c0c111b",
+  "dtcm_static_bytes": 2072,
+  "reserved_stack_bytes": 16384,
+  "dtcm_spare_after_reserve": 112616,
+  "static_frames_bytes": {
+    "bench.c.su:scene_bench_init": 24,
+    "bench.c.su:scene_bench_tick": 64,
+    "interrupts.c.su:SysTick_Handler": 0,
+    "interrupts.c.su:FLASH_IRQHandler": 0,
+    "interrupts.c.su:HardFault_Handler": 0,
+    "interrupts.c.su:MemManage_Handler": 0,
+    "interrupts.c.su:UsageFault_Handler": 0,
+    "interrupts.c.su:NMI_Handler": 0,
+    "main.c.su:fail": 0,
+    "main.c.su:main": 64
+  },
+  "frames_scope": "individual compiler frames, not measured stack high-water",
+  "source_sha256": {
+    "bench/scene_flash_h743/CMakeLists.txt": "bdee0eb9f97df179eebd99f55747d7a994b6e60e43fb287b53dfe873b401d4f1",
+    "bench/scene_flash_h743/bench.c": "b64f769ea2ac30e9875c5361dd52fbc2765ad8ea123ae364eba1cbd1caedde69",
+    "bench/scene_flash_h743/bench.h": "863ed4d1484fb1a85dc2bd9458a268209da0ad582f3f0689010fdaadbd9ec85a",
+    "bench/scene_flash_h743/bench.ld": "f883c9e76cb27a0d3b1342393896862a59c187a9fc0f0ce161d8cca0e819f381",
+    "bench/scene_flash_h743/busfault_vector.S": "4740a36db22bb5a843ef8a5cc478307f517d10bcf3018861fe91bc34625252e2",
+    "bench/scene_flash_h743/commands.gdb": "9525842a79af0e46d1ed371f0b840889b9a31c74bf54034bd4203bad00e42866",
+    "bench/scene_flash_h743/interrupts.c": "70429360169dae04a7d902954a812f88325872fd17c85ff0545159dc691ccb00",
+    "bench/scene_flash_h743/main.c": "0bd8d23b92fd546d37ad0643925927d621b724a94d8dcc667eb8241ef322f8a9",
+    "bench/scene_flash_h743/test_bench.c": "ec215a095d2b53cde70c13f3283bdfae3f77dfb18b13b0d028c5418738805f72",
+    "tools/review_h743_scene_bench.py": "2026094e9de035ad09e06974b3ff1be6eb23c614b35b8a39c01970f2b25477c7"
+  }
+}

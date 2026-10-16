@@ -8,14 +8,14 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-15**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-16**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-15
+## Offener Arbeitsstand 2026-10-16
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
 11 technische Blöcke:9 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
@@ -270,8 +270,18 @@ Scene-Komponenten und echter ST-HAL gelinkt; geschütztes LDR/BX binär geprüft
 Alle258 bisherigen Firmwareinputs exakt PR167. Noch kein CMake-/Main-/Vektor-/
 UI-Anschluss: Live-Save synchron, Journal OFF, keine reale ECC-/Zeitabnahme.
 Details:[SD41_H743_SCENE_IO_CHECKPOINT.md](SD41_H743_SCENE_IO_CHECKPOINT.md).
-Nächste einzelne Einheit: isolierter Geräte-Testbuild mit explizitem Vektor-/
-Adapteranschluss; anschließend echte ECC-/Power-cut-/IRQ-Abnahme.
+SD41 hat jetzt auch diesen isolierten Geräte-Testbuild: eigener Main/Linker,
+echte RESET-/SysTick-/FLASH-/BusFault-Vektoren und HAL-Callbacks im vollständigen
+ARM-ELF geprüft. Alle263 bisherigen Firmwareinputs unverändert. Boot liest nur;
+SWD-SAVE verlangt eine bestätigte, zeitlich begrenzte Einmalfreigabe.27752 native
+Checks/2529 Ticks mit echtem Adapter/Writer/Recovery, max1 IO/Tick und ASan/UBSan
+bestehen. BIN8668B ausschließlich Bank1, statisch2072B DTCM,16KiB Stackreserve.
+Das Schreibmuster ist keine SCN7-Scene; Anleitung verlangt eigenes Testgerät
+und Backup der benutzten Bank2-Journalsektoren. Kein Gerät programmiert, kein
+Audio-/UI-/Produktanschluss. Vorheriger PR168 abschließend19/19 CI grün.
+Details:[SD41_H743_SCENE_BENCH_CHECKPOINT.md](SD41_H743_SCENE_BENCH_CHECKPOINT.md).
+Nächste Grenze: echte ECC-/Power-cut-/IRQ-Abnahme; ohne Gerät als nächste
+einzelne unabhängige Softwareeinheit SD47. SD41 bleibt offen, Zählung unverändert.
 Finale Quellen-/Raum-/Nature-Hörwahl
 bleibt erforderlich. SD29/SD30-Windauswahl oder Naturumbau erst nach deren Nutzenentscheidung.
 Keine UI vor Soundabnahme.
