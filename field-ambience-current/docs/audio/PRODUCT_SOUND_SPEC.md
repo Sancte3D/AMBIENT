@@ -580,7 +580,14 @@ Kein Heap, kein I/O und keine Quellenanregung im Audio-Render. Drei feste
 Slots,16 Tails, drei feste Phrasenzustände und begrenzte Core-Registertabellen;
 höchstens zwei Vorbereitungen pro COAST-Tick, sonst eine, keine unbounded Suche.
 Pluck-Vorbereitung: fixer 1024-Float-Loop, höchstens acht harmonische Moden;
-im Produkt N≤315, keine große Stacktable. Sourcefilterkoeffizienten maximal
+manuell N≤315/n≤316 (Hz≥140), Generate N≤420/n≤421 (Hz≥105), wobei
+n=floor(N)+1. Die beiden n-Durchläufe zentrieren und normalisieren; höchstens
+1866 Bufferbearbeitungen pro Product-Start, keine große Stacktable. Die
+öffentliche Quellen-API ab60Hz bleibt mit N≤735/n≤736 ebenfalls begrenzt.
+Temporär instrumentierte echte Quellen bestehen die Unterbrechungen aller
+drei Pluck-Pässe; Firmwareinputs bleiben bytegleich PR171. Details:
+[SD47_SOURCE_PREPARATION_CHECKPOINT.md](SD47_SOURCE_PREPARATION_CHECKPOINT.md).
+Sourcefilterkoeffizienten maximal
 alle 32 Samples pro aktiver Bowed/Horn-Quelle; `tanf` bleibt ein echter
 Worst-case-CPU-Kandidat. Room pro Sample 8 Feedbacklinien +4 Allpässe;
 kaltes Room/Nature überspringt DSP, Zero-Übergang leert einmalig den Tank.

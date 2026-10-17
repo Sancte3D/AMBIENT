@@ -13,6 +13,10 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Actual source preparation, including each Pluck excitation pass iteration.
+# Fixture mode does not require old Git objects for a standalone host checkout.
+python3 "$src/tools/review_source_preparation.py" "$tmp/source-preparation" --fixture-only
+
 # Actual source retirement may precede Main's old stop publication. Reusing
 # that owner must keep the new note, while other/current stops remain valid.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_source_handoff.c" \

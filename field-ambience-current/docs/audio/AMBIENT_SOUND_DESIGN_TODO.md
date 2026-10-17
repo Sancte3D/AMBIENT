@@ -34,6 +34,24 @@ zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 |Hör-/Klangentscheidungen|18|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
 
+## Einzelner Fortschritt 2026-10-17 — SD47 Quellenvorbereitung
+
+Die echte Vorbereitung aller drei Quellen ist jetzt innerhalb der Arbeit
+unterbrochen und gegen einen vollständigen Float-Audioverlauf verglichen:
+4605 Fälle,5082 Audiohälften, C11/O2/Werror und ASan/UBSan grün. Bei Pluck
+jede Iteration der Füll-/Zentrier-/Normierpässe bei60 und146,83238Hz; vor
+Publikation hört Audio ausschließlich die alte Quelle. Uninstrumentierte
+Normalspuren bleiben exakt gleich. Keine Firmwareänderung, alle263 Inputs
+bytegleich PR171. Die bestehende lange WOODLAND-Artikulation bleibt erhalten.
+
+Eine falsche Ressourcenangabe ist korrigiert: N≤315 gilt nur manuell ab140Hz;
+Generate ab105Hz braucht die konservative Grenze N≤420/n≤421. Höchstens1866
+Pluck-Bufferiterationen pro Product-Start, keine neue Arbeit oder neue Töne.
+[SD47_SOURCE_PREPARATION_CHECKPOINT.md](SD47_SOURCE_PREPARATION_CHECKPOINT.md).
+SD47 wartet noch auf das übrige abschließende Spitzenlastinventar.24/54
+Hauptpunkte geschlossen,30 offen und11 technische Hauptblöcke unverändert;
+kein Hör-/Gerätehaken und keine reale WCET aus Hosttests.
+
 ## Einzelner Fortschritt 2026-10-17 — SD47 Quellenbesitzer
 
 Ein tatsächlicher Übergabefehler ist behoben: Audio konnte die alte Quelle
