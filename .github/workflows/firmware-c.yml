@@ -96,11 +96,36 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
-  room-handoff-review:
-    name: current coherent Room handoff and real Product PCM (SD47)
+  source-handoff-review:
+    name: current source owner handoff and real Product PCM (SD47)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch exact pre-fix baseline
+        run: git fetch --no-tags origin 6990f11d8ddbe0bf6a9676309b6589acd0b94b9b
+      - name: Install Cortex-M7 compiler and Newlib
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi cmake
+      - name: Verify source reuse, current stops, whole Product PCM and unchanged audio code
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_source_handoff.py build-source-handoff-review --sanitize --arm
+      - name: Upload current source handoff proof and Product ARM image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-source-handoff-proof
+          path: field-ambience-current/firmware-c-next/build-source-handoff-review/artifact
+          if-no-files-found: error
+          retention-days: 30
+
+  room-handoff-review:
+    name: archived coherent Room handoff and Product PCM (PR170)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the strict PR170 proof; current source proof runs above.
+          ref: 6990f11d8ddbe0bf6a9676309b6589acd0b94b9b
       - name: Fetch exact pre-fix baseline
         run: git fetch --no-tags origin e2ede28c0ccc653f1d641741285d58eb7d02e587
       - name: Install Cortex-M7 compiler and Newlib

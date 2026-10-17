@@ -8,14 +8,14 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-16**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-17**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-16
+## Offener Arbeitsstand 2026-10-17
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
 11 technische Blöcke:9 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
@@ -33,6 +33,28 @@ zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 |Prüfungen am echten Gerät|2|SD48, SD49|
 |Hör-/Klangentscheidungen|18|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
+
+## Einzelner Fortschritt 2026-10-17 — SD47 Quellenbesitzer
+
+Ein tatsächlicher Übergabefehler ist behoben: Audio konnte die alte Quelle
+beenden, bevor Main deren alten Stopp veröffentlichte. Bei erneuter Belegung
+löschte dieser Befehl den neuen Ton. Gegenprobe am unveränderten PR170 scheitert
+in allen drei Worlds. Main entfernt jetzt die beiden alten Besitzerbits vor
+der neuen Vorbereitung; andere und aktuelle Stopps bleiben erhalten.
+
+645 gezielte Fälle/48809 Assertions,1395 Audiohalb-Unterbrechungen an zehn
+Main-Grenzen, alle neun Worldpaare und sieben manuelle/Generate-Besitzer;
+C11/O2/Werror und ASan/UBSan grün.24 ganze12-s-Paare liefern identische normale
+PCM und echte Hooks, auch64/512. H743-Gegenlink: Flash+136B, kein neues RAM,
+Audio-Renderabschnitt und dessen88-B-Compilerframe unverändert. Zwei feste
+Main-Wort-RMWs, mögliche Exclusive-Retries; keine neue Audioarbeit oder echte
+Geräte-WCET behauptet. Quellen/Grammatiken und lange WOODLAND-Holds erhalten.
+[SD47_SOURCE_HANDOFF_CHECKPOINT.md](SD47_SOURCE_HANDOFF_CHECKPOINT.md).
+
+SD47 bleibt für die übrigen Hotpath-/Spitzenlastfälle offen.24/54 geschlossen,
+30 offen und11 technische Hauptblöcke bleiben bestehen. PR170 ist abschließend
+mit21/21 CI-Jobs grün; dessen frühere13/21-Meldung ist überholt. Kein neuer
+Hörhaken und keine Gerätefreigabe aus „weiter“.
 
 ## Hörfeedback 2026-10-08 — musikalische Priorität
 
