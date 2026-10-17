@@ -1,0 +1,57 @@
+{
+  "baseline_checked": true,
+  "baseline_commit": "7af108cb02c80425c959b58dc8b58ad5299c2465",
+  "families": [
+    {
+      "assertions": 1025293,
+      "audio_half_preemptions": 320,
+      "cases": 161,
+      "family": 0,
+      "normal_float_pcm_equal": true
+    },
+    {
+      "assertions": 1025293,
+      "audio_half_preemptions": 320,
+      "cases": 161,
+      "family": 1,
+      "normal_float_pcm_equal": true
+    },
+    {
+      "assertions": 18997211,
+      "audio_half_preemptions": 4442,
+      "cases": 4283,
+      "family": 2,
+      "normal_float_pcm_equal": true
+    }
+  ],
+  "firmware_inputs_byte_equal": 263,
+  "instrumentation": "Temporary source copies only; calls after actual statements and every Pluck excitation pass iteration. Main pauses for complete audio halves; no Main inside audio.",
+  "limitations": "Source-level directed preemption, not every machine instruction or hardware WCET/stack measurement.",
+  "new_runtime_state_bytes": 0,
+  "runtime_files_changed": 0,
+  "sanitized": true,
+  "source_sha256": {
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "5e13ddfe5dc4717a770e336fa8838e4f4bce4f1019aae4cd7ac4db9f95b79317",
+    "test/test_source_preparation.c": "eaa196a15dd2130f3432cff591faa17a2d51afdee50531449fd0e4ad266146a4",
+    "tools/review_source_preparation.py": "c02771b3b460438c94bb0a72840b3a78a9bdbe7fd5c4abecb6063bc0c426829a"
+  },
+  "uninstrumented_vs_observed_traces": [
+    {
+      "family": "bowed",
+      "float_bytes": 65536,
+      "sha256": "6dbdcc13dc29825c2c1954e4af3a9882900ceefa3ea6b285cfcb6fa2ae5dace9"
+    },
+    {
+      "family": "horn",
+      "float_bytes": 65536,
+      "sha256": "470ffd105fa3f0c3bb0f13089614e5d7489976cc94e53cc322247923a447a65c"
+    },
+    {
+      "family": "pluck",
+      "float_bytes": 65536,
+      "sha256": "31deab08af3d13e5271e29ff1d192d7f0439295517c3082658bcb30a57fc6f60"
+    }
+  ]
+}

@@ -96,6 +96,24 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  source-preparation-review:
+    name: current actual source preparation under audio IRQ (SD47)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged firmware baseline
+        run: git fetch --no-tags origin 7af108cb02c80425c959b58dc8b58ad5299c2465
+      - name: Verify every preparation pass and complete source PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_source_preparation.py build-source-preparation-review --sanitize
+      - name: Upload actual source preparation proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-source-preparation-proof
+          path: field-ambience-current/firmware-c-next/build-source-preparation-review/SD47_SOURCE_PREPARATION_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
   source-handoff-review:
     name: current source owner handoff and real Product PCM (SD47)
     runs-on: ubuntu-latest
