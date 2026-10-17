@@ -596,6 +596,16 @@ Audio-Zielcache36B plus Version4B. Gezielte Preemptionfälle und ganze normale
 PCM sind geprüft; tatsächliche IRQ-/Cachelatenz bleibt SD48. Details:
 [SD47_ROOM_HANDOFF_CHECKPOINT.md](SD47_ROOM_HANDOFF_CHECKPOINT.md).
 
+Vor einer neuen Quellenvorbereitung entfernt Main die alten Release-/Quick-
+Bits des nach tatsächlichem Retirement freien Besitzers. Ein Audio-IRQ kann
+die alte Quelle vor deren später Main-Stopp-Publikation beenden; dieser alte
+Befehl darf keinen neu belegten Ton löschen. Zwei atomare Wort-RMWs in Main,
+kein neuer State und keine zusätzliche Audiooperation. Andere Besitzer und
+gültige aktuelle Stopps bleiben erhalten. Ein Main-Schreiber, keine Engine-
+Steuerungsreentranz im Note-Hook; Cortex-M-Exclusive-Retries sind keine feste
+Main-WCET. Gezielte IRQ-Fälle, ganze normale PCM und echter ARM-Gegenlink:
+[SD47_SOURCE_HANDOFF_CHECKPOINT.md](SD47_SOURCE_HANDOFF_CHECKPOINT.md).
+
 ARM `-fstack-usage` dokumentiert individuelle Compilerframes in
 `PRODUCT_BUILD_AUDIT.json`. Kein Beleg für ganze Callchains, Bibliotheks-
 Callees, Interruptstapel oder realen High-water. Der vorhandene DWT-Profiler

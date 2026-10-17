@@ -20,6 +20,12 @@
 #include <stdatomic.h>
 #include <string.h>
 _Static_assert(ATOMIC_INT_LOCK_FREE==2,"Audio needs lock-free word atomics");
+#ifdef FAM_SOURCE_HANDOFF_TEST
+extern void engine_source_handoff_probe(unsigned point,uint8_t owner);
+#define SOURCE_HANDOFF_POINT(point,owner) engine_source_handoff_probe(point,owner)
+#else
+#define SOURCE_HANDOFF_POINT(point,owner) ((void)0)
+#endif
 enum { SLOTS=3,TAILS=16,SOURCES=16,BLOCK=AUDIO_BUFFER_FRAMES };
 typedef struct {
     float hz,velocity;
@@ -226,13 +232,27 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     /* Fixed dry-source calibration candidate. Shared by manual/generator;
      * no master AGC, automatic gain compensation or implicit second source. */
     float amp=velocity*(world==WORLD_WOODLAND ? .22f : .50f);
+    /* Main is the sole request writer. Reap proved this owner has no old
+     * source, but its release/quick request may have been posted after the
+     * retiring audio IRQ. Discard those old commands before publishing the
+     * new preparation. Audio only consumes bits; an IRQ at either clear is
+     * safe because the new source is not yet visible. No IRQ masking or
+     * added work in render; these two word RMWs run only in Main. */
+    SOURCE_HANDOFF_POINT(4,owner);
+    atomic_fetch_and_explicit(&release_mask,~(1u<<owner),memory_order_acq_rel);
+    SOURCE_HANDOFF_POINT(5,owner);
+    atomic_fetch_and_explicit(&quick_mask,~(1u<<owner),memory_order_acq_rel);
+    SOURCE_HANDOFF_POINT(6,owner);
     bool ok=world==WORLD_COAST ? bowed_try_note_on(owner,hz,amp) :
             world==WORLD_WOODLAND ? pluck_note_on(owner,hz,amp) : horn_try_note_on(owner,hz,amp);
+    SOURCE_HANDOFF_POINT(7,owner);
     if(!ok) return false;
     slots[empty]=(source_slot_t){.hz=hz,.velocity=velocity,.owner=owner,.family=(uint8_t)world,
         .used=true,.held=world!=WORLD_WOODLAND,.issued_epoch=atomic_load(&audio_epoch)};
+    SOURCE_HANDOFF_POINT(8,owner);
     nature_set_amount(nature_amount);
     atomic_store_explicit(&output_enabled,true,memory_order_release);
+    SOURCE_HANDOFF_POINT(9,owner);
     return true;
 }
 bool engine_try_note_on(uint8_t owner,float hz,float v) {
@@ -257,8 +277,11 @@ void engine_note_off(uint8_t owner) {
          * chord holds end with the source's own soft musical release.
          * Cancel preparations before their first DSP sample.
          * Context handovers still use quick_mask; Clear/Mute gate all paths. */
-        if(s->family!=WORLD_WOODLAND || !s->started || owner==6 || owner==7 || owner==15)
+        if(s->family!=WORLD_WOODLAND || !s->started || owner==6 || owner==7 || owner==15) {
+            SOURCE_HANDOFF_POINT(2,owner);
             atomic_fetch_or_explicit(&release_mask,1u<<owner,memory_order_release);
+            SOURCE_HANDOFF_POINT(3,owner);
+        }
         if(s->on_sent && !s->off_sent) {
             if(note_hook) note_hook(0,owner,s->hz,0);
             s->off_sent=true;
@@ -271,7 +294,10 @@ static void release_all(void) {
 static void retire_context(bool all) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used &&
        (all || slots[i].owner==6 || slots[i].owner==7 || slots[i].owner==15)) {
-        uint8_t owner=slots[i].owner;engine_note_off(owner);
+        uint8_t owner=slots[i].owner;
+        SOURCE_HANDOFF_POINT(0,owner);
+        engine_note_off(owner);
+        SOURCE_HANDOFF_POINT(1,owner);
         atomic_fetch_or_explicit(&quick_mask,1u<<owner,memory_order_release);
     }
     coast_pending=0;woodland_pending=highlands_pending=false;

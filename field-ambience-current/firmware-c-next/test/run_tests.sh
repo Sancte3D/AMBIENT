@@ -13,6 +13,14 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Actual source retirement may precede Main's old stop publication. Reusing
+# that owner must keep the new note, while other/current stops remain valid.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_source_handoff.c" \
+    "$src/src/world_grammar.c" "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+    "$src/src/ambient_room.c" "$src/src/nature.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/source_handoff_test"
+"$tmp/source_handoff_test"
+
 # Real Room under Main/audio preemption; no mixed coefficient publication.
 "$CC" "${CFLAGS[@]}" -Werror "$here/test_room_handoff.c" -lm -o "$tmp/room_handoff_test"
 "$tmp/room_handoff_test"
