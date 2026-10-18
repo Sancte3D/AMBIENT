@@ -96,6 +96,22 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  nature-handoff-review:
+    name: current Nature handoffs and unchanged runtime inventory (SD47)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact final runtime baseline
+        run: git fetch --no-tags origin b352dbf9799b3fa618eeb01a833ac2a776f1c64e
+      - name: Verify real Nature publications and complete float traces
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_nature_handoff.py build-nature-handoff --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-nature-handoff-proof
+          path: field-ambience-current/firmware-c-next/build-nature-handoff/SD47_NATURE_HANDOFF_METRICS.json
+          if-no-files-found: error
+
   room-clear-work-review:
     name: current bounded Room clear work and real Product PCM (SD47)
     runs-on: ubuntu-latest

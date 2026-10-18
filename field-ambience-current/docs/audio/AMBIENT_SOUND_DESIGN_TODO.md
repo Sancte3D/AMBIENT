@@ -34,6 +34,24 @@ zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 |Hör-/Klangentscheidungen|18|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
 
+## Einzelner Fortschritt 2026-10-18 — SD47 Abschlussinventar und Nature
+
+Das verbliebene SD47-DSP-/Übergabeinventar ist jetzt konkret abgeschlossen:
+Callsites, Besitzer, feste Schleifengrenzen, Publikation und Spitzen-/Stack-
+Kandidaten stehen in [SD47_HOTPATH_INVENTORY.md](SD47_HOTPATH_INVENTORY.md).
+Kein neuer belegter DSPfehler; alle263 bestehenden Firmwareinputs bytegleich
+PR173.120 echte Nature-Publikationsunterbrechungen und10580880 vollständig
+verglichene Stereo-Floatframes bestehen einschließlich schneller World-/Seed-
+Targets, Amount0/Stille, Clear und Neustart;64/512 bytegleich, Sanitizer grün.
+
+SD47 bleibt nur für zwei ausdrücklich benannte Abhängigkeiten offen:
+SD41 muss den weiterhin synchronen Live-Save ablösen, SD48 muss die ganze
+DMA-IRQ-Spitze und reale Stackreserve messen. Keine weiteren bereits grünen
+Room-/Quellen-Prep-/Stoppprüfungen als neue Arbeit beginnen. PR173 ist jetzt
+vollständig24/24 grün; sein vorheriger18/24-Zwischenstand ist überholt.
+24/54 geschlossen,30 offen,11 technische Hauptblöcke unverändert.
+Nächster unabhängiger Prüfblock in der Reihenfolge: SD11.
+
 ## Einzelner Fortschritt 2026-10-18 — SD47 Room-Clear-Arbeit
 
 Ein tatsächlicher Spitzenlastfall ist reduziert: Room-null/Dry und Clear/Mute
@@ -728,7 +746,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
 | SD45 | Hörgate Langzeit | Bisherige48min plus90min echte Phrasenentwicklung/mehrere Seeds/Grenzen; keine NaN/Limiter/Stuck, alle tatsächlichen Rückkehrstufen und Ende nach Stop; Langzeitform hören |
 | SD46 | geschlossen | Tatsächlicher ARM-Compile-/Funktionssymbol-/DMA-/Bank-Audit, Archive nicht nur umbenannt |
-| SD47 | Geräte-/Storagegate | Bounded Hotpath/Prep und Compilerframes dokumentiert; Journal außerhalb Audio-IRQ, Main-Save-Stall und echte Spitzen offen |
+| SD47 | DSP-/Übergabeinventar abgeschlossen; SD41/SD48 offen | Quellen/Room/Nature, feste Arbeit und Einzelframes geprüft; Rest exakt synchroner Product-Save (SD41) und ganze Geräte-IRQ-/Stackmessung (SD48), kein unbestimmtes Restinventar |
 | SD48 | echtes Gerät | DWT <0,60, null Misses und realer Stack-High-water mit UI/MIDI/Storage |
 | SD49 | echtes Gerät | Gebauter Ausgang, Pegel/DC/Noise/Pops/Lasten/Clock/Power/Cache/Flash prüfen |
 | SD50 | echte Hörer + Gerät | Alarm/Tube/Buzz/Beep/Ermüdung konkret lösen, keine Heilbehauptung |
@@ -1390,6 +1408,13 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Worst-case-Arbeit pro Tick/Block benannt, Output unabhängig von
   Datenrennen und Control-/Audioraten, CPU-/Stackkandidaten für SD48 dokumentiert.
   Voraussetzung: SD17/SD27/SD37/SD46.
+  **Abschlussinventar2026-10-18:** DSP-/Übergabecallsites und Arbeit vollständig
+  zugeordnet; Nature-Publikationen120 Fälle/10580880 ganze Stereo-Floatframes
+  inklusive64/512, Stille/Clear/Neustart und ASan/UBSan.263 bestehende Inputs
+  unverändert PR173. Siehe [SD47_HOTPATH_INVENTORY.md](SD47_HOTPATH_INVENTORY.md).
+  Kein weiterer belegter DSPbefund. Hauptpunkt bleibt für den synchronen
+  Product-Save/SD41 und echte IRQ-/Stackspitzen/SD48 offen; keine neue
+  Room-/Quellen-Prep-Kleinstprüfung als vermeintliches Restinventar.
 - [ ] **SD48 — Echte H743-Zeit-/Stackabnahme durchführen.**
   Nach UX-Integration: DWT inklusive Onset, maximale SHAPE-Releases, native/alte
   Engine-Retirement, Masterraum, schnell bewegte Targets, Display/LED und Storage;
