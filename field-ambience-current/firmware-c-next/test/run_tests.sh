@@ -13,6 +13,16 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Observe only Room's explicit memset calls; the observer performs real writes.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT -include "$here/room_clear_observer.h" \
+    -c "$src/src/ambient_room.c" -o "$tmp/room-clear-observed.o"
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_room_clear_work.c" \
+    "$tmp/room-clear-observed.o" "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" \
+    -lm -o "$tmp/room_clear_work_test"
+"$tmp/room_clear_work_test"
+
 # Actual source preparation, including each Pluck excitation pass iteration.
 # Fixture mode does not require old Git objects for a standalone host checkout.
 python3 "$src/tools/review_source_preparation.py" "$tmp/source-preparation" --fixture-only

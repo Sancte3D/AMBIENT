@@ -594,6 +594,13 @@ kaltes Room/Nature überspringt DSP, Zero-Übergang leert einmalig den Tank.
 Clear-Init/Memset im Audiokontext, kalte Cachepfade und DMA-Clean gehören
 zur späteren Spitzenlastmessung.
 
+Ein bereits kalter Room überspringt weitere Löschungen. Fallen Dry/Amount-null
+und Engine-Clear in dieselbe Audiohälfte, werden dessen60720 Clear-Zielbytes
+einmal statt zweimal beschrieben. Kalter Wiederholungs-Clear bleibt ohne
+Schreibarbeit; warmer Clear leert weiter vollständig. Kein Zeit-/Cache- oder
+Gesamtstackversprechen aus diesen C-Zielgrößen. Nachweise:
+[SD47_ROOM_CLEAR_WORK_CHECKPOINT.md](SD47_ROOM_CLEAR_WORK_CHECKPOINT.md).
+
 Roomziele werden von genau einem Main-Schreiber als vollständige Generation
 veröffentlicht. Der Audio-Leser versucht höchstens einmal pro Renderabschnitt,
 mit maximal elf atomaren Wortloads und ohne Retry/Spin. Bei laufender oder

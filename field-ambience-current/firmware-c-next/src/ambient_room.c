@@ -71,6 +71,10 @@ static void accept_targets(void) {
 }
 void ambient_room_enable(bool on) { atomic_store_explicit(&enabled,on,memory_order_release); }
 void ambient_room_clear(void) {
+    /* Audio-owned cold means every clearable buffer/state is already zero.
+     * Dry completion and whole-chain Clear can coincide in the same block;
+     * do not write the same 60 KiB twice. Init starts with cold=false. */
+    if(cold)return;
     memset(tank,0,sizeof tank); memset(diffusion,0,sizeof diffusion);
     memset(at,0,sizeof at); memset(diff_at,0,sizeof diff_at);
     memset(low,0,sizeof low); memset(hp_x,0,sizeof hp_x); memset(hp_y,0,sizeof hp_y); peak=0; cold=true;

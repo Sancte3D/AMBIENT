@@ -8,14 +8,14 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-17**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-18**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-17
+## Offener Arbeitsstand 2026-10-18
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
 11 technische Blöcke:9 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
@@ -33,6 +33,24 @@ zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 |Prüfungen am echten Gerät|2|SD48, SD49|
 |Hör-/Klangentscheidungen|18|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
+
+## Einzelner Fortschritt 2026-10-18 — SD47 Room-Clear-Arbeit
+
+Ein tatsächlicher Spitzenlastfall ist reduziert: Room-null/Dry und Clear/Mute
+konnten dieselbe bereits leere Hallarena im Audioblock nochmals löschen.
+Der vorhandene audioeigene Cold-Zustand vermeidet die zweite Löschung.
+Beobachtete Clear-Zielbytes pro betroffenem Block121440→60720, kalter
+Wiederholungs-Clear60720→0. Ein warmer Clear leert weiter vollständig.
+Das sind C-Zielgrößen, kein gemessener Busverkehr oder halbierte CPUzeit.
+
+36 echte Clear-/Mute-Fälle und24 ganze normale12-s-Product-Paare: PCM und
+Hooks vorher/nachher bytegleich, Sanitizer grün. Gepaarter H743-Link:
+Flash+8B, kein zusätzliches RAM, Room-Process-Instruktionsbytes gleich;
+eigener Clear-Compilerframe8→16B, keine Gesamtstack-/WCET-Behauptung.
+[SD47_ROOM_CLEAR_WORK_CHECKPOINT.md](SD47_ROOM_CLEAR_WORK_CHECKPOINT.md).
+SD47 bleibt für das restliche Abschlussinventar offen;24/54 geschlossen,
+30 offen,11 technische Hauptblöcke. PR172 ist jetzt vollständig23/23 grün,
+sein2004-B-CI-Proof gegen committed/lokal geprüft; alter Queued-Stand überholt.
 
 ## Einzelner Fortschritt 2026-10-17 — SD47 Quellenvorbereitung
 
