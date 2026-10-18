@@ -1,0 +1,276 @@
+{
+  "baseline_checked": true,
+  "baseline_commit": "659cb04df4d9e145c6de1f7aea9ecd17fe2b8db6",
+  "existing_compiled_inputs_byte_equal": 263,
+  "limitations": "Acks/admission observed on a10-ms Main grid; last-block Room peak/quiet can shift acceptance within a block plus control tick. No arbitrary control-rate or universal psychoacoustic threshold, hardware or hearing approval.",
+  "native": {
+    "cancel_cases": 6,
+    "common_tone_cases": 6,
+    "max_partition_accept_delta_frames": 441,
+    "real_tail_cases": 24,
+    "rows": [
+      {
+        "accepted_frame": 423801,
+        "block": 64,
+        "release": 0,
+        "retired_frame": 412776,
+        "room": 0,
+        "wait_frames": 11025,
+        "wet_at_retirement": 0,
+        "world": 0
+      },
+      {
+        "accepted_frame": 423360,
+        "block": 512,
+        "release": 0,
+        "retired_frame": 412776,
+        "room": 0,
+        "wait_frames": 10584,
+        "wet_at_retirement": 0,
+        "world": 0
+      },
+      {
+        "accepted_frame": 423801,
+        "block": 64,
+        "release": 0,
+        "retired_frame": 412776,
+        "room": 1,
+        "wait_frames": 11025,
+        "wet_at_retirement": 4.37343829e-07,
+        "world": 0
+      },
+      {
+        "accepted_frame": 423360,
+        "block": 512,
+        "release": 0,
+        "retired_frame": 412776,
+        "room": 1,
+        "wait_frames": 10584,
+        "wet_at_retirement": 4.93430719e-07,
+        "world": 0
+      },
+      {
+        "accepted_frame": 787626,
+        "block": 64,
+        "release": 1,
+        "retired_frame": 776601,
+        "room": 0,
+        "wait_frames": 11025,
+        "wet_at_retirement": 0,
+        "world": 0
+      },
+      {
+        "accepted_frame": 787185,
+        "block": 512,
+        "release": 1,
+        "retired_frame": 776601,
+        "room": 0,
+        "wait_frames": 10584,
+        "wet_at_retirement": 0,
+        "world": 0
+      },
+      {
+        "accepted_frame": 787626,
+        "block": 64,
+        "release": 1,
+        "retired_frame": 776601,
+        "room": 1,
+        "wait_frames": 11025,
+        "wet_at_retirement": 2.1325593e-07,
+        "world": 0
+      },
+      {
+        "accepted_frame": 787185,
+        "block": 512,
+        "release": 1,
+        "retired_frame": 776601,
+        "room": 1,
+        "wait_frames": 10584,
+        "wet_at_retirement": 4.20996003e-07,
+        "world": 0
+      },
+      {
+        "accepted_frame": 943299,
+        "block": 64,
+        "release": 0,
+        "retired_frame": 932274,
+        "room": 0,
+        "wait_frames": 11025,
+        "wet_at_retirement": 0,
+        "world": 1
+      },
+      {
+        "accepted_frame": 942858,
+        "block": 512,
+        "release": 0,
+        "retired_frame": 932274,
+        "room": 0,
+        "wait_frames": 10584,
+        "wet_at_retirement": 0,
+        "world": 1
+      },
+      {
+        "accepted_frame": 977256,
+        "block": 64,
+        "release": 0,
+        "retired_frame": 932274,
+        "room": 1,
+        "wait_frames": 44982,
+        "wet_at_retirement": 1.24788694e-05,
+        "world": 1
+      },
+      {
+        "accepted_frame": 977256,
+        "block": 512,
+        "release": 0,
+        "retired_frame": 932274,
+        "room": 1,
+        "wait_frames": 44982,
+        "wet_at_retirement": 2.39147175e-05,
+        "world": 1
+      },
+      {
+        "accepted_frame": 2009196,
+        "block": 64,
+        "release": 1,
+        "retired_frame": 1998171,
+        "room": 0,
+        "wait_frames": 11025,
+        "wet_at_retirement": 0,
+        "world": 1
+      },
+      {
+        "accepted_frame": 2008755,
+        "block": 512,
+        "release": 1,
+        "retired_frame": 1998171,
+        "room": 0,
+        "wait_frames": 10584,
+        "wet_at_retirement": 0,
+        "world": 1
+      },
+      {
+        "accepted_frame": 2043594,
+        "block": 64,
+        "release": 1,
+        "retired_frame": 1998171,
+        "room": 1,
+        "wait_frames": 45423,
+        "wet_at_retirement": 2.0769894e-05,
+        "world": 1
+      },
+      {
+        "accepted_frame": 2043594,
+        "block": 512,
+        "release": 1,
+        "retired_frame": 1998171,
+        "room": 1,
+        "wait_frames": 45423,
+        "wet_at_retirement": 2.07852463e-05,
+        "world": 1
+      },
+      {
+        "accepted_frame": 361620,
+        "block": 64,
+        "release": 0,
+        "retired_frame": 350595,
+        "room": 0,
+        "wait_frames": 11025,
+        "wet_at_retirement": 0,
+        "world": 2
+      },
+      {
+        "accepted_frame": 361179,
+        "block": 512,
+        "release": 0,
+        "retired_frame": 350595,
+        "room": 0,
+        "wait_frames": 10584,
+        "wet_at_retirement": 0,
+        "world": 2
+      },
+      {
+        "accepted_frame": 361620,
+        "block": 64,
+        "release": 0,
+        "retired_frame": 350595,
+        "room": 1,
+        "wait_frames": 11025,
+        "wet_at_retirement": 4.59789533e-07,
+        "world": 2
+      },
+      {
+        "accepted_frame": 361179,
+        "block": 512,
+        "release": 0,
+        "retired_frame": 350595,
+        "room": 1,
+        "wait_frames": 10584,
+        "wet_at_retirement": 5.44711213e-07,
+        "world": 2
+      },
+      {
+        "accepted_frame": 644301,
+        "block": 64,
+        "release": 1,
+        "retired_frame": 633276,
+        "room": 0,
+        "wait_frames": 11025,
+        "wet_at_retirement": 0,
+        "world": 2
+      },
+      {
+        "accepted_frame": 643860,
+        "block": 512,
+        "release": 1,
+        "retired_frame": 633276,
+        "room": 0,
+        "wait_frames": 10584,
+        "wet_at_retirement": 0,
+        "world": 2
+      },
+      {
+        "accepted_frame": 644301,
+        "block": 64,
+        "release": 1,
+        "retired_frame": 633276,
+        "room": 1,
+        "wait_frames": 11025,
+        "wet_at_retirement": 2.11754312e-07,
+        "world": 2
+      },
+      {
+        "accepted_frame": 643860,
+        "block": 512,
+        "release": 1,
+        "retired_frame": 633276,
+        "room": 1,
+        "wait_frames": 10584,
+        "wet_at_retirement": 2.53370047e-07,
+        "world": 2
+      }
+    ],
+    "synthetic_state_checks": 10,
+    "whole_pcm_stereo_frames_compared": 45962784
+  },
+  "new_runtime_state_bytes": 0,
+  "runtime_files_changed": 0,
+  "sanitized": true,
+  "scope": "Real Equal-to-Just rejection while held/releasing, all three current sources, release/Room endpoints,64/512, complete continuation controls and audio frame/epoch wrap; common Room tone and cancelled preparation. Separate synthetic ledger capacity/exact-zero deadline checks.",
+  "source_sha256": {
+    "src/ambient_room.c": "9633f78873608cf3924ce60b946e198fd031ec587572ecb5da306b971a164633",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/engine_product.c": "da6fda2bec7412393e1c169616cff16769c3e76ae15666a36a83bfdb4d6286f3",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/pluck.c": "5e13ddfe5dc4717a770e336fa8838e4f4bce4f1019aae4cd7ac4db9f95b79317",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/world_grammar.c": "a90cea1f8c86728a9136dc3b2332bda2c69393db9bab2fbfd0cbc19d092e6f78",
+    "test/test_product_tail_history.c": "7518000c8fa3d9f41a39c67ba8a7cd2595705d25f7ee2a8b184a56d4fb16fff2",
+    "tools/review_product_tail_history.py": "ed75d0d6f939e5da9adb77adb6ed0a3042a4794cbcb56a3ec356ed9229702c20"
+  }
+}

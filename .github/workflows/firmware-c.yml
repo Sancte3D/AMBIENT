@@ -96,6 +96,22 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  product-tail-history-review:
+    name: current Product tail-history release and continuation (SD12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged Product baseline
+        run: git fetch --no-tags origin 659cb04df4d9e145c6de1f7aea9ecd17fe2b8db6
+      - name: Verify real release, complete PCM and bounded history state
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_tail_history.py build-product-tail-history --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd12-tail-history-proof
+          path: field-ambience-current/firmware-c-next/build-product-tail-history/SD12_TAIL_HISTORY_METRICS.json
+          if-no-files-found: error
+
   product-harmony-review:
     name: current public Product harmony and register contract (SD11)
     runs-on: ubuntu-latest
