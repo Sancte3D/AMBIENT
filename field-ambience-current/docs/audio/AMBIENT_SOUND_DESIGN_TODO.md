@@ -18,22 +18,40 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 ## Offener Arbeitsstand 2026-10-18
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-9 technische Blöcke:7 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+8 technische Blöcke:6 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD11,SD12,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
-gehörte Teilton-/Register-/Tailwahl, Lautheitsbalance, musikalische Endwertwahl
+SD11,SD12,SD31,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
+gehörte Teilton-/Register-/Tailwahl, Geräuschrollen, Lautheitsbalance, musikalische Endwertwahl
 beziehungsweise Worldübergänge offen. Sie zählen
 zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|7|SD31, SD33, SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|6|SD33, SD41, SD45, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|20|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
+|Hör-/Klangentscheidungen|21|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD31, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
+
+## Einzelner Fortschritt 2026-10-18 — SD31 technische Geräuschwege geprüft
+
+Vollständiges Product-Inventar mit Eintritt, Besitzer, Rolle und Idle-/Endverhalten:
+alte Brown-Rumble-/Breath-/Warm-/Air-/Fjord-/Haze-/Desert-/Crackle-/Hiss-/Sea-Hum-
+Wege fehlen im tatsächlichen ARM-Link. Aktuelles PR176-Product-Artefakt heruntergeladen,
+API-Head/Digest/ZIP-CRC und73 Firmware-LOAD-Objekte sowie belegte Funktionen geprüft.
+Alle263 bestehenden Firmwareinputs bytegleich; aktueller vollständiger Hostrunner
+und H743-CI grün, vorhandene Nature-Handoffhashes stimmen. Keine neue DSP-Änderung
+oder erneuter Langzeitrender für dieses Inventar.
+
+Übrig nur deklarierte Quellenartikulation und optionale Nature, default0.
+Kein weiterer Softwarebefund; Ort, Grain/Anblasen, Bandresonanz und Maskierung
+bleiben gehörseitig offen. Die lange WOODLAND-Saite bleibt unverändert.
+[SD31_NOISE_PATHS_CHECKPOINT.md](SD31_NOISE_PATHS_CHECKPOINT.md).
+SD31 zählt jetzt zur Hörgruppe, bleibt ungecheckt.24/54 geschlossen,30 offen;
+technische Blöcke9→8 (6 Software/Prüfung+2 Gerät), Hörgruppe20→21.
+Nächste unabhängige technische Einheit: SD33.
 
 ## Einzelner Fortschritt 2026-10-18 — SD12 technische Tailhistorie abgeschlossen
 
@@ -764,7 +782,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD28 | Vergleich vorbereitet; Hörgate | Drei 27,5-s-Mit/Ohne-Proben, 18×112 s echte Fälle mit zwei Seeds und Nature0/.35/1; Noten/Besitzer/Phrasen64/512 gleich, Room unabhängig, Stop still; Nutzen und Weglassen offen |
 | SD29 | Hörgate | Unregelmäßige Wetter-/Gustuhren und Seedstarts; Homogenität nicht numerisch freigeben |
 | SD30 | Hörgate | Nur neue leise Wellen/Tropfen, kein Sea-Hum oder Sampleloop; Nutzen hören |
-| SD31 | Hörgate verbleibender Wege | Alttexturen auslinkt; übrig nur deklarierte Nature/Quellenartikulation |
+| SD31 | Software geprüft; Hörgruppe | Aktuelles ARM-Artefakt/73 LOAD-Objekte,263 gleiche Inputs und vollständiges Eintritts-/Idle-/Rolleninventar; Alttexturen auslinkt, nur deklarierte Nature/Quellenartikulation; gehörte Rolle/Resonanz/Maskierung offen |
 | SD32 | geschlossen | Vollständiges normiertes Parameterregister samt Aliases/retired API und Priorität |
 | SD33 | Hörgate | Begrenzte Activity/Color/Room/SHAPE und kurze Endpointvergleiche |
 | SD34 | Softwareprüfung abgeschlossen; Hörgate | 596 Render/209,2min;105 Solos/162 Summen/24 Genfälle; feste Gains,9,5dB Referenz-/5,1dB Maxreserve; Lautheitsbalance hören |
@@ -1111,6 +1129,15 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   und besteht ohne elektrischem Brumm-/Summcharakter, dominanter Bandresonanz,
   Maskierung oder nervöser Gleichförmigkeit. Sonst entfernen; keine neue Nature
   Library anlegen. Voraussetzung: SD00/SD28.
+  **Softwareabschluss 2026-10-18:** Jeder entfernte und verbleibende Weg ist mit
+  Eintritt/Besitz/Rolle/Idle/Ende zugeordnet. Das echte aktuelle PR176-ARM-Artefakt
+  bestätigt den Ausschluss, nicht bloß Amount0:73 Firmware-LOAD-Objekte und belegte
+  Funktionen geprüft, ZIP-Digest/CRC und Head stimmen.263 Firmwareinputs bytegleich;
+  aktueller vollständiger Host-/H743-Stand grün, vorhandene Nature-Handoffbelege
+  quellenidentisch. Kein weiterer Softwarebefund und kein neuer DSP-/Testumbau.
+  SD31 zählt zur Hörgruppe; die gehörte Orts-/Artikulationsrolle, Bandresonanz
+  und Maskierung bleiben offen. Kein Hauptpunkt-Haken aus dem Linkaudit.
+  Details:[SD31_NOISE_PATHS_CHECKPOINT.md](SD31_NOISE_PATHS_CHECKPOINT.md).
 
 ### 5. Musikalische Einflussbereiche, Pegel und Zustandswechsel
 
