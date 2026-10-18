@@ -94,6 +94,15 @@ Der bloße Archivordner oder Amount=0 gilt ausdrücklich nicht als Entfernung.
   werden für ausgehende Quellen reserviert, relevante Historie nicht verdrängt.
   Kein Anspruch auf universelle psychoakustische Unhörbarkeit dieser Schwelle.
 
+Der öffentliche Harmonie-/Registervertrag ist über alle12 Keys, beide
+Collections und Equal/Just an beiden echten Note-APIs geprüft:40032 Einzel-
+und Paarfälle,8060928 Stereo-Frames nach abgewiesenen Partnern bytegleich
+zum unberührten Kontrollton. Kein öffentlicher Zugang zu privaten Phrasen-
+registern. Dies prüft angewandte Hz/Zulassung und echte DSP-Acks, keine
+universelle gemessene Grundton-/Teilton- oder Wahrnehmungsfreigabe. SD11 ist
+softwareseitig geprüft; Quellen-/Teilton-/Registerhörwahl bleibt offen.
+[SD11_PUBLIC_HARMONY_CHECKPOINT.md](SD11_PUBLIC_HARMONY_CHECKPOINT.md).
+
 ## Drei deterministische, begrenzte Grammatiken
 
 Nur bestätigte Töne werden gespeichert. Ein Vorschlag verändert den lebenden

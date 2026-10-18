@@ -18,21 +18,38 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 ## Offener Arbeitsstand 2026-10-18
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-11 technische Blöcke:9 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+10 technische Blöcke:8 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale gehörte
-Lautheitsbalance, musikalische Endwertwahl beziehungsweise Worldübergänge offen. Sie zählen
+SD11,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
+gehörte Teilton-/Registerwahl, Lautheitsbalance, musikalische Endwertwahl
+beziehungsweise Worldübergänge offen. Sie zählen
 zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|9|SD11, SD12, SD31, SD33, SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|8|SD12, SD31, SD33, SD41, SD45, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|18|SD02, SD03, SD04, SD05, SD06, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
+|Hör-/Klangentscheidungen|19|SD02, SD03, SD04, SD05, SD06, SD11, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
+
+## Einzelner Fortschritt 2026-10-18 — SD11 technische Harmonik abgeschlossen
+
+Die noch fehlende systematische öffentliche Zulassung ist geprüft:40032
+Einzelton-/Paarfälle über3 Worlds×12 Keys×2 Collections×Equal/Just×beide
+öffentlichen APIs. Unabhängiger Frequenzbezug und deklarierte Intervallgrenzen,
+echte Quellen/DSP-Acks;3936 abgewiesene Paare erhalten8060928 ganze Stereo-
+Frames exakt gegenüber dem unberührten Kontrollton. Register-/3-Cent-Grenzen
+und fehlender privater Bypass bestehen nativ und unter ASan/UBSan.
+
+Bestehende All-key-Generatoren und aktuelle Teilton-/Quellenbelege sind
+zugeordnet;263 Firmwareinputs bleiben bytegleich PR174. Kein neuer belegter
+DSPfehler. [SD11_PUBLIC_HARMONY_CHECKPOINT.md](SD11_PUBLIC_HARMONY_CHECKPOINT.md).
+SD11 zählt jetzt zur Hörgruppe; Teilton-/Registerwahl bleibt ungecheckt.
+24/54 geschlossen,30 offen; technische Blöcke11→10 (8 Software/Prüfung+2 Gerät).
+Nächste unabhängige technische Einheit: SD12.
 
 ## Einzelner Fortschritt 2026-10-18 — SD47 Abschlussinventar und Nature
 
@@ -710,7 +727,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD08 | geschlossen | Originalowner, DSP-Ack, Storno, tatsächliche One-shot-/Release-Enden |
 | SD09 | geschlossen | Drei globale Slots / zwei Plucks auch Manual, kein held Steal |
 | SD10 | geschlossen | Gemeinsame Familie/Admit ohne Pad/Bass/Archive; SCN7-Migration geprüft |
-| SD11 | Hörgate | Zwei Cores,12 Keys, Equal/Just und niedrige Intervallgrenzen; COAST45..80, WOODLAND45..68 und HIGHLANDS45..75 jeweils in48 echten Phrasen geprüft; HIGHLANDS zusätzlich4 Seed/Wrap-Phrasen; Teilton-/Registerhörwahl offen |
+| SD11 | Software geprüft; Hörgruppe |40032 öffentliche Hz-/Paarfälle,8060928 ganze Rejektions-Frames exakt; zwei Cores/12 Keys/Equal/Just, private Register in je48 echten Phrasen; aktuelle Teiltonbelege zugeordnet, Teilton-/Registerhörwahl offen |
 | SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
 | SD13 | geschlossen | Alle drei Worlds: eigene begrenzte Rollen-/Phrasenzustände mit DSP-Ack; alte Einzeltickets/Alternativsuche im Product ersetzt; cancel/retry/Timer gültig, kein gehörtes Motiv ohne Start |
 | SD14 | Generator integriert; Hör-/Gerätegate offen | Gegenbewegung, gemeinsamer Akkordton, einmaliger Mittelton; echte Besitzer/Releases/Tails,48 Engine-Phrasen, volle Host-Suite und H743 geprüft; neue70-s-Probe noch hören |
@@ -862,6 +879,12 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Tatsächliche Frequenzen/Grundtöne und relevante Teiltonkonflikte
   berücksichtigen; keine Registerflucht, tiefe Reibung oder bloßer Parallelakkord.
   Key-Transposition bleibt im akzeptierten Quellenbereich. Voraussetzung: SD02–SD07.
+  **Technischer Abschluss2026-10-18:**40032 öffentliche Einzel-/Paarfälle,
+  tatsächliche Hz/Acks und8060928 bytegleiche Rejektions-Frames; nativ und
+  ASan/UBSan. Zusammen mit All-key-Generatoren und aktuellen Komponenten-
+  belegen ist keine weitere technische Zulassungslücke belegt. SD11 jetzt
+  Hörgruppe, weiterhin ungecheckt für Quellen-/Teilton-/Registerwahl.
+  [SD11_PUBLIC_HARMONY_CHECKPOINT.md](SD11_PUBLIC_HARMONY_CHECKPOINT.md).
 - [ ] **SD12 — Harmoniegedächtnis mit realen Releases/Effekttails verbinden.**
   Quellrelease, Raum, Echo/Blur und gegebenenfalls Shimmer-Oktave konservativ
   erfassen; Timeout/Schwellwert aus hörbarer Energie begründen.
