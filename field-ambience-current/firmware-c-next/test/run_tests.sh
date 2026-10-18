@@ -13,6 +13,9 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Nature's remaining Main/audio publications and complete cold/restart traces.
+python3 "$src/tools/review_nature_handoff.py" "$tmp/nature-handoff" --fixture-only
+
 # Observe only Room's explicit memset calls; the observer performs real writes.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT -include "$here/room_clear_observer.h" \
     -c "$src/src/ambient_room.c" -o "$tmp/room-clear-observed.o"

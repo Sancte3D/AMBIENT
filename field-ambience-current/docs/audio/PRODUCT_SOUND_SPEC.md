@@ -632,6 +632,16 @@ Das beweist keine SD-Nachrüstbarkeit; PCB-/Pin-/Busfragen bleiben davon getrenn
 Projektziel am Gerät: peak_load <0,60, null Deadline-Misses, gemessene
 Stackreserve mit Display/LED/MIDI/Storage. Kein CPU-Versprechen aus Hostzeit.
 
+Das abschließende [SD47-Arbeitsinventar](SD47_HOTPATH_INVENTORY.md) ordnet alle
+Prep-/DSP-/World-/Storagecallsites mit Besitz und festen Grenzen zu. Nature
+liest genau3 atomare Targets pro Renderabschnitt; Filter/Eventstate bleibt
+audioeigen. Für≤512 Frames höchstens20 analytisch begrenzte SVF-Koeffizienten-
+setzungen einschließlich eines World-/Seed-Resets (im gerichteten Test18
+beobachtet), höchstens8 Dropplätze.120 Store-Grenzunterbrechungen und ganze
+38-s-Verläufe über alle Worlds sind geprüft,263 Firmwareinputs unverändert.
+Main-Live-Save bleibt synchron und offen unter SD41; vollständige DMA-IRQ-
+Spitze inklusive Clipscan/Cache-Clean und realer Stack bleiben SD48.
+
 ## Hörnachweis und Freeze-Regel
 
 `tools/review_product_audio.py`: reale Quellen/Kette, RAW-Firmwarepegel plus
