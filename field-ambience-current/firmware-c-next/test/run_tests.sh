@@ -13,6 +13,9 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Actual tail-history release, common tone, cancellation and bounded wrap.
+python3 "$src/tools/review_product_tail_history.py" "$tmp/product-tail-history" --fixture-only
+
 # Shared public harmony/register contract, real DSP and complete rejects.
 python3 "$src/tools/review_product_harmony.py" "$tmp/product-harmony" --fixture-only
 

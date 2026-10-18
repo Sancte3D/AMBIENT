@@ -90,9 +90,19 @@ Der bloße Archivordner oder Amount=0 gilt ausdrücklich nicht als Entfernung.
   Saitenrelease; musikalischer Stop beendet sie ebenfalls damit.
 - Nach tatsächlichem Quellenende: maximal 16 konservative Raum-Hz-Einträge,
   Ende spätestens 7,2 s später (1,5× maximal nominalem T60), oder nach
-  250 ms gemessener nasser Ruhe unter 1e-5 ohne aktive Quellen. Drei Plätze
+  nominal250ms nasser Ruhe unter1e-5 ohne aktive Quellen, aus Maxima ganzer
+  Audioabschnitte gezählt. Keine exakt samplegezählte Quiet-Frist. Drei Plätze
   werden für ausgehende Quellen reserviert, relevante Historie nicht verdrängt.
   Kein Anspruch auf universelle psychoakustische Unhörbarkeit dieser Schwelle.
+
+Der direkte SD12-Nachweis prüft reale Hold-/Release-/Room- und Audioframe-/
+Epoch-Wrapfälle:45962784 ganze Stereo-Kontrollframes, Common-tone und Cancel
+sowie getrennte synthetische Deadline-/Kapazitätsgrenzen. An der gezielt
+versuchten Quiet-Freigabe weichen64/512-Obergrenzen maximal einen10-ms-
+Main-Tick ab. Ganze PCM-Gleichheit gilt dort für Rejektionskontrolle/Wrap
+innerhalb derselben Partition, nicht für den neuen Grenzstart über Partitionen.
+7,2s/250ms/1e-5 bleiben Hörkalibrierung. SD12 ist softwareseitig geprüft:
+[SD12_TAIL_HISTORY_CHECKPOINT.md](SD12_TAIL_HISTORY_CHECKPOINT.md).
 
 Der öffentliche Harmonie-/Registervertrag ist über alle12 Keys, beide
 Collections und Equal/Just an beiden echten Note-APIs geprüft:40032 Einzel-

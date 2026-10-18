@@ -18,22 +18,39 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 ## Offener Arbeitsstand 2026-10-18
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-10 technische Blöcke:8 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+9 technische Blöcke:7 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD11,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
-gehörte Teilton-/Registerwahl, Lautheitsbalance, musikalische Endwertwahl
+SD11,SD12,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
+gehörte Teilton-/Register-/Tailwahl, Lautheitsbalance, musikalische Endwertwahl
 beziehungsweise Worldübergänge offen. Sie zählen
 zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|8|SD12, SD31, SD33, SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|7|SD31, SD33, SD41, SD45, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|19|SD02, SD03, SD04, SD05, SD06, SD11, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
+|Hör-/Klangentscheidungen|20|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
+
+## Einzelner Fortschritt 2026-10-18 — SD12 technische Tailhistorie abgeschlossen
+
+24 reale Hold-/Release-/Roomfälle mit Equal→Just-Sperre, vollständiger
+Rejektionskontrolle und Audioframe-/Epoch-Wrap:45962784 Stereo-Frames je
+Prüfmodus bytegleich verglichen. Dazu6 echte warme Common-tone- und6 Cancel-
+Fälle sowie10 klar getrennte synthetische Deadline-/Kapazitäts-/Refreshchecks.
+Nativ und ASan/UBSan grün,263 Firmwareinputs bytegleich PR175.
+
+Die Freigabegrenze unterscheidet sich bei64/512-Obergrenzen höchstens einen
+10-ms-Main-Tick; keine samplegenaue Quiet-Frist oder ganze64/512-PCMgleichheit
+für diesen neuen Grenzstart behaupten. Die lange WOODLAND-Saite bleibt erhalten.
+[SD12_TAIL_HISTORY_CHECKPOINT.md](SD12_TAIL_HISTORY_CHECKPOINT.md).
+SD12 zählt jetzt zur Hörgruppe;7,2s/250ms/1e-5 bleiben gehörseitig zu kalibrieren.
+24/54 geschlossen,30 offen; technische Blöcke10→9 (7 Software/Prüfung+2 Gerät).
+PR175 ist abschließend26/26 grün, sein echter CI-Proof geprüft. Nächste
+unabhängige technische Einheit: SD31.
 
 ## Einzelner Fortschritt 2026-10-18 — SD11 technische Harmonik abgeschlossen
 
@@ -728,7 +745,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD09 | geschlossen | Drei globale Slots / zwei Plucks auch Manual, kein held Steal |
 | SD10 | geschlossen | Gemeinsame Familie/Admit ohne Pad/Bass/Archive; SCN7-Migration geprüft |
 | SD11 | Software geprüft; Hörgruppe |40032 öffentliche Hz-/Paarfälle,8060928 ganze Rejektions-Frames exakt; zwei Cores/12 Keys/Equal/Just, private Register in je48 echten Phrasen; aktuelle Teiltonbelege zugeordnet, Teilton-/Registerhörwahl offen |
-| SD12 | Hörgate | Reale Releases, 16 Hz-Tails, max 7,2 s / 250-ms-Quiet; Hörrelevanz kalibrieren |
+| SD12 | Software geprüft; Hörgruppe |24 echte Rejektions-/Room-/Wrapfälle,45962784 ganze Kontrollframes,6 Common-tone/6 Cancel,10 Stategrenzen; Freigabepartition maximal10ms verschieden;7,2s/250ms/1e-5 hören |
 | SD13 | geschlossen | Alle drei Worlds: eigene begrenzte Rollen-/Phrasenzustände mit DSP-Ack; alte Einzeltickets/Alternativsuche im Product ersetzt; cancel/retry/Timer gültig, kein gehörtes Motiv ohne Start |
 | SD14 | Generator integriert; Hör-/Gerätegate offen | Gegenbewegung, gemeinsamer Akkordton, einmaliger Mittelton; echte Besitzer/Releases/Tails,48 Engine-Phrasen, volle Host-Suite und H743 geprüft; neue70-s-Probe noch hören |
 | SD15 | Lange Quelle und Generator integriert; Hör-/Gerätegate offen | Sechs lange Akkordrollen-Starts mit real gehaltenen gemeinsamen Tönen, zwei Saiten inklusive Release,48 echte Phrasen und50-s-Engineprobe; kein Wiederanschlag gemeinsamer Töne; neue Hörwahl offen |
@@ -892,6 +909,13 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   verbinden, alte leise Fahne sperrt nicht dauerhaft jeden neuen Ton. Ein
   abgewiesener Vorschlag verbraucht keine gehörte Historie. Voraussetzung: SD08/SD11;
   endgültige Tailwerte nach SD19–SD27 nachführen.
+  **Technischer Abschluss2026-10-18:**24 echte Source-/Room-/Wrapfälle,
+  ganze Kontrollausgaben45962784 Stereo-Frames,6 Common-tone/6 Cancel und10
+  getrennte Stategrenzen.263 Firmwareinputs unverändert; native/Sanitizer grün.
+  Quiet-Freigabe aus Blockmaxima, beobachtet maximal10ms Partitionsabweichung;
+  kein samplegenauer250-ms- oder globaler64/512-Bytegleichheitsclaim.
+  SD12 jetzt Hörgruppe, weiterhin ungecheckt für gehörte Energie-/Wartewerte.
+  [SD12_TAIL_HISTORY_CHECKPOINT.md](SD12_TAIL_HISTORY_CHECKPOINT.md).
 - [x] **SD13 — World-Datenmodell und begrenzte Ereigniszustände bauen.**
   Je Welt kleine Zustandsmaschine, Motivspeicher, eigener Planungszustand/Seed,
   Quellenrollen und Defaults; gemeinsame Zulassung als Transaktion beibehalten.
