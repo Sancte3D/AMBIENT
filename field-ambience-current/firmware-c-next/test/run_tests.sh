@@ -13,6 +13,9 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Shared public harmony/register contract, real DSP and complete rejects.
+python3 "$src/tools/review_product_harmony.py" "$tmp/product-harmony" --fixture-only
+
 # Nature's remaining Main/audio publications and complete cold/restart traces.
 python3 "$src/tools/review_nature_handoff.py" "$tmp/nature-handoff" --fixture-only
 

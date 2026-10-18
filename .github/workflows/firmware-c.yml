@@ -96,6 +96,22 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  product-harmony-review:
+    name: current public Product harmony and register contract (SD11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged Product baseline
+        run: git fetch --no-tags origin e7c16650c10f466cb602ab2f3b24643a83f014a9
+      - name: Verify all-key public admission and whole rejected PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_harmony.py build-product-harmony --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd11-public-harmony-proof
+          path: field-ambience-current/firmware-c-next/build-product-harmony/SD11_PUBLIC_HARMONY_METRICS.json
+          if-no-files-found: error
+
   nature-handoff-review:
     name: current Nature handoffs and unchanged runtime inventory (SD47)
     runs-on: ubuntu-latest

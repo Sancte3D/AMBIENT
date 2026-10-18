@@ -1,0 +1,42 @@
+{
+  "baseline_checked": true,
+  "baseline_commit": "e7c16650c10f466cb602ab2f3b24643a83f014a9",
+  "existing_compiled_inputs_byte_equal": 263,
+  "limitations": "Applied Hz, admission, real DSP acks and complete rejected PCM, not a universal measured source-F0/partial/roughness or hearing acceptance. Source selection, partial/register audibility and actual output remain hearing/device gates.",
+  "native": {
+    "accepted_pairs": 16128,
+    "accepted_singles": 7200,
+    "collections": 2,
+    "keys": 12,
+    "maximum_accepted_hz": 445.240173,
+    "minimum_accepted_hz": 145.268219,
+    "pair_cases": 20064,
+    "public_apis": 2,
+    "rejected_pairs": 3936,
+    "single_cases": 19968,
+    "tunings": 2,
+    "unchanged_rejected_stereo_frames": 8060928,
+    "worlds": 3
+  },
+  "new_runtime_state_bytes": 0,
+  "oracle": "Independent double-precision Equal/Just reference, fixed Core bitsets and declarative forbidden cent bands; no call to production private admission helpers. Full 2048-frame real PCM continuation after rejected pairs matches its untouched first-note control.",
+  "runtime_files_changed": 0,
+  "sanitized": true,
+  "scope": "Current public Manual/World APIs only, 140..470 Hz and MIDI50..69. Internal phrase registers are covered by existing real all-key generator tests, not opened through these public APIs.",
+  "source_sha256": {
+    "src/ambient_room.c": "9633f78873608cf3924ce60b946e198fd031ec587572ecb5da306b971a164633",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/engine_product.c": "da6fda2bec7412393e1c169616cff16769c3e76ae15666a36a83bfdb4d6286f3",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/pluck.c": "5e13ddfe5dc4717a770e336fa8838e4f4bce4f1019aae4cd7ac4db9f95b79317",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/world_grammar.c": "a90cea1f8c86728a9136dc3b2332bda2c69393db9bab2fbfd0cbc19d092e6f78",
+    "test/test_product_harmony.c": "2b746b9be319cfd5b1bb319e41b55a7172e8af5fcefe9642db114469b2d7a21b",
+    "tools/review_product_harmony.py": "15e489b865c191c8bbdeb92ad43b11bacf7f8546592d5afe76fb7a6445c0e3e4"
+  }
+}
