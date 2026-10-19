@@ -18,22 +18,43 @@ physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 ## Offener Arbeitsstand 2026-10-19
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-7 technische Blöcke:5 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+6 technische Blöcke:4 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD11,SD12,SD31,SD33,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
+SD11,SD12,SD31,SD33,SD34,SD35,SD37 und SD45 sind softwareseitig geprüft und bleiben für die finale
 gehörte Teilton-/Register-/Tailwahl, Geräuschrollen, Lautheitsbalance, musikalische Endwertwahl
-beziehungsweise Worldübergänge offen. Sie zählen
+beziehungsweise Worldübergänge und Langzeitform offen. Sie zählen
 zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|5|SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|4|SD41, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|22|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD31, SD33, SD34, SD35, SD37, SD44, SD50|
+|Hör-/Klangentscheidungen|23|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD31, SD33, SD34, SD35, SD37, SD44, SD45, SD50|
 |Abschließender Gesamtcheck|1|SD53|
+
+## Einzelner Fortschritt 2026-10-19 — SD45 durchgehende Recovery geprüft
+
+Die noch fehlende gemeinsame Sequenz ist ergänzt: sechs World-/Scenezyklen,
+native Savefehler/Retry, CRC-Fallback/Recovery und Start/Stop/Mute in einer
+ununterbrochenen800-s-Engine-Sitzung, danach lange manuelle WOODLAND über
+Worldwahl bis natürlichem Ende. Zwei Seeds×64/512-Obergrenzen, je normale/
+wrappende Mainclock:141120000 ganze Stereo-Frames und komplette Hooks pro
+Prüfmodus bytegleich. Native und ASan/UBSan gleich;16 Captures/213min20s echtes
+Audio insgesamt,91 bestätigte Starts an91 frischen Reservierungen je Capture.
+Keine NaN/Limiter/Stuck, geplante stille Endphasen exakt Null, physisch≤3/Pluck≤2.
+Alle263 Firmwareinputs unverändert, eigener aktueller SD45-CI-Job hinzugefügt.
+
+Kein Flash-/ECC-/Power-cut- oder Hardwarezeitpass; Product-Save synchron,
+Journal OFF. Bekannte Partitions-/Quiet-Grenze bleibt, keine ganze64/512-
+Kreuzgleichheit behauptet. Vorhandene lange Phrasen-/Stress-/Recoverybelege
+zugeordnet, musikalische Langzeitform weiter hören. SD45 bleibt ungecheckt
+und zählt zur Hörgruppe.24/54 geschlossen,30 offen; technische Blöcke7→6
+(4 Software/Abschluss+2 Gerät), Hörgruppe22→23.
+[SD45_LONG_RECOVERY_CHECKPOINT.md](SD45_LONG_RECOVERY_CHECKPOINT.md).
+Nächste unabhängige Einheit: SD51, Softwarekandidat ohne vorzeitigen finalen Freeze.
 
 ## Einzelner Fortschritt 2026-10-19 — SD33 technische Parameterbereiche geprüft
 
@@ -814,7 +835,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD42 | geschlossen softwareseitig | 42 Summen-/Registerprobes: True Peak ≥6 dB Reserve, DC/Mono/NaN/Clip; physische Ausgabe SD49 |
 | SD43 | geschlossen | Echte C-Kette, SHA/Parameter/Trace/rohe Pegel/fester Gain; jeder Hör-WAV 27 s |
 | SD44 | Hörgate | Blindpaket A/B/C: gleiche Key/Tuning, ohne Room/Nature; Antwortschlüssel separat |
-| SD45 | Hörgate Langzeit | Bisherige48min plus90min echte Phrasenentwicklung/mehrere Seeds/Grenzen; keine NaN/Limiter/Stuck, alle tatsächlichen Rückkehrstufen und Ende nach Stop; Langzeitform hören |
+| SD45 | Software geprüft; Hörgruppe | Zusätzlich800-s-World-/Scene-/Recovery-Sitzungen,2 Seeds/64/512 und vier volle Mainwrap-PCM-/Hookpaare;141120000 Stereo-Frames je Modus, native/ASan/UBSan; Langzeitform hören, Flash/ECC weiterSD41 |
 | SD46 | geschlossen | Tatsächlicher ARM-Compile-/Funktionssymbol-/DMA-/Bank-Audit, Archive nicht nur umbenannt |
 | SD47 | DSP-/Übergabeinventar abgeschlossen; SD41/SD48 offen | Quellen/Room/Nature, feste Arbeit und Einzelframes geprüft; Rest exakt synchroner Product-Save (SD41) und ganze Geräte-IRQ-/Stackmessung (SD48), kein unbestimmtes Restinventar |
 | SD48 | echtes Gerät | DWT <0,60, null Misses und realer Stack-High-water mit UI/MIDI/Storage |
@@ -1497,6 +1518,18 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   unerklärte Dauerstille, kurzer Dauermotifloop, NaN oder zunehmende Energie.
   Aus gewählten Zeitpunkten kurze Hörproben; kein langes WAV an Nutzer.
   Voraussetzung: SD37–SD43.
+  **Softwareabschluss2026-10-19:** Vorhandene lange Phrasen-/Stress-/Statebelege
+  durch echte gemeinsame World-/Scene-/Fehler-/Recovery-/Neustartsequenz ergänzt.
+  Genau eine Engineinitialisierung je800s,2 Seeds×64/512×Normal/Mainwrap;
+  ganze PCM/Hookpaare141120000 Stereo-Frames pro Modus exakt. Native/ASan/UBSan
+  gleiche Metrik,16 ganze Captures/213min20s über beide Modi; bestätigte Quellen
+  an frischer physischer Reservierung, Quellen-/Clear-/Stillegrenzen bestehen.
+  Native512-B-RAM-Scene-Backend statt erfundener Siliziumprüfung. Product-Save
+  bleibt synchron/Journal OFF; echter Flash-/ECC-/Storageanschluss weiter SD41.
+  Keine ganze64/512-PCM-Kreuzgleichheit an bekannten Quiet-Grenzen behauptet.
+  Alle263 Firmwareinputs gleich. Eigener aktueller strikter SD45-CI-Job.
+  SD45 bleibt ungecheckt und zählt für gehörte Langzeitform zur Hörgruppe.
+  Details:[SD45_LONG_RECOVERY_CHECKPOINT.md](SD45_LONG_RECOVERY_CHECKPOINT.md).
 - [x] **SD46 — Entfernte Produktpfade tatsächlich auslinken.**
   Nach Migration Archiv-/Altquellen, doppelte Raumwege und unbenötigte Buffer
   aus H743-Produktauswahl entfernen; Referenzcode nachvollziehbar behalten.
