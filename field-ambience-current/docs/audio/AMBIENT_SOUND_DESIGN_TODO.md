@@ -8,32 +8,50 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-18**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-19**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
 [PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
 physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
 `FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-18
+## Offener Arbeitsstand 2026-10-19
 
 54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-8 technische Blöcke:6 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
+7 technische Blöcke:5 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
 Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
 enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
 Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
 zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD11,SD12,SD31,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
+SD11,SD12,SD31,SD33,SD34,SD35 und SD37 sind softwareseitig geprüft und bleiben für die finale
 gehörte Teilton-/Register-/Tailwahl, Geräuschrollen, Lautheitsbalance, musikalische Endwertwahl
 beziehungsweise Worldübergänge offen. Sie zählen
 zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|6|SD33, SD41, SD45, SD47, SD51, SD52|
+|Software-/Prüfblöcke|5|SD41, SD45, SD47, SD51, SD52|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|21|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD31, SD34, SD35, SD37, SD44, SD50|
+|Hör-/Klangentscheidungen|22|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD31, SD33, SD34, SD35, SD37, SD44, SD50|
 |Abschließender Gesamtcheck|1|SD53|
+
+## Einzelner Fortschritt 2026-10-19 — SD33 technische Parameterbereiche geprüft
+
+Activity/Color/Room sowie getrennte Attack-/Releasebereiche vollständig mit
+aktuellen Settern, Kennlinien und vorhandenen Ensemble-/Kombinationsbelegen
+zugeordnet. COAST-Activity und lange WOODLAND-Color sind bereits kalibriert;
+kein weiterer belegter Softwarebefund. Zehn von zwölf Release-Checkpoint-
+Corequellen und alle sieben öffentlichen Reglerfunktionen aktuell bytegleich.
+Spätere Engine-/Roomkorrekturen und historische PCM-Belege ausdrücklich getrennt;
+keine alte Aufnahme als frisch gerendert bezeichnet.263 Firmwareinputs exaktPR177,
+Runtime identisch zum vollständigen grünen PR176-Host/H743-Stand (27/27 CI).
+[SD33_CONTROL_CONSOLIDATION_CHECKPOINT.md](SD33_CONTROL_CONSOLIDATION_CHECKPOINT.md).
+
+SD33 zählt jetzt zur Hörgruppe und bleibt ungecheckt. Musikalischer Nutzen,
+gehörte Endwerte und physische Zuordnung bleiben offen; keine Klangänderung.
+24/54 geschlossen,30 offen; technische Blöcke8→7 (5 Software/Prüfung+2 Gerät),
+Hörgruppe21→22. SD41/SD47 warten auf ihre Geräteabhängigkeiten; nächste
+unabhängige technische Einheit ist SD45.
 
 ## Einzelner Fortschritt 2026-10-18 — SD31 technische Geräuschwege geprüft
 
@@ -784,7 +802,7 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD30 | Hörgate | Nur neue leise Wellen/Tropfen, kein Sea-Hum oder Sampleloop; Nutzen hören |
 | SD31 | Software geprüft; Hörgruppe | Aktuelles ARM-Artefakt/73 LOAD-Objekte,263 gleiche Inputs und vollständiges Eintritts-/Idle-/Rolleninventar; Alttexturen auslinkt, nur deklarierte Nature/Quellenartikulation; gehörte Rolle/Resonanz/Maskierung offen |
 | SD32 | geschlossen | Vollständiges normiertes Parameterregister samt Aliases/retired API und Priorität |
-| SD33 | Hörgate | Begrenzte Activity/Color/Room/SHAPE und kurze Endpointvergleiche |
+| SD33 | Software geprüft; Hörgruppe | Kennlinien und spätere Fixes konsolidiert,7 öffentliche Setter/10 Release-Corequellen bytegleich,263 Inputs aktueller Host/H743-Basis; musikalische Endwerte und Nutzen hören |
 | SD34 | Softwareprüfung abgeschlossen; Hörgate | 596 Render/209,2min;105 Solos/162 Summen/24 Genfälle; feste Gains,9,5dB Referenz-/5,1dB Maxreserve; Lautheitsbalance hören |
 | SD35 | Softwareprüfung abgeschlossen; Hörgate | 77 aktuelle Szenarien/157 Render;1049 echte Quellenreservierungen,64/512 exakt, schnelle Regler/volle natürliche Tails; musikalische Endwertwahl offen |
 | SD36 | geschlossen | SCN5/6→SCN7, 368 B, CRC, Provenienz, fehlgeschlagener Save-RAM-Rollback |
@@ -1265,6 +1283,16 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Details:[SD33_RELEASE_CHECKPOINT.md](SD33_RELEASE_CHECKPOINT.md).
   Die anschließende SD34-Softwareprüfung ist abgeschlossen (unten).
   SD33 bleibt für Hören/Nutzen offen.
+  **Softwareabschluss2026-10-19:** Aktuelle Kennlinien/Setter-/Quellenverträge und
+  alle vorhandenen Einzel-/Kombinationsbelege konsolidiert. Die zwei früheren
+  COAST-Activity-/WOODLAND-Colorbefunde sind bearbeitet; kein weiterer technischer
+  Rest festgestellt. Zehn Corequellen und sieben komplette öffentliche Setter
+  bytegleich zum Release-Checkpoint; Engine/Room später geändert und separat
+  über aktuelle Übergabe-/Clearbelege gedeckt. Keine neuen PCM-Gleichheiten zu
+  historischen Captures behauptet.263 aktuelle Inputs exaktPR177, Runtime wie
+  grüner PR176-Host/H743-Stand. Kein neuer DSP-/Testumbau oder voller Renderlauf.
+  SD33 bleibt ungecheckt und zählt zur Hörgruppe; physische Zuordnung SD52.
+  Details:[SD33_CONTROL_CONSOLIDATION_CHECKPOINT.md](SD33_CONTROL_CONSOLIDATION_CHECKPOINT.md).
 - [ ] **SD34 — Quellen-/Rollenpegel fest kalibrieren.**
   Bestehende Pluck/Bowed/Horn/Choir/Guembri-Verstärkungsfaktoren und Min/Max-Clamps
   gegen tatsächliches PCM prüfen. Register, Artikulation, Body, Send und Rollen
