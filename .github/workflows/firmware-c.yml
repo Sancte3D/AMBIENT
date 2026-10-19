@@ -96,6 +96,22 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
+  product-long-recovery-review:
+    name: current continuous Product World and Scene recovery (SD45)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact unchanged Product baseline
+        run: git fetch --no-tags origin fe0551c3f0ca1bbf2fc7d1693a2a8d337c5e77c2
+      - name: Verify continuous PCM, native Scene failures and Main timer wrap
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_long_recovery.py build-product-long-recovery --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd45-continuous-recovery-proof
+          path: field-ambience-current/firmware-c-next/build-product-long-recovery/SD45_LONG_RECOVERY_METRICS.json
+          if-no-files-found: error
+
   product-tail-history-review:
     name: current Product tail-history release and continuation (SD12)
     runs-on: ubuntu-latest
