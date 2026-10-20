@@ -64,6 +64,9 @@ void leds_clear_flash(uint32_t now_ms);
  * Shift+Display encoder. */
 void leds_set_backlight(uint16_t pwm);
 
+/* Fade all UI light targets to zero without changing their remembered state. */
+void leds_set_quiet(bool quiet);
+
 /* Active Generate breathes over four seconds at up to one third of white duty.
  * Render: read the live controls/modifier state, advance the fade math by
  * `dt_ms` ticks, and write the 16 PWM values into `out`. Caller pushes

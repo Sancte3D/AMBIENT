@@ -13,6 +13,9 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Real H743 human-input routing; full PCM and wake-only gestures.
+python3 "$src/tools/review_ui_idle.py" "$tmp/ui-idle" --fixture-only
+
 # Actual tail-history release, common tone, cancellation and bounded wrap.
 python3 "$src/tools/review_product_tail_history.py" "$tmp/product-tail-history" --fixture-only
 

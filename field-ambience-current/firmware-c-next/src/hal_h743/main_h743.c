@@ -46,6 +46,7 @@
 #include "cell_router.h"
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
+#include "ui_idle.h"
 #include "menu.h"        /* menu state machine */
 #include "battery.h"     /* r18.92: BAT_SENSE ADC -> % + USB glyph */
 #include "h743_hal.h"    /* SystemClock_Config, enc_set_ext_push */
@@ -279,6 +280,180 @@ static void midi_note_tap(int on, uint8_t source, float freq_hz, float amp) {
  * runs — C globals rely on zero-init. */
 extern uint32_t _sdtcm_bss, _edtcm_bss, _sd2_bss, _ed2_bss;
 
+/* Shared routing remains the real H743 Main path; host integration tests
+ * extract this function unchanged and inject only hardware input queues. */
+static ui_idle_t s_ui_idle;
+static int s_backlight_pct = 70;
+static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
+                              uint8_t *jack_pending, uint32_t *jack_edge_ms,
+                              bool *ui_dirty) {
+    bool was_quiet = s_ui_idle.quiet;
+    ui_idle_begin_frame(&s_ui_idle, now);
+    /* --- 1. Encoder rotate/push → params + menu ---
+     * r18.92: SHIFT + DISPLAY = backlight (SPEC transient overlay rule
+     * — a hardware modifier, not a menu row). 5 %/detent, 10..100 %. */
+
+    enc_event_t ev;
+    while (enc_pop_event(&ev)) {
+        if (ev.id < 1 || ev.id > ENC_COUNT) continue;
+        bool deliver = ev.kind == ENC_EVENT_ROTATE
+            ? ui_idle_rotation(&s_ui_idle, ev.value, now)
+            : ev.kind == ENC_EVENT_PUSH &&
+              ui_idle_button(&s_ui_idle, 15u + ev.id, ev.value != 0, now);
+        if (!deliver) continue;
+        if (ev.kind == ENC_EVENT_ROTATE) {
+            if (ev.id == PARAM_ENC_DISPLAY) {
+                if (controls_modifier_active(MOD_SHIFT)) {
+                    s_backlight_pct += ev.value * 5;
+                    if (s_backlight_pct < 10)  s_backlight_pct = 10;
+                    if (s_backlight_pct > 100) s_backlight_pct = 100;
+                    leds_set_backlight((uint16_t)(LED_PWM_MAX *
+                                                  s_backlight_pct / 100));
+                } else {
+                    menu_rotate(ev.value);          /* DISPLAY: Menü   */
+                    *ui_dirty = true;
+                }
+            } else {
+                /* r19.21: DRIVE/BRIGHT/VOLUME → params + Overlay */
+                knobs_rotate(ev.id, ev.value, now);
+            }
+        } else if (ev.kind == ENC_EVENT_PUSH) {
+            /* r19.21: BEIDE Flanken in die Kurz/Lang-Klassifikation.
+             * DISPLAY-kurz ruft menu_push ueber den Callback (feuert
+             * jetzt auf der Loslass-Flanke statt auf Druck — noetig
+             * fuer die Lang-Druck-Unterscheidung). */
+            knobs_push(ev.id, ev.value != 0, now);
+            if (ev.id == PARAM_ENC_DISPLAY && !ev.value)
+                *ui_dirty = true;            /* Menue evtl. veraendert */
+        }
+    }
+    knobs_tick(now);                        /* Lang-Druck-Schwelle */
+    scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
+    bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
+    gesture_tick(now);                      /* r19.25: Gesten-Wiedergabe */
+
+    /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
+     * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
+     * reads both ports (auto-clears the MCP interrupt). No polling —
+     * the I²C bus stays free for the 60 Hz LED/VU writes.
+     * r18.82: Cells sind DIGITALE Switches (GPA0-4, aktiv-LOW mit
+     * Pull-up), keine Hall-ADCs mehr. Gleicher Edge-Pfad wie die
+     * bench-erprobte Pico-Implementierung, geroutet durch die host-
+     * getestete controls.c-Statemachine. */
+    if (mcp_irq_pending()) {
+        uint16_t gpio = mcp_service();
+        uint16_t fell = (uint16_t)(*prev_gpio & ~gpio);   /* 1→0 = press */
+        uint16_t rose = (uint16_t)(~*prev_gpio & gpio);   /* 0→1 = release */
+
+        /* Human switches only; jack/VBUS and EN4's raw level bypass
+         * this gate. EN4 is gated once through the encoder event queue. */
+        for (unsigned key = 0; key <= MCP_BIT_MOD_CLEAR; ++key) {
+            uint16_t bit = (uint16_t)(1u << key);
+            if (!(bit & 0x1f1fu)) continue;
+            if ((fell & bit) && !ui_idle_button(&s_ui_idle, key, true, now))
+                fell &= (uint16_t)~bit;
+            if ((rose & bit) && !ui_idle_button(&s_ui_idle, key, false, now))
+                rose &= (uint16_t)~bit;
+        }
+
+        /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL).
+         * r19.22: solange der Scenes-Browser offen ist, WAEHLEN die
+         * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
+        for (uint8_t c = 0; c < 5; ++c) {
+            uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
+            if (scenes_ui_active() && !controls_modifier_active(MOD_GENERATE)) {
+                if (fell & m)
+                    scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
+                                   now);
+            } else {
+                /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
+                 * durch die gemeinsame Routing-Logik spielen.
+                 * r19.27: in Landscape ist Cell 5 die MEMORY-Steuerung
+                 * selbst — die darf NICHT in die Schleife aufgenommen
+                 * werden (sonst würde der aufgenommene Cell-5-Druck die
+                 * Schleife bei der Wiedergabe wieder stoppen). */
+                bool record = !(s_cell_mode == CELL_LAND && c == 4);
+                if (fell & m) { if (record) gesture_record_cell(c, true,  now);
+                                route_cell(c, true,  now); }
+                if (rose & m) { if (record) gesture_record_cell(c, false, now);
+                                route_cell(c, false, now); }
+            }
+        }
+
+        /* Modifier GPB0-4 (bits 8-12). r19.20: BOTH edges reach
+         * controls.c — SHIFT is momentary now (needs its release), and
+         * feeding releases uniformly keeps the toggles honest too
+         * (they only act on pressed=true). CLEAR press also drives the
+         * confirm-flash that existed since r18.64 but was never wired. */
+        if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
+        if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
+        if ((fell & (1u<<MCP_BIT_MOD_HOLD)) && !controls_modifier_active(MOD_GENERATE)) {
+            if (controls_modifier_active(MOD_SHIFT)) {
+                /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.
+                 * (Mischis SHIFT+GENERATE ist seit r19.24 New Field.) */
+                gesture_toggle(now);
+                gesture_state_t g = gesture_state();
+                overlay_show("GESTURE",
+                             g == GESTURE_REC  ? "REC"  :
+                             g == GESTURE_PLAY ? "LOOP" : "OFF", now, 0);
+            } else {
+                controls_modifier(MOD_HOLD, true);
+            }
+        }
+        if (rose & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, false);
+        if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
+        if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
+        if (fell & (1u<<MCP_BIT_MOD_GENERATE)) {
+            if (!controls_modifier_active(MOD_GENERATE)) prepare_listening(now);
+            if (controls_modifier_active(MOD_SHIFT)) {
+                /* r19.24: SHIFT+GENERATE = New Field — sicher AN + neuer,
+                 * reproduzierbarer Seed (via engine_gen_seed scene-bar). */
+                if (!controls_modifier_active(MOD_GENERATE))
+                    controls_modifier(MOD_GENERATE, true);
+                engine_generative_new_field(s_field_seed++ ^ now);
+                overlay_show("GENERATE", "NEW FIELD", now, 0);
+            } else {
+                controls_modifier(MOD_GENERATE, true);   /* normaler Toggle */
+                overlay_show("GENERATE", controls_modifier_active(MOD_GENERATE)
+                             ? "LISTENING" : "PLAY", now, 0);
+            }
+        }
+        if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
+        if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { cell_router_release_all(&s_cell_router, now, dispatch_cell);
+                                               controls_modifier(MOD_CLEAR, true);
+                                               bloom_all_off();  /* r19.23 */
+                                               landscape_all_off(now); /* r19.27 */
+                                               gesture_clear(now); /* r19.25 */
+                                               leds_clear_flash(now); }
+        if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
+
+        /* EN4 (volume) push lives on GPB5 — feed the level into the
+         * encoder layer so enc_pushed(4)/PUSH events stay uniform. */
+        {
+            uint16_t em = (uint16_t)(1u << MCP_BIT_ENC4_SW);
+            if ((fell | rose) & em)
+                enc_set_ext_push(4, (gpio & em) == 0);   /* active-low */
+        }
+
+        /* Jack-Detect GPA6 (r18.82-Hardware: PJ-320D-Switch oeffnet beim
+         * Einstecken → mit R_DET 10k/C_DET 1µF + MCP-Pull-up liest der
+         * Pin unplugged ≈ 0,3 V = LOW, plugged = HIGH). Edge → arm the
+         * debounce; applied below once stable for JACK_DEBOUNCE_MS. */
+        {
+            uint16_t jm = (uint16_t)(1u << MCP_BIT_JACK);
+            if ((fell | rose) & jm) {
+                *jack_pending = (gpio & jm) ? 1 : 0;
+                *jack_edge_ms = now;
+            }
+        }
+
+        *prev_gpio = gpio;
+    }
+
+    leds_set_quiet(s_ui_idle.quiet);
+    if (was_quiet && !s_ui_idle.quiet) *ui_dirty = true;
+}
+
 int main(void) {
     /* Zero the out-of-.bss DSP regions first (see linker script). */
     for (uint32_t *p = &_sdtcm_bss; p < &_edtcm_bss; ++p) *p = 0u;
@@ -408,6 +583,11 @@ int main(void) {
     uint8_t  jack_pending  = 0xFF;
     uint32_t jack_edge_ms  = 0;
 
+    uint32_t initially_down = (uint32_t)(~prev_gpio & 0x1f1fu);
+    for (unsigned id = 1; id <= ENC_COUNT; ++id)
+        if (enc_pushed((uint8_t)id)) initially_down |= UINT32_C(1) << (15u + id);
+    ui_idle_init(&s_ui_idle, HAL_GetTick(), initially_down);
+
     /* UI frame pacing. */
     uint32_t last_frame_ms = 0;
     bool     ui_dirty      = true;     /* draw the first frame immediately */
@@ -418,149 +598,7 @@ int main(void) {
     for (;;) {
         uint32_t now = HAL_GetTick();
 
-        /* --- 1. Encoder rotate/push → params + menu ---
-         * r18.92: SHIFT + DISPLAY = backlight (SPEC transient overlay rule
-         * — a hardware modifier, not a menu row). 5 %/detent, 10..100 %. */
-        static int backlight_pct = 70;
-        enc_event_t ev;
-        while (enc_pop_event(&ev)) {
-            if (ev.kind == ENC_EVENT_ROTATE) {
-                if (ev.id == PARAM_ENC_DISPLAY) {
-                    if (controls_modifier_active(MOD_SHIFT)) {
-                        backlight_pct += ev.value * 5;
-                        if (backlight_pct < 10)  backlight_pct = 10;
-                        if (backlight_pct > 100) backlight_pct = 100;
-                        leds_set_backlight((uint16_t)(LED_PWM_MAX *
-                                                      backlight_pct / 100));
-                    } else {
-                        menu_rotate(ev.value);          /* DISPLAY: Menü   */
-                        ui_dirty = true;
-                    }
-                } else {
-                    /* r19.21: DRIVE/BRIGHT/VOLUME → params + Overlay */
-                    knobs_rotate(ev.id, ev.value, now);
-                }
-            } else if (ev.kind == ENC_EVENT_PUSH) {
-                /* r19.21: BEIDE Flanken in die Kurz/Lang-Klassifikation.
-                 * DISPLAY-kurz ruft menu_push ueber den Callback (feuert
-                 * jetzt auf der Loslass-Flanke statt auf Druck — noetig
-                 * fuer die Lang-Druck-Unterscheidung). */
-                knobs_push(ev.id, ev.value != 0, now);
-                if (ev.id == PARAM_ENC_DISPLAY && !ev.value)
-                    ui_dirty = true;            /* Menue evtl. veraendert */
-            }
-        }
-        knobs_tick(now);                        /* Lang-Druck-Schwelle */
-        scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
-        bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
-        gesture_tick(now);                      /* r19.25: Gesten-Wiedergabe */
-
-        /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
-         * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
-         * reads both ports (auto-clears the MCP interrupt). No polling —
-         * the I²C bus stays free for the 60 Hz LED/VU writes.
-         * r18.82: Cells sind DIGITALE Switches (GPA0-4, aktiv-LOW mit
-         * Pull-up), keine Hall-ADCs mehr. Gleicher Edge-Pfad wie die
-         * bench-erprobte Pico-Implementierung, geroutet durch die host-
-         * getestete controls.c-Statemachine. */
-        if (mcp_irq_pending()) {
-            uint16_t gpio = mcp_service();
-            uint16_t fell = (uint16_t)(prev_gpio & ~gpio);   /* 1→0 = press */
-            uint16_t rose = (uint16_t)(~prev_gpio & gpio);   /* 0→1 = release */
-
-            /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL).
-             * r19.22: solange der Scenes-Browser offen ist, WAEHLEN die
-             * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
-            for (uint8_t c = 0; c < 5; ++c) {
-                uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
-                if (scenes_ui_active() && !controls_modifier_active(MOD_GENERATE)) {
-                    if (fell & m)
-                        scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
-                                       now);
-                } else {
-                    /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
-                     * durch die gemeinsame Routing-Logik spielen.
-                     * r19.27: in Landscape ist Cell 5 die MEMORY-Steuerung
-                     * selbst — die darf NICHT in die Schleife aufgenommen
-                     * werden (sonst würde der aufgenommene Cell-5-Druck die
-                     * Schleife bei der Wiedergabe wieder stoppen). */
-                    bool record = !(s_cell_mode == CELL_LAND && c == 4);
-                    if (fell & m) { if (record) gesture_record_cell(c, true,  now);
-                                    route_cell(c, true,  now); }
-                    if (rose & m) { if (record) gesture_record_cell(c, false, now);
-                                    route_cell(c, false, now); }
-                }
-            }
-
-            /* Modifier GPB0-4 (bits 8-12). r19.20: BOTH edges reach
-             * controls.c — SHIFT is momentary now (needs its release), and
-             * feeding releases uniformly keeps the toggles honest too
-             * (they only act on pressed=true). CLEAR press also drives the
-             * confirm-flash that existed since r18.64 but was never wired. */
-            if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
-            if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
-            if ((fell & (1u<<MCP_BIT_MOD_HOLD)) && !controls_modifier_active(MOD_GENERATE)) {
-                if (controls_modifier_active(MOD_SHIFT)) {
-                    /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.
-                     * (Mischis SHIFT+GENERATE ist seit r19.24 New Field.) */
-                    gesture_toggle(now);
-                    gesture_state_t g = gesture_state();
-                    overlay_show("GESTURE",
-                                 g == GESTURE_REC  ? "REC"  :
-                                 g == GESTURE_PLAY ? "LOOP" : "OFF", now, 0);
-                } else {
-                    controls_modifier(MOD_HOLD, true);
-                }
-            }
-            if (rose & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, false);
-            if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
-            if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
-            if (fell & (1u<<MCP_BIT_MOD_GENERATE)) {
-                if (!controls_modifier_active(MOD_GENERATE)) prepare_listening(now);
-                if (controls_modifier_active(MOD_SHIFT)) {
-                    /* r19.24: SHIFT+GENERATE = New Field — sicher AN + neuer,
-                     * reproduzierbarer Seed (via engine_gen_seed scene-bar). */
-                    if (!controls_modifier_active(MOD_GENERATE))
-                        controls_modifier(MOD_GENERATE, true);
-                    engine_generative_new_field(s_field_seed++ ^ now);
-                    overlay_show("GENERATE", "NEW FIELD", now, 0);
-                } else {
-                    controls_modifier(MOD_GENERATE, true);   /* normaler Toggle */
-                    overlay_show("GENERATE", controls_modifier_active(MOD_GENERATE)
-                                 ? "LISTENING" : "PLAY", now, 0);
-                }
-            }
-            if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
-            if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { cell_router_release_all(&s_cell_router, now, dispatch_cell);
-                                                   controls_modifier(MOD_CLEAR, true);
-                                                   bloom_all_off();  /* r19.23 */
-                                                   landscape_all_off(now); /* r19.27 */
-                                                   gesture_clear(now); /* r19.25 */
-                                                   leds_clear_flash(now); }
-            if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
-
-            /* EN4 (volume) push lives on GPB5 — feed the level into the
-             * encoder layer so enc_pushed(4)/PUSH events stay uniform. */
-            {
-                uint16_t em = (uint16_t)(1u << MCP_BIT_ENC4_SW);
-                if ((fell | rose) & em)
-                    enc_set_ext_push(4, (gpio & em) == 0);   /* active-low */
-            }
-
-            /* Jack-Detect GPA6 (r18.82-Hardware: PJ-320D-Switch oeffnet beim
-             * Einstecken → mit R_DET 10k/C_DET 1µF + MCP-Pull-up liest der
-             * Pin unplugged ≈ 0,3 V = LOW, plugged = HIGH). Edge → arm the
-             * debounce; applied below once stable for JACK_DEBOUNCE_MS. */
-            {
-                uint16_t jm = (uint16_t)(1u << MCP_BIT_JACK);
-                if ((fell | rose) & jm) {
-                    jack_pending = (gpio & jm) ? 1 : 0;
-                    jack_edge_ms = now;
-                }
-            }
-
-            prev_gpio = gpio;
-        }
+        poll_human_inputs(now, &prev_gpio, &jack_pending, &jack_edge_ms, &ui_dirty);
 
         /* --- 3. Jack debounce settle → PAM8406 /MUTE --- */
         if (jack_pending != 0xFF &&
@@ -609,7 +647,7 @@ int main(void) {
              * offen ist einfach jedes 30-fps-Fenster neu zeichnen. */
             if (sc_now || sc_now != sc_was)   { sc_was = sc_now;             ui_dirty = true; }
         }
-        if (ui_dirty && !oled_flush_busy() &&
+        if (!s_ui_idle.quiet && ui_dirty && !oled_flush_busy() &&
             (uint32_t)(now - last_frame_ms) >= 33) {
             bool accent_moving = oled_accent_tick(now) != 0;
             if (scenes_ui_active())       scenes_ui_render();

@@ -96,11 +96,30 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
-  product-long-recovery-review:
-    name: current continuous Product World and Scene recovery (SD45)
+  ui-idle-review:
+    name: current H743 UI idle and whole Product PCM (SD52)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch exact pre-UI software candidate
+        run: git fetch --no-tags origin b29246fde0c66618bbfc25742f929dc1f362ebf6
+      - name: Verify human input, wake-only routing and whole Product PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_ui_idle.py build-ui-idle --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd52-ui-idle-proof
+          path: field-ambience-current/firmware-c-next/build-ui-idle/SD52_UI_IDLE_METRICS.json
+          if-no-files-found: error
+
+  product-long-recovery-review:
+    name: archived continuous Product World and Scene recovery (PR179)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
       - name: Fetch exact unchanged Product baseline
         run: git fetch --no-tags origin fe0551c3f0ca1bbf2fc7d1693a2a8d337c5e77c2
       - name: Verify continuous PCM, native Scene failures and Main timer wrap
@@ -113,10 +132,13 @@ jobs:
           if-no-files-found: error
 
   product-tail-history-review:
-    name: current Product tail-history release and continuation (SD12)
+    name: archived Product tail-history release and continuation (PR179)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
       - name: Fetch exact unchanged Product baseline
         run: git fetch --no-tags origin 659cb04df4d9e145c6de1f7aea9ecd17fe2b8db6
       - name: Verify real release, complete PCM and bounded history state
@@ -129,10 +151,13 @@ jobs:
           if-no-files-found: error
 
   product-harmony-review:
-    name: current public Product harmony and register contract (SD11)
+    name: archived public Product harmony and register contract (PR179)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
       - name: Fetch exact unchanged Product baseline
         run: git fetch --no-tags origin e7c16650c10f466cb602ab2f3b24643a83f014a9
       - name: Verify all-key public admission and whole rejected PCM
@@ -145,10 +170,13 @@ jobs:
           if-no-files-found: error
 
   nature-handoff-review:
-    name: current Nature handoffs and unchanged runtime inventory (SD47)
+    name: archived Nature handoffs and unchanged runtime inventory (PR179)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
       - name: Fetch exact final runtime baseline
         run: git fetch --no-tags origin b352dbf9799b3fa618eeb01a833ac2a776f1c64e
       - name: Verify real Nature publications and complete float traces
@@ -161,10 +189,13 @@ jobs:
           if-no-files-found: error
 
   room-clear-work-review:
-    name: current bounded Room clear work and real Product PCM (SD47)
+    name: archived bounded Room clear work and real Product PCM (PR179)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
       - name: Fetch exact pre-fix baseline
         run: git fetch --no-tags origin 8b7044206f7c9d29323f95a03f1c9ef6041818fd
       - name: Install Cortex-M7 compiler and Newlib
