@@ -13,6 +13,9 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Actual H743 DMA C scope, synthetic clocks and real Product PCM.
+python3 "$src/tools/review_h743_irq_scope.py" "$tmp/h743-irq-scope" --fixture-only
+
 # Real H743 human-input routing; full PCM and wake-only gestures.
 python3 "$src/tools/review_ui_idle.py" "$tmp/ui-idle" --fixture-only
 

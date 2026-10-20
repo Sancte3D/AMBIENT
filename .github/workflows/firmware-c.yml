@@ -96,11 +96,29 @@ jobs:
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
 
-  ui-idle-review:
-    name: current H743 UI idle and whole Product PCM (SD52)
+  h743-irq-scope-review:
+    name: current H743 DMA C scope and real Product PCM (SD48)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch exact pre-instrumentation baseline
+        run: git fetch --no-tags origin de732f42d4c1973a82f256d9cdec129394dba4b1
+      - name: Check actual handler scope, wrap and complete Product PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_h743_irq_scope.py build-irq-scope --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd48-dma-c-scope-proof
+          path: field-ambience-current/firmware-c-next/build-irq-scope/SD48_IRQ_SCOPE_METRICS.json
+          if-no-files-found: error
+
+  ui-idle-review:
+    name: archived H743 UI idle and whole Product PCM (PR180)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: de732f42d4c1973a82f256d9cdec129394dba4b1
       - name: Fetch exact pre-UI software candidate
         run: git fetch --no-tags origin b29246fde0c66618bbfc25742f929dc1f362ebf6
       - name: Verify human input, wake-only routing and whole Product PCM
