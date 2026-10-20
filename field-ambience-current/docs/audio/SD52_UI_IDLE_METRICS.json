@@ -21,10 +21,10 @@
     "CMakeLists.txt": "929887da70f4d02e0d36151645f01260956c2f93fb9676a191d95160ada8f11e",
     "include/leds.h": "0537687228d6426b6fa9d7955a19dfaa33aca7493e980cd8015c7abd860241e4",
     "include/ui_idle.h": "7129f7be3e49e7fa0e38ad6dd1c0b082a1b714cd5eabe5de08078e374f1b1abe",
-    "src/hal_h743/main_h743.c": "5103898450958ec5b3a978eeecfbbcb3bf5f55da1fb5c8e81efe8b6f23652791",
+    "src/hal_h743/main_h743.c": "9e91477f32440f5664c5f3b9977729ab8600bd82e5845cf2dab200b248bca215",
     "src/leds.c": "840b7d3957ba9074352db343954e5dcb2890e25124d2574caef6fa14de1cdbbb",
     "src/ui_idle.c": "6580f9c3de471b72cefd223ee8ed1a3366968998b94e9f47c7817900b5482ea4",
-    "test/test_ui_h743.c": "156a5961c2f62e6d916f35d31ae3b10a86d8137d1641e8fae7d8a1cf5662eac2",
+    "test/test_ui_h743.c": "01fdeeea409d510da0d212dc7d2d9c3e76e64cce3bcdfd1497e6a18aee6749b3",
     "test/test_ui_idle.c": "f8e4ba3b990698eaf266ecf7a661991b460f84c682e2088c18e2d451d0c62450",
     "tools/review_ui_idle.py": "c196c84aa2d2a1b906b213a0ac6618ad3a44efcd16f27f5e6477bdfb6c853ccb"
   },

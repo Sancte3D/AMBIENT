@@ -22,7 +22,10 @@ Ausgangsabnahme bleiben SD48/SD49, finaler Klang SD51/SD50.
 `ui_idle.c` besitzt nur Main-State: letzte Aktivität, Wakezeit, physisch unten,
 verbrauchte Tasten und Quiet-/Guardflags. Kein Engine-/Audio-/Parameteraufruf,
 keine Allocation, Suche oder Wartefunktion. Init berücksichtigt bei Boot schon
-gehaltene Tasten. `poll_human_inputs()` ist aus dem tatsächlichen H743-Mainloop
+gehaltene Tasten; EN4 wird zuvor aus dem echten Expanderpegel initialisiert,
+sein bei Boot eingequeueeter Druck und sein späterer Release wirken nicht als Mute.
+Die zusätzliche tatsächliche H743-Initialisierung ist direkt geprüft.
+`poll_human_inputs()` ist aus dem tatsächlichen H743-Mainloop
 herausgezogen; der Loop ruft genau diese Funktion weiter auf. Vorhandene
 Encoder-, MCP-, Knob-, Scene-, Gesture- und Cell-Routen bleiben darin erhalten.
 Jack/VBUS umgehen das Human-Gate; EN4 geht einmal durch die Encoderqueue.
@@ -57,9 +60,9 @@ PCM bleibt temporär, kein langes WAVpaket. Kein NaN-/Limiterereignis.
 ## ARM-Builds
 
 Product und Reference mit GCC13.2.1 vollständig für Cortex-M7 gelinkt.
-Product: Text197628B, Data240B, BSS142704B, BIN197876B;
-BIN-SHA256 `ffc41320d22a655889d5a29b8b5e30c030c9209b3a8458f5e60048fc3066bfa3`.
-Reference: Text257720B, Data364B, BSS794640B, BIN258092B.
+Product: Text197644B, Data240B, BSS142704B, BIN197892B;
+BIN-SHA256 `f2560485b552cff4ca93f73d8c9f5c3cd29eb583f65ee50296305276f6c0cd6e`.
+Reference: Text257744B, Data364B, BSS794640B, BIN258116B.
 Der reale Product-Linkaudit bestätigt ausgeschlossene Legacy-DSPpfade,
 einen D2-Raum, ausgerichtetes D1-Audio-DMA und das Bank1-Imagelimit.
 Der neue Main-Idle-State ist im ARM-ELF20B, der LED-Quietstate1B;

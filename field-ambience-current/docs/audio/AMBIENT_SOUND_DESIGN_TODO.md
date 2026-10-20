@@ -1615,7 +1615,8 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   gleiche musikalischen Eingaben liefern gleiche Audioereignisse. Konkrete
   **Softwareabschluss2026-10-20:** Bestehende H743-Button-/Encoder-/Display-/LED-
   Routen angebunden;900000ms Ruhe, erste Wakegeste verbraucht,30-ms-Guard und
-  gehaltene/verbrauchte Releases geprüft.126 ganze12-s-PCMvergleiche je Modus,
+  gehaltene/verbrauchte Releases sowie boot-gehaltener EN4 mit tatsächlicher
+  H743-Initialisierung geprüft.126 ganze12-s-PCMvergleiche je Modus,
   alle drei Worlds/21 Wakewege/64-512/Mainwrap; native+ASan/UBSan, kein
   Parameterjump, Save oder Retrigger. [SD52_UI_IDLE_CHECKPOINT.md](SD52_UI_IDLE_CHECKPOINT.md).
   Neues Grafiklayout hier nicht als entworfen behauptet; physische Bedien-/

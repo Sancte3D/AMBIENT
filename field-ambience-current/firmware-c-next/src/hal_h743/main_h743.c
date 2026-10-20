@@ -284,6 +284,15 @@ extern uint32_t _sdtcm_bss, _edtcm_bss, _sd2_bss, _ed2_bss;
  * extract this function unchanged and inject only hardware input queues. */
 static ui_idle_t s_ui_idle;
 static int s_backlight_pct = 70;
+static void init_human_inputs(uint32_t now, uint16_t gpio) {
+    /* EN4 has no GPIO sampler: prime its expander level before taking the
+     * boot-held snapshot, so its later release cannot become a Mute click. */
+    enc_set_ext_push(4, (gpio & (1u << MCP_BIT_ENC4_SW)) == 0);
+    uint32_t down = (uint32_t)(~gpio & 0x1f1fu);
+    for (unsigned id = 1; id <= ENC_COUNT; ++id)
+        if (enc_pushed((uint8_t)id)) down |= UINT32_C(1) << (15u + id);
+    ui_idle_init(&s_ui_idle, now, down);
+}
 static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                               uint8_t *jack_pending, uint32_t *jack_edge_ms,
                               bool *ui_dirty) {
@@ -583,10 +592,7 @@ int main(void) {
     uint8_t  jack_pending  = 0xFF;
     uint32_t jack_edge_ms  = 0;
 
-    uint32_t initially_down = (uint32_t)(~prev_gpio & 0x1f1fu);
-    for (unsigned id = 1; id <= ENC_COUNT; ++id)
-        if (enc_pushed((uint8_t)id)) initially_down |= UINT32_C(1) << (15u + id);
-    ui_idle_init(&s_ui_idle, HAL_GetTick(), initially_down);
+    init_human_inputs(HAL_GetTick(), prev_gpio);
 
     /* UI frame pacing. */
     uint32_t last_frame_ms = 0;

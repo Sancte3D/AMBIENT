@@ -32,6 +32,7 @@ static uint8_t jack_pending;
 static uint32_t jack_edge;
 static bool pending, dirty;
 static enc_event_t queue[32];
+static bool enc_down[ENC_COUNT];
 static unsigned qin, qout, display_short, display_long, write_calls;
 static unsigned ons, offs;
 static int16_t expected[FRAMES * 2], actual[FRAMES * 2];
@@ -44,7 +45,12 @@ bool enc_pop_event(enc_event_t *out) {
 static void enqueue(unsigned id, enc_event_kind_t kind, int value) {
     assert(qin < 32); queue[qin++] = (enc_event_t){kind, (uint8_t)id, (int8_t)value};
 }
-void enc_set_ext_push(uint8_t id, bool down) { enqueue(id, ENC_EVENT_PUSH, down); }
+bool enc_pushed(uint8_t id) { return enc_down[id - 1]; }
+void enc_set_ext_push(uint8_t id, bool down) {
+    if (enc_down[id - 1] != down) {
+        enc_down[id - 1] = down; enqueue(id, ENC_EVENT_PUSH, down);
+    }
+}
 bool mcp_irq_pending(void) { return pending; }
 uint16_t mcp_service(void) { pending = false; return gpio; }
 static void inputs(uint16_t down) { gpio = (uint16_t)~down; pending = true; }
@@ -72,11 +78,12 @@ static void reset(int world, uint32_t epoch) {
     leds_set_backlight(LED_PWM_MAX * 70 / 100);
     memset(&s_cell_router, 0, sizeof s_cell_router); s_cell_mode = CELL_NOTE;
     s_field_seed = 0x1234; qin = qout = 0; pending = dirty = false;
+    memset(enc_down, 0, sizeof enc_down);
     gpio = prev_gpio = UINT16_MAX; jack_pending = 0xff; jack_edge = 0;
     display_short = display_long = write_calls = ons = offs = 0;
     engine_set_world(world); engine_generative_new_field(42);
     controls_modifier(MOD_GENERATE, true); engine_set_note_hook(hook);
-    ui_idle_init(&s_ui_idle, epoch - (UI_IDLE_MS - 1000), 0);
+    init_human_inputs(epoch - (UI_IDLE_MS - 1000), gpio);
 }
 
 static void poll(uint32_t ms) {
@@ -148,6 +155,18 @@ static void run(int world, int wake, bool idle, uint32_t epoch, int cap, int16_t
 }
 
 int main(void) {
+    /* Real boot initializer must prime the indirect EN4 level before its
+     * snapshot. Its queued down and later up are both consumed, no Mute. */
+    reset(0, 100);
+    gpio = prev_gpio = (uint16_t)~(1u << MCP_BIT_ENC4_SW);
+    init_human_inputs(100, gpio);
+    assert(s_ui_idle.down == (1u << 19) && s_ui_idle.suppressed == (1u << 19));
+    poll(100 + UI_IDLE_MS);
+    assert(!s_ui_idle.quiet && !params_muted());
+    inputs(0); poll(110 + UI_IDLE_MS); poll(120 + UI_IDLE_MS);
+    assert(!s_ui_idle.down && !s_ui_idle.suppressed && !params_muted());
+    poll(119 + 2 * UI_IDLE_MS); assert(!s_ui_idle.quiet);
+    poll(120 + 2 * UI_IDLE_MS); assert(s_ui_idle.quiet);
     unsigned cases = 0;
     for (int world = 0; world < 3; ++world) for (int partition = 0; partition < 2; ++partition) {
         int cap = partition ? 512 : 64;
