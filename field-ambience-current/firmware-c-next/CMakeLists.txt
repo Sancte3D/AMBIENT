@@ -145,6 +145,7 @@ set(DSP_SOURCES
     src/rolepatch.c     # r19.30: role-based chord timbre
     src/landscape.c     # r19.27: layer-role cell mode (drone/bed/motif/atmos/memory)
     src/gesture.c       # r19.25: gesture loop (record/replay cell events)
+    src/ui_idle.c       # human-idle gate; never pauses audio
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
     src/oled_draw.c
     src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)
@@ -198,7 +199,7 @@ if(FAM_SOUND_PROFILE STREQUAL "product")
         src/engine_product.c src/ambient_room.c src/nature.c
         src/controls.c src/params.c src/knobs.c src/overlay.c src/scenes.c
         src/bloom.c src/voicelead.c src/rolepatch.c src/landscape.c src/gesture.c
-        src/leds.c src/midi.c src/oled_draw.c src/oled_color.c
+        src/ui_idle.c src/leds.c src/midi.c src/oled_draw.c src/oled_color.c
         src/baked_font.c src/baked_font_data.c src/font_8x8.c
         src/battery.c src/menu.c ${WORLD_SOURCE} src/audio_profiler.c)
 endif()

@@ -1,0 +1,33 @@
+{
+  "actual_h743_routing_extracted": true,
+  "audio_seconds_per_mode": 1584,
+  "baseline": "b29246fde0c66618bbfc25742f929dc1f362ebf6",
+  "comparisons_per_mode": 126,
+  "limitations": "Hardware queues injected; not physical switch bounce, DMA latency, display current, H743 whole IRQ/stack, flash power-cut or hearing acceptance. Idle boundary uses elapsed Mainclock; no15-minute real-device timing claim. Default live Save remains synchronous; journal OFF.",
+  "logs": [
+    {
+      "integration": "H743 UI: 126 whole 12-second PCM comparisons, 21 wake routes, all Worlds, 64/512 caps and Main wrap pass",
+      "sanitized": false,
+      "unit": "ui idle: exact threshold, held/released/duplicate keys, wake batch and wrap pass"
+    },
+    {
+      "integration": "H743 UI: 126 whole 12-second PCM comparisons, 21 wake routes, all Worlds, 64/512 caps and Main wrap pass",
+      "sanitized": true,
+      "unit": "ui idle: exact threshold, held/released/duplicate keys, wake batch and wrap pass"
+    }
+  ],
+  "scope": "21 wake routes, all3 Worlds,64/512 render caps; cap512 uses441-frame Main grid; normal/wrapping Mainclock. Entire12-second PCM equality against untouched awake controls, actual UI setters and subsequent matching musical/volume input. Separate exact900000-ms boundary/held/duplicate/boot-held/wrap cases.",
+  "sha256": {
+    "CMakeLists.txt": "929887da70f4d02e0d36151645f01260956c2f93fb9676a191d95160ada8f11e",
+    "include/leds.h": "0537687228d6426b6fa9d7955a19dfaa33aca7493e980cd8015c7abd860241e4",
+    "include/ui_idle.h": "7129f7be3e49e7fa0e38ad6dd1c0b082a1b714cd5eabe5de08078e374f1b1abe",
+    "src/hal_h743/main_h743.c": "9e91477f32440f5664c5f3b9977729ab8600bd82e5845cf2dab200b248bca215",
+    "src/leds.c": "840b7d3957ba9074352db343954e5dcb2890e25124d2574caef6fa14de1cdbbb",
+    "src/ui_idle.c": "6580f9c3de471b72cefd223ee8ed1a3366968998b94e9f47c7817900b5482ea4",
+    "test/test_ui_h743.c": "01fdeeea409d510da0d212dc7d2d9c3e76e64cce3bcdfd1497e6a18aee6749b3",
+    "test/test_ui_idle.c": "f8e4ba3b990698eaf266ecf7a661991b460f84c682e2088c18e2d451d0c62450",
+    "tools/review_ui_idle.py": "c196c84aa2d2a1b906b213a0ac6618ad3a44efcd16f27f5e6477bdfb6c853ccb"
+  },
+  "unchanged_existing_compiled_inputs": 259,
+  "whole_stereo_frames_compared_per_mode": 66679200
+}

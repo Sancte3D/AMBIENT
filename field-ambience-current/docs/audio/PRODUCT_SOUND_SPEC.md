@@ -1,6 +1,6 @@
 # AMBIENT — Product Sound Candidate 0.10
 
-Stand 2026-10-12. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
+Softwarestand konsolidiert2026-10-20; Klangkennlinien seit2026-10-12 unverändert. Gilt ausschließlich für `FAM_SOUND_PROFILE=product` /
 `FAM_SOUND_PRODUCT`, Wireformat SCN7. Dies ist der reproduzierbare
 **Softwarevertrag**, keine endgültige Klang- oder Gerätefreigabe.
 `reference` bleibt der CMake-Default; historische Beschreibungen gelten dafür.
@@ -12,6 +12,18 @@ Der aktuelle Nachweis und die offenen Gates stehen in
 [PHRASE_DEVELOPMENT_CHECKPOINT.md](PHRASE_DEVELOPMENT_CHECKPOINT.md) und
 [SD19_ROOM_CALIBRATION_CHECKPOINT.md](SD19_ROOM_CALIBRATION_CHECKPOINT.md), die vollständige
 Arbeitsliste in [AMBIENT_SOUND_DESIGN_TODO.md](AMBIENT_SOUND_DESIGN_TODO.md).
+
+## Softwarestand und UI-Anbindung
+
+[SD51-Softwarekandidat](SD51_SOFTWARE_CANDIDATE.md) konsolidiert diesen
+aktuellen Vertrag; finale Quellen-/Hör-/Geräteentscheidungen bleiben offen.
+[SD52](SD52_UI_IDLE_CHECKPOINT.md) bindet die vorhandene H743-Bedienung an:
+900000ms ohne menschliche Eingabe → Display/LEDs weich dunkel; Musikzeit,
+Generate, Audio-DMA und Quellen laufen weiter. Die erste Dreh-/Druckgeste
+weckt ohne Aktion; zugehöriges Loslassen und30ms Warteschlangen-/Debounce-
+Nachlauf bleiben verbraucht. Gehaltene physische Tasten verhindern idle.
+Bedienung danach verwendet dieselben Audiooperationen und gemerkten Werte.
+Kein Klang-/Sceneformatwechsel, keine Aktivierung des vorbereiteten Journals.
 
 ## Produktidee und bewusst kleiner Umfang
 

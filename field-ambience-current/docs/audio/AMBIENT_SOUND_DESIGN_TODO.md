@@ -8,32 +8,49 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-19**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
-[PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md); verifizierte Checkpoints:
-[PRODUCT_CORE_CHECKPOINT.md](PRODUCT_CORE_CHECKPOINT.md). UI, Display,
-physische Encoder/Tasten und die 15-Minuten-Ruhe folgen nach dem Soundstand.
-`FAM_SOUND_PROFILE=product` ist der neue Kandidat, `reference` bleibt Default.
+Stand **2026-10-20**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+[PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md), konsolidierter
+[SD51-Softwarestand](SD51_SOFTWARE_CANDIDATE.md) und
+[SD52-UI-Anbindung](SD52_UI_IDLE_CHECKPOINT.md).
+`FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
-## Offener Arbeitsstand 2026-10-19
+## Offener Arbeitsstand2026-10-20
 
-54 Hauptpunkte:24 erledigt,30 offen. Für die weitere Planung sind davon
-6 technische Blöcke:4 Software-/Prüfblöcke plus2 Abnahmen am echten Gerät.
-Viele technische Pfade sind bereits implementiert; der offene Hauptpunkt
-enthält noch Abschlussprüfung oder Konsolidierung. Diese Einteilung zählt
-Hauptpunkte, keine einzelnen Tests oder Unteraufgaben. Attack/Release gehören
-zu SD33 und bekommen keinen zusätzlichen Hauptpunkt.
-SD11,SD12,SD31,SD33,SD34,SD35,SD37 und SD45 sind softwareseitig geprüft und bleiben für die finale
-gehörte Teilton-/Register-/Tailwahl, Geräuschrollen, Lautheitsbalance, musikalische Endwertwahl
-beziehungsweise Worldübergänge und Langzeitform offen. Sie zählen
-zu den Hörentscheidungen; kein Hauptpunkt-Haken aus Messwerten.
+54 Hauptpunkte:25 erledigt,29 offen. SD52 ist für die bestehende H743-Bedienung
+softwareseitig abgeschlossen. SD51 ist als reproduzierbarer Softwarekandidat
+konsolidiert; sein finaler Sound-Freeze bleibt bei den Hör-/Geräteentscheidungen.
+Es gibt keinen weiteren unabhängig vom Gerät belegten DSP-/UI-Softwarebefund.
+Das bedeutet ausdrücklich nicht, dass die ganze Produktsoftware freigegeben ist:
+Product-Live-Save bleibt synchron. SD41-Aktivierung benötigt zuerst die reale
+ECC-/Power-cut-Abnahme; SD47 hängt an dieser Aktivierung und SD48-Messung.
 
 | Einteilung | Offen | Punkte |
 |---|---:|---|
-|Software-/Prüfblöcke|4|SD41, SD47, SD51, SD52|
+|Softwareabschluss mit Geräteabhängigkeit|2|SD41 (Journalaktivierung nach Siliziumtest), SD47 (SD41 + IRQ/Stack)|
 |Prüfungen am echten Gerät|2|SD48, SD49|
-|Hör-/Klangentscheidungen|23|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD31, SD33, SD34, SD35, SD37, SD44, SD45, SD50|
+|Hör-/Klangentscheidungen und finaler Freeze|24|SD02, SD03, SD04, SD05, SD06, SD11, SD12, SD14, SD15, SD16, SD17, SD19, SD28, SD29, SD30, SD31, SD33, SD34, SD35, SD37, SD44, SD45, SD50, SD51|
 |Abschließender Gesamtcheck|1|SD53|
+
+SD11/12/31/33/34/35/37/45 sind softwareseitig geprüft. SD51 konsolidiert
+Sound0.10/SCN7/Defaults,265 gehashte Firmwareinputs und die verbliebenen Gates.
+Kein Hör-/Gerätehaken aus Messwerten oder aus „weiter“.
+
+## Softwarefortschritt2026-10-20 — SD51 konsolidiert, SD52 angebunden
+
+900000ms Human-idle → Display/LEDs weich dunkel, Musik/DMA/Zeit/Besitzer laufen.
+Erste Geste samt Release und30-ms-Queue-/Debounce-Guard weckt ohne Aktion;
+weitere Bedienung nutzt dieselben Audiooperationen. Gehaltene Tasten verhindern
+idle.21 reale Wakewege in allen drei Worlds,64/512-Caps und Mainclockwrap:
+126 vollständige12-s-PCMgegenproben pro Modus bytegleich,66679200 Stereo-Frames.
+Native und ASan/UBSan geprüft. Kein neuer Klangpfad, keine Parameteränderung,
+keine WOODLAND-Verkürzung. Product-/Reference-ARM-Builds und aktueller Hostrunner
+prüfen den neuen Stand; konkrete Ergebnisse im SD52-Checkpoint/PR.
+
+Vier bestehende UI/CMake/LED-Inputs geändert,259 übrige bytegleich PR179;
+zwei neue UI-Dateien. SD41-Bench existiert bereits; nächste Grenze ist dessen
+reale Siliziumabnahme, nicht ein weiteres gleichartiges Hostpaket. Kein Gerät
+verbunden/geflasht. Keine Produktfreigabe, kein automatischer Merge/Retarget.
 
 ## Einzelner Fortschritt 2026-10-19 — SD45 durchgehende Recovery geprüft
 
@@ -54,7 +71,7 @@ zugeordnet, musikalische Langzeitform weiter hören. SD45 bleibt ungecheckt
 und zählt zur Hörgruppe.24/54 geschlossen,30 offen; technische Blöcke7→6
 (4 Software/Abschluss+2 Gerät), Hörgruppe22→23.
 [SD45_LONG_RECOVERY_CHECKPOINT.md](SD45_LONG_RECOVERY_CHECKPOINT.md).
-Nächste unabhängige Einheit: SD51, Softwarekandidat ohne vorzeitigen finalen Freeze.
+Weitergeführt durch den SD51-/SD52-Softwareabschluss2026-10-20 oben.
 
 ## Einzelner Fortschritt 2026-10-19 — SD33 technische Parameterbereiche geprüft
 
@@ -540,7 +557,9 @@ Der gemeinsame Raum verbindet beide, ohne die Quellen unkenntlich zu machen.
 
 Die Werte in dieser Tabelle sind **Startbereiche für die Konstruktion und den
 Hörvergleich**, keine Eigenschaften des aktuellen Builds oder fertige Presets.
-Sie werden in SD51 anhand der Abnahme durch exakte Werte ersetzt.
+Aktuelle exakte Kandidatenwerte ersetzt ausschließlich das Parameter-/Grammatikregister
+in PRODUCT_SOUND_SPEC.md; diese historische Entwurfstabelle ist kein Buildpreset.
+Der finale Lock in SD51 bleibt von echten Abnahmen abhängig.
 
 | Welt | Tonkörper und Identität | Ereignisgrammatik | Anfangsgrenzen und Verwerfungsgrund |
 |---|---|---|---|
@@ -841,14 +860,14 @@ markiert. Geprüfte SHA/CI/Bankwerte und Hörartefakte stehen im Checkpoint.
 | SD48 | echtes Gerät | DWT <0,60, null Misses und realer Stack-High-water mit UI/MIDI/Storage |
 | SD49 | echtes Gerät | Gebauter Ausgang, Pegel/DC/Noise/Pops/Lasten/Clock/Power/Cache/Flash prüfen |
 | SD50 | echte Hörer + Gerät | Alarm/Tube/Buzz/Beep/Ermüdung konkret lösen, keine Heilbehauptung |
-| SD51 | Freeze-Gate | Software Candidate 0.3 dokumentiert; endgültige Endwerte erst nach Quellen-/Hör-/Geräteabnahme |
-| SD52 | spätere UX | Tasten/Encoder/Display/LED/15-min-Ruhe, Wake ohne Klangereignis |
+| SD51 | Software konsolidiert, finaler Freeze offen | Sound Candidate0.10/SCN7/265 Inputhashes; endgültige Endwerte erst nach Quellen-/Hör-/Geräteabnahme |
+| SD52 | Softwareanbindung abgeschlossen | Bestehende H743-Bedienung,15-min-Display-/LED-Ruhe, Wake ohne Klangereignis geprüft |
 | SD53 | Produkt-DoD offen | Alle zutreffenden Gates bestehen; erst dann Sounddesign fertig nennen |
 
 ## Verbindliche Arbeitsliste
 
-**54 Aufgaben, SD00–SD53: 24 vollständig geschlossene Software-/Entfernungsaufgaben,
-30 Aufgaben mit offener Quellen-, Hör-, Geräte-, Storage- oder UX-Abnahme.** Bereits erledigte Teilbefunde stehen oben und
+**54 Aufgaben, SD00–SD53: 25 vollständig geschlossene Software-/Entfernungsaufgaben,
+29 Aufgaben mit offener Quellen-, Hör-, Geräte-, Storage- oder UX-Abnahme.** Bereits erledigte Teilbefunde stehen oben und
 in den entsprechenden Aufgaben. Jede Checkbox bleibt offen, bis die zugehörige
 Abnahme besteht oder der gesamte betroffene Produktpfad nachweislich entfernt
 wurde. Abhängigkeiten beschreiben die Reihenfolge, keine zusätzliche Architektur.
@@ -1479,8 +1498,11 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Cortex-M7/ST-HAL-Teillink bestehen. Alle258 bisherigen Inputs bytegleich.
   Eigenständige Komponente, keine Main-/Vektor-/UI-Aktivierung oder Siliziumabnahme.
   [SD41_H743_SCENE_IO_CHECKPOINT.md](SD41_H743_SCENE_IO_CHECKPOINT.md).
-  Nächste einzelne Einheit: isolierter Geräte-Testbuild mit explizitem Anschluss,
-  anschließend physische ECC-/Power-cut-/IRQ-/Geräteprüfung.
+  **Stand2026-10-20:** Der isolierte Geräte-Testbuild mit Anschluss ist bereits
+  implementiert, nativ/sanitized und ARM-gelinkt geprüft:
+  [SD41_H743_SCENE_BENCH_CHECKPOINT.md](SD41_H743_SCENE_BENCH_CHECKPOINT.md).
+  Nächste Grenze: physische ECC-/Power-cut-/IRQ-/Geräteprüfung; erst danach
+  Productaktivierung. Kein neuer unabhängig umsetzbarer Softwareteil offen.
   **Abnahme:** Kein Überraschungsstart oder Lautstärkesprung, kaputte/alte Scene
   führt in dokumentierten stillen Fallback; Reset beim laufenden Raum gezielt
   testen. Keine blockierende Speicherung im Audiopfad. Voraussetzung: SD36/SD39–SD40.
@@ -1579,14 +1601,26 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   **Abnahme:** Ein Versionsstand reproduziert alle Produktwelten; kein ungelöster
   Pflichtparameter, Widerspruch zwischen Docs und Firmware oder stiller
   Legacy-Default. Softwarestand vor UX, Hardwarekorrekturen danach versionieren.
+  **Softwarekonsolidierung2026-10-20 abgeschlossen:** Sound0.10/SCN7,
+  Defaults/Parameter-/Grammatik-/Übergabeverträge und265 Inputhashes dokumentiert:
+  [SD51_SOFTWARE_CANDIDATE.md](SD51_SOFTWARE_CANDIDATE.md). Candidate0.3-Zeile
+  korrigiert; alte Entwurfsbereiche ausdrücklich historisch, kein Parallelpreset.
+  Finaler Haken erst nach gehörten Endwerten und SD48–SD50; zählt zur Hörgruppe.
   Voraussetzung: SD00–SD47; endgültiger Lock zusätzlich SD48–SD50.
-- [ ] **SD52 — Spätere UI auf unveränderte Audioverträge anbinden.**
+- [x] **SD52 — Bestehende UI auf unveränderte Audioverträge anbinden.**
   Neue Display-/Button-/Encoderzuordnung darf UIzustände ändern; Start/Stop,
   Worldtargets, Besitzer, Volume und Stillwerden nutzen obige Audiooperationen.
   Human-idle/Displayruhe dürfen keine musikalische Inaktivität simulieren.
   **Abnahme:** UIwechsel/Wake kein Retrigger, Parameterjump oder neuer Klangpfad;
   gleiche musikalischen Eingaben liefern gleiche Audioereignisse. Konkrete
-  Tasten-/LED-/15-Minuten-Gestaltung bleibt spätere UX-Aufgabe. Nach SD51-Softwarestand.
+  **Softwareabschluss2026-10-20:** Bestehende H743-Button-/Encoder-/Display-/LED-
+  Routen angebunden;900000ms Ruhe, erste Wakegeste verbraucht,30-ms-Guard und
+  gehaltene/verbrauchte Releases sowie boot-gehaltener EN4 mit tatsächlicher
+  H743-Initialisierung geprüft.126 ganze12-s-PCMvergleiche je Modus,
+  alle drei Worlds/21 Wakewege/64-512/Mainwrap; native+ASan/UBSan, kein
+  Parameterjump, Save oder Retrigger. [SD52_UI_IDLE_CHECKPOINT.md](SD52_UI_IDLE_CHECKPOINT.md).
+  Neues Grafiklayout hier nicht als entworfen behauptet; physische Bedien-/
+  Deadline-/Stack-/Ausgangsabnahme weiterhin SD48/SD49. Nach SD51-Softwarestand.
 - [ ] **SD53 — Sound-Definition-of-Done abschließen.**
   Jede KEEP-Quelle, jedes behaltene FX/Naturelement, jeder Parameterbereich und
   jeder Zustandswechsel hat Entwurf + Software + Hörbefund + nötigen Gerätetest.
