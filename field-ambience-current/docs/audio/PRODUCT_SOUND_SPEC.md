@@ -653,9 +653,10 @@ Main-WCET. Gezielte IRQ-Fälle, ganze normale PCM und echter ARM-Gegenlink:
 
 ARM `-fstack-usage` dokumentiert individuelle Compilerframes in
 `PRODUCT_BUILD_AUDIT.json`. Kein Beleg für ganze Callchains, Bibliotheks-
-Callees, Interruptstapel oder realen High-water. Der vorhandene DWT-Profiler
-misst das Rendererfenster; Cache-Clean/weitere IRQ-Arbeit muss für die
-Geräteabnahme zusätzlich berücksichtigt werden.
+Callees, Interruptstapel oder realen High-water. Der Renderer-DWT-Profiler
+bleibt erhalten; ein zusätzliches DMA-C-Fenster umfasst nun HAL-Dispatch,
+Clipscan und Cache-Clean: [SD48-Messvorbereitung](SD48_IRQ_SCOPE_CHECKPOINT.md).
+Exception-/Dispatch-/Stackabnahme erfordert weiterhin das echte Gerät.
 
 Interne Audio-Speicher reichen im tatsächlichen Link; keine SD-Karte,
 Samplebank oder erforderliche externe PSRAM für diesen Klangpfad.
@@ -670,8 +671,9 @@ audioeigen. Für≤512 Frames höchstens20 analytisch begrenzte SVF-Koeffiziente
 setzungen einschließlich eines World-/Seed-Resets (im gerichteten Test18
 beobachtet), höchstens8 Dropplätze.120 Store-Grenzunterbrechungen und ganze
 38-s-Verläufe über alle Worlds sind geprüft,263 Firmwareinputs unverändert.
-Main-Live-Save bleibt synchron und offen unter SD41; vollständige DMA-IRQ-
-Spitze inklusive Clipscan/Cache-Clean und realer Stack bleiben SD48.
+Main-Live-Save bleibt synchron und offen unter SD41; vollständige Exception-/Dispatch-Spitze und realer Stack bleiben SD48.
+Das zusätzliche DMA-C-Fenster erfasst jetzt auch Clipscan/Cache-Clean;
+echte Hardwarezeiten werden daraus noch nicht behauptet.
 
 ## Hörnachweis und Freeze-Regel
 

@@ -39,20 +39,26 @@ static void row(int y, const char *label, uint32_t v, const char *suffix) {
 
 void diag_draw(int psram_pass, int psram_ran) {
     const struct audio_profiler *pr = audio_profiler_state();
+    const struct audio_profiler *irq = h743_audio_irq_profiler_state();
     oled_fill(0);
     oled_text_scaled(6, 6, "BRING-UP DIAG", 12, 2);
 
     int y = 34;
     if (pr) {
-        row(y, "load%  ", (uint32_t)(pr->peak_load * 100.0f + 0.5f), "");   y += 14;
-        row(y, "maxcyc ", pr->max_cycles, "");                              y += 14;
-        row(y, "misses ", pr->deadline_miss_count, "");                     y += 14;
-        row(y, "clips  ", pr->clip_count, "");                              y += 14;
+        row(y, "render% ", (uint32_t)(pr->peak_load * 100.0f + 0.5f), "");   y += 12;
+        row(y, "R cyc   ", pr->max_cycles, "");                              y += 12;
+        row(y, "R over  ", pr->deadline_miss_count, "");                     y += 12;
+        row(y, "clips  ", pr->clip_count, "");                              y += 12;
     } else {
-        oled_text(6, y, "profiler: n/a", 10); y += 14;
+        oled_text(6, y, "profiler: n/a", 10); y += 12;
     }
-    row(y, "voices ", (uint32_t)engine_active_voices(), "");                y += 14;
-    row(y, "batt mV", (uint32_t)(bat_adc_read_volts() * 1000.0f + 0.5f), ""); y += 14;
+    if (irq) {
+        row(y, "IRQ C%  ", (uint32_t)(irq->peak_load * 100.0f + 0.5f), ""); y += 12;
+        row(y, "I cyc   ", irq->max_cycles, ""); y += 12;
+        row(y, "I over  ", irq->deadline_miss_count, ""); y += 12;
+    }
+    row(y, "voices ", (uint32_t)engine_active_voices(), "");                y += 12;
+    row(y, "batt mV", (uint32_t)(bat_adc_read_volts() * 1000.0f + 0.5f), ""); y += 12;
 
     if (!psram_ran)      oled_text(6, y, "psram: (hold CELL2)", 9);
     else if (psram_pass) oled_text(6, y, "psram: PASS", 15);

@@ -36,6 +36,21 @@ SD11/12/31/33/34/35/37/45 sind softwareseitig geprüft. SD51 konsolidiert
 Sound0.10/SCN7/Defaults,265 gehashte Firmwareinputs und die verbliebenen Gates.
 Kein Hör-/Gerätehaken aus Messwerten oder aus „weiter“.
 
+## Einzelner Fortschritt2026-10-20 — SD48-Messvorbereitung
+
+Die Messlücke zwischen Renderer und äußerem DMA-C-Handler ist vorbereitet:
+separates Profilfenster umfasst HAL-Dispatch, Refillstatistik, Clipscan und
+Cache-Clean. Vorhandene Renderwerte bleiben getrennt; Diagnose passt weiterhin
+in320×170.64 synthetische Kontofälle, konkrete verdeckte Budgetüberschreitung,
+zwölf ganze reale Product-PCMgegenproben/196608 Stereo-Frames je Modus sowie
+Native+ASan/UBSan und Product-/Reference-ARM bestehen. Vier HAL-Dateien geändert,
+261 bestehende Inputs bytegleich PR180; keine Klang-/Parameter-/Sceneänderung.
+[SD48_IRQ_SCOPE_CHECKPOINT.md](SD48_IRQ_SCOPE_CHECKPOINT.md).
+
+C-Grenzen sind keine komplette Exception-/Dispatch-/Stackmessung. SD48 bleibt
+ungecheckt;25/54 erledigt,29 offen und die vier technischen Hauptpunkte bleiben.
+Basis-PR180/CI740 jetzt vollständig29/29 erfolgreich. Kein Gerät verbunden.
+
 ## Softwarefortschritt2026-10-20 — SD51 konsolidiert, SD52 angebunden
 
 900000ms Human-idle → Display/LEDs weich dunkel, Musik/DMA/Zeit/Besitzer laufen.
@@ -1573,6 +1588,10 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Product-Save/SD41 und echte IRQ-/Stackspitzen/SD48 offen; keine neue
   Room-/Quellen-Prep-Kleinstprüfung als vermeintliches Restinventar.
 - [ ] **SD48 — Echte H743-Zeit-/Stackabnahme durchführen.**
+  **Softwarevorbereitung2026-10-20:** getrenntes DMA-C-Messfenster nach HAL-
+  Rückkehr einschließlich Clip/Cache ergänzt, eigene Diagnose-/Wrap-/PCM-
+  Gegenproben bestanden. [SD48_IRQ_SCOPE_CHECKPOINT.md](SD48_IRQ_SCOPE_CHECKPOINT.md).
+  Exception-Entry/Exit, Dispatchlatenz und realer Stack weiterhin ungemessen.
   Nach UX-Integration: DWT inklusive Onset, maximale SHAPE-Releases, native/alte
   Engine-Retirement, Masterraum, schnell bewegte Targets, Display/LED und Storage;
   lange Läufe bei tatsächlicher Samplerate/Blockkonfiguration.

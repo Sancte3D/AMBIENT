@@ -48,6 +48,11 @@ static int16_t s_buffer[AUDIO_BUFFER_FRAMES * 2 * AUDIO_NUM_BUFFERS];
  * render inside the DMA IRQ; the accounting lives in audio_profiler.c and is
  * host-tested. audio_profiler_state() exposes it for a debug/menu readout. */
 static audio_profiler_t s_prof;
+static audio_profiler_t s_irq_prof;
+static void reset_profilers(void) {
+    audio_profiler_reset(&s_prof, SystemCoreClock, AUDIO_SAMPLE_RATE_HZ);
+    audio_profiler_reset(&s_irq_prof, SystemCoreClock, AUDIO_SAMPLE_RATE_HZ);
+}
 
 /* Enable the Cortex-M7 cycle counter (DWT->CYCCNT) once, before the pump. */
 static void dwt_cyccnt_enable(void) {
@@ -57,6 +62,14 @@ static void dwt_cyccnt_enable(void) {
 }
 
 const audio_profiler_t *audio_profiler_state(void) { return &s_prof; }
+const audio_profiler_t *h743_audio_irq_profiler_state(void) { return &s_irq_prof; }
+void h743_audio_irq_begin(void) {
+    /* Keep one half-period budget even when both DMA flags are pending. */
+    audio_profiler_begin(&s_irq_prof, DWT->CYCCNT, AUDIO_BUFFER_FRAMES);
+}
+void h743_audio_irq_end(void) {
+    audio_profiler_end(&s_irq_prof, DWT->CYCCNT);
+}
 
 /* ---- test-sine fallback (identical contract to the Pico pump) ---- */
 static void fill_test_sine(int16_t *block, int frames) {
@@ -138,7 +151,7 @@ void audio_init(void) {
     /* Render deadline profiler: enable the cycle counter + clear stats before
      * the pump starts. SystemCoreClock = 480 MHz after clock init. */
     dwt_cyccnt_enable();
-    audio_profiler_reset(&s_prof, SystemCoreClock, AUDIO_SAMPLE_RATE_HZ);
+    reset_profilers();
 
     /* Amp control pins LOW first (they already are, via R_SHDN_PD/R_MUTE_PD
      * — drive them explicitly anyway before anything clocks). */

@@ -27,7 +27,9 @@ void SysTick_Handler(void) {
 /* ---- SAI1-A TX DMA (DMA1 Stream 0): half/complete refill callbacks
  * land in audio_h743.c via the HAL SAI dispatch. ---- */
 void DMA1_Stream0_IRQHandler(void) {
+    h743_audio_irq_begin();
     HAL_DMA_IRQHandler(&h743_hdma_sai);
+    h743_audio_irq_end();
 }
 
 /* ---- SPI1-TX DMA (DMA2 Stream 3): async LCD framebuffer flush. TxCplt lands
