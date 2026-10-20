@@ -1,0 +1,49 @@
+{
+  "actual_arm_manifest": {
+    "elf_sha256": "a28f54cb85c59afd4be53dfe8fe4080bc324a5cd28cd65c2c3050e7d6e968aab",
+    "fields": [
+      "cpu_hz",
+      "sample_rate_hz",
+      "budget_cycles",
+      "begin_cycles",
+      "in_flight",
+      "last_cycles",
+      "max_cycles",
+      "last_frames",
+      "render_count",
+      "deadline_miss_count",
+      "reentry_count",
+      "clip_count",
+      "last_load",
+      "peak_load"
+    ],
+    "flash_address": 134217728,
+    "image_bytes": 200132,
+    "image_sha256": "c07844a1f18ca60b5de84f6d91fbe38ce482875d4cff8fcb65cd2b7a6a7b73a5",
+    "journal_candidate": false,
+    "profile": "product",
+    "schema": 1,
+    "symbols": {
+      "s_irq_prof": {
+        "address": 604034048,
+        "bytes": 56
+      },
+      "s_prof": {
+        "address": 604034104,
+        "bytes": 56
+      }
+    }
+  },
+  "baseline": "0637707d2d878abf3093c4c4a9d5dc9e47d4f11e",
+  "device_accepted": false,
+  "firmware_image_byte_equal": true,
+  "firmware_inputs_byte_equal": 265,
+  "gdb_hardware_executed": false,
+  "source_sha256": {
+    "test/test_device_capture.py": "f98a20182c52cf739d30d4da50e342a87c3542a8010932b5cd3bf4596dbe80ef",
+    "tools/DEVICE_CAPTURE_README.md": "94c6cc5e1287ce57cae8a67319ceac50d17811cee20a8111d640a1d8302691ca",
+    "tools/device_capture.py": "d25d767e49a11d8275f1051de2dba2cdd393592e4949895c7e794ec08f835a9c",
+    "tools/device_capture_gdb.py": "5bb818da64b8a3fb7b3a03e8859677564018eeb093cc43a12cfc8a9d63405d15"
+  },
+  "unit_tests": 9
+}

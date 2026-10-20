@@ -1075,6 +1075,7 @@ jobs:
           cat build-h743-product/CMakeFiles/field_ambience_h743.dir/flags.make
           cmake --build build-h743-product -j"$(nproc)"
           python3 tools/check_product_link.py build-h743-product
+          python3 tools/device_capture.py build-h743-product
 
       - name: Upload reduced sound candidate and linker map
         uses: actions/upload-artifact@v4
@@ -1085,6 +1086,11 @@ jobs:
             field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.hex
             field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.map
             field-ambience-current/firmware-c-next/build-h743-product/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-product/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-product/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-product/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-product/DEVICE_CAPTURE_README.md
           if-no-files-found: error
           retention-days: 14
 

@@ -36,6 +36,19 @@ SD11/12/31/33/34/35/37/45 sind softwareseitig geprüft. SD51 konsolidiert
 Sound0.10/SCN7/Defaults,265 gehashte Firmwareinputs und die verbliebenen Gates.
 Kein Hör-/Gerätehaken aus Messwerten oder aus „weiter“.
 
+## Einzelner Fortschritt2026-10-20 — SD48-Auslesepaket vorbereitet
+
+Die Basis-CI des DMA-Checkpoints ist vollständig30/30 grün. Für die reale
+Abnahme ist ein lesendes Auslesepaket ergänzt: passendes ELF/BIN/Linkaudit,
+Profilerlayout/-adressen, GDB-Export ohne selbständiges Verbinden/Flashen/
+Stoppen/Starten und ein konkretes Geräteprotokoll. Laufende/IRQ-gestoppte,
+unfertige oder abweichende Zielstände werden abgewiesen; schlechte Messwerte
+bleiben im Export sichtbar, Gerätefreigabe immer false. Neun Offline-Tests,
+echter Product-ARM-Link und Paketerzeugung bestanden. Alle265 Firmwareinputs
+und das tatsächliche BIN unverändert PR181. Details:
+[SD48_DEVICE_CAPTURE_CHECKPOINT.md](SD48_DEVICE_CAPTURE_CHECKPOINT.md).
+Keine Geräte-/Zeit-/Stack-/Ausgangsabnahme daraus;25/54 erledigt,29 offen.
+
 ## Einzelner Fortschritt2026-10-20 — SD48-Messvorbereitung
 
 Die Messlücke zwischen Renderer und äußerem DMA-C-Handler ist vorbereitet:
@@ -1588,6 +1601,10 @@ gegen die migrierten Scenes geprüft. Keine zirkulären Freigabebedingungen.
   Product-Save/SD41 und echte IRQ-/Stackspitzen/SD48 offen; keine neue
   Room-/Quellen-Prep-Kleinstprüfung als vermeintliches Restinventar.
 - [ ] **SD48 — Echte H743-Zeit-/Stackabnahme durchführen.**
+  **Auslesevorbereitung2026-10-20:** passendes ARM-/Profilerpaket samt rein
+  lesendem GDB-Exporter und konkretem Messprotokoll ergänzt. Neun Offline-
+  Gegenproben und echte ARM-Paketerzeugung bestanden, keine Gerätefreigabe.
+  [SD48_DEVICE_CAPTURE_CHECKPOINT.md](SD48_DEVICE_CAPTURE_CHECKPOINT.md).
   **Softwarevorbereitung2026-10-20:** getrenntes DMA-C-Messfenster nach HAL-
   Rückkehr einschließlich Clip/Cache ergänzt, eigene Diagnose-/Wrap-/PCM-
   Gegenproben bestanden. [SD48_IRQ_SCOPE_CHECKPOINT.md](SD48_IRQ_SCOPE_CHECKPOINT.md).
