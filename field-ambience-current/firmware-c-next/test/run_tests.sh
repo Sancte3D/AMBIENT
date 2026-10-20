@@ -13,6 +13,9 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Read-only device capture guards and real profiler ABI.
+python3 "$here/test_device_capture.py"
+
 # Actual H743 DMA C scope, synthetic clocks and real Product PCM.
 python3 "$src/tools/review_h743_irq_scope.py" "$tmp/h743-irq-scope" --fixture-only
 
