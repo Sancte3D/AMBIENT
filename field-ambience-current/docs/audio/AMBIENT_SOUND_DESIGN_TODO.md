@@ -15,6 +15,21 @@ Stand **2026-10-26**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+## Einzelner Ausbau2026-10-26 — WOODLAND-Körper gesichert
+
+Die letzte Körper-Hörprobe lag noch ohne gesicherten Quellstand vor. Eine
+reproduzierbare V2-Fassung ist jetzt als unabhängiger OFF-Default-Kandidat
+implementiert: zwei leise, saitengetriebene Resonanzen auf 2f/3f, ohne Änderung
+von Saitenpuffer, Stimmung, langen Tönen oder Ruhestandsentscheidung. Native/
+Sanitizer-, tatsächliche PCM-/Ereignis-/Clear-/Mute-Prüfungen bestehen;
+neue echte Firmware-WAVs vergleichen 24 s bisher / 24 s Körper. Die alte WAV
+bleibt erhalten. [Körper-Checkpoint](WOODLAND_BODY_CHECKPOINT.md).
+
+Nächste einzelne Einheit: eigenständige lange Resonatorquelle als Ersatz
+vergleichen, danach Flächen, Stimmführung/Loops und Effekte gemäß dem unten
+verlinkten Ausbauplan. Diese Körperstufe ist noch kein vollständiger DRUID-Port.
+Hör-/Geräteabnahme sowie alle bisherigen SD-Gates bleiben offen.
+
 ## Einzelner Ausbau2026-10-26 — World-Charakter nach Tonitor
 
 Die Entfaltungs-Hörprobe wurde mit „klingt gut“ beurteilt. Der nächste

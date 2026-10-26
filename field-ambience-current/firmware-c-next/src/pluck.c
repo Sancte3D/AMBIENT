@@ -8,6 +8,7 @@
 #ifdef FAM_SOUND_PRODUCT
 #include "cell_unfold.h"
 #include "world_character.h"
+#include "woodland_body.h"
 #endif
 #include <math.h>
 #include <stdatomic.h>
@@ -49,6 +50,7 @@ typedef struct {
 #ifdef FAM_SOUND_PRODUCT
     uint32_t unfold;
     world_character_t character;
+    woodland_body_t body;
 #endif
 } pluck_voice_t;
 
@@ -63,6 +65,8 @@ static _Atomic uint32_t unfold_mask;
  * Init/Clear in the IRQ must not overwrite this future-note config. */
 static uint32_t character_seed;
 static bool character_enabled;
+static bool body_enabled;
+void pluck_set_body(bool enabled) { body_enabled=enabled; }
 void pluck_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
 }
@@ -159,6 +163,7 @@ static bool start_note(int owner, float freq_hz, float amp) {
     p->unfold = 0;
     world_character_prepare(&p->character,1,character_seed,owner,freq_hz,character_enabled);
     p->colored = ambient;
+    woodland_body_prepare(&p->body,freq_hz,ambient && body_enabled);
     p->color = atomic_load_explicit(&s_color, memory_order_relaxed);
     p->color_lp = 0.0f;
     /* Pitch-relative nonresonant source shelf: dark takes the low band,
@@ -312,15 +317,17 @@ void pluck_render_mix(float *dry_L, float *dry_R,
 #ifdef FAM_SOUND_PRODUCT
             float opening=cell_unfold_step(&p->unfold,held,p->owner);
             world_character_tick(&p->character);
+            colored=woodland_body_step(&p->body,audible);
             if (p->colored) {
                 /* Track at neutral for warm state during live edits. Dry
                  * and Room send hear the same color. Ownership/decay still
                  * track the uncolored string below. */
                 p->color += (color - p->color) * (1.0f / (0.080f * SR));
-                p->color_lp += p->color_a * (audible - p->color_lp);
+                float body_colored=colored;
+                p->color_lp += p->color_a * (body_colored - p->color_lp);
                 float shelf=2.0f * p->color - 1.0f + 0.35f*opening;
                 if(p->character.enabled) shelf=dsp_clampf(shelf+p->character.shade,-1.0f,1.35f);
-                colored += shelf * (audible - p->color_lp);
+                colored += shelf * (body_colored - p->color_lp);
             }
 #endif
             float output = colored * attack * p->stop_gain;
