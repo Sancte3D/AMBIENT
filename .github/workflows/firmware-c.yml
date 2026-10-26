@@ -95,12 +95,28 @@ jobs:
       - name: Run host tests
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
+      - name: Fetch exact pre-expression baseline
+        run: git fetch --no-tags origin bea7f5765125b2d55c7bb28832626dce7956b382
+      - name: Check current physical expression and matched baseline PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          python3 tools/review_cell_unfold.py build-cell-unfold
+          python3 tools/review_h743_irq_scope.py build-cell-unfold/irq --fixture-only --sanitize
+          python3 tools/review_ui_idle.py build-cell-unfold/ui --fixture-only --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-cell-unfold-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-cell-unfold
+          if-no-files-found: error
 
   h743-irq-scope-review:
-    name: current H743 DMA C scope and real Product PCM (SD48)
+    name: archived H743 DMA C scope and unchanged inputs (PR182)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Keep the original strict inventory proof; current fixtures run above.
+          ref: bea7f5765125b2d55c7bb28832626dce7956b382
       - name: Fetch exact pre-instrumentation baseline
         run: git fetch --no-tags origin de732f42d4c1973a82f256d9cdec129394dba4b1
       - name: Check actual handler scope, wrap and complete Product PCM

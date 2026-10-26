@@ -49,4 +49,8 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                       float *send_L, float *send_R,
                       int frames, float send_amount);
 
+#ifdef FAM_SOUND_PRODUCT
+/* Digital physical hold, independent of note/HOLD lifetime; Main only. */
+void bowed_set_cell_held(int source,bool down);
+#endif
 #endif /* BOWED_H */

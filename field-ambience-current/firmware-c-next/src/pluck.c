@@ -5,6 +5,9 @@
 #include "pluck.h"
 #include "shape.h"
 #include "dsp.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "cell_unfold.h"
+#endif
 #include <math.h>
 #include <stdatomic.h>
 #include <string.h>
@@ -42,6 +45,9 @@ typedef struct {
     uint32_t release_frames;
     uint32_t stop_total;
     volatile uint32_t stop_left;
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t unfold;
+#endif
 } pluck_voice_t;
 
 static pluck_voice_t v[PLUCK_VOICES];
@@ -49,6 +55,12 @@ static _Atomic float s_damp = 0.42f * (0.25f / 0.9f); /* FIR side weight: 0=brig
 static _Atomic bool s_ambient;
 #ifdef FAM_SOUND_PRODUCT
 static _Atomic float s_color = 0.5f;
+#ifdef FAM_SOUND_PRODUCT
+static _Atomic uint32_t unfold_mask;
+void pluck_set_cell_held(int source,bool down) {
+    cell_unfold_publish(&unfold_mask,source,down);
+}
+#endif
 #endif
 static int      next_voice;
 static uint32_t excitation_rng = 0x9E3779B9u;
@@ -59,6 +71,9 @@ static inline float excitation_variation(void) {
 }
 
 void pluck_init(void) {
+#ifdef FAM_SOUND_PRODUCT
+    atomic_store_explicit(&unfold_mask,0,memory_order_relaxed);
+#endif
     memset(v, 0, sizeof v);
     /* Slight opposing pans — equal-power at ±0.35. */
     for (int i = 0; i < PLUCK_VOICES; ++i) {
@@ -132,6 +147,7 @@ static bool start_note(int owner, float freq_hz, float amp) {
     p->attack_step = 1.0f / (attack_s * SR);
     p->dc = 0.0f;
 #ifdef FAM_SOUND_PRODUCT
+    p->unfold = 0;
     p->colored = ambient;
     p->color = atomic_load_explicit(&s_color, memory_order_relaxed);
     p->color_lp = 0.0f;
@@ -238,6 +254,7 @@ void pluck_render_mix(float *dry_L, float *dry_R,
     float damping=atomic_load_explicit(&s_damp,memory_order_relaxed);
 #ifdef FAM_SOUND_PRODUCT
     float color = atomic_load_explicit(&s_color, memory_order_relaxed);
+    uint32_t held=atomic_load_explicit(&unfold_mask,memory_order_acquire);
 #endif
     for (int i = 0; i < PLUCK_VOICES; ++i) {
         pluck_voice_t *p = &v[i];
@@ -283,13 +300,14 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             float audible = y - p->dc;
             float colored = audible;
 #ifdef FAM_SOUND_PRODUCT
+            float opening=cell_unfold_step(&p->unfold,held,p->owner);
             if (p->colored) {
                 /* Track at neutral for warm state during live edits. Dry
                  * and Room send hear the same color. Ownership/decay still
                  * track the uncolored string below. */
                 p->color += (color - p->color) * (1.0f / (0.080f * SR));
                 p->color_lp += p->color_a * (audible - p->color_lp);
-                colored += (2.0f * p->color - 1.0f) * (audible - p->color_lp);
+                colored += (2.0f * p->color - 1.0f + 0.35f*opening) * (audible - p->color_lp);
             }
 #endif
             float output = colored * attack * p->stop_gain;

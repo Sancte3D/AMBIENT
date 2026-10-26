@@ -73,6 +73,11 @@ void controls_cell_press(uint8_t cell, float velocity_amp);
 /* Cell release (momentary up-edge). Only meaningful when Hold is NOT latched
  * — releases the momentary note. Held cells are unaffected. */
 void controls_cell_release(uint8_t cell);
+#ifdef FAM_SOUND_PRODUCT
+/* True only immediately after a physically routed Note press. False on every
+ * physical up edge, including Scene UI. Replay must never call true. */
+void controls_cell_physical(uint8_t cell,bool down);
+#endif
 
 /* Leave Note mode: release momentary/latched sources and physical presence,
  * preserving Shift/Hold/Drone/Generate settings. No engine-wide panic. */

@@ -74,4 +74,8 @@ void pluck_set_color(float color);
 void pluck_render_mix(float *dry_L, float *dry_R,
                       float *send_L, float *send_R, int frames);
 
+#ifdef FAM_SOUND_PRODUCT
+/* Digital physical hold, independent of note/HOLD lifetime; Main only. */
+void pluck_set_cell_held(int source,bool down);
+#endif
 #endif

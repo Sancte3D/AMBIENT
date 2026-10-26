@@ -8,12 +8,24 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-20**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-26**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md), konsolidierter
 [SD51-Softwarestand](SD51_SOFTWARE_CANDIDATE.md) und
 [SD52-UI-Anbindung](SD52_UI_IDLE_CHECKPOINT.md).
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
+
+## Einzelner Ausbau2026-10-26 — physische Cell-Entfaltung
+
+Der zusätzlich beauftragte Ausbau ist als Product-Softwarekandidat umgesetzt:
+vier Sekunden begrenzte Klangöffnung pro physisch gedrückter Note-Cell,
+weiche Rückkehr beim Loslassen, unabhängig von HOLD. Tonhöhen und die lange
+WOODLAND-Saitenschwingung bleiben erhalten. Replay startet keine Entfaltung.
+Quellen-/Bedien-/Sanitizer-/Baseline-PCM-Prüfungen sowie H743-Build und Linkaudit
+sind belegt: [Entfaltungs-Checkpoint](CELL_UNFOLD_CHECKPOINT.md).
+Hörvergleich und konkrete Geräteabnahme sind vorbereitet und bleiben offen.
+Dieser Funktionsausbau schließt keinen der bisherigen Hör-/Gerätepunkte;
+die folgende Zählung der ursprünglichen 54 Hauptpunkte bleibt unverändert.
 
 ## Offener Arbeitsstand2026-10-20
 

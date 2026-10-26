@@ -154,6 +154,29 @@ static void run(int world, int wake, bool idle, uint32_t epoch, int cap, int16_t
     assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
 }
 
+/* Actual MCP/H743 path: physical up is honored even under the Scene UI. */
+static void expression_route(int world,bool scene,bool hardware,int16_t *pcm) {
+    reset(world,100);controls_modifier(MOD_GENERATE,true);
+    controls_modifier(MOD_HOLD,true);
+    for(unsigned t=0;t<6000;t+=10) {
+        uint32_t now=100+t;s_ui_idle.last_ms=now;
+        if(t==0) {
+            if(hardware)inputs(1u<<MCP_BIT_CELL1);
+            else {controls_cell_press(0,CELL_TAP_AMP);controls_cell_physical(0,true);}
+        }
+        if(scene && t==4000)scenes_ui_open(now);
+        if(t==4500) {
+            if(hardware)inputs(0);
+            else if(scene)controls_cell_physical(0,false);
+            else controls_cell_release(0);
+        }
+        poll(now);engine_generative_tick(now);
+        engine_render(pcm+2*(t/10)*441,441);
+    }
+    assert(controls_hold_base(0));
+    assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+}
+
 int main(void) {
     /* Real boot initializer must prime the indirect EN4 level before its
      * snapshot. Its queued down and later up are both consumed, no Mute. */
@@ -167,6 +190,12 @@ int main(void) {
     assert(!s_ui_idle.down && !s_ui_idle.suppressed && !params_muted());
     poll(119 + 2 * UI_IDLE_MS); assert(!s_ui_idle.quiet);
     poll(120 + 2 * UI_IDLE_MS); assert(s_ui_idle.quiet);
+    for(int world=0;world<3;++world) for(int scene=0;scene<2;++scene) {
+        expression_route(world,scene,false,expected);
+        expression_route(world,scene,true,actual);
+        assert(!memcmp(expected,actual,6*44100*2*sizeof *actual));
+    }
+    puts("H743 physical unfold: all Worlds, normal and Scene-overlay release match explicit physical controls");
     unsigned cases = 0;
     for (int world = 0; world < 3; ++world) for (int partition = 0; partition < 2; ++partition) {
         int cap = partition ? 512 : 64;

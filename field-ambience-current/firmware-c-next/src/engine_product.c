@@ -242,6 +242,7 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     atomic_fetch_and_explicit(&release_mask,~(1u<<owner),memory_order_acq_rel);
     SOURCE_HANDOFF_POINT(5,owner);
     atomic_fetch_and_explicit(&quick_mask,~(1u<<owner),memory_order_acq_rel);
+    engine_set_cell_held(owner,false);
     SOURCE_HANDOFF_POINT(6,owner);
     bool ok=world==WORLD_COAST ? bowed_try_note_on(owner,hz,amp) :
             world==WORLD_WOODLAND ? pluck_note_on(owner,hz,amp) : horn_try_note_on(owner,hz,amp);
@@ -254,6 +255,19 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     atomic_store_explicit(&output_enabled,true,memory_order_release);
     SOURCE_HANDOFF_POINT(9,owner);
     return true;
+}
+void engine_set_cell_held(uint8_t owner,bool down) {
+    if(!(owner<5 || (owner>=9 && owner<=13))) return;
+    if(down) {
+        bool admitted=false;
+        for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==owner && !slots[i].released)
+            admitted=true;
+        if(!admitted || clearing || muted || generate) return;
+    }
+    bowed_set_cell_held(owner,down); horn_set_cell_held(owner,down); pluck_set_cell_held(owner,down);
+}
+static void clear_cell_unfold(void) {
+    for(uint8_t i=0;i<SOURCES;++i) engine_set_cell_held(i,false);
 }
 bool engine_try_note_on(uint8_t owner,float hz,float v) {
     if(generate || !(owner<5 || (owner>=9 && owner<=13))) return false;
@@ -270,6 +284,7 @@ bool engine_try_world_note_on(uint8_t owner,float hz,float v) {
 }
 void engine_note_off(uint8_t owner) {
     if(owner>=SOURCES) return;
+    engine_set_cell_held(owner,false);
     reap();
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==owner && !slots[i].released) {
         source_slot_t *s=&slots[i]; s->held=s->timed=false; s->released=true;
@@ -310,6 +325,7 @@ static void release_generated(void) {
     highlands_pending=false;highlands_phrase_restart(&highlands);
 }
 static void quiet_chain(void) {
+    clear_cell_unfold();
     coast_pending=0; coast_phrase_restart(&coast); resume_nature=false;
     woodland_pending=false;woodland_phrase_restart(&woodland);
     highlands_pending=false;highlands_phrase_restart(&highlands);
@@ -360,6 +376,7 @@ void engine_set_nature(float v) {
 }
 void engine_set_world(int i) {
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
+    clear_cell_unfold();
     reap(); retire_context(false); world=i; nature_set_world(world);retry_ms=now_ms;
     coast_pending=0; coast_phrase_init(&coast,seed);
     woodland_pending=false;woodland_phrase_init(&woodland,seed);

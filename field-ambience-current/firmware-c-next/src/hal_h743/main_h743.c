@@ -370,6 +370,9 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
          * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
         for (uint8_t c = 0; c < 5; ++c) {
             uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
+#ifdef FAM_SOUND_PRODUCT
+            if(rose & m) controls_cell_physical(c,false);
+#endif
             if (scenes_ui_active() && !controls_modifier_active(MOD_GENERATE)) {
                 if (fell & m)
                     scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
@@ -383,7 +386,11 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                  * Schleife bei der Wiedergabe wieder stoppen). */
                 bool record = !(s_cell_mode == CELL_LAND && c == 4);
                 if (fell & m) { if (record) gesture_record_cell(c, true,  now);
-                                route_cell(c, true,  now); }
+                                route_cell(c, true,  now);
+#ifdef FAM_SOUND_PRODUCT
+                                if(s_cell_mode==CELL_NOTE) controls_cell_physical(c,true);
+#endif
+                              }
                 if (rose & m) { if (record) gesture_record_cell(c, false, now);
                                 route_cell(c, false, now); }
             }
