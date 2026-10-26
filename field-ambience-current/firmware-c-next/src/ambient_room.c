@@ -6,6 +6,15 @@
 #include "dsp.h"
 #include <stdatomic.h>
 #include <string.h>
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "sound_finish_fx.h"
+static _Atomic uint32_t finish_decay_bits;
+static float finish_decay,model_gain;
+static bool active_plate;
+void ambient_room_finish_set(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate) {
+    sf_parameters(delay,grain,freeze,drive,crush,phaser,plate);
+}
+#endif
 enum { LINES=8, SAMPLES=13838, DIFF_SAMPLES=1324 };
 static const uint16_t lengths[LINES]={1117,1277,1429,1601,1789,1999,2203,2423};
 static const uint16_t diff_len[4]={239,389,277,419};
@@ -33,6 +42,12 @@ static _Atomic bool enabled;
 static bool cold;
 static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+bool ambient_room_retains_history(void) {
+    return (atomic_load(&sf_freeze) && atomic_load(&enabled) && value(atomic_load(&amount_bits))>0) ||
+            atomic_load_explicit(&sf_content_held,memory_order_acquire);
+}
+#endif
 void ambient_room_set(float amount) {
     if(!isfinite(amount)) return;
     amount=dsp_clampf(amount,0,1);
@@ -52,6 +67,9 @@ void ambient_room_set(float amount) {
     PUBLISH_POINT(10);
     atomic_store_explicit(&t60_bits,bits(t60),memory_order_seq_cst);
     PUBLISH_POINT(11);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    atomic_store_explicit(&finish_decay_bits,bits(expf(-6.9077553f*.120f/t60)),memory_order_seq_cst);
+#endif
     atomic_store_explicit(&target_version,version+2u,memory_order_seq_cst);
     PUBLISH_POINT(12);
 }
@@ -66,20 +84,32 @@ static void accept_targets(void) {
     }
     float amount=value(atomic_load_explicit(&amount_bits,memory_order_seq_cst));
     ACCEPT_POINT(9);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    float next_decay=value(atomic_load_explicit(&finish_decay_bits,memory_order_seq_cst));
+#endif
     if(before!=atomic_load_explicit(&target_version,memory_order_seq_cst))return;
     memcpy(accepted_gains,next,sizeof next);accepted_amount=amount;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    finish_decay=next_decay;
+#endif
 }
 void ambient_room_enable(bool on) { atomic_store_explicit(&enabled,on,memory_order_release); }
 void ambient_room_clear(void) {
     /* Audio-owned cold means every clearable buffer/state is already zero.
      * Dry completion and whole-chain Clear can coincide in the same block;
      * do not write the same 60 KiB twice. Init starts with cold=false. */
+    #ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_clear();
+#endif
     if(cold)return;
     memset(tank,0,sizeof tank); memset(diffusion,0,sizeof diffusion);
     memset(at,0,sizeof at); memset(diff_at,0,sizeof diff_at);
     memset(low,0,sizeof low); memset(hp_x,0,sizeof hp_x); memset(hp_y,0,sizeof hp_y); peak=0; cold=true;
 }
 void ambient_room_init(void) {
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_init();model_gain=1;active_plate=true;
+#endif
     ambient_room_clear(); ambient_room_set(.5f); ambient_room_enable(true);
     amount_cur=.5f; enable_cur=1; cold=false;
     accept_targets();
@@ -87,7 +117,13 @@ void ambient_room_init(void) {
 }
 float ambient_room_tail_seconds(void) { return value(atomic_load_explicit(&t60_bits,memory_order_acquire)); }
 float ambient_room_peak(void) { return peak; }
-size_t ambient_room_storage_bytes(void) { return sizeof tank+sizeof diffusion+sizeof low+sizeof at+sizeof diff_at+sizeof gains+sizeof hp_x+sizeof hp_y; }
+size_t ambient_room_storage_bytes(void) {
+    size_t n=sizeof tank+sizeof diffusion+sizeof low+sizeof at+sizeof diff_at+sizeof gains+sizeof hp_x+sizeof hp_y;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    n+=sizeof sf;
+#endif
+    return n;
+}
 static float allpass(int k,float x) {
     int offset=0; for(int i=0;i<k;++i) offset+=diff_len[i];
     float d=diffusion[offset+diff_at[k]], y=d-.62f*x;
@@ -95,11 +131,9 @@ static float allpass(int k,float x) {
     if(++diff_at[k]==diff_len[k]) diff_at[k]=0;
     return y;
 }
-void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int frames) {
-    accept_targets();
+static void process_fdn(float *l,float *r,const float *sl,const float *sr,int frames,float on) {
     const float *targets=accepted_gains;
     float target=accepted_amount;
-    float on=atomic_load_explicit(&enabled,memory_order_acquire) ? 1 : 0;
     static const float il[LINES]={1,-1,.72f,-.72f,.45f,-.45f,.88f,-.88f};
     static const float ir[LINES]={.45f,.88f,-1,-.72f,1,.72f,-.45f,-.88f};
     peak=0;
@@ -154,4 +188,39 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
         peak=fmaxf(peak,fmaxf(fabsf(wl),fabsf(wr)));
         l[n]+=wl; r[n]+=wr;
     }
+}
+
+void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int frames) {
+    accept_targets();
+    float on=atomic_load_explicit(&enabled,memory_order_acquire) ? 1 : 0;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_accept();
+    bool wanted=atomic_load_explicit(&sf_plate_on,memory_order_acquire);
+    float maximum=0;
+    for(int n=0;n<frames;++n) {
+        /* Change model at the same actual sample for every render partition,
+         * after a 40ms return fade. Erase the inactive model before reuse. */
+        if(wanted!=active_plate && model_gain==0) {ambient_room_clear();active_plate=wanted;}
+        float ms=1.0f/(.040f*DSP_SAMPLE_RATE_HZ),mt=wanted==active_plate ? 1 : 0;
+        model_gain+=dsp_clampf(mt-model_gain,-ms,ms);
+        float before_l=l[n],before_r=r[n];
+        if(active_plate) {
+            float step=1.0f/(.080f*DSP_SAMPLE_RATE_HZ);
+            amount_cur+=dsp_clampf(accepted_amount-amount_cur,-step,step);
+            float estep=1.0f/(.040f*DSP_SAMPLE_RATE_HZ);
+            enable_cur+=dsp_clampf(on-enable_cur,-estep,estep);
+            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,true);
+            cold=false;
+        } else {
+            process_fdn(l+n,r+n,sl+n,sr+n,1,on);
+            l[n]=before_l+(l[n]-before_l)*model_gain;
+            r[n]=before_r+(r[n]-before_r)*model_gain;
+            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,false);
+        }
+        maximum=fmaxf(maximum,fmaxf(fabsf(l[n]-before_l),fabsf(r[n]-before_r)));
+    }
+    peak=maximum;
+#else
+    process_fdn(l,r,sl,sr,frames,on);
+#endif
 }

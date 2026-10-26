@@ -15,6 +15,24 @@ Stand **2026-10-26**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+## Gesamtauftrag2026-10-26 — Sound-Software fertigstellen
+
+Michalis beauftragt ausdrücklich alle verbliebenen Sound-Softwareblöcke.
+Zusammenhängender Modell-1-Hörkandidat: harmonische COAST-Fläche, langer
+WOODLAND-Modalersatz, bestätigte nähere Voicings, eigene Loopbesitzer mit
+Register/Velocity und Ties, alternativer Plate-Raum, gemeinsamer Stereo-
+Delay, Grains/Freeze und gezielte Klangfarben. Drei globale Stimmen,
+Harmonie-/Tail-Verträge, Clear/Mute und getrennte Nature bleiben erhalten.
+Kein Stop nach bloß einer weiteren Einzelstufe. Der nächste Schritt nach
+dieser Softwarefassung ist die gemeinsame Gesamt-Hörabnahme und Geräteprüfung.
+Details: [Sound-Fertigstellung](SOUND_FINISH_CHECKPOINT.md).
+
+Der neue Schalter `FAM_SOUND_FINISH_CANDIDATE` ist ein eigener, technisch
+prüfbarer Hörbuild. Alte Defaults/Scenes bleiben erhalten; keine implizite
+Hör-/Hardwarefreigabe oder neue UI-Belegung. Die frühere „nächste Flächen-
+alternative“-Angabe unten ist durch diesen Gesamtstand überholt. Die alten
+54 SD-Gates bleiben getrennt von diesem implementierten Ausbauumfang.
+
 ## Einzelner Ausbau2026-10-26 — eigenständiger WOODLAND-Resonator
 
 Michalis beurteilt die vorherige Körper-Hörprobe mit „Das ist sehr gut“.

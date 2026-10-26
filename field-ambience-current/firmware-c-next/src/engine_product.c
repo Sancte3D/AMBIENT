@@ -17,6 +17,9 @@
 #include "pluck.h"
 #include "ambient_room.h"
 #include "nature.h"
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "gesture.h"
+#endif
 #include <stdatomic.h>
 #include <string.h>
 _Static_assert(ATOMIC_INT_LOCK_FREE==2,"Audio needs lock-free word atomics");
@@ -56,6 +59,14 @@ static _Atomic uint32_t quick_mask,release_mask,audio_mask,started_mask,audio_ep
 static _Atomic bool clear_request,clear_done,output_enabled,room_quiet;
 static float dry_l[BLOCK],dry_r[BLOCK],send_l[BLOCK],send_r[BLOCK];
 static float volume_cur,gate_cur,dc_l,dc_r;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+static int last_voicing[CORE_WORLD_COUNT][3];
+static uint8_t loop_lane[2];
+static bool freeze_seen;
+static void reset_voicing(void) {
+    for(int w=0;w<CORE_WORLD_COUNT;++w)for(int r=0;r<3;++r)last_voicing[w][r]=-1;
+}
+#endif
 static uint32_t quiet_frames;
 static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
@@ -64,7 +75,13 @@ static void remember(float hz) {
     /* Max room T60 4.8 s: nominal -90 dB after another 1.5*T60 from real
      * source retirement. Also allow 250 ms of measured quiet wet return.
      * Reserve all three outgoing slots; never evict an audible history item. */
-    uint32_t until=clock_frames()+(uint32_t)(7.2f*DSP_SAMPLE_RATE_HZ);
+    uint32_t until=clock_frames()+(uint32_t)(
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        14.0f*DSP_SAMPLE_RATE_HZ
+#else
+        7.2f*DSP_SAMPLE_RATE_HZ
+#endif
+    );
     for(int i=0;i<TAILS;++i) if(tails[i].used && fabsf(tails[i].hz-hz)<.001f) {
         tails[i].until=until; return;
     }
@@ -85,8 +102,18 @@ static void reap(void) {
     }
     uint32_t frames=clock_frames();
     bool quiet=atomic_load_explicit(&room_quiet,memory_order_acquire);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    bool frozen=ambient_room_retains_history();
+    if(freeze_seen && !frozen)for(int i=0;i<TAILS;++i)if(tails[i].used)tails[i].until=frames+14u*DSP_SAMPLE_RATE_HZ;
+    freeze_seen=frozen;
+    quiet=quiet && !frozen;
+#endif
     for(int i=0;i<TAILS;++i) if(tails[i].used &&
-       (quiet || (int32_t)(frames-tails[i].until)>=0)) tails[i].used=false;
+       (quiet || (
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        !frozen &&
+#endif
+        (int32_t)(frames-tails[i].until)>=0))) tails[i].used=false;
     uint32_t epoch=atomic_load_explicit(&audio_epoch,memory_order_acquire);
     uint32_t mask=atomic_load_explicit(&audio_mask,memory_order_acquire);
     uint32_t heard=atomic_exchange_explicit(&started_mask,0,memory_order_acquire);
@@ -109,6 +136,9 @@ static void reap(void) {
                 if(!clearing && !muted && !suppressed && generate && autoplay &&
                    world==WORLD_COAST && coast_phrase_heard(&coast,o,now_ms)) {
                     last_midi=o->midi; ++note_count;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                    last_voicing[world][o->role]=o->midi;
+#endif
                     if(o->hold_ms) {s->timed=true; s->off_ms=now_ms+o->hold_ms;}
                     if(o->phase==3) for(int k=0;k<SLOTS;++k)
                         if(slots[k].used && slots[k].owner==coast_owners[2] && !slots[k].released) {
@@ -121,6 +151,9 @@ static void reap(void) {
                 if(!clearing && !muted && !suppressed && generate && autoplay &&
                    world==WORLD_WOODLAND && woodland_phrase_heard(&woodland,&woodland_ticket,now_ms)) {
                     last_midi=woodland_ticket.midi;++note_count;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                    last_voicing[world][woodland_ticket.role]=woodland_ticket.midi;
+#endif
                     s->timed=true;s->off_ms=now_ms+woodland_ticket.hold_ms;
                 }
             }
@@ -130,6 +163,9 @@ static void reap(void) {
                    world==WORLD_HIGHLANDS && highlands_phrase_heard(&highlands,&highlands_ticket,now_ms)) {
                     highlands_offer_t *o=&highlands_ticket;
                     last_midi=o->midi;++note_count;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                    last_voicing[world][o->role]=o->midi;
+#endif
                     if(o->hold_ms) {s->timed=true;s->off_ms=now_ms+o->hold_ms;}
                     /* The shared third stays in its original source through
                      * both actual partner starts. Release it with the last
@@ -299,7 +335,11 @@ void engine_note_off(uint8_t owner) {
          * chord holds end with the source's own soft musical release.
          * Cancel preparations before their first DSP sample.
          * Context handovers still use quick_mask; Clear/Mute gate all paths. */
-        if(s->family!=WORLD_WOODLAND || !s->started || owner==6 || owner==7 || owner==15) {
+        if(s->family!=WORLD_WOODLAND || !s->started || owner==6 || owner==7 || owner==15
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+           || owner==8 || owner==14
+#endif
+        ) {
             SOURCE_HANDOFF_POINT(2,owner);
             atomic_fetch_or_explicit(&release_mask,1u<<owner,memory_order_release);
             SOURCE_HANDOFF_POINT(3,owner);
@@ -332,6 +372,9 @@ static void release_generated(void) {
     highlands_pending=false;highlands_phrase_restart(&highlands);
 }
 static void quiet_chain(void) {
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    gesture_stop(now_ms);
+#endif
     clear_cell_unfold();
     coast_pending=0; coast_phrase_restart(&coast); resume_nature=false;
     woodland_pending=false;woodland_phrase_restart(&woodland);
@@ -384,6 +427,9 @@ void engine_set_nature(float v) {
 void engine_set_world(int i) {
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
     clear_cell_unfold();
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    reset_voicing();
+#endif
     reap(); retire_context(false); world=i; nature_set_world(world);retry_ms=now_ms;
     coast_pending=0; coast_phrase_init(&coast,seed);
     woodland_pending=false;woodland_phrase_init(&woodland,seed);
@@ -395,7 +441,35 @@ int engine_product_cell_midi(int cell,bool upper) {
     if(cell<0 || cell>=CELL_COUNT) return -1;
     return world_pitch_midi(cell+(upper ? 3 : 0),tonic_pc,minor!=0);
 }
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+void engine_set_sound_effects(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate) {
+    ambient_room_finish_set(delay,grain,freeze,drive,crush,phaser,plate);
+}
+bool engine_gesture_note(uint8_t cell,bool upper,bool pressed,float velocity,uint32_t ms) {
+    (void)ms;if(cell>=5)return false;
+    static const uint8_t owners[2]={8,14};uint8_t lane=(uint8_t)(1+cell+5*upper);
+    reap();
+    if(!pressed) {
+        for(int k=0;k<2;++k)if(loop_lane[k]==lane) {engine_note_off(owners[k]);loop_lane[k]=0;}
+        return true;
+    }
+    if(generate || clearing || muted || !isfinite(velocity) || velocity<=0)return false;
+    for(int k=0;k<2;++k) {
+        bool active=false;
+        for(int i=0;i<SLOTS;++i)if(slots[i].used && slots[i].owner==owners[k])active=true;
+        if(!active)loop_lane[k]=0;
+        if(loop_lane[k]==lane)return true;
+        if(!loop_lane[k] && admit(owners[k],tuning_hz((float)engine_product_cell_midi(cell,upper)),velocity,false)) {
+            loop_lane[k]=lane;return true;
+        }
+    }
+    return false;
+}
+#endif
 static void reset_score_context(void) {
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    reset_voicing();
+#endif
     reap();
     /* A prepared old-context note is not a newly heard new-context event.
      * Already acknowledged voices keep their actual Hz. Forget degree memory
@@ -433,6 +507,9 @@ void engine_set_user_presence(bool on) {
 }
 void engine_set_generative(bool on,int program) {
     (void)program; reap(); if(on==generate) return;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    if(on)gesture_stop(now_ms);
+#endif
     if(on)retire_context(true);else release_all();
     generate=on; suppressed=false; retry_ms=now_ms;
     coast_pending=0;
@@ -459,6 +536,25 @@ static bool coast_owner_free(int role) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==coast_owners[role])return false;
     return true;
 }
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+/* Bounded same-pitch-class octave selection. Failed admission never commits
+ * memory; live common tones, actual Hz and all tail checks stay authoritative. */
+static int revoice(int role,int midi) {
+    int prev=last_voicing[world][role],best=midi,cost=1000;
+    if(prev<0)return midi;
+    for(int delta=-12;delta<=12;delta+=12) {
+        int m=midi+delta;
+        bool allowed=world==WORLD_COAST ? coast_phrase_pitch_allowed(m,tonic_pc,minor!=0) :
+                     world==WORLD_WOODLAND ? woodland_phrase_pitch_allowed(m,tonic_pc,minor!=0) :
+                     highlands_phrase_pitch_allowed(m,tonic_pc,minor!=0);
+        float hz=tuning_hz((float)m);
+        if(!allowed || hz<105 || hz>(world==WORLD_COAST ? 850 : world==WORLD_WOODLAND ? 470 : 650) || !pitch_clear(hz))continue;
+        int d=m-prev;if(d<0)d=-d;
+        if(d<cost) {cost=d;best=m;}
+    }
+    return best;
+}
+#endif
 static bool coast_start(const coast_offer_t *o) {
     float hz=tuning_hz((float)o->midi);
     if(!admit(coast_owners[o->role],hz,o->velocity,true)) {++rejects;return false;}
@@ -494,6 +590,13 @@ static void coast_tick(uint32_t ms) {
     }
     coast_offer_t a=coast_phrase_propose(&coast,0,tonic_pc,minor!=0,activity);
     coast_offer_t b=coast_phrase_propose(&coast,1,tonic_pc,minor!=0,activity);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    a.midi=revoice(a.role,a.midi);b.midi=revoice(b.role,b.midi);
+    if(!compatible(tuning_hz((float)a.midi),tuning_hz((float)b.midi)) || a.midi==b.midi) {
+        a=coast_phrase_propose(&coast,0,tonic_pc,minor!=0,activity);
+        b=coast_phrase_propose(&coast,1,tonic_pc,minor!=0,activity);
+    }
+#endif
     int free=0;for(int i=0;i<SLOTS;++i)free+=!slots[i].used;
     if(!coast.heard_mask && (free<2 || !coast_owner_free(0) || !coast_owner_free(1) ||
        !pitch_clear(tuning_hz((float)a.midi)) || !pitch_clear(tuning_hz((float)b.midi)))) {
@@ -511,6 +614,9 @@ static void woodland_tick(uint32_t ms) {
         woodland_phrase_restart(&woodland);
     }
     woodland_offer_t o=woodland_phrase_propose(&woodland,tonic_pc,minor!=0,activity);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    o.midi=revoice(o.role,o.midi);
+#endif
     if(!coast_owner_free(o.role) || !admit(coast_owners[o.role],tuning_hz((float)o.midi),o.velocity,true)) {
         ++rejects;retry_ms=ms+250;return;
     }
@@ -527,6 +633,9 @@ static void highlands_tick(uint32_t ms) {
     if(!highlands_phrase_due(&highlands,ms))return;
     if(highlands.phase==8)highlands_phrase_restart(&highlands);
     highlands_offer_t o=highlands_phrase_propose(&highlands,tonic_pc,minor!=0,activity);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    o.midi=revoice(o.role,o.midi);
+#endif
     if(!coast_owner_free(o.role)) {retry_ms=ms+250;return;}
     if(!admit(coast_owners[o.role],tuning_hz((float)o.midi),o.velocity,true)) {
         ++rejects;retry_ms=ms+250;return;
@@ -613,11 +722,16 @@ void engine_set_vibe(int i) { (void)i; }
 void engine_init(void) {
     dsp_init(); shape_init(); tuning_set_mode(0); brain_init(); cells_init();
     bowed_init(); horn_init(); pluck_init(); ambient_room_init(); nature_init();
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    reset_voicing();freeze_seen=false;memset(loop_lane,0,sizeof loop_lane);bowed_set_pad(true);
+#else
+    bowed_set_pad(false);
+#endif
     memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
     world=minor=0; tonic_pc=-1; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=false; autoplay=true;
     muted=resume_nature=false;
-#ifdef FAM_WORLD_CHARACTER_CANDIDATE
+#if defined(FAM_WORLD_CHARACTER_CANDIDATE) || defined(FAM_SOUND_FINISH_CANDIDATE)
     engine_set_world_character(true);
 #else
     engine_set_world_character(false);
@@ -627,7 +741,7 @@ void engine_init(void) {
 #else
     engine_set_woodland_body(false);
 #endif
-#ifdef FAM_WOODLAND_RESONATOR_CANDIDATE
+#if defined(FAM_WOODLAND_RESONATOR_CANDIDATE) || defined(FAM_SOUND_FINISH_CANDIDATE)
     engine_set_woodland_resonator(true);
 #else
     engine_set_woodland_resonator(false);

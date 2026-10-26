@@ -54,5 +54,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 void bowed_set_cell_held(int source,bool down);
 /* Main only; captured for future notes, not a live parameter write. */
 void bowed_set_character(uint32_t seed,bool enabled);
+/* Future-note capture of the harmonic pad alternative, same source pool. */
+void bowed_set_pad(bool enabled);
 #endif
 #endif /* BOWED_H */
