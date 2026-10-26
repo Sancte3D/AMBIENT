@@ -20,6 +20,7 @@
 #ifdef FAM_SOUND_PRODUCT
 #include "cell_unfold.h"
 #include "world_character.h"
+#include "soft_pad.h"
 #endif
 #include <math.h>
 #include <string.h>
@@ -53,6 +54,7 @@ typedef struct {
 #ifdef FAM_SOUND_PRODUCT
     uint32_t unfold;
     world_character_t character;
+    bool soft_pad;
 #endif
 } bvoice_t;
 
@@ -70,6 +72,8 @@ static _Atomic uint32_t unfold_mask;
  * Init/Clear in the IRQ must not overwrite this future-note config. */
 static uint32_t character_seed;
 static bool character_enabled;
+static bool pad_enabled;
+void bowed_set_pad(bool on) { pad_enabled=on; }
 void bowed_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
 }
@@ -135,6 +139,7 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
     v->source=source; v->owner_tag=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f);
 #ifdef FAM_SOUND_PRODUCT
     world_character_prepare(&v->character,0,character_seed,source,freq_hz,character_enabled);
+    v->soft_pad=pad_enabled;
 #endif
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
@@ -154,6 +159,9 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
 
     v->env = 0.0001f;
     v->envInc = v->amp / (0.30f * shape_attack_scale() * SR);   /* r19.60: 300 ms x SHAPE */
+#ifdef FAM_SOUND_PRODUCT
+    if(v->soft_pad)v->envInc=v->amp/(.85f*shape_attack_scale()*SR);
+#endif
     v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
     v->bow = 0.0f;
@@ -300,6 +308,15 @@ void bowed_render_mix(float *dry_L, float *dry_R,
              * 3.1 dB of periodic root beating. Preserve the former average
              * oscillator power: sqrt(.71^2 + .125^2) ~= .721. */
             float inc  = v->inc;
+            float out;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->soft_pad) {
+                float shade=2*tone_cur-1+.25f*opening;
+                if(v->character.enabled)shade+=v->character.shade;
+                out=soft_pad_sample(v->ph,v->freq,shade)*v->env*.5f;
+                v->ph+=inc;if(v->ph>=1)v->ph-=1;
+            } else {
+#endif
             float s = dsp_poly_saw(v->ph, inc) * 0.721f;
             v->ph  += inc;  if (v->ph  >= 1.0f) v->ph  -= 1.0f;
 
@@ -315,7 +332,10 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 #ifdef FAM_SOUND_PRODUCT
             if(v->character.enabled) detail*=v->character.detail;
 #endif
-            float out = (body + sy * detail) * v->env * 0.5f;
+            out = (body + sy * detail) * v->env * 0.5f;
+#ifdef FAM_SOUND_PRODUCT
+            }
+#endif
             if(fade_left[i]>0) {
                 out *= (float)fade_left[i]/(float)fade_total[i];
                 if(--fade_left[i]==0) v->stage=V_IDLE;

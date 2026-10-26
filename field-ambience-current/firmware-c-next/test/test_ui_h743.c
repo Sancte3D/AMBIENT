@@ -4,6 +4,7 @@
 #include "engine_product.h"
 #include "dsp.h"
 #include "brain.h"
+#include "cells.h"
 #include "controls.h"
 #include "cell_router.h"
 #include "params.h"
@@ -72,7 +73,13 @@ static void reset(int world, uint32_t epoch) {
         .set_tuning = engine_set_tuning, .set_attack = engine_set_attack,
         .set_release = engine_set_release, .set_space = engine_set_space};
     menu_init(&cb); controls_init(); params_init(); overlay_init(); bloom_init();
-    landscape_init(NULL); gesture_init(route_cell); scenes_init(store, load);
+    landscape_init(NULL);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    gesture_init_owned(engine_gesture_note);
+#else
+    gesture_init(route_cell);
+#endif
+    scenes_init(store, load);
     knobs_callbacks_t kb = {.display_push = short_cb, .display_long = long_cb};
     knobs_init(&kb); leds_init(); s_backlight_pct = 70;
     leds_set_backlight(LED_PWM_MAX * 70 / 100);

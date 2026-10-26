@@ -10,7 +10,7 @@
  * KEIN Audio. Die Schleife wiederholt die gespielten Zellen mit dem
  * AKTUELL geladenen World + Klang + Zellmodus (Note/Bloom/Generate-Steer)
  * — die Gesten laufen also durch dieselbe Routing-Logik wie das Live-Spiel.
- * Sehr wenig RAM (GESTURE_MAX Events × 6 B ≈ 0,75 KB), kein Schreiben in
+ * Sehr wenig RAM (GESTURE_MAX Events × 8 B = 1 KB), kein Schreiben in
  * den PSRAM, kein Echtzeit-kritischer Pfad (control-rate, Main-Loop).
  *
  * Bedienung (r19.25): **SHIFT+HOLD** zykelt
@@ -37,6 +37,11 @@ typedef enum { GESTURE_IDLE = 0, GESTURE_REC, GESTURE_PLAY } gesture_state_t;
 
 /* Cell-Callback: fuehrt einen Zell-Druck/-Loslass aus (route_cell). */
 typedef void (*gesture_cell_fn)(uint8_t cell, bool pressed, uint32_t now_ms);
+typedef bool (*gesture_note_fn)(uint8_t cell,bool upper,bool pressed,float velocity,uint32_t now_ms);
+void gesture_init_owned(gesture_note_fn on_note);
+void gesture_set_record_context(bool upper,float velocity);
+void gesture_stop(uint32_t now_ms);
+void gesture_play(uint32_t now_ms);
 
 void gesture_init(gesture_cell_fn on_cell);
 

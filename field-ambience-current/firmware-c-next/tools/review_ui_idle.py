@@ -19,6 +19,7 @@ def main():
     ap.add_argument('output', type=Path)
     ap.add_argument('--sanitize', action='store_true')
     ap.add_argument('--fixture-only', action='store_true')
+    ap.add_argument('--finish-candidate', action='store_true')
     a = ap.parse_args()
     out = a.output.resolve(); out.mkdir(parents=True, exist_ok=True)
     hal = (ROOT/'src/hal_h743/main_h743.c').read_text()
@@ -51,6 +52,7 @@ def main():
             tmp = Path(temp)
             (tmp/'ui_h743_routing.inc').write_text(routing + '\n' + poll)
             flags = ['-std=c11','-O2','-Wall','-Wextra','-Werror']
+            if a.finish_candidate:flags += ['-DFAM_SOUND_FINISH_CANDIDATE']
             if sanitized:
                 flags += ['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']
             env = dict(os.environ, ASAN_OPTIONS='detect_leaks=0')
@@ -60,6 +62,7 @@ def main():
             unit = run([str(tmp/'unit')], env=env)
             run(['cmake','-S',str(ROOT),'-B',str(tmp/'build'),'-DFAM_TARGET=host',
                  '-DFAM_SOUND_PROFILE=product','-DCMAKE_BUILD_TYPE=Release',
+                 '-DFAM_SOUND_FINISH_CANDIDATE='+('ON' if a.finish_candidate else 'OFF'),
                  '-DCMAKE_C_FLAGS='+' '.join(flags)])
             run(['cmake','--build',str(tmp/'build'),'-j2'])
             run([cc, *flags, '-Wno-unused-function', '-DFAM_SOUND_PRODUCT',

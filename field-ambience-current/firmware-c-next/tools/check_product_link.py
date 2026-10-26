@@ -70,7 +70,13 @@ for function in ('engine_render','ambient_room_process','nature_render','engine_
     rows=[r for r in frames if r['function']==function or r['function'].startswith(function+'.')]
     assert rows,function
     print(f"PRODUCT FRAME {function}: {max(r['bytes'] for r in rows)} B (compiler, not stack high-water)")
-report={'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
+finish_state=None
+if any('FAM_SOUND_FINISH_CANDIDATE' in c['command'] for c in compiled):
+    address,size,_,_=one('sf')
+    assert 0x30000000<=address and address+size<=0x30048000,(hex(address),size)
+    finish_state={'model':1,'address':address,'bytes':size,'region':'internal D2'}
+    print(f'COMPLETE SOUND FX: 0x{address:08x}, {size} B, internal D2')
+report={'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
         'compiler':subprocess.check_output(['arm-none-eabi-gcc','--version'],text=True).splitlines()[0],
         'profile':'product','individual_frames':sorted(frames,key=lambda r:r['bytes'],reverse=True),
         'core_max_frame_bytes':max(r['bytes'] for r in core_frames),

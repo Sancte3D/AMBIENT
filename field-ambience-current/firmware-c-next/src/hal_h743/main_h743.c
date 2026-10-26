@@ -21,6 +21,9 @@
  */
 
 #include "engine.h"
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "engine_product.h"
+#endif
 #ifndef FAM_SOUND_PRODUCT
 #include "v2/synth_host.h"
 #endif
@@ -42,6 +45,7 @@
 #include "gesture.h"     /* r19.25: gesture loop (record/replay cells) */
 #include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
+#include "cells.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
 #include "cell_router.h"
 #include "params.h"      /* encoder → engine param bindings */
@@ -385,7 +389,11 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                  * werden (sonst würde der aufgenommene Cell-5-Druck die
                  * Schleife bei der Wiedergabe wieder stoppen). */
                 bool record = !(s_cell_mode == CELL_LAND && c == 4);
-                if (fell & m) { if (record) gesture_record_cell(c, true,  now);
+                if (fell & m) {
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                                gesture_set_record_context(controls_modifier_active(MOD_SHIFT),CELL_TAP_AMP/CELL_AMP_MAX);
+#endif
+                                if (record) gesture_record_cell(c, true,  now);
                                 route_cell(c, true,  now);
 #ifdef FAM_SOUND_PRODUCT
                                 if(s_cell_mode==CELL_NOTE) controls_cell_physical(c,true);
@@ -544,7 +552,11 @@ int main(void) {
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     bloom_init();             /* r19.23: chord-bloom cell mode */
     landscape_init(&s_ls_iface); /* r19.27: layer-role cell mode */
-    gesture_init(route_cell); /* r19.25: gesture loop replays via route_cell */
+    #ifdef FAM_SOUND_FINISH_CANDIDATE
+    gesture_init_owned(engine_gesture_note);
+#else
+    gesture_init(route_cell);
+#endif
     params_init();            /* encoder param values → engine defaults */
     overlay_init();
     {   /* r19.21: Encoder-Push-Belegung (DISPLAY kurz = Menue wie bisher;
