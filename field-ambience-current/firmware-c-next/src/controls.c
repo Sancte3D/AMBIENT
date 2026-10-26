@@ -36,6 +36,19 @@ static float s_amp_shift[CTRL_CELL_COUNT];
 /* Momentary (non-hold) note tracking: which source is sounding for a cell
  * that was tapped without Hold latched. -1 = none. */
 static int8_t s_moment_src[CTRL_CELL_COUNT];
+#ifdef FAM_SOUND_PRODUCT
+static int8_t s_admitted_src[CTRL_CELL_COUNT],s_physical_src[CTRL_CELL_COUNT];
+void controls_cell_physical(uint8_t cell,bool down) {
+    if(cell>=CTRL_CELL_COUNT) return;
+    if(s_physical_src[cell]>=0) engine_set_cell_held((uint8_t)s_physical_src[cell],false);
+    s_physical_src[cell]=-1;
+    if(down && s_admitted_src[cell]>=0) {
+        s_physical_src[cell]=s_admitted_src[cell];
+        engine_set_cell_held((uint8_t)s_physical_src[cell],true);
+    }
+    s_admitted_src[cell]=-1;
+}
+#endif
 
 void controls_init(void) {
     for (int i = 0; i < MOD_COUNT; ++i) s_mod[i] = false;
@@ -47,11 +60,17 @@ void controls_init(void) {
         s_amp_base[c]   = 0.0f;
         s_amp_shift[c]  = 0.0f;
         s_moment_src[c] = -1;
+#ifdef FAM_SOUND_PRODUCT
+        s_admitted_src[c]=s_physical_src[c]=-1;
+#endif
     }
 }
 
 static void clear_all_holds(void) {
     for (int c = 0; c < CTRL_CELL_COUNT; ++c) {
+#ifdef FAM_SOUND_PRODUCT
+        controls_cell_physical((uint8_t)c,false);
+#endif
         if (s_hold_base[c])  { engine_note_off((uint8_t)c);          s_hold_base[c]  = false; }
         if (s_hold_shift[c]) { engine_note_off(SHIFT_SRC(c));        s_hold_shift[c] = false; }
         if (s_moment_src[c] >= 0) { engine_note_off((uint8_t)s_moment_src[c]); s_moment_src[c] = -1; }
@@ -121,6 +140,9 @@ void controls_modifier(mod_id_t mod, bool pressed) {
 }
 
 void controls_cell_press(uint8_t cell, float velocity_amp) {
+#ifdef FAM_SOUND_PRODUCT
+    if(cell<CTRL_CELL_COUNT) s_admitted_src[cell]=-1;
+#endif
     if (cell >= CTRL_CELL_COUNT || s_mod[MOD_GENERATE]) return;
     s_cells_down |= (uint8_t)(1u << cell);      /* r19.20: physical key down */
     engine_set_user_presence(true);
@@ -134,6 +156,7 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
     }
     float hz=tuning_hz((float)engine_product_cell_midi(cell,s_mod[MOD_SHIFT]));
     if(engine_try_note_on(src,hz,velocity_amp/CELL_AMP_MAX)) {
+        s_admitted_src[cell]=(int8_t)src;
         if(s_mod[MOD_HOLD]) { *held=true; *amp=velocity_amp; }
         else s_moment_src[cell]=(int8_t)src;
     }
@@ -169,6 +192,9 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
 
 void controls_cell_release(uint8_t cell) {
     if (cell >= CTRL_CELL_COUNT) return;
+#ifdef FAM_SOUND_PRODUCT
+    controls_cell_physical(cell,false);
+#endif
     s_cells_down &= (uint8_t)~(1u << cell);     /* r19.20: physical key up */
     engine_set_user_presence(s_cells_down != 0);
     /* Only momentary notes release on key-up; held latches persist. */

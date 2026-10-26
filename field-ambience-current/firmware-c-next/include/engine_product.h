@@ -6,6 +6,8 @@ void engine_set_activity(float value);
 void engine_set_color(float value);
 void engine_set_room(float value);
 void engine_set_nature(float value);
+/* Physical Note-mode edge after admission; never inferred from replay/HOLD. */
+void engine_set_cell_held(uint8_t source,bool down);
 bool engine_try_note_on(uint8_t source,float actual_hz,float velocity);
 int engine_sounding_frequencies(float *out,int max);
 uint32_t engine_admission_rejections(void);

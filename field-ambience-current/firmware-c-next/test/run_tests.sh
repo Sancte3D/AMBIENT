@@ -13,6 +13,20 @@ tmp="$(mktemp -d)"
 CC="${CC:-cc}"
 CFLAGS=(-std=c11 -O2 -Wall -Wextra -I"$src/include")
 
+# Physical Cell expression through real Product DSP/controls.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_cell_unfold.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" "$src/src/controls.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" "$src/src/ambient_room.c" \
+    "$src/src/nature.c" "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" \
+    "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/cell_unfold_test"
+"$tmp/cell_unfold_test"
+for source in BOWED HORN PLUCK; do
+    "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT -D"UNFOLD_$source" \
+        "$here/test_cell_unfold_sources.c" "$src/src/dsp.c" "$src/src/shape.c" \
+        -lm -o "$tmp/unfold_source_test"
+    "$tmp/unfold_source_test"
+done
+
 # Read-only device capture guards and real profiler ABI.
 python3 "$here/test_device_capture.py"
 

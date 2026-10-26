@@ -17,6 +17,9 @@
 #include "bowed.h"
 #include "shape.h"
 #include "dsp.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "cell_unfold.h"
+#endif
 #include <math.h>
 #include <string.h>
 #include <stdatomic.h>
@@ -46,6 +49,9 @@ typedef struct {
 
     float    panL, panR;
     float    body_base, symp_gain;         /* colour-dependent            */
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t unfold;
+#endif
 } bvoice_t;
 
 static bvoice_t V[VMAX], pending[VMAX];
@@ -56,6 +62,12 @@ static _Atomic int queued[VMAX];
 static int fade_left[VMAX],fade_total[VMAX];
 static int      ctl;
 static _Atomic uint32_t tone_bits;
+#ifdef FAM_SOUND_PRODUCT
+static _Atomic uint32_t unfold_mask;
+void bowed_set_cell_held(int source,bool down) {
+    cell_unfold_publish(&unfold_mask,source,down);
+}
+#endif
 static float tone_cur=0.5f;
 void bowed_set_tone(float v) {
     if (!isfinite(v)) return;
@@ -85,6 +97,9 @@ static inline float wnoise(uint32_t *r) {
 }
 
 void bowed_init(void) {
+#ifdef FAM_SOUND_PRODUCT
+    atomic_store_explicit(&unfold_mask,0,memory_order_relaxed);
+#endif
     memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
     memset(fade_left,0,sizeof fade_left); memset(fade_total,0,sizeof fade_total);
     memset(V, 0, sizeof V);
@@ -213,6 +228,9 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                       float *send_L, float *send_R,
                       int frames, float send_amount) {
     float colour=tone_target();
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t held=atomic_load_explicit(&unfold_mask,memory_order_acquire);
+#endif
     for (int n = 0; n < frames; ++n) {
         tone_cur+=(colour-tone_cur)*(1.0f/(0.080f*SR));
         float L = 0.0f, R = 0.0f;
@@ -228,6 +246,9 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
 
             vstage_t stage=atomic_load_explicit(&v->stage,memory_order_relaxed);
+#ifdef FAM_SOUND_PRODUCT
+            float opening=cell_unfold_step(&v->unfold,held,v->owner_tag);
+#endif
             if (do_ctl) {
                 /* bow pressure: rises through the attack, settles to a low
                  * sustained value — the grain follows it. */
@@ -236,6 +257,9 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                 /* Body cutoff opens with bow pressure and slow breath. */
                 float breath = dsp_sin(v->bodyPh);
                 float cut = v->body_base * (1.0f + 0.35f * v->bow + 0.06f * breath) * (0.8f+0.4f*tone_cur);
+#ifdef FAM_SOUND_PRODUCT
+                cut *= 1.0f+.25f*opening;
+#endif
                 dsp_svf_set(&v->body, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.9f);
             }
 
