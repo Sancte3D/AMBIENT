@@ -43,5 +43,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
 #ifdef FAM_SOUND_PRODUCT
 /* Digital physical hold, independent of note/HOLD lifetime; Main only. */
 void horn_set_cell_held(int source,bool down);
+/* Main only; captured for future notes, not a live parameter write. */
+void horn_set_character(uint32_t seed,bool enabled);
 #endif
 #endif /* HORN_H */

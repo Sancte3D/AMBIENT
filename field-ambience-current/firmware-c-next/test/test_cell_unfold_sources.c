@@ -62,4 +62,5 @@ int main(void) {
     assert(VOICE[0].unfold==0 && VOICE[1].unfold>0);
     INIT();assert(!atomic_load(&unfold_mask));
     puts("Cell source: neighbour state identical, pitch/envelope unchanged, independent holds, smooth return and init reset pass");
+    return 0;
 }

@@ -49,6 +49,7 @@ static bool highlands_pending;
 static engine_note_hook_t note_hook;
 static int world,minor,tonic_pc,fx_mode,last_midi,note_count;
 static uint32_t seed,now_ms,last_user_ms,retry_ms,rejects;
+static bool world_character;
 static bool generate,autoplay,user_present,user_seen,suppressed,clearing,muted,resume_nature;
 static float activity,color,room,nature_amount;
 static _Atomic uint32_t quick_mask,release_mask,audio_mask,started_mask,audio_epoch,audio_frames,volume_bits,color_bits,limited,faults;
@@ -256,6 +257,10 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     SOURCE_HANDOFF_POINT(9,owner);
     return true;
 }
+void engine_set_world_character(bool enabled) {
+    world_character=enabled;
+    bowed_set_character(seed,enabled); horn_set_character(seed,enabled); pluck_set_character(seed,enabled);
+}
 void engine_set_cell_held(uint8_t owner,bool down) {
     if(!(owner<5 || (owner>=9 && owner<=13))) return;
     if(down) {
@@ -441,6 +446,7 @@ int engine_autoplay_melody(void) { return autoplay; }
 uint32_t engine_gen_seed(void) { return seed; }
 void engine_set_gen_seed(uint32_t v) {
     reap(); retire_context(false); seed=v ? v : 0xA6B13E7Du; nature_set_seed(seed);
+    engine_set_world_character(world_character);
     retry_ms=now_ms;
     coast_pending=0; coast_phrase_init(&coast,seed);
     woodland_pending=false;woodland_phrase_init(&woodland,seed);
@@ -609,6 +615,11 @@ void engine_init(void) {
     world=minor=0; tonic_pc=-1; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=false; autoplay=true;
     muted=resume_nature=false;
+#ifdef FAM_WORLD_CHARACTER_CANDIDATE
+    engine_set_world_character(true);
+#else
+    engine_set_world_character(false);
+#endif
     note_hook=0; fx_mode=1; last_midi=note_count=0;
     atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&audio_mask,0); atomic_store(&started_mask,0);
     atomic_store(&audio_epoch,0); atomic_store(&audio_frames,0); atomic_store(&limited,0); atomic_store(&faults,0);

@@ -15,6 +15,19 @@ Stand **2026-10-26**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+## Einzelner Ausbau2026-10-26 — World-Charakter nach Tonitor
+
+Die Entfaltungs-Hörprobe wurde mit „klingt gut“ beurteilt. Der nächste
+abgegrenzte Ausbau setzt Tonitors familiengebundene Klangentwürfe und
+zusammenhängende Bewegung als eigenen Float-Kandidaten für alle drei Welten
+um. Tonhöhen, Ereignisplanung und lange WOODLAND-Saitenschwingung bleiben
+erhalten. Standard OFF; separater ON-Build und echte World-Hörproben sind
+vorbereitet. Host-/Sanitizer-/Baseline-PCM-/ARM-Linkprüfungen bestanden;
+Hör-/Geräteabnahme bleibt offen. Der Ausbauplan für Resonatoren, Flächen,
+Stimmführung/Loops, Raum/Delay und Granular/weitere Effekte steht im
+[World-Charakter-Checkpoint](WORLD_CHARACTER_CHECKPOINT.md).
+Die ursprünglichen SD00–SD53 werden dadurch nicht pauschal geschlossen.
+
 ## Einzelner Ausbau2026-10-26 — physische Cell-Entfaltung
 
 Der zusätzlich beauftragte Ausbau ist als Product-Softwarekandidat umgesetzt:

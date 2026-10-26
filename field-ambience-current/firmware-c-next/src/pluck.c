@@ -7,6 +7,7 @@
 #include "dsp.h"
 #ifdef FAM_SOUND_PRODUCT
 #include "cell_unfold.h"
+#include "world_character.h"
 #endif
 #include <math.h>
 #include <stdatomic.h>
@@ -47,6 +48,7 @@ typedef struct {
     volatile uint32_t stop_left;
 #ifdef FAM_SOUND_PRODUCT
     uint32_t unfold;
+    world_character_t character;
 #endif
 } pluck_voice_t;
 
@@ -57,6 +59,13 @@ static _Atomic bool s_ambient;
 static _Atomic float s_color = 0.5f;
 #ifdef FAM_SOUND_PRODUCT
 static _Atomic uint32_t unfold_mask;
+/* Main-owned preparation config; render reads only published voice snapshots.
+ * Init/Clear in the IRQ must not overwrite this future-note config. */
+static uint32_t character_seed;
+static bool character_enabled;
+void pluck_set_character(uint32_t seed,bool enabled) {
+    character_seed=seed; character_enabled=enabled;
+}
 void pluck_set_cell_held(int source,bool down) {
     cell_unfold_publish(&unfold_mask,source,down);
 }
@@ -148,6 +157,7 @@ static bool start_note(int owner, float freq_hz, float amp) {
     p->dc = 0.0f;
 #ifdef FAM_SOUND_PRODUCT
     p->unfold = 0;
+    world_character_prepare(&p->character,1,character_seed,owner,freq_hz,character_enabled);
     p->colored = ambient;
     p->color = atomic_load_explicit(&s_color, memory_order_relaxed);
     p->color_lp = 0.0f;
@@ -301,24 +311,34 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             float colored = audible;
 #ifdef FAM_SOUND_PRODUCT
             float opening=cell_unfold_step(&p->unfold,held,p->owner);
+            world_character_tick(&p->character);
             if (p->colored) {
                 /* Track at neutral for warm state during live edits. Dry
                  * and Room send hear the same color. Ownership/decay still
                  * track the uncolored string below. */
                 p->color += (color - p->color) * (1.0f / (0.080f * SR));
                 p->color_lp += p->color_a * (audible - p->color_lp);
-                colored += (2.0f * p->color - 1.0f + 0.35f*opening) * (audible - p->color_lp);
+                float shelf=2.0f * p->color - 1.0f + 0.35f*opening;
+                if(p->character.enabled) shelf=dsp_clampf(shelf+p->character.shade,-1.0f,1.35f);
+                colored += shelf * (audible - p->color_lp);
             }
 #endif
             float output = colored * attack * p->stop_gain;
+            float panL=p->panL,panR=p->panR;
+#ifdef FAM_SOUND_PRODUCT
+            if(p->character.enabled) {
+                output*=p->character.gain;
+                panL-=p->character.pan; panR+=p->character.pan;
+            }
+#endif
             if (p->stop_left) {
                 --p->stop_left;
                 p->stop_gain=p->stop_start*(float)p->stop_left/(float)p->stop_total;
             }
-            dry_L[n]  += output * p->panL;
-            dry_R[n]  += output * p->panR;
-            send_L[n] += output * p->panL * VERB_SEND;
-            send_R[n] += output * p->panR * VERB_SEND;
+            dry_L[n]  += output * panL;
+            dry_R[n]  += output * panR;
+            send_L[n] += output * panL * VERB_SEND;
+            send_R[n] += output * panR * VERB_SEND;
 
             /* cheap peak tracker: instant up, slow down */
             float a = audible < 0.0f ? -audible : audible;

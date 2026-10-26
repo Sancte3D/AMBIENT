@@ -50,12 +50,16 @@ set_property(CACHE FAM_TARGET PROPERTY STRINGS h743 pico host)
 # Reference remains the default until source hearing and device gates pass.
 set(FAM_SOUND_PROFILE "reference" CACHE STRING "Sound profile: reference | product")
 set_property(CACHE FAM_SOUND_PROFILE PROPERTY STRINGS reference product)
+option(FAM_WORLD_CHARACTER_CANDIDATE "Opt-in Model-1 World character hearing candidate; no Scene/UI activation" OFF)
 option(FAM_SCENE_JOURNAL_CANDIDATE "Experimental two-sector Scene journal; ECC/device acceptance pending" OFF)
 if(NOT FAM_SOUND_PROFILE STREQUAL "reference" AND NOT FAM_SOUND_PROFILE STREQUAL "product")
     message(FATAL_ERROR "Unknown FAM_SOUND_PROFILE '${FAM_SOUND_PROFILE}'")
 endif()
 if(FAM_SOUND_PROFILE STREQUAL "product")
     add_compile_definitions(FAM_SOUND_PRODUCT)
+    if(FAM_WORLD_CHARACTER_CANDIDATE)
+        add_compile_definitions(FAM_WORLD_CHARACTER_CANDIDATE)
+    endif()
 endif()
 
 # ---------------------------------------------------------------------------
