@@ -99,11 +99,13 @@ jobs:
         run: |
           git fetch --no-tags origin bea7f5765125b2d55c7bb28832626dce7956b382
           git fetch --no-tags origin 49169462c1705a4238bd2194559689b07e22d8c5
+          git fetch --no-tags origin 24936b4e19895627d8b4bbdb1ba19a5b05c3db10
       - name: Check current expression, World character and matched baseline PCM
         working-directory: field-ambience-current/firmware-c-next
         run: |
           python3 tools/review_cell_unfold.py build-cell-unfold
           python3 tools/review_world_character.py build-world-character
+          python3 tools/review_woodland_body.py build-woodland-body
           python3 tools/review_h743_irq_scope.py build-cell-unfold/irq --fixture-only --sanitize
           python3 tools/review_ui_idle.py build-cell-unfold/ui --fixture-only --sanitize
       - uses: actions/upload-artifact@v4
@@ -115,6 +117,11 @@ jobs:
         with:
           name: ambient-world-character-current-proof-and-wav
           path: field-ambience-current/firmware-c-next/build-world-character
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-body-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-woodland-body
           if-no-files-found: error
 
   h743-irq-scope-review:
@@ -1138,6 +1145,28 @@ jobs:
             field-ambience-current/firmware-c-next/build-h743-character/device_capture.py
             field-ambience-current/firmware-c-next/build-h743-character/device_capture_gdb.py
             field-ambience-current/firmware-c-next/build-h743-character/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build opt-in WOODLAND harmonic body hearing candidate
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-woodland-body -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_WORLD_CHARACTER_CANDIDATE=ON -DFAM_WOODLAND_BODY_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-woodland-body -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-woodland-body
+          python3 tools/device_capture.py build-h743-woodland-body
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-woodland-body-hearing
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/DEVICE_CAPTURE_README.md
           if-no-files-found: error
 
       - name: Cross-build experimental recoverable Scene journal

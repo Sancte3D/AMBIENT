@@ -79,5 +79,7 @@ void pluck_render_mix(float *dry_L, float *dry_R,
 void pluck_set_cell_held(int source,bool down);
 /* Main only; captured for future notes, not a live parameter write. */
 void pluck_set_character(uint32_t seed,bool enabled);
+/* Main-only opt-in body, captured by future long Product strings. */
+void pluck_set_body(bool enabled);
 #endif
 #endif

@@ -48,6 +48,20 @@ done
     "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/character_stress_test"
 "$tmp/character_stress_test"
 
+# New body uses the same actual-Engine partition/control and endpoint fixtures
+# with the candidate explicitly enabled, plus private source/spectral checks.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_woodland_body.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" -lm -o "$tmp/woodland_body_source_test"
+"$tmp/woodland_body_source_test"
+for fixture in test_world_character test_world_character_stress; do
+    "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT -DFAM_WOODLAND_BODY_CANDIDATE \
+        "$here/$fixture.c" "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+        "$src/src/controls.c" "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+        "$src/src/ambient_room.c" "$src/src/nature.c" "$src/src/dsp.c" "$src/src/shape.c" \
+        "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/woodland_body_test"
+    "$tmp/woodland_body_test"
+done
+
 # Read-only device capture guards and real profiler ABI.
 python3 "$here/test_device_capture.py"
 
