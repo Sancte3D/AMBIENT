@@ -59,6 +59,15 @@ static void release_play_voices(uint32_t now_ms) {
         }
 }
 void gesture_stop(uint32_t now_ms) {
+    if(s_on_note && s_state==GESTURE_REC && s_count) {
+        /* A Mute/stop may arrive before the next Engine clock update. Keep
+         * the partial take valid even if that cached clock is slightly old. */
+        uint32_t length=now_ms-s_rec_start;
+        if((int32_t)length<0)length=0;
+        uint32_t last=s_ev[s_count-1].t;
+        if(length<=last)length=last+1u;
+        s_loop_len=length<GESTURE_MIN_LOOP ? GESTURE_MIN_LOOP : length;
+    }
     release_play_voices(now_ms);s_state=GESTURE_IDLE;s_play_idx=0;
 }
 void gesture_play(uint32_t now_ms) {

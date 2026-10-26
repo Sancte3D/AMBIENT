@@ -80,6 +80,14 @@ static void owned(void) {
     gesture_record_cell(0,true,UINT32_MAX-1000u);gesture_toggle(UINT32_MAX-500u);
     calls=0;gesture_tick(UINT32_MAX-500u);gesture_tick(3000000000u);assert(calls<=GESTURE_MAX*2u);
     gesture_clear(0);
+    /* Stop/Mute during REC preserves a valid take, including a cached
+     * engine time just before the physical recording-start timestamp. */
+    engine_init();gesture_init_owned(loop);gesture_toggle(1000);
+    gesture_record_cell(0,true,1000);gesture_stop(990);
+    assert(gesture_count()==1 && gesture_state()==GESTURE_IDLE);
+    gesture_toggle(2000);assert(gesture_state()==GESTURE_PLAY);
+    gesture_tick(2000);render(441);engine_generative_tick(2010);
+    assert(engine_active_voices()==1);gesture_clear(2011);
 }
 static void frozen_history(void) {
     engine_init();gesture_init_owned(loop);
