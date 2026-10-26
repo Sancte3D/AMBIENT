@@ -27,6 +27,27 @@ for source in BOWED HORN PLUCK; do
     "$tmp/unfold_source_test"
 done
 
+# Opt-in family character: private snapshots and real Product controls.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_world_character.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" "$src/src/controls.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" "$src/src/ambient_room.c" \
+    "$src/src/nature.c" "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" \
+    "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/world_character_test"
+"$tmp/world_character_test"
+for source in BOWED HORN PLUCK; do
+    "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT -D"UNFOLD_$source" \
+        "$here/test_world_character_sources.c" "$src/src/dsp.c" "$src/src/shape.c" \
+        -lm -o "$tmp/character_source_test"
+    "$tmp/character_source_test"
+done
+
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_world_character_stress.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" "$src/src/controls.c" \
+    "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" "$src/src/ambient_room.c" \
+    "$src/src/nature.c" "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" \
+    "$src/src/brain.c" "$src/src/cells.c" -lm -o "$tmp/character_stress_test"
+"$tmp/character_stress_test"
+
 # Read-only device capture guards and real profiler ABI.
 python3 "$here/test_device_capture.py"
 

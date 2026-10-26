@@ -19,6 +19,7 @@
 #include "dsp.h"
 #ifdef FAM_SOUND_PRODUCT
 #include "cell_unfold.h"
+#include "world_character.h"
 #endif
 #include <math.h>
 #include <string.h>
@@ -51,6 +52,7 @@ typedef struct {
     float    body_base, symp_gain;         /* colour-dependent            */
 #ifdef FAM_SOUND_PRODUCT
     uint32_t unfold;
+    world_character_t character;
 #endif
 } bvoice_t;
 
@@ -64,6 +66,13 @@ static int      ctl;
 static _Atomic uint32_t tone_bits;
 #ifdef FAM_SOUND_PRODUCT
 static _Atomic uint32_t unfold_mask;
+/* Main-owned preparation config; render reads only published voice snapshots.
+ * Init/Clear in the IRQ must not overwrite this future-note config. */
+static uint32_t character_seed;
+static bool character_enabled;
+void bowed_set_character(uint32_t seed,bool enabled) {
+    character_seed=seed; character_enabled=enabled;
+}
 void bowed_set_cell_held(int source,bool down) {
     cell_unfold_publish(&unfold_mask,source,down);
 }
@@ -124,6 +133,9 @@ static int alloc_voice(int source) {
 static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float amp) {
     memset(v,0,sizeof *v);
     v->source=source; v->owner_tag=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f);
+#ifdef FAM_SOUND_PRODUCT
+    world_character_prepare(&v->character,0,character_seed,source,freq_hz,character_enabled);
+#endif
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
@@ -248,6 +260,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             vstage_t stage=atomic_load_explicit(&v->stage,memory_order_relaxed);
 #ifdef FAM_SOUND_PRODUCT
             float opening=cell_unfold_step(&v->unfold,held,v->owner_tag);
+            world_character_tick(&v->character);
 #endif
             if (do_ctl) {
                 /* bow pressure: rises through the attack, settles to a low
@@ -259,6 +272,7 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                 float cut = v->body_base * (1.0f + 0.35f * v->bow + 0.06f * breath) * (0.8f+0.4f*tone_cur);
 #ifdef FAM_SOUND_PRODUCT
                 cut *= 1.0f+.25f*opening;
+                if(v->character.enabled) cut*=v->character.tone;
 #endif
                 dsp_svf_set(&v->body, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.9f);
             }
@@ -297,14 +311,25 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 
             /* sympathetic resonators (fed lightly, ring back in) */
             float sy = dsp_svf_bp(&v->symp1, body) + dsp_svf_bp(&v->symp2, body);
-            float out = (body + sy * v->symp_gain) * v->env * 0.5f;
+            float detail=v->symp_gain;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) detail*=v->character.detail;
+#endif
+            float out = (body + sy * detail) * v->env * 0.5f;
             if(fade_left[i]>0) {
                 out *= (float)fade_left[i]/(float)fade_total[i];
                 if(--fade_left[i]==0) v->stage=V_IDLE;
             }
 
-            L += out * v->panL;
-            R += out * v->panR;
+            float panL=v->panL,panR=v->panR;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) {
+                out*=v->character.gain;
+                panL-=v->character.pan; panR+=v->character.pan;
+            }
+#endif
+            L += out * panL;
+            R += out * panR;
         }
 
         if (++ctl >= CTL) ctl = 0;

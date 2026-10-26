@@ -18,6 +18,7 @@
 #include "dsp.h"
 #ifdef FAM_SOUND_PRODUCT
 #include "cell_unfold.h"
+#include "world_character.h"
 #endif
 #include <string.h>
 #include <stdatomic.h>
@@ -48,6 +49,7 @@ typedef struct {
     float    panL, panR;
 #ifdef FAM_SOUND_PRODUCT
     uint32_t unfold;
+    world_character_t character;
 #endif
 } hvoice_t;
 
@@ -61,6 +63,13 @@ static int      ctl;
 static _Atomic uint32_t tone_bits;
 #ifdef FAM_SOUND_PRODUCT
 static _Atomic uint32_t unfold_mask;
+/* Main-owned preparation config; render reads only published voice snapshots.
+ * Init/Clear in the IRQ must not overwrite this future-note config. */
+static uint32_t character_seed;
+static bool character_enabled;
+void horn_set_character(uint32_t seed,bool enabled) {
+    character_seed=seed; character_enabled=enabled;
+}
 void horn_set_cell_held(int source,bool down) {
     cell_unfold_publish(&unfold_mask,source,down);
 }
@@ -117,6 +126,9 @@ static int alloc_voice(int source) {
 static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float amp) {
     memset(v,0,sizeof *v);
     v->source=source; v->owner_tag=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
+#ifdef FAM_SOUND_PRODUCT
+    world_character_prepare(&v->character,2,character_seed,source,freq_hz,character_enabled);
+#endif
     v->freq = freq_hz;
     v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
     v->inc  = freq_hz / SR;
@@ -235,6 +247,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
             vstage_t stage=atomic_load_explicit(&v->stage,memory_order_relaxed);
 #ifdef FAM_SOUND_PRODUCT
             float opening=cell_unfold_step(&v->unfold,held,v->owner_tag);
+            world_character_tick(&v->character);
 #endif
             if (do_ctl) {
                 /* Breath opens modestly; no resonant brass flare. */
@@ -244,6 +257,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
                 float cut = v->freq * (2.2f + (1.0f+1.2f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift) * (0.85f+0.3f*tone_cur);
 #ifdef FAM_SOUND_PRODUCT
                 cut *= 1.0f+.40f*opening;
+                if(v->character.enabled) cut*=v->character.tone;
 #endif
                 dsp_svf_set(&v->blare, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.707f);
             }
@@ -271,7 +285,16 @@ void horn_render_mix(float *dry_L, float *dry_R,
              * reinforce it, not cancel it. .45*(2/pi)+.35 ~= 2/pi preserves
              * the old fundamental drive while reducing buzzy upper partials.
              * Reuse the former sub oscillator's LUT work at the played pitch. */
-            float reed = 0.45f*dsp_poly_saw(v->ph, v->inc) - 0.35f*dsp_sin(v->ph);
+            float saw_share=.45f,sine_share=.35f;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) {
+                saw_share*=v->character.detail;
+                /* Exchange aligned harmonic detail with the fundamental,
+                 * keeping .45*(2/pi)+.35 constant. No added frequency. */
+                sine_share+=(.45f-saw_share)*.636619772f;
+            }
+#endif
+            float reed = saw_share*dsp_poly_saw(v->ph, v->inc) - sine_share*dsp_sin(v->ph);
             v->ph += v->inc; if (v->ph >= 1.0f) v->ph -= 1.0f;
             float brass = dsp_svf_lp(&v->blare, reed);
 
@@ -287,8 +310,15 @@ void horn_render_mix(float *dry_L, float *dry_R,
                 out *= (float)fade_left[i]/(float)fade_total[i];
                 if(--fade_left[i]==0) v->stage=V_IDLE;
             }
-            L += out * v->panL;
-            R += out * v->panR;
+            float panL=v->panL,panR=v->panR;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) {
+                out*=v->character.gain;
+                panL-=v->character.pan; panR+=v->character.pan;
+            }
+#endif
+            L += out * panL;
+            R += out * panR;
         }
 
         if (++ctl >= CTL) ctl = 0;

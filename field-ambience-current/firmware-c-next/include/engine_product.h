@@ -8,6 +8,9 @@ void engine_set_room(float value);
 void engine_set_nature(float value);
 /* Physical Note-mode edge after admission; never inferred from replay/HOLD. */
 void engine_set_cell_held(uint8_t source,bool down);
+/* Opt-in Model-1 hearing candidate. Main-only; applies to future notes.
+ * Default OFF; not a new Scene/UI/MIDI parameter. Active snapshots stay intact. */
+void engine_set_world_character(bool enabled);
 bool engine_try_note_on(uint8_t source,float actual_hz,float velocity);
 int engine_sounding_frequencies(float *out,int max);
 uint32_t engine_admission_rejections(void);
