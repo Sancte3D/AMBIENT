@@ -81,5 +81,8 @@ void pluck_set_cell_held(int source,bool down);
 void pluck_set_character(uint32_t seed,bool enabled);
 /* Main-only opt-in body, captured by future long Product strings. */
 void pluck_set_body(bool enabled);
+/* Main-only modal replacement for future long notes; default selected by
+ * engine_init. Uses the same voice union, no simultaneous delay or body. */
+void pluck_set_resonator(bool enabled);
 #endif
 #endif

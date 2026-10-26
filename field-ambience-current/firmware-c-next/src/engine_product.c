@@ -262,6 +262,7 @@ void engine_set_world_character(bool enabled) {
     bowed_set_character(seed,enabled); horn_set_character(seed,enabled); pluck_set_character(seed,enabled);
 }
 void engine_set_woodland_body(bool enabled) { pluck_set_body(enabled); }
+void engine_set_woodland_resonator(bool enabled) { pluck_set_resonator(enabled); }
 void engine_set_cell_held(uint8_t owner,bool down) {
     if(!(owner<5 || (owner>=9 && owner<=13))) return;
     if(down) {
@@ -625,6 +626,11 @@ void engine_init(void) {
     engine_set_woodland_body(true);
 #else
     engine_set_woodland_body(false);
+#endif
+#ifdef FAM_WOODLAND_RESONATOR_CANDIDATE
+    engine_set_woodland_resonator(true);
+#else
+    engine_set_woodland_resonator(false);
 #endif
     note_hook=0; fx_mode=1; last_midi=note_count=0;
     atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&audio_mask,0); atomic_store(&started_mask,0);

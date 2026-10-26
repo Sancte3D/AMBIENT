@@ -22,7 +22,8 @@ static void u32(FILE *f,uint32_t x) {u16(f,x&65535);u16(f,x>>16);}
 int main(int argc,char **argv) {
     if(argc<3 || argc>4)return 2;
     bool body_mode=!strncmp(argv[2],"body-",5);
-    const char *mode=argv[2]+(body_mode ? 5 : 0);
+    bool resonator_mode=!strncmp(argv[2],"resonator-",10);
+    const char *mode=argv[2]+(body_mode ? 5 : resonator_mode ? 10 : 0);
     bool paired=!strcmp(mode,"pair"),only_on=!strcmp(mode,"on");
     if(!paired && !only_on && strcmp(mode,"off"))return 2;
     int cap=argc==4 ? atoi(argv[3]) : 512;if(cap<1 || cap>512)return 2;
@@ -37,12 +38,15 @@ int main(int argc,char **argv) {
     for(world=0;world<3;++world)for(variant=0;variant<2;++variant) {
         engine_init();engine_set_world(world);engine_set_gen_seed(1234);
 #ifdef HAS_WORLD_CHARACTER
-        engine_set_world_character(body_mode || (paired ? variant!=0 : only_on));
+        engine_set_world_character(body_mode || resonator_mode || (paired ? variant!=0 : only_on));
 #else
         (void)paired;(void)only_on;
 #endif
 #ifdef HAS_WOODLAND_BODY
-        engine_set_woodland_body(body_mode && (paired ? variant!=0 : only_on));
+        engine_set_woodland_body(resonator_mode || (body_mode && (paired ? variant!=0 : only_on)));
+#endif
+#ifdef HAS_WOODLAND_RESONATOR
+        engine_set_woodland_resonator(resonator_mode && (paired ? variant!=0 : only_on));
 #endif
         engine_set_room(.5f);engine_set_nature(0);engine_set_master_volume(.75f);
         engine_set_note_hook(hook);engine_set_generative(true,-1);starts=0;

@@ -14,6 +14,8 @@ void engine_set_world_character(bool enabled);
 /* Main-only Model-1 WOODLAND body hearing candidate; future notes only.
  * Default OFF, independent of World character; no Scene/UI/MIDI migration. */
 void engine_set_woodland_body(bool enabled);
+/* Main-only harmonic modal replacement, future notes. Default OFF. */
+void engine_set_woodland_resonator(bool enabled);
 bool engine_try_note_on(uint8_t source,float actual_hz,float velocity);
 int engine_sounding_frequencies(float *out,int max);
 uint32_t engine_admission_rejections(void);
