@@ -15,6 +15,23 @@ Stand **2026-10-26**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+## Einzelner Ausbau2026-10-26 — eigenständiger WOODLAND-Resonator
+
+Michalis beurteilt die vorherige Körper-Hörprobe mit „Das ist sehr gut“.
+Jetzt ist die nächste einzelne Stufe als eigener OFF-Default-Kandidat
+implementiert: ein lange klingender harmonischer Modalersatz innerhalb der
+bestehenden Stimmenplätze. Der Union nutzt den bisherigen Saitenspeicher;
+Saite und Körperergänzung laufen beim Ersatz nicht mit. Native/Sanitizer-,
+Pitch-/Besitz-/Clear-/Mute-/PCM- und 48 vollständige Phrasenprüfungen bestehen.
+Ein echter 48-s-Vergleich beginnt exakt mit der bisherigen Body-V2-Passage.
+[Resonator-Checkpoint](WOODLAND_RESONATOR_CHECKPOINT.md).
+
+Die zusätzliche UI-Untersuchung liefert die belegte Dateipipeline und einen
+geprüften Offline-Exporter: [Display-Dateien](../UI_ASSET_PIPELINE_TONITOR.md).
+LVGL bleibt geplant, noch keine Renderer-/Layout-/Encoderfreigabe.
+Nächste einzelne Soundeinheit: tonal begrenzte Flächenalternative, danach
+Stimmführung/Loops und Effekte. Neue Hör-/Geräteabnahme bleibt offen.
+
 ## Einzelner Ausbau2026-10-26 — WOODLAND-Körper gesichert
 
 Die letzte Körper-Hörprobe lag noch ohne gesicherten Quellstand vor. Eine

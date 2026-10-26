@@ -100,14 +100,21 @@ jobs:
           git fetch --no-tags origin bea7f5765125b2d55c7bb28832626dce7956b382
           git fetch --no-tags origin 49169462c1705a4238bd2194559689b07e22d8c5
           git fetch --no-tags origin 24936b4e19895627d8b4bbdb1ba19a5b05c3db10
+          git fetch --no-tags origin b6b62dbf3f33230ea4c659a8f5976efbf4ff31d2
       - name: Check current expression, World character and matched baseline PCM
         working-directory: field-ambience-current/firmware-c-next
         run: |
           python3 tools/review_cell_unfold.py build-cell-unfold
           python3 tools/review_world_character.py build-world-character
           python3 tools/review_woodland_body.py build-woodland-body
+          python3 tools/review_woodland_resonator.py build-woodland-resonator
           python3 tools/review_h743_irq_scope.py build-cell-unfold/irq --fixture-only --sanitize
           python3 tools/review_ui_idle.py build-cell-unfold/ui --fixture-only --sanitize
+      - name: Check offline display asset pixel contracts
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          python3 -m pip install Pillow
+          python3 test/test_ui_asset.py
       - uses: actions/upload-artifact@v4
         with:
           name: ambient-cell-unfold-current-proof-and-wav
@@ -122,6 +129,11 @@ jobs:
         with:
           name: ambient-woodland-body-current-proof-and-wav
           path: field-ambience-current/firmware-c-next/build-woodland-body
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-resonator-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-woodland-resonator
           if-no-files-found: error
 
   h743-irq-scope-review:
@@ -1167,6 +1179,28 @@ jobs:
             field-ambience-current/firmware-c-next/build-h743-woodland-body/device_capture.py
             field-ambience-current/firmware-c-next/build-h743-woodland-body/device_capture_gdb.py
             field-ambience-current/firmware-c-next/build-h743-woodland-body/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build opt-in long WOODLAND modal replacement
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-resonator -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_WORLD_CHARACTER_CANDIDATE=ON -DFAM_WOODLAND_RESONATOR_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-resonator -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-resonator
+          python3 tools/device_capture.py build-h743-resonator
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-woodland-resonator-hearing
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-resonator/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-resonator/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-resonator/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-resonator/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-resonator/DEVICE_CAPTURE_README.md
           if-no-files-found: error
 
       - name: Cross-build experimental recoverable Scene journal

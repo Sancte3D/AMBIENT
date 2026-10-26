@@ -9,6 +9,7 @@
 #include "cell_unfold.h"
 #include "world_character.h"
 #include "woodland_body.h"
+#include "woodland_resonator.h"
 #endif
 #include <math.h>
 #include <stdatomic.h>
@@ -24,7 +25,12 @@
 #define DC_COEF 0.001424f             /* output-only DC tracker, ~10 Hz */
 
 typedef struct {
-    float buf[BUF_LEN];
+    union {
+        float buf[BUF_LEN];
+#ifdef FAM_SOUND_PRODUCT
+        woodland_resonator_t resonator; /* replaces, never layers the delay */
+#endif
+    };
     float N;              /* target period; read delay is N-1     */
     float damp;           /* smoothed loop-filter coefficient     */
     int   widx;           /* write index                          */
@@ -51,6 +57,7 @@ typedef struct {
     uint32_t unfold;
     world_character_t character;
     woodland_body_t body;
+    bool resonating;
 #endif
 } pluck_voice_t;
 
@@ -66,7 +73,9 @@ static _Atomic uint32_t unfold_mask;
 static uint32_t character_seed;
 static bool character_enabled;
 static bool body_enabled;
+static bool resonator_enabled;
 void pluck_set_body(bool enabled) { body_enabled=enabled; }
+void pluck_set_resonator(bool enabled) { resonator_enabled=enabled; }
 void pluck_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
 }
@@ -163,7 +172,8 @@ static bool start_note(int owner, float freq_hz, float amp) {
     p->unfold = 0;
     world_character_prepare(&p->character,1,character_seed,owner,freq_hz,character_enabled);
     p->colored = ambient;
-    woodland_body_prepare(&p->body,freq_hz,ambient && body_enabled);
+    p->resonating=ambient && resonator_enabled;
+    woodland_body_prepare(&p->body,freq_hz,ambient && body_enabled && !p->resonating);
     p->color = atomic_load_explicit(&s_color, memory_order_relaxed);
     p->color_lp = 0.0f;
     /* Pitch-relative nonresonant source shelf: dark takes the low band,
@@ -181,6 +191,17 @@ static bool start_note(int owner, float freq_hz, float amp) {
      * dsp_init() has prepared the sine LUT, so no per-sample transcendental
      * or extra source buffer is needed. Modes above 0.45 SR are omitted. */
     float position = 0.24f + 0.015f * excitation_variation();
+#ifdef FAM_SOUND_PRODUCT
+    if(p->resonating) {
+        /* Same allocated voice/owner. Clear union bytes so reuse cannot
+         * retain either the previous delay or a previous resonator mode. */
+        memset(p->buf,0,sizeof p->buf);
+        woodland_resonator_prepare(&p->resonator,freq_hz,amp,position,shape_release_scale());
+        __asm__ volatile("" ::: "memory");
+        p->active=1;
+        return true;
+    }
+#endif
     float coefficients[EXCITATION_MODES];
     int modes = 0;
     for (int m = 1; m <= EXCITATION_MODES &&
@@ -282,13 +303,19 @@ void pluck_render_mix(float *dry_L, float *dry_R,
              * head therefore stays fixed when BRIGHTNESS changes. Only loss
              * follows the 80 ms smoother. Interpolation's small residual is
              * covered by rendered-pitch tests. */
+            float y;
+#ifdef FAM_SOUND_PRODUCT
+            if(p->resonating) {
+                y=woodland_resonator_step(&p->resonator);
+            } else {
+#endif
             p->damp += (damping - p->damp) * (1.0f / (0.080f * SR));
             float rpos = (float)p->widx - (p->N - 1.0f);
             if (rpos < 0.0f) rpos += (float)BUF_LEN;
             int   r0 = (int)rpos;
             float fr = rpos - (float)r0;
             int   r1 = r0 + 1; if (r1 >= BUF_LEN) r1 = 0;
-            float y  = p->buf[r0] + fr * (p->buf[r1] - p->buf[r0]);
+            y  = p->buf[r0] + fr * (p->buf[r1] - p->buf[r0]);
 
             /* Damped feedback: averaging lowpass + T60 loop gain. */
             float fb = p->rho * (p->damp * (y + p->y_prev2) +
@@ -297,6 +324,9 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             p->y_prev = y;
             p->buf[p->widx] = fb;
             if (++p->widx >= BUF_LEN) p->widx = 0;
+#ifdef FAM_SOUND_PRODUCT
+            }
+#endif
 
             /* Output and send share the ramp; the loop itself is untouched.
              * First release sample keeps its gain, last reaches silence.
