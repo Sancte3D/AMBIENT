@@ -4,6 +4,7 @@
 
 #include "gesture.h"
 #include <math.h>
+#include <string.h>
 
 typedef struct {
     uint32_t t;         /* Offset seit Loop-Start (ms) */
@@ -26,6 +27,47 @@ static uint32_t s_loop_len;     /* PLAY: Schleifenlaenge (ms)    */
 static uint32_t s_play_base;    /* PLAY: now bei Loop-Beginn     */
 static int      s_play_idx;     /* PLAY: naechstes Event         */
 static uint16_t s_play_down;    /* PLAY: owned lower/upper cell lanes */
+
+static void archive_u32(uint8_t *p,uint32_t v) {
+    for(unsigned i=0;i<4;++i)p[i]=(uint8_t)(v>>(8*i));
+}
+static uint32_t archive_read(const uint8_t *p) {
+    uint32_t v=0;for(unsigned i=0;i<4;++i)v|=(uint32_t)p[i]<<(8*i);return v;
+}
+static uint32_t archive_hash(const uint8_t *p,unsigned n) {
+    uint32_t h=2166136261u;for(unsigned i=0;i<n;++i)h=(h^p[i])*16777619u;return h;
+}
+unsigned gesture_export(void *bytes,unsigned capacity) {
+    unsigned length=16u+8u*(unsigned)s_count;
+    if(!bytes || capacity<length || s_state==GESTURE_REC)return 0;
+    uint8_t *p=bytes;memcpy(p,"GLP1",4);archive_u32(p+4,(uint32_t)s_count);
+    archive_u32(p+8,s_count ? s_loop_len : GESTURE_MIN_LOOP);
+    for(int i=0;i<s_count;++i) {
+        uint8_t *e=p+12+8*i;archive_u32(e,s_ev[i].t);
+        e[4]=s_ev[i].cell;e[5]=s_ev[i].pressed;e[6]=s_ev[i].upper;e[7]=s_ev[i].velocity;
+    }
+    archive_u32(p+length-4,archive_hash(p,length-4));return length;
+}
+bool gesture_import(const void *bytes,unsigned length,uint32_t now_ms) {
+    if(!bytes || length<16 || length>GESTURE_ARCHIVE_MAX)return false;
+    const uint8_t *p=bytes;unsigned n=archive_read(p+4);uint32_t duration=archive_read(p+8);
+    if(memcmp(p,"GLP1",4) || n>GESTURE_MAX || length!=16u+8u*n ||
+       duration<GESTURE_MIN_LOOP || archive_read(p+length-4)!=archive_hash(p,length-4))return false;
+    uint32_t last=0;
+    for(unsigned i=0;i<n;++i) {
+        const uint8_t *e=p+12+8*i;uint32_t t=archive_read(e);
+        if(t<last || t>duration || e[4]>=5 || e[5]>1 || e[6]>1 || e[7]>127 ||
+           (e[5] && !e[7]))return false;
+        last=t;
+    }
+    /* Validate the entire record before releasing any playback owner. */
+    gesture_clear(now_ms);s_loop_len=duration;
+    for(unsigned i=0;i<n;++i) {
+        const uint8_t *e=p+12+8*i;
+        s_ev[i]=(gev_t){archive_read(e),e[4],e[5],e[6],e[7]};
+    }
+    s_count=(int)n;recorded_upper=0;return true;
+}
 
 void gesture_init(gesture_cell_fn on_cell) {
     s_on_note=0;rec_upper=false;rec_velocity=1;recorded_upper=0;

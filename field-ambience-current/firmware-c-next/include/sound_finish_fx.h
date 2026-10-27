@@ -20,18 +20,29 @@ typedef struct {
 static sound_finish_fx_t sf;
 static _Atomic uint32_t sf_target[5]; /* Q16 independent macro targets */
 static _Atomic bool sf_freeze,sf_plate_on,sf_content_held;
+static _Atomic unsigned sf_version;
+static bool sf_accepted_plate=true;
 static float sf_controls[5];
 static bool sf_is_frozen;
 static void sf_accept(void) {
-    for(int i=0;i<5;++i)sf_controls[i]=(float)atomic_load_explicit(&sf_target[i],memory_order_acquire)/65536;
-    sf_is_frozen=atomic_load_explicit(&sf_freeze,memory_order_acquire);
+    unsigned before=atomic_load_explicit(&sf_version,memory_order_seq_cst);
+    if(before&1u)return;
+    float next[5];
+    for(int i=0;i<5;++i)next[i]=(float)atomic_load_explicit(&sf_target[i],memory_order_seq_cst)/65536;
+    bool frozen=atomic_load_explicit(&sf_freeze,memory_order_seq_cst);
+    bool plate=atomic_load_explicit(&sf_plate_on,memory_order_seq_cst);
+    if(before!=atomic_load_explicit(&sf_version,memory_order_seq_cst))return;
+    memcpy(sf_controls,next,sizeof next);sf_is_frozen=frozen;sf_accepted_plate=plate;
     atomic_store_explicit(&sf_content_held,sf_is_frozen && !sf.cold,memory_order_release);
 }
 static void sf_parameters(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate) {
     float v[5]={delay,grain,drive,crush,phaser};
     for(int i=0;i<5;++i)if(!isfinite(v[i]))return;
+    unsigned version=atomic_load_explicit(&sf_version,memory_order_seq_cst);
+    atomic_store_explicit(&sf_version,version+1u,memory_order_seq_cst);
     for(int i=0;i<5;++i)atomic_store(&sf_target[i],(uint32_t)(dsp_clampf(v[i],0,1)*65536));
     atomic_store(&sf_plate_on,plate);atomic_store(&sf_freeze,freeze);
+    atomic_store_explicit(&sf_version,version+2u,memory_order_seq_cst);
 }
 static void sf_clear(void) {
     if(sf.cold)return;

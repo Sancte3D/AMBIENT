@@ -36,7 +36,7 @@ def main():
         with tarfile.open(fileobj=io.BytesIO(archive)) as tar:tar.extractall(tmp/'base',filter='data')
         base=tmp/'base'/prefix
         for sanitized in ([False] if a.native_only else [False,True]):
-            for name in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music','test_woodland_resonator']:
+            for name in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music','test_woodland_resonator','test_parameter_foundation']:
                 compile_at(ROOT,ROOT/'test'/f'{name}.c',tmp/'test',True,sanitized,
                            sources=['dsp'] if name=='test_sound_finish_fx' else ['dsp','shape'] if name=='test_woodland_resonator' else None)
                 log=run([tmp/'test'],env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0')).strip()

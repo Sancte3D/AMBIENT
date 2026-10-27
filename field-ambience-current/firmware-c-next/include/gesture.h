@@ -62,5 +62,10 @@ void gesture_tick(uint32_t now_ms);
 void gesture_clear(uint32_t now_ms);
 
 int  gesture_count(void);        /* aufgenommene Ereignisse (Test/UI) */
+/* Versioned little-endian take archive, with checksum. No flash or autoplay.
+ * Export rejects an unfinished REC; failed import leaves the live take intact. */
+#define GESTURE_ARCHIVE_MAX (16u+8u*GESTURE_MAX)
+unsigned gesture_export(void *bytes,unsigned capacity);
+bool gesture_import(const void *bytes,unsigned length,uint32_t now_ms);
 
 #endif

@@ -446,8 +446,23 @@ int engine_product_cell_midi(int cell,bool upper) {
     return world_pitch_midi(cell+(upper ? 3 : 0),tonic_pc,minor!=0);
 }
 #ifdef FAM_SOUND_FINISH_CANDIDATE
+static sound_parameters_t sound_parameters;
+bool engine_apply_sound_parameters(const sound_parameters_t *p) {
+    if(!p || !isfinite(p->delay) || !isfinite(p->grain) || !isfinite(p->drive) ||
+       !isfinite(p->crush) || !isfinite(p->phaser))return false;
+    sound_parameters=(sound_parameters_t){
+        .delay=dsp_clampf(p->delay,0,1),.grain=dsp_clampf(p->grain,0,1),
+        .drive=dsp_clampf(p->drive,0,1),.crush=dsp_clampf(p->crush,0,1),
+        .phaser=dsp_clampf(p->phaser,0,1),.freeze=p->freeze,.plate=p->plate};
+    ambient_room_finish_set(sound_parameters.delay,sound_parameters.grain,
+        sound_parameters.freeze,sound_parameters.drive,sound_parameters.crush,
+        sound_parameters.phaser,sound_parameters.plate);
+    return true;
+}
+void engine_get_sound_parameters(sound_parameters_t *p) {if(p)*p=sound_parameters;}
 void engine_set_sound_effects(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate) {
-    ambient_room_finish_set(delay,grain,freeze,drive,crush,phaser,plate);
+    sound_parameters_t p={delay,grain,drive,crush,phaser,freeze,plate};
+    (void)engine_apply_sound_parameters(&p);
 }
 bool engine_gesture_note(uint8_t cell,bool upper,bool pressed,float velocity,uint32_t ms) {
     (void)ms;if(cell>=5)return false;
@@ -728,6 +743,7 @@ void engine_init(void) {
     bowed_init(); horn_init(); pluck_init(); ambient_room_init(); nature_init();
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     reset_voicing();freeze_seen=false;memset(loop_lane,0,sizeof loop_lane);bowed_set_pad(true);
+    sound_parameters=(sound_parameters_t){.delay=.16f,.grain=.12f,.drive=.04f,.plate=true};
 #else
     bowed_set_pad(false);
 #endif

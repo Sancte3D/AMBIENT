@@ -195,7 +195,7 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
     float on=atomic_load_explicit(&enabled,memory_order_acquire) ? 1 : 0;
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     sf_accept();
-    bool wanted=atomic_load_explicit(&sf_plate_on,memory_order_acquire);
+    bool wanted=sf_accepted_plate;
     float maximum=0;
     for(int n=0;n<frames;++n) {
         /* Change model at the same actual sample for every render partition,
