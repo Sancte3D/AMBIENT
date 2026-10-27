@@ -369,6 +369,12 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                 rose &= (uint16_t)~bit;
         }
 
+        /* Apply the effective SHIFT level before interpreting this snapshot's
+         * Cell edges, including upper-register notes and Scene Save. Wake-only
+         * edges have already been consumed by ui_idle above. */
+        if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
+        if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
+
         /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL).
          * r19.22: solange der Scenes-Browser offen ist, WAEHLEN die
          * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
@@ -381,6 +387,14 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                 if (fell & m)
                     scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
                                    now);
+                /* The browser owns new presses, never an earlier note's
+                 * release. Preserve its original route and REC off edge;
+                 * a slot-selection-only up has no routed owner to release. */
+                if ((rose & m) && s_cell_router.owner[c]) {
+                    bool record = !(s_cell_router.owner[c] == CELL_LAND + 1 && c == 4);
+                    if (record) gesture_record_cell(c, false, now);
+                    route_cell(c, false, now);
+                }
             } else {
                 /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
                  * durch die gemeinsame Routing-Logik spielen.
@@ -409,8 +423,6 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
          * feeding releases uniformly keeps the toggles honest too
          * (they only act on pressed=true). CLEAR press also drives the
          * confirm-flash that existed since r18.64 but was never wired. */
-        if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
-        if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
         if ((fell & (1u<<MCP_BIT_MOD_HOLD)) && !controls_modifier_active(MOD_GENERATE)) {
             if (controls_modifier_active(MOD_SHIFT)) {
                 /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.

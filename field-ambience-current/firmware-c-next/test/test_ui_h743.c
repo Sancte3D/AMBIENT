@@ -36,6 +36,7 @@ static enc_event_t queue[32];
 static bool enc_down[ENC_COUNT];
 static unsigned qin, qout, display_short, display_long, write_calls;
 static unsigned ons, offs;
+static uint8_t last_owner;
 static int16_t expected[FRAMES * 2], actual[FRAMES * 2];
 
 static uint32_t HAL_GetTick(void) { return clock_ms; }
@@ -61,7 +62,7 @@ static bool store(const void *p, unsigned n) { (void)p; (void)n; ++write_calls; 
 static bool load(void *p, unsigned n) { (void)p; (void)n; return false; }
 static void hook(int on, uint8_t owner, float hz, float velocity) {
     (void)owner; (void)hz; (void)velocity;
-    if (on > 0) ++ons;
+    if (on > 0) {++ons;last_owner=owner;}
     if (on == 0) ++offs;
 }
 
@@ -88,7 +89,7 @@ static void reset(int world, uint32_t epoch) {
     s_field_seed = 0x1234; qin = qout = 0; pending = dirty = false;
     memset(enc_down, 0, sizeof enc_down);
     gpio = prev_gpio = UINT16_MAX; jack_pending = 0xff; jack_edge = 0;
-    display_short = display_long = write_calls = ons = offs = 0;
+    display_short = display_long = write_calls = ons = offs = 0;last_owner=0;
     engine_set_world(world); engine_generative_new_field(42);
     controls_modifier(MOD_GENERATE, true); engine_set_note_hook(hook);
     init_human_inputs(epoch - (UI_IDLE_MS - 1000), gpio);
@@ -207,7 +208,83 @@ static void nature_menu(void) {
     puts("H743 Nature menu: existing 0/65/0% editor, actual Engine audio without voices, all Worlds and settled silence pass");
 }
 #endif
+/* An already sounding press keeps its release recipient while the Scene
+ * browser temporarily consumes new presses as slot selections. */
+static void scene_release_route(int world,bool scene,bool hardware,bool hold,int16_t *pcm) {
+    reset(world,100);controls_modifier(MOD_GENERATE,true);
+    if(hold)controls_modifier(MOD_HOLD,true);
+    for(unsigned t=0;t<12000;t+=10) {
+        uint32_t now=100+t;s_ui_idle.last_ms=now;
+        if(t==0) {
+            if(hardware)inputs(1u<<MCP_BIT_CELL1);
+            else {controls_cell_press(0,CELL_TAP_AMP);controls_cell_physical(0,true);}
+        }
+        if(scene && t==1000)scenes_ui_open(now);
+        if(t==1500) {
+            if(hardware)inputs(0);
+            else controls_cell_release(0);
+        }
+        poll(now);engine_generative_tick(now);
+        engine_render(pcm+2*(t/10)*441,441);
+    }
+    assert(ons==1 && offs==(hold ? 0u : 1u));
+    if(hardware)assert(!s_cell_router.owner[0]);
+    assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+}
+static void shift_batch_route(int world,bool hardware,int16_t *pcm) {
+    reset(world,100);controls_modifier(MOD_GENERATE,true);
+    for(unsigned t=0;t<12000;t+=10) {
+        uint32_t now=100+t;s_ui_idle.last_ms=now;
+        if(t==0) {
+            if(hardware)inputs((1u<<MCP_BIT_MOD_SHIFT)|(1u<<MCP_BIT_CELL1));
+            else {
+                controls_modifier(MOD_SHIFT,true);controls_cell_press(0,CELL_TAP_AMP);
+                controls_cell_physical(0,true);
+            }
+        }
+        if(t==1500) {
+            if(hardware)inputs(0);
+            else {controls_modifier(MOD_SHIFT,false);controls_cell_release(0);}
+        }
+        poll(now);engine_generative_tick(now);
+        engine_render(pcm+2*(t/10)*441,441);
+    }
+    assert(ons==1 && offs==1 && last_owner==9);
+    assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+}
+static void input_edge_audit(void) {
+    for(int world=0;world<3;++world)for(int hold=0;hold<2;++hold) {
+        scene_release_route(world,false,false,hold!=0,expected);
+        scene_release_route(world,true,true,hold!=0,actual);
+        assert(!memcmp(expected,actual,sizeof actual));
+    }
+    puts("H743 Scene releases: ordinary note-off and intentional HOLD match full 12s explicit controls in every World");
+    for(int world=0;world<3;++world) {
+        shift_batch_route(world,false,expected);shift_batch_route(world,true,actual);
+        assert(!memcmp(expected,actual,sizeof actual));
+    }
+    reset(0,100);controls_modifier(MOD_GENERATE,true);scenes_ui_open(100);
+    inputs((1u<<MCP_BIT_MOD_SHIFT)|(1u<<MCP_BIT_CELL1));poll(100);
+    assert(write_calls==1 && !ons && !s_cell_router.owner[0]);
+    inputs(0);poll(110);assert(!ons && !offs);
+    reset(0,100);controls_modifier(MOD_GENERATE,true);
+    inputs(1u<<MCP_BIT_MOD_SHIFT);poll(100);scenes_ui_open(100);
+    inputs(1u<<MCP_BIT_CELL1);poll(110); /* SHIFT up + Cell down together. */
+    assert(!controls_modifier_active(MOD_SHIFT) && !write_calls && !ons);
+    inputs(0);poll(120);assert(!s_cell_router.owner[0]);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    reset(0,100);controls_modifier(MOD_GENERATE,true);gesture_toggle(100);
+    inputs(1u<<MCP_BIT_CELL1);poll(100);assert(gesture_count()==1);
+    int16_t pcm[882];engine_render(pcm,441);engine_generative_tick(110);
+    scenes_ui_open(200);inputs(0);poll(300);
+    assert(gesture_count()==2 && !s_cell_router.owner[0]);
+    inputs(1u<<(MCP_BIT_CELL1+1));poll(310);inputs(0);poll(320);
+    assert(gesture_count()==2); /* Slot-only events never invent a REC off. */
+#endif
+    puts("H743 SHIFT batch: upper register and Scene Save use the same snapshot; Scene releases close REC without orphan slot events");
+}
 int main(void) {
+    input_edge_audit();
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     nature_menu();
 #endif
