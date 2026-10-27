@@ -8,12 +8,32 @@ echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
 Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
 und optionale Natur sind noch kein belegter ruhiger Produktklang.
 
-Stand **2026-10-26**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
+Stand **2026-10-27**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md), konsolidierter
 [SD51-Softwarestand](SD51_SOFTWARE_CANDIDATE.md) und
 [SD52-UI-Anbindung](SD52_UI_IDLE_CHECKPOINT.md).
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
+
+## Ergänzung 2026-10-27 — leise Naturkulissen
+
+Michalis beauftragt Strandwellen, unterschiedliche Brisen sowie Regen und
+fernen Donner als deutlich leiseren Hintergrund unter den gespielten Cells.
+Die Erweiterung des vorhandenen Nature-Reglers ist im vollständigen
+Soundkandidaten implementiert: COAST mit Brandung, WOODLAND mit sanftem Regen
+und seltenem sehr leisem Donner, HIGHLANDS mit drei wechselnden Windarten.
+Nature startet weiterhin bei 0 %. Kein zusätzliches Bedienkonzept und kein
+neues Scene-Format. Musik, lange WOODLAND-Töne und Source-/Harmonievertrag
+bleiben erhalten. Details und reproduzierbare Nachweise:
+[Naturkulissen-Checkpoint](NATURE_ACCENTS_CHECKPOINT.md).
+
+Native/Sanitizer-, echte Cell-/Generate-/Pegel-/Partition-/Main-Audio-Prüfungen
+und der vorhandene Nature-Editor sind technisch geprüft. Die neue Hörprobe
+enthält dieselbe Kulisse allein und unter zwei wirklichen Cells, keine extern
+zugemischte Natur. Hör- und Geräteabnahme sowie die alten SD-Gates bleiben
+offen. Der vorherige Soundstand PR187 hat inzwischen seinen aktuellen
+GitHub-Hostjob und H743-Build bestanden; das ersetzt keinen ARM-Nachweis für
+die neue Naturergänzung.
 
 ## Gesamtauftrag2026-10-26 — Sound-Software fertigstellen
 

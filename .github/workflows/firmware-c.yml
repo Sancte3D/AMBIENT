@@ -102,6 +102,7 @@ jobs:
           git fetch --no-tags origin 24936b4e19895627d8b4bbdb1ba19a5b05c3db10
           git fetch --no-tags origin b6b62dbf3f33230ea4c659a8f5976efbf4ff31d2
           git fetch --no-tags origin c974584ab24dcb51696d85888ce4125deda20d6f
+          git fetch --no-tags origin 8381a1dc8ff85cac71d6b4941b94a6ef82d22e17
       - name: Check current expression, World character and matched baseline PCM
         working-directory: field-ambience-current/firmware-c-next
         run: |
@@ -110,6 +111,8 @@ jobs:
           python3 tools/review_woodland_body.py build-woodland-body
           python3 tools/review_woodland_resonator.py build-woodland-resonator
           python3 tools/review_sound_finish.py build-sound-finish
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
+          python3 tools/review_nature_accents.py build-sound-finish/nature
           python3 tools/review_ui_idle.py build-sound-finish/ui --fixture-only --finish-candidate --sanitize
           python3 tools/review_h743_irq_scope.py build-cell-unfold/irq --fixture-only --sanitize
           python3 tools/review_ui_idle.py build-cell-unfold/ui --fixture-only --sanitize

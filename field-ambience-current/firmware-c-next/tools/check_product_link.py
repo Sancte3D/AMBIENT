@@ -62,7 +62,7 @@ for path in build.rglob('*.su'):
         frames.append({'source':source.name,'function':function,
                        'bytes':int(fields[1]),'kind':fields[2]})
 assert frames,'-fstack-usage evidence missing'
-core={'engine_product.c','world_grammar.c','bowed.c','horn.c','pluck.c','nature.c','ambient_room.c'}
+core={'engine_product.c','world_grammar.c','bowed.c','horn.c','pluck.c','nature.c','nature_accents.h','ambient_room.c'}
 core_frames=[r for r in frames if r['source'] in core]
 assert core_frames and max(r['bytes'] for r in core_frames)<=1024,core_frames
 assert all('unbounded' not in r['kind'] for r in core_frames),core_frames
@@ -71,12 +71,17 @@ for function in ('engine_render','ambient_room_process','nature_render','engine_
     assert rows,function
     print(f"PRODUCT FRAME {function}: {max(r['bytes'] for r in rows)} B (compiler, not stack high-water)")
 finish_state=None
+nature_state=None
 if any('FAM_SOUND_FINISH_CANDIDATE' in c['command'] for c in compiled):
     address,size,_,_=one('sf')
     assert 0x30000000<=address and address+size<=0x30048000,(hex(address),size)
     finish_state={'model':1,'address':address,'bytes':size,'region':'internal D2'}
     print(f'COMPLETE SOUND FX: 0x{address:08x}, {size} B, internal D2')
-report={'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
+    address,size,_,_=one('na')
+    assert 0x24000000<=address and address+size<=0x24080000 and size<=2048,(hex(address),size)
+    nature_state={'address':address,'bytes':size,'region':'internal D1','max_bytes':2048}
+    print(f'NATURE ACCENTS: 0x{address:08x}, {size} B, internal D1, no sample buffers')
+report={'nature_accents_state':nature_state,'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
         'compiler':subprocess.check_output(['arm-none-eabi-gcc','--version'],text=True).splitlines()[0],
         'profile':'product','individual_frames':sorted(frames,key=lambda r:r['bytes'],reverse=True),
         'core_max_frame_bytes':max(r['bytes'] for r in core_frames),

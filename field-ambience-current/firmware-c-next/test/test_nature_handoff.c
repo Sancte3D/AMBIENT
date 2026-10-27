@@ -34,9 +34,15 @@ static void render(bool instrumented,int frames,int block,float *out) {
         in_audio=false;
         if(instrumented) {
             assert(loads==3);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+            /* Ten reset coefficients, then a stereo wind update /128 samples.
+             * A World/seed reset can split the control phase inside a block. */
+            assert(coefs<=10u+2u*((unsigned)(n+127)/128u+1u));
+#else
             /* One reset (two water coefficients), and at most ceil(n/64)+1
              * wind updates if that reset changes the control phase mid-block. */
             assert(coefs<=2u+2u*((unsigned)(n+63)/64u+1u));
+#endif
             if(coefs>max_coefs)max_coefs=coefs;
         }
         for(int i=0;i<n;++i) {

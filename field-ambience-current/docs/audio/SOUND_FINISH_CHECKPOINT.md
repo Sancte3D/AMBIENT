@@ -7,6 +7,10 @@ Commit `c974584ab24dcb51696d85888ce4125deda20d6f`, Tree
 `3d8da53ccc6487dadc2e33fc6e99922f3f4c64e9`.
 Branch `codex/ambient-sound-completion-2026-10-26`.
 
+Ergänzung vom 27.10.2026: Auf PR187 folgt der ausdrücklich beauftragte Ausbau
+der optionalen [leisen Naturkulissen](NATURE_ACCENTS_CHECKPOINT.md).
+Nature0 lässt den hier beschriebenen musikalischen Hörstand exakt erhalten.
+
 ## Fertig implementierte Softwareblöcke
 
 | Block | Tatsächlich eingebaut |
