@@ -13,7 +13,11 @@
  * Main prepares; Audio alone advances the published states. The enclosing
  * voice supplies its existing attack/release/color/ownership and tail rules.
  */
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#define WOODLAND_RESONATOR_MODEL 2
+#else
 #define WOODLAND_RESONATOR_MODEL 1
+#endif
 #define WOODLAND_RESONATOR_MODES 8
 typedef struct {
     float re[WOODLAND_RESONATOR_MODES],im[WOODLAND_RESONATOR_MODES];
@@ -38,10 +42,25 @@ static inline void woodland_resonator_prepare(woodland_resonator_t *r,
          * Complex states avoid low-frequency cancellation in a direct-form
          * two-pole filter. Coefficients use double at preparation only. */
         double w=6.2831853071795864769*(double)f/DSP_SAMPLE_RATE_HZ;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        /* A voiced wooden body, rather than a triangle losing every upper
+         * mode at once. The fourth/sixth form a warm struck shoulder; upper
+         * loss is still faster than the unchanged 36s fundamental. */
+        static const float seconds[8]={36,30,18,26,16,12,10,8};
+        static const float weight[8]={.40f,.025f,.08f,.28f,.07f,.14f,.015f,.06f};
+        double t60=(double)seconds[m]*release_scale;
+#else
         double t60=36.0*(double)release_scale/(1.0+.28*m*m);
+#endif
         double radius=exp(-6.907755278982137/(t60*DSP_SAMPLE_RATE_HZ));
         r->a[m]=(float)(radius*cos(w));r->b[m]=(float)(radius*sin(w));
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        /* Small position-dependent articulation; it cannot erase the body.
+         * Excite once, never sustain/restrike the modes during render. */
+        r->re[m]=weight[m]*(1+.15f*sinf(3.141592654f*position*harmonic));
+#else
         r->re[m]=fabsf(sinf(3.141592654f*position*harmonic))/(harmonic*harmonic);
+#endif
         sum+=r->re[m];++r->modes;
     }
     /* Triangle inequality bounds the initial sum by the admitted amplitude.

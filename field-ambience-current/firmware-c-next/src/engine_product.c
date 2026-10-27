@@ -268,7 +268,11 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     velocity=dsp_clampf(velocity,0,1);
     /* Fixed dry-source calibration candidate. Shared by manual/generator;
      * no master AGC, automatic gain compensation or implicit second source. */
-    float amp=velocity*(world==WORLD_WOODLAND ? .22f : .50f);
+    float woodland_level=.22f;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    woodland_level=.32f; /* compensate the broader, peak-bounded modal body */
+#endif
+    float amp=velocity*(world==WORLD_WOODLAND ? woodland_level : .50f);
     /* Main is the sole request writer. Reap proved this owner has no old
      * source, but its release/quick request may have been posted after the
      * retiring audio IRQ. Discard those old commands before publishing the

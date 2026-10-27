@@ -165,6 +165,12 @@ static bool start_note(int owner, float freq_hz, float amp) {
     p->release_frames=ambient ? (uint32_t)(2.0f*shape_release_scale()*SR) : STOP_FRAMES;
     float attack_s = ambient ? dsp_clampf(0.8f*shape_attack_scale(),0.4f,2.4f) :
         dsp_clampf(0.008f * shape_attack_scale(), 0.004f, 0.032f);
+#if defined(FAM_SOUND_PRODUCT) && defined(FAM_SOUND_FINISH_CANDIDATE)
+    /* A soft but perceptible excitation, followed by the same long freely
+     * ringing fundamental. Never turn the approved long body into a short pluck. */
+    if(ambient && resonator_enabled)
+        attack_s=dsp_clampf(.12f*shape_attack_scale(),.06f,.36f);
+#endif
     p->attack_phase = 0.0f;
     p->attack_step = 1.0f / (attack_s * SR);
     p->dc = 0.0f;
@@ -356,6 +362,9 @@ void pluck_render_mix(float *dry_L, float *dry_R,
                 float body_colored=colored;
                 p->color_lp += p->color_a * (body_colored - p->color_lp);
                 float shelf=2.0f * p->color - 1.0f + 0.35f*opening;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                if(p->resonating)shelf=.45f*(2*p->color-1)+.20f*opening;
+#endif
                 if(p->character.enabled) shelf=dsp_clampf(shelf+p->character.shade,-1.0f,1.35f);
                 colored += shelf * (body_colored - p->color_lp);
             }

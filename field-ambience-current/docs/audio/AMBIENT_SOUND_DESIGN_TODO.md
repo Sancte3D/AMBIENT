@@ -2,11 +2,12 @@
 
 ## KERNURTEIL
 
-AMBIENT besitzt jetzt einen tatsächlich reduzierten Produktkandidaten: drei
-verschiedene Grammatiken, gemeinsame Quellen-/Besitz-/Harmonieprüfung,
-echte Hz-/Besitzer-/Tailhistorie und einen gemeinsamen Raum. Die größte offene
-Schwäche ist die ungehörte Familienauswahl: insbesondere HIGHLANDS, Bowed-Grain
-und optionale Natur sind noch kein belegter ruhiger Produktklang.
+AMBIENT besitzt einen technisch geprüften Produktkandidaten mit drei
+Grammatiken, gemeinsamer Quellen-/Besitz-/Harmonieprüfung und gemeinsamem Raum.
+Michalis lehnt die Klangidentität von V1 als denselben synthetischen Ton in
+anderen Oktaven ab. Die vorige Einschätzung war zu großzügig. Materialmodell 2
+setzt jetzt drei erheblich unterschiedliche Tonkörper um; seine persönliche
+Hör- und Geräteabnahme bleibt offen. Technische Tests schließen diese Lücke nicht.
 
 Stand **2026-10-27**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [PRODUCT_SOUND_SPEC.md](PRODUCT_SOUND_SPEC.md), konsolidierter
@@ -14,6 +15,25 @@ Stand **2026-10-27**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 [SD52-UI-Anbindung](SD52_UI_IDLE_CHECKPOINT.md).
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
+
+## Materialmodell 2, 2026-10-27 — klare Klangtrennung bei Ambient-Charakter
+
+Neuer Auftrag: Die Worlds sollen musikalisch extrem weit auseinanderliegen
+und zugleich ihren Ambient-Charakter behalten. Der vollständige Hörkandidat
+bekommt deshalb drei andere Materialrollen: langsam aufblühende evenreiche
+COAST-Fläche, einmal angeregter WOODLAND-Körper mit weichem klarem Ansatz und
+bewahrtem nominellem 36-s-Grundtonnachklang, hohler oddreicher HIGHLANDS-
+Atemton mit notengebundenem Luftanteil. Keine neue World, Oktavverschiebung
+oder Naturkulisse als Ersatz für eine eigene Cell-Stimme.
+
+60 tatsächliche gleiche Ton-/Color-/trocken-FX-Fälle, ganze PCM-/Hz-/Owner-/
+Belegungstraces exakt bei 37/512 Frames, zusätzlich tatsächliche 96-s-Musik;
+51.861.600 Stereo-Frames. Alle Sound-/Pegel-/Freeze-/Loop-/Natur- und H743-
+Inputtests native/sanitisiert bestehen; der neu veröffentlichte ARM-Build
+bleibt separat abzulesen. Die veränderten Spektren sind keine vorweggenommene
+Hörfreigabe. V1-Kritik sowie lange WOODLAND-Töne bleiben dokumentiert.
+Neue Hördateien: AMBIENT_Worlds_V2_Trocken (55 s) und V2_Musik (96 s), MP3/WAV.
+[Entwurf, genaue Grenzen und Nachweise](WORLD_MATERIALS_V2_CHECKPOINT.md).
 
 ## Prüfung 2026-10-27 — Bedienfehler und World-Eigenständigkeit
 

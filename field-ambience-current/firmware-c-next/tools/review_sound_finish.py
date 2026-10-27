@@ -36,9 +36,9 @@ def main():
         with tarfile.open(fileobj=io.BytesIO(archive)) as tar:tar.extractall(tmp/'base',filter='data')
         base=tmp/'base'/prefix
         for sanitized in ([False] if a.native_only else [False,True]):
-            for name in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music']:
+            for name in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music','test_woodland_resonator']:
                 compile_at(ROOT,ROOT/'test'/f'{name}.c',tmp/'test',True,sanitized,
-                           sources=['dsp'] if name=='test_sound_finish_fx' else None)
+                           sources=['dsp'] if name=='test_sound_finish_fx' else ['dsp','shape'] if name=='test_woodland_resonator' else None)
                 log=run([tmp/'test'],env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0')).strip()
                 label=name+('_sanitized' if sanitized else '_native');tests[label]=log.splitlines()[-1]
                 (out/(label+'.log')).write_text(log+'\n')
@@ -64,7 +64,7 @@ def main():
             with wave.open(str(path),'wb') as w:
                 w.setnchannels(2);w.setsampwidth(2);w.setframerate(44100);w.writeframes(data)
         samples=array.array('h',after);peak=max(map(abs,samples))/32768
-        proof=dict(model=1,baseline=BASE,default_profile_unchanged_pcm=True,compared_stereo_frames=2*96*44100,
+        proof=dict(model=1,world_material_model=2,baseline=BASE,default_profile_unchanged_pcm=True,compared_stereo_frames=2*96*44100,
                    candidate_pcm_exact_37_512=True,actual_event_traces_partition_exact=True,
                    tests=tests,preview_seconds=96,ab_seconds=192,
                    order='COAST, WOODLAND, HIGHLANDS; each 32s before then 32s candidate in AB',
