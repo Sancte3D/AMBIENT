@@ -71,7 +71,8 @@ static void reset(int world, uint32_t epoch) {
     dsp_init(); brain_init(); engine_init(); engine_boot_mute();
     menu_callbacks_t cb = {.set_world = engine_set_world, .set_key = engine_set_key_pc,
         .set_tuning = engine_set_tuning, .set_attack = engine_set_attack,
-        .set_release = engine_set_release, .set_space = engine_set_space};
+        .set_release = engine_set_release, .set_space = engine_set_space,
+        .set_atmosphere = engine_set_atmosphere};
     menu_init(&cb); controls_init(); params_init(); overlay_init(); bloom_init();
     landscape_init(NULL);
 #ifdef FAM_SOUND_FINISH_CANDIDATE
@@ -184,7 +185,32 @@ static void expression_route(int world,bool scene,bool hardware,int16_t *pcm) {
     assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
 }
 
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+static void nature_menu(void) {
+    for(int world=0;world<3;++world) {
+        reset(world,100);engine_set_generative(false,-1);engine_set_master_volume(.75f);
+        for(int i=0;menu_current()!=MP_ATMOS && i<MP_COUNT;++i)menu_rotate(1);
+        assert(menu_current()==MP_ATMOS && !strcmp(menu_current_label(),"Nature"));
+        assert(menu_value_int(MP_ATMOS)==0);menu_push();menu_rotate(65);
+        assert(menu_value_int(MP_ATMOS)==65 && !strcmp(menu_current_value_text(),"65%"));
+        int16_t pcm[1024];unsigned audible=0;
+        for(int f=0;f<10*44100;f+=512) {
+            engine_render(pcm,512);
+            for(int i=0;i<1024;++i)if(pcm[i])++audible;
+        }
+        assert(audible && !engine_active_voices() && !ons);
+        menu_rotate(-65);assert(menu_value_int(MP_ATMOS)==0);
+        for(int f=0;f<31*44100;f+=512)engine_render(pcm,512);
+        for(int i=0;i<1024;++i)assert(!pcm[i]);
+        assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+    }
+    puts("H743 Nature menu: existing 0/65/0% editor, actual Engine audio without voices, all Worlds and settled silence pass");
+}
+#endif
 int main(void) {
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    nature_menu();
+#endif
     /* Real boot initializer must prime the indirect EN4 level before its
      * snapshot. Its queued down and later up are both consumed, no Mute. */
     reset(0, 100);

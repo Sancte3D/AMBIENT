@@ -4,6 +4,9 @@
 #include <stdatomic.h>
 #include <string.h>
 #include <stdbool.h>
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "nature_accents.h"
+#else
 static _Atomic uint32_t requested_seed;
 static uint32_t current_seed;
 static bool idle;
@@ -168,3 +171,4 @@ void nature_render(float *l,float *r,int frames) {
         l[n]+=L*amount_cur*transition; r[n]+=R*amount_cur*transition;
     }
 }
+#endif

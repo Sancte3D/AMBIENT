@@ -19,6 +19,7 @@ def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('output',type=Path);ap.add_argument('--sanitize',action='store_true')
     ap.add_argument('--fixture-only',action='store_true')
+    ap.add_argument('--finish-candidate',action='store_true')
     args=ap.parse_args();out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     inputs=None
     if not args.fixture_only:
@@ -35,6 +36,7 @@ def main():
         tmp=Path(directory)
         def fixture(sanitize):
             flags=[os.environ.get('CC','cc'),'-std=c11','-O2','-Wall','-Wextra','-Werror','-I'+str(ROOT/'include')]
+            if args.finish_candidate:flags+=['-DFAM_SOUND_FINISH_CANDIDATE']
             if sanitize:flags+=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']
             obj=tmp/'observed.o';binary=tmp/'fixture'
             names=['init','clear','set_amount','set_world','set_seed','render']
