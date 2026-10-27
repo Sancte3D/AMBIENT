@@ -15,6 +15,21 @@ Stand **2026-10-27**. Diese Liste umfasst alle SD00–SD53. Aktueller Vertrag:
 `FAM_SOUND_PROFILE=product` bleibt Kandidat, `reference` ausdrücklicher Default.
 Ältere Render-/Next-/Locked-Einträge sind keine Produktfreigabe.
 
+## Prüfung 2026-10-27 — Bedienfehler und World-Eigenständigkeit
+
+Die zusätzliche Prüfung findet zwei reproduzierbare H743-Eingabefehler:
+verlorenes Note-Off beim Loslassen unter dem Szenenmenü sowie zu spät
+angewandtes SHIFT bei gleichzeitigem Cell-Druck/Scene-Save. Beide sind
+korrigiert und im echten extrahierten Inputfixture native/sanitisiert geprüft.
+Klanglich sind die generativen Grammatiken eigenständig; bei gehaltenen
+Tönen liegen COAST/HIGHLANDS noch nah. WOODLANDs lange natürliche Resonanz
+bleibt bestehen. Erst die bestehenden Klangidentitäten schärfen, dann über
+eine vierte World entscheiden. Keine neue World oder DSP-Parameteränderung
+als unbelegte Reaktion auf Ähnlichkeitswerte. Neue FX-Makros/Loops benötigen
+weiter eigene Bedien-/Speicherintegration; frühere „fertig“-Angaben betreffen
+implementierte DSP-Blöcke, nicht eine vollständige Produktfreigabe.
+[Prüfbericht und Hörvergleich](WORLD_IDENTITY_AUDIT.md).
+
 ## Ergänzung 2026-10-27 — leise Naturkulissen
 
 Michalis beauftragt Strandwellen, unterschiedliche Brisen sowie Regen und
