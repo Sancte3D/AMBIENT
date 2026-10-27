@@ -160,7 +160,7 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
     v->env = 0.0001f;
     v->envInc = v->amp / (0.30f * shape_attack_scale() * SR);   /* r19.60: 300 ms x SHAPE */
 #ifdef FAM_SOUND_PRODUCT
-    if(v->soft_pad)v->envInc=v->amp/(.85f*shape_attack_scale()*SR);
+    if(v->soft_pad)v->envInc=v->amp/(1.8f*shape_attack_scale()*SR);
 #endif
     v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */

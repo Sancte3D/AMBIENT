@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Quiet procedural Nature: actual Cells, weather, score and old-PCM evidence."""
+"""Quiet Nature regression while the owning musical materials evolve.
+
+Compare the actual Nature-only bus with PR189, and the non-finish profile
+with its previous PCM. Full-candidate music deliberately changes in model 2;
+its current Nature0/1 note traces, additivity and level bounds remain checked.
+"""
 import argparse
 import array
 import hashlib
@@ -14,7 +19,7 @@ import tempfile
 import wave
 from review_cell_unfold import SOURCES, ROOT
 
-BASE='8381a1dc8ff85cac71d6b4941b94a6ef82d22e17'
+BASE='df9a8a903d444d48133b980760a9686202455637'
 SR=44100
 
 def run(cmd,**kw):return subprocess.check_output([str(x) for x in cmd],text=True,**kw)
@@ -97,7 +102,10 @@ def main():
                 assert ratio<10**(-24/20) and max(windows)<10**(-20/20),level
                 assert level['peak']<.75
                 if seed==1234:
-                    exact(off,capture('previous',world,seed,0))
+                    # Evolving Cell timbres must not be falsely claimed to
+                    # match old music. Nature alone itself stays bit-exact.
+                    exact(capture('current',world,seed,1,mode=0),
+                          capture('previous',world,seed,1,mode=0))
                     for amount in (0,1):exact(capture('off',world,seed,amount),capture('previous_off',world,seed,amount))
                     audition=capture('current',world,seed,.65);alone=capture('current',world,seed,.65,mode=0)
                     exact(alone,capture('current',world,seed,.65,mode=0,cap=37,room=1))
@@ -119,7 +127,7 @@ def main():
                     (out/f'world{world}_seed{seed}_generate.events.csv').write_bytes(generative_notes)
                     silent=capture('current',world,seed,0,mode=0)
                     assert not any(data(silent))
-            print(f'World {world}: Cell/Generate traces, levels, old PCM, Room and partition checks pass',flush=True)
+            print(f'World {world}: Cell/Generate traces, levels, unchanged Nature-only and off-profile PCM, Room and partitions pass',flush=True)
         for name,chunks in [('AMBIENT_Nature_mit_Cells.wav',mixed),('AMBIENT_Nature_solo.wav',solo)]:
             expected=b''.join(chunks)
             with (out/name).open('wb') as raw:
@@ -144,7 +152,7 @@ def main():
                    physical_cells='Cell0 at8s, Cell2 at18s, release30s, velocity0.7; same in every48s capture',
                    wav_gain_db=0,mp3_shared_gain_db=20*math.log10(4),
                    captures=captures,exact_stereo_frames_compared=frames_verified,tests=tests,levels=levels,
-                   complete_zero_nature_matches_previous=True,off_defaults_match_previous=True,
+                   complete_nature_only_matches_previous=True,musical_material_model=2,off_defaults_match_previous=True,
                    complete_note_traces_nature_independent=True,room_independent_nature=True,
                    additive_bus_excludes_first_cell_40ms_output_gate=True,
                    no_phantom_voices=True,all_output_protection_counters_zero=True,

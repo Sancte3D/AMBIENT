@@ -9,7 +9,9 @@
  * No sub-octave oscillator or fixed cupped-horn formant. A geographic World
  * does not require an imitation horn call; retain the source ID and ownership.
  *
- * Control-rate work (coeff/LFO updates) every CTL samples; per-sample stays
+ * Complete sound material model 2 instead uses a hollow odd-harmonic pipe
+ * and restrained sustained breath within the same voice, below.
+ * Control-rate work (coeff/LFO updates) every CTL samples; reference stays
  * one saw + one LUT sine + one LP, plus onset-only noise/BP. No per-sample
  * transcendental or added oscillator work.
  */
@@ -19,6 +21,9 @@
 #ifdef FAM_SOUND_PRODUCT
 #include "cell_unfold.h"
 #include "world_character.h"
+#endif
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "highlands_breath.h"
 #endif
 #include <string.h>
 #include <stdatomic.h>
@@ -140,6 +145,9 @@ static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float am
 
     v->env = 0.0001f;
     v->envInc  = v->amp / (0.45f * shape_attack_scale() * SR);  /* 450 ms x SHAPE */
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    v->envInc=v->amp/(.70f*shape_attack_scale()*SR);
+#endif
     v->relCoef = dsp_smooth_coef(0.7f * shape_release_scale()); /* r19.60 */
     v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
     v->blareEnv  = 0.0f;
@@ -255,6 +263,11 @@ void horn_render_mix(float *dry_L, float *dry_R,
                 v->blareEnv += (btgt - v->blareEnv) * 0.035f;
                 float drift = dsp_sin(v->driftPh);
                 float cut = v->freq * (2.2f + (1.0f+1.2f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift) * (0.85f+0.3f*tone_cur);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                /* Keep the hollow third audible even at Color 0; brightness
+                 * varies upper loss without collapsing to a plain sine. */
+                cut=v->freq*(4.4f+.5f*tone_cur+.35f*v->blareEnv);
+#endif
 #ifdef FAM_SOUND_PRODUCT
                 cut *= 1.0f+.40f*opening;
                 if(v->character.enabled) cut*=v->character.tone;
@@ -285,6 +298,16 @@ void horn_render_mix(float *dry_L, float *dry_R,
              * reinforce it, not cancel it. .45*(2/pi)+.35 ~= 2/pi preserves
              * the old fundamental drive while reducing buzzy upper partials.
              * Reuse the former sub oscillator's LUT work at the played pitch. */
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+            float shade=2*tone_cur-1+.20f*opening;
+            if(v->character.enabled)shade+=v->character.shade;
+            float reed=highlands_breath_sample(v->ph,v->freq,shade);
+            v->ph+=v->inc;if(v->ph>=1)v->ph-=1;
+            float brass=dsp_svf_lp(&v->blare,reed);
+            /* A restrained sustained aspiration belongs to this note and
+             * follows its entire envelope/release, not a 90ms pre-bloom burst. */
+            brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.055f+.025f*v->blareEnv);
+#else
             float saw_share=.45f,sine_share=.35f;
 #ifdef FAM_SOUND_PRODUCT
             if(v->character.enabled) {
@@ -304,6 +327,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
                 float a = (float)v->chiff_left / (0.09f * SR);   /* fade out */
                 brass += dsp_svf_bp(&v->chiffbp, wnoise(&v->rng)) * a * a * 0.12f;
             }
+#endif
 
             float out = brass * v->env * 0.5f;
             if(fade_left[i]>0) {

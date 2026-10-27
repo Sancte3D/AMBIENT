@@ -1,5 +1,13 @@
 # AMBIENT — vollständiger Sound-Softwarekandidat
 
+Aktuelle Weiterentwicklung vom 27.10.2026: Michalis fordert nach negativem
+V1-Hörurteil extrem deutlich unterscheidbare Worlds bei erhaltenem Ambient-
+Charakter. Der bestehende vollständige Kandidat verwendet nun
+[Materialmodell 2](WORLD_MATERIALS_V2_CHECKPOINT.md) mit evenreicher Fläche,
+langem angeregtem Körper und oddreichem Atemton. Die Beschreibung der ersten
+Fassung unten bleibt historische Basis; neue Dateien heißen ausdrücklich V2.
+Eine persönliche Klang-/Gerätefreigabe wird daraus nicht abgeleitet.
+
 Auftrag vom 26.10.2026: „okay. dann sound fertig machen“. Dieser Auftrag
 umfasst jetzt alle noch benannten Softwareblöcke; nach der Flächenstufe wird
 nicht wieder mit einem bloßen „nächster Schritt“ aufgehört. Basis ist PR186,
