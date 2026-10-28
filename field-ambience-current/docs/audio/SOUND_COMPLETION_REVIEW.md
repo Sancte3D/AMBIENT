@@ -1,5 +1,10 @@
 # AMBIENT — vollständiger Abgleich der 54 Soundaufgaben
 
+Nachtrag28.10.2026: [Hierarchieprüfung](SOUND_HIERARCHY_REVIEW.md),180 Fälle/
+201 Captures, konkretisiert offene Pegel-/FX-/Freeze-Entscheidungen. Technische
+Reproduzierbarkeit ist keine Freigabe dieser Bedien- und Klangabhängigkeiten.
+PCB nach Michalis noch nicht festgelegt; BOM bleibt Entwurf, Geräteprüfung später.
+
 Stand28.10.2026. Alle54 Punkte der kanonischen Projekt-To-do (Version50) gelesen,
 mit aktuellem Code, Nachweisen und PR192-CI766 abgeglichen. Diese CI ist für
 ddb3cef2bb9af29027531f80140f3705a10b75c1 vollständig30/30 erfolgreich.
