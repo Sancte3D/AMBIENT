@@ -1,5 +1,13 @@
 # AMBIENT — verbindliche Sounddesign-To-do
 
+Hierarchieprüfung28.10.2026:
+[konkrete Befunde, Pegel und empfohlene Rangfolge](SOUND_HIERARCHY_REVIEW.md).
+180 Fälle/201 Captures: Standard-FX hinter Cells, Nature bei leisen/langsam
+verklungenen Cells nicht durchgehend stark untergeordnet; Room-/Farbwirkung
+modellabhängig. Stummer Freeze kann neue Tonzulassung blockieren. Diese
+Produktentscheidungen bleiben offen; keine automatische Parameteränderung.
+Michalis stellt klar: PCB noch nicht festgelegt, Hardwareabnahme später.
+
 Aktueller vollständiger Abgleich28.10.2026:
 [alle54 Aufgaben und verbleibende Abnahmen](SOUND_COMPLETION_REVIEW.md),
 [Softwarevertrag0.11](PRODUCT_SOUND_SPEC.md),

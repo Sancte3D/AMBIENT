@@ -80,6 +80,12 @@ Wetter-RNG, keine Änderung von Zulassung/Planer-RNG/Belegung. Mischung nach
 Musik-FX, unabhängig von Room/Freeze. [Nature-Vertrag](NATURE_ACCENTS_CHECKPOINT.md).
 Gemessene Lautheitsabstände sind Testfälle, keine universale Wahrnehmung.
 
+[Hierarchieprüfung28.10.2026](SOUND_HIERARCHY_REVIEW.md) erweitert die bisherigen
+Zwei-Cell-Fälle um leise Einzeltöne: Nature ist statisch begrenzt, nicht relativ
+zu jedem Cell-Tail geregelt. Room skaliert den gesamten Musik-Rückweg; FDN-Hall
+umgeht die SF-Färbung. Diese Abhängigkeiten und die stumme Freeze-Zulassung
+sind offene Produktfragen, keine hiermit freigegebenen Endwerte.
+
 Send0,35, Master nach Musik/Nature. Volume Host0,60/Gerät0,30 mit120-ms-
 Zeitkonstante. Ganze Kette über40-ms-Gate zu exakter Null, dann Historyclear;
 Clear erhält Reglerwerte, Mute außerdem Generateabsicht. Owner-/Tailharmonie,
