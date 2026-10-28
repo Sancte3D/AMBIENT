@@ -1,44 +1,33 @@
-# SD51 — reproduzierbarer Softwarestand vor UI
+# SD51 — aktueller Softwarekandidat0.11
 
-Stand2026-10-20. Sound Candidate **0.10**, SCN7. Dies konsolidiert den
-Softwarevertrag; der endgültige Sound-Freeze benötigt weiterhin gehörte
-Quellen-/Parameterentscheidungen und SD48–SD50. SD51 bleibt deshalb offen.
+Stand28.10.2026. [Produktvertrag](PRODUCT_SOUND_SPEC.md): Materialmodell2,
+vollständige Effektsteuerung, leise Nature und SCN8/JSS1-Sessions. Michalis'
+„Besser“ ist positives V2-Klangurteil, keine pauschale Parameter-/Gerätefreigabe.
+Der finale Freeze bleibt offen.
 
-Die verbindlichen aktuellen Werte stehen vollständig im
-[Produktvertrag](PRODUCT_SOUND_SPEC.md): Register/Admit und Ownership,
-alle drei Grammatiken einschließlich Seeds und Phrasengedächtnis,
-Parameterregister/Kennlinien/Defaults, Gain-/Ausgabekette, Kontextwechsel/
-Persistenz und Ressourcenvertrag. Der ältere Entwurfsabschnitt „BESTE VERSION“
-der To-do beschreibt erste Suchbereiche; er ist kein zweites Presetregister.
-Die veraltete Candidate-0.3-Zuordnung in der Aufgabenmatrix ist korrigiert.
-
-| Vertrag | Aktueller Stand / maßgeblicher Nachweis |
+| Vertrag | Aktueller Stand |
 |---|---|
-| Konfiguration | `FAM_TARGET=h743`, `FAM_SOUND_PROFILE=product`, Release, `FAM_LCD_PANEL=1_9inch`; Reference bleibt ausdrücklich CMake-Default |
-| Klang | COAST/Bowed, WOODLAND/lange Saite, HIGHLANDS/Horn; drei unterschiedliche begrenzte Grammatiken, gemeinsame Zulassung und Room, Nature optional/default0 |
-| Festes Gain | Familien0,50/0,22/0,50; Send0,35; Master erst nach Room/Nature; kein neuer UI-Audiopfad |
-| Makros | Activity/Attack/Release/Color/Room je0..1/default0,5; Nature0; Gerätvolume0,30, Host0,60; genaue Kurven und Glättungen im Parameterregister |
-| Persistenz | SCN7, alte SCN5/6 nur Migration; kein Volume/Generate/Owner/Roomsnapshot; Seed0→0xA6B13E7D |
-| Besitz/Harmonie | [SD11](SD11_PUBLIC_HARMONY_CHECKPOINT.md), [SD12](SD12_TAIL_HISTORY_CHECKPOINT.md); reale Quellen inklusive Vorbereitung/Release≤3, Pluck≤2 |
-| Parameter/Pegel | [SD35](SD35_PARAMETER_CHECKPOINT.md); vorhandene separate SD33/34-/Gainbelege im Produktvertrag |
-| Wechsel/Langlauf | [SD37](SD37_WORLD_TRANSITION_CHECKPOINT.md), [SD45](SD45_LONG_RECOVERY_CHECKPOINT.md); letzter Vor-UI-Head b29246fde0c66618bbfc25742f929dc1f362ebf6, CI736:28/28 erfolgreich |
-| Begrenzte Arbeit | [SD47-Inventar](SD47_HOTPATH_INVENTORY.md); tatsächliche whole-IRQ-/Stackabnahme bleibt SD48 |
-| Save | SD41-Writer, Recovery, bestätigte Scene-API und H743-Adapter vorbereitet/geprüft; Product-Live-Save weiterhin synchron, Journal OFF; Silizium-ECC-/Power-cut-Abnahme vor Aktivierung |
+| Build | H743/Product/Full-Sound/Session, Release; Reference CMake-Default, Kandidatenflags OFF |
+| Tonkörper | COAST evenreiche Fläche, WOODLAND langer angeregter Modalkörper, HIGHLANDS oddreicher Atemton |
+| Gain | Familien0,50/0,32/0,50, Send0,35, Master nach Room/Nature; keine AGC |
+| Effekte | Zehn Float-Ziele + Freeze/Plate in einer Main-/Audio-Transaktion, keine Encoderzuordnung |
+| Persistenz | FXP1/GLP1 in fünf SCN8-Slots,5848B,8192-B-JSS1, echter yielding IRQ-/ECC-H743-Adapter |
+| Recall | Targets/gestoppter Loop, keine Stimmen/Generate/Volume oder Freeze-Audio |
+| Besitz | Drei reale Quellen inklusive Pending/Release, WOODLAND höchstens zwei; alte Hz/Tails geschützt |
+| UI | Bestehende Eingaben/15-min-Ruhe/Wake, Scene-Status; neue Encoderbelegung zuletzt |
+| Messung | Separater Bench mit startup-MSP-Paint/SAI-DMA-Fehlern/Savezählern und rein lesendem Snapshot |
 
-Die UI darf darauf aufbauen. Displayruhe ändert weder musikalische Zeit,
-Quellenbesitz noch Targets; erstes Wake ist eine verbrauchte Bediengeste,
-kein Note-on, Mute, Scene Save oder Parameterinkrement. Spätere tatsächliche
-Bediengesten verwenden ausschließlich dieselben geprüften Audiooperationen.
-Die vorhandene Menü-/Encoderzuordnung bleibt erkennbar; der im Product
-entfernte Drive-Regler aktiviert keinen Legacyeffekt. Eine neue grafische
-Gestaltung ist keine Voraussetzung dieses Softwarevertrags.
+[SOUND_CANDIDATE_INPUTS.json](SOUND_CANDIDATE_INPUTS.json) enthält aktuelle
+eigene Runtime-/Header-/HAL-/Startup-/Linker-/CMake-Hashes und aus C ermittelte
+Grenzen/Defaults. freeze_sound_candidate.py --check erkennt spätere Änderungen.
+Vendor/Compiler ersetzt dieser eigene Quellhashvertrag nicht; tatsächlicher
+ARM-Build/Audit bleibt nötig. Flags stehen vollständig im Produktvertrag.
 
-Der neue UI-Checkpoint enthält eine gehashte Momentaufnahme aller bestehenden
-Buildinputs plus der beiden neuen UI-Dateien. Vier bestehende Inputs ändern
-sich ausschließlich für UI/CMake/LED; alle259 übrigen bleiben bytegleich zum
-Vor-UI-Head. Klangquellen, Engine, Grammatiken, Parameter, Scene, Audio-DMA,
-HAL-Flash und Linker bleiben gleich. Das ist kein finaler Sound-Lock.
+SD51_SOFTWARE_INPUTS.json bleibt die unveränderte265-Input-Momentaufnahme
+von0.10. Der volle vorherige Text steht im [0.10-Archiv](PRODUCT_SOUND_SPEC_0_10_ARCHIVE.md).
+Historische Werte sind keine aktuellen Full-Sound-Werte.
 
-Unabhängig implementierbare DSP-/Bedienarbeit wird damit geschlossen;
-SD41/SD47 enthalten weiterhin die ausdrücklich geräteabhängige Aktivierung/
-Abnahme. Diese Grenzen werden nicht durch einen zusätzlichen Hosttest ersetzt.
+Ohne echte Hörer/Hardware kein finaler Sound-Lock. Das neue Blindpaket hat
+unbekannte A/B/C-Zuordnung, identische drei Register/Regler, zuerst trocken,
+dann Standard-FX. Erzeugung bedeutet keine durchgeführte Blindabnahme.
+SD41/47/48/49 benötigen das Gerät, SD53 alle zutreffenden Hör-/Gerätenachweise.

@@ -20,8 +20,10 @@ class AmbientCapture(gdb.Command):
             threads=inferior.threads()
             if not threads or not all(t.is_stopped() for t in threads):
                 raise ValueError('Target must already be stopped; this command will not halt it')
-            registers={n:int(gdb.parse_and_eval('$'+n)) for n in ('pc','sp','xpsr')}
-            result=collect(json.loads(Path(args[0]).read_text()),
+            manifest=json.loads(Path(args[0]).read_text())
+            names=('pc','sp','xpsr')+ (('control','msp') if manifest.get('device_bench') else ())
+            registers={n:int(gdb.parse_and_eval('$'+n)) for n in names}
+            result=collect(manifest,
                            inferior.read_memory,registers,args[2])
             if not all(t.is_stopped() for t in inferior.threads()):
                 raise ValueError('Target resumed during capture')

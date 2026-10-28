@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "inputs_sha256": {
+    "src/device_bench.c": "0615e10c7eb14e3f79d89b3b6e23329877254282dabfcb2e160d4f0513e5e468",
+    "include/device_bench.h": "0feb15c4c988deb66fe8f147186d3e4fea49d0cea9ffb19665a07582e36ec402",
+    "src/scenes_save_async.c": "3066d8590c98ea5e4fc83a1404bf93d3a6268d31251505372b0203baa14c453c",
+    "src/hal_h743/main_h743.c": "0a2166f57fb07e919de21a624d79a8447055bbcc2179ac978be6a8095a04c81c",
+    "src/hal_h743/audio_h743.c": "0d7ff089db7e4b19f6e3fd53758f916be3f35f75a91f1cd4cf89a2117de4a9cf",
+    "src/hal_h743/stm32h743_flash.ld": "dadb2669fbf86021c7ed776629cb9317e6ceb7a58284195a91297be00443f976",
+    "CMakeLists.txt": "01dc7f9a6cf11f96aef1f6aac889e37bf6d4e8ddd1d1ee33cc2fb3bb9dc8544d",
+    "tools/device_capture.py": "d26a5a570b744de3c8718c711011db7519f7c07cd934135da07b596d67c57b53",
+    "tools/device_capture_gdb.py": "804241d28ebef3eb8eacaeeb09fea6f82c9327c94ab74dcf22a14b3b2eb486c4",
+    "tools/check_product_link.py": "424e6f13ad0c563b56f1b7e06b5d9238944e7a870be7c786269865e7af90a45e",
+    "tools/review_device_bench.py": "575a6bec88d8d45f03539cdfbb17348dbb15ffa8e1665ff25432cd0756b1be49",
+    "test/test_device_bench.c": "5a8a59ac8be1c95c7c5385985408cc63de827fefb8eabc0696bf663d78c66758",
+    "test/test_device_bench_capture.py": "cb5b0db857965e3f0a0649ef116d1c46dba4dca70816c1f7a2ed72eb5b5b5a15",
+    "test/test_device_capture.py": "f64f4016f5fa9c2414d8bf56c3d4ba093f9769c7354301a4412cfdf67f40dbd1"
+  },
+  "logs": [
+    {
+      "sanitized": false,
+      "output": "Device bench: guarded startup stack paint, invalid bounds, real Scene status transitions, sticky SAI/DMA errors and saturated counters pass"
+    },
+    {
+      "sanitized": true,
+      "output": "Device bench: guarded startup stack paint, invalid bounds, real Scene status transitions, sticky SAI/DMA errors and saturated counters pass"
+    }
+  ],
+  "candidate_default": false,
+  "device_accepted": false,
+  "stack_method": "Startup MSP write watermark; not minimum SP or per-context reserve",
+  "capture_read_only": true,
+  "physical_clock_verified": false
+}

@@ -1,64 +1,73 @@
-# AMBIENT — lesender Abschluss-Snapshot
+# AMBIENT — tatsächlichen Kandidaten lesend beobachten
 
-Dieses Paket ist eine Beobachtungshilfe für SD48. Es verbindet sich nicht
-selbst mit einem Gerät und enthält keinen Flash-/Reset-/Halt-/Continuebefehl.
-Es ist kein Gerätepass. Journal bleibt OFF; Live-Save weiterhin synchron.
+Stand28.10.2026. Das Paket verbindet/flasht/resetet/stoppt/startet kein Gerät
+und ruft keine Firmwarefunktion auf. Ein Snapshot ist keine Gerätefreigabe.
+Ohne Sessionflag bleibt Save synchron; der explizite SCN8/JSS1-Kandidat
+enthält jetzt wirklichen asynchronen Speicher.
 
-## Vorbereitung ohne Gerät
+## Paket und Messbuild
 
-Nach normalem Product-ARM-Build und `tools/check_product_link.py <build>`:
+Nach H743/Product-Build und check_product_link.py <build>:
 
 ```sh
 python3 tools/device_capture.py <build>
 ```
 
-Die Vorbereitung verlangt H743/Product/Journal-OFF, den zum ELF passenden
-Linkaudit, ein Bank1-BIN und genau zwei56-B-Profiler an gültigen D1-Adressen.
-Objcopy erzeugt separat aus demselben ELF ein Vergleichs-BIN; abweichende
-ELF/BIN-Paare werden abgewiesen. Das Paket enthält das echte ELF, BIN, Map,
-Audit, DEVICE_CAPTURE_MANIFEST.json und die beiden Pythondateien samt dieser
-Anleitung. Keine Firmwareänderung und kein neuer Profiler werden eingebaut.
+ELF/BIN/Map/Audit/Manifest gehören zusammen. Unabhängiger Objcopyvergleich
+prüft ELF/BIN; das Ziel muss denselben Imagehash haben. Altes experimentelles
+JSC1 ausgeschlossen. Das Manifest unterscheidet Session und Messbuild.
 
-## Später am bewusst bereits verbundenen Testgerät
+```sh
+cmake -S . -B build-h743-device-bench -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SOUND_FINISH_CANDIDATE=ON -DFAM_SOUND_SESSION_CANDIDATE=ON -DFAM_DEVICE_BENCH_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-h743-device-bench
+python3 tools/check_product_link.py build-h743-device-bench
+python3 tools/device_capture.py build-h743-device-bench
+```
 
-Den gewünschten Test vollständig laufen lassen. Erst am Sitzungsende die
-CPU mit dem eigenen Debugger in Threadmode außerhalb von IRQs anhalten.
-Ein Debuggerhalt unterbricht die Audioverarbeitung; DMA kann weiterlaufen.
-Nach einem Halt ist kein ungestörter Fortsetzungslauf bewiesen. Für neue
-unbeeinflusste Durchläufe eigene frisch gestartete Sitzungen verwenden.
-Dieses Werkzeug startet solche Sitzungen nicht selbst.
+Vor HAL/Audio nur unbenutzte reservierte16-KiB-MSP-Region markieren. Aktiver
+Main-/Initstack und256B Abstand bleiben unberührt; Compilerframe dagegen
+geprüft. Linker schließt Überschneidung mit DTCM-DSPdaten aus. Kein Paint/Scan
+im Audio-IRQ, unveränderte Soundziele.64B Beobachtungen: Start-/letzter Maintick,
+sticky SAI-Fehlerzahl mit letztem SAI-/DMA-Code, bestätigte/fehlgeschlagene Saves.
+Fehlerzähler sättigen.
 
-In einer GDB-Sitzung mit Pythonunterstützung, vorbereitetem Paket und bereits
-gestopptem Ziel nur den Befehl definieren und danach die Beobachtung anfordern:
+## Bereits verbundenes Gerät am Sitzungsende
+
+Test zuerst ungestört ausführen. Erst am Ende selbst in privilegiertem
+Threadmode außerhalb von IRQs anhalten, alle Threads bereits gestoppt.
+Im Messbuild muss der Thread den markierten MSP verwenden; PSP/RTOS wird
+abgewiesen. Halt unterbricht Audio, DMA kann weiterlaufen. Fortsetzen
+beweist keinen ungestörten neuen Lauf. Dieses Werkzeug erzeugt keine Starts.
 
 ```gdb
 source /pfad/zum/paket/device_capture_gdb.py
-ambient-capture /pfad/zum/paket/DEVICE_CAPTURE_MANIFEST.json /pfad/zu/neuem/snapshot.json "world-seed-lastfall-dauer"
+ambient-capture /pfad/zum/paket/DEVICE_CAPTURE_MANIFEST.json /pfad/zu/neuem/snapshot.json "World-Seed-Last-Dauer"
 ```
 
-Das Sourcen definiert nur `ambient-capture`. Jeder Aufruf verlangt bereits
-gestoppte Threads und IPSR=0 in xPSR. Er liest das gesamte erwartete Bank1-Image
-zum Hashvergleich, danach beide Profiler und DWT-Enable. Kein Firmwaregetter
-wird aufgerufen und kein Speicher beschrieben. Noch nicht initialisierte,
-laufende, IRQ-unterbrochene, falsch konfigurierte oder abweichende Zielstände
-werden abgewiesen. Vorhandene Ergebnisdateien werden nicht überschrieben.
-Der echte GDB-/SWD-Transport ist hier noch nicht am Silizium abgenommen.
+Sourcen definiert nur den Befehl. Er liest Bank1-Image, beide Profiler und
+DWT-Enable; im Messbuild64B Zustand und höchstens16KiB Paint in validierten
+Bereichen. Kein Targetschreiben/Getters/Halt/Resume und kein Überschreiben
+von Ergebnisfiles. Fremde, unfertige oder abweichende Ziele scheitern.
 
-Auch auffällige Messwerte werden exportiert: Scopeüberschreitungen und
-Peak≥0,60 erscheinen als Beobachtungen. `device_accepted` bleibt immer false;
-Stack-High-water ist null, physische Clockverifikation false. Ein aktueller SP
-ist keine Stackreserve. Renderer- und DMA-C-Werte ersetzen weiterhin keine
-volle Exception-/Dispatch-/DMAfehler-/Ausgangsabnahme. Ein Snapshot beweist
-keine Sitzungsdauer, früheren Debuggerhalte oder reale CPU-Clock.
+stack_high_water_bytes ist im Messbuild der tiefste beobachtete
+**Schreibzugriff** ab Stacktop, einschließlich konservativ mitgezählter
+aktiver unmarkierter Topregion. Kein kleinster jemals erreichter SP oder
+vollständiger per-Kontext-/FPU-/Exception-/Verschachtelungsnachweis.
+Zerstörte Paintregion wird als ausgeschöpft exportiert. Fehler, Last>=0,60
+und Misses bleiben erhalten. Maintickspanne beweist keine ungestörte Dauer.
+Physische Clockverifikation und device_accepted bleiben false.
 
-## Noch am Gerät ausführen
+## Tatsächlich auszuführende Geräteserie
 
-| Durchlauf | Festhalten |
+| Gate | Durchführung und Belege |
 |---|---|
-| Je World mehrere Seeds, lange Releases/Room, höchstens3 reale Quellen | Label, Einstellungen, tatsächliche Dauer, volle IRQ-/Dispatchlatenz und Deadline-/DMAfehler unabhängig messen |
-| Encoder-/Display-/LED-/MIDIverkehr,15-min-Displayruhe und Wake | Musikalischer Verlauf, Scopewerte, eventuelle Störungen; spätere Snapshotnahme beendet den ungestörten Lauf |
-| Speicher | Isolierten SD41-Bench zuerst real auf ECC/Power-cut/IRQ prüfen; Productaktivierung bleibt gesperrt, kein Live-Save-Dauerlastpass vorweggenommen |
-| Stack | Reale High-water-Messung aller relevanten Stacks/Exception-/FPU-/Verschachtelungszustände gesondert; keine Ableitung aus SP oder Compilerframes |
-| Ausgang/Hören | Tatsächliche Hardwarekette und Lautstärke/Noise/Pops sowie offene Hörentscheidungen separat protokollieren |
+| SD41 | Erst isolierten ECC-/Power-cut-Bench, danach Session-Save/Cancel/Neustart/alle Slots unter Audio. Abbrüche vor/nach Header, Rollover, beschädigtes Wort, gültige alte Version und Retry. Datensatz je echtem Versuch |
+| SD48 Last | Alle Worlds/Seeds,3 Quellen, lange Releases, Room/Nature/FX-Maxima, Freeze, schnelle Zeit-/Längen-/Modellwechsel und Clear/Mute; UI/LED/MIDI und wiederholte Saves. C-Maxima/Misses/Fehler/Stackpaint aufbewahren |
+| SD48 Grenzen | Volle Exception-Entry/Exit-/Dispatchlatenz und DMA-Unterläufe unabhängig messen. Ziel peak<0,60, null Misses und Stackreserve je Kontext zusätzlich bestätigen |
+| SD49 Entwurf | BOM_CURRENT dokumentiert PCM5102A -> PAM8406/Lautsprecher sowie TPA6132A2 -> J8 Phones/Line. J10 ist MIDI, J6/J7 Lautsprecher. Reale PCB-/Bestückungsrevision und tatsächlich verbaute Teile/Lasten bestätigen |
+| SD49 Zustände | Stereo/Mono, gebaute Lasten, USB/Batterie, Jackwechsel, Boot/Mute/Power: Pegel/DC/Clock/Noise/Hum/Pops und reale Lautstärke messen. BOMwerte sind keine Messwerte |
+| SD44/50 | Neues unbekanntes A/B/C-Paket, später längere echte Nutzung; Quelle/Parameter/Zeitpunkt und konkrete störende Alarm-/Tube-/Buzz-/Beep-/Ermüdungsstelle protokollieren |
 
-Keine Hauptpunkt-Checkbox aus dem Auslesepaket schließen.
+Die Fehlererfassung zählt HAL-SAI-Fehler einschließlich gemeldeter
+DMAfehler; kein Beweis für Abwesenheit aller physikalischen I2S-/Clockfehler.
+Keine Hauptpunkt-Checkbox allein aus dem Auslesepaket schließen.

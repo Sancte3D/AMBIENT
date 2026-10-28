@@ -1,5 +1,13 @@
 # SD47 — abschließendes Arbeits- und Übergabeinventar
 
+Aktualisierung28.10.2026: Die folgenden synchronen Save-/vorbereiteten-
+Anschlussangaben beschreiben den historischen Product-0.10-Pfad. Im neuen
+expliziten [Session-Kandidaten](SOUND_SESSION_CHECKPOINT.md) ist der yielding
+Main-/IRQ-/ECC-Anschluss implementiert. Default OFF, reale Speicher-/IRQ-/
+Stackabnahme offen. Neue FX/Speicher stehen im [aktuellen Vertrag](PRODUCT_SOUND_SPEC.md).
+Ein separater Messbuild ergänzt startup-MSP-Paint und Audiofehlerbeobachtungen.
+Das alte Inventar bleibt als Historie erhalten, keine unbestimmte DSP-Restliste.
+
 Stand 2026-10-18, auf PR173/Commit
 `b352dbf9799b3fa618eeb01a833ac2a776f1c64e`. Dessen
 [CI39081685904/728](https://github.com/Sancte3D/AMBIENT/actions/runs/39081685904)

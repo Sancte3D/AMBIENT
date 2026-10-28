@@ -17,11 +17,13 @@ SOURCES=('engine_product world_grammar worlds_product bowed horn pluck ambient_r
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('output',type=Path);ap.add_argument('--sanitize',action='store_true')
+    ap.add_argument('--device-bench',action='store_true')
     args=ap.parse_args();out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     inputs=list((ROOT/'include').glob('*.h'))+[ROOT/'src'/f'{s}.c' for s in SOURCES]
     inputs+=[ROOT/p for p in ('src/scenes.c','src/scenes_save_async.c',
         'src/hal_h743/scenes_storage_h743.c','src/hal_h743/scenes_flash_h743_async.c',
         'test/test_effect_parameters.c','test/test_sound_session.c','tools/review_sound_session.py')]
+    if args.device_bench:inputs.append(ROOT/'src/device_bench.c')
     def hashes():return {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(inputs)}
     before=hashes();rows={}
     with tempfile.TemporaryDirectory(prefix='sound-session-') as folder:
@@ -36,6 +38,8 @@ def main():
                 else:
                     defs=['-DFAM_SOUND_SESSION_CANDIDATE','-DFAM_SCENE_SAVE_ASYNC_PREPARED','-DSCENES_FLASH_H743_HOST_MODEL']
                     sources=[ROOT/'src'/f'{s}.c' for s in SOURCES]+[ROOT/'src/hal_h743/scenes_flash_h743_async.c']
+                    if args.device_bench:
+                        defs+=['-DFAM_DEVICE_BENCH_CANDIDATE'];sources+=[ROOT/'src/device_bench.c']
                 subprocess.run([*flags,*extra,*defs,str(ROOT/'test'/f'{name}.c'),*map(str,sources),'-lm','-o',str(binary)],check=True)
                 label=name+('_sanitized' if sanitized else '_native')
                 result=subprocess.run([str(binary)],text=True,capture_output=True,
@@ -47,7 +51,7 @@ def main():
     assert before==hashes(),'Source changed during proof'
     manifest=dict(status='passed',effect_parameter_codec='FXP1, 52 bytes, CRC32, 10 float32 targets plus flags',
         session_format='SCN8, five 1168-byte slots, 5848-byte transaction',journal='JSS1, 8192-byte payload, two 128KiB sectors',
-        tests=rows,inputs_sha256=before,encoder_mapping_changed=False,candidate_default=False,
+        tests=rows,inputs_sha256=before,device_bench=args.device_bench,encoder_mapping_changed=False,candidate_default=False,
         device_accepted=False,hearing_of_new_parameter_ranges_accepted=False,
         limitations='Host NOR/ECC/IRQ model checks real owners and algorithms. Actual H743 flash/audio timing, power interruption, cache/ECC and stack high-water need device bench acceptance.')
     path=out/'SOUND_SESSION_METRICS.json';path.write_text(json.dumps(manifest,indent=2)+'\n')

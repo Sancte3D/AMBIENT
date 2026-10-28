@@ -1,6 +1,9 @@
 #include "scenes_save_async_internal.h"
 #include "scenes.h"
 #include <stddef.h>
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+#include "device_bench.h"
+#endif
 #if !defined(FAM_SOUND_PRODUCT) || !defined(FAM_SCENE_SAVE_ASYNC_PREPARED)
 #error "Prepared Scene save requires Product and FAM_SCENE_SAVE_ASYNC_PREPARED"
 #endif
@@ -35,6 +38,9 @@ bool scenes_save_begin(int slot,uint32_t now_ms) {
     if(ready ? !scene_journal_async_begin(writer,p,n) : !scene_journal_recovery_begin(recovery)) return false;
     snapshot=p; length=n; phase=ready ? WRITE : RECOVER;
     info=(scenes_save_info_t){.status=SCENES_SAVE_BUSY,.slot=slot,.requested_ms=now_ms};
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    device_bench_save_begin();
+#endif
     return true;
 }
 static scenes_save_status_t failed(scenes_save_error_t error,uint32_t now_ms) {
