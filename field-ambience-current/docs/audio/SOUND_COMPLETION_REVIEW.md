@@ -1,5 +1,9 @@
 # AMBIENT — vollständiger Abgleich der 54 Soundaufgaben
 
+Aktuelle technische [Hierarchiekorrekturen0.12](SOUND_HIERARCHY_FIXES.md):
+vier benannte Schwächen behoben, eigenständige Hör-/Gerätegates bleiben.
+Die folgenden ursprünglichen54 Aufgaben behalten ihre belegte Bedeutung.
+
 Nachtrag28.10.2026: [Hierarchieprüfung](SOUND_HIERARCHY_REVIEW.md),180 Fälle/
 201 Captures, konkretisiert offene Pegel-/FX-/Freeze-Entscheidungen. Technische
 Reproduzierbarkeit ist keine Freigabe dieser Bedien- und Klangabhängigkeiten.

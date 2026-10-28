@@ -110,14 +110,16 @@ def main():
                     audition=capture('current',world,seed,.65);alone=capture('current',world,seed,.65,mode=0)
                     exact(alone,capture('current',world,seed,.65,mode=0,cap=37,room=1))
                     assert notes(off)==notes(audition)
-                    # The independent bus really adds the same Nature under
-                    # Cells as alone, subject only to final 16-bit rounding.
-                    # Nature0 opens the shared 40ms output gate at the first
-                    # Cell; positive Nature already opened it at frame0.
+                    # The weather generator stays exact alone. Under music its
+                    # return now has a foreground governor, so strict additivity
+                    # to the solo file is intentionally replaced by level checks.
                     difference=[b-a for a,b in zip(music,values(data(audition)))]
-                    error=[abs(a-b) for a,b in zip(difference,values(data(alone)))]
-                    gate_start=8*SR*2;gate_end=(8*SR+SR*40//1000+1)*2
-                    assert max(error[:gate_start]+error[gate_end:])<=2
+                    # Before the first Cell no foreground attenuation is active.
+                    alone_values=values(data(alone))
+                    assert max(abs(a-b) for a,b in zip(difference[:8*SR*2],alone_values[:8*SR*2]))<=2
+                    for second in range(10,30):
+                        sl=slice(second*SR*2,(second+1)*SR*2)
+                        assert rms(difference[sl])<rms(music[sl])*10**(-20/20)
                     mixed.append(data(audition));solo.append(data(alone))
                     for amount in (0,1):
                         p=capture('current',world,seed,amount,mode=2,seconds=64)
@@ -154,7 +156,8 @@ def main():
                    captures=captures,exact_stereo_frames_compared=frames_verified,tests=tests,levels=levels,
                    complete_nature_only_matches_previous=True,musical_material_model=2,off_defaults_match_previous=True,
                    complete_note_traces_nature_independent=True,room_independent_nature=True,
-                   additive_bus_excludes_first_cell_40ms_output_gate=True,
+                   solo_weather_unchanged=True,foreground_nature_governor=True,
+                   before_first_cell_additive_pcm_within_two_lsb=True,
                    no_phantom_voices=True,all_output_protection_counters_zero=True,
                    mp3_fully_decoded_stereo_frames=decoded_frames,
                    hearing_accepted=False,device_accepted=False,inputs_sha256=after,

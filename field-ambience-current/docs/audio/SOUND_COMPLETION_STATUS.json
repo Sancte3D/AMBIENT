@@ -1,6 +1,6 @@
 {
   "review_date": "2026-10-28",
-  "software_candidate": "0.11",
+  "software_candidate": "0.12",
   "canonical_task_file": "libfile_c56e9a57773481919644693401ef9f3d",
   "reviewed_canonical_version": 50,
   "source_snapshot": "SOUND_CANDIDATE_INPUTS.json",
@@ -353,5 +353,13 @@
       "status": "final_acceptance_pending"
     }
   ],
-  "scope": "The 25 old closed checks retain their original technical/removal criteria. Old Echo/Blur/Tape removals do not constitute listening approval of new full-candidate delay/grains/color. New flags remain OFF. Positive V2 feedback does not satisfy the outstanding device/listening gates."
+  "scope": "The 25 old closed checks retain their original technical/removal criteria. Old Echo/Blur/Tape removals do not constitute listening approval of new full-candidate delay/grains/color. New flags remain OFF. Positive V2 feedback does not satisfy the outstanding device/listening gates.",
+  "hierarchy_repairs": {
+    "nature_foreground": true,
+    "room_level_and_color_scope": true,
+    "silent_freeze_and_feedback": true,
+    "proof": "SOUND_HIERARCHY_FIXES.md",
+    "hearing_accepted": false,
+    "device_accepted": false
+  }
 }

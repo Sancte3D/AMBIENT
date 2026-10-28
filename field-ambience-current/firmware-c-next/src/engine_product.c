@@ -50,6 +50,8 @@ static highlands_phrase_t highlands;
 static highlands_offer_t highlands_ticket;
 static bool highlands_pending;
 static engine_note_hook_t note_hook;
+static engine_note_block_t note_block;
+engine_note_block_t engine_note_block_reason(void) {return note_block;}
 static int world,minor,tonic_pc,fx_mode,last_midi,note_count;
 static uint32_t seed,now_ms,last_user_ms,retry_ms,rejects;
 static bool world_character;
@@ -204,13 +206,22 @@ static bool pitch_clear(float hz) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used) {
         /* Two independently restarted identical oscillators can cancel.
          * Keep the existing common tone; another role chooses another pitch. */
-        if(fabsf(1200.0f*log2f(hz/slots[i].hz))<3 || !compatible(hz,slots[i].hz)) return false;
+        if(fabsf(1200.0f*log2f(hz/slots[i].hz))<3 || !compatible(hz,slots[i].hz)) {
+            note_block=ENGINE_NOTE_HELD_PITCH;return false;
+        }
     }
     int n=0;
     for(int i=0;i<TAILS;++i) if(tails[i].used) {
-        ++n; if(!compatible(hz,tails[i].hz)) return false;
+        ++n; if(!compatible(hz,tails[i].hz)) {
+            note_block=ENGINE_NOTE_TAIL_PITCH;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+            if(ambient_room_retains_history())note_block=ENGINE_NOTE_FROZEN_PITCH;
+#endif
+            return false;
+        }
     }
-    return n<TAILS-SLOTS;
+    if(n>=TAILS-SLOTS) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
+    return true;
 }
 int engine_ambient_source_count(void) {
     reap(); int n=0; for(int i=0;i<SLOTS;++i) n+=slots[i].used; return n;
@@ -255,16 +266,22 @@ static bool in_collection(float hz,bool phrase) {
 }
 static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     reap();
+    note_block=ENGINE_NOTE_OK;
+    if(clearing || muted) {note_block=ENGINE_NOTE_SILENCED;return false;}
     if(owner>=SOURCES || !isfinite(hz) || !isfinite(velocity) || velocity<=0 ||
        hz<(phrase ? 105 : 140) || hz>(phrase ? (world==WORLD_COAST ? 850 : world==WORLD_HIGHLANDS ? 650 : 470) : 470) || clearing || muted ||
-       !in_collection(hz,phrase)) return false;
+       !in_collection(hz,phrase)) {note_block=ENGINE_NOTE_INVALID;return false;}
     int empty=-1,local=0;
     for(int i=0;i<SLOTS;++i) {
         if(!slots[i].used) { if(empty<0) empty=i; continue; }
-        if(slots[i].owner==owner) return false;
+        if(slots[i].owner==owner) {
+            note_block=slots[i].released ? ENGINE_NOTE_TAIL_PITCH : ENGINE_NOTE_HELD_PITCH;
+            return false;
+        }
         local+=slots[i].family==world;
     }
-    if(empty<0 || (world==WORLD_WOODLAND && local>=PLUCK_VOICES) || !pitch_clear(hz)) return false;
+    if(empty<0 || (world==WORLD_WOODLAND && local>=PLUCK_VOICES)) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
+    if(!pitch_clear(hz))return false;
     velocity=dsp_clampf(velocity,0,1);
     /* Fixed dry-source calibration candidate. Shared by manual/generator;
      * no master AGC, automatic gain compensation or implicit second source. */
@@ -288,7 +305,7 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     bool ok=world==WORLD_COAST ? bowed_try_note_on(owner,hz,amp) :
             world==WORLD_WOODLAND ? pluck_note_on(owner,hz,amp) : horn_try_note_on(owner,hz,amp);
     SOURCE_HANDOFF_POINT(7,owner);
-    if(!ok) return false;
+    if(!ok) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
     slots[empty]=(source_slot_t){.hz=hz,.velocity=velocity,.owner=owner,.family=(uint8_t)world,
         .used=true,.held=world!=WORLD_WOODLAND,.issued_epoch=atomic_load(&audio_epoch)};
     SOURCE_HANDOFF_POINT(8,owner);
@@ -317,7 +334,8 @@ static void clear_cell_unfold(void) {
     for(uint8_t i=0;i<SOURCES;++i) engine_set_cell_held(i,false);
 }
 bool engine_try_note_on(uint8_t owner,float hz,float v) {
-    if(generate || !(owner<5 || (owner>=9 && owner<=13))) return false;
+    if(generate) {note_block=ENGINE_NOTE_GENERATE;return false;}
+    if(!(owner<5 || (owner>=9 && owner<=13))) {note_block=ENGINE_NOTE_INVALID;return false;}
     bool ok=admit(owner,hz,v,false); if(!ok) ++rejects; return ok;
 }
 void engine_note_on(uint8_t owner,float hz,float legacy_amp) {
@@ -756,7 +774,7 @@ void engine_init(void) {
 #else
     engine_set_woodland_resonator(false);
 #endif
-    note_hook=0; fx_mode=1; last_midi=note_count=0;
+    note_hook=0;note_block=ENGINE_NOTE_OK; fx_mode=1; last_midi=note_count=0;
     atomic_store(&quick_mask,0); atomic_store(&release_mask,0); atomic_store(&audio_mask,0); atomic_store(&started_mask,0);
     atomic_store(&audio_epoch,0); atomic_store(&audio_frames,0); atomic_store(&limited,0); atomic_store(&faults,0);
     atomic_store(&clear_request,false); atomic_store(&clear_done,false);
@@ -800,7 +818,11 @@ void engine_render(int16_t *out,int frames) {
         for(int i=0;i<n;++i) { send_l[i]=.35f*dry_l[i]; send_r[i]=.35f*dry_r[i]; }
         ambient_room_process(dry_l,dry_r,send_l,send_r,n);
         float wet_peak=ambient_room_peak();
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        nature_render_music(dry_l,dry_r,send_l,send_r,1.0f/.35f,n);
+#else
         nature_render(dry_l,dry_r,n);
+#endif
         float target=value(atomic_load_explicit(&volume_bits,memory_order_acquire));
         bool clear=atomic_load_explicit(&clear_request,memory_order_acquire);
         float gate=atomic_load_explicit(&output_enabled,memory_order_acquire) && !clear ? 1 : 0;

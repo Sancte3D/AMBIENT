@@ -46,7 +46,9 @@ static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
 #ifdef FAM_SOUND_FINISH_CANDIDATE
 bool ambient_room_retains_history(void) {
-    return (atomic_load(&sf_freeze) && atomic_load(&enabled) && value(atomic_load(&amount_bits))>0) ||
+    return (atomic_load(&sf_freeze) && atomic_load(&sf_target[1])>0 &&
+            atomic_load(&enabled) && value(atomic_load(&amount_bits))>0 &&
+            atomic_load_explicit(&sf_content_available,memory_order_acquire)) ||
             atomic_load_explicit(&sf_content_held,memory_order_acquire);
 }
 #endif
@@ -185,7 +187,12 @@ static void process_fdn(float *l,float *r,const float *sl,const float *sr,int fr
          * Dry RMS in normal held ensembles at Amount .5. Linear gain keeps
          * the same tank/decay, a smooth zero, and a bounded maximum of 5.
          * This is output calibration, not feedback gain or another arena. */
-        float wet=5.0f*amount_cur*enable_cur;
+        float wet=
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+            enable_cur; /* Raw room joins Plate/textures before common level/color. */
+#else
+            5.0f*amount_cur*enable_cur;
+#endif
         wl=(mid+side)*wet; wr=(mid-side)*wet;
         peak=fmaxf(peak,fmaxf(fabsf(wl),fabsf(wr)));
         l[n]+=wl; r[n]+=wr;
@@ -211,17 +218,18 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
             amount_cur+=dsp_clampf(accepted_amount-amount_cur,-step,step);
             float estep=1.0f/(.040f*DSP_SAMPLE_RATE_HZ);
             enable_cur+=dsp_clampf(on-enable_cur,-estep,estep);
-            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,true);
+            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,true,0,0);
             cold=false;
         } else {
             process_fdn(l+n,r+n,sl+n,sr+n,1,on);
-            l[n]=before_l+(l[n]-before_l)*model_gain;
-            r[n]=before_r+(r[n]-before_r)*model_gain;
-            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,false);
+            float fdn_l=l[n]-before_l,fdn_r=r[n]-before_r;
+            l[n]=before_l;r[n]=before_r;
+            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,false,fdn_l,fdn_r);
         }
         maximum=fmaxf(maximum,fmaxf(fabsf(l[n]-before_l),fabsf(r[n]-before_r)));
     }
     peak=maximum;
+    sf_publish_content();
 #else
     process_fdn(l,r,sl,sr,frames,on);
 #endif

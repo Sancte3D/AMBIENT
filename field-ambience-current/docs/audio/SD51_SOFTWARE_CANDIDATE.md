@@ -1,7 +1,7 @@
-# SD51 — aktueller Softwarekandidat0.11
+# SD51 — aktueller Softwarekandidat0.12
 
 Stand28.10.2026. [Produktvertrag](PRODUCT_SOUND_SPEC.md): Materialmodell2,
-vollständige Effektsteuerung, leise Nature und SCN8/JSS1-Sessions. Michalis'
+vollständige Effektsteuerung, korrigierte Raum-/Nature-Hierarchie und SCN8/JSS1-Sessions. Michalis'
 „Besser“ ist positives V2-Klangurteil, keine pauschale Parameter-/Gerätefreigabe.
 Der finale Freeze bleibt offen.
 
@@ -9,12 +9,13 @@ Der finale Freeze bleibt offen.
 |---|---|
 | Build | H743/Product/Full-Sound/Session, Release; Reference CMake-Default, Kandidatenflags OFF |
 | Tonkörper | COAST evenreiche Fläche, WOODLAND langer angeregter Modalkörper, HIGHLANDS oddreicher Atemton |
-| Gain | Familien0,50/0,32/0,50, Send0,35, Master nach Room/Nature; keine AGC |
+| Gain | Familien0,50/0,32/0,50, Send0,35, Master nach Room/Nature; keine Quellen-/Master-AGC, begrenzte Raum-Rückwegkalibrierung und Nature-Absenkung |
 | Effekte | Zehn Float-Ziele + Freeze/Plate in einer Main-/Audio-Transaktion, keine Encoderzuordnung |
 | Persistenz | FXP1/GLP1 in fünf SCN8-Slots,5848B,8192-B-JSS1, echter yielding IRQ-/ECC-H743-Adapter |
 | Recall | Targets/gestoppter Loop, keine Stimmen/Generate/Volume oder Freeze-Audio |
 | Besitz | Drei reale Quellen inklusive Pending/Release, WOODLAND höchstens zwei; alte Hz/Tails geschützt |
 | UI | Bestehende Eingaben/15-min-Ruhe/Wake, Scene-Status; neue Encoderbelegung zuletzt |
+| Hierarchie | Beide Räume vor gemeinsamer Färbung; Grain0 deaktiviert Freeze; leere Capture blockiert nicht; sichtbare Ablehnungsgründe |
 | Messung | Separater Bench mit startup-MSP-Paint/SAI-DMA-Fehlern/Savezählern und rein lesendem Snapshot |
 
 [SOUND_CANDIDATE_INPUTS.json](SOUND_CANDIDATE_INPUTS.json) enthält aktuelle

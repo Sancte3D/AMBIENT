@@ -18,12 +18,12 @@ int main(void) {
     atomic_store(&sf_version,version+2);sf_accept();
     assert(sf_controls[0]==1 && !sf_accepted_plate);
     float zero[1]={0},l[1]={0},r[1]={0};
-    sf_process(l,r,zero,zero,1,0,0,false,false);
+    sf_process(l,r,zero,zero,1,0,0,false,false,0,0);
     engine_init();sound_parameters_t p,q;
     engine_get_sound_parameters(&p);assert(p.delay==.16f && p.plate && !p.freeze);
     p.delay=2;p.grain=-1;p.phaser=.7f;p.freeze=true;
     assert(engine_apply_sound_parameters(&p));engine_get_sound_parameters(&q);
-    assert(q.delay==1 && q.grain==0 && q.freeze && q.phaser==.7f);
+    assert(q.delay==1 && q.grain==0 && !q.freeze && q.phaser==.7f);
     p.drive=NAN;assert(!engine_apply_sound_parameters(&p));
     engine_get_sound_parameters(&p);assert(p.delay==q.delay && p.grain==q.grain &&
         p.drive==q.drive && p.crush==q.crush && p.phaser==q.phaser &&

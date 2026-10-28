@@ -30,13 +30,15 @@ def manifest():
             'printf(",\\"freeze\\":%s,\\"plate\\":%s}",p.freeze?"true":"false",p.plate?"true":"false");return 0;}')
         subprocess.run(['cc','-std=c11','-O2','-Wall','-Wextra','-Werror','-I'+str(ROOT/'include'),str(source),'-lm','-o',str(tmp/'registry')],check=True)
         values=json.loads(subprocess.check_output([str(tmp/'registry')],text=True))
-    return dict(software_candidate='0.11',world_material_model=2,fx_model=1,base_commit='ddb3cef2bb9af29027531f80140f3705a10b75c1',
+    return dict(software_candidate='0.12',world_material_model=2,fx_model=2,base_commit='254ee97be8f20d48aba9f097b2439461814f27fd',
         configuration=dict(FAM_TARGET='h743',FAM_SOUND_PROFILE='product',FAM_SOUND_FINISH_CANDIDATE='ON',
             FAM_SOUND_SESSION_CANDIDATE='ON',FAM_DEVICE_BENCH_CANDIDATE='OFF',FAM_SCENE_JOURNAL_CANDIDATE='OFF',
             CMAKE_BUILD_TYPE='Release',FAM_LCD_PANEL='1_9inch'),
         default_profile='reference',new_flags_default='OFF',encoder_mapping_deferred=True,
         effect_targets={f:{k:values[k][i] for k in ('minimum','default','maximum')} for i,f in enumerate(FIELDS)},
         effect_flags=dict(freeze=values['freeze'],plate=values['plate']),effect_wire_bytes=52,
+        freeze_requires_nonzero_grain=True,room_return_level_rule='bounded return-only calibration, nominal Dry ratio .25*Room; no source/master AGC',
+        nature_level_rule='foreground Dry, then surviving music FX; approx -28dB target, 10ms reduction / 2s recovery',
         scene_store_bytes=5848,scene_slot_bytes=1168,gesture_events_per_slot=128,journal_payload_bytes=8192,
         inputs=hashes,scope='Own C/header/startup/linker/CMake source files, including reference paths. Vendor, compiler, tests and tool scripts are separate evidence.',
         final_sound_frozen=False,hearing_fully_accepted=False,device_accepted=False)

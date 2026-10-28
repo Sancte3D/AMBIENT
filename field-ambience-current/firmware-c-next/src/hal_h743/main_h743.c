@@ -421,8 +421,18 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                                 gesture_set_record_context(controls_modifier_active(MOD_SHIFT),CELL_TAP_AMP/CELL_AMP_MAX);
 #endif
                                 if (record) gesture_record_cell(c, true,  now);
+#ifdef FAM_SOUND_PRODUCT
+                                uint32_t rejected_before=engine_admission_rejections();
+#endif
                                 route_cell(c, true,  now);
 #ifdef FAM_SOUND_PRODUCT
+                                if(engine_admission_rejections()!=rejected_before) {
+                                    engine_note_block_t reason=engine_note_block_reason();
+                                    if(reason==ENGINE_NOTE_FROZEN_PITCH)overlay_show("FREEZE","CLEAR TO PLAY",now,1800);
+                                    else if(reason==ENGINE_NOTE_VOICES_FULL)overlay_show("NOTES","VOICES FULL",now,0);
+                                    else if(reason==ENGINE_NOTE_HELD_PITCH)overlay_show("HARMONY","NOTE ACTIVE",now,0);
+                                    else if(reason==ENGINE_NOTE_TAIL_PITCH)overlay_show("HARMONY","TAIL ACTIVE",now,0);
+                                }
                                 if(s_cell_mode==CELL_NOTE) controls_cell_physical(c,true);
 #endif
                               }

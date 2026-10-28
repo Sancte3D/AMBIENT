@@ -17,6 +17,14 @@ void engine_set_woodland_body(bool enabled);
 /* Main-only harmonic modal replacement, future notes. Default OFF. */
 void engine_set_woodland_resonator(bool enabled);
 bool engine_try_note_on(uint8_t source,float actual_hz,float velocity);
+typedef enum {
+    ENGINE_NOTE_OK,ENGINE_NOTE_INVALID,ENGINE_NOTE_VOICES_FULL,
+    ENGINE_NOTE_HELD_PITCH,ENGINE_NOTE_TAIL_PITCH,ENGINE_NOTE_FROZEN_PITCH,
+    ENGINE_NOTE_GENERATE,ENGINE_NOTE_SILENCED
+} engine_note_block_t;
+/* Main-only result of the latest real admission attempt. UI should consume
+ * immediately after its own rejected press, not infer from audio/UI state. */
+engine_note_block_t engine_note_block_reason(void);
 int engine_sounding_frequencies(float *out,int max);
 uint32_t engine_admission_rejections(void);
 uint32_t engine_generative_return_count(void);

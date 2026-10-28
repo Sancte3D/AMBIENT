@@ -40,11 +40,11 @@ void hierarchy_room_process(float *l,float *r,const float *sl,const float *sr,in
     for(int i=0;i<n;++i) {returned[0][i]=l[i]-direct[0][i];returned[1][i]=r[i]-direct[1][i];}
     pending=true;
 }
-void hierarchy_nature_render(float *l,float *r,int n) {
-    if(!collecting) {nature_render(l,r,n);return;}
+void hierarchy_nature_render_music(float *l,float *r,const float *ml,const float *mr,float gain,int n) {
+    if(!collecting) {nature_render_music(l,r,ml,mr,gain,n);return;}
     assert(pending && observed+(unsigned)n<=SECONDS*SR);
     float before[2][512];memcpy(before[0],l,(size_t)n*sizeof(float));memcpy(before[1],r,(size_t)n*sizeof(float));
-    nature_render(l,r,n);
+    nature_render_music(l,r,ml,mr,gain,n);
     for(int i=0;i<n;++i)for(int c=0;c<2;++c) {
         float final=c ? r[i] : l[i];
         float value[STEMS]={direct[c][i],returned[c][i],final-before[c][i]};
@@ -106,7 +106,8 @@ static void policy(void) {
         engine_generative_tick(62000);float ledger[32];int retained=engine_sounding_frequencies(ledger,32);
         int voices=engine_active_voices();engine_set_key_pc(4);
         bool accepted=engine_try_note_on(1,tuning_hz(52),.5f);
-        assert(peak==0 && voices==0 && retained==freeze && accepted==(freeze==0));
+        sound_parameters_t actual;engine_get_sound_parameters(&actual);
+        assert(peak==0 && voices==0 && retained==0 && accepted && !actual.freeze);
         printf("%s{\"freeze\":%s,\"grain\":0,\"active_voices\":%d,\"retained_pitches\":%d,\"last_second_pcm_peak\":%d,\"new_E3_accepted\":%s}",
                freeze ? ",\n" : "",freeze ? "true" : "false",voices,retained,peak,accepted ? "true" : "false");
     }
