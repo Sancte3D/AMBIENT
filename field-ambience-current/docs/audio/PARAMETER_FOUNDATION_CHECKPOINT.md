@@ -1,5 +1,10 @@
 # Parameterverwaltung und Loop-Archiv, 28.10.2026
 
+Fortsetzung: Die hier ausdrücklich offenen Feinparameter und die große
+Geräte-Speicheranbindung sind nun im separaten
+[Effekt-/Session-Kandidaten](SOUND_SESSION_CHECKPOINT.md) implementiert.
+Dieser Text bleibt der historische erste Abschnitt von PR191.
+
 Auftrag: technisch ausbauen, Encoderbelegung ausdrücklich erst am Ende.
 Basis PR190, da9acce4f1e50b4afa7921c4a678bcfe16e25640. Michalis bewertet die
 neuen World-Klänge als besser; dies ist keine pauschale Effekt-/Gerätefreigabe.

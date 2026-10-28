@@ -11,6 +11,8 @@
 static _Atomic uint32_t finish_decay_bits;
 static float finish_decay,model_gain;
 static bool active_plate;
+bool ambient_room_finish_apply(const sound_parameters_t *p) {return sf_apply_parameters(p);}
+void ambient_room_finish_get(sound_parameters_t *p) {if(p)*p=sf_desired;}
 void ambient_room_finish_set(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate) {
     sf_parameters(delay,grain,freeze,drive,crush,phaser,plate);
 }
@@ -120,7 +122,7 @@ float ambient_room_peak(void) { return peak; }
 size_t ambient_room_storage_bytes(void) {
     size_t n=sizeof tank+sizeof diffusion+sizeof low+sizeof at+sizeof diff_at+sizeof gains+sizeof hp_x+sizeof hp_y;
 #ifdef FAM_SOUND_FINISH_CANDIDATE
-    n+=sizeof sf;
+    n+=sizeof sf+sizeof sf_delay;
 #endif
     return n;
 }

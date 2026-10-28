@@ -1,5 +1,10 @@
 # AMBIENT — vollständiger Sound-Softwarekandidat
 
+Technischer Ausbau vom 28.10.2026: Auf die Parametergrundlage folgt der
+[Effekt-/Session-Kandidat](SOUND_SESSION_CHECKPOINT.md) mit Delay-Zeiten und
+Feedback, Grain-Länge, Phaser-Tempo sowie großem asynchronem Scene-/Loop-
+Speicher. Die Encoderbelegung ist weiterhin ausdrücklich zurückgestellt.
+
 Aktuelle Weiterentwicklung vom 27.10.2026: Michalis fordert nach negativem
 V1-Hörurteil extrem deutlich unterscheidbare Worlds bei erhaltenem Ambient-
 Charakter. Der bestehende vollständige Kandidat verwendet nun

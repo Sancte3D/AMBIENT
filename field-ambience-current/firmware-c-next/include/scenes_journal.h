@@ -9,7 +9,13 @@
  * Main-context only. read must safely classify unreadable/ECC-corrupt words;
  * CPU fault recovery is the platform adapter's responsibility. */
 #define SCENE_JOURNAL_WORD_BYTES 32u
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+#define SCENE_JOURNAL_PAYLOAD_BYTES 8192u
+#define SCENE_JOURNAL_MAGIC 0x3153534au /* JSS1, distinct large-session geometry */
+#else
 #define SCENE_JOURNAL_PAYLOAD_BYTES 512u
+#define SCENE_JOURNAL_MAGIC 0x3143534au /* JSC1, existing small Scene geometry */
+#endif
 #define SCENE_JOURNAL_RECORD_BYTES (SCENE_JOURNAL_WORD_BYTES + SCENE_JOURNAL_PAYLOAD_BYTES)
 
 typedef enum {

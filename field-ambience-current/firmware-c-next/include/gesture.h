@@ -67,5 +67,7 @@ int  gesture_count(void);        /* aufgenommene Ereignisse (Test/UI) */
 #define GESTURE_ARCHIVE_MAX (16u+8u*GESTURE_MAX)
 unsigned gesture_export(void *bytes,unsigned capacity);
 bool gesture_import(const void *bytes,unsigned length,uint32_t now_ms);
+bool gesture_archive_valid(const void *bytes,unsigned length);
+unsigned gesture_archive_empty(void *bytes,unsigned capacity);
 
 #endif

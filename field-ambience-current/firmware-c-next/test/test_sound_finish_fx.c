@@ -37,7 +37,8 @@ static void partition(int cap,float *out) {
     }
 }
 int main(void) {
-    dsp_init();assert(ambient_room_storage_bytes()<288u*1024);
+    dsp_init();assert(ambient_room_storage_bytes()<512u*1024);
+    assert(sizeof sf<288u*1024 && sizeof sf_delay==262144u);
     partition(37,partition_a);partition(512,partition_b);
     assert(!memcmp(partition_a,partition_b,sizeof partition_a));
     for(int plate=0;plate<2;++plate)for(int macro=0;macro<2;++macro) {

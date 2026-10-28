@@ -4,7 +4,8 @@
 #include "scenes_journal_recovery.h"
 
 /* Prepared Product Scene API, enabled only with FAM_SCENE_SAVE_ASYNC_PREPARED.
- * Main-only; not wired to UI/H743/CMake/default builds. Configure a quiescent
+ * Main-only; wired to UI/H743 only by explicit SOUND_SESSION candidate, OFF
+ * by default. Configure a quiescent
  * writer/recovery pair for the same journal; keep them and their IO alive until
  * detached. Exclusively own all three during BUSY, including media/backend IO.
  * A true begin means accepted, NEVER saved. Poll info until DONE or FAILED.

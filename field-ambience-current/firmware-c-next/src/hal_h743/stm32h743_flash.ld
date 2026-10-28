@@ -157,6 +157,15 @@ SECTIONS
    * those modules are host-test-only now (out of the target link). CPU-only
    * access from engine_render — never DMA — so D2 is safe per ADR-0015 D3.
    * Confirm placement + margin in the .map after any change here. */
+  /* CPU-only echo history. Valid-frame counters make uninitialised/cleared
+   * history unreadable; do not zero this large buffer in the audio IRQ. */
+  .sound_delay_bss (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.sound_delay_bss)
+    . = ALIGN(32);
+  } >RAM_D1
+
   .d2_bss (NOLOAD) :
   {
     . = ALIGN(32);

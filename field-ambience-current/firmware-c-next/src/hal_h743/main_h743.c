@@ -39,6 +39,10 @@
 #include "overlay.h"     /* r19.21: transient knob-value overlay */
 #include "knobs.h"       /* r19.21: encoder push short/long actions */
 #include "scenes.h"      /* r19.22: parameter locks + 5 scene slots */
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+#include "scenes_save_async.h"
+#include "scenes_storage_h743.h"
+#endif
 #include "bloom.h"       /* r19.23: chord-bloom cell mode */
 #include "landscape.h"   /* r19.27: layer-role cell mode */
 #include "tuning.h"      /* r19.27: tuning_hz for the Bed/Motif layer pitches */
@@ -342,6 +346,9 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
     }
     knobs_tick(now);                        /* Lang-Druck-Schwelle */
     scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+    (void)scenes_save_step(now);
+#endif
     bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
     gesture_tick(now);                      /* r19.25: Gesten-Wiedergabe */
 
@@ -582,6 +589,9 @@ int main(void) {
     {   /* r19.22: Scenes aus dem Flash laden (Bank-2-Sektor, dual-bank —
          * Audio laeuft beim Speichern weiter). */
         scenes_init(scenes_flash_write, scenes_flash_read);
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+        (void)scenes_storage_h743_bind();
+#endif
     }
     leds_init();              /* 16-ch PWM render */
     leds_set_backlight((uint16_t)(LED_PWM_MAX * 70 / 100));   /* 70 % boot */

@@ -107,6 +107,13 @@ class CaptureTest(unittest.TestCase):
                 for mutation in mutations:
                     original();mutation()
                     with self.assertRaises(ValueError):capture.prepare(p)
+                # An explicit large-session build requires its actual link
+                # audit and must be identified in the capture provenance.
+                original();(p/'CMakeCache.txt').write_text(cache+'FAM_SOUND_SESSION_CANDIDATE:BOOL=ON\n')
+                with self.assertRaises(ValueError):capture.prepare(p)
+                audit['sound_session']={'format':'SCN8/JSS1'}
+                (p/'PRODUCT_BUILD_AUDIT.json').write_text(json.dumps(audit))
+                self.assertTrue(capture.prepare(p)['sound_session_candidate'])
 
     def test_actual_gdb_command_is_read_only_and_exclusive(self):
         commands=[];state=dict(stopped=True)
