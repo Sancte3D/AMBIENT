@@ -7,6 +7,10 @@
 #include "controls.h"
 #include <assert.h>
 #include <stdlib.h>
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+#include "device_bench.h"
+static uint32_t model_stack[4096];
+#endif
 
 enum { SECTOR=128*1024,WORD=32,FRAMES=12*44100 };
 static uint8_t flash[2][SECTOR],written[2][SECTOR/WORD],poison[2][SECTOR/WORD];
@@ -80,6 +84,10 @@ static void boot(void) {
     memset(&storage_adapter,0,sizeof storage_adapter);
     configured=available=false;writer=NULL;recovery=NULL;snapshot=NULL;length=phase=0;
     info=(scenes_save_info_t){.slot=-1};ticks=0;loop_notes=0;
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    CHECK(device_bench_init(model_stack,model_stack+4096,(uintptr_t)(model_stack+4096)));
+    device_bench_audio_start(0,480000000);
+#endif
     engine_init();engine_boot_mute();controls_init();gesture_init_owned(loop_note);
     menu_callbacks_t cb={.set_world=engine_set_world,.set_key=engine_set_key_pc,.set_tuning=engine_set_tuning,
         .set_space=engine_set_space,.set_atmosphere=engine_set_atmosphere,.set_motion=engine_set_motion,
@@ -91,6 +99,9 @@ static void boot(void) {
 static scenes_save_status_t step(void) {
     scenes_flash_h743_async_flash_irq();unsigned r=reads,s=starts;
     scenes_save_status_t status=scenes_save_step(++ticks);
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    device_bench_poll(ticks,(uint32_t)status);
+#endif
     CHECK(reads-r<=8 && starts-s<=1 && !(reads!=r && starts!=s));return status;
 }
 static scenes_save_status_t finish(void) {
@@ -172,6 +183,9 @@ static void roundtrip(void) {
     CHECK(scenes_save_begin(1,500));while(!active || erasing)CHECK(step()==SCENES_SAVE_BUSY);
     CHECK(scenes_save_cancel() && finish()==SCENES_SAVE_FAILED && !active && !scenes_used(1));
     CHECK(scenes_save_begin(1,600) && finish()==SCENES_SAVE_DONE);
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    CHECK(g_device_bench.saves_done==2 && g_device_bench.saves_failed==2);
+#endif
     /* Fill and roll over the real 128KiB sectors, preserving all five slots. */
     for(unsigned i=0;i<34;++i) {
         control_state((int)(i%3),(int)(i%12),1000+i);

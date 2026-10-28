@@ -38,6 +38,9 @@ MEMORY
 _estack        = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM);
 _Min_Heap_Size  = 0x1000;   /* 4 KB  — newlib-nano internal use only     */
 _Min_Stack_Size = 0x4000;   /* 16 KB — render path is static, menu light */
+__ambient_stack_low = _estack - _Min_Stack_Size;
+__ambient_stack_high = _estack;
+ASSERT(__ambient_stack_low >= _edtcm_bss, "DSP data collides with reserved MSP stack")
 
 SECTIONS
 {

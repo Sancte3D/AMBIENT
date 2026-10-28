@@ -113,6 +113,9 @@ jobs:
           python3 tools/review_woodland_resonator.py build-woodland-resonator
           python3 tools/review_sound_finish.py build-sound-finish
           python3 tools/review_sound_session.py build-sound-finish/session --sanitize
+          python3 tools/review_device_bench.py build-sound-finish/device-bench --sanitize
+          python3 tools/review_sound_session.py build-sound-finish/device-session --device-bench --sanitize
+          python3 tools/freeze_sound_candidate.py ../docs/audio/SOUND_CANDIDATE_INPUTS.json --check
           if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
           python3 tools/review_nature_accents.py build-sound-finish/nature
           python3 tools/review_ui_idle.py build-sound-finish/ui --fixture-only --finish-candidate --sanitize
@@ -1258,6 +1261,28 @@ jobs:
             field-ambience-current/firmware-c-next/build-h743-sound-session/device_capture.py
             field-ambience-current/firmware-c-next/build-h743-sound-session/device_capture_gdb.py
             field-ambience-current/firmware-c-next/build-h743-sound-session/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build instrumented complete-sound device bench
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-device-bench -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SOUND_FINISH_CANDIDATE=ON -DFAM_SOUND_SESSION_CANDIDATE=ON -DFAM_DEVICE_BENCH_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-device-bench -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-device-bench
+          python3 tools/device_capture.py build-h743-device-bench
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-instrumented-device-bench
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-device-bench/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-device-bench/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-device-bench/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-device-bench/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-device-bench/DEVICE_CAPTURE_README.md
           if-no-files-found: error
 
       - name: Cross-build experimental recoverable Scene journal

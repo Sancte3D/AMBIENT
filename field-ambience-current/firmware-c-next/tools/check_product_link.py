@@ -73,6 +73,7 @@ for function in ('engine_render','ambient_room_process','nature_render','engine_
 finish_state=None
 nature_state=None
 session_state=None
+bench_state=None
 if any('FAM_SOUND_FINISH_CANDIDATE' in c['command'] for c in compiled):
     address,size,_,_=one('sf')
     assert 0x30000000<=address and address+size<=0x30048000,(hex(address),size)
@@ -106,7 +107,16 @@ if any('FAM_SOUND_SESSION_CANDIDATE' in c['command'] for c in compiled):
     session_state=dict(format='SCN8/JSS1',store_bytes=5848,payload_bytes=8192,
         backend='ECC-safe IRQ adapter, one flash owner',candidate=True,device_accepted=False)
     print('SOUND SESSION: SCN8/JSS1, single async flash owner, strong ECC/FLASH vectors, sync writer absent')
-report={'sound_session':session_state,'nature_accents_state':nature_state,'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
+if any('FAM_DEVICE_BENCH_CANDIDATE' in c['command'] for c in compiled):
+    assert session_state is not None
+    address,size,_,_=one('g_device_bench')
+    assert size==64 and 0x24000000<=address and address+size<=0x24080000
+    init_frames=[r for r in frames if r['function']=='device_bench_init']
+    assert len(init_frames)==1 and init_frames[0]['bytes']<=256 and init_frames[0]['kind']=='static',init_frames
+    bench_state=dict(schema=1,address=address,bytes=size,paint_guard_bytes=256,
+        init_compiler_frame_bytes=init_frames[0]['bytes'],device_accepted=False)
+    print('DEVICE BENCH: guarded MSP paint, SAI/DMA errors and Main Save observations; no hardware acceptance')
+report={'device_bench':bench_state,'sound_session':session_state,'nature_accents_state':nature_state,'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
         'compiler':subprocess.check_output(['arm-none-eabi-gcc','--version'],text=True).splitlines()[0],
         'profile':'product','individual_frames':sorted(frames,key=lambda r:r['bytes'],reverse=True),
         'core_max_frame_bytes':max(r['bytes'] for r in core_frames),

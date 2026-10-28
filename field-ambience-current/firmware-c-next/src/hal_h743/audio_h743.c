@@ -29,6 +29,9 @@
 #include "h743_hal.h"
 #include "mcp23017.h"
 #include <string.h>
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+#include "device_bench.h"
+#endif
 
 SAI_HandleTypeDef h743_hsai1a;
 DMA_HandleTypeDef h743_hdma_sai;
@@ -109,6 +112,11 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *h) {
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *h) {
     (void)h; fill_half(1);
 }
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *h) {
+    if(h==&h743_hsai1a)device_bench_audio_error(h->ErrorCode,h->hdmatx ? h->hdmatx->ErrorCode : 0);
+}
+#endif
 
 /* ---- MspInit: pins, clocks, DMA plumbing ---- */
 void HAL_SAI_MspInit(SAI_HandleTypeDef *h) {
@@ -193,6 +201,9 @@ void audio_init(void) {
         Error_Handler();
 
     /* SPEC §8.3 pop-suppression: rails settle → amp wakes → un-mute. */
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    device_bench_audio_start(HAL_GetTick(),SystemCoreClock);
+#endif
     HAL_Delay(50);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);   /* /SHDN high  */
     HAL_Delay(50);

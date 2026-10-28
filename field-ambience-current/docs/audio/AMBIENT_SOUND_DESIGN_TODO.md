@@ -1,5 +1,16 @@
 # AMBIENT — verbindliche Sounddesign-To-do
 
+Aktueller vollständiger Abgleich28.10.2026:
+[alle54 Aufgaben und verbleibende Abnahmen](SOUND_COMPLETION_REVIEW.md),
+[Softwarevertrag0.11](PRODUCT_SOUND_SPEC.md),
+[aktuelle eigene Quellhashes/FX-Grenzen](SOUND_CANDIDATE_INPUTS.json).
+V2-Worlds, neue FX und SCN8/JSS1 sind implementiert. Separater Messbuild
+mit Startup-MSP-Paint/Audiofehlern und aktuelles Blindpaket sind vorbereitet.
+25 ursprüngliche technische Kriterien geschlossen,24 Hör-/Endwertgates,
+vier Gerätegates und ein Gesamtgate offen. Neue Encoderzuordnung zuletzt.
+Die folgende ältere Aufgabenhistorie wird durch diesen Abgleich fortgeschrieben;
+alte0.10-Defaults/Remove-Belege sind keine Freigabe der neuen Full-Sound-Palette.
+
 ## KERNURTEIL
 
 AMBIENT besitzt einen technisch geprüften Produktkandidaten mit drei

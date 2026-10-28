@@ -42,6 +42,9 @@
 #ifdef FAM_SOUND_SESSION_CANDIDATE
 #include "scenes_save_async.h"
 #include "scenes_storage_h743.h"
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+#include "device_bench.h"
+#endif
 #endif
 #include "bloom.h"       /* r19.23: chord-bloom cell mode */
 #include "landscape.h"   /* r19.27: layer-role cell mode */
@@ -348,6 +351,9 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
     scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
 #ifdef FAM_SOUND_SESSION_CANDIDATE
     (void)scenes_save_step(now);
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    device_bench_poll(now,(uint32_t)scenes_save_info().status);
+#endif
 #endif
     bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
     gesture_tick(now);                      /* r19.25: Gesten-Wiedergabe */
@@ -501,6 +507,10 @@ int main(void) {
     /* Zero the out-of-.bss DSP regions first (see linker script). */
     for (uint32_t *p = &_sdtcm_bss; p < &_edtcm_bss; ++p) *p = 0u;
     for (uint32_t *p = &_sd2_bss;   p < &_ed2_bss;   ++p) *p = 0u;
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    extern uint32_t __ambient_stack_low,__ambient_stack_high;
+    (void)device_bench_init(&__ambient_stack_low,&__ambient_stack_high,__get_MSP());
+#endif
 
     /* Denormal protection (r18.90): flush-to-zero on the M7 FPU. Reverb,
      * echo and pluck feedback tails decay THROUGH the denormal range; on

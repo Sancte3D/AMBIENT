@@ -1,0 +1,357 @@
+{
+  "review_date": "2026-10-28",
+  "software_candidate": "0.11",
+  "canonical_task_file": "libfile_c56e9a57773481919644693401ef9f3d",
+  "reviewed_canonical_version": 50,
+  "source_snapshot": "SOUND_CANDIDATE_INPUTS.json",
+  "last_complete_reference_ci": {
+    "commit": "ddb3cef2bb9af29027531f80140f3705a10b75c1",
+    "run": 40671843136,
+    "conclusion": "success",
+    "jobs": 30
+  },
+  "counts": {
+    "total": 54,
+    "software_closed": 25,
+    "hearing_or_selection_pending": 24,
+    "physical_device_pending": 4,
+    "final_acceptance_pending": 1
+  },
+  "encoder_assignment_deferred": true,
+  "new_software": {
+    "current_contract_and_registry": true,
+    "actual_session_integration": true,
+    "guarded_stack_and_audio_error_observation": true,
+    "current_blind_materials_prepared": true
+  },
+  "new_effects_listening_pending": true,
+  "device_accepted": false,
+  "all_tasks_accepted": false,
+  "tasks": [
+    {
+      "id": "SD00",
+      "title": "Erreichbare Soundpfade abschließend klassifizieren",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD01",
+      "title": "Ressourcenbaseline als fortlaufenden Vertrag führen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD02",
+      "title": "COAST-Tonkörper trocken auswählen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD03",
+      "title": "COAST-Bewegung von der Quelle aus ordnen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD04",
+      "title": "HIGHLANDS-Tonkörper behalten oder verwerfen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD05",
+      "title": "HIGHLANDS-Artikulation und Atembewegung begrenzen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD06",
+      "title": "WOODLAND-Klang und musikalischen Decay fertig auswählen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD07",
+      "title": "Gemeinsamen Quellen-/Inputvertrag schließen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD08",
+      "title": "Besitzer und sämtliche One-shot-Tails vollständig verfolgen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD09",
+      "title": "Globale Belegung auch manuell verbindlich machen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD10",
+      "title": "Manuelle Palette auf World-Quellen vereinheitlichen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD11",
+      "title": "Gemeinsame Harmonik und Quellenregister final konstruieren",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD12",
+      "title": "Harmoniegedächtnis mit realen Releases/Effekttails verbinden",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD13",
+      "title": "World-Datenmodell und begrenzte Ereigniszustände bauen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD14",
+      "title": "COAST-Grammatik implementieren",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD15",
+      "title": "WOODLAND-Grammatik implementieren",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD16",
+      "title": "HIGHLANDS-Grammatik implementieren",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD17",
+      "title": "Langfristige Entwicklung mit Wiedererkennbarkeit bauen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD18",
+      "title": "Body mit/ohne entscheiden und Übergänge korrigieren",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD19",
+      "title": "Einen gemeinsamen Raum als Produktbasis wählen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD20",
+      "title": "Dry/Send/Room und Natur voneinander entkoppeln",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD21",
+      "title": "Echo als räumliche Antwort prüfen oder entfernen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD22",
+      "title": "Chorus/Detune gegen Quellenbewegung abwägen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD23",
+      "title": "Age auf sinnvolle Klangalterung reduzieren",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD24",
+      "title": "Blur auf Grundton und musikalischen Nutzen prüfen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD25",
+      "title": "Shimmer behalten oder vollständig aus Produkt entfernen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD26",
+      "title": "Reverse Swell strikt auf Produktnutzen begrenzen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD27",
+      "title": "Finale Effektpalette reduzieren und Moduswechsel prüfen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD28",
+      "title": "Naturebene rechtfertigen und separat steuern",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD29",
+      "title": "Wind nach vorhandenem Irregularitätsumbau hören",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD30",
+      "title": "Regen und Wellen auf Ereignisse statt Looptrim prüfen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD31",
+      "title": "Alle übrigen Geräuschwege schließen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD32",
+      "title": "Vollständiges versioniertes Parameterregister schreiben",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD33",
+      "title": "Activity/Color/Room als musikalische Bereiche konstruieren",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD34",
+      "title": "Quellen-/Rollenpegel fest kalibrieren",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD35",
+      "title": "Kritische Parameterkombinationen prüfen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD36",
+      "title": "Katalog und Scenes ausdrücklich migrieren",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD37",
+      "title": "Sämtliche Worldwechsel musikalisch schließen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD38",
+      "title": "Autonomen Betrieb als Audiobefehl fertig definieren",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD39",
+      "title": "Stillwerden/Clear/Mute für die gesamte Kette bauen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD40",
+      "title": "Live-Key/Mode/Tuning und Besitzerwechsel prüfen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD41",
+      "title": "Boot/Recall/Seed ohne ungewollte Ausgabe schließen",
+      "closed": false,
+      "status": "physical_device_pending"
+    },
+    {
+      "id": "SD42",
+      "title": "Ganze Ausgabekette gegen harte/hohle Ergebnisse absichern",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD43",
+      "title": "Hör-/Renderverfahren für die ganze Kette festlegen",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD44",
+      "title": "World-Unterschied ohne Labels prüfen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD45",
+      "title": "Lange reale Audioläufe und Recovery prüfen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD46",
+      "title": "Entfernte Produktpfade tatsächlich auslinken",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD47",
+      "title": "Hotpath und Note-on-Arbeit auf Spitzenlast prüfen",
+      "closed": false,
+      "status": "physical_device_pending"
+    },
+    {
+      "id": "SD48",
+      "title": "Echte H743-Zeit-/Stackabnahme durchführen",
+      "closed": false,
+      "status": "physical_device_pending"
+    },
+    {
+      "id": "SD49",
+      "title": "Reale Ausgangskette und Hardwarezustände abnehmen",
+      "closed": false,
+      "status": "physical_device_pending"
+    },
+    {
+      "id": "SD50",
+      "title": "Ruhige Wahrnehmung mit echten Hörern abnehmen",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD51",
+      "title": "Sound-Spezifikation mit exakten Endwerten einfrieren",
+      "closed": false,
+      "status": "listening_or_final_selection_pending"
+    },
+    {
+      "id": "SD52",
+      "title": "Bestehende UI auf unveränderte Audioverträge anbinden",
+      "closed": true,
+      "status": "software_closed"
+    },
+    {
+      "id": "SD53",
+      "title": "Sound-Definition-of-Done abschließen",
+      "closed": false,
+      "status": "final_acceptance_pending"
+    }
+  ],
+  "scope": "The 25 old closed checks retain their original technical/removal criteria. Old Echo/Blur/Tape removals do not constitute listening approval of new full-candidate delay/grains/color. New flags remain OFF. Positive V2 feedback does not satisfy the outstanding device/listening gates."
+}
