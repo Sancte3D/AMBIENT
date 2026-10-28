@@ -21,7 +21,7 @@
  */
 
 #include "engine.h"
-#ifdef FAM_SOUND_FINISH_CANDIDATE
+#ifdef FAM_SOUND_PRODUCT
 #include "engine_product.h"
 #endif
 #ifndef FAM_SOUND_PRODUCT

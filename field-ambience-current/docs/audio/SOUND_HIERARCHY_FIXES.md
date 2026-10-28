@@ -130,7 +130,10 @@ ist keine Behauptung, dass das Board bereits gebaut oder gehört wurde.
 - [Session/Messmodus](HIERARCHY_SESSION_METRICS.json):1104 Stromabbrüche und
   27.041.631 Modellchecks je Modus; neun echte12-s-Captures je Modus, Save/kein
   Save und37/512 bytegleich, Main-Planertraces unverändert.
-- Tatsächlicher H743-Bedienfixture nativ/sanitisiert:126 vollständige12-s-
+- Echter Headerkontext des H743-Einstiegs wird zusätzlich für Reference,
+  Basic Product und Full-Sound separat kompiliert. Die Fixture-eigenen Includes
+  können dadurch keine fehlende Abhängigkeit mehr verdecken.
+- [Tatsächlicher H743-Bedienfixture](HIERARCHY_UI_METRICS.json) nativ/sanitisiert:126 vollständige12-s-
   Wakevergleiche je Modus, dazu neue Ablehnungs-/Clearprüfung sowie frühere
   Scene-Releases, SHIFT, REC, Natureeditor und physische Entfaltung.
 - Voller Hostrunner und Hotpath-Lint bestehen. Der Guard erfasst jetzt auch

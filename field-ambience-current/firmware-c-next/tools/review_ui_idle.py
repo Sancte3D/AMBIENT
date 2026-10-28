@@ -23,6 +23,20 @@ def main():
     a = ap.parse_args()
     out = a.output.resolve(); out.mkdir(parents=True, exist_ok=True)
     hal = (ROOT/'src/hal_h743/main_h743.c').read_text()
+    # The routing fixture has many test includes. Independently compile the
+    # real entry point's engine-header prelude so those includes cannot hide
+    # a missing dependency in Basic Product versus Full-Sound builds.
+    engine_headers = hal[hal.index('#include "engine.h"'):hal.index('#ifndef FAM_SOUND_PRODUCT')]
+    with tempfile.TemporaryDirectory(prefix='ui-header-scope-') as temp:
+        probe = Path(temp)/'headers.c'
+        probe.write_text(engine_headers+'\nvoid probe(void) {\n#ifdef FAM_SOUND_PRODUCT\n'
+            'engine_note_block_t reason=engine_note_block_reason();\n'
+            'uint32_t count=engine_admission_rejections();\n(void)reason;(void)count;\n#endif\n}\n')
+        for profile in ('reference','product','full'):
+            defs=[] if profile=='reference' else ['-DFAM_SOUND_PRODUCT']
+            if profile=='full':defs+=['-DFAM_SOUND_FINISH_CANDIDATE']
+            run([os.environ.get('CC','cc'),'-std=c11','-Wall','-Wextra','-Werror',*defs,
+                 '-I'+str(ROOT/'include'),'-c',str(probe),'-o',str(Path(temp)/'headers.o')])
     routing = hal[hal.index('static void dispatch_cell('):hal.index('\n/* r19.16')]
     poll = hal[hal.index('static ui_idle_t s_ui_idle;'):hal.index('\nint main(void)')]
     inputs = [ROOT/'src/ui_idle.c', ROOT/'include/ui_idle.h', ROOT/'src/leds.c',
@@ -72,7 +86,7 @@ def main():
             logs.append(dict(sanitized=sanitized, unit=unit.strip(), integration=integration.strip()))
             print(logs[-1], flush=True)
     proof = dict(baseline=BASE, unchanged_existing_compiled_inputs=baseline_equal,
-        actual_h743_routing_extracted=True, comparisons_per_mode=126,
+        actual_h743_routing_extracted=True, real_engine_header_scope_profiles=['reference','product','full'], comparisons_per_mode=126,
         whole_stereo_frames_compared_per_mode=126*12*44100,
         audio_seconds_per_mode=132*12, logs=logs,
         scope='21 wake routes, all3 Worlds,64/512 render caps; cap512 uses441-frame Main grid; normal/wrapping Mainclock. Entire12-second PCM equality against untouched awake controls, actual UI setters and subsequent matching musical/volume input. Separate exact900000-ms boundary/held/duplicate/boot-held/wrap cases.',
