@@ -37,6 +37,40 @@ static struct {
 } na;
 static _Atomic uint32_t na_amount_bits,na_requested_seed;
 static _Atomic int na_requested_world;
+static struct {
+    float dc[3][2],power[3],gain,goal;
+    uint32_t tick,quiet;
+    bool active;
+} na_music;
+
+/* Return-only hierarchy: about -28dB RMS under an ongoing direct Cell.
+ * Fast attenuation, two-second recovery; the source never changes gain or
+ * length. After the actual reference has died away, weather returns gently.
+ * Per-sample state and a /64 goal clock keep all render partitions identical. */
+static float na_background_gain(float dl,float dr,float ml,float mr,float wl,float wr) {
+    float input[3][2]={{dl,dr},{wl,wr},{ml,mr}},power[3]={0,0,0};
+    for(int k=0;k<3;++k)for(int c=0;c<2;++c) {
+        na_music.dc[k][c]+=.00228f*(input[k][c]-na_music.dc[k][c]);
+        float x=input[k][c]-na_music.dc[k][c];power[k]+=.5f*x*x;
+    }
+    for(int k=0;k<3;++k)na_music.power[k]+=(power[k]-na_music.power[k])*(1.0f/(.020f*NA_SR));
+    /* Keep a surviving Freeze/room return in front after the direct sources
+     * retire. While Dry is present, its level remains the stricter reference. */
+    float reference=na_music.power[0]>=1e-12f ? na_music.power[0] : na_music.power[2];
+    if(reference>1e-10f) {na_music.active=true;na_music.quiet=0;}
+    else if(reference<1e-12f) {
+        if(na_music.quiet<(uint32_t)(.250f*NA_SR))++na_music.quiet;
+        else na_music.active=false;
+    } else na_music.quiet=0;
+    if((na_music.tick++&63u)==0) {
+        na_music.goal=1;
+        if(na_music.active && na_music.power[1]>1e-20f)
+            na_music.goal=fminf(1,.04f*sqrtf(reference/na_music.power[1]));
+    }
+    float seconds=na_music.goal<na_music.gain ? .010f : 2;
+    na_music.gain+=(na_music.goal-na_music.gain)*(1.0f/(seconds*NA_SR));
+    return na_music.gain;
+}
 
 static uint32_t na_next(uint32_t *rng) {
     *rng=*rng*1664525u+1013904223u;return *rng;
@@ -209,12 +243,17 @@ void nature_set_world(int world) {
 void nature_set_seed(uint32_t seed) {
     atomic_store_explicit(&na_requested_seed,seed ? seed : 0xA6B13E7Du,memory_order_release);
 }
-void nature_clear(void) {int world=na.world;uint32_t seed=na.seed;na_reset(world,seed);na.idle=true;}
+void nature_clear(void) {
+    int world=na.world;uint32_t seed=na.seed;na_reset(world,seed);na.idle=true;
+    memset(&na_music,0,sizeof na_music);na_music.gain=na_music.goal=1;
+}
 void nature_init(void) {
     nature_set_amount(0);nature_set_world(WORLD_COAST);nature_set_seed(0xA6B13E7Du);
     na_reset(WORLD_COAST,0xA6B13E7Du);na.idle=true;
+    memset(&na_music,0,sizeof na_music);na_music.gain=na_music.goal=1;
 }
-void nature_render(float *left,float *right,int frames) {
+static void na_render(float *left,float *right,const float *music_l,const float *music_r,
+                       float reference_gain,int frames) {
     uint32_t bits=atomic_load_explicit(&na_amount_bits,memory_order_acquire);
     float target;memcpy(&target,&bits,4);
     int world=atomic_load_explicit(&na_requested_world,memory_order_acquire);
@@ -237,8 +276,15 @@ void nature_render(float *left,float *right,int frames) {
         }
         na.amount+=(target-na.amount)*(1.0f/(NA_SR*2));
         float l,r;na_weather(&l,&r);
-        left[i]+=l*na.amount*na.transition;right[i]+=r*na.amount*na.transition;
+        l=l*na.amount*na.transition;r=r*na.amount*na.transition;
+        float gain=music_l ? na_background_gain(music_l[i]*reference_gain,music_r[i]*reference_gain,left[i],right[i],l,r) : 1;
+        left[i]+=l*gain;right[i]+=r*gain;
     }
+}
+void nature_render(float *left,float *right,int frames) {na_render(left,right,NULL,NULL,1,frames);}
+void nature_render_music(float *left,float *right,const float *music_l,const float *music_r,
+                         float reference_gain,int frames) {
+    na_render(left,right,music_l,music_r,reference_gain,frames);
 }
 #undef NA_EVENT
 #undef NA_THUNDER

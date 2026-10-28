@@ -35,7 +35,7 @@ static void impulse(void) {
     int first[2]={-1,-1};
     for(int i=0;i<33000;++i) {
         float left=0,right=0,in=i==0 ? 1 : 0;
-        sf_process(&left,&right,&in,&in,1,1,0,true,false);
+        sf_process(&left,&right,&in,&in,1,1,0,true,false,0,0);
         if(left!=0 && first[0]<0)first[0]=i;
         if(right!=0 && first[1]<0)first[1]=i;
     }
@@ -44,7 +44,7 @@ static void impulse(void) {
      * a 256KiB IRQ memset, including short delays after a longer old time. */
     sf_clear();p.delay_left_ms=p.delay_right_ms=40;assert(sf_apply_parameters(&p));sf_accept();
     for(unsigned i=0;i<2u*SF_DELAY;++i) {
-        float left=0,right=0,in=0;sf_process(&left,&right,&in,&in,1,1,0,true,false);
+        float left=0,right=0,in=0;sf_process(&left,&right,&in,&in,1,1,0,true,false,0,0);
         assert(left==0 && right==0);
     }
 }
@@ -94,7 +94,7 @@ static void longest_tail(void) {
     float peak=0,last=0;
     for(unsigned i=0;i<16u*44100;++i) {
         float in=i<44100 ? .1f*dsp_sin((float)(i%44100)*196/44100) : 0,left=0,right=0;
-        sf_process(&left,&right,&in,&in,1,1,.8f,true,true);
+        sf_process(&left,&right,&in,&in,1,1,.8f,true,true,0,0);
         assert(isfinite(left) && isfinite(right));
         float mag=fmaxf(fabsf(left),fabsf(right));if(mag>peak)peak=mag;
         if(i>=15u*44100 && mag>last)last=mag;

@@ -1,5 +1,12 @@
 # AMBIENT — verbindliche Sounddesign-To-do
 
+Hierarchiekorrekturen0.12 nach „Fixe alles davon“:
+[Umsetzung und aktuelle Nachweise](SOUND_HIERARCHY_FIXES.md). Nature folgt
+leisen Cells und überlebenden FX; beide Räume bekommen dieselbe Pegelregel
+und Färbung. Grain0 deaktiviert Freeze, leere Aufnahme blockiert nicht;
+echte Konflikte werden angezeigt. Trockene V2-Materialien erhalten,
+Encoderzuordnung zuletzt. Keine automatische Hör-/Gerätefreigabe.
+
 Hierarchieprüfung28.10.2026:
 [konkrete Befunde, Pegel und empfohlene Rangfolge](SOUND_HIERARCHY_REVIEW.md).
 180 Fälle/201 Captures: Standard-FX hinter Cells, Nature bei leisen/langsam
@@ -10,7 +17,7 @@ Michalis stellt klar: PCB noch nicht festgelegt, Hardwareabnahme später.
 
 Aktueller vollständiger Abgleich28.10.2026:
 [alle54 Aufgaben und verbleibende Abnahmen](SOUND_COMPLETION_REVIEW.md),
-[Softwarevertrag0.11](PRODUCT_SOUND_SPEC.md),
+[Softwarevertrag0.12](PRODUCT_SOUND_SPEC.md),
 [aktuelle eigene Quellhashes/FX-Grenzen](SOUND_CANDIDATE_INPUTS.json).
 V2-Worlds, neue FX und SCN8/JSS1 sind implementiert. Separater Messbuild
 mit Startup-MSP-Paint/Audiofehlern und aktuelles Blindpaket sind vorbereitet.

@@ -77,7 +77,7 @@ bench_state=None
 if any('FAM_SOUND_FINISH_CANDIDATE' in c['command'] for c in compiled):
     address,size,_,_=one('sf')
     assert 0x30000000<=address and address+size<=0x30048000,(hex(address),size)
-    finish_state={'model':1,'address':address,'bytes':size,'region':'internal D2'}
+    finish_state={'model':2,'address':address,'bytes':size,'region':'internal D2'}
     delay_address,delay_size,_,_=one('sf_delay')
     assert 0x24000000<=delay_address and delay_address+delay_size<=0x24080000
     assert delay_address%32==0 and delay_size==262144

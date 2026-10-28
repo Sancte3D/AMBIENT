@@ -112,6 +112,7 @@ jobs:
           python3 tools/review_woodland_body.py build-woodland-body
           python3 tools/review_woodland_resonator.py build-woodland-resonator
           python3 tools/review_sound_finish.py build-sound-finish
+          python3 tools/review_sound_hierarchy.py build-sound-finish/hierarchy
           python3 tools/review_sound_session.py build-sound-finish/session --sanitize
           python3 tools/review_device_bench.py build-sound-finish/device-bench --sanitize
           python3 tools/review_sound_session.py build-sound-finish/device-session --device-bench --sanitize

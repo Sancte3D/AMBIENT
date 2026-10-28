@@ -1,5 +1,9 @@
 # AMBIENT — Hierarchieprüfung von Cells, Effekten und Nature
 
+Historischer Vorher-Befund. Die vier Punkte werden durch
+[Hierarchiekorrekturen0.12](SOUND_HIERARCHY_FIXES.md) mit eigenen aktuellen
+Messwerten fortgeschrieben. Die folgenden Vorher-Werte bleiben erhalten.
+
 Stand 28.10.2026, tatsächliche Firmwarebasis
 `457bba1c4f4f9f381acab8fa84cc79264c71c128` / PR193.
 Auftrag: Hierarchie prüfen. Das PCB steht nach Michalis' Klarstellung noch

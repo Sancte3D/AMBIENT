@@ -1,6 +1,6 @@
-# AMBIENT — Sound Software Candidate 0.11
+# AMBIENT — Sound Software Candidate 0.12
 
-Stand28.10.2026, fortgesetzt auf PR192/ddb3cef. Aktueller vollständiger
+Stand28.10.2026, Hierarchiekorrekturen auf PR194/254ee97. Aktueller vollständiger
 Softwarevertrag. Michalis beurteilt die V2-Worlds als „Besser“; das ist keine
 pauschale Parameter-/Gerätefreigabe. Der endgültige Freeze bleibt offen.
 
@@ -10,7 +10,7 @@ pauschale Parameter-/Gerätefreigabe. Der endgültige Freeze bleibt offen.
 |---|---|---|
 | Reference | keiner | Ausdrücklicher CMake-Default, historische Referenz |
 | Grundprodukt0.10 | FAM_SOUND_PROFILE=product | Vorheriger reduzierter Klang/SCN7; [unveränderter Archivvertrag](PRODUCT_SOUND_SPEC_0_10_ARCHIVE.md) |
-| Aktueller Sound0.11 | Product + FAM_SOUND_FINISH_CANDIDATE=ON | Materialmodell2, vollständige FX, leise Nature, GLP1; ohne Sessionflag weiter SCN7, neue FX/Loops dann nicht dauerhaft gespeichert |
+| Aktueller Sound0.12 | Product + FAM_SOUND_FINISH_CANDIDATE=ON | Materialmodell2, FX-Modell2 mit gemeinsamer Pegelregel/Färbung, geregelte Nature, GLP1; ohne Sessionflag weiter SCN7, neue FX/Loops dann nicht dauerhaft gespeichert |
 | Sound-Session | zusätzlich FAM_SOUND_SESSION_CANDIDATE=ON | SCN8/JSS1 mit echtem asynchronem H743-Speicher |
 | Messbuild | zusätzlich FAM_DEVICE_BENCH_CANDIDATE=ON | Derselbe Klang, startup-MSP-Paint, SAI-/DMA-Fehler und Savebeobachtungen |
 
@@ -60,14 +60,19 @@ keinen gemischten Snapshot; kein Spin und keine IRQ-Sperre.
 | Feedback | 0..0,5 | 0,32 | 80 ms, gekreuztes Delayfeedback |
 | Grain-Länge | 40..260 ms | 8192 Samples, etwa185,7596 ms | Grain-Rückweg40 ms ausblenden, Fenster neu, wieder einblenden; Inhalt erhalten |
 | Phaser-Tempo | 0,01..0,5 Hz | 0,07 Hz | 80 ms, kontinuierliche Phase |
-| Freeze | false/true | false | Grain-Inhalt halten und Pitchhistory sperren; keine dauerhafte Audioaufnahme |
+| Freeze | false/true | false | Nur bei Grain mindestens einem Q16-Schritt aktiv; Grain0 deaktiviert Freeze. Tatsächlich gespeicherter Inhalt schützt Pitchhistory, leere Aufnahme sperrt nicht. Keine dauerhafte Audioaufnahme. |
 | Raummodell plate | false/true | true | Eigenständiger vereinfachter Float-Plate oder vorhandener FDN;40-ms-Rückwegfade und Clear vor Wiederverwendung |
 
 Ein gemeinsamer Musik-Effektbus, keine neuen Tonquellen pro Effekt. Grain-
 Rückweg geht nicht in Delayfeedback. Room0..1/default0,5: nominal T60
 1,2+3,6*r*r s,80-ms-Amount und40-ms-Enable-Rampe; Room0/Dry wird kalt.
-Die alte FDN-Kalibrierung5*r gilt nur für diesen Modellzweig; Plate verwendet
-die eigene im Code ausgewiesene Mischung/Dämpfung. Keine Archiv-Echo-/Blur-/
+Beide Räume erhalten eine gemeinsame Rückwegkalibrierung: nominal0,25*r
+RMS gegenüber Dry, also−24/−18/−14,5/−12dB bei r0,25/0,5/0,75/1. Audio-
+eigene250-ms-Leistungsmessung, begrenzter Gain0,125..8 mit500-ms-Smoothing;
+unter dem Eingangsfloor bleibt der Gain für die Fahne stehen. Nur der Raum
+wird kalibriert, keine Quellen-/Master-AGC. Drive/Crush/Phaser bearbeiten den
+ganzen Rückweg beider Räume einschließlich Delay/Grain. Die reduzierte
+OFF-Referenz behält ihren alten5*r-FDN. Keine Archiv-Echo-/Blur-/
 Tape-/Chorus-/Shimmer-/Reversequellen zurück im Compile. Neue Delay/Grains/
 Färbungen sind explizite Full-Sound-Module. Frühere Remove-Belege gelten
 weiter für die alten Module, nicht als Hörfreigabe der neuen Palette.
@@ -77,21 +82,30 @@ weiter für die alten Module, nicht als Hörfreigabe der neuen Palette.
 Nature default0: COAST Wellen, WOODLAND Regen mit seltenem sehr leisem Donner,
 HIGHLANDS drei Brisen-/Windprofile mit unregelmäßigen Intervallen. Eigenes
 Wetter-RNG, keine Änderung von Zulassung/Planer-RNG/Belegung. Mischung nach
-Musik-FX, unabhängig von Room/Freeze. [Nature-Vertrag](NATURE_ACCENTS_CHECKPOINT.md).
+Musik-FX; Nature-Regler und Wetter bleiben separat. [Nature-Vertrag](NATURE_ACCENTS_CHECKPOINT.md).
 Gemessene Lautheitsabstände sind Testfälle, keine universale Wahrnehmung.
 
-[Hierarchieprüfung28.10.2026](SOUND_HIERARCHY_REVIEW.md) erweitert die bisherigen
-Zwei-Cell-Fälle um leise Einzeltöne: Nature ist statisch begrenzt, nicht relativ
-zu jedem Cell-Tail geregelt. Room skaliert den gesamten Musik-Rückweg; FDN-Hall
-umgeht die SF-Färbung. Diese Abhängigkeiten und die stumme Freeze-Zulassung
-sind offene Produktfragen, keine hiermit freigegebenen Endwerte.
+[Ursprüngliche Hierarchieprüfung](SOUND_HIERARCHY_REVIEW.md) und
+[Korrekturen](SOUND_HIERARCHY_FIXES.md): Nature folgt einer Rückwegregel,
+Ziel etwa28dB unter Dry. Bei verstummtem Dry bleibt ein überlebender Musik-/
+Freeze-Rückweg Referenz.20-ms-AC-Leistungsmessung,10-ms-Absenkung,2-s-Erholung;
+nach wirklicher musikalischer Ruhe kommt die ursprüngliche Kulisse langsam
+zurück. Keine Änderung am Cell-Pegel oder natürlichen WOODLAND-Verlauf.
+Nominale Wetter-/Donnergrenzen und solo gerendertes Wetter bleiben erhalten.
+Die Regel ist kein universaler Wahrnehmungs- oder Verdeckungstest.
 
 Send0,35, Master nach Musik/Nature. Volume Host0,60/Gerät0,30 mit120-ms-
 Zeitkonstante. Ganze Kette über40-ms-Gate zu exakter Null, dann Historyclear;
 Clear erhält Reglerwerte, Mute außerdem Generateabsicht. Owner-/Tailharmonie,
 DC-Tracker, Peakschutz und PCM16 wie im Archivvertrag. Volume/Mute/Generate/
 physische Besitzer und laufende Effekt-History werden nicht restauriert.
-Standard-96-s-V2-Musik bleibt bytegleich; neue Werte wirken beim Verstellen.
+Die trockenen V2-Tonkörper bleiben gleich. Die vollständige96-s-Musik ändert
+sich durch die beauftragte Raumkalibrierung; alte Hördateien bleiben Historie.
+
+Abgewiesene physische Noten erhalten im H743-Frontend konkrete Rückmeldung:
+FREEZE/CLEAR TO PLAY, NOTES/VOICES FULL beziehungsweise HARMONY/NOTE ACTIVE
+oder TAIL ACTIVE. Clear verwirft den eingefrorenen Inhalt nach dem bisherigen
+40-ms-Gate; Harmoniehistory wird nicht ungeschützt freigegeben. Encoder zuletzt.
 
 ## Persistenz und Fehlerverhalten
 
@@ -115,7 +129,9 @@ SHIFT+Cell/Cell bleibt Save/Recall mit SAVING/SAVED/SAVE FAILED.
 
 ## Ressourcen, Messung und Freigabe
 
-Delay262144B in internem D1, SF-State109908B in D2. Gültige Delay-Frameanzahl
+Delay262144B in internem D1, SF-State109948B in D2, Nature-Pegelzustand56B
+zusätzlich. Je Pegelregel ein sqrtf nur alle64 echten Samples, keine Allokation.
+Gültige Delay-Frameanzahl
 schützt NOLOAD-History, kein zusätzlicher256-KiB-Clear im Audio-IRQ. Echte
 Bank-/DMA-/Symbol-/Compilerframeprüfung im ARM-Linkaudit, Code/Konstanten
 vollständig Bank1. Startup-Paint/Fehlererfassung nur im separaten Messbuild.

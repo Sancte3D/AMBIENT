@@ -40,6 +40,7 @@ def main():
             if sanitize:flags+=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']
             obj=tmp/'observed.o';binary=tmp/'fixture'
             names=['init','clear','set_amount','set_world','set_seed','render']
+            if args.finish_candidate:names+=['render_music']
             run([*flags,*['-Dnature_'+n+'=observed_nature_'+n for n in names],
                 '-include',str(ROOT/'test/nature_handoff_observer.h'),'-c',str(ROOT/'src/nature.c'),'-o',str(obj)])
             run([*flags,str(ROOT/'test/test_nature_handoff.c'),str(obj),str(ROOT/'src/nature.c'),

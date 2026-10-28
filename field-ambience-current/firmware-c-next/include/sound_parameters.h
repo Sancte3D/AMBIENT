@@ -25,7 +25,10 @@ static inline bool sound_parameters_normalize(const sound_parameters_t *in,sound
     static const float hi[10]={1,1,1,1,1,700,700,.5f,260,.5f};
     for(int i=0;i<10;++i)if(!isfinite(v[i]))return false;
     for(int i=0;i<10;++i)v[i]=v[i]<lo[i] ? lo[i] : v[i]>hi[i] ? hi[i] : v[i];
-    *out=(sound_parameters_t){v[0],v[1],v[2],v[3],v[4],in->freeze,in->plate,
+    /* A zero Q16 Grain return cannot hold a hidden capture. Turning Grain
+     * down disarms Freeze; audio resumes writing before its pitch guard ends. */
+    bool freeze=in->freeze && v[1]>=1.0f/65536.0f;
+    *out=(sound_parameters_t){v[0],v[1],v[2],v[3],v[4],freeze,in->plate,
         v[5],v[6],v[7],v[8],v[9]};
     return true;
 }

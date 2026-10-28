@@ -27,7 +27,7 @@ def main():
         if sources is None:sources=SOURCES+(['gesture'] if finish else [])
         run([cc,*flags,*extra,'-I'+str(root/'include'),source,*[root/'src'/f'{n}.c' for n in sources],'-lm','-o',exe])
     guard=list((ROOT/'include').glob('*.h'))+[ROOT/'src'/f'{n}.c' for n in SOURCES+['gesture']]
-    guard+=[ROOT/'test'/f'{n}.c' for n in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music']]
+    guard+=[ROOT/'test'/f'{n}.c' for n in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music','test_hierarchy_fixes']]
     guard+=[Path(__file__),ROOT/'tools/render_sound_finish.c',ROOT/'src/hal_h743/main_h743.c']
     initial_hashes={str(p.relative_to(ROOT)):sha(p) for p in sorted(guard)}
     with tempfile.TemporaryDirectory(prefix='sound-finish-') as directory:
@@ -36,7 +36,7 @@ def main():
         with tarfile.open(fileobj=io.BytesIO(archive)) as tar:tar.extractall(tmp/'base',filter='data')
         base=tmp/'base'/prefix
         for sanitized in ([False] if a.native_only else [False,True]):
-            for name in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music','test_woodland_resonator','test_parameter_foundation']:
+            for name in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music','test_woodland_resonator','test_parameter_foundation','test_hierarchy_fixes']:
                 compile_at(ROOT,ROOT/'test'/f'{name}.c',tmp/'test',True,sanitized,
                            sources=['dsp'] if name=='test_sound_finish_fx' else ['dsp','shape'] if name=='test_woodland_resonator' else None)
                 log=run([tmp/'test'],env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0')).strip()
@@ -64,14 +64,14 @@ def main():
             with wave.open(str(path),'wb') as w:
                 w.setnchannels(2);w.setsampwidth(2);w.setframerate(44100);w.writeframes(data)
         samples=array.array('h',after);peak=max(map(abs,samples))/32768
-        proof=dict(model=1,world_material_model=2,baseline=BASE,default_profile_unchanged_pcm=True,compared_stereo_frames=2*96*44100,
+        proof=dict(model=2,world_material_model=2,baseline=BASE,default_profile_unchanged_pcm=True,compared_stereo_frames=2*96*44100,
                    candidate_pcm_exact_37_512=True,actual_event_traces_partition_exact=True,
                    tests=tests,preview_seconds=96,ab_seconds=192,
                    order='COAST, WOODLAND, HIGHLANDS; each 32s before then 32s candidate in AB',
                    preview_sha256=sha(preview),ab_sha256=sha(pair),sample_peak=peak,
                    hearing_accepted=False,device_accepted=False)
         inputs=[ROOT/'src'/f'{n}.c' for n in SOURCES+['gesture']]+list((ROOT/'include').glob('*.h'))
-        inputs+=[ROOT/'test'/f'{n}.c' for n in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music']]
+        inputs+=[ROOT/'test'/f'{n}.c' for n in ['test_sound_finish_fx','test_sound_finish','test_world_character_stress','test_sound_finish_music','test_hierarchy_fixes']]
         inputs+=[Path(__file__),driver,ROOT/'src/hal_h743/main_h743.c']
         proof['inputs_sha256']={str(p.relative_to(ROOT)):sha(p) for p in sorted(inputs)}
         assert proof['inputs_sha256']==initial_hashes, 'Inputs changed while proof was running'

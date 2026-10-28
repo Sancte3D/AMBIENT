@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure Cell / music-return / Nature hierarchy in the unchanged Product DSP.
+"""Verify corrected Cell / music-return / Nature hierarchy in actual Product DSP.
 
 The observer wraps two calls in a host-only engine object. Ordinary and observed
 engines are compared byte for byte, as are selected 37/512-frame performances.
@@ -74,7 +74,7 @@ def main():
         objects = []
         for source in SOURCES+['gesture']:
             obj = tmp/(source+'.o')
-            extra = (['-Dambient_room_process=hierarchy_room_process', '-Dnature_render=hierarchy_nature_render']
+            extra = (['-Dambient_room_process=hierarchy_room_process', '-Dnature_render_music=hierarchy_nature_render_music']
                      if source == 'engine_product' else [])
             run([cc, *flags, *extra, '-c', ROOT/'src'/f'{source}.c', '-o', obj])
             objects.append(obj)
@@ -167,32 +167,57 @@ def main():
             if c['room'] == 0:assert all(row[1] == 0 for row in c['seconds'][2:])
             if c['nature'] == 0:assert all(row[2] == 0 for row in c['seconds'])
 
-        fdn_bypass = []
+        fdn_colors = []
         for w in range(3):
             base = key(w, 50, .7, 0, 1, 1, 1, 1, 1234)
             color = key(w, 50, .7, 0, 1, 1, 9, 1, 1234)
-            assert selected_pcm[base] == selected_pcm[color]
+            assert selected_pcm[base] != selected_pcm[color]
             exact_frames += SECONDS*SR
-            fdn_bypass.append(dict(world=NAMES[w], stereo_frames=SECONDS*SR,
-                                   room_only_equals_all_color_at_max=True))
+            fdn_colors.append(dict(world=NAMES[w], stereo_frames=SECONDS*SR,
+                                   all_color_at_max_changes_room_only=True))
+        # Product requirements: weather remains background even for the old
+        # failing soft single notes. Compare raw dry fingerprints with the
+        # immutable pre-fix audit; no World-body change may hide the repair.
+        baseline_path=ROOT.parent/'docs/audio/SOUND_HIERARCHY_METRICS.json'
+        baseline=json.loads(baseline_path.read_text())
+        def case_key(c):
+            return tuple(c[k] for k in ('world','midi','velocity','plate','room','nature','profile','density','seed'))
+        old={case_key(c):c for c in baseline['cases']}
+        for c in cases.values():
+            assert c['stem_fingerprints'][0]==old[case_key(c)]['stem_fingerprints'][0],case_key(c)
+            if c['nature']>0:
+                b=c['mature_6_24s']
+                assert b['nature_to_dry_db']<=-24 and b['worst_1s_nature_to_dry_db']<=-20,(case_key(c),b)
+            if c['profile']=='grain_freeze':
+                for row in c['seconds'][36:]:
+                    assert relative(row[2],row[1])<=-24,(case_key(c),row)
+        room_pairs=[]
+        for w in range(3):
+            previous=[None,None]
+            for room in (.25,.5,.75,1):
+                pair=[cases[key(w,50,.7,plate,room,1,1,1,1234)]['mature_6_24s']['return_to_dry_db'] for plate in (0,1)]
+                assert abs(pair[0]-pair[1])<=3,(NAMES[w],room,pair)
+                for model in (0,1):
+                    if previous[model] is not None:assert pair[model]>previous[model]+.5,(NAMES[w],room,pair)
+                previous=pair;room_pairs.append(dict(world=NAMES[w],room=room,fdn_to_plate_difference_db=pair[0]-pair[1]))
         after = {str(p.relative_to(ROOT)): sha(p) for p in inputs}; assert before == after
         repo = run(['git', 'rev-parse', '--show-toplevel'], cwd=ROOT, text=True).strip()
-        proof = dict(schema=1, firmware_base=run(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
+        proof = dict(schema=2, firmware_base=run(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
                      sample_rate=SR, seconds_each=SECONDS, captures=renders, measured_cases=len(cases),
                      physical_engine_velocity_floor=physical_floor, master=1,
                      source_start_s=2, physical_hold_release_s=26, freeze_on_s=10,
                      measurement='RMS of exact bus differences with matching per-stem DC tracking, before common Volume/gate/PCM; no normalization',
-                     diagnostic_nature_goal=dict(mean_below_dry_db=-24, worst_1s_below_dry_db=-20,
-                                                origin='Existing two-Cell Nature regression thresholds; applied diagnostically to single/quiet Cells, not newly approved product ranges'),
+                     enforced_nature_goal=dict(mean_below_dry_db=-24, worst_1s_below_dry_db=-20),
                      policy=policy, observer_pairs=observer_pairs, partition_pairs=partition_pairs,
-                     sanitizer_pairs=sanitizer_pairs, fdn_color_bypass_pairs=fdn_bypass,
+                     sanitizer_pairs=sanitizer_pairs, fdn_color_pairs=fdn_colors,room_pairs=room_pairs,
                      exact_stereo_frames_compared=exact_frames,
                      dry_source_fingerprints_and_note_event_fingerprints_invariant=True,
+                     dry_world_body_fingerprints_equal_pre_fix=True,
                      all_measured_output_protection_counters_zero=True,
                      hearing_accepted=False, device_accepted=False,
-                     limitations='One key/collection and neutral Color/Attack/Release, three notes, two seeds (42 only selected D3 cases), fixed 40s manual passages. Not exhaustive parameter combinations, perceptual masking, World recognition, real PCB/DAC/stack/timing or long-term listening. Silent-Freeze restriction is retained-harmony policy with a UX conflict, not permission to discard the pitch ledger.',
+                     limitations='One key/collection and neutral Color/Attack/Release, three notes, two seeds (42 only selected D3 cases), fixed 40s manual passages. Not exhaustive parameter combinations, perceptual masking, World recognition, real PCB/DAC/stack/timing or long-term listening. Positive-mix frozen pitches remain protected; Grain0 disarms Freeze rather than discarding the pitch ledger.',
                      inputs_sha256=after, cases=list(cases.values()))
-        metrics = out/'SOUND_HIERARCHY_METRICS.json'
+        metrics = out/'SOUND_HIERARCHY_FIXED_METRICS.json'
         with metrics.open('w') as f:
             # Full one-second values remain available; compact case rows avoid
             # a huge mostly-whitespace report while keeping exact raw numbers.

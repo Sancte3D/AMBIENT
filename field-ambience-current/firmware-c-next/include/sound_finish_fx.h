@@ -1,6 +1,6 @@
 #ifndef FAM_SOUND_FINISH_FX_H
 #define FAM_SOUND_FINISH_FX_H
-#define SOUND_FINISH_MODEL 1
+#define SOUND_FINISH_MODEL 2
 #include <stdatomic.h>
 #include <string.h>
 #include "dsp.h"
@@ -17,21 +17,27 @@ static float sf_delay[2][SF_DELAY] __attribute__((section(".sound_delay_bss"),al
 typedef struct {
     float plate[SF_PLATE],grain[SF_GRAIN];
     unsigned at[12],delay_at,grain_at,grain_read[2],grain_age[2],rng;
-    unsigned delay_valid,delay_frames[2],delay_from[2],grain_window;
+    unsigned delay_valid,delay_frames[2],delay_from[2],grain_window,grain_nonzero,room_tick;
     float fb[2],damp[2],delay_lp[2],phase_z[2][4],phase;
     float delay_mix,grain_mix,drive_mix,crush_mix,phase_mix,decay;
     float delay_fade,feedback,grain_gain,phase_rate;
+    float room_power[2],room_dc[2][2],room_gain,room_goal;
     bool cold;
 } sound_finish_fx_t;
 static sound_finish_fx_t sf;
 static _Atomic uint32_t sf_target[5]; /* Q16 independent macro targets */
 static _Atomic uint32_t sf_detail[5]; /* float32 control values, same transaction */
-static _Atomic bool sf_freeze,sf_plate_on,sf_content_held;
+static _Atomic bool sf_freeze,sf_plate_on,sf_content_held,sf_content_available;
 static _Atomic unsigned sf_version;
 static bool sf_accepted_plate=true;
 static float sf_controls[10];
 static sound_parameters_t sf_desired;
 static bool sf_is_frozen;
+static void sf_publish_content(void) {
+    bool available=!sf.cold && sf.grain_nonzero>0;
+    atomic_store_explicit(&sf_content_available,available,memory_order_release);
+    atomic_store_explicit(&sf_content_held,available && sf_is_frozen && sf_controls[1]>0,memory_order_release);
+}
 static void sf_accept(void) {
     unsigned before=atomic_load_explicit(&sf_version,memory_order_seq_cst);
     if(before&1u)return;
@@ -42,7 +48,7 @@ static void sf_accept(void) {
     bool plate=atomic_load_explicit(&sf_plate_on,memory_order_seq_cst);
     if(before!=atomic_load_explicit(&sf_version,memory_order_seq_cst))return;
     memcpy(sf_controls,next,sizeof next);sf_is_frozen=frozen;sf_accepted_plate=plate;
-    atomic_store_explicit(&sf_content_held,sf_is_frozen && !sf.cold,memory_order_release);
+    sf_publish_content();
 }
 static bool sf_apply_parameters(const sound_parameters_t *p) {
     sound_parameters_t normalized;if(!sound_parameters_normalize(p,&normalized))return false;
@@ -65,6 +71,7 @@ static inline void sf_parameters(float delay,float grain,bool freeze,float drive
 static void sf_clear(void) {
     if(sf.cold)return;
     atomic_store_explicit(&sf_content_held,false,memory_order_release);
+    atomic_store_explicit(&sf_content_available,false,memory_order_release);
     memset(&sf,0,sizeof sf);sf.cold=true;
 }
 static void sf_init(void) {
@@ -86,8 +93,27 @@ static float sf_line(int k,float x,float g) {
     sf.plate[pos]=x+g*out;if(++sf.at[k]==len[k])sf.at[k]=0;
     return out;
 }
+/* Level-match the room return, never the direct voices or extra textures.
+ * Same -24/-18/-14.5/-12 dB nominal Dry ratio at Room .25/.5/.75/1 for both
+ * tanks. A bounded, slow scalar retains each tank's spectrum/stereo/decay.
+ * Stop adapting below the input floor so an outgoing tail keeps its gain.
+ * sqrt runs once per 64 real samples, independent of render partition. */
+static float sf_room_level(const float *in,const float *room) {
+    float power[2]={0,0};
+    for(int c=0;c<2;++c) {
+        sf.room_dc[0][c]+=.00228f*(in[c]-sf.room_dc[0][c]);
+        sf.room_dc[1][c]+=.00228f*(room[c]-sf.room_dc[1][c]);
+        float a=in[c]-sf.room_dc[0][c],b=room[c]-sf.room_dc[1][c];
+        power[0]+=.5f*a*a;power[1]+=.5f*b*b;
+    }
+    for(int k=0;k<2;++k)sf.room_power[k]+=(power[k]-sf.room_power[k])*(1.0f/(.250f*DSP_SAMPLE_RATE_HZ));
+    if((sf.room_tick++&63u)==0 && power[0]>1e-12f && sf.room_power[0]>1e-10f && sf.room_power[1]>1e-12f)
+        sf.room_goal=dsp_clampf(sqrtf((.25f/.35f)*(.25f/.35f)*sf.room_power[0]/sf.room_power[1]),.125f,8);
+    sf.room_gain+=(sf.room_goal-sf.room_gain)*(1.0f/(.500f*DSP_SAMPLE_RATE_HZ));
+    return sf.room_gain;
+}
 static void sf_process(float *l,float *r,const float *sl,const float *sr,int frames,
-                       float amount,float decay,bool enabled,bool plate) {
+                       float amount,float decay,bool enabled,bool plate,float fdn_l,float fdn_r) {
     const float *target=sf_controls;bool frozen=sf_is_frozen;
     if(!enabled || amount==0) {sf_clear();return;}
     if(sf.cold) {
@@ -99,6 +125,7 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
         sf.grain_read[0]=SF_GRAIN-a;sf.grain_read[1]=SF_GRAIN-b;
         for(int c=0;c<2;++c)sf.delay_from[c]=sf.delay_frames[c]=sf_frames(target[5+c]);
         sf.delay_fade=1;sf.feedback=target[7];sf.phase_rate=target[9];
+        sf.room_gain=sf.room_goal=plate ? 1 : 4;
     }
     const float smooth=1.0f/(.080f*DSP_SAMPLE_RATE_HZ);
     for(int n=0;n<frames;++n) {
@@ -129,7 +156,11 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
         }
         float in[2]={sl[n],sr[n]},wet[2]={0,0};
         float mono=.5f*(in[0]+in[1]);
-        if(!frozen)sf.grain[sf.grain_at]=mono;
+        if(!frozen) {
+            if(fabsf(sf.grain[sf.grain_at])>1e-7f)--sf.grain_nonzero;
+            sf.grain[sf.grain_at]=mono;
+            if(fabsf(mono)>1e-7f)++sf.grain_nonzero;
+        }
         float gs=0,ws=0;
         for(int k=0;k<2;++k) {
             float t=(float)sf.grain_age[k]/sf.grain_window,w=4*t*(1-t);
@@ -156,6 +187,7 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
         sf.delay_at=(sf.delay_at+1u)%SF_DELAY;
         if(sf.delay_valid<SF_DELAY)++sf.delay_valid;
         if(sf.delay_fade<1)sf.delay_fade=fminf(1,sf.delay_fade+fade_step);
+        float room[2]={fdn_l,fdn_r};
         if(plate) {
             float x=mono;
             for(int k=0;k<4;++k)x=sf_line(k,x,k<2 ? .6f : .5f);
@@ -169,9 +201,11 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
                 b[c]=sf_line(k+3,sf_line(k+2,sf.damp[c],.45f),0);
                 sf.fb[c]=b[c];
             }
-            wet[0]+=1.4f*(a[0]+b[0]+.22f*a[1]);
-            wet[1]+=1.4f*(a[1]+b[1]+.22f*a[0]);
+            room[0]=1.4f*(a[0]+b[0]+.22f*a[1]);
+            room[1]=1.4f*(a[1]+b[1]+.22f*a[0]);
         }
+        float room_gain=sf_room_level(in,room);
+        wet[0]+=room[0]*room_gain;wet[1]+=room[1]*room_gain;
         sf.phase+=sf.phase_rate/DSP_SAMPLE_RATE_HZ;if(sf.phase>=1)sf.phase-=1;
         float coefficient=.35f+.12f*dsp_sin(sf.phase);
         for(int c=0;c<2;++c) {

@@ -19,6 +19,7 @@
 #include "encoders.h"
 #include "mcp23017.h"
 #include "ui_idle.h"
+#include "tuning.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -207,6 +208,40 @@ static void nature_menu(void) {
     }
     puts("H743 Nature menu: existing 0/65/0% editor, actual Engine audio without voices, all Worlds and settled silence pass");
 }
+static void note_block_feedback(void) {
+    reset(0,100);controls_modifier(MOD_GENERATE,true);engine_set_master_volume(.6f);
+    static const int notes[3]={50,57,62};
+    int16_t pcm[882];
+    for(unsigned k=0;k<3;++k) {
+        assert(engine_try_note_on((uint8_t)k,tuning_hz((float)notes[k]),.5f));
+        engine_render(pcm,441);engine_generative_tick(100+k*10);
+    }
+    uint32_t generation=overlay_gen();inputs(1u<<(MCP_BIT_CELL1+3));poll(200);
+    assert(engine_note_block_reason()==ENGINE_NOTE_VOICES_FULL);
+    assert(overlay_gen()==generation+1 && overlay_active(200));
+    inputs(0);poll(210);
+
+    reset(0,100);controls_modifier(MOD_GENERATE,true);engine_set_master_volume(.6f);
+    assert(engine_try_note_on(0,tuning_hz(50),.5f));
+    for(unsigned ms=100;ms<2100;ms+=10) {engine_generative_tick(ms);engine_render(pcm,441);}
+    engine_note_off(0);sound_parameters_t p;engine_get_sound_parameters(&p);p.grain=.8f;p.freeze=true;
+    assert(engine_apply_sound_parameters(&p));
+    for(unsigned ms=2100;ms<26100;ms+=10) {engine_generative_tick(ms);engine_render(pcm,441);}
+    assert(!engine_active_voices());engine_set_key_pc(4);
+    s_ui_idle.last_ms=26100; /* This case tests an awake press, not wake-only. */
+    generation=overlay_gen();inputs(1u<<MCP_BIT_CELL1);poll(26100);
+    assert(engine_note_block_reason()==ENGINE_NOTE_FROZEN_PITCH);
+    assert(overlay_gen()==generation+1 && overlay_active(26100));
+    inputs(0);poll(26110);
+    /* The displayed Clear action must actually free the protected capture. */
+    inputs(1u<<MCP_BIT_MOD_CLEAR);poll(26120);inputs(0);poll(26130);
+    for(unsigned ms=26130;ms<26500;ms+=10) {engine_generative_tick(ms);engine_render(pcm,441);}
+    generation=overlay_gen();inputs(1u<<MCP_BIT_CELL1);poll(26500);
+    engine_render(pcm,441);engine_generative_tick(26510);
+    assert(engine_active_voices()==1 && overlay_gen()==generation);
+    assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+    puts("H743 note feedback: real rejected pool/Freeze presses show overlay; displayed Clear releases capture and next Cell plays");
+}
 #endif
 /* An already sounding press keeps its release recipient while the Scene
  * browser temporarily consumes new presses as slot selections. */
@@ -287,6 +322,7 @@ int main(void) {
     input_edge_audit();
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     nature_menu();
+    note_block_feedback();
 #endif
     /* Real boot initializer must prime the indirect EN4 level before its
      * snapshot. Its queued down and later up are both consumed, no Mute. */
