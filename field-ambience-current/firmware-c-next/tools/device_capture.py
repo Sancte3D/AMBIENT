@@ -31,6 +31,12 @@ def prepare(build, nm='arm-none-eabi-nm', objcopy='arm-none-eabi-objcopy'):
     audit = json.loads((build/'PRODUCT_BUILD_AUDIT.json').read_text())
     if audit.get('profile') != 'product' or audit.get('elf_sha256') != sha(elf):
         raise ValueError('Product link audit does not match ELF')
+    session_values=re.findall(r'^FAM_SOUND_SESSION_CANDIDATE:[^=\n]+=([^\n]+)$',cache,re.M)
+    if session_values not in ([],['OFF'],['ON']):
+        raise ValueError('Unsupported sound session configuration')
+    session=session_values==['ON']
+    if session and (audit.get('sound_session') or {}).get('format')!='SCN8/JSS1':
+        raise ValueError('Sound session link audit missing')
     if not 0 < len(image) <= 1024*1024:
         raise ValueError('Image does not fit Bank1')
     with tempfile.TemporaryDirectory(prefix='ambient-image-') as directory:
@@ -54,6 +60,7 @@ def prepare(build, nm='arm-none-eabi-nm', objcopy='arm-none-eabi-objcopy'):
     if abs(symbols['s_prof']['address'] - symbols['s_irq_prof']['address']) < 56:
         raise ValueError('Aliased profiler symbols')
     manifest = dict(schema=1,profile='product',journal_candidate=False,
+        sound_session_candidate=session,
         elf_sha256=sha(elf),image_sha256=sha(image),image_bytes=len(image),
         flash_address=0x08000000,fields=FIELDS,symbols=symbols)
     (build/'DEVICE_CAPTURE_MANIFEST.json').write_text(json.dumps(manifest,indent=2)+'\n')

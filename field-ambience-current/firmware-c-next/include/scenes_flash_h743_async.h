@@ -5,7 +5,8 @@
 #define SCENES_FLASH_H743_SECTOR_BYTES (128u * 1024u)
 #define SCENES_FLASH_H743_BASE 0x081c0000u
 
-/* Prepared standalone component; no default/CMake/vector/UI connection.
+/* Standalone component; also integrated by explicit SOUND_SESSION candidate.
+ * No default activation.
  * Main only, one global FLASH owner, no other HAL flash users. The integrator
  * must reserve Bank-2 sectors 6/7, keep executable code/constants in Bank 1,
  * branch FLASH_IRQHandler to flash_irq and BusFault_Handler to busfault_entry.

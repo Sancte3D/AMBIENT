@@ -48,7 +48,12 @@ unsigned gesture_export(void *bytes,unsigned capacity) {
     }
     archive_u32(p+length-4,archive_hash(p,length-4));return length;
 }
-bool gesture_import(const void *bytes,unsigned length,uint32_t now_ms) {
+unsigned gesture_archive_empty(void *bytes,unsigned capacity) {
+    if(!bytes || capacity<16)return 0;
+    uint8_t *p=bytes;memcpy(p,"GLP1",4);archive_u32(p+4,0);
+    archive_u32(p+8,GESTURE_MIN_LOOP);archive_u32(p+12,archive_hash(p,12));return 16;
+}
+bool gesture_archive_valid(const void *bytes,unsigned length) {
     if(!bytes || length<16 || length>GESTURE_ARCHIVE_MAX)return false;
     const uint8_t *p=bytes;unsigned n=archive_read(p+4);uint32_t duration=archive_read(p+8);
     if(memcmp(p,"GLP1",4) || n>GESTURE_MAX || length!=16u+8u*n ||
@@ -60,6 +65,11 @@ bool gesture_import(const void *bytes,unsigned length,uint32_t now_ms) {
            (e[5] && !e[7]))return false;
         last=t;
     }
+    return true;
+}
+bool gesture_import(const void *bytes,unsigned length,uint32_t now_ms) {
+    if(!gesture_archive_valid(bytes,length))return false;
+    const uint8_t *p=bytes;unsigned n=archive_read(p+4);uint32_t duration=archive_read(p+8);
     /* Validate the entire record before releasing any playback owner. */
     gesture_clear(now_ms);s_loop_len=duration;
     for(unsigned i=0;i<n;++i) {

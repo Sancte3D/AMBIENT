@@ -72,16 +72,41 @@ for function in ('engine_render','ambient_room_process','nature_render','engine_
     print(f"PRODUCT FRAME {function}: {max(r['bytes'] for r in rows)} B (compiler, not stack high-water)")
 finish_state=None
 nature_state=None
+session_state=None
 if any('FAM_SOUND_FINISH_CANDIDATE' in c['command'] for c in compiled):
     address,size,_,_=one('sf')
     assert 0x30000000<=address and address+size<=0x30048000,(hex(address),size)
     finish_state={'model':1,'address':address,'bytes':size,'region':'internal D2'}
+    delay_address,delay_size,_,_=one('sf_delay')
+    assert 0x24000000<=delay_address and delay_address+delay_size<=0x24080000
+    assert delay_address%32==0 and delay_size==262144
+    finish_state['delay']={'address':delay_address,'bytes':delay_size,'region':'internal D1'}
     print(f'COMPLETE SOUND FX: 0x{address:08x}, {size} B, internal D2')
     address,size,_,_=one('na')
     assert 0x24000000<=address and address+size<=0x24080000 and size<=2048,(hex(address),size)
     nature_state={'address':address,'bytes':size,'region':'internal D1','max_bytes':2048}
     print(f'NATURE ACCENTS: 0x{address:08x}, {size} B, internal D1, no sample buffers')
-report={'nature_accents_state':nature_state,'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
+if any('FAM_SOUND_SESSION_CANDIDATE' in c['command'] for c in compiled):
+    session_sources={'scenes_storage_h743.c','scenes_save_async.c','scenes_journal_async.c',
+        'scenes_journal_recovery.c','scenes_flash_h743_async.c','scenes_flash_h743_fault.c','scenes_flash_h743_guard.S'}
+    assert session_sources.issubset({s.name for s in sources})
+    assert 'scenes_flash_h743.c' not in {s.name for s in sources},'Competing synchronous flash owner'
+    assert finish_state is not None
+    for name in ('s_store','s_pending'):
+        address,size,_,_=one(name)
+        assert size==5848 and 0x24000000<=address and address+size<=0x24080000,(name,address,size)
+    assert not any(s[3]=='scene_journal_write' for s in symbols),'Synchronous journal writer retained'
+    for name in ('BusFault_Handler','FLASH_IRQHandler','scenes_flash_h743_async_busfault_entry',
+                 'scenes_flash_h743_guarded_read','scenes_storage_h743_bind','scenes_save_step'):
+        address,size,kind,_=one(name)
+        assert kind.lower()=='t' and 0x08000000<=address<0x08100000,(name,address,kind)
+    disassembly=subprocess.check_output(['arm-none-eabi-objdump','-d',str(elf)],text=True)
+    busfault=re.search(r'<BusFault_Handler>:\n(.*?)(?=\n\n)',disassembly,re.S)
+    assert busfault and 'scenes_flash_h743_async_busfault_entry' in busfault[1]
+    session_state=dict(format='SCN8/JSS1',store_bytes=5848,payload_bytes=8192,
+        backend='ECC-safe IRQ adapter, one flash owner',candidate=True,device_accepted=False)
+    print('SOUND SESSION: SCN8/JSS1, single async flash owner, strong ECC/FLASH vectors, sync writer absent')
+report={'sound_session':session_state,'nature_accents_state':nature_state,'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
         'compiler':subprocess.check_output(['arm-none-eabi-gcc','--version'],text=True).splitlines()[0],
         'profile':'product','individual_frames':sorted(frames,key=lambda r:r['bytes'],reverse=True),
         'core_max_frame_bytes':max(r['bytes'] for r in core_frames),

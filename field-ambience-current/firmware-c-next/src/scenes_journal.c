@@ -1,7 +1,7 @@
 #include "scenes_journal.h"
 #include <string.h>
 
-#define JOURNAL_MAGIC 0x3143534au /* JSC1, little-endian wire */
+#define JOURNAL_MAGIC SCENE_JOURNAL_MAGIC
 #define JOURNAL_VERSION 1u
 
 static uint32_t get32(const uint8_t *p) {

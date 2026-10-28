@@ -55,6 +55,15 @@ option(FAM_WOODLAND_BODY_CANDIDATE "Opt-in harmonic WOODLAND body hearing candid
 option(FAM_WOODLAND_RESONATOR_CANDIDATE "Opt-in long harmonic modal WOODLAND replacement; no Scene/UI activation" OFF)
 option(FAM_SOUND_FINISH_CANDIDATE "Complete sound candidate: pad, voicing, owned loops, bounded effects and quiet Nature accents" OFF)
 option(FAM_SCENE_JOURNAL_CANDIDATE "Experimental two-sector Scene journal; ECC/device acceptance pending" OFF)
+option(FAM_SOUND_SESSION_CANDIDATE "Large sound/loop Scenes with ECC-safe async H743 journal; device acceptance pending" OFF)
+if(FAM_SOUND_SESSION_CANDIDATE)
+    if(NOT FAM_SOUND_FINISH_CANDIDATE OR NOT FAM_SOUND_PROFILE STREQUAL "product" OR NOT FAM_TARGET STREQUAL "h743")
+        message(FATAL_ERROR "Sound session candidate requires H743, Product and complete sound")
+    endif()
+    if(FAM_SCENE_JOURNAL_CANDIDATE)
+        message(FATAL_ERROR "Large session and old experimental Scene journal cannot share flash ownership")
+    endif()
+endif()
 if(NOT FAM_SOUND_PROFILE STREQUAL "reference" AND NOT FAM_SOUND_PROFILE STREQUAL "product")
     message(FATAL_ERROR "Unknown FAM_SOUND_PROFILE '${FAM_SOUND_PROFILE}'")
 endif()
@@ -258,7 +267,7 @@ if(FAM_TARGET STREQUAL "h743")
         src/hal_h743/stm32h7xx_it.c
         src/hal_h743/audio_h743.c
         src/hal_h743/encoders_h743.c
-        src/hal_h743/scenes_flash_h743.c   # r19.22: Scenes-Persistenz (Bank-2-Sektor)
+        $<$<NOT:$<BOOL:${FAM_SOUND_SESSION_CANDIDATE}>>:src/hal_h743/scenes_flash_h743.c>
         src/hal_h743/lcd_st7789_h743.c
         src/hal_h743/mcp23017_h743.c
         src/hal_h743/midi_uart_h743.c
@@ -278,7 +287,15 @@ if(FAM_TARGET STREQUAL "h743")
         USE_HAL_DRIVER
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
-    if(FAM_SCENE_JOURNAL_CANDIDATE)
+    if(FAM_SOUND_SESSION_CANDIDATE)
+        target_sources(field_ambience_h743 PRIVATE
+            src/scenes_journal.c src/scenes_journal_async.c src/scenes_journal_recovery.c
+            src/scenes_save_async.c src/hal_h743/scenes_storage_h743.c
+            src/hal_h743/scenes_flash_h743_async.c src/hal_h743/scenes_flash_h743_fault.c
+            src/hal_h743/scenes_flash_h743_guard.S)
+        target_compile_definitions(field_ambience_h743 PRIVATE FAM_SOUND_SESSION_CANDIDATE FAM_SCENE_SAVE_ASYNC_PREPARED)
+        target_link_options(field_ambience_h743 PRIVATE -Wl,--defsym=__scene_journal_candidate=1)
+    elseif(FAM_SCENE_JOURNAL_CANDIDATE)
         target_sources(field_ambience_h743 PRIVATE src/scenes_journal.c)
         target_compile_definitions(field_ambience_h743 PRIVATE FAM_SCENE_JOURNAL_CANDIDATE)
         target_link_options(field_ambience_h743 PRIVATE -Wl,--defsym=__scene_journal_candidate=1)

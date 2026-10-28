@@ -14,7 +14,7 @@ static uint32_t crc_update(uint32_t crc,const uint8_t *p,unsigned n) {
 }
 static bool valid_header(const uint8_t *p) {
     unsigned n=get32(p+12);
-    return get32(p)==0x3143534au && get32(p+4)==1u && n>0 &&
+    return get32(p)==SCENE_JOURNAL_MAGIC && get32(p+4)==1u && n>0 &&
            n<=SCENE_JOURNAL_PAYLOAD_BYTES && get32(p+20)==0xffffffffu &&
            get32(p+24)==0xffffffffu && get32(p+28)==~crc_update(0xffffffffu,p,28);
 }

@@ -43,7 +43,7 @@ bool scene_journal_async_begin(scene_journal_async_t *w,const void *blob,unsigne
     memset(w->staging,0xff,32);
     memset(w->staging+32+n,0xff,SCENE_JOURNAL_PAYLOAD_BYTES-n);
     /* Exact JSC1 wire used by the existing synchronous reader. */
-    put32(w->staging,0x3143534au); put32(w->staging+4,1);
+    put32(w->staging,SCENE_JOURNAL_MAGIC); put32(w->staging+4,1);
     put32(w->staging+8,w->sequence); put32(w->staging+12,n);
     put32(w->staging+16,crc32(w->staging+32,n));
     put32(w->staging+28,crc32(w->staging,28));

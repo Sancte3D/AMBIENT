@@ -12,7 +12,17 @@
 void NMI_Handler(void)        { for (;;) { } }
 void HardFault_Handler(void)  { for (;;) { } }
 void MemManage_Handler(void)  { for (;;) { } }
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+#include "scenes_flash_h743_async.h"
+/* Preserve the original EXC_RETURN and stack pointer for guarded ECC reads.
+ * The adapter parks unrelated faults; it never guesses a recovery address. */
+__attribute__((naked)) void BusFault_Handler(void) {
+    __asm volatile("b scenes_flash_h743_async_busfault_entry");
+}
+void FLASH_IRQHandler(void) {scenes_flash_h743_async_flash_irq();}
+#else
 void BusFault_Handler(void)   { for (;;) { } }
+#endif
 void UsageFault_Handler(void) { for (;;) { } }
 void SVC_Handler(void)        { }
 void DebugMon_Handler(void)   { }
