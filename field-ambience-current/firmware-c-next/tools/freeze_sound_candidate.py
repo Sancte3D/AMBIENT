@@ -30,7 +30,7 @@ def manifest():
             'printf(",\\"freeze\\":%s,\\"plate\\":%s}",p.freeze?"true":"false",p.plate?"true":"false");return 0;}')
         subprocess.run(['cc','-std=c11','-O2','-Wall','-Wextra','-Werror','-I'+str(ROOT/'include'),str(source),'-lm','-o',str(tmp/'registry')],check=True)
         values=json.loads(subprocess.check_output([str(tmp/'registry')],text=True))
-    return dict(software_candidate='0.12',world_material_model=2,fx_model=2,base_commit='254ee97be8f20d48aba9f097b2439461814f27fd',
+    return dict(software_candidate='0.13',world_material_model=2,fx_model=2,base_commit='7af582b94c8dd0e765ceac44ee27666b5586fe5c',
         configuration=dict(FAM_TARGET='h743',FAM_SOUND_PROFILE='product',FAM_SOUND_FINISH_CANDIDATE='ON',
             FAM_SOUND_SESSION_CANDIDATE='ON',FAM_DEVICE_BENCH_CANDIDATE='OFF',FAM_SCENE_JOURNAL_CANDIDATE='OFF',
             CMAKE_BUILD_TYPE='Release',FAM_LCD_PANEL='1_9inch'),

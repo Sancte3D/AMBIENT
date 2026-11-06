@@ -57,6 +57,7 @@ static uint32_t seed,now_ms,last_user_ms,retry_ms,rejects;
 static bool world_character;
 static bool generate,autoplay,user_present,user_seen,suppressed,clearing,muted,resume_nature;
 static float activity,color,room,nature_amount;
+/* quick_mask: one bit per owner for context stops, then Cell handovers. */
 static _Atomic uint32_t quick_mask,release_mask,audio_mask,started_mask,audio_epoch,audio_frames,volume_bits,color_bits,limited,faults;
 static _Atomic bool clear_request,clear_done,output_enabled,room_quiet;
 static float dry_l[BLOCK],dry_r[BLOCK],send_l[BLOCK],send_r[BLOCK];
@@ -65,6 +66,18 @@ static float volume_cur,gate_cur,dc_l,dc_r;
 static int last_voicing[CORE_WORLD_COUNT][3];
 static uint8_t loop_lane[2];
 static bool freeze_seen;
+/* Main reserves incoming Cell notes while Audio ramps released sources down.
+ * The existing source pools stay fixed and preparation stays in Main. */
+typedef struct {
+    float hz,velocity;
+    uint8_t owner;
+    bool down;
+} cell_press_t;
+static cell_press_t cell_queue[SLOTS];
+static unsigned cell_queue_count;
+static uint32_t cell_retiring;
+enum { CELL_FADE_FRAMES = DSP_SAMPLE_RATE_HZ / 50 }; /* 20 ms */
+_Static_assert(2*SOURCES<=32,"Two stop bits per audio owner");
 static void reset_voicing(void) {
     for(int w=0;w<CORE_WORLD_COUNT;++w)for(int r=0;r<3;++r)last_voicing[w][r]=-1;
 }
@@ -94,6 +107,9 @@ static void remember(float hz) {
 static void reap(void) {
     if(clearing && atomic_load_explicit(&clear_done,memory_order_acquire)) {
         memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        cell_retiring=0;
+#endif
         coast_pending=0; woodland_pending=highlands_pending=false;
         clearing=false; atomic_store(&clear_request,false);
         if(resume_nature && !muted) {
@@ -182,6 +198,9 @@ static void reap(void) {
         if(epoch!=s->issued_epoch && !(mask&(1u<<s->owner))) {
             if(s->on_sent && !s->off_sent && note_hook) note_hook(0,s->owner,s->hz,0);
             if(s->started) remember(s->hz);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+            cell_retiring &= ~(1u << s->owner);
+#endif
             for(int role=0;role<3;++role) if(s->owner==coast_owners[role])
                 coast_pending&=(uint8_t)~(1u<<role);
             if(woodland_pending && s->owner==coast_owners[woodland_ticket.role])woodland_pending=false;
@@ -190,38 +209,43 @@ static void reap(void) {
         }
     }
 }
-static bool compatible(float a,float b) {
+static bool compatible(float a,float b,bool enforce_register) {
     float cents=fabsf(1200.0f*log2f(a/b));
     if(cents<3) return true; /* room tails may share an exactly tuned tone */
     if(cents<90) return false; /* different JI/ET versions of the same MIDI */
     float cls=fmodf(cents,1200);
     if(cls>600) cls=1200-cls;
     if(fabsf(cls-100)<45 || fabsf(cls-600)<45) return false;
+    if(!enforce_register) return true;
     float lo=fminf(a,b);
     if(lo<261.63f && cents<249.5f) return false;
     if(lo<196 && cents<299.5f) return false;
     return true;
 }
-static bool pitch_clear(float hz) {
-    for(int i=0;i<SLOTS;++i) if(slots[i].used) {
-        /* Two independently restarted identical oscillators can cancel.
-         * Keep the existing common tone; another role chooses another pitch. */
-        if(fabsf(1200.0f*log2f(hz/slots[i].hz))<3 || !compatible(hz,slots[i].hz)) {
-            note_block=ENGINE_NOTE_HELD_PITCH;return false;
-        }
-    }
+static bool source_pitch_conflict(float hz,float other) {
+    /* Two independently restarted identical oscillators can cancel. */
+    return fabsf(1200.0f*log2f(hz/other))<3 || !compatible(hz,other,true);
+}
+static bool tail_pitch_clear(float hz,bool cell,int reserve) {
+    bool frozen=false;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    frozen=ambient_room_retains_history();
+#endif
     int n=0;
     for(int i=0;i<TAILS;++i) if(tails[i].used) {
-        ++n; if(!compatible(hz,tails[i].hz)) {
-            note_block=ENGINE_NOTE_TAIL_PITCH;
-#ifdef FAM_SOUND_FINISH_CANDIDATE
-            if(ambient_room_retains_history())note_block=ENGINE_NOTE_FROZEN_PITCH;
-#endif
+        ++n; if(!compatible(hz,tails[i].hz,!cell || frozen)) {
+            note_block=frozen ? ENGINE_NOTE_FROZEN_PITCH : ENGINE_NOTE_TAIL_PITCH;
             return false;
         }
     }
-    if(n>=TAILS-SLOTS) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
+    if(n+reserve>=TAILS-SLOTS) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
     return true;
+}
+static bool pitch_clear(float hz) {
+    for(int i=0;i<SLOTS;++i) if(slots[i].used && source_pitch_conflict(hz,slots[i].hz)) {
+        note_block=ENGINE_NOTE_HELD_PITCH;return false;
+    }
+    return tail_pitch_clear(hz,false,0);
 }
 int engine_ambient_source_count(void) {
     reap(); int n=0; for(int i=0;i<SLOTS;++i) n+=slots[i].used; return n;
@@ -264,24 +288,15 @@ static bool in_collection(float hz,bool phrase) {
     }
     return false; /* Reject outside pitches; never silently clamp or transpose. */
 }
-static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
-    reap();
+static bool note_request_valid(uint8_t owner,float hz,float velocity,bool phrase) {
     note_block=ENGINE_NOTE_OK;
     if(clearing || muted) {note_block=ENGINE_NOTE_SILENCED;return false;}
     if(owner>=SOURCES || !isfinite(hz) || !isfinite(velocity) || velocity<=0 ||
-       hz<(phrase ? 105 : 140) || hz>(phrase ? (world==WORLD_COAST ? 850 : world==WORLD_HIGHLANDS ? 650 : 470) : 470) || clearing || muted ||
+       hz<(phrase ? 105 : 140) || hz>(phrase ? (world==WORLD_COAST ? 850 : world==WORLD_HIGHLANDS ? 650 : 470) : 470) ||
        !in_collection(hz,phrase)) {note_block=ENGINE_NOTE_INVALID;return false;}
-    int empty=-1,local=0;
-    for(int i=0;i<SLOTS;++i) {
-        if(!slots[i].used) { if(empty<0) empty=i; continue; }
-        if(slots[i].owner==owner) {
-            note_block=slots[i].released ? ENGINE_NOTE_TAIL_PITCH : ENGINE_NOTE_HELD_PITCH;
-            return false;
-        }
-        local+=slots[i].family==world;
-    }
-    if(empty<0 || (world==WORLD_WOODLAND && local>=PLUCK_VOICES)) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
-    if(!pitch_clear(hz))return false;
+    return true;
+}
+static bool start_source(int empty,uint8_t owner,float hz,float velocity) {
     velocity=dsp_clampf(velocity,0,1);
     /* Fixed dry-source calibration candidate. Shared by manual/generator;
      * no master AGC, automatic gain compensation or implicit second source. */
@@ -299,7 +314,11 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     SOURCE_HANDOFF_POINT(4,owner);
     atomic_fetch_and_explicit(&release_mask,~(1u<<owner),memory_order_acq_rel);
     SOURCE_HANDOFF_POINT(5,owner);
-    atomic_fetch_and_explicit(&quick_mask,~(1u<<owner),memory_order_acq_rel);
+    uint32_t stop_bits=1u<<owner;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    stop_bits|=stop_bits<<SOURCES;
+#endif
+    atomic_fetch_and_explicit(&quick_mask,~stop_bits,memory_order_acq_rel);
     engine_set_cell_held(owner,false);
     SOURCE_HANDOFF_POINT(6,owner);
     bool ok=world==WORLD_COAST ? bowed_try_note_on(owner,hz,amp) :
@@ -314,6 +333,113 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
     SOURCE_HANDOFF_POINT(9,owner);
     return true;
 }
+static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
+    reap();
+    if(!note_request_valid(owner,hz,velocity,phrase))return false;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    /* Already accepted live Cells own the slots reserved for their handover. */
+    if(cell_queue_count) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
+#endif
+    int empty=-1,local=0;
+    for(int i=0;i<SLOTS;++i) {
+        if(!slots[i].used) { if(empty<0) empty=i; continue; }
+        if(slots[i].owner==owner) {
+            note_block=slots[i].released ? ENGINE_NOTE_TAIL_PITCH : ENGINE_NOTE_HELD_PITCH;
+            return false;
+        }
+        local+=slots[i].family==world;
+    }
+    if(empty<0 || (world==WORLD_WOODLAND && local>=PLUCK_VOICES)) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
+    if(!pitch_clear(hz))return false;
+    return start_source(empty,owner,hz,velocity);
+}
+static bool cell_owner(uint8_t owner) {
+    return owner<5 || (owner>=9 && owner<=13);
+}
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+static bool plan_cell_press(uint8_t owner,float hz,float velocity) {
+    reap();
+    if(!note_request_valid(owner,hz,velocity,false))return false;
+    unsigned total=cell_queue_count,local=cell_queue_count;
+    for(unsigned i=0;i<cell_queue_count;++i) {
+        if(cell_queue[i].owner==owner || source_pitch_conflict(hz,cell_queue[i].hz)) {
+            note_block=ENGINE_NOTE_HELD_PITCH;
+            return false;
+        }
+    }
+
+    uint32_t victims=0;
+    bool frozen=ambient_room_retains_history();
+    int empty=-1,active=0;
+    for(int i=0;i<SLOTS;++i) {
+        const source_slot_t *s=&slots[i];
+        if(!s->used) { if(empty<0)empty=i; continue; }
+        ++active;
+        uint32_t bit=1u<<s->owner;
+        bool conflict=s->owner==owner || source_pitch_conflict(hz,s->hz);
+        if(!(cell_retiring&bit) && (!conflict || !s->released || !cell_owner(s->owner))) {
+            if(conflict) {
+                note_block=s->released ? ENGINE_NOTE_TAIL_PITCH : ENGINE_NOTE_HELD_PITCH;
+                return false;
+            }
+            ++total;
+            local+=s->family==world;
+            continue;
+        }
+        /* A released Cell may yield its direct source. Its wet history still
+         * enforces pitch identity, semitones and tritones, or the full rule
+         * if Freeze is retaining material. */
+        if(!compatible(hz,s->hz,frozen)) {
+            note_block=frozen ? ENGINE_NOTE_FROZEN_PITCH : ENGINE_NOTE_TAIL_PITCH;
+            return false;
+        }
+        victims|=bit;
+    }
+    bool local_full=world==WORLD_WOODLAND && local>=PLUCK_VOICES;
+    if(total>=SLOTS || local_full) {
+        int oldest=-1;
+        uint32_t age=0,epoch=atomic_load(&audio_epoch);
+        for(int i=0;i<SLOTS;++i) {
+            const source_slot_t *s=&slots[i];
+            if(!s->used || !s->released || !cell_owner(s->owner) ||
+               (victims&(1u<<s->owner)) || (local_full && s->family!=world))continue;
+            uint32_t candidate_age=epoch-s->issued_epoch;
+            if(oldest<0 || candidate_age>age) { oldest=i; age=candidate_age; }
+        }
+        if(oldest<0) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
+        victims|=1u<<slots[oldest].owner;
+    }
+    bool wait=victims || cell_queue_count;
+    if(!tail_pitch_clear(hz,true,wait ? active : 0))return false;
+    if(!wait)return start_source(empty,owner,hz,velocity);
+
+    cell_queue[cell_queue_count++]=(cell_press_t){.hz=hz,.velocity=velocity,.owner=owner};
+    uint32_t fade=victims&~cell_retiring;
+    cell_retiring|=fade;
+    if(fade)atomic_fetch_or_explicit(&quick_mask,fade<<SOURCES,memory_order_release);
+    return true;
+}
+bool engine_try_cell_on(uint8_t owner,float hz,float velocity) {
+    if(generate || !cell_owner(owner))return engine_try_note_on(owner,hz,velocity);
+    if(plan_cell_press(owner,hz,velocity))return true;
+    ++rejects;
+    return false;
+}
+static void service_cell_queue(void) {
+    if(cell_retiring || !cell_queue_count)return;
+    unsigned count=cell_queue_count;
+    cell_queue_count=0;
+    for(unsigned q=0;q<count;++q) {
+        const cell_press_t *press=&cell_queue[q];
+        if(!tail_pitch_clear(press->hz,true,0))continue; /* e.g. new Freeze capture */
+        for(int i=0;i<SLOTS;++i) if(!slots[i].used) {
+            if(start_source(i,press->owner,press->hz,press->velocity))
+                engine_set_cell_held(press->owner,press->down);
+            break;
+        }
+    }
+}
+#endif
 void engine_set_world_character(bool enabled) {
     world_character=enabled;
     bowed_set_character(seed,enabled); horn_set_character(seed,enabled); pluck_set_character(seed,enabled);
@@ -321,7 +447,13 @@ void engine_set_world_character(bool enabled) {
 void engine_set_woodland_body(bool enabled) { pluck_set_body(enabled); }
 void engine_set_woodland_resonator(bool enabled) { pluck_set_resonator(enabled); }
 void engine_set_cell_held(uint8_t owner,bool down) {
-    if(!(owner<5 || (owner>=9 && owner<=13))) return;
+    if(!cell_owner(owner)) return;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    for(unsigned i=0;i<cell_queue_count;++i) if(cell_queue[i].owner==owner) {
+        cell_queue[i].down=down;
+        return;
+    }
+#endif
     if(down) {
         bool admitted=false;
         for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==owner && !slots[i].released)
@@ -335,7 +467,7 @@ static void clear_cell_unfold(void) {
 }
 bool engine_try_note_on(uint8_t owner,float hz,float v) {
     if(generate) {note_block=ENGINE_NOTE_GENERATE;return false;}
-    if(!(owner<5 || (owner>=9 && owner<=13))) {note_block=ENGINE_NOTE_INVALID;return false;}
+    if(!cell_owner(owner)) {note_block=ENGINE_NOTE_INVALID;return false;}
     bool ok=admit(owner,hz,v,false); if(!ok) ++rejects; return ok;
 }
 void engine_note_on(uint8_t owner,float hz,float legacy_amp) {
@@ -350,6 +482,13 @@ bool engine_try_world_note_on(uint8_t owner,float hz,float v) {
 void engine_note_off(uint8_t owner) {
     if(owner>=SOURCES) return;
     engine_set_cell_held(owner,false);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    for(unsigned i=0;i<cell_queue_count;++i) if(cell_queue[i].owner==owner) {
+        --cell_queue_count;
+        memmove(&cell_queue[i],&cell_queue[i+1],(cell_queue_count-i)*sizeof cell_queue[0]);
+        break;
+    }
+#endif
     reap();
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].owner==owner && !slots[i].released) {
         source_slot_t *s=&slots[i]; s->held=s->timed=false; s->released=true;
@@ -379,6 +518,9 @@ static void retire_context(bool all) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used &&
        (all || slots[i].owner==6 || slots[i].owner==7 || slots[i].owner==15)) {
         uint8_t owner=slots[i].owner;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        if(cell_owner(owner))cell_retiring|=1u<<owner;
+#endif
         SOURCE_HANDOFF_POINT(0,owner);
         engine_note_off(owner);
         SOURCE_HANDOFF_POINT(1,owner);
@@ -396,6 +538,7 @@ static void release_generated(void) {
 static void quiet_chain(void) {
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     gesture_stop(now_ms);
+    cell_queue_count=0;
 #endif
     clear_cell_unfold();
     coast_pending=0; coast_phrase_restart(&coast); resume_nature=false;
@@ -451,6 +594,7 @@ void engine_set_world(int i) {
     clear_cell_unfold();
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     reset_voicing();
+    cell_queue_count=0;
 #endif
     reap(); retire_context(false); world=i; nature_set_world(world);retry_ms=now_ms;
     coast_pending=0; coast_phrase_init(&coast,seed);
@@ -497,6 +641,7 @@ bool engine_gesture_note(uint8_t cell,bool upper,bool pressed,float velocity,uin
 static void reset_score_context(void) {
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     reset_voicing();
+    cell_queue_count=0;
 #endif
     reap();
     /* A prepared old-context note is not a newly heard new-context event.
@@ -526,7 +671,11 @@ void engine_set_release(float v) { if(isfinite(v)) shape_set_release(.35f+.30f*d
 bool engine_cell_sample(uint8_t cell,float position,uint32_t ms) {
     if(generate || !isfinite(position)) return false;
     cell_event_t e=cells_update(cell,position,ms);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    if(e.kind==CELL_EVENT_PRESS) return engine_try_cell_on(e.cell,tuning_hz((float)engine_product_cell_midi(e.cell,false)),e.amp/CELL_AMP_MAX);
+#else
     if(e.kind==CELL_EVENT_PRESS) return engine_try_note_on(e.cell,tuning_hz((float)engine_product_cell_midi(e.cell,false)),e.amp/CELL_AMP_MAX);
+#endif
     if(e.kind==CELL_EVENT_RELEASE) { engine_note_off(e.cell); return true; }
     return false;
 }
@@ -537,6 +686,7 @@ void engine_set_generative(bool on,int program) {
     (void)program; reap(); if(on==generate) return;
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     if(on)gesture_stop(now_ms);
+    cell_queue_count=0;
 #endif
     if(on)retire_context(true);else release_all();
     generate=on; suppressed=false; retry_ms=now_ms;
@@ -620,7 +770,7 @@ static void coast_tick(uint32_t ms) {
     coast_offer_t b=coast_phrase_propose(&coast,1,tonic_pc,minor!=0,activity);
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     a.midi=revoice(a.role,a.midi);b.midi=revoice(b.role,b.midi);
-    if(!compatible(tuning_hz((float)a.midi),tuning_hz((float)b.midi)) || a.midi==b.midi) {
+    if(!compatible(tuning_hz((float)a.midi),tuning_hz((float)b.midi),true) || a.midi==b.midi) {
         a=coast_phrase_propose(&coast,0,tonic_pc,minor!=0,activity);
         b=coast_phrase_propose(&coast,1,tonic_pc,minor!=0,activity);
     }
@@ -672,6 +822,9 @@ static void highlands_tick(uint32_t ms) {
 }
 void engine_generative_tick(uint32_t ms) {
     now_ms=ms; reap();
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    service_cell_queue();
+#endif
     for(int i=0;i<SLOTS;++i) if(slots[i].used && slots[i].timed &&
        (int32_t)(ms-slots[i].off_ms)>=0) engine_note_off(slots[i].owner);
     if(user_present) { last_user_ms=ms; user_seen=true; }
@@ -752,6 +905,7 @@ void engine_init(void) {
     bowed_init(); horn_init(); pluck_init(); ambient_room_init(); nature_init();
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     reset_voicing();freeze_seen=false;memset(loop_lane,0,sizeof loop_lane);bowed_set_pad(true);
+    cell_queue_count=0;cell_retiring=0;
 #else
     bowed_set_pad(false);
 #endif
@@ -803,12 +957,23 @@ void engine_render(int16_t *out,int frames) {
     while(frames>0) {
         int n=frames>BLOCK ? BLOCK : frames;
         uint32_t fast=atomic_exchange_explicit(&quick_mask,0,memory_order_acquire);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        uint32_t cell_fades=fast>>SOURCES;
+        fast|=cell_fades;
+#endif
         uint32_t off=atomic_exchange_explicit(&release_mask,0,memory_order_acquire)|fast;
         for(int i=0;i<SOURCES;++i) if(off&(1u<<i)) {
-            if(fast&(1u<<i)) {bowed_quiet_source(i,(int)(.100f*DSP_SAMPLE_RATE_HZ));horn_quiet_source(i,(int)(.100f*DSP_SAMPLE_RATE_HZ));}
-            else {bowed_note_off(i);horn_note_off(i);}
-            if(fast&(1u<<i))pluck_quiet_source((uint8_t)i,(uint32_t)(.100f*DSP_SAMPLE_RATE_HZ));
-            else pluck_note_off((uint8_t)i);
+            if(fast&(1u<<i)) {
+                int fade_frames=(int)(.100f*DSP_SAMPLE_RATE_HZ);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                if(cell_fades&(1u<<i))fade_frames=CELL_FADE_FRAMES;
+#endif
+                bowed_quiet_source(i,fade_frames);
+                horn_quiet_source(i,fade_frames);
+                pluck_quiet_source((uint8_t)i,(uint32_t)fade_frames);
+            } else {
+                bowed_note_off(i);horn_note_off(i);pluck_note_off((uint8_t)i);
+            }
         }
         memset(dry_l,0,n*sizeof(float)); memset(dry_r,0,n*sizeof(float));
         memset(send_l,0,n*sizeof(float)); memset(send_r,0,n*sizeof(float));

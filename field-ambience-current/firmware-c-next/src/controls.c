@@ -155,7 +155,14 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
         engine_note_off(src); *held=false; *amp=0; return;
     }
     float hz=tuning_hz((float)engine_product_cell_midi(cell,s_mod[MOD_SHIFT]));
-    if(engine_try_note_on(src,hz,velocity_amp/CELL_AMP_MAX)) {
+    float velocity=velocity_amp/CELL_AMP_MAX;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    bool accepted=s_mod[MOD_HOLD] ? engine_try_note_on(src,hz,velocity) :
+        engine_try_cell_on(src,hz,velocity);
+#else
+    bool accepted=engine_try_note_on(src,hz,velocity);
+#endif
+    if(accepted) {
         s_admitted_src[cell]=(int8_t)src;
         if(s_mod[MOD_HOLD]) { *held=true; *amp=velocity_amp; }
         else s_moment_src[cell]=(int8_t)src;

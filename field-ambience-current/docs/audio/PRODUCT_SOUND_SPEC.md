@@ -1,6 +1,6 @@
-# AMBIENT — Sound Software Candidate 0.12
+# AMBIENT — Sound Software Candidate 0.13
 
-Stand28.10.2026, Hierarchiekorrekturen auf PR194/254ee97. Aktueller vollständiger
+Stand06.11.2026, Cell-Übergaben auf PR195/7af582b. Aktueller vollständiger
 Softwarevertrag. Michalis beurteilt die V2-Worlds als „Besser“; das ist keine
 pauschale Parameter-/Gerätefreigabe. Der endgültige Freeze bleibt offen.
 
@@ -10,7 +10,7 @@ pauschale Parameter-/Gerätefreigabe. Der endgültige Freeze bleibt offen.
 |---|---|---|
 | Reference | keiner | Ausdrücklicher CMake-Default, historische Referenz |
 | Grundprodukt0.10 | FAM_SOUND_PROFILE=product | Vorheriger reduzierter Klang/SCN7; [unveränderter Archivvertrag](PRODUCT_SOUND_SPEC_0_10_ARCHIVE.md) |
-| Aktueller Sound0.12 | Product + FAM_SOUND_FINISH_CANDIDATE=ON | Materialmodell2, FX-Modell2 mit gemeinsamer Pegelregel/Färbung, geregelte Nature, GLP1; ohne Sessionflag weiter SCN7, neue FX/Loops dann nicht dauerhaft gespeichert |
+| Aktueller Sound0.13 | Product + FAM_SOUND_FINISH_CANDIDATE=ON | Materialmodell2, FX-Modell2 mit gemeinsamer Pegelregel/Färbung, geregelte Nature, Cell-Übergaben, GLP1; ohne Sessionflag weiter SCN7, neue FX/Loops dann nicht dauerhaft gespeichert |
 | Sound-Session | zusätzlich FAM_SOUND_SESSION_CANDIDATE=ON | SCN8/JSS1 mit echtem asynchronem H743-Speicher |
 | Messbuild | zusätzlich FAM_DEVICE_BENCH_CANDIDATE=ON | Derselbe Klang, startup-MSP-Paint, SAI-/DMA-Fehler und Savebeobachtungen |
 
@@ -32,9 +32,19 @@ Die begrenzten Grammatiken, Register, Major/Minor-Cores, Equal/Just,
 DSP-Startbestätigung und Eigentümerverträge des Archivvertrags gelten weiter:
 drei globale reale Quellen inklusive Vorbereitung/Release, WOODLAND höchstens
 zwei. Keine vierte World, tonale Zusatzschicht oder inharmonische Verstimmung.
-Manual und Generate benutzen dieselben Familien/Zulassung; gehaltene Hz
-werden nicht retuned. [Materialmodell2](WORLD_MATERIALS_V2_CHECKPOINT.md)
+Manual und Generate benutzen dieselben Familien; gehaltene Hz bleiben fest.
+[Materialmodell2](WORLD_MATERIALS_V2_CHECKPOINT.md)
 ersetzt alte Tonkörper-/Attack-/WOODLAND-Gain-/Colorbeschreibungen von0.10.
+
+Im momentanen NOTE-Spiel kann eine losgelassene Cell für einen Wiederanschlag,
+eine tiefe Nachbarnote oder eine volle Stimmenbelegung Platz machen. Das Audio
+blendet die alte Quelle über20ms aus. Main startet die reservierte Note nach
+bestätigter Freigabe. Loslassen vor dem Start und Kontextwechsel können die
+Reservierung abbrechen. Die Registerregel schützt gleichzeitig klingende
+direkte Quellen und hörbare Freeze-Reste. Im normalen Hallnachklang bleiben
+Tonhöhenidentität, Halbton- und Tritonusregeln maßgeblich. HOLD, Generate und
+Loop-Starts verwenden die strenge Zulassung. Eine reservierte Cell hat
+während ihrer kurzen Übergabe Vorrang bei der Stimmenbelegung.
 
 Activity steuert Phrasenzeiten; Attack/Release werden beim Start eingefangen.
 Physische Entfaltung bleibt notengebunden.128 Gestenereignisse enthalten

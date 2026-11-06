@@ -41,6 +41,9 @@ int engine_product_cell_midi(int cell,bool upper);
 bool engine_clear_pending(void);
 #ifdef FAM_SOUND_FINISH_CANDIDATE
 #include "sound_parameters.h"
+/* Momentary live Cell. A true result may reserve a short release handover;
+ * engine_note_off cancels an unstarted press. Service from the Main tick. */
+bool engine_try_cell_on(uint8_t source,float actual_hz,float velocity);
 /* Independent Main targets; no Scene/UI mapping is implied. */
 void engine_set_sound_effects(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate);
 /* Playback owners 8/14 stay separate from live/shift/drone/Generate. */

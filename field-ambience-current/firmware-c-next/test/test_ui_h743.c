@@ -211,12 +211,13 @@ static void nature_menu(void) {
 static void note_block_feedback(void) {
     reset(0,100);controls_modifier(MOD_GENERATE,true);engine_set_master_volume(.6f);
     static const int notes[3]={50,57,62};
+    static const uint8_t owners[3]={0,1,3};
     int16_t pcm[882];
     for(unsigned k=0;k<3;++k) {
-        assert(engine_try_note_on((uint8_t)k,tuning_hz((float)notes[k]),.5f));
+        assert(engine_try_note_on(owners[k],tuning_hz((float)notes[k]),.5f));
         engine_render(pcm,441);engine_generative_tick(100+k*10);
     }
-    uint32_t generation=overlay_gen();inputs(1u<<(MCP_BIT_CELL1+3));poll(200);
+    uint32_t generation=overlay_gen();inputs(1u<<(MCP_BIT_CELL1+2));poll(200);
     assert(engine_note_block_reason()==ENGINE_NOTE_VOICES_FULL);
     assert(overlay_gen()==generation+1 && overlay_active(200));
     inputs(0);poll(210);
@@ -241,6 +242,113 @@ static void note_block_feedback(void) {
     assert(engine_active_voices()==1 && overlay_gen()==generation);
     assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
     puts("H743 note feedback: real rejected pool/Freeze presses show overlay; displayed Clear releases capture and next Cell plays");
+}
+
+static void cell_audio(uint32_t *ms,int duration,int cap,int16_t *out) {
+    for(int elapsed=0;elapsed<duration;elapsed+=10) {
+        int16_t pcm[882];
+        engine_generative_tick(*ms);
+        for(int offset=0;offset<441;) {
+            int frames=441-offset;
+            if(frames>cap)frames=cap;
+            engine_render(pcm+2*offset,frames);
+            offset+=frames;
+        }
+        if(out) {
+            memcpy(out,pcm,sizeof pcm);
+            out+=882;
+        }
+        *ms+=10;
+    }
+    engine_generative_tick(*ms);
+}
+
+static void cell_edge(uint32_t ms,uint16_t down) {
+    inputs(down);
+    poll(ms);
+}
+
+static void cell_reset(int world) {
+    reset(world,100);
+    controls_modifier(MOD_GENERATE,true);
+    engine_set_master_volume(.6f);
+}
+
+static unsigned cell_tap_sequence(int world,int interval,int cap) {
+    static const uint8_t sequence[]={0,1,2,3,4,4,3,2,1,0,0,1,3,0};
+    uint32_t ms=100;
+    unsigned worst=0;
+    cell_reset(world);
+    for(unsigned i=0;i<sizeof sequence;++i) {
+        uint32_t pressed=ms;
+        cell_edge(ms,(uint16_t)(1u<<(MCP_BIT_CELL1+sequence[i])));
+        while(ons==i && ms-pressed<50)cell_audio(&ms,10,cap,NULL);
+        assert(ons==i+1 && last_owner==sequence[i]);
+        unsigned latency=ms-pressed;
+        if(latency>worst)worst=latency;
+        cell_audio(&ms,100-(int)latency,cap,NULL);
+        cell_edge(ms,0);
+        cell_audio(&ms,interval-100,cap,NULL);
+        assert(offs==ons);
+        assert(engine_active_voices()<=(world==1 ? 2 : 3));
+    }
+    assert(!engine_admission_rejections() && !engine_nonfinite_samples() && !engine_output_limited_samples());
+    return worst;
+}
+
+static void cell_live_handover(void) {
+    const uint16_t first=1u<<MCP_BIT_CELL1, adjacent=first<<1;
+    const uint16_t fourth=first<<3, fifth=first<<4;
+    for(int world=0;world<3;++world)for(int interval=600;interval<=2500;interval+=1900) {
+        unsigned fast=cell_tap_sequence(world,interval,64);
+        unsigned slow=cell_tap_sequence(world,interval,512);
+        assert(fast==slow);
+        printf("H743 momentary Cells: world=%d interval=%dms 14/14, worst host On ack=%ums\n",world,interval,slow);
+    }
+
+    /* A latched source keeps its note and the existing harmony protection. */
+    uint32_t ms=100;
+    cell_reset(1);
+    controls_modifier(MOD_HOLD,true);
+    cell_edge(ms,first);cell_audio(&ms,100,512,NULL);
+    cell_edge(ms,0);cell_audio(&ms,100,512,NULL);
+    controls_modifier(MOD_HOLD,true);
+    cell_edge(ms,adjacent);cell_audio(&ms,100,512,NULL);
+    assert(ons==1 && !offs && controls_hold_base(0));
+    assert(engine_note_block_reason()==ENGINE_NOTE_HELD_PITCH);
+
+    /* Compatible simultaneous replacements can reserve both Woodland slots. */
+    for(int cap=64;cap<=512;cap*=8) {
+        cell_reset(1);ms=100;
+        cell_edge(ms,first|fourth);cell_audio(&ms,100,cap,NULL);
+        cell_edge(ms,0);cell_audio(&ms,100,cap,NULL);
+        assert(ons==2 && offs==2 && engine_active_voices()==2);
+        cell_edge(ms,adjacent|fifth);
+        cell_audio(&ms,60,cap,cap==64 ? expected : actual);
+        assert(ons==4 && offs==2 && engine_active_voices()==2 && !engine_admission_rejections());
+    }
+    assert(!memcmp(expected,actual,2*6*441*sizeof *expected));
+
+    /* A reserved note cannot sound after an early release or context change. */
+    for(int cancel=0;cancel<5;++cancel) {
+        cell_reset(1);ms=100;
+        cell_edge(ms,first);cell_audio(&ms,100,512,NULL);
+        cell_edge(ms,0);cell_audio(&ms,100,512,NULL);
+        cell_edge(ms,adjacent);cell_audio(&ms,10,512,NULL);
+        assert(ons==1 && !engine_admission_rejections());
+        if(cancel==0)cell_edge(ms,0);
+        if(cancel==1)cell_edge(ms,adjacent|(1u<<MCP_BIT_MOD_CLEAR));
+        if(cancel==2)engine_set_muted(true);
+        if(cancel==3)engine_set_world(0);
+        if(cancel==4)engine_set_key_pc(4);
+        cell_audio(&ms,100,512,NULL);
+        assert(ons==1 && offs==1 && !engine_active_voices());
+        cell_edge(ms,0);
+        engine_set_muted(false);
+        cell_edge(ms,first);cell_audio(&ms,60,512,NULL);
+        assert(ons==2 && last_owner==0);
+    }
+    puts("H743 momentary Cells: held harmony, paired ramps, handover cancellation and reuse pass");
 }
 #endif
 /* An already sounding press keeps its release recipient while the Scene
@@ -323,6 +431,7 @@ int main(void) {
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     nature_menu();
     note_block_feedback();
+    cell_live_handover();
 #endif
     /* Real boot initializer must prime the indirect EN4 level before its
      * snapshot. Its queued down and later up are both consumed, no Mute. */
