@@ -304,6 +304,17 @@ static void init_human_inputs(uint32_t now, uint16_t gpio) {
         if (enc_pushed((uint8_t)id)) down |= UINT32_C(1) << (15u + id);
     ui_idle_init(&s_ui_idle, now, down);
 }
+static void release_cell_edge(uint8_t c, bool browsing, uint32_t now) {
+#ifdef FAM_SOUND_PRODUCT
+    controls_cell_physical(c, false);
+#endif
+    /* The browser owns new presses; earlier notes keep their release route. */
+    uint8_t owner = s_cell_router.owner[c];
+    if (browsing && !owner) return;
+    bool land = browsing ? owner == CELL_LAND + 1 : s_cell_mode == CELL_LAND;
+    if (!land || c != 4) gesture_record_cell(c, false, now);
+    route_cell(c, false, now);
+}
 static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                               uint8_t *jack_pending, uint32_t *jack_edge_ms,
                               bool *ui_dirty) {
@@ -388,26 +399,27 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
         if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
         if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
 
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        const uint16_t cell_bits = (uint16_t)(((1u << CTRL_CELL_COUNT) - 1u) << MCP_BIT_CELL1);
+        uint16_t cell_releases = rose & cell_bits;
+        if (s_cell_mode == CELL_NOTE && !scenes_ui_active() && cell_releases && (fell & cell_bits)) {
+            /* A simultaneous key-up yields its note before the new press
+             * checks harmony, in either direction across the keys. */
+            for (uint8_t c = 0; c < CTRL_CELL_COUNT; ++c)
+                if (cell_releases & (1u << (MCP_BIT_CELL1 + c))) release_cell_edge(c, false, now);
+            rose &= (uint16_t)~cell_releases;
+        }
+#endif
         /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL).
          * r19.22: solange der Scenes-Browser offen ist, WAEHLEN die
          * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
         for (uint8_t c = 0; c < 5; ++c) {
             uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
-#ifdef FAM_SOUND_PRODUCT
-            if(rose & m) controls_cell_physical(c,false);
-#endif
-            if (scenes_ui_active() && !controls_modifier_active(MOD_GENERATE)) {
+            bool browsing = scenes_ui_active() && !controls_modifier_active(MOD_GENERATE);
+            if (browsing) {
                 if (fell & m)
                     scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
                                    now);
-                /* The browser owns new presses, never an earlier note's
-                 * release. Preserve its original route and REC off edge;
-                 * a slot-selection-only up has no routed owner to release. */
-                if ((rose & m) && s_cell_router.owner[c]) {
-                    bool record = !(s_cell_router.owner[c] == CELL_LAND + 1 && c == 4);
-                    if (record) gesture_record_cell(c, false, now);
-                    route_cell(c, false, now);
-                }
             } else {
                 /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
                  * durch die gemeinsame Routing-Logik spielen.
@@ -436,9 +448,8 @@ static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
                                 if(s_cell_mode==CELL_NOTE) controls_cell_physical(c,true);
 #endif
                               }
-                if (rose & m) { if (record) gesture_record_cell(c, false, now);
-                                route_cell(c, false, now); }
             }
+            if (rose & m) release_cell_edge(c, browsing, now);
         }
 
         /* Modifier GPB0-4 (bits 8-12). r19.20: BOTH edges reach

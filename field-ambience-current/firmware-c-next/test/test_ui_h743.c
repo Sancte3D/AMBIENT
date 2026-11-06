@@ -306,6 +306,18 @@ static void cell_live_handover(void) {
         printf("H743 momentary Cells: world=%d interval=%dms 14/14, worst host On ack=%ums\n",world,interval,slow);
     }
 
+    /* The MCP can report one release and one press in a single snapshot. */
+    for(int world=0;world<3;++world)for(int reverse=0;reverse<2;++reverse) {
+        uint32_t edge_ms=100;
+        cell_reset(world);
+        cell_edge(edge_ms,reverse ? adjacent : first);
+        cell_audio(&edge_ms,100,512,NULL);
+        cell_edge(edge_ms,reverse ? first : adjacent);
+        cell_audio(&edge_ms,60,512,NULL);
+        assert(ons==2 && offs==1 && last_owner==(uint8_t)!reverse);
+        assert(!engine_admission_rejections());
+    }
+
     /* A latched source keeps its note and the existing harmony protection. */
     uint32_t ms=100;
     cell_reset(1);
@@ -348,7 +360,7 @@ static void cell_live_handover(void) {
         cell_edge(ms,first);cell_audio(&ms,60,512,NULL);
         assert(ons==2 && last_owner==0);
     }
-    puts("H743 momentary Cells: held harmony, paired ramps, handover cancellation and reuse pass");
+    puts("H743 momentary Cells: same-scan swaps, held harmony, paired ramps, handover cancellation and reuse pass");
 }
 #endif
 /* An already sounding press keeps its release recipient while the Scene

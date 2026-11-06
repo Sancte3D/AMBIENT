@@ -40,7 +40,8 @@ Im momentanen NOTE-Spiel kann eine losgelassene Cell für einen Wiederanschlag,
 eine tiefe Nachbarnote oder eine volle Stimmenbelegung Platz machen. Das Audio
 blendet die alte Quelle über20ms aus. Main startet die reservierte Note nach
 bestätigter Freigabe. Loslassen vor dem Start und Kontextwechsel können die
-Reservierung abbrechen. Die Registerregel schützt gleichzeitig klingende
+Reservierung abbrechen. Im selben H743-Tastenscan werden NOTE-Freigaben vor
+neuen Anschlägen verarbeitet. Die Registerregel schützt gleichzeitig klingende
 direkte Quellen und hörbare Freeze-Reste. Im normalen Hallnachklang bleiben
 Tonhöhenidentität, Halbton- und Tritonusregeln maßgeblich. HOLD, Generate und
 Loop-Starts verwenden die strenge Zulassung. Eine reservierte Cell hat
