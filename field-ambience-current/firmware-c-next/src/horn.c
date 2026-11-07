@@ -56,7 +56,17 @@ typedef struct {
     uint32_t unfold;
     world_character_t character;
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    float    vibPh, vibInc, incCur;       /* delayed gentle vibrato (turns) */
+    int      vibDelay;                    /* control ticks before it fades in */
+    dsp_svf_t breath1, breath2;           /* tuned breath: 4-pole band at the note */
+#endif
 } hvoice_t;
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Tuned breath, about -24 dB re the whistle tone at A4; >90 % of it lies
+ * within half an octave of the note, nothing measurable above 2.6 kHz. */
+static const float HL_BREATH=.55f;
+#endif
 
 static hvoice_t V[VMAX], pending[VMAX];
 /* Prepare off the audio path; at capacity fade the old voice for 8 ms,
@@ -142,6 +152,13 @@ static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float am
 
     dsp_svf_reset(&v->blare);   dsp_svf_set(&v->blare, freq_hz * 2.2f, 0.707f);
     dsp_svf_reset(&v->chiffbp); dsp_svf_set(&v->chiffbp, 1700.0f, 1.1f);
+#ifdef FAM_SOUND_AMBIENT_V3
+    dsp_svf_set(&v->chiffbp, 3200.0f, 0.9f);   /* air above the tone, not hiss in it */
+    /* Ocarina breath: noise through two band-passes at the played pitch, so it
+     * colours the note itself and its skirts stay out of the high band. */
+    dsp_svf_reset(&v->breath1); dsp_svf_set(&v->breath1, freq_hz, 2.5f);
+    dsp_svf_reset(&v->breath2); dsp_svf_set(&v->breath2, freq_hz, 2.5f);
+#endif
 
     v->env = 0.0001f;
     v->envInc  = v->amp / (0.45f * shape_attack_scale() * SR);  /* 450 ms x SHAPE */
@@ -149,6 +166,14 @@ static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float am
     v->envInc=v->amp/(.70f*shape_attack_scale()*SR);
 #endif
     v->relCoef = dsp_smooth_coef(0.7f * shape_release_scale()); /* r19.60 */
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Airy whistle: a breath-quick 400 ms bloom, longer release, vibrato that starts
+     * ~0.5 s into the note and fades in over ~1 s (4.7 Hz, about +-5 cents). */
+    v->envInc=v->amp/(.40f*shape_attack_scale()*SR);
+    v->relCoef=dsp_smooth_coef(.85f*shape_release_scale());
+    v->vibPh=0.0f; v->vibInc=4.7f*(float)CTL/SR; v->incCur=v->inc;
+    v->vibDelay=(int)(.50f*SR/(float)CTL);
+#endif
     v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
     v->blareEnv  = 0.0f;
     v->chiff_left = (int)(0.09f * SR);         /* 90 ms of air at the onset          */
@@ -268,6 +293,13 @@ void horn_render_mix(float *dry_L, float *dry_R,
                  * varies upper loss without collapsing to a plain sine. */
                 cut=v->freq*(4.4f+.5f*tone_cur+.35f*v->blareEnv);
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+                cut=v->freq*(5.0f+1.6f*tone_cur+.40f*v->blareEnv);
+                if(v->vibDelay>0) --v->vibDelay;
+                else v->vibFade+=(1.0f-v->vibFade)*((float)CTL/(1.0f*SR));
+                v->vibPh+=v->vibInc; if(v->vibPh>=1.0f) v->vibPh-=1.0f;
+                v->incCur=v->inc*(1.0f+.0030f*v->vibFade*dsp_sin(v->vibPh));
+#endif
 #ifdef FAM_SOUND_PRODUCT
                 cut *= 1.0f+.40f*opening;
                 if(v->character.enabled) cut*=v->character.tone;
@@ -301,12 +333,21 @@ void horn_render_mix(float *dry_L, float *dry_R,
 #ifdef FAM_SOUND_FINISH_CANDIDATE
             float shade=2*tone_cur-1+.20f*opening;
             if(v->character.enabled)shade+=v->character.shade;
+#ifdef FAM_SOUND_AMBIENT_V3
+            float reed=highlands_air_sample(v->ph,v->freq,shade);
+            v->ph+=v->incCur;if(v->ph>=1)v->ph-=1;
+            float brass=dsp_svf_lp(&v->blare,reed);
+            /* Air, about 15 dB below the former aspiration, above the tone. */
+            brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.010f+.008f*v->blareEnv);
+            brass+=dsp_svf_bp(&v->breath2,dsp_svf_bp(&v->breath1,wnoise(&v->rng)))*HL_BREATH;
+#else
             float reed=highlands_breath_sample(v->ph,v->freq,shade);
             v->ph+=v->inc;if(v->ph>=1)v->ph-=1;
             float brass=dsp_svf_lp(&v->blare,reed);
             /* A restrained sustained aspiration belongs to this note and
              * follows its entire envelope/release, not a 90ms pre-bloom burst. */
             brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.055f+.025f*v->blareEnv);
+#endif
 #else
             float saw_share=.45f,sine_share=.35f;
 #ifdef FAM_SOUND_PRODUCT

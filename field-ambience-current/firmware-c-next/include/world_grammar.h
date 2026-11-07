@@ -32,6 +32,13 @@ void world_grammar_commit(world_grammar_t *g, const world_offer_t *offer,
                           int heard_index, uint32_t now_ms);
 int world_pitch_count(int key_pc, bool minor);
 int world_pitch_midi(int index, int key_pc, bool minor);
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Live (non-phrase) admission window: the D4.. Cell window plus the previous
+ * D3.. window, so HARMONY voicings and the LANDSCAPE bed, which still voice
+ * from brain.c in octave 3/4, are never rejected by the higher Cells. */
+bool world_live_pitch_allowed(int midi, int key_pc, bool minor);
+enum { WORLD_LIVE_MIDI_LOW=50, WORLD_LIVE_MIDI_HIGH=86 };
+#endif
 
 /* Heard phrase memory, no extra source or user parameter. A complete first
  * phrase learns its seed/contour. Variation and relative-key voicings lead

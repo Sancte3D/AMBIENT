@@ -108,7 +108,13 @@ static float sf_room_level(const float *in,const float *room) {
     }
     for(int k=0;k<2;++k)sf.room_power[k]+=(power[k]-sf.room_power[k])*(1.0f/(.250f*DSP_SAMPLE_RATE_HZ));
     if((sf.room_tick++&63u)==0 && power[0]>1e-12f && sf.room_power[0]>1e-10f && sf.room_power[1]>1e-12f)
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* Ambient voicing: the room is part of the instrument. Nominal return
+         * .9*Room of Dry (about -7 dB at Room .5, -1 dB at 1) instead of .25. */
+        sf.room_goal=dsp_clampf(sqrtf((.90f/.35f)*(.90f/.35f)*sf.room_power[0]/sf.room_power[1]),.125f,32);
+#else
         sf.room_goal=dsp_clampf(sqrtf((.25f/.35f)*(.25f/.35f)*sf.room_power[0]/sf.room_power[1]),.125f,8);
+#endif
     sf.room_gain+=(sf.room_goal-sf.room_gain)*(1.0f/(.500f*DSP_SAMPLE_RATE_HZ));
     return sf.room_gain;
 }

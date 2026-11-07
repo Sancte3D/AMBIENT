@@ -46,8 +46,16 @@ static inline void woodland_resonator_prepare(woodland_resonator_t *r,
         /* A voiced wooden body, rather than a triangle losing every upper
          * mode at once. The fourth/sixth form a warm struck shoulder; upper
          * loss is still faster than the unchanged 36s fundamental. */
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* Ambient voicing: a soft mallet. The fundamental leads, upper modes
+         * are quiet and die early, so the ring stays round instead of the
+         * loud double-octave shoulder; a 10 s fundamental instead of 36 s. */
+        static const float seconds[8]={10,6.5f,4.5f,3.4f,2.6f,2.0f,1.6f,1.3f};
+        static const float weight[8]={.62f,.14f,.09f,.05f,.03f,.015f,.008f,.004f};
+#else
         static const float seconds[8]={36,30,18,26,16,12,10,8};
         static const float weight[8]={.40f,.025f,.08f,.28f,.07f,.14f,.015f,.06f};
+#endif
         double t60=(double)seconds[m]*release_scale;
 #else
         double t60=36.0*(double)release_scale/(1.0+.28*m*m);

@@ -270,29 +270,56 @@ int engine_sounding_notes(int *out,int max) {
     }
     return count;
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Ambient voicing: Generate keeps its grammar registers, memory and voice
+ * leading, but every phrase pitch sounds one octave higher. Cells use the
+ * D4.. window of world_pitch_midi, SHIFT is an exact octave above. Live
+ * admission keeps the previous D3.. window too (world_live_pitch_allowed),
+ * so nothing the previous voicing accepted is rejected now. */
+enum { PHRASE_SHIFT=12, CELL_SHIFT_STEPS=5 };
+#define PHRASE_LO_HZ 210.0f
+#define CELL_LO_HZ 140.0f
+#define CELL_HI_HZ 1250.0f
+#else
+enum { PHRASE_SHIFT=0, CELL_SHIFT_STEPS=3 };
+#define PHRASE_LO_HZ 105.0f
+#define CELL_LO_HZ 140.0f
+#define CELL_HI_HZ 470.0f
+#endif
+static float phrase_hz(int midi) { return tuning_hz((float)(midi+PHRASE_SHIFT)); }
+static float phrase_hi_hz(void) {
+    float hi=world==WORLD_COAST ? 850.0f : world==WORLD_HIGHLANDS ? 650.0f : 470.0f;
+    return PHRASE_SHIFT ? 2.0f*hi : hi;
+}
 static bool in_collection(float hz,bool phrase) {
     if(phrase) {
         int top=world==WORLD_WOODLAND ? 68 : world==WORLD_HIGHLANDS ? 75 : 80;
         for(int m=45;m<=top;++m) if(world==WORLD_WOODLAND ?
                 woodland_phrase_pitch_allowed(m,tonic_pc,minor!=0) : world==WORLD_HIGHLANDS ?
                 highlands_phrase_pitch_allowed(m,tonic_pc,minor!=0) : coast_phrase_pitch_allowed(m,tonic_pc,minor!=0)) {
-            float allowed=tuning_hz((float)m);
+            float allowed=phrase_hz(m);
             if(fabsf(1200.0f*log2f(hz/allowed))<3)return true;
         }
         return false;
     }
+#ifdef FAM_SOUND_AMBIENT_V3
+    for(int m=WORLD_LIVE_MIDI_LOW;m<=WORLD_LIVE_MIDI_HIGH;++m) if(world_live_pitch_allowed(m,tonic_pc,minor!=0)) {
+        if(fabsf(1200.0f*log2f(hz/tuning_hz((float)m)))<3) return true;
+    }
+#else
     int n=world_pitch_count(tonic_pc,minor!=0);
     for(int i=0;i<n;++i) {
         float allowed=tuning_hz((float)world_pitch_midi(i,tonic_pc,minor!=0));
         if(fabsf(1200.0f*log2f(hz/allowed))<3) return true;
     }
+#endif
     return false; /* Reject outside pitches; never silently clamp or transpose. */
 }
 static bool note_request_valid(uint8_t owner,float hz,float velocity,bool phrase) {
     note_block=ENGINE_NOTE_OK;
     if(clearing || muted) {note_block=ENGINE_NOTE_SILENCED;return false;}
     if(owner>=SOURCES || !isfinite(hz) || !isfinite(velocity) || velocity<=0 ||
-       hz<(phrase ? 105 : 140) || hz>(phrase ? (world==WORLD_COAST ? 850 : world==WORLD_HIGHLANDS ? 650 : 470) : 470) ||
+       hz<(phrase ? PHRASE_LO_HZ : CELL_LO_HZ) || hz>(phrase ? phrase_hi_hz() : CELL_HI_HZ) ||
        !in_collection(hz,phrase)) {note_block=ENGINE_NOTE_INVALID;return false;}
     return true;
 }
@@ -605,7 +632,7 @@ int engine_product_world(void) { return world; }
 int engine_product_collection(void) { return minor; }
 int engine_product_cell_midi(int cell,bool upper) {
     if(cell<0 || cell>=CELL_COUNT) return -1;
-    return world_pitch_midi(cell+(upper ? 3 : 0),tonic_pc,minor!=0);
+    return world_pitch_midi(cell+(upper ? CELL_SHIFT_STEPS : 0),tonic_pc,minor!=0);
 }
 #ifdef FAM_SOUND_FINISH_CANDIDATE
 bool engine_apply_sound_parameters(const sound_parameters_t *p) {
@@ -725,8 +752,8 @@ static int revoice(int role,int midi) {
         bool allowed=world==WORLD_COAST ? coast_phrase_pitch_allowed(m,tonic_pc,minor!=0) :
                      world==WORLD_WOODLAND ? woodland_phrase_pitch_allowed(m,tonic_pc,minor!=0) :
                      highlands_phrase_pitch_allowed(m,tonic_pc,minor!=0);
-        float hz=tuning_hz((float)m);
-        if(!allowed || hz<105 || hz>(world==WORLD_COAST ? 850 : world==WORLD_WOODLAND ? 470 : 650) || !pitch_clear(hz))continue;
+        float hz=phrase_hz(m);
+        if(!allowed || hz<PHRASE_LO_HZ || hz>phrase_hi_hz() || !pitch_clear(hz))continue;
         int d=m-prev;if(d<0)d=-d;
         if(d<cost) {cost=d;best=m;}
     }
@@ -734,7 +761,7 @@ static int revoice(int role,int midi) {
 }
 #endif
 static bool coast_start(const coast_offer_t *o) {
-    float hz=tuning_hz((float)o->midi);
+    float hz=phrase_hz(o->midi);
     if(!admit(coast_owners[o->role],hz,o->velocity,true)) {++rejects;return false;}
     coast_tickets[o->role]=*o; coast_pending|=(uint8_t)(1u<<o->role);
     return true;
@@ -770,14 +797,14 @@ static void coast_tick(uint32_t ms) {
     coast_offer_t b=coast_phrase_propose(&coast,1,tonic_pc,minor!=0,activity);
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     a.midi=revoice(a.role,a.midi);b.midi=revoice(b.role,b.midi);
-    if(!compatible(tuning_hz((float)a.midi),tuning_hz((float)b.midi),true) || a.midi==b.midi) {
+    if(!compatible(phrase_hz(a.midi),phrase_hz(b.midi),true) || a.midi==b.midi) {
         a=coast_phrase_propose(&coast,0,tonic_pc,minor!=0,activity);
         b=coast_phrase_propose(&coast,1,tonic_pc,minor!=0,activity);
     }
 #endif
     int free=0;for(int i=0;i<SLOTS;++i)free+=!slots[i].used;
     if(!coast.heard_mask && (free<2 || !coast_owner_free(0) || !coast_owner_free(1) ||
-       !pitch_clear(tuning_hz((float)a.midi)) || !pitch_clear(tuning_hz((float)b.midi)))) {
+       !pitch_clear(phrase_hz(a.midi)) || !pitch_clear(phrase_hz(b.midi)))) {
         retry_ms=ms+250; return;
     }
     /* Bounded pair preparation in Main. State commits only at audio ack.
@@ -795,7 +822,7 @@ static void woodland_tick(uint32_t ms) {
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     o.midi=revoice(o.role,o.midi);
 #endif
-    if(!coast_owner_free(o.role) || !admit(coast_owners[o.role],tuning_hz((float)o.midi),o.velocity,true)) {
+    if(!coast_owner_free(o.role) || !admit(coast_owners[o.role],phrase_hz(o.midi),o.velocity,true)) {
         ++rejects;retry_ms=ms+250;return;
     }
     woodland_ticket=o;woodland_pending=true;
@@ -815,7 +842,7 @@ static void highlands_tick(uint32_t ms) {
     o.midi=revoice(o.role,o.midi);
 #endif
     if(!coast_owner_free(o.role)) {retry_ms=ms+250;return;}
-    if(!admit(coast_owners[o.role],tuning_hz((float)o.midi),o.velocity,true)) {
+    if(!admit(coast_owners[o.role],phrase_hz(o.midi),o.velocity,true)) {
         ++rejects;retry_ms=ms+250;return;
     }
     highlands_ticket=o;highlands_pending=true;

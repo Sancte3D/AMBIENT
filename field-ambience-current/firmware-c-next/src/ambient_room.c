@@ -55,7 +55,12 @@ bool ambient_room_retains_history(void) {
 void ambient_room_set(float amount) {
     if(!isfinite(amount)) return;
     amount=dsp_clampf(amount,0,1);
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Ambient voicing: a longer room, 3.5 s at the default .5 and 8 s at 1. */
+    float t60=2.0f+6.0f*amount*amount;
+#else
     float t60=1.2f+3.6f*amount*amount;
+#endif
     uint32_t next[LINES];
     for(int i=0;i<LINES;++i)
         next[i]=bits(expf(-6.9077553f*(float)lengths[i]/(DSP_SAMPLE_RATE_HZ*t60)));

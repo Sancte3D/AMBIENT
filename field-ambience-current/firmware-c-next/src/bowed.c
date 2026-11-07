@@ -56,6 +56,9 @@ typedef struct {
     world_character_t character;
     bool soft_pad;
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    float ph2, inc2;                       /* ensemble partner, +5 cents  */
+#endif
 } bvoice_t;
 
 static bvoice_t V[VMAX], pending[VMAX];
@@ -163,6 +166,15 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
     if(v->soft_pad)v->envInc=v->amp/(1.8f*shape_attack_scale()*SR);
 #endif
     v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Ambient pad: a slow 2 s swell, a longer soft release and an ensemble
+     * partner 5 cents above (2^(5/1200)), started out of phase. */
+    if(v->soft_pad) {
+        v->envInc=v->amp/(2.0f*shape_attack_scale()*SR);
+        v->relCoef=dsp_smooth_coef(1.1f*shape_release_scale());
+    }
+    v->inc2=v->inc*1.0028922f; v->ph2=.31f;
+#endif
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
     v->bow = 0.0f;
     #ifdef FAM_SOUND_PRODUCT
@@ -309,11 +321,20 @@ void bowed_render_mix(float *dry_L, float *dry_R,
              * oscillator power: sqrt(.71^2 + .125^2) ~= .721. */
             float inc  = v->inc;
             float out;
+#ifdef FAM_SOUND_AMBIENT_V3
+            float side = 0.0f;
+#endif
 #ifdef FAM_SOUND_PRODUCT
             if(v->soft_pad) {
                 float shade=2*tone_cur-1+.25f*opening;
                 if(v->character.enabled)shade+=v->character.shade;
+#ifdef FAM_SOUND_AMBIENT_V3
+                out=soft_pad_v3_sample(v->ph,v->freq,shade)*v->env*.5f;
+                side=soft_pad_v3_partner(v->ph2,v->freq)*v->env*.5f*.45f;
+                v->ph2+=v->inc2;if(v->ph2>=1)v->ph2-=1;
+#else
                 out=soft_pad_sample(v->ph,v->freq,shade)*v->env*.5f;
+#endif
                 v->ph+=inc;if(v->ph>=1)v->ph-=1;
             } else {
 #endif
@@ -337,7 +358,11 @@ void bowed_render_mix(float *dry_L, float *dry_R,
             }
 #endif
             if(fade_left[i]>0) {
-                out *= (float)fade_left[i]/(float)fade_total[i];
+                float fade=(float)fade_left[i]/(float)fade_total[i];
+                out *= fade;
+#ifdef FAM_SOUND_AMBIENT_V3
+                side *= fade;
+#endif
                 if(--fade_left[i]==0) v->stage=V_IDLE;
             }
 
@@ -345,11 +370,20 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 #ifdef FAM_SOUND_PRODUCT
             if(v->character.enabled) {
                 out*=v->character.gain;
+#ifdef FAM_SOUND_AMBIENT_V3
+                side*=v->character.gain;
+#endif
                 panL-=v->character.pan; panR+=v->character.pan;
             }
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+            /* The ensemble partner sits on the opposite side. */
+            L += out * panL + side * panR;
+            R += out * panR + side * panL;
+#else
             L += out * panL;
             R += out * panR;
+#endif
         }
 
         if (++ctl >= CTL) ctl = 0;

@@ -230,14 +230,21 @@ static void note_block_feedback(void) {
     for(unsigned ms=2100;ms<26100;ms+=10) {engine_generative_tick(ms);engine_render(pcm,441);}
     assert(!engine_active_voices());engine_set_key_pc(4);
     s_ui_idle.last_ms=26100; /* This case tests an awake press, not wake-only. */
-    generation=overlay_gen();inputs(1u<<MCP_BIT_CELL1);poll(26100);
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* V3 Cells sit an octave higher: E4 no longer crowds the frozen D3; the
+     * semitone-class C#5 (Cell 5 in E) is the protected conflict. */
+    const uint16_t frozen_cell=(uint16_t)(1u<<(MCP_BIT_CELL1+4));
+#else
+    const uint16_t frozen_cell=(uint16_t)(1u<<MCP_BIT_CELL1);
+#endif
+    generation=overlay_gen();inputs(frozen_cell);poll(26100);
     assert(engine_note_block_reason()==ENGINE_NOTE_FROZEN_PITCH);
     assert(overlay_gen()==generation+1 && overlay_active(26100));
     inputs(0);poll(26110);
     /* The displayed Clear action must actually free the protected capture. */
     inputs(1u<<MCP_BIT_MOD_CLEAR);poll(26120);inputs(0);poll(26130);
     for(unsigned ms=26130;ms<26500;ms+=10) {engine_generative_tick(ms);engine_render(pcm,441);}
-    generation=overlay_gen();inputs(1u<<MCP_BIT_CELL1);poll(26500);
+    generation=overlay_gen();inputs(frozen_cell);poll(26500);
     engine_render(pcm,441);engine_generative_tick(26510);
     assert(engine_active_voices()==1 && overlay_gen()==generation);
     assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
@@ -326,8 +333,14 @@ static void cell_live_handover(void) {
     cell_edge(ms,0);cell_audio(&ms,100,512,NULL);
     controls_modifier(MOD_HOLD,true);
     cell_edge(ms,adjacent);cell_audio(&ms,100,512,NULL);
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* V3 register: D4+E4 is a compatible second above middle C under the same
+     * harmony rule, so the neighbour sounds beside the untouched latch. */
+    assert(ons==2 && !offs && controls_hold_base(0));
+#else
     assert(ons==1 && !offs && controls_hold_base(0));
     assert(engine_note_block_reason()==ENGINE_NOTE_HELD_PITCH);
+#endif
 
     /* Compatible simultaneous replacements can reserve both Woodland slots. */
     for(int cap=64;cap<=512;cap*=8) {
@@ -344,21 +357,31 @@ static void cell_live_handover(void) {
     /* A reserved note cannot sound after an early release or context change. */
     for(int cancel=0;cancel<5;++cancel) {
         cell_reset(1);ms=100;
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* V3 register: neighbours are compatible, so the full two-voice
+         * WOODLAND pool (two ringing tails) is what reserves the handover. */
+        cell_edge(ms,fourth);cell_audio(&ms,100,512,NULL);
+        cell_edge(ms,0);cell_audio(&ms,100,512,NULL);
+        const unsigned before=1;
+#else
+        const unsigned before=0;
+#endif
         cell_edge(ms,first);cell_audio(&ms,100,512,NULL);
         cell_edge(ms,0);cell_audio(&ms,100,512,NULL);
         cell_edge(ms,adjacent);cell_audio(&ms,10,512,NULL);
-        assert(ons==1 && !engine_admission_rejections());
+        assert(ons==1+before && !engine_admission_rejections());
         if(cancel==0)cell_edge(ms,0);
         if(cancel==1)cell_edge(ms,adjacent|(1u<<MCP_BIT_MOD_CLEAR));
         if(cancel==2)engine_set_muted(true);
         if(cancel==3)engine_set_world(0);
         if(cancel==4)engine_set_key_pc(4);
         cell_audio(&ms,100,512,NULL);
-        assert(ons==1 && offs==1 && !engine_active_voices());
+        /* The reserved neighbour never sounds; at most the untouched tail rings. */
+        assert(ons==1+before && offs==1+before && engine_active_voices()<=(int)before);
         cell_edge(ms,0);
         engine_set_muted(false);
         cell_edge(ms,first);cell_audio(&ms,60,512,NULL);
-        assert(ons==2 && last_owner==0);
+        assert(ons==2+before && last_owner==0);
     }
     puts("H743 momentary Cells: same-scan swaps, held harmony, paired ramps, handover cancellation and reuse pass");
 }
@@ -368,6 +391,7 @@ static void cell_live_handover(void) {
 static void scene_release_route(int world,bool scene,bool hardware,bool hold,int16_t *pcm) {
     reset(world,100);controls_modifier(MOD_GENERATE,true);
     if(hold)controls_modifier(MOD_HOLD,true);
+    unsigned offs_after_release=0;
     for(unsigned t=0;t<12000;t+=10) {
         uint32_t now=100+t;s_ui_idle.last_ms=now;
         if(t==0) {
@@ -381,8 +405,17 @@ static void scene_release_route(int world,bool scene,bool hardware,bool hold,int
         }
         poll(now);engine_generative_tick(now);
         engine_render(pcm+2*(t/10)*441,441);
+        if(t==2500)offs_after_release=offs;
     }
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* The routed release decides the first second; the V3 WOODLAND mallet
+     * (10 s ring) then retires naturally inside the 12 s window. */
+    assert(ons==1 && offs_after_release==(hold ? 0u : 1u) &&
+           offs==(hold && world!=1 ? 0u : 1u));
+#else
+    (void)offs_after_release;
     assert(ons==1 && offs==(hold ? 0u : 1u));
+#endif
     if(hardware)assert(!s_cell_router.owner[0]);
     assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
 }

@@ -62,18 +62,30 @@ static bool core(int midi, int key, bool minor) {
     for (int i=0; i<5; ++i) if (pc == p[i]) return true;
     return false;
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Ambient voicing: the five Cells start at D4 instead of D3 and the window
+ * holds two pentatonic octaves, so SHIFT can be an exact octave (index+5). */
+enum { CELL_WINDOW_LOW=62, CELL_WINDOW_HIGH=86 };
+#else
+enum { CELL_WINDOW_LOW=50, CELL_WINDOW_HIGH=69 };
+#endif
 int world_pitch_count(int key, bool minor) {
     int n=0;
-    for (int m=50; m<=69; ++m) n += core(m, key, minor);
+    for (int m=CELL_WINDOW_LOW; m<=CELL_WINDOW_HIGH; ++m) n += core(m, key, minor);
     return n;
 }
 int world_pitch_midi(int index, int key, bool minor) {
     int n=world_pitch_count(key, minor);
     if (index < 0) index=0;
     if (index >= n) index=n-1;
-    for (int m=50; m<=69; ++m) if (core(m,key,minor) && index-- == 0) return m;
-    return 50;
+    for (int m=CELL_WINDOW_LOW; m<=CELL_WINDOW_HIGH; ++m) if (core(m,key,minor) && index-- == 0) return m;
+    return CELL_WINDOW_LOW;
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+bool world_live_pitch_allowed(int midi, int key, bool minor) {
+    return midi>=WORLD_LIVE_MIDI_LOW && midi<=WORLD_LIVE_MIDI_HIGH && core(midi,key,minor);
+}
+#endif
 void world_grammar_init(world_grammar_t *g, int world, uint32_t seed) {
     memset(g,0,sizeof *g);
     g->world = world >= 0 && world < CORE_WORLD_COUNT ? world : WORLD_COAST;

@@ -27,6 +27,17 @@ for source in BOWED HORN PLUCK; do
     "$tmp/unfold_source_test"
 done
 
+# Ambient voicing V3 candidate (FAM_SOUND_AMBIENT_V3, default OFF): Cell register
+# and SHIFT octave, soft spectra without horn/clarinet partials, quiet air and an
+# audible bounded room, through the real Full-Sound Product engine.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT -DFAM_SOUND_FINISH_CANDIDATE -DFAM_SOUND_AMBIENT_V3 \
+    "$here/test_ambient_v3.c" "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+    "$src/src/controls.c" "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+    "$src/src/ambient_room.c" "$src/src/nature.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" "$src/src/gesture.c" \
+    -lm -o "$tmp/ambient_v3_test"
+"$tmp/ambient_v3_test"
+
 # Opt-in family character: private snapshots and real Product controls.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_world_character.c" \
     "$src/src/engine_product.c" "$src/src/world_grammar.c" "$src/src/controls.c" \
