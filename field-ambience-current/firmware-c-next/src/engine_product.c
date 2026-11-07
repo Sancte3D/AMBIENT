@@ -20,6 +20,9 @@
 #ifdef FAM_SOUND_FINISH_CANDIDATE
 #include "gesture.h"
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_motion.h"
+#endif
 #include <stdatomic.h>
 #include <string.h>
 _Static_assert(ATOMIC_INT_LOCK_FREE==2,"Audio needs lock-free word atomics");
@@ -86,6 +89,99 @@ static uint32_t quiet_frames;
 static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
 static uint32_t clock_frames(void) { return atomic_load_explicit(&audio_frames,memory_order_acquire); }
+#ifdef FAM_SOUND_AMBIENT_V3
+/* DRONE: a soft, slowly breathing tonic+fifth bed (root ~147-277 Hz). A layer
+ * of its own: never a note slot, never admitted, no tail history, so it can
+ * neither block nor steal a Cell. Main publishes the target level and root;
+ * Audio ramps (about 5 s in, 8 s out) and glides 1.5 s to a new key. */
+enum { DRONE_VOICES=2 };
+static const float DRONE_LEVEL=.022f; /* about -12 dB re a held COAST/HIGHLANDS Cell */
+static _Atomic uint32_t drone_level_bits,drone_root_bits;
+static bool drone_on;
+typedef struct { float ph,ph2,beat,lev,drift; ambient_motion_t motion; } drone_voice_t;
+static struct { drone_voice_t v[DRONE_VOICES]; float level,root; } drone;
+static float drone_root_hz(void) {
+    int m=48+(tonic_pc<0 ? 2 : tonic_pc); if(m<50) m+=12;
+    return tuning_hz((float)m);
+}
+static void drone_publish(void) {
+    bool on=drone_on && !muted;
+    atomic_store_explicit(&drone_root_bits,bits(drone_root_hz()),memory_order_release);
+    atomic_store_explicit(&drone_level_bits,bits(on ? DRONE_LEVEL : 0.0f),memory_order_release);
+    if(on && !clearing) atomic_store(&output_enabled,true);
+}
+/* Audio-side state: engine_init and the IRQ Clear only. */
+static void drone_reset_audio(void) {
+    memset(&drone,0,sizeof drone);
+    for(int i=0;i<DRONE_VOICES;++i) {
+        drone_voice_t *d=&drone.v[i];
+        ambient_motion_prepare(&d->motion,0xD7053u+0x9E3779B9u*(uint32_t)(i+1));
+        d->lev=ambient_motion_peek(&d->motion,.45f,&d->drift);
+        d->ph2=.37f*(float)(i+1);
+        d->beat=(.11f+.06f*(float)i)/(float)DSP_SAMPLE_RATE_HZ;
+    }
+}
+/* Four soft partials 1:.32:.12:.05; the brightness drift tilts the upper
+ * three. Harmonics 2-4 come from sin/cos of the fundamental (exact identities),
+ * the slow drifts and the normalisation run at block rate and are interpolated
+ * per sample: 3 table sines per voice and sample, no division. */
+static void drone_render(float *l,float *r,int n) {
+    float target=value(atomic_load_explicit(&drone_level_bits,memory_order_acquire));
+    if(target<=0 && drone.level<1e-6f) { drone.level=0; return; }
+    float root=value(atomic_load_explicit(&drone_root_bits,memory_order_acquire));
+    if(!(root>0 && root<1000) || n<=0) return;
+    if(drone.root<=0) drone.root=root;
+    const float up=1.0f/(1.2f*DSP_SAMPLE_RATE_HZ),down=1.0f/(1.8f*DSP_SAMPLE_RATE_HZ),glide=1.0f/(1.5f*DSP_SAMPLE_RATE_HZ);
+    const float W0=1.0f,W1=.32f,W2=.12f,W3=.05f,step=1.0f/(float)n;
+    float lev[DRONE_VOICES],dlev[DRONE_VOICES],tilt[DRONE_VOICES],dtilt[DRONE_VOICES],inv[DRONE_VOICES],dinv[DRONE_VOICES];
+    for(int v=0;v<DRONE_VOICES;++v) {
+        drone_voice_t *d=&drone.v[v];
+        float drift1,lev1=ambient_motion_skip(&d->motion,.45f,n,&drift1);
+        float t0=1.0f+.4f*(-.6f+d->drift),t1=1.0f+.4f*(-.6f+drift1);
+        float i0=1.0f/(W0+t0*(W1+W2+W3)),i1=1.0f/(W0+t1*(W1+W2+W3));
+        lev[v]=d->lev; dlev[v]=(lev1-d->lev)*step;
+        tilt[v]=t0; dtilt[v]=(t1-t0)*step;
+        inv[v]=i0; dinv[v]=(i1-i0)*step;
+        d->lev=lev1; d->drift=drift1;
+    }
+    for(int i=0;i<n;++i) {
+        drone.level+=(target-drone.level)*(target>drone.level ? up : down);
+        drone.root+=(root-drone.root)*glide;
+        float sl=0,sr=0;
+        for(int v=0;v<DRONE_VOICES;++v) {
+            drone_voice_t *d=&drone.v[v];
+            lev[v]+=dlev[v]; tilt[v]+=dtilt[v]; inv[v]+=dinv[v];
+            float inc=drone.root*(v ? 1.4983071f : 1.0f)/(float)DSP_SAMPLE_RATE_HZ;
+            float s1=dsp_sin(d->ph),c1=dsp_sin(d->ph+.25f),q=s1*s1;
+            float s2=2.0f*s1*c1,s3=s1*(3.0f-4.0f*q),s4=2.0f*s2*(1.0f-2.0f*q);
+            float tone=(W0*s1+tilt[v]*(W1*s2+W2*s3+W3*s4))*inv[v];
+            float g=v ? .7f : 1.0f;
+            float s=tone*lev[v]*g;
+            float p=dsp_sin(d->ph2)*.30f*(2.0f-lev[v])*g;
+            d->ph+=inc; if(d->ph>=1.0f) d->ph-=1.0f;
+            d->ph2+=inc+d->beat; if(d->ph2>=1.0f) d->ph2-=1.0f;
+            /* Root centred with its partner opposite the fifth's. */
+            if(v) { sl+=.62f*s+.38f*p; sr+=.38f*s+.62f*p; } else { sl+=.5f*s+.62f*p; sr+=.5f*s+.38f*p; }
+        }
+        l[i]+=drone.level*sl; r[i]+=drone.level*sr;
+    }
+}
+/* Generate as loops: state here, logic next to the World ticks. */
+typedef struct {
+    uint32_t due_ms;                      /* the loop's own clock: next onset */
+    uint32_t next_ms;                     /* next attempt (due, or a retry) */
+    int8_t step[2];                       /* steps through the loop's band */
+    uint8_t len,phase,fires,evolve_at,retries;
+    int midi;
+    bool pending;
+} gen_loop_t;
+static gen_loop_t gen_loops[3];
+static uint32_t gen_rng;
+static float gen_scale=1.0f;              /* one tempo per performance: keeps the ratios */
+static void gen_loop_heard(int role,source_slot_t *s);
+static void gen_loops_reset(uint32_t ms);
+static void gen_loops_cancel(void) { for(int r=0;r<3;++r) gen_loops[r].pending=false; }
+#endif
 static void remember(float hz) {
     /* Max room T60 4.8 s: nominal -90 dB after another 1.5*T60 from real
      * source retirement. Also allow 250 ms of measured quiet wet return.
@@ -117,6 +213,10 @@ static void reap(void) {
             if(nature_amount>0) atomic_store(&output_enabled,true);
         }
         resume_nature=false;
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* A Flush keeps the DRONE mode: its bed fades back in after Clear. */
+        if(drone_on && !muted) atomic_store(&output_enabled,true);
+#endif
     }
     uint32_t frames=clock_frames();
     bool quiet=atomic_load_explicit(&room_quiet,memory_order_acquire);
@@ -194,6 +294,10 @@ static void reap(void) {
                         }
                 }
             }
+#ifdef FAM_SOUND_AMBIENT_V3
+            for(int role=0;role<3;++role)
+                if(gen_loops[role].pending && s->owner==coast_owners[role]) gen_loop_heard(role,s);
+#endif
         }
         if(epoch!=s->issued_epoch && !(mask&(1u<<s->owner))) {
             if(s->on_sent && !s->off_sent && note_hook) note_hook(0,s->owner,s->hz,0);
@@ -205,6 +309,12 @@ static void reap(void) {
                 coast_pending&=(uint8_t)~(1u<<role);
             if(woodland_pending && s->owner==coast_owners[woodland_ticket.role])woodland_pending=false;
             if(highlands_pending && s->owner==coast_owners[highlands_ticket.role])highlands_pending=false;
+#ifdef FAM_SOUND_AMBIENT_V3
+            /* Cancelled before it was heard: that loop simply tries again soon. */
+            for(int role=0;role<3;++role) if(gen_loops[role].pending && s->owner==coast_owners[role]) {
+                gen_loops[role].pending=false; gen_loops[role].next_ms=now_ms+700u;
+            }
+#endif
             s->used=false;
         }
     }
@@ -556,6 +666,9 @@ static void retire_context(bool all) {
         atomic_fetch_or_explicit(&quick_mask,1u<<owner,memory_order_release);
     }
     coast_pending=0;woodland_pending=highlands_pending=false;
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_loops_cancel();
+#endif
 }
 static void release_generated(void) {
     for(int i=0;i<SLOTS;++i) if(slots[i].used &&
@@ -563,6 +676,9 @@ static void release_generated(void) {
     coast_pending=0; coast_phrase_restart(&coast);
     woodland_pending=false;woodland_phrase_restart(&woodland);
     highlands_pending=false;highlands_phrase_restart(&highlands);
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_loops_cancel();
+#endif
 }
 static void quiet_chain(void) {
 #ifdef FAM_SOUND_FINISH_CANDIDATE
@@ -573,6 +689,9 @@ static void quiet_chain(void) {
     coast_pending=0; coast_phrase_restart(&coast); resume_nature=false;
     woodland_pending=false;woodland_phrase_restart(&woodland);
     highlands_pending=false;highlands_phrase_restart(&highlands);
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_loops_cancel();
+#endif
     nature_set_amount(0); release_all(); clearing=true;
     atomic_store(&clear_done,false); atomic_store(&output_enabled,false);
     atomic_store_explicit(&clear_request,true,memory_order_release);
@@ -595,6 +714,9 @@ void engine_set_muted(bool on) {
             if(nature_amount>0) atomic_store(&output_enabled,true);
         }
     }
+#ifdef FAM_SOUND_AMBIENT_V3
+    drone_publish();
+#endif
 }
 bool engine_muted(void) { return muted; }
 bool engine_clear_pending(void) { reap(); return clearing; }
@@ -629,6 +751,9 @@ void engine_set_world(int i) {
     coast_pending=0; coast_phrase_init(&coast,seed);
     woodland_pending=false;woodland_phrase_init(&woodland,seed);
     highlands_pending=false;highlands_phrase_init(&highlands,seed);
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_loops_reset(now_ms);
+#endif
 }
 int engine_product_world(void) { return world; }
 int engine_product_collection(void) { return minor; }
@@ -687,6 +812,9 @@ void engine_set_key_pc(int pc) {
     if(pc==tonic_pc)return;
     reset_score_context();tonic_pc=pc;
     int root=50+((pc-2+12)%12);brain_set_key(root);tuning_set_key(root);
+#ifdef FAM_SOUND_AMBIENT_V3
+    if(drone_on) drone_publish(); /* the bed glides to the new tonic */
+#endif
 }
 void engine_set_key(int midi) { engine_set_key_pc(midi%12); }
 void engine_set_mode(int i) {
@@ -726,6 +854,9 @@ void engine_set_generative(bool on,int program) {
     highlands_pending=false;
     if(on)highlands_phrase_init(&highlands,seed);else highlands_phrase_restart(&highlands);
     nature_set_amount(on && !muted && !clearing ? nature_amount : 0);
+#ifdef FAM_SOUND_AMBIENT_V3
+    if(on) gen_loops_reset(now_ms);
+#endif
 }
 void engine_set_autoplay_melody(int on) { autoplay=on!=0; if(!autoplay) release_generated(); }
 int engine_autoplay_melody(void) { return autoplay; }
@@ -737,6 +868,9 @@ void engine_set_gen_seed(uint32_t v) {
     coast_pending=0; coast_phrase_init(&coast,seed);
     woodland_pending=false;woodland_phrase_init(&woodland,seed);
     highlands_pending=false;highlands_phrase_init(&highlands,seed);
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_loops_reset(now_ms);
+#endif
 }
 void engine_generative_new_field(uint32_t v) { engine_set_gen_seed(v); }
 static bool coast_owner_free(int role) {
@@ -849,6 +983,118 @@ static void highlands_tick(uint32_t ms) {
     }
     highlands_ticket=o;highlands_pending=true;
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Generate as incommensurate loops, the Music for Airports principle: three
+ * voices (owners 6/7/15), each repeating a short soft note (or a two-note
+ * figure) on its own cycle. The cycle lengths share no common period within a
+ * performance, so the voices meet in ever new combinations, with open space
+ * between. Each loop keeps its own register band; every 3-5 of its notes one
+ * step moves through the World's collection, so the material evolves slowly.
+ * Admission, tails, owners and ack timing are the existing Main paths.
+ *
+ * Every pair of cycles stays clear of the simple ratios a listener hears as a
+ * polyrhythm (4:3, 3:2, 5:3, 2:1 by >= .08; 5:4, 6:5, 7:4 by >= .06): the
+ * cycles relate as 1 : 1.12 : 1.585 or 1 : 1.414 : 1.585. One tempo factor per
+ * performance scales all three, and each loop keeps its own clock, so a busy
+ * voice delays a single note, never the loop. WOODLAND holds end at ~-29 dB of
+ * the mallet ring (its 2 s release follows), so its two voices stay available. */
+typedef struct { float period_s[3]; uint16_t hold_ms[3]; float lo_hz[3],hi_hz[3],velocity[3]; } gen_world_t;
+static const gen_world_t GEN_WORLD[CORE_WORLD_COUNT]={
+    /* COAST: pad swells */     {{19.7f,22.1f,31.2f},{4800,4200,3600},{220,294,392},{330,494,850},{.50f,.44f,.36f}},
+    /* WOODLAND: mallet rings */{{11.1f,15.7f,17.6f},{4600,4000,3400},{220,262,330},{294,392,470},{.56f,.50f,.44f}},
+    /* HIGHLANDS: breath tones */{{15.2f,21.5f,24.1f},{3600,3000,2600},{220,294,392},{330,494,650},{.52f,.46f,.40f}},
+};
+static float gen_unit(void) { gen_rng=gen_rng*1664525u+1013904223u; return (float)(gen_rng>>8)*(1.0f/16777216.0f); }
+/* The loop's admissible pitches: the World's collection inside its band. */
+static int gen_band(int role,int *out,int max) {
+    const gen_world_t *g=&GEN_WORLD[world];
+    int top=world==WORLD_WOODLAND ? 68 : world==WORLD_HIGHLANDS ? 75 : 80,n=0;
+    float lo=g->lo_hz[role],hi=fminf(g->hi_hz[role],phrase_hi_hz());
+    for(int m=PHRASE_LIFT_BELOW;m<=top && n<max;++m) {
+        float hz=tuning_hz((float)m);
+        if(hz<lo || hz>hi) continue;
+        bool ok=world==WORLD_COAST ? coast_phrase_pitch_allowed(m,tonic_pc,minor!=0) :
+                world==WORLD_WOODLAND ? woodland_phrase_pitch_allowed(m,tonic_pc,minor!=0) :
+                highlands_phrase_pitch_allowed(m,tonic_pc,minor!=0);
+        if(ok) out[n++]=m;
+    }
+    return n;
+}
+static uint32_t gen_period_ms(int role) {
+    float spacing=1.35f-.70f*(activity>=0 && activity<=1 ? activity : .5f);
+    return (uint32_t)(GEN_WORLD[world].period_s[role]*spacing*gen_scale*(.97f+.06f*gen_unit())*1000.0f);
+}
+/* Advance a loop's clock by whole cycles until its next onset lies ahead. */
+static void gen_loop_advance(int role,uint32_t ms) {
+    gen_loop_t *L=&gen_loops[role];
+    for(int k=0;k<4 && (int32_t)(L->due_ms-ms)<1000;++k) L->due_ms+=gen_period_ms(role);
+    if((int32_t)(L->due_ms-ms)<1000) L->due_ms=ms+gen_period_ms(role);
+    L->next_ms=L->due_ms;
+}
+static void gen_loops_reset(uint32_t ms) {
+    gen_rng=seed^0x5EEDF00Du^((uint32_t)world*0x9E3779B9u)^((uint32_t)(tonic_pc+1)*7919u)^((uint32_t)minor<<20);
+    gen_scale=.94f+.12f*gen_unit();
+    static const float start_s[3]={.3f,3.7f,8.9f};
+    for(int r=0;r<3;++r) {
+        gen_loop_t *L=&gen_loops[r]; int band[24],n=gen_band(r,band,24);
+        memset(L,0,sizeof *L); L->midi=-1;
+        L->len=(uint8_t)(gen_unit()<.6f ? 2 : 1);
+        for(int k=0;k<2;++k) L->step[k]=(int8_t)(n>0 ? (int)(gen_unit()*(float)n)%n : 0);
+        L->evolve_at=(uint8_t)(3+(int)(gen_unit()*3.0f));
+        L->due_ms=L->next_ms=ms+(uint32_t)(start_s[r]*(1.35f-.70f*activity)*1000.0f);
+    }
+}
+static void gen_loop_heard(int role,source_slot_t *s) {
+    gen_loop_t *L=&gen_loops[role]; L->pending=false;
+    if(clearing || muted || suppressed || !generate || !autoplay) return;
+    s->timed=true; s->off_ms=now_ms+GEN_WORLD[world].hold_ms[role];
+    last_midi=L->midi; ++note_count; ++L->fires; L->retries=0;
+    if(L->len>1) L->phase^=1u;
+    gen_loop_advance(role,now_ms);
+    if(L->fires>=L->evolve_at) {
+        int band[24],n=gen_band(role,band,24),k=(int)(gen_unit()*(float)L->len)%L->len;
+        int st=L->step[k]+(gen_unit()<.5f ? -1 : 1);
+        if(st<0) st=1;
+        if(st>=n) st=n-2;
+        L->step[k]=(int8_t)(st<0 ? 0 : st); L->fires=0; L->evolve_at=(uint8_t)(3+(int)(gen_unit()*3.0f));
+    }
+}
+static void gen_loops_tick(uint32_t ms) {
+    for(int r=0;r<3;++r) {
+        gen_loop_t *L=&gen_loops[r];
+        if(L->pending || (int32_t)(ms-L->next_ms)<0) continue;
+        /* Resumed after a pause (user playing, Mute): re-stagger, no burst. */
+        if((int32_t)(ms-L->next_ms)>8000) {
+            L->retries=0; L->due_ms=L->next_ms=ms+400u+2700u*(uint32_t)r; continue;
+        }
+        int band[24],n=gen_band(r,band,24);
+        if(n<=0) { gen_loop_advance(r,ms); continue; }
+        int st=L->step[L->phase%L->len]; if(st>=n) st=n-1;
+        float v=GEN_WORLD[world].velocity[r]+(gen_unit()-.5f)*.08f;
+        bool free=coast_owner_free(r); int pick=-1;
+        /* The figure's tone; if it would clash with what sounds (unison,
+         * semitone, tritone), a neighbour in the band, as a player would. */
+        int dir=((L->fires+r)&1u) ? 1 : -1;
+        const int try_step[3]={st,st+dir,st-dir};
+        for(int k=0;free && k<3 && pick<0;++k) {
+            int c=try_step[k]; if(c<0 || c>=n) continue;
+            if(admit(coast_owners[r],tuning_hz((float)band[c]),v,true)) pick=c;
+            else if(note_block!=ENGINE_NOTE_HELD_PITCH && note_block!=ENGINE_NOTE_TAIL_PITCH &&
+                    note_block!=ENGINE_NOTE_FROZEN_PITCH) break;
+        }
+        if(pick<0) {
+            if(free) ++rejects;
+            /* A few short retries delay this note only; then the cycle stays
+             * silent, the loop steps aside and keeps its clock. */
+            if(++L->retries<5) L->next_ms=ms+700u;
+            else { L->retries=0; gen_loop_advance(r,ms); L->step[L->phase%L->len]=(int8_t)((st+1)%n); }
+            continue;
+        }
+        L->midi=band[pick]; L->pending=true;
+        return; /* one bounded preparation per Main tick */
+    }
+}
+#endif
 void engine_generative_tick(uint32_t ms) {
     now_ms=ms; reap();
 #ifdef FAM_SOUND_FINISH_CANDIDATE
@@ -862,12 +1108,19 @@ void engine_generative_tick(uint32_t ms) {
     suppressed=wait;
     if(!generate || !autoplay || suppressed || clearing || muted ||
        (int32_t)(ms-retry_ms)<0) return;
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_loops_tick(ms); return;
+#endif
     if(world==WORLD_COAST) {coast_tick(ms);return;}
     if(world==WORLD_WOODLAND) {woodland_tick(ms);return;}
     highlands_tick(ms);
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+int engine_generative_advance(void) { return generate && !suppressed ? (int)(((unsigned)note_count/3u)%4u)+1 : -1; }
+#else
 int engine_generative_advance(void) { return generate && !suppressed ?
     (int)((world==WORLD_COAST ? coast.episodes : world==WORLD_WOODLAND ? woodland.episodes : highlands.episodes)%4u)+1 : -1; }
+#endif
 void engine_generative_nudge(int cell,uint32_t ms) { (void)cell; (void)ms; }
 int engine_generative_suppressed(void) { return suppressed; }
 int engine_generative_last_melody_midi(void) { return last_midi; }
@@ -896,7 +1149,11 @@ int engine_synth(void) { return 0; }
 void engine_set_synth_param(int i,float v) { (void)i; (void)v; }
 void engine_set_voice(int i) { (void)i; }
 void engine_set_pad_voice(int i) { (void)i; }
+#ifdef FAM_SOUND_AMBIENT_V3
+void engine_set_drone(bool on) { reap(); drone_on=on; drone_publish(); }
+#else
 void engine_set_drone(bool on) { (void)on; }
+#endif
 void engine_bass_follow(bool on) { (void)on; }
 void engine_bass_set(float v) { (void)v; }
 void engine_bass_off(void) {}
@@ -939,6 +1196,9 @@ void engine_init(void) {
     bowed_set_pad(false);
 #endif
     memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
+#ifdef FAM_SOUND_AMBIENT_V3
+    drone_on=false; drone_reset_audio();
+#endif
     world=minor=0; tonic_pc=-1; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=false; autoplay=true;
     muted=resume_nature=false;
@@ -969,6 +1229,10 @@ void engine_init(void) {
     coast_pending=0; coast_phrase_init(&coast,seed);
     woodland_pending=false;woodland_phrase_init(&woodland,seed);pluck_set_ambient(true);
     highlands_pending=false;highlands_phrase_init(&highlands,seed);
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_loops_reset(0);
+    drone_publish();
+#endif
 }
 static float protect(float x) {
     if(!isfinite(x)) { atomic_fetch_add_explicit(&faults,1,memory_order_relaxed); return 0; }
@@ -1009,6 +1273,9 @@ void engine_render(int16_t *out,int frames) {
         bowed_render_mix(dry_l,dry_r,send_l,send_r,n,.35f);
         horn_render_mix(dry_l,dry_r,send_l,send_r,n,.35f);
         pluck_render_mix(dry_l,dry_r,send_l,send_r,n);
+#ifdef FAM_SOUND_AMBIENT_V3
+        drone_render(dry_l,dry_r,n);
+#endif
         for(int i=0;i<n;++i) { send_l[i]=.35f*dry_l[i]; send_r[i]=.35f*dry_r[i]; }
         ambient_room_process(dry_l,dry_r,send_l,send_r,n);
         float wet_peak=ambient_room_peak();
@@ -1036,6 +1303,9 @@ void engine_render(int16_t *out,int frames) {
         if(clear && gate_cur==0 && !atomic_load(&clear_done)) {
             bowed_init(); horn_init(); pluck_init(); ambient_room_clear(); nature_clear();
             pluck_set_ambient(true);
+#ifdef FAM_SOUND_AMBIENT_V3
+            drone_reset_audio();
+#endif
             float c=value(atomic_load_explicit(&color_bits,memory_order_acquire));
             bowed_set_tone(c); horn_set_tone(c);
             pluck_set_damp(.025f-.020f*.5f); pluck_set_color(c);

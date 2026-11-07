@@ -34,6 +34,18 @@ static inline float ambient_motion_step(ambient_motion_t *m,float depth,float *t
     m->tone_ph +=m->tone_inc;  if(m->tone_ph >=1.0f) m->tone_ph -=1.0f;
     return level;
 }
+/* The same drifts at block rate: the value at the current phase, and the
+ * value after n samples. A caller interpolates linearly in between; at these
+ * rates (<= .145 Hz) that is exact to far below audibility and continuous. */
+static inline float ambient_motion_peek(const ambient_motion_t *m,float depth,float *tone) {
+    *tone=depth*dsp_sin(m->tone_ph);
+    return 1.0f+.17f*dsp_sin(m->level_ph);
+}
+static inline float ambient_motion_skip(ambient_motion_t *m,float depth,int n,float *tone) {
+    m->level_ph+=m->level_inc*(float)n; m->level_ph-=(float)(int)m->level_ph;
+    m->tone_ph +=m->tone_inc*(float)n;  m->tone_ph -=(float)(int)m->tone_ph;
+    return ambient_motion_peek(m,depth,tone);
+}
 /* Natural register balance, set once per note: above ~520 Hz a note sits
  * progressively softer (-3 dB per octave), as on acoustic instruments; the
  * ear's 2-5 kHz sensitivity otherwise pushes high tones forward. */

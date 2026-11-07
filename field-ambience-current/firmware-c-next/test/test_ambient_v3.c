@@ -4,15 +4,19 @@
  * Room: audible return around -6 dB of Dry at Room .5. Every live Cell plays,
  * HARMONY/LANDSCAPE pitches of the previous register stay admitted.
  * Identity: a rich smooth COAST pad and a pure breathy HIGHLANDS whistle.
+ * Generate: short notes on incommensurate loops. DRONE: a quiet tonic/fifth
+ * bed. HOLD: a classic latch.
  * Host proof of the voicing contract, not a listening or device acceptance. */
 #include "engine.h"
 #include "engine_product.h"
+#include "controls.h"
 #include "gesture.h"
 #include "dsp.h"
 #include "tuning.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 enum { SR = 44100, TICK = 441, SECONDS = 16, FRAMES = SECONDS * SR };
@@ -63,6 +67,58 @@ static void score_hook(int on, uint8_t source, float hz, float amp) {
     score_last = score_t; ++score_n;
     if (hz < score_lo) score_lo = hz;
     if (hz > score_hi) score_hi = hz;
+}
+/* Every heard note start/release with its owner and Hz. */
+typedef struct { double t; int on; int owner; float hz; } note_event_t;
+static note_event_t ev[512];
+static int ev_n;
+static void event_hook(int on, uint8_t source, float hz, float amp) {
+    (void)amp;
+    if ((on == 0 || on == 1) && ev_n < 512) ev[ev_n++] = (note_event_t){score_t, on, source, hz};
+}
+static int count_events(int on) { int n = 0; for (int i = 0; i < ev_n; ++i) n += ev[i].on == on; return n; }
+/* Controls-driven timeline for the HOLD checks (10 ms Main ticks). */
+static uint32_t latch_ms;
+static void latch_run(int ms) {
+    for (int t = 0; t < ms; t += 10) {
+        latch_ms += 10; score_t = latch_ms / 1000.0; engine_generative_tick(latch_ms);
+        int16_t pcm[2 * TICK]; engine_render(pcm, TICK);
+    }
+}
+static void latch_tap(int cell) { controls_cell_press((uint8_t)cell, .12f); latch_run(150); controls_cell_release((uint8_t)cell); latch_run(100); }
+/* Engine audio into a mono buffer for the DRONE checks; time continues
+ * across blocks. level_db/peak_hz look at seconds a..b of the last block. */
+enum { MONO = 40 * SR };
+static float mono[MONO];
+static int mono_n, block_start;
+static uint32_t mono_ms;
+static double max_step;
+static void render_mono(int seconds) {
+    block_start = mono_n;
+    for (int f = 0; f < seconds * SR && mono_n + TICK <= MONO; f += TICK) {
+        mono_ms += 10; engine_generative_tick(mono_ms);
+        int16_t pcm[2 * TICK]; engine_render(pcm, TICK);
+        for (int k = 0; k < TICK; ++k) {
+            float v = .5f * (pcm[2 * k] + pcm[2 * k + 1]) / 32768.0f;
+            if (mono_n > 0 && fabs(v - mono[mono_n - 1]) > max_step) max_step = fabs(v - mono[mono_n - 1]);
+            mono[mono_n++] = v;
+        }
+    }
+}
+static double level_db(double a, double b) {
+    double e = 0; int n = 0;
+    for (int i = block_start + (int)(a * SR); i < block_start + (int)(b * SR) && i < mono_n; ++i) { e += mono[i] * mono[i]; ++n; }
+    return 10 * log10(e / (n ? n : 1) + 1e-20);
+}
+static int peak_hz(double a, double b, int lo, int hi) {
+    int start = block_start + (int)(a * SR), n = (int)((b - a) * SR); double best = 0; int at = lo;
+    for (int f = lo; f <= hi; ++f) {
+        double w = 2 * PI_D * f / SR, c = 2 * cos(w), s1 = 0, s2 = 0;
+        for (int i = 0; i < n; ++i) { double s = mono[start + i] * (.5 - .5 * cos(2 * PI_D * i / (n - 1))) + c * s1 - s2; s2 = s1; s1 = s; }
+        double m = s1 * s1 + s2 * s2 - c * s1 * s2;
+        if (m > best) { best = m; at = f; }
+    }
+    return at;
 }
 /* A5 held for 20 s, dry (left/right hold seconds 0..16 of it, from 6 s). */
 enum { LONG = 26 * SR };
@@ -234,5 +290,105 @@ int main(void) {
         assert(swing > 2 && swing < 12 && ratio < -10);
     }
     puts("ambient V3: middle register, flowing Generate, slowly breathing held notes pass");
+
+    /* 6. Generate as incommensurate loops (Music for Airports): short notes,
+     * three voices on cycles with no common period, slow evolution. */
+    for (int world = 0; world < 3; ++world) {
+        engine_init(); gesture_init_owned(engine_gesture_note); engine_set_world(world); engine_set_gen_seed(1234);
+        engine_set_note_hook(event_hook); ev_n = 0;
+        for (int frame = 0; frame < 300 * SR; frame += TICK) {
+            uint32_t ms = (uint32_t)((uint64_t)frame * 1000 / SR); score_t = frame / (double)SR;
+            if (ms == 1000) engine_set_generative(true, -1);
+            engine_generative_tick(ms);
+            int16_t pcm[2 * TICK]; engine_render(pcm, TICK);
+        }
+        engine_set_note_hook(NULL);
+        double hold_max = 0, cycle[3] = {0}, gaps[3][64]; int cycles[3] = {0}, pitches = 0, skipped = 0;
+        float seen[32]; double last_on[3] = {-1, -1, -1};
+        for (int i = 0; i < ev_n; ++i) {
+            if (!ev[i].on) continue;
+            int role = ev[i].owner == 6 ? 0 : ev[i].owner == 7 ? 1 : ev[i].owner == 15 ? 2 : -1;
+            assert(role >= 0);
+            for (int j = i + 1; j < ev_n; ++j) if (!ev[j].on && ev[j].owner == ev[i].owner) {
+                if (ev[j].t - ev[i].t > hold_max) hold_max = ev[j].t - ev[i].t;
+                break;
+            }
+            if (last_on[role] >= 0 && cycles[role] < 64) gaps[role][cycles[role]++] = ev[i].t - last_on[role];
+            last_on[role] = ev[i].t;
+            bool known = false; for (int k = 0; k < pitches; ++k) known |= fabsf(seen[k] - ev[i].hz) < .5f;
+            if (!known && pitches < 32) seen[pitches++] = ev[i].hz;
+        }
+        /* Each loop's cycle is the median onset spacing: a skipped cycle (busy
+         * voice) or a short retry does not shift it. */
+        for (int r = 0; r < 3; ++r) {
+            int n = cycles[r]; assert(n >= 6);
+            for (int a = 1; a < n; ++a) for (int b = a; b > 0 && gaps[r][b] < gaps[r][b - 1]; --b) {
+                double t = gaps[r][b]; gaps[r][b] = gaps[r][b - 1]; gaps[r][b - 1] = t;
+            }
+            cycle[r] = n % 2 ? gaps[r][n / 2] : .5 * (gaps[r][n / 2 - 1] + gaps[r][n / 2]);
+            for (int k = 0; k < n; ++k) skipped += gaps[r][k] > 1.6 * cycle[r];
+        }
+        printf("ambient V3 %-9s loops: cycles %.1f / %.1f / %.1f s, longest note %.1f s, %d pitches, %d silent cycles in 300 s\n",
+               name[world], cycle[0], cycle[1], cycle[2], hold_max, pitches, skipped);
+        assert(hold_max <= 6.0 && pitches >= 4 && skipped <= 4);
+        static const double strong[] = {4.0 / 3.0, 1.5, 5.0 / 3.0, 2.0}, weak[] = {1.25, 1.2, 1.75};
+        for (int a = 0; a < 3; ++a) for (int b = 0; b < 3; ++b) {
+            if (cycle[b] <= cycle[a] || a == b) continue;
+            double q = cycle[b] / cycle[a];
+            assert(q > 1.08);                                    /* distinct cycles */
+            for (int k = 0; k < 4; ++k) assert(fabs(q - strong[k]) > .05); /* no audible polyrhythm */
+            for (int k = 0; k < 3; ++k) assert(fabs(q - weak[k]) > .03);
+        }
+    }
+    puts("ambient V3 Generate: short notes on incommensurate loops, slowly evolving pass");
+
+    /* 7. DRONE: a real, quiet tonic+fifth bed with soft fades and a glide. */
+    {
+        engine_init(); gesture_init_owned(engine_gesture_note); controls_init(); engine_set_world(0);
+        engine_set_master_volume(.75f); engine_set_room(.5f);
+        mono_n = 0; mono_ms = 0; max_step = 0;
+        controls_modifier(MOD_DRONE, true); render_mono(8);
+        double on_db = level_db(6, 8); int f1 = peak_hz(6, 8, 100, 200), f2 = peak_hz(6, 8, 200, 300);
+        engine_set_key_pc(4); render_mono(6);
+        int g1 = peak_hz(4, 6, 100, 200);
+        controls_modifier(MOD_SHIFT, true); controls_modifier(MOD_CLEAR, true); controls_modifier(MOD_CLEAR, false);
+        controls_modifier(MOD_SHIFT, false); render_mono(10);
+        double flush_db = level_db(8, 10);
+        controls_modifier(MOD_CLEAR, true); controls_modifier(MOD_CLEAR, false); render_mono(10);
+        double off_db = level_db(8, 10);
+        printf("ambient V3 DRONE: %.1f dBFS bed on %d+%d Hz, glides to %d Hz, after Flush %.1f dBFS, after Clear %.1f dBFS, max step %.4f\n",
+               on_db, f1, f2, g1, flush_db, off_db, max_step);
+        assert(on_db > -54 && on_db < -38 && abs(f1 - 147) <= 2 && abs(f2 - 220) <= 2 && abs(g1 - 165) <= 2);
+        assert(flush_db > -56 && off_db < -80 && max_step < .02);
+    }
+    puts("ambient V3 DRONE: quiet tonic/fifth bed, soft fades, key glide, Flush keeps it, Clear ends it pass");
+
+    /* 8. HOLD as a classic latch: the chord stays, a new gesture replaces it,
+     * no dead tap after a WOODLAND ring-out, HOLD off lets go, HOLD catches. */
+    for (int world = 0; world < 3; ++world) {
+        engine_init(); gesture_init_owned(engine_gesture_note); controls_init(); engine_set_world(world);
+        engine_set_note_hook(event_hook); ev_n = 0; latch_ms = 100;
+        controls_modifier(MOD_HOLD, true);
+        controls_cell_press(0, .12f); controls_cell_press(2, .12f); latch_run(200);
+        controls_cell_release(0); controls_cell_release(2); latch_run(2000);
+        int ons1 = count_events(1), offs1 = count_events(0);
+        latch_tap(4);
+        int ons2 = count_events(1), offs2 = count_events(0);
+        latch_run(40000); latch_tap(4);
+        int ons3 = count_events(1);
+        controls_modifier(MOD_HOLD, true); latch_run(500);
+        bool flags = controls_hold_base(0) || controls_hold_base(2) || controls_hold_base(4);
+        printf("ambient V3 %-9s HOLD latch: chord %d on/%d off, new gesture %d on/%d off, tap after ring-out %d on, latch after HOLD off %d\n",
+               name[world], ons1, offs1, ons2, offs2, ons3, flags);
+        assert(ons1 == 2 && offs1 == 0 && ons2 == 3 && offs2 == 2 && ons3 == 4 && !flags);
+        engine_set_note_hook(NULL);
+    }
+    {
+        engine_init(); gesture_init_owned(engine_gesture_note); controls_init(); engine_set_world(0); latch_ms = 100;
+        controls_cell_press(1, .12f); controls_cell_press(3, .12f); latch_run(300);
+        controls_modifier(MOD_HOLD, true); controls_cell_release(1); controls_cell_release(3); latch_run(2000);
+        assert(controls_hold_base(1) && controls_hold_base(3) && engine_active_voices() == 2);
+    }
+    puts("ambient V3 HOLD: latch keeps the chord, new gesture replaces, no dead tap, HOLD off releases, catch pass");
     return 0;
 }

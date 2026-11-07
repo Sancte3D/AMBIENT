@@ -334,9 +334,9 @@ static void cell_live_handover(void) {
     controls_modifier(MOD_HOLD,true);
     cell_edge(ms,adjacent);cell_audio(&ms,100,512,NULL);
 #ifdef FAM_SOUND_AMBIENT_V3
-    /* V3 register: D4+E4 is a compatible second above middle C under the same
-     * harmony rule, so the neighbour sounds beside the untouched latch. */
-    assert(ons==2 && !offs && controls_hold_base(0));
+    /* V3 HOLD is a classic latch: switching HOLD off lets the latched note go
+     * (its tail keeps the harmony protection); the neighbour then sounds. */
+    assert(ons==2 && offs==1 && !controls_hold_base(0));
 #else
     assert(ons==1 && !offs && controls_hold_base(0));
     assert(engine_note_block_reason()==ENGINE_NOTE_HELD_PITCH);

@@ -83,6 +83,37 @@ void controls_release_cells(void) {
     engine_set_user_presence(false);
 }
 
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Ambient voicing: HOLD is a classic latch. Latched sources live in the
+ * s_hold_* flags; nothing toggles per key, so a tap always plays. With
+ * keep_down, a latched note whose key is still down becomes momentary and
+ * ends at its key-up instead of being cut. */
+static void release_latched(bool keep_down) {
+    for (int c = 0; c < CTRL_CELL_COUNT; ++c) {
+        bool down = keep_down && ((s_cells_down >> c) & 1u) && s_moment_src[c] < 0;
+        if (s_hold_base[c]) {
+            s_hold_base[c] = false; s_amp_base[c] = 0.0f;
+            if (down) { s_moment_src[c] = (int8_t)c; down = false; }
+            else engine_note_off((uint8_t)c);
+        }
+        if (s_hold_shift[c]) {
+            s_hold_shift[c] = false; s_amp_shift[c] = 0.0f;
+            if (down) s_moment_src[c] = (int8_t)SHIFT_SRC(c);
+            else engine_note_off(SHIFT_SRC(c));
+        }
+    }
+}
+/* HOLD pressed while keys are down: the notes they play are caught. */
+static void catch_moments(void) {
+    for (int c = 0; c < CTRL_CELL_COUNT; ++c) {
+        int8_t src = s_moment_src[c];
+        if (src < 0) continue;
+        if (src == (int8_t)c) s_hold_base[c] = true; else s_hold_shift[c] = true;
+        s_moment_src[c] = -1;
+    }
+}
+#endif
+
 void controls_modifier(mod_id_t mod, bool pressed) {
     if (mod >= MOD_COUNT) return;
     if (s_mod[MOD_GENERATE] && (mod == MOD_HOLD || mod == MOD_DRONE)) return;
@@ -92,6 +123,10 @@ void controls_modifier(mod_id_t mod, bool pressed) {
             break;
         case MOD_HOLD:
             if (pressed) s_mod[mod] = !s_mod[mod];   /* latch toggle on press */
+#ifdef FAM_SOUND_AMBIENT_V3
+            /* On: catch what the held keys play. Off: let the latch go. */
+            if (pressed) { if (s_mod[MOD_HOLD]) catch_moments(); else release_latched(true); }
+#endif
             break;
         case MOD_DRONE:
             if (pressed) { s_mod[MOD_DRONE] = !s_mod[MOD_DRONE]; engine_set_drone(s_mod[MOD_DRONE]); }
@@ -144,6 +179,9 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
     if(cell<CTRL_CELL_COUNT) s_admitted_src[cell]=-1;
 #endif
     if (cell >= CTRL_CELL_COUNT || s_mod[MOD_GENERATE]) return;
+#ifdef FAM_SOUND_AMBIENT_V3
+    bool new_gesture = (s_cells_down & ~(1u << cell)) == 0;
+#endif
     s_cells_down |= (uint8_t)(1u << cell);      /* r19.20: physical key down */
     engine_set_user_presence(true);
 #ifdef FAM_SOUND_PRODUCT
@@ -151,6 +189,20 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
     uint8_t src=s_mod[MOD_SHIFT] ? SHIFT_SRC(cell) : cell;
     bool *held=s_mod[MOD_SHIFT] ? &s_hold_shift[cell] : &s_hold_base[cell];
     float *amp=s_mod[MOD_SHIFT] ? &s_amp_shift[cell] : &s_amp_base[cell];
+#ifdef FAM_SOUND_AMBIENT_V3
+    if(s_mod[MOD_HOLD]) {
+        /* Latch: the first key of a new gesture replaces the latched chord;
+         * keys added while others are down join it. The live path takes over
+         * the just-released voices, so an old latch never blocks a new note
+         * (no dead tap after a WOODLAND ring-out, no VOICES FULL from it). */
+        if(new_gesture) release_latched(false);
+        float hz=tuning_hz((float)engine_product_cell_midi(cell,s_mod[MOD_SHIFT]));
+        if(engine_try_cell_on(src,hz,velocity_amp/CELL_AMP_MAX)) {
+            s_admitted_src[cell]=(int8_t)src; *held=true; *amp=velocity_amp;
+        }
+        return;
+    }
+#endif
     if(s_mod[MOD_HOLD] && *held) {
         engine_note_off(src); *held=false; *amp=0; return;
     }

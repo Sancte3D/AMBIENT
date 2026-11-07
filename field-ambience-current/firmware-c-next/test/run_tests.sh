@@ -28,8 +28,9 @@ for source in BOWED HORN PLUCK; do
 done
 
 # Ambient voicing V3 candidate (FAM_SOUND_AMBIENT_V3, default OFF): Cell register
-# and SHIFT octave, soft spectra without horn/clarinet partials, quiet air and an
-# audible bounded room, through the real Full-Sound Product engine.
+# and SHIFT octave, soft spectra without horn/clarinet partials, quiet air, an
+# audible bounded room, Generate as incommensurate loops, the DRONE bed and the
+# HOLD latch, through the real Full-Sound Product engine.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT -DFAM_SOUND_FINISH_CANDIDATE -DFAM_SOUND_AMBIENT_V3 \
     "$here/test_ambient_v3.c" "$src/src/engine_product.c" "$src/src/world_grammar.c" \
     "$src/src/controls.c" "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
