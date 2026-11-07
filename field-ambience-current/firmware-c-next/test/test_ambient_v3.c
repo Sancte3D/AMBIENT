@@ -5,7 +5,8 @@
  * HARMONY/LANDSCAPE pitches of the previous register stay admitted.
  * Identity: a rich smooth COAST pad and a pure breathy HIGHLANDS whistle.
  * Generate: short notes on incommensurate loops. DRONE: a quiet tonic/fifth
- * bed. HOLD: a classic latch.
+ * bed in the World's colour (Strings, Wood, Breath), equally soft, with
+ * UI-ready colour and level controls. HOLD: a classic latch.
  * Host proof of the voicing contract, not a listening or device acceptance. */
 #include "engine.h"
 #include "engine_product.h"
@@ -161,6 +162,64 @@ static void motion(double *swing, double *ratio) {
 }
 static double energy(const float *x, const float *ref, int a, int b, bool diff) {
     double e = 0; for (int i = a; i < b; ++i) { double v = diff ? x[i] - ref[i] : x[i]; e += v * v; } return e;
+}
+/* Mean Hann power spectrum of mono[] in 1.49 s blocks (0.67 Hz bins), for the
+ * DRONE colour checks: partials, air between them and an A-weighted level. */
+enum { NFFT = 1 << 16 };
+static double fre[NFFT], fim[NFFT], fpow[NFFT / 2];
+static void fft(double *re, double *im, int n) {
+    for (int i = 1, j = 0; i < n; ++i) {
+        int bit = n >> 1;
+        for (; j & bit; bit >>= 1) j ^= bit;
+        j ^= bit;
+        if (i < j) { double t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+    }
+    for (int len = 2; len <= n; len <<= 1) {
+        double wr = cos(-2 * PI_D / len), wi = sin(-2 * PI_D / len);
+        for (int i = 0; i < n; i += len) {
+            double cr = 1, ci = 0;
+            for (int k = 0; k < len / 2; ++k) {
+                double *ar = &re[i + k], *ai = &im[i + k], *br = &re[i + k + len / 2], *bi = &im[i + k + len / 2];
+                double vr = *br * cr - *bi * ci, vi = *br * ci + *bi * cr;
+                *br = *ar - vr; *bi = *ai - vi; *ar += vr; *ai += vi;
+                double t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t;
+            }
+        }
+    }
+}
+static void spectrum(int a, int frames) {
+    memset(fpow, 0, sizeof fpow);
+    for (int s = a; s + NFFT <= a + frames && s + NFFT <= mono_n; s += NFFT) {
+        for (int i = 0; i < NFFT; ++i) { fre[i] = mono[s + i] * (.5 - .5 * cos(2 * PI_D * i / (NFFT - 1))); fim[i] = 0; }
+        fft(fre, fim, NFFT);
+        for (int k = 0; k < NFFT / 2; ++k) fpow[k] += fre[k] * fre[k] + fim[k] * fim[k];
+    }
+}
+static double band_power(double lo, double hi) {
+    double e = 0;
+    for (int k = 1; k < NFFT / 2; ++k) { double f = (double)k * SR / NFFT; if (f >= lo && f <= hi) e += fpow[k]; }
+    return e;
+}
+/* Power within 4 Hz of partials 1..6 of the root or the fifth (the Hann main
+ * lobe of a 1.49 s block is +-1.3 Hz), each bin once: 3 x root and 2 x fifth
+ * nearly coincide. */
+static double tone_power(double f0, double fifth) {
+    double e = 0;
+    for (int k = 1; k < NFFT / 2; ++k) {
+        double f = (double)k * SR / NFFT; bool near = false;
+        for (int h = 1; h <= 6; ++h) near |= fabs(f - h * f0) < 4 || fabs(f - h * fifth) < 4;
+        if (near) e += fpow[k];
+    }
+    return e;
+}
+static double a_level(void) {
+    double e = 0;
+    for (int k = 1; k < NFFT / 2; ++k) {
+        double f2 = (double)k * SR / NFFT; f2 *= f2;
+        double ra = 12194.0 * 12194.0 * f2 * f2 / ((f2 + 20.6 * 20.6) * sqrt((f2 + 107.7 * 107.7) * (f2 + 737.9 * 737.9)) * (f2 + 12194.0 * 12194.0));
+        e += fpow[k] * ra * ra;
+    }
+    return 10 * log10(e + 1e-30);
 }
 
 int main(void) {
@@ -362,6 +421,91 @@ int main(void) {
         assert(flush_db > -56 && off_db < -80 && max_step < .02);
     }
     puts("ambient V3 DRONE: quiet tonic/fifth bed, soft fades, key glide, Flush keeps it, Clear ends it pass");
+
+    /* 7b. DRONE colours: each World has its own bed, equally soft. Strings
+     * (COAST) from D3, Wood (WOODLAND) and Breath (HIGHLANDS) from A3; Wood is
+     * hollow (partial 4 above partial 2), Breath nearly pure with tuned air.
+     * A-weighted, as the ear hears a quiet bed, the three match within 1.5 dB. */
+    {
+        double alev[3];
+        for (int world = 0; world < 3; ++world) {
+            engine_init(); gesture_init_owned(engine_gesture_note); engine_set_world(world);
+            engine_set_master_volume(.75f); engine_set_room(0);
+            mono_n = 0; mono_ms = 0; max_step = 0;
+            engine_set_drone(true); render_mono(14);
+            assert(engine_drone_color() == ENGINE_DRONE_AUTO && engine_drone_sounding_color() == ENGINE_DRONE_STRINGS + world);
+            double f0 = tuning_hz(world ? 62.0f : 50.0f), fifth = f0 * 1.4983071;
+            int root = peak_hz(6, 14, (int)(f0 * .85), (int)(f0 * 1.15));
+            spectrum(block_start + 6 * SR, 8 * SR);
+            double tone = tone_power(f0, fifth);
+            double h1 = band_power(f0 - 4, f0 + 4), h2 = band_power(2 * f0 - 4, 2 * f0 + 4), h4 = band_power(4 * f0 - 4, 4 * f0 + 4);
+            double below_db = 10 * log10(band_power(f0 / 2 - 4, f0 / 2 + 4) / h1 + 1e-30); /* the octave under the root */
+            double air_db = 10 * log10((band_power(40, 4000) - tone) / tone + 1e-30);
+            double h2_db = 10 * log10(h2 / h1), h4_db = 10 * log10(h4 / h1);
+            alev[world] = a_level();
+            printf("ambient V3 DRONE %-9s root %d Hz (octave below %.0f dB), H2 %.1f dB, H4 %.1f dB, air %.1f dB re tones, A-weighted %+.1f dB\n",
+                   name[world], root, below_db, h2_db, h4_db, air_db, alev[world] - alev[0]);
+            assert(abs(root - (int)lround(f0)) <= 2 && below_db < -40 && max_step < .02);
+            assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+            if (world == 0) assert(h2_db > -16 && air_db < -40);                  /* string slope, no air */
+            if (world == 1) assert(h4_db - h2_db > 3 && air_db < -40);            /* hollow 1:4 wood */
+            if (world == 2) assert(h2_db < -18 && air_db > -26 && air_db < -15);  /* pure, breathy */
+        }
+        for (int c = 1; c < 3; ++c) assert(fabs(alev[c] - alev[0]) < 1.5);
+
+        /* A World change while the bed sounds: it dips out, switches colour and
+         * register at silence and returns; nothing glides through the registers. */
+        engine_init(); gesture_init_owned(engine_gesture_note); engine_set_world(0);
+        engine_set_master_volume(.75f); engine_set_room(.5f);
+        mono_n = 0; mono_ms = 0; max_step = 0;
+        engine_set_drone(true); render_mono(8);
+        double before = level_db(5, 8);
+        engine_set_world(1); render_mono(8);
+        double dip = level_db(.3, .6), after = level_db(5, 8);
+        spectrum(block_start, NFFT);
+        double between = 10 * log10((band_power(155, 210) + band_power(230, 280)) / band_power(100, 2000));
+        printf("ambient V3 DRONE COAST->WOODLAND: %.1f dBFS, dip %.1f dBFS, Wood %.1f dBFS, between registers %.1f dB, max step %.4f\n",
+               before, dip, after, between, max_step);
+        assert(dip < before - 6 && after > before - 10 && between < -35 && max_step < .02);
+
+        /* The UI-ready controls: colour override and level trim, both clamped. */
+        engine_set_drone_color(ENGINE_DRONE_BREATH);
+        assert(engine_drone_color() == ENGINE_DRONE_BREATH && engine_drone_sounding_color() == ENGINE_DRONE_BREATH);
+        engine_set_world(0); assert(engine_drone_sounding_color() == ENGINE_DRONE_BREATH);
+        engine_set_drone_color(ENGINE_DRONE_COLORS); engine_set_drone_color(-1);
+        assert(engine_drone_color() == ENGINE_DRONE_BREATH);
+        engine_set_drone_color(ENGINE_DRONE_AUTO); assert(engine_drone_sounding_color() == ENGINE_DRONE_STRINGS);
+        engine_set_drone_level_db(20); assert(engine_drone_level_db() == 6);
+        engine_set_drone_level_db(-40); assert(engine_drone_level_db() == -12);
+        engine_set_drone_level_db(NAN); assert(engine_drone_level_db() == -12);
+        /* The trim scales the same deterministic bed exactly (same window of
+         * identical runs; the slow swells would bias windows taken apart). */
+        double trim_db[3] = {0, 6, -12}, lvl[3];
+        for (int t = 0; t < 3; ++t) {
+            engine_init(); gesture_init_owned(engine_gesture_note); engine_set_world(0);
+            engine_set_master_volume(.75f); engine_set_room(0);
+            assert(engine_drone_color() == ENGINE_DRONE_AUTO && engine_drone_level_db() == 0);
+            engine_set_drone_level_db((float)trim_db[t]);
+            mono_n = 0; mono_ms = 0; engine_set_drone(true); render_mono(14);
+            lvl[t] = level_db(6, 14);
+        }
+        /* A live change ramps without a step. */
+        max_step = 0; engine_set_drone_level_db(6); render_mono(4); engine_set_drone_level_db(-12); render_mono(4);
+        printf("ambient V3 DRONE level trim: +6 dB -> %+.2f dB, -12 dB -> %+.2f dB, live change max step %.4f\n",
+               lvl[1] - lvl[0], lvl[2] - lvl[0], max_step);
+        assert(fabs(lvl[1] - lvl[0] - 6) < .2 && fabs(lvl[2] - lvl[0] + 12) < .2 && max_step < .02);
+
+        /* Clear ends the bed in every colour, the Breath air included. */
+        for (int c = ENGINE_DRONE_STRINGS; c < ENGINE_DRONE_COLORS; ++c) {
+            engine_init(); gesture_init_owned(engine_gesture_note); controls_init(); engine_set_world(0);
+            engine_set_master_volume(.75f); engine_set_room(.5f); engine_set_drone_color(c);
+            mono_n = 0; mono_ms = 0;
+            controls_modifier(MOD_DRONE, true); render_mono(6);
+            controls_modifier(MOD_CLEAR, true); controls_modifier(MOD_CLEAR, false); render_mono(10);
+            assert(level_db(8, 10) < -80);
+        }
+    }
+    puts("ambient V3 DRONE colours: Strings, Wood, Breath, equally soft, clean World change, UI-ready controls pass");
 
     /* 8. HOLD as a classic latch: the chord stays, a new gesture replaces it,
      * no dead tap after a WOODLAND ring-out, HOLD off lets go, HOLD catches. */

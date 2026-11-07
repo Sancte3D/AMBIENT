@@ -25,6 +25,17 @@ typedef enum {
 /* Main-only result of the latest real admission attempt. UI should consume
  * immediately after its own rejected press, not infer from audio/UI state. */
 engine_note_block_t engine_note_block_reason(void);
+#ifdef FAM_SOUND_AMBIENT_V3
+/* DRONE colour and level for a display-UI row; the DRONE key stays the on/off
+ * control. Not stored in Scenes, like the DRONE mode itself. AUTO follows the
+ * World: Strings in COAST, Wood in WOODLAND, Breath in HIGHLANDS. */
+enum { ENGINE_DRONE_AUTO,ENGINE_DRONE_STRINGS,ENGINE_DRONE_WOOD,ENGINE_DRONE_BREATH,ENGINE_DRONE_COLORS };
+void engine_set_drone_color(int color);
+int engine_drone_color(void);           /* the selection, AUTO included */
+int engine_drone_sounding_color(void);  /* the colour that sounds: Strings/Wood/Breath */
+void engine_set_drone_level_db(float db); /* trim -12..+6 dB, default 0 */
+float engine_drone_level_db(void);
+#endif
 int engine_sounding_frequencies(float *out,int max);
 uint32_t engine_admission_rejections(void);
 uint32_t engine_generative_return_count(void);

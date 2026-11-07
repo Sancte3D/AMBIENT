@@ -54,7 +54,7 @@ option(FAM_WORLD_CHARACTER_CANDIDATE "Opt-in Model-1 World character hearing can
 option(FAM_WOODLAND_BODY_CANDIDATE "Opt-in harmonic WOODLAND body hearing candidate; no Scene/UI activation" OFF)
 option(FAM_WOODLAND_RESONATOR_CANDIDATE "Opt-in long harmonic modal WOODLAND replacement; no Scene/UI activation" OFF)
 option(FAM_SOUND_FINISH_CANDIDATE "Complete sound candidate: pad, voicing, owned loops, bounded effects and quiet Nature accents" OFF)
-option(FAM_SOUND_AMBIENT_V3 "Ambient voicing candidate on top of the complete sound: octave-up Cells, chorused string-pad COAST, breathy ocarina HIGHLANDS, mallet WOODLAND, audible longer room, Generate as incommensurate loops, DRONE bed, HOLD latch" OFF)
+option(FAM_SOUND_AMBIENT_V3 "Ambient voicing candidate on top of the complete sound: octave-up Cells, chorused string-pad COAST, breathy ocarina HIGHLANDS, mallet WOODLAND, audible longer room, Generate as incommensurate loops, DRONE bed in each World's colour, HOLD latch" OFF)
 option(FAM_SCENE_JOURNAL_CANDIDATE "Experimental two-sector Scene journal; ECC/device acceptance pending" OFF)
 option(FAM_SOUND_SESSION_CANDIDATE "Large sound/loop Scenes with ECC-safe async H743 journal; device acceptance pending" OFF)
 option(FAM_DEVICE_BENCH_CANDIDATE "Instrument explicit sound-session bench: MSP paint, SAI errors and Save observations" OFF)

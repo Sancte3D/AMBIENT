@@ -90,27 +90,81 @@ static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
 static uint32_t clock_frames(void) { return atomic_load_explicit(&audio_frames,memory_order_acquire); }
 #ifdef FAM_SOUND_AMBIENT_V3
-/* DRONE: a soft, slowly breathing tonic+fifth bed (root ~147-277 Hz). A layer
- * of its own: never a note slot, never admitted, no tail history, so it can
- * neither block nor steal a Cell. Main publishes the target level and root;
- * Audio ramps (about 5 s in, 8 s out) and glides 1.5 s to a new key. */
+/* DRONE: a soft, slowly breathing bed in the colour of the World. A layer of
+ * its own: never a note slot, never admitted, no tail history, so it can
+ * neither block nor steal a Cell. Main publishes level, colour and root;
+ * Audio ramps (about 5 s in, 8 s out) and glides 1.5 s to a new key. A new
+ * colour (World change, later the display UI) dips the bed out in .5 s,
+ * switches at silence and returns in 1.5 s, so it never sweeps an octave.
+ *   Strings (COAST):    tonic+fifth from D3, smooth string slope, slow ensemble beat.
+ *   Wood (WOODLAND):    tonic+fifth from A3, hollow 1:4 marimba-resonator partial,
+ *                       slower and deeper bloom.
+ *   Breath (HIGHLANDS): tonic+fifth from A3, nearly pure, air tuned to each tone.
+ * Roots stay in D3..C#4 (Strings) and A3..G#4 (Wood, Breath); the highest
+ * fifth is 622 Hz, below the register that made long high tones unsettling.
+ * Trims give the three colours equal loudness (K-weighted). */
 enum { DRONE_VOICES=2 };
-static const float DRONE_LEVEL=.022f; /* about -12 dB re a held COAST/HIGHLANDS Cell */
-static _Atomic uint32_t drone_level_bits,drone_root_bits;
+#define DRONE_TRIM_WOOD .56f
+#define DRONE_TRIM_BREATH .51f
+#define DRONE_AIR 1.4f
+static const float DRONE_LEVEL=.022f; /* Strings: about -12 dB re a held COAST/HIGHLANDS Cell */
+typedef struct {
+    int lowest;          /* lowest root, MIDI: the 12-note window starts here */
+    float w[4];          /* partials 1..4 */
+    float tilt;          /* brightness-drift depth on partials 2..4 */
+    float fifth;         /* level of the fifth voice */
+    float partner;       /* slow-beat partner of each tone */
+    float beat_hz[2];    /* partner beat, root and fifth */
+    float bloom;         /* level-drift depth, 1 = +-1.4 dB */
+    float breath;        /* tuned air, 0 = none */
+    float trim;          /* equal-loudness trim */
+} drone_color_t;
+static const drone_color_t DRONE_COLOR[ENGINE_DRONE_COLORS]={
+    /* AUTO (never sounds) */{50,{1,.34f,.16f,.08f},.40f,.70f,.30f,{.11f,.17f},1.0f,0,1.0f},
+    /* Strings */            {50,{1,.34f,.16f,.08f},.40f,.70f,.30f,{.11f,.17f},1.0f,0,1.0f},
+    /* Wood */               {57,{1,.08f,.03f,.16f},.30f,.45f,.18f,{.05f,.08f},1.8f,0,DRONE_TRIM_WOOD},
+    /* Breath */             {57,{1,.07f,.02f,0},   .20f,.50f,.20f,{.08f,.13f},1.0f,DRONE_AIR,DRONE_TRIM_BREATH},
+};
+static _Atomic uint32_t drone_level_bits,drone_root_bits,drone_color_bits;
 static bool drone_on;
-typedef struct { float ph,ph2,beat,lev,drift; ambient_motion_t motion; } drone_voice_t;
-static struct { drone_voice_t v[DRONE_VOICES]; float level,root; } drone;
-static float drone_root_hz(void) {
-    int m=48+(tonic_pc<0 ? 2 : tonic_pc); if(m<50) m+=12;
-    return tuning_hz((float)m);
+static int drone_color_sel;   /* ENGINE_DRONE_AUTO: the World's colour */
+static float drone_level_db;  /* user trim, -12..+6 dB */
+typedef struct {
+    float ph,ph2,beat,lev,drift,air_hz;
+    uint32_t rng;
+    dsp_svf_t air1,air2;
+    ambient_motion_t motion;
+} drone_voice_t;
+static struct { drone_voice_t v[DRONE_VOICES]; float level,root,gate; int col; } drone;
+static int drone_resolved(void) {
+    if(drone_color_sel>ENGINE_DRONE_AUTO && drone_color_sel<ENGINE_DRONE_COLORS) return drone_color_sel;
+    return world==WORLD_WOODLAND ? ENGINE_DRONE_WOOD : world==WORLD_HIGHLANDS ? ENGINE_DRONE_BREATH : ENGINE_DRONE_STRINGS;
+}
+static float drone_root_hz(int col) {
+    int lo=DRONE_COLOR[col].lowest,pc=tonic_pc<0 ? 2 : tonic_pc;
+    return tuning_hz((float)(lo+(((pc-lo)%12)+12)%12));
+}
+/* 10^(dB/20) without libm in this file (the hot-path lint reads whole
+ * modules): whole dB by multiplication, the fraction interpolated, error
+ * below .02 dB over the -12..+6 dB trim. Main only. */
+static float drone_db_gain(float db) {
+    const float step=1.1220185f; float g=1.0f;
+    int n=(int)(db+100.0f)-100; float f=db-(float)n;
+    for(;n>0;--n) g*=step;
+    for(;n<0;++n) g/=step;
+    return g*(1.0f+f*(step-1.0f));
 }
 static void drone_publish(void) {
-    bool on=drone_on && !muted;
-    atomic_store_explicit(&drone_root_bits,bits(drone_root_hz()),memory_order_release);
-    atomic_store_explicit(&drone_level_bits,bits(on ? DRONE_LEVEL : 0.0f),memory_order_release);
+    bool on=drone_on && !muted; int col=drone_resolved();
+    /* Colour before root: Audio never glides toward another colour's register. */
+    atomic_store_explicit(&drone_color_bits,(uint32_t)col,memory_order_release);
+    atomic_store_explicit(&drone_root_bits,bits(drone_root_hz(col)),memory_order_release);
+    float gain=DRONE_LEVEL*drone_db_gain(drone_level_db);
+    atomic_store_explicit(&drone_level_bits,bits(on ? gain : 0.0f),memory_order_release);
     if(on && !clearing) atomic_store(&output_enabled,true);
 }
-/* Audio-side state: engine_init and the IRQ Clear only. */
+/* Audio-side state: engine_init and the IRQ Clear only. col 0 adopts the
+ * published colour directly at the next start. */
 static void drone_reset_audio(void) {
     memset(&drone,0,sizeof drone);
     for(int i=0;i<DRONE_VOICES;++i) {
@@ -118,52 +172,84 @@ static void drone_reset_audio(void) {
         ambient_motion_prepare(&d->motion,0xD7053u+0x9E3779B9u*(uint32_t)(i+1));
         d->lev=ambient_motion_peek(&d->motion,.45f,&d->drift);
         d->ph2=.37f*(float)(i+1);
-        d->beat=(.11f+.06f*(float)i)/(float)DSP_SAMPLE_RATE_HZ;
+        d->rng=0xA17B5EEDu+0x9E3779B9u*(uint32_t)i;
     }
 }
-/* Four soft partials 1:.32:.12:.05; the brightness drift tilts the upper
- * three. Harmonics 2-4 come from sin/cos of the fundamental (exact identities),
- * the slow drifts and the normalisation run at block rate and are interpolated
- * per sample: 3 table sines per voice and sample, no division. */
+static void drone_adopt(int col,float root) {
+    drone.col=col; drone.root=root;
+    for(int v=0;v<DRONE_VOICES;++v) {
+        drone_voice_t *d=&drone.v[v];
+        d->beat=DRONE_COLOR[col].beat_hz[v]/(float)DSP_SAMPLE_RATE_HZ;
+        dsp_svf_reset(&d->air1); dsp_svf_reset(&d->air2); d->air_hz=0;
+    }
+}
+static inline float drone_noise(uint32_t *r) {
+    *r=*r*1664525u+1013904223u;
+    return (float)(int32_t)*r*(1.0f/2147483648.0f);
+}
+/* Harmonics 2-4 come from sin/cos of the fundamental (exact identities); the
+ * slow drifts and the normalisation run at block rate and are interpolated
+ * per sample: 3 table sines per voice and sample, no division. Breath adds
+ * noise through two band-passes at the tone (coefficients only on a pitch
+ * change). */
 static void drone_render(float *l,float *r,int n) {
     float target=value(atomic_load_explicit(&drone_level_bits,memory_order_acquire));
-    if(target<=0 && drone.level<1e-6f) { drone.level=0; return; }
+    if(target<=0 && drone.level<1e-6f) { drone.level=0; drone.col=0; return; }
     float root=value(atomic_load_explicit(&drone_root_bits,memory_order_acquire));
-    if(!(root>0 && root<1000) || n<=0) return;
-    if(drone.root<=0) drone.root=root;
+    int want=(int)atomic_load_explicit(&drone_color_bits,memory_order_acquire);
+    if(!(root>0 && root<1000) || want<=ENGINE_DRONE_AUTO || want>=ENGINE_DRONE_COLORS || n<=0) return;
+    if(drone.col==0) { drone_adopt(want,root); drone.gate=1; }
+    else if(want!=drone.col && drone.gate<=0) drone_adopt(want,root);
+    const bool fading=want!=drone.col;
+    const drone_color_t *c=&DRONE_COLOR[drone.col];
     const float up=1.0f/(1.2f*DSP_SAMPLE_RATE_HZ),down=1.0f/(1.8f*DSP_SAMPLE_RATE_HZ),glide=1.0f/(1.5f*DSP_SAMPLE_RATE_HZ);
-    const float W0=1.0f,W1=.32f,W2=.12f,W3=.05f,step=1.0f/(float)n;
-    float lev[DRONE_VOICES],dlev[DRONE_VOICES],tilt[DRONE_VOICES],dtilt[DRONE_VOICES],inv[DRONE_VOICES],dinv[DRONE_VOICES];
+    const float gate_step=fading ? -1.0f/(.5f*DSP_SAMPLE_RATE_HZ) : 1.0f/(1.5f*DSP_SAMPLE_RATE_HZ);
+    const float W0=c->w[0],W1=c->w[1],W2=c->w[2],W3=c->w[3],Wu=W1+W2+W3,step=1.0f/(float)n;
+    float lev[DRONE_VOICES],dlev[DRONE_VOICES],dr[DRONE_VOICES],ddr[DRONE_VOICES],inv[DRONE_VOICES],dinv[DRONE_VOICES];
     for(int v=0;v<DRONE_VOICES;++v) {
         drone_voice_t *d=&drone.v[v];
         float drift1,lev1=ambient_motion_skip(&d->motion,.45f,n,&drift1);
-        float t0=1.0f+.4f*(-.6f+d->drift),t1=1.0f+.4f*(-.6f+drift1);
-        float i0=1.0f/(W0+t0*(W1+W2+W3)),i1=1.0f/(W0+t1*(W1+W2+W3));
-        lev[v]=d->lev; dlev[v]=(lev1-d->lev)*step;
-        tilt[v]=t0; dtilt[v]=(t1-t0)*step;
+        float l0=1.0f+(d->lev-1.0f)*c->bloom,l1=1.0f+(lev1-1.0f)*c->bloom;
+        float t0=1.0f+c->tilt*(-.6f+d->drift),t1=1.0f+c->tilt*(-.6f+drift1);
+        float i0=1.0f/(W0+t0*Wu),i1=1.0f/(W0+t1*Wu);
+        lev[v]=l0; dlev[v]=(l1-l0)*step;
+        dr[v]=d->drift; ddr[v]=(drift1-d->drift)*step;
         inv[v]=i0; dinv[v]=(i1-i0)*step;
         d->lev=lev1; d->drift=drift1;
+        if(c->breath>0) {
+            float hz=drone.root*(v ? 1.4983071f : 1.0f);
+            if(fabsf(hz-d->air_hz)>.0005f*hz) {
+                dsp_svf_set(&d->air1,hz,2.5f);
+                d->air2.a1=d->air1.a1; d->air2.a2=d->air1.a2; d->air2.a3=d->air1.a3; d->air2.k=d->air1.k;
+                d->air_hz=hz;
+            }
+        }
     }
     for(int i=0;i<n;++i) {
         drone.level+=(target-drone.level)*(target>drone.level ? up : down);
-        drone.root+=(root-drone.root)*glide;
+        if(!fading) drone.root+=(root-drone.root)*glide;
+        drone.gate=dsp_clampf(drone.gate+gate_step,0,1);
+        float g=drone.gate*drone.gate*(3.0f-2.0f*drone.gate)*c->trim;
         float sl=0,sr=0;
         for(int v=0;v<DRONE_VOICES;++v) {
             drone_voice_t *d=&drone.v[v];
-            lev[v]+=dlev[v]; tilt[v]+=dtilt[v]; inv[v]+=dinv[v];
+            lev[v]+=dlev[v]; dr[v]+=ddr[v]; inv[v]+=dinv[v];
+            float tilt=1.0f+c->tilt*(-.6f+dr[v]);
             float inc=drone.root*(v ? 1.4983071f : 1.0f)/(float)DSP_SAMPLE_RATE_HZ;
             float s1=dsp_sin(d->ph),c1=dsp_sin(d->ph+.25f),q=s1*s1;
             float s2=2.0f*s1*c1,s3=s1*(3.0f-4.0f*q),s4=2.0f*s2*(1.0f-2.0f*q);
-            float tone=(W0*s1+tilt[v]*(W1*s2+W2*s3+W3*s4))*inv[v];
-            float g=v ? .7f : 1.0f;
-            float s=tone*lev[v]*g;
-            float p=dsp_sin(d->ph2)*.30f*(2.0f-lev[v])*g;
+            float tone=(W0*s1+tilt*(W1*s2+W2*s3+W3*s4))*inv[v];
+            float gv=v ? c->fifth : 1.0f;
+            float s=tone*lev[v]*gv;
+            if(c->breath>0)
+                s+=dsp_svf_bp(&d->air2,dsp_svf_bp(&d->air1,drone_noise(&d->rng)))*c->breath*(1.0f+.8f*dr[v])*gv;
+            float p=dsp_sin(d->ph2)*c->partner*(2.0f-lev[v])*gv;
             d->ph+=inc; if(d->ph>=1.0f) d->ph-=1.0f;
             d->ph2+=inc+d->beat; if(d->ph2>=1.0f) d->ph2-=1.0f;
             /* Root centred with its partner opposite the fifth's. */
             if(v) { sl+=.62f*s+.38f*p; sr+=.38f*s+.62f*p; } else { sl+=.5f*s+.62f*p; sr+=.5f*s+.38f*p; }
         }
-        l[i]+=drone.level*sl; r[i]+=drone.level*sr;
+        l[i]+=drone.level*g*sl; r[i]+=drone.level*g*sr;
     }
 }
 /* Generate as loops: state here, logic next to the World ticks. */
@@ -753,6 +839,7 @@ void engine_set_world(int i) {
     highlands_pending=false;highlands_phrase_init(&highlands,seed);
 #ifdef FAM_SOUND_AMBIENT_V3
     gen_loops_reset(now_ms);
+    drone_publish(); /* AUTO colour follows the World */
 #endif
 }
 int engine_product_world(void) { return world; }
@@ -1151,6 +1238,17 @@ void engine_set_voice(int i) { (void)i; }
 void engine_set_pad_voice(int i) { (void)i; }
 #ifdef FAM_SOUND_AMBIENT_V3
 void engine_set_drone(bool on) { reap(); drone_on=on; drone_publish(); }
+void engine_set_drone_color(int color) {
+    if(color<ENGINE_DRONE_AUTO || color>=ENGINE_DRONE_COLORS) return;
+    drone_color_sel=color; drone_publish();
+}
+int engine_drone_color(void) { return drone_color_sel; }
+int engine_drone_sounding_color(void) { return drone_resolved(); }
+void engine_set_drone_level_db(float db) {
+    if(!isfinite(db)) return;
+    drone_level_db=dsp_clampf(db,-12.0f,6.0f); drone_publish();
+}
+float engine_drone_level_db(void) { return drone_level_db; }
 #else
 void engine_set_drone(bool on) { (void)on; }
 #endif
@@ -1197,7 +1295,7 @@ void engine_init(void) {
 #endif
     memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
 #ifdef FAM_SOUND_AMBIENT_V3
-    drone_on=false; drone_reset_audio();
+    drone_on=false; drone_color_sel=ENGINE_DRONE_AUTO; drone_level_db=0; drone_reset_audio();
 #endif
     world=minor=0; tonic_pc=-1; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=false; autoplay=true;
