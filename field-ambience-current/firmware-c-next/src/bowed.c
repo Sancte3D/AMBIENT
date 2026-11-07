@@ -22,6 +22,9 @@
 #include "world_character.h"
 #include "soft_pad.h"
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_motion.h"
+#endif
 #include <math.h>
 #include <string.h>
 #include <stdatomic.h>
@@ -57,7 +60,9 @@ typedef struct {
     bool soft_pad;
 #endif
 #ifdef FAM_SOUND_AMBIENT_V3
-    float ph2, inc2;                       /* ensemble partner, +5 cents  */
+    float ph2, inc2;                       /* ensemble partner, slow beat */
+    ambient_motion_t motion;               /* slow level/brightness drift */
+    float level_bal;                       /* register balance, per note  */
 #endif
 } bvoice_t;
 
@@ -76,6 +81,11 @@ static _Atomic uint32_t unfold_mask;
 static uint32_t character_seed;
 static bool character_enabled;
 static bool pad_enabled;
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Per-note motion seed counter, restarted with the voices: identical inputs
+ * after Init/Clear give identical PCM. Main prepares, the IRQ may reset. */
+static _Atomic uint32_t v3_notes;
+#endif
 void bowed_set_pad(bool on) { pad_enabled=on; }
 void bowed_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
@@ -115,6 +125,9 @@ static inline float wnoise(uint32_t *r) {
 void bowed_init(void) {
 #ifdef FAM_SOUND_PRODUCT
     atomic_store_explicit(&unfold_mask,0,memory_order_relaxed);
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    atomic_store_explicit(&v3_notes,0,memory_order_relaxed);
 #endif
     memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
     memset(fade_left,0,sizeof fade_left); memset(fade_total,0,sizeof fade_total);
@@ -168,12 +181,24 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
     v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
 #ifdef FAM_SOUND_AMBIENT_V3
     /* Ambient pad: a slow 2 s swell, a longer soft release and an ensemble
-     * partner 5 cents above (2^(5/1200)), started out of phase. */
+     * partner a constant 0.12-0.28 Hz above, started out of phase: the same
+     * slow breathing beat (one swell every ~4-8 s) at every pitch, never a
+     * 4-5 Hz flutter up high. Each note also gets its own slow drift. */
     if(v->soft_pad) {
         v->envInc=v->amp/(2.0f*shape_attack_scale()*SR);
         v->relCoef=dsp_smooth_coef(1.1f*shape_release_scale());
     }
-    v->inc2=v->inc*1.0028922f; v->ph2=.31f;
+    {
+        uint32_t n=atomic_fetch_add_explicit(&v3_notes,1,memory_order_relaxed)+1u;
+        uint32_t seed=character_seed*0x27D4EB2Fu^(uint32_t)source*0x9E3779B9u^
+                      (uint32_t)(freq_hz*977.0f)^(n*0x85EBCA6Bu);
+        ambient_motion_prepare(&v->motion,seed);
+        float beat=.12f+.16f*ambient_motion_unit(&seed);
+        v->inc2=v->inc+beat/SR; v->ph2=.31f;
+        /* +0.7 dB keeps the complete-sound World balance (COAST re WOODLAND)
+         * within 0.7 dB for played Cells and Generate. */
+        v->level_bal=1.08f*ambient_register_gain(freq_hz);
+    }
 #endif
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
     v->bow = 0.0f;
@@ -329,8 +354,10 @@ void bowed_render_mix(float *dry_L, float *dry_R,
                 float shade=2*tone_cur-1+.25f*opening;
                 if(v->character.enabled)shade+=v->character.shade;
 #ifdef FAM_SOUND_AMBIENT_V3
-                out=soft_pad_v3_sample(v->ph,v->freq,shade)*v->env*.5f;
-                side=soft_pad_v3_partner(v->ph2,v->freq)*v->env*.5f*.45f;
+                /* The partner swells against the main voice: slow width motion. */
+                float drift,level=ambient_motion_step(&v->motion,.45f,&drift);
+                out=soft_pad_v3_sample(v->ph,v->freq,shade+drift)*v->env*.5f*level*v->level_bal;
+                side=soft_pad_v3_partner(v->ph2,v->freq)*v->env*.5f*.30f*(2.0f-level)*v->level_bal;
                 v->ph2+=v->inc2;if(v->ph2>=1)v->ph2-=1;
 #else
                 out=soft_pad_sample(v->ph,v->freq,shade)*v->env*.5f;

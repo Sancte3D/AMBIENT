@@ -25,6 +25,9 @@
 #ifdef FAM_SOUND_FINISH_CANDIDATE
 #include "highlands_breath.h"
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_motion.h"
+#endif
 #include <string.h>
 #include <stdatomic.h>
 
@@ -57,9 +60,11 @@ typedef struct {
     world_character_t character;
 #endif
 #ifdef FAM_SOUND_AMBIENT_V3
-    float    vibPh, vibInc, incCur;       /* delayed gentle vibrato (turns) */
+    float    vibPh, vibInc, incCur;       /* delayed slow pitch drift (turns) */
     int      vibDelay;                    /* control ticks before it fades in */
     dsp_svf_t breath1, breath2;           /* tuned breath: 4-pole band at the note */
+    ambient_motion_t motion;              /* slow level/brightness drift */
+    float    level_bal;                   /* register balance, per note */
 #endif
 } hvoice_t;
 #ifdef FAM_SOUND_AMBIENT_V3
@@ -82,6 +87,11 @@ static _Atomic uint32_t unfold_mask;
  * Init/Clear in the IRQ must not overwrite this future-note config. */
 static uint32_t character_seed;
 static bool character_enabled;
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Per-note motion seed counter, restarted with the voices: identical inputs
+ * after Init/Clear give identical PCM. Main prepares, the IRQ may reset. */
+static _Atomic uint32_t v3_notes;
+#endif
 void horn_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
 }
@@ -119,6 +129,9 @@ static inline float wnoise(uint32_t *r) {
 void horn_init(void) {
 #ifdef FAM_SOUND_PRODUCT
     atomic_store_explicit(&unfold_mask,0,memory_order_relaxed);
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    atomic_store_explicit(&v3_notes,0,memory_order_relaxed);
 #endif
     memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
     memset(fade_left,0,sizeof fade_left); memset(fade_total,0,sizeof fade_total);
@@ -167,11 +180,22 @@ static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float am
 #endif
     v->relCoef = dsp_smooth_coef(0.7f * shape_release_scale()); /* r19.60 */
 #ifdef FAM_SOUND_AMBIENT_V3
-    /* Airy whistle: a breath-quick 400 ms bloom, longer release, vibrato that starts
-     * ~0.5 s into the note and fades in over ~1 s (4.7 Hz, about +-5 cents). */
+    /* Airy whistle: a breath-quick 400 ms bloom and a longer release. No 4-5 Hz
+     * vibrato, which sits at the peak of fluctuation strength: from ~0.5 s a
+     * slow 0.17-0.31 Hz pitch drift of about +-3 cents fades in over ~1 s,
+     * plus the note's own slow level/brightness drift. */
     v->envInc=v->amp/(.40f*shape_attack_scale()*SR);
     v->relCoef=dsp_smooth_coef(.85f*shape_release_scale());
-    v->vibPh=0.0f; v->vibInc=4.7f*(float)CTL/SR; v->incCur=v->inc;
+    {
+        uint32_t n=atomic_fetch_add_explicit(&v3_notes,1,memory_order_relaxed)+1u;
+        uint32_t seed=character_seed*0x27D4EB2Fu^(uint32_t)source*0x9E3779B9u^
+                      (uint32_t)(freq_hz*977.0f)^(n*0xC2B2AE35u);
+        ambient_motion_prepare(&v->motion,seed);
+        v->vibPh=ambient_motion_unit(&seed);
+        v->vibInc=(.17f+.14f*ambient_motion_unit(&seed))*(float)CTL/SR;
+        v->level_bal=ambient_register_gain(freq_hz);
+    }
+    v->incCur=v->inc;
     v->vibDelay=(int)(.50f*SR/(float)CTL);
 #endif
     v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
@@ -298,7 +322,7 @@ void horn_render_mix(float *dry_L, float *dry_R,
                 if(v->vibDelay>0) --v->vibDelay;
                 else v->vibFade+=(1.0f-v->vibFade)*((float)CTL/(1.0f*SR));
                 v->vibPh+=v->vibInc; if(v->vibPh>=1.0f) v->vibPh-=1.0f;
-                v->incCur=v->inc*(1.0f+.0030f*v->vibFade*dsp_sin(v->vibPh));
+                v->incCur=v->inc*(1.0f+.0017f*v->vibFade*dsp_sin(v->vibPh));
 #endif
 #ifdef FAM_SOUND_PRODUCT
                 cut *= 1.0f+.40f*opening;
@@ -334,12 +358,15 @@ void horn_render_mix(float *dry_L, float *dry_R,
             float shade=2*tone_cur-1+.20f*opening;
             if(v->character.enabled)shade+=v->character.shade;
 #ifdef FAM_SOUND_AMBIENT_V3
-            float reed=highlands_air_sample(v->ph,v->freq,shade);
+            float drift,level=ambient_motion_step(&v->motion,.40f,&drift);
+            float reed=highlands_air_sample(v->ph,v->freq,shade+drift);
             v->ph+=v->incCur;if(v->ph>=1)v->ph-=1;
             float brass=dsp_svf_lp(&v->blare,reed);
-            /* Air, about 15 dB below the former aspiration, above the tone. */
-            brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.010f+.008f*v->blareEnv);
-            brass+=dsp_svf_bp(&v->breath2,dsp_svf_bp(&v->breath1,wnoise(&v->rng)))*HL_BREATH;
+            /* Air, about 18 dB below the former aspiration, above the tone. */
+            brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.007f+.006f*v->blareEnv);
+            /* The breath rises and falls with the brightness drift (+-2.5 dB). */
+            brass+=dsp_svf_bp(&v->breath2,dsp_svf_bp(&v->breath1,wnoise(&v->rng)))*HL_BREATH*(1.0f+.8f*drift);
+            brass*=level*v->level_bal;
 #else
             float reed=highlands_breath_sample(v->ph,v->freq,shade);
             v->ph+=v->inc;if(v->ph>=1)v->ph-=1;

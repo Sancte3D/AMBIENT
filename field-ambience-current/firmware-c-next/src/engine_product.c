@@ -271,25 +271,27 @@ int engine_sounding_notes(int *out,int max) {
     return count;
 }
 #ifdef FAM_SOUND_AMBIENT_V3
-/* Ambient voicing: Generate keeps its grammar registers, memory and voice
- * leading, but every phrase pitch sounds one octave higher. Cells use the
- * D4.. window of world_pitch_midi, SHIFT is an exact octave above. Live
- * admission keeps the previous D3.. window too (world_live_pitch_allowed),
- * so nothing the previous voicing accepted is rejected now. */
-enum { PHRASE_SHIFT=12, CELL_SHIFT_STEPS=5 };
-#define PHRASE_LO_HZ 210.0f
+/* Ambient voicing: Generate keeps its grammar, memory and voice leading and
+ * the per-World ceilings, but every phrase pitch below A3 sounds an octave
+ * higher. Phrases live in the comfortable middle (~220-830 Hz): no 110 Hz
+ * drones and no 1 kHz whistles held for seconds. Cells use the D4.. window
+ * of world_pitch_midi, SHIFT is an exact octave above. Live admission keeps
+ * the previous D3.. window too (world_live_pitch_allowed). */
+enum { PHRASE_LIFT_BELOW=57, CELL_SHIFT_STEPS=5 };
+#define PHRASE_LO_HZ 200.0f
 #define CELL_LO_HZ 140.0f
 #define CELL_HI_HZ 1250.0f
+static int phrase_midi(int midi) { return midi<PHRASE_LIFT_BELOW ? midi+12 : midi; }
 #else
-enum { PHRASE_SHIFT=0, CELL_SHIFT_STEPS=3 };
+enum { CELL_SHIFT_STEPS=3 };
 #define PHRASE_LO_HZ 105.0f
 #define CELL_LO_HZ 140.0f
 #define CELL_HI_HZ 470.0f
+static int phrase_midi(int midi) { return midi; }
 #endif
-static float phrase_hz(int midi) { return tuning_hz((float)(midi+PHRASE_SHIFT)); }
+static float phrase_hz(int midi) { return tuning_hz((float)phrase_midi(midi)); }
 static float phrase_hi_hz(void) {
-    float hi=world==WORLD_COAST ? 850.0f : world==WORLD_HIGHLANDS ? 650.0f : 470.0f;
-    return PHRASE_SHIFT ? 2.0f*hi : hi;
+    return world==WORLD_COAST ? 850.0f : world==WORLD_HIGHLANDS ? 650.0f : 470.0f;
 }
 static bool in_collection(float hz,bool phrase) {
     if(phrase) {
