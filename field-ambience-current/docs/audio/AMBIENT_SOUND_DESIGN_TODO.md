@@ -26,6 +26,12 @@ vier Gerätegates und ein Gesamtgate offen. Neue Encoderzuordnung zuletzt.
 Die folgende ältere Aufgabenhistorie wird durch diesen Abgleich fortgeschrieben;
 alte0.10-Defaults/Remove-Belege sind keine Freigabe der neuen Full-Sound-Palette.
 
+Parallelstand 2026-10-07 (PR140/PR142, erst beim Gesamtmerge 2026-11-08 in die
+Hauptlinie übernommen): [Hörabnahmeliste](SOUND_ACCEPTANCE_2026-10-07.md) und
+`tools/build_sound_acceptance.py`. Historisch; die dortige 24/30-Zählung ist
+durch den Abgleich vom 28.10.2026 ersetzt. Weiter aktiv ist nur die
+Kontinuitätsprüfung der Hörexporte (`test/test_product_preview.py`).
+
 ## KERNURTEIL
 
 AMBIENT besitzt einen technisch geprüften Produktkandidaten mit drei

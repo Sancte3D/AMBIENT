@@ -12,7 +12,11 @@ Basis: Entwicklungsbranch `claude/hall-sensor-bom-pcb-update-a8xj82`,
 Commit `43729f26d9265417c1db610d58809993c2e27255`.
 Arbeit: `codex/scenes-journal-2026-10-07`. Sound-DSP und Scene-Wireformate
 bleiben gleich; 24 von 54 Aufgaben geschlossen, 30 Gesamtgates offen.
-Separater [Draft PR138](https://github.com/Sancte3D/AMBIENT/pull/138).
+[PR138](https://github.com/Sancte3D/AMBIENT/pull/138) ist nach finaler Head-/Diff-/
+CI-Pruefung im Entwicklungsbranch gemerged: `d97824ec0039499969ef91353633b2c934818690`.
+Der finale Dokumentationshead `3ee75dc68b84e7555917735bfa68a834462ae269`
+bestand [CI37603226476](https://github.com/Sancte3D/AMBIENT/actions/runs/37603226476),
+ebenfalls sechs Jobs. Die Option bleibt OFF.
 
 `FAM_SCENE_JOURNAL_CANDIDATE` ist **standardmäßig OFF**. Der experimentelle
 H743-Adapter verwendet noch gewöhnliche memory-mapped Reads. Ein beschädigtes

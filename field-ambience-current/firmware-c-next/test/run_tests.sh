@@ -192,6 +192,15 @@ python3 "$src/tools/review_source_preparation.py" "$tmp/source-preparation" --fi
     "$src/src/baked_font.c" "$src/src/baked_font_data.c" "$src/src/font_8x8.c" -lm -o "$tmp/product_scene_save_test"
 "$tmp/product_scene_save_test"
 
+# Audition exports must observe the real continuous PCM, including a partial
+# first block; a clock jump or extra scheduler tick would falsify hearing.
+"$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$src/tools/render_product_preview.c" \
+    "$src/src/engine_product.c" "$src/src/world_grammar.c" "$src/src/bowed.c" \
+    "$src/src/horn.c" "$src/src/pluck.c" "$src/src/ambient_room.c" "$src/src/nature.c" \
+    "$src/src/dsp.c" "$src/src/shape.c" "$src/src/tuning.c" "$src/src/brain.c" \
+    "$src/src/cells.c" -lm -o "$tmp/product_preview"
+python3 "$here/test_product_preview.py" "$tmp/product_preview"
+
 # Reduced product candidate: actual source/room/nature/master PCM contract.
 "$CC" "${CFLAGS[@]}" -Werror -DFAM_SOUND_PRODUCT "$here/test_product_sound.c" \
     "$src/src/engine_product.c" "$src/src/world_grammar.c" \
