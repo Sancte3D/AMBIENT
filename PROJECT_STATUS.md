@@ -1,5 +1,26 @@
 # PROJECT STATUS
 
+> **2026-11-08 — Gesamtmerge, aktueller Stand (dieser Eintrag gilt vor allen
+> älteren):** Alle offenen PRs liegen in `main`: der Codex-Stapel #139–#197,
+> der V3-Kandidat #198, #126 (mit den nachgereichten #140/#142) und #128.
+> - **Klang:** `FAM_SOUND_PROFILE=product` mit `FAM_SOUND_FINISH_CANDIDATE`.
+>   Der Ambient-Kandidat `FAM_SOUND_AMBIENT_V3` (Standard OFF) bringt
+>   sechs Welten (COAST, WOODLAND, HIGHLANDS plus FJORD/Chor, MEADOW/Kalimba,
+>   GLACIER/Glocken), DRONE-Farben, Loop-Generate mit DRONE darunter, die
+>   HOLD-Rastung, S-4-artige Welteffekte und Hall/Ensemble aus Mutable
+>   Instruments Rings (MIT, `THIRD_PARTY_NOTICES.md`). Details stehen in PR #198
+>   und in `firmware-c-next/test/test_ambient_v3.c`.
+> - **Display:** #128 ersetzt die gebackene UI-Schrift durch Bitcount Grid
+>   Single (gilt auch auf dem H743; die Firmware wird ~50 KB kleiner).
+>   ADR-0026–0028 (Rad, Szenen, Encoder-Farben) sind PROPOSED und auf dem H743
+>   nicht verdrahtet.
+> - **Hardware:** Es gibt noch keine Platine. Das externe Fertigungspaket ist
+>   „NICHT fertigen“ (Audit 2026-07-30, unten). Eine Mess-Firmware für die
+>   Last je Welt ist vorbereitet: CELL1 beim Einschalten halten.
+> - **Offen:** die Belegung der vier Encoder und das UI (Foliensatz
+>   „Bedienung & Funktionsmatrix“, 44 Funktionen, 15 davon ohne Bedienelement),
+>   der Motif-Klang, die CPU-Messung auf dem H743, die Hörabnahmen.
+
 > **2026-10-07 — alle 30 offenen Abnahmen konkret vorbereitet:**
 > Neue kontinuierliche PCM-Exporte, isolierte Attack-/Release-Grenzen,
 > Activity 0/1, ungekuerzte Tails, zwei Natur-Seeds, identische musikalische
