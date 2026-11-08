@@ -20,6 +20,18 @@ gate enforces this and hard-fails the suite), ramp every live parameter (no
 sample discontinuities), keep FTZ + DMA cache-clean intact, never stop/restart
 the audio pump, and keep hot buffers internal — **never** in QSPI-PSRAM.
 
+## Open-source DSP (owner decision 2026-11-08)
+
+- Proven open-source code may be used instead of writing everything in-house —
+  reverb, delay, chorus, filters, granular, oscillators.
+- Permissive licenses only by default: MIT, BSD, zlib, Apache-2.0, public
+  domain. GPL/LGPL only after an explicit owner decision — statically linked
+  into the firmware they would require publishing its source. (Example:
+  Mutable Instruments' STM32 code is MIT, its AVR code GPL-3.0.)
+- Keep the original license header in every ported file and list the source in
+  `field-ambience-current/firmware-c-next/THIRD_PARTY_NOTICES.md`.
+- Ported code obeys the Realtime Audio rule exactly like our own.
+
 ## BINDING RULE — AI-Ready PCB Schematic Standard
 
 When creating, reviewing, or modifying ANY PCB schematic (i.e. editing the
