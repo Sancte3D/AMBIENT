@@ -21,7 +21,9 @@
  *   hold       — toggle-on-press; without it cell taps are momentary
  *   drone      — toggle; engine_set_drone(); root drone follows brain key
  *   generate   — autonomous listening; releases cells, clears Hold/Drone,
- *                locks new cell/Hold/Drone input until exit
+ *                locks new cell/Hold/Drone input until exit. With the ambient
+ *                voicing (FAM_SOUND_AMBIENT_V3) Drone keeps sounding under
+ *                Generate and stays switchable; Hold is still cleared/locked
  *   clear      — momentary FULL STOP: wipes all hold bits, silences all
  *                voices (engine_all_off — natural releases, no hard cut),
  *                and turns HOLD/DRONE/GENERATE off

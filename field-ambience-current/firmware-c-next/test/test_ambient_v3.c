@@ -674,5 +674,41 @@ int main(void) {
         assert(swing[1] > swing[0] + 3);
     }
     puts("ambient V3 sketch effects: Rings ensemble and hall, breathing filter pass");
+
+    /* 11. DRONE under Generate: the bed keeps sounding when Generate starts
+     * and can be switched while it runs; HOLD stays cleared and locked. The
+     * same seeded Generate run with and without the bed differs by the bed. */
+    {
+        static float without_bed[20 * SR];
+        double level[2], bed_db = -300;
+        for (int bed = 0; bed < 2; ++bed) {
+            engine_init(); gesture_init_owned(engine_gesture_note); controls_init(); engine_set_world(WORLD_FJORD);
+            engine_set_master_volume(.75f); engine_set_room(.5f); engine_set_gen_seed(4321);
+            mono_n = 0; mono_ms = 0; max_step = 0;
+            if (bed) controls_modifier(MOD_DRONE, true);
+            controls_modifier(MOD_HOLD, true);
+            controls_modifier(MOD_GENERATE, true);
+            assert(controls_modifier_active(MOD_GENERATE) && !controls_modifier_active(MOD_HOLD));
+            assert(controls_modifier_active(MOD_DRONE) == (bed != 0));
+            controls_modifier(MOD_HOLD, true); assert(!controls_modifier_active(MOD_HOLD));
+            render_mono(20);
+            level[bed] = level_db(8, 20);
+            if (!bed) memcpy(without_bed, mono, sizeof without_bed);
+            else {
+                double e = 0;
+                for (int i = 8 * SR; i < 20 * SR; ++i) { double d = mono[i] - without_bed[i]; e += d * d; }
+                bed_db = 10 * log10(e / (12 * SR) + 1e-20);
+            }
+            assert(max_step < .02 && !engine_nonfinite_samples() && !engine_output_limited_samples());
+            if (bed) {
+                controls_modifier(MOD_DRONE, true); assert(!controls_modifier_active(MOD_DRONE));
+                controls_modifier(MOD_DRONE, true); assert(controls_modifier_active(MOD_DRONE));
+            }
+        }
+        printf("ambient V3 DRONE under Generate: FJORD Generate %.1f dBFS, with the choir bed %.1f dBFS, the bed itself %.1f dBFS\n",
+               level[0], level[1], bed_db);
+        assert(bed_db > -62 && bed_db < level[0]);
+    }
+    puts("ambient V3 DRONE under Generate: the bed stays and stays switchable, HOLD locked pass");
     return 0;
 }

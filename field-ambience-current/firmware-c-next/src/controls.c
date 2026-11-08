@@ -116,7 +116,13 @@ static void catch_moments(void) {
 
 void controls_modifier(mod_id_t mod, bool pressed) {
     if (mod >= MOD_COUNT) return;
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Ambient voicing: the DRONE bed may lie under Generate's loops and can
+     * be switched while Generate runs; HOLD stays locked. */
+    if (s_mod[MOD_GENERATE] && mod == MOD_HOLD) return;
+#else
     if (s_mod[MOD_GENERATE] && (mod == MOD_HOLD || mod == MOD_DRONE)) return;
+#endif
     switch (mod) {
         case MOD_SHIFT:
             s_mod[MOD_SHIFT] = pressed;   /* r19.20: momentary, both edges */
@@ -135,8 +141,12 @@ void controls_modifier(mod_id_t mod, bool pressed) {
             if (pressed) {
                 if (!s_mod[MOD_GENERATE]) {
                     controls_release_cells();
+#ifdef FAM_SOUND_AMBIENT_V3
+                    s_mod[MOD_HOLD] = false;    /* the DRONE bed keeps sounding */
+#else
                     s_mod[MOD_HOLD] = s_mod[MOD_DRONE] = false;
                     engine_set_drone(false);
+#endif
                 }
                 s_mod[MOD_GENERATE] = !s_mod[MOD_GENERATE];
                 engine_set_generative(s_mod[MOD_GENERATE], -1);

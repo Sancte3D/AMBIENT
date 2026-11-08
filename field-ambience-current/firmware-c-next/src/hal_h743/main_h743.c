@@ -636,6 +636,11 @@ int main(void) {
      * never returns (power-cycle to exit). Drives a heavy scene so the load%
      * is meaningful. CELL bits are active-low (MCP pull-ups). */
     if (!(mcp_state() & (1u << MCP_BIT_CELL1))) {
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* CELL1 alone: the per-World render load bench (never returns).
+         * CELL1 + CELL2: the bring-up readout below, as before. */
+        if (mcp_state() & (1u << MCP_BIT_CELL2)) diag_world_load_run();
+#endif
         engine_set_world(0);
         engine_set_drone(true);
         engine_set_generative(true, 0);
