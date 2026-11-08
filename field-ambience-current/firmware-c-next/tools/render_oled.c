@@ -94,10 +94,17 @@ int main(int argc, char **argv) {
     char path[512];
 
     /* One BROWSE frame per parameter. */
+    /* One entry per MP_* slot — keep in sync with menu.h. The compile-time
+     * assert below stops this list silently falling behind again: it used to
+     * cover 11 of the 16 slots, so the last five previews all collided into a
+     * single "menu_browse_(null).ppm". */
     static const char *NAMES[MP_COUNT] = {
         "01_world","02_key","03_tuning","04_voice","05_space","06_shimmer",
-        "07_atmos","08_motion","09_age","10_echo","11_blur"
+        "07_atmos","08_motion","09_age","10_echo","11_blur","12_synth",
+        "13_cell","14_bass","15_color","16_fx"
     };
+    _Static_assert(sizeof NAMES / sizeof NAMES[0] == MP_COUNT,
+                   "NAMES must have one entry per MP_* slot (see menu.h)");
     for (int p = 0; p < MP_COUNT; ++p) {
         to_param((menu_param_t)p);
         menu_render();
