@@ -5,6 +5,12 @@
 
 /* Product catalogue V1; deliberately separate from the five legacy IDs. */
 enum { WORLD_COAST = 0, WORLD_WOODLAND, WORLD_HIGHLANDS, CORE_WORLD_COUNT };
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Instrument Worlds: each plays one of the three voice families (its index
+ * minus CORE_WORLD_COUNT) with its own instrument, DRONE, space and effects.
+ * The grammar, scales and admission stay those of the family. */
+enum { WORLD_FJORD = CORE_WORLD_COUNT, WORLD_MEADOW, WORLD_GLACIER, AMBIENT_WORLD_COUNT };
+#endif
 typedef struct {
     uint32_t rng, next_ms, episode_until;
     uint32_t notes, episodes, answers, returns, heard_ms;

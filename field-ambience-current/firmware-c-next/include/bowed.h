@@ -56,5 +56,9 @@ void bowed_set_cell_held(int source,bool down);
 void bowed_set_character(uint32_t seed,bool enabled);
 /* Future-note capture of the harmonic pad alternative, same source pool. */
 void bowed_set_pad(bool enabled);
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Future-note capture: a soft choir instead of the pad (FJORD). */
+void bowed_set_choir(bool enabled);
+#endif
 #endif
 #endif /* BOWED_H */

@@ -22,6 +22,10 @@ typedef struct {
     float delay_mix,grain_mix,drive_mix,crush_mix,phase_mix,decay;
     float delay_fade,feedback,grain_gain,phase_rate;
     float room_power[2],room_dc[2][2],room_gain,room_goal;
+#ifdef FAM_SOUND_AMBIENT_V3
+    unsigned wg_read[2],wg_age[2],wg_window; int wg_speed;
+    float vast,shimmer,echo,wgrain,dlp;
+#endif
     bool cold;
 } sound_finish_fx_t;
 static sound_finish_fx_t sf;
@@ -98,6 +102,86 @@ static float sf_line(int k,float x,float g) {
  * tanks. A bounded, slow scalar retains each tank's spectrum/stereo/decay.
  * Stop adapting below the input floor so an outgoing tail keeps its gain.
  * sqrt runs once per 64 real samples, independent of render partition. */
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Instrument Worlds sculpt the shared music effects, after the S-4: their
+ * own echo times, more echo and grains, echoes that feed the plate ("Vast")
+ * and a second pair of grains an octave up (FJORD, GLACIER) or reversed
+ * (MEADOW). Octave grains keep every pitch class, reversed ones every pitch,
+ * so the admission ledger stays true. The World adds its own echo, grain and
+ * shimmer returns (relative to the send) on top of the user's amounts, which
+ * keep scaling them; the classic Worlds use the stored values unchanged.
+ * First echoes sit about 11-14 dB under the dry voices, as an S-4 Vast. */
+typedef struct {
+    float echo,delay_ms[2],feedback,delay_lp; /* extra echo return, times, feedback, loop tone */
+    float grain,grain_ms;                      /* extra grain return, grain length */
+    float vast;                                /* echoes and shimmer into the plate */
+    float shimmer,shimmer_ms; int speed;       /* world grains: return, length, 2 octave / -1 reverse */
+} sf_world_t;
+static const sf_world_t SF_WORLD[4]={
+    {0,{0,0},0,.23f,0,0,0,0,0,1},
+    /* FJORD   */ {.70f,{480,620},.46f,.30f,.45f,240,1.0f,.35f,160, 2},
+    /* MEADOW  */ {.60f,{330,495},.40f,.25f,.55f, 70,.30f,.55f,120,-1},
+    /* GLACIER */ {.80f,{610,690},.44f,.38f,.35f,160,1.0f,.70f,140, 2},
+};
+static _Atomic uint32_t sf_world_wet_bits,sf_world_sel;
+static float sf_world_controls[10],sf_world_vast,sf_world_shimmer,sf_world_echo,sf_world_grain,sf_world_dlp=.23f;
+static int sf_world_on,sf_world_speed;
+static unsigned sf_world_window;
+/* Main: the selected instrument World (0 = a classic World) and its room return. */
+static inline void sf_set_world(int sel,float wet) {
+    uint32_t b; memcpy(&b,&wet,4); atomic_store_explicit(&sf_world_wet_bits,b,memory_order_release);
+    atomic_store_explicit(&sf_world_sel,(uint32_t)(sel>0 && sel<4 ? sel : 0),memory_order_release);
+}
+/* Audio, once per block after sf_accept: the World's effective targets. */
+static void sf_world_accept(void) {
+    int sel=(int)atomic_load_explicit(&sf_world_sel,memory_order_acquire);
+    if(sel<=0 || sel>=4) { sf_world_on=0; sf_world_vast=sf_world_shimmer=sf_world_echo=sf_world_grain=0; return; }
+    const sf_world_t *w=&SF_WORLD[sel]; const float *u=sf_controls;
+    memcpy(sf_world_controls,u,sizeof sf_world_controls);
+    sf_world_controls[5]=w->delay_ms[0]; sf_world_controls[6]=w->delay_ms[1];
+    sf_world_controls[7]=dsp_clampf(w->feedback+(u[7]-.32f),0,.5f);
+    sf_world_controls[8]=w->grain_ms;
+    const float echo_scale=dsp_clampf(u[0]*(1.0f/.16f),0,2),grain_scale=dsp_clampf(u[1]*(1.0f/.12f),0,2);
+    sf_world_echo=w->echo*echo_scale; sf_world_grain=w->grain*grain_scale;
+    sf_world_vast=w->vast; sf_world_shimmer=w->shimmer*grain_scale; sf_world_dlp=w->delay_lp;
+    sf_world_speed=w->speed; sf_world_window=sf_frames(w->shimmer_ms); sf_world_on=sel;
+}
+/* A world grain's start: far enough behind (octave) or ahead of the reverse
+ * path (reversed) that its read never meets the write head, frozen or not. */
+static unsigned sf_world_back(unsigned window,int speed,unsigned random) {
+    unsigned lo,hi;
+    if(speed>1) { lo=2*window+64; hi=SF_GRAIN-1; if(hi>lo+4096) hi=lo+4096; }
+    else { lo=64; hi=SF_GRAIN-1-2*window; if(hi>lo+4096) hi=lo+4096; }
+    if(hi<=lo) return lo;
+    return lo+((random>>20)*(hi-lo))/4096u;
+}
+static float sf_world_grains(float *side) {
+    if(sf.wg_window!=sf_world_window || sf.wg_speed!=sf_world_speed) {
+        /* A new World starts its grains afresh (they are faded in by shimmer). */
+        sf.wg_window=sf_world_window; sf.wg_speed=sf_world_speed;
+        for(int k=0;k<2;++k) {
+            sf.wg_age[k]=k ? sf.wg_window/2 : 0;
+            sf.rng=sf.rng*1664525u+1013904223u;
+            sf.wg_read[k]=(sf.grain_at+SF_GRAIN-sf_world_back(sf.wg_window,sf.wg_speed,sf.rng))%SF_GRAIN;
+        }
+    }
+    if(sf.wg_window<64) { *side=0; return 0; }
+    float g[2],w[2],ws=0;
+    for(int k=0;k<2;++k) {
+        float t=(float)sf.wg_age[k]/sf.wg_window; w[k]=4*t*(1-t); ws+=w[k];
+        g[k]=sf.grain[sf.wg_read[k]];
+        sf.wg_read[k]=(sf.wg_read[k]+(unsigned)(SF_GRAIN+sf.wg_speed))%SF_GRAIN;
+        if(++sf.wg_age[k]>=sf.wg_window) {
+            sf.wg_age[k]=0; sf.rng=sf.rng*1664525u+1013904223u;
+            sf.wg_read[k]=(sf.grain_at+SF_GRAIN-sf_world_back(sf.wg_window,sf.wg_speed,sf.rng))%SF_GRAIN;
+        }
+    }
+    if(ws<=0) { *side=0; return 0; }
+    float inv=1.0f/(.7f*ws);
+    *side=(.4f*w[0]*g[0]+w[1]*g[1])*inv;
+    return (w[0]*g[0]+.4f*w[1]*g[1])*inv;
+}
+#endif
 static float sf_room_level(const float *in,const float *room) {
     float power[2]={0,0};
     for(int c=0;c<2;++c) {
@@ -111,7 +195,12 @@ static float sf_room_level(const float *in,const float *room) {
 #ifdef FAM_SOUND_AMBIENT_V3
         /* Ambient voicing: the room is part of the instrument. Nominal return
          * .9*Room of Dry (about -7 dB at Room .5, -1 dB at 1) instead of .25. */
-        sf.room_goal=dsp_clampf(sqrtf((.90f/.35f)*(.90f/.35f)*sf.room_power[0]/sf.room_power[1]),.125f,32);
+    {
+        /* The World's room return: 1 in the classic Worlds. */
+        uint32_t wb=atomic_load_explicit(&sf_world_wet_bits,memory_order_acquire); float wet; memcpy(&wet,&wb,4);
+        if(!(wet>0)) wet=1;
+        sf.room_goal=dsp_clampf(wet*sqrtf((.90f/.35f)*(.90f/.35f)*sf.room_power[0]/sf.room_power[1]),.125f,32);
+    }
 #else
         sf.room_goal=dsp_clampf(sqrtf((.25f/.35f)*(.25f/.35f)*sf.room_power[0]/sf.room_power[1]),.125f,8);
 #endif
@@ -121,6 +210,9 @@ static float sf_room_level(const float *in,const float *room) {
 static void sf_process(float *l,float *r,const float *sl,const float *sr,int frames,
                        float amount,float decay,bool enabled,bool plate,float fdn_l,float fdn_r) {
     const float *target=sf_controls;bool frozen=sf_is_frozen;
+#ifdef FAM_SOUND_AMBIENT_V3
+    if(sf_world_on) target=sf_world_controls;
+#endif
     if(!enabled || amount==0) {sf_clear();return;}
     if(sf.cold) {
         sf.grain_window=sf_frames(target[8]);sf.grain_age[1]=sf.grain_window/2;
@@ -180,15 +272,40 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
         }
         if(!frozen)sf.grain_at=(sf.grain_at+1u)%SF_GRAIN;
         float grain=(ws>0 ? gs/ws : 0)*sf.grain_gain;
+#ifdef FAM_SOUND_AMBIENT_V3
+        float shim[2]={0,0},vast=0,wecho=0,wgrain=0,dlp=.23f;
+        const bool world_fx=sf_world_on || sf.shimmer>0 || sf.vast>0 || sf.echo>0 || sf.wgrain>0;
+        if(world_fx) {
+            if(sf.dlp==0) sf.dlp=.23f;
+            sf.shimmer+=(sf_world_shimmer-sf.shimmer)*smooth;
+            sf.vast+=(sf_world_vast-sf.vast)*smooth;
+            sf.echo+=(sf_world_echo-sf.echo)*smooth;
+            sf.wgrain+=(sf_world_grain-sf.wgrain)*smooth;
+            sf.dlp+=((sf_world_on ? sf_world_dlp : .23f)-sf.dlp)*smooth;
+            if(!sf_world_on && sf.shimmer<1e-6f && sf.vast<1e-6f && sf.echo<1e-6f && sf.wgrain<1e-6f) {
+                sf.shimmer=sf.vast=sf.echo=sf.wgrain=0; sf.dlp=.23f;
+            }
+            float side,s=sf_world_grains(&side);
+            shim[0]=s*sf.shimmer; shim[1]=side*sf.shimmer; vast=sf.vast;
+            wecho=sf.echo; wgrain=sf.wgrain; dlp=sf.dlp;
+        }
+#endif
         float echoes[2];
         for(int c=0;c<2;++c) {
             float old=sf_echo(c,sf.delay_from[c]),next=sf_echo(c,sf.delay_frames[c]);
             echoes[c]=old+(next-old)*sf.delay_fade;
         }
         for(int c=0;c<2;++c) {
+#ifdef FAM_SOUND_AMBIENT_V3
+            if(world_fx) sf.delay_lp[c]+=dlp*(in[c]+sf.feedback*echoes[1-c]-sf.delay_lp[c]);
+            else
+#endif
             sf.delay_lp[c]+=.23f*(in[c]+sf.feedback*echoes[1-c]-sf.delay_lp[c]);
             sf_delay[c][sf.delay_at]=sf.delay_lp[c];
             wet[c]=.65f*sf.delay_mix*echoes[c]+.55f*sf.grain_mix*grain;
+#ifdef FAM_SOUND_AMBIENT_V3
+            if(world_fx) wet[c]+=wecho*echoes[c]+wgrain*grain+shim[c];
+#endif
         }
         sf.delay_at=(sf.delay_at+1u)%SF_DELAY;
         if(sf.delay_valid<SF_DELAY)++sf.delay_valid;
@@ -196,6 +313,10 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
         float room[2]={fdn_l,fdn_r};
         if(plate) {
             float x=mono;
+#ifdef FAM_SOUND_AMBIENT_V3
+            /* Vast: the echoes and the octave grains also sing in the plate. */
+            if(vast>0 || shim[0]!=0) x+=vast*.5f*(echoes[0]+echoes[1])+.5f*(shim[0]+shim[1]);
+#endif
             for(int k=0;k<4;++k)x=sf_line(k,x,k<2 ? .6f : .5f);
             float input[2]={x*(1-sf.decay)+sf.fb[1]*sf.decay,
                             x*(1-sf.decay)+sf.fb[0]*sf.decay};

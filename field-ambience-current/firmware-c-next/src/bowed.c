@@ -23,6 +23,7 @@
 #include "soft_pad.h"
 #endif
 #ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_choir.h"
 #include "ambient_motion.h"
 #endif
 #include <math.h>
@@ -63,6 +64,8 @@ typedef struct {
     float ph2, inc2;                       /* ensemble partner, slow beat */
     ambient_motion_t motion;               /* slow level/brightness drift */
     float level_bal;                       /* register balance, per note  */
+    bool choir;                            /* FJORD voicing, fixed per note */
+    ambient_choir_t singers;
 #endif
 } bvoice_t;
 
@@ -87,6 +90,13 @@ static bool pad_enabled;
 static _Atomic uint32_t v3_notes;
 #endif
 void bowed_set_pad(bool on) { pad_enabled=on; }
+#ifdef FAM_SOUND_AMBIENT_V3
+static bool choir_enabled;
+/* The choir level at equal loudness with the other voicings: the tract
+ * passes less energy than the pad's harmonic table. */
+#define CHOIR_GAIN 2.5f
+void bowed_set_choir(bool on) { choir_enabled=on; }
+#endif
 void bowed_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
 }
@@ -184,7 +194,12 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
      * partner a constant 0.12-0.28 Hz above, started out of phase: the same
      * slow breathing beat (one swell every ~4-8 s) at every pitch, never a
      * 4-5 Hz flutter up high. Each note also gets its own slow drift. */
-    if(v->soft_pad) {
+    v->choir=v->soft_pad && choir_enabled;
+    if(v->choir) {
+        /* Choir: the voices bloom in 0.9 s and fade over about 1.4 s. */
+        v->envInc=v->amp/(0.9f*shape_attack_scale()*SR);
+        v->relCoef=dsp_smooth_coef(1.4f*shape_release_scale());
+    } else if(v->soft_pad) {
         v->envInc=v->amp/(2.0f*shape_attack_scale()*SR);
         v->relCoef=dsp_smooth_coef(1.1f*shape_release_scale());
     }
@@ -198,6 +213,10 @@ static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float am
         /* +0.7 dB keeps the complete-sound World balance (COAST re WOODLAND)
          * within 0.7 dB for played Cells and Generate. */
         v->level_bal=1.08f*ambient_register_gain(freq_hz);
+        if(v->choir) {
+            v->level_bal*=CHOIR_GAIN;
+            ambient_choir_prepare(&v->singers,freq_hz,seed,0.0f); /* a warm "aah" */
+        }
     }
 #endif
     v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
@@ -356,9 +375,16 @@ void bowed_render_mix(float *dry_L, float *dry_R,
 #ifdef FAM_SOUND_AMBIENT_V3
                 /* The partner swells against the main voice: slow width motion. */
                 float drift,level=ambient_motion_step(&v->motion,.45f,&drift);
+                if(v->choir) {
+                    /* Three singers; the outer pair's difference is the width. */
+                    float wide;
+                    out=ambient_choir_sample(&v->singers,shade+drift,&wide)*v->env*.5f*level*v->level_bal;
+                    side=wide*v->env*.5f*v->level_bal;
+                } else {
                 out=soft_pad_v3_sample(v->ph,v->freq,shade+drift)*v->env*.5f*level*v->level_bal;
                 side=soft_pad_v3_partner(v->ph2,v->freq)*v->env*.5f*.30f*(2.0f-level)*v->level_bal;
                 v->ph2+=v->inc2;if(v->ph2>=1)v->ph2-=1;
+                }
 #else
                 out=soft_pad_sample(v->ph,v->freq,shade)*v->env*.5f;
 #endif

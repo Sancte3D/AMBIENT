@@ -6,7 +6,10 @@
  * Identity: a rich smooth COAST pad and a pure breathy HIGHLANDS whistle.
  * Generate: short notes on incommensurate loops. DRONE: a quiet tonic/fifth
  * bed in the World's colour (Strings, Wood, Breath), equally soft, with
- * UI-ready colour and level controls. HOLD: a classic latch.
+ * UI-ready colour and level controls. HOLD: a classic latch. Instrument
+ * Worlds: FJORD (choir), MEADOW (kalimba) and GLACIER (bells) play the three
+ * families' grammar with their own instrument, DRONE bed, space and S-4 style
+ * effects; every World change fades.
  * Host proof of the voicing contract, not a listening or device acceptance. */
 #include "engine.h"
 #include "engine_product.h"
@@ -14,6 +17,7 @@
 #include "gesture.h"
 #include "dsp.h"
 #include "tuning.h"
+#include "world_grammar.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -226,7 +230,7 @@ int main(void) {
     dsp_init();
     /* 1. Register and SHIFT octave, every Cell admitted on the live path. */
     static const int base[5] = {62, 64, 66, 69, 71};
-    for (int world = 0; world < 3; ++world) {
+    for (int world = 0; world < AMBIENT_WORLD_COUNT; ++world) {
         engine_init(); engine_set_world(world);
         for (int c = 0; c < 5; ++c) {
             assert(engine_product_cell_midi(c, false) == base[c]);
@@ -238,13 +242,13 @@ int main(void) {
             assert(engine_try_cell_on(owner, tuning_hz((float)engine_product_cell_midi(c, upper != 0)), .545f));
         }
     }
-    puts("ambient V3 register: Cells D4..B4, SHIFT exact octave, all 30 live Cells admitted");
+    puts("ambient V3 register: Cells D4..B4, SHIFT exact octave, all 60 live Cells of the six Worlds admitted");
 
     /* 1b. Live admission keeps the previous register: HARMONY voicings and the
      * LANDSCAPE bed still voice from brain.c in octave 3/4. Every pentatonic
      * pitch D3..D6, in every World, key and mode, is admitted on its own. */
     int admitted = 0;
-    for (int world = 0; world < 3; ++world) for (int minor = 0; minor < 2; ++minor)
+    for (int world = 0; world < AMBIENT_WORLD_COUNT; ++world) for (int minor = 0; minor < 2; ++minor)
         for (int key = 0; key < 12; ++key) for (int m = 50; m <= 86; ++m) {
             static const int major[5] = {0, 2, 4, 7, 9}, dark[5] = {0, 3, 5, 7, 10};
             const int *p = minor ? dark : major;
@@ -534,5 +538,88 @@ int main(void) {
         assert(controls_hold_base(1) && controls_hold_base(3) && engine_active_voices() == 2);
     }
     puts("ambient V3 HOLD: latch keeps the chord, new gesture replaces, no dead tap, HOLD off releases, catch pass");
+
+    /* 9. Instrument Worlds: FJORD, MEADOW and GLACIER play the COAST, WOODLAND
+     * and HIGHLANDS grammar with their own instrument, bed, space and effects. */
+    {
+        engine_init();
+        for (int w = 0; w < AMBIENT_WORLD_COUNT; ++w) { engine_set_world(w); assert(engine_product_world() == w); }
+        engine_set_world(AMBIENT_WORLD_COUNT); engine_set_world(-1);
+        assert(engine_product_world() == AMBIENT_WORLD_COUNT - 1);
+
+        /* Their own instruments on D4, dry: the choir's first formant lifts H3
+         * far above the pad's; the kalimba tine's bending mode (5.62x) and the
+         * bell bar's 2.756x mode are absent from the classic voices. */
+        double f0 = tuning_hz(62.0f), h3[2], tine[2], bar[2];
+        for (int k = 0; k < 2; ++k) {
+            render_note(k ? WORLD_FJORD : WORLD_COAST, 0, 62, 6000);
+            h3[k] = db(tone(3 * f0, 1.05, .5), tone(f0, 1.05, .5));
+            render_note(k ? WORLD_MEADOW : WORLD_WOODLAND, 0, 62, 6000);
+            tine[k] = db(tone(5.62 * f0, 1.01, .25), tone(f0, 1.01, .25));
+            render_note(k ? WORLD_GLACIER : WORLD_HIGHLANDS, 0, 62, 6000);
+            bar[k] = db(tone(2.756 * f0, 1.05, .5), tone(f0, 1.05, .5));
+        }
+        printf("ambient V3 instruments: H3 COAST %.1f / FJORD %.1f dB, tine mode WOODLAND %.1f / MEADOW %.1f dB, bar mode HIGHLANDS %.1f / GLACIER %.1f dB re H1\n",
+               h3[0], h3[1], tine[0], tine[1], bar[0], bar[1]);
+        assert(h3[1] - h3[0] > 6 && tine[1] > -35 && tine[0] < -60 && bar[1] > -25 && bar[0] < -50);
+
+        /* Vast: FJORD's echoes run into a longer hall; 3-5 s after the release
+         * its tail stays well above COAST's. */
+        double tail[2];
+        for (int k = 0; k < 2; ++k) {
+            render_note(k ? WORLD_FJORD : WORLD_COAST, .5f, 62, 6000);
+            double e = 0; for (int i = 9 * SR; i < 11 * SR; ++i) e += .5 * (left[i] * left[i] + right[i] * right[i]);
+            tail[k] = 10 * log10(e / (2 * SR) + 1e-20);
+        }
+        printf("ambient V3 space: tail 3-5 s after release COAST %.1f dBFS, FJORD %.1f dBFS\n", tail[0], tail[1]);
+        assert(tail[1] - tail[0] > 5);
+
+        /* MEADOW rings three tines together; WOODLAND keeps its two voices. */
+        int voices[2];
+        for (int k = 0; k < 2; ++k) {
+            engine_init(); gesture_init_owned(engine_gesture_note); controls_init();
+            engine_set_world(k ? WORLD_MEADOW : WORLD_WOODLAND); latch_ms = 100;
+            controls_cell_press(0, .12f); latch_run(60); controls_cell_press(2, .12f); latch_run(60);
+            controls_cell_press(4, .12f); latch_run(300);
+            voices[k] = engine_active_voices();
+            for (int c = 0; c < 5; c += 2) controls_cell_release((uint8_t)c);
+            latch_run(100);
+        }
+        printf("ambient V3 tines: WOODLAND %d voices, MEADOW %d voices for three Cells\n", voices[0], voices[1]);
+        assert(voices[0] == 2 && voices[1] == 3);
+
+        /* DRONE AUTO plays each World's own bed, quietly and without steps. */
+        static const int bed[3] = {ENGINE_DRONE_CHOIR, ENGINE_DRONE_KALIMBA, ENGINE_DRONE_BELLS};
+        static const char *bed_name[3] = {"FJORD choir", "MEADOW kalimba", "GLACIER bells"};
+        for (int k = 0; k < 3; ++k) {
+            engine_init(); gesture_init_owned(engine_gesture_note); engine_set_world(WORLD_FJORD + k);
+            engine_set_master_volume(.75f); engine_set_room(.5f);
+            mono_n = 0; mono_ms = 0; max_step = 0;
+            engine_set_drone(true); render_mono(16);
+            double l = level_db(4, 16);
+            printf("ambient V3 DRONE %-14s %.1f dBFS, max step %.4f\n", bed_name[k], l, max_step);
+            assert(engine_drone_sounding_color() == bed[k]);
+            assert(l > -70 && l < -36 && max_step < .02);
+            assert(!engine_nonfinite_samples() && !engine_output_limited_samples());
+        }
+
+        /* Through all six Worlds while Generate runs, then with the bed, plus a
+         * key change: every stage fades in and out, nothing steps or clips. */
+        engine_init(); gesture_init_owned(engine_gesture_note); controls_init(); engine_set_world(WORLD_COAST);
+        engine_set_master_volume(.75f); engine_set_room(.5f); engine_set_gen_seed(77);
+        mono_n = 0; mono_ms = 0; max_step = 0;
+        controls_modifier(MOD_GENERATE, true); render_mono(4);
+        static const int order[8] = {WORLD_FJORD, WORLD_MEADOW, WORLD_WOODLAND, WORLD_GLACIER,
+                                     WORLD_HIGHLANDS, WORLD_FJORD, WORLD_COAST, WORLD_MEADOW};
+        for (int k = 0; k < 8; ++k) {
+            if (k == 4) { controls_modifier(MOD_GENERATE, true); engine_set_drone(true); }
+            if (k == 2) engine_set_key_pc(7);
+            engine_set_world(order[k]); render_mono(4);
+        }
+        printf("ambient V3 World changes through all six: max step %.4f, limited %u, nonfinite %u\n",
+               max_step, (unsigned)engine_output_limited_samples(), (unsigned)engine_nonfinite_samples());
+        assert(max_step < .02 && !engine_nonfinite_samples() && !engine_output_limited_samples());
+    }
+    puts("ambient V3 instrument Worlds: own instruments, Vast space, three tines, own beds, clean World changes pass");
     return 0;
 }

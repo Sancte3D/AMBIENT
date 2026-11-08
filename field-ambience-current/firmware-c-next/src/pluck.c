@@ -11,6 +11,9 @@
 #include "woodland_body.h"
 #include "woodland_resonator.h"
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_modal.h"
+#endif
 #include <math.h>
 #include <stdatomic.h>
 #include <string.h>
@@ -29,6 +32,9 @@ typedef struct {
         float buf[BUF_LEN];
 #ifdef FAM_SOUND_PRODUCT
         woodland_resonator_t resonator; /* replaces, never layers the delay */
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+        ambient_modal_t tine;           /* kalimba voicing: a ringing tine */
 #endif
     };
     float N;              /* target period; read delay is N-1     */
@@ -59,9 +65,12 @@ typedef struct {
     woodland_body_t body;
     bool resonating;
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    bool kalimba;
+#endif
 } pluck_voice_t;
 
-static pluck_voice_t v[PLUCK_VOICES];
+static pluck_voice_t v[PLUCK_POOL];
 static _Atomic float s_damp = 0.42f * (0.25f / 0.9f); /* FIR side weight: 0=bright */
 static _Atomic bool s_ambient;
 #ifdef FAM_SOUND_PRODUCT
@@ -76,6 +85,11 @@ static bool body_enabled;
 static bool resonator_enabled;
 void pluck_set_body(bool enabled) { body_enabled=enabled; }
 void pluck_set_resonator(bool enabled) { resonator_enabled=enabled; }
+#ifdef FAM_SOUND_AMBIENT_V3
+static bool kalimba_enabled;
+void pluck_set_kalimba(bool on) { kalimba_enabled=on; }
+int pluck_voice_limit(void) { return kalimba_enabled ? PLUCK_POOL : PLUCK_VOICES; }
+#endif
 void pluck_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
 }
@@ -98,8 +112,8 @@ void pluck_init(void) {
 #endif
     memset(v, 0, sizeof v);
     /* Slight opposing pans — equal-power at ±0.35. */
-    for (int i = 0; i < PLUCK_VOICES; ++i) {
-        float p = (i == 0) ? -0.35f : 0.35f;
+    for (int i = 0; i < PLUCK_POOL; ++i) {
+        float p = (i == 0) ? -0.35f : (i == 1) ? 0.35f : 0.0f;
         float a = (p + 1.0f) * 0.25f * 3.14159265f;
         v[i].panL = cosf(a);
         v[i].panR = sinf(a);
@@ -139,15 +153,20 @@ static bool start_note(int owner, float freq_hz, float amp) {
     /* Never reset a ringing delay line. Releases occupy their slot too.
      * A busy source or full pool declines the event without changing RNG. */
     if (owner != 256)
-        for (int k = 0; k < PLUCK_VOICES; ++k)
+        for (int k = 0; k < PLUCK_POOL; ++k)
             if (v[k].active && v[k].owner == owner) return false;
+#ifdef FAM_SOUND_AMBIENT_V3
+    const int cap = pluck_voice_limit();
+#else
+    const int cap = PLUCK_VOICES;
+#endif
     int i = -1;
-    for (int k = 0; k < PLUCK_VOICES; ++k) {
-        int candidate = (next_voice + k) % PLUCK_VOICES;
+    for (int k = 0; k < cap; ++k) {
+        int candidate = (next_voice + k) % cap;
         if (!v[candidate].active) { i = candidate; break; }
     }
     if (i < 0) return false;
-    next_voice = (i + 1) % PLUCK_VOICES;
+    next_voice = (i + 1) % cap;
 
     pluck_voice_t *p = &v[i];
     bool ambient=atomic_load(&s_ambient);
@@ -170,6 +189,15 @@ static bool start_note(int owner, float freq_hz, float amp) {
      * ringing fundamental. Never turn the approved long body into a short pluck. */
     if(ambient && resonator_enabled)
         attack_s=dsp_clampf(.12f*shape_attack_scale(),.06f,.36f);
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* A thumb plucks the tine: the modes start at zero output, so a 3 ms
+     * ramp is enough; on release the tine keeps ringing and fades over 3 s. */
+    p->kalimba=ambient && resonator_enabled && kalimba_enabled;
+    if(p->kalimba) {
+        attack_s=.003f;
+        p->release_frames=(uint32_t)(3.0f*shape_release_scale()*SR);
+    }
 #endif
     p->attack_phase = 0.0f;
     p->attack_step = 1.0f / (attack_s * SR);
@@ -202,6 +230,11 @@ static bool start_note(int owner, float freq_hz, float amp) {
         /* Same allocated voice/owner. Clear union bytes so reuse cannot
          * retain either the previous delay or a previous resonator mode. */
         memset(p->buf,0,sizeof p->buf);
+#ifdef FAM_SOUND_AMBIENT_V3
+        if(p->kalimba)
+            ambient_kalimba_prepare(&p->tine,freq_hz,amp,.30f+.40f*p->color,shape_release_scale());
+        else
+#endif
         woodland_resonator_prepare(&p->resonator,freq_hz,amp,position,shape_release_scale());
         __asm__ volatile("" ::: "memory");
         p->active=1;
@@ -268,26 +301,26 @@ static void release_voice(pluck_voice_t *p,uint32_t frames) {
     }
 }
 void pluck_note_off(uint8_t source) {
-    for (int i = 0; i < PLUCK_VOICES; ++i)
+    for (int i = 0; i < PLUCK_POOL; ++i)
         if (v[i].owner == (int)source) release_voice(&v[i],v[i].release_frames);
 }
 void pluck_all_off(void) {
-    for (int i = 0; i < PLUCK_VOICES; ++i) release_voice(&v[i],v[i].release_frames);
+    for (int i = 0; i < PLUCK_POOL; ++i) release_voice(&v[i],v[i].release_frames);
 }
 void pluck_quiet_source(uint8_t source,uint32_t frames) {
-    for(int i=0;i<PLUCK_VOICES;++i)
+    for(int i=0;i<PLUCK_POOL;++i)
         if(v[i].owner==(int)source)release_voice(&v[i],frames);
 }
 
 uint16_t pluck_active_sources(void) {
     uint16_t mask=0;
-    for(int i=0;i<PLUCK_VOICES;++i) if(v[i].active && v[i].owner>=0 && v[i].owner<16)
+    for(int i=0;i<PLUCK_POOL;++i) if(v[i].active && v[i].owner>=0 && v[i].owner<16)
         mask|=(uint16_t)(1u<<v[i].owner);
     return mask;
 }
 int pluck_active_count(void) {
     int c = 0;
-    for (int i = 0; i < PLUCK_VOICES; ++i) c += v[i].active ? 1 : 0;
+    for (int i = 0; i < PLUCK_POOL; ++i) c += v[i].active ? 1 : 0;
     return c;
 }
 
@@ -298,7 +331,7 @@ void pluck_render_mix(float *dry_L, float *dry_R,
     float color = atomic_load_explicit(&s_color, memory_order_relaxed);
     uint32_t held=atomic_load_explicit(&unfold_mask,memory_order_acquire);
 #endif
-    for (int i = 0; i < PLUCK_VOICES; ++i) {
+    for (int i = 0; i < PLUCK_POOL; ++i) {
         pluck_voice_t *p = &v[i];
         if (!p->active) continue;
 
@@ -312,7 +345,11 @@ void pluck_render_mix(float *dry_L, float *dry_R,
             float y;
 #ifdef FAM_SOUND_PRODUCT
             if(p->resonating) {
+#ifdef FAM_SOUND_AMBIENT_V3
+                y=p->kalimba ? ambient_modal_step(&p->tine) : woodland_resonator_step(&p->resonator);
+#else
                 y=woodland_resonator_step(&p->resonator);
+#endif
             } else {
 #endif
             p->damp += (damping - p->damp) * (1.0f / (0.080f * SR));

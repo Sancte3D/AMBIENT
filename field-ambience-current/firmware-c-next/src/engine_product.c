@@ -22,6 +22,9 @@
 #endif
 #ifdef FAM_SOUND_AMBIENT_V3
 #include "ambient_motion.h"
+#include "ambient_choir.h"
+#include "ambient_modal.h"
+#include "ambient_world_fx.h"
 #endif
 #include <stdatomic.h>
 #include <string.h>
@@ -56,6 +59,12 @@ static engine_note_hook_t note_hook;
 static engine_note_block_t note_block;
 engine_note_block_t engine_note_block_reason(void) {return note_block;}
 static int world,minor,tonic_pc,fx_mode,last_midi,note_count;
+#ifdef FAM_SOUND_AMBIENT_V3
+/* `world` is the voice family whose grammar, scales and admission apply;
+ * world_id the selected World: FJORD, MEADOW and GLACIER are the families
+ * COAST, WOODLAND and HIGHLANDS with their own instrument and effects. */
+static int world_id;
+#endif
 static uint32_t seed,now_ms,last_user_ms,retry_ms,rejects;
 static bool world_character;
 static bool generate,autoplay,user_present,user_seen,suppressed,clearing,muted,resume_nature;
@@ -86,6 +95,15 @@ static void reset_voicing(void) {
 }
 #endif
 static uint32_t quiet_frames;
+/* Plucked voices the next WOODLAND-family note may use: the kalimba rings
+ * three tines, the resonator body keeps its two. */
+static int pluck_capacity(void) {
+#ifdef FAM_SOUND_AMBIENT_V3
+    return pluck_voice_limit();
+#else
+    return PLUCK_VOICES;
+#endif
+}
 static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
 static uint32_t clock_frames(void) { return atomic_load_explicit(&audio_frames,memory_order_acquire); }
@@ -102,8 +120,18 @@ static uint32_t clock_frames(void) { return atomic_load_explicit(&audio_frames,m
  *   Breath (HIGHLANDS): tonic+fifth from A3, nearly pure, air tuned to each tone.
  * Roots stay in D3..C#4 (Strings) and A3..G#4 (Wood, Breath); the highest
  * fifth is 622 Hz, below the register that made long high tones unsettling.
- * Trims give the three colours equal loudness (K-weighted). */
-enum { DRONE_VOICES=2 };
+ * Trims give the three colours equal loudness (K-weighted).
+ * The instrument Worlds play their bed with their own instrument:
+ *   Choir (FJORD):     three soft "ooh" voices, tonic, third (else sixth or
+ *                      fourth) and fifth from A3, slowly breathing.
+ *   Kalimba (MEADOW):  no held tone: soft tines from the World's first five
+ *                      notes above A4, unhurried and irregular.
+ *   Bells (GLACIER):   distant strokes on tonic, fifth and octave every
+ *                      3.5-7 s, ringing into each other. */
+enum { DRONE_VOICES=2,BED_VOICES=3,BED_TINES=4,BED_BELLS=3,BED_DROPS=5 };
+#define DRONE_TRIM_CHOIR 1.9f
+#define DRONE_TRIM_KALIMBA 1.7f
+#define DRONE_TRIM_BELLS 2.6f
 #define DRONE_TRIM_WOOD .56f
 #define DRONE_TRIM_BREATH .51f
 #define DRONE_AIR 1.4f
@@ -119,13 +147,14 @@ typedef struct {
     float breath;        /* tuned air, 0 = none */
     float trim;          /* equal-loudness trim */
 } drone_color_t;
-static const drone_color_t DRONE_COLOR[ENGINE_DRONE_COLORS]={
+static const drone_color_t DRONE_COLOR[ENGINE_DRONE_BREATH+1]={
     /* AUTO (never sounds) */{50,{1,.34f,.16f,.08f},.40f,.70f,.30f,{.11f,.17f},1.0f,0,1.0f},
     /* Strings */            {50,{1,.34f,.16f,.08f},.40f,.70f,.30f,{.11f,.17f},1.0f,0,1.0f},
     /* Wood */               {57,{1,.08f,.03f,.16f},.30f,.45f,.18f,{.05f,.08f},1.8f,0,DRONE_TRIM_WOOD},
     /* Breath */             {57,{1,.07f,.02f,0},   .20f,.50f,.20f,{.08f,.13f},1.0f,DRONE_AIR,DRONE_TRIM_BREATH},
 };
 static _Atomic uint32_t drone_level_bits,drone_root_bits,drone_color_bits;
+static _Atomic uint32_t bed_upper_bits,bed_drop_bits[BED_DROPS];
 static bool drone_on;
 static int drone_color_sel;   /* ENGINE_DRONE_AUTO: the World's colour */
 static float drone_level_db;  /* user trim, -12..+6 dB */
@@ -135,14 +164,36 @@ typedef struct {
     dsp_svf_t air1,air2;
     ambient_motion_t motion;
 } drone_voice_t;
-static struct { drone_voice_t v[DRONE_VOICES]; float level,root,gate; int col; } drone;
+typedef struct { ambient_choir_t choir; ambient_motion_t motion; float lev,drift; } bed_voice_t;
+typedef struct { ambient_modal_t body; float pan; bool live; } bed_strike_t;
+static struct {
+    drone_voice_t v[DRONE_VOICES]; float level,root,gate; int col;
+    bed_voice_t bed[BED_VOICES]; bed_strike_t tine[BED_TINES],bell[BED_BELLS];
+    uint32_t rng; int32_t next;
+} drone;
+static bool drone_is_bed(int col) { return col>=ENGINE_DRONE_CHOIR && col<ENGINE_DRONE_COLORS; }
 static int drone_resolved(void) {
     if(drone_color_sel>ENGINE_DRONE_AUTO && drone_color_sel<ENGINE_DRONE_COLORS) return drone_color_sel;
+    if(world_id>=CORE_WORLD_COUNT)
+        return world==WORLD_WOODLAND ? ENGINE_DRONE_KALIMBA : world==WORLD_HIGHLANDS ? ENGINE_DRONE_BELLS : ENGINE_DRONE_CHOIR;
     return world==WORLD_WOODLAND ? ENGINE_DRONE_WOOD : world==WORLD_HIGHLANDS ? ENGINE_DRONE_BREATH : ENGINE_DRONE_STRINGS;
 }
 static float drone_root_hz(int col) {
-    int lo=DRONE_COLOR[col].lowest,pc=tonic_pc<0 ? 2 : tonic_pc;
+    int lo=drone_is_bed(col) ? 57 : DRONE_COLOR[col].lowest,pc=tonic_pc<0 ? 2 : tonic_pc;
     return tuning_hz((float)(lo+(((pc-lo)%12)+12)%12));
+}
+/* The beds' pitches: kalimba tines from the World's first five notes above
+ * A4; the choir's upper voice on the third, else the sixth, else the fourth. */
+static void bed_publish_pitches(void) {
+    int lo=57,pc=tonic_pc<0 ? 2 : tonic_pc,rm=lo+(((pc-lo)%12)+12)%12;
+    float root=tuning_hz((float)rm),drop[BED_DROPS]; int k=0;
+    for(int m=69;m<=WORLD_LIVE_MIDI_HIGH && k<BED_DROPS;++m)
+        if(world_live_pitch_allowed(m,pc,minor!=0)) drop[k++]=tuning_hz((float)m);
+    for(;k<BED_DROPS;++k) drop[k]=k ? drop[k-1] : 2.0f*root;
+    for(int i=0;i<BED_DROPS;++i) atomic_store_explicit(&bed_drop_bits[i],bits(drop[i]),memory_order_release);
+    static const int upper[4]={4,3,9,5}; int up=7;
+    for(int c=3;c>=0;--c) if(world_live_pitch_allowed(rm+upper[c]+(rm+upper[c]<WORLD_LIVE_MIDI_LOW ? 12 : 0),pc,minor!=0)) up=upper[c];
+    atomic_store_explicit(&bed_upper_bits,bits(tuning_hz((float)(rm+up))/root),memory_order_release);
 }
 /* 10^(dB/20) without libm in this file (the hot-path lint reads whole
  * modules): whole dB by multiplication, the fraction interpolated, error
@@ -156,6 +207,7 @@ static float drone_db_gain(float db) {
 }
 static void drone_publish(void) {
     bool on=drone_on && !muted; int col=drone_resolved();
+    if(drone_is_bed(col)) bed_publish_pitches();
     /* Colour before root: Audio never glides toward another colour's register. */
     atomic_store_explicit(&drone_color_bits,(uint32_t)col,memory_order_release);
     atomic_store_explicit(&drone_root_bits,bits(drone_root_hz(col)),memory_order_release);
@@ -174,9 +226,26 @@ static void drone_reset_audio(void) {
         d->ph2=.37f*(float)(i+1);
         d->rng=0xA17B5EEDu+0x9E3779B9u*(uint32_t)i;
     }
+    drone.rng=0xA17B5EEDu;
 }
 static void drone_adopt(int col,float root) {
     drone.col=col; drone.root=root;
+    if(drone_is_bed(col)) {
+        /* Preparing a choir voice computes its tract once: at most three per
+         * kind change, outside the per-sample loop. */
+        static const float ratio[BED_VOICES]={1.0f,1.0f,1.4983071f};
+        float upper=value(atomic_load_explicit(&bed_upper_bits,memory_order_acquire));
+        for(int v=0;v<BED_VOICES;++v) {
+            bed_voice_t *d=&drone.bed[v];
+            ambient_choir_prepare(&d->choir,root*(v==1 ? upper : ratio[v]),0xC401u+977u*(uint32_t)v,.85f);
+            ambient_motion_prepare(&d->motion,0xD7053u+0x9E3779B9u*(uint32_t)(v+1));
+            d->lev=ambient_motion_peek(&d->motion,.45f,&d->drift);
+        }
+        for(int i=0;i<BED_TINES;++i) drone.tine[i].live=false;
+        for(int i=0;i<BED_BELLS;++i) drone.bell[i].live=false;
+        drone.next=(int32_t)(.3f*DSP_SAMPLE_RATE_HZ);
+        return;
+    }
     for(int v=0;v<DRONE_VOICES;++v) {
         drone_voice_t *d=&drone.v[v];
         d->beat=DRONE_COLOR[col].beat_hz[v]/(float)DSP_SAMPLE_RATE_HZ;
@@ -192,18 +261,9 @@ static inline float drone_noise(uint32_t *r) {
  * per sample: 3 table sines per voice and sample, no division. Breath adds
  * noise through two band-passes at the tone (coefficients only on a pitch
  * change). */
-static void drone_render(float *l,float *r,int n) {
-    float target=value(atomic_load_explicit(&drone_level_bits,memory_order_acquire));
-    if(target<=0 && drone.level<1e-6f) { drone.level=0; drone.col=0; return; }
-    float root=value(atomic_load_explicit(&drone_root_bits,memory_order_acquire));
-    int want=(int)atomic_load_explicit(&drone_color_bits,memory_order_acquire);
-    if(!(root>0 && root<1000) || want<=ENGINE_DRONE_AUTO || want>=ENGINE_DRONE_COLORS || n<=0) return;
-    if(drone.col==0) { drone_adopt(want,root); drone.gate=1; }
-    else if(want!=drone.col && drone.gate<=0) drone_adopt(want,root);
-    const bool fading=want!=drone.col;
+static void drone_tone(float *l,float *r,int n,float target,float root,bool fading,float gate_step) {
     const drone_color_t *c=&DRONE_COLOR[drone.col];
     const float up=1.0f/(1.2f*DSP_SAMPLE_RATE_HZ),down=1.0f/(1.8f*DSP_SAMPLE_RATE_HZ),glide=1.0f/(1.5f*DSP_SAMPLE_RATE_HZ);
-    const float gate_step=fading ? -1.0f/(.5f*DSP_SAMPLE_RATE_HZ) : 1.0f/(1.5f*DSP_SAMPLE_RATE_HZ);
     const float W0=c->w[0],W1=c->w[1],W2=c->w[2],W3=c->w[3],Wu=W1+W2+W3,step=1.0f/(float)n;
     float lev[DRONE_VOICES],dlev[DRONE_VOICES],dr[DRONE_VOICES],ddr[DRONE_VOICES],inv[DRONE_VOICES],dinv[DRONE_VOICES];
     for(int v=0;v<DRONE_VOICES;++v) {
@@ -251,6 +311,101 @@ static void drone_render(float *l,float *r,int n) {
         }
         l[i]+=drone.level*g*sl; r[i]+=drone.level*g*sr;
     }
+}
+/* The beds share the tone colours' ramps: level, glide (never while
+ * dipping) and the dip gate, smoothstepped. */
+static inline float bed_step(float target,float root,bool fading,float gate_step,float trim) {
+    const float up=1.0f/(1.2f*DSP_SAMPLE_RATE_HZ),down=1.0f/(1.8f*DSP_SAMPLE_RATE_HZ),glide=1.0f/(1.5f*DSP_SAMPLE_RATE_HZ);
+    drone.level+=(target-drone.level)*(target>drone.level ? up : down);
+    if(!fading) drone.root+=(root-drone.root)*glide;
+    drone.gate=dsp_clampf(drone.gate+gate_step,0,1);
+    return drone.level*drone.gate*drone.gate*(3.0f-2.0f*drone.gate)*trim;
+}
+static inline float bed_unit(void) {
+    drone.rng=drone.rng*1664525u+1013904223u;
+    return (float)(drone.rng>>8)*(1.0f/16777216.0f);
+}
+static void bed_choir(float *l,float *r,int n,float target,float root,bool fading,float gate_step) {
+    static const float gain[BED_VOICES]={1.0f,.45f,.62f},pan[BED_VOICES]={.5f,.35f,.65f};
+    const float upper=value(atomic_load_explicit(&bed_upper_bits,memory_order_acquire));
+    const float ratio[BED_VOICES]={1.0f,upper,1.4983071f},step=1.0f/(float)n;
+    float lev[BED_VOICES],dlev[BED_VOICES];
+    for(int v=0;v<BED_VOICES;++v) {
+        bed_voice_t *d=&drone.bed[v];
+        float drift1,lev1=ambient_motion_skip(&d->motion,.45f,n,&drift1);
+        lev[v]=d->lev; dlev[v]=(lev1-d->lev)*step; d->lev=lev1; d->drift=drift1;
+        ambient_choir_retune(&d->choir,drone.root*ratio[v]);
+    }
+    for(int i=0;i<n;++i) {
+        float g=bed_step(target,root,fading,gate_step,DRONE_TRIM_CHOIR),sl=0,sr=0;
+        for(int v=0;v<BED_VOICES;++v) {
+            float side,x=ambient_choir_sample(&drone.bed[v].choir,-.4f,&side)*(lev[v]+=dlev[v])*gain[v];
+            sl+=(1.0f-pan[v])*x+pan[v]*side; sr+=pan[v]*x+(1.0f-pan[v])*side;
+        }
+        l[i]+=g*sl; r[i]+=g*sr;
+    }
+}
+static void bed_kalimba(float *l,float *r,int n,float target,float root,bool fading,float gate_step) {
+    float pitch[BED_DROPS];
+    for(int k=0;k<BED_DROPS;++k) pitch[k]=value(atomic_load_explicit(&bed_drop_bits[k],memory_order_acquire));
+    for(int i=0;i<n;++i) {
+        float g=bed_step(target,root,fading,gate_step,DRONE_TRIM_KALIMBA),sl=0,sr=0;
+        if(--drone.next<=0) {
+            bool pair=bed_unit()<.15f;
+            drone.next=(int32_t)((pair ? .12f+.10f*bed_unit() : .6f+1.6f*bed_unit())*DSP_SAMPLE_RATE_HZ);
+            for(int k=0;k<BED_TINES;++k) if(!drone.tine[k].live) {
+                float hz=pitch[(int)(bed_unit()*BED_DROPS)%BED_DROPS];
+                ambient_kalimba_prepare(&drone.tine[k].body,hz>0 && hz<4000 ? hz : 440,.45f+.35f*bed_unit(),.15f+.15f*bed_unit(),1.0f);
+                drone.tine[k].pan=.25f+.5f*bed_unit(); drone.tine[k].live=true;
+                break;
+            }
+        }
+        for(int k=0;k<BED_TINES;++k) if(drone.tine[k].live) {
+            float x=ambient_modal_step(&drone.tine[k].body);
+            sl+=x*(1.0f-drone.tine[k].pan); sr+=x*drone.tine[k].pan;
+        }
+        l[i]+=g*sl; r[i]+=g*sr;
+    }
+    for(int k=0;k<BED_TINES;++k) if(drone.tine[k].live && ambient_modal_energy(&drone.tine[k].body)<1e-10f) drone.tine[k].live=false;
+}
+static void bed_bells(float *l,float *r,int n,float target,float root,bool fading,float gate_step) {
+    static const float ratio[3]={1.0f,1.4983071f,2.0f};
+    for(int i=0;i<n;++i) {
+        float g=bed_step(target,root,fading,gate_step,DRONE_TRIM_BELLS),sl=0,sr=0;
+        if(--drone.next<=0) {
+            drone.next=(int32_t)((3.5f+3.5f*bed_unit())*DSP_SAMPLE_RATE_HZ);
+            int best=0; float least=1e30f;
+            for(int k=0;k<BED_BELLS;++k) {
+                float e=drone.bell[k].live ? ambient_modal_energy(&drone.bell[k].body) : 0;
+                if(e<least) { least=e; best=k; }
+            }
+            if(least<1e-6f || !drone.bell[best].live) {
+                ambient_bell_prepare(&drone.bell[best].body,drone.root*ratio[(int)(bed_unit()*3.0f)%3],.5f+.3f*bed_unit(),.20f,1.2f);
+                drone.bell[best].pan=.3f+.4f*bed_unit(); drone.bell[best].live=true;
+            }
+        }
+        for(int k=0;k<BED_BELLS;++k) if(drone.bell[k].live) {
+            float x=ambient_modal_step(&drone.bell[k].body);
+            sl+=x*(1.0f-drone.bell[k].pan); sr+=x*drone.bell[k].pan;
+        }
+        l[i]+=g*sl; r[i]+=g*sr;
+    }
+    for(int k=0;k<BED_BELLS;++k) if(drone.bell[k].live && ambient_modal_energy(&drone.bell[k].body)<1e-10f) drone.bell[k].live=false;
+}
+static void drone_render(float *l,float *r,int n) {
+    float target=value(atomic_load_explicit(&drone_level_bits,memory_order_acquire));
+    if(target<=0 && drone.level<1e-6f) { drone.level=0; drone.col=0; return; }
+    float root=value(atomic_load_explicit(&drone_root_bits,memory_order_acquire));
+    int want=(int)atomic_load_explicit(&drone_color_bits,memory_order_acquire);
+    if(!(root>0 && root<1000) || want<=ENGINE_DRONE_AUTO || want>=ENGINE_DRONE_COLORS || n<=0) return;
+    if(drone.col==0) { drone_adopt(want,root); drone.gate=1; }
+    else if(want!=drone.col && drone.gate<=0) drone_adopt(want,root);
+    const bool fading=want!=drone.col;
+    const float gate_step=fading ? -1.0f/(.5f*DSP_SAMPLE_RATE_HZ) : 1.0f/(1.5f*DSP_SAMPLE_RATE_HZ);
+    if(drone.col==ENGINE_DRONE_CHOIR) bed_choir(l,r,n,target,root,fading,gate_step);
+    else if(drone.col==ENGINE_DRONE_KALIMBA) bed_kalimba(l,r,n,target,root,fading,gate_step);
+    else if(drone.col==ENGINE_DRONE_BELLS) bed_bells(l,r,n,target,root,fading,gate_step);
+    else drone_tone(l,r,n,target,root,fading,gate_step);
 }
 /* Generate as loops: state here, logic next to the World ticks. */
 typedef struct {
@@ -574,7 +729,7 @@ static bool admit(uint8_t owner,float hz,float velocity,bool phrase) {
         }
         local+=slots[i].family==world;
     }
-    if(empty<0 || (world==WORLD_WOODLAND && local>=PLUCK_VOICES)) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
+    if(empty<0 || (world==WORLD_WOODLAND && local>=pluck_capacity())) {note_block=ENGINE_NOTE_VOICES_FULL;return false;}
     if(!pitch_clear(hz))return false;
     return start_source(empty,owner,hz,velocity);
 }
@@ -620,7 +775,7 @@ static bool plan_cell_press(uint8_t owner,float hz,float velocity) {
         }
         victims|=bit;
     }
-    bool local_full=world==WORLD_WOODLAND && local>=PLUCK_VOICES;
+    bool local_full=world==WORLD_WOODLAND && local>=(unsigned)pluck_capacity();
     if(total>=SLOTS || local_full) {
         int oldest=-1;
         uint32_t age=0,epoch=atomic_load(&audio_epoch);
@@ -826,23 +981,57 @@ void engine_set_nature(float v) {
      * Init/boot/World defaults are zero; Clear still ends the whole session. */
     if(nature_amount>0 && !clearing && !muted) atomic_store_explicit(&output_enabled,true,memory_order_release);
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+/* The selected World's instrument, space and effects; Main, future notes. */
+static void world_strings_tune(void) {
+    if(world_id<CORE_WORLD_COUNT) return;
+    /* Tonic from A3, fifth, octave, and the World's third (else sixth,
+     * else fourth) an octave up: four strings in every key and collection. */
+    int pc=tonic_pc<0 ? 2 : tonic_pc,rm=57+(((pc-57)%12)+12)%12;
+    static const int colour[4]={4,3,9,5}; int up=7;
+    for(int c=3;c>=0;--c) if(world_live_pitch_allowed(rm+12+colour[c],pc,minor!=0)) up=colour[c];
+    float hz[WFX_STRINGS]={tuning_hz((float)rm),tuning_hz((float)(rm+7)),tuning_hz((float)(rm+12)),tuning_hz((float)(rm+12+up))};
+    wfx_tune(hz,WFX_PRESET[world_id-CORE_WORLD_COUNT+1].t60);
+}
+static void world_voicing_apply(void) {
+    bowed_set_choir(world_id==WORLD_FJORD);
+    pluck_set_kalimba(world_id==WORLD_MEADOW);
+    horn_set_bells(world_id==WORLD_GLACIER);
+    ambient_room_set_world(world_id);
+    world_strings_tune();
+    wfx_set_preset(world_id>=CORE_WORLD_COUNT ? world_id-CORE_WORLD_COUNT+1 : 0);
+}
+#endif
 void engine_set_world(int i) {
+#ifdef FAM_SOUND_AMBIENT_V3
+    if(i<0 || i>=AMBIENT_WORLD_COUNT || i==world_id) return;
+#else
     if(i<0 || i>=CORE_WORLD_COUNT || i==world) return;
+#endif
     clear_cell_unfold();
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     reset_voicing();
     cell_queue_count=0;
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    reap(); retire_context(false); world=i%CORE_WORLD_COUNT; world_id=i; nature_set_world(world);retry_ms=now_ms;
+#else
     reap(); retire_context(false); world=i; nature_set_world(world);retry_ms=now_ms;
+#endif
     coast_pending=0; coast_phrase_init(&coast,seed);
     woodland_pending=false;woodland_phrase_init(&woodland,seed);
     highlands_pending=false;highlands_phrase_init(&highlands,seed);
 #ifdef FAM_SOUND_AMBIENT_V3
+    world_voicing_apply();
     gen_loops_reset(now_ms);
     drone_publish(); /* AUTO colour follows the World */
 #endif
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+int engine_product_world(void) { return world_id; }
+#else
 int engine_product_world(void) { return world; }
+#endif
 int engine_product_collection(void) { return minor; }
 int engine_product_cell_midi(int cell,bool upper) {
     if(cell<0 || cell>=CELL_COUNT) return -1;
@@ -901,11 +1090,17 @@ void engine_set_key_pc(int pc) {
     int root=50+((pc-2+12)%12);brain_set_key(root);tuning_set_key(root);
 #ifdef FAM_SOUND_AMBIENT_V3
     if(drone_on) drone_publish(); /* the bed glides to the new tonic */
+    world_strings_tune();
 #endif
 }
 void engine_set_key(int midi) { engine_set_key_pc(midi%12); }
 void engine_set_mode(int i) {
-    if(i>=0 && i<=1 && i!=minor) {reset_score_context();minor=i;brain_set_mode(minor ? 5 : 0);}
+    if(i>=0 && i<=1 && i!=minor) {reset_score_context();minor=i;brain_set_mode(minor ? 5 : 0);
+#ifdef FAM_SOUND_AMBIENT_V3
+        if(drone_on) drone_publish();
+        world_strings_tune();
+#endif
+    }
 }
 void engine_set_tuning(int just) {
     if((just==0 || just==1) && just!=tuning_mode()) {reset_score_context();tuning_set_mode(just);}
@@ -1091,10 +1286,25 @@ static const gen_world_t GEN_WORLD[CORE_WORLD_COUNT]={
     /* WOODLAND: mallet rings */{{11.1f,15.7f,17.6f},{4600,4000,3400},{220,262,330},{294,392,470},{.56f,.50f,.44f}},
     /* HIGHLANDS: breath tones */{{15.2f,21.5f,24.1f},{3600,3000,2600},{220,294,392},{330,494,650},{.52f,.46f,.40f}},
 };
+#ifdef FAM_SOUND_AMBIENT_V3
+/* The instrument Worlds: choir swells as COAST; kalimba figures, quicker
+ * and shorter (three tines keep them available); bell pairs as HIGHLANDS. */
+static const gen_world_t GEN_INSTRUMENT[CORE_WORLD_COUNT]={
+    /* FJORD: choir swells */      {{19.7f,22.1f,31.2f},{4800,4200,3600},{220,294,392},{330,494,850},{.50f,.44f,.36f}},
+    /* MEADOW: kalimba figures */  {{6.3f,8.9f,10.0f},{1800,1500,1300},{220,262,330},{294,392,470},{.52f,.46f,.40f}},
+    /* GLACIER: bell pairs */      {{15.2f,21.5f,24.1f},{3600,3000,2600},{220,294,392},{330,494,650},{.52f,.46f,.40f}},
+};
+#endif
+static const gen_world_t *gen_world(void) {
+#ifdef FAM_SOUND_AMBIENT_V3
+    if(world_id>=CORE_WORLD_COUNT) return &GEN_INSTRUMENT[world];
+#endif
+    return &GEN_WORLD[world];
+}
 static float gen_unit(void) { gen_rng=gen_rng*1664525u+1013904223u; return (float)(gen_rng>>8)*(1.0f/16777216.0f); }
 /* The loop's admissible pitches: the World's collection inside its band. */
 static int gen_band(int role,int *out,int max) {
-    const gen_world_t *g=&GEN_WORLD[world];
+    const gen_world_t *g=gen_world();
     int top=world==WORLD_WOODLAND ? 68 : world==WORLD_HIGHLANDS ? 75 : 80,n=0;
     float lo=g->lo_hz[role],hi=fminf(g->hi_hz[role],phrase_hi_hz());
     for(int m=PHRASE_LIFT_BELOW;m<=top && n<max;++m) {
@@ -1109,7 +1319,7 @@ static int gen_band(int role,int *out,int max) {
 }
 static uint32_t gen_period_ms(int role) {
     float spacing=1.35f-.70f*(activity>=0 && activity<=1 ? activity : .5f);
-    return (uint32_t)(GEN_WORLD[world].period_s[role]*spacing*gen_scale*(.97f+.06f*gen_unit())*1000.0f);
+    return (uint32_t)(gen_world()->period_s[role]*spacing*gen_scale*(.97f+.06f*gen_unit())*1000.0f);
 }
 /* Advance a loop's clock by whole cycles until its next onset lies ahead. */
 static void gen_loop_advance(int role,uint32_t ms) {
@@ -1119,13 +1329,21 @@ static void gen_loop_advance(int role,uint32_t ms) {
     L->next_ms=L->due_ms;
 }
 static void gen_loops_reset(uint32_t ms) {
+#ifdef FAM_SOUND_AMBIENT_V3
+    gen_rng=seed^0x5EEDF00Du^((uint32_t)world_id*0x9E3779B9u)^((uint32_t)(tonic_pc+1)*7919u)^((uint32_t)minor<<20);
+#else
     gen_rng=seed^0x5EEDF00Du^((uint32_t)world*0x9E3779B9u)^((uint32_t)(tonic_pc+1)*7919u)^((uint32_t)minor<<20);
+#endif
     gen_scale=.94f+.12f*gen_unit();
     static const float start_s[3]={.3f,3.7f,8.9f};
     for(int r=0;r<3;++r) {
         gen_loop_t *L=&gen_loops[r]; int band[24],n=gen_band(r,band,24);
         memset(L,0,sizeof *L); L->midi=-1;
+#ifdef FAM_SOUND_AMBIENT_V3
+        L->len=(uint8_t)(world_id==WORLD_GLACIER || gen_unit()<.6f ? 2 : 1); /* bells: melodic pairs */
+#else
         L->len=(uint8_t)(gen_unit()<.6f ? 2 : 1);
+#endif
         for(int k=0;k<2;++k) L->step[k]=(int8_t)(n>0 ? (int)(gen_unit()*(float)n)%n : 0);
         L->evolve_at=(uint8_t)(3+(int)(gen_unit()*3.0f));
         L->due_ms=L->next_ms=ms+(uint32_t)(start_s[r]*(1.35f-.70f*activity)*1000.0f);
@@ -1134,7 +1352,7 @@ static void gen_loops_reset(uint32_t ms) {
 static void gen_loop_heard(int role,source_slot_t *s) {
     gen_loop_t *L=&gen_loops[role]; L->pending=false;
     if(clearing || muted || suppressed || !generate || !autoplay) return;
-    s->timed=true; s->off_ms=now_ms+GEN_WORLD[world].hold_ms[role];
+    s->timed=true; s->off_ms=now_ms+gen_world()->hold_ms[role];
     last_midi=L->midi; ++note_count; ++L->fires; L->retries=0;
     if(L->len>1) L->phase^=1u;
     gen_loop_advance(role,now_ms);
@@ -1157,7 +1375,7 @@ static void gen_loops_tick(uint32_t ms) {
         int band[24],n=gen_band(r,band,24);
         if(n<=0) { gen_loop_advance(r,ms); continue; }
         int st=L->step[L->phase%L->len]; if(st>=n) st=n-1;
-        float v=GEN_WORLD[world].velocity[r]+(gen_unit()-.5f)*.08f;
+        float v=gen_world()->velocity[r]+(gen_unit()-.5f)*.08f;
         bool free=coast_owner_free(r); int pick=-1;
         /* The figure's tone; if it would clash with what sounds (unison,
          * semitone, tritone), a neighbour in the band, as a player would. */
@@ -1296,6 +1514,7 @@ void engine_init(void) {
     memset(slots,0,sizeof slots); memset(tails,0,sizeof tails);
 #ifdef FAM_SOUND_AMBIENT_V3
     drone_on=false; drone_color_sel=ENGINE_DRONE_AUTO; drone_level_db=0; drone_reset_audio();
+    wfx_reset_audio(); world_id=0;
 #endif
     world=minor=0; tonic_pc=-1; seed=0xA6B13E7Du; now_ms=last_user_ms=retry_ms=rejects=0;
     generate=user_present=user_seen=suppressed=clearing=false; autoplay=true;
@@ -1328,6 +1547,7 @@ void engine_init(void) {
     woodland_pending=false;woodland_phrase_init(&woodland,seed);pluck_set_ambient(true);
     highlands_pending=false;highlands_phrase_init(&highlands,seed);
 #ifdef FAM_SOUND_AMBIENT_V3
+    world_voicing_apply();
     gen_loops_reset(0);
     drone_publish();
 #endif
@@ -1373,6 +1593,7 @@ void engine_render(int16_t *out,int frames) {
         pluck_render_mix(dry_l,dry_r,send_l,send_r,n);
 #ifdef FAM_SOUND_AMBIENT_V3
         drone_render(dry_l,dry_r,n);
+        wfx_process(dry_l,dry_r,n); /* instrument Worlds only; bypassed otherwise */
 #endif
         for(int i=0;i<n;++i) { send_l[i]=.35f*dry_l[i]; send_r[i]=.35f*dry_r[i]; }
         ambient_room_process(dry_l,dry_r,send_l,send_r,n);
@@ -1402,7 +1623,7 @@ void engine_render(int16_t *out,int frames) {
             bowed_init(); horn_init(); pluck_init(); ambient_room_clear(); nature_clear();
             pluck_set_ambient(true);
 #ifdef FAM_SOUND_AMBIENT_V3
-            drone_reset_audio();
+            drone_reset_audio(); wfx_reset_audio();
 #endif
             float c=value(atomic_load_explicit(&color_bits,memory_order_acquire));
             bowed_set_tone(c); horn_set_tone(c);

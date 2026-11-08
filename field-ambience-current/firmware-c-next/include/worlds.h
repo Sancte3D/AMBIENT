@@ -7,7 +7,9 @@
 
 #include <stdint.h>
 
-#ifdef FAM_SOUND_PRODUCT
+#if defined(FAM_SOUND_PRODUCT) && defined(FAM_SOUND_AMBIENT_V3)
+#define WORLD_COUNT 6   /* + FJORD, MEADOW, GLACIER instrument Worlds */
+#elif defined(FAM_SOUND_PRODUCT)
 #define WORLD_COUNT 3   /* SCN7: COAST, WOODLAND, HIGHLANDS candidates */
 #else
 #define WORLD_COUNT 5   /* SCN5/6 reference IDs remain unchanged */

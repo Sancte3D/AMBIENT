@@ -45,5 +45,9 @@ void horn_render_mix(float *dry_L, float *dry_R,
 void horn_set_cell_held(int source,bool down);
 /* Main only; captured for future notes, not a live parameter write. */
 void horn_set_character(uint32_t seed,bool enabled);
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Future-note capture: a struck glockenspiel bar instead of the whistle (GLACIER). */
+void horn_set_bells(bool enabled);
+#endif
 #endif
 #endif /* HORN_H */

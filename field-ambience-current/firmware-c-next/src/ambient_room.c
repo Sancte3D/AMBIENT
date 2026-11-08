@@ -52,12 +52,28 @@ bool ambient_room_retains_history(void) {
             atomic_load_explicit(&sf_content_held,memory_order_acquire);
 }
 #endif
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Each instrument World its own space on top of the shared Room value: the
+ * choir in a wide hall, the kalimba close and dry, the bells far and open.
+ * The classic Worlds keep the shared room exactly. */
+static float room_last=.5f,room_world_t60=1.0f;
+void ambient_room_set_world(int world) {
+    static const float t60s[6]={1,1,1,1.25f,.50f,1.15f},wets[6]={1,1,1,1.00f,.55f,.90f};
+    if(world<0 || world>=6) world=0;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_set_world(world>=3 ? world-2 : 0,wets[world]);
+#endif
+    if(t60s[world]!=room_world_t60) { room_world_t60=t60s[world]; ambient_room_set(room_last); }
+}
+#endif
 void ambient_room_set(float amount) {
     if(!isfinite(amount)) return;
     amount=dsp_clampf(amount,0,1);
 #ifdef FAM_SOUND_AMBIENT_V3
-    /* Ambient voicing: a longer room, 3.5 s at the default .5 and 8 s at 1. */
-    float t60=2.0f+6.0f*amount*amount;
+    /* Ambient voicing: a longer room, 3.5 s at the default .5 and 8 s at 1,
+     * scaled by an instrument World's space (exactly 1 in the classic ones). */
+    room_last=amount;
+    float t60=(2.0f+6.0f*amount*amount)*room_world_t60;
 #else
     float t60=1.2f+3.6f*amount*amount;
 #endif
@@ -209,6 +225,9 @@ void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int 
     float on=atomic_load_explicit(&enabled,memory_order_acquire) ? 1 : 0;
 #ifdef FAM_SOUND_FINISH_CANDIDATE
     sf_accept();
+#ifdef FAM_SOUND_AMBIENT_V3
+    sf_world_accept();
+#endif
     bool wanted=sf_accepted_plate;
     float maximum=0;
     for(int n=0;n<frames;++n) {

@@ -2,7 +2,11 @@
  * HIGHLANDS is a source candidate, not a hearing-approved product promise. */
 #include "worlds.h"
 #include "world_grammar.h"
+#ifdef FAM_SOUND_AMBIENT_V3
+_Static_assert(WORLD_COUNT == AMBIENT_WORLD_COUNT, "Catalogue/score disagree");
+#else
 _Static_assert(WORLD_COUNT == CORE_WORLD_COUNT, "Catalogue/score disagree");
+#endif
 static const world_t worlds[WORLD_COUNT] = {
     { .name="COAST", .subtitle="tones pass across open water",
       .accent_r=154,.accent_g=205,.accent_b=211,
@@ -13,6 +17,18 @@ static const world_t worlds[WORLD_COUNT] = {
     { .name="HIGHLANDS", .subtitle="fragments leave open space",
       .accent_r=196,.accent_g=186,.accent_b=164,
       .space_pct=50,.atmos_pct=0,.motion_pct=50,.key_midi=50 }
+#ifdef FAM_SOUND_AMBIENT_V3
+    ,
+    { .name="FJORD", .subtitle="voices drift between the cliffs",
+      .accent_r=128,.accent_g=152,.accent_b=200,
+      .space_pct=50,.atmos_pct=0,.motion_pct=50,.key_midi=50 },
+    { .name="MEADOW", .subtitle="small tines in warm light",
+      .accent_r=214,.accent_g=198,.accent_b=132,
+      .space_pct=50,.atmos_pct=0,.motion_pct=50,.key_midi=50 },
+    { .name="GLACIER", .subtitle="bells ring across the ice",
+      .accent_r=200,.accent_g=210,.accent_b=236,
+      .space_pct=50,.atmos_pct=0,.motion_pct=50,.key_midi=50 }
+#endif
 };
 const world_t *worlds_get(int i) {
     if(i<0)i=0;
@@ -22,7 +38,11 @@ const world_t *worlds_get(int i) {
 int worlds_count(void) { return WORLD_COUNT; }
 /* Legacy query is never the product scheduler. */
 const world_phrase_t *worlds_phrase(int i) {
-    static const world_phrase_t p[WORLD_COUNT]={{6,14,4,10,35},{2,3,6,16,30},{2,4,8,20,20}};
+    static const world_phrase_t p[WORLD_COUNT]={{6,14,4,10,35},{2,3,6,16,30},{2,4,8,20,20}
+#ifdef FAM_SOUND_AMBIENT_V3
+        ,{6,14,4,10,35},{2,3,6,16,30},{2,4,8,20,20}
+#endif
+    };
     if(i<0)i=0;
     if(i>=WORLD_COUNT)i=WORLD_COUNT-1;
     return &p[i];

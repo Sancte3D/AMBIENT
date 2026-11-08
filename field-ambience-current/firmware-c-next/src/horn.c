@@ -26,6 +26,7 @@
 #include "highlands_breath.h"
 #endif
 #ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_modal.h"
 #include "ambient_motion.h"
 #endif
 #include <string.h>
@@ -65,12 +66,16 @@ typedef struct {
     dsp_svf_t breath1, breath2;           /* tuned breath: 4-pole band at the note */
     ambient_motion_t motion;              /* slow level/brightness drift */
     float    level_bal;                   /* register balance, per note */
+    bool     bells;                       /* GLACIER voicing, fixed per note */
+    ambient_modal_t bar;
 #endif
 } hvoice_t;
 #ifdef FAM_SOUND_AMBIENT_V3
 /* Tuned breath, about -24 dB re the whistle tone at A4; >90 % of it lies
  * within half an octave of the note, nothing measurable above 2.6 kHz. */
 static const float HL_BREATH=.55f;
+/* The bar at equal loudness with the other voicings. */
+#define BELL_GAIN 1.45f
 #endif
 
 static hvoice_t V[VMAX], pending[VMAX];
@@ -95,6 +100,10 @@ static _Atomic uint32_t v3_notes;
 void horn_set_character(uint32_t seed,bool enabled) {
     character_seed=seed; character_enabled=enabled;
 }
+#ifdef FAM_SOUND_AMBIENT_V3
+static bool bells_enabled;
+void horn_set_bells(bool enabled) { bells_enabled=enabled; }
+#endif
 void horn_set_cell_held(int source,bool down) {
     cell_unfold_publish(&unfold_mask,source,down);
 }
@@ -197,6 +206,14 @@ static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float am
     }
     v->incCur=v->inc;
     v->vibDelay=(int)(.50f*SR/(float)CTL);
+    /* Bells: struck, then the bar rings on its own. The envelope only opens
+     * (2 ms) and, after a release, damps slowly (about 4 s). */
+    v->bells=bells_enabled;
+    if(v->bells) {
+        ambient_bell_prepare(&v->bar,freq_hz,1.0f,.30f+.40f*tone_target(),shape_release_scale());
+        v->envInc=v->amp/(.002f*SR);
+        v->relCoef=dsp_smooth_coef(4.0f*shape_release_scale());
+    }
 #endif
     v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
     v->blareEnv  = 0.0f;
@@ -358,15 +375,22 @@ void horn_render_mix(float *dry_L, float *dry_R,
             float shade=2*tone_cur-1+.20f*opening;
             if(v->character.enabled)shade+=v->character.shade;
 #ifdef FAM_SOUND_AMBIENT_V3
+            float brass;
+            if(v->bells) {
+                brass=ambient_modal_step(&v->bar)*v->level_bal*BELL_GAIN;
+                /* The bar has rung out: free the voice and its slot. */
+                if(do_ctl && ambient_modal_energy(&v->bar)<1e-10f) v->stage=V_IDLE;
+            } else {
             float drift,level=ambient_motion_step(&v->motion,.40f,&drift);
             float reed=highlands_air_sample(v->ph,v->freq,shade+drift);
             v->ph+=v->incCur;if(v->ph>=1)v->ph-=1;
-            float brass=dsp_svf_lp(&v->blare,reed);
+            brass=dsp_svf_lp(&v->blare,reed);
             /* Air, about 18 dB below the former aspiration, above the tone. */
             brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.007f+.006f*v->blareEnv);
             /* The breath rises and falls with the brightness drift (+-2.5 dB). */
             brass+=dsp_svf_bp(&v->breath2,dsp_svf_bp(&v->breath1,wnoise(&v->rng)))*HL_BREATH*(1.0f+.8f*drift);
             brass*=level*v->level_bal;
+            }
 #else
             float reed=highlands_breath_sample(v->ph,v->freq,shade);
             v->ph+=v->inc;if(v->ph>=1)v->ph-=1;

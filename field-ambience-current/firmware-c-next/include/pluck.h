@@ -30,10 +30,22 @@
 #include <stdbool.h>
 
 #define PLUCK_VOICES 2
+#ifdef FAM_SOUND_AMBIENT_V3
+/* The kalimba voicing rings three tines; every other voicing keeps two. */
+#define PLUCK_POOL 3
+#else
+#define PLUCK_POOL PLUCK_VOICES
+#endif
 #define PLUCK_MIN_HZ 60.0f      /* buffer sized for this floor */
 #define PLUCK_MAX_HZ 8000.0f    /* owned-source contract; no hidden pitch clamp */
 
 void pluck_init(void);
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Main-owned, captured by each new note: a kalimba tine instead of the
+ * resonator body. A ringing voice keeps the voicing it started with. */
+void pluck_set_kalimba(bool on);
+int pluck_voice_limit(void); /* voices the next notes may use: 3 kalimba, else 2 */
+#endif
 
 /* Fixed Product WOODLAND articulation, captured by each new note. Reference
  * and direct historical probes retain the short source after pluck_init().
