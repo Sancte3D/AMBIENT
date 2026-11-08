@@ -5,6 +5,9 @@
 #include <string.h>
 #include "dsp.h"
 #include "sound_parameters.h"
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "mi_fx.h"
+#endif
 /* Independent float design, no Tonitor source/tables. Figure-eight plate,
  * stereo music delay, two unity-speed grains; optional soft color, crush and
  * phase texture. Nature is mixed afterwards. All storage belongs to the one
@@ -25,6 +28,7 @@ typedef struct {
 #ifdef FAM_SOUND_AMBIENT_V3
     unsigned wg_read[2],wg_age[2],wg_window; int wg_speed;
     float vast,shimmer,echo,wgrain,dlp;
+    mi_reverb_t mi; float mi_mix,send_hp[2],hp_mix; unsigned mi_quiet,plate_quiet; bool mi_ready;
 #endif
     bool cold;
 } sound_finish_fx_t;
@@ -124,6 +128,11 @@ static const sf_world_t SF_WORLD[4]={
     /* GLACIER */ {.80f,{610,690},.44f,.38f,.35f,160,1.0f,.70f,140, 2},
 };
 static _Atomic uint32_t sf_world_wet_bits,sf_world_sel;
+/* The instrument Worlds' hall: the Rings reverb (64 KB, D2 with this
+ * object). Diffusion and damping per World; its loop gain follows the same
+ * Room/World decay as the plate. */
+static uint16_t sf_mi_store[MI_REVERB_SIZE];
+static const float SF_MI_DIFFUSION[4]={0,.66f,.62f,.70f},SF_MI_LP[4]={0,.62f,.55f,.72f};
 static float sf_world_controls[10],sf_world_vast,sf_world_shimmer,sf_world_echo,sf_world_grain,sf_world_dlp=.23f;
 static int sf_world_on,sf_world_speed;
 static unsigned sf_world_window;
@@ -212,6 +221,8 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
     const float *target=sf_controls;bool frozen=sf_is_frozen;
 #ifdef FAM_SOUND_AMBIENT_V3
     if(sf_world_on) target=sf_world_controls;
+    /* Runs while the World is on and until the Rings hall's tail is silent. */
+    const bool hall=sf_world_on || sf.mi_mix>0 || sf.hp_mix>0 || sf.mi_ready;
 #endif
     if(!enabled || amount==0) {sf_clear();return;}
     if(sf.cold) {
@@ -253,6 +264,15 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
             }
         }
         float in[2]={sl[n],sr[n]},wet[2]={0,0};
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* Instrument Worlds: the sends lose their low end below ~170 Hz,
+         * crossfaded in and out with the World. */
+        if(hall) {
+            const float hp_step=1.0f/(.5f*DSP_SAMPLE_RATE_HZ);
+            sf.hp_mix=dsp_clampf(sf.hp_mix+(sf_world_on ? hp_step : -hp_step),0,1);
+            for(int c=0;c<2;++c) { sf.send_hp[c]+=.0239f*(in[c]-sf.send_hp[c]); in[c]-=sf.hp_mix*sf.send_hp[c]; }
+        }
+#endif
         float mono=.5f*(in[0]+in[1]);
         if(!frozen) {
             if(fabsf(sf.grain[sf.grain_at])>1e-7f)--sf.grain_nonzero;
@@ -311,11 +331,37 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
         if(sf.delay_valid<SF_DELAY)++sf.delay_valid;
         if(sf.delay_fade<1)sf.delay_fade=fminf(1,sf.delay_fade+fade_step);
         float room[2]={fdn_l,fdn_r};
-        if(plate) {
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* The Rings hall takes over from the plate in the instrument Worlds
+         * (0.5 s crossfade of their inputs; both tails ring on). */
+        float mi_wet[2]={0,0};
+        if(hall) {
+            if(!sf.mi_ready) { mi_reverb_init(&sf.mi,sf_mi_store); sf.mi_ready=true; sf.mi_quiet=0; }
+            const float mi_step=1.0f/(.5f*DSP_SAMPLE_RATE_HZ);
+            sf.mi_mix=dsp_clampf(sf.mi_mix+(sf_world_on ? mi_step : -mi_step),0,1);
+            int w=sf_world_on>0 && sf_world_on<4 ? sf_world_on : 1;
+            float x=mono+vast*.5f*(echoes[0]+echoes[1])+.5f*(shim[0]+shim[1]);
+            mi_reverb_step(&sf.mi,x*sf.mi_mix,SF_MI_DIFFUSION[w],SF_MI_LP[w],sf.decay*sf.decay,&mi_wet[0],&mi_wet[1]);
+            float level=fabsf(mi_wet[0])+fabsf(mi_wet[1]);
+            sf.mi_quiet=level<1e-6f ? sf.mi_quiet+1u : 0u;
+            if(!sf_world_on && sf.mi_mix<=0 && sf.mi_quiet>(unsigned)DSP_SAMPLE_RATE_HZ) sf.mi_ready=false;
+        }
+#endif
+        bool plate_rests=false;
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* While the Rings hall carries the World alone and the muted plate
+         * has rung out, the plate rests (its states are already silent). */
+        if(hall) {
+            if(sf.mi_mix<1.0f) sf.plate_quiet=0;
+            plate_rests=sf.plate_quiet>(unsigned)DSP_SAMPLE_RATE_HZ;
+        }
+#endif
+        if(plate && !plate_rests) {
             float x=mono;
 #ifdef FAM_SOUND_AMBIENT_V3
-            /* Vast: the echoes and the octave grains also sing in the plate. */
+            /* Vast: the echoes and the octave grains also sing in the hall. */
             if(vast>0 || shim[0]!=0) x+=vast*.5f*(echoes[0]+echoes[1])+.5f*(shim[0]+shim[1]);
+            if(hall) x*=1.0f-sf.mi_mix;
 #endif
             for(int k=0;k<4;++k)x=sf_line(k,x,k<2 ? .6f : .5f);
             float input[2]={x*(1-sf.decay)+sf.fb[1]*sf.decay,
@@ -331,6 +377,13 @@ static void sf_process(float *l,float *r,const float *sl,const float *sr,int fra
             room[0]=1.4f*(a[0]+b[0]+.22f*a[1]);
             room[1]=1.4f*(a[1]+b[1]+.22f*a[0]);
         }
+#ifdef FAM_SOUND_AMBIENT_V3
+        if(hall) {
+            if(plate && !plate_rests && sf.mi_mix>=1.0f)
+                sf.plate_quiet=fabsf(room[0])+fabsf(room[1])<1e-7f ? sf.plate_quiet+1u : 0u;
+            room[0]+=mi_wet[0]; room[1]+=mi_wet[1];
+        }
+#endif
         float room_gain=sf_room_level(in,room);
         wet[0]+=room[0]*room_gain;wet[1]+=room[1]*room_gain;
         sf.phase+=sf.phase_rate/DSP_SAMPLE_RATE_HZ;if(sf.phase>=1)sf.phase-=1;

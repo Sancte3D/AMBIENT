@@ -9,7 +9,8 @@
  * UI-ready colour and level controls. HOLD: a classic latch. Instrument
  * Worlds: FJORD (choir), MEADOW (kalimba) and GLACIER (bells) play the three
  * families' grammar with their own instrument, DRONE bed, space and S-4 style
- * effects; every World change fades.
+ * effects (with the Mutable Instruments Rings ensemble and hall and a
+ * breathing filter); every World change fades.
  * Host proof of the voicing contract, not a listening or device acceptance. */
 #include "engine.h"
 #include "engine_product.h"
@@ -18,6 +19,7 @@
 #include "dsp.h"
 #include "tuning.h"
 #include "world_grammar.h"
+#include "mi_fx.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -621,5 +623,56 @@ int main(void) {
         assert(max_step < .02 && !engine_nonfinite_samples() && !engine_output_limited_samples());
     }
     puts("ambient V3 instrument Worlds: own instruments, Vast space, three tines, own beds, clean World changes pass");
+
+    /* 10. The sketch effects. The Rings ensemble (C port, MIT) leaves the
+     * signal untouched at amount 0 and beats a steady tone at its amount;
+     * the Rings hall decays to exact silence (16-bit lines, no limit cycle)
+     * and longer with a higher loop gain; FJORD's filter breathes. */
+    {
+        static mi_ensemble_t ens; memset(&ens, 0, sizeof ens);
+        bool exact = true; double lo = 1e9, hi = -1e9, frame = 0; int fn = 0;
+        for (int i = 0; i < 6 * SR; ++i) {
+            float x = .2f * dsp_sin(440.0f * (float)i / SR), l = x, r = x;
+            mi_ensemble_step(&ens, &l, &r, i < SR ? 0.0f : .55f, .7f);
+            if (i < SR) exact &= l == x && r == x;
+            else if (i >= 2 * SR) {
+                frame += l * l;
+                if (++fn == SR / 20) { double d = 10 * log10(frame / fn); lo = d < lo ? d : lo; hi = d > hi ? d : hi; frame = 0; fn = 0; }
+            }
+        }
+        static uint16_t hall_store[MI_REVERB_SIZE]; static mi_reverb_t hall;
+        double tail[2]; long silent_at[2];
+        for (int t = 0; t < 2; ++t) {
+            const float loop[2] = {.5f, .9f};
+            mi_reverb_init(&hall, hall_store);
+            double e0 = 0, e3 = 0; long last = 0;
+            for (long i = 0; i < 20L * SR; ++i) {
+                float wl, wr; mi_reverb_step(&hall, i == 0 ? .5f : 0.0f, .66f, .62f, loop[t], &wl, &wr);
+                assert(isfinite(wl) && isfinite(wr));
+                if (i >= SR / 10 && i < SR / 5) e0 += wl * wl + wr * wr;
+                if (i >= 1 * SR && i < 1 * SR + SR / 10) e3 += wl * wl + wr * wr;
+                if (wl != 0 || wr != 0) last = i;
+            }
+            tail[t] = 10 * log10(e3 / e0 + 1e-30); silent_at[t] = last;
+        }
+        double f0 = tuning_hz(62.0f), swing[2];
+        for (int k = 0; k < 2; ++k) {
+            render_long_note(k ? WORLD_FJORD : WORLD_COAST, 62);
+            double bl = 1e9, bh = -1e9;
+            for (double t0 = 4; t0 + 2 <= 22; t0 += 1) {
+                memcpy(left, long_mono + (int)(t0 * SR), (size_t)(2 * SR) * sizeof(float));
+                memcpy(right, long_mono + (int)(t0 * SR), (size_t)(2 * SR) * sizeof(float));
+                double b = db(tone(4 * f0, 0, 2), tone(f0, 0, 2));
+                bl = b < bl ? b : bl; bh = b > bh ? b : bh;
+            }
+            swing[k] = bh - bl;
+        }
+        printf("ambient V3 sketch effects: ensemble exact dry at 0, beat %.1f dB at .55; hall 1 s tail %.1f / %.1f dB re early (loop .5/.9), silent after %.1f / %.1f s; held D4 H4 swing COAST %.1f / FJORD %.1f dB\n",
+               hi - lo, tail[0], tail[1], silent_at[0] / (double)SR, silent_at[1] / (double)SR, swing[0], swing[1]);
+        assert(exact && hi - lo > 1.0);
+        assert(tail[1] > tail[0] + 10 && silent_at[0] < 10 * SR && silent_at[1] < 15 * SR);
+        assert(swing[1] > swing[0] + 3);
+    }
+    puts("ambient V3 sketch effects: Rings ensemble and hall, breathing filter pass");
     return 0;
 }

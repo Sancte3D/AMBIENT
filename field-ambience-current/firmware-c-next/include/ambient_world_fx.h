@@ -7,6 +7,10 @@
  *   Resonator: four sympathetic strings tuned to the key (tonic, fifth,
  *              octave and the World's third, else sixth or fourth), excited
  *              by the bus above 200 Hz: the notes ring on in tune.
+ *   Filter:    a low-pass whose cutoff breathes on a slow sine or a smoothed
+ *              sample-and-hold (the VCF/LFO/S&H of a synth).
+ *   Ensemble:  the Mutable Instruments Rings ensemble (MIT): three detuned
+ *              moving taps per side, a string-machine chorus.
  * Delay, grains and the hall follow in the shared music effects. Main picks
  * a preset and publishes the string tuning; Audio ramps every parameter and
  * dips the strings out and in around a retune. The classic Worlds never
@@ -19,6 +23,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "dsp.h"
+#include "mi_fx.h"
 
 enum { WFX_TAPE=256, WFX_STRINGS=4, WFX_COMB=256, WFX_PRESETS=4 };
 typedef struct {
@@ -29,17 +34,25 @@ typedef struct {
     float strings;             /* resonator return */
     float t60,damp;            /* string decay in seconds, loop damping 0..1/4 */
     float trim;                /* World loudness, matched to the classic Worlds */
+    int   lfo_shape;           /* filter LFO: 0 sine, 1 smoothed sample-and-hold */
+    float lfo_hz,cutoff_hz,octaves,q; /* rate, centre, sweep (+-octaves), resonance */
+    float ensemble,ensemble_depth;    /* Rings ensemble: wet share, depth */
 } wfx_preset_t;
 /* 0 = bypass (the classic Worlds), then FJORD, MEADOW, GLACIER. Pitch depth
  * of wow: 2*pi*rate*depth/SR, about 3 cents in FJORD, 7 in MEADOW, 2.5 in
  * GLACIER. The bus peaks near .15, so a gain of 3-5 drives them to .45-.75
  * of the saturation knee: third harmonic about -30 dB on peaks, the bias
  * adds a second; the kalimba gets the most and the darkest tape. */
+/* Filter: the choir breathes over ~18 s between 1.3 and 5.2 kHz; the
+ * kalimba's brightness wanders to a new place every ~2 s; the bells open and
+ * close over half a minute. Resonance stays low (Q <= 1.1): movement, no
+ * whistling peak. Ensemble: rich on the choir, light on tines and bars.
+ * Trims bring each World back to its loudness without filter and ensemble. */
 static const wfx_preset_t WFX_PRESET[WFX_PRESETS]={
-    {0,0,0,0,1,0,20000,0,1,.2f,1},
-    /* FJORD   */ {.30f,40,5.5f,.5f,3.0f,.010f,9000,.25f,3.5f,.20f,1},
-    /* MEADOW  */ {.55f,52,6.8f,1.2f,5.0f,.012f,6500,.30f,2.5f,.24f,1},
-    /* GLACIER */ {.22f,45,0,0,2.2f,.006f,12000,.45f,5.0f,.12f,1},
+    {0,0,0,0,1,0,20000,0,1,.2f,1, 0,0,20000,0,.707f, 0,0},
+    /* FJORD   */ {.30f,40,5.5f,.5f,3.0f,.010f,9000,.25f,3.5f,.20f,1.30f, 0,.055f,2600,1.0f,.9f, .55f,.70f},
+    /* MEADOW  */ {.55f,52,6.8f,1.2f,5.0f,.012f,6500,.30f,2.5f,.24f,1.20f, 1,.45f,3800,.7f,1.1f, .25f,.40f},
+    /* GLACIER */ {.22f,45,0,0,2.2f,.006f,12000,.45f,5.0f,.12f,1.23f, 0,.03f,5000,1.0f,.8f, .35f,.55f},
 };
 static _Atomic uint32_t wfx_sel;                    /* preset index */
 static _Atomic uint32_t wfx_tone_bits;              /* tape one-pole coefficient */
@@ -52,6 +65,10 @@ static struct {
     float wow_ph,flutter_ph,lp[2],hp,mix,gate;
     unsigned at,cat,version;
     bool tuned,active;
+    dsp_svf_t vcf[2];
+    float lfo_ph,lfo,lfo_goal,ens,ens_depth; /* filter LFO, ensemble (ramped) */
+    uint32_t rng; int ctl;
+    mi_ensemble_t ensemble;
 } wfx;
 static inline uint32_t wfx_bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
 static inline float wfx_value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
@@ -89,6 +106,13 @@ static void wfx_tune(const float hz[WFX_STRINGS],float t60) {
 static void wfx_reset_audio(void) {
     memset(&wfx,0,sizeof wfx);
     wfx.tone_a=1.0f; wfx.damp=.2f; wfx.drive=1.0f; wfx.trim=1.0f; wfx.version=~0u;
+    wfx.rng=0x5EED1F7Bu;
+    for(int c=0;c<2;++c) { dsp_svf_reset(&wfx.vcf[c]); dsp_svf_set(&wfx.vcf[c],18000.0f,.707f); }
+}
+/* 2^x for the filter sweep, |x| <= 2, without libm. */
+static inline float wfx_exp2(float x) {
+    const float ln2=.69314718f;
+    return x<=0 ? wfx_exp(x*ln2) : 1.0f/wfx_exp(-x*ln2);
 }
 /* One attempt to adopt a whole published tuning. */
 static bool wfx_take_tuning(void) {
@@ -142,6 +166,26 @@ static void wfx_process(float *l,float *r,int n) {
         wfx.tone_a+=(tone-wfx.tone_a)*glide;
         wfx.damp+=(p->damp-wfx.damp)*glide;
         wfx.trim+=(p->trim-wfx.trim)*glide;
+        wfx.ens+=(p->ensemble-wfx.ens)*glide; wfx.ens_depth+=(p->ensemble_depth-wfx.ens_depth)*glide;
+        /* Filter LFO and coefficients at control rate (every 32 samples). */
+        if(--wfx.ctl<0) {
+            wfx.ctl=31;
+            const float dt=32.0f/DSP_SAMPLE_RATE_HZ;
+            float hz=p->lfo_hz>0 ? p->lfo_hz : .05f;
+            wfx.lfo_ph+=hz*dt;
+            if(p->lfo_shape==1) {
+                if(wfx.lfo_ph>=1.0f) {
+                    wfx.lfo_ph-=1.0f; wfx.rng=wfx.rng*1664525u+1013904223u;
+                    wfx.lfo_goal=(float)(int32_t)wfx.rng*(1.0f/2147483648.0f);
+                }
+                wfx.lfo+=(wfx.lfo_goal-wfx.lfo)*dsp_clampf(2.0f*hz*dt*3.0f,0,1); /* slewed S&H */
+            } else {
+                if(wfx.lfo_ph>=1.0f) wfx.lfo_ph-=1.0f;
+                wfx.lfo=dsp_sin(wfx.lfo_ph);
+            }
+            float cutoff=p->cutoff_hz*wfx_exp2(dsp_clampf(p->octaves*wfx.lfo,-2,2));
+            for(int c=0;c<2;++c) dsp_svf_set(&wfx.vcf[c],cutoff,p->q);
+        }
         wfx.gate=dsp_clampf(wfx.gate+gate_step,0,1);
         /* Tape: modulated read behind the write head, 64 samples of headroom. */
         wfx.wow_ph+=wfx.wow_hz*(1.0f/DSP_SAMPLE_RATE_HZ); if(wfx.wow_ph>=1.0f) wfx.wow_ph-=1.0f;
@@ -156,7 +200,8 @@ static void wfx_process(float *l,float *r,int n) {
             float x=wfx.tape[c][i0]+fr*(wfx.tape[c][i1]-wfx.tape[c][i0]);
             x=(wfx_sat(g*(x+b))-zero)*ig;
             wfx.lp[c]+=wfx.tone_a*(x-wfx.lp[c]);
-            out[c]=in[c]+wfx.mix*(wfx.trim*wfx.lp[c]-in[c]);
+            float shaped=dsp_svf_lp(&wfx.vcf[c],wfx.lp[c]);
+            out[c]=in[c]+wfx.mix*(wfx.trim*shaped-in[c]);
         }
         wfx.at=(wfx.at+1u)&(WFX_TAPE-1);
         /* Strings: excited above ~200 Hz, FIR loop damping with exactly one
@@ -180,6 +225,8 @@ static void wfx_process(float *l,float *r,int n) {
             float s=wfx.strings*wfx.gate*wfx.trim;
             out[0]+=s*sl; out[1]+=s*sr;
         }
+        /* Ensemble: the stacked, detuned unison of a string machine. */
+        mi_ensemble_step(&wfx.ensemble,&out[0],&out[1],wfx.ens*wfx.mix,wfx.ens_depth);
         l[i]=out[0]; r[i]=out[1];
     }
     /* Leave the stage only once it has faded and the strings are silent. */
