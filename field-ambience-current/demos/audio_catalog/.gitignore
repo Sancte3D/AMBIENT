@@ -1,0 +1,3 @@
+# generated audio — regenerate with tools/render_catalog.sh
+*.wav
+*.flac

@@ -21,7 +21,12 @@
  */
 
 #include "engine.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "engine_product.h"
+#endif
+#ifndef FAM_SOUND_PRODUCT
 #include "v2/synth_host.h"
+#endif
 #include "brain.h"
 #include "dsp.h"
 #include "audio.h"
@@ -34,15 +39,25 @@
 #include "overlay.h"     /* r19.21: transient knob-value overlay */
 #include "knobs.h"       /* r19.21: encoder push short/long actions */
 #include "scenes.h"      /* r19.22: parameter locks + 5 scene slots */
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+#include "scenes_save_async.h"
+#include "scenes_storage_h743.h"
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+#include "device_bench.h"
+#endif
+#endif
 #include "bloom.h"       /* r19.23: chord-bloom cell mode */
 #include "landscape.h"   /* r19.27: layer-role cell mode */
 #include "tuning.h"      /* r19.27: tuning_hz for the Bed/Motif layer pitches */
 #include "gesture.h"     /* r19.25: gesture loop (record/replay cells) */
 #include <stdio.h>       /* snprintf (status overlay, control-rate only) */
 #include "midi.h"
+#include "cells.h"
 #include "controls.h"    /* hold-latch + modifier state machine (ADR-0008 r2) */
+#include "cell_router.h"
 #include "params.h"      /* encoder → engine param bindings */
 #include "leds.h"        /* controls/modifier state → PCA9685 16-ch PWM */
+#include "ui_idle.h"
 #include "menu.h"        /* menu state machine */
 #include "battery.h"     /* r18.92: BAT_SENSE ADC -> % + USB glyph */
 #include "h743_hal.h"    /* SystemClock_Config, enc_set_ext_push */
@@ -87,13 +102,18 @@ static void hal_set_synth      (int   idx) { engine_set_synth(idx); }
 static void hal_set_bass       (int   mode){ bloom_set_bassmode(mode); }   /* r19.31 */
 static void hal_set_color      (int   col) { bloom_set_color(col); }        /* r19.32 */
 static void hal_set_fx         (int   m)   { engine_set_fx_mode(m); }       /* r19.41 */
+static void hal_set_bright      (float hz)  { params_set_bright(hz); }         /* r19.45 */
+static void hal_set_reso        (float v)   { engine_set_resonance(v); }       /* r19.59 */
+static void hal_set_attack      (float v)   { engine_set_attack(v); }          /* r19.60 */
+static void hal_set_release     (float v)   { engine_set_release(v); }         /* r19.60 */
+static void hal_set_sweep       (float v)   { engine_set_sweep(v); }           /* r19.60 */
+static void hal_set_envmod      (float v)   { engine_set_envmod(v); }          /* r19.60 */
 /* cell play mode — 0 Note (r19.26), 1 Harmony (r19.29, chord + voice-leading),
  * 2 Landscape (r19.27, sound layers). */
 enum { CELL_NOTE = 0, CELL_HARMONY = 1, CELL_LAND = 2 };
 static int s_cell_mode = CELL_NOTE;
 static uint32_t s_field_seed = 0x1234u;             /* r19.24: New-Field seed source */
-static const char *const STEER_NAME[5] =            /* r19.24: cell → intent */
-    { "HOME", "LIFT", "DARK", "OPEN", "TENSION" };
+static cell_router_t s_cell_router;
 
 /* r19.27 — Landscape layer callbacks: map the abstract role state machine
  * (landscape.c) onto the engine's existing layers. Bed/Motif pitches come
@@ -139,19 +159,13 @@ static const landscape_iface_t s_ls_iface = {
     ls_drone, ls_bed, ls_motif, ls_atmos, ls_memory
 };
 
-/* r19.25: the single cell-routing path — used by the physical buttons AND
- * by the gesture-loop playback, so a replayed cell behaves exactly like a
- * live one in the current mode (generate-steer / bloom / landscape / note). */
-static void route_cell(uint8_t c, bool pressed, uint32_t now) {
-    if (c >= 5) return;
-    if (controls_modifier_active(MOD_GENERATE)) {
-        if (pressed) { engine_generative_nudge(c, now);
-                       overlay_show("STEER", STEER_NAME[c], now, 0); }
-    } else if (s_cell_mode == CELL_HARMONY) {
+/* Listening locks new cell presses; previously owned releases still arrive. */
+static void dispatch_cell(int mode, uint8_t c, bool pressed, uint32_t now) {
+    if (mode == CELL_HARMONY) {
         if (pressed) bloom_press(c, CELL_TAP_AMP,
                                  controls_modifier_active(MOD_HOLD), now);
         else         bloom_release(c, now);
-    } else if (s_cell_mode == CELL_LAND) {
+    } else if (mode == CELL_LAND) {
         if (pressed) landscape_press(c, controls_modifier_active(MOD_HOLD), now);
         else         landscape_release(c, now);
     } else {
@@ -159,14 +173,26 @@ static void route_cell(uint8_t c, bool pressed, uint32_t now) {
         else         controls_cell_release(c);
     }
 }
+static void route_cell(uint8_t c, bool pressed, uint32_t now) {
+    if (pressed && controls_modifier_active(MOD_GENERATE)) return;
+    cell_router_event(&s_cell_router, s_cell_mode, c, pressed, now, dispatch_cell);
+}
+static void prepare_listening(uint32_t now) {
+    cell_router_release_all(&s_cell_router, now, dispatch_cell);
+    controls_release_cells();
+    bloom_all_off();
+    landscape_all_off(now);
+    gesture_clear(now);
+}
 static void hal_set_cell(int mode) {
     if (mode < CELL_NOTE || mode > CELL_LAND) mode = CELL_NOTE;
     if (mode == s_cell_mode) return;
+    cell_router_release_all(&s_cell_router, HAL_GetTick(), dispatch_cell);
     /* Modewechsel: die Stimmen/Latches des verlassenen Modus sauber beenden. */
     switch (s_cell_mode) {
         case CELL_HARMONY: bloom_all_off();          break;
         case CELL_LAND:  landscape_all_off(0);     break;
-        default:         engine_all_off();         break;   /* NOTE latches */
+        default:         controls_release_cells(); engine_all_off(); break;
     }
     /* r19.31: HARMONY owns the bass (own octave/glide per mode); NOTE/LAND let
      * the engine auto-follow the lowest held note again. */
@@ -176,16 +202,20 @@ static void hal_set_cell(int mode) {
 
 /* r19.16 — V2 sound-core backend: thin adapters so the engine keeps no link
  * dependency on src/v2 (host tests link engine.c without it). */
+#ifndef FAM_SOUND_PRODUCT
 static void be_select  (int id)              { synth_host_select((synth_id_t)id); }
 static void be_note_on (int midi, float vel) { synth_host_note_on(midi, vel); }
 static void be_note_off(void)                { synth_host_note_off(); }
 static void be_panic   (void)                { synth_host_panic(); }
 static void be_render  (int16_t *b, int n)   { synth_host_render(b, n); }
+static void be_param(int slot, float value) { synth_host_set_param((synth_param_t)slot, value); }
 static const engine_synth_backend_t s_v2_backend = {
-    be_select, be_note_on, be_note_off, be_panic, be_render
+    be_select, be_note_on, be_note_off, be_panic, be_render, synth_host_render_mix, be_param,
+    synth_host_note_on_hz, synth_host_set_macro, synth_host_retune_hz
 };
+#endif
 
-/* Klinke drin → NUR den PAM8403 muten (AMP_nMUTE = PB15 LOW), Line-Out
+/* Klinke drin → NUR den PAM8406 muten (AMP_MUTE_N = PB15 LOW), Line-Out
  * bleibt live — NICHT audio_mute() rufen (das wuerde auch XSMT ziehen und
  * den Line-Out toeten). Design: ADR / v0.7. */
 static bool s_jack_plugged = false;   /* r19.21: fuer das Status-Overlay */
@@ -261,10 +291,247 @@ static void midi_note_tap(int on, uint8_t source, float freq_hz, float amp) {
  * runs — C globals rely on zero-init. */
 extern uint32_t _sdtcm_bss, _edtcm_bss, _sd2_bss, _ed2_bss;
 
+/* Shared routing remains the real H743 Main path; host integration tests
+ * extract this function unchanged and inject only hardware input queues. */
+static ui_idle_t s_ui_idle;
+static int s_backlight_pct = 70;
+static void init_human_inputs(uint32_t now, uint16_t gpio) {
+    /* EN4 has no GPIO sampler: prime its expander level before taking the
+     * boot-held snapshot, so its later release cannot become a Mute click. */
+    enc_set_ext_push(4, (gpio & (1u << MCP_BIT_ENC4_SW)) == 0);
+    uint32_t down = (uint32_t)(~gpio & 0x1f1fu);
+    for (unsigned id = 1; id <= ENC_COUNT; ++id)
+        if (enc_pushed((uint8_t)id)) down |= UINT32_C(1) << (15u + id);
+    ui_idle_init(&s_ui_idle, now, down);
+}
+static void release_cell_edge(uint8_t c, bool browsing, uint32_t now) {
+#ifdef FAM_SOUND_PRODUCT
+    controls_cell_physical(c, false);
+#endif
+    /* The browser owns new presses; earlier notes keep their release route. */
+    uint8_t owner = s_cell_router.owner[c];
+    if (browsing && !owner) return;
+    bool land = browsing ? owner == CELL_LAND + 1 : s_cell_mode == CELL_LAND;
+    if (!land || c != 4) gesture_record_cell(c, false, now);
+    route_cell(c, false, now);
+}
+static void poll_human_inputs(uint32_t now, uint16_t *prev_gpio,
+                              uint8_t *jack_pending, uint32_t *jack_edge_ms,
+                              bool *ui_dirty) {
+    bool was_quiet = s_ui_idle.quiet;
+    ui_idle_begin_frame(&s_ui_idle, now);
+    /* --- 1. Encoder rotate/push → params + menu ---
+     * r18.92: SHIFT + DISPLAY = backlight (SPEC transient overlay rule
+     * — a hardware modifier, not a menu row). 5 %/detent, 10..100 %. */
+
+    enc_event_t ev;
+    while (enc_pop_event(&ev)) {
+        if (ev.id < 1 || ev.id > ENC_COUNT) continue;
+        bool deliver = ev.kind == ENC_EVENT_ROTATE
+            ? ui_idle_rotation(&s_ui_idle, ev.value, now)
+            : ev.kind == ENC_EVENT_PUSH &&
+              ui_idle_button(&s_ui_idle, 15u + ev.id, ev.value != 0, now);
+        if (!deliver) continue;
+        if (ev.kind == ENC_EVENT_ROTATE) {
+            if (ev.id == PARAM_ENC_DISPLAY) {
+                if (controls_modifier_active(MOD_SHIFT)) {
+                    s_backlight_pct += ev.value * 5;
+                    if (s_backlight_pct < 10)  s_backlight_pct = 10;
+                    if (s_backlight_pct > 100) s_backlight_pct = 100;
+                    leds_set_backlight((uint16_t)(LED_PWM_MAX *
+                                                  s_backlight_pct / 100));
+                } else {
+                    menu_rotate(ev.value);          /* DISPLAY: Menü   */
+                    *ui_dirty = true;
+                }
+            } else {
+                /* r19.21: DRIVE/BRIGHT/VOLUME → params + Overlay */
+                knobs_rotate(ev.id, ev.value, now);
+            }
+        } else if (ev.kind == ENC_EVENT_PUSH) {
+            /* r19.21: BEIDE Flanken in die Kurz/Lang-Klassifikation.
+             * DISPLAY-kurz ruft menu_push ueber den Callback (feuert
+             * jetzt auf der Loslass-Flanke statt auf Druck — noetig
+             * fuer die Lang-Druck-Unterscheidung). */
+            knobs_push(ev.id, ev.value != 0, now);
+            if (ev.id == PARAM_ENC_DISPLAY && !ev.value)
+                *ui_dirty = true;            /* Menue evtl. veraendert */
+        }
+    }
+    knobs_tick(now);                        /* Lang-Druck-Schwelle */
+    scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+    (void)scenes_save_step(now);
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    device_bench_poll(now,(uint32_t)scenes_save_info().status);
+#endif
+#endif
+    bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
+    gesture_tick(now);                      /* r19.25: Gesten-Wiedergabe */
+
+    /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
+     * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
+     * reads both ports (auto-clears the MCP interrupt). No polling —
+     * the I²C bus stays free for the 60 Hz LED/VU writes.
+     * r18.82: Cells sind DIGITALE Switches (GPA0-4, aktiv-LOW mit
+     * Pull-up), keine Hall-ADCs mehr. Gleicher Edge-Pfad wie die
+     * bench-erprobte Pico-Implementierung, geroutet durch die host-
+     * getestete controls.c-Statemachine. */
+    if (mcp_irq_pending()) {
+        uint16_t gpio = mcp_service();
+        uint16_t fell = (uint16_t)(*prev_gpio & ~gpio);   /* 1→0 = press */
+        uint16_t rose = (uint16_t)(~*prev_gpio & gpio);   /* 0→1 = release */
+
+        /* Human switches only; jack/VBUS and EN4's raw level bypass
+         * this gate. EN4 is gated once through the encoder event queue. */
+        for (unsigned key = 0; key <= MCP_BIT_MOD_CLEAR; ++key) {
+            uint16_t bit = (uint16_t)(1u << key);
+            if (!(bit & 0x1f1fu)) continue;
+            if ((fell & bit) && !ui_idle_button(&s_ui_idle, key, true, now))
+                fell &= (uint16_t)~bit;
+            if ((rose & bit) && !ui_idle_button(&s_ui_idle, key, false, now))
+                rose &= (uint16_t)~bit;
+        }
+
+        /* Apply the effective SHIFT level before interpreting this snapshot's
+         * Cell edges, including upper-register notes and Scene Save. Wake-only
+         * edges have already been consumed by ui_idle above. */
+        if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
+        if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
+
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+        const uint16_t cell_bits = (uint16_t)(((1u << CTRL_CELL_COUNT) - 1u) << MCP_BIT_CELL1);
+        uint16_t cell_releases = rose & cell_bits;
+        if (s_cell_mode == CELL_NOTE && !scenes_ui_active() && cell_releases && (fell & cell_bits)) {
+            /* A simultaneous key-up yields its note before the new press
+             * checks harmony, in either direction across the keys. */
+            for (uint8_t c = 0; c < CTRL_CELL_COUNT; ++c)
+                if (cell_releases & (1u << (MCP_BIT_CELL1 + c))) release_cell_edge(c, false, now);
+            rose &= (uint16_t)~cell_releases;
+        }
+#endif
+        /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL).
+         * r19.22: solange der Scenes-Browser offen ist, WAEHLEN die
+         * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
+        for (uint8_t c = 0; c < 5; ++c) {
+            uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
+            bool browsing = scenes_ui_active() && !controls_modifier_active(MOD_GENERATE);
+            if (browsing) {
+                if (fell & m)
+                    scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
+                                   now);
+            } else {
+                /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
+                 * durch die gemeinsame Routing-Logik spielen.
+                 * r19.27: in Landscape ist Cell 5 die MEMORY-Steuerung
+                 * selbst — die darf NICHT in die Schleife aufgenommen
+                 * werden (sonst würde der aufgenommene Cell-5-Druck die
+                 * Schleife bei der Wiedergabe wieder stoppen). */
+                bool record = !(s_cell_mode == CELL_LAND && c == 4);
+                if (fell & m) {
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                                gesture_set_record_context(controls_modifier_active(MOD_SHIFT),CELL_TAP_AMP/CELL_AMP_MAX);
+#endif
+                                if (record) gesture_record_cell(c, true,  now);
+#ifdef FAM_SOUND_PRODUCT
+                                uint32_t rejected_before=engine_admission_rejections();
+#endif
+                                route_cell(c, true,  now);
+#ifdef FAM_SOUND_PRODUCT
+                                if(engine_admission_rejections()!=rejected_before) {
+                                    engine_note_block_t reason=engine_note_block_reason();
+                                    if(reason==ENGINE_NOTE_FROZEN_PITCH)overlay_show("FREEZE","CLEAR TO PLAY",now,1800);
+                                    else if(reason==ENGINE_NOTE_VOICES_FULL)overlay_show("NOTES","VOICES FULL",now,0);
+                                    else if(reason==ENGINE_NOTE_HELD_PITCH)overlay_show("HARMONY","NOTE ACTIVE",now,0);
+                                    else if(reason==ENGINE_NOTE_TAIL_PITCH)overlay_show("HARMONY","TAIL ACTIVE",now,0);
+                                }
+                                if(s_cell_mode==CELL_NOTE) controls_cell_physical(c,true);
+#endif
+                              }
+            }
+            if (rose & m) release_cell_edge(c, browsing, now);
+        }
+
+        /* Modifier GPB0-4 (bits 8-12). r19.20: BOTH edges reach
+         * controls.c — SHIFT is momentary now (needs its release), and
+         * feeding releases uniformly keeps the toggles honest too
+         * (they only act on pressed=true). CLEAR press also drives the
+         * confirm-flash that existed since r18.64 but was never wired. */
+        if ((fell & (1u<<MCP_BIT_MOD_HOLD)) && !controls_modifier_active(MOD_GENERATE)) {
+            if (controls_modifier_active(MOD_SHIFT)) {
+                /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.
+                 * (Mischis SHIFT+GENERATE ist seit r19.24 New Field.) */
+                gesture_toggle(now);
+                gesture_state_t g = gesture_state();
+                overlay_show("GESTURE",
+                             g == GESTURE_REC  ? "REC"  :
+                             g == GESTURE_PLAY ? "LOOP" : "OFF", now, 0);
+            } else {
+                controls_modifier(MOD_HOLD, true);
+            }
+        }
+        if (rose & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, false);
+        if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
+        if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
+        if (fell & (1u<<MCP_BIT_MOD_GENERATE)) {
+            if (!controls_modifier_active(MOD_GENERATE)) prepare_listening(now);
+            if (controls_modifier_active(MOD_SHIFT)) {
+                /* r19.24: SHIFT+GENERATE = New Field — sicher AN + neuer,
+                 * reproduzierbarer Seed (via engine_gen_seed scene-bar). */
+                if (!controls_modifier_active(MOD_GENERATE))
+                    controls_modifier(MOD_GENERATE, true);
+                engine_generative_new_field(s_field_seed++ ^ now);
+                overlay_show("GENERATE", "NEW FIELD", now, 0);
+            } else {
+                controls_modifier(MOD_GENERATE, true);   /* normaler Toggle */
+                overlay_show("GENERATE", controls_modifier_active(MOD_GENERATE)
+                             ? "LISTENING" : "PLAY", now, 0);
+            }
+        }
+        if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
+        if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { cell_router_release_all(&s_cell_router, now, dispatch_cell);
+                                               controls_modifier(MOD_CLEAR, true);
+                                               bloom_all_off();  /* r19.23 */
+                                               landscape_all_off(now); /* r19.27 */
+                                               gesture_clear(now); /* r19.25 */
+                                               leds_clear_flash(now); }
+        if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
+
+        /* EN4 (volume) push lives on GPB5 — feed the level into the
+         * encoder layer so enc_pushed(4)/PUSH events stay uniform. */
+        {
+            uint16_t em = (uint16_t)(1u << MCP_BIT_ENC4_SW);
+            if ((fell | rose) & em)
+                enc_set_ext_push(4, (gpio & em) == 0);   /* active-low */
+        }
+
+        /* Jack-Detect GPA6 (r18.82-Hardware: PJ-320D-Switch oeffnet beim
+         * Einstecken → mit R_DET 10k/C_DET 1µF + MCP-Pull-up liest der
+         * Pin unplugged ≈ 0,3 V = LOW, plugged = HIGH). Edge → arm the
+         * debounce; applied below once stable for JACK_DEBOUNCE_MS. */
+        {
+            uint16_t jm = (uint16_t)(1u << MCP_BIT_JACK);
+            if ((fell | rose) & jm) {
+                *jack_pending = (gpio & jm) ? 1 : 0;
+                *jack_edge_ms = now;
+            }
+        }
+
+        *prev_gpio = gpio;
+    }
+
+    leds_set_quiet(s_ui_idle.quiet);
+    if (was_quiet && !s_ui_idle.quiet) *ui_dirty = true;
+}
+
 int main(void) {
     /* Zero the out-of-.bss DSP regions first (see linker script). */
     for (uint32_t *p = &_sdtcm_bss; p < &_edtcm_bss; ++p) *p = 0u;
     for (uint32_t *p = &_sd2_bss;   p < &_ed2_bss;   ++p) *p = 0u;
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    extern uint32_t __ambient_stack_low,__ambient_stack_high;
+    (void)device_bench_init(&__ambient_stack_low,&__ambient_stack_high,__get_MSP());
+#endif
 
     /* Denormal protection (r18.90): flush-to-zero on the M7 FPU. Reverb,
      * echo and pluck feedback tails decay THROUGH the denormal range; on
@@ -299,8 +566,10 @@ int main(void) {
                                * sets the 30 % target → ~350 ms fade-in */
     for (int i = 0; i < 16; ++i) s_midi_src_note[i] = -1;
     engine_set_note_hook(midi_note_tap);   /* played cells → MIDI out */
+#ifndef FAM_SOUND_PRODUCT
     synth_host_init();
-    engine_set_synth_backend(&s_v2_backend);   /* r19.16: SYNTH menu slot live */
+    engine_set_synth_backend(&s_v2_backend);
+#endif
     {
         /* ADR-0017 Phase 4 + r18.58 Reddit-macro menu */
         menu_callbacks_t cb = {
@@ -320,13 +589,24 @@ int main(void) {
             .set_bass       = hal_set_bass,
             .set_color      = hal_set_color,
             .set_fx         = hal_set_fx,
+            .set_bright     = hal_set_bright,
+        .set_reso        = hal_set_reso,
+        .set_attack      = hal_set_attack,
+        .set_release     = hal_set_release,
+        .set_sweep       = hal_set_sweep,
+        .set_envmod      = hal_set_envmod,
+        .set_synth_param = engine_set_synth_param,
         };
         menu_init(&cb);
     }
     controls_init();          /* hold-latch + modifier state (ADR-0008 r2) */
     bloom_init();             /* r19.23: chord-bloom cell mode */
     landscape_init(&s_ls_iface); /* r19.27: layer-role cell mode */
-    gesture_init(route_cell); /* r19.25: gesture loop replays via route_cell */
+    #ifdef FAM_SOUND_FINISH_CANDIDATE
+    gesture_init_owned(engine_gesture_note);
+#else
+    gesture_init(route_cell);
+#endif
     params_init();            /* encoder param values → engine defaults */
     overlay_init();
     {   /* r19.21: Encoder-Push-Belegung (DISPLAY kurz = Menue wie bisher;
@@ -340,6 +620,9 @@ int main(void) {
     {   /* r19.22: Scenes aus dem Flash laden (Bank-2-Sektor, dual-bank —
          * Audio laeuft beim Speichern weiter). */
         scenes_init(scenes_flash_write, scenes_flash_read);
+#ifdef FAM_SOUND_SESSION_CANDIDATE
+        (void)scenes_storage_h743_bind();
+#endif
     }
     leds_init();              /* 16-ch PWM render */
     leds_set_backlight((uint16_t)(LED_PWM_MAX * 70 / 100));   /* 70 % boot */
@@ -353,6 +636,11 @@ int main(void) {
      * never returns (power-cycle to exit). Drives a heavy scene so the load%
      * is meaningful. CELL bits are active-low (MCP pull-ups). */
     if (!(mcp_state() & (1u << MCP_BIT_CELL1))) {
+#ifdef FAM_SOUND_AMBIENT_V3
+        /* CELL1 alone: the per-World render load bench (never returns).
+         * CELL1 + CELL2: the bring-up readout below, as before. */
+        if (mcp_state() & (1u << MCP_BIT_CELL2)) diag_world_load_run();
+#endif
         engine_set_world(0);
         engine_set_drone(true);
         engine_set_generative(true, 0);
@@ -381,6 +669,8 @@ int main(void) {
     uint8_t  jack_pending  = 0xFF;
     uint32_t jack_edge_ms  = 0;
 
+    init_human_inputs(HAL_GetTick(), prev_gpio);
+
     /* UI frame pacing. */
     uint32_t last_frame_ms = 0;
     bool     ui_dirty      = true;     /* draw the first frame immediately */
@@ -391,147 +681,9 @@ int main(void) {
     for (;;) {
         uint32_t now = HAL_GetTick();
 
-        /* --- 1. Encoder rotate/push → params + menu ---
-         * r18.92: SHIFT + DISPLAY = backlight (SPEC transient overlay rule
-         * — a hardware modifier, not a menu row). 5 %/detent, 10..100 %. */
-        static int backlight_pct = 70;
-        enc_event_t ev;
-        while (enc_pop_event(&ev)) {
-            if (ev.kind == ENC_EVENT_ROTATE) {
-                if (ev.id == PARAM_ENC_DISPLAY) {
-                    if (controls_modifier_active(MOD_SHIFT)) {
-                        backlight_pct += ev.value * 5;
-                        if (backlight_pct < 10)  backlight_pct = 10;
-                        if (backlight_pct > 100) backlight_pct = 100;
-                        leds_set_backlight((uint16_t)(LED_PWM_MAX *
-                                                      backlight_pct / 100));
-                    } else {
-                        menu_rotate(ev.value);          /* DISPLAY: Menü   */
-                        ui_dirty = true;
-                    }
-                } else {
-                    /* r19.21: DRIVE/BRIGHT/VOLUME → params + Overlay */
-                    knobs_rotate(ev.id, ev.value, now);
-                }
-            } else if (ev.kind == ENC_EVENT_PUSH) {
-                /* r19.21: BEIDE Flanken in die Kurz/Lang-Klassifikation.
-                 * DISPLAY-kurz ruft menu_push ueber den Callback (feuert
-                 * jetzt auf der Loslass-Flanke statt auf Druck — noetig
-                 * fuer die Lang-Druck-Unterscheidung). */
-                knobs_push(ev.id, ev.value != 0, now);
-                if (ev.id == PARAM_ENC_DISPLAY && !ev.value)
-                    ui_dirty = true;            /* Menue evtl. veraendert */
-            }
-        }
-        knobs_tick(now);                        /* Lang-Druck-Schwelle */
-        scenes_ui_tick(now);                    /* Scenes-Idle-Timeout  */
-        bloom_tick(now);                        /* r19.23: Akkord-Einsaetze */
-        gesture_tick(now);                      /* r19.25: Gesten-Wiedergabe */
+        poll_human_inputs(now, &prev_gpio, &jack_pending, &jack_edge_ms, &ui_dirty);
 
-        /* --- 2. MCP23017 → cells + modifiers + EN4-push + jack-detect ---
-         * INT-driven: INTA (PC13, EXTI) latches s_irq_pending; mcp_service()
-         * reads both ports (auto-clears the MCP interrupt). No polling —
-         * the I²C bus stays free for the 60 Hz LED/VU writes.
-         * r18.82: Cells sind DIGITALE Switches (GPA0-4, aktiv-LOW mit
-         * Pull-up), keine Hall-ADCs mehr. Gleicher Edge-Pfad wie die
-         * bench-erprobte Pico-Implementierung, geroutet durch die host-
-         * getestete controls.c-Statemachine. */
-        if (mcp_irq_pending()) {
-            uint16_t gpio = mcp_service();
-            uint16_t fell = (uint16_t)(prev_gpio & ~gpio);   /* 1→0 = press */
-            uint16_t rose = (uint16_t)(~prev_gpio & gpio);   /* 0→1 = release */
-
-            /* Cells GPA0-4: digital an/aus → feste Velocity (wie Pico-HAL).
-             * r19.22: solange der Scenes-Browser offen ist, WAEHLEN die
-             * Cells Slots (SHIFT+Cell speichert) statt Noten zu spielen. */
-            for (uint8_t c = 0; c < 5; ++c) {
-                uint16_t m = (uint16_t)(1u << (MCP_BIT_CELL1 + c));
-                if (scenes_ui_active()) {
-                    if (fell & m)
-                        scenes_ui_cell(c, controls_modifier_active(MOD_SHIFT),
-                                       now);
-                } else {
-                    /* r19.25: physisches Ereignis → aufnehmen (wenn REC) +
-                     * durch die gemeinsame Routing-Logik spielen.
-                     * r19.27: in Landscape ist Cell 5 die MEMORY-Steuerung
-                     * selbst — die darf NICHT in die Schleife aufgenommen
-                     * werden (sonst würde der aufgenommene Cell-5-Druck die
-                     * Schleife bei der Wiedergabe wieder stoppen). */
-                    bool record = !(s_cell_mode == CELL_LAND && c == 4);
-                    if (fell & m) { if (record) gesture_record_cell(c, true,  now);
-                                    route_cell(c, true,  now); }
-                    if (rose & m) { if (record) gesture_record_cell(c, false, now);
-                                    route_cell(c, false, now); }
-                }
-            }
-
-            /* Modifier GPB0-4 (bits 8-12). r19.20: BOTH edges reach
-             * controls.c — SHIFT is momentary now (needs its release), and
-             * feeding releases uniformly keeps the toggles honest too
-             * (they only act on pressed=true). CLEAR press also drives the
-             * confirm-flash that existed since r18.64 but was never wired. */
-            if (fell & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, true);
-            if (rose & (1u<<MCP_BIT_MOD_SHIFT))    controls_modifier(MOD_SHIFT, false);
-            if (fell & (1u<<MCP_BIT_MOD_HOLD)) {
-                if (controls_modifier_active(MOD_SHIFT)) {
-                    /* r19.25: SHIFT+HOLD = Gesten-Loop IDLE→REC→PLAY→IDLE.
-                     * (Mischis SHIFT+GENERATE ist seit r19.24 New Field.) */
-                    gesture_toggle(now);
-                    gesture_state_t g = gesture_state();
-                    overlay_show("GESTURE",
-                                 g == GESTURE_REC  ? "REC"  :
-                                 g == GESTURE_PLAY ? "LOOP" : "OFF", now, 0);
-                } else {
-                    controls_modifier(MOD_HOLD, true);
-                }
-            }
-            if (rose & (1u<<MCP_BIT_MOD_HOLD))     controls_modifier(MOD_HOLD, false);
-            if (fell & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, true);
-            if (rose & (1u<<MCP_BIT_MOD_DRONE))    controls_modifier(MOD_DRONE, false);
-            if (fell & (1u<<MCP_BIT_MOD_GENERATE)) {
-                if (controls_modifier_active(MOD_SHIFT)) {
-                    /* r19.24: SHIFT+GENERATE = New Field — sicher AN + neuer,
-                     * reproduzierbarer Seed (via engine_gen_seed scene-bar). */
-                    if (!controls_modifier_active(MOD_GENERATE))
-                        controls_modifier(MOD_GENERATE, true);
-                    engine_generative_new_field(s_field_seed++ ^ now);
-                    overlay_show("GENERATE", "NEW FIELD", now, 0);
-                } else {
-                    controls_modifier(MOD_GENERATE, true);   /* normaler Toggle */
-                }
-            }
-            if (rose & (1u<<MCP_BIT_MOD_GENERATE)) controls_modifier(MOD_GENERATE, false);
-            if (fell & (1u<<MCP_BIT_MOD_CLEAR))  { controls_modifier(MOD_CLEAR, true);
-                                                   bloom_all_off();  /* r19.23 */
-                                                   landscape_all_off(now); /* r19.27 */
-                                                   gesture_clear(now); /* r19.25 */
-                                                   leds_clear_flash(now); }
-            if (rose & (1u<<MCP_BIT_MOD_CLEAR))    controls_modifier(MOD_CLEAR, false);
-
-            /* EN4 (volume) push lives on GPB5 — feed the level into the
-             * encoder layer so enc_pushed(4)/PUSH events stay uniform. */
-            {
-                uint16_t em = (uint16_t)(1u << MCP_BIT_ENC4_SW);
-                if ((fell | rose) & em)
-                    enc_set_ext_push(4, (gpio & em) == 0);   /* active-low */
-            }
-
-            /* Jack-Detect GPA6 (r18.82-Hardware: PJ-320D-Switch oeffnet beim
-             * Einstecken → mit R_DET 10k/C_DET 1µF + MCP-Pull-up liest der
-             * Pin unplugged ≈ 0,3 V = LOW, plugged = HIGH). Edge → arm the
-             * debounce; applied below once stable for JACK_DEBOUNCE_MS. */
-            {
-                uint16_t jm = (uint16_t)(1u << MCP_BIT_JACK);
-                if ((fell | rose) & jm) {
-                    jack_pending = (gpio & jm) ? 1 : 0;
-                    jack_edge_ms = now;
-                }
-            }
-
-            prev_gpio = gpio;
-        }
-
-        /* --- 3. Jack debounce settle → PAM8403 /MUTE --- */
+        /* --- 3. Jack debounce settle → PAM8406 /MUTE --- */
         if (jack_pending != 0xFF &&
             (uint32_t)(now - jack_edge_ms) >= JACK_DEBOUNCE_MS) {
             /* Still at the level that armed the debounce? (A bounce mid-
@@ -578,7 +730,7 @@ int main(void) {
              * offen ist einfach jedes 30-fps-Fenster neu zeichnen. */
             if (sc_now || sc_now != sc_was)   { sc_was = sc_now;             ui_dirty = true; }
         }
-        if (ui_dirty && !oled_flush_busy() &&
+        if (!s_ui_idle.quiet && ui_dirty && !oled_flush_busy() &&
             (uint32_t)(now - last_frame_ms) >= 33) {
             bool accent_moving = oled_accent_tick(now) != 0;
             if (scenes_ui_active())       scenes_ui_render();

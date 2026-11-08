@@ -8,6 +8,6 @@ BIN="$(mktemp -d)/render_synth_samples"
 cc -O2 -std=c11 -Iinclude \
     tools/render_synth_samples.c \
     src/dsp.c src/dsp_ladder.c src/reverb.c \
-    src/v2/beauty_guard.c src/v2/synth_host.c src/v2/engines/*.c \
+    src/v2/beauty_guard.c src/v2/synth_host.c src/v2/Synths_Archive/*.c \
     -lm -o "$BIN"
 "$BIN" "$OUT"

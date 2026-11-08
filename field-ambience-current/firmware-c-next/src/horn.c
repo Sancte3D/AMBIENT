@@ -1,0 +1,446 @@
+/*
+ * horn.c — rounded, breath-shaped Alps tone (legacy Horn ID). See horn.h.
+ *
+ * Signal per voice:
+ *   body   : phase-aligned fundamental sine + quiet band-limited saw detail
+ *   filter : non-resonant, pitch-tracked lowpass with a gentle breath opening
+ *   air    : restrained 90-ms onset texture under a 450-ms amplitude bloom
+ *   drift  : shallow filter movement; no repeated pitch sweep
+ * No sub-octave oscillator or fixed cupped-horn formant. A geographic World
+ * does not require an imitation horn call; retain the source ID and ownership.
+ *
+ * Complete sound material model 2 instead uses a hollow odd-harmonic pipe
+ * and restrained sustained breath within the same voice, below.
+ * Control-rate work (coeff/LFO updates) every CTL samples; reference stays
+ * one saw + one LUT sine + one LP, plus onset-only noise/BP. No per-sample
+ * transcendental or added oscillator work.
+ */
+#include "horn.h"
+#include "shape.h"
+#include "dsp.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "cell_unfold.h"
+#include "world_character.h"
+#endif
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "highlands_breath.h"
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_modal.h"
+#include "ambient_motion.h"
+#endif
+#include <string.h>
+#include <stdatomic.h>
+
+#define SR    ((float)DSP_SAMPLE_RATE_HZ)
+#define CTL   32
+#define VMAX  3
+
+typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
+
+typedef struct {
+    _Atomic vstage_t stage;
+    _Atomic int source;
+    int owner_tag;
+    float expression, vibFade;
+    float    freq, amp;
+    float    ph, inc;                 /* reed saw                          */
+    dsp_svf_t blare;                  /* breath-tracking body lowpass      */
+    dsp_svf_t chiffbp;                /* attack air-chiff bandpass         */
+    uint32_t rng;
+
+    float    env, envInc, relCoef;    /* amp envelope                      */
+    int      hold_left;               /* samples of sustain left           */
+    float    blareEnv;                /* brightness env: overshoot→settle  */
+    int      chiff_left;              /* samples of air chiff remaining    */
+
+    float    driftPh, driftInc;       /* slow air-pressure tremor (turns)  */
+    float    panL, panR;
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t unfold;
+    world_character_t character;
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    float    vibPh, vibInc, incCur;       /* delayed slow pitch drift (turns) */
+    int      vibDelay;                    /* control ticks before it fades in */
+    dsp_svf_t breath1, breath2;           /* tuned breath: 4-pole band at the note */
+    ambient_motion_t motion;              /* slow level/brightness drift */
+    float    level_bal;                   /* register balance, per note */
+    bool     bells;                       /* GLACIER voicing, fixed per note */
+    ambient_modal_t bar;
+#endif
+} hvoice_t;
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Tuned breath, about -24 dB re the whistle tone at A4; >90 % of it lies
+ * within half an octave of the note, nothing measurable above 2.6 kHz. */
+static const float HL_BREATH=.55f;
+/* The bar at equal loudness with the other voicings. */
+#define BELL_GAIN 1.45f
+#endif
+
+static hvoice_t V[VMAX], pending[VMAX];
+/* Prepare off the audio path; at capacity fade the old voice for 8 ms,
+ * then start the prepared attack. Exactly VMAX voices render at any time. */
+#define HANDOVER_SAMPLES 353
+static _Atomic int queued[VMAX];
+static int fade_left[VMAX],fade_total[VMAX];
+static int      ctl;
+static _Atomic uint32_t tone_bits;
+#ifdef FAM_SOUND_PRODUCT
+static _Atomic uint32_t unfold_mask;
+/* Main-owned preparation config; render reads only published voice snapshots.
+ * Init/Clear in the IRQ must not overwrite this future-note config. */
+static uint32_t character_seed;
+static bool character_enabled;
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Per-note motion seed counter, restarted with the voices: identical inputs
+ * after Init/Clear give identical PCM. Main prepares, the IRQ may reset. */
+static _Atomic uint32_t v3_notes;
+#endif
+void horn_set_character(uint32_t seed,bool enabled) {
+    character_seed=seed; character_enabled=enabled;
+}
+#ifdef FAM_SOUND_AMBIENT_V3
+static bool bells_enabled;
+void horn_set_bells(bool enabled) { bells_enabled=enabled; }
+#endif
+void horn_set_cell_held(int source,bool down) {
+    cell_unfold_publish(&unfold_mask,source,down);
+}
+#endif
+static float tone_cur=0.5f;
+void horn_set_tone(float v) {
+    if (!isfinite(v)) return;
+    v=dsp_clampf(v,0.0f,1.0f);
+    uint32_t b; memcpy(&b,&v,4);
+    atomic_store_explicit(&tone_bits,b,memory_order_release);
+}
+static float tone_target(void) {
+    uint32_t b=atomic_load_explicit(&tone_bits,memory_order_acquire);
+    float v; memcpy(&v,&b,4); return v;
+}
+uint16_t horn_active_sources(void) {
+    uint16_t mask=0;
+    for (int i=0;i<VMAX;++i) {
+        if (queued[i] && pending[i].owner_tag>=0 && pending[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<pending[i].owner_tag);
+        if (V[i].stage!=V_IDLE && V[i].owner_tag>=0 && V[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<V[i].owner_tag);
+    }
+    return mask;
+}
+
+static inline float wnoise(uint32_t *r) {
+    *r = (*r) * 1664525u + 1013904223u;
+    return (float)((int32_t)*r) * (1.0f / 2147483648.0f);
+}
+
+void horn_init(void) {
+#ifdef FAM_SOUND_PRODUCT
+    atomic_store_explicit(&unfold_mask,0,memory_order_relaxed);
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    atomic_store_explicit(&v3_notes,0,memory_order_relaxed);
+#endif
+    memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
+    memset(fade_left,0,sizeof fade_left); memset(fade_total,0,sizeof fade_total);
+    memset(V, 0, sizeof V);
+    ctl = 0; tone_cur=0.5f; horn_set_tone(0.5f);
+}
+
+static int alloc_voice(int source) {
+    int best=0; float lowest=1e9f;
+    for(int i=0;i<VMAX;++i) {
+        if(queued[i] && pending[i].source==source && source>=0) return i;
+        if(V[i].stage==V_IDLE && !queued[i]) return i;
+        /* Released voices yield first, then the quietest held voice. */
+        float score=V[i].env + (V[i].stage==V_RELEASE ? 0.0f:2.0f);
+        if(score<lowest) { lowest=score; best=i; }
+    }
+    return best;
+}
+
+static void prepare_note(hvoice_t *v, int i, int source, float freq_hz, float amp) {
+    memset(v,0,sizeof *v);
+    v->source=source; v->owner_tag=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f); v->vibFade=0.0f;
+#ifdef FAM_SOUND_PRODUCT
+    world_character_prepare(&v->character,2,character_seed,source,freq_hz,character_enabled);
+#endif
+    v->freq = freq_hz;
+    v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
+    v->inc  = freq_hz / SR;
+    v->ph = 0.02f;
+    v->rng = 0x51ED270Bu ^ (uint32_t)(freq_hz * 97.0f);
+
+    dsp_svf_reset(&v->blare);   dsp_svf_set(&v->blare, freq_hz * 2.2f, 0.707f);
+    dsp_svf_reset(&v->chiffbp); dsp_svf_set(&v->chiffbp, 1700.0f, 1.1f);
+#ifdef FAM_SOUND_AMBIENT_V3
+    dsp_svf_set(&v->chiffbp, 3200.0f, 0.9f);   /* air above the tone, not hiss in it */
+    /* Ocarina breath: noise through two band-passes at the played pitch, so it
+     * colours the note itself and its skirts stay out of the high band. */
+    dsp_svf_reset(&v->breath1); dsp_svf_set(&v->breath1, freq_hz, 2.5f);
+    dsp_svf_reset(&v->breath2); dsp_svf_set(&v->breath2, freq_hz, 2.5f);
+#endif
+
+    v->env = 0.0001f;
+    v->envInc  = v->amp / (0.45f * shape_attack_scale() * SR);  /* 450 ms x SHAPE */
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    v->envInc=v->amp/(.70f*shape_attack_scale()*SR);
+#endif
+    v->relCoef = dsp_smooth_coef(0.7f * shape_release_scale()); /* r19.60 */
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Airy whistle: a breath-quick 400 ms bloom and a longer release. No 4-5 Hz
+     * vibrato, which sits at the peak of fluctuation strength: from ~0.5 s a
+     * slow 0.17-0.31 Hz pitch drift of about +-3 cents fades in over ~1 s,
+     * plus the note's own slow level/brightness drift. */
+    v->envInc=v->amp/(.40f*shape_attack_scale()*SR);
+    v->relCoef=dsp_smooth_coef(.85f*shape_release_scale());
+    {
+        uint32_t n=atomic_fetch_add_explicit(&v3_notes,1,memory_order_relaxed)+1u;
+        uint32_t seed=character_seed*0x27D4EB2Fu^(uint32_t)source*0x9E3779B9u^
+                      (uint32_t)(freq_hz*977.0f)^(n*0xC2B2AE35u);
+        ambient_motion_prepare(&v->motion,seed);
+        v->vibPh=ambient_motion_unit(&seed);
+        v->vibInc=(.17f+.14f*ambient_motion_unit(&seed))*(float)CTL/SR;
+        v->level_bal=ambient_register_gain(freq_hz);
+    }
+    v->incCur=v->inc;
+    v->vibDelay=(int)(.50f*SR/(float)CTL);
+    /* Bells: struck, then the bar rings on its own. The envelope only opens
+     * (2 ms) and, after a release, damps slowly (about 4 s). */
+    v->bells=bells_enabled;
+    if(v->bells) {
+        ambient_bell_prepare(&v->bar,freq_hz,1.0f,.30f+.40f*tone_target(),shape_release_scale());
+        v->envInc=v->amp/(.002f*SR);
+        v->relCoef=dsp_smooth_coef(4.0f*shape_release_scale());
+    }
+#endif
+    v->hold_left = (int)(2.8f * SR);           /* call ~2.8 s                        */
+    v->blareEnv  = 0.0f;
+    v->chiff_left = (int)(0.09f * SR);         /* 90 ms of air at the onset          */
+    #ifdef FAM_SOUND_PRODUCT
+    v->driftPh = 0.0f; v->driftInc = 0.0f; /* no repeated wah in the product */
+#else
+    v->driftPh = 0.0f; v->driftInc = 0.9f / SR;
+#endif
+    /* gentle stereo spread per voice */
+    float pan = (i == 0) ? -0.2f : (i == 1) ? 0.2f : 0.0f;
+    v->panL = 0.5f * (1.0f - pan);
+    v->panR = 0.5f * (1.0f + pan);
+    v->stage = V_ATTACK;
+}
+
+static void start_note(int source, float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || freq_hz>8000.0f || amp<=0.0f) return;
+    if(source>=0) for(int j=0;j<VMAX;++j)
+        if(V[j].stage!=V_IDLE && V[j].source==source) V[j].stage=V_RELEASE;
+    int i=alloc_voice(source);
+    queued[i]=0;
+    prepare_note(&pending[i],i,source,freq_hz,amp);
+    if(V[i].stage!=V_IDLE && fade_left[i]==0) {
+        fade_total[i]=HANDOVER_SAMPLES; fade_left[i]=HANDOVER_SAMPLES;
+    }
+    __asm__ volatile("" ::: "memory");
+    queued[i]=1;
+}
+
+bool horn_try_note_on(int source, float freq_hz, float amp) {
+    if (source < 0 || source >= 16 || !isfinite(freq_hz) || !isfinite(amp) ||
+        freq_hz < 20.0f || freq_hz > 8000.0f || amp <= 0.0f) return false;
+    for (int i = 0; i < VMAX; ++i)
+        if ((queued[i] && pending[i].source == source) ||
+            (V[i].stage != V_IDLE && V[i].source == source)) return false;
+    for (int i = 0; i < VMAX; ++i) {
+        if (V[i].stage != V_IDLE || queued[i]) continue;
+        prepare_note(&pending[i], i, source, freq_hz, amp);
+        __asm__ volatile("" ::: "memory");
+        queued[i] = 1;
+        return true;
+    }
+    return false;
+}
+
+void horn_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
+void horn_note_on(int source,float freq_hz,float amp) {
+    if(source>=0 && source<16) start_note(source,freq_hz,amp);
+}
+void horn_note_off(int source) {
+    for(int i=0;i<VMAX;++i) if(queued[i] && pending[i].source==source) queued[i]=0;
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE && V[i].source==source) {
+        V[i].source=-1; V[i].stage=V_RELEASE;
+    }
+}
+#ifdef FAM_SOUND_PRODUCT
+/* Audio owner only: bounded context handover; no held manual voice stealing. */
+void horn_quiet_source(int source,int frames) {
+    if(frames<1)frames=1;
+    if(frames>(int)(.100f*SR))frames=(int)(.100f*SR);
+    for(int i=0;i<VMAX;++i) {
+        if(queued[i] && pending[i].owner_tag==source)queued[i]=0;
+        if(V[i].stage!=V_IDLE && V[i].owner_tag==source) {
+            V[i].source=-1; V[i].stage=V_RELEASE;
+            if(!fade_left[i] || fade_left[i]>frames) {
+                fade_total[i]=frames;fade_left[i]=frames;
+            }
+        }
+    }
+}
+#endif
+void horn_all_off(void) {
+    for(int i=0;i<VMAX;++i) queued[i]=0;
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
+}
+
+int horn_active_count(void) {
+    int c = 0;
+    for (int i = 0; i < VMAX; ++i) if (V[i].stage != V_IDLE || queued[i]) ++c;
+    return c;
+}
+
+void horn_render_mix(float *dry_L, float *dry_R,
+                     float *send_L, float *send_R,
+                     int frames, float send_amount) {
+    float colour=tone_target();
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t held=atomic_load_explicit(&unfold_mask,memory_order_acquire);
+#endif
+    for (int n = 0; n < frames; ++n) {
+        tone_cur+=(colour-tone_cur)*(1.0f/(0.080f*SR));
+        float L = 0.0f, R = 0.0f;
+        int do_ctl = (ctl == 0);
+
+        for (int i = 0; i < VMAX; ++i) {
+            hvoice_t *v = &V[i];
+            if(atomic_load_explicit(&queued[i],memory_order_relaxed) &&
+               atomic_load_explicit(&v->stage,memory_order_relaxed)==V_IDLE) {
+                atomic_thread_fence(memory_order_acquire);
+                *v=pending[i]; queued[i]=0; fade_left[i]=0;
+            }
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
+
+            vstage_t stage=atomic_load_explicit(&v->stage,memory_order_relaxed);
+#ifdef FAM_SOUND_PRODUCT
+            float opening=cell_unfold_step(&v->unfold,held,v->owner_tag);
+            world_character_tick(&v->character);
+#endif
+            if (do_ctl) {
+                /* Breath opens modestly; no resonant brass flare. */
+                float btgt = (stage == V_ATTACK) ? 1.0f : 0.35f;
+                v->blareEnv += (btgt - v->blareEnv) * 0.035f;
+                float drift = dsp_sin(v->driftPh);
+                float cut = v->freq * (2.2f + (1.0f+1.2f*v->expression) * v->blareEnv) * (1.0f + 0.03f * drift) * (0.85f+0.3f*tone_cur);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                /* Keep the hollow third audible even at Color 0; brightness
+                 * varies upper loss without collapsing to a plain sine. */
+                cut=v->freq*(4.4f+.5f*tone_cur+.35f*v->blareEnv);
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+                cut=v->freq*(5.0f+1.6f*tone_cur+.40f*v->blareEnv);
+                if(v->vibDelay>0) --v->vibDelay;
+                else v->vibFade+=(1.0f-v->vibFade)*((float)CTL/(1.0f*SR));
+                v->vibPh+=v->vibInc; if(v->vibPh>=1.0f) v->vibPh-=1.0f;
+                v->incCur=v->inc*(1.0f+.0017f*v->vibFade*dsp_sin(v->vibPh));
+#endif
+#ifdef FAM_SOUND_PRODUCT
+                cut *= 1.0f+.40f*opening;
+                if(v->character.enabled) cut*=v->character.tone;
+#endif
+                dsp_svf_set(&v->blare, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.707f);
+            }
+
+            /* amp envelope */
+            switch (stage) {
+                case V_ATTACK:
+                    v->env += v->envInc;
+                    if (v->env >= v->amp) { v->env = v->amp; v->stage = V_HOLD; }
+                    break;
+                case V_HOLD:
+                    if (atomic_load_explicit(&v->source,memory_order_relaxed) < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
+                    break;
+                case V_RELEASE:
+                    v->env -= v->relCoef * v->env;
+                    if (v->env <= 1.0e-5f) { v->env = 0.0f; v->stage = V_IDLE; }
+                    break;
+                default: break;
+            }
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
+
+            v->driftPh += v->driftInc; if (v->driftPh >= 1.0f) v->driftPh -= 1.0f;
+
+            /* The ramp's fundamental is NEGATIVE sine: align polarity to
+             * reinforce it, not cancel it. .45*(2/pi)+.35 ~= 2/pi preserves
+             * the old fundamental drive while reducing buzzy upper partials.
+             * Reuse the former sub oscillator's LUT work at the played pitch. */
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+            float shade=2*tone_cur-1+.20f*opening;
+            if(v->character.enabled)shade+=v->character.shade;
+#ifdef FAM_SOUND_AMBIENT_V3
+            float brass;
+            if(v->bells) {
+                brass=ambient_modal_step(&v->bar)*v->level_bal*BELL_GAIN;
+                /* The bar has rung out: free the voice and its slot. */
+                if(do_ctl && ambient_modal_energy(&v->bar)<1e-10f) v->stage=V_IDLE;
+            } else {
+            float drift,level=ambient_motion_step(&v->motion,.40f,&drift);
+            float reed=highlands_air_sample(v->ph,v->freq,shade+drift);
+            v->ph+=v->incCur;if(v->ph>=1)v->ph-=1;
+            brass=dsp_svf_lp(&v->blare,reed);
+            /* Air, about 18 dB below the former aspiration, above the tone. */
+            brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.007f+.006f*v->blareEnv);
+            /* The breath rises and falls with the brightness drift (+-2.5 dB). */
+            brass+=dsp_svf_bp(&v->breath2,dsp_svf_bp(&v->breath1,wnoise(&v->rng)))*HL_BREATH*(1.0f+.8f*drift);
+            brass*=level*v->level_bal;
+            }
+#else
+            float reed=highlands_breath_sample(v->ph,v->freq,shade);
+            v->ph+=v->inc;if(v->ph>=1)v->ph-=1;
+            float brass=dsp_svf_lp(&v->blare,reed);
+            /* A restrained sustained aspiration belongs to this note and
+             * follows its entire envelope/release, not a 90ms pre-bloom burst. */
+            brass+=dsp_svf_bp(&v->chiffbp,wnoise(&v->rng))*(.055f+.025f*v->blareEnv);
+#endif
+#else
+            float saw_share=.45f,sine_share=.35f;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) {
+                saw_share*=v->character.detail;
+                /* Exchange aligned harmonic detail with the fundamental,
+                 * keeping .45*(2/pi)+.35 constant. No added frequency. */
+                sine_share+=(.45f-saw_share)*.636619772f;
+            }
+#endif
+            float reed = saw_share*dsp_poly_saw(v->ph, v->inc) - sine_share*dsp_sin(v->ph);
+            v->ph += v->inc; if (v->ph >= 1.0f) v->ph -= 1.0f;
+            float brass = dsp_svf_lp(&v->blare, reed);
+
+            /* attack air chiff (onset only) */
+            if (v->chiff_left > 0) {
+                --v->chiff_left;
+                float a = (float)v->chiff_left / (0.09f * SR);   /* fade out */
+                brass += dsp_svf_bp(&v->chiffbp, wnoise(&v->rng)) * a * a * 0.12f;
+            }
+#endif
+
+            float out = brass * v->env * 0.5f;
+            if(fade_left[i]>0) {
+                out *= (float)fade_left[i]/(float)fade_total[i];
+                if(--fade_left[i]==0) v->stage=V_IDLE;
+            }
+            float panL=v->panL,panR=v->panR;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) {
+                out*=v->character.gain;
+                panL-=v->character.pan; panR+=v->character.pan;
+            }
+#endif
+            L += out * panL;
+            R += out * panR;
+        }
+
+        if (++ctl >= CTL) ctl = 0;
+
+        dry_L[n]  += L;  dry_R[n]  += R;
+        send_L[n] += L * send_amount;
+        send_R[n] += R * send_amount;
+    }
+}

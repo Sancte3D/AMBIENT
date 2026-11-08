@@ -38,8 +38,8 @@
 #define PIN_I2S_BCK    0
 #define PIN_I2S_LRCK   1     /* MUST be BCK+1 (sideset bit 1) */
 #define PIN_I2S_DIN    4
-#define PIN_AMP_nSHDN  27    /* HIGH = chip awake */
-#define PIN_AMP_nMUTE  28    /* HIGH = un-muted */
+#define PIN_AMP_SHDN_N  27    /* HIGH = chip awake */
+#define PIN_AMP_MUTE_N  28    /* HIGH = un-muted */
 
 #define AUDIO_PIO      pio0
 #define AUDIO_SM       0
@@ -59,7 +59,7 @@ void audio_set_renderer(audio_render_fn fn) {
 
 /* ---- Test sine state (Step 5 fallback renderer) ---- */
 static volatile float test_freq_hz = 440.0f;
-static volatile float test_amp_0_1 = 0.10f;   /* -20 dB FS — safe for the 23 dB PAM8403 gain */
+static volatile float test_amp_0_1 = 0.10f;   /* -20 dB FS — safe for the 23 dB PAM8406 gain */
 static float phase = 0.0f;
 
 static void fill_test_sine(int16_t *buf, int frames) {
@@ -156,8 +156,8 @@ static void pio_dma_init(void) {
 void audio_init(void) {
     /* 1) Boot-safe defaults on the amp control pins. R_SHDN_PD + R_MUTE_PD
      *    pull-downs hold them LOW already; we drive them LOW explicitly. */
-    gpio_init(PIN_AMP_nSHDN); gpio_set_dir(PIN_AMP_nSHDN, GPIO_OUT); gpio_put(PIN_AMP_nSHDN, 0);
-    gpio_init(PIN_AMP_nMUTE); gpio_set_dir(PIN_AMP_nMUTE, GPIO_OUT); gpio_put(PIN_AMP_nMUTE, 0);
+    gpio_init(PIN_AMP_SHDN_N); gpio_set_dir(PIN_AMP_SHDN_N, GPIO_OUT); gpio_put(PIN_AMP_SHDN_N, 0);
+    gpio_init(PIN_AMP_MUTE_N); gpio_set_dir(PIN_AMP_MUTE_N, GPIO_OUT); gpio_put(PIN_AMP_MUTE_N, 0);
     mcp_set_xsmt(false);   /* PCM5102A soft-mute on */
 
     /* 2) Bring up PIO + DMA with a silent first buffer so the DAC never
@@ -170,9 +170,9 @@ void audio_init(void) {
 
     /* 3) SPEC v0.6 §8 power sequence — silent throughout. */
     sleep_ms(50);                              /* rails settle */
-    gpio_put(PIN_AMP_nSHDN, 1);                /* amp chip wakes */
+    gpio_put(PIN_AMP_SHDN_N, 1);                /* amp chip wakes */
     sleep_ms(50);                              /* internal refs settle */
-    gpio_put(PIN_AMP_nMUTE, 1);                /* amp un-mutes */
+    gpio_put(PIN_AMP_MUTE_N, 1);                /* amp un-mutes */
     mcp_set_xsmt(true);                        /* DAC un-soft-mutes */
 
     /* 4) Hand the buffers over to the test-sine fill. Until the IRQ first
@@ -185,7 +185,7 @@ void audio_mute(void) {
     /* Reverse order of un-mute: XSMT off (DAC), then /MUTE off (amp).
      * /SHDN stays HIGH — this is a "pause", not a teardown. */
     mcp_set_xsmt(false);
-    gpio_put(PIN_AMP_nMUTE, 0);
+    gpio_put(PIN_AMP_MUTE_N, 0);
 }
 
 void audio_set_test_freq(float hz) {

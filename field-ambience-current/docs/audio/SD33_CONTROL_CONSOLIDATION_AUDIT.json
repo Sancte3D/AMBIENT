@@ -1,0 +1,249 @@
+{
+  "baseline_ci": {
+    "conclusion": "success",
+    "head_sha": "e2104094cfda3f4af563c608cf4c0f94430c945f",
+    "run_id": 39156738516,
+    "run_number": 734,
+    "status": "completed",
+    "successful_jobs": 27
+  },
+  "baseline_commit": "fe3da78264a57963a5b8063cf158a7f6bb59f3ea",
+  "current_core_files_unchanged_from_release_checkpoint": [
+    "src/bowed.c",
+    "src/brain.c",
+    "src/cells.c",
+    "src/dsp.c",
+    "src/horn.c",
+    "src/nature.c",
+    "src/pluck.c",
+    "src/shape.c",
+    "src/tuning.c",
+    "src/world_grammar.c"
+  ],
+  "evidence": {
+    "SD19_ROOM_CALIBRATION_METRICS.json": {
+      "current_core_file_differences": [],
+      "current_core_files_byte_equal": [],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "09319610912b81a8c71860479a6eeba754f53427",
+      "new_pcm_render": false,
+      "sha256": "a074dbf817c30246ed6631b17d932379179d0d6f1f65b0135030975934323e05"
+    },
+    "SD33_ACTIVITY_METRICS.json": {
+      "current_core_file_differences": [
+        "src/ambient_room.c",
+        "src/engine_product.c",
+        "src/pluck.c",
+        "src/world_grammar.c"
+      ],
+      "current_core_files_byte_equal": [
+        "src/bowed.c",
+        "src/brain.c",
+        "src/cells.c",
+        "src/dsp.c",
+        "src/horn.c",
+        "src/nature.c",
+        "src/shape.c",
+        "src/tuning.c"
+      ],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "9f9aafc3fc44ba53a8496f6ec8e501e6efdd4def",
+      "new_pcm_render": false,
+      "sha256": "ed7143d6dae8ca69f14e31b11381f48849e0e2cf336294498a50e83286c30375"
+    },
+    "SD33_ATTACK_METRICS.json": {
+      "current_core_file_differences": [
+        "src/ambient_room.c",
+        "src/engine_product.c"
+      ],
+      "current_core_files_byte_equal": [
+        "src/bowed.c",
+        "src/brain.c",
+        "src/cells.c",
+        "src/dsp.c",
+        "src/horn.c",
+        "src/nature.c",
+        "src/pluck.c",
+        "src/shape.c",
+        "src/tuning.c",
+        "src/world_grammar.c"
+      ],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "1f21ade3c78acc2a1c513eefaa4fa1ba1561dd95",
+      "new_pcm_render": false,
+      "sha256": "790180a99f0fd4a1b97726d0b32156026852e155883e450378a3d95ebd421cdc"
+    },
+    "SD33_COAST_ACTIVITY_METRICS.json": {
+      "current_core_file_differences": [
+        "src/ambient_room.c",
+        "src/engine_product.c",
+        "src/pluck.c"
+      ],
+      "current_core_files_byte_equal": [
+        "src/bowed.c",
+        "src/brain.c",
+        "src/cells.c",
+        "src/dsp.c",
+        "src/horn.c",
+        "src/nature.c",
+        "src/shape.c",
+        "src/tuning.c",
+        "src/world_grammar.c"
+      ],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "4de325a0d4c6255909801e02e0cfe62889a6777e",
+      "new_pcm_render": false,
+      "sha256": "72a35af14bdbce0236afe7add0298f78f5772b4c1abf8693789b6406f45ada79"
+    },
+    "SD33_COLOR_METRICS.json": {
+      "current_core_file_differences": [
+        "src/ambient_room.c",
+        "src/engine_product.c",
+        "src/pluck.c"
+      ],
+      "current_core_files_byte_equal": [
+        "src/bowed.c",
+        "src/brain.c",
+        "src/cells.c",
+        "src/dsp.c",
+        "src/horn.c",
+        "src/nature.c",
+        "src/shape.c",
+        "src/tuning.c",
+        "src/world_grammar.c"
+      ],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "c89bc630fec5a9e193f06a4e08d8e6752a16b3b2",
+      "new_pcm_render": false,
+      "sha256": "4a68e999311a35f5989632404cc3d713884d42f9021fc112e5d6685038f831da"
+    },
+    "SD33_RELEASE_METRICS.json": {
+      "current_core_file_differences": [
+        "src/ambient_room.c",
+        "src/engine_product.c"
+      ],
+      "current_core_files_byte_equal": [
+        "src/bowed.c",
+        "src/brain.c",
+        "src/cells.c",
+        "src/dsp.c",
+        "src/horn.c",
+        "src/nature.c",
+        "src/pluck.c",
+        "src/shape.c",
+        "src/tuning.c",
+        "src/world_grammar.c"
+      ],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "4cd07cd63c82b251320bce3be8676473a2ee9e3e",
+      "new_pcm_render": false,
+      "sha256": "bd2543225239ca4594bb4a2231e9ef6ab06861f165f115b978aa531fcd0fbf7a"
+    },
+    "SD33_WOODLAND_COLOR_METRICS.json": {
+      "current_core_file_differences": [
+        "src/ambient_room.c",
+        "src/engine_product.c"
+      ],
+      "current_core_files_byte_equal": [
+        "src/bowed.c",
+        "src/brain.c",
+        "src/cells.c",
+        "src/dsp.c",
+        "src/horn.c",
+        "src/nature.c",
+        "src/pluck.c",
+        "src/shape.c",
+        "src/tuning.c",
+        "src/world_grammar.c"
+      ],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "ab673f49de056154d985290d5bc1f8a7f5bf43a5",
+      "new_pcm_render": false,
+      "sha256": "a3ede8a83ccd100eb11cbaa997cb59d8dac81d75a56d2da7f4e7e5944d19561f"
+    },
+    "SD35_PARAMETER_METRICS.json": {
+      "current_core_file_differences": [
+        "src/ambient_room.c",
+        "src/engine_product.c"
+      ],
+      "current_core_files_byte_equal": [
+        "src/bowed.c",
+        "src/brain.c",
+        "src/cells.c",
+        "src/dsp.c",
+        "src/horn.c",
+        "src/nature.c",
+        "src/pluck.c",
+        "src/shape.c",
+        "src/tuning.c",
+        "src/world_grammar.c"
+      ],
+      "hearing_accepted": false,
+      "historical_baseline_commit": "9bde4de2646bafb027f1e76d6b7b683c32a56798",
+      "new_pcm_render": false,
+      "sha256": "889668b7ebdb29edd65739c7c4a7b8651249b8ca0c1cb61881cb913c3fea5eb5"
+    }
+  },
+  "existing_compiled_inputs_byte_equal": 263,
+  "hearing_accepted": false,
+  "input_manifest_encoding": "sorted repository-relative path + NUL + lowercase SHA256 + LF, UTF-8",
+  "input_manifest_sha256": "1e4d94ae77cb6f5d102645988330ac6d674ca05c5fcae14eca1e5d22cb48aa7a",
+  "limitations": "Historical parameter captures remain tied to their exact checkpoints. Current engine/Room files changed for later ownership/handoff/clear fixes; no fresh entire-PCM equivalence to old captures is claimed. Same current build inputs as the successful full host/H743 baseline; no hearing, physical controls, CPU or hardware acceptance.",
+  "new_arm_build": false,
+  "new_audio_render": false,
+  "new_host_suite": false,
+  "new_runtime_state_bytes": 0,
+  "public_control_setters": {
+    "engine_set_activity": {
+      "byte_equal_to_release_checkpoint": true,
+      "sha256": "9f5df939f936b70928cd48ab10a53f31ec322d62657c163c6615eec8227b7a3e"
+    },
+    "engine_set_attack": {
+      "byte_equal_to_release_checkpoint": true,
+      "sha256": "e5a8ca6c4d99964139fb8fb8a1aa76344273688a428cc639cd9ecbcb0cfc3503"
+    },
+    "engine_set_color": {
+      "byte_equal_to_release_checkpoint": true,
+      "sha256": "ec82f874d3584cdae979be260ea215171c325498bc40d58dfe40198a4eb62a0b"
+    },
+    "engine_set_master_volume": {
+      "byte_equal_to_release_checkpoint": true,
+      "sha256": "15c166b990faf1144503c8b0f7b111de9e4e7e79c05e2ec2be1228e8ce2a6ce9"
+    },
+    "engine_set_nature": {
+      "byte_equal_to_release_checkpoint": true,
+      "sha256": "171238413af9398b9c40e92e99a090530c69c704be8af37bbf38e25d739dff51"
+    },
+    "engine_set_release": {
+      "byte_equal_to_release_checkpoint": true,
+      "sha256": "c6ee3f7885bcc33b059dc96b0f7228e26f3a71cae05ae56f960c0e19ad890f11"
+    },
+    "engine_set_room": {
+      "byte_equal_to_release_checkpoint": true,
+      "sha256": "24983eeb8104174eb7e49215730ba33d964393555f22e2ad41ceed13621beff9"
+    }
+  },
+  "reference_control_checkpoint": "4cd07cd63c82b251320bce3be8676473a2ee9e3e",
+  "reused_arm_artifact_id": 12147027941,
+  "reused_product_bin_sha256": "7ba0c2db6914cdc581fcfc3ad72a9adbeb5712835ef9f5a5ef3dd1276f77c285",
+  "runtime_files_changed": 0,
+  "scope": "SD33 current control-contract/evidence consolidation; no runtime, calibration or test change",
+  "source_sha256": {
+    "src/ambient_room.c": "9633f78873608cf3924ce60b946e198fd031ec587572ecb5da306b971a164633",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/controls.c": "882d4a70cb641d7b08b9e31812dd72ee27b6ec5c789407f1ea150e047c6ca45c",
+    "src/engine_product.c": "da6fda2bec7412393e1c169616cff16769c3e76ae15666a36a83bfdb4d6286f3",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/params.c": "ff315e8d8990c6f7a9983dcf4eae197bd521e6480a05cd5ff72d7226c9ec3b24",
+    "src/pluck.c": "5e13ddfe5dc4717a770e336fa8838e4f4bce4f1019aae4cd7ac4db9f95b79317",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/world_grammar.c": "a90cea1f8c86728a9136dc3b2332bda2c69393db9bab2fbfd0cbc19d092e6f78",
+    "test/run_tests.sh": "ebc16d4f6df87a7fe7ede919f03fc0871f890185e484c86b49a0bd0f541f21b4",
+    "test/test_activity_ranges.c": "39daa64b9f57c3293905378289fec48f01c0ad21e310165b07a8b4c48bb01189",
+    "test/test_pluck_color.c": "2c0b7371f377f6a40e81ac88683dedd85c60f2034bf2f0b9b1c64d78a74d0a2d",
+    "test/test_product_sound.c": "d83892236fb9e46b0f646faeac6139ac3b18bdfe8675de805171cab91159e3be",
+    "test/test_product_stress.c": "fa61802cade55d4b9124b23ffceee0b4c7a2638417f33806e797012a134a4637",
+    "test/test_room_nature.c": "be551e72f29f2f6c8ae2a7c5ba0fcbc4917f4274b28f4c2c76b66913d8f306f6"
+  }
+}

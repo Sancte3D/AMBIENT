@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""Audit actual ARM ELF and compilation inputs, not host sizeof estimates."""
+import json
+import hashlib
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+build = Path(sys.argv[1])
+elf = build / 'field_ambience_h743'
+compiled = json.loads((build / 'compile_commands.json').read_text())
+forbidden = {
+    'engine.c','pad.c','padsynth.c','bass.c','drone.c','body.c','choir.c','guembri.c','ember.c',
+    'texture.c','ambience.c','reverb.c','reverb_presets.c','fx_master.c','ambient_effects.c',
+    'tape.c','echo.c','blur.c','shimmer.c','generative.c','composer.c','harmony.c','voices.c','dsp_ladder.c'
+}
+sources = [Path(c['file']) for c in compiled]
+bad = [str(s) for s in sources if s.name in forbidden or '/v2/' in str(s)]
+assert not bad, f'Archived/retired sources compiled: {bad}'
+required = {'engine_product.c','ambient_room.c','nature.c','world_grammar.c','worlds_product.c'}
+assert required.issubset({s.name for s in sources})
+nm = subprocess.check_output(['arm-none-eabi-nm','-S','--defined-only',str(elf)], text=True)
+symbols = []
+for line in nm.splitlines():
+    m=re.match(r'([0-9a-f]+)\s+([0-9a-f]+)\s+(\S)\s+(.+)$',line)
+    if m: symbols.append((int(m[1],16),int(m[2],16),m[3],m[4]))
+prefixes = ('pad_','padsynth_','bass_','drone_','body_','choir_','guembri_','ember_','texture_',
+            'ambience_','reverb_','fx_master_','synth_host_','engine_v2_','tape_','echo_','blur_','shimmer_')
+bad_symbols=[s[3] for s in symbols if s[2].lower()=='t' and s[3].startswith(prefixes)]
+assert not bad_symbols, f'Retired DSP function retained: {bad_symbols}'
+def one(name):
+    found=[s for s in symbols if s[3]==name]
+    assert len(found)==1, (name,found)
+    return found[0]
+for name in ('tank','diffusion'):
+    address,size,_,_=one(name)
+    assert 0x30000000<=address and address+size<=0x30048000,(name,hex(address),size)
+    print(f'PRODUCT LINK {name}: 0x{address:08x}, {size} B, internal D2')
+address,size,_,_=one('s_buffer')
+assert 0x24000000<=address and address+size<=0x24080000 and address%32==0,(hex(address),size)
+print(f'PRODUCT LINK audio DMA: 0x{address:08x}, {size} B, aligned internal D1')
+assert all('FAM_SOUND_PRODUCT' in c['command'] for c in compiled if Path(c['file']).name in required)
+# Live Bank-2 Scene writes require the complete firmware load image in Bank 1.
+# The larger linker Flash region alone would silently allow code/const spill.
+image=build/'field_ambience_h743.bin'
+assert image.stat().st_size<=1024*1024,'Firmware spills into Scene-write bank; revisit storage before shipping'
+print(f'PRODUCT LINK Bank-1 load image: {image.stat().st_size} B / 1048576 B')
+print('PRODUCT LINK PASS: reference DSP/archive excluded, one internal room, DMA placement verified')
+
+# Compiler-reported individual frames. This is deliberately not a call-chain,
+# ISR nesting or runtime high-water claim (those are SD48 on real hardware).
+frames=[]
+for path in build.rglob('*.su'):
+    for line in path.read_text().splitlines():
+        fields=line.split('\t')
+        if len(fields)!=3:continue
+        match=re.match(r'(.+):(\d+):(\d+):(.+)',fields[0])
+        if not match:continue
+        source=Path(match[1]);function=match[4]
+        if '/vendor/' in str(source):continue
+        frames.append({'source':source.name,'function':function,
+                       'bytes':int(fields[1]),'kind':fields[2]})
+assert frames,'-fstack-usage evidence missing'
+core={'engine_product.c','world_grammar.c','bowed.c','horn.c','pluck.c','nature.c','nature_accents.h','ambient_room.c'}
+core_frames=[r for r in frames if r['source'] in core]
+assert core_frames and max(r['bytes'] for r in core_frames)<=1024,core_frames
+assert all('unbounded' not in r['kind'] for r in core_frames),core_frames
+for function in ('engine_render','ambient_room_process','nature_render','engine_generative_tick','pluck_note_on','scenes_save'):
+    rows=[r for r in frames if r['function']==function or r['function'].startswith(function+'.')]
+    assert rows,function
+    print(f"PRODUCT FRAME {function}: {max(r['bytes'] for r in rows)} B (compiler, not stack high-water)")
+finish_state=None
+nature_state=None
+session_state=None
+bench_state=None
+if any('FAM_SOUND_FINISH_CANDIDATE' in c['command'] for c in compiled):
+    address,size,_,_=one('sf')
+    assert 0x30000000<=address and address+size<=0x30048000,(hex(address),size)
+    finish_state={'model':2,'address':address,'bytes':size,'region':'internal D2'}
+    delay_address,delay_size,_,_=one('sf_delay')
+    assert 0x24000000<=delay_address and delay_address+delay_size<=0x24080000
+    assert delay_address%32==0 and delay_size==262144
+    finish_state['delay']={'address':delay_address,'bytes':delay_size,'region':'internal D1'}
+    print(f'COMPLETE SOUND FX: 0x{address:08x}, {size} B, internal D2')
+    address,size,_,_=one('na')
+    assert 0x24000000<=address and address+size<=0x24080000 and size<=2048,(hex(address),size)
+    nature_state={'address':address,'bytes':size,'region':'internal D1','max_bytes':2048}
+    print(f'NATURE ACCENTS: 0x{address:08x}, {size} B, internal D1, no sample buffers')
+if any('FAM_SOUND_SESSION_CANDIDATE' in c['command'] for c in compiled):
+    session_sources={'scenes_storage_h743.c','scenes_save_async.c','scenes_journal_async.c',
+        'scenes_journal_recovery.c','scenes_flash_h743_async.c','scenes_flash_h743_fault.c','scenes_flash_h743_guard.S'}
+    assert session_sources.issubset({s.name for s in sources})
+    assert 'scenes_flash_h743.c' not in {s.name for s in sources},'Competing synchronous flash owner'
+    assert finish_state is not None
+    for name in ('s_store','s_pending'):
+        address,size,_,_=one(name)
+        assert size==5848 and 0x24000000<=address and address+size<=0x24080000,(name,address,size)
+    assert not any(s[3]=='scene_journal_write' for s in symbols),'Synchronous journal writer retained'
+    for name in ('BusFault_Handler','FLASH_IRQHandler','scenes_flash_h743_async_busfault_entry',
+                 'scenes_flash_h743_guarded_read','scenes_storage_h743_bind','scenes_save_step'):
+        address,size,kind,_=one(name)
+        assert kind.lower()=='t' and 0x08000000<=address<0x08100000,(name,address,kind)
+    disassembly=subprocess.check_output(['arm-none-eabi-objdump','-d',str(elf)],text=True)
+    busfault=re.search(r'<BusFault_Handler>:\n(.*?)(?=\n\n)',disassembly,re.S)
+    assert busfault and 'scenes_flash_h743_async_busfault_entry' in busfault[1]
+    session_state=dict(format='SCN8/JSS1',store_bytes=5848,payload_bytes=8192,
+        backend='ECC-safe IRQ adapter, one flash owner',candidate=True,device_accepted=False)
+    print('SOUND SESSION: SCN8/JSS1, single async flash owner, strong ECC/FLASH vectors, sync writer absent')
+if any('FAM_DEVICE_BENCH_CANDIDATE' in c['command'] for c in compiled):
+    assert session_state is not None
+    address,size,_,_=one('g_device_bench')
+    assert size==64 and 0x24000000<=address and address+size<=0x24080000
+    init_frames=[r for r in frames if r['function']=='device_bench_init']
+    assert len(init_frames)==1 and init_frames[0]['bytes']<=256 and init_frames[0]['kind']=='static',init_frames
+    bench_state=dict(schema=1,address=address,bytes=size,paint_guard_bytes=256,
+        init_compiler_frame_bytes=init_frames[0]['bytes'],device_accepted=False)
+    print('DEVICE BENCH: guarded MSP paint, SAI/DMA errors and Main Save observations; no hardware acceptance')
+report={'device_bench':bench_state,'sound_session':session_state,'nature_accents_state':nature_state,'sound_finish_state':finish_state,'elf_sha256':hashlib.sha256(elf.read_bytes()).hexdigest(),
+        'compiler':subprocess.check_output(['arm-none-eabi-gcc','--version'],text=True).splitlines()[0],
+        'profile':'product','individual_frames':sorted(frames,key=lambda r:r['bytes'],reverse=True),
+        'core_max_frame_bytes':max(r['bytes'] for r in core_frames),
+        'limitations':'Individual compiler frames only. Library callees, call chains, exception context, ISR nesting and actual stack high-water remain SD48.'}
+(build/'PRODUCT_BUILD_AUDIT.json').write_text(json.dumps(report,indent=2)+'\n')
+print(f"PRODUCT FRAME PASS: {len(core_frames)} core frames, maximum {report['core_max_frame_bytes']} B")

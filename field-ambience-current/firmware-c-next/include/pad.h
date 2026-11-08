@@ -48,6 +48,19 @@ void pad_all_off(void);
  * (the BRIGHT encoder will drive this later; default 0). Smoothed internally
  * so turning it does not zipper. */
 void pad_set_brightness(float hz);
+/* Smooth live gain of a source, including sustained voices. */
+void pad_set_source_gain(uint8_t source, float gain);
+
+/* r19.59: RESONANCE of the Moog ladder on the pad bus. 0 = off/bypassed,
+ * 1 = just under self-oscillation. Cutoff follows the BRIGHT macro. */
+void  pad_set_resonance(float amount_0_1);
+float pad_resonance(void);
+
+/* r19.60 MOTION: LFO- und Huellkurven-Modulation auf den Bus-Cutoff (0..1). */
+void  pad_set_sweep(float amount_0_1);
+void  pad_set_envmod(float amount_0_1);
+float pad_sweep(void);
+float pad_envmod(void);
 
 /* Global LFO-depth multiplier for the filter sweep (0..2). 0 = LFO has no
  * effect on cutoff (static voice). 1 = current default (audible chorus

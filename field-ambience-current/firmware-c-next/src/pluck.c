@@ -3,142 +3,434 @@
  */
 
 #include "pluck.h"
+#include "shape.h"
 #include "dsp.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "cell_unfold.h"
+#include "world_character.h"
+#include "woodland_body.h"
+#include "woodland_resonator.h"
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_modal.h"
+#endif
 #include <math.h>
+#include <stdatomic.h>
 #include <string.h>
 
 #define SR        ((float)DSP_SAMPLE_RATE_HZ)
 #define BUF_LEN   1024                 /* > SR/PLUCK_MIN_HZ = 735 @44.1k */
-#define T60_S     3.2f                 /* ring time, pitch-independent   */
+#define T60_S     3.2f                 /* nominal loss; filter shortens it */
 #define VERB_SEND 0.50f                /* plucks bloom into the hall     */
+#define STOP_FRAMES ((uint32_t)(0.020f * SR)) /* bounded 20 ms soft stop */
 #define ENV_EPS   2.5e-4f              /* ≈ −72 dBFS → voice retires     */
+#define EXCITATION_MODES 8            /* bounded, harmonic displacement */
+#define DC_COEF 0.001424f             /* output-only DC tracker, ~10 Hz */
 
 typedef struct {
-    float buf[BUF_LEN];
-    float N;              /* loop length in samples (fractional)  */
+    union {
+        float buf[BUF_LEN];
+#ifdef FAM_SOUND_PRODUCT
+        woodland_resonator_t resonator; /* replaces, never layers the delay */
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+        ambient_modal_t tine;           /* kalimba voicing: a ringing tine */
+#endif
+    };
+    float N;              /* target period; read delay is N-1     */
+    float damp;           /* smoothed loop-filter coefficient     */
     int   widx;           /* write index                          */
     float rho;            /* per-sample loop gain for the T60     */
     float y_prev;         /* averaging-lowpass memory             */
+    float y_prev2;
     float env;            /* tracked peak envelope (for retiring) */
     float panL, panR;
-    int   active;
-    uint32_t age;         /* steal-the-oldest bookkeeping         */
+    _Atomic int active;
+    int owner;            /* 0..255 source; 256 = legacy one-shot */
+    float stop_gain;
+    float stop_start;
+    float attack_phase, attack_step;
+    float dc;
+#ifdef FAM_SOUND_PRODUCT
+    /* Output color never changes the circulating string or retirement. */
+    float color, color_lp, color_a;
+    bool colored;
+#endif
+    uint32_t release_frames;
+    uint32_t stop_total;
+    volatile uint32_t stop_left;
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t unfold;
+    world_character_t character;
+    woodland_body_t body;
+    bool resonating;
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    bool kalimba;
+#endif
 } pluck_voice_t;
 
-static pluck_voice_t v[PLUCK_VOICES];
-static float    s_damp = 0.42f;   /* averaging-LP blend: 0=bright (macro) */
+static pluck_voice_t v[PLUCK_POOL];
+static _Atomic float s_damp = 0.42f * (0.25f / 0.9f); /* FIR side weight: 0=bright */
+static _Atomic bool s_ambient;
+#ifdef FAM_SOUND_PRODUCT
+static _Atomic float s_color = 0.5f;
+#ifdef FAM_SOUND_PRODUCT
+static _Atomic uint32_t unfold_mask;
+/* Main-owned preparation config; render reads only published voice snapshots.
+ * Init/Clear in the IRQ must not overwrite this future-note config. */
+static uint32_t character_seed;
+static bool character_enabled;
+static bool body_enabled;
+static bool resonator_enabled;
+void pluck_set_body(bool enabled) { body_enabled=enabled; }
+void pluck_set_resonator(bool enabled) { resonator_enabled=enabled; }
+#ifdef FAM_SOUND_AMBIENT_V3
+static bool kalimba_enabled;
+void pluck_set_kalimba(bool on) { kalimba_enabled=on; }
+int pluck_voice_limit(void) { return kalimba_enabled ? PLUCK_POOL : PLUCK_VOICES; }
+#endif
+void pluck_set_character(uint32_t seed,bool enabled) {
+    character_seed=seed; character_enabled=enabled;
+}
+void pluck_set_cell_held(int source,bool down) {
+    cell_unfold_publish(&unfold_mask,source,down);
+}
+#endif
+#endif
 static int      next_voice;
-static uint32_t age_counter;
-static uint32_t burst_rng = 0x9E3779B9u;
+static uint32_t excitation_rng = 0x9E3779B9u;
 
-static inline float burst_white(void) {
-    burst_rng = burst_rng * 1664525u + 1013904223u;
-    return (float)((int32_t)burst_rng) * (1.0f / 2147483648.0f);
+static inline float excitation_variation(void) {
+    excitation_rng = excitation_rng * 1664525u + 1013904223u;
+    return (float)((int32_t)excitation_rng) * (1.0f / 2147483648.0f);
 }
 
 void pluck_init(void) {
+#ifdef FAM_SOUND_PRODUCT
+    atomic_store_explicit(&unfold_mask,0,memory_order_relaxed);
+#endif
     memset(v, 0, sizeof v);
     /* Slight opposing pans — equal-power at ±0.35. */
-    for (int i = 0; i < PLUCK_VOICES; ++i) {
-        float p = (i == 0) ? -0.35f : 0.35f;
+    for (int i = 0; i < PLUCK_POOL; ++i) {
+        float p = (i == 0) ? -0.35f : (i == 1) ? 0.35f : 0.0f;
         float a = (p + 1.0f) * 0.25f * 3.14159265f;
         v[i].panL = cosf(a);
         v[i].panR = sinf(a);
     }
     next_voice  = 0;
-    age_counter = 0;
-    burst_rng   = 0x9E3779B9u;
-    s_damp      = 0.42f;
+    excitation_rng = 0x9E3779B9u;
+    s_damp      = 0.42f * (0.25f / 0.9f);
+    s_ambient   = false;
+#ifdef FAM_SOUND_PRODUCT
+    s_color = 0.5f;
+#endif
 }
+
+void pluck_set_ambient(bool on) { atomic_store(&s_ambient,on); }
+
+#ifdef FAM_SOUND_PRODUCT
+void pluck_set_color(float color) {
+    if (!isfinite(color)) return;
+    atomic_store_explicit(&s_color, dsp_clampf(color, 0.0f, 1.0f), memory_order_relaxed);
+}
+#endif
 
 void pluck_set_damp(float damp) {
+    if (!isfinite(damp)) return;
     if (damp < 0.0f) damp = 0.0f;
     if (damp > 0.9f) damp = 0.9f;
-    s_damp = damp;
+    /* Symmetric non-negative FIR: fixed one-sample phase delay and monotonic
+     * loss. The old two-tap blend became brighter again above its midpoint. */
+    s_damp = damp * (0.25f / 0.9f);
 }
 
-void pluck_note(float freq_hz, float amp) {
+static bool start_note(int owner, float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz <= 0.0f ||
+        freq_hz >= SR * 0.5f || amp <= 0.0f) return false;
     if (freq_hz < PLUCK_MIN_HZ) freq_hz = PLUCK_MIN_HZ;
-    if (amp < 0.0f) amp = 0.0f;
     if (amp > 1.0f) amp = 1.0f;
-
-    /* Round-robin, but steal the OLDEST if the preferred slot still rings
-     * loudly (keeps overlapping sparkles from cutting each other hard). */
-    int i = next_voice;
-    if (v[i].active && v[i].env > 0.05f) {
-        int oldest = 0;
-        for (int k = 1; k < PLUCK_VOICES; ++k)
-            if (v[k].age < v[oldest].age) oldest = k;
-        i = oldest;
+    /* Never reset a ringing delay line. Releases occupy their slot too.
+     * A busy source or full pool declines the event without changing RNG. */
+    if (owner != 256)
+        for (int k = 0; k < PLUCK_POOL; ++k)
+            if (v[k].active && v[k].owner == owner) return false;
+#ifdef FAM_SOUND_AMBIENT_V3
+    const int cap = pluck_voice_limit();
+#else
+    const int cap = PLUCK_VOICES;
+#endif
+    int i = -1;
+    for (int k = 0; k < cap; ++k) {
+        int candidate = (next_voice + k) % cap;
+        if (!v[candidate].active) { i = candidate; break; }
     }
-    next_voice = (i + 1) % PLUCK_VOICES;
+    if (i < 0) return false;
+    next_voice = (i + 1) % cap;
 
     pluck_voice_t *p = &v[i];
+    bool ambient=atomic_load(&s_ambient);
     p->N   = SR / freq_hz;
     if (p->N > (float)(BUF_LEN - 4)) p->N = (float)(BUF_LEN - 4);
-    p->rho = powf(0.001f, 1.0f / (freq_hz * T60_S));   /* −60 dB in T60 */
+    p->damp = s_damp;
+    p->rho = powf(0.001f, 1.0f / (freq_hz * (ambient ? 36.0f : T60_S) * shape_release_scale()));
     p->widx   = 0;
-    p->y_prev = 0.0f;
+    p->y_prev = p->y_prev2 = 0.0f;
     p->env    = amp;
-    p->age    = ++age_counter;
-    p->active = 1;
-
-    /* Excitation: one loop-length of lowpassed noise (the classic KS burst;
-     * the one-pole softens the attack from "snap" to "bell"). The write head
-     * starts just PAST the burst so the fractional read (N behind the write
-     * head) lands inside the fresh burst — starting it at 0 would overwrite
-     * the excitation with silence before the read head ever got there. */
-    int n = (int)p->N + 1;
-    float lp = 0.0f;
-    for (int k = 0; k < BUF_LEN; ++k) {
-        if (k < n) {
-            lp += 0.45f * (burst_white() - lp);
-            p->buf[k] = lp * amp * 2.2f;   /* ≈ peak `amp` after the LP loss */
-        } else {
-            p->buf[k] = 0.0f;
-        }
+    p->owner = owner;
+    p->stop_gain = 1.0f;
+    p->stop_start = 1.0f;
+    p->stop_left = 0;
+    p->release_frames=ambient ? (uint32_t)(2.0f*shape_release_scale()*SR) : STOP_FRAMES;
+    float attack_s = ambient ? dsp_clampf(0.8f*shape_attack_scale(),0.4f,2.4f) :
+        dsp_clampf(0.008f * shape_attack_scale(), 0.004f, 0.032f);
+#if defined(FAM_SOUND_PRODUCT) && defined(FAM_SOUND_FINISH_CANDIDATE)
+    /* A soft but perceptible excitation, followed by the same long freely
+     * ringing fundamental. Never turn the approved long body into a short pluck. */
+    if(ambient && resonator_enabled)
+        attack_s=dsp_clampf(.12f*shape_attack_scale(),.06f,.36f);
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* A thumb plucks the tine: the modes start at zero output, so a 3 ms
+     * ramp is enough; on release the tine keeps ringing and fades over 3 s. */
+    p->kalimba=ambient && resonator_enabled && kalimba_enabled;
+    if(p->kalimba) {
+        attack_s=.003f;
+        p->release_frames=(uint32_t)(3.0f*shape_release_scale()*SR);
     }
+#endif
+    p->attack_phase = 0.0f;
+    p->attack_step = 1.0f / (attack_s * SR);
+    p->dc = 0.0f;
+#ifdef FAM_SOUND_PRODUCT
+    p->unfold = 0;
+    world_character_prepare(&p->character,1,character_seed,owner,freq_hz,character_enabled);
+    p->colored = ambient;
+    p->resonating=ambient && resonator_enabled;
+    woodland_body_prepare(&p->body,freq_hz,ambient && body_enabled && !p->resonating);
+    p->color = atomic_load_explicit(&s_color, memory_order_relaxed);
+    p->color_lp = 0.0f;
+    /* Pitch-relative nonresonant source shelf: dark takes the low band,
+     * bright adds the complementary upper band. Neutral is exactly dry.
+     * Coefficient work is bounded at note-on, never per audio sample. */
+    float cutoff = fminf(2.0f * freq_hz, 0.45f * SR);
+    p->color_a = 1.0f - expf(-6.283185307f * cutoff / SR);
+#endif
+
+    /* A plucked displacement, rather than a randomly missing fundamental.
+     * Eight harmonic modes approximate a triangular string displacement:
+     * sin(pi * mode * position) / mode^2. Slight position variation changes
+     * articulation without adding a noise floor. This bounded work happens
+     * at note-on; the existing delay/filter still produces the natural ring.
+     * dsp_init() has prepared the sine LUT, so no per-sample transcendental
+     * or extra source buffer is needed. Modes above 0.45 SR are omitted. */
+    float position = 0.24f + 0.015f * excitation_variation();
+#ifdef FAM_SOUND_PRODUCT
+    if(p->resonating) {
+        /* Same allocated voice/owner. Clear union bytes so reuse cannot
+         * retain either the previous delay or a previous resonator mode. */
+        memset(p->buf,0,sizeof p->buf);
+#ifdef FAM_SOUND_AMBIENT_V3
+        if(p->kalimba)
+            ambient_kalimba_prepare(&p->tine,freq_hz,amp,.30f+.40f*p->color,shape_release_scale());
+        else
+#endif
+        woodland_resonator_prepare(&p->resonator,freq_hz,amp,position,shape_release_scale());
+        __asm__ volatile("" ::: "memory");
+        p->active=1;
+        return true;
+    }
+#endif
+    float coefficients[EXCITATION_MODES];
+    int modes = 0;
+    for (int m = 1; m <= EXCITATION_MODES &&
+                    (m == 1 || m * freq_hz < SR * 0.45f); ++m) {
+        coefficients[m - 1] = dsp_sin(0.5f * m * position) / (float)(m * m);
+        modes = m;
+    }
+    int n = (int)p->N + 1;
+    float mean = 0.0f;
+    for (int k = 0; k < BUF_LEN; ++k) {
+        float x = 0.0f;
+        if (k < n) {
+            float phase = (float)k / p->N;
+            for (int m = 1; m <= modes; ++m)
+                x += coefficients[m - 1] * dsp_sin(m * phase);
+            mean += x;
+        }
+        p->buf[k] = x;
+    }
+    /* Finite/fractional cycles can otherwise seed a slowly decaying DC mode.
+     * Centre the excitation and bound its peak before publishing the voice.
+     * Convex interpolation/filtering and rho <= 1 preserve this peak bound. */
+    mean /= (float)n;
+    float peak = 0.0f;
+    for (int k = 0; k < n; ++k) {
+        p->buf[k] -= mean;
+        float a = fabsf(p->buf[k]);
+        if (a > peak) peak = a;
+    }
+    float gain = peak > 1.0e-8f ? amp / peak : 0.0f;
+    for (int k = 0; k < n; ++k) p->buf[k] *= gain;
+    /* Start past the burst so the read head reaches fresh displacement
+     * before the write head overwrites it. */
     p->widx = n;
+    /* The audio IRQ must never see a half-filled excitation buffer. */
+    __asm__ volatile("" ::: "memory");
+    p->active = 1;
+    return true;
 }
 
+bool pluck_note_on(uint8_t source, float freq_hz, float amp) {
+    /* Owned starts must not silently change the recorded pitch. */
+    if (freq_hz < PLUCK_MIN_HZ || freq_hz > PLUCK_MAX_HZ) return false;
+    return start_note((int)source, freq_hz, amp);
+}
+void pluck_note(float freq_hz, float amp) {
+    (void)start_note(256, freq_hz, amp);
+}
+static void release_voice(pluck_voice_t *p,uint32_t frames) {
+#ifdef FAM_SOUND_PRODUCT
+    /* Product audio owner: a preparation cancelled before its first sample
+     * is not a 20 ms audible strike, MIDI event or heard score item. */
+    if (p->active && p->attack_phase==0.0f) { p->active=0; return; }
+#endif
+    if(frames==0)frames=1;
+    if(p->active && (!p->stop_left || frames<p->stop_left)) {
+        p->stop_left=p->stop_total=frames;p->stop_start=p->stop_gain;
+    }
+}
+void pluck_note_off(uint8_t source) {
+    for (int i = 0; i < PLUCK_POOL; ++i)
+        if (v[i].owner == (int)source) release_voice(&v[i],v[i].release_frames);
+}
+void pluck_all_off(void) {
+    for (int i = 0; i < PLUCK_POOL; ++i) release_voice(&v[i],v[i].release_frames);
+}
+void pluck_quiet_source(uint8_t source,uint32_t frames) {
+    for(int i=0;i<PLUCK_POOL;++i)
+        if(v[i].owner==(int)source)release_voice(&v[i],frames);
+}
+
+uint16_t pluck_active_sources(void) {
+    uint16_t mask=0;
+    for(int i=0;i<PLUCK_POOL;++i) if(v[i].active && v[i].owner>=0 && v[i].owner<16)
+        mask|=(uint16_t)(1u<<v[i].owner);
+    return mask;
+}
 int pluck_active_count(void) {
     int c = 0;
-    for (int i = 0; i < PLUCK_VOICES; ++i) c += v[i].active ? 1 : 0;
+    for (int i = 0; i < PLUCK_POOL; ++i) c += v[i].active ? 1 : 0;
     return c;
 }
 
 void pluck_render_mix(float *dry_L, float *dry_R,
                       float *send_L, float *send_R, int frames) {
-    for (int i = 0; i < PLUCK_VOICES; ++i) {
+    float damping=atomic_load_explicit(&s_damp,memory_order_relaxed);
+#ifdef FAM_SOUND_PRODUCT
+    float color = atomic_load_explicit(&s_color, memory_order_relaxed);
+    uint32_t held=atomic_load_explicit(&unfold_mask,memory_order_acquire);
+#endif
+    for (int i = 0; i < PLUCK_POOL; ++i) {
         pluck_voice_t *p = &v[i];
         if (!p->active) continue;
 
         float env_track = p->env;
         for (int n = 0; n < frames; ++n) {
-            /* Fractional read `N` samples behind the write head. */
-            float rpos = (float)p->widx - p->N;
+            /* Symmetric [a, 1-2a, a] damping has exactly one sample of phase
+             * delay throughout its usable band, independently of a. The read
+             * head therefore stays fixed when BRIGHTNESS changes. Only loss
+             * follows the 80 ms smoother. Interpolation's small residual is
+             * covered by rendered-pitch tests. */
+            float y;
+#ifdef FAM_SOUND_PRODUCT
+            if(p->resonating) {
+#ifdef FAM_SOUND_AMBIENT_V3
+                y=p->kalimba ? ambient_modal_step(&p->tine) : woodland_resonator_step(&p->resonator);
+#else
+                y=woodland_resonator_step(&p->resonator);
+#endif
+            } else {
+#endif
+            p->damp += (damping - p->damp) * (1.0f / (0.080f * SR));
+            float rpos = (float)p->widx - (p->N - 1.0f);
             if (rpos < 0.0f) rpos += (float)BUF_LEN;
             int   r0 = (int)rpos;
             float fr = rpos - (float)r0;
             int   r1 = r0 + 1; if (r1 >= BUF_LEN) r1 = 0;
-            float y  = p->buf[r0] + fr * (p->buf[r1] - p->buf[r0]);
+            y  = p->buf[r0] + fr * (p->buf[r1] - p->buf[r0]);
 
             /* Damped feedback: averaging lowpass + T60 loop gain. */
-            float fb = p->rho * ((1.0f - s_damp) * y + s_damp * p->y_prev);
+            float fb = p->rho * (p->damp * (y + p->y_prev2) +
+                                (1.0f - 2.0f * p->damp) * p->y_prev);
+            p->y_prev2 = p->y_prev;
             p->y_prev = y;
             p->buf[p->widx] = fb;
             if (++p->widx >= BUF_LEN) p->widx = 0;
+#ifdef FAM_SOUND_PRODUCT
+            }
+#endif
 
-            dry_L[n]  += y * p->panL;
-            dry_R[n]  += y * p->panR;
-            send_L[n] += y * p->panL * VERB_SEND;
-            send_R[n] += y * p->panR * VERB_SEND;
+            /* Output and send share the ramp; the loop itself is untouched.
+             * First release sample keeps its gain, last reaches silence.
+             * Repeated stop requests cannot restart/prolong the release. */
+            float attack = 1.0f;
+            if (p->attack_phase < 1.0f) {
+                float t = p->attack_phase;
+                attack = t * t * (3.0f - 2.0f * t);
+                p->attack_phase += p->attack_step;
+                if (p->attack_phase > 1.0f) p->attack_phase = 1.0f;
+            }
+            /* Fractional startup/filter state can retain a tiny zero-frequency
+             * mode, especially after high notes lose their audible modes.
+             * Remove it outside the feedback: loop pitch/decay are unchanged. */
+            p->dc += DC_COEF * (y - p->dc);
+            float audible = y - p->dc;
+            float colored = audible;
+#ifdef FAM_SOUND_PRODUCT
+            float opening=cell_unfold_step(&p->unfold,held,p->owner);
+            world_character_tick(&p->character);
+            colored=woodland_body_step(&p->body,audible);
+            if (p->colored) {
+                /* Track at neutral for warm state during live edits. Dry
+                 * and Room send hear the same color. Ownership/decay still
+                 * track the uncolored string below. */
+                p->color += (color - p->color) * (1.0f / (0.080f * SR));
+                float body_colored=colored;
+                p->color_lp += p->color_a * (body_colored - p->color_lp);
+                float shelf=2.0f * p->color - 1.0f + 0.35f*opening;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+                if(p->resonating)shelf=.45f*(2*p->color-1)+.20f*opening;
+#endif
+                if(p->character.enabled) shelf=dsp_clampf(shelf+p->character.shade,-1.0f,1.35f);
+                colored += shelf * (body_colored - p->color_lp);
+            }
+#endif
+            float output = colored * attack * p->stop_gain;
+            float panL=p->panL,panR=p->panR;
+#ifdef FAM_SOUND_PRODUCT
+            if(p->character.enabled) {
+                output*=p->character.gain;
+                panL-=p->character.pan; panR+=p->character.pan;
+            }
+#endif
+            if (p->stop_left) {
+                --p->stop_left;
+                p->stop_gain=p->stop_start*(float)p->stop_left/(float)p->stop_total;
+            }
+            dry_L[n]  += output * panL;
+            dry_R[n]  += output * panR;
+            send_L[n] += output * panL * VERB_SEND;
+            send_R[n] += output * panR * VERB_SEND;
 
             /* cheap peak tracker: instant up, slow down */
-            float a = y < 0.0f ? -y : y;
+            float a = audible < 0.0f ? -audible : audible;
             env_track = a > env_track ? a : env_track * 0.99995f;
+            /* Retire at the same actual sample for every caller block size.
+             * Checking ENV_EPS only after a block prolonged quiet strings by
+             * up to 511 frames and changed their room/DC tail trajectory. */
+            if (p->stop_gain == 0.0f || env_track < ENV_EPS) { p->active = 0; break; }
         }
         p->env = env_track;
-        if (p->env < ENV_EPS) p->active = 0;
     }
 }

@@ -51,5 +51,7 @@ void bass_render_mix(float *dry_L, float *dry_R,
 
 /* True while either layer is still producing sound (incl. release tail). */
 bool bass_active(void);
+/* Independently enveloped sub/deep layers, including releases: 0..2. */
+int bass_active_count(void);
 
 #endif

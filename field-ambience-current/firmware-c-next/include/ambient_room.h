@@ -1,0 +1,23 @@
+#ifndef FAM_AMBIENT_ROOM_H
+#define FAM_AMBIENT_ROOM_H
+#include <stdbool.h>
+#include <stddef.h>
+void ambient_room_init(void);
+void ambient_room_clear(void); /* audio owner, behind zero output */
+void ambient_room_set(float amount); /* control owner, finite 0..1 */
+#ifdef FAM_SOUND_AMBIENT_V3
+void ambient_room_set_world(int world); /* control owner: the World's space and effects */
+#endif
+void ambient_room_enable(bool enabled);
+void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int n);
+float ambient_room_tail_seconds(void);
+float ambient_room_peak(void); /* audio owner, last block wet peak */
+size_t ambient_room_storage_bytes(void);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "sound_parameters.h"
+bool ambient_room_finish_apply(const sound_parameters_t *parameters);
+void ambient_room_finish_get(sound_parameters_t *parameters);
+void ambient_room_finish_set(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate);
+bool ambient_room_retains_history(void);
+#endif
+#endif

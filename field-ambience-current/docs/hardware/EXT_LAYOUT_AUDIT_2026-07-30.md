@@ -1,0 +1,411 @@
+# Audit — externes Fertigungspaket „Field Ambience Source files"
+
+**Bericht-Fassung 2 · 2026-07-30** (Fassung 1 siehe Git-Historie; Änderungen in §10)
+
+**Geprüftes Paket:** `Field Ambience Source files.zip`
+(`SCHEMATICS.zip` = KiCad-9.0.4-Projekt „FIELD AMBIENCE", `GERBERS.zip`,
+`FIELD_AMBIENCE_BOM.xlsx`, `FIELD_AMBIENCE_CPL.xlsx`, Handoff-PDF, 2 Screenshots)
+
+**Board:** 198,84 × 106,92 mm · 4 Lagen · 1,6 mm · 195 Footprints · 239 Netze · 166 Vias
+
+---
+
+## 0 · Kurzfassung
+
+**So nicht fertigen.** Das Paket ist formal sauber — BOM/CPL/PCB sind 1:1
+konsistent, kein Netz hängt in der Luft, der GND-Pour hat trotz fehlerhafter
+Zonen-Einstellung überall echten Abstand. Elektrisch stehen aber **6 Blocker**,
+davon zwei, die den 5-V-Zweig beim ersten Einschalten zerstören können, dazu
+**16 wichtige Punkte** und **7 Regressionen** gegen bereits geschlossene
+Repo-Entscheidungen.
+
+> **Einordnung:** Dieses Layout stammt **nicht** aus
+> `kicad/generate_kicad_project.py`. Es ist ein eigenständiges, extern
+> gezeichnetes Projekt mit EasyEDA-importierten Bibliotheken. Deshalb fällt es
+> auch hinter Entscheidungen zurück, die im Repo bereits verifiziert und
+> abgehakt waren (§3).
+
+### Prüfmethode
+
+Netzliste vollständig aus den Pad-Netzzuweisungen der `.kicad_pcb`
+rekonstruiert, Symbol-Pinouts aus der `.kicad_sch` (302 Symbole) extrahiert.
+Jede Pin-Zuordnung gegen **zwei unabhängige Referenzen** gespiegelt, die im
+Projekt bereits existieren: die datenblatt-verifizierten Symboldefinitionen in
+`kicad/generate_kicad_project.py` (TI SLUS810N, SLVSD38C, SLVSD76C; Diodes
+AP7361C/PAM8406) und die laufende Firmware `firmware-c-next/src/hal_h743/`.
+Dazu numerische Geometrie-Checks (Zonen-Clearance über 583 Pad-Instanzen,
+Bauteilabstände, **LED-Polarität auf Footprint-Ebene**, Pad-Nummerierung von
+LQFP-100 und TSSOP-28), Gerber-/Drill-/Job-File-Inspektion und ein
+Designator-Abgleich PCB ↔ BOM ↔ CPL.
+
+**Wie belastbar welcher Befund ist, steht in §7** — inklusive der vier Punkte,
+die an Datenblattwissen hängen und gegengeprüft werden sollten.
+
+---
+
+## 1 · Blocker — DO NOT FABRICATE
+
+### B1 · L1 = 1,8 µH im 0402-Gehäuse als Boost-Speicherdrossel 🔴
+
+- **Was:** `L1 = MLI1005F-1R8KT` (LCSC **C2885840**), Footprint `L0402`,
+  gemessene Pads 0,54 × 0,54 mm, im Schaltknoten von U1 (TPS61089).
+- **Warum kritisch:** U1 boostet VBAT (3,0–4,2 V) auf 5 V. Schon bei 500 mA
+  Last am 5-V-Rail liegt der Spitzenstrom in der Drossel über 2 A. Ein
+  0402-Vielschicht-Chipinduktor ist für einige hundert mA spezifiziert und
+  sättigt weit darunter; sein DCR liegt bei mehreren hundert mΩ.
+- **Was ausfällt:** Der Wandler regelt nie aus, geht in Dauerstrombegrenzung,
+  die Drossel wird thermisch zerstört. Am 5-V-Zweig hängt alles — Endstufe,
+  Kopfhörerverstärker und der 3,3-V-LDO, der die MCU versorgt.
+- **Fix:** Das Teil aus der Repo-BOM nehmen: **SWPA6045S2R2NT, 2,2 µH, 6045,
+  ~4 A (C36500)**. Dabei prüfen, ob die Typ-II-Kompensation (R3 = 17,4 k,
+  C6 = 4,7 nF) noch passt — sie war für 2,2 µH ausgelegt, nicht für 1,8 µH.
+
+### B2 · Der gesamte Boost-Eingangsstrom läuft über den Schiebeschalter SW2 🔴
+
+- **Was:** `VSYS → SW2.1 → SW2.2 → PWR_ON`, und `PWR_ON` speist **L1.1** und
+  **U1.9 (VIN)** — zusätzlich zu U1.7 (EN) und U5.3 (ON). Pad 2 ist
+  geometrisch der mittlere Anschluss, also der Umschalter-Pol; VSYS liegt auf
+  einem Schaltkontakt. Die Verbindung ist also real, nicht nur nominell.
+- **Warum kritisch:** SW2 = **SSSS811101** (C109335), ein ALPS-Signalschalter.
+  LCSC führt ihn mit 12 V / 50 mA. Über ihn fließen hier 1,5–2 A.
+- **Was ausfällt:** Der Kontakt verschweißt oder brennt weg — das Gerät bleibt
+  dann dauerhaft an oder dauerhaft tot. Zusätzlich sitzt ein mechanisch
+  prellender Kontakt direkt im Eingangspfad eines Schaltwandlers; jedes
+  Betätigen wird zum Wandler-Neustart.
+- **Fix:** Topologie aus **ADR-0016**: VSYS geht **direkt** an U1.VIN und an
+  das Eingangs-C. SW2 schaltet **nur** das Signal `PWR_ON` (EN von U1 + ON
+  von U5).
+
+### B3 · `PWR_ON` hat keinen Pull-down 🔴
+
+- **Was:** SW2 ist SPDT, der zweite Schaltkontakt (Pad 3) ist unbeschaltet. Am
+  Netz `PWR_ON` hängen nur C2, L1.1, U1.7 (EN), U1.9 (VIN), U5.3 (ON) —
+  **kein Widerstand nach GND**.
+- **Warum kritisch:** Bei geöffnetem Schalter sind EN des Boosts und ON des
+  Load-Switch hochohmig, also undefiniert.
+- **Was ausfällt:** Das Gerät schaltet sich durch Störeinkopplung selbst ein
+  oder kippt im Ein-/Aus-Grenzbereich hin und her; im Aus-Zustand stellt sich
+  kein definierter µA-Ruhestrom ein.
+- **Fix:** `R_PWR_PD` (100 k) von `PWR_ON` nach GND — im selben Zug wie B2.
+
+### B4 · USB-C: D+/D− nur auf einer Steckerorientierung verdrahtet 🔴
+
+- **Was:** `USBC1.B6 = DR+`, `USBC1.B7 = DR−`; **A6 (DP1) und A7 (DN1) sind
+  unbeschaltet**. Die Platine schreibt es wörtlich hin:
+  `unconnected-(USBC1-DP1-PadA6)` und `unconnected-(USBC1-DN1-PadA7)`.
+- **Warum kritisch:** Bei einer USB-2.0-Buchse müssen A6↔B6 und A7↔B7
+  gebrückt werden. Sonst trägt nur eine der beiden Steckrichtungen Daten.
+- **Was ausfällt:** USB — DFU-Flashen, Ladeerkennung, Host-Kommunikation —
+  enumeriert in rund der Hälfte aller Steckvorgänge nicht. Genau die Art
+  Fehler, die im Bring-up Tage kostet, weil sie sich als „wackelige Platine"
+  liest.
+- **Fix:** A6 mit B6 und A7 mit B7 direkt an der Buchse verbinden.
+
+### B5 · PCA9685 treibt LEDs gegen +5 V, Firmware konfiguriert Totem-Pole 🔴
+
+- **Was:** U11 läuft an 3,3 V (Pin 28), die LED-Anoden hängen über 390 Ω am
+  **ungeschalteten +5 V**. `mcp23017_h743.c:197` setzt
+  `PCA_MODE2 = PCA_MODE2_OUTDRV` (Totem-Pole).
+- **Warum kritisch:** Die LEDn-Ausgänge des PCA9685 sind nur **im
+  Open-Drain-Modus** 5,5-V-tolerant. Im Totem-Pole gilt Abs-Max = VDD + 0,5 V
+  = 3,8 V; der 5-V-Pull-up speist im Aus-Zustand dauerhaft in den
+  High-Side-Treiber und über dessen Body-Diode zurück ins 3,3-V-Netz.
+- **Was ausfällt:** Latch-up-Risiko am PCA9685, glimmende LEDs im
+  Aus-Zustand, Rückspeisung ins 3,3-V-Rail.
+- **Fix (eine der beiden):** `MODE2 = 0x00` (Open-Drain) in `pca_dev_init()`
+  — dann ist die vorhandene Beschaltung datenblattkonform; **oder** die
+  LED-Anoden auf 3,3 V legen und die Vorwiderstände neu rechnen. Der
+  Firmware-Weg ist der billigere, muss aber vor dem Bring-up landen.
+- ⚠️ Die Datenblatt-Aussage zur 5,5-V-Toleranz stammt aus dem Gedächtnis —
+  **bitte gegenprüfen**, siehe §7.
+
+### B6 · Die beiden Klinkenbuchsen widersprechen sich, MIDI kann nicht treiben 🔴
+
+- **Was:** CN2 und CN5 sind dasselbe Bauteil (`PJ-320D`, C431535) mit
+  demselben Footprint. Bei **CN2** liegt GND auf **Pad 3**, zwei Signale über
+  je 33 Ω auf Pad 1/2, ein Pull-up-Zweig auf Pad 4. Bei **CN5** liegt GND auf
+  **Pad 1**, R50 (10 k → 3,3 V) auf Pad 2, R49 (220 Ω ← USART2_TX) auf
+  **Pad 4** — und **Pad 3 ist unbeschaltet**.
+- **Warum kritisch — zwei voneinander unabhängige, beweisbare Punkte:**
+  1. **Widerspruch:** Zwei Instanzen desselben Footprints belegen GND auf
+     verschiedenen Pads (3 vs. 1). Welche Pad↔Kontakt-Zuordnung auch immer
+     stimmt — **beide können nicht richtig sein.** Reine Netzlisten-Arithmetik,
+     hängt an keiner Datenblatt-Annahme.
+  2. **Rechnung:** Über 10 kΩ liefert ein 3,3-V-Zweig maximal 0,33 mA. Die
+     MIDI-Stromschleife braucht 5 mA. R50 verfehlt das **um Faktor 15** —
+     unabhängig davon, auf welchem Kontakt er landet.
+- **Was ausfällt:** MIDI-Out tot. Zusätzlich floatet bei CN5 ein Kontakt
+  (Pad 3), und an einer der beiden Buchsen liegt ein Signal auf dem falschen
+  Kontakt.
+- **Ausdrücklich nicht behauptet:** *welche* der beiden Buchsen die falsche
+  ist. Das lässt sich ohne die Pad↔Kontakt-Zuordnung des PJ-320D nicht
+  entscheiden; die Footprint-Geometrie (Pads 2/3/4 an der Unterkante, Pad 1
+  allein an der Oberkante, Barrel bei −x) reicht dafür nicht.
+- **Fix:** `PJ-320D Pad-/Kontakt-Zuordnung: UNVERIFIED — NEEDS HUMAN CHECK`
+  gegen das Datenblatt festnageln, dann beide Buchsen konsistent neu
+  verdrahten. MIDI-TRS Type A: Tip ← 33 Ω ← USART2_TX, Ring ← 33 Ω ← 3,3 V,
+  Sleeve = GND (Repo-Referenz r18.67 / ADR-0004).
+
+---
+
+## 2 · Wichtig — vor Fertigung klären
+
+| # | Befund | Wirkung | Fix |
+|---|--------|---------|-----|
+| **I1** | **STM32 VBAT (Pin 6) unbeschaltet** | ST verlangt VBAT → VDD, wenn keine Backup-Zelle sitzt. Backup-Domain/RTC unzuverlässig, Startprobleme möglich — und X2 (32,768 kHz LSE) **ist** bestückt | VBAT → 3,3 V + 100 nF |
+| **I2** | **VREF+ (Pin 20) nur mit C43/C44 nach GND, nicht an VDDA** | ADC ohne Referenz; der Pin floatet, solange die Firmware den VREFBUF nicht einschaltet | VREF+ an das VDDA-Netz (wie im Repo-Generator) |
+| **I3** | **Encoder 3 und 4 auf Pins ohne Timer-Quadratur** — SW14 → PC4/PC5, SW15 → PB0/PB1 | PC4/PC5 haben auf dem H743 keine TIM-AF; PB0/PB1 nur CH3/CH4/CHxN — **kein TIMx_CH1/CH2**. Die Firmware fährt alle 4 Encoder im TIM-Encoder-Modus. Zwei müssten auf EXTI/Polling → Schrittverluste beim schnellen Drehen plus ISR-Last neben dem Audio-Hot-Path | Auf PA0/PA1, PC6/PC7, PD12/PD13, PA8/PA9 legen (oder TIM2/TIM3-Remaps PA15/PB3, PB4/PB5) |
+| **I4** | **Pinmap-Kollisionen mit `hal_h743`** (Details §4) | Board ist nicht drop-in für die aktuelle Firmware | Firmware-Port einplanen **oder** Layout angleichen |
+| **I5** | **8 von 15 Status-LEDs hängen an einem anderen PCA9685-Kanal als ihr Netzname sagt** | `leds.c` schreibt „LED n → Kanal n" → falsche LED leuchtet. Pad-Nummerierung des TSSOP-28-Footprints geprüft und standardkonform, der Befund hängt also nicht an einer Footprint-Annahme | Mapping in Firmware **oder** Schaltplan korrigieren (§5) |
+| **I6** | **Lagenaufbau weicht von SPEC §9 (Sig/GND/PWR/Sig) ab** | In1.Cu ist eine 3,3-V-Fläche, die **zusätzlich von 233 Signalsegmenten zerschnitten** wird; In2.Cu hat **gar keine Fläche**, nur 151 Tracks. Einzige Masse sind die von Routing zerschnittenen F.Cu/B.Cu-Pours. Für 480-MHz-H7 + 2-MHz-Boost + Analogaudio das größte EMV-Risiko des Layouts | Durchgehende GND-Fläche auf einer Innenlage; Signale von der Plane-Lage runter |
+| **I7** | **DRC im Projektfile faktisch abgeschaltet** | `clearance`, `annular_width`, `hole_clearance`, `padstack`, `*_courtyard`, `silk_*`, `starved_thermal` = **ignore**; dazu `min_clearance = 0`, `min_track_width = 0`, `min_connection = 0`. **Ein DRC-Lauf mit diesem Projektfile beweist nichts** | Severities zurück auf `error`, DRC neu laufen lassen |
+| **I8** | **NPTH-Löcher als plattierte Löcher mit Ringbreite 0 exportiert** | Die NPTH-Bohrdatei ist **leer**; alle Befestigungs-/Ankerlöcher (CN2/CN5 1,0 mm, SW1/SW3–6 2,0 + 3,5 mm, SW2 0,9 mm, USBC1 0,75 mm) liegen in der PTH-Datei mit Paddurchmesser = Bohrdurchmesser | Pads auf `np_thru_hole` umstellen, Gerber neu exportieren — sonst JLC-DFM-Rückfrage |
+| **I9** | **Boost-Eingangs-C 6,2 mm von U1 entfernt** (C2, 22 µF; Ausgangsbank 4,6–9 mm) | Hot Loop viel zu groß für einen bis 2,4 MHz schaltenden Wandler → Überschwinger am SW-Knoten, EMV | Power-Stage neu platzieren (fällt mit B1/B2 ohnehin an) |
+| **I10** | **HSE-Quarz X1 auf der Gegenseite**, ~10 mm von PH0/PH1, mitten im Frontpanel | Elektrisch: langer, viadurchsetzter Taktpfad. Mechanisch: 11,4 × 4,7 mm HC49-SMD zwischen den Tasten auf der Bedienfläche | X1 + C54/C55 direkt an PH0/PH1 auf die MCU-Seite |
+| **I11** | **Keine Serienwiderstände auf dem LCD-SPI**, H1 sitzt 54,5 mm von der MCU plus Kabel | Ringing/EMV bei den Refresh-Raten, auf die die LCD-Motion-Arbeit zielt | 22–33 Ω in Serie auf SCK/MOSI/CS/DC nahe der MCU |
+| **I12** | **H1-Pinreihenfolge unüblich** (1 = VCC, 2 = GND, 3 = DIN, 4 = CLK, 5 = CS, 6 = DC, 7 = RST, 8 = BL) | Gängige ST7789-Module sind GND, VCC, SCL, SDA, RES, DC, CS, BLK → direktes Aufstecken legt VCC auf GND. Zusätzlich setzt der Backlight-Pfad (Low-Side-2N7002 an BL) voraus, dass BL die LED-**Kathode** ist; viele Module erwarten BL = aktiv-high-Enable | `Exaktes Display-Modul: UNVERIFIED — NEEDS HUMAN CHECK`, danach Pinout + Backlight festziehen |
+| **I13** | **Akku-NTC R13 sitzt auf der Platine, nicht an der Zelle** | R13 (NCP15XH103) liegt in der Power-Ecke neben Lader und Boost → BQ24074-TS misst Platinentemperatur. Unter Last droht ein Temperatur-Fault, der das Laden abbricht. Das Repo nutzt bewusst einen festen 10 k statt eines NTC | Festwiderstand 10 k **oder** Pack-NTC an der Zelle über CN1 |
+| **I14** | **PCA9685 EXTCLK (Pin 25) floatet** | CMOS-Eingang, laut NXP nicht offen lassen | auf VSS legen |
+| **I15** | **PSRAM-Exposed-Pad (U9 Pad 9) unbeschaltet** | Thermik/EMV | auf GND |
+| **I16** | **Bibliotheks-Teil `XL-1608UOC-06` (LED17) ist in sich widersprüchlich** — das Symbol sagt Pin 1 = K, der Footprint `LED0603-R-RD_ORANGE` legt **Pad 1 auf das Anoden-Ende** (Polaritäts-Fase im Silk bei −x, dort sitzt Pad 2) | **Das Kupfer ist korrekt** — LED17 ist richtig herum verdrahtet und leuchtet. Aber: der Schaltplan zeigt „K" auf der +5-V-Seite, KiCad-Netznamen und ERC melden entsprechend falsch, und die LED-Bestückungsdrehung referenziert beim Bestücker auf Pad 1 | Symbol/Footprint-Paarung geradeziehen. **Vor Bestellung klären, ob die LED-Drehung für C965800 auf Pad 1 oder auf die Fase referenziert** |
+
+### Zusätzlich aufgefallen (Fassung 2)
+
+- **SW2-Footprint: unregelmäßiger Pad-Abstand.** Die drei Schaltkontakte
+  liegen bei x = −2,25 / +0,75 / +2,25 mm — also 3,0 mm und dann 1,5 mm
+  Abstand. Ein SPDT-Schiebeschalter hat normalerweise gleichmäßige 1,5-mm-
+  Teilung. Das kann eine korrekte Herstellerbesonderheit sein oder ein
+  Import-Artefakt. `SSSS811101 Land-Pattern: UNVERIFIED — NEEDS HUMAN CHECK`
+  gegen die ALPS-Maßzeichnung. Fällt bei der ohnehin nötigen SW2-Umverdrahtung
+  (B2) mit an.
+
+---
+
+## 3 · Regressionen gegenüber dem Repo-Stand (r19.37 ff.)
+
+| # | Board | Repo-Stand | Konsequenz |
+|---|-------|-----------|------------|
+| **R1** | `U8 = PAM8403DR` (C17337) | **PAM8406DR** (C86270), r19.37 / ADR-0025 — PAM8403 ist NRND | Über die Lifecycle-Frage hinaus: der PAM8403 hat **feste +24 dB**. Der r19.37-Gain-Staging-Fix (RI 20 k → 174 k, +23 dB → +4,3 dB) **lässt sich auf diesem Board gar nicht anwenden** — der 5-V-BTL-Amp clippt analog weit unter DAC-Vollaussteuerung. Exakt der Fehler, der bereits gefunden und behoben war |
+| **R2** | `C69/C70 = 1 µF` Eingangskoppel-C | **10 nF** (Speaker-HPF ~91 Hz, r19.37) | HPF liegt bei ~8 Hz; der 8-Ω-40-mm-Treiber bekommt die volle Bassenergie |
+| **R3** | TPA6132A2 Gain = **0 dB** (G0 = H, G1 = L) | **−6 dB** laut ADR-0024 | Pegelplan neu beurteilen — zusammen mit R1 |
+| **R4** | `U3 = AP7361C-33E-13`, **SOT-223** (C500795), verdrahtet als 1 = IN, 2 = GND, 3 = OUT, Tab = GND | **AP7361C-33Y5-13, SOT-89-5** (C460397); r18.6 hat eine SOT-223-Variante ausdrücklich verworfen, weil das Pinout abweicht | `AP7361C SOT-223 Pin-Reihenfolge: UNVERIFIED — NEEDS HUMAN CHECK`. Falsch = das komplette 3,3-V-Rail ist tot. **Muss vor Fertigung gegen das Diodes-Datenblatt geprüft werden** |
+| **R5** | `U9 = APS6404L-3SQR-ZR`, USON-8 (C3040877) | APS6404L-3SQN-SN, SOIC-8 (C3028887) | Pin-Mapping geprüft und **korrekt**; nur BOM-Divergenz dokumentieren |
+| **R6** | `U2.14 (TMR) → GND` = Safety-Timer **aus** | TMR = NC = 5-h-Default | Bewusst? Sonst NC lassen |
+| **R7** | — | `PCB_LAYOUT_STATUS.md`: „Es existiert KEIN `.kicad_pcb`" (2026-06-11) | Repo-Doku war überholt und ist korrigiert |
+
+---
+
+## 4 · Firmware ↔ Board — Pinmap-Abgleich
+
+Verglichen gegen `firmware-c-next/src/hal_h743/`.
+
+### Stimmt überein
+
+| Funktion | Firmware | Board |
+|---|---|---|
+| SAI1 FS / SCK / SD | PE4 / PE5 / PE6 | Pin 3 / 4 / 5 ✅ |
+| QSPI CLK / BK2_NCS / IO0–3 | PB2 / PC11 / PE7–PE10 | Pin 36 / 79 / 37–40 ✅ |
+| Amp /SHDN, /MUTE | PB14, PB15 | Pin 53, 54 ✅ |
+| MIDI TX | PD5 (USART2) | Pin 86 ✅ |
+| LCD SCK / MOSI / CS | PA5 / PA7 / PA6 | Pin 29 / 31 / 30 ✅ |
+| Encoder 1, 2 | PA0/PA1 (TIM2), PC6/PC7 (TIM3) | ✅ (bei Enc 2 A/B getauscht → Drehrichtung invers) |
+| MCP23017: GPA0–4 = Cells, GPA5 = XSMT, GPA6 = Jack, GPA7 = VBUS | `IODIRA 0xDF`, `GPPUA 0x5F` | ✅ bit-genau |
+| Backlight = PCA9685 Kanal 15 → 2N7002 | ✅ | ✅ |
+
+### Weicht ab
+
+| Funktion | Firmware | Board | Anmerkung |
+|---|---|---|---|
+| LCD DC / RES | PC4 / PC5 | **PD15 / PD14** | PC4/PC5 sind auf dem Board jetzt Encoder 3 |
+| MCP23017-Bus | I²C1 PB6/PB7 (gemeinsam mit PCA9685) | **I²C4 PD12/PD13** | PD12/PD13 sind in der Firmware TIM4 = Encoder 3 |
+| Encoder 3 | PD12/PD13 (TIM4) | **PC4/PC5** | siehe I3 — keine Timer-Quadratur |
+| Encoder 4 | PA8/PA9 (TIM1) | **PB0/PB1** | siehe I3 — keine Timer-Quadratur |
+| Encoder-Push 1–3 | PE0 / PE1 / PE3 | MCP GPB5–7 + PD4 | Port nötig |
+
+**Fazit:** für die Pinmap allein kein Respin nötig — aber ein geplanter
+Firmware-Port, mit der einen Ausnahme I3, die Hardware ist.
+
+---
+
+## 5 · LED ↔ PCA9685-Kanal (Ist-Zustand)
+
+| Netzname | tatsächlicher Kanal | | LED |
+|---|---|---|---|
+| LD0–LD4 | 0–4 | ✓ | LED6, LED4, LED5, LED3, LED7 |
+| **LD5** | **11** | ✗ | LED16 |
+| LD6 | 6 | ✓ | LED9 |
+| **LD7** | **10** | ✗ | LED10 |
+| LD8 | 8 | ✓ | LED11 |
+| **LD9** | **7** | ✗ | LED13 |
+| **LD10** | **5** | ✗ | LED8 |
+| **LD11** | **14** | ✗ | LED14 |
+| **LD12** | **13** | ✗ | LED15 |
+| **LD13** | **12** | ✗ | LED12 |
+| **LD14** | **9** | ✗ | LED17 |
+| LD15 | 15 | ✓ | Backlight-FET Q1 |
+
+---
+
+## 6 · Kosmetik / Dokumentationsschulden
+
+Verstöße gegen `AI_READY_SCHEMATIC_STANDARD.md` — nicht fertigungskritisch,
+aber sie machen den Schaltplan als maschinenlesbare Design-Datenquelle
+unbrauchbar.
+
+- **Netznamen mit Leerzeichen:** `LCD CS`, `LCD DC`, `LCD SCK`, `LCD RST`,
+  `SCL MCP`, `SDA MCP`, `SCL PCA`, `SDA PCA`, `OUT DR+`, `OUT DR-`.
+  Aktiv-low fehlt durchgängig: `SHDN` → `AMP_SHDN_N`, `MUTE` → `AMP_MUTE_N`.
+- **Netzlabels widersprechen den echten Pins:** „PB0"/„PB1" auf Pin 35/34
+  (vertauscht), „PC6"/„PC7" auf Pin 63/64 (vertauscht), „GPA5" auf MCP-Pin 25
+  (= GPA4).
+- **Falsche MPN-/Package-Felder im Schaltplan** — die BOM ist in allen Fällen
+  richtig, es wird also nichts falsch bestellt, aber der Schaltplan lügt:
+  - R10/R14: Wert „470 Ω", MPN-Feld `RC0603FR-07470KL` = **470 kΩ**
+    (BOM: C144657 = 470 Ω ✓)
+  - R8/R53: Wert „200 kΩ", MPN-Feld `0603WAF3900T5E` = **390 Ω**
+    (BOM: C105574 = 200 k ✓)
+  - R37/R38/R55/R56: Footprint-Feld `R0402`, MPN-Feld `RC0603FR-074K7L`
+    (BOM: C99782 = 4,7 k 0402 ✓, Pads sind 0402 ✓)
+  - C39-Familie: Bibliotheksname „10uF 0805" auf einem C1210-Land
+- **Symbol-Tippfehler:** PAM8403 Pin 12 heißt „SHND"; das MCP23017-Symbol
+  nennt Pin 12 „SCK" (SPI-Name des MCP23**S**17 — hier ist es SCL).
+- **BOM enthält H2–H5 (Bohrungen) als Positionen mit leerem LCSC-Feld** —
+  der JLC-BOM-Upload läuft darauf in einen Fehler. Streichen oder DNP.
+- **`copper_finish: "None"`** im Stackup, entsprechend `"Finish": "None"` im
+  Gerber-Job-File. Auf ENIG/HASL setzen, damit Fertigungsdaten und Bestellung
+  übereinstimmen.
+- **Ungespeicherte Schaltplan-Änderungen im Archiv:**
+  `_autosave-FIELD AMBIENCE.kicad_sch` (30.07., 14:23) ist **neuer** als
+  `FIELD AMBIENCE.kicad_sch` (29.07., 22:39) und enthält zusätzlich die
+  `Mechanical:MountingHole_Pad`-Symbole (H2–H5). Der gespeicherte Schaltplan
+  hinkt der Platine also um genau diese vier Bohrungen hinterher. Die
+  `.kicad_pcb` ist identisch mit ihrem Autosave ✓.
+
+---
+
+## 7 · Belastbarkeit der Befunde
+
+Nicht jeder Punkt steht auf demselben Fundament. Wer gegenprüft, sollte
+wissen, wo er ansetzen muss.
+
+### Klasse A — direkt aus den gelieferten Dateien
+
+Kein Datenblatt-Wissen nötig, kein Ermessen. Wer die Dateien öffnet, sieht
+dasselbe: **B2, B3, B4, I1, I5, I6, I7, I8, I9, I10, I16**, der Widerspruch in
+**B6**, sämtliche Punkte in §6 und alles in §8. Bei B4 schreibt die Platine die
+Nicht-Verbindung sogar wörtlich hin.
+
+### Klasse B — Datei plus einfache Rechnung
+
+**B1** (Package aus BOM und gemessenem Pad-Maß; dass ein 0402-Chipinduktor
+keine 2 A führt, ist keine Grenzfall-Einschätzung), die 10-kΩ-Rechnung in
+**B6**, **I9**.
+
+### Klasse C — hängt an Datenblatt-Angaben aus dem Gedächtnis · bitte gegenprüfen
+
+| Punkt | Die Annahme | Warum sie trotzdem trägt |
+|---|---|---|
+| **B2** | SSSS811101 ist mit ~12 V / 50 mA spezifiziert | Der exakte Wert ist zu prüfen. Qualitativ ändert er nichts: ein ALPS-Signal-Schiebeschalter ist kein 2-A-Lastschalter |
+| **B5** | PCA9685-LEDn sind nur im Open-Drain 5,5-V-tolerant; im Totem-Pole gilt VDD+0,5 V | **Der Punkt, den ich am ehesten gegenprüfen lassen würde.** NXP PCA9685, „Limiting values" + `MODE2`/`OUTDRV` |
+| **I3** | PC4/PC5 haben auf dem H743 keine TIM-AF; PB0/PB1 nur CH3/CH4/CHxN | Gegen DS12110 „Alternate function mapping" prüfen. Falls doch ein CH1/CH2 existiert, entfällt der halbe Punkt — die Kollision mit `hal_h743` aus I4 bleibt |
+| **R1** | PAM8403 hat feste +24 dB ohne externe Gain-Widerstände | Wird vom eigenen Repo gestützt: r19.37/ADR-0025 hat genau deshalb auf den PAM8406 mit externem RI gewechselt |
+
+### Gegenproben mit zweitem, unabhängigem Zeugen
+
+- Das **STM32-Symbol** aus dem gelieferten Projekt (`STM32H743VIT6_C114409`)
+  wurde Pin für Pin gegen die im Repo aus DS12110 verifizierte Pin-Tabelle
+  gestellt: **60 von 60 geprüften Pins stimmen überein**, einzige Abweichung
+  sind die Namen „VCAP" statt „VCAP1"/„VCAP2". I1 und der komplette
+  Pinmap-Vergleich in §4 stehen damit auf zwei unabhängigen Quellen.
+- **Pad-Nummerierung geprüft**, damit kein Befund an einer stillschweigenden
+  Footprint-Annahme hängt: LQFP-100 hat 100 Pads, 4 × 25 zusammenhängend;
+  TSSOP-28 ist standardkonform umlaufend nummeriert. I1 und I5 sind damit
+  abgesichert.
+- **LED-Polarität aller 17 LEDs auf Footprint-Ebene nachgerechnet** (Silk-Fase
+  = Kathode, über alle vier LED-Footprints abgeglichen): **alle 17 sind auf
+  der Platine richtig gepolt.**
+
+---
+
+## 8 · Was sauber ist (geprüft, keine Beanstandung)
+
+- **BOM ↔ CPL ↔ PCB sind 1:1 konsistent:** 195 Designatoren in Platine und
+  BOM, keine Karteileiche in beide Richtungen, alle Stückzahlen stimmen mit
+  der Zahl der Designatoren, LCSC-Nummern überall gesetzt (Ausnahme: H2–H5),
+  CPL enthält korrekt 191 Positionen (Bohrungen ausgenommen), Top/Bottom in
+  CPL und PCB deckungsgleich (69 top / 122 bottom).
+- **Keine floatenden Netze:** alle 239 Netze haben ≥ 2 Pads.
+- **Keine Pour-Kurzschlüsse:** trotz `connect_pads (clearance 0)` in der
+  GND-Zone hält der gefüllte Pour geometrisch gemessen **überall exakt
+  0,2 mm** Abstand zu jedem fremden Pad (583 Pad-Instanzen, Median 0,201 mm).
+- **STM32-Entkopplung gut:** je 100 nF in 1,8–3,3 mm an allen fünf VDD-Pins;
+  VCAP1/VCAP2 mit 2,2 µF in 2,8 / 3,2 mm.
+- **Alle 17 LEDs auf der Platine richtig gepolt** (Footprint-Ebene geprüft).
+  Nur die Symbol/Footprint-Paarung von LED17 ist inkonsistent (I16).
+- **BQ24074 korrekt beschaltet** (gegen die im Repo verifizierte
+  TI-SLUS810N-Lesart): EN1 = LO / EN2 = HI = ILIM-Widerstandsmodus ✓,
+  CE_N = GND ✓, **ITERM = NC ist der Datenblatt-Default (10 %) und damit
+  richtig** ✓, ISET 1,13 k ≈ 0,79 A, ILIM 1,18 k ≈ 1,36 A, EP auf GND ✓,
+  /CHG- und /PGOOD-LED korrekt gepolt ✓.
+- **TPS61089:** FB-Teiler 332 k / 107 k → 4,94 V ✓; **R_FSW gegen den
+  SW-Knoten ist korrekt** (TI SLVSD38C Table 6-1 — sieht ungewöhnlich aus,
+  ist es aber nicht) ✓; BOOT-C vorhanden ✓.
+- **TPS22918:** QOD an VOUT gebunden, CT offen — genau die ADR-0016-Absicht ✓.
+- **TPA6132A2:** Ladungspumpen-Netzwerk vollständig (CPP/CPN/HPVDD/HPVSS),
+  Eingänge single-ended mit IN+ auf GND, EP auf GND ✓.
+- **PCM5102A / APS6404L / MCP23017 / PCA9685:** Pin-Zuordnungen gegen die
+  Symbole geprüft, keine Vertauschung.
+- **USB-ESD (USBLC6-2SC6) vorhanden, CC1/CC2 mit 5,1 k** ✓. D+/D− laufen bei
+  D1 kanalrein durch (Pin 3→4 und Pin 1→6) ✓.
+- **Board-Outline geschlossen**, 198,84 × 106,92 mm, 4 Lagen, 1,6 mm, Vias
+  0,6/0,3 mm, Innenlagen-Clearance 0,127 mm — alles in JLC-Standardkapazität.
+
+---
+
+## 9 · Empfohlene Reihenfolge
+
+1. **B1 + B2 + B3 zusammen** — Power-Stage neu zeichnen und neu platzieren
+   (Drossel, Schalterpfad, Pull-down, Eingangs-C an den IC).
+2. **B4, B6** — reine Netzlisten-Korrekturen.
+3. **B5** — Firmware-Einzeiler (`MODE2 = 0x00`), sofort machbar.
+4. **R1 + R2 + R4** — Audio-Front-End auf den r19.37-Stand ziehen und das
+   LDO-Pinout verifizieren.
+5. **I1, I2, I14, I15, I16** — kleine Netzlisten-/Bibliotheks-Korrekturen.
+6. **I3 + I4** — Encoder-Pins gerade ziehen, danach Firmware-Port planen.
+7. **I6** — Lagenaufbau auf SPEC §9.
+8. **I7 + I8** — DRC-Severities zurücksetzen, NPTH korrigieren, Gerber neu
+   exportieren. **Erst dann** ist ein DRC-Lauf aussagekräftig.
+
+**Offene `UNVERIFIED — NEEDS HUMAN CHECK`:** PJ-320D-Pad-Zuordnung (B6),
+AP7361C-SOT-223-Pinreihenfolge (R4), exaktes Display-Modul hinter H1 (I12),
+SSSS811101-Land-Pattern (§2, Zusatz).
+
+---
+
+## 10 · Änderungen gegenüber Fassung 1
+
+Fassung 1 dieses Berichts führte **sieben** Blocker. Auf Rückfrage nachgeprüft:
+
+- **„B5 · LED17 verpolt" war ein Prüffehler und ist gestrichen.** Er entstand
+  allein aus den Symbol-Pinnamen, ohne die Polaritätsmarkierung im Footprint
+  zu prüfen. Über alle vier LED-Footprints nachgerechnet markiert die
+  Silk-Fase durchgängig die Kathode, und bei LED17 sitzt dort Pad 2 — das
+  Kupfer ist richtig, LED17 leuchtet. Geblieben ist die
+  Bibliotheks-Inkonsistenz als **I16**. Die Blocker sind neu durchnummeriert
+  (altes B6 → B5, altes B7 → B6).
+- **B6 (MIDI/Klinke) wurde entschärft.** Die Aussage „CN5 liegt auf dem
+  Schaltkontakt" war eine Folgerung aus der Annahme, CN2 sei die richtige
+  Buchse. Der Befund stützt sich jetzt nur noch auf zwei ohne
+  PJ-320D-Datenblatt beweisbare Punkte.
+- **Neu: §7 Belastbarkeit** — jeder Befund ist danach klassifiziert, worauf er
+  steht, inklusive der vier Punkte, die gegengeprüft werden sollten.
+- **Neue Gegenproben (Fassung 2):** Pad-Nummerierung von LQFP-100 und
+  TSSOP-28 verifiziert (sichert I1 und I5 gegen Footprint-Annahmen ab),
+  SW2-Polzuordnung geometrisch bestätigt (sichert B2/B3), dabei der
+  unregelmäßige SW2-Pad-Abstand neu aufgefallen.
+
+Zwei weitere Verdachtsfälle wurden bereits **vor** Fassung 1 verworfen und
+sind nie in den Bericht gelangt: `R_FSW` gegen den SW-Knoten (sieht nach
+Verdrahtungsfehler aus, ist laut TI korrekt) und `ITERM` offen (ist der
+Datenblatt-Default). Beide stehen jetzt in §8 unter „sauber", damit sie nicht
+bei der nächsten Prüfung erneut als Befund auftauchen.

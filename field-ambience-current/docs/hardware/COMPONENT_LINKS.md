@@ -24,7 +24,7 @@ page). Regenerate: this list is derived from `kicad/jlc_bom.csv` + `kicad/*.kica
 | C_HPVDD,C_HP_VDD | CL10A225KP8NNNC | [C1607](https://www.lcsc.com/product-detail/C1607.html) | — |
 | U8 | TPS61089RNR | [C165129](https://www.lcsc.com/product-detail/C165129.html) | [PDF](https://www.ti.com/lit/ds/symlink/tps61089.pdf) |
 | J1 | TYPE-C-31-M-12 | [C165948](https://www.lcsc.com/product-detail/C165948.html) | [PDF](https://datasheet.lcsc.com/lcsc/1903211732_Korean-Hroparts-Elec-TYPE-C-31-M-12_C165948.pdf) |
-| U4 | PAM8403DR-H | [C17337](https://www.lcsc.com/product-detail/C17337.html) | PAM8403H.PDF (Diodes Inc Rev 1-0, Nov 2012) |
+| U4 | PAM8406DR | [C86270](https://www.lcsc.com/product-detail/C86270.html) | [PDF](https://www.diodes.com/assets/Datasheets/PAM8406.pdf) (r19.37 / ADR-0025 — replaces the NRND PAM8403DR-H C17337) |
 | F1 | 1812L300/16GR | [C18198349](https://www.lcsc.com/product-detail/C18198349.html) | [PDF](https://www.littelfuse.com/media?resourcetype=datasheets&itemid=ce0d2bf7-3eb1-4cf6-9c8c-8d3d3a8b1f9a&filename=littelfuse-pptc-1812l-datasheet) |
 | FB1,FB2 | BLM18AG601SN1D | [C19330](https://www.lcsc.com/product-detail/C19330.html) | — |
 | EN1,EN2,EN3,EN4 | EC11E18244AU (ALPS EC11E, 18 Pulse, 36 Detents, mit Push-Switch, Flat-Shaft 20 mm) | [C202365](https://www.lcsc.com/product-detail/C202365.html) | [PDF](https://tech.alpsalpine.com/e/products/category/encorder/sub/01/series/ec11e/) |

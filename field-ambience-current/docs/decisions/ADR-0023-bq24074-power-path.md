@@ -59,7 +59,7 @@ SW_PWR: COM=PWR_ON (100k-PD), Throw-A=VSYS  →  PWR_ON schaltet U8.EN UND U_PWR
 
 **Aus-Zustand:** U8-Shutdown-Iq < 3 µA (SLVSD38C §8.3.2). Der TPS61089 hat
 **kein Output-Disconnect** — die Rail liegt im Aus ueber Body-Diode + D3 auf
-~VSYS−0,7 V. Alle Rail-Lasten sind dann hochohmig: PAM8403 via R_SHDN_PD in
+~VSYS−0,7 V. Alle Rail-Lasten sind dann hochohmig: PAM8406 via R_SHDN_PD in
 Shutdown, LED-Anoden gegen unbestromten PCA9685 high-Z, 3V3-Domaene hinter
 U_PWR getrennt. Rest-Drain im Aus: µA-Bereich (vorher: Boost regelte dauerhaft).
 

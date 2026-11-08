@@ -1,0 +1,38 @@
+{
+  "actual_h743_routing_extracted": true,
+  "audio_seconds_per_mode": 1584,
+  "baseline": "b29246fde0c66618bbfc25742f929dc1f362ebf6",
+  "comparisons_per_mode": 126,
+  "limitations": "Hardware queues injected; not physical switch bounce, DMA latency, display current, H743 whole IRQ/stack, flash power-cut or hearing acceptance. Idle boundary uses elapsed Mainclock; no15-minute real-device timing claim. Default live Save remains synchronous; journal OFF.",
+  "logs": [
+    {
+      "integration": "H743 Scene releases: ordinary note-off and intentional HOLD match full 12s explicit controls in every World\nH743 SHIFT batch: upper register and Scene Save use the same snapshot; Scene releases close REC without orphan slot events\nH743 Nature menu: existing 0/65/0% editor, actual Engine audio without voices, all Worlds and settled silence pass\nH743 note feedback: real rejected pool/Freeze presses show overlay; displayed Clear releases capture and next Cell plays\nH743 physical unfold: all Worlds, normal and Scene-overlay release match explicit physical controls\nH743 UI: 126 whole 12-second PCM comparisons, 21 wake routes, all Worlds, 64/512 caps and Main wrap pass",
+      "sanitized": false,
+      "unit": "ui idle: exact threshold, held/released/duplicate keys, wake batch and wrap pass"
+    },
+    {
+      "integration": "H743 Scene releases: ordinary note-off and intentional HOLD match full 12s explicit controls in every World\nH743 SHIFT batch: upper register and Scene Save use the same snapshot; Scene releases close REC without orphan slot events\nH743 Nature menu: existing 0/65/0% editor, actual Engine audio without voices, all Worlds and settled silence pass\nH743 note feedback: real rejected pool/Freeze presses show overlay; displayed Clear releases capture and next Cell plays\nH743 physical unfold: all Worlds, normal and Scene-overlay release match explicit physical controls\nH743 UI: 126 whole 12-second PCM comparisons, 21 wake routes, all Worlds, 64/512 caps and Main wrap pass",
+      "sanitized": true,
+      "unit": "ui idle: exact threshold, held/released/duplicate keys, wake batch and wrap pass"
+    }
+  ],
+  "real_engine_header_scope_profiles": [
+    "reference",
+    "product",
+    "full"
+  ],
+  "scope": "21 wake routes, all3 Worlds,64/512 render caps; cap512 uses441-frame Main grid; normal/wrapping Mainclock. Entire12-second PCM equality against untouched awake controls, actual UI setters and subsequent matching musical/volume input. Separate exact900000-ms boundary/held/duplicate/boot-held/wrap cases.",
+  "sha256": {
+    "CMakeLists.txt": "01dc7f9a6cf11f96aef1f6aac889e37bf6d4e8ddd1d1ee33cc2fb3bb9dc8544d",
+    "include/leds.h": "0537687228d6426b6fa9d7955a19dfaa33aca7493e980cd8015c7abd860241e4",
+    "include/ui_idle.h": "7129f7be3e49e7fa0e38ad6dd1c0b082a1b714cd5eabe5de08078e374f1b1abe",
+    "src/hal_h743/main_h743.c": "06e9869c8e6dbf158f4117202f01d86ee683e54630aeb69c6fa40174b55efdf9",
+    "src/leds.c": "840b7d3957ba9074352db343954e5dcb2890e25124d2574caef6fa14de1cdbbb",
+    "src/ui_idle.c": "6580f9c3de471b72cefd223ee8ed1a3366968998b94e9f47c7817900b5482ea4",
+    "test/test_ui_h743.c": "661946dd52b2eb99c00f4fdc203316460402a4537c3c5f02e7224375289b5512",
+    "test/test_ui_idle.c": "f8e4ba3b990698eaf266ecf7a661991b460f84c682e2088c18e2d451d0c62450",
+    "tools/review_ui_idle.py": "508aec83a3ec1e4e983524f6e372c7d3ef3ca6ce5a949b45cba5745760be13c2"
+  },
+  "unchanged_existing_compiled_inputs": null,
+  "whole_stereo_frames_compared_per_mode": 66679200
+}

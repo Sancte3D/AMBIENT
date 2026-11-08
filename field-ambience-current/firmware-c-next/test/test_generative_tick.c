@@ -1,28 +1,27 @@
 /*
- * Host test for the r18.88 generative AUTOPLAY (engine_generative_tick) and
- * the audit fixes around it:
- *   - enabling GENERATE produces a bed note on the FIRST tick (no 8 s wait)
- *   - autoplay runs by itself: bars advance, sparkle chord tones appear
- *     (sources 14/15), degree stays 1..7, audio stays finite and bounded
- *   - a held USER note suppresses new bed/sparkle notes — including the
- *     SHIFT-octave sources 9..13 (the old any_cell_held() only looked at
- *     0..4, so the bed played over latched shift notes)
- *   - releasing the user note resumes the bed on the next tick
- *   - disabling GENERATE releases bed + sparkles
- *
- * The tick is pure in now_ms, so the whole schedule is simulated without
- * wall-clock waits: advance a fake clock, render audio between ticks (the
- * envelopes need samples to move), and watch engine_active_voices().
+ * Autonomous World scheduler: owned onsets, real rests, player-priority
+ * return and harmonic grammar. Advance control and source audio together.
+ * Generate starts no pad/loop/bass bed; source releases occupy their slots.
  */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <string.h>
 #include "engine.h"
 #include "brain.h"
 #include "generative.h"
-#include "pluck.h"   /* r18.89: sparkles are KS plucks now */
+#include "pad.h"
+#include "horn.h"    /* default Alps World uses its curated horn */
+#include "worlds.h"
+#include "pluck.h"
+#include "shape.h"
+#include "bowed.h"
+#include "choir.h"
+#include "guembri.h"
+#include "bass.h"
 #include "composer.h" /* r18.96: top-level intent states */
+#include "harmony.h"
 #include "dsp.h"
 
 static int checks = 0, fails = 0;
@@ -30,56 +29,326 @@ static int checks = 0, fails = 0;
     fprintf(stderr, "FAIL %s:%d  ", __FILE__, __LINE__); \
     fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); } } while (0)
 
-/* Render `ms` of audio in 256-frame blocks; returns peak |sample| and traps
- * NaN. 1 ms ≈ 44.1 frames — close enough for envelope movement. */
+/* Render elapsed audio, including a final partial block; return PCM peak. */
 static int render_ms(int ms) {
     int16_t buf[512];
-    int blocks = (ms * 44100) / (1000 * 256) + 1, pk = 0;
-    for (int b = 0; b < blocks; ++b) {
-        engine_render(buf, 256);
-        for (int i = 0; i < 512; ++i) {
+    int remaining = ms * 44100 / 1000, pk = 0;
+    while (remaining > 0) {
+        int n = remaining > 256 ? 256 : remaining;
+        engine_render(buf, n);
+        for (int i = 0; i < n * 2; ++i) {
             int a = buf[i] < 0 ? -buf[i] : buf[i];
             if (a > pk) pk = a;
         }
+        remaining -= n;
     }
     return pk;
+}
+
+/* A scheduler audit must advance source envelopes by the same elapsed time.
+ * Render the real World sources directly here; master/manual behavior is
+ * covered by the engine tests. No WAV export or wall-clock wait. */
+static void advance_world_audio(int ms) {
+    float l[256],r[256],sl[256],sr[256];
+    int remaining=ms*44100/1000;
+    while(remaining>0) {
+        int n=remaining>256?256:remaining;
+        memset(l,0,sizeof l);memset(r,0,sizeof r);
+        memset(sl,0,sizeof sl);memset(sr,0,sizeof sr);
+        bowed_render_mix(l,r,sl,sr,n,.5f);horn_render_mix(l,r,sl,sr,n,.5f);
+        choir_render_mix(l,r,sl,sr,n,.5f);guembri_render_mix(l,r,sl,sr,n,.5f);
+        pluck_render_mix(l,r,sl,sr,n);
+        remaining-=n;
+    }
+}
+
+static int world_on_events;
+static void world_event(int on,uint8_t source,float hz,float amp) {
+    (void)hz;(void)amp;
+    if(on==1 && source==15) ++world_on_events;
+}
+static void test_world_admission(void) {
+    int before[128],after[128];
+    engine_init();engine_set_world(0);engine_set_fx_mode(0);
+    CHECK(!engine_try_world_note_on(15,220,.07f),"World admission requires Generate");
+    engine_set_generative(true,-1);engine_set_note_hook(world_event);world_on_events=0;
+    CHECK(!engine_try_world_note_on(255,220,.07f),"invalid source refused");
+    CHECK(!engine_try_world_note_on(15,NAN,.07f),"invalid pitch refused");
+    CHECK(!engine_try_world_note_on(15,220,0),"zero level refused");
+    /* A mixed-family full pool must block a fourth World tone as well. */
+    CHECK(horn_try_note_on(0,220,.3f),"reserve Horn");
+    CHECK(bowed_try_note_on(1,220,.3f),"reserve Bowed");
+    CHECK(choir_try_note_on(2,220,.3f),"reserve Choir");
+    CHECK(engine_world_source_count()==ENGINE_WORLD_SOURCE_LIMIT,"count pending mixed-family slots");
+    int n=engine_sounding_notes(before,128);
+    CHECK(!engine_try_world_note_on(15,330,.07f),"full pool refuses World tone");
+    CHECK(world_on_events==0,"refusal emits no MIDI onset");
+    int m=engine_sounding_notes(after,128);
+    CHECK(n==m && memcmp(before,after,(size_t)n*sizeof(int))==0,"refusal adds no phantom harmony pitch");
+    render_ms(1000);horn_note_off(0);render_ms(100);
+    CHECK(engine_world_source_count()==3,"release remains occupied");
+    CHECK(!engine_try_world_note_on(15,330,.07f),"release cannot be stolen");
+    /* Saturation cannot consume a phrase, increment melody count or log an onset. */
+    for(uint32_t now=2000;now<62000;now+=500) engine_generative_tick(now);
+    CHECK(engine_generative_melody_count()==0,"rejected scheduler starts do not increment melody count");
+    CHECK(engine_generative_last_melody_midi()==0,"rejected starts do not become phrase history");
+    CHECK(world_on_events==0,"scheduler emits no phantom World onset");
+    render_ms(18000);CHECK(engine_world_source_count()==2,"released Horn slot eventually frees");
+    CHECK(engine_try_world_note_on(15,330,.07f),"admission succeeds after real slot frees");
+    CHECK(engine_world_source_count()==3 && world_on_events==1,"accepted onset reserves slot and emits one event");
+    n=engine_sounding_notes(before,128);
+    CHECK(!engine_try_world_note_on(15,440,.07f),"held owner refuses retrigger");
+    m=engine_sounding_notes(after,128);
+    CHECK(n==m && memcmp(before,after,(size_t)n*sizeof(int))==0 && world_on_events==1,
+          "refused retrigger leaves actual pitch and MIDI unchanged");
+    engine_set_note_hook(NULL);engine_init();
+}
+
+static int generated_onsets;
+static void isolated_event(int on,uint8_t source,float hz,float amp) {
+    (void)hz;(void)amp;
+    if(on==1) {
+        CHECK(source==15,"autonomous event has no extra pad/loop source (%u)",source);
+        ++generated_onsets;
+    }
+}
+static void test_no_autonomous_bed(void) {
+    for(int world=0;world<WORLD_COUNT;++world) {
+        engine_init();engine_set_world(world);engine_set_fx_mode(0);
+        engine_set_atmosphere(0);engine_set_texture(0);
+        engine_set_note_hook(isolated_event);generated_onsets=0;
+        engine_set_generative(true,-1);engine_generative_tick(1000);
+        CHECK(generated_onsets==1,"world %d gets one opening tone",world);
+        int before=generated_onsets, changes=harmony_state_changes();
+        CHECK(engine_generative_advance()>0,"explicit harmonic step is available");
+        CHECK(harmony_state_changes()>changes,"harmony evolves without accompaniment");
+        CHECK(generated_onsets==before,"harmonic step emits no extra note");
+        for(uint32_t t=1250;t<61000;t+=250) {
+            render_ms(250);engine_generative_tick(t);
+            CHECK(pad_active_count()==0,"world %d has no autonomous pad",world);
+            CHECK(!engine_bass_active(),"world %d has no automatic bass",world);
+            CHECK(engine_world_source_count()<=ENGINE_WORLD_SOURCE_LIMIT,
+                  "world %d retains the source/release budget",world);
+        }
+        CHECK(generated_onsets>=2,"world %d develops beyond its first tone",world);
+        /* Turning off events must leave actual dry silence after releases,
+         * even while harmony continues; no hidden bed fills the pause. */
+        engine_set_autoplay_melody(0);before=generated_onsets;
+        for(uint32_t t=61000;t<86000;t+=250) {
+            engine_generative_tick(t);render_ms(250);
+        }
+        CHECK(generated_onsets==before,"disabled World starts no substitute layer");
+        CHECK(engine_world_source_count()==0,"World release reaches idle");
+        CHECK(render_ms(100)==0,"World leaves dry silence without a bass/drone bed");
+        engine_set_generative(false,-1);
+        engine_set_note_hook(NULL);
+    }
+    /* Three different World families can still be releasing during rapid
+     * changes. A fourth proposal waits; none is replaced by a pad or bass. */
+    engine_init();engine_set_release(1);engine_set_generative(true,-1);
+    engine_set_note_hook(isolated_event);generated_onsets=0;
+    const int path[]={0,1,3};
+    for(int i=0;i<3;++i) {
+        engine_set_world(path[i]);
+        CHECK(engine_try_world_note_on(15,dsp_midi_to_hz((float)brain_get_key()),.06f),
+              "admit World family before handover");
+        render_ms(1000);
+    }
+    engine_set_world(4);
+    CHECK(engine_world_source_count()==3,"old World releases retain all three slots");
+    int before=generated_onsets;
+    CHECK(!engine_try_world_note_on(15,220,.06f),"new World waits for a real slot");
+    CHECK(generated_onsets==before,"blocked transition creates no note event");
+    CHECK(pad_active_count()==0 && !engine_bass_active(),"World changes add no accompaniment");
+    for(int i=0;i<40;++i) {
+        engine_set_world(i%WORLD_COUNT);
+        CHECK(engine_world_source_count()==3,"rapid target changes do not stack sources");
+    }
+    engine_set_generative(false,-1);render_ms(30000);render_ms(30000);
+    CHECK(engine_world_source_count()==0,"maximum Shape releases eventually free all families");
+    CHECK(generated_onsets==before,"Stop and target changes create no new tone");
+    engine_set_note_hook(NULL);
+    /* Releasing one owner while another remains used to wake bass-follow.
+     * Exercise both manual preferences; neither may accompany Generate. */
+    for(int follow=0;follow<=1;++follow) {
+        engine_init();engine_bass_follow(follow!=0);
+        engine_set_generative(true,-1);
+        CHECK(engine_try_world_note_on(15,220,.06f),"admit first World owner");
+        CHECK(engine_try_world_note_on(14,330,.06f),"admit second World owner");
+        engine_note_off(15);
+        CHECK(!engine_bass_active(),"World release cannot wake bass under another owner");
+        engine_note_off(14);engine_set_generative(false,-1);
+        render_ms(12000);engine_note_on(0,220,.1f);
+        CHECK(engine_bass_active()==(follow!=0),"manual bass preference survives Generate");
+        engine_note_off(0);
+    }
+    engine_bass_follow(true);engine_init();
+}
+
+static int entry_onsets;
+static void entry_event(int on,uint8_t source,float hz,float amp) {
+    (void)hz;(void)amp;
+    if(on==1 && source==15) {
+        CHECK(engine_ambient_source_count()<=ENGINE_WORLD_SOURCE_LIMIT,
+              "admitted World includes all outgoing Ambient slots");
+        ++entry_onsets;
+    }
+}
+static void test_manual_entry_budget(void) {
+    /* Bass has two independently retiring envelopes, not one boolean slot. */
+    engine_init();engine_set_fx_mode(0);engine_bass_set(220);
+    CHECK(bass_active_count()==2 && engine_ambient_source_count()==2,
+          "both bass layers reserve a slot");
+    render_ms(4000);engine_bass_off();int one_layer=0;
+    for(int i=0;i<90;++i) {
+        render_ms(100);
+        if(bass_active_count()==1) one_layer=1;
+        CHECK(engine_ambient_source_count()==bass_active_count(),"count tracks independent bass releases");
+    }
+    CHECK(one_layer && bass_active_count()==0,"bass retires two, one, then zero layers");
+
+    /* Raw legacy voices can exist outside note-source tracking. They still
+     * occupy DSP slots and must block new World allocation. */
+    engine_init();engine_set_generative(true,-1);engine_set_note_hook(entry_event);entry_onsets=0;
+    for(int i=0;i<3;++i) engine_motif_strike(220,.1f);
+    CHECK(engine_ambient_source_count()==3,"unowned Ember voices count");
+    CHECK(!engine_try_world_note_on(15,220,.06f),"Ember saturation blocks a World");
+    CHECK(entry_onsets==0,"saturation emits no World event");
+    render_ms(6000);
+    CHECK(engine_try_world_note_on(15,220,.06f),"World enters after natural Ember decay");
+    engine_set_note_hook(NULL);
+
+    engine_init();engine_set_generative(true,-1);
+    engine_bass_set(220);engine_set_drone(true);
+    CHECK(engine_ambient_source_count()==3,"bass layers plus drone fill the budget");
+    CHECK(!engine_try_world_note_on(15,220,.06f),"bass/drone block a fourth source");
+    engine_set_drone(false);render_ms(12000);
+    CHECK(engine_ambient_source_count()==2,"released drone frees its slot");
+    CHECK(engine_try_world_note_on(15,220,.06f),"two bass layers allow only one World tone");
+    CHECK(engine_ambient_source_count()==3,"admission uses the last actual slot");
+
+    /* Dense old manual chords can exceed the new limit before Generate.
+     * Do not hard-cut them or add a fourth voice; entry stays pending while
+     * audio runs, with no rejected phrase history or artificial 2 s timer. */
+    engine_init();engine_set_fx_mode(0);engine_set_drone(true);
+    engine_note_on(0,dsp_midi_to_hz(55),.1f);
+    engine_note_on(1,dsp_midi_to_hz(59),.1f);
+    engine_note_on(2,dsp_midi_to_hz(62),.1f);
+    render_ms(1500);
+    CHECK(engine_ambient_source_count()==6,"three pads, two bass layers and drone are real old sources");
+    engine_set_generative(true,-1);engine_set_note_hook(entry_event);entry_onsets=0;
+    uint32_t seed=engine_gen_seed(),now=1500;
+    engine_generative_tick(now);
+    CHECK(entry_onsets==0,"dense manual tail defers the opening World tone");
+    for(int i=0;i<300 && !entry_onsets;++i) {
+        render_ms(100);now+=100;
+        int slots=engine_ambient_source_count();
+        engine_generative_tick(now);
+        if(slots>=3) {
+            CHECK(entry_onsets==0,"busy entry starts no additional source");
+            CHECK(engine_gen_seed()==seed,"busy entry consumes no pitch/phrase RNG");
+        } else CHECK(entry_onsets==1,"safe opening enters on the first free control tick");
+    }
+    CHECK(entry_onsets==1 && engine_generative_melody_count()==1,
+          "opening proposal survives the manual handover");
+    engine_set_note_hook(NULL);engine_set_generative(false,-1);
+    render_ms(12000);
+    CHECK(engine_ambient_source_count()==0,"manual and generated releases all retire");
+    engine_init();
+}
+
+static uint32_t phrase_clock, phrase_started, phrase_ended;
+static int phrase_world, phrase_pairs, phrase_live, phrase_has_end;
+static void phrase_event(int on, uint8_t source, float hz, float amp) {
+    (void)hz; (void)amp;
+    if (source != 15) return;
+    const world_phrase_t *p = worlds_phrase(phrase_world);
+    if (on == 1) {
+        if (phrase_has_end) {
+            /* OPEN can shorten the base rest by 20%; other states and
+             * phrase boundaries only add space. Tick quantization: 100 ms. */
+            CHECK(phrase_clock - phrase_ended + 100 >= p->rest_min * 800u,
+                  "world %d has space between melodic holds", phrase_world);
+        }
+        phrase_started = phrase_clock; phrase_live = 1;
+    } else if (on == 0 && phrase_live) {
+        uint32_t hold = phrase_clock - phrase_started;
+        CHECK(hold >= p->note_min * 1000u && hold <= p->note_max * 1000u + 100u,
+              "world %d melodic hold %u ms matches its phrase", phrase_world, hold);
+        ++phrase_pairs; phrase_live = 0;
+        phrase_ended = phrase_clock; phrase_has_end = 1;
+    }
+}
+
+static void test_world_phrases(void) {
+    for (phrase_world = 0; phrase_world < WORLD_COUNT; ++phrase_world) {
+        engine_init(); engine_set_world(phrase_world);
+        engine_set_gen_seed(0x5EEDBA55u);
+        engine_set_generative(true, -1);
+        phrase_live = phrase_has_end = phrase_pairs = 0;
+        engine_set_note_hook(phrase_event);
+        /* This is a scheduler audit, not a long audio export. */
+        for (phrase_clock = 1000; phrase_clock < 901000; phrase_clock += 100) {
+            engine_generative_tick(phrase_clock);
+            advance_world_audio(100);
+        }
+        engine_set_note_hook(NULL); /* explicit stop may shorten a hold */
+        engine_set_generative(false, -1);
+        CHECK(phrase_pairs >= 5, "world %d completed enough phrases (%d)",
+              phrase_world, phrase_pairs);
+        printf("  World %d: %d completed melodic holds audited\n", phrase_world, phrase_pairs);
+    }
 }
 
 int main(void) {
     printf("== generative autoplay (engine_generative_tick, r18.88) ==\n");
     dsp_init(); brain_init(); engine_init();
+    /* A generated world melody must not allocate a hidden pad. Its
+     * scheduled owner still participates in harmony and releases normally. */
+    engine_set_world(0); /* Horn / current Alps descriptor */
+    engine_set_generative(true, -1);
+    engine_note_on(15, 220.0f, 0.07f);
+    CHECK(horn_active_count() == 1, "melody starts the selected World source");
+    CHECK(pad_active_count() == 0, "melody does not duplicate into pad pool");
+    engine_note_off(15);
+    render_ms(10000);
+    CHECK(horn_active_count() == 0, "melody owner releases its World source");
+    engine_init();
+    test_world_admission();
+    test_no_autonomous_bed();
+    test_manual_entry_budget();
     uint32_t now = 1000;
 
     /* ---- 1. Immediate first note ---- */
     CHECK(engine_active_voices() == 0, "silent at boot");
     engine_set_generative(true, -1);            /* Markov auto */
     engine_generative_tick(now);
-    CHECK(engine_active_voices() >= 1, "bed voice starts on the FIRST tick");
+    CHECK(horn_active_count() == 1, "World source starts on the FIRST tick");
+    CHECK(engine_active_voices() == 0, "opening tone has no pad accompaniment");
     int pk = render_ms(1500);
-    CHECK(pk > 300, "bed audible shortly after enable (peak %d)", pk);
+    CHECK(pk > 300, "World audible shortly after enable (peak %d)", pk);
+    now += 1500;
 
     /* ---- 2. Autoplay: simulate ~120 s, tick every 16 ms ---- */
-    int max_voices = 0, sparkle_seen = 0;
+    int max_voices = 0, melody_seen = 0;
     for (int step = 0; step < 7500; ++step) {
         now += 16;
         engine_generative_tick(now);
         int d = generative_current_degree();
         CHECK(d >= 1 && d <= 7, "degree in range (%d)", d);
-        int v = engine_active_voices();
+        int v = engine_world_source_count();
         if (v > max_voices) max_voices = v;
-        if (pluck_active_count() > 0) sparkle_seen = 1;   /* r18.89: plucks */
+        if (horn_active_count() > 0) melody_seen = 1;
         if ((step & 63) == 0) {
             int p = render_ms(16 * 64);
             CHECK(p <= 32767, "bounded");
         }
         if (fails > 10) break;                  /* don't spam */
     }
-    CHECK(sparkle_seen, "sparkle PLUCKS actually played");
-    /* r18.99: the bed is a CHOIR now — the three Eno loops join one by
-     * one (staggered entries at 0.40/0.62/0.81 of their periods), so the
-     * pad pool grows past the single bed voice but never past bed + 3. */
-    CHECK(max_voices >= 2, "Eno loops actually joined the bed (%d)", max_voices);
-    CHECK(max_voices <= 5, "pad pool = bed + 3 Eno loops + melody max (%d)", max_voices);
+    CHECK(melody_seen, "Alps World source actually played");
+    CHECK(max_voices>=1 && max_voices<=ENGINE_WORLD_SOURCE_LIMIT,
+          "World source and releases stay within budget (%d)",max_voices);
+    CHECK(engine_active_voices()==0,"no accompaniment was added over 120 s");
 
     /* ---- 3. User override — r19.20: the gate is PHYSICAL key presence
      * (controls.c edges), not "any active voice". The device path calls
@@ -96,29 +365,25 @@ int main(void) {
         if (v > voices_with_user) voices_with_user = v;
         if ((step & 127) == 0) render_ms(16 * 128);     /* let sparkles decay */
     }
-    /* No NEW gen notes while the user holds: sparkles release on schedule,
-     * the BED deliberately keeps sustaining underneath (it's an ambient bed
-     * — same semantics as the old advance() gate), so after the sparkle
-     * tails exactly two voices remain: user note + sustained bed. */
-    CHECK(voices_with_user <= 6, "no new gen notes while user holds (max %d)",
+    /* Low-level manual injection remains available for regression tests.
+     * After the World release, only that manual pad remains. */
+    CHECK(voices_with_user == 1, "only injected manual pad while user holds (%d)",
           voices_with_user);
     render_ms(10000);                                   /* drain sparkle tails */
-    /* r18.99: user + bed + up to 3 sustaining Eno loops (loops freeze while
-     * the user plays — they neither retrigger nor release under a hold). */
-    CHECK(engine_active_voices() >= 2 && engine_active_voices() <= 5,
-          "user note + bed choir remain (have %d)", engine_active_voices());
-    CHECK(pluck_active_count() == 0, "plucks self-decayed under the user (%d)",
-          pluck_active_count());
+    CHECK(engine_active_voices() == 1,
+          "only the injected manual pad remains (%d)", engine_active_voices());
+    CHECK(horn_active_count() == 0, "Alps voice self-decayed under the user (%d)",
+          horn_active_count());
 
-    /* ---- 4. Release → bed movement resumes promptly ----
+    /* ---- 4. Release → World resumes after the return pause ----
      * Drain the user note's release tail FIRST (no ticks), so the resume
      * check below can only be satisfied by NEW sparkle notes, not by the
      * old note still fading out. */
     engine_note_off(11);
     engine_set_user_presence(false);                    /* finger lifted */
     render_ms(10000);
-    CHECK(engine_active_voices() >= 1 && engine_active_voices() <= 4,
-          "only the bed choir left after the user tail (%d)",
+    CHECK(engine_active_voices() == 0,
+          "no hidden pad remains after the user tail (%d)",
           engine_active_voices());
     int resumed = 0;                                    /* sparkles restart? */
     for (int step = 0; step < 9500; ++step) {           /* 152 s simulated —
@@ -126,12 +391,13 @@ int main(void) {
         * the window must span a state change so the resume is observable */
         now += 16;
         engine_generative_tick(now);
-        if (pluck_active_count() > 0) { resumed = 1; break; }
+        if (horn_active_count() > 0) { resumed = 1; break; }
         if ((step & 127) == 0) render_ms(16 * 128);
     }
     CHECK(resumed, "autoplay (sparkles) resumes after the user lets go");
 
-    /* ---- 4b. r19.20 HOLD+GENERATE regression: a LATCHED voice (note on,
+    /* ---- 4b. Low-level injected-note regression (physical cells are now
+     * locked during Generate). Former r19.20 HOLD+GENERATE regression: a LATCHED voice (note on,
      * finger UP → no presence) must NOT freeze the composer. Before r19.20
      * the gate was any_user_note(): one latched cell paused autoplay
      * forever. Now the generator keeps composing around the latch. */
@@ -140,7 +406,7 @@ int main(void) {
     for (int step = 0; step < 9500; ++step) {
         now += 16;
         engine_generative_tick(now);
-        if (pluck_active_count() > 0) { gen_moved = 1; break; }
+        if (horn_active_count() > 0) { gen_moved = 1; break; }
         if ((step & 127) == 0) render_ms(16 * 128);
     }
     CHECK(gen_moved, "generator keeps playing around a latched voice (r19.20)");
@@ -152,12 +418,12 @@ int main(void) {
     render_ms(12000);
     CHECK(engine_active_voices() == 0, "all gen voices gone after disable (%d)",
           engine_active_voices());
-    CHECK(pluck_active_count() == 0, "plucks rang out after disable (%d)",
-          pluck_active_count());
+    CHECK(horn_active_count() == 0, "Alps voice rang out after disable (%d)",
+          horn_active_count());
 
     /* ---- 6. r18.90 melody GRAMMAR: composes, not randomizes ----
-     * Simulate ~200 bars with coarse 250 ms ticks (no audio needed to make
-     * scheduling decisions; render occasionally to keep envelopes moving)
+     * Simulate ~200 bars with coarse 250 ms ticks and matching source audio
+     * (real release occupancy now governs whether an onset can succeed)
      * and audit the tone sequence via the observability getters against
      * SOUND_WORLD.md §6: register bounds, stepwise voice-leading,
      * repetitions present, rests present. */
@@ -186,11 +452,11 @@ int main(void) {
                 prev_count = c;
                 ++notes;
             }
-            if ((step & 255) == 0) render_ms(300);
+            advance_world_audio(250);
         }
         CHECK(notes >= 40, "melody actually sings (%d notes in ~206 bars)", notes);
         CHECK(notes <= 190, "melody leaves space — rests exist (%d notes)", notes);
-        CHECK(lo >= 52 && hi <= 98, "register inside the voiced band (%d..%d)", lo, hi);
+        CHECK(lo >= 50 && hi <= 69, "autonomous melody stays in the calm band (%d..%d)", lo, hi);
         CHECK(big_leaps == 0, "no leap beyond an octave (%d)", big_leaps);
         CHECK(reps >= 3, "repetition happens — it's a motif, not a walk (%d)", reps);
         CHECK(small_steps >= notes / 5,
@@ -223,7 +489,7 @@ int main(void) {
             ms_in[st] += 250.0;
             int c = engine_generative_melody_count();
             if (c != prev_notes) { notes_in[st] += c - prev_notes; prev_notes = c; }
-            if ((step & 255) == 0) render_ms(400);
+            advance_world_audio(250);
         }
         for (int k = 0; k < COMPOSER_STATE_COUNT; ++k)
             CHECK(seen[k], "composer visits state %d", k);
@@ -261,6 +527,7 @@ int main(void) {
         engine_set_generative(false, -1);
     }
 
+    test_world_phrases();
     printf("%d checks, %d failures\n", checks, fails);
     return fails ? 1 : 0;
 }

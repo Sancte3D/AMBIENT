@@ -1,0 +1,267 @@
+{
+  "plan": {
+    "world": "HIGHLANDS",
+    "seed": 1234,
+    "transpose": 0,
+    "seconds": 44,
+    "voices": 3,
+    "release": 0,
+    "events": [
+      [
+        0,
+        1,
+        0,
+        50,
+        0.57,
+        0.55
+      ],
+      [
+        0.8,
+        1,
+        1,
+        69,
+        0.43,
+        0.55
+      ],
+      [
+        1.6,
+        1,
+        2,
+        66,
+        0.47,
+        0.55
+      ],
+      [
+        6,
+        0,
+        0,
+        50,
+        0,
+        0
+      ],
+      [
+        7.8,
+        0,
+        1,
+        69,
+        0,
+        0
+      ],
+      [
+        10.03,
+        1,
+        0,
+        59,
+        0.5,
+        0.55
+      ],
+      [
+        11.03,
+        1,
+        1,
+        62,
+        0.52,
+        0.55
+      ],
+      [
+        17.03,
+        0,
+        0,
+        59,
+        0,
+        0
+      ],
+      [
+        18.03,
+        0,
+        1,
+        62,
+        0,
+        0
+      ],
+      [
+        18.6,
+        0,
+        2,
+        66,
+        0,
+        0
+      ],
+      [
+        28,
+        1,
+        0,
+        50,
+        0.54,
+        0.55
+      ],
+      [
+        29,
+        1,
+        1,
+        69,
+        0.4,
+        0.55
+      ],
+      [
+        30,
+        1,
+        2,
+        66,
+        0.46,
+        0.55
+      ],
+      [
+        35.5,
+        0,
+        0,
+        50,
+        0,
+        0
+      ],
+      [
+        36.2,
+        0,
+        1,
+        69,
+        0,
+        0
+      ],
+      [
+        37.2,
+        0,
+        2,
+        66,
+        0,
+        0
+      ]
+    ]
+  },
+  "plan_checks": 100,
+  "scope": "Seeded host algorithm with unchanged actual Product source/Room C DSP; not production generator integration.",
+  "limits": "Direct SHAPE values and register extension bypass Product macro/admission limits. No claim of final hearing or device acceptance.",
+  "source_sha256": {
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/ambient_room.c": "04c3bc83fdaa0938503a81c9270a068d9f4c36ca6401630155146616aded89ef",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "tools/render_ensemble_sketch.c": "f4132199bd6a8a07a6cbf42283df2e9695dd1687f2f8f9994d7c715b8d28eb42",
+    "tools/review_world_ensembles.py": "1564e61fb9ad48a77184310295ae7afe1bbb69aadb17992a2e4f8ff8168ead08",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "834ebc6acf0fbf50d6da9e018d5499b953a403602c450d64d8b23c694eafe708",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "aae60ffca60c94da9e6bd3b9caf820c234bd45c7df075a625d60115a37bf8517",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "9f00f50fdae93e8f11c4f7128f61a80f45420a851ac74eb567754c9936f8f50d",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6"
+  },
+  "driver_sha256": "f049877fd2f49fe6c06f8277b1af3865061930c389bcff8c447aff26862f19a7",
+  "files": [
+    {
+      "mode": "dry",
+      "listen_file": "AMBIENT_HIGHLANDS_dry_listen_44s.wav",
+      "raw": {
+        "integrated_lufs": -29.7,
+        "true_peak_dbfs": -22.7
+      },
+      "listen": {
+        "integrated_lufs": -23.0,
+        "true_peak_dbfs": -16.0
+      },
+      "constant_gain_db": 6.699999999999999,
+      "mono_energy_ratio": 0.9743738844448854,
+      "dc_lr": [
+        2.10748065798289e-09,
+        -4.828332552244383e-09
+      ],
+      "pcm_64_512_identical": true,
+      "renderer_report": "ENSEMBLE mode=dry frames=1940400 starts=8 max_sources=3 final_sources=0 peak=0.07307103",
+      "raw_sha256": "d15279e5084c2b3c44f4c182f9faf0ba17060f87f345e07cfad57437d2aa96d6",
+      "listen_sha256": "455526a0dbc0bfaababa376ec0683d1e159ae9d909f3c47c653b1c82bda6516e"
+    },
+    {
+      "mode": "room",
+      "listen_file": "AMBIENT_HIGHLANDS_room_listen_44s.wav",
+      "raw": {
+        "integrated_lufs": -29.7,
+        "true_peak_dbfs": -22.7
+      },
+      "listen": {
+        "integrated_lufs": -23.0,
+        "true_peak_dbfs": -16.0
+      },
+      "constant_gain_db": 6.699999999999999,
+      "mono_energy_ratio": 0.9744505247745942,
+      "dc_lr": [
+        1.1952875373634302e-09,
+        1.7457489032544836e-09
+      ],
+      "pcm_64_512_identical": true,
+      "renderer_report": "ENSEMBLE mode=room frames=1940400 starts=8 max_sources=3 final_sources=0 peak=0.07312103",
+      "raw_sha256": "21431d06db9e1295e7185e936abea6476aca05258efc34fa573f64132df2bf61",
+      "listen_sha256": "2a646830b1a6a566ed34dd77b69c94e11a3d3015cb90903805d788749b9b2a01"
+    }
+  ]
+}

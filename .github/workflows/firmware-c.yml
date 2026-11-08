@@ -95,6 +95,901 @@ jobs:
       - name: Run host tests
         working-directory: field-ambience-current/firmware-c-next/test
         run: ./run_tests.sh
+      - name: Fetch exact pre-expression and pre-character baselines
+        run: |
+          git fetch --no-tags origin bea7f5765125b2d55c7bb28832626dce7956b382
+          git fetch --no-tags origin 49169462c1705a4238bd2194559689b07e22d8c5
+          git fetch --no-tags origin 24936b4e19895627d8b4bbdb1ba19a5b05c3db10
+          git fetch --no-tags origin b6b62dbf3f33230ea4c659a8f5976efbf4ff31d2
+          git fetch --no-tags origin c974584ab24dcb51696d85888ce4125deda20d6f
+          git fetch --no-tags origin 8381a1dc8ff85cac71d6b4941b94a6ef82d22e17
+          git fetch --no-tags origin df9a8a903d444d48133b980760a9686202455637
+      - name: Check current expression, World character and matched baseline PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          python3 tools/review_cell_unfold.py build-cell-unfold
+          python3 tools/review_world_character.py build-world-character
+          python3 tools/review_woodland_body.py build-woodland-body
+          python3 tools/review_woodland_resonator.py build-woodland-resonator
+          python3 tools/review_sound_finish.py build-sound-finish
+          python3 tools/review_sound_hierarchy.py build-sound-finish/hierarchy
+          python3 tools/review_sound_session.py build-sound-finish/session --sanitize
+          python3 tools/review_device_bench.py build-sound-finish/device-bench --sanitize
+          python3 tools/review_sound_session.py build-sound-finish/device-session --device-bench --sanitize
+          python3 tools/freeze_sound_candidate.py ../docs/audio/SOUND_CANDIDATE_INPUTS.json --check
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
+          python3 tools/review_nature_accents.py build-sound-finish/nature
+          python3 tools/review_ui_idle.py build-sound-finish/ui --fixture-only --finish-candidate --sanitize
+          python3 tools/review_h743_irq_scope.py build-cell-unfold/irq --fixture-only --sanitize
+          python3 tools/review_ui_idle.py build-cell-unfold/ui --fixture-only --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-complete-sound-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-sound-finish
+          if-no-files-found: error
+      - name: Check offline display asset pixel contracts
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          python3 -m pip install Pillow
+          python3 test/test_ui_asset.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-cell-unfold-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-cell-unfold
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-world-character-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-world-character
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-body-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-woodland-body
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-resonator-current-proof-and-wav
+          path: field-ambience-current/firmware-c-next/build-woodland-resonator
+          if-no-files-found: error
+
+  h743-irq-scope-review:
+    name: archived H743 DMA C scope and unchanged inputs (PR182)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Keep the original strict inventory proof; current fixtures run above.
+          ref: bea7f5765125b2d55c7bb28832626dce7956b382
+      - name: Fetch exact pre-instrumentation baseline
+        run: git fetch --no-tags origin de732f42d4c1973a82f256d9cdec129394dba4b1
+      - name: Check actual handler scope, wrap and complete Product PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_h743_irq_scope.py build-irq-scope --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd48-dma-c-scope-proof
+          path: field-ambience-current/firmware-c-next/build-irq-scope/SD48_IRQ_SCOPE_METRICS.json
+          if-no-files-found: error
+
+  ui-idle-review:
+    name: archived H743 UI idle and whole Product PCM (PR180)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: de732f42d4c1973a82f256d9cdec129394dba4b1
+      - name: Fetch exact pre-UI software candidate
+        run: git fetch --no-tags origin b29246fde0c66618bbfc25742f929dc1f362ebf6
+      - name: Verify human input, wake-only routing and whole Product PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_ui_idle.py build-ui-idle --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd52-ui-idle-proof
+          path: field-ambience-current/firmware-c-next/build-ui-idle/SD52_UI_IDLE_METRICS.json
+          if-no-files-found: error
+
+  product-long-recovery-review:
+    name: archived continuous Product World and Scene recovery (PR179)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
+      - name: Fetch exact unchanged Product baseline
+        run: git fetch --no-tags origin fe0551c3f0ca1bbf2fc7d1693a2a8d337c5e77c2
+      - name: Verify continuous PCM, native Scene failures and Main timer wrap
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_long_recovery.py build-product-long-recovery --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd45-continuous-recovery-proof
+          path: field-ambience-current/firmware-c-next/build-product-long-recovery/SD45_LONG_RECOVERY_METRICS.json
+          if-no-files-found: error
+
+  product-tail-history-review:
+    name: archived Product tail-history release and continuation (PR179)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
+      - name: Fetch exact unchanged Product baseline
+        run: git fetch --no-tags origin 659cb04df4d9e145c6de1f7aea9ecd17fe2b8db6
+      - name: Verify real release, complete PCM and bounded history state
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_tail_history.py build-product-tail-history --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd12-tail-history-proof
+          path: field-ambience-current/firmware-c-next/build-product-tail-history/SD12_TAIL_HISTORY_METRICS.json
+          if-no-files-found: error
+
+  product-harmony-review:
+    name: archived public Product harmony and register contract (PR179)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
+      - name: Fetch exact unchanged Product baseline
+        run: git fetch --no-tags origin e7c16650c10f466cb602ab2f3b24643a83f014a9
+      - name: Verify all-key public admission and whole rejected PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_harmony.py build-product-harmony --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd11-public-harmony-proof
+          path: field-ambience-current/firmware-c-next/build-product-harmony/SD11_PUBLIC_HARMONY_METRICS.json
+          if-no-files-found: error
+
+  nature-handoff-review:
+    name: archived Nature handoffs and unchanged runtime inventory (PR179)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
+      - name: Fetch exact final runtime baseline
+        run: git fetch --no-tags origin b352dbf9799b3fa618eeb01a833ac2a776f1c64e
+      - name: Verify real Nature publications and complete float traces
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_nature_handoff.py build-nature-handoff --sanitize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-nature-handoff-proof
+          path: field-ambience-current/firmware-c-next/build-nature-handoff/SD47_NATURE_HANDOFF_METRICS.json
+          if-no-files-found: error
+
+  room-clear-work-review:
+    name: archived bounded Room clear work and real Product PCM (PR179)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the published strict source guards at their verified revision.
+          ref: b29246fde0c66618bbfc25742f929dc1f362ebf6
+      - name: Fetch exact pre-fix baseline
+        run: git fetch --no-tags origin 8b7044206f7c9d29323f95a03f1c9ef6041818fd
+      - name: Install Cortex-M7 compiler and Newlib
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi cmake
+      - name: Verify real clear work, complete PCM and paired H743 link
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_room_clear_work.py build-room-clear-review --sanitize --arm
+      - name: Upload current Room clear proof and Product ARM image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-room-clear-work-proof
+          path: field-ambience-current/firmware-c-next/build-room-clear-review/artifact
+          if-no-files-found: error
+          retention-days: 30
+
+  source-preparation-review:
+    name: archived actual source preparation under audio IRQ (PR172)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8b7044206f7c9d29323f95a03f1c9ef6041818fd
+      - name: Fetch exact unchanged firmware baseline
+        run: git fetch --no-tags origin 7af108cb02c80425c959b58dc8b58ad5299c2465
+      - name: Verify every preparation pass and complete source PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_source_preparation.py build-source-preparation-review --sanitize
+      - name: Upload actual source preparation proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-source-preparation-proof
+          path: field-ambience-current/firmware-c-next/build-source-preparation-review/SD47_SOURCE_PREPARATION_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
+  source-handoff-review:
+    name: archived source owner handoff and Product PCM (PR172)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8b7044206f7c9d29323f95a03f1c9ef6041818fd
+      - name: Fetch exact pre-fix baseline
+        run: git fetch --no-tags origin 6990f11d8ddbe0bf6a9676309b6589acd0b94b9b
+      - name: Install Cortex-M7 compiler and Newlib
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi cmake
+      - name: Verify source reuse, current stops, whole Product PCM and unchanged audio code
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_source_handoff.py build-source-handoff-review --sanitize --arm
+      - name: Upload current source handoff proof and Product ARM image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-source-handoff-proof
+          path: field-ambience-current/firmware-c-next/build-source-handoff-review/artifact
+          if-no-files-found: error
+          retention-days: 30
+
+  room-handoff-review:
+    name: archived coherent Room handoff and Product PCM (PR170)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Preserve the strict PR170 proof; current source proof runs above.
+          ref: 6990f11d8ddbe0bf6a9676309b6589acd0b94b9b
+      - name: Fetch exact pre-fix baseline
+        run: git fetch --no-tags origin e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Install Cortex-M7 compiler and Newlib
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi cmake
+      - name: Verify preemption counterexample and unchanged Product PCM and ARM delta
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_room_handoff.py build-room-handoff-review --sanitize --arm
+      - name: Upload current Room proof and Product ARM image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd47-room-handoff-proof
+          path: field-ambience-current/firmware-c-next/build-room-handoff-review/artifact
+          if-no-files-found: error
+          retention-days: 30
+
+  scene-save-review:
+    name: archived confirmed Scene Save API (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Fetch exact default-source baseline
+        run: git fetch --no-tags origin 6c1316bea9dc5ced80dafcde29872ac4eb2b784e
+      - name: Verify snapshot publication, all IO faults, cancellation and complete PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_scene_save.py build-scene-save-review --sanitize-model
+      - name: Upload confirmed Scene API proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-scene-save-proof
+          path: field-ambience-current/firmware-c-next/build-scene-save-review/SD41_SCENE_SAVE_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
+  h743-scene-io-review:
+    name: archived H743 Scene IO and ECC recovery (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Fetch exact unchanged firmware baseline
+        run: git fetch --no-tags origin 45a71dc9615271e596aa984a4c89cb8403e91686
+      - name: Install Cortex-M7 compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi
+      - name: Verify native fault model and real Cortex-M7 handlers
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_h743_scene_io.py build-h743-scene-io-review --sanitize-model
+      - name: Upload H743 Scene IO proof and ARM object
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-h743-scene-io-proof
+          path: field-ambience-current/firmware-c-next/build-h743-scene-io-review
+          if-no-files-found: error
+          retention-days: 30
+
+  h743-scene-bench-review:
+    name: archived isolated H743 Scene bench (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Fetch exact unchanged firmware baseline
+        run: git fetch --no-tags origin 70ddde32dfaeaffe3399a9ee5c1f83b65cde40e3
+      - name: Install Cortex-M7 compiler and Newlib
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gcc-arm-none-eabi libnewlib-dev libnewlib-arm-none-eabi cmake
+      - name: Verify native commands and full ARM ELF vectors and memory
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_h743_scene_bench.py build-h743-scene-bench-review --sanitize-model
+      - name: Upload isolated H743 bench image and proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-h743-scene-bench-proof
+          path: field-ambience-current/firmware-c-next/build-h743-scene-bench-review/artifact
+          if-no-files-found: error
+          retention-days: 30
+
+  journal-recovery-review:
+    name: archived yielding Scene recovery (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Fetch exact unchanged runtime and writer baseline
+        run: git fetch --no-tags origin 6c380a62be0a3fd54e1725995ad619de9ab51396
+      - name: Verify bounded recovery, cancellation, corrupt reads and actual retry PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_journal_recovery.py build-journal-recovery-review
+      - name: Upload yielding recovery and retry proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-journal-recovery-proof
+          path: field-ambience-current/firmware-c-next/build-journal-recovery-review/SD41_JOURNAL_RECOVERY_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
+  async-journal-review:
+    name: archived async Scene journal PCM (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Fetch exact unchanged runtime baseline
+        run: git fetch --no-tags origin 6e5be3d663a54d3e1e08d77683b23563fae0da09
+      - name: Verify bounded writer, drains, readback and whole PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_async_journal.py build-async-journal-review
+      - name: Upload async transaction proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-async-journal-proof
+          path: field-ambience-current/firmware-c-next/build-async-journal-review/SD41_ASYNC_JOURNAL_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
+  boot-recall-review:
+    name: archived Product boot and Scene recall (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags origin 67b4ac83f42e5af7b5190db812005ed8c4d693ae
+      - name: Verify actual boot silence, recalled owners and complete PCM
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_boot_recall.py build-boot-recall-review
+      - name: Upload bounded boot, recall and seed proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-boot-recall-seed-proof
+          path: field-ambience-current/firmware-c-next/build-boot-recall-review/SD41_BOOT_RECALL_METRICS.json
+          if-no-files-found: error
+          retention-days: 30
+
+  product-audio-review:
+    name: archived Spec0.8 hearing packs (PR155)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historical hearing packs assert their published source hashes.
+          # New musical changes get a separate current-source audit below.
+          ref: 4de325a0d4c6255909801e02e0cfe62889a6777e
+      - name: Install audio measurement tool
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Render and measure short hearing files
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_product_audio.py build-product-audio
+      - name: Upload dry source hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-dry-sources-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/dry
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload World hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-worlds-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/world
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Nature hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-nature-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/nature
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Color endpoint hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-color-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/color
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload SHAPE endpoint hearing pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-shape-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/shape
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload blind dry World comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-blind-worlds-27s
+          path: field-ambience-current/firmware-c-next/build-product-audio/blind
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render isolated SD02 COAST components
+        working-directory: field-ambience-current/firmware-c-next
+        run: python3 tools/review_coast_components.py build-sd02-components
+      - name: Upload SD02 COAST component comparisons
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd02-coast-components-27s
+          path: field-ambience-current/firmware-c-next/build-sd02-components
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify SD03 COAST voice independence
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_coast_independence.py build-sd03-independence
+      - name: Upload SD03 COAST independence comparisons
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd03-coast-independence-27s
+          path: field-ambience-current/firmware-c-next/build-sd03-independence
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render SD04 dry HIGHLANDS and COAST comparison
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_highlands_coast.py build-sd04-sources
+      - name: Upload SD04 source comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-sd04-highlands-coast-27s
+          path: field-ambience-current/firmware-c-next/build-sd04-sources
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render musical ensemble direction sketch
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_ensemble_sketch.py build-ensemble-sketch
+      - name: Upload composed ensemble sketch
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-musical-ensemble-sketch-27s
+          path: field-ambience-current/firmware-c-next/build-ensemble-sketch
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render converging COAST World algorithm
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_converging_world.py build-converging-world
+      - name: Upload converging COAST World sketch
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-coast-converge-27s
+          path: field-ambience-current/firmware-c-next/build-converging-world
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render distinct WOODLAND and HIGHLANDS ensemble algorithms
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          python3 tools/review_world_ensembles.py build-world-ensembles
+          python3 tools/review_world_ensembles.py build-world-ensembles/seed-1 --seed 1
+          python3 tools/review_world_ensembles.py build-world-ensembles/seed-42 --seed 42
+      - name: Upload distinct World ensemble probes
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-highlands-ensembles
+          path: field-ambience-current/firmware-c-next/build-world-ensembles
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render long soft WOODLAND string candidate
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_woodland_long.py build-woodland-long
+      - name: Upload long WOODLAND candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-long-45s
+          path: field-ambience-current/firmware-c-next/build-woodland-long
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render actual integrated COAST generator
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_coast_generator.py build-coast-generator
+      - name: Upload integrated COAST firmware phrase
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-coast-generator-70s
+          path: field-ambience-current/firmware-c-next/build-coast-generator
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render actual long WOODLAND generator
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_woodland_generator.py build-woodland-generator
+      - name: Upload integrated WOODLAND firmware phrase
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-generator-50s
+          path: field-ambience-current/firmware-c-next/build-woodland-generator
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render actual HIGHLANDS chord and pause generator
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_highlands_generator.py build-highlands-generator
+      - name: Upload integrated HIGHLANDS firmware phrase
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-highlands-generator-65s
+          path: field-ambience-current/firmware-c-next/build-highlands-generator
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify actual long-form phrase memory and render short comparisons
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_phrase_development.py build-phrase-development
+      - name: Upload later-phrase hearing comparisons and long traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-phrase-development-29s
+          path: |
+            field-ambience-current/firmware-c-next/build-phrase-development/AMBIENT_*_Development_compare_29s.wav
+            field-ambience-current/firmware-c-next/build-phrase-development/PHRASE_DEVELOPMENT_METRICS.json
+            field-ambience-current/firmware-c-next/build-phrase-development/*.events.csv
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify matched actual-ensemble Room amounts and float decay
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_room_comparison.py build-room-comparison
+      - name: Upload compact Room comparisons and actual note histories
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-room-comparison-27p5s
+          path: |
+            field-ambience-current/firmware-c-next/build-room-comparison/AMBIENT_*_Room_AB_27p5s.wav
+            field-ambience-current/firmware-c-next/build-room-comparison/SD19_ROOM_METRICS.json
+            field-ambience-current/firmware-c-next/build-room-comparison/*.events.csv
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Compare calibrated Room with exact PR152 baseline
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          git fetch --no-tags --depth=1 origin 09319610912b81a8c71860479a6eeba754f53427
+          python3 tools/review_room_calibration.py build-room-calibration --candidate-audit build-room-comparison
+      - name: Upload matched held and release Room comparisons
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-room-calibration-27p5s
+          path: |
+            field-ambience-current/firmware-c-next/build-room-calibration/AMBIENT_*_Room_Calibrated_AB_27p5s.wav
+            field-ambience-current/firmware-c-next/build-room-calibration/SD19_ROOM_CALIBRATION_METRICS.json
+            field-ambience-current/firmware-c-next/build-room-calibration/*.events.csv
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify optional Nature against matched actual music and pauses
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          git fetch --no-tags --depth=1 origin e34bcf372637c6e3db239849550d7bd4bb015bdc
+          python3 tools/review_nature_comparison.py build-nature-comparison
+      - name: Upload compact Nature comparisons and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-nature-comparison-27p5s
+          path: |
+            field-ambience-current/firmware-c-next/build-nature-comparison/AMBIENT_*_Nature_AB_27p5s.wav
+            field-ambience-current/firmware-c-next/build-nature-comparison/SD28_NATURE_METRICS.json
+            field-ambience-current/firmware-c-next/build-nature-comparison/*.events.csv
+            field-ambience-current/firmware-c-next/build-nature-comparison/*.state.csv
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify actual Activity ranges and held musical roles
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          git fetch --no-tags --depth=1 origin 9f9aafc3fc44ba53a8496f6ec8e501e6efdd4def
+          python3 tools/review_activity_comparison.py build-activity-comparison
+      - name: Upload compact Activity comparisons and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-activity-comparison-38p5s
+          path: |
+            field-ambience-current/firmware-c-next/build-activity-comparison/AMBIENT_*_Activity_0_50_100_38p5s.wav
+            field-ambience-current/firmware-c-next/build-activity-comparison/SD33_ACTIVITY_METRICS.json
+            field-ambience-current/firmware-c-next/build-activity-comparison/*.events.csv
+            field-ambience-current/firmware-c-next/build-activity-comparison/*.state.csv
+          if-no-files-found: error
+          retention-days: 30
+
+  coast-activity-review:
+    name: archived COAST Activity calibration (PR156)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: c89bc630fec5a9e193f06a4e08d8e6752a16b3b2
+      - name: Fetch exact comparison baseline
+        run: git fetch --no-tags --depth=1 origin 4de325a0d4c6255909801e02e0cfe62889a6777e
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify real COAST waits, music and unchanged other Worlds
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_coast_activity_calibration.py build-coast-activity-calibration
+      - name: Upload one short COAST WAV and complete audit traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-coast-activity-calibrated-38p5s
+          path: field-ambience-current/firmware-c-next/build-coast-activity-calibration
+          if-no-files-found: error
+          retention-days: 30
+
+  color-ensemble-review:
+    name: archived musical Color ranges (PR157)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ab673f49de056154d985290d5bc1f8a7f5bf43a5
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin c89bc630fec5a9e193f06a4e08d8e6752a16b3b2
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify Color endpoints and live controls through actual ensembles
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_color_comparison.py build-color-ensemble-review
+      - name: Upload three short Color WAVs and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-color-ensembles-38p5s
+          path: field-ambience-current/firmware-c-next/build-color-ensemble-review
+          if-no-files-found: error
+          retention-days: 30
+
+  woodland-color-review:
+    name: archived long WOODLAND Color calibration (PR158)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1f21ade3c78acc2a1c513eefaa4fa1ba1561dd95
+      - name: Fetch exact comparison baseline
+        run: git fetch --no-tags --depth=1 origin ab673f49de056154d985290d5bc1f8a7f5bf43a5
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy scipy
+      - name: Verify Color, neutral PCM, long decay and actual musical ownership
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_woodland_color_calibration.py build-woodland-color-calibration
+      - name: Upload two short WOODLAND WAVs and complete audit traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-woodland-color-calibrated
+          path: field-ambience-current/firmware-c-next/build-woodland-color-calibration
+          if-no-files-found: error
+          retention-days: 30
+
+  attack-ensemble-review:
+    name: archived musical Attack ranges (PR159)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4cd07cd63c82b251320bce3be8676473a2ee9e3e
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin 1f21ade3c78acc2a1c513eefaa4fa1ba1561dd95
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify Attack openings, prepared holds and future note controls
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_attack_comparison.py build-attack-ensemble-review
+      - name: Upload three short Attack WAVs and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-attack-ensembles-38p5s
+          path: field-ambience-current/firmware-c-next/build-attack-ensemble-review
+          if-no-files-found: error
+          retention-days: 30
+
+  release-ensemble-review:
+    name: archived musical Release and physical handovers (PR160)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a13d01949b425f3cec966573544639bf8ec49b5f
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin 4cd07cd63c82b251320bce3be8676473a2ee9e3e
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify captured Release, physical retirement and matched tails
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_release_comparison.py build-release-ensemble-review
+      - name: Upload three short Release WAVs and complete musical traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-release-ensembles-38p5s
+          path: field-ambience-current/firmware-c-next/build-release-ensemble-review
+          if-no-files-found: error
+          retention-days: 30
+
+  product-level-review:
+    name: archived Product gains and admitted source sums (PR161)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9bde4de2646bafb027f1e76d6b7b683c32a56798
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin a13d01949b425f3cec966573544639bf8ec49b5f
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify fixed gains, velocities, source sums and reference headroom
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_product_levels.py build-product-level-review
+      - name: Upload musical level comparison and complete audit traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-product-levels-40s
+          path: field-ambience-current/firmware-c-next/build-product-level-review
+          if-no-files-found: error
+          retention-days: 30
+
+  parameter-combination-review:
+    name: archived reachable parameter combinations (PR162)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4c784f64de8f27686be6539b228be578d147620e
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin 9bde4de2646bafb027f1e76d6b7b683c32a56798
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify directed combinations, control transitions and actual retirement
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_parameter_combinations.py build-parameter-combination-review
+      - name: Upload short parameter comparison and complete audit traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-parameter-combinations-40s
+          path: field-ambience-current/firmware-c-next/build-parameter-combination-review
+          if-no-files-found: error
+          retention-days: 30
+
+  world-transition-review:
+    name: archived directed Product World changes (PR169)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Retain strict published byte guards; current SD47 proof runs below.
+          ref: e2ede28c0ccc653f1d641741285d58eb7d02e587
+      - name: Fetch exact unchanged sound baseline
+        run: git fetch --no-tags --depth=1 origin 4c784f64de8f27686be6539b228be578d147620e
+      - name: Install audio measurement tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install numpy
+      - name: Verify actual owners, shared Room, latest World and complete PCM
+        working-directory: field-ambience-current/firmware-c-next
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: python3 tools/review_world_transitions.py build-world-transition-review
+      - name: Upload six genuine transition excerpts and complete ownership traces
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-world-transitions-50p5s
+          path: field-ambience-current/firmware-c-next/build-world-transition-review
+          if-no-files-found: error
+          retention-days: 30
 
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
@@ -132,18 +1027,25 @@ jobs:
           cmake .. -DPICO_BOARD=pico2
           make -j"$(nproc)"
 
-      - name: Report size + verify UF2 exists
+      - name: Report size + verify UF2s exist
         working-directory: field-ambience-current/firmware-c-next/build
         run: |
-          arm-none-eabi-size display_hw_test.elf
-          test -f display_hw_test.uf2
-          ls -la display_hw_test.uf2
+          # Both bench tools are flashable deliverables, so both are checked and
+          # both are uploaded. design_bench was previously built but never
+          # published, which made it undownloadable.
+          for t in display_hw_test design_bench; do
+            arm-none-eabi-size "$t.elf"
+            test -f "$t.uf2"
+            ls -la "$t.uf2"
+          done
 
-      - name: Upload UF2 artifact
+      - name: Upload UF2 artifacts
         uses: actions/upload-artifact@v4
         with:
           name: firmware-c-next-pico2-uf2
-          path: field-ambience-current/firmware-c-next/build/display_hw_test.uf2
+          path: |
+            field-ambience-current/firmware-c-next/build/display_hw_test.uf2
+            field-ambience-current/firmware-c-next/build/design_bench.uf2
           if-no-files-found: error
 
   # --- STM32H743 product target: real ARM cross-build gate ----------------
@@ -162,12 +1064,252 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq gcc-arm-none-eabi cmake build-essential
+      - name: Compile prepared async journal for Cortex-M7 (not integrated)
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build-async-journal-arm
+          arm-none-eabi-gcc -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -fstack-usage -Iinclude -c src/scenes_journal_async.c -o build-async-journal-arm/scenes_journal_async.o
+          arm-none-eabi-nm build-async-journal-arm/scenes_journal_async.o
+          test -s build-async-journal-arm/scenes_journal_async.su
+      - name: Upload standalone ARM component and stack report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-async-journal-arm-component
+          path: field-ambience-current/firmware-c-next/build-async-journal-arm
+          if-no-files-found: error
+          retention-days: 30
+      - name: Compile prepared yielding recovery for Cortex-M7 (not integrated)
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build-journal-recovery-arm
+          arm-none-eabi-gcc -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -fstack-usage -Iinclude -c src/scenes_journal_recovery.c -o build-journal-recovery-arm/scenes_journal_recovery.o
+          arm-none-eabi-nm build-journal-recovery-arm/scenes_journal_recovery.o
+          test -s build-journal-recovery-arm/scenes_journal_recovery.su
+      - name: Upload standalone ARM recovery component and stack report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-journal-recovery-arm-component
+          path: field-ambience-current/firmware-c-next/build-journal-recovery-arm
+          if-no-files-found: error
+          retention-days: 30
+      - name: Compile and partially link prepared Scene Save for Cortex-M7
+        # The prepared API is a separate component, never a default image option.
+        # Compile both sides of its private SCN7 bridge and partially link them.
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          mkdir -p build-scene-save-arm
+          for source in scenes scenes_save_async scenes_journal scenes_journal_async scenes_journal_recovery; do
+            arm-none-eabi-gcc -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -DFAM_SOUND_PRODUCT -DFAM_SCENE_SAVE_ASYNC_PREPARED -fstack-usage -Iinclude -c "src/$source.c" -o "build-scene-save-arm/$source.o"
+          done
+          arm-none-eabi-ld -r build-scene-save-arm/*.o -o build-scene-save-arm/prepared_scene_save.o
+          arm-none-eabi-nm -S build-scene-save-arm/prepared_scene_save.o > build-scene-save-arm/prepared_scene_save.nm
+          test -s build-scene-save-arm/scenes_save_async.su
+          test -s build-scene-save-arm/scenes.su
+          ! grep -E ' U scenes_save_' build-scene-save-arm/prepared_scene_save.nm
+      - name: Upload prepared ARM Scene Save component and stack reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: ambient-scene-save-arm-component
+          path: field-ambience-current/firmware-c-next/build-scene-save-arm
+          if-no-files-found: error
+          retention-days: 30
       - name: Cross-build h743 (FAM_TARGET=h743)
         working-directory: field-ambience-current/firmware-c-next
         run: |
           mkdir -p build-h743 && cd build-h743
           # CMakeLists auto-selects cmake/arm-none-eabi-m7.cmake for h743.
-          cmake .. -DFAM_TARGET=h743
+          cmake .. -DFAM_TARGET=h743 -DCMAKE_BUILD_TYPE=Release
+          cat CMakeFiles/field_ambience_h743.dir/flags.make
           make -j"$(nproc)"
           test -f field_ambience_h743 && echo "h743 cross-build linked OK"
           arm-none-eabi-size field_ambience_h743
+
+      - name: Upload H743 image and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-release
+          path: |
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743/field_ambience_h743.map
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Cross-build reduced product sound candidate
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-product -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cat build-h743-product/CMakeFiles/field_ambience_h743.dir/flags.make
+          cmake --build build-h743-product -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-product
+          python3 tools/device_capture.py build-h743-product
+
+      - name: Upload reduced sound candidate and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-product-candidate
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-product/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-product/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-product/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-product/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-product/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-product/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Cross-build opt-in World character hearing candidate
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-character -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_WORLD_CHARACTER_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-character -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-character
+          python3 tools/device_capture.py build-h743-character
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-world-character-hearing
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-character/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-character/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-character/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-character/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-character/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-character/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-character/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-character/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-character/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build opt-in WOODLAND harmonic body hearing candidate
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-woodland-body -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_WORLD_CHARACTER_CANDIDATE=ON -DFAM_WOODLAND_BODY_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-woodland-body -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-woodland-body
+          python3 tools/device_capture.py build-h743-woodland-body
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-woodland-body-hearing
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-woodland-body/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build opt-in long WOODLAND modal replacement
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-resonator -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_WORLD_CHARACTER_CANDIDATE=ON -DFAM_WOODLAND_RESONATOR_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-resonator -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-resonator
+          python3 tools/device_capture.py build-h743-resonator
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-woodland-resonator-hearing
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-resonator/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-resonator/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-resonator/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-resonator/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-resonator/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-resonator/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build complete sound software candidate
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-sound-finish -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SOUND_FINISH_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-sound-finish -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-sound-finish
+          python3 tools/device_capture.py build-h743-sound-finish
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-complete-sound-hearing
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-sound-finish/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build complete sound with large asynchronous sessions
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-sound-session -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SOUND_FINISH_CANDIDATE=ON -DFAM_SOUND_SESSION_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-sound-session -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-sound-session
+          python3 tools/device_capture.py build-h743-sound-session
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-sound-session-candidate
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-sound-session/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-sound-session/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-sound-session/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-sound-session/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-sound-session/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-sound-session/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-sound-session/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-sound-session/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-sound-session/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build instrumented complete-sound device bench
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-device-bench -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SOUND_FINISH_CANDIDATE=ON -DFAM_SOUND_SESSION_CANDIDATE=ON -DFAM_DEVICE_BENCH_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-device-bench -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-device-bench
+          python3 tools/device_capture.py build-h743-device-bench
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-instrumented-device-bench
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-device-bench/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-device-bench/PRODUCT_BUILD_AUDIT.json
+            field-ambience-current/firmware-c-next/build-h743-device-bench/DEVICE_CAPTURE_MANIFEST.json
+            field-ambience-current/firmware-c-next/build-h743-device-bench/device_capture.py
+            field-ambience-current/firmware-c-next/build-h743-device-bench/device_capture_gdb.py
+            field-ambience-current/firmware-c-next/build-h743-device-bench/DEVICE_CAPTURE_README.md
+          if-no-files-found: error
+
+      - name: Cross-build experimental recoverable Scene journal
+        working-directory: field-ambience-current/firmware-c-next
+        run: |
+          cmake -S . -B build-h743-journal -DFAM_TARGET=h743 -DFAM_SOUND_PROFILE=product -DFAM_SCENE_JOURNAL_CANDIDATE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-h743-journal -j"$(nproc)"
+          python3 tools/check_product_link.py build-h743-journal
+          grep -q 'src/scenes_journal.c' build-h743-journal/compile_commands.json
+          grep -q 'scene_journal_write' build-h743-journal/field_ambience_h743.map
+
+      - name: Upload experimental Scene journal and linker map
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c-next-h743-scene-journal-experimental
+          path: |
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.bin
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.hex
+            field-ambience-current/firmware-c-next/build-h743-journal/field_ambience_h743.map
+            field-ambience-current/firmware-c-next/build-h743-journal/PRODUCT_BUILD_AUDIT.json
+          if-no-files-found: error
+          retention-days: 14

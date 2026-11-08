@@ -1,0 +1,41 @@
+{
+  "baseline": "de732f42d4c1973a82f256d9cdec129394dba4b1",
+  "changed_inputs": [
+    "src/hal_h743/audio_h743.c",
+    "src/hal_h743/stm32h7xx_it.c",
+    "src/hal_h743/diag_h743.c",
+    "src/hal_h743/h743_hal.h"
+  ],
+  "limitations": "No device timing/stack/dispatch-latency/DMA-error/output acceptance. C window excludes exception entry/exit and final profiler bookkeeping. Overruns describe scope budget, not measured hardware underruns. Diagnostic fields are individual observations, not a coherent multi-field snapshot.",
+  "native": {
+    "accounting_cases": 64,
+    "added_profiler_bytes": 56,
+    "diagnostic_rows": 33,
+    "pcm_pairs": 12,
+    "stereo_frames_compared": 196608
+  },
+  "sanitized": true,
+  "scope": "Actual H743 reset/IRQ/refill/diagnostic functions with synthetic DWT/HAL/scan/cache costs;0/1/2 pending halves, counter wrap, real full Product PCM in3 Worlds at64/512 render caps.",
+  "sha256": {
+    "src/ambient_room.c": "9633f78873608cf3924ce60b946e198fd031ec587572ecb5da306b971a164633",
+    "src/audio_profiler.c": "74df46ddbb0d9cd6bea6b9b6e656eeaf7fab5361722bedea75e46a2e6284217f",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/engine_product.c": "da6fda2bec7412393e1c169616cff16769c3e76ae15666a36a83bfdb4d6286f3",
+    "src/hal_h743/audio_h743.c": "7b3893a99cb881f11204a6d307ee3ff62dea07fd36286ee16a348a2e03fbb79f",
+    "src/hal_h743/diag_h743.c": "60b1acc9bcce50efa2b9fe232e064e358c5475ad290069149da78eeee6434355",
+    "src/hal_h743/h743_hal.h": "d1150f9f884703ce908f4171990580a3f5bc582e25f98109a8ea99cfe62b9d7d",
+    "src/hal_h743/stm32h7xx_it.c": "be0641420046ad21fbb81abf5b931c1097b2e7a573f52c72eaf29cce3c7979e8",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/pluck.c": "5e13ddfe5dc4717a770e336fa8838e4f4bce4f1019aae4cd7ac4db9f95b79317",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/world_grammar.c": "a90cea1f8c86728a9136dc3b2332bda2c69393db9bab2fbfd0cbc19d092e6f78",
+    "test/test_h743_irq_scope.c": "5903af5cafe37260a5bb9942bb0f76d98e8a91e83512671bb8a685253b576daf",
+    "tools/review_h743_irq_scope.py": "d808e1f7dcd7557f38a7705c6d683091f14fca182992336799ced3d79a26efd1"
+  },
+  "unchanged_existing_inputs": 261
+}

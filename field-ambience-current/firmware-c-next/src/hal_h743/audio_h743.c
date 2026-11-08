@@ -9,7 +9,7 @@
  *
  * Pins (AF6, NETS-verified r18.83): PE4 SAI1_FS_A → LRCK (DAC 15),
  * PE5 SAI1_SCK_A → BCK (DAC 13), PE6 SAI1_SD_A → DIN (DAC 14).
- * Amp control: PB14 = AMP_nSHDN, PB15 = AMP_nMUTE (hardware pulldowns keep
+ * Amp control: PB14 = AMP_SHDN_N, PB15 = AMP_MUTE_N (hardware pulldowns keep
  * both LOW through boot — SPEC §8.3 pop-suppression).
  *
  * Pump: one ping-pong buffer (2 × AUDIO_BUFFER_FRAMES stereo frames),
@@ -29,6 +29,9 @@
 #include "h743_hal.h"
 #include "mcp23017.h"
 #include <string.h>
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+#include "device_bench.h"
+#endif
 
 SAI_HandleTypeDef h743_hsai1a;
 DMA_HandleTypeDef h743_hdma_sai;
@@ -48,6 +51,11 @@ static int16_t s_buffer[AUDIO_BUFFER_FRAMES * 2 * AUDIO_NUM_BUFFERS];
  * render inside the DMA IRQ; the accounting lives in audio_profiler.c and is
  * host-tested. audio_profiler_state() exposes it for a debug/menu readout. */
 static audio_profiler_t s_prof;
+static audio_profiler_t s_irq_prof;
+static void reset_profilers(void) {
+    audio_profiler_reset(&s_prof, SystemCoreClock, AUDIO_SAMPLE_RATE_HZ);
+    audio_profiler_reset(&s_irq_prof, SystemCoreClock, AUDIO_SAMPLE_RATE_HZ);
+}
 
 /* Enable the Cortex-M7 cycle counter (DWT->CYCCNT) once, before the pump. */
 static void dwt_cyccnt_enable(void) {
@@ -57,6 +65,14 @@ static void dwt_cyccnt_enable(void) {
 }
 
 const audio_profiler_t *audio_profiler_state(void) { return &s_prof; }
+const audio_profiler_t *h743_audio_irq_profiler_state(void) { return &s_irq_prof; }
+void h743_audio_irq_begin(void) {
+    /* Keep one half-period budget even when both DMA flags are pending. */
+    audio_profiler_begin(&s_irq_prof, DWT->CYCCNT, AUDIO_BUFFER_FRAMES);
+}
+void h743_audio_irq_end(void) {
+    audio_profiler_end(&s_irq_prof, DWT->CYCCNT);
+}
 
 /* ---- test-sine fallback (identical contract to the Pico pump) ---- */
 static void fill_test_sine(int16_t *block, int frames) {
@@ -96,6 +112,11 @@ void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *h) {
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *h) {
     (void)h; fill_half(1);
 }
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *h) {
+    if(h==&h743_hsai1a)device_bench_audio_error(h->ErrorCode,h->hdmatx ? h->hdmatx->ErrorCode : 0);
+}
+#endif
 
 /* ---- MspInit: pins, clocks, DMA plumbing ---- */
 void HAL_SAI_MspInit(SAI_HandleTypeDef *h) {
@@ -138,7 +159,7 @@ void audio_init(void) {
     /* Render deadline profiler: enable the cycle counter + clear stats before
      * the pump starts. SystemCoreClock = 480 MHz after clock init. */
     dwt_cyccnt_enable();
-    audio_profiler_reset(&s_prof, SystemCoreClock, AUDIO_SAMPLE_RATE_HZ);
+    reset_profilers();
 
     /* Amp control pins LOW first (they already are, via R_SHDN_PD/R_MUTE_PD
      * — drive them explicitly anyway before anything clocks). */
@@ -180,6 +201,9 @@ void audio_init(void) {
         Error_Handler();
 
     /* SPEC §8.3 pop-suppression: rails settle → amp wakes → un-mute. */
+#ifdef FAM_DEVICE_BENCH_CANDIDATE
+    device_bench_audio_start(HAL_GetTick(),SystemCoreClock);
+#endif
     HAL_Delay(50);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);   /* /SHDN high  */
     HAL_Delay(50);

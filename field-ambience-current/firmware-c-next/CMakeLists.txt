@@ -47,6 +47,53 @@ endif()
 set(FAM_TARGET "${_fam_default}" CACHE STRING "Build target: h743 | pico | host")
 set_property(CACHE FAM_TARGET PROPERTY STRINGS h743 pico host)
 
+# Reference remains the default until source hearing and device gates pass.
+set(FAM_SOUND_PROFILE "reference" CACHE STRING "Sound profile: reference | product")
+set_property(CACHE FAM_SOUND_PROFILE PROPERTY STRINGS reference product)
+option(FAM_WORLD_CHARACTER_CANDIDATE "Opt-in Model-1 World character hearing candidate; no Scene/UI activation" OFF)
+option(FAM_WOODLAND_BODY_CANDIDATE "Opt-in harmonic WOODLAND body hearing candidate; no Scene/UI activation" OFF)
+option(FAM_WOODLAND_RESONATOR_CANDIDATE "Opt-in long harmonic modal WOODLAND replacement; no Scene/UI activation" OFF)
+option(FAM_SOUND_FINISH_CANDIDATE "Complete sound candidate: pad, voicing, owned loops, bounded effects and quiet Nature accents" OFF)
+option(FAM_SOUND_AMBIENT_V3 "Ambient voicing candidate on top of the complete sound: octave-up Cells, chorused string-pad COAST, breathy ocarina HIGHLANDS, mallet WOODLAND, audible longer room, Generate as incommensurate loops, DRONE bed in each World's colour, HOLD latch, three instrument Worlds (FJORD choir, MEADOW kalimba, GLACIER bells) with S-4 style tape, resonator, grains and Vast echoes, a breathing filter and the Mutable Instruments Rings ensemble and hall" OFF)
+option(FAM_SCENE_JOURNAL_CANDIDATE "Experimental two-sector Scene journal; ECC/device acceptance pending" OFF)
+option(FAM_SOUND_SESSION_CANDIDATE "Large sound/loop Scenes with ECC-safe async H743 journal; device acceptance pending" OFF)
+option(FAM_DEVICE_BENCH_CANDIDATE "Instrument explicit sound-session bench: MSP paint, SAI errors and Save observations" OFF)
+if(FAM_DEVICE_BENCH_CANDIDATE AND NOT FAM_SOUND_SESSION_CANDIDATE)
+    message(FATAL_ERROR "Device bench requires the explicit sound-session H743 candidate")
+endif()
+if(FAM_SOUND_AMBIENT_V3 AND NOT FAM_SOUND_FINISH_CANDIDATE)
+    message(FATAL_ERROR "Ambient voicing V3 builds on the complete sound candidate")
+endif()
+if(FAM_SOUND_SESSION_CANDIDATE)
+    if(NOT FAM_SOUND_FINISH_CANDIDATE OR NOT FAM_SOUND_PROFILE STREQUAL "product" OR NOT FAM_TARGET STREQUAL "h743")
+        message(FATAL_ERROR "Sound session candidate requires H743, Product and complete sound")
+    endif()
+    if(FAM_SCENE_JOURNAL_CANDIDATE)
+        message(FATAL_ERROR "Large session and old experimental Scene journal cannot share flash ownership")
+    endif()
+endif()
+if(NOT FAM_SOUND_PROFILE STREQUAL "reference" AND NOT FAM_SOUND_PROFILE STREQUAL "product")
+    message(FATAL_ERROR "Unknown FAM_SOUND_PROFILE '${FAM_SOUND_PROFILE}'")
+endif()
+if(FAM_SOUND_PROFILE STREQUAL "product")
+    add_compile_definitions(FAM_SOUND_PRODUCT)
+    if(FAM_WORLD_CHARACTER_CANDIDATE)
+        add_compile_definitions(FAM_WORLD_CHARACTER_CANDIDATE)
+    endif()
+    if(FAM_WOODLAND_BODY_CANDIDATE)
+        add_compile_definitions(FAM_WOODLAND_BODY_CANDIDATE)
+    endif()
+    if(FAM_WOODLAND_RESONATOR_CANDIDATE)
+        add_compile_definitions(FAM_WOODLAND_RESONATOR_CANDIDATE)
+    endif()
+    if(FAM_SOUND_FINISH_CANDIDATE)
+        add_compile_definitions(FAM_SOUND_FINISH_CANDIDATE FAM_WORLD_CHARACTER_CANDIDATE FAM_WOODLAND_RESONATOR_CANDIDATE)
+    endif()
+    if(FAM_SOUND_AMBIENT_V3)
+        add_compile_definitions(FAM_SOUND_AMBIENT_V3)
+    endif()
+endif()
+
 # ---------------------------------------------------------------------------
 # Panel selection (ADR-0015 prep). Default = current 1.9" hardware (170×320).
 # Set FAM_LCD_PANEL=2_0inch when the proposed 2" 240×320 module is verified
@@ -101,14 +148,18 @@ set(DSP_SOURCES
     src/echo.c          # Reddit Echo macro: tape-style stereo delay
     src/blur.c          # Reddit Blur macro: granular cloud
     src/pluck.c         # r18.89: Karplus-Strong sparkle plucks
-    src/glass.c         # r18.98: 2-op FM glass melody voice (VOICE menu)
     src/ember.c         # r19.28: warm subtractive analog voice (Motif layer)
+    src/bowed.c         # r19.47: bowed lyra/Hardanger voice (Open Sea / Fjords)
+    src/horn.c          # r19.53: alphorn/brass voice (Alps)
+    src/choir.c         # r19.61: damp organ/choir voice (Moss Fields)
+    src/guembri.c       # r19.61: plucked low lute / sintir (Desert)
     src/shimmer.c       # r18.99: octave-up hall regeneration (SHIMMER menu)
     src/padsynth.c      # r18.93: PADsynth spectral bed table (Nasca model)
     src/body.c          # r18.94: modal resonant body for the plucks (Rings concept)
     src/composer.c      # r18.96: ambient composer state machine (probabilities only)
     src/harmony.c       # r19.0: harmonic safety core (pitch worlds, mutation, collision filter)
     src/tuning.c        # r19.6: equal/just intonation layer
+    src/shape.c         # r19.60: global envelope shape (attack/release scaling)
     src/bass.c
     src/reverb.c
     src/reverb_presets.c
@@ -130,6 +181,7 @@ set(DSP_SOURCES
     src/rolepatch.c     # r19.30: role-based chord timbre
     src/landscape.c     # r19.27: layer-role cell mode (drone/bed/motif/atmos/memory)
     src/gesture.c       # r19.25: gesture loop (record/replay cell events)
+    src/ui_idle.c       # human-idle gate; never pauses audio
     src/leds.c          # controls state → PCA9685 16-channel PWM with fade
     src/oled_draw.c
     src/oled_color.c    # accent-tinted grey→RGB565 LUT (ADR-0015 step 1)
@@ -164,13 +216,29 @@ set(V2_SOURCES
     # OP-1-Field-style swappable synth-engine host (FX stay global; the V2
     # ambient stack above remains the FIELD engine, untouched).
     src/v2/synth_host.c
-    src/v2/engines/engine_acid.c            # 303-style resonant acid bass
-    src/v2/engines/engine_fm_glass.c        # DX7-style 2-op FM key/glass
-    src/v2/engines/engine_chorus_mist.c     # Juno detuned-saw pad + chorus
-    src/v2/engines/engine_ion_storm.c       # hoover / PWM stack
-    src/v2/engines/engine_glass_orbit.c     # wavetable-style morph
-    src/v2/engines/engine_bamboo_circuit.c  # west-coast LPG pluck
+    src/v2/Synths_Archive/engine_acid.c            # 303-style resonant acid bass
+    src/v2/Synths_Archive/engine_fm_glass.c        # DX7-style 2-op FM key/glass
+    src/v2/Synths_Archive/engine_chorus_mist.c     # Juno detuned-saw pad + chorus
+    src/v2/Synths_Archive/engine_ion_storm.c       # hoover / PWM stack
+    src/v2/Synths_Archive/engine_glass_orbit.c     # wavetable-style morph
+    src/v2/Synths_Archive/engine_bamboo_circuit.c  # west-coast LPG pluck
 )
+
+# Product candidate: selected at compile time, not an amount-zero archive.
+set(WORLD_SOURCE src/worlds.c)
+if(FAM_SOUND_PROFILE STREQUAL "product")
+    set(WORLD_SOURCE src/worlds_product.c)
+    set(V2_SOURCES)
+    set(DSP_SOURCES
+        src/dsp.c src/shape.c src/tuning.c src/brain.c src/cells.c
+        src/bowed.c src/horn.c src/pluck.c src/world_grammar.c
+        src/engine_product.c src/ambient_room.c src/nature.c
+        src/controls.c src/params.c src/knobs.c src/overlay.c src/scenes.c
+        src/bloom.c src/voicelead.c src/rolepatch.c src/landscape.c src/gesture.c
+        src/ui_idle.c src/leds.c src/midi.c src/oled_draw.c src/oled_color.c
+        src/baked_font.c src/baked_font_data.c src/font_8x8.c
+        src/battery.c src/menu.c ${WORLD_SOURCE} src/audio_profiler.c)
+endif()
 
 # ---------------------------------------------------------------------------
 # Target-specific build dispatch.
@@ -210,7 +278,7 @@ if(FAM_TARGET STREQUAL "h743")
         src/hal_h743/stm32h7xx_it.c
         src/hal_h743/audio_h743.c
         src/hal_h743/encoders_h743.c
-        src/hal_h743/scenes_flash_h743.c   # r19.22: Scenes-Persistenz (Bank-2-Sektor)
+        $<$<NOT:$<BOOL:${FAM_SOUND_SESSION_CANDIDATE}>>:src/hal_h743/scenes_flash_h743.c>
         src/hal_h743/lcd_st7789_h743.c
         src/hal_h743/mcp23017_h743.c
         src/hal_h743/midi_uart_h743.c
@@ -230,6 +298,28 @@ if(FAM_TARGET STREQUAL "h743")
         USE_HAL_DRIVER
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
+    if(FAM_SOUND_SESSION_CANDIDATE)
+        target_sources(field_ambience_h743 PRIVATE
+            src/scenes_journal.c src/scenes_journal_async.c src/scenes_journal_recovery.c
+            src/scenes_save_async.c src/hal_h743/scenes_storage_h743.c
+            src/hal_h743/scenes_flash_h743_async.c src/hal_h743/scenes_flash_h743_fault.c
+            src/hal_h743/scenes_flash_h743_guard.S)
+        target_compile_definitions(field_ambience_h743 PRIVATE FAM_SOUND_SESSION_CANDIDATE FAM_SCENE_SAVE_ASYNC_PREPARED)
+        if(FAM_DEVICE_BENCH_CANDIDATE)
+            target_sources(field_ambience_h743 PRIVATE src/device_bench.c)
+            target_compile_definitions(field_ambience_h743 PRIVATE FAM_DEVICE_BENCH_CANDIDATE)
+        endif()
+        target_link_options(field_ambience_h743 PRIVATE -Wl,--defsym=__scene_journal_candidate=1)
+    elseif(FAM_SCENE_JOURNAL_CANDIDATE)
+        target_sources(field_ambience_h743 PRIVATE src/scenes_journal.c)
+        target_compile_definitions(field_ambience_h743 PRIVATE FAM_SCENE_JOURNAL_CANDIDATE)
+        target_link_options(field_ambience_h743 PRIVATE -Wl,--defsym=__scene_journal_candidate=1)
+        message(STATUS "Experimental Scene journal: ECC-safe reads and device acceptance remain open")
+    endif()
+    if(FAM_SOUND_PROFILE STREQUAL "product")
+        # Static compiler frame sizes, not measured interrupt/high-water use.
+        target_compile_options(field_ambience_h743 PRIVATE -fstack-usage)
+    endif()
     # Quiet the vendored HAL only — our own code keeps full warnings.
     set_source_files_properties(${H743_HAL_SOURCES} PROPERTIES
         COMPILE_OPTIONS "-w")
@@ -268,7 +358,7 @@ elseif(FAM_TARGET STREQUAL "pico")
         src/baked_font_data.c
         src/battery.c
         src/menu.c
-        src/worlds.c
+        ${WORLD_SOURCE}
     )
     target_include_directories(display_hw_test PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -289,12 +379,58 @@ elseif(FAM_TARGET STREQUAL "pico")
         # 2.0" module is verified — until then we stay on 1.9".
         "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
     )
+    # hardware_dma because lcd_st7789_pico.c owns the DMA row-streaming path
+    # (design_bench uses it; this target does not, but it compiles the same
+    # driver, so it needs the header and the library either way).
     target_link_libraries(display_hw_test
-        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm
+        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm hardware_dma
     )
     pico_enable_stdio_usb(display_hw_test 1)
     pico_enable_stdio_uart(display_hw_test 0)
     pico_add_extra_outputs(display_hw_test)
+
+    # --- design_bench: the radial navigation system on the real panel -------
+    # Same breadboard and same pins as display_hw_test. tools/ui_wheel.c draws
+    # the wheel from signed distance fields a row at a time — no framebuffer,
+    # no background asset, just two line buffers.
+    add_executable(design_bench
+        tools/design_bench_pico.c
+        tools/ui_wheel.c
+        tools/ui_scene.c
+        tools/ui_draw.c
+        tools/ui_motion.c
+        tools/ui_encoder.c
+        src/hal_pico/lcd_st7789_pico.c
+        src/oled_draw.c
+        src/oled_color.c
+        src/baked_font.c
+        src/baked_font_data.c
+    )
+    target_include_directories(design_bench PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools
+    )
+    target_compile_definitions(design_bench PRIVATE
+        LCD_SPI_HZ=24000000
+        LCD_PIN_SCK=18
+        LCD_PIN_MOSI=19
+        LCD_PIN_CS=17
+        LCD_PIN_DC=16
+        LCD_PIN_RES=20
+        PIN_BL=22
+        PIN_ENC_CLK=2
+        PIN_ENC_DT=3
+        PIN_ENC_SW=4
+        PIN_SHIFT=5
+        "$<$<STREQUAL:${FAM_LCD_PANEL},2_0inch>:FAM_LCD_PANEL_2_0>"
+    )
+    target_link_libraries(design_bench
+        pico_stdlib pico_time hardware_spi hardware_gpio hardware_pwm hardware_dma
+    )
+    pico_enable_stdio_usb(design_bench 1)
+    pico_enable_stdio_uart(design_bench 0)
+    pico_add_extra_outputs(design_bench)
 
 elseif(FAM_TARGET STREQUAL "host")
     message(STATUS "Field Ambience: host DSP library + offline renderers")
@@ -307,6 +443,9 @@ elseif(FAM_TARGET STREQUAL "host")
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(field_ambience_dsp PUBLIC m)
+    if(FAM_SOUND_PROFILE STREQUAL "product")
+        target_compile_definitions(field_ambience_dsp PUBLIC FAM_SOUND_PRODUCT)
+    endif()
 
 else()
     message(FATAL_ERROR "Unknown FAM_TARGET '${FAM_TARGET}' — must be h743, pico, or host")

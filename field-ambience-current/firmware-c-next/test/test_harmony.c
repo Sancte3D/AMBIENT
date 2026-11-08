@@ -119,7 +119,7 @@ int main(void) {
             if (t < 0) { ++silences; continue; }
             CHECK(harmony_in_world(t), "pick in world (%d)", t);
             CHECK(harmony_collision_ok(t, sus, nsus), "pick collision-safe (%d)", t);
-            CHECK(t >= 62 && t <= 86, "pick in melody register (%d)", t);
+            CHECK(t >= 50 && t <= 69, "pick in calm melody register (%d)", t);
             if (last > 0) {
                 int d = t > last ? t - last : last - t;
                 if (d == 0) ++reps;
@@ -155,6 +155,44 @@ int main(void) {
         }
     }
 
+    /* Calming register is a product contract, including modal colour and
+     * the anti-repeat fallback. Verify actual picks across all keys/modes,
+     * with the full voiced harmony underneath (not an empty-bed shortcut). */
+    for (int key = 0; key < 12; ++key) {
+        for (int mode = 0; mode < 6; ++mode) {
+            harmony_init(); harmony_set_mode(48 + key, mode);
+            int last = 0, notes = 0, moved = 0;
+            for (int k = 0; k < 240; ++k) {
+                if (k % 8 == 0) harmony_advance();
+                int sus[5]; sus[0] = harmony_bass_midi();
+                harmony_voices(sus + 1, 4);
+                int t = harmony_melody_next(last, sus, 5, (k & 1) ? 1.0f : 0.0f);
+                if (t < 0) continue;
+                CHECK(t >= 50 && t <= 69, "key %d mode %d: bounded note %d", key, mode, t);
+                CHECK(harmony_in_world(t) && harmony_collision_ok(t, sus, 5),
+                      "key %d mode %d: safe note %d", key, mode, t);
+                CHECK(!last || (t-last <= 12 && last-t <= 12), "bounded melodic leap");
+                int next = harmony_melody_move(t, sus, 5);
+                if (next >= 0) {
+                    ++moved;
+                    CHECK(next != t && next >= 50 && next <= 69 &&
+                          harmony_in_core(next) && harmony_collision_ok(next, sus, 5),
+                          "anti-repeat stays safe and low: %d -> %d", t, next);
+                }
+                last = t; ++notes;
+            }
+            CHECK(notes > 200, "key %d mode %d: no register-induced starvation (%d)", key, mode, notes);
+            CHECK(moved > 160, "key %d mode %d: room for melodic movement (%d)", key, mode, moved);
+        }
+    }
+    {
+        int occupied[128];
+        for (int i = 0; i < 128; ++i) occupied[i] = i;
+        CHECK(harmony_melody_next(60, occupied, 128, 1.0f) == -1,
+              "blocked register rests instead of escaping upwards");
+        CHECK(harmony_melody_move(60, occupied, 128) == -1,
+              "anti-repeat also respects a blocked register");
+    }
     printf("%d checks, %d failures\n", checks, fails);
     printf("RESULT: %s\n", fails ? "FAIL" : "PASS");
     return fails ? 1 : 0;

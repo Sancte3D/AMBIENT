@@ -1,0 +1,69 @@
+#ifndef FAM_ENGINE_PRODUCT_H
+#define FAM_ENGINE_PRODUCT_H
+#include <stdbool.h>
+#include <stdint.h>
+void engine_set_activity(float value);
+void engine_set_color(float value);
+void engine_set_room(float value);
+void engine_set_nature(float value);
+/* Physical Note-mode edge after admission; never inferred from replay/HOLD. */
+void engine_set_cell_held(uint8_t source,bool down);
+/* Opt-in Model-1 hearing candidate. Main-only; applies to future notes.
+ * Default OFF; not a new Scene/UI/MIDI parameter. Active snapshots stay intact. */
+void engine_set_world_character(bool enabled);
+/* Main-only Model-1 WOODLAND body hearing candidate; future notes only.
+ * Default OFF, independent of World character; no Scene/UI/MIDI migration. */
+void engine_set_woodland_body(bool enabled);
+/* Main-only harmonic modal replacement, future notes. Default OFF. */
+void engine_set_woodland_resonator(bool enabled);
+bool engine_try_note_on(uint8_t source,float actual_hz,float velocity);
+typedef enum {
+    ENGINE_NOTE_OK,ENGINE_NOTE_INVALID,ENGINE_NOTE_VOICES_FULL,
+    ENGINE_NOTE_HELD_PITCH,ENGINE_NOTE_TAIL_PITCH,ENGINE_NOTE_FROZEN_PITCH,
+    ENGINE_NOTE_GENERATE,ENGINE_NOTE_SILENCED
+} engine_note_block_t;
+/* Main-only result of the latest real admission attempt. UI should consume
+ * immediately after its own rejected press, not infer from audio/UI state. */
+engine_note_block_t engine_note_block_reason(void);
+#ifdef FAM_SOUND_AMBIENT_V3
+/* DRONE colour and level for a display-UI row; the DRONE key stays the on/off
+ * control. Not stored in Scenes, like the DRONE mode itself. AUTO follows the
+ * World: Strings in COAST, Wood in WOODLAND, Breath in HIGHLANDS, a choir bed
+ * in FJORD, a kalimba bed in MEADOW, distant bells in GLACIER. */
+enum { ENGINE_DRONE_AUTO,ENGINE_DRONE_STRINGS,ENGINE_DRONE_WOOD,ENGINE_DRONE_BREATH,
+       ENGINE_DRONE_CHOIR,ENGINE_DRONE_KALIMBA,ENGINE_DRONE_BELLS,ENGINE_DRONE_COLORS };
+void engine_set_drone_color(int color);
+int engine_drone_color(void);           /* the selection, AUTO included */
+int engine_drone_sounding_color(void);  /* the colour that sounds, never AUTO */
+void engine_set_drone_level_db(float db); /* trim -12..+6 dB, default 0 */
+float engine_drone_level_db(void);
+#endif
+int engine_sounding_frequencies(float *out,int max);
+uint32_t engine_admission_rejections(void);
+uint32_t engine_generative_return_count(void);
+uint32_t engine_generative_episode_count(void);
+/* Main-only observations of acknowledged phrase development; not controls. */
+int engine_generative_phrase_kind(void);
+uint32_t engine_generative_memory_return_count(void);
+uint32_t engine_output_limited_samples(void);
+uint32_t engine_nonfinite_samples(void);
+int engine_product_world(void);
+int engine_product_collection(void);
+/* Bounded lower/upper register choices. Upper is not a promised octave. */
+int engine_product_cell_midi(int cell,bool upper);
+bool engine_clear_pending(void);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "sound_parameters.h"
+/* Momentary live Cell. A true result may reserve a short release handover;
+ * engine_note_off cancels an unstarted press. Service from the Main tick. */
+bool engine_try_cell_on(uint8_t source,float actual_hz,float velocity);
+/* Independent Main targets; no Scene/UI mapping is implied. */
+void engine_set_sound_effects(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate);
+/* Playback owners 8/14 stay separate from live/shift/drone/Generate. */
+bool engine_gesture_note(uint8_t cell,bool upper,bool pressed,float velocity,uint32_t now_ms);
+#endif
+/* Soft 40 ms whole-chain silence, preserves targets and Generate intent.
+ * Old sources/room are cleared behind zero; resume creates only fresh events. */
+void engine_set_muted(bool on);
+bool engine_muted(void);
+#endif

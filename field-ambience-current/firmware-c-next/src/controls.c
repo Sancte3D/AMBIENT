@@ -12,6 +12,11 @@
 #include "brain.h"
 #include "dsp.h"
 #include "tuning.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "engine_product.h"
+#include "cells.h"
+#include <math.h>
+#endif
 
 #define SHIFT_SRC(c) ((uint8_t)((c) + 9))   /* shift-octave pad source */
 
@@ -31,6 +36,19 @@ static float s_amp_shift[CTRL_CELL_COUNT];
 /* Momentary (non-hold) note tracking: which source is sounding for a cell
  * that was tapped without Hold latched. -1 = none. */
 static int8_t s_moment_src[CTRL_CELL_COUNT];
+#ifdef FAM_SOUND_PRODUCT
+static int8_t s_admitted_src[CTRL_CELL_COUNT],s_physical_src[CTRL_CELL_COUNT];
+void controls_cell_physical(uint8_t cell,bool down) {
+    if(cell>=CTRL_CELL_COUNT) return;
+    if(s_physical_src[cell]>=0) engine_set_cell_held((uint8_t)s_physical_src[cell],false);
+    s_physical_src[cell]=-1;
+    if(down && s_admitted_src[cell]>=0) {
+        s_physical_src[cell]=s_admitted_src[cell];
+        engine_set_cell_held((uint8_t)s_physical_src[cell],true);
+    }
+    s_admitted_src[cell]=-1;
+}
+#endif
 
 void controls_init(void) {
     for (int i = 0; i < MOD_COUNT; ++i) s_mod[i] = false;
@@ -42,38 +60,108 @@ void controls_init(void) {
         s_amp_base[c]   = 0.0f;
         s_amp_shift[c]  = 0.0f;
         s_moment_src[c] = -1;
+#ifdef FAM_SOUND_PRODUCT
+        s_admitted_src[c]=s_physical_src[c]=-1;
+#endif
     }
 }
 
 static void clear_all_holds(void) {
     for (int c = 0; c < CTRL_CELL_COUNT; ++c) {
+#ifdef FAM_SOUND_PRODUCT
+        controls_cell_physical((uint8_t)c,false);
+#endif
         if (s_hold_base[c])  { engine_note_off((uint8_t)c);          s_hold_base[c]  = false; }
         if (s_hold_shift[c]) { engine_note_off(SHIFT_SRC(c));        s_hold_shift[c] = false; }
         if (s_moment_src[c] >= 0) { engine_note_off((uint8_t)s_moment_src[c]); s_moment_src[c] = -1; }
     }
 }
 
+void controls_release_cells(void) {
+    clear_all_holds();
+    s_cells_down = 0;
+    engine_set_user_presence(false);
+}
+
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Ambient voicing: HOLD is a classic latch. Latched sources live in the
+ * s_hold_* flags; nothing toggles per key, so a tap always plays. With
+ * keep_down, a latched note whose key is still down becomes momentary and
+ * ends at its key-up instead of being cut. */
+static void release_latched(bool keep_down) {
+    for (int c = 0; c < CTRL_CELL_COUNT; ++c) {
+        bool down = keep_down && ((s_cells_down >> c) & 1u) && s_moment_src[c] < 0;
+        if (s_hold_base[c]) {
+            s_hold_base[c] = false; s_amp_base[c] = 0.0f;
+            if (down) { s_moment_src[c] = (int8_t)c; down = false; }
+            else engine_note_off((uint8_t)c);
+        }
+        if (s_hold_shift[c]) {
+            s_hold_shift[c] = false; s_amp_shift[c] = 0.0f;
+            if (down) s_moment_src[c] = (int8_t)SHIFT_SRC(c);
+            else engine_note_off(SHIFT_SRC(c));
+        }
+    }
+}
+/* HOLD pressed while keys are down: the notes they play are caught. */
+static void catch_moments(void) {
+    for (int c = 0; c < CTRL_CELL_COUNT; ++c) {
+        int8_t src = s_moment_src[c];
+        if (src < 0) continue;
+        if (src == (int8_t)c) s_hold_base[c] = true; else s_hold_shift[c] = true;
+        s_moment_src[c] = -1;
+    }
+}
+#endif
+
 void controls_modifier(mod_id_t mod, bool pressed) {
     if (mod >= MOD_COUNT) return;
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Ambient voicing: the DRONE bed may lie under Generate's loops and can
+     * be switched while Generate runs; HOLD stays locked. */
+    if (s_mod[MOD_GENERATE] && mod == MOD_HOLD) return;
+#else
+    if (s_mod[MOD_GENERATE] && (mod == MOD_HOLD || mod == MOD_DRONE)) return;
+#endif
     switch (mod) {
         case MOD_SHIFT:
             s_mod[MOD_SHIFT] = pressed;   /* r19.20: momentary, both edges */
             break;
         case MOD_HOLD:
             if (pressed) s_mod[mod] = !s_mod[mod];   /* latch toggle on press */
+#ifdef FAM_SOUND_AMBIENT_V3
+            /* On: catch what the held keys play. Off: let the latch go. */
+            if (pressed) { if (s_mod[MOD_HOLD]) catch_moments(); else release_latched(true); }
+#endif
             break;
         case MOD_DRONE:
             if (pressed) { s_mod[MOD_DRONE] = !s_mod[MOD_DRONE]; engine_set_drone(s_mod[MOD_DRONE]); }
             break;
         case MOD_GENERATE:
-            if (pressed) { s_mod[MOD_GENERATE] = !s_mod[MOD_GENERATE];
-                           engine_set_generative(s_mod[MOD_GENERATE], -1); }  /* -1 = Markov auto */
+            if (pressed) {
+                if (!s_mod[MOD_GENERATE]) {
+                    controls_release_cells();
+#ifdef FAM_SOUND_AMBIENT_V3
+                    s_mod[MOD_HOLD] = false;    /* the DRONE bed keeps sounding */
+#else
+                    s_mod[MOD_HOLD] = s_mod[MOD_DRONE] = false;
+                    engine_set_drone(false);
+#endif
+                }
+                s_mod[MOD_GENERATE] = !s_mod[MOD_GENERATE];
+                engine_set_generative(s_mod[MOD_GENERATE], -1);
+            }
             break;
         case MOD_CLEAR:
             if (!pressed) break;
+            if (s_mod[MOD_GENERATE]) {
+                s_mod[MOD_GENERATE] = false;
+                engine_set_generative(false, -1);
+            }
             if (s_mod[MOD_SHIFT]) {
                 /* r19.20 SHIFT+CLEAR — FLUSH: silence everything that is
-                 * sounding, but leave the modes running. The drone module
+                 * sounding, preserving manual Hold/Drone modes. Generate has
+                 * already exited above. The drone module
                  * is not touched by engine_all_off (own envelope), so it
                  * keeps sounding; the generator re-blooms on its next bar. */
                 clear_all_holds();
@@ -97,9 +185,52 @@ void controls_modifier(mod_id_t mod, bool pressed) {
 }
 
 void controls_cell_press(uint8_t cell, float velocity_amp) {
-    if (cell >= CTRL_CELL_COUNT) return;
+#ifdef FAM_SOUND_PRODUCT
+    if(cell<CTRL_CELL_COUNT) s_admitted_src[cell]=-1;
+#endif
+    if (cell >= CTRL_CELL_COUNT || s_mod[MOD_GENERATE]) return;
+#ifdef FAM_SOUND_AMBIENT_V3
+    bool new_gesture = (s_cells_down & ~(1u << cell)) == 0;
+#endif
     s_cells_down |= (uint8_t)(1u << cell);      /* r19.20: physical key down */
     engine_set_user_presence(true);
+#ifdef FAM_SOUND_PRODUCT
+    if(!isfinite(velocity_amp) || velocity_amp<=0) return;
+    uint8_t src=s_mod[MOD_SHIFT] ? SHIFT_SRC(cell) : cell;
+    bool *held=s_mod[MOD_SHIFT] ? &s_hold_shift[cell] : &s_hold_base[cell];
+    float *amp=s_mod[MOD_SHIFT] ? &s_amp_shift[cell] : &s_amp_base[cell];
+#ifdef FAM_SOUND_AMBIENT_V3
+    if(s_mod[MOD_HOLD]) {
+        /* Latch: the first key of a new gesture replaces the latched chord;
+         * keys added while others are down join it. The live path takes over
+         * the just-released voices, so an old latch never blocks a new note
+         * (no dead tap after a WOODLAND ring-out, no VOICES FULL from it). */
+        if(new_gesture) release_latched(false);
+        float hz=tuning_hz((float)engine_product_cell_midi(cell,s_mod[MOD_SHIFT]));
+        if(engine_try_cell_on(src,hz,velocity_amp/CELL_AMP_MAX)) {
+            s_admitted_src[cell]=(int8_t)src; *held=true; *amp=velocity_amp;
+        }
+        return;
+    }
+#endif
+    if(s_mod[MOD_HOLD] && *held) {
+        engine_note_off(src); *held=false; *amp=0; return;
+    }
+    float hz=tuning_hz((float)engine_product_cell_midi(cell,s_mod[MOD_SHIFT]));
+    float velocity=velocity_amp/CELL_AMP_MAX;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    bool accepted=s_mod[MOD_HOLD] ? engine_try_note_on(src,hz,velocity) :
+        engine_try_cell_on(src,hz,velocity);
+#else
+    bool accepted=engine_try_note_on(src,hz,velocity);
+#endif
+    if(accepted) {
+        s_admitted_src[cell]=(int8_t)src;
+        if(s_mod[MOD_HOLD]) { *held=true; *amp=velocity_amp; }
+        else s_moment_src[cell]=(int8_t)src;
+    }
+    return;
+#else
     int   root = brain_cell_root(cell);
     float hz   = tuning_hz((float)root);
     float hz_s = tuning_hz((float)(root + 12));
@@ -125,10 +256,14 @@ void controls_cell_press(uint8_t cell, float velocity_amp) {
         engine_note_on(src, f, velocity_amp);
         s_moment_src[cell] = (int8_t)src;
     }
+#endif
 }
 
 void controls_cell_release(uint8_t cell) {
     if (cell >= CTRL_CELL_COUNT) return;
+#ifdef FAM_SOUND_PRODUCT
+    controls_cell_physical(cell,false);
+#endif
     s_cells_down &= (uint8_t)~(1u << cell);     /* r19.20: physical key up */
     engine_set_user_presence(s_cells_down != 0);
     /* Only momentary notes release on key-up; held latches persist. */
@@ -156,6 +291,10 @@ void controls_cell_release(uint8_t cell) {
  * engine_set_key. Momentary notes are left alone (they end in a moment
  * anyway, and re-pitching under a held finger feels wrong). */
 void controls_refresh_held_pitches(void) {
+#ifdef FAM_SOUND_PRODUCT
+    /* Held sources retain their actual pitch/owner; new notes use the context. */
+    return;
+#else
     for (uint8_t c = 0; c < CTRL_CELL_COUNT; ++c) {
         if (!s_hold_base[c] && !s_hold_shift[c]) continue;
         int root = brain_cell_root(c);
@@ -165,6 +304,7 @@ void controls_refresh_held_pitches(void) {
             engine_note_on(SHIFT_SRC(c), tuning_hz((float)(root + 12)),
                            s_amp_shift[c]);
     }
+#endif
 }
 
 bool controls_any_cell_down(void) { return s_cells_down != 0; }

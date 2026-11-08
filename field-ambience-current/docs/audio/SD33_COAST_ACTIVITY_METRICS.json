@@ -1,0 +1,5758 @@
+{
+  "scope": "Spec0.9 COAST Activity only: waits after real outgoing-owner retirement. Held outer intentions, common tone, ordered heard music and bounded source admission retained.",
+  "baseline_commit": "4de325a0d4c6255909801e02e0cfe62889a6777e",
+  "baseline_tree": "f515c8c68420ceec81d4ff26f80b3e40c8b8a69b",
+  "firmware_changed": true,
+  "hearing_accepted": false,
+  "source_sha256": {
+    "src/engine_product.c": "778b5098df4468f538119455be7fd63f077c37eaae10840b031d205d206adb99",
+    "src/world_grammar.c": "a90cea1f8c86728a9136dc3b2332bda2c69393db9bab2fbfd0cbc19d092e6f78",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "af50ea44971a41e2af647a44d08db09ce2d3cd81ae65c4b626de76557467cc9b",
+    "src/ambient_room.c": "0f54bfbe08b83ba08034b587f20923b326594e9b4bd4d5038b84ad166acf85ee",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "f9ce41e7407a52b0a49515b190aaa2dd611f3b174d4d43e2c94cb769547fb92e",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "68d587c4cb05bd89257e3044714227a55c079542a7d4fd3a09f0a061256d20b9",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "4051e5460af6bb26dee1c5dcc24e8c9f515c48fb6075f976c3d133971635ebdd",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6",
+    "tools/review_coast_activity_calibration.py": "89f6710fb25e90321c28545b58b8bd90044a95891994cc71191ed8694a448de7",
+    "tools/render_coast_activity_calibration.c": "10492e4942d385d2977147dd9809fd011fe322c72f367e188f34ed8aa8253a18",
+    "tools/render_nature_comparison.c": "decd3414cd82572b9b57205133b361f0651f4398f67a3e4da942cff4be1d2c00",
+    "test/test_activity_ranges.c": "39daa64b9f57c3293905378289fec48f01c0ad21e310165b07a8b4c48bb01189",
+    "tools/review_activity_comparison.py": "4fdd2c12e4131dbba094811e579b9c3ad36648e993067fa8f0e2f72d4ff78017",
+    "tools/review_room_comparison.py": "1760c798fcb4df166e0bcf0c0b39323762f20164cf086ee3ca47f511750d6eba",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1"
+  },
+  "parameters": {
+    "activity_values": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "default_activity": 0.5,
+    "color": 0.5,
+    "room": 0.5,
+    "nature": 0,
+    "attack": 0.5,
+    "release": 0.5,
+    "volume": 0.6,
+    "seeds": [
+      1234,
+      42
+    ],
+    "key": "D",
+    "collection": "major",
+    "tuning": "equal"
+  },
+  "raw_seconds": 600,
+  "generate_stop_seconds": 568,
+  "block_sizes": [
+    64,
+    512
+  ],
+  "control_tick_ms": 10,
+  "fixed_cases": [
+    {
+      "version": "baseline",
+      "seed": 1234,
+      "initial_activity": 0.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=0.00 live=0 frames=26460000 starts=79 phrases=9 memory_returns=2 max_sources=3 final_ms=577210 nonfinite=0 limited=0 peak=0.10037231",
+      "raw_level": {
+        "integrated_lufs": -33.0,
+        "true_peak_dbfs": -20.0
+      },
+      "mono_energy_ratio": 0.970075730125974,
+      "dc": [
+        -9.32135549532313e-09,
+        -6.6548157891628875e-09
+      ],
+      "starts": 79,
+      "starts_per_minute": 8.345070422535212,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.4686091549295774,
+      "source_free_seconds": 0.83,
+      "longest_actual_source_free_interval_seconds": 0.21000000000000796,
+      "largest_actual_onset_gap_seconds": 19.98999999999998,
+      "full_owner_retirement_after_stop_seconds": 577.21,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.94
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.16
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 117.55
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 178.31
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 236.08
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 296.02
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 356.23
+        },
+        {
+          "episode": 7,
+          "kind": 2,
+          "seconds": 416.43
+        },
+        {
+          "episode": 8,
+          "kind": 3,
+          "seconds": 476.54
+        },
+        {
+          "episode": 9,
+          "kind": 1,
+          "seconds": 534.31
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.14,
+          58.15
+        ],
+        [
+          117.33,
+          117.54
+        ],
+        [
+          178.2,
+          178.3
+        ],
+        [
+          236.01,
+          236.07
+        ],
+        [
+          356.06,
+          356.22
+        ],
+        [
+          416.22,
+          416.42
+        ],
+        [
+          476.5,
+          476.53
+        ],
+        [
+          534.24,
+          534.3
+        ]
+      ],
+      "raw_sha256": "143dfa6784bbb1ed2f14325f5d75b575e8fd479b9b463721646aff3c72eb1df6",
+      "events_sha256": "b95a7fc3955ee7bc79fd646a8fff540144c56e9d03e613c30add74973d468a53",
+      "state_sha256": "d94639bbc77dc3c026d30f511454ea1fc4bca38fd4cdbb62d0bd39124ba47c6d",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.14,
+          "next_ack_seconds": 12.15,
+          "actual_retirement_seconds": 12.04,
+          "actual_wait_seconds": 0.1,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.48,
+          "next_ack_seconds": 31.49,
+          "actual_retirement_seconds": 24.22,
+          "actual_wait_seconds": 7.26,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 43.76,
+          "next_ack_seconds": 43.77,
+          "actual_retirement_seconds": 43.6,
+          "actual_wait_seconds": 0.16,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 58.15,
+          "next_ack_seconds": 58.16,
+          "actual_retirement_seconds": 58.14,
+          "actual_wait_seconds": 0.01,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 70.52,
+          "next_ack_seconds": 70.53,
+          "actual_retirement_seconds": 70.46,
+          "actual_wait_seconds": 0.06,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 90.29,
+          "next_ack_seconds": 90.3,
+          "actual_retirement_seconds": 82.96,
+          "actual_wait_seconds": 7.33,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 102.67,
+          "next_ack_seconds": 102.68,
+          "actual_retirement_seconds": 102.63,
+          "actual_wait_seconds": 0.04,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 117.54,
+          "next_ack_seconds": 117.55,
+          "actual_retirement_seconds": 117.33,
+          "actual_wait_seconds": 0.21,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 130.44,
+          "next_ack_seconds": 130.45,
+          "actual_retirement_seconds": 130.23,
+          "actual_wait_seconds": 0.21,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 143.27,
+          "next_ack_seconds": 143.28,
+          "actual_retirement_seconds": 143.11,
+          "actual_wait_seconds": 0.16,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 163.1,
+          "next_ack_seconds": 163.11,
+          "actual_retirement_seconds": 155.67,
+          "actual_wait_seconds": 7.43,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 178.3,
+          "next_ack_seconds": 178.31,
+          "actual_retirement_seconds": 178.2,
+          "actual_wait_seconds": 0.1,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 190.37,
+          "next_ack_seconds": 190.38,
+          "actual_retirement_seconds": 190.22,
+          "actual_wait_seconds": 0.15,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 209.63,
+          "next_ack_seconds": 209.64,
+          "actual_retirement_seconds": 202.33,
+          "actual_wait_seconds": 7.3,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 221.84,
+          "next_ack_seconds": 221.85,
+          "actual_retirement_seconds": 221.64,
+          "actual_wait_seconds": 0.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 236.07,
+          "next_ack_seconds": 236.08,
+          "actual_retirement_seconds": 236.01,
+          "actual_wait_seconds": 0.06,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 248.53,
+          "next_ack_seconds": 248.54,
+          "actual_retirement_seconds": 248.36,
+          "actual_wait_seconds": 0.17,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 268.52,
+          "next_ack_seconds": 268.53,
+          "actual_retirement_seconds": 261.11,
+          "actual_wait_seconds": 7.41,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 281.06,
+          "next_ack_seconds": 281.07,
+          "actual_retirement_seconds": 280.97,
+          "actual_wait_seconds": 0.09,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 296.01,
+          "next_ack_seconds": 296.02,
+          "actual_retirement_seconds": 296.01,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 308.68,
+          "next_ack_seconds": 308.69,
+          "actual_retirement_seconds": 308.48,
+          "actual_wait_seconds": 0.2,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 321.3,
+          "next_ack_seconds": 321.31,
+          "actual_retirement_seconds": 321.19,
+          "actual_wait_seconds": 0.11,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 341.23,
+          "next_ack_seconds": 341.24,
+          "actual_retirement_seconds": 333.96,
+          "actual_wait_seconds": 7.27,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 356.22,
+          "next_ack_seconds": 356.23,
+          "actual_retirement_seconds": 356.06,
+          "actual_wait_seconds": 0.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 368.75,
+          "next_ack_seconds": 368.76,
+          "actual_retirement_seconds": 368.57,
+          "actual_wait_seconds": 0.18,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 388.55,
+          "next_ack_seconds": 388.56,
+          "actual_retirement_seconds": 381.16,
+          "actual_wait_seconds": 7.39,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 401.29,
+          "next_ack_seconds": 401.3,
+          "actual_retirement_seconds": 401.14,
+          "actual_wait_seconds": 0.15,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 416.42,
+          "next_ack_seconds": 416.43,
+          "actual_retirement_seconds": 416.22,
+          "actual_wait_seconds": 0.2,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 429.05,
+          "next_ack_seconds": 429.06,
+          "actual_retirement_seconds": 428.98,
+          "actual_wait_seconds": 0.07,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 441.63,
+          "next_ack_seconds": 441.64,
+          "actual_retirement_seconds": 441.54,
+          "actual_wait_seconds": 0.09,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 461.32,
+          "next_ack_seconds": 461.33,
+          "actual_retirement_seconds": 454.08,
+          "actual_wait_seconds": 7.24,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 476.53,
+          "next_ack_seconds": 476.54,
+          "actual_retirement_seconds": 476.5,
+          "actual_wait_seconds": 0.03,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 488.6,
+          "next_ack_seconds": 488.61,
+          "actual_retirement_seconds": 488.45,
+          "actual_wait_seconds": 0.15,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 507.86,
+          "next_ack_seconds": 507.87,
+          "actual_retirement_seconds": 500.56,
+          "actual_wait_seconds": 7.3,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 520.07,
+          "next_ack_seconds": 520.08,
+          "actual_retirement_seconds": 519.87,
+          "actual_wait_seconds": 0.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 534.3,
+          "next_ack_seconds": 534.31,
+          "actual_retirement_seconds": 534.24,
+          "actual_wait_seconds": 0.06,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 546.83,
+          "next_ack_seconds": 546.84,
+          "actual_retirement_seconds": 546.61,
+          "actual_wait_seconds": 0.22,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 566.51,
+          "next_ack_seconds": 566.52,
+          "actual_retirement_seconds": 559.17,
+          "actual_wait_seconds": 7.34,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        }
+      ]
+    },
+    {
+      "version": "calibrated",
+      "seed": 1234,
+      "initial_activity": 0.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=0.00 live=0 frames=26460000 starts=56 phrases=7 memory_returns=1 max_sources=3 final_ms=568990 nonfinite=0 limited=0 peak=0.09979248",
+      "raw_level": {
+        "integrated_lufs": -33.6,
+        "true_peak_dbfs": -20.0
+      },
+      "mono_energy_ratio": 0.9727010211235879,
+      "dc": [
+        -7.474845949664589e-09,
+        -4.342353803500567e-09
+      ],
+      "starts": 56,
+      "starts_per_minute": 5.915492957746479,
+      "completed_phrases": 7,
+      "memory_returns": 1,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 1.9609154929577466,
+      "source_free_seconds": 64.14,
+      "longest_actual_source_free_interval_seconds": 11.360000000000014,
+      "largest_actual_onset_gap_seconds": 26.400000000000006,
+      "full_owner_retirement_after_stop_seconds": 568.99,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.83
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 80.16
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 163.29
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 248.66
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 327.56
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 411.24
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 496.06
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          70.14,
+          80.15
+        ],
+        [
+          152.27,
+          163.28
+        ],
+        [
+          237.35,
+          248.65
+        ],
+        [
+          317.89,
+          327.55
+        ],
+        [
+          400.43,
+          411.23
+        ],
+        [
+          484.69,
+          496.05
+        ]
+      ],
+      "raw_sha256": "2f2fa5f73e0ac79b617a81dea2aeabe25e54eef8b5f053eaeaf8cb3c71acbaa8",
+      "events_sha256": "f8ea6ad1448ed3367dcb95ddd2b39567788c753466434c5a0c5cef2d6e5a71e0",
+      "state_sha256": "ca31cd43299c6b35dc66edd534bc6650f778fe41cb7008df29dd26dac3b05550",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 18.14,
+          "next_ack_seconds": 18.15,
+          "actual_retirement_seconds": 12.04,
+          "actual_wait_seconds": 6.1,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 37.48,
+          "next_ack_seconds": 37.49,
+          "actual_retirement_seconds": 30.22,
+          "actual_wait_seconds": 7.26,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 55.76,
+          "next_ack_seconds": 55.77,
+          "actual_retirement_seconds": 49.6,
+          "actual_wait_seconds": 6.16,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 80.15,
+          "next_ack_seconds": 80.16,
+          "actual_retirement_seconds": 70.14,
+          "actual_wait_seconds": 10.01,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 10.0,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 99.0,
+          "next_ack_seconds": 99.01,
+          "actual_retirement_seconds": 92.46,
+          "actual_wait_seconds": 6.54,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 118.75,
+          "next_ack_seconds": 118.76,
+          "actual_retirement_seconds": 111.44,
+          "actual_wait_seconds": 7.31,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 137.61,
+          "next_ack_seconds": 137.62,
+          "actual_retirement_seconds": 131.09,
+          "actual_wait_seconds": 6.52,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 163.28,
+          "next_ack_seconds": 163.29,
+          "actual_retirement_seconds": 152.27,
+          "actual_wait_seconds": 11.01,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 10.8,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 182.9,
+          "next_ack_seconds": 182.91,
+          "actual_retirement_seconds": 175.97,
+          "actual_wait_seconds": 6.93,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 202.45,
+          "next_ack_seconds": 202.46,
+          "actual_retirement_seconds": 195.57,
+          "actual_wait_seconds": 6.88,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 222.25,
+          "next_ack_seconds": 222.26,
+          "actual_retirement_seconds": 214.85,
+          "actual_wait_seconds": 7.4,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 248.65,
+          "next_ack_seconds": 248.66,
+          "actual_retirement_seconds": 237.35,
+          "actual_wait_seconds": 11.3,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 11.200000000000001,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 266.48,
+          "next_ack_seconds": 266.49,
+          "actual_retirement_seconds": 260.57,
+          "actual_wait_seconds": 5.91,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 5.76,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 285.75,
+          "next_ack_seconds": 285.76,
+          "actual_retirement_seconds": 278.44,
+          "actual_wait_seconds": 7.31,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 5.76,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 303.72,
+          "next_ack_seconds": 303.73,
+          "actual_retirement_seconds": 297.76,
+          "actual_wait_seconds": 5.96,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 5.76,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 327.55,
+          "next_ack_seconds": 327.56,
+          "actual_retirement_seconds": 317.89,
+          "actual_wait_seconds": 9.66,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 9.6,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 346.49,
+          "next_ack_seconds": 346.5,
+          "actual_retirement_seconds": 339.84,
+          "actual_wait_seconds": 6.65,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 366.46,
+          "next_ack_seconds": 366.47,
+          "actual_retirement_seconds": 359.07,
+          "actual_wait_seconds": 7.39,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 385.48,
+          "next_ack_seconds": 385.49,
+          "actual_retirement_seconds": 378.91,
+          "actual_wait_seconds": 6.57,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 411.23,
+          "next_ack_seconds": 411.24,
+          "actual_retirement_seconds": 400.43,
+          "actual_wait_seconds": 10.8,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 10.8,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 430.62,
+          "next_ack_seconds": 430.63,
+          "actual_retirement_seconds": 423.7,
+          "actual_wait_seconds": 6.92,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 449.96,
+          "next_ack_seconds": 449.97,
+          "actual_retirement_seconds": 443.13,
+          "actual_wait_seconds": 6.83,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 469.86,
+          "next_ack_seconds": 469.87,
+          "actual_retirement_seconds": 462.62,
+          "actual_wait_seconds": 7.24,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 496.05,
+          "next_ack_seconds": 496.06,
+          "actual_retirement_seconds": 484.69,
+          "actual_wait_seconds": 11.36,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 11.200000000000001,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 515.06,
+          "next_ack_seconds": 515.07,
+          "actual_retirement_seconds": 508.4,
+          "actual_wait_seconds": 6.66,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 534.84,
+          "next_ack_seconds": 534.85,
+          "actual_retirement_seconds": 527.47,
+          "actual_wait_seconds": 7.37,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 554.06,
+          "next_ack_seconds": 554.07,
+          "actual_retirement_seconds": 547.43,
+          "actual_wait_seconds": 6.63,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        }
+      ],
+      "retained_against_exact_pr155": {
+        "matched_heard_prefix_starts": 56,
+        "unchanged_held_outer_roles": 49,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "retained_across_activity": {
+        "matched_heard_prefix_starts": 56,
+        "unchanged_held_outer_roles": 49,
+        "maximum_held_role_difference_seconds": 0.0
+      }
+    },
+    {
+      "version": "baseline",
+      "seed": 1234,
+      "initial_activity": 0.5,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=0.50 live=0 frames=26460000 starts=79 phrases=9 memory_returns=2 max_sources=3 final_ms=577210 nonfinite=0 limited=0 peak=0.10000610",
+      "raw_level": {
+        "integrated_lufs": -33.0,
+        "true_peak_dbfs": -20.0
+      },
+      "mono_energy_ratio": 0.9698831301941275,
+      "dc": [
+        -9.727333858890778e-09,
+        -2.117546237244898e-09
+      ],
+      "starts": 79,
+      "starts_per_minute": 8.345070422535212,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.4699823943661974,
+      "source_free_seconds": 0.83,
+      "longest_actual_source_free_interval_seconds": 0.20999999999999375,
+      "largest_actual_onset_gap_seconds": 20.05000000000001,
+      "full_owner_retirement_after_stop_seconds": 577.21,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.94
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.19
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 117.78
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 178.23
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 236.03
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 295.85
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 355.94
+        },
+        {
+          "episode": 7,
+          "kind": 2,
+          "seconds": 416.01
+        },
+        {
+          "episode": 8,
+          "kind": 3,
+          "seconds": 476.28
+        },
+        {
+          "episode": 9,
+          "kind": 1,
+          "seconds": 534.08
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.17,
+          58.18
+        ],
+        [
+          117.56,
+          117.77
+        ],
+        [
+          178.12,
+          178.22
+        ],
+        [
+          235.96,
+          236.02
+        ],
+        [
+          355.77,
+          355.93
+        ],
+        [
+          415.8,
+          416.0
+        ],
+        [
+          476.24,
+          476.27
+        ],
+        [
+          534.01,
+          534.07
+        ]
+      ],
+      "raw_sha256": "80574693366d3d4d530e2a7418ed0e3d180805fa13dcabbb9718398bf29c2822",
+      "events_sha256": "d69970063fbf6b66a8e681b1e2f3cb98236b7432e80dc9e975de25140d2294fe",
+      "state_sha256": "59b6fcdf7c20baf094e76671aabd89b8a78d8bdfff10081d0a43fa643348a988",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.1,
+          "next_ack_seconds": 12.11,
+          "actual_retirement_seconds": 12.04,
+          "actual_wait_seconds": 0.06,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.59,
+          "next_ack_seconds": 31.6,
+          "actual_retirement_seconds": 24.18,
+          "actual_wait_seconds": 7.41,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 43.79,
+          "next_ack_seconds": 43.8,
+          "actual_retirement_seconds": 43.71,
+          "actual_wait_seconds": 0.08,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 58.18,
+          "next_ack_seconds": 58.19,
+          "actual_retirement_seconds": 58.17,
+          "actual_wait_seconds": 0.01,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 70.5,
+          "next_ack_seconds": 70.51,
+          "actual_retirement_seconds": 70.49,
+          "actual_wait_seconds": 0.01,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 90.32,
+          "next_ack_seconds": 90.33,
+          "actual_retirement_seconds": 82.94,
+          "actual_wait_seconds": 7.38,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 102.9,
+          "next_ack_seconds": 102.91,
+          "actual_retirement_seconds": 102.66,
+          "actual_wait_seconds": 0.24,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 117.77,
+          "next_ack_seconds": 117.78,
+          "actual_retirement_seconds": 117.56,
+          "actual_wait_seconds": 0.21,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 130.55,
+          "next_ack_seconds": 130.56,
+          "actual_retirement_seconds": 130.46,
+          "actual_wait_seconds": 0.09,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 143.35,
+          "next_ack_seconds": 143.36,
+          "actual_retirement_seconds": 143.22,
+          "actual_wait_seconds": 0.13,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 163.02,
+          "next_ack_seconds": 163.03,
+          "actual_retirement_seconds": 155.75,
+          "actual_wait_seconds": 7.27,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 178.22,
+          "next_ack_seconds": 178.23,
+          "actual_retirement_seconds": 178.12,
+          "actual_wait_seconds": 0.1,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 190.33,
+          "next_ack_seconds": 190.34,
+          "actual_retirement_seconds": 190.14,
+          "actual_wait_seconds": 0.19,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 209.58,
+          "next_ack_seconds": 209.59,
+          "actual_retirement_seconds": 202.29,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 221.79,
+          "next_ack_seconds": 221.8,
+          "actual_retirement_seconds": 221.59,
+          "actual_wait_seconds": 0.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 236.02,
+          "next_ack_seconds": 236.03,
+          "actual_retirement_seconds": 235.96,
+          "actual_wait_seconds": 0.06,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 248.47,
+          "next_ack_seconds": 248.48,
+          "actual_retirement_seconds": 248.31,
+          "actual_wait_seconds": 0.16,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 268.44,
+          "next_ack_seconds": 268.45,
+          "actual_retirement_seconds": 261.05,
+          "actual_wait_seconds": 7.39,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 280.89,
+          "next_ack_seconds": 280.9,
+          "actual_retirement_seconds": 280.89,
+          "actual_wait_seconds": 0.0,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 295.84,
+          "next_ack_seconds": 295.85,
+          "actual_retirement_seconds": 295.84,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 308.38,
+          "next_ack_seconds": 308.39,
+          "actual_retirement_seconds": 308.31,
+          "actual_wait_seconds": 0.07,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 320.89,
+          "next_ack_seconds": 320.9,
+          "actual_retirement_seconds": 320.89,
+          "actual_wait_seconds": 0.0,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 340.94,
+          "next_ack_seconds": 340.95,
+          "actual_retirement_seconds": 333.55,
+          "actual_wait_seconds": 7.39,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 355.93,
+          "next_ack_seconds": 355.94,
+          "actual_retirement_seconds": 355.77,
+          "actual_wait_seconds": 0.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 368.37,
+          "next_ack_seconds": 368.38,
+          "actual_retirement_seconds": 368.28,
+          "actual_wait_seconds": 0.09,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 388.08,
+          "next_ack_seconds": 388.09,
+          "actual_retirement_seconds": 380.78,
+          "actual_wait_seconds": 7.3,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 400.87,
+          "next_ack_seconds": 400.88,
+          "actual_retirement_seconds": 400.67,
+          "actual_wait_seconds": 0.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 416.0,
+          "next_ack_seconds": 416.01,
+          "actual_retirement_seconds": 415.8,
+          "actual_wait_seconds": 0.2,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 428.7,
+          "next_ack_seconds": 428.71,
+          "actual_retirement_seconds": 428.56,
+          "actual_wait_seconds": 0.14,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 441.25,
+          "next_ack_seconds": 441.26,
+          "actual_retirement_seconds": 441.19,
+          "actual_wait_seconds": 0.06,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 461.06,
+          "next_ack_seconds": 461.07,
+          "actual_retirement_seconds": 453.7,
+          "actual_wait_seconds": 7.36,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 476.27,
+          "next_ack_seconds": 476.28,
+          "actual_retirement_seconds": 476.24,
+          "actual_wait_seconds": 0.03,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 488.38,
+          "next_ack_seconds": 488.39,
+          "actual_retirement_seconds": 488.19,
+          "actual_wait_seconds": 0.19,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 507.63,
+          "next_ack_seconds": 507.64,
+          "actual_retirement_seconds": 500.34,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 519.84,
+          "next_ack_seconds": 519.85,
+          "actual_retirement_seconds": 519.64,
+          "actual_wait_seconds": 0.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 534.07,
+          "next_ack_seconds": 534.08,
+          "actual_retirement_seconds": 534.01,
+          "actual_wait_seconds": 0.06,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 546.51,
+          "next_ack_seconds": 546.52,
+          "actual_retirement_seconds": 546.38,
+          "actual_wait_seconds": 0.13,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 566.12,
+          "next_ack_seconds": 566.13,
+          "actual_retirement_seconds": 558.85,
+          "actual_wait_seconds": 7.27,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        }
+      ]
+    },
+    {
+      "version": "calibrated",
+      "seed": 1234,
+      "initial_activity": 0.5,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=0.50 live=0 frames=26460000 starts=64 phrases=8 memory_returns=1 max_sources=3 final_ms=568450 nonfinite=0 limited=0 peak=0.10037231",
+      "raw_level": {
+        "integrated_lufs": -33.3,
+        "true_peak_dbfs": -20.0
+      },
+      "mono_energy_ratio": 0.9714125459770229,
+      "dc": [
+        -7.007740162037037e-09,
+        -3.2824273372543464e-09
+      ],
+      "starts": 64,
+      "starts_per_minute": 6.76056338028169,
+      "completed_phrases": 8,
+      "memory_returns": 1,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.157323943661972,
+      "source_free_seconds": 41.66,
+      "longest_actual_source_free_interval_seconds": 6.319999999999993,
+      "largest_actual_onset_gap_seconds": 21.359999999999985,
+      "full_owner_retirement_after_stop_seconds": 568.45,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.94
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 69.69
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 141.69
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 215.13
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 284.1
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 356.33
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 429.16
+        },
+        {
+          "episode": 7,
+          "kind": 2,
+          "seconds": 501.64
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          64.17,
+          69.68
+        ],
+        [
+          135.53,
+          141.68
+        ],
+        [
+          208.86,
+          215.12
+        ],
+        [
+          278.75,
+          284.09
+        ],
+        [
+          350.38,
+          356.32
+        ],
+        [
+          422.83,
+          429.15
+        ],
+        [
+          495.49,
+          501.63
+        ]
+      ],
+      "raw_sha256": "cb5dcff1386121f3290e4ad4a9bbfad499ef5ccda73123f30815f210ecafbcf2",
+      "events_sha256": "807a1ae36d1933b869409f89d8b763c428f9c20c3ccb38348d94c3d528904e61",
+      "state_sha256": "58972aef0201f6961e997a69f95e28ac8d114719153ece21a881c6b787e87f3d",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 15.1,
+          "next_ack_seconds": 15.11,
+          "actual_retirement_seconds": 12.04,
+          "actual_wait_seconds": 3.06,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 34.59,
+          "next_ack_seconds": 34.6,
+          "actual_retirement_seconds": 27.18,
+          "actual_wait_seconds": 7.41,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 49.79,
+          "next_ack_seconds": 49.8,
+          "actual_retirement_seconds": 46.71,
+          "actual_wait_seconds": 3.08,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 69.68,
+          "next_ack_seconds": 69.69,
+          "actual_retirement_seconds": 64.17,
+          "actual_wait_seconds": 5.51,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.5,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 85.24,
+          "next_ack_seconds": 85.25,
+          "actual_retirement_seconds": 81.99,
+          "actual_wait_seconds": 3.25,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 105.05,
+          "next_ack_seconds": 105.06,
+          "actual_retirement_seconds": 97.68,
+          "actual_wait_seconds": 7.37,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 120.87,
+          "next_ack_seconds": 120.88,
+          "actual_retirement_seconds": 117.39,
+          "actual_wait_seconds": 3.48,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 141.68,
+          "next_ack_seconds": 141.69,
+          "actual_retirement_seconds": 135.53,
+          "actual_wait_seconds": 6.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.94,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 157.82,
+          "next_ack_seconds": 157.83,
+          "actual_retirement_seconds": 154.37,
+          "actual_wait_seconds": 3.45,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 173.98,
+          "next_ack_seconds": 173.99,
+          "actual_retirement_seconds": 170.49,
+          "actual_wait_seconds": 3.49,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 193.76,
+          "next_ack_seconds": 193.77,
+          "actual_retirement_seconds": 186.38,
+          "actual_wait_seconds": 7.38,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 215.12,
+          "next_ack_seconds": 215.13,
+          "actual_retirement_seconds": 208.86,
+          "actual_wait_seconds": 6.26,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 6.16,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 230.11,
+          "next_ack_seconds": 230.12,
+          "actual_retirement_seconds": 227.04,
+          "actual_wait_seconds": 3.07,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 249.49,
+          "next_ack_seconds": 249.5,
+          "actual_retirement_seconds": 242.07,
+          "actual_wait_seconds": 7.42,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 264.58,
+          "next_ack_seconds": 264.59,
+          "actual_retirement_seconds": 261.5,
+          "actual_wait_seconds": 3.08,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 284.09,
+          "next_ack_seconds": 284.1,
+          "actual_retirement_seconds": 278.75,
+          "actual_wait_seconds": 5.34,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.279999999999999,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 299.78,
+          "next_ack_seconds": 299.79,
+          "actual_retirement_seconds": 296.38,
+          "actual_wait_seconds": 3.4,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 319.74,
+          "next_ack_seconds": 319.75,
+          "actual_retirement_seconds": 312.36,
+          "actual_wait_seconds": 7.38,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 335.43,
+          "next_ack_seconds": 335.44,
+          "actual_retirement_seconds": 332.19,
+          "actual_wait_seconds": 3.24,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 356.32,
+          "next_ack_seconds": 356.33,
+          "actual_retirement_seconds": 350.38,
+          "actual_wait_seconds": 5.94,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.94,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 372.22,
+          "next_ack_seconds": 372.23,
+          "actual_retirement_seconds": 368.79,
+          "actual_wait_seconds": 3.43,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 388.09,
+          "next_ack_seconds": 388.1,
+          "actual_retirement_seconds": 384.73,
+          "actual_wait_seconds": 3.36,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 408.0,
+          "next_ack_seconds": 408.01,
+          "actual_retirement_seconds": 400.75,
+          "actual_wait_seconds": 7.25,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 429.15,
+          "next_ack_seconds": 429.16,
+          "actual_retirement_seconds": 422.83,
+          "actual_wait_seconds": 6.32,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 6.16,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 444.83,
+          "next_ack_seconds": 444.84,
+          "actual_retirement_seconds": 441.5,
+          "actual_wait_seconds": 3.33,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 464.53,
+          "next_ack_seconds": 464.54,
+          "actual_retirement_seconds": 457.24,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 480.56,
+          "next_ack_seconds": 480.57,
+          "actual_retirement_seconds": 477.12,
+          "actual_wait_seconds": 3.44,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 501.63,
+          "next_ack_seconds": 501.64,
+          "actual_retirement_seconds": 495.49,
+          "actual_wait_seconds": 6.14,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.94,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 517.69,
+          "next_ack_seconds": 517.7,
+          "actual_retirement_seconds": 514.19,
+          "actual_wait_seconds": 3.5,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 533.6,
+          "next_ack_seconds": 533.61,
+          "actual_retirement_seconds": 530.18,
+          "actual_wait_seconds": 3.42,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 553.27,
+          "next_ack_seconds": 553.28,
+          "actual_retirement_seconds": 546.05,
+          "actual_wait_seconds": 7.22,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        }
+      ],
+      "retained_against_exact_pr155": {
+        "matched_heard_prefix_starts": 64,
+        "unchanged_held_outer_roles": 56,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "retained_across_activity": {
+        "matched_heard_prefix_starts": 64,
+        "unchanged_held_outer_roles": 56,
+        "maximum_held_role_difference_seconds": 0.0
+      }
+    },
+    {
+      "version": "baseline",
+      "seed": 1234,
+      "initial_activity": 1.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=1.00 live=0 frames=26460000 starts=79 phrases=9 memory_returns=2 max_sources=3 final_ms=577210 nonfinite=0 limited=0 peak=0.09838867",
+      "raw_level": {
+        "integrated_lufs": -33.0,
+        "true_peak_dbfs": -20.1
+      },
+      "mono_energy_ratio": 0.9701887917688895,
+      "dc": [
+        -1.0971795944940476e-08,
+        -2.5823453296249054e-09
+      ],
+      "starts": 79,
+      "starts_per_minute": 8.345070422535212,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.4701936619718308,
+      "source_free_seconds": 0.83,
+      "longest_actual_source_free_interval_seconds": 0.20999999999999375,
+      "largest_actual_onset_gap_seconds": 19.95999999999998,
+      "full_owner_retirement_after_stop_seconds": 577.21,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.94
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 57.97
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 117.76
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 178.38
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 236.23
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 296.2
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 356.44
+        },
+        {
+          "episode": 7,
+          "kind": 2,
+          "seconds": 416.14
+        },
+        {
+          "episode": 8,
+          "kind": 3,
+          "seconds": 476.31
+        },
+        {
+          "episode": 9,
+          "kind": 1,
+          "seconds": 534.16
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          57.95,
+          57.96
+        ],
+        [
+          117.54,
+          117.75
+        ],
+        [
+          178.27,
+          178.37
+        ],
+        [
+          236.16,
+          236.22
+        ],
+        [
+          356.27,
+          356.43
+        ],
+        [
+          415.93,
+          416.13
+        ],
+        [
+          476.27,
+          476.3
+        ],
+        [
+          534.09,
+          534.15
+        ]
+      ],
+      "raw_sha256": "c4889afdcaf08eca886c1ed95265a5de9dd307d7dd11a31d9c1ceb0130e15c33",
+      "events_sha256": "6f8a1106659b7499c94ced1253bf70b47496165f15242ccdf7ae984ac504f71e",
+      "state_sha256": "25767a98dcfc4da1b49f76fc47df976ca1d109b6b7dcd308fe77b3e1c9a21f4d",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.05,
+          "next_ack_seconds": 12.06,
+          "actual_retirement_seconds": 12.04,
+          "actual_wait_seconds": 0.01,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.45,
+          "next_ack_seconds": 31.46,
+          "actual_retirement_seconds": 24.13,
+          "actual_wait_seconds": 7.32,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 43.57,
+          "next_ack_seconds": 43.58,
+          "actual_retirement_seconds": 43.57,
+          "actual_wait_seconds": 0.0,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 57.96,
+          "next_ack_seconds": 57.97,
+          "actual_retirement_seconds": 57.95,
+          "actual_wait_seconds": 0.01,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 70.49,
+          "next_ack_seconds": 70.5,
+          "actual_retirement_seconds": 70.27,
+          "actual_wait_seconds": 0.22,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 90.35,
+          "next_ack_seconds": 90.36,
+          "actual_retirement_seconds": 82.93,
+          "actual_wait_seconds": 7.42,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 102.88,
+          "next_ack_seconds": 102.89,
+          "actual_retirement_seconds": 102.69,
+          "actual_wait_seconds": 0.19,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 117.75,
+          "next_ack_seconds": 117.76,
+          "actual_retirement_seconds": 117.54,
+          "actual_wait_seconds": 0.21,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 130.66,
+          "next_ack_seconds": 130.67,
+          "actual_retirement_seconds": 130.44,
+          "actual_wait_seconds": 0.22,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 143.42,
+          "next_ack_seconds": 143.43,
+          "actual_retirement_seconds": 143.33,
+          "actual_wait_seconds": 0.09,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 163.17,
+          "next_ack_seconds": 163.18,
+          "actual_retirement_seconds": 155.82,
+          "actual_wait_seconds": 7.35,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 178.37,
+          "next_ack_seconds": 178.38,
+          "actual_retirement_seconds": 178.27,
+          "actual_wait_seconds": 0.1,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 190.52,
+          "next_ack_seconds": 190.53,
+          "actual_retirement_seconds": 190.29,
+          "actual_wait_seconds": 0.23,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 209.77,
+          "next_ack_seconds": 209.78,
+          "actual_retirement_seconds": 202.48,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 221.99,
+          "next_ack_seconds": 222.0,
+          "actual_retirement_seconds": 221.78,
+          "actual_wait_seconds": 0.21,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 236.22,
+          "next_ack_seconds": 236.23,
+          "actual_retirement_seconds": 236.16,
+          "actual_wait_seconds": 0.06,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 248.67,
+          "next_ack_seconds": 248.68,
+          "actual_retirement_seconds": 248.51,
+          "actual_wait_seconds": 0.16,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 268.63,
+          "next_ack_seconds": 268.64,
+          "actual_retirement_seconds": 261.25,
+          "actual_wait_seconds": 7.38,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 281.24,
+          "next_ack_seconds": 281.25,
+          "actual_retirement_seconds": 281.08,
+          "actual_wait_seconds": 0.16,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 296.19,
+          "next_ack_seconds": 296.2,
+          "actual_retirement_seconds": 296.19,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 308.86,
+          "next_ack_seconds": 308.87,
+          "actual_retirement_seconds": 308.66,
+          "actual_wait_seconds": 0.2,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 321.51,
+          "next_ack_seconds": 321.52,
+          "actual_retirement_seconds": 321.37,
+          "actual_wait_seconds": 0.14,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 341.44,
+          "next_ack_seconds": 341.45,
+          "actual_retirement_seconds": 334.17,
+          "actual_wait_seconds": 7.27,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 356.43,
+          "next_ack_seconds": 356.44,
+          "actual_retirement_seconds": 356.27,
+          "actual_wait_seconds": 0.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 368.78,
+          "next_ack_seconds": 368.79,
+          "actual_retirement_seconds": 368.78,
+          "actual_wait_seconds": 0.0,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 388.4,
+          "next_ack_seconds": 388.41,
+          "actual_retirement_seconds": 381.19,
+          "actual_wait_seconds": 7.21,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 401.0,
+          "next_ack_seconds": 401.01,
+          "actual_retirement_seconds": 400.99,
+          "actual_wait_seconds": 0.01,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 416.13,
+          "next_ack_seconds": 416.14,
+          "actual_retirement_seconds": 415.93,
+          "actual_wait_seconds": 0.2,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 428.9,
+          "next_ack_seconds": 428.91,
+          "actual_retirement_seconds": 428.69,
+          "actual_wait_seconds": 0.21,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 441.41,
+          "next_ack_seconds": 441.42,
+          "actual_retirement_seconds": 441.39,
+          "actual_wait_seconds": 0.02,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 461.09,
+          "next_ack_seconds": 461.1,
+          "actual_retirement_seconds": 453.86,
+          "actual_wait_seconds": 7.23,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 476.3,
+          "next_ack_seconds": 476.31,
+          "actual_retirement_seconds": 476.27,
+          "actual_wait_seconds": 0.03,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 488.45,
+          "next_ack_seconds": 488.46,
+          "actual_retirement_seconds": 488.22,
+          "actual_wait_seconds": 0.23,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 507.7,
+          "next_ack_seconds": 507.71,
+          "actual_retirement_seconds": 500.41,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 519.92,
+          "next_ack_seconds": 519.93,
+          "actual_retirement_seconds": 519.71,
+          "actual_wait_seconds": 0.21,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 534.15,
+          "next_ack_seconds": 534.16,
+          "actual_retirement_seconds": 534.09,
+          "actual_wait_seconds": 0.06,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 546.51,
+          "next_ack_seconds": 546.52,
+          "actual_retirement_seconds": 546.46,
+          "actual_wait_seconds": 0.05,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 566.06,
+          "next_ack_seconds": 566.07,
+          "actual_retirement_seconds": 558.85,
+          "actual_wait_seconds": 7.21,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        }
+      ]
+    },
+    {
+      "version": "calibrated",
+      "seed": 1234,
+      "initial_activity": 1.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=1.00 live=0 frames=26460000 starts=77 phrases=9 memory_returns=2 max_sources=3 final_ms=576820 nonfinite=0 limited=0 peak=0.09838867",
+      "raw_level": {
+        "integrated_lufs": -33.0,
+        "true_peak_dbfs": -20.1
+      },
+      "mono_energy_ratio": 0.9701253372089712,
+      "dc": [
+        -1.2231251550099206e-08,
+        -2.7668809494283824e-09
+      ],
+      "starts": 77,
+      "starts_per_minute": 8.133802816901408,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.4452992957746478,
+      "source_free_seconds": 10.35,
+      "longest_actual_source_free_interval_seconds": 1.289999999999992,
+      "largest_actual_onset_gap_seconds": 19.960000000000008,
+      "full_owner_retirement_after_stop_seconds": 576.82,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.94
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.97
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 119.84
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 181.58
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 240.39
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 301.44
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 362.8
+        },
+        {
+          "episode": 7,
+          "kind": 2,
+          "seconds": 423.58
+        },
+        {
+          "episode": 8,
+          "kind": 3,
+          "seconds": 484.87
+        },
+        {
+          "episode": 9,
+          "kind": 1,
+          "seconds": 543.68
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          57.95,
+          58.96
+        ],
+        [
+          118.54,
+          119.83
+        ],
+        [
+          180.35,
+          181.57
+        ],
+        [
+          239.36,
+          240.38
+        ],
+        [
+          300.35,
+          301.43
+        ],
+        [
+          361.51,
+          362.79
+        ],
+        [
+          422.29,
+          423.57
+        ],
+        [
+          483.71,
+          484.86
+        ],
+        [
+          542.65,
+          543.67
+        ]
+      ],
+      "raw_sha256": "0392ab1cbb8851a5d102378e807d7e5de58e1a0990d5d85c3bbbbbf5e77080cc",
+      "events_sha256": "5463d57298bf0db8413d799e54992d132ca0aa05820a4157e8dd6e9fc253c3f6",
+      "state_sha256": "c2743ed377026d1a7f4578f41c0e4ea1830b6e82d4832f48e490d4c62b3865d4",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.05,
+          "next_ack_seconds": 12.06,
+          "actual_retirement_seconds": 12.04,
+          "actual_wait_seconds": 0.01,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.45,
+          "next_ack_seconds": 31.46,
+          "actual_retirement_seconds": 24.13,
+          "actual_wait_seconds": 7.32,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 43.57,
+          "next_ack_seconds": 43.58,
+          "actual_retirement_seconds": 43.57,
+          "actual_wait_seconds": 0.0,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 58.96,
+          "next_ack_seconds": 58.97,
+          "actual_retirement_seconds": 57.95,
+          "actual_wait_seconds": 1.01,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.0,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 71.49,
+          "next_ack_seconds": 71.5,
+          "actual_retirement_seconds": 71.27,
+          "actual_wait_seconds": 0.22,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 91.35,
+          "next_ack_seconds": 91.36,
+          "actual_retirement_seconds": 83.93,
+          "actual_wait_seconds": 7.42,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 103.88,
+          "next_ack_seconds": 103.89,
+          "actual_retirement_seconds": 103.69,
+          "actual_wait_seconds": 0.19,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 119.83,
+          "next_ack_seconds": 119.84,
+          "actual_retirement_seconds": 118.54,
+          "actual_wait_seconds": 1.29,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.08,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 132.74,
+          "next_ack_seconds": 132.75,
+          "actual_retirement_seconds": 132.52,
+          "actual_wait_seconds": 0.22,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 145.5,
+          "next_ack_seconds": 145.51,
+          "actual_retirement_seconds": 145.41,
+          "actual_wait_seconds": 0.09,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 165.25,
+          "next_ack_seconds": 165.26,
+          "actual_retirement_seconds": 157.9,
+          "actual_wait_seconds": 7.35,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 181.57,
+          "next_ack_seconds": 181.58,
+          "actual_retirement_seconds": 180.35,
+          "actual_wait_seconds": 1.22,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.12,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 193.72,
+          "next_ack_seconds": 193.73,
+          "actual_retirement_seconds": 193.49,
+          "actual_wait_seconds": 0.23,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 212.97,
+          "next_ack_seconds": 212.98,
+          "actual_retirement_seconds": 205.68,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 225.19,
+          "next_ack_seconds": 225.2,
+          "actual_retirement_seconds": 224.98,
+          "actual_wait_seconds": 0.21,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 240.38,
+          "next_ack_seconds": 240.39,
+          "actual_retirement_seconds": 239.36,
+          "actual_wait_seconds": 1.02,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 0.96,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 252.83,
+          "next_ack_seconds": 252.84,
+          "actual_retirement_seconds": 252.67,
+          "actual_wait_seconds": 0.16,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 272.79,
+          "next_ack_seconds": 272.8,
+          "actual_retirement_seconds": 265.41,
+          "actual_wait_seconds": 7.38,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 285.4,
+          "next_ack_seconds": 285.41,
+          "actual_retirement_seconds": 285.24,
+          "actual_wait_seconds": 0.16,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 301.43,
+          "next_ack_seconds": 301.44,
+          "actual_retirement_seconds": 300.35,
+          "actual_wait_seconds": 1.08,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.08,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 314.1,
+          "next_ack_seconds": 314.11,
+          "actual_retirement_seconds": 313.9,
+          "actual_wait_seconds": 0.2,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 326.75,
+          "next_ack_seconds": 326.76,
+          "actual_retirement_seconds": 326.61,
+          "actual_wait_seconds": 0.14,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 346.68,
+          "next_ack_seconds": 346.69,
+          "actual_retirement_seconds": 339.41,
+          "actual_wait_seconds": 7.27,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 362.79,
+          "next_ack_seconds": 362.8,
+          "actual_retirement_seconds": 361.51,
+          "actual_wait_seconds": 1.28,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.12,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 375.14,
+          "next_ack_seconds": 375.15,
+          "actual_retirement_seconds": 375.14,
+          "actual_wait_seconds": 0.0,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 394.76,
+          "next_ack_seconds": 394.77,
+          "actual_retirement_seconds": 387.55,
+          "actual_wait_seconds": 7.21,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 407.36,
+          "next_ack_seconds": 407.37,
+          "actual_retirement_seconds": 407.35,
+          "actual_wait_seconds": 0.01,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 423.57,
+          "next_ack_seconds": 423.58,
+          "actual_retirement_seconds": 422.29,
+          "actual_wait_seconds": 1.28,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.08,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 436.34,
+          "next_ack_seconds": 436.35,
+          "actual_retirement_seconds": 436.13,
+          "actual_wait_seconds": 0.21,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 448.85,
+          "next_ack_seconds": 448.86,
+          "actual_retirement_seconds": 448.83,
+          "actual_wait_seconds": 0.02,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 468.53,
+          "next_ack_seconds": 468.54,
+          "actual_retirement_seconds": 461.3,
+          "actual_wait_seconds": 7.23,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 484.86,
+          "next_ack_seconds": 484.87,
+          "actual_retirement_seconds": 483.71,
+          "actual_wait_seconds": 1.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.12,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 497.01,
+          "next_ack_seconds": 497.02,
+          "actual_retirement_seconds": 496.78,
+          "actual_wait_seconds": 0.23,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 516.26,
+          "next_ack_seconds": 516.27,
+          "actual_retirement_seconds": 508.97,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 528.48,
+          "next_ack_seconds": 528.49,
+          "actual_retirement_seconds": 528.27,
+          "actual_wait_seconds": 0.21,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 543.67,
+          "next_ack_seconds": 543.68,
+          "actual_retirement_seconds": 542.65,
+          "actual_wait_seconds": 1.02,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 0.96,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 556.03,
+          "next_ack_seconds": 556.04,
+          "actual_retirement_seconds": 555.98,
+          "actual_wait_seconds": 0.05,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        }
+      ],
+      "retained_against_exact_pr155": {
+        "matched_heard_prefix_starts": 77,
+        "unchanged_held_outer_roles": 67,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "retained_across_activity": {
+        "matched_heard_prefix_starts": 64,
+        "unchanged_held_outer_roles": 56,
+        "maximum_held_role_difference_seconds": 0.0
+      }
+    },
+    {
+      "version": "baseline",
+      "seed": 42,
+      "initial_activity": 0.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=42 initial=0.00 live=0 frames=26460000 starts=79 phrases=9 memory_returns=2 max_sources=3 final_ms=576820 nonfinite=0 limited=0 peak=0.09707642",
+      "raw_level": {
+        "integrated_lufs": -32.9,
+        "true_peak_dbfs": -20.2
+      },
+      "mono_energy_ratio": 0.9702632909414881,
+      "dc": [
+        -5.042435811130008e-09,
+        -5.08395632558579e-09
+      ],
+      "starts": 79,
+      "starts_per_minute": 8.345070422535212,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.4864788732394367,
+      "source_free_seconds": 1.09,
+      "longest_actual_source_free_interval_seconds": 0.2400000000000091,
+      "largest_actual_onset_gap_seconds": 19.950000000000017,
+      "full_owner_retirement_after_stop_seconds": 576.82,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        6.0
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.99
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 118.8
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 179.31
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 237.68
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 297.9
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 358.91
+        },
+        {
+          "episode": 7,
+          "kind": 3,
+          "seconds": 419.12
+        },
+        {
+          "episode": 8,
+          "kind": 1,
+          "seconds": 477.49
+        },
+        {
+          "episode": 9,
+          "kind": 2,
+          "seconds": 537.38
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.82,
+          58.98
+        ],
+        [
+          118.64,
+          118.79
+        ],
+        [
+          179.17,
+          179.3
+        ],
+        [
+          297.65,
+          297.89
+        ],
+        [
+          358.73,
+          358.9
+        ],
+        [
+          418.96,
+          419.11
+        ],
+        [
+          537.28,
+          537.37
+        ]
+      ],
+      "raw_sha256": "1c337122602f4f1d9d7ba47b283a4ff52ee761236cc475e49dc34c847b52f566",
+      "events_sha256": "35b35ea13e90c51a5ceb9f0bbf6303fe3b2af9a11f3abf68eacc51f6fc64c654",
+      "state_sha256": "6bad0a5e87f5fca2bcbdf47beeed0475389aebf515a2f4f580b6c183e64e3c45",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.4,
+          "next_ack_seconds": 12.41,
+          "actual_retirement_seconds": 12.29,
+          "actual_wait_seconds": 0.11,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.89,
+          "next_ack_seconds": 31.9,
+          "actual_retirement_seconds": 24.68,
+          "actual_wait_seconds": 7.21,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 44.16,
+          "next_ack_seconds": 44.17,
+          "actual_retirement_seconds": 43.96,
+          "actual_wait_seconds": 0.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 58.98,
+          "next_ack_seconds": 58.99,
+          "actual_retirement_seconds": 58.82,
+          "actual_wait_seconds": 0.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 71.53,
+          "next_ack_seconds": 71.54,
+          "actual_retirement_seconds": 71.3,
+          "actual_wait_seconds": 0.23,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 91.19,
+          "next_ack_seconds": 91.2,
+          "actual_retirement_seconds": 83.83,
+          "actual_wait_seconds": 7.36,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 103.68,
+          "next_ack_seconds": 103.69,
+          "actual_retirement_seconds": 103.47,
+          "actual_wait_seconds": 0.21,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 118.79,
+          "next_ack_seconds": 118.8,
+          "actual_retirement_seconds": 118.64,
+          "actual_wait_seconds": 0.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 131.47,
+          "next_ack_seconds": 131.48,
+          "actual_retirement_seconds": 131.43,
+          "actual_wait_seconds": 0.04,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 144.28,
+          "next_ack_seconds": 144.29,
+          "actual_retirement_seconds": 144.1,
+          "actual_wait_seconds": 0.18,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 164.23,
+          "next_ack_seconds": 164.24,
+          "actual_retirement_seconds": 156.97,
+          "actual_wait_seconds": 7.26,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 179.3,
+          "next_ack_seconds": 179.31,
+          "actual_retirement_seconds": 179.17,
+          "actual_wait_seconds": 0.13,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 191.63,
+          "next_ack_seconds": 191.64,
+          "actual_retirement_seconds": 191.46,
+          "actual_wait_seconds": 0.17,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 211.04,
+          "next_ack_seconds": 211.05,
+          "actual_retirement_seconds": 203.79,
+          "actual_wait_seconds": 7.25,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 223.23,
+          "next_ack_seconds": 223.24,
+          "actual_retirement_seconds": 223.0,
+          "actual_wait_seconds": 0.23,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 237.67,
+          "next_ack_seconds": 237.68,
+          "actual_retirement_seconds": 237.67,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 250.38,
+          "next_ack_seconds": 250.39,
+          "actual_retirement_seconds": 250.17,
+          "actual_wait_seconds": 0.21,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 270.13,
+          "next_ack_seconds": 270.14,
+          "actual_retirement_seconds": 262.73,
+          "actual_wait_seconds": 7.4,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 282.63,
+          "next_ack_seconds": 282.64,
+          "actual_retirement_seconds": 282.54,
+          "actual_wait_seconds": 0.09,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 297.89,
+          "next_ack_seconds": 297.9,
+          "actual_retirement_seconds": 297.65,
+          "actual_wait_seconds": 0.24,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 310.82,
+          "next_ack_seconds": 310.83,
+          "actual_retirement_seconds": 310.59,
+          "actual_wait_seconds": 0.23,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 323.63,
+          "next_ack_seconds": 323.64,
+          "actual_retirement_seconds": 323.47,
+          "actual_wait_seconds": 0.16,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 343.47,
+          "next_ack_seconds": 343.48,
+          "actual_retirement_seconds": 336.18,
+          "actual_wait_seconds": 7.29,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 358.9,
+          "next_ack_seconds": 358.91,
+          "actual_retirement_seconds": 358.73,
+          "actual_wait_seconds": 0.17,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 371.44,
+          "next_ack_seconds": 371.45,
+          "actual_retirement_seconds": 371.36,
+          "actual_wait_seconds": 0.08,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 391.25,
+          "next_ack_seconds": 391.26,
+          "actual_retirement_seconds": 383.96,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 403.82,
+          "next_ack_seconds": 403.83,
+          "actual_retirement_seconds": 403.79,
+          "actual_wait_seconds": 0.03,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 419.11,
+          "next_ack_seconds": 419.12,
+          "actual_retirement_seconds": 418.96,
+          "actual_wait_seconds": 0.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 431.44,
+          "next_ack_seconds": 431.45,
+          "actual_retirement_seconds": 431.27,
+          "actual_wait_seconds": 0.17,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 450.85,
+          "next_ack_seconds": 450.86,
+          "actual_retirement_seconds": 443.6,
+          "actual_wait_seconds": 7.25,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 463.04,
+          "next_ack_seconds": 463.05,
+          "actual_retirement_seconds": 462.81,
+          "actual_wait_seconds": 0.23,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 477.48,
+          "next_ack_seconds": 477.49,
+          "actual_retirement_seconds": 477.48,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 489.99,
+          "next_ack_seconds": 490.0,
+          "actual_retirement_seconds": 489.82,
+          "actual_wait_seconds": 0.17,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 509.77,
+          "next_ack_seconds": 509.78,
+          "actual_retirement_seconds": 502.38,
+          "actual_wait_seconds": 7.39,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 522.22,
+          "next_ack_seconds": 522.23,
+          "actual_retirement_seconds": 522.12,
+          "actual_wait_seconds": 0.1,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 537.37,
+          "next_ack_seconds": 537.38,
+          "actual_retirement_seconds": 537.28,
+          "actual_wait_seconds": 0.09,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 549.89,
+          "next_ack_seconds": 549.9,
+          "actual_retirement_seconds": 549.8,
+          "actual_wait_seconds": 0.09,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 562.53,
+          "next_ack_seconds": 562.54,
+          "actual_retirement_seconds": 562.31,
+          "actual_wait_seconds": 0.22,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        }
+      ]
+    },
+    {
+      "version": "calibrated",
+      "seed": 42,
+      "initial_activity": 0.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=42 initial=0.00 live=0 frames=26460000 starts=56 phrases=7 memory_returns=1 max_sources=3 final_ms=571730 nonfinite=0 limited=0 peak=0.09265137",
+      "raw_level": {
+        "integrated_lufs": -33.5,
+        "true_peak_dbfs": -20.7
+      },
+      "mono_energy_ratio": 0.9735725232880739,
+      "dc": [
+        -5.64332992311508e-09,
+        -2.5685051581396445e-09
+      ],
+      "starts": 56,
+      "starts_per_minute": 5.915492957746479,
+      "completed_phrases": 7,
+      "memory_returns": 1,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 1.9596302816901408,
+      "source_free_seconds": 64.45,
+      "longest_actual_source_free_interval_seconds": 11.370000000000005,
+      "largest_actual_onset_gap_seconds": 26.629999999999995,
+      "full_owner_retirement_after_stop_seconds": 571.73,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        6.0
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 80.99
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 164.54
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 249.66
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 329.16
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 413.12
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 498.74
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          70.82,
+          80.98
+        ],
+        [
+          153.58,
+          164.53
+        ],
+        [
+          238.32,
+          249.65
+        ],
+        [
+          319.55,
+          329.15
+        ],
+        [
+          402.07,
+          413.11
+        ],
+        [
+          487.36,
+          498.73
+        ]
+      ],
+      "raw_sha256": "9078962c9d5a096cd7821c742ebd93acd30512ddc9cba21600a8d519afa62287",
+      "events_sha256": "e4b3cc498095530377f01035cfe4f4882e8989d6973b2c8c14c99c8768c0c1c6",
+      "state_sha256": "2f230880b743c0953b0cc91ec1698cd3d643720b268607aa79adeacc4a98fb7e",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 18.4,
+          "next_ack_seconds": 18.41,
+          "actual_retirement_seconds": 12.29,
+          "actual_wait_seconds": 6.11,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 37.89,
+          "next_ack_seconds": 37.9,
+          "actual_retirement_seconds": 30.68,
+          "actual_wait_seconds": 7.21,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 56.16,
+          "next_ack_seconds": 56.17,
+          "actual_retirement_seconds": 49.96,
+          "actual_wait_seconds": 6.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 80.98,
+          "next_ack_seconds": 80.99,
+          "actual_retirement_seconds": 70.82,
+          "actual_wait_seconds": 10.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 10.0,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 100.01,
+          "next_ack_seconds": 100.02,
+          "actual_retirement_seconds": 93.3,
+          "actual_wait_seconds": 6.71,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 119.65,
+          "next_ack_seconds": 119.66,
+          "actual_retirement_seconds": 112.31,
+          "actual_wait_seconds": 7.34,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 138.62,
+          "next_ack_seconds": 138.63,
+          "actual_retirement_seconds": 131.93,
+          "actual_wait_seconds": 6.69,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 164.53,
+          "next_ack_seconds": 164.54,
+          "actual_retirement_seconds": 153.58,
+          "actual_wait_seconds": 10.95,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 10.8,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 183.93,
+          "next_ack_seconds": 183.94,
+          "actual_retirement_seconds": 177.17,
+          "actual_wait_seconds": 6.76,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 203.46,
+          "next_ack_seconds": 203.47,
+          "actual_retirement_seconds": 196.56,
+          "actual_wait_seconds": 6.9,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 223.38,
+          "next_ack_seconds": 223.39,
+          "actual_retirement_seconds": 216.15,
+          "actual_wait_seconds": 7.23,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 249.65,
+          "next_ack_seconds": 249.66,
+          "actual_retirement_seconds": 238.32,
+          "actual_wait_seconds": 11.33,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 11.200000000000001,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 267.74,
+          "next_ack_seconds": 267.75,
+          "actual_retirement_seconds": 261.81,
+          "actual_wait_seconds": 5.93,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 5.76,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 287.16,
+          "next_ack_seconds": 287.17,
+          "actual_retirement_seconds": 279.9,
+          "actual_wait_seconds": 7.26,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 5.76,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 305.11,
+          "next_ack_seconds": 305.12,
+          "actual_retirement_seconds": 299.12,
+          "actual_wait_seconds": 5.99,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 5.76,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 329.15,
+          "next_ack_seconds": 329.16,
+          "actual_retirement_seconds": 319.55,
+          "actual_wait_seconds": 9.6,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 9.6,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 348.34,
+          "next_ack_seconds": 348.35,
+          "actual_retirement_seconds": 341.65,
+          "actual_wait_seconds": 6.69,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 368.07,
+          "next_ack_seconds": 368.08,
+          "actual_retirement_seconds": 360.69,
+          "actual_wait_seconds": 7.38,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 387.05,
+          "next_ack_seconds": 387.06,
+          "actual_retirement_seconds": 380.48,
+          "actual_wait_seconds": 6.57,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 413.11,
+          "next_ack_seconds": 413.12,
+          "actual_retirement_seconds": 402.07,
+          "actual_wait_seconds": 11.04,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 10.8,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 432.76,
+          "next_ack_seconds": 432.77,
+          "actual_retirement_seconds": 425.81,
+          "actual_wait_seconds": 6.95,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 452.29,
+          "next_ack_seconds": 452.3,
+          "actual_retirement_seconds": 445.41,
+          "actual_wait_seconds": 6.88,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 472.1,
+          "next_ack_seconds": 472.11,
+          "actual_retirement_seconds": 464.84,
+          "actual_wait_seconds": 7.26,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.720000000000001,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 498.73,
+          "next_ack_seconds": 498.74,
+          "actual_retirement_seconds": 487.36,
+          "actual_wait_seconds": 11.37,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 11.200000000000001,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 517.75,
+          "next_ack_seconds": 517.76,
+          "actual_retirement_seconds": 511.19,
+          "actual_wait_seconds": 6.56,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 537.54,
+          "next_ack_seconds": 537.55,
+          "actual_retirement_seconds": 530.27,
+          "actual_wait_seconds": 7.27,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 556.59,
+          "next_ack_seconds": 556.6,
+          "actual_retirement_seconds": 550.08,
+          "actual_wait_seconds": 6.51,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 6.48,
+          "common_tone_retained": true
+        }
+      ],
+      "retained_against_exact_pr155": {
+        "matched_heard_prefix_starts": 56,
+        "unchanged_held_outer_roles": 49,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "retained_across_activity": {
+        "matched_heard_prefix_starts": 56,
+        "unchanged_held_outer_roles": 49,
+        "maximum_held_role_difference_seconds": 0.0
+      }
+    },
+    {
+      "version": "baseline",
+      "seed": 42,
+      "initial_activity": 0.5,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=42 initial=0.50 live=0 frames=26460000 starts=79 phrases=9 memory_returns=2 max_sources=3 final_ms=576820 nonfinite=0 limited=0 peak=0.09710693",
+      "raw_level": {
+        "integrated_lufs": -32.9,
+        "true_peak_dbfs": -20.3
+      },
+      "mono_energy_ratio": 0.9703659766048871,
+      "dc": [
+        -1.8142158121929326e-09,
+        -4.01826312122071e-09
+      ],
+      "starts": 79,
+      "starts_per_minute": 8.345070422535212,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.4902112676056336,
+      "source_free_seconds": 1.09,
+      "longest_actual_source_free_interval_seconds": 0.2400000000000091,
+      "largest_actual_onset_gap_seconds": 19.889999999999986,
+      "full_owner_retirement_after_stop_seconds": 576.82,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        6.0
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.93
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 118.51
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 178.99
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 237.3
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 297.48
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 358.23
+        },
+        {
+          "episode": 7,
+          "kind": 3,
+          "seconds": 418.42
+        },
+        {
+          "episode": 8,
+          "kind": 1,
+          "seconds": 476.73
+        },
+        {
+          "episode": 9,
+          "kind": 2,
+          "seconds": 536.52
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.76,
+          58.92
+        ],
+        [
+          118.35,
+          118.5
+        ],
+        [
+          178.85,
+          178.98
+        ],
+        [
+          297.23,
+          297.47
+        ],
+        [
+          358.05,
+          358.22
+        ],
+        [
+          418.26,
+          418.41
+        ],
+        [
+          536.42,
+          536.51
+        ]
+      ],
+      "raw_sha256": "5be629c8e1b8fce4de04eddc5564dde49d51db07b94f62ec8fec6d51de160d37",
+      "events_sha256": "5c2df072d17ec6d1c0294bf80a23e553a2624c7f459973769a78217a6a67262e",
+      "state_sha256": "6cfb080b26c0b37630f5c8177d829e7f59c3b332cf96fa547fbadc4860d5e832",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.36,
+          "next_ack_seconds": 12.37,
+          "actual_retirement_seconds": 12.29,
+          "actual_wait_seconds": 0.07,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.97,
+          "next_ack_seconds": 31.98,
+          "actual_retirement_seconds": 24.64,
+          "actual_wait_seconds": 7.33,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 44.1,
+          "next_ack_seconds": 44.11,
+          "actual_retirement_seconds": 44.04,
+          "actual_wait_seconds": 0.06,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 58.92,
+          "next_ack_seconds": 58.93,
+          "actual_retirement_seconds": 58.76,
+          "actual_wait_seconds": 0.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 71.38,
+          "next_ack_seconds": 71.39,
+          "actual_retirement_seconds": 71.24,
+          "actual_wait_seconds": 0.14,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 90.98,
+          "next_ack_seconds": 90.99,
+          "actual_retirement_seconds": 83.68,
+          "actual_wait_seconds": 7.3,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 103.39,
+          "next_ack_seconds": 103.4,
+          "actual_retirement_seconds": 103.26,
+          "actual_wait_seconds": 0.13,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 118.5,
+          "next_ack_seconds": 118.51,
+          "actual_retirement_seconds": 118.35,
+          "actual_wait_seconds": 0.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 131.3,
+          "next_ack_seconds": 131.31,
+          "actual_retirement_seconds": 131.14,
+          "actual_wait_seconds": 0.16,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 144.02,
+          "next_ack_seconds": 144.03,
+          "actual_retirement_seconds": 143.93,
+          "actual_wait_seconds": 0.09,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 163.91,
+          "next_ack_seconds": 163.92,
+          "actual_retirement_seconds": 156.71,
+          "actual_wait_seconds": 7.2,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 178.98,
+          "next_ack_seconds": 178.99,
+          "actual_retirement_seconds": 178.85,
+          "actual_wait_seconds": 0.13,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 191.35,
+          "next_ack_seconds": 191.36,
+          "actual_retirement_seconds": 191.14,
+          "actual_wait_seconds": 0.21,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 210.72,
+          "next_ack_seconds": 210.73,
+          "actual_retirement_seconds": 203.51,
+          "actual_wait_seconds": 7.21,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 222.85,
+          "next_ack_seconds": 222.86,
+          "actual_retirement_seconds": 222.68,
+          "actual_wait_seconds": 0.17,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 237.29,
+          "next_ack_seconds": 237.3,
+          "actual_retirement_seconds": 237.29,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 249.99,
+          "next_ack_seconds": 250.0,
+          "actual_retirement_seconds": 249.79,
+          "actual_wait_seconds": 0.2,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 269.66,
+          "next_ack_seconds": 269.67,
+          "actual_retirement_seconds": 262.34,
+          "actual_wait_seconds": 7.32,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 282.21,
+          "next_ack_seconds": 282.22,
+          "actual_retirement_seconds": 282.07,
+          "actual_wait_seconds": 0.14,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 297.47,
+          "next_ack_seconds": 297.48,
+          "actual_retirement_seconds": 297.23,
+          "actual_wait_seconds": 0.24,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 310.34,
+          "next_ack_seconds": 310.35,
+          "actual_retirement_seconds": 310.17,
+          "actual_wait_seconds": 0.17,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 322.99,
+          "next_ack_seconds": 323.0,
+          "actual_retirement_seconds": 322.99,
+          "actual_wait_seconds": 0.0,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 342.79,
+          "next_ack_seconds": 342.8,
+          "actual_retirement_seconds": 335.54,
+          "actual_wait_seconds": 7.25,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 358.22,
+          "next_ack_seconds": 358.23,
+          "actual_retirement_seconds": 358.05,
+          "actual_wait_seconds": 0.17,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 370.74,
+          "next_ack_seconds": 370.75,
+          "actual_retirement_seconds": 370.68,
+          "actual_wait_seconds": 0.06,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 390.58,
+          "next_ack_seconds": 390.59,
+          "actual_retirement_seconds": 383.26,
+          "actual_wait_seconds": 7.32,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 403.12,
+          "next_ack_seconds": 403.13,
+          "actual_retirement_seconds": 403.12,
+          "actual_wait_seconds": 0.0,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 418.41,
+          "next_ack_seconds": 418.42,
+          "actual_retirement_seconds": 418.26,
+          "actual_wait_seconds": 0.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 430.78,
+          "next_ack_seconds": 430.79,
+          "actual_retirement_seconds": 430.57,
+          "actual_wait_seconds": 0.21,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 450.15,
+          "next_ack_seconds": 450.16,
+          "actual_retirement_seconds": 442.94,
+          "actual_wait_seconds": 7.21,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 462.28,
+          "next_ack_seconds": 462.29,
+          "actual_retirement_seconds": 462.11,
+          "actual_wait_seconds": 0.17,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 476.72,
+          "next_ack_seconds": 476.73,
+          "actual_retirement_seconds": 476.72,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 489.21,
+          "next_ack_seconds": 489.22,
+          "actual_retirement_seconds": 489.06,
+          "actual_wait_seconds": 0.15,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 508.91,
+          "next_ack_seconds": 508.92,
+          "actual_retirement_seconds": 501.6,
+          "actual_wait_seconds": 7.31,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 521.36,
+          "next_ack_seconds": 521.37,
+          "actual_retirement_seconds": 521.26,
+          "actual_wait_seconds": 0.1,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 536.51,
+          "next_ack_seconds": 536.52,
+          "actual_retirement_seconds": 536.42,
+          "actual_wait_seconds": 0.09,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 548.94,
+          "next_ack_seconds": 548.95,
+          "actual_retirement_seconds": 548.94,
+          "actual_wait_seconds": 0.0,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 561.47,
+          "next_ack_seconds": 561.48,
+          "actual_retirement_seconds": 561.36,
+          "actual_wait_seconds": 0.11,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        }
+      ]
+    },
+    {
+      "version": "calibrated",
+      "seed": 42,
+      "initial_activity": 0.5,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=42 initial=0.50 live=0 frames=26460000 starts=64 phrases=8 memory_returns=2 max_sources=3 final_ms=568490 nonfinite=0 limited=0 peak=0.09603882",
+      "raw_level": {
+        "integrated_lufs": -33.2,
+        "true_peak_dbfs": -20.4
+      },
+      "mono_energy_ratio": 0.9720595692229469,
+      "dc": [
+        -4.698738219246032e-09,
+        -2.0460386845710505e-09
+      ],
+      "starts": 64,
+      "starts_per_minute": 6.76056338028169,
+      "completed_phrases": 8,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.154735915492958,
+      "source_free_seconds": 41.92,
+      "longest_actual_source_free_interval_seconds": 6.329999999999984,
+      "largest_actual_onset_gap_seconds": 21.589999999999975,
+      "full_owner_retirement_after_stop_seconds": 568.49,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        6.0
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 70.43
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 142.42
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 215.89
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 285.37
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 357.96
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 431.7
+        },
+        {
+          "episode": 7,
+          "kind": 3,
+          "seconds": 504.3
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          64.76,
+          70.42
+        ],
+        [
+          136.32,
+          142.41
+        ],
+        [
+          209.59,
+          215.88
+        ],
+        [
+          280.08,
+          285.36
+        ],
+        [
+          351.77,
+          357.95
+        ],
+        [
+          425.36,
+          431.69
+        ],
+        [
+          498.2,
+          504.29
+        ]
+      ],
+      "raw_sha256": "c44584d858dff9218ac1c95953276ff3950a32b5bb17c484eb871328c5823c6b",
+      "events_sha256": "88605581cb63c5181489cfa55f89890d3343ab81aab8ec5e0828742c1348b53c",
+      "state_sha256": "7f669bd24231ee23828f635e48453e7f3d3ccc4ccbbbd817fd32787e9b0598e9",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 15.36,
+          "next_ack_seconds": 15.37,
+          "actual_retirement_seconds": 12.29,
+          "actual_wait_seconds": 3.07,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 34.97,
+          "next_ack_seconds": 34.98,
+          "actual_retirement_seconds": 27.64,
+          "actual_wait_seconds": 7.33,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 50.1,
+          "next_ack_seconds": 50.11,
+          "actual_retirement_seconds": 47.04,
+          "actual_wait_seconds": 3.06,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 70.42,
+          "next_ack_seconds": 70.43,
+          "actual_retirement_seconds": 64.76,
+          "actual_wait_seconds": 5.66,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.5,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 86.12,
+          "next_ack_seconds": 86.13,
+          "actual_retirement_seconds": 82.74,
+          "actual_wait_seconds": 3.38,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 105.71,
+          "next_ack_seconds": 105.72,
+          "actual_retirement_seconds": 98.42,
+          "actual_wait_seconds": 7.29,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 121.36,
+          "next_ack_seconds": 121.37,
+          "actual_retirement_seconds": 117.99,
+          "actual_wait_seconds": 3.37,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 142.41,
+          "next_ack_seconds": 142.42,
+          "actual_retirement_seconds": 136.32,
+          "actual_wait_seconds": 6.09,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.94,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 158.57,
+          "next_ack_seconds": 158.58,
+          "actual_retirement_seconds": 155.05,
+          "actual_wait_seconds": 3.52,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 174.65,
+          "next_ack_seconds": 174.66,
+          "actual_retirement_seconds": 171.2,
+          "actual_wait_seconds": 3.45,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 194.65,
+          "next_ack_seconds": 194.66,
+          "actual_retirement_seconds": 187.34,
+          "actual_wait_seconds": 7.31,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 215.88,
+          "next_ack_seconds": 215.89,
+          "actual_retirement_seconds": 209.59,
+          "actual_wait_seconds": 6.29,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 6.16,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 231.13,
+          "next_ack_seconds": 231.14,
+          "actual_retirement_seconds": 228.04,
+          "actual_wait_seconds": 3.09,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 250.63,
+          "next_ack_seconds": 250.64,
+          "actual_retirement_seconds": 243.29,
+          "actual_wait_seconds": 7.34,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 265.64,
+          "next_ack_seconds": 265.65,
+          "actual_retirement_seconds": 262.59,
+          "actual_wait_seconds": 3.05,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 285.36,
+          "next_ack_seconds": 285.37,
+          "actual_retirement_seconds": 280.08,
+          "actual_wait_seconds": 5.28,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.279999999999999,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 301.3,
+          "next_ack_seconds": 301.31,
+          "actual_retirement_seconds": 297.86,
+          "actual_wait_seconds": 3.44,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 320.96,
+          "next_ack_seconds": 320.97,
+          "actual_retirement_seconds": 313.65,
+          "actual_wait_seconds": 7.31,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 336.75,
+          "next_ack_seconds": 336.76,
+          "actual_retirement_seconds": 333.37,
+          "actual_wait_seconds": 3.38,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 357.95,
+          "next_ack_seconds": 357.96,
+          "actual_retirement_seconds": 351.77,
+          "actual_wait_seconds": 6.18,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.94,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 374.18,
+          "next_ack_seconds": 374.19,
+          "actual_retirement_seconds": 370.65,
+          "actual_wait_seconds": 3.53,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 390.19,
+          "next_ack_seconds": 390.2,
+          "actual_retirement_seconds": 386.83,
+          "actual_wait_seconds": 3.36,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 410.1,
+          "next_ack_seconds": 410.11,
+          "actual_retirement_seconds": 402.74,
+          "actual_wait_seconds": 7.36,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.3600000000000003,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 431.69,
+          "next_ack_seconds": 431.7,
+          "actual_retirement_seconds": 425.36,
+          "actual_wait_seconds": 6.33,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 6.16,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 447.45,
+          "next_ack_seconds": 447.46,
+          "actual_retirement_seconds": 444.15,
+          "actual_wait_seconds": 3.3,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 467.28,
+          "next_ack_seconds": 467.29,
+          "actual_retirement_seconds": 459.97,
+          "actual_wait_seconds": 7.31,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 483.06,
+          "next_ack_seconds": 483.07,
+          "actual_retirement_seconds": 479.82,
+          "actual_wait_seconds": 3.24,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 3.24,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 504.29,
+          "next_ack_seconds": 504.3,
+          "actual_retirement_seconds": 498.2,
+          "actual_wait_seconds": 6.09,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 5.94,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 519.54,
+          "next_ack_seconds": 519.55,
+          "actual_retirement_seconds": 516.45,
+          "actual_wait_seconds": 3.09,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 539.04,
+          "next_ack_seconds": 539.05,
+          "actual_retirement_seconds": 531.7,
+          "actual_wait_seconds": 7.34,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 554.05,
+          "next_ack_seconds": 554.06,
+          "actual_retirement_seconds": 551.0,
+          "actual_wait_seconds": 3.05,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 2.88,
+          "common_tone_retained": true
+        }
+      ],
+      "retained_against_exact_pr155": {
+        "matched_heard_prefix_starts": 64,
+        "unchanged_held_outer_roles": 56,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "retained_across_activity": {
+        "matched_heard_prefix_starts": 64,
+        "unchanged_held_outer_roles": 56,
+        "maximum_held_role_difference_seconds": 0.0
+      }
+    },
+    {
+      "version": "baseline",
+      "seed": 42,
+      "initial_activity": 1.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=42 initial=1.00 live=0 frames=26460000 starts=79 phrases=9 memory_returns=2 max_sources=3 final_ms=576820 nonfinite=0 limited=0 peak=0.09915161",
+      "raw_level": {
+        "integrated_lufs": -32.9,
+        "true_peak_dbfs": -20.1
+      },
+      "mono_energy_ratio": 0.9698697529394023,
+      "dc": [
+        -4.372340841718632e-09,
+        -2.03911859882842e-09
+      ],
+      "starts": 79,
+      "starts_per_minute": 8.345070422535212,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.489612676056338,
+      "source_free_seconds": 1.09,
+      "longest_actual_source_free_interval_seconds": 0.2400000000000091,
+      "largest_actual_onset_gap_seconds": 20.069999999999993,
+      "full_owner_retirement_after_stop_seconds": 576.82,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        6.0
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.86
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 118.22
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 178.91
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 237.16
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 297.31
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 358.05
+        },
+        {
+          "episode": 7,
+          "kind": 3,
+          "seconds": 418.47
+        },
+        {
+          "episode": 8,
+          "kind": 1,
+          "seconds": 476.72
+        },
+        {
+          "episode": 9,
+          "kind": 2,
+          "seconds": 536.39
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.69,
+          58.85
+        ],
+        [
+          118.06,
+          118.21
+        ],
+        [
+          178.77,
+          178.9
+        ],
+        [
+          297.06,
+          297.3
+        ],
+        [
+          357.87,
+          358.04
+        ],
+        [
+          418.31,
+          418.46
+        ],
+        [
+          536.29,
+          536.38
+        ]
+      ],
+      "raw_sha256": "d7602c865307b1d6175164d09416363b7a1732251f36e530560aa81e71269175",
+      "events_sha256": "f6561b20163456465fd0a13897d40894778711d1a632f6d869aa13528d279dac",
+      "state_sha256": "49a02eff19d1b118d538ebcf5db5bd27d5aa490dd50afb3aead644878fcf0c41",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.31,
+          "next_ack_seconds": 12.32,
+          "actual_retirement_seconds": 12.29,
+          "actual_wait_seconds": 0.02,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.79,
+          "next_ack_seconds": 31.8,
+          "actual_retirement_seconds": 24.59,
+          "actual_wait_seconds": 7.2,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 44.03,
+          "next_ack_seconds": 44.04,
+          "actual_retirement_seconds": 43.86,
+          "actual_wait_seconds": 0.17,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 58.85,
+          "next_ack_seconds": 58.86,
+          "actual_retirement_seconds": 58.69,
+          "actual_wait_seconds": 0.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 71.21,
+          "next_ack_seconds": 71.22,
+          "actual_retirement_seconds": 71.17,
+          "actual_wait_seconds": 0.04,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 90.76,
+          "next_ack_seconds": 90.77,
+          "actual_retirement_seconds": 83.51,
+          "actual_wait_seconds": 7.25,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 103.1,
+          "next_ack_seconds": 103.11,
+          "actual_retirement_seconds": 103.04,
+          "actual_wait_seconds": 0.06,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 118.21,
+          "next_ack_seconds": 118.22,
+          "actual_retirement_seconds": 118.06,
+          "actual_wait_seconds": 0.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 130.89,
+          "next_ack_seconds": 130.9,
+          "actual_retirement_seconds": 130.85,
+          "actual_wait_seconds": 0.04,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 143.76,
+          "next_ack_seconds": 143.77,
+          "actual_retirement_seconds": 143.52,
+          "actual_wait_seconds": 0.24,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 163.83,
+          "next_ack_seconds": 163.84,
+          "actual_retirement_seconds": 156.45,
+          "actual_wait_seconds": 7.38,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 178.9,
+          "next_ack_seconds": 178.91,
+          "actual_retirement_seconds": 178.77,
+          "actual_wait_seconds": 0.13,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 191.06,
+          "next_ack_seconds": 191.07,
+          "actual_retirement_seconds": 191.06,
+          "actual_wait_seconds": 0.0,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 210.63,
+          "next_ack_seconds": 210.64,
+          "actual_retirement_seconds": 203.22,
+          "actual_wait_seconds": 7.41,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 222.71,
+          "next_ack_seconds": 222.72,
+          "actual_retirement_seconds": 222.59,
+          "actual_wait_seconds": 0.12,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 237.15,
+          "next_ack_seconds": 237.16,
+          "actual_retirement_seconds": 237.15,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 249.85,
+          "next_ack_seconds": 249.86,
+          "actual_retirement_seconds": 249.65,
+          "actual_wait_seconds": 0.2,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 269.44,
+          "next_ack_seconds": 269.45,
+          "actual_retirement_seconds": 262.2,
+          "actual_wait_seconds": 7.24,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 282.04,
+          "next_ack_seconds": 282.05,
+          "actual_retirement_seconds": 281.85,
+          "actual_wait_seconds": 0.19,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 297.3,
+          "next_ack_seconds": 297.31,
+          "actual_retirement_seconds": 297.06,
+          "actual_wait_seconds": 0.24,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 310.1,
+          "next_ack_seconds": 310.11,
+          "actual_retirement_seconds": 310.0,
+          "actual_wait_seconds": 0.1,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 322.84,
+          "next_ack_seconds": 322.85,
+          "actual_retirement_seconds": 322.75,
+          "actual_wait_seconds": 0.09,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 342.61,
+          "next_ack_seconds": 342.62,
+          "actual_retirement_seconds": 335.39,
+          "actual_wait_seconds": 7.22,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 358.04,
+          "next_ack_seconds": 358.05,
+          "actual_retirement_seconds": 357.87,
+          "actual_wait_seconds": 0.17,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 370.53,
+          "next_ack_seconds": 370.54,
+          "actual_retirement_seconds": 370.5,
+          "actual_wait_seconds": 0.03,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 390.41,
+          "next_ack_seconds": 390.42,
+          "actual_retirement_seconds": 383.05,
+          "actual_wait_seconds": 7.36,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 403.17,
+          "next_ack_seconds": 403.18,
+          "actual_retirement_seconds": 402.95,
+          "actual_wait_seconds": 0.22,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 418.46,
+          "next_ack_seconds": 418.47,
+          "actual_retirement_seconds": 418.31,
+          "actual_wait_seconds": 0.15,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 430.62,
+          "next_ack_seconds": 430.63,
+          "actual_retirement_seconds": 430.62,
+          "actual_wait_seconds": 0.0,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 450.19,
+          "next_ack_seconds": 450.2,
+          "actual_retirement_seconds": 442.78,
+          "actual_wait_seconds": 7.41,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 462.27,
+          "next_ack_seconds": 462.28,
+          "actual_retirement_seconds": 462.15,
+          "actual_wait_seconds": 0.12,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 476.71,
+          "next_ack_seconds": 476.72,
+          "actual_retirement_seconds": 476.71,
+          "actual_wait_seconds": 0.0,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 489.18,
+          "next_ack_seconds": 489.19,
+          "actual_retirement_seconds": 489.05,
+          "actual_wait_seconds": 0.13,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 508.79,
+          "next_ack_seconds": 508.8,
+          "actual_retirement_seconds": 501.57,
+          "actual_wait_seconds": 7.22,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 521.23,
+          "next_ack_seconds": 521.24,
+          "actual_retirement_seconds": 521.14,
+          "actual_wait_seconds": 0.09,
+          "phase": "3",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 536.38,
+          "next_ack_seconds": 536.39,
+          "actual_retirement_seconds": 536.29,
+          "actual_wait_seconds": 0.09,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 548.98,
+          "next_ack_seconds": 548.99,
+          "actual_retirement_seconds": 548.81,
+          "actual_wait_seconds": 0.17,
+          "phase": "1",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 561.64,
+          "next_ack_seconds": 561.65,
+          "actual_retirement_seconds": 561.4,
+          "actual_wait_seconds": 0.24,
+          "phase": "2",
+          "nominal_extra_wait_seconds": null,
+          "common_tone_retained": true
+        }
+      ]
+    },
+    {
+      "version": "calibrated",
+      "seed": 42,
+      "initial_activity": 1.0,
+      "live_changes": false,
+      "renderer_report": "COAST ACTIVITY seed=42 initial=1.00 live=0 frames=26460000 starts=77 phrases=9 memory_returns=2 max_sources=3 final_ms=576820 nonfinite=0 limited=0 peak=0.09915161",
+      "raw_level": {
+        "integrated_lufs": -32.9,
+        "true_peak_dbfs": -20.1
+      },
+      "mono_energy_ratio": 0.9704353340921591,
+      "dc": [
+        -4.089770673894558e-09,
+        -1.5581726397156085e-09
+      ],
+      "starts": 77,
+      "starts_per_minute": 8.133802816901408,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.4404225352112676,
+      "source_free_seconds": 10.57,
+      "longest_actual_source_free_interval_seconds": 1.3199999999999932,
+      "largest_actual_onset_gap_seconds": 20.069999999999993,
+      "full_owner_retirement_after_stop_seconds": 576.82,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        6.0
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 59.86
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 120.3
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 182.11
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 241.32
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 302.55
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 364.41
+        },
+        {
+          "episode": 7,
+          "kind": 3,
+          "seconds": 425.91
+        },
+        {
+          "episode": 8,
+          "kind": 1,
+          "seconds": 485.12
+        },
+        {
+          "episode": 9,
+          "kind": 2,
+          "seconds": 545.87
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.69,
+          59.85
+        ],
+        [
+          119.06,
+          120.29
+        ],
+        [
+          180.85,
+          182.1
+        ],
+        [
+          240.35,
+          241.31
+        ],
+        [
+          301.22,
+          302.54
+        ],
+        [
+          363.11,
+          364.4
+        ],
+        [
+          424.67,
+          425.9
+        ],
+        [
+          484.15,
+          485.11
+        ],
+        [
+          544.69,
+          545.86
+        ]
+      ],
+      "raw_sha256": "c6c9b215d050c6382b1b4ed257c4e63c5eb771b59c8c22544afd97dddda26b54",
+      "events_sha256": "3a235b155d89d478e471484b3f327dad6bcbf926a6e18d02312de27d376be1cd",
+      "state_sha256": "d26118e0e0c5d2cb775cb936b733fa09c9a49cced857dcee9d77d5993b9738c1",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "actual_post_retirement_waits": [
+        {
+          "next_source_issue_seconds": 12.31,
+          "next_ack_seconds": 12.32,
+          "actual_retirement_seconds": 12.29,
+          "actual_wait_seconds": 0.02,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 31.79,
+          "next_ack_seconds": 31.8,
+          "actual_retirement_seconds": 24.59,
+          "actual_wait_seconds": 7.2,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 44.03,
+          "next_ack_seconds": 44.04,
+          "actual_retirement_seconds": 43.86,
+          "actual_wait_seconds": 0.17,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 59.85,
+          "next_ack_seconds": 59.86,
+          "actual_retirement_seconds": 58.69,
+          "actual_wait_seconds": 1.16,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.0,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 72.21,
+          "next_ack_seconds": 72.22,
+          "actual_retirement_seconds": 72.17,
+          "actual_wait_seconds": 0.04,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 91.76,
+          "next_ack_seconds": 91.77,
+          "actual_retirement_seconds": 84.51,
+          "actual_wait_seconds": 7.25,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 104.1,
+          "next_ack_seconds": 104.11,
+          "actual_retirement_seconds": 104.04,
+          "actual_wait_seconds": 0.06,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 120.29,
+          "next_ack_seconds": 120.3,
+          "actual_retirement_seconds": 119.06,
+          "actual_wait_seconds": 1.23,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.08,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 132.97,
+          "next_ack_seconds": 132.98,
+          "actual_retirement_seconds": 132.93,
+          "actual_wait_seconds": 0.04,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 145.84,
+          "next_ack_seconds": 145.85,
+          "actual_retirement_seconds": 145.6,
+          "actual_wait_seconds": 0.24,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 165.91,
+          "next_ack_seconds": 165.92,
+          "actual_retirement_seconds": 158.53,
+          "actual_wait_seconds": 7.38,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 182.1,
+          "next_ack_seconds": 182.11,
+          "actual_retirement_seconds": 180.85,
+          "actual_wait_seconds": 1.25,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.12,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 194.26,
+          "next_ack_seconds": 194.27,
+          "actual_retirement_seconds": 194.26,
+          "actual_wait_seconds": 0.0,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 213.83,
+          "next_ack_seconds": 213.84,
+          "actual_retirement_seconds": 206.42,
+          "actual_wait_seconds": 7.41,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 225.91,
+          "next_ack_seconds": 225.92,
+          "actual_retirement_seconds": 225.79,
+          "actual_wait_seconds": 0.12,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 241.31,
+          "next_ack_seconds": 241.32,
+          "actual_retirement_seconds": 240.35,
+          "actual_wait_seconds": 0.96,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 0.96,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 254.01,
+          "next_ack_seconds": 254.02,
+          "actual_retirement_seconds": 253.81,
+          "actual_wait_seconds": 0.2,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 273.6,
+          "next_ack_seconds": 273.61,
+          "actual_retirement_seconds": 266.36,
+          "actual_wait_seconds": 7.24,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 286.2,
+          "next_ack_seconds": 286.21,
+          "actual_retirement_seconds": 286.01,
+          "actual_wait_seconds": 0.19,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 302.54,
+          "next_ack_seconds": 302.55,
+          "actual_retirement_seconds": 301.22,
+          "actual_wait_seconds": 1.32,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.08,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 315.34,
+          "next_ack_seconds": 315.35,
+          "actual_retirement_seconds": 315.24,
+          "actual_wait_seconds": 0.1,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 328.08,
+          "next_ack_seconds": 328.09,
+          "actual_retirement_seconds": 327.99,
+          "actual_wait_seconds": 0.09,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 347.85,
+          "next_ack_seconds": 347.86,
+          "actual_retirement_seconds": 340.63,
+          "actual_wait_seconds": 7.22,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 364.4,
+          "next_ack_seconds": 364.41,
+          "actual_retirement_seconds": 363.11,
+          "actual_wait_seconds": 1.29,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.12,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 376.89,
+          "next_ack_seconds": 376.9,
+          "actual_retirement_seconds": 376.86,
+          "actual_wait_seconds": 0.03,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 396.77,
+          "next_ack_seconds": 396.78,
+          "actual_retirement_seconds": 389.41,
+          "actual_wait_seconds": 7.36,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 409.53,
+          "next_ack_seconds": 409.54,
+          "actual_retirement_seconds": 409.31,
+          "actual_wait_seconds": 0.22,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 425.9,
+          "next_ack_seconds": 425.91,
+          "actual_retirement_seconds": 424.67,
+          "actual_wait_seconds": 1.23,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.08,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 438.06,
+          "next_ack_seconds": 438.07,
+          "actual_retirement_seconds": 438.06,
+          "actual_wait_seconds": 0.0,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 457.63,
+          "next_ack_seconds": 457.64,
+          "actual_retirement_seconds": 450.22,
+          "actual_wait_seconds": 7.41,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 469.71,
+          "next_ack_seconds": 469.72,
+          "actual_retirement_seconds": 469.59,
+          "actual_wait_seconds": 0.12,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 485.11,
+          "next_ack_seconds": 485.12,
+          "actual_retirement_seconds": 484.15,
+          "actual_wait_seconds": 0.96,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 0.96,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 497.58,
+          "next_ack_seconds": 497.59,
+          "actual_retirement_seconds": 497.45,
+          "actual_wait_seconds": 0.13,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 517.19,
+          "next_ack_seconds": 517.2,
+          "actual_retirement_seconds": 509.97,
+          "actual_wait_seconds": 7.22,
+          "phase": "2",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 529.63,
+          "next_ack_seconds": 529.64,
+          "actual_retirement_seconds": 529.54,
+          "actual_wait_seconds": 0.09,
+          "phase": "3",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        },
+        {
+          "next_source_issue_seconds": 545.86,
+          "next_ack_seconds": 545.87,
+          "actual_retirement_seconds": 544.69,
+          "actual_wait_seconds": 1.17,
+          "phase": "closing",
+          "nominal_extra_wait_seconds": 1.08,
+          "common_tone_retained": false
+        },
+        {
+          "next_source_issue_seconds": 558.46,
+          "next_ack_seconds": 558.47,
+          "actual_retirement_seconds": 558.29,
+          "actual_wait_seconds": 0.17,
+          "phase": "1",
+          "nominal_extra_wait_seconds": 0.0,
+          "common_tone_retained": true
+        }
+      ],
+      "retained_against_exact_pr155": {
+        "matched_heard_prefix_starts": 77,
+        "unchanged_held_outer_roles": 67,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "retained_across_activity": {
+        "matched_heard_prefix_starts": 64,
+        "unchanged_held_outer_roles": 56,
+        "maximum_held_role_difference_seconds": 0.0
+      }
+    }
+  ],
+  "live": [
+    {
+      "version": "baseline",
+      "seed": 1234,
+      "initial_activity": 0.5,
+      "live_changes": true,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=0.50 live=1 frames=26460000 starts=79 phrases=9 memory_returns=2 max_sources=3 final_ms=577210 nonfinite=0 limited=0 peak=0.10000610",
+      "raw_level": {
+        "integrated_lufs": -33.0,
+        "true_peak_dbfs": -20.0
+      },
+      "mono_energy_ratio": 0.9701897891386762,
+      "dc": [
+        -9.406703219482237e-09,
+        -2.930656312003968e-09
+      ],
+      "starts": 79,
+      "starts_per_minute": 8.345070422535212,
+      "completed_phrases": 9,
+      "memory_returns": 2,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.468926056338028,
+      "source_free_seconds": 0.83,
+      "longest_actual_source_free_interval_seconds": 0.20999999999999375,
+      "largest_actual_onset_gap_seconds": 20.05000000000001,
+      "full_owner_retirement_after_stop_seconds": 577.21,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.94
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 58.12
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 117.92
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 178.53
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 236.33
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 296.15
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 356.24
+        },
+        {
+          "episode": 7,
+          "kind": 2,
+          "seconds": 416.31
+        },
+        {
+          "episode": 8,
+          "kind": 3,
+          "seconds": 476.58
+        },
+        {
+          "episode": 9,
+          "kind": 1,
+          "seconds": 534.38
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          58.1,
+          58.11
+        ],
+        [
+          117.7,
+          117.91
+        ],
+        [
+          178.42,
+          178.52
+        ],
+        [
+          236.26,
+          236.32
+        ],
+        [
+          356.07,
+          356.23
+        ],
+        [
+          416.1,
+          416.3
+        ],
+        [
+          476.54,
+          476.57
+        ],
+        [
+          534.31,
+          534.37
+        ]
+      ],
+      "raw_sha256": "f4162d7e8a80dd75abe269cc5abb1f40157efbd7ce2138390fbc8df970ec3f23",
+      "events_sha256": "20ee7244708500ad060d5a60f8b2a21d12fce158d7b7727a43124f9ae88a9d4a",
+      "state_sha256": "0a4f85fb9dd61fc249ee061eebf655fa3b65a27a451af05e5fa92a4cdc1fc85e",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "retained_against_fixed_default": {
+        "matched_heard_prefix_starts": 79,
+        "unchanged_held_outer_roles": 67,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "setter_caused_immediate_note_hook": false,
+      "target_changes_seconds_values": [
+        [
+          10,
+          0
+        ],
+        [
+          32,
+          1
+        ],
+        [
+          64,
+          0.5
+        ],
+        [
+          96,
+          0
+        ],
+        [
+          128,
+          1
+        ],
+        [
+          160,
+          0.5
+        ]
+      ]
+    },
+    {
+      "version": "calibrated",
+      "seed": 1234,
+      "initial_activity": 0.5,
+      "live_changes": true,
+      "renderer_report": "COAST ACTIVITY seed=1234 initial=0.50 live=1 frames=26460000 starts=67 phrases=8 memory_returns=1 max_sources=3 final_ms=576820 nonfinite=0 limited=0 peak=0.10037231",
+      "raw_level": {
+        "integrated_lufs": -33.2,
+        "true_peak_dbfs": -20.0
+      },
+      "mono_energy_ratio": 0.971456334666922,
+      "dc": [
+        -7.80239667481576e-09,
+        -4.163584921815948e-09
+      ],
+      "starts": 67,
+      "starts_per_minute": 7.077464788732394,
+      "completed_phrases": 8,
+      "memory_returns": 1,
+      "maximum_actual_sources": 3,
+      "mean_actual_sources": 2.1729225352112675,
+      "source_free_seconds": 38.49,
+      "longest_actual_source_free_interval_seconds": 6.319999999999993,
+      "largest_actual_onset_gap_seconds": 21.370000000000005,
+      "full_owner_retirement_after_stop_seconds": 576.82,
+      "held_role_on_off_seconds_range": [
+        2.7,
+        5.94
+      ],
+      "phrase_openings": [
+        {
+          "episode": 0,
+          "kind": 0,
+          "seconds": 0.01
+        },
+        {
+          "episode": 1,
+          "kind": 1,
+          "seconds": 64.96
+        },
+        {
+          "episode": 2,
+          "kind": 2,
+          "seconds": 135.14
+        },
+        {
+          "episode": 3,
+          "kind": 3,
+          "seconds": 205.31
+        },
+        {
+          "episode": 4,
+          "kind": 1,
+          "seconds": 274.28
+        },
+        {
+          "episode": 5,
+          "kind": 2,
+          "seconds": 346.51
+        },
+        {
+          "episode": 6,
+          "kind": 1,
+          "seconds": 419.34
+        },
+        {
+          "episode": 7,
+          "kind": 2,
+          "seconds": 491.82
+        },
+        {
+          "episode": 8,
+          "kind": 3,
+          "seconds": 564.83
+        }
+      ],
+      "actual_source_free_intervals_seconds": [
+        [
+          63.94,
+          64.95
+        ],
+        [
+          133.84,
+          135.13
+        ],
+        [
+          199.04,
+          205.3
+        ],
+        [
+          268.93,
+          274.27
+        ],
+        [
+          340.56,
+          346.5
+        ],
+        [
+          413.01,
+          419.33
+        ],
+        [
+          485.67,
+          491.81
+        ],
+        [
+          558.63,
+          564.82
+        ]
+      ],
+      "raw_sha256": "1318e72829bcce05e94559fb262185bf28c51b9b39754874e0292ff6842312e9",
+      "events_sha256": "1634ef68f9a8f175ee82e8add8493e00e45b2948c7adba0c0f2d1db6c3892e5b",
+      "state_sha256": "f989fd0a75372643b99be8df416855c01912f2a7730f7181348b98f7c0e2f8fd",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "retained_against_fixed_default": {
+        "matched_heard_prefix_starts": 64,
+        "unchanged_held_outer_roles": 56,
+        "maximum_held_role_difference_seconds": 0.0
+      },
+      "setter_caused_immediate_note_hook": false,
+      "target_changes_seconds_values": [
+        [
+          10,
+          0
+        ],
+        [
+          32,
+          1
+        ],
+        [
+          64,
+          0.5
+        ],
+        [
+          96,
+          0
+        ],
+        [
+          128,
+          1
+        ],
+        [
+          160,
+          0.5
+        ]
+      ],
+      "retained_against_exact_pr155_live": {
+        "matched_heard_prefix_starts": 67,
+        "unchanged_held_outer_roles": 58,
+        "maximum_held_role_difference_seconds": 0.0
+      }
+    }
+  ],
+  "other_worlds_unchanged": [
+    {
+      "world": "WOODLAND",
+      "seed": 1234,
+      "raw_seconds": 112,
+      "baseline_candidate_pcm_events_state_identical": true,
+      "block_64_512_identical": true,
+      "raw_sha256": "829c72846ae14ce6a41946615f471d84be98ec457a448669563e84871e58365f",
+      "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+      "state_sha256": "7b5ace8e4cf6c0fefab52d89e67263d17fab6053e9780d9dfa4db239d7f6bc34"
+    },
+    {
+      "world": "WOODLAND",
+      "seed": 42,
+      "raw_seconds": 112,
+      "baseline_candidate_pcm_events_state_identical": true,
+      "block_64_512_identical": true,
+      "raw_sha256": "6bb2d79d7f0c846cdd1843473100eec9a06b09d630268f835753befcae9674bc",
+      "events_sha256": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+      "state_sha256": "e88c80fe19633cf7b1af4c8c64c10bf8cbc990d428bb09317d6fe03a4c86426a"
+    },
+    {
+      "world": "HIGHLANDS",
+      "seed": 1234,
+      "raw_seconds": 112,
+      "baseline_candidate_pcm_events_state_identical": true,
+      "block_64_512_identical": true,
+      "raw_sha256": "de6bae31b69bef3ee2ffcfa91545cc2c0063ea7f78c832c47986a8ae6bffc5ec",
+      "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+      "state_sha256": "a90be84c850034fdcfe92855a92b6f3e32ac01c3b35539224ff4698d98cc0d3b"
+    },
+    {
+      "world": "HIGHLANDS",
+      "seed": 42,
+      "raw_seconds": 112,
+      "baseline_candidate_pcm_events_state_identical": true,
+      "block_64_512_identical": true,
+      "raw_sha256": "3bee479a079a7a655f0b61a1fc09ecba0b221aea44c3f4b84aff9f66f147839d",
+      "events_sha256": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+      "state_sha256": "c9eb060f54eb40d91941e16851edfdb9e2db4a1bfc2a2fb955f8e739530f3856"
+    }
+  ],
+  "full_pcm_retained": false,
+  "pure_regression": "ACTIVITY PURE PASS: 576 key/collection/seed cases, 33792 heard intents across eight phrases, min/default/max preserve pitch/role/velocity/hold and memory; 1536 post-retirement pause intents >=8s, timer wrap",
+  "listening": {
+    "file": "AMBIENT_COAST_Activity_Calibrated_0_50_100_38p5s.wav",
+    "sha256": "a79641b9c820dc7b139bdee4ec1751d2ea792d574516624237c1ab739a54925f",
+    "level": {
+      "integrated_lufs": -23.3,
+      "true_peak_dbfs": -10.7
+    },
+    "sections": [
+      {
+        "activity": 0.0,
+        "output_seconds": [
+          0.0,
+          12.5
+        ],
+        "source_seconds": [
+          8.0,
+          20.5
+        ],
+        "delivered_level": {
+          "integrated_lufs": -24.0,
+          "true_peak_dbfs": -10.7
+        }
+      },
+      {
+        "activity": 0.5,
+        "output_seconds": [
+          13.0,
+          25.5
+        ],
+        "source_seconds": [
+          8.0,
+          20.5
+        ],
+        "delivered_level": {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -10.7
+        }
+      },
+      {
+        "activity": 1.0,
+        "output_seconds": [
+          26.0,
+          38.5
+        ],
+        "source_seconds": [
+          8.0,
+          20.5
+        ],
+        "delivered_level": {
+          "integrated_lufs": -23.0,
+          "true_peak_dbfs": -10.8
+        }
+      }
+    ],
+    "identical_fixed_gain_db_all_sections": 9.899999999999999,
+    "comparison_gap_seconds": 0.5,
+    "cut_edge_fade_ms": 40
+  },
+  "total_full_render_count": 44,
+  "total_full_render_minutes": 309.8666666666667
+}

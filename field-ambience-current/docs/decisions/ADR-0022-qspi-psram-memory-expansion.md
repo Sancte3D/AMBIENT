@@ -42,7 +42,7 @@ QUADSPI **Bank 2** — die freien PE7–PE10 sind die BK2-IO-Pins, kontinuierlic
 | Signal | MCU-Pin | QUADSPI-Funktion | frei? |
 |---|---|---|---|
 | `QSPI_CLK` | **PB2** | QUADSPI_CLK (AF9) | ✅ |
-| `QSPI_NCS` | **PC11** (Pin 79) | QUADSPI_BK2_NCS (AF9) | ✅ |
+| `QSPI_CS_N` | **PC11** (Pin 79) | QUADSPI_BK2_NCS (AF9) | ✅ |
 | `QSPI_IO0` | **PE7** | QUADSPI_BK2_IO0 (AF10) | ✅ |
 | `QSPI_IO1` | **PE8** | QUADSPI_BK2_IO1 (AF10) | ✅ |
 | `QSPI_IO2` | **PE9** | QUADSPI_BK2_IO2 (AF10) | ✅ |
@@ -79,7 +79,7 @@ deckt sich mit der Datenblatt-Top-View). Dimensionally korrekt.
 133-MHz-Burst kurzzeitig Strom). Beide an +3V3.
 
 ### Nets (AI_READY-konform, keine Slashes/Spaces, konsistent)
-`QSPI_CLK`, `QSPI_NCS`, `QSPI_IO0`, `QSPI_IO1`, `QSPI_IO2`, `QSPI_IO3`.
+`QSPI_CLK`, `QSPI_CS_N`, `QSPI_IO0`, `QSPI_IO1`, `QSPI_IO2`, `QSPI_IO3`.
 
 ## Was es ermöglicht
 - **Sample-Playback** (Field-Recordings, One-Shots)
@@ -112,7 +112,7 @@ Im Generator (`generate_kicad_project.py`, Sheet `stm32h743`) emittiert:
   LCSC C3028887, mit `FP_NOTE` = `UNVERIFIED — NEEDS HUMAN CHECK` (FP via
   `easyeda2kicad --full --lcsc_id=C3028887` ziehen + Pin-1 gegen AP-Memory-DB).
 - **6 QSPI-Nets** an den MCU-Pins PB2(36)/PC11(79)/PE7–10(37–40) →
-  `QSPI_CLK`/`QSPI_NCS`/`QSPI_IO0–3` (per Local-Label, beidseitig).
+  `QSPI_CLK`/`QSPI_CS_N`/`QSPI_IO0–3` (per Local-Label, beidseitig).
 - **Decoupling** `C_QSPI` 100 nF (C14663) + `C_QSPI2` 10 µF (C15850), beide an
   +3V3/GND; U9 VCC→+3V3, VSS→GND.
 - **PINMAP** (Pins nicht mehr frei), **BOM** (U9 + 2 Cs) nachgezogen.

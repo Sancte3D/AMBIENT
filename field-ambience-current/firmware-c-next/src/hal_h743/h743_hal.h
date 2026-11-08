@@ -41,6 +41,13 @@ extern SAI_HandleTypeDef h743_hsai1a;        /* audio_h743.c        */
 extern DMA_HandleTypeDef h743_hdma_sai;      /* audio_h743.c        */
 extern DMA_HandleTypeDef h743_hdma_spi1_tx;  /* lcd_st7789_h743.c   */
 
+/* DMA C-handler scope includes HAL/refill/clip/cache work. Excludes exception
+ * entry/exit and final profiler bookkeeping; no dispatch/stack guarantee. */
+struct audio_profiler;
+const struct audio_profiler *h743_audio_irq_profiler_state(void);
+void h743_audio_irq_begin(void);
+void h743_audio_irq_end(void);
+
 /* --- BAT_SENSE ADC (adc_h743.c): PA3 = ADC12_INP15, 100k/100k divider.
  * bat_adc_read_volts returns VBAT in volts (blocking ~250 us, UI loop
  * only — never the audio path). ------------------------------------------ */

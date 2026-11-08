@@ -361,8 +361,124 @@ static void verify_stress(void)
     fixture_destroy(&fixture);
 }
 
+/* A stationary sine stays at its pitch through BLUR. A second-order sine
+ * predictor rejects that pitch but exposes the old continuously transposed
+ * grains; short grain envelopes leave only a small residual. */
+static void verify_blur_pitch(void) {
+    Fixture f; fixture_create(&f,1234u);
+    CHECK(f.fx!=NULL,"blur fixture"); if(!f.fx) return;
+    AmbientFxParameters p=ambient_fx_world_parameters(AMBIENT_FX_TOKYO_CITY);
+    p.blur=1.0f; p.motion=0.5f; p.tone=1.0f;
+    ambient_fx_set_parameters(f.fx,p);
+    ambient_fx_set_mode(f.fx,AMBIENT_FX_BLUR);
+    double err=0.0,energy=0.0;
+    float z1=0.0f,z2=0.0f;
+    float k=2.0f*cosf(6.28318530718f*4000.0f/44100.0f);
+    for(int n=0;n<44100*6;++n) {
+        float x=0.10f*sinf((float)(6.283185307179586*4000.0*n/44100.0));
+        float stereo[2]={x,x},send[2]={0,0};
+        ambient_fx_process_buses_f32(f.fx,stereo,send,1);
+        float y=stereo[0],e=y-k*z1+z2;
+        if(n>44100) { err+=(double)e*e; energy+=(double)y*y; }
+        z2=z1; z1=y;
+    }
+    printf("blur pitch predictor residual: %.6f\n",sqrt(err/energy));
+    CHECK(sqrt(err/energy)<0.01,"BLUR adds transposed partials to a stationary pitch");
+    fixture_destroy(&f);
+}
+
+/* The direct tone must keep its body under slow chorus/grain interference.
+ * Actual product bus API, no limiter or final DC filter. A quiet stationary
+ * tone isolates effect-created pumping from source envelopes and loudness.
+ * These are product bounds, not a perceptual guarantee of relaxation. */
+static void verify_motion_body(void) {
+    const float hz[] = {146.83238f, 220.0f, 440.0f};
+    const float amount[] = {0.0f, 0.65f, 1.0f};
+    const int modes[] = {AMBIENT_FX_CHORUS_DETUNE, AMBIENT_FX_BLUR, AMBIENT_FX_DREAM_CHAIN};
+    const int window = 4410; /* 100 ms RMS; inspect seconds 2..12 */
+    const float input_rms = 0.10f / 1.41421356237f;
+    for (unsigned m=0; m<3; ++m) for (unsigned a=0; a<3; ++a)
+    for (unsigned h=0; h<3; ++h) {
+        Fixture f; fixture_create(&f, 1234u);
+        CHECK(f.fx!=NULL,"motion body fixture"); if(!f.fx) return;
+        AmbientFxParameters p=ambient_fx_world_parameters(AMBIENT_FX_CRYSTAL_COAST);
+        p.motion=amount[a]; p.blur=amount[a]; p.age=p.echo=p.atmosphere=p.shimmer=0;
+        p.tone=1; p.width=1;
+        ambient_fx_set_parameters(f.fx,p); ambient_fx_set_mode(f.fx,(AmbientFxMode)modes[m]);
+        double energy[3]={0}; float lo=10,hi=0;
+        float block[2*128],send[2*128]={0}; int in_window=0;
+        for(int frame=0;frame<12*44100;frame+=128) {
+            int count=12*44100-frame; if(count>128) count=128;
+            for(int i=0;i<count;++i) {
+                float v=0.1f*sinf(6.28318530718f*hz[h]*(float)(frame+i)/44100.0f);
+                block[2*i]=block[2*i+1]=v;
+            }
+            ambient_fx_process_buses_f32(f.fx,block,send,(size_t)count);
+            for(int i=0;i<count;++i) if(frame+i>=2*44100) {
+                float l=block[2*i],r=block[2*i+1],mono=.5f*(l+r);
+                energy[0]+=l*l; energy[1]+=r*r; energy[2]+=mono*mono;
+                if(++in_window==window) {
+                    for(int c=0;c<3;++c) {
+                        float gain=(float)sqrt(energy[c]/window)/input_rms;
+                        CHECK(isfinite(gain),"finite motion window");
+                        if(gain<lo)lo=gain;
+                        if(gain>hi)hi=gain;
+                        energy[c]=0;
+                    }
+                    in_window=0;
+                }
+            }
+        }
+        float swing=20.0f*log10f(hi/lo);
+        printf("motion body mode %d amount %.2f %.0f Hz: floor %.2f dB, swing %.2f dB\n",
+               modes[m],amount[a],hz[h],20.0f*log10f(lo),swing);
+        CHECK(lo>=(m==2 ? .48f:.65f),"direct body survives effect interference in L/R/mono");
+        CHECK(swing<=(m==2 ? 8.0f:5.0f),"motion does not become deep cyclic pumping");
+        CHECK(hi<=1.35f,"bounded additive motion gain");
+        if(a==0) CHECK(lo>.99f && hi<1.01f,"zero insert amounts preserve direct gain");
+        check_guards(&f);fixture_destroy(&f);
+    }
+}
+
+/* Age colours played material; it must not create an electrical noise bed.
+ * Test idle signal through both public APIs without suppressing live tails. */
+static void verify_age_silence(void) {
+    const float ages[]={0.0f,0.20f,1.0f};
+    const int modes[]={AMBIENT_FX_TAPE_AGE,AMBIENT_FX_DREAM_CHAIN};
+    for(unsigned a=0;a<3;++a) for(unsigned m=0;m<2;++m) for(int buses=0;buses<2;++buses) {
+        Fixture f;fixture_create(&f,9876u);
+        CHECK(f.fx!=NULL,"Age silence fixture");if(!f.fx)return;
+        AmbientFxParameters p=ambient_fx_world_parameters(AMBIENT_FX_CRYSTAL_COAST);
+        p.age=ages[a];ambient_fx_set_parameters(f.fx,p);
+        ambient_fx_set_mode(f.fx,(AmbientFxMode)modes[m]);
+        float block[256],send[256]={0},peak=0; double energy=0;
+        for(int frame=0;frame<3*44100;frame+=128) {
+            int n=3*44100-frame;if(n>128)n=128;
+            memset(block,0,sizeof block);
+            if(buses)ambient_fx_process_buses_f32(f.fx,block,send,(size_t)n);
+            else ambient_fx_process_f32(f.fx,block,(size_t)n);
+            for(int i=0;i<n*2;++i) {
+                float v=fabsf(block[i]);if(v>peak)peak=v;
+                energy+=(double)block[i]*block[i];
+            }
+        }
+        printf("Age idle mode %d bus %d amount %.2f: peak %.9f RMS %.9f\n",
+               modes[m],buses,ages[a],peak,sqrt(energy/(3*44100*2)));
+        CHECK(peak==0.0f && energy==0.0,"Age must not synthesize hum/hiss from silence");
+        /* Silence must come from removing the generator, not from muting Age. */
+        for(int i=0;i<128;++i)block[2*i]=block[2*i+1]=.1f*sinf(6.28318530718f*220*i/44100);
+        if(buses)ambient_fx_process_buses_f32(f.fx,block,send,128);
+        else ambient_fx_process_f32(f.fx,block,128);
+        CHECK(signal_energy(block,0,128)>1e-5,"played material remains audible with Age");
+        check_guards(&f);fixture_destroy(&f);
+    }
+}
+
 int main(void)
 {
+    verify_age_silence();
+    verify_motion_body();
+    verify_blur_pitch();
     verify_basics();
     verify_bypass();
     for (int mode = AMBIENT_FX_DARK_REVERB; mode < AMBIENT_FX_MODE_COUNT; ++mode) {

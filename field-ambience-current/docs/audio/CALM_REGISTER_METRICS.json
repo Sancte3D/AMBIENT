@@ -1,0 +1,206 @@
+{
+  "seed": "0x5EEDBA55",
+  "render_seconds": 28,
+  "generate_stop_s": 24,
+  "before": [
+    {
+      "world": "Alps",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 659.14,
+          "amp": 0.06952,
+          "midi": 75.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -31.4,
+        "true_peak_dbfs": -17.2
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Open Sea",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 493.797,
+          "amp": 0.06952,
+          "midi": 70.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -35.8,
+        "true_peak_dbfs": -21.8
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Fjords",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 659.14,
+          "amp": 0.06952,
+          "midi": 75.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -33.3,
+        "true_peak_dbfs": -20.3
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Moss Fields",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 466.082,
+          "amp": 0.06952,
+          "midi": 69.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -34.5,
+        "true_peak_dbfs": -21.3
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Desert",
+      "melody": [],
+      "melody_observed": false,
+      "raw": {
+        "integrated_lufs": -35.3,
+        "true_peak_dbfs": -24.7
+      },
+      "clipped_samples": 0
+    }
+  ],
+  "after": [
+    {
+      "world": "Alps",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 195.964,
+          "amp": 0.06952,
+          "midi": 54.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -31.8,
+        "true_peak_dbfs": -17.0
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Open Sea",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 293.614,
+          "amp": 0.06952,
+          "midi": 61.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -35.8,
+        "true_peak_dbfs": -21.5
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Fjords",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 184.965,
+          "amp": 0.06952,
+          "midi": 53.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -33.7,
+        "true_peak_dbfs": -21.7
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Moss Fields",
+      "melody": [
+        {
+          "ms": 21408,
+          "on": 1,
+          "source": 15,
+          "hz": 261.58,
+          "amp": 0.06952,
+          "midi": 59.997
+        }
+      ],
+      "melody_observed": true,
+      "raw": {
+        "integrated_lufs": -34.5,
+        "true_peak_dbfs": -22.1
+      },
+      "clipped_samples": 0
+    },
+    {
+      "world": "Desert",
+      "melody": [],
+      "melody_observed": false,
+      "raw": {
+        "integrated_lufs": -35.3,
+        "true_peak_dbfs": -24.7
+      },
+      "clipped_samples": 0
+    }
+  ],
+  "comparison": {
+    "file": "AMBIENT_Calm_Register_AB_27s5.wav",
+    "seconds": 27.5,
+    "order": [
+      "Alps old 0 s",
+      "Alps new 7 s",
+      "Open Sea old 14 s",
+      "Open Sea new 21 s"
+    ],
+    "excerpt_start_s": 20.5,
+    "target_lufs_per_excerpt": -25.0,
+    "fixed_gains_db": [
+      3.5,
+      5.0,
+      8.299999999999997,
+      8.399999999999999
+    ],
+    "integrated_lufs": -25.1,
+    "true_peak_dbfs": -12.0
+  },
+  "provenance": {
+    "baseline_github_commit": "e4a1172660d6f737f41030f4a049d733ec4684ac",
+    "baseline_local_commit": "814d5b5",
+    "candidate_change": "src/harmony.c melody bounds 50..69 and tonic-centred opening; presets and DSP unchanged"
+  }
+}

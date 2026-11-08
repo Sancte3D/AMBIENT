@@ -1,0 +1,1187 @@
+{
+  "scope": "Spec0.9 unchanged actual Product engine; Color0/0.5/1 and live controls. Matched held ensemble, normal sources/score/envelopes/Room, no replacement soundtrack.",
+  "baseline_commit": "c89bc630fec5a9e193f06a4e08d8e6752a16b3b2",
+  "baseline_tree": "b3d1db9e8d9fe6f5c972147fd4df47d331f69a3d",
+  "compilation_inputs_unchanged_from_pr156": true,
+  "compilation_input_count": 251,
+  "firmware_changed": false,
+  "hearing_accepted": false,
+  "range_usefulness_accepted": false,
+  "full_pcm_retained": false,
+  "source_sha256": {
+    "src/engine_product.c": "778b5098df4468f538119455be7fd63f077c37eaae10840b031d205d206adb99",
+    "src/world_grammar.c": "a90cea1f8c86728a9136dc3b2332bda2c69393db9bab2fbfd0cbc19d092e6f78",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "af50ea44971a41e2af647a44d08db09ce2d3cd81ae65c4b626de76557467cc9b",
+    "src/ambient_room.c": "0f54bfbe08b83ba08034b587f20923b326594e9b4bd4d5038b84ad166acf85ee",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "f9ce41e7407a52b0a49515b190aaa2dd611f3b174d4d43e2c94cb769547fb92e",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "68d587c4cb05bd89257e3044714227a55c079542a7d4fd3a09f0a061256d20b9",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "4051e5460af6bb26dee1c5dcc24e8c9f515c48fb6075f976c3d133971635ebdd",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6",
+    "tools/review_color_comparison.py": "b97e26fb9eef668cb19c38f16f693d971809727d55d798fc5e0a676cc77a2698",
+    "tools/render_color_comparison.c": "ee74e4dd7ca5e10e764c0b973df5662cb9d296d1c0b2eab08799aeded5d1c6c2",
+    "tools/render_nature_comparison.c": "decd3414cd82572b9b57205133b361f0651f4398f67a3e4da942cff4be1d2c00",
+    "tools/review_activity_comparison.py": "4fdd2c12e4131dbba094811e579b9c3ad36648e993067fa8f0e2f72d4ff78017",
+    "tools/review_room_comparison.py": "1760c798fcb4df166e0bcf0c0b39323762f20164cf086ee3ca47f511750d6eba",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1",
+    "test/test_product_sound.c": "d83892236fb9e46b0f646faeac6139ac3b18bdfe8675de805171cab91159e3be"
+  },
+  "parameters": {
+    "color_values": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "default_color": 0.5,
+    "activity": 0.5,
+    "room": 0.5,
+    "nature": 0,
+    "attack": 0.5,
+    "release": 0.5,
+    "volume": 0.6,
+    "seeds": [
+      1234,
+      42
+    ],
+    "key": "D",
+    "collection": "major",
+    "tuning": "equal"
+  },
+  "raw_seconds": 112,
+  "generate_stop_seconds": 80,
+  "block_sizes": [
+    64,
+    512
+  ],
+  "silent_settling_seconds": 1,
+  "control_tick_ms": 10,
+  "worlds": [
+    {
+      "world": "COAST",
+      "cases": [
+        {
+          "seed": 1234,
+          "initial_color": 0.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=0 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09066772 max_step=599",
+          "raw_level": {
+            "integrated_lufs": -33.4,
+            "true_peak_dbfs": -20.8
+          },
+          "mono_energy_ratio": 0.9695171309025061,
+          "dc": [
+            -1.0849705860766926e-08,
+            -4.621628692399579e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 310.5186354695507,
+            "energy_fraction_above_1000_hz": 0.013053573297075311,
+            "energy_fraction_above_4000_hz": 1.1997072505815371e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.71,
+          "acknowledged_hold_seconds_range": [
+            2.82,
+            54.19
+          ],
+          "raw_sha256": "de229ae2ed8f9ca249a0402a81acb06326945b80e94985b59e02f9f5127d9e51",
+          "events_sha256": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+          "state_sha256": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 1234,
+          "initial_color": 0.5,
+          "live_changes": false,
+          "renderer_report": "COLOR world=0 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09329224 max_step=713",
+          "raw_level": {
+            "integrated_lufs": -33.3,
+            "true_peak_dbfs": -20.6
+          },
+          "mono_energy_ratio": 0.9697907760218385,
+          "dc": [
+            -1.0837348564797943e-08,
+            -6.1724693365069245e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 330.9842585029282,
+            "energy_fraction_above_1000_hz": 0.026289357100964403,
+            "energy_fraction_above_4000_hz": 2.8670079290734475e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.71,
+          "acknowledged_hold_seconds_range": [
+            2.82,
+            54.19
+          ],
+          "raw_sha256": "733d8ebf07f5d1bd435d1be93f4ff293884c7c8a5c936d62dcd24a4daac7f441",
+          "events_sha256": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+          "state_sha256": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true,
+          "default_pcm_events_shared_state_equal_existing_driver": true
+        },
+        {
+          "seed": 1234,
+          "initial_color": 1.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=0 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09439087 max_step=846",
+          "raw_level": {
+            "integrated_lufs": -33.2,
+            "true_peak_dbfs": -20.5
+          },
+          "mono_energy_ratio": 0.9698941942924453,
+          "dc": [
+            -8.64392853030349e-09,
+            -3.373541799532313e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 347.9331024540598,
+            "energy_fraction_above_1000_hz": 0.039839332990240645,
+            "energy_fraction_above_4000_hz": 5.920567934803728e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.71,
+          "acknowledged_hold_seconds_range": [
+            2.82,
+            54.19
+          ],
+          "raw_sha256": "118785120bc29932a95219615586bbc9fdbcf959305c910869726d0f8b052f42",
+          "events_sha256": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+          "state_sha256": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 0.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=0 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09280396 max_step=606",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -20.6
+          },
+          "mono_energy_ratio": 0.9712892475494858,
+          "dc": [
+            -8.180529931466635e-09,
+            -8.03224237983884e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 310.5501356540071,
+            "energy_fraction_above_1000_hz": 0.013072746187911056,
+            "energy_fraction_above_4000_hz": 1.2343895637269165e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.84,
+          "acknowledged_hold_seconds_range": [
+            2.82,
+            54.78
+          ],
+          "raw_sha256": "94562ff1361e7db5d610cd693b58a3c08cd2ddaa972cf3a5b7ce48357c4ab9e0",
+          "events_sha256": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+          "state_sha256": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 0.5,
+          "live_changes": false,
+          "renderer_report": "COLOR world=0 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09548950 max_step=726",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -20.4
+          },
+          "mono_energy_ratio": 0.9715387087237566,
+          "dc": [
+            -1.0627274533325235e-08,
+            -1.2641513776269436e-08
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 331.0199930388631,
+            "energy_fraction_above_1000_hz": 0.026309704459091462,
+            "energy_fraction_above_4000_hz": 2.9461587136406508e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.84,
+          "acknowledged_hold_seconds_range": [
+            2.82,
+            54.78
+          ],
+          "raw_sha256": "f427487fb006a87b5b1f0a13ad3a49c33a93ad363b0fc443e412135c8717d8c5",
+          "events_sha256": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+          "state_sha256": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true,
+          "default_pcm_events_shared_state_equal_existing_driver": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 1.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=0 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88840 nonfinite=0 limited=0 peak=0.09698486 max_step=862",
+          "raw_level": {
+            "integrated_lufs": -32.9,
+            "true_peak_dbfs": -20.3
+          },
+          "mono_energy_ratio": 0.9716224492169421,
+          "dc": [
+            -1.2141043289525632e-08,
+            -2.693890521238257e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 347.97233457115186,
+            "energy_fraction_above_1000_hz": 0.03985953404510298,
+            "energy_fraction_above_4000_hz": 6.0557839015890025e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 88.84,
+          "acknowledged_hold_seconds_range": [
+            2.82,
+            54.78
+          ],
+          "raw_sha256": "7a66e2e68b52c1c75a93ac666e3960c3bc30b589d74a6494c947034a1ded97bd",
+          "events_sha256": "723913236adff80ca95455a281fd78a36d88947988b961d203e0952f344b3afd",
+          "state_sha256": "c729d6fbd77f33627c750e85f8ac395b0c1e9a5f2a2e78c38b81abd806cf8e08",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        }
+      ],
+      "listen_file": "AMBIENT_COAST_Color_0_50_100_38p5s.wav",
+      "listen_sha256": "68de35d4722c8909228ffe424f1b2e9f866124dce244a8fb41de597c152af84b",
+      "listen_level": {
+        "integrated_lufs": -23.0,
+        "true_peak_dbfs": -8.6
+      },
+      "sections": [
+        {
+          "color": 0.0,
+          "output_seconds": [
+            0.0,
+            12.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.2,
+            "true_peak_dbfs": -8.7
+          }
+        },
+        {
+          "color": 0.5,
+          "output_seconds": [
+            13.0,
+            25.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.1,
+            "true_peak_dbfs": -8.6
+          }
+        },
+        {
+          "color": 1.0,
+          "output_seconds": [
+            26.0,
+            38.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -8.6
+          }
+        }
+      ],
+      "identical_fixed_gain_db_all_sections": 13.0,
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "raw_rms_difference_to_default_same_held_excerpt_fraction": [
+        0.1443680123266484,
+        0.0,
+        0.10631458906031119
+      ],
+      "held_power_centroid_min_max_fraction_of_default": 0.11304001934635236,
+      "measured_weak_woodland_color_range_requires_calibration": false,
+      "note": "RMS/FFT are diagnostics. No perceptual audibility, soothing or musical usefulness is accepted."
+    },
+    {
+      "world": "WOODLAND",
+      "cases": [
+        {
+          "seed": 1234,
+          "initial_color": 0.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=1 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07574463 max_step=101",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.931813335940255,
+          "dc": [
+            -7.939562660071469e-09,
+            -6.178647984491416e-10
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 181.0844469648538,
+            "energy_fraction_above_1000_hz": 3.943666807237786e-06,
+            "energy_fraction_above_4000_hz": 6.509543427724412e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "acknowledged_hold_seconds_range": [
+            6.06,
+            19.49
+          ],
+          "raw_sha256": "1973e96e9b1cd21c634e1e4f6f57b6d5f010be39e0b26f967ac8ee1c5592bae1",
+          "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+          "state_sha256": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 1234,
+          "initial_color": 0.5,
+          "live_changes": false,
+          "renderer_report": "COLOR world=1 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07580566 max_step=101",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.9318080182179287,
+          "dc": [
+            -2.7680342970521543e-09,
+            -3.954334710074506e-10
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 181.27152989213386,
+            "energy_fraction_above_1000_hz": 4.331032838640536e-06,
+            "energy_fraction_above_4000_hz": 6.481829850494918e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "acknowledged_hold_seconds_range": [
+            6.06,
+            19.49
+          ],
+          "raw_sha256": "829c72846ae14ce6a41946615f471d84be98ec457a448669563e84871e58365f",
+          "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+          "state_sha256": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true,
+          "default_pcm_events_shared_state_equal_existing_driver": true
+        },
+        {
+          "seed": 1234,
+          "initial_color": 1.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=1 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07589722 max_step=101",
+          "raw_level": {
+            "integrated_lufs": -33.1,
+            "true_peak_dbfs": -22.4
+          },
+          "mono_energy_ratio": 0.9318024399161055,
+          "dc": [
+            -2.4158513619361436e-09,
+            1.130692581161929e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 181.4616460025322,
+            "energy_fraction_above_1000_hz": 4.76754536499899e-06,
+            "energy_fraction_above_4000_hz": 6.416360508127674e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "acknowledged_hold_seconds_range": [
+            6.06,
+            19.49
+          ],
+          "raw_sha256": "2a329bb6d297068daacf681badf6c41b581708256f5d07c71a964cd8c6305412",
+          "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+          "state_sha256": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 0.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=1 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07473755 max_step=103",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -22.5
+          },
+          "mono_energy_ratio": 0.9319954685776104,
+          "dc": [
+            -5.344530506585074e-09,
+            -4.084086317748826e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 180.6304035146976,
+            "energy_fraction_above_1000_hz": 3.927339414131993e-06,
+            "energy_fraction_above_4000_hz": 6.642431838649981e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "acknowledged_hold_seconds_range": [
+            6.13,
+            19.78
+          ],
+          "raw_sha256": "c02c93232a95adb4542d5642f0140197ab0c49d322c7656ebbaddf12c213684a",
+          "events_sha256": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+          "state_sha256": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 0.5,
+          "live_changes": false,
+          "renderer_report": "COLOR world=1 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07479858 max_step=103",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -22.5
+          },
+          "mono_energy_ratio": 0.9319899257666192,
+          "dc": [
+            1.5693765880608195e-09,
+            -2.8483567208505424e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 180.81608180662906,
+            "energy_fraction_above_1000_hz": 4.307306166550011e-06,
+            "energy_fraction_above_4000_hz": 6.604675976934853e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "acknowledged_hold_seconds_range": [
+            6.13,
+            19.78
+          ],
+          "raw_sha256": "6bb2d79d7f0c846cdd1843473100eec9a06b09d630268f835753befcae9674bc",
+          "events_sha256": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+          "state_sha256": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true,
+          "default_pcm_events_shared_state_equal_existing_driver": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 1.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=1 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07489014 max_step=104",
+          "raw_level": {
+            "integrated_lufs": -33.0,
+            "true_peak_dbfs": -22.5
+          },
+          "mono_energy_ratio": 0.9319844207316276,
+          "dc": [
+            -5.437210226352446e-10,
+            -1.96481005906827e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 181.0049489601126,
+            "energy_fraction_above_1000_hz": 4.751276678211027e-06,
+            "energy_fraction_above_4000_hz": 6.600231569887468e-07,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 2,
+          "full_owner_retirement_after_stop_seconds": 82.0,
+          "acknowledged_hold_seconds_range": [
+            6.13,
+            19.78
+          ],
+          "raw_sha256": "3bdb9f95fe06b4cd5da91bb8221aa8629f52d5256bee80a8fd2d88001d1b7cce",
+          "events_sha256": "6ebf1238bc3f51bab4c8cce2b21be376aa418875f5bd7d69725a229d1095114c",
+          "state_sha256": "971e85fb0ea0e7c7e1890b3eb5d858f649c447cbbe3f0cef47d6b8b1108e966a",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        }
+      ],
+      "listen_file": "AMBIENT_WOODLAND_Color_0_50_100_38p5s.wav",
+      "listen_sha256": "9bcbc7d3c4855c038002f7ca34f42c501ba903c394763ed600c8dd88eb7ba78f",
+      "listen_level": {
+        "integrated_lufs": -23.0,
+        "true_peak_dbfs": -12.6
+      },
+      "sections": [
+        {
+          "color": 0.0,
+          "output_seconds": [
+            0.0,
+            12.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.1,
+            "true_peak_dbfs": -12.6
+          }
+        },
+        {
+          "color": 0.5,
+          "output_seconds": [
+            13.0,
+            25.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.1,
+            "true_peak_dbfs": -12.6
+          }
+        },
+        {
+          "color": 1.0,
+          "output_seconds": [
+            26.0,
+            38.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -12.6
+          }
+        }
+      ],
+      "identical_fixed_gain_db_all_sections": 10.399999999999999,
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "raw_rms_difference_to_default_same_held_excerpt_fraction": [
+        0.002029934210949567,
+        0.0,
+        0.002041322322655994
+      ],
+      "held_power_centroid_min_max_fraction_of_default": 0.0020808509637605423,
+      "measured_weak_woodland_color_range_requires_calibration": true,
+      "note": "RMS/FFT are diagnostics. No perceptual audibility, soothing or musical usefulness is accepted."
+    },
+    {
+      "world": "HIGHLANDS",
+      "cases": [
+        {
+          "seed": 1234,
+          "initial_color": 0.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=2 seed=1234 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07644653 max_step=198",
+          "raw_level": {
+            "integrated_lufs": -29.5,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770530702602261,
+          "dc": [
+            7.414377581389699e-10,
+            -3.4724001672841756e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 384.0072965416922,
+            "energy_fraction_above_1000_hz": 0.005948436773024071,
+            "energy_fraction_above_4000_hz": 6.494386960352029e-06,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.07,
+          "acknowledged_hold_seconds_range": [
+            6.01,
+            20.62
+          ],
+          "raw_sha256": "547cda7f8863c6f2c4c268031c3ad204d7f8b5f6be851fa78e9b3b174d74dfea",
+          "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+          "state_sha256": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 1234,
+          "initial_color": 0.5,
+          "live_changes": false,
+          "renderer_report": "COLOR world=2 seed=1234 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07666016 max_step=224",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770540825567335,
+          "dc": [
+            1.9957032989907274e-09,
+            -1.4210890364330255e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 389.23846026922286,
+            "energy_fraction_above_1000_hz": 0.00936937854578337,
+            "energy_fraction_above_4000_hz": 1.2019944580964969e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.07,
+          "acknowledged_hold_seconds_range": [
+            6.01,
+            20.62
+          ],
+          "raw_sha256": "de6bae31b69bef3ee2ffcfa91545cc2c0063ea7f78c832c47986a8ae6bffc5ec",
+          "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+          "state_sha256": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true,
+          "default_pcm_events_shared_state_equal_existing_driver": true
+        },
+        {
+          "seed": 1234,
+          "initial_color": 1.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=2 seed=1234 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07672119 max_step=251",
+          "raw_level": {
+            "integrated_lufs": -29.3,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.977049870487618,
+          "dc": [
+            -2.9657510325558796e-09,
+            5.820286401390914e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 394.22938175193315,
+            "energy_fraction_above_1000_hz": 0.01308641110575144,
+            "energy_fraction_above_4000_hz": 2.0614648487349648e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.07,
+          "acknowledged_hold_seconds_range": [
+            6.01,
+            20.62
+          ],
+          "raw_sha256": "326c698b8cc1f4be58bc092a8c834f2cda9c733e3f204c4469604d2400ef5bb4",
+          "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+          "state_sha256": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 0.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=2 seed=42 initial=0.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07656860 max_step=198",
+          "raw_level": {
+            "integrated_lufs": -29.4,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770315203935405,
+          "dc": [
+            4.491877084725259e-09,
+            -2.106918962711573e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 383.44251714270405,
+            "energy_fraction_above_1000_hz": 0.005942505448435178,
+            "energy_fraction_above_4000_hz": 6.481117971039283e-06,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.18,
+          "acknowledged_hold_seconds_range": [
+            6.04,
+            20.86
+          ],
+          "raw_sha256": "b1f4350ec450f2e8169f2e12a428d8a688cff6064868245e3dae04a7b16d6c2c",
+          "events_sha256": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+          "state_sha256": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 0.5,
+          "live_changes": false,
+          "renderer_report": "COLOR world=2 seed=42 initial=0.50 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07678223 max_step=223",
+          "raw_level": {
+            "integrated_lufs": -29.3,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770329819090432,
+          "dc": [
+            1.8041652114714935e-09,
+            -4.127336853640266e-09
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 388.66968065516164,
+            "energy_fraction_above_1000_hz": 0.009357991045980691,
+            "energy_fraction_above_4000_hz": 1.19965127760599e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.18,
+          "acknowledged_hold_seconds_range": [
+            6.04,
+            20.86
+          ],
+          "raw_sha256": "3bee479a079a7a655f0b61a1fc09ecba0b221aea44c3f4b84aff9f66f147839d",
+          "events_sha256": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+          "state_sha256": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true,
+          "default_pcm_events_shared_state_equal_existing_driver": true
+        },
+        {
+          "seed": 42,
+          "initial_color": 1.0,
+          "live_changes": false,
+          "renderer_report": "COLOR world=2 seed=42 initial=1.00 live=0 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87180 nonfinite=0 limited=0 peak=0.07641602 max_step=250",
+          "raw_level": {
+            "integrated_lufs": -29.3,
+            "true_peak_dbfs": -22.3
+          },
+          "mono_energy_ratio": 0.9770292328936073,
+          "dc": [
+            -2.6259253934088516e-09,
+            8.711893658132896e-10
+          ],
+          "held_spectrum_6_to_12p5_seconds": {
+            "power_weighted_centroid_hz": 393.6560405958497,
+            "energy_fraction_above_1000_hz": 0.013067317804000927,
+            "energy_fraction_above_4000_hz": 2.0593748586304148e-05,
+            "diagnostic_only_not_hearing_acceptance": true
+          },
+          "starts": 11,
+          "completed_phrases": 1,
+          "maximum_actual_sources": 3,
+          "full_owner_retirement_after_stop_seconds": 87.18,
+          "acknowledged_hold_seconds_range": [
+            6.04,
+            20.86
+          ],
+          "raw_sha256": "24c9ae7de9f44513ea30d9ae1e392e1c6a1fca88aaec1ef2c805c0704031d21c",
+          "events_sha256": "f13bd7be6e789f2cf2c57af99d7bc0be27655510bcbcde35672531bb41c00daa",
+          "state_sha256": "06a43edf333f42f30392ea3559a058c701b89761e206074d8a77671e70494aaa",
+          "pcm_events_state_64_512_identical": true,
+          "final_second_exact_silence": true,
+          "all_color_values_complete_events_state_identical": true
+        }
+      ],
+      "listen_file": "AMBIENT_HIGHLANDS_Color_0_50_100_38p5s.wav",
+      "listen_sha256": "b1dda58c269a8d97e374df35908544f290e6be15d26c8f6da3f9e0c665228bf2",
+      "listen_level": {
+        "integrated_lufs": -23.1,
+        "true_peak_dbfs": -15.2
+      },
+      "sections": [
+        {
+          "color": 0.0,
+          "output_seconds": [
+            0.0,
+            12.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.2,
+            "true_peak_dbfs": -15.2
+          }
+        },
+        {
+          "color": 0.5,
+          "output_seconds": [
+            13.0,
+            25.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -15.2
+          }
+        },
+        {
+          "color": 1.0,
+          "output_seconds": [
+            26.0,
+            38.5
+          ],
+          "source_seconds": [
+            3.0,
+            15.5
+          ],
+          "delivered_level": {
+            "integrated_lufs": -23.0,
+            "true_peak_dbfs": -15.3
+          }
+        }
+      ],
+      "identical_fixed_gain_db_all_sections": 7.100000000000001,
+      "comparison_gap_seconds": 0.5,
+      "cut_edge_fade_ms": 40,
+      "raw_rms_difference_to_default_same_held_excerpt_fraction": [
+        0.1128405809285416,
+        0.0,
+        0.08503051250991009
+      ],
+      "held_power_centroid_min_max_fraction_of_default": 0.026261755334174026,
+      "measured_weak_woodland_color_range_requires_calibration": false,
+      "note": "RMS/FFT are diagnostics. No perceptual audibility, soothing or musical usefulness is accepted."
+    }
+  ],
+  "live": [
+    {
+      "seed": 1234,
+      "initial_color": 0.5,
+      "live_changes": true,
+      "renderer_report": "COLOR world=0 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=88710 nonfinite=0 limited=0 peak=0.09066772 max_step=846",
+      "raw_level": {
+        "integrated_lufs": -33.3,
+        "true_peak_dbfs": -20.8
+      },
+      "mono_energy_ratio": 0.9698139050809241,
+      "dc": [
+        -9.879658127201773e-09,
+        -4.6463432843375445e-09
+      ],
+      "held_spectrum_6_to_12p5_seconds": {
+        "power_weighted_centroid_hz": 323.87926714845105,
+        "energy_fraction_above_1000_hz": 0.021666985176713616,
+        "energy_fraction_above_4000_hz": 2.312552218240121e-05,
+        "diagnostic_only_not_hearing_acceptance": true
+      },
+      "starts": 11,
+      "completed_phrases": 1,
+      "maximum_actual_sources": 3,
+      "full_owner_retirement_after_stop_seconds": 88.71,
+      "acknowledged_hold_seconds_range": [
+        2.82,
+        54.19
+      ],
+      "raw_sha256": "5ac077cd835f8d9c8b8c93f706461315cc69ecbc7ea816734d93364e95de1471",
+      "events_sha256": "3044d014a05abe09924a3fb5cf3508f0a095ba165758ff8ec0f6330a0d4b03fa",
+      "state_sha256": "6b27e92cee671929afb2712f07c2573c6aded337142c88b313aff8700ba71efb",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "changes": [
+        {
+          "seconds": 10,
+          "target_color": 0,
+          "maximum_adjacent_sample_step": 0.003143310546875
+        },
+        {
+          "seconds": 20,
+          "target_color": 1,
+          "maximum_adjacent_sample_step": 0.0030517578125
+        },
+        {
+          "seconds": 32,
+          "target_color": 0.5,
+          "maximum_adjacent_sample_step": 0.003753662109375
+        },
+        {
+          "seconds": 48,
+          "target_color": 0,
+          "maximum_adjacent_sample_step": 0.003143310546875
+        },
+        {
+          "seconds": 64,
+          "target_color": 1,
+          "maximum_adjacent_sample_step": 0.0
+        },
+        {
+          "seconds": 72,
+          "target_color": 0.5,
+          "maximum_adjacent_sample_step": 0.023895263671875
+        }
+      ],
+      "setter_caused_immediate_note_hook": false,
+      "world": "COAST",
+      "live_complete_events_state_identical_to_fixed_default": true
+    },
+    {
+      "seed": 1234,
+      "initial_color": 0.5,
+      "live_changes": true,
+      "renderer_report": "COLOR world=1 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=2 final_ms=82000 nonfinite=0 limited=0 peak=0.07580566 max_step=101",
+      "raw_level": {
+        "integrated_lufs": -33.1,
+        "true_peak_dbfs": -22.4
+      },
+      "mono_energy_ratio": 0.9317964961919027,
+      "dc": [
+        -1.946274115114796e-09,
+        1.1121566372084549e-10
+      ],
+      "held_spectrum_6_to_12p5_seconds": {
+        "power_weighted_centroid_hz": 181.26916940702597,
+        "energy_fraction_above_1000_hz": 4.330968947030296e-06,
+        "energy_fraction_above_4000_hz": 6.476416024299958e-07,
+        "diagnostic_only_not_hearing_acceptance": true
+      },
+      "starts": 11,
+      "completed_phrases": 1,
+      "maximum_actual_sources": 2,
+      "full_owner_retirement_after_stop_seconds": 82.0,
+      "acknowledged_hold_seconds_range": [
+        6.06,
+        19.49
+      ],
+      "raw_sha256": "994d97aee2cd70fba6ad036942a79343b717c5b0b5658c5c562b0eceb8d0d0ed",
+      "events_sha256": "9d8dc28ec596af01a265fc4a7ee9f2ce945efcaa6b0037eaae5423147b8ccf0b",
+      "state_sha256": "cf69f3824274d1669fcd14c1e1823c151fb57ff2cc8f88efcf00f8f794d6ac29",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "changes": [
+        {
+          "seconds": 10,
+          "target_color": 0,
+          "maximum_adjacent_sample_step": 0.000579833984375
+        },
+        {
+          "seconds": 20,
+          "target_color": 1,
+          "maximum_adjacent_sample_step": 0.000732421875
+        },
+        {
+          "seconds": 32,
+          "target_color": 0.5,
+          "maximum_adjacent_sample_step": 0.001068115234375
+        },
+        {
+          "seconds": 48,
+          "target_color": 0,
+          "maximum_adjacent_sample_step": 0.001800537109375
+        },
+        {
+          "seconds": 64,
+          "target_color": 1,
+          "maximum_adjacent_sample_step": 0.002044677734375
+        },
+        {
+          "seconds": 72,
+          "target_color": 0.5,
+          "maximum_adjacent_sample_step": 0.002349853515625
+        }
+      ],
+      "setter_caused_immediate_note_hook": false,
+      "world": "WOODLAND",
+      "live_complete_events_state_identical_to_fixed_default": true
+    },
+    {
+      "seed": 1234,
+      "initial_color": 0.5,
+      "live_changes": true,
+      "renderer_report": "COLOR world=2 seed=1234 initial=0.50 live=1 frames=4939200 starts=11 phrases=1 max_sources=3 final_ms=87070 nonfinite=0 limited=0 peak=0.07666016 max_step=224",
+      "raw_level": {
+        "integrated_lufs": -29.4,
+        "true_peak_dbfs": -22.3
+      },
+      "mono_energy_ratio": 0.9770279641767394,
+      "dc": [
+        3.898726878214083e-09,
+        -1.6620563078281908e-09
+      ],
+      "held_spectrum_6_to_12p5_seconds": {
+        "power_weighted_centroid_hz": 387.9788748397717,
+        "energy_fraction_above_1000_hz": 0.008489459848889701,
+        "energy_fraction_above_4000_hz": 1.0803232371362882e-05,
+        "diagnostic_only_not_hearing_acceptance": true
+      },
+      "starts": 11,
+      "completed_phrases": 1,
+      "maximum_actual_sources": 3,
+      "full_owner_retirement_after_stop_seconds": 87.07,
+      "acknowledged_hold_seconds_range": [
+        6.01,
+        20.62
+      ],
+      "raw_sha256": "12cec2d98fb22c4d779b7ab266a4164fa5521d9ae3e717b68f74e26b9224a514",
+      "events_sha256": "0ffa7836907078a6961292c928845b521e9a2e92a8988477529811190914ba96",
+      "state_sha256": "1a8e6c400770fa8e61bbac7058e3379bd8ca99c950aab382fa956eff1651ee6f",
+      "pcm_events_state_64_512_identical": true,
+      "final_second_exact_silence": true,
+      "changes": [
+        {
+          "seconds": 10,
+          "target_color": 0,
+          "maximum_adjacent_sample_step": 0.00262451171875
+        },
+        {
+          "seconds": 20,
+          "target_color": 1,
+          "maximum_adjacent_sample_step": 0.0045166015625
+        },
+        {
+          "seconds": 32,
+          "target_color": 0.5,
+          "maximum_adjacent_sample_step": 0.0
+        },
+        {
+          "seconds": 48,
+          "target_color": 0,
+          "maximum_adjacent_sample_step": 0.005126953125
+        },
+        {
+          "seconds": 64,
+          "target_color": 1,
+          "maximum_adjacent_sample_step": 0.0
+        },
+        {
+          "seconds": 72,
+          "target_color": 0.5,
+          "maximum_adjacent_sample_step": 0.0
+        }
+      ],
+      "setter_caused_immediate_note_hook": false,
+      "world": "HIGHLANDS",
+      "live_complete_events_state_identical_to_fixed_default": true
+    }
+  ],
+  "product_contract_regression": "PRODUCT trajectory world=0 block64-vs512 max_delta=0 invalid_input bit-identical\nPRODUCT trajectory world=1 block64-vs512 max_delta=0 invalid_input bit-identical\nPRODUCT trajectory world=2 block64-vs512 max_delta=0 invalid_input bit-identical\nPRODUCT world=0 seed=1 duration=120 notes=15 answers=0 rejects=0 rms=0.0152044 peak=0.0963135\nPRODUCT world=0 seed=2 duration=120 notes=15 answers=0 rejects=0 rms=0.0150251 peak=0.0958252\nPRODUCT world=1 seed=1 duration=120 notes=15 answers=3 rejects=0 rms=0.0153388 peak=0.0751343\nPRODUCT world=1 seed=2 duration=120 notes=15 answers=3 rejects=0 rms=0.0152863 peak=0.0744934\nPRODUCT world=2 seed=1 duration=120 notes=16 answers=0 rejects=7 rms=0.0183028 peak=0.0750732\nPRODUCT world=2 seed=2 duration=120 notes=16 answers=0 rejects=6 rms=0.0183786 peak=0.0771179\nPRODUCT SOUND PASS: ownership, capacity, cancellation, real PCM, input invariance, tuning tails and 12 minutes rendered",
+  "actual_color_render_count": 42,
+  "existing_default_driver_control_render_count": 6,
+  "total_full_render_minutes": 89.6
+}

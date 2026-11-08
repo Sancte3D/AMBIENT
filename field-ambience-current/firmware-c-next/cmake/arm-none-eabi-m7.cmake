@@ -3,8 +3,8 @@
 # can also be passed explicitly with -DCMAKE_TOOLCHAIN_FILE=….
 #
 # CPU: Cortex-M7 r1p1, double-precision FPU (FPv5-D16), hard-float ABI.
-# The DSP code is float32 throughout — hard-float is what makes the
-# engine_render() budget (512 frames in <11.6 ms) trivially achievable.
+# The DSP code is float32 throughout. Hard-float selects the required target
+# ABI; render deadlines and CPU reserve still require on-device DWT profiling.
 #
 # libc: newlib-nano (--specs=nano.specs) + no-syscall stubs (nosys.specs).
 # printf-float is NOT enabled — nothing in the product firmware printf()s

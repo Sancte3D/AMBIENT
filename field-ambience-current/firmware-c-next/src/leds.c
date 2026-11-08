@@ -25,11 +25,13 @@
 static uint16_t s_cur[LED_CH_COUNT];
 static uint16_t s_backlight = 0;
 static uint32_t s_clear_until = 0;
+static bool s_quiet = false;
 
 void leds_init(void) {
     memset(s_cur, 0, sizeof s_cur);
     s_backlight = 0;
     s_clear_until = 0;
+    s_quiet = false;
 }
 
 void leds_clear_flash(uint32_t now_ms) {
@@ -39,6 +41,8 @@ void leds_clear_flash(uint32_t now_ms) {
 void leds_set_backlight(uint16_t pwm) {
     s_backlight = (pwm > LED_PWM_MAX) ? LED_PWM_MAX : pwm;
 }
+
+void leds_set_quiet(bool quiet) { s_quiet = quiet; }
 
 /* Ramp `cur` toward `target` by `step` (signed-clamped). */
 static uint16_t ramp(uint16_t cur, uint16_t target, uint16_t step) {
@@ -83,7 +87,12 @@ void leds_render(uint32_t now_ms, uint16_t dt_ms, uint16_t out[LED_CH_COUNT]) {
         }
     }
     target[CH_DRONE]    = controls_modifier_active(MOD_DRONE)    ? LED_DUTY_WHITE  : 0;
-    target[CH_GENERATE] = controls_modifier_active(MOD_GENERATE) ? LED_DUTY_WHITE  : 0;
+    if (controls_modifier_active(MOD_GENERATE)) {
+        /* Quiet four-second activity pulse, independent of musical timing. */
+        uint32_t phase = now_ms % 4000u;
+        uint32_t triangle = phase < 2000u ? phase : 4000u - phase;
+        target[CH_GENERATE] = (uint16_t)((LED_DUTY_WHITE / 3u) * triangle / 2000u);
+    }
     target[CH_CLEAR]    = (now_ms < s_clear_until)               ? LED_DUTY_WHITE  : 0;
 
     if (scenes_ui_active()) {
@@ -105,7 +114,7 @@ void leds_render(uint32_t now_ms, uint16_t dt_ms, uint16_t out[LED_CH_COUNT]) {
 
     /* ---- Ramp each channel toward its target ---- */
     for (uint8_t ch = 0; ch < LED_CH_COUNT; ++ch) {
-        s_cur[ch] = ramp(s_cur[ch], target[ch], step16);
+        s_cur[ch] = ramp(s_cur[ch], s_quiet ? 0 : target[ch], step16);
         out[ch]   = s_cur[ch];
     }
 }

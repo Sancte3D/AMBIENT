@@ -1,0 +1,132 @@
+#ifndef FAM_WORLD_GRAMMAR_H
+#define FAM_WORLD_GRAMMAR_H
+#include <stdbool.h>
+#include <stdint.h>
+
+/* Product catalogue V1; deliberately separate from the five legacy IDs. */
+enum { WORLD_COAST = 0, WORLD_WOODLAND, WORLD_HIGHLANDS, CORE_WORLD_COUNT };
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Instrument Worlds: each plays one of the three voice families (its index
+ * minus CORE_WORLD_COUNT) with its own instrument, DRONE, space and effects.
+ * The grammar, scales and admission stay those of the family. */
+enum { WORLD_FJORD = CORE_WORLD_COUNT, WORLD_MEADOW, WORLD_GLACIER, AMBIENT_WORLD_COUNT };
+#endif
+typedef struct {
+    uint32_t rng, next_ms, episode_until;
+    uint32_t notes, episodes, answers, returns, heard_ms;
+    uint32_t rhythm[4], memory_rhythm[4];
+    int8_t last, motif[4], memory[4], transpose;
+    uint8_t world, phase, pos, length, direction, timing_valid;
+    uint8_t episode_valid, memory_len, recalled, focus;
+    float time_spacing;
+} world_grammar_t;
+typedef struct {
+    world_grammar_t next;
+    uint32_t hold_ms, gap_ms;
+    float velocity, spacing;
+    int index;
+    uint8_t role, held_limit;
+    bool rest;
+} world_offer_t;
+
+void world_grammar_init(world_grammar_t *g, int world, uint32_t seed);
+bool world_grammar_due(const world_grammar_t *g, uint32_t now_ms);
+/* Pure proposal: failures leave the RNG, heard motif and timing untouched. */
+world_offer_t world_grammar_propose(const world_grammar_t *g,
+                                  uint32_t now_ms, float activity);
+void world_grammar_commit(world_grammar_t *g, const world_offer_t *offer,
+                          int heard_index, uint32_t now_ms);
+int world_pitch_count(int key_pc, bool minor);
+int world_pitch_midi(int index, int key_pc, bool minor);
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Live (non-phrase) admission window: the D4.. Cell window plus the previous
+ * D3.. window, so HARMONY voicings and the LANDSCAPE bed, which still voice
+ * from brain.c in octave 3/4, are never rejected by the higher Cells. */
+bool world_live_pitch_allowed(int midi, int key_pc, bool minor);
+enum { WORLD_LIVE_MIDI_LOW=50, WORLD_LIVE_MIDI_HIGH=86 };
+#endif
+
+/* Heard phrase memory, no extra source or user parameter. A complete first
+ * phrase learns its seed/contour. Variation and relative-key voicings lead
+ * back to that memory after two to four intervening complete phrases.
+ * The live RNG continues; recalling an intent never resets the audio/RNG. */
+enum { PHRASE_HOME=0,PHRASE_VARIATION,PHRASE_RELATED,PHRASE_RETURN };
+typedef struct {
+    uint32_t home_seed,phrase_seed,completed,recalls;
+    uint8_t kind,next_kind,span,pos,home_variant;
+} phrase_development_t;
+
+/* COAST's explicit three-role phrase. Main-only, pure proposals; only a real
+ * audio-start acknowledgement advances heard state. Phases 0..2 are outer
+ * pairs, phase 3 coalesces their destination, phase 4 is a bounded rest. */
+typedef struct {
+    uint32_t rng, next_ms, phase_ms, notes, episodes, returns;
+    uint8_t phase, heard_mask, timing_valid, variant, wait_valid;
+    phrase_development_t development;
+} coast_phrase_t;
+typedef struct {
+    uint32_t hold_ms, gap_ms;
+    int midi;
+    float velocity;
+    uint8_t phase, role;
+} coast_offer_t;
+void coast_phrase_init(coast_phrase_t *g, uint32_t seed);
+void coast_phrase_restart(coast_phrase_t *g);
+bool coast_phrase_due(const coast_phrase_t *g, uint32_t now_ms);
+coast_offer_t coast_phrase_propose(const coast_phrase_t *g, int role,
+                                  int key_pc, bool minor, float activity);
+bool coast_phrase_heard(coast_phrase_t *g, const coast_offer_t *offer,
+                        uint32_t now_ms);
+bool coast_phrase_pitch_allowed(int midi, int key_pc, bool minor);
+/* Main calls only after outgoing owners retire. Keep the held common role
+ * across partner waits; the closing wait begins after all three owners end. */
+bool coast_phrase_wait_after_retirement(coast_phrase_t *g, uint32_t now_ms,
+                                       float activity);
+
+/* WOODLAND: two long owned strings; replace one chord tone while the other
+ * stays. Six heard starts, then rest. Offers/acks are Main-only and bounded. */
+typedef struct {
+    uint32_t rng,next_ms,notes,episodes,answers,returns;
+    uint8_t phase,timing_valid,variant;
+    phrase_development_t development;
+} woodland_phrase_t;
+typedef struct {
+    uint32_t hold_ms,gap_ms;
+    int midi;
+    float velocity;
+    uint8_t phase,role;
+} woodland_offer_t;
+void woodland_phrase_init(woodland_phrase_t *g,uint32_t seed);
+void woodland_phrase_restart(woodland_phrase_t *g);
+bool woodland_phrase_due(const woodland_phrase_t *g,uint32_t now_ms);
+woodland_offer_t woodland_phrase_propose(const woodland_phrase_t *g,
+                                       int key_pc,bool minor,float activity);
+bool woodland_phrase_heard(woodland_phrase_t *g,const woodland_offer_t *o,
+                          uint32_t now_ms);
+bool woodland_phrase_pitch_allowed(int midi,int key_pc,bool minor);
+
+/* HIGHLANDS: wide chord -> related voicing with the same held third ->
+ * actual retirement, open pause, reprise. Eight starts, three owned roles.
+ * Main acknowledges starts and begins silence only after all owners retire. */
+typedef struct {
+    uint32_t rng,next_ms,notes,episodes,returns;
+    uint8_t phase,timing_valid,rest_valid,variant;
+    phrase_development_t development;
+} highlands_phrase_t;
+typedef struct {
+    uint32_t hold_ms,gap_ms;
+    int midi;
+    float velocity;
+    uint8_t phase,role;
+} highlands_offer_t;
+void highlands_phrase_init(highlands_phrase_t *g,uint32_t seed);
+void highlands_phrase_restart(highlands_phrase_t *g);
+bool highlands_phrase_due(const highlands_phrase_t *g,uint32_t now_ms);
+highlands_offer_t highlands_phrase_propose(const highlands_phrase_t *g,
+                                         int key_pc,bool minor,float activity);
+bool highlands_phrase_heard(highlands_phrase_t *g,const highlands_offer_t *o,
+                           uint32_t now_ms);
+/* Engine calls only at phase 5/8 after actual sources have retired. */
+bool highlands_phrase_pause(highlands_phrase_t *g,uint32_t now_ms,float activity);
+bool highlands_phrase_pitch_allowed(int midi,int key_pc,bool minor);
+#endif

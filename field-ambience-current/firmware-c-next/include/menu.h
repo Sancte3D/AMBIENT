@@ -67,6 +67,12 @@ typedef enum {
     MP_BASS,      /* r19.31: HARMONY bass 0 Off / 1 Root / 2 Fifth / 3 Drift */
     MP_COLOR,     /* r19.32: HARMONY chord color 0 Pure / 1 Open / 2 Warm / 3 Deep */
     MP_FX,        /* r19.41: master-effects page 0 Bypass .. 8 Dream (default 8) */
+    MP_RESO,      /* r19.59: RESONANCE of the pad-bus ladder (0..100 %) */
+    MP_ATTACK,    /* r19.60: SHAPE attack  (0..100 %, 50 = neutral) */
+    MP_RELEASE,   /* r19.60: SHAPE release (0..100 %, 50 = neutral) */
+    MP_SWEEP,     /* r19.60: MOTION — LFO auf den Filter-Cutoff */
+    MP_ENVMOD,    /* r19.60: MOTION — Huellkurvenfolger auf den Cutoff */
+    MP_CORE_A, MP_CORE_B, MP_CORE_C, MP_CORE_D, MP_CORE_E, MP_CORE_F,
     MP_COUNT
 } menu_param_t;
 
@@ -97,6 +103,13 @@ typedef struct {
     void (*set_bass)       (int mode);               /* r19.31: 0 Off / 1 Root / 2 Fifth / 3 Drift */
     void (*set_color)      (int color);              /* r19.32: 0 Pure / 1 Open / 2 Warm / 3 Deep */
     void (*set_fx)         (int mode);               /* r19.41: 0 Bypass .. 8 Dream Chain */
+    void (*set_bright)     (float hz);               /* r19.45: per-world pad brightness (Hz) */
+    void (*set_reso)       (float v01);              /* r19.59: pad-bus ladder resonance */
+    void (*set_attack)     (float v01);              /* r19.60: envelope shape attack  */
+    void (*set_release)    (float v01);              /* r19.60: envelope shape release */
+    void (*set_sweep)      (float v01);              /* r19.60: LFO -> filter cutoff   */
+    void (*set_envmod)     (float v01);              /* r19.60: env -> filter cutoff   */
+    void (*set_synth_param)(int slot, float value);
 } menu_callbacks_t;
 
 void menu_init(const menu_callbacks_t *cb);
@@ -125,6 +138,8 @@ typedef struct {
     uint8_t  world, key_pc, tuning, voice, synth, cell, bass, color, fx;
     uint8_t  space, shimmer, atmos, motion, age, echo, blur;   /* % */
     uint16_t locks;
+    uint8_t reso, attack, release, sweep, envmod;
+    uint8_t core[6][6];
 } menu_state_t;
 void menu_get_state(menu_state_t *out);
 /* Werte setzen + ALLE Engine-Callbacks feuern (Recall = live). */

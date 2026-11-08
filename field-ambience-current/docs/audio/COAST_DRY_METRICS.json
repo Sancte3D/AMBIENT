@@ -1,0 +1,486 @@
+{
+  "sample_rate": 44100,
+  "block_frames": 256,
+  "probes": [
+    {
+      "colour": 0,
+      "midi": 50,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 3.085875244734199,
+        "root_rms": 0.014904859797018036,
+        "off_1p5_root_db": -62.17757993883276,
+        "pcm_sha256": "36d08cdf1ea33bc83efa783d110fdc9a6d859d86f5e2a4f91002bea59e07e6aa"
+      },
+      "after": {
+        "root_swing_db": 0.025553750115841017,
+        "root_rms": 0.014795140876123073,
+        "off_1p5_root_db": -62.17868764951092,
+        "pcm_sha256": "96f6c350dc592cbd7c3dd324dfd62cade777df6b048f0510b90345525c417195"
+      },
+      "root_gain_change_db": -0.0641758082082535,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 50,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 3.0832331555752757,
+        "root_rms": 0.034708461572269665,
+        "off_1p5_root_db": -62.19793986366242,
+        "pcm_sha256": "baec777f3badd31f4820632bef9acee4d787921ae27269e4a480eb82b4068aff"
+      },
+      "after": {
+        "root_swing_db": 0.022031831489978997,
+        "root_rms": 0.03445287589231389,
+        "off_1p5_root_db": -62.19905629367634,
+        "pcm_sha256": "a33a597a145cb39dccdba45ea1a3da9543e25939246753779469b73711834793"
+      },
+      "root_gain_change_db": -0.06419769184784475,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 50,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 3.081861641506651,
+        "root_rms": 0.04788149481372148,
+        "off_1p5_root_db": -62.20872988906608,
+        "pcm_sha256": "284f52906194b7d3fa2a6343e0139ff820cbda18d8f0118abacae3d71e193979"
+      },
+      "after": {
+        "root_swing_db": 0.020205169629174062,
+        "root_rms": 0.047528841401910146,
+        "off_1p5_root_db": -62.209781158960105,
+        "pcm_sha256": "97ca34520f2dfa3fb9df1bb147f16a8557ffbbe3b1b295db69e4ed57480e2c2a"
+      },
+      "root_gain_change_db": -0.06420944912679026,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 57,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 3.0483668558463375,
+        "root_rms": 0.01477205327112002,
+        "off_1p5_root_db": -60.694449968081486,
+        "pcm_sha256": "05767ddfea5a6fbba803617c28fa5381d5d615769666b01cf3f9771cc91ae9eb"
+      },
+      "after": {
+        "root_swing_db": 0.026990604935128015,
+        "root_rms": 0.014792860552581001,
+        "off_1p5_root_db": -60.69551654507548,
+        "pcm_sha256": "85e54a1f168d82935f57a653860c87754df2f157811eb557b2ed3e2fda7db252"
+      },
+      "root_gain_change_db": 0.01222596361045186,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 57,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 3.047925800442248,
+        "root_rms": 0.03439905435369231,
+        "off_1p5_root_db": -60.71448637217382,
+        "pcm_sha256": "cbec934fca16f68c524a4bfae22489fe3768229b94cec007852eb0ec5941b86f"
+      },
+      "after": {
+        "root_swing_db": 0.023513812906352995,
+        "root_rms": 0.03444754995655106,
+        "off_1p5_root_db": -60.7155876014043,
+        "pcm_sha256": "b20f547da08a738ec805e5487e3204233a3dd448d6bfa0b6f7f6caae4fc1a406"
+      },
+      "root_gain_change_db": 0.012236697169047519,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 57,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 3.0479797905105785,
+        "root_rms": 0.0474545517368575,
+        "off_1p5_root_db": -60.725125071484754,
+        "pcm_sha256": "290feaede35a0646771d182bebd4557fbbc41bb9fcdc2c7eb9e0e0c0df306cdf"
+      },
+      "after": {
+        "root_swing_db": 0.02171035361736887,
+        "root_rms": 0.04752148345438391,
+        "off_1p5_root_db": -60.72615540487534,
+        "pcm_sha256": "74716f7c789916da457a557c8bb24bc7a61d746144ddb0de4434301a72ce63d4"
+      },
+      "root_gain_change_db": 0.012242279998129425,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 62,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 3.030045282789639,
+        "root_rms": 0.014777103280928336,
+        "off_1p5_root_db": -60.161426589885494,
+        "pcm_sha256": "c7dd430cb7fc8d07fbe99dee50aaae6c438ed9eb26de412f60fa41fc566779c3"
+      },
+      "after": {
+        "root_swing_db": 0.024897277107321834,
+        "root_rms": 0.014791361296520677,
+        "off_1p5_root_db": -60.162404416220326,
+        "pcm_sha256": "768a2a13b13cd1a5010eaaa56da5a30048bcd1bf0b6d70765c61de2c37e18da7"
+      },
+      "root_gain_change_db": 0.00837673252645251,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 62,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 3.0266967804257314,
+        "root_rms": 0.034410817306940185,
+        "off_1p5_root_db": -60.18123298837739,
+        "pcm_sha256": "7d4bd7f8ff4607e6e1203ee2ca3704160eb3f20649a025773205973c4874b80e"
+      },
+      "after": {
+        "root_swing_db": 0.021544464898735245,
+        "root_rms": 0.03444403730463027,
+        "off_1p5_root_db": -60.18222827038979,
+        "pcm_sha256": "9e8ff4b428012f7bc82395fb424df7083b14ac0ada5addf4a6e50cfd33cabe34"
+      },
+      "root_gain_change_db": 0.00838126106660094,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 62,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 3.024959657785659,
+        "root_rms": 0.04747078205201514,
+        "off_1p5_root_db": -60.191702326425315,
+        "pcm_sha256": "a19c219ff79eb7e502fd6225cecec4bc1d6e12d8f8a08d52c999e8a0cbeb3287"
+      },
+      "after": {
+        "root_swing_db": 0.01980491086687137,
+        "root_rms": 0.04751662314985732,
+        "off_1p5_root_db": -60.19270797198299,
+        "pcm_sha256": "e4a26f7de1538a75da9d4a248030962fb06d52ad968f35cf95328e200eb95a3d"
+      },
+      "root_gain_change_db": 0.008383653534079365,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 69,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 2.919543858190323,
+        "root_rms": 0.014794949875135698,
+        "off_1p5_root_db": -57.21359284118232,
+        "pcm_sha256": "79b5e593b3f169a60677173d3bad5f8250a8689396d52ec3206c4ce140d6542b"
+      },
+      "after": {
+        "root_swing_db": 0.024700741842692553,
+        "root_rms": 0.01478736165551076,
+        "off_1p5_root_db": -57.21468882615795,
+        "pcm_sha256": "a690322222b468b635b8433244594ea8bb0936d5279801dd5a1e439d9f30d4be"
+      },
+      "root_gain_change_db": -0.004456070959087815,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 69,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 2.917135480408404,
+        "root_rms": 0.034452302233168246,
+        "off_1p5_root_db": -57.233777924999515,
+        "pcm_sha256": "f2dd4e234b9a91492a0e8a7751095841dda966946a833c4d5d949b44b53d99d6"
+      },
+      "after": {
+        "root_swing_db": 0.02120672008827964,
+        "root_rms": 0.03443465041977294,
+        "off_1p5_root_db": -57.2348592497118,
+        "pcm_sha256": "bcf996ed7ef95d865fdb7cf032f5841fc7fff471914691e44702cb00a81285d5"
+      },
+      "root_gain_change_db": -0.004451400461608707,
+      "passed": true
+    },
+    {
+      "colour": 0,
+      "midi": 69,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 2.915886017173932,
+        "root_rms": 0.047527962261785364,
+        "off_1p5_root_db": -57.24443328436409,
+        "pcm_sha256": "13f78d83c90071d90c7c4f7a9501639b3588d23196ff34e4665dfbb02e385834"
+      },
+      "after": {
+        "root_swing_db": 0.01939409193157658,
+        "root_rms": 0.04750362420042301,
+        "off_1p5_root_db": -57.24551843911348,
+        "pcm_sha256": "11fa31ee9999ae7e4b345256b51715faf5c74a0b216bbc0479f1405bef3bd08d"
+      },
+      "root_gain_change_db": -0.004448999064194915,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 50,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 3.1024759295750575,
+        "root_rms": 0.015137263474915747,
+        "off_1p5_root_db": -61.553131106937535,
+        "pcm_sha256": "be78fa1968b4b1c34c7790ebb7c706a52b56f4a19d4d59699e900cc7bdbecc3e"
+      },
+      "after": {
+        "root_swing_db": 0.04758914130577378,
+        "root_rms": 0.015026011628478575,
+        "off_1p5_root_db": -61.554350882955234,
+        "pcm_sha256": "b0a6ea282e9de911e00e2ee0b937122ee42191bb989f27f1f6dc850e45380a5f"
+      },
+      "root_gain_change_db": -0.06407299199175218,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 50,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 3.0972461231699677,
+        "root_rms": 0.03516395484474802,
+        "off_1p5_root_db": -61.58518221072606,
+        "pcm_sha256": "e0f543f3a7edc552cd369e1316526fed4cf877f86f9fef8ffcbd6298ce1537cc"
+      },
+      "after": {
+        "root_swing_db": 0.04057414848753015,
+        "root_rms": 0.034905356456065226,
+        "off_1p5_root_db": -61.58630120850776,
+        "pcm_sha256": "8fc0a05c0d152fd7f6c8a215a24bab46a825eff3d48eda5ff901b3d3d42d1713"
+      },
+      "root_gain_change_db": -0.06411272555871515,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 50,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 3.0944157811459982,
+        "root_rms": 0.048447584774558246,
+        "off_1p5_root_db": -61.6040451342968,
+        "pcm_sha256": "9b70b53633f855a6e933661676e26f55f04e425dd5374c268282f42492c29137"
+      },
+      "after": {
+        "root_swing_db": 0.036787296423327495,
+        "root_rms": 0.048091177933191676,
+        "off_1p5_root_db": -61.60523439347713,
+        "pcm_sha256": "e238e5bff5645c84a5e427875346ddeb11c79fd73851947e006b8f5ee51d63fa"
+      },
+      "root_gain_change_db": -0.06413433253661965,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 57,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 3.060879953688484,
+        "root_rms": 0.01500273594617998,
+        "off_1p5_root_db": -60.07333835566125,
+        "pcm_sha256": "110edd3494dda69f989ef72db77591cce61b20e533f15da994fc4339abf17f5d"
+      },
+      "after": {
+        "root_swing_db": 0.048750448711529934,
+        "root_rms": 0.015023737231129276,
+        "off_1p5_root_db": -60.074260918034824,
+        "pcm_sha256": "b795601d3a00d62b08b33b75e294409c11d20fc2b3d9ed986f46cb16a90a1d2f"
+      },
+      "root_gain_change_db": 0.01215026966340773,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 57,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 3.055137710137843,
+        "root_rms": 0.03485116029264107,
+        "off_1p5_root_db": -60.10471524369221,
+        "pcm_sha256": "a8501d8a05d32b32586d1b7f1659f66681f693ba589f7557fc53832af20950e3"
+      },
+      "after": {
+        "root_swing_db": 0.04182129772427845,
+        "root_rms": 0.0349000321053854,
+        "off_1p5_root_db": -60.105758042268874,
+        "pcm_sha256": "fac01cc0caf4e8c79e882b2a32b21326b753888b2ebf2b7306be3de2c4993f7f"
+      },
+      "root_gain_change_db": 0.012171698483719013,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 57,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 3.053029134635501,
+        "root_rms": 0.048016415820390235,
+        "off_1p5_root_db": -60.123325593313496,
+        "pcm_sha256": "47d28ce489259542c8508ed7f081fbcedc74a4b0467ad436db95f6ed8941fa0b"
+      },
+      "after": {
+        "root_swing_db": 0.03808027020269986,
+        "root_rms": 0.048083813163056155,
+        "off_1p5_root_db": -60.12435947520017,
+        "pcm_sha256": "a1f95c93d9867795fc2568c94e9f0405bc32c3f8f4964efc76475520514ede5e"
+      },
+      "root_gain_change_db": 0.012183237906209593,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 62,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 3.0511313512767306,
+        "root_rms": 0.015007850275930332,
+        "off_1p5_root_db": -59.53656813460621,
+        "pcm_sha256": "aa72e5a8b7e1e5e73c8f56ac6964199bbc7ed758c7a65cd4562ac353cc0b4e37"
+      },
+      "after": {
+        "root_swing_db": 0.04634490798282567,
+        "root_rms": 0.01502227167966175,
+        "off_1p5_root_db": -59.5375684849124,
+        "pcm_sha256": "daed9980dcea3afb271626c0bd8d733706a4cde6a2c55cc3382dae3a8f41c3a9"
+      },
+      "root_gain_change_db": 0.008342472338391638,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 62,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 3.0444570953816594,
+        "root_rms": 0.03486303399785305,
+        "off_1p5_root_db": -59.567841633589026,
+        "pcm_sha256": "5f71891c6e95ae7242a5c2b8a9354b8a2c904be3bfadc4c9cee47584f897c9f7"
+      },
+      "after": {
+        "root_swing_db": 0.039391258616921776,
+        "root_rms": 0.03489656990027286,
+        "off_1p5_root_db": -59.5688416393957,
+        "pcm_sha256": "8e664d88e3e724a15eb3f936d2403f64514331594e3210fe53b88755d6a3bbee"
+      },
+      "root_gain_change_db": 0.008351227744824309,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 62,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 3.040853657434051,
+        "root_rms": 0.04803277281805355,
+        "off_1p5_root_db": -59.5863047102406,
+        "pcm_sha256": "40c5ad59613265bffa63b74d38519f7d04c28be50b022e6d7910643919c18596"
+      },
+      "after": {
+        "root_swing_db": 0.0356367387372973,
+        "root_rms": 0.04807900324258724,
+        "off_1p5_root_db": -59.58731244713606,
+        "pcm_sha256": "a2b3d080ba38d130b6de0daa3c44a81f63134805188454c77fbb384187c1db37"
+      },
+      "root_gain_change_db": 0.008355945813256714,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 69,
+      "amp": 0.18,
+      "before": {
+        "root_swing_db": 2.9347236538162393,
+        "root_rms": 0.015026174701309736,
+        "off_1p5_root_db": -56.594129453821395,
+        "pcm_sha256": "8982a5248c23cfb02a31fc41a2760cdda0b4b6fc566e3ec1bd86ed014d56e229"
+      },
+      "after": {
+        "root_swing_db": 0.046567605375720175,
+        "root_rms": 0.015018399589752133,
+        "off_1p5_root_db": -56.595191391111406,
+        "pcm_sha256": "e1ed96e28c01fdf5739122885d645bf27c4b15d8a154fd50d17f0b225e329449"
+      },
+      "root_gain_change_db": -0.004495571264636802,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 69,
+      "amp": 0.42,
+      "before": {
+        "root_swing_db": 2.929911314425091,
+        "root_rms": 0.03490540909575831,
+        "off_1p5_root_db": -56.62594561469188,
+        "pcm_sha256": "a43c99c592afcce366f9aee178f65ecde0b1057fc55c64912d7ff7b804c83c7a"
+      },
+      "after": {
+        "root_swing_db": 0.039604621224574345,
+        "root_rms": 0.03488738695379642,
+        "off_1p5_root_db": -56.62699313409306,
+        "pcm_sha256": "e3a8e056e0dfc721012f389e5d189561f442528e683ff70a4f48667e9eab59a7"
+      },
+      "root_gain_change_db": -0.004485802216338591,
+      "passed": true
+    },
+    {
+      "colour": 1,
+      "midi": 69,
+      "amp": 0.58,
+      "before": {
+        "root_swing_db": 2.9273165013149285,
+        "root_rms": 0.04809102131412062,
+        "off_1p5_root_db": -56.644716691640625,
+        "pcm_sha256": "c36a7a18a4f3b0578784071f1cad3271adfbcf9d1dc25f1cbe37f020b1ee6380"
+      },
+      "after": {
+        "root_swing_db": 0.03584529610764875,
+        "root_rms": 0.048066220017358156,
+        "off_1p5_root_db": -56.64578411890771,
+        "pcm_sha256": "6e19a7a17cd8b1855e5ade4222acd497debda6fd08a68ec6261716955965079b"
+      },
+      "root_gain_change_db": -0.00448060548230704,
+      "passed": true
+    }
+  ],
+  "audio": {
+    "seconds": 27,
+    "starts_s": [
+      0,
+      7,
+      14,
+      21
+    ],
+    "order": [
+      "colour 0 before",
+      "colour 0 after",
+      "colour 1 before",
+      "colour 1 after"
+    ],
+    "fixed_gains_db": [
+      -0.8999999999999986,
+      -0.8999999999999986,
+      -0.8000000000000007,
+      -0.8000000000000007
+    ],
+    "integrated_lufs": -26.1,
+    "true_peak_dbfs": -18.8
+  },
+  "failures": 0
+}

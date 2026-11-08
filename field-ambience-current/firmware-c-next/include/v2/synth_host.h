@@ -12,17 +12,16 @@
  *     active_engine.render_mix → global reverb (send) → master → beauty-guard
  * So the FX live outside the sound-core; switching engines never re-plumbs FX.
  *
- * Only engines that actually exist are listed below — add an id here AND a row
- * in the TABLE in synth_host.c as each engine is built. (FM Glass, Chorus Mist,
- * Ion Storm, Glass Orbit, Bamboo Circuit, and a FIELD wrapper come next.)
+ * Existing identifiers are stable scene/API keys. Display names come from
+ * synth_names.h; renaming a sound type must never reorder these values.
  */
 typedef enum {
-    SYNTH_ACID = 0,         /* 303-style resonant acid bass */
-    SYNTH_FM_GLASS,         /* DX7-style 2-op FM key/glass tone */
-    SYNTH_CHORUS_MIST,      /* Juno-style detuned saw pad + chorus */
-    SYNTH_ION_STORM,        /* Alpha-Juno / hoover-style PWM stack */
-    SYNTH_GLASS_ORBIT,      /* wavetable-style morphing tone */
-    SYNTH_BAMBOO_CIRCUIT,   /* Buchla / west-coast LPG pluck */
+    SYNTH_ACID = 0,         /* Dusk: subtractive ladder-filter tone */
+    SYNTH_FM_GLASS,         /* Glimmer: 2-op FM attack/body tone */
+    SYNTH_CHORUS_MIST,      /* Mist: detuned saw pad + chorus */
+    SYNTH_ION_STORM,        /* Tide: sustained PWM stack */
+    SYNTH_GLASS_ORBIT,      /* Horizon: phase-related waveform morph */
+    SYNTH_BAMBOO_CIRCUIT,   /* Dew: coupled LPG amplitude/brightness decay */
     SYNTH_COUNT
 } synth_id_t;
 
@@ -32,6 +31,10 @@ synth_id_t  synth_host_active(void);
 const char *synth_host_active_name(void);
 
 void        synth_host_note_on(int midi, float vel);
+void        synth_host_note_on_hz(float hz, float vel);
+/* Slots: brightness (-600..800 Hz legacy offset), resonance, sweep, envmod. */
+void        synth_host_set_macro(int slot, float value);
+void        synth_host_retune_hz(float hz);
 void        synth_host_note_off(void);
 void        synth_host_set_param(synth_param_t p, float v01);
 void        synth_host_panic(void);
@@ -43,5 +46,7 @@ void        synth_host_set_master(float v_0_1);
 /* Render `frames` stereo samples → interleaved int16. Runs the active engine
  * → global reverb on its send bus → master mix → beauty-guard limiter. */
 void        synth_host_render(int16_t *out, int frames);
+/* Adds unmastered dry/send buses. Device uses its shared master and FX. */
+void synth_host_render_mix(float *dry_l, float *dry_r, float *send_l, float *send_r, int frames);
 
 #endif /* FAM_V2_SYNTH_HOST_H */

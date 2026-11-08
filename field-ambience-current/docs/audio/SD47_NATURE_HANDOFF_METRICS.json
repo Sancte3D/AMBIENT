@@ -1,0 +1,25 @@
+{
+  "baseline_checked": true,
+  "baseline_commit": "b352dbf9799b3fa618eeb01a833ac2a776f1c64e",
+  "existing_compiled_inputs_byte_equal": 263,
+  "instrumentation": "Real nature.c compiled twice; only the observed host object wraps its three atomic stores/loads and SVF coefficient calls. Real original object supplies the full-float control.",
+  "limitations": "Directed Main-store boundary preemption and identical-command-frame partition checks; not every machine instruction, arbitrary control-rate invariance, hardware WCET, total stack or hearing acceptance.",
+  "native": {
+    "audio_preemptions": 120,
+    "full_stereo_frames_compared": 10580880,
+    "max_observed_svf_coefficients_per_render": 18,
+    "publication_cases": 120,
+    "target_loads_per_render": 3,
+    "timeline_seconds": 38,
+    "timeline_worlds": 3
+  },
+  "new_runtime_state_bytes": 0,
+  "runtime_files_changed": 0,
+  "sanitized": true,
+  "source_sha256": {
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "test/nature_handoff_observer.h": "02cc06bdf1f366e66ad81721a5f41d7a89fc3defbc41f3f5a613be75f5b94917",
+    "test/test_nature_handoff.c": "8be74ef056d0070e066684d3f902d008b7d178ce3a1c35e572f5533d8768d531",
+    "tools/review_nature_handoff.py": "f81ab8df89b1e793b01a9106b619b641aa06debcea6790292c69341372ad99b4"
+  }
+}

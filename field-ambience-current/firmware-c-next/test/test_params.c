@@ -28,7 +28,8 @@ int main(void) {
     /* r19.20: SPEC boot rule — 30 % max at power-on (headphone-safe since
      * the TPA6132A2). Was 60 % before the phones jack existed. */
     CHECK(params_volume_pct() == 30, "volume default 30%% (got %d)", params_volume_pct());
-    CHECK(params_bright_hz() == 0.0f, "bright default 0 Hz");
+    /* r19.45: brightness boots to world 0 (Alps) = +550 Hz, not 0. */
+    CHECK(params_bright_hz() == 550.0f, "bright default = Alps +550 Hz (got %.0f)", params_bright_hz());
 
     /* ---- slow detents: 1 %/step. Space events 300 ms apart (no accel). ---- */
     uint32_t t = 1000;
@@ -65,7 +66,7 @@ int main(void) {
     params_init();
     t = 9000;
     for (int i = 0; i < 5; ++i) { params_encoder(PARAM_ENC_BRIGHT, +1, t); t += 300; }
-    CHECK(params_bright_hz() == 100.0f, "5 bright detents = +100 Hz (got %.0f)", params_bright_hz());
+    CHECK(params_bright_hz() == 650.0f, "5 bright detents from +550 base = +650 Hz (got %.0f)", params_bright_hz());
     for (int i = 0; i < 200; ++i) { params_encoder(PARAM_ENC_BRIGHT, +1, t); t += 300; }
     CHECK(params_bright_hz() <= 800.0f && params_bright_hz() >= 799.0f,
           "bright clamps at +800 Hz (got %.0f)", params_bright_hz());

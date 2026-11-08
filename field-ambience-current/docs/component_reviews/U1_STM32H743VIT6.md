@@ -142,8 +142,8 @@ die 30 belegten GPIOs + dedicated Pins. Vollständige Übersicht siehe SPEC v0.7
 | 25 | PA3 | ADC1_INP15 (analog) + USART2_RX | BAT_SENSE | OK | DS S.62 |
 | 29 | PA5 | SPI1_SCK / I2S1_CK (AF5) | LCD_SCK | OK | DS S.62 |
 | 31 | PA7 | SPI1_MOSI / I2S1_SDO (AF5) | LCD_MOSI | OK | DS S.63 |
-| 53 | PB14 | GPIO + USART1_TX, SPI2_MISO, OTG_HS_DM | AMP_nSHDN | OK | DS S.67 |
-| 54 | PB15 | GPIO + USART1_RX, OTG_HS_DP | AMP_nMUTE | OK | DS S.67 |
+| 53 | PB14 | GPIO + USART1_TX, SPI2_MISO, OTG_HS_DM | AMP_SHDN_N | OK | DS S.67 |
+| 54 | PB15 | GPIO + USART1_RX, OTG_HS_DP | AMP_MUTE_N | OK | DS S.67 |
 | 55 | PD8 | GPIO + DFSDM_CKIN3, SAI3_SCK_B, USART3_TX | STATUS_LED | OK | DS S.68 |
 | 59 | PD12 | TIM4_CH1 (AF2) | DISPLAY_A | OK | DS S.69 |
 | 60 | PD13 | TIM4_CH2 (AF2) | DISPLAY_B | OK | DS S.69 |
@@ -205,7 +205,7 @@ die 30 belegten GPIOs + dedicated Pins. Vollständige Übersicht siehe SPEC v0.7
 | Prüfpunkt | Status | Anmerkung |
 |---|---|---|
 | Pins layout-technisch erreichbar | ⚠ kann nicht geprüft werden | PCB-Layout existiert noch nicht (kommt nach Phase 5 Profiling) |
-| Testpunkte sinnvoll | empfohlen | für: I2S_LRCK/BCK/DOUT (Audio-Debug), SWO, BAT_SENSE, AMP_nSHDN, NRST. Aktuell nicht im Schematic — sollte in Phase-3-Schematic ergänzt werden |
+| Testpunkte sinnvoll | empfohlen | für: I2S_LRCK/BCK/DOUT (Audio-Debug), SWO, BAT_SENSE, AMP_SHDN_N, NRST. Aktuell nicht im Schematic — sollte in Phase-3-Schematic ergänzt werden |
 | Hand-lötbar / Rework | ✓ machbar | LQFP100 0.5 mm Pitch ist mit Übung handlötbar (Drag-Solder + Wick). BGA wurde bewusst verworfen |
 | Pin-1 sichtbar nach Bestückung | ⚠ TBD | Standard-LQFP: Punkt auf Body + Silk-Markierung; hängt von PCB-Layout ab |
 | Thermisch | ✓ unkritisch | LQFP100 ohne EP → max ~1 W ohne Heat-Spreader; H743 zieht 0.4–0.6 W → weit unter Limit |

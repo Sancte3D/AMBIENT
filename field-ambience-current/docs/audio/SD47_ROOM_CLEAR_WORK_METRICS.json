@@ -1,0 +1,1061 @@
+{
+  "added_state_bytes": 0,
+  "arm": {
+    "baseline_bin_bytes": 196836,
+    "candidate_bin_bytes": 196844,
+    "compiler_frames_bytes": {
+      "baseline:accept_targets": 40,
+      "baseline:ambient_room_clear": 8,
+      "baseline:ambient_room_enable": 0,
+      "baseline:ambient_room_init": 16,
+      "baseline:ambient_room_peak": 0,
+      "baseline:ambient_room_process": 160,
+      "baseline:ambient_room_set": 0,
+      "baseline:ambient_room_set.part.0": 80,
+      "baseline:ambient_room_storage_bytes": 0,
+      "baseline:ambient_room_tail_seconds": 0,
+      "candidate:accept_targets": 40,
+      "candidate:ambient_room_clear": 16,
+      "candidate:ambient_room_enable": 0,
+      "candidate:ambient_room_init": 16,
+      "candidate:ambient_room_peak": 0,
+      "candidate:ambient_room_process": 160,
+      "candidate:ambient_room_set": 0,
+      "candidate:ambient_room_set.part.0": 80,
+      "candidate:ambient_room_storage_bytes": 0,
+      "candidate:ambient_room_tail_seconds": 0
+    },
+    "current_sections": {
+      ".ARM": 8,
+      ".ARM.attributes": 46,
+      ".ARM.extab": 0,
+      "._stack_guard": 16384,
+      "._user_heap": 4096,
+      ".bss": 61344,
+      ".comment": 38,
+      ".d2_bss": 60848,
+      ".data": 240,
+      ".debug_abbrev": 14760,
+      ".debug_aranges": 1304,
+      ".debug_frame": 2548,
+      ".debug_info": 51421,
+      ".debug_line": 28249,
+      ".debug_line_str": 338,
+      ".debug_loclists": 20307,
+      ".debug_rnglists": 978,
+      ".debug_str": 7746,
+      ".dtcm_bss": 0,
+      ".fini_array": 4,
+      ".init_array": 4,
+      ".isr_vector": 664,
+      ".preinit_array": 0,
+      ".rodata": 76732,
+      ".text": 119184
+    },
+    "device_timing_measured": false,
+    "no_atomic_runtime_helper": true,
+    "no_test_hook_in_arm": true,
+    "previous_sections": {
+      ".ARM": 8,
+      ".ARM.attributes": 46,
+      ".ARM.extab": 0,
+      "._stack_guard": 16384,
+      "._user_heap": 4096,
+      ".bss": 61344,
+      ".comment": 38,
+      ".d2_bss": 60848,
+      ".data": 240,
+      ".debug_abbrev": 14760,
+      ".debug_aranges": 1304,
+      ".debug_frame": 2548,
+      ".debug_info": 51421,
+      ".debug_line": 28249,
+      ".debug_line_str": 338,
+      ".debug_loclists": 20307,
+      ".debug_rnglists": 978,
+      ".debug_str": 7746,
+      ".dtcm_bss": 0,
+      ".fini_array": 4,
+      ".init_array": 4,
+      ".isr_vector": 664,
+      ".preinit_array": 0,
+      ".rodata": 76732,
+      ".text": 119176
+    },
+    "room_process_instruction_bytes_equal": true,
+    "room_process_section_bytes": 2092,
+    "room_process_sha256": "33051f0e0785d083f723fcbf2929f0ba5b9c94d65263420959439cc8377bc6b0",
+    "section_deltas": {
+      ".text": 8
+    }
+  },
+  "baseline_commit": "8b7044206f7c9d29323f95a03f1c9ef6041818fd",
+  "baseline_counterexample": "clear work case=0 line=54: max_clear_bytes<=60720",
+  "baseline_work": {
+    "cases": 36,
+    "work": [
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 0,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 121440,
+        "mute": 1,
+        "repeat_clear_bytes": 1214400,
+        "total_clear_bytes": 121440,
+        "world": 2
+      }
+    ]
+  },
+  "changed_input": "src/ambient_room.c",
+  "clear_frames_each_version": 484128,
+  "clear_pcm_and_events_byte_equal": true,
+  "compiled_inputs": 263,
+  "device_accepted": false,
+  "existing_inputs_byte_equal": 262,
+  "native": {
+    "cases": 36,
+    "work": [
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 0
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 1
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 64,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 0,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 16388,
+        "kind": 1,
+        "max_clear_bytes": 0,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 0,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 0,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      },
+      {
+        "block": 512,
+        "frames": 11978,
+        "kind": 2,
+        "max_clear_bytes": 60720,
+        "mute": 1,
+        "repeat_clear_bytes": 0,
+        "total_clear_bytes": 60720,
+        "world": 2
+      }
+    ]
+  },
+  "ownership_contract": "Cold is audio-owned and means all clearable buffers/state are already zero. No retry, allocation or IRQ masking.",
+  "paired_product_cases": [
+    {
+      "block": 64,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 0,
+      "pcm_sha256": "3c151a2537eb3a8d00f05f411536526debc5dd6109d4de19c43836e910c17923",
+      "world": 0
+    },
+    {
+      "block": 512,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 0,
+      "pcm_sha256": "3c151a2537eb3a8d00f05f411536526debc5dd6109d4de19c43836e910c17923",
+      "world": 0
+    },
+    {
+      "block": 64,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 1,
+      "pcm_sha256": "be228ff9a61f15dabf1198b3b4fbdd5edcfd0f6ac7037a8fd133b4ca3426af89",
+      "world": 0
+    },
+    {
+      "block": 512,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 1,
+      "pcm_sha256": "be228ff9a61f15dabf1198b3b4fbdd5edcfd0f6ac7037a8fd133b4ca3426af89",
+      "world": 0
+    },
+    {
+      "block": 64,
+      "events_sha256": "27d62cff92725e27a32114cffe8af0cf7f0c586d92f2bda4f19aebdb9b0b2492",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 0,
+      "pcm_sha256": "a809b6e6e9ab4bfa63f779c19d10d8779b98cdead44d8fb0fca361342d2a8b03",
+      "world": 0
+    },
+    {
+      "block": 512,
+      "events_sha256": "27d62cff92725e27a32114cffe8af0cf7f0c586d92f2bda4f19aebdb9b0b2492",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 0,
+      "pcm_sha256": "a809b6e6e9ab4bfa63f779c19d10d8779b98cdead44d8fb0fca361342d2a8b03",
+      "world": 0
+    },
+    {
+      "block": 64,
+      "events_sha256": "27d62cff92725e27a32114cffe8af0cf7f0c586d92f2bda4f19aebdb9b0b2492",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 1,
+      "pcm_sha256": "ee07925fc0ec4fbf774892da7d4b5ced22cdfb70b601089f8bda641d6864adc0",
+      "world": 0
+    },
+    {
+      "block": 512,
+      "events_sha256": "27d62cff92725e27a32114cffe8af0cf7f0c586d92f2bda4f19aebdb9b0b2492",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 1,
+      "pcm_sha256": "ee07925fc0ec4fbf774892da7d4b5ced22cdfb70b601089f8bda641d6864adc0",
+      "world": 0
+    },
+    {
+      "block": 64,
+      "events_sha256": "82fdf1ce9b42cce8c67cb49d327c92b797557e31ca5fe5263e0e4d080b2e526a",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 0,
+      "pcm_sha256": "808424a0854b36bbfa2013b73c2c902c1dfd38e01a471a2967f794bd6de3d20a",
+      "world": 1
+    },
+    {
+      "block": 512,
+      "events_sha256": "82fdf1ce9b42cce8c67cb49d327c92b797557e31ca5fe5263e0e4d080b2e526a",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 0,
+      "pcm_sha256": "808424a0854b36bbfa2013b73c2c902c1dfd38e01a471a2967f794bd6de3d20a",
+      "world": 1
+    },
+    {
+      "block": 64,
+      "events_sha256": "82fdf1ce9b42cce8c67cb49d327c92b797557e31ca5fe5263e0e4d080b2e526a",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 1,
+      "pcm_sha256": "161a815fc4dea4a90fc07b4a78c0bbc89565fc74f2376ef2263ebca20feeb236",
+      "world": 1
+    },
+    {
+      "block": 512,
+      "events_sha256": "82fdf1ce9b42cce8c67cb49d327c92b797557e31ca5fe5263e0e4d080b2e526a",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 1,
+      "pcm_sha256": "161a815fc4dea4a90fc07b4a78c0bbc89565fc74f2376ef2263ebca20feeb236",
+      "world": 1
+    },
+    {
+      "block": 64,
+      "events_sha256": "a656242fbbf6ddcb924f2565fb62898a15a3155dc87194a340a492bc1d399ab5",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 0,
+      "pcm_sha256": "8c8cf255d8d8eada6251f3d37ad0281b278aa82a41cb8f271077a59315c182c8",
+      "world": 1
+    },
+    {
+      "block": 512,
+      "events_sha256": "a656242fbbf6ddcb924f2565fb62898a15a3155dc87194a340a492bc1d399ab5",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 0,
+      "pcm_sha256": "8c8cf255d8d8eada6251f3d37ad0281b278aa82a41cb8f271077a59315c182c8",
+      "world": 1
+    },
+    {
+      "block": 64,
+      "events_sha256": "a656242fbbf6ddcb924f2565fb62898a15a3155dc87194a340a492bc1d399ab5",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 1,
+      "pcm_sha256": "84ba17b251d0e778f41f09efb99b01c0d06b8e954730c5b047a8a6237c18520f",
+      "world": 1
+    },
+    {
+      "block": 512,
+      "events_sha256": "a656242fbbf6ddcb924f2565fb62898a15a3155dc87194a340a492bc1d399ab5",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 1,
+      "pcm_sha256": "84ba17b251d0e778f41f09efb99b01c0d06b8e954730c5b047a8a6237c18520f",
+      "world": 1
+    },
+    {
+      "block": 64,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 0,
+      "pcm_sha256": "932c35026fd20d9a0b1ebe370a3bbf82b93415aef782712a51d6a24dd9622919",
+      "world": 2
+    },
+    {
+      "block": 512,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 0,
+      "pcm_sha256": "932c35026fd20d9a0b1ebe370a3bbf82b93415aef782712a51d6a24dd9622919",
+      "world": 2
+    },
+    {
+      "block": 64,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 1,
+      "pcm_sha256": "0ccff46c9344b8ce02da913762ff946181f10b88811c1d6fae2bd6cd88dc6637",
+      "world": 2
+    },
+    {
+      "block": 512,
+      "events_sha256": "b34854b3f9ba088eb804892579f4b6cfe48caf9a208cbe16e4df17caf974462c",
+      "frames": 529200,
+      "generated": 0,
+      "nature": 1,
+      "pcm_sha256": "0ccff46c9344b8ce02da913762ff946181f10b88811c1d6fae2bd6cd88dc6637",
+      "world": 2
+    },
+    {
+      "block": 64,
+      "events_sha256": "5bb4040633f09f68606dc0ff15a73a79ef01c63706b5c513e6504907d1170c28",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 0,
+      "pcm_sha256": "afdba640737e71e26b790b9807d72c7fb34b9247feca57f8fef02725bf57c34e",
+      "world": 2
+    },
+    {
+      "block": 512,
+      "events_sha256": "5bb4040633f09f68606dc0ff15a73a79ef01c63706b5c513e6504907d1170c28",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 0,
+      "pcm_sha256": "afdba640737e71e26b790b9807d72c7fb34b9247feca57f8fef02725bf57c34e",
+      "world": 2
+    },
+    {
+      "block": 64,
+      "events_sha256": "5bb4040633f09f68606dc0ff15a73a79ef01c63706b5c513e6504907d1170c28",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 1,
+      "pcm_sha256": "2a7268e1b1ece469d34e4a6eb179f745bc5d36b697ca054aec7c4908704ed05c",
+      "world": 2
+    },
+    {
+      "block": 512,
+      "events_sha256": "5bb4040633f09f68606dc0ff15a73a79ef01c63706b5c513e6504907d1170c28",
+      "frames": 529200,
+      "generated": 1,
+      "nature": 1,
+      "pcm_sha256": "2a7268e1b1ece469d34e4a6eb179f745bc5d36b697ca054aec7c4908704ed05c",
+      "world": 2
+    }
+  ],
+  "pcm_frames_each_version": 12700800,
+  "sanitized": true,
+  "saved_state_bytes_per_redundant_clear": 60720,
+  "source_sha256": {
+    "src/ambient_room.c": "9633f78873608cf3924ce60b946e198fd031ec587572ecb5da306b971a164633",
+    "test/room_clear_observer.h": "0c83a5564ed10e276f2c5fcf2fbae2225d6825928a33b00e4839aa57fcb2baf8",
+    "test/test_room_clear_work.c": "e0daa5d8f618bfa444298478a32c016dec88439e0635d6bbf3220bdd7185b2e4",
+    "tools/render_room_handoff.c": "0803b5267c1d29f4796363f07c4de89794097c92b99ca2ae1f7e4881b8a5b107",
+    "tools/review_room_clear_work.py": "4352f39329b3468c2d326aa268bfca1ea3d622fce74f38d7347d907fbed83c8d"
+  },
+  "whole_pcm_and_events_byte_equal": true,
+  "work_limit": "Observed C memset byte counts, not measured bus traffic, Cortex-M WCET or a claim of halved whole-block CPU time."
+}

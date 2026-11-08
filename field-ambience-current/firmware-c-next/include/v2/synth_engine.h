@@ -27,12 +27,16 @@ typedef struct {
     void (*init)(void);                     /* one-time, at boot */
     void (*activate)(void);                 /* on select: reset phases/voices */
     void (*deactivate)(void);               /* on leave: silence cleanly */
-    void (*note_on)(int midi, float vel);   /* vel 0..1; vel high = accent */
+    void (*note_on)(float midi, float vel); /* fractional MIDI preserves tuning */
     void (*note_off)(void);
     void (*set_param)(synth_param_t p, float v01);
     void (*render_mix)(float *dryL, float *dryR,
                        float *sendL, float *sendR, int frames);  /* ADDS */
     void (*panic)(void);
+    /* Host macros modulate the native filter without overwriting its knobs. */
+    void (*set_colour)(float cutoff_scale, float resonance);
+    /* Pitch target only: preserve phase, envelopes, velocity and gate. */
+    void (*retune_hz)(float hz);
 } synth_engine_t;
 
 #endif /* FAM_V2_SYNTH_ENGINE_H */

@@ -17,6 +17,7 @@
 #include "dsp.h"
 #include "pluck.h"
 #include "glass.h"
+#include "ember.h"
 #include "shimmer.h"
 #include "tape.h"
 #include "reverb.h"
@@ -513,23 +514,32 @@ int main(void) {
         CHECK(l_sb < l_f * 0.05,
               "ring is nearly pure (sb/f %.4f)", l_sb / (l_f + 1e-12));
 
-        /* (c) engine dispatch */
+        /* (c) engine VOICE dispatch (r19.51: Glass removed; map is now
+         *     0 Pad / 1 String→pluck / 2 Ember / 3 Bowed). */
         engine_init();
-        engine_set_voice(2);
-        engine_note_on(0, 220.0f, 0.12f);
-        CHECK(glass_active_count() > 0, "VOICE=GLASS strikes on a cell press");
-        CHECK(pluck_active_count() == 0, "no string when GLASS is chosen");
+        engine_set_voice(1);
+        engine_note_on(0, 330.0f, 0.12f);
+        CHECK(pluck_active_count() > 0, "VOICE=STRING strikes the pluck on a cell press");
+        engine_all_off();
+        CHECK(pluck_active_count() > 0, "Clear starts a release, does not hard-reset pluck");
+        { int16_t b[512]; for (int i = 0; i < 4; ++i) engine_render(b, 256); }
+        CHECK(pluck_active_count() == 0, "Clear stops pluck within 20 ms of rendered audio");
+        engine_sparkle_strike(330.0f, 0.12f); /* legacy unowned one-shot */
+        CHECK(pluck_active_count() == 1, "sparkle started");
+        engine_all_off();
+        { int16_t b[512]; for (int i = 0; i < 4; ++i) engine_render(b, 256); }
+        CHECK(pluck_active_count() == 0, "Clear also stops unowned sparkle");
         engine_note_off(0);
         { int16_t b[512]; for (int i = 0; i < 1200; ++i) engine_render(b, 256); }
-        engine_set_voice(1);
+        engine_set_voice(2);
         engine_note_on(1, 330.0f, 0.12f);
-        CHECK(pluck_active_count() > 0, "VOICE=STRING strikes on a cell press");
+        CHECK(ember_active_count() > 0, "VOICE=EMBER strikes on a cell press");
         engine_note_off(1);
         { int16_t b[512]; for (int i = 0; i < 1200; ++i) engine_render(b, 256); }
         engine_set_voice(0);
-        int g0 = glass_active_count(), p0 = pluck_active_count();
+        int p0 = pluck_active_count(), e0 = ember_active_count();
         engine_note_on(2, 440.0f, 0.12f);
-        CHECK(glass_active_count() == g0 && pluck_active_count() == p0,
+        CHECK(pluck_active_count() == p0 && ember_active_count() == e0,
               "VOICE=PAD leaves the reference sound untouched");
         engine_note_off(2);
 
@@ -541,16 +551,13 @@ int main(void) {
         engine_set_key_pc(-3); CHECK(brain_get_key() == 57, "pc wraps below (%d)", brain_get_key());
     }
 
-    /* ---- 13. r18.99 SHIMMER + WOW/FLUTTER + ENO LOOPS ----
+    /* ---- 13. r18.99 SHIMMER + WOW/FLUTTER ----
      * (a) shimmer module: feed a pure 220 Hz sine, the return must be
      *     dominated by 440 Hz (one octave up) — Goertzel 440 vs 220;
      *     amount 0 adds NOTHING (bit-exact bypass);
      * (b) tape wow: depth 0 = bit-exact pass-through; depth 1 modulates
      *     the pitch of a 1 kHz sine (zero-crossing period variance > 0)
-     *     while staying bounded;
-     * (c) Eno loops: in autoplay the pad pool grows beyond the single bed
-     *     voice (loops join one by one) and never exceeds bed + 3;
-     *     disabling generative releases them all. */
+     *     while staying bounded. */
     {
         enum { SB = 256 };
         static float sL[SB], sR[SB], oL[SB], oR[SB];
@@ -638,27 +645,6 @@ int main(void) {
         CHECK(np > 1000 && var > 0.01,
               "wow modulates pitch (n=%d, period var %.4f)", np, var);
 
-        /* (c) Eno loops join the bed */
-        engine_init();
-        engine_set_generative(true, -1);
-        uint32_t t = 42000;
-        engine_generative_tick(t);
-        int16_t eb[512];
-        int maxv = 0;
-        for (int step = 0; step < 4000; ++step) {            /* 64 s */
-            t += 16;
-            engine_generative_tick(t);
-            int v = engine_active_voices();
-            if (v > maxv) maxv = v;
-            if ((step & 255) == 0)
-                for (int k = 0; k < 30; ++k) engine_render(eb, 256);
-        }
-        CHECK(maxv >= 2, "Eno loops joined the bed (max voices %d)", maxv);
-        CHECK(maxv <= 5, "never more than bed + 3 loops + melody (max %d)", maxv);
-        engine_set_generative(false, -1);
-        for (int k = 0; k < 2500; ++k) engine_render(eb, 256);   /* ~14.5 s */
-        CHECK(engine_active_voices() == 0,
-              "loops released on disable (%d)", engine_active_voices());
     }
 
     /* ---- 14. r19.5 Blendwave spectral animator ----

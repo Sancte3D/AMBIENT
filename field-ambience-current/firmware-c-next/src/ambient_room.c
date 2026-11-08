@@ -1,0 +1,260 @@
+/* One shared floating-point Householder room, reusing the eight delay lengths
+ * and orthogonal matrix of ambient_effects.c. Two input allpasses per side
+ * diffuse the onset. Fixed delays: no pitch shift, chorus or deterministic
+ * swells. No other effect storage is linked by the reduced product profile. */
+#include "ambient_room.h"
+#include "dsp.h"
+#include <stdatomic.h>
+#include <string.h>
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+#include "sound_finish_fx.h"
+static _Atomic uint32_t finish_decay_bits;
+static float finish_decay,model_gain;
+static bool active_plate;
+bool ambient_room_finish_apply(const sound_parameters_t *p) {return sf_apply_parameters(p);}
+void ambient_room_finish_get(sound_parameters_t *p) {if(p)*p=sf_desired;}
+void ambient_room_finish_set(float delay,float grain,bool freeze,float drive,float crush,float phaser,bool plate) {
+    sf_parameters(delay,grain,freeze,drive,crush,phaser,plate);
+}
+#endif
+enum { LINES=8, SAMPLES=13838, DIFF_SAMPLES=1324 };
+static const uint16_t lengths[LINES]={1117,1277,1429,1601,1789,1999,2203,2423};
+static const uint16_t diff_len[4]={239,389,277,419};
+static float tank[SAMPLES],diffusion[DIFF_SAMPLES];
+static uint16_t at[LINES],diff_at[4];
+static float low[LINES],gains[LINES],hp_x[2],hp_y[2],amount_cur,enable_cur,peak;
+static _Atomic uint32_t gain_bits[LINES],amount_bits,t60_bits;
+/* Single Main writer, single audio reader. Each reader makes ONE attempt;
+ * preemption of an unfinished publication retains the last whole target.
+ * SC payload/version words give a total order even in a C11 thread model.
+ * No spin, IRQ masking, coefficient calculation or heap on the reader. */
+static _Atomic uint32_t target_version;
+static float accepted_gains[LINES],accepted_amount; /* audio owned */
+_Static_assert(ATOMIC_INT_LOCK_FREE==2,"Room publication needs lock-free words");
+#ifdef FAM_ROOM_HANDOFF_TEST
+extern void ambient_room_publish_probe(unsigned point);
+extern void ambient_room_accept_probe(unsigned point);
+#define PUBLISH_POINT(p) ambient_room_publish_probe(p)
+#define ACCEPT_POINT(p) ambient_room_accept_probe(p)
+#else
+#define PUBLISH_POINT(p) ((void)0)
+#define ACCEPT_POINT(p) ((void)0)
+#endif
+static _Atomic bool enabled;
+static bool cold;
+static uint32_t bits(float v) { uint32_t b; memcpy(&b,&v,4); return b; }
+static float value(uint32_t b) { float v; memcpy(&v,&b,4); return v; }
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+bool ambient_room_retains_history(void) {
+    return (atomic_load(&sf_freeze) && atomic_load(&sf_target[1])>0 &&
+            atomic_load(&enabled) && value(atomic_load(&amount_bits))>0 &&
+            atomic_load_explicit(&sf_content_available,memory_order_acquire)) ||
+            atomic_load_explicit(&sf_content_held,memory_order_acquire);
+}
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Each instrument World its own space on top of the shared Room value: the
+ * choir in a wide hall, the kalimba close and dry, the bells far and open.
+ * The classic Worlds keep the shared room exactly. */
+static float room_last=.5f,room_world_t60=1.0f;
+void ambient_room_set_world(int world) {
+    static const float t60s[6]={1,1,1,1.25f,.50f,1.15f},wets[6]={1,1,1,1.00f,.55f,.90f};
+    if(world<0 || world>=6) world=0;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_set_world(world>=3 ? world-2 : 0,wets[world]);
+#endif
+    if(t60s[world]!=room_world_t60) { room_world_t60=t60s[world]; ambient_room_set(room_last); }
+}
+#endif
+void ambient_room_set(float amount) {
+    if(!isfinite(amount)) return;
+    amount=dsp_clampf(amount,0,1);
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Ambient voicing: a longer room, 3.5 s at the default .5 and 8 s at 1,
+     * scaled by an instrument World's space (exactly 1 in the classic ones). */
+    room_last=amount;
+    float t60=(2.0f+6.0f*amount*amount)*room_world_t60;
+#else
+    float t60=1.2f+3.6f*amount*amount;
+#endif
+    uint32_t next[LINES];
+    for(int i=0;i<LINES;++i)
+        next[i]=bits(expf(-6.9077553f*(float)lengths[i]/(DSP_SAMPLE_RATE_HZ*t60)));
+    PUBLISH_POINT(0);
+    uint32_t version=atomic_load_explicit(&target_version,memory_order_seq_cst);
+    atomic_store_explicit(&target_version,version+1u,memory_order_seq_cst);
+    PUBLISH_POINT(1);
+    for(int i=0;i<LINES;++i) {
+        atomic_store_explicit(&gain_bits[i],next[i],memory_order_seq_cst);
+        PUBLISH_POINT((unsigned)i+2u);
+    }
+    atomic_store_explicit(&amount_bits,bits(amount),memory_order_seq_cst);
+    PUBLISH_POINT(10);
+    atomic_store_explicit(&t60_bits,bits(t60),memory_order_seq_cst);
+    PUBLISH_POINT(11);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    atomic_store_explicit(&finish_decay_bits,bits(expf(-6.9077553f*.120f/t60)),memory_order_seq_cst);
+#endif
+    atomic_store_explicit(&target_version,version+2u,memory_order_seq_cst);
+    PUBLISH_POINT(12);
+}
+static void accept_targets(void) {
+    uint32_t before=atomic_load_explicit(&target_version,memory_order_seq_cst);
+    ACCEPT_POINT(0);
+    if(before&1u)return;
+    float next[LINES];
+    for(int i=0;i<LINES;++i) {
+        next[i]=value(atomic_load_explicit(&gain_bits[i],memory_order_seq_cst));
+        ACCEPT_POINT((unsigned)i+1u);
+    }
+    float amount=value(atomic_load_explicit(&amount_bits,memory_order_seq_cst));
+    ACCEPT_POINT(9);
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    float next_decay=value(atomic_load_explicit(&finish_decay_bits,memory_order_seq_cst));
+#endif
+    if(before!=atomic_load_explicit(&target_version,memory_order_seq_cst))return;
+    memcpy(accepted_gains,next,sizeof next);accepted_amount=amount;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    finish_decay=next_decay;
+#endif
+}
+void ambient_room_enable(bool on) { atomic_store_explicit(&enabled,on,memory_order_release); }
+void ambient_room_clear(void) {
+    /* Audio-owned cold means every clearable buffer/state is already zero.
+     * Dry completion and whole-chain Clear can coincide in the same block;
+     * do not write the same 60 KiB twice. Init starts with cold=false. */
+    #ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_clear();
+#endif
+    if(cold)return;
+    memset(tank,0,sizeof tank); memset(diffusion,0,sizeof diffusion);
+    memset(at,0,sizeof at); memset(diff_at,0,sizeof diff_at);
+    memset(low,0,sizeof low); memset(hp_x,0,sizeof hp_x); memset(hp_y,0,sizeof hp_y); peak=0; cold=true;
+}
+void ambient_room_init(void) {
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_init();model_gain=1;active_plate=true;
+#endif
+    ambient_room_clear(); ambient_room_set(.5f); ambient_room_enable(true);
+    amount_cur=.5f; enable_cur=1; cold=false;
+    accept_targets();
+    for(int i=0;i<LINES;++i) gains[i]=accepted_gains[i];
+}
+float ambient_room_tail_seconds(void) { return value(atomic_load_explicit(&t60_bits,memory_order_acquire)); }
+float ambient_room_peak(void) { return peak; }
+size_t ambient_room_storage_bytes(void) {
+    size_t n=sizeof tank+sizeof diffusion+sizeof low+sizeof at+sizeof diff_at+sizeof gains+sizeof hp_x+sizeof hp_y;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    n+=sizeof sf+sizeof sf_delay;
+#endif
+    return n;
+}
+static float allpass(int k,float x) {
+    int offset=0; for(int i=0;i<k;++i) offset+=diff_len[i];
+    float d=diffusion[offset+diff_at[k]], y=d-.62f*x;
+    diffusion[offset+diff_at[k]]=x+.62f*y;
+    if(++diff_at[k]==diff_len[k]) diff_at[k]=0;
+    return y;
+}
+static void process_fdn(float *l,float *r,const float *sl,const float *sr,int frames,float on) {
+    const float *targets=accepted_gains;
+    float target=accepted_amount;
+    static const float il[LINES]={1,-1,.72f,-.72f,.45f,-.45f,.88f,-.88f};
+    static const float ir[LINES]={.45f,.88f,-1,-.72f,1,.72f,-.45f,-.88f};
+    peak=0;
+    if(cold && (on==0 || target==0)) {
+        amount_cur=target; for(int i=0;i<LINES;++i) gains[i]=targets[i]; return;
+    }
+    cold=false;
+    for(int n=0;n<frames;++n) {
+        float amount_step=1.0f/(.080f*DSP_SAMPLE_RATE_HZ);
+        if(amount_cur<target) amount_cur=fminf(target,amount_cur+amount_step);
+        else if(amount_cur>target) amount_cur=fmaxf(target,amount_cur-amount_step);
+        float step=1.0f/(.040f*DSP_SAMPLE_RATE_HZ);
+        if(enable_cur<on) enable_cur=fminf(on,enable_cur+step);
+        else if(enable_cur>on) enable_cur=fmaxf(on,enable_cur-step);
+        if((on==0 && enable_cur==0) || (target==0 && amount_cur==0)) {
+            if(!cold) ambient_room_clear();
+            continue; /* Completed Dry transition cannot reveal an old room later. */
+        }
+        float in[2]={sl[n]*enable_cur,sr[n]*enable_cur};
+        for(int c=0;c<2;++c) {
+            float y=in[c]-hp_x[c]+.98585f*hp_y[c];
+            hp_x[c]=in[c]; hp_y[c]=y; in[c]=allpass(2*c+1,allpass(2*c,y));
+        }
+        float line[LINES],sum=0; int offset=0;
+        for(int i=0;i<LINES;++i) {
+            float x=tank[offset+at[i]];
+            low[i]+=(x-low[i])*.25f; line[i]=low[i]; sum+=line[i]; offset+=lengths[i];
+        }
+        offset=0;
+        for(int i=0;i<LINES;++i) {
+            gains[i]+=(targets[i]-gains[i])*(1.0f/(.120f*DSP_SAMPLE_RATE_HZ));
+            /* Orthogonal feedback, gain <1, convex damping. Floating-point
+             * tank avoids int16 truncation creating a premature silent tail. */
+            float x=(line[i]-.25f*sum)*gains[i]+.105f*(in[0]*il[i]+in[1]*ir[i]);
+            if(fabsf(x)<1e-20f) x=0;
+            tank[offset+at[i]]=x;
+            if(++at[i]==lengths[i]) at[i]=0;
+            offset+=lengths[i];
+        }
+        /* Balanced orthogonal readouts. The previous six-tap rows shared
+         * four opposing signs (dot=-4, norm^2=6), weakening the mono room.
+         * Preserve each row's norm: .205*sqrt(6/8) = .1775352. */
+        float wl=.1775352f*(line[0]-line[1]+line[2]-line[3]+line[4]-line[5]+line[6]-line[7]);
+        float wr=.1775352f*(line[0]+line[1]-line[2]-line[3]+line[4]+line[5]-line[6]-line[7]);
+        float mid=.5f*(wl+wr),side=.30f*(wl-wr);
+        /* Calibrated return: the former low quadratic curve left <1.1% of
+         * Dry RMS in normal held ensembles at Amount .5. Linear gain keeps
+         * the same tank/decay, a smooth zero, and a bounded maximum of 5.
+         * This is output calibration, not feedback gain or another arena. */
+        float wet=
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+            enable_cur; /* Raw room joins Plate/textures before common level/color. */
+#else
+            5.0f*amount_cur*enable_cur;
+#endif
+        wl=(mid+side)*wet; wr=(mid-side)*wet;
+        peak=fmaxf(peak,fmaxf(fabsf(wl),fabsf(wr)));
+        l[n]+=wl; r[n]+=wr;
+    }
+}
+
+void ambient_room_process(float *l,float *r,const float *sl,const float *sr,int frames) {
+    accept_targets();
+    float on=atomic_load_explicit(&enabled,memory_order_acquire) ? 1 : 0;
+#ifdef FAM_SOUND_FINISH_CANDIDATE
+    sf_accept();
+#ifdef FAM_SOUND_AMBIENT_V3
+    sf_world_accept();
+#endif
+    bool wanted=sf_accepted_plate;
+    float maximum=0;
+    for(int n=0;n<frames;++n) {
+        /* Change model at the same actual sample for every render partition,
+         * after a 40ms return fade. Erase the inactive model before reuse. */
+        if(wanted!=active_plate && model_gain==0) {ambient_room_clear();active_plate=wanted;}
+        float ms=1.0f/(.040f*DSP_SAMPLE_RATE_HZ),mt=wanted==active_plate ? 1 : 0;
+        model_gain+=dsp_clampf(mt-model_gain,-ms,ms);
+        float before_l=l[n],before_r=r[n];
+        if(active_plate) {
+            float step=1.0f/(.080f*DSP_SAMPLE_RATE_HZ);
+            amount_cur+=dsp_clampf(accepted_amount-amount_cur,-step,step);
+            float estep=1.0f/(.040f*DSP_SAMPLE_RATE_HZ);
+            enable_cur+=dsp_clampf(on-enable_cur,-estep,estep);
+            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,true,0,0);
+            cold=false;
+        } else {
+            process_fdn(l+n,r+n,sl+n,sr+n,1,on);
+            float fdn_l=l[n]-before_l,fdn_r=r[n]-before_r;
+            l[n]=before_l;r[n]=before_r;
+            sf_process(l+n,r+n,sl+n,sr+n,1,amount_cur*enable_cur*model_gain,finish_decay,enable_cur>0,false,fdn_l,fdn_r);
+        }
+        maximum=fmaxf(maximum,fmaxf(fabsf(l[n]-before_l),fabsf(r[n]-before_r)));
+    }
+    peak=maximum;
+    sf_publish_content();
+#else
+    process_fdn(l,r,sl,sr,frames,on);
+#endif
+}

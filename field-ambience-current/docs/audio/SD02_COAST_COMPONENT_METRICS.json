@@ -1,0 +1,780 @@
+{
+  "task": "SD02",
+  "commit": "d97824ec0039499969ef91353633b2c934818690",
+  "profile": "product",
+  "sample_rate": 44100,
+  "frames": 1190700,
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+  "source_sha256": {
+    "src/engine_product.c": "d9e115a2b3ff7c74715b1dda49741b638072d71c181891d0dbb91d0382c3b10a",
+    "src/world_grammar.c": "e228ebf301be18b11f48dbf8f412e707783b60ef7c9b9bf2da4564dfd3062a2d",
+    "src/bowed.c": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+    "src/horn.c": "fdde9781008b3e33fd0486b71ffc4d34536b0c21b8fab412383b61d1b4095d93",
+    "src/pluck.c": "02b186191fb2eb7269e37b4a85a5f20eada41250236f3e02536613db8e17a6ac",
+    "src/ambient_room.c": "04c3bc83fdaa0938503a81c9270a068d9f4c36ca6401630155146616aded89ef",
+    "src/nature.c": "701abceb0eeb8cec0d5293fb9369214a8e8b7277c3f3915c8400cb9ad7c6f466",
+    "src/dsp.c": "9c08f17e189d56cea77b1067cc62a888b88be18e15de42409f8d2b6efb9e6dd3",
+    "src/shape.c": "174b27951925750115b6c0ad2ce8509575516afc69f697b03b19fb8f5d530ff9",
+    "src/tuning.c": "7c0633a8e2e8f10265d737e8c3147d6bc8dc5210705bb17d0e1b16291efe6093",
+    "src/brain.c": "f998a969fbc9aa5e7d0ebf4c4385b4a4d093692633e4c42b2df30a96cc1b7928",
+    "src/cells.c": "4636bdb6cdd2dd51abb1f7c78c9ca6e16b96147e698ce33b070260d6167e5ae5",
+    "tools/render_product_preview.c": "a44244cd2ae981cff42cda081ca31de63879f7a26c1052492a66761625cc94e4",
+    "tools/package_musical_review.py": "14b42b1b238eb325aec37eadf0fee8375f14688f3a9909c5ca598505ceb19ff1",
+    "tools/review_coast_components.py": "3f128f4dfc1ea8aa4371e5cb9f976663cc738004c9dc791c347a5f7319705363",
+    "include/ambience.h": "e177bb3c88fab7b31d45704ae19910ac8c6ec3532b4fa2776731f7b20bae5f24",
+    "include/ambient_effects.h": "bd178c9306ae00e4473520a18ec073775dabd9afe6641e232c6c7242a938e01e",
+    "include/ambient_room.h": "4f542d149f3faa6329def081d9b76e0ab9eacceb138886f7ccdc4850d4392357",
+    "include/audio.h": "6564999e6a9ff7791dd1d7df0002bbf2fdfa0eed518f23a5ffa69191e050b401",
+    "include/audio_profiler.h": "43d41b11a7db0cdee23fad573d8579fa14e31363a2aaa8a77304f31327f2d496",
+    "include/baked_font.h": "99524ce1000e31e9a351004afbb2121e42610185be7639f0cdfe1af20b6f508a",
+    "include/bass.h": "b034dd394cdbda30b0320f517feaab324220a8da48c3a81dc51b896c699ac999",
+    "include/battery.h": "f331d7379a6feed1139c9ece3831ff4f1a90b36867418073e932187f9a6c8d6d",
+    "include/bloom.h": "c1c320f779ca1e044c8d9bcfc77b53cff9468386f86f6023bfb2523cb57604ac",
+    "include/blur.h": "abac5b7f47269bedd37544526cc251a671c3d8c45c9b90f89ab60235bccf2458",
+    "include/body.h": "b1d4509671bcf9a864e5c8771c47c14611f445069ba14a298ceb44b5ebab9075",
+    "include/bowed.h": "005ae21f920a373b91e8845e965515f1916ce57f9939bd0fe39b64506f1d0189",
+    "include/brain.h": "2e7eaa65e60faff493d7bc05ae37aec26e1c11f368728a7f1c52a0888548a480",
+    "include/cell_router.h": "5fdf3654255d5cfe079979778cd74e09cc30f93f0473900ea063a4c58aa71fbb",
+    "include/cells.h": "89019a155fe856e6362e4b9ea43ea642678505806d398f67894635e4a1871c6d",
+    "include/choir.h": "d1fae95074861a57033d49f855c7318d9bf7bb50c16535965418cf77cda80f79",
+    "include/composer.h": "f30574a4e02a14decb147e69ebf253f279c2207697d7754c6b85616244065698",
+    "include/controls.h": "4d0e7feb44c39f3228dc7dc362231eef1fa00390879e5ef7258522d622a03a63",
+    "include/diag.h": "20b2352a14c4eb959b4504152bdf32474839a2c2310478fc63437885daaf80f1",
+    "include/drone.h": "f5f7fe7dd3eb494a4306ab6d7287749ed054886523c476d8e91db6340f365c0a",
+    "include/dsp.h": "a96d148bafd3595bed4b06e5f44ed0287ffdf990c0be91b8d84f0009ed0098a1",
+    "include/dsp_ladder.h": "51be0009e6e1696c945058f42c28d33d55eb0c55f1f88a3e4382959cc65ceeee",
+    "include/echo.h": "026fa2841c7dd78182f5bb80dfa42a3fe2858efd31f37079d5c5eae4bba75265",
+    "include/ember.h": "436cd808dc406722404ed095ec39745d0770e4b185f115f1f0ea9a2670e7219a",
+    "include/encoders.h": "d48b7329536bf734bee6fe605187c791c16da30a993161081493c8b17c654fab",
+    "include/engine.h": "2017b4c8b8d3236a9adb48e837748169298f6f571926af639d3ec8726d0845af",
+    "include/engine_product.h": "834ebc6acf0fbf50d6da9e018d5499b953a403602c450d64d8b23c694eafe708",
+    "include/fx_master.h": "3e9467ebb3ea1b21d391e3c4d1e97e18fbbbecbf529aced652f8f19fa74a73aa",
+    "include/generative.h": "ec88dcb1265e1ff2b3cd30847e523cb9280279f270ffddf5def5a5056fc58c00",
+    "include/gesture.h": "2a8a95a21882dfdd7b36e7e80b47969f3037307cab66722f7632ffcec5eee989",
+    "include/glass.h": "c9ecbaaf7706ee7f6b76b76a9e0d2d03f5500868ace34837fdd32e2358c172ce",
+    "include/guembri.h": "9b20957bc1565fff797d2b96b1a37c2a2aa417e43f3dc8034e4b7ff6b5117b4c",
+    "include/harmonic_bass.h": "4128880a7edce0a1660dd38062d5bce91b7b728186fe3ce2cfd89e12d765cef3",
+    "include/harmony.h": "1516baaba3000b573e451fe14caa5f1c1a2c3fe895c82a37f46d660d2e5d9a98",
+    "include/horn.h": "18965c16a206d66392042d930a5eef352b966dc83db312738382cd46dffac6c3",
+    "include/knobs.h": "c5873c89f2e71a73d1eb1e6430ffbb27db20c8b93ad2e9d680d18631bd0bec2f",
+    "include/landscape.h": "f24e61a3aaf49e8c42c73669b28dd9a661090dc0042655339f6e7fc201d23df1",
+    "include/leds.h": "60657a06ca746fd5bccced5d5d8c246bd56570fae69ac57cb7f233f158daa1ff",
+    "include/mcp23017.h": "5e8d27e4d7227a1f716b8993fc6842d389d9c0214a30e71f6299a8044787c878",
+    "include/menu.h": "71b3c3f2684e36d5edf3b2e51f0178dc99a40fcce496c9fccb49a0dc08dff450",
+    "include/midi.h": "1e0da73618c06b64845f2dc62b71fdc8f6414f2888df8cc29f1f0b43a8769747",
+    "include/nature.h": "7a318e417a39c6383a6901dd3b9be7a9c474fde78cd19b51232650f6272dbc25",
+    "include/oled.h": "2d478bd919db8c21837f4958bd5ccb0f2b2d40594a83e01e291fa37507260080",
+    "include/oled_color.h": "b8fa1fcd3e4f3eeedf7f06572d1103e25fa26273c6918368d918e678c98f78ce",
+    "include/overlay.h": "6fbb782705d09680b7d0b42f21c27c81d23d1214af26c235f59939be14a022ed",
+    "include/pad.h": "79d0a8c47c1b8e539c8c10e793d471b5e9627e519e09a4fa8753dcaf26d111ad",
+    "include/padsynth.h": "d8db704593ee6859614f563174396dfa62d5e23dcc515e60a15c9a0cba4f6662",
+    "include/params.h": "ac463646eaf83a8c1284bd64f6e68ccbaa8605328c13e5fc1fe996106a8df50c",
+    "include/pitch_modes.h": "3c7c48db29ef7f23d67be6d500dd7240b94343b9f056541ee82bd7c11e6ab1f5",
+    "include/pluck.h": "aae60ffca60c94da9e6bd3b9caf820c234bd45c7df075a625d60115a37bf8517",
+    "include/psram.h": "2f910062909c0ac1c958e694e45d3b37e9cd348b7856b14e9fd7a262ca4f3748",
+    "include/reverb.h": "636b83c463ad080d0e9c0f3cab15a9d8798a9315ac3c29fb909a175233072763",
+    "include/reverb_presets.h": "c5d841aa29868f7503a620810e4f354c76f45fac0f2a421d36047b9965a35732",
+    "include/rolepatch.h": "0be028231d0e719d60fb0af5f67cde91ea57f904a2111784374a6745bfb84ccb",
+    "include/scenes.h": "2731cd303dae2408577cc83ef425fe3b200c4dd11a7dec0600a37ab7d5302d0b",
+    "include/scenes_journal.h": "a2aed7f1911ede2e52ba74b8f538f50faa6ef6ebcf351e14a3d2645cbd3bbde3",
+    "include/shape.h": "b91755ba8edd32fc68292b81b0d183ce567d75608f2a3da35917441b90b306a5",
+    "include/shimmer.h": "baeef7c32c5c3930674f7470a68a3507a9c9617a0c6e33d2ee99efc6bf7e4644",
+    "include/synth_controls.h": "483d82f1bb97bcd962dca1e03ffcb63cb04b8fc4c3595669fa097610f1d4b2c8",
+    "include/synth_names.h": "720ec0054d365b03982e6b753a0fa7b1c7a1aa27e610b4acedb97cf8b89272d5",
+    "include/tape.h": "b75e85d482199dca48bad4aefb3ff4998002ee72ce3207385e5963068ec6d9b2",
+    "include/texture.h": "e7cb6aa1332aeb0b05eb8e5ec91668923d4cab9508aa396c5cba7a0795fa9eb3",
+    "include/tuning.h": "fa20e7fedef4745b7bf85d3961c9a3c0569d74d603dbd2faaf57ad14801f6c29",
+    "include/v2/arp.h": "6bed82591b4bbb072119c4e3426e1cb878f990b09ab241578fc1a3c69747ba34",
+    "include/v2/beat.h": "5e44dddb8da6d5ef87ff2aeac1b01289a73b2888c434b558f0f5f969e196df9a",
+    "include/v2/beauty_guard.h": "97f42b467fc185cf36b164eec0127c4a04871e04930d93668868ed1b722072a9",
+    "include/v2/diffuser.h": "dfe5dd75cfef1fb11d7a0aa6b2277738ae8eed704ea19920abc3aa7909c26ec0",
+    "include/v2/engine_v2.h": "cf5009d757c2d37128079abc9325c36591aea7ced5027ca5ed2100b7850ff15c",
+    "include/v2/field_voice.h": "fe4e00521c713c711633fe4f378aabb253386dc6279923c7e8862305b58474c7",
+    "include/v2/harmony_field.h": "2e9023c6ce3ae714a938d686a6e56f758d3d7810bb7ab89dc76ee1e20f9948dd",
+    "include/v2/material_texture.h": "05d9cf78f22142c01d5e6c9d3fea51a89a92a8b5018f9ba3cfb423b32c173af6",
+    "include/v2/mod_delay.h": "8ee5d5cf7d7c9f1c96fd46e9144db98e40843bfdbc8eec70ea769364f65638ea",
+    "include/v2/motion.h": "b0d7adfb61f4966324fa6c9b3c064aeb4b2fc3eddd7ae02c4f3cbabfef73d899",
+    "include/v2/synth_engine.h": "74d84b52a430fe0ba01886b86c42b34dd6717f62bcecddc0fd4babf8ccfd6201",
+    "include/v2/synth_host.h": "b9e1bf03bb5c447b51e768a7ccdf6c786dedbef22665f211dace32dac6c4106f",
+    "include/v2/worlds.h": "92d166dbae70f6db0ce9e712b681109e9813a3c37f4acacbc665b640ab67516e",
+    "include/version.h": "742f7780edefb0efb048db023b90c54d1e63b59a97a7d72ad55cb606df846301",
+    "include/voicelead.h": "e4ffe350759ebb35dfab6fe609b00f4b274ddf7942cc2d02153c4ba91d3dfa1e",
+    "include/voices.h": "40357d42d881d35043bd178689f33e9ca5ec5ef0a28415fa7d3ffa0f4ce48f41",
+    "include/world_grammar.h": "9f00f50fdae93e8f11c4f7128f61a80f45420a851ac74eb567754c9936f8f50d",
+    "include/worlds.h": "3c7ec920a6389ae6c277a87d6577c3b6deeaab90809ed8601a5ed4bef0c23fe6"
+  },
+  "reference": {
+    "volume": 0.6,
+    "velocity": 0.75,
+    "color": 0.5,
+    "attack": 0.5,
+    "release": 0.5,
+    "room": "Dry",
+    "nature": 0,
+    "seed": 1234,
+    "midi": [
+      50,
+      62,
+      69
+    ]
+  },
+  "diagnostics": "Temporary source ablations; no new product parameters or accepted timbres.",
+  "band_measurement": "One-second Hann spectrum, +/-8 Hz bands; ratios describe energy, not perceived roughness.",
+  "files": [
+    {
+      "colour": 0,
+      "variant": "full",
+      "components": {
+        "grain": 1,
+        "fifth": 1,
+        "octave": 1
+      },
+      "raw_file": "COAST_colour0_full_raw_27s.wav",
+      "listen_file": "COAST_colour0_full_listen_27s.wav",
+      "constant_gain_db": 5.199999999999999,
+      "diagnostic_source_sha256": "d6bf025be1e9f2112094d7d0fe721b84f3bc3997882948e87268b2002500035b",
+      "raw": {
+        "integrated_lufs": -31.2,
+        "true_peak_dbfs": -23.9,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -59.25275476587464,
+            "octave_band_to_root_db": -4.951547227992546
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -61.659003333442385,
+            "octave_band_to_root_db": -4.982990846239495
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -60.74452957040116,
+            "octave_band_to_root_db": -4.9896118634443445
+          }
+        ],
+        "mono_energy_ratio": 0.9411765049954585,
+        "mean_L": 1.2456154336734694e-08,
+        "mean_R": -4.9722097558159065e-09,
+        "sha256": "dfc5f933722de5a7316b42d2ec31642b5ccce40e270a590e056c8744bf9bec6c"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -18.7,
+        "sha256": "97872b6b3a859b1a634b2ba2f8a01a29c25c05e41d88de046de36594eaa4b6a3"
+      }
+    },
+    {
+      "colour": 0,
+      "variant": "without_fifth",
+      "components": {
+        "grain": 1,
+        "fifth": 0,
+        "octave": 1
+      },
+      "raw_file": "COAST_colour0_without_fifth_raw_27s.wav",
+      "listen_file": "COAST_colour0_without_fifth_listen_27s.wav",
+      "constant_gain_db": 5.199999999999999,
+      "diagnostic_source_sha256": "2e508e460ce435fbaed5cfa65ac291eb48fe369fcf68c98fb17d7252ad14e189",
+      "raw": {
+        "integrated_lufs": -31.2,
+        "true_peak_dbfs": -24.0,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -59.92504998410925,
+            "octave_band_to_root_db": -4.963538682089159
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -62.42969246114268,
+            "octave_band_to_root_db": -4.9949484490849105
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -61.576499881925656,
+            "octave_band_to_root_db": -5.001554710463915
+          }
+        ],
+        "mono_energy_ratio": 0.9411765202417234,
+        "mean_L": 1.6249386521583943e-08,
+        "mean_R": -8.7141820462753e-10,
+        "sha256": "9eec6c2f9087ae6f591abf5cacf9d1be8ed433604a6c88b575d2e214f9bcaf46"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -18.8,
+        "sha256": "3b8850a80f5969c9f60f87d33aeadc292116b6c38b46574add61872cd2907bbd"
+      }
+    },
+    {
+      "colour": 0,
+      "variant": "without_octave",
+      "components": {
+        "grain": 1,
+        "fifth": 1,
+        "octave": 0
+      },
+      "raw_file": "COAST_colour0_without_octave_raw_27s.wav",
+      "listen_file": "COAST_colour0_without_octave_listen_27s.wav",
+      "constant_gain_db": 5.300000000000001,
+      "diagnostic_source_sha256": "1310f7c655e879615d6bb8edf4916601ae74a3ffc7687c441467023ad53c521f",
+      "raw": {
+        "integrated_lufs": -31.3,
+        "true_peak_dbfs": -24.1,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -59.27230315016888,
+            "octave_band_to_root_db": -5.7692365314183895
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -61.69095216703901,
+            "octave_band_to_root_db": -5.800662393256671
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -60.78623919183301,
+            "octave_band_to_root_db": -5.807203335554174
+          }
+        ],
+        "mono_energy_ratio": 0.9411764743034243,
+        "mean_L": 6.8431959010456035e-09,
+        "mean_R": 7.278905003359369e-09,
+        "sha256": "75201ac39d2bb840b82ebfe5032300580f2ec315282c170e76ff1fbdbe10a464"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -18.8,
+        "sha256": "b778e84bf2450de5394780990ffeab8e69185b15e329405312aa3a95290342fc"
+      }
+    },
+    {
+      "colour": 0,
+      "variant": "without_grain",
+      "components": {
+        "grain": 0,
+        "fifth": 1,
+        "octave": 1
+      },
+      "raw_file": "COAST_colour0_without_grain_raw_27s.wav",
+      "listen_file": "COAST_colour0_without_grain_listen_27s.wav",
+      "constant_gain_db": 5.199999999999999,
+      "diagnostic_source_sha256": "693929178914243a43907d86714ab4215895f71f9e5f94c1405f2ff946fb3f20",
+      "raw": {
+        "integrated_lufs": -31.2,
+        "true_peak_dbfs": -24.0,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -101.8537211813114,
+            "octave_band_to_root_db": -4.946097458563944
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -103.30093262036104,
+            "octave_band_to_root_db": -4.9791832524107065
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -98.82734886866196,
+            "octave_band_to_root_db": -4.991684342552959
+          }
+        ],
+        "mono_energy_ratio": 0.9411760328472347,
+        "mean_L": -1.7684663564499874e-09,
+        "mean_R": 6.663786270681112e-10,
+        "sha256": "5a38c30255e47fafbc6375240f7e139e6ad047f8eedce4bae1c696c2226e3aa5"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -18.8,
+        "sha256": "b50888f76c47ab0144cabec73846a06fb78f033dc5a0243d36f8c688f66d06d2"
+      }
+    },
+    {
+      "colour": 0,
+      "variant": "body_only",
+      "components": {
+        "grain": 0,
+        "fifth": 0,
+        "octave": 0
+      },
+      "raw_file": "COAST_colour0_body_only_raw_27s.wav",
+      "listen_file": "COAST_colour0_body_only_listen_27s.wav",
+      "constant_gain_db": 5.300000000000001,
+      "diagnostic_source_sha256": "9f41736ac5ef0001b40724ad1801117c294f2be531d964199aa0aab9ce1aa0d9",
+      "raw": {
+        "integrated_lufs": -31.3,
+        "true_peak_dbfs": -24.2,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -101.75747901114104,
+            "octave_band_to_root_db": -5.7795643545191115
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -104.8506765569502,
+            "octave_band_to_root_db": -5.812734759344043
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -97.26127257884704,
+            "octave_band_to_root_db": -5.8252793158551235
+          }
+        ],
+        "mono_energy_ratio": 0.9411762743831689,
+        "mean_L": 1.1277176765768035e-09,
+        "mean_R": 3.178113452170992e-09,
+        "sha256": "a356f574a4f2646aab74fc4e5576ed1c22a7dcb9fe01751f15069e04eea72010"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -18.9,
+        "sha256": "3b1efccf8517eb2a5d550d588c2b02532ad35ede58b914361842071a4beac34d"
+      }
+    },
+    {
+      "colour": 1,
+      "variant": "full",
+      "components": {
+        "grain": 1,
+        "fifth": 1,
+        "octave": 1
+      },
+      "raw_file": "COAST_colour1_full_raw_27s.wav",
+      "listen_file": "COAST_colour1_full_listen_27s.wav",
+      "constant_gain_db": 5.300000000000001,
+      "diagnostic_source_sha256": "1b91a29530cba23e0ebb0c3c0d70dc08258fddff8542a8d4c00dbeea7ac913d1",
+      "raw": {
+        "integrated_lufs": -31.3,
+        "true_peak_dbfs": -24.2,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -58.62720921101291,
+            "octave_band_to_root_db": -4.23605519468458
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -61.03056869300336,
+            "octave_band_to_root_db": -4.2665317590622385
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -60.13272699177112,
+            "octave_band_to_root_db": -4.27149101215213
+          }
+        ],
+        "mono_energy_ratio": 0.9411763890523979,
+        "mean_L": -4.5877605478919964e-09,
+        "mean_R": -1.1892295498446292e-08,
+        "sha256": "9711350400a317531a25f0735bea4b0ddb9defc603ac9b569607652e8198f0da"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -18.9,
+        "sha256": "2d9a55c6b3b65b945567f6655871a8dcb98881b617c263a138718bb7a8aecec2"
+      }
+    },
+    {
+      "colour": 1,
+      "variant": "without_fifth",
+      "components": {
+        "grain": 1,
+        "fifth": 0,
+        "octave": 1
+      },
+      "raw_file": "COAST_colour1_without_fifth_raw_27s.wav",
+      "listen_file": "COAST_colour1_without_fifth_listen_27s.wav",
+      "constant_gain_db": 5.300000000000001,
+      "diagnostic_source_sha256": "10cbb9bbc43f5124a761bd63f8700bc6e6b57825ecc81f766f22ad9df1abfd13",
+      "raw": {
+        "integrated_lufs": -31.3,
+        "true_peak_dbfs": -24.3,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -59.80684309376143,
+            "octave_band_to_root_db": -4.252636464620354
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -62.31212596157895,
+            "octave_band_to_root_db": -4.2830589324654955
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -61.46826596671569,
+            "octave_band_to_root_db": -4.287926799475284
+          }
+        ],
+        "mono_energy_ratio": 0.9411760880015697,
+        "mean_L": 6.58689642909633e-09,
+        "mean_R": -1.1251546818573108e-08,
+        "sha256": "bb489cfbc77e909af06762287d3afa3b81f4171a50538698597d20eeaea552a7"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -19.0,
+        "sha256": "94bff1e67f80a88e06420f1798d88bdd12f0fdf73ba9da3de87086929d10edad"
+      }
+    },
+    {
+      "colour": 1,
+      "variant": "without_octave",
+      "components": {
+        "grain": 1,
+        "fifth": 1,
+        "octave": 0
+      },
+      "raw_file": "COAST_colour1_without_octave_raw_27s.wav",
+      "listen_file": "COAST_colour1_without_octave_listen_27s.wav",
+      "constant_gain_db": 5.600000000000001,
+      "diagnostic_source_sha256": "57c74dd21871403f9d59b0f96836b755fb3d70485cef82cb498dea0b3820ceee",
+      "raw": {
+        "integrated_lufs": -31.6,
+        "true_peak_dbfs": -24.6,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -58.72636220188938,
+            "octave_band_to_root_db": -5.577485151647683
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -61.07053340172374,
+            "octave_band_to_root_db": -5.6080061746337275
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -60.23836570350966,
+            "octave_band_to_root_db": -5.612928548072231
+          }
+        ],
+        "mono_energy_ratio": 0.9411761944650923,
+        "mean_L": 1.5147298792202065e-08,
+        "mean_R": -1.2712453808683968e-08,
+        "sha256": "b1050f3295cf1964cd3446d075d594cb4ff7c51e6327e9710e42f9cb47e24d01"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -19.0,
+        "sha256": "ce7d8474a05dce935fc34b70de62e9730378b5bac30b1ce090d88cd7e0413513"
+      }
+    },
+    {
+      "colour": 1,
+      "variant": "without_grain",
+      "components": {
+        "grain": 0,
+        "fifth": 1,
+        "octave": 1
+      },
+      "raw_file": "COAST_colour1_without_grain_raw_27s.wav",
+      "listen_file": "COAST_colour1_without_grain_listen_27s.wav",
+      "constant_gain_db": 5.300000000000001,
+      "diagnostic_source_sha256": "994b9c0128bb5fceff9401a1b332edba4d7f3892d38a7e759ab3854b306a36bc",
+      "raw": {
+        "integrated_lufs": -31.3,
+        "true_peak_dbfs": -24.2,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -100.86887135078493,
+            "octave_band_to_root_db": -4.230555331697705
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -101.70218988749104,
+            "octave_band_to_root_db": -4.262676720061352
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -102.15855965504316,
+            "octave_band_to_root_db": -4.273628284067384
+          }
+        ],
+        "mono_energy_ratio": 0.9411760645259706,
+        "mean_L": 5.510438646909381e-09,
+        "mean_R": -1.4045211062820189e-08,
+        "sha256": "cbd76742bcd38d6dd335305511c09f6827a71f62d7d483af767b609abf384b2b"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -18.9,
+        "sha256": "e91e6d4e59b3811b1132d1df7d8ec2604c7d8929f824265f797db37af4b0b451"
+      }
+    },
+    {
+      "colour": 1,
+      "variant": "body_only",
+      "components": {
+        "grain": 0,
+        "fifth": 0,
+        "octave": 0
+      },
+      "raw_file": "COAST_colour1_body_only_raw_27s.wav",
+      "listen_file": "COAST_colour1_body_only_listen_27s.wav",
+      "constant_gain_db": 5.600000000000001,
+      "diagnostic_source_sha256": "35bfb39c29651d647131b566563e0990fd22a9422ece61b2167b27c449c8dec4",
+      "raw": {
+        "integrated_lufs": -31.6,
+        "true_peak_dbfs": -24.7,
+        "register": [
+          {
+            "midi": 50,
+            "hz": 146.8323839587038,
+            "window_seconds": [
+              1,
+              2
+            ],
+            "fifth_band_to_root_db": -100.42062412164907,
+            "octave_band_to_root_db": -5.599840809747512
+          },
+          {
+            "midi": 62,
+            "hz": 293.6647679174076,
+            "window_seconds": [
+              10,
+              11
+            ],
+            "fifth_band_to_root_db": -100.37315847430064,
+            "octave_band_to_root_db": -5.6319588543558785
+          },
+          {
+            "midi": 69,
+            "hz": 440.0,
+            "window_seconds": [
+              19,
+              20
+            ],
+            "fifth_band_to_root_db": -97.2556243076096,
+            "octave_band_to_root_db": -5.642859134007711
+          }
+        ],
+        "mono_energy_ratio": 0.9411764485466957,
+        "mean_L": 6.356226904341984e-09,
+        "mean_R": -2.0760257227891156e-09,
+        "sha256": "e7bbddf84b4859c7d97d783a0560b31a8d192f7cbed98cab368e29a76ed6d0d3"
+      },
+      "listen": {
+        "integrated_lufs": -26.0,
+        "true_peak_dbfs": -19.1,
+        "sha256": "61d605906d42966819bc2b1d71c50b846867833ac4d9e8bfd3af8306910e0556"
+      }
+    }
+  ],
+  "unmodified_control_sha256": "dfc5f933722de5a7316b42d2ec31642b5ccce40e270a590e056c8744bf9bec6c",
+  "quick_comparisons": [
+    {
+      "file": "SD02_COAST_colour0_AB_27s.wav",
+      "segments": [
+        {
+          "start_seconds": 0,
+          "end_seconds": 6,
+          "variant": "full",
+          "constant_gain_db": 5.0,
+          "end_fade_seconds": 0.1
+        },
+        {
+          "start_seconds": 7,
+          "end_seconds": 13,
+          "variant": "without_fifth",
+          "constant_gain_db": 5.0,
+          "end_fade_seconds": 0.1
+        },
+        {
+          "start_seconds": 14,
+          "end_seconds": 20,
+          "variant": "without_octave",
+          "constant_gain_db": 5.100000000000001,
+          "end_fade_seconds": 0.1
+        },
+        {
+          "start_seconds": 21,
+          "end_seconds": 27,
+          "variant": "without_grain",
+          "constant_gain_db": 5.0,
+          "end_fade_seconds": 0.1
+        }
+      ],
+      "integrated_lufs": -26.1,
+      "true_peak_dbfs": -19.2,
+      "sha256": "6c1c0d5f992253e45f5185601ac90d0483f098d9fb91c345ac7487c95b924e4d"
+    },
+    {
+      "file": "SD02_COAST_colour1_AB_27s.wav",
+      "segments": [
+        {
+          "start_seconds": 0,
+          "end_seconds": 6,
+          "variant": "full",
+          "constant_gain_db": 5.100000000000001,
+          "end_fade_seconds": 0.1
+        },
+        {
+          "start_seconds": 7,
+          "end_seconds": 13,
+          "variant": "without_fifth",
+          "constant_gain_db": 5.100000000000001,
+          "end_fade_seconds": 0.1
+        },
+        {
+          "start_seconds": 14,
+          "end_seconds": 20,
+          "variant": "without_octave",
+          "constant_gain_db": 5.399999999999999,
+          "end_fade_seconds": 0.1
+        },
+        {
+          "start_seconds": 21,
+          "end_seconds": 27,
+          "variant": "without_grain",
+          "constant_gain_db": 5.100000000000001,
+          "end_fade_seconds": 0.1
+        }
+      ],
+      "integrated_lufs": -26.1,
+      "true_peak_dbfs": -19.3,
+      "sha256": "0b1267142d1901923ce24549b8d9d2ebb4b2742b3987a277a682db49a3d2cbbf"
+    }
+  ]
+}

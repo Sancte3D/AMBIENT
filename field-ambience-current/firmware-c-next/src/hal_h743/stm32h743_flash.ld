@@ -25,7 +25,8 @@ MEMORY
    * (SCENES_FLASH_ADDR). Shrinking FLASH by that sector keeps the linker from
    * ever placing code/data into it (firmware is ~203 KB today, far below, but
    * this guards against future growth silently colliding with the store). */
-  FLASH   (rx)  : ORIGIN = 0x08000000, LENGTH = 1920K   /* 2048K - 128K scenes */
+  /* The experimental journal reserves Bank-2 sectors 6 and 7. */
+  FLASH   (rx)  : ORIGIN = 0x08000000, LENGTH = DEFINED(__scene_journal_candidate) ? 1792K : 1920K
   DTCMRAM (xrw) : ORIGIN = 0x20000000, LENGTH = 128K
   RAM_D1  (xrw) : ORIGIN = 0x24000000, LENGTH = 512K
   RAM_D2  (xrw) : ORIGIN = 0x30000000, LENGTH = 288K
@@ -37,6 +38,9 @@ MEMORY
 _estack        = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM);
 _Min_Heap_Size  = 0x1000;   /* 4 KB  — newlib-nano internal use only     */
 _Min_Stack_Size = 0x4000;   /* 16 KB — render path is static, menu light */
+__ambient_stack_low = _estack - _Min_Stack_Size;
+__ambient_stack_high = _estack;
+ASSERT(__ambient_stack_low >= _edtcm_bss, "DSP data collides with reserved MSP stack")
 
 SECTIONS
 {
@@ -156,11 +160,21 @@ SECTIONS
    * those modules are host-test-only now (out of the target link). CPU-only
    * access from engine_render — never DMA — so D2 is safe per ADR-0015 D3.
    * Confirm placement + margin in the .map after any change here. */
+  /* CPU-only echo history. Valid-frame counters make uninitialised/cleared
+   * history unreadable; do not zero this large buffer in the audio IRQ. */
+  .sound_delay_bss (NOLOAD) :
+  {
+    . = ALIGN(32);
+    *(.sound_delay_bss)
+    . = ALIGN(32);
+  } >RAM_D1
+
   .d2_bss (NOLOAD) :
   {
     . = ALIGN(32);
     _sd2_bss = .;
     *fx_master.c.obj(.bss .bss* COMMON)
+    *ambient_room.c.obj(.bss .bss* COMMON) /* product: one CPU-only float room */
     . = ALIGN(4);
     _ed2_bss = .;
   } >RAM_D2

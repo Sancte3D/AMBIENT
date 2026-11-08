@@ -1,0 +1,117 @@
+{
+  "before": {
+    "voice": {
+      "rms_dbfs": -32.971,
+      "centroid_hz": 895.4,
+      "energy_above_2khz_pct": 6.226,
+      "lr_correlation": 1.0
+    },
+    "pad": {
+      "rms_dbfs": -32.147,
+      "centroid_hz": 223.2,
+      "energy_above_2khz_pct": 0.002,
+      "lr_correlation": 0.9679
+    },
+    "mix": {
+      "rms_dbfs": -29.947,
+      "centroid_hz": 533.3,
+      "energy_above_2khz_pct": 3.022,
+      "lr_correlation": 0.9558
+    },
+    "dream": {
+      "rms_dbfs": -33.842,
+      "centroid_hz": 527.1,
+      "energy_above_2khz_pct": 3.024,
+      "lr_correlation": 0.9488
+    },
+    "no_blur": {
+      "rms_dbfs": -32.72,
+      "centroid_hz": 529.9,
+      "energy_above_2khz_pct": 2.983,
+      "lr_correlation": 0.9501
+    },
+    "no_motion": {
+      "rms_dbfs": -32.592,
+      "centroid_hz": 519.7,
+      "energy_above_2khz_pct": 2.858,
+      "lr_correlation": 0.9522
+    },
+    "no_shimmer": {
+      "rms_dbfs": -33.842,
+      "centroid_hz": 527.1,
+      "energy_above_2khz_pct": 3.024,
+      "lr_correlation": 0.9488
+    }
+  },
+  "after": {
+    "voice": {
+      "rms_dbfs": -32.959,
+      "centroid_hz": 894.9,
+      "energy_above_2khz_pct": 6.24,
+      "lr_correlation": 1.0
+    },
+    "pad": {
+      "rms_dbfs": -32.147,
+      "centroid_hz": 223.2,
+      "energy_above_2khz_pct": 0.002,
+      "lr_correlation": 0.9679
+    },
+    "mix": {
+      "rms_dbfs": -29.95,
+      "centroid_hz": 532.6,
+      "energy_above_2khz_pct": 3.036,
+      "lr_correlation": 0.9562
+    },
+    "dream": {
+      "rms_dbfs": -33.854,
+      "centroid_hz": 524.6,
+      "energy_above_2khz_pct": 3.171,
+      "lr_correlation": 0.9483
+    },
+    "no_blur": {
+      "rms_dbfs": -32.701,
+      "centroid_hz": 528.6,
+      "energy_above_2khz_pct": 3.096,
+      "lr_correlation": 0.95
+    },
+    "no_motion": {
+      "rms_dbfs": -32.635,
+      "centroid_hz": 516.1,
+      "energy_above_2khz_pct": 2.977,
+      "lr_correlation": 0.9513
+    },
+    "no_shimmer": {
+      "rms_dbfs": -33.854,
+      "centroid_hz": 524.6,
+      "energy_above_2khz_pct": 3.171,
+      "lr_correlation": 0.9483
+    }
+  },
+  "comparison": {
+    "seconds": 28.25,
+    "order": [
+      "voice before",
+      "voice after",
+      "mix before",
+      "mix after",
+      "dream before",
+      "dream after"
+    ],
+    "shared_gain_db": 4.8,
+    "integrated_lufs": -25.0,
+    "true_peak_dbfs": -13.4
+  },
+  "provenance": {
+    "baseline_local_commit": "52fc226",
+    "baseline_remote_commit": "bbda10c95f57ad85e66826ff7391d6d4c5a47abe",
+    "changed_dsp": "bowed oscillator weights only; .6/.4 to .71/.125",
+    "note_midi": 71,
+    "pad_bed_midi": 50,
+    "note_on_s": 1,
+    "note_off_s": 9,
+    "comparison_slice_s": [
+      1,
+      5.5
+    ]
+  }
+}

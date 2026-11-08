@@ -20,12 +20,15 @@
  *                naturally on a panel with no dedicated shift LED lock)
  *   hold       — toggle-on-press; without it cell taps are momentary
  *   drone      — toggle; engine_set_drone(); root drone follows brain key
- *   generate   — toggle; engine_set_generative(true,…)
+ *   generate   — autonomous listening; releases cells, clears Hold/Drone,
+ *                locks new cell/Hold/Drone input until exit. With the ambient
+ *                voicing (FAM_SOUND_AMBIENT_V3) Drone keeps sounding under
+ *                Generate and stays switchable; Hold is still cleared/locked
  *   clear      — momentary FULL STOP: wipes all hold bits, silences all
  *                voices (engine_all_off — natural releases, no hard cut),
  *                and turns HOLD/DRONE/GENERATE off
- *   shift+clear— FLUSH: silence the voices only; HOLD/DRONE/GENERATE keep
- *                running (drone re-swells, the generator plays on)
+ *   shift+clear— FLUSH outside listening (Hold/Drone stay); during listening
+ *                Clear always exits Generate, including with Shift
  *
  * Tap semantics (Hold latched + cell c tapped):
  *   shift OFF → toggle hold_base[c]:  if turning ON  → engine_note_on(c, root)
@@ -61,7 +64,7 @@ void controls_init(void);
 /* Modifier press edge (pressed=true) / release edge (pressed=false).
  * SHIFT is momentary (r19.20) — feed BOTH edges. HOLD/DRONE/GENERATE latch
  * on press (next press toggles off). CLEAR acts on press: full stop, or
- * voice-flush when SHIFT is held. */
+ * voice-flush when SHIFT is held. Clear always exits active Generate. */
 void controls_modifier(mod_id_t mod, bool pressed);
 
 /* Cell tap (momentary press edge with velocity amp 0..1, ADR-0013). Velocity
@@ -72,6 +75,15 @@ void controls_cell_press(uint8_t cell, float velocity_amp);
 /* Cell release (momentary up-edge). Only meaningful when Hold is NOT latched
  * — releases the momentary note. Held cells are unaffected. */
 void controls_cell_release(uint8_t cell);
+#ifdef FAM_SOUND_PRODUCT
+/* True only immediately after a physically routed Note press. False on every
+ * physical up edge, including Scene UI. Replay must never call true. */
+void controls_cell_physical(uint8_t cell,bool down);
+#endif
+
+/* Leave Note mode: release momentary/latched sources and physical presence,
+ * preserving Shift/Hold/Drone/Generate settings. No engine-wide panic. */
+void controls_release_cells(void);
 
 /* Observability — used by LED renderer + UI. */
 bool controls_any_cell_down(void);   /* r19.20: any cell key physically held */

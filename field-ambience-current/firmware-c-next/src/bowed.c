@@ -1,0 +1,448 @@
+/*
+ * bowed.c — bowed-string voice. See bowed.h.
+ *
+ * Signal per voice:
+ *   string : one stable band-limited saw (dsp_poly_saw) = harmonic body
+ *   bow    : white noise → bandpass, level follows a bow-pressure envelope
+ *            (grain swells on the attack, settles to a whisper on the sustain)
+ *   body   : one resonant SVF lowpass = the wooden instrument body; its cutoff
+ *            opens with bow pressure and breathes with a slow LFO
+ *   symp   : two high-Q SVF bandpass resonators at the 5th and octave, lightly
+ *            fed back = sympathetic strings (the lyra/Hardanger shimmer)
+ *   pitch  : stable string; no detune beat or shared vibrato
+ *
+ * Control-rate work (coeff/LFO updates) every CTL samples; per-sample stays
+ * one saw + one LP + two BP + adds. No per-sample transcendental.
+ */
+#include "bowed.h"
+#include "shape.h"
+#include "dsp.h"
+#ifdef FAM_SOUND_PRODUCT
+#include "cell_unfold.h"
+#include "world_character.h"
+#include "soft_pad.h"
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+#include "ambient_choir.h"
+#include "ambient_motion.h"
+#endif
+#include <math.h>
+#include <string.h>
+#include <stdatomic.h>
+
+#define SR    ((float)DSP_SAMPLE_RATE_HZ)
+#define CTL   32
+#define VMAX  3
+
+typedef enum { V_IDLE = 0, V_ATTACK, V_HOLD, V_RELEASE } vstage_t;
+
+typedef struct {
+    _Atomic vstage_t stage;
+    _Atomic int source;
+    int owner_tag;
+    float expression;
+    float    freq, amp;
+    float    ph, inc;                    /* stable band-limited string  */
+    dsp_svf_t body, symp1, symp2;
+    uint32_t rng;
+    dsp_svf_t bowbp;                       /* bow-noise bandpass          */
+
+    float    env, envInc, relCoef;         /* amp envelope                */
+    int      hold_left;                    /* samples of sustain left     */
+    float    bow;                          /* bow-pressure env 0..1       */
+
+    float    bodyPh, bodyInc;              /* body-breath LFO             */
+
+    float    panL, panR;
+    float    body_base, symp_gain;         /* colour-dependent            */
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t unfold;
+    world_character_t character;
+    bool soft_pad;
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    float ph2, inc2;                       /* ensemble partner, slow beat */
+    ambient_motion_t motion;               /* slow level/brightness drift */
+    float level_bal;                       /* register balance, per note  */
+    bool choir;                            /* FJORD voicing, fixed per note */
+    ambient_choir_t singers;
+#endif
+} bvoice_t;
+
+static bvoice_t V[VMAX], pending[VMAX];
+/* Prepare off the audio path; at capacity fade the old voice for 8 ms,
+ * then start the prepared attack. Exactly VMAX voices render at any time. */
+#define HANDOVER_SAMPLES 353
+static _Atomic int queued[VMAX];
+static int fade_left[VMAX],fade_total[VMAX];
+static int      ctl;
+static _Atomic uint32_t tone_bits;
+#ifdef FAM_SOUND_PRODUCT
+static _Atomic uint32_t unfold_mask;
+/* Main-owned preparation config; render reads only published voice snapshots.
+ * Init/Clear in the IRQ must not overwrite this future-note config. */
+static uint32_t character_seed;
+static bool character_enabled;
+static bool pad_enabled;
+#ifdef FAM_SOUND_AMBIENT_V3
+/* Per-note motion seed counter, restarted with the voices: identical inputs
+ * after Init/Clear give identical PCM. Main prepares, the IRQ may reset. */
+static _Atomic uint32_t v3_notes;
+#endif
+void bowed_set_pad(bool on) { pad_enabled=on; }
+#ifdef FAM_SOUND_AMBIENT_V3
+static bool choir_enabled;
+/* The choir level at equal loudness with the other voicings: the tract
+ * passes less energy than the pad's harmonic table. */
+#define CHOIR_GAIN 2.5f
+void bowed_set_choir(bool on) { choir_enabled=on; }
+#endif
+void bowed_set_character(uint32_t seed,bool enabled) {
+    character_seed=seed; character_enabled=enabled;
+}
+void bowed_set_cell_held(int source,bool down) {
+    cell_unfold_publish(&unfold_mask,source,down);
+}
+#endif
+static float tone_cur=0.5f;
+void bowed_set_tone(float v) {
+    if (!isfinite(v)) return;
+    v=dsp_clampf(v,0.0f,1.0f);
+    uint32_t b; memcpy(&b,&v,4);
+    atomic_store_explicit(&tone_bits,b,memory_order_release);
+}
+static float tone_target(void) {
+    uint32_t b=atomic_load_explicit(&tone_bits,memory_order_acquire);
+    float v; memcpy(&v,&b,4); return v;
+}
+uint16_t bowed_active_sources(void) {
+    uint16_t mask=0;
+    for (int i=0;i<VMAX;++i) {
+        if (queued[i] && pending[i].owner_tag>=0 && pending[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<pending[i].owner_tag);
+        if (V[i].stage!=V_IDLE && V[i].owner_tag>=0 && V[i].owner_tag<16)
+            mask|=(uint16_t)(1u<<V[i].owner_tag);
+    }
+    return mask;
+}
+static int      s_colour = 0;
+
+static inline float wnoise(uint32_t *r) {
+    *r = (*r) * 1664525u + 1013904223u;
+    return (float)((int32_t)*r) * (1.0f / 2147483648.0f);
+}
+
+void bowed_init(void) {
+#ifdef FAM_SOUND_PRODUCT
+    atomic_store_explicit(&unfold_mask,0,memory_order_relaxed);
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+    atomic_store_explicit(&v3_notes,0,memory_order_relaxed);
+#endif
+    memset(pending,0,sizeof pending); memset((void*)queued,0,sizeof queued);
+    memset(fade_left,0,sizeof fade_left); memset(fade_total,0,sizeof fade_total);
+    memset(V, 0, sizeof V);
+    ctl = 0; tone_cur=0.5f; bowed_set_tone(0.5f);
+    s_colour = 0;
+}
+
+void bowed_set_colour(int colour) { s_colour = colour ? 1 : 0; }
+
+static int alloc_voice(int source) {
+    int best=0; float lowest=1e9f;
+    for(int i=0;i<VMAX;++i) {
+        if(queued[i] && pending[i].source==source && source>=0) return i;
+        if(V[i].stage==V_IDLE && !queued[i]) return i;
+        /* Released voices yield first, then the quietest held voice. */
+        float score=V[i].env + (V[i].stage==V_RELEASE ? 0.0f:2.0f);
+        if(score<lowest) { lowest=score; best=i; }
+    }
+    return best;
+}
+
+static void prepare_note(bvoice_t *v, int i, int source, float freq_hz, float amp) {
+    memset(v,0,sizeof *v);
+    v->source=source; v->owner_tag=source; v->expression=dsp_clampf(amp/0.62f,0.0f,1.0f);
+#ifdef FAM_SOUND_PRODUCT
+    world_character_prepare(&v->character,0,character_seed,source,freq_hz,character_enabled);
+    v->soft_pad=pad_enabled;
+#endif
+    v->freq = freq_hz;
+    v->amp  = dsp_clampf(amp, 0.0f, 1.0f);
+    v->inc  = freq_hz / SR;
+    v->ph = 0.03f;
+    v->rng  = 0x9E3779B9u ^ (uint32_t)(freq_hz * 131.0f);
+
+    /* colour: Open Sea = warmer/brighter body, moderate symp; Fjords = darker,
+     * more sympathetic ring. */
+    v->body_base = ((s_colour == 0) ? freq_hz * 6.5f : freq_hz * 4.2f) * (0.75f+0.25f*v->expression);
+    v->symp_gain = (s_colour == 0) ? 0.10f : 0.17f;
+
+    dsp_svf_reset(&v->body);  dsp_svf_set(&v->body, v->body_base, 0.9f);
+    dsp_svf_reset(&v->symp1); dsp_svf_set(&v->symp1, freq_hz * 1.5f, 9.0f);
+    dsp_svf_reset(&v->symp2); dsp_svf_set(&v->symp2, freq_hz * 2.0f, 8.0f);
+    dsp_svf_reset(&v->bowbp); dsp_svf_set(&v->bowbp, freq_hz * 2.6f, 1.4f);
+
+    v->env = 0.0001f;
+    v->envInc = v->amp / (0.30f * shape_attack_scale() * SR);   /* r19.60: 300 ms x SHAPE */
+#ifdef FAM_SOUND_PRODUCT
+    if(v->soft_pad)v->envInc=v->amp/(1.8f*shape_attack_scale()*SR);
+#endif
+    v->relCoef = dsp_smooth_coef(0.9f * shape_release_scale());  /* r19.60 */
+#ifdef FAM_SOUND_AMBIENT_V3
+    /* Ambient pad: a slow 2 s swell, a longer soft release and an ensemble
+     * partner a constant 0.12-0.28 Hz above, started out of phase: the same
+     * slow breathing beat (one swell every ~4-8 s) at every pitch, never a
+     * 4-5 Hz flutter up high. Each note also gets its own slow drift. */
+    v->choir=v->soft_pad && choir_enabled;
+    if(v->choir) {
+        /* Choir: the voices bloom in 0.9 s and fade over about 1.4 s. */
+        v->envInc=v->amp/(0.9f*shape_attack_scale()*SR);
+        v->relCoef=dsp_smooth_coef(1.4f*shape_release_scale());
+    } else if(v->soft_pad) {
+        v->envInc=v->amp/(2.0f*shape_attack_scale()*SR);
+        v->relCoef=dsp_smooth_coef(1.1f*shape_release_scale());
+    }
+    {
+        uint32_t n=atomic_fetch_add_explicit(&v3_notes,1,memory_order_relaxed)+1u;
+        uint32_t seed=character_seed*0x27D4EB2Fu^(uint32_t)source*0x9E3779B9u^
+                      (uint32_t)(freq_hz*977.0f)^(n*0x85EBCA6Bu);
+        ambient_motion_prepare(&v->motion,seed);
+        float beat=.12f+.16f*ambient_motion_unit(&seed);
+        v->inc2=v->inc+beat/SR; v->ph2=.31f;
+        /* +0.7 dB keeps the complete-sound World balance (COAST re WOODLAND)
+         * within 0.7 dB for played Cells and Generate. */
+        v->level_bal=1.08f*ambient_register_gain(freq_hz);
+        if(v->choir) {
+            v->level_bal*=CHOIR_GAIN;
+            ambient_choir_prepare(&v->singers,freq_hz,seed,0.0f); /* a warm "aah" */
+        }
+    }
+#endif
+    v->hold_left = (int)(3.6f * SR);           /* sing ~3.6 s               */
+    v->bow = 0.0f;
+    #ifdef FAM_SOUND_PRODUCT
+    v->bodyPh = 0.0f; v->bodyInc = 0.0f; /* articulation comes from the envelope */
+#else
+    v->bodyPh = 0.0f; v->bodyInc = 0.13f / SR;
+#endif
+    /* gentle stereo spread per voice */
+    float pan = (i == 0) ? -0.25f : (i == 1) ? 0.25f : 0.0f;
+    v->panL = 0.5f * (1.0f - pan);
+    v->panR = 0.5f * (1.0f + pan);
+    v->stage = V_ATTACK;
+}
+
+static void start_note(int source, float freq_hz, float amp) {
+    if (!isfinite(freq_hz) || !isfinite(amp) || freq_hz<20.0f || freq_hz>8000.0f || amp<=0.0f) return;
+    if(source>=0) for(int j=0;j<VMAX;++j)
+        if(V[j].stage!=V_IDLE && V[j].source==source) V[j].stage=V_RELEASE;
+    int i=alloc_voice(source);
+    queued[i]=0;
+    prepare_note(&pending[i],i,source,freq_hz,amp);
+    if(V[i].stage!=V_IDLE && fade_left[i]==0) {
+        fade_total[i]=HANDOVER_SAMPLES; fade_left[i]=HANDOVER_SAMPLES;
+    }
+    __asm__ volatile("" ::: "memory");
+    queued[i]=1;
+}
+
+bool bowed_try_note_on(int source, float freq_hz, float amp) {
+    if (source < 0 || source >= 16 || !isfinite(freq_hz) || !isfinite(amp) ||
+        freq_hz < 20.0f || freq_hz > 8000.0f || amp <= 0.0f) return false;
+    for (int i = 0; i < VMAX; ++i)
+        if ((queued[i] && pending[i].source == source) ||
+            (V[i].stage != V_IDLE && V[i].source == source)) return false;
+    for (int i = 0; i < VMAX; ++i) {
+        if (V[i].stage != V_IDLE || queued[i]) continue;
+        prepare_note(&pending[i], i, source, freq_hz, amp);
+        __asm__ volatile("" ::: "memory");
+        queued[i] = 1;
+        return true;
+    }
+    return false;
+}
+
+void bowed_note(float freq_hz, float amp) { start_note(-1,freq_hz,amp); }
+void bowed_note_on(int source,float freq_hz,float amp) {
+    if(source>=0 && source<16) start_note(source,freq_hz,amp);
+}
+void bowed_note_off(int source) {
+    for(int i=0;i<VMAX;++i) if(queued[i] && pending[i].source==source) queued[i]=0;
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE && V[i].source==source) {
+        V[i].source=-1; V[i].stage=V_RELEASE;
+    }
+}
+#ifdef FAM_SOUND_PRODUCT
+/* Audio owner only: bounded context handover; no held manual voice stealing. */
+void bowed_quiet_source(int source,int frames) {
+    if(frames<1)frames=1;
+    if(frames>(int)(.100f*SR))frames=(int)(.100f*SR);
+    for(int i=0;i<VMAX;++i) {
+        if(queued[i] && pending[i].owner_tag==source)queued[i]=0;
+        if(V[i].stage!=V_IDLE && V[i].owner_tag==source) {
+            V[i].source=-1; V[i].stage=V_RELEASE;
+            if(!fade_left[i] || fade_left[i]>frames) {
+                fade_total[i]=frames;fade_left[i]=frames;
+            }
+        }
+    }
+}
+#endif
+void bowed_all_off(void) {
+    for(int i=0;i<VMAX;++i) queued[i]=0;
+    for(int i=0;i<VMAX;++i) if(V[i].stage!=V_IDLE) { V[i].source=-1; V[i].stage=V_RELEASE; }
+}
+
+int bowed_active_count(void) {
+    int c = 0;
+    for (int i = 0; i < VMAX; ++i) if (V[i].stage != V_IDLE || queued[i]) ++c;
+    return c;
+}
+
+void bowed_render_mix(float *dry_L, float *dry_R,
+                      float *send_L, float *send_R,
+                      int frames, float send_amount) {
+    float colour=tone_target();
+#ifdef FAM_SOUND_PRODUCT
+    uint32_t held=atomic_load_explicit(&unfold_mask,memory_order_acquire);
+#endif
+    for (int n = 0; n < frames; ++n) {
+        tone_cur+=(colour-tone_cur)*(1.0f/(0.080f*SR));
+        float L = 0.0f, R = 0.0f;
+        int do_ctl = (ctl == 0);
+
+        for (int i = 0; i < VMAX; ++i) {
+            bvoice_t *v = &V[i];
+            if(atomic_load_explicit(&queued[i],memory_order_relaxed) &&
+               atomic_load_explicit(&v->stage,memory_order_relaxed)==V_IDLE) {
+                atomic_thread_fence(memory_order_acquire);
+                *v=pending[i]; queued[i]=0; fade_left[i]=0;
+            }
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
+
+            vstage_t stage=atomic_load_explicit(&v->stage,memory_order_relaxed);
+#ifdef FAM_SOUND_PRODUCT
+            float opening=cell_unfold_step(&v->unfold,held,v->owner_tag);
+            world_character_tick(&v->character);
+#endif
+            if (do_ctl) {
+                /* bow pressure: rises through the attack, settles to a low
+                 * sustained value — the grain follows it. */
+                float target = (stage == V_ATTACK) ? 1.0f : 0.35f;
+                v->bow += (target - v->bow) * 0.02f;
+                /* Body cutoff opens with bow pressure and slow breath. */
+                float breath = dsp_sin(v->bodyPh);
+                float cut = v->body_base * (1.0f + 0.35f * v->bow + 0.06f * breath) * (0.8f+0.4f*tone_cur);
+#ifdef FAM_SOUND_PRODUCT
+                cut *= 1.0f+.25f*opening;
+                if(v->character.enabled) cut*=v->character.tone;
+#endif
+                dsp_svf_set(&v->body, dsp_clampf(cut, 120.0f, SR * 0.45f), 0.9f);
+            }
+
+            /* amp envelope */
+            switch (stage) {
+                case V_ATTACK:
+                    v->env += v->envInc;
+                    if (v->env >= v->amp) { v->env = v->amp; v->stage = V_HOLD; }
+                    break;
+                case V_HOLD:
+                    if (atomic_load_explicit(&v->source,memory_order_relaxed) < 0 && --v->hold_left <= 0) v->stage = V_RELEASE;
+                    break;
+                case V_RELEASE:
+                    v->env -= v->relCoef * v->env;
+                    if (v->env <= 1.0e-5f) { v->env = 0.0f; v->stage = V_IDLE; }
+                    break;
+                default: break;
+            }
+            if (atomic_load_explicit(&v->stage,memory_order_relaxed) == V_IDLE) continue;
+
+            v->bodyPh += v->bodyInc; if (v->bodyPh >= 1.0f) v->bodyPh -= 1.0f;
+
+            /* No detuned companion: even the quieter string caused up to
+             * 3.1 dB of periodic root beating. Preserve the former average
+             * oscillator power: sqrt(.71^2 + .125^2) ~= .721. */
+            float inc  = v->inc;
+            float out;
+#ifdef FAM_SOUND_AMBIENT_V3
+            float side = 0.0f;
+#endif
+#ifdef FAM_SOUND_PRODUCT
+            if(v->soft_pad) {
+                float shade=2*tone_cur-1+.25f*opening;
+                if(v->character.enabled)shade+=v->character.shade;
+#ifdef FAM_SOUND_AMBIENT_V3
+                /* The partner swells against the main voice: slow width motion. */
+                float drift,level=ambient_motion_step(&v->motion,.45f,&drift);
+                if(v->choir) {
+                    /* Three singers; the outer pair's difference is the width. */
+                    float wide;
+                    out=ambient_choir_sample(&v->singers,shade+drift,&wide)*v->env*.5f*level*v->level_bal;
+                    side=wide*v->env*.5f*v->level_bal;
+                } else {
+                out=soft_pad_v3_sample(v->ph,v->freq,shade+drift)*v->env*.5f*level*v->level_bal;
+                side=soft_pad_v3_partner(v->ph2,v->freq)*v->env*.5f*.30f*(2.0f-level)*v->level_bal;
+                v->ph2+=v->inc2;if(v->ph2>=1)v->ph2-=1;
+                }
+#else
+                out=soft_pad_sample(v->ph,v->freq,shade)*v->env*.5f;
+#endif
+                v->ph+=inc;if(v->ph>=1)v->ph-=1;
+            } else {
+#endif
+            float s = dsp_poly_saw(v->ph, inc) * 0.721f;
+            v->ph  += inc;  if (v->ph  >= 1.0f) v->ph  -= 1.0f;
+
+            /* Restrained grain: 12 dB below the former continuous bow noise. */
+            float bn = dsp_svf_bp(&v->bowbp, wnoise(&v->rng)) * (0.015f + 0.05f * v->bow);
+
+            /* wooden body */
+            float body = dsp_svf_lp(&v->body, s + bn);
+
+            /* sympathetic resonators (fed lightly, ring back in) */
+            float sy = dsp_svf_bp(&v->symp1, body) + dsp_svf_bp(&v->symp2, body);
+            float detail=v->symp_gain;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) detail*=v->character.detail;
+#endif
+            out = (body + sy * detail) * v->env * 0.5f;
+#ifdef FAM_SOUND_PRODUCT
+            }
+#endif
+            if(fade_left[i]>0) {
+                float fade=(float)fade_left[i]/(float)fade_total[i];
+                out *= fade;
+#ifdef FAM_SOUND_AMBIENT_V3
+                side *= fade;
+#endif
+                if(--fade_left[i]==0) v->stage=V_IDLE;
+            }
+
+            float panL=v->panL,panR=v->panR;
+#ifdef FAM_SOUND_PRODUCT
+            if(v->character.enabled) {
+                out*=v->character.gain;
+#ifdef FAM_SOUND_AMBIENT_V3
+                side*=v->character.gain;
+#endif
+                panL-=v->character.pan; panR+=v->character.pan;
+            }
+#endif
+#ifdef FAM_SOUND_AMBIENT_V3
+            /* The ensemble partner sits on the opposite side. */
+            L += out * panL + side * panR;
+            R += out * panR + side * panL;
+#else
+            L += out * panL;
+            R += out * panR;
+#endif
+        }
+
+        if (++ctl >= CTL) ctl = 0;
+
+        dry_L[n]  += L;  dry_R[n]  += R;
+        send_L[n] += L * send_amount;
+        send_R[n] += R * send_amount;
+    }
+}

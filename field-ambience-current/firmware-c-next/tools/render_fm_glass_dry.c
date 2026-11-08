@@ -7,7 +7,7 @@
  * (E2-A2). Debug surface for A/B; render_synth.c is the wet/product path.
  *
  *   cc -std=c11 -O2 -Iinclude tools/render_fm_glass_dry.c \
- *      src/dsp.c src/v2/engines/engine_fm_glass.c -lm -o /tmp/render_fm_glass_dry
+ *      src/dsp.c src/v2/Synths_Archive/engine_fm_glass.c -lm -o /tmp/render_fm_glass_dry
  *   /tmp/render_fm_glass_dry /tmp/fm_glass_dry.wav
  */
 #include "dsp.h"

@@ -6,7 +6,7 @@
  *
  * Step 5: produces a continuous test sine on the PCM5102A via I²S, driven
  * by a PIO state machine + DMA double-buffer. Implements the SPEC v0.6 §8
- * pop-suppression power sequence around the PAM8403 (/SHDN, /MUTE) and
+ * pop-suppression power sequence around the PAM8406 (/SHDN, /MUTE) and
  * PCM5102A (XSMT, via MCP-GPA5) so the speakers come up silently.
  *
  * Later steps replace the test sine with the famPadCore + famSubBass + …
@@ -16,8 +16,8 @@
  *   GP0  : I²S BCK  → PCM5102A pin 13
  *   GP1  : I²S LRCK → PCM5102A pin 15
  *   GP4  : I²S DIN  → PCM5102A pin 14
- *   GP27 : PAM8403 /SHDN  (HIGH = chip awake)
- *   GP28 : PAM8403 /MUTE  (HIGH = un-muted)
+ *   GP27 : PAM8406 /SHDN  (HIGH = chip awake)
+ *   GP28 : PAM8406 /MUTE  (HIGH = un-muted)
  *   (MCP GPA5 = PCM XSMT, driven via mcp_set_xsmt())
  */
 
