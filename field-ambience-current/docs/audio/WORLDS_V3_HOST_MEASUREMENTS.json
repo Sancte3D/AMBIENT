@@ -1,0 +1,37 @@
+{
+ "stand": "2026-11-13",
+ "hinweis": "Host-Messungen und Linker-Map. Keine Geraetemessung, keine Hoerabnahme.",
+ "linker_map": {
+  "build": "FAM_TARGET=h743 FAM_SOUND_PROFILE=product FAM_SOUND_FINISH_CANDIDATE=ON FAM_SOUND_AMBIENT_V3=ON CMAKE_BUILD_TYPE=Release, arm-none-eabi-gcc 13.2.1",
+  "sections_bytes": {".isr_vector": 664, ".text": 187272, ".rodata": 29172, ".data": 260, ".sound_delay_bss": 262144, ".d2_bss": 236704, ".bss": 87224, "._user_heap": 4096, "._stack_guard": 16384},
+  "flash_bytes": 217384, "ram_d1_bytes": 353724, "ram_d2_bytes": 236704, "dtcm_bytes": 16384, "ram_d3_bytes": 0, "itcm_bytes": 0,
+  "largest_ram_symbols_bytes": {"sf_delay": 262144, "sf": 110088, "sf_mi_store": 65536, "tank": 55352, "fb": 27200, "wfx": 14588},
+  "largest_code_symbols_bytes": {"engine_render": 14124, "ambient_room_process": 11552, "bed_bells": 5692, "na_render": 3548, "bowed_render_mix": 3176, "horn_render_mix": 3148, "pluck_render_mix": 2348}
+ },
+ "host_render": {
+  "werkzeug": "tools/render_v3_world.c, Block 512, Seed 1234, Color 0.5, Room 0.5, Nature 0, Volume 0.75, Flush-to-Zero an",
+  "host": "Intel Xeon 2.10 GHz (Cloud), eine Messung je Fall, Thread-CPU-Zeit",
+  "generate_drone_90s": {
+   "COAST": {"cpu_ms_per_s": 13.43, "starts": 13, "peak_dbfs": -21.2},
+   "WOODLAND": {"cpu_ms_per_s": 8.18, "starts": 19, "peak_dbfs": -16.9},
+   "HIGHLANDS": {"cpu_ms_per_s": 13.19, "starts": 15, "peak_dbfs": -20.1},
+   "FJORD": {"cpu_ms_per_s": 19.38, "starts": 12, "peak_dbfs": -17.4},
+   "MEADOW": {"cpu_ms_per_s": 14.93, "starts": 35, "peak_dbfs": -18.5},
+   "GLACIER": {"cpu_ms_per_s": 13.95, "starts": 14, "peak_dbfs": -20.1}
+  },
+  "cells_then_generate_60s": {
+   "COAST": {"cpu_ms_per_s": 13.45, "peak_dbfs": -22.8}, "WOODLAND": {"cpu_ms_per_s": 8.73, "peak_dbfs": -17.0},
+   "HIGHLANDS": {"cpu_ms_per_s": 14.09, "peak_dbfs": -21.1}, "FJORD": {"cpu_ms_per_s": 19.09, "peak_dbfs": -16.4},
+   "MEADOW": {"cpu_ms_per_s": 14.11, "peak_dbfs": -18.4}, "GLACIER": {"cpu_ms_per_s": 14.40, "peak_dbfs": -20.2}
+  },
+  "ohne_flush_to_zero_60s_cpu_ms_per_s": {"COAST": 13.18, "WOODLAND": 7.54, "HIGHLANDS": 10.95, "FJORD": 17.25, "MEADOW": 69.77, "GLACIER": 53.62},
+  "spektrum_generate_ab_sekunde_10": {
+   "COAST": {"centroid_hz": 474, "rolloff85_hz": 732}, "WOODLAND": {"centroid_hz": 293, "rolloff85_hz": 366},
+   "HIGHLANDS": {"centroid_hz": 412, "rolloff85_hz": 495}, "FJORD": {"centroid_hz": 778, "rolloff85_hz": 1098},
+   "MEADOW": {"centroid_hz": 334, "rolloff85_hz": 366}, "GLACIER": {"centroid_hz": 371, "rolloff85_hz": 484}
+  }
+ },
+ "identitaet": {"heute_verstoesse": 13, "heute_paare_mit_3_gleichen_achsen": 9, "kandidaten_verstoesse": 0, "kandidaten_groesste_ueberdeckung": 1},
+ "tonvorraete_zulaessig": 10,
+ "hoerskizzen": {"quelle": "tools/world_sketches/sketch_worlds.py (numpy, kein Firmware-Klang)", "spektraler_schwerpunkt_hz": {"cave": 990, "dunes": 339, "jungle": 439}, "gehoert": false}
+}
