@@ -49,6 +49,11 @@ für Natur und Familie, ein gemeinsamer Raum der drei klassischen Worlds.
 
 ## Die 16 Kandidaten
 
+**Entscheid des Besitzers vom 13.11.2026:** Diese Firmware heißt **Nature Landscapes** und enthält nur echte
+Landschaften, in die man sich selbst hineindeuten kann. Denkräume und gebaute Orte kommen später als eigene
+Firmware. Deshalb ersetzt: GARDEN → BLACKFOREST, EMBER → VOLCANO, CLOISTER → CANYON, ZENITH → STEPPE
+(Klangbausteine bleiben, Ort, Natur und Name wechseln).
+
 Regel: Klangquelle und Signatur-Effekt je nur einmal; in Tonvorrat, Zeitgefühl, Raum und Natur
 gleichen sich zwei Worlds höchstens in zweien. Ergebnis des Prüfskripts: 0 Verstöße, größte Überdeckung 1 von 4.
 
@@ -66,10 +71,10 @@ gleichen sich zwei Worlds höchstens in zweien. Ergebnis des Prüfskripts: 0 Ver
 | REEF (Riff) | neu | FM-Glas | Sus gleichstufig | Kanon | gedämpft | Blasen | Unterwasser |
 | MOOR (Moor) | neu | Windharfe | Septimal hell | Windgeführt | gedämpft | Moorblubbern und Wasservögel | Nebel |
 | AURORA (Polarnacht) | neu | Glasharmonika | Man Gong gleichstufig | Auf- und Abbau | weit und hell | Schneestille und Knistern | Nordlicht-Vorhang |
-| GARDEN (Garten) | neu | Gezupfte Saite | Ritusen/Yo gleichstufig | Jo-ha-kyu | klein | Rinnsal und Wasserwippe | Ma |
-| EMBER (Glut) | neu | Handpan | Moll gleichstufig | Ostinato | offen und trocken | Feuerknistern | Glutflackern |
-| CLOISTER (Kreuzgang) | neu | Harmonium | Dur rein | Choral | gross und dunkel | Brunnen | Tremulant |
-| ZENITH (Sternwarte) | neu | Sinus-Schwebung | Moll rein | Umlaufbahnen | Kuppel | Uhrwerk und Raumbrummen | Umlaufbahn |
+| BLACKFOREST (Schwarzwald) | neu | Gezupfte Saite | Ritusen/Yo gleichstufig | Anlauf und Stille | klein | Waldbach und Specht | Waldstille |
+| VOLCANO (Lavafeld) | neu | Handpan | Moll gleichstufig | Ostinato | offen und trocken | Knistern erkaltender Lava | Glutflackern |
+| CANYON (Schlucht) | neu | Harmonium | Dur rein | Choral | gross und dunkel | Fluss in der Tiefe | Hitzeflimmern |
+| STEPPE (Steppe) | neu | Sinus-Schwebung | Moll rein | Umlaufbahnen | offener Himmel | Gras im Nachtwind | Sternenlauf |
 
 Für die sechs vorhandenen Worlds ist das der **Vorschlag**, nicht der heutige Klang. Jede Änderung an
 ihnen kommt nur mit Freigabe nach Gehör (Schritt 2). Ort, Gefühl, DRONE, Bild und Akzentfarbe je World
@@ -90,7 +95,7 @@ zurückgestellt. Folgen: `core()` wird eine Tabelle je World; der DRONE braucht 
 
 Höchstens 3 Stimmen · 6–14 Notenstarts je Minute bei Dichte 50 % · je zwei Minuten eine Pause ≥ 8 s ·
 gehaltene Quellen 10→90 % in ≥ 150 ms · angeschlagene Quellen Anstieg ≥ 3 ms, kein Knackser ·
-gehaltener Ton ändert in 10 s Pegel oder Helligkeit um ≥ 1 dB · nichts schneller als 8 Hz außer Tremulant,
+gehaltener Ton ändert in 10 s Pegel oder Helligkeit um ≥ 1 dB · nichts schneller als 8 Hz außer Hitzeflimmern,
 Ombak, Glutflackern · keine Wiederholung unter 60 s · Ausklang ≥ 4 s bis −60 dB bei Raum 50 % ·
 nichts wird abgeschnitten · Schwerpunkt 250–1200 Hz, Grundtöne ≥ 147 Hz, je World eigene Lage ·
 alle Worlds gleich laut ±1,5 LU.
@@ -168,7 +173,7 @@ Rechenzeit-Klassen der Signatur-Effekte · Wirkung der Hebel 3 und 4 · die Hör
 
 ## Halt 1 – Entscheidungen des Besitzers
 
-1. Welche Worlds? Empfehlung: zwölf zuerst (die sechs vorhandenen, CAVE, DUNES, JUNGLE, MOOR, EMBER, ZENITH), vier später.
+1. Welche Worlds? Empfehlung: zwölf zuerst (die sechs vorhandenen, CAVE, DUNES, JUNGLE, MOOR, BLACKFOREST, STEPPE), vier später (REEF, AURORA, VOLCANO, CANYON).
 2. Dürfen die sechs vorhandenen eigenen Tonvorrat, Zeitgefühl und Natur bekommen? Empfehlung: ja, einzeln per Hörskizze.
 3. Die neun Fragen (oben).
 4. Die Streichliste der 13 Funktionen. Empfehlung: annehmen.
