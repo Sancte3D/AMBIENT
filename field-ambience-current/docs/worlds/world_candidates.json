@@ -1,0 +1,334 @@
+{
+ "stand": "2026-11-13, Schritt 1 (Vorschlag). Besitzer-Entscheide 13.11.: Firmware Nature Landscapes, nur echte Landschaften; Namen als Orte der Erde (ATLANTIC, ICEFIELDS, ISLANDS, MOORLAND, CANYONS, GRASSLANDS); keine World wird auf eine Kultur oder landestypische Musik reduziert.",
+ "achsen": [
+  "quelle",
+  "tonvorrat",
+  "zeit",
+  "raumklasse",
+  "natur",
+  "signatur"
+ ],
+ "regel": "quelle und signatur je nur einmal; in tonvorrat, zeit, raumklasse und natur duerfen zwei Worlds hoechstens in zweien gleich sein",
+ "tonvorraete": {
+  "Dur gleichstufig": [
+   0,
+   200,
+   400,
+   700,
+   900
+  ],
+  "Moll gleichstufig": [
+   0,
+   300,
+   500,
+   700,
+   1000
+  ],
+  "Sus gleichstufig": [
+   0,
+   200,
+   500,
+   700,
+   1000
+  ],
+  "Ritusen/Yo gleichstufig": [
+   0,
+   200,
+   500,
+   700,
+   900
+  ],
+  "Man Gong gleichstufig": [
+   0,
+   300,
+   500,
+   800,
+   1000
+  ],
+  "Dur rein": [
+   0,
+   203.91,
+   386.31,
+   701.96,
+   884.36
+  ],
+  "Moll rein": [
+   0,
+   315.64,
+   498.04,
+   701.96,
+   1017.6
+  ],
+  "Septimal dunkel": [
+   0,
+   266.87,
+   498.04,
+   701.96,
+   968.83
+  ],
+  "Septimal hell": [
+   0,
+   231.17,
+   498.04,
+   701.96,
+   933.13
+  ],
+  "Fuenf gleiche Stufen": [
+   0,
+   240,
+   480,
+   720,
+   960
+  ]
+ },
+ "worlds": [
+  {
+   "name": "ATLANTIC",
+   "deutsch": "Atlantikkueste",
+   "status": "vorhanden",
+   "akzent": "#9ACDD3",
+   "quelle": "Streicherflaeche",
+   "tonvorrat": "Dur gleichstufig",
+   "zeit": "Gezeiten",
+   "raumklasse": "weit und hell",
+   "natur": "Brandung",
+   "signatur": "Brandungs-Atem"
+  },
+  {
+   "name": "WOODLAND",
+   "deutsch": "Wald",
+   "status": "vorhanden",
+   "akzent": "#9DC19D",
+   "quelle": "weicher Mallet",
+   "tonvorrat": "Moll gleichstufig",
+   "zeit": "Ruf und Antwort",
+   "raumklasse": "klein",
+   "natur": "Regen und Donner",
+   "signatur": "Resonanzholz"
+  },
+  {
+   "name": "HIGHLANDS",
+   "deutsch": "Hochland",
+   "status": "vorhanden",
+   "akzent": "#C4BAA4",
+   "quelle": "Okarina mit Atem",
+   "tonvorrat": "Sus gleichstufig",
+   "zeit": "Einzelruf und Stille",
+   "raumklasse": "offen und trocken",
+   "natur": "Hoehenwind",
+   "signatur": "Bergecho"
+  },
+  {
+   "name": "FJORD",
+   "deutsch": "Fjord",
+   "status": "vorhanden",
+   "akzent": "#8098C8",
+   "quelle": "Chor",
+   "tonvorrat": "Man Gong gleichstufig",
+   "zeit": "Stehender Akkord",
+   "raumklasse": "gross und dunkel",
+   "natur": "Ferner Wasserfall",
+   "signatur": "Vokal-Morph"
+  },
+  {
+   "name": "MEADOW",
+   "deutsch": "Wiese",
+   "status": "vorhanden",
+   "akzent": "#D6C684",
+   "quelle": "Kalimba",
+   "tonvorrat": "Dur rein",
+   "zeit": "Schwarm",
+   "raumklasse": "offen und trocken",
+   "natur": "Grillen und Hummeln",
+   "signatur": "Rueckwaerts-Band"
+  },
+  {
+   "name": "ICEFIELDS",
+   "deutsch": "Eisfelder",
+   "status": "vorhanden",
+   "akzent": "#C8D2EC",
+   "quelle": "Glocken",
+   "tonvorrat": "Ritusen/Yo gleichstufig",
+   "zeit": "Wechsellaeuten",
+   "raumklasse": "weit und hell",
+   "natur": "Eisknacken und Schmelztropfen",
+   "signatur": "Shimmer"
+  },
+  {
+   "name": "CAVE",
+   "deutsch": "Grotte",
+   "status": "neu",
+   "akzent": "#7E8FA6",
+   "quelle": "Gestimmte Tropfen",
+   "tonvorrat": "Moll rein",
+   "zeit": "Zufallstropfen",
+   "raumklasse": "gross und dunkel",
+   "natur": "Tropfwasser",
+   "signatur": "Tropfstein-Echo"
+  },
+  {
+   "name": "DUNES",
+   "deutsch": "Duenen",
+   "status": "neu",
+   "akzent": "#DDB06A",
+   "quelle": "Weiches Rohrblatt",
+   "tonvorrat": "Septimal dunkel",
+   "zeit": "Ruhiger Puls",
+   "raumklasse": "offen und trocken",
+   "natur": "Rieselnder Sand",
+   "signatur": "Sandkorn-Wolke"
+  },
+  {
+   "name": "JUNGLE",
+   "deutsch": "Regenwald",
+   "status": "neu",
+   "akzent": "#86B84F",
+   "quelle": "Schwebende Klangstaebe",
+   "tonvorrat": "Fuenf gleiche Stufen",
+   "zeit": "Verzahnte Muster",
+   "raumklasse": "klein",
+   "natur": "Froesche und Zikaden",
+   "signatur": "Schwebung"
+  },
+  {
+   "name": "ISLANDS",
+   "deutsch": "Inseln",
+   "status": "neu",
+   "akzent": "#45C4C0",
+   "quelle": "FM-Glas",
+   "tonvorrat": "Sus gleichstufig",
+   "zeit": "Kanon",
+   "raumklasse": "gedaempft",
+   "natur": "Lagunenwasser und Seevoegel",
+   "signatur": "Lagune"
+  },
+  {
+   "name": "MOORLAND",
+   "deutsch": "Moorland",
+   "status": "neu",
+   "akzent": "#B9A7B6",
+   "quelle": "Windharfe",
+   "tonvorrat": "Septimal hell",
+   "zeit": "Windgefuehrt",
+   "raumklasse": "gedaempft",
+   "natur": "Moorblubbern und Wasservoegel",
+   "signatur": "Nebel"
+  },
+  {
+   "name": "AURORA",
+   "deutsch": "Polarnacht",
+   "status": "neu",
+   "akzent": "#7DF0C2",
+   "quelle": "Glasharmonika",
+   "tonvorrat": "Man Gong gleichstufig",
+   "zeit": "Auf- und Abbau",
+   "raumklasse": "weit und hell",
+   "natur": "Schneestille und Knistern",
+   "signatur": "Nordlicht-Vorhang"
+  },
+  {
+   "name": "BLACKFOREST",
+   "deutsch": "Schwarzwald",
+   "status": "neu",
+   "akzent": "#5F8F7A",
+   "quelle": "Gezupfte Saite",
+   "tonvorrat": "Ritusen/Yo gleichstufig",
+   "zeit": "Anlauf und Stille",
+   "raumklasse": "klein",
+   "natur": "Waldbach und Specht",
+   "signatur": "Waldstille"
+  },
+  {
+   "name": "VOLCANO",
+   "deutsch": "Lavafeld",
+   "status": "neu",
+   "akzent": "#F0874A",
+   "quelle": "Handpan",
+   "tonvorrat": "Moll gleichstufig",
+   "zeit": "Ostinato",
+   "raumklasse": "offen und trocken",
+   "natur": "Knistern erkaltender Lava",
+   "signatur": "Glutflackern"
+  },
+  {
+   "name": "CANYONS",
+   "deutsch": "Schluchten",
+   "status": "neu",
+   "akzent": "#CC8F78",
+   "quelle": "Harmonium",
+   "tonvorrat": "Dur rein",
+   "zeit": "Choral",
+   "raumklasse": "gross und dunkel",
+   "natur": "Fluss in der Tiefe",
+   "signatur": "Hitzeflimmern"
+  },
+  {
+   "name": "GRASSLANDS",
+   "deutsch": "Grasland",
+   "status": "neu",
+   "akzent": "#8272F2",
+   "quelle": "Sinus-Schwebung",
+   "tonvorrat": "Moll rein",
+   "zeit": "Umlaufbahnen",
+   "raumklasse": "offener Himmel",
+   "natur": "Gras im Nachtwind",
+   "signatur": "Sternenlauf"
+  }
+ ],
+ "heute": [
+  {
+   "name": "COAST",
+   "quelle": "Streicherflaeche",
+   "tonvorrat": "Dur/Moll gleichstufig",
+   "zeit": "Drei Schleifen",
+   "raumklasse": "gemeinsamer Raum",
+   "natur": "Brandung",
+   "signatur": "keine"
+  },
+  {
+   "name": "WOODLAND",
+   "quelle": "weicher Mallet",
+   "tonvorrat": "Dur/Moll gleichstufig",
+   "zeit": "Drei Schleifen",
+   "raumklasse": "gemeinsamer Raum",
+   "natur": "Regen und Donner",
+   "signatur": "keine"
+  },
+  {
+   "name": "HIGHLANDS",
+   "quelle": "Okarina mit Atem",
+   "tonvorrat": "Dur/Moll gleichstufig",
+   "zeit": "Drei Schleifen",
+   "raumklasse": "gemeinsamer Raum",
+   "natur": "Wind",
+   "signatur": "keine"
+  },
+  {
+   "name": "FJORD",
+   "quelle": "Chor",
+   "tonvorrat": "Dur/Moll gleichstufig",
+   "zeit": "Drei Schleifen",
+   "raumklasse": "Rings-Hall",
+   "natur": "Brandung",
+   "signatur": "Oktav-Grains"
+  },
+  {
+   "name": "MEADOW",
+   "quelle": "Kalimba",
+   "tonvorrat": "Dur/Moll gleichstufig",
+   "zeit": "Drei Schleifen",
+   "raumklasse": "Rings-Hall",
+   "natur": "Regen und Donner",
+   "signatur": "Rueckwaerts-Grains"
+  },
+  {
+   "name": "GLACIER",
+   "quelle": "Glocken",
+   "tonvorrat": "Dur/Moll gleichstufig",
+   "zeit": "Drei Schleifen",
+   "raumklasse": "Rings-Hall",
+   "natur": "Wind",
+   "signatur": "Oktav-Grains"
+  }
+ ]
+}

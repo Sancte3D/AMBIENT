@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>AMBIENT — State Atlas</title>
+<style>
+  :root{font-family:Inter,"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;--bg:#131416;--surface:#1c1e20;--surface2:#242629;--glass:rgba(37,39,43,.84);--text:#f4f4f5;--muted:#9c9ea4;--subtle:#696d74;--line:rgba(255,255,255,.1);--line-strong:rgba(255,255,255,.19);--accent:#a5e0cf;--accent-soft:rgba(165,224,207,.12);--amber:#e9bc7a;--red:#df8a8f;--blue:#9fbbeb;--shadow:0 20px 70px rgba(0,0,0,.24)}
+  body.light{color-scheme:light;--bg:#f3f3f1;--surface:#fff;--surface2:#f5f6f6;--glass:rgba(255,255,255,.88);--text:#21242a;--muted:#686d74;--subtle:#9ba0a6;--line:rgba(23,28,34,.1);--line-strong:rgba(23,28,34,.2);--accent:#167e69;--accent-soft:rgba(22,126,105,.09);--amber:#ac6d20;--red:#b45156;--blue:#456bb5;--shadow:0 20px 60px rgba(30,35,40,.08)}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);line-height:1.48;-webkit-font-smoothing:antialiased}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.35;cursor:not-allowed}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}::selection{background:var(--accent-soft)}
+  .shell{max-width:1520px;margin:0 auto;padding:24px 36px 100px}.topbar{position:sticky;top:12px;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:16px;border:1px solid var(--line-strong);border-radius:18px;background:var(--glass);backdrop-filter:blur(34px) saturate(150%);padding:12px 16px;box-shadow:var(--shadow)}.brand{display:flex;gap:12px;align-items:center;min-width:215px}.brandmark{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line-strong);border-radius:50%;font-size:17px;letter-spacing:-3px;padding-right:3px;color:var(--accent)}.brand-name{font-size:12px;font-weight:770;letter-spacing:.12em}.brand-caption{font-size:10px;color:var(--muted);letter-spacing:.055em;margin-top:3px}.toolbar,.tabs,.segmented{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.segmented{background:rgba(100,100,110,.11);padding:3px;border-radius:11px;border:1px solid var(--line)}.segmented button{border:0;background:transparent;color:var(--muted);padding:8px 12px;border-radius:8px;font-size:12px}.segmented button.active{background:var(--surface2);color:var(--text);box-shadow:0 1px 7px rgba(0,0,0,.09)}.btn{background:transparent;color:var(--text);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px;font-size:12px;min-height:35px;white-space:nowrap}.btn:hover,.chip-btn:hover{background:var(--surface2)}.btn.primary{background:var(--accent);color:var(--bg);border-color:transparent;font-weight:700}.btn.ghost{border-color:transparent;color:var(--muted)}.btn.danger{color:var(--red)}.iconbtn{width:35px;padding:0;font-size:16px}.tabs{margin-top:29px;border-bottom:1px solid var(--line);gap:25px;overflow-x:auto;flex-wrap:nowrap}.tab{padding:0 0 15px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:13px;white-space:nowrap;letter-spacing:.01em}.tab.active{color:var(--text);border-bottom-color:var(--accent)}.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:51px 0 32px}.eyebrow{font-size:10px;color:var(--accent);font-weight:750;letter-spacing:.19em;text-transform:uppercase}.hero h1{font-weight:620;font-size:clamp(32px,4vw,60px);letter-spacing:-.065em;line-height:1.04;margin:12px 0 12px}.hero p{font-size:14px;color:var(--muted);max-width:690px;margin:0}.meta{font-size:11px;color:var(--subtle);white-space:nowrap;text-align:right}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:30px}.metric{padding:18px 20px;border-radius:15px;background:var(--surface);border:1px solid var(--line)}.metric b{font-weight:600;font-size:27px;letter-spacing:-.065em;display:block;line-height:1.15}.metric span{display:block;font-size:11px;color:var(--muted);margin-top:5px}.notice{border-left:2px solid var(--amber);padding:13px 16px;margin:0 0 22px;background:color-mix(in srgb,var(--amber) 6%,transparent);color:var(--muted);font-size:12px;border-radius:0 11px 11px 0}.notice strong{color:var(--text);font-weight:650}.pane{display:none}.pane.active{display:block}.section-head{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:19px}.section-head h2{font-size:20px;letter-spacing:-.035em;font-weight:625;margin:0}.section-head p{margin:4px 0 0;font-size:12px;color:var(--muted)}.timeline-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:36px;align-items:start}.story-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:25px}.story-toolbar select{width:min(270px,100%)}select,input,textarea{background:var(--surface);color:var(--text);border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px;outline:none;font-size:12px;min-height:36px}textarea{min-height:95px;width:100%;resize:vertical}label{font-size:11px;color:var(--muted);display:block;margin:0 0 7px}.timeline{position:relative;padding-left:42px}.timeline:before{content:"";position:absolute;left:13px;top:18px;bottom:28px;width:1px;background:linear-gradient(var(--accent),var(--line-strong) 18%,var(--line-strong) 88%,transparent)}.event{position:relative;margin-bottom:15px;padding:18px 18px 17px;border-radius:15px;border:1px solid var(--line);background:var(--surface);transition:border .2s,background .2s;cursor:pointer}.event:hover{border-color:var(--line-strong)}.event.selected{border-color:var(--accent);background:linear-gradient(115deg,var(--accent-soft),transparent 63%),var(--surface)}.event:before{content:"";position:absolute;left:-37px;top:22px;width:15px;height:15px;background:var(--bg);border:2px solid var(--subtle);border-radius:50%;box-shadow:0 0 0 5px var(--bg)}.event.selected:before{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 5px var(--bg),0 0 22px var(--accent)}.event.drag-over{outline:2px dashed var(--accent)}.event-top{display:flex;align-items:center;gap:10px;margin-bottom:9px}.event-index{color:var(--subtle);font-size:10px;font-variant-numeric:tabular-nums;letter-spacing:.09em}.event-time{font-size:10px;color:var(--subtle);margin-left:auto;font-variant-numeric:tabular-nums}.tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:99px;padding:3px 8px;font-size:10px;color:var(--muted)}.tag.accent{border-color:color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent)}.tag.warn{color:var(--amber)}.drag{border:0;background:transparent;color:var(--subtle);font-size:14px;cursor:grab;padding:0 4px;line-height:1}.event h3{font-weight:620;font-size:16px;letter-spacing:-.02em;margin:0 0 6px}.event p{font-size:12px;color:var(--muted);margin:0 0 13px;line-height:1.55}.event [contenteditable]{border-radius:4px;cursor:text}.event [contenteditable]:focus{background:var(--surface2);outline:1px solid var(--accent);padding:2px 4px;margin:-2px -4px}.effects{display:flex;flex-wrap:wrap;gap:6px}.effect{border-radius:6px;background:var(--surface2);padding:4px 7px;font-size:10px;color:var(--muted)}.effect.audio{color:var(--accent)}.effect.screen{color:var(--blue)}.effect.blocked{color:var(--red)}.event-foot{display:flex;align-items:center;gap:7px;margin-top:12px;font-size:10px;color:var(--subtle)}.event-foot b{font-weight:500}.inspector{position:sticky;top:100px;border:1px solid var(--line-strong);border-radius:18px;background:var(--glass);backdrop-filter:blur(28px);overflow:hidden}.inspector-inner{padding:22px}.inspector-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.inspector h3{font-size:15px;margin:0;letter-spacing:-.02em}.inspector .field{margin:17px 0}.inspector input,.inspector select{width:100%}.inspector .separator{height:1px;background:var(--line);margin:20px 0}.inspector .state-label{font-size:10px;letter-spacing:.12em;color:var(--subtle);margin:0 0 9px}.state-list{display:grid;gap:6px}.state-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:11px;border-bottom:1px solid var(--line);padding:6px 0}.state-row span{color:var(--muted)}.state-row b{font-weight:600;text-align:right;overflow-wrap:anywhere}.deltas{display:flex;flex-wrap:wrap;gap:6px}.delta{font-size:10px;padding:5px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent)}.empty{padding:24px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line-strong);border-radius:14px}.legend{font-size:11px;color:var(--subtle);display:flex;align-items:center;gap:10px;flex-wrap:wrap}.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--accent)}
+  .sim-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:18px}.panel{border:1px solid var(--line);border-radius:18px;padding:24px;background:var(--surface)}.panel-title{font-size:12px;letter-spacing:.13em;color:var(--muted);font-weight:700;margin:0 0 23px}.device{max-width:780px;margin:4px auto 20px;border:1px solid var(--line-strong);padding:30px;border-radius:28px;background:linear-gradient(140deg,var(--surface2),var(--surface));box-shadow:inset 0 1px rgba(255,255,255,.06)}.device-top{display:grid;grid-template-columns:1.25fr 1fr;gap:25px}.mini-display{background:#101719;color:#e4f0e9;border:1px solid #364540;border-radius:10px;min-height:190px;padding:18px;font-variant-numeric:tabular-nums;box-shadow:0 0 25px rgba(68,122,104,.12) inset;display:flex;flex-direction:column;justify-content:space-between}.display-top{font-size:10px;color:#8fbfb0;letter-spacing:.13em;display:flex;justify-content:space-between}.display-world{font-size:33px;font-weight:500;letter-spacing:-.06em;line-height:1.1}.display-sub{font-size:12px;color:#96aaa3}.display-bottom{display:flex;justify-content:space-between;gap:4px;border-top:1px solid #273531;padding-top:10px;font-size:10px;color:#a6bbb3}.encoder-board{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.encoder{display:flex;flex-direction:column;align-items:center;gap:7px}.encoder-knob{display:grid;place-items:center;width:53px;height:53px;border:1px solid var(--line-strong);border-radius:50%;font-size:12px;letter-spacing:.07em;background:radial-gradient(circle at 35% 30%,#555c60,#25292b 65%);color:#f5f5f5;box-shadow:0 5px 15px rgba(0,0,0,.23);cursor:pointer}.encoder small{font-size:10px;color:var(--muted)}.encoder-buttons{display:flex;gap:3px}.encoder-buttons button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:5px;min-width:25px;height:24px;line-height:1;padding:0}.key-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:17px}.key{padding:11px 3px;min-height:47px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface2);font-size:10px;color:var(--text);letter-spacing:.02em;position:relative}.key.active:before{content:"";position:absolute;top:5px;right:7px;width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 9px var(--accent)}.key.locked{opacity:.45}.key.shifted{background:var(--accent-soft);border-color:var(--accent)}.machine-status{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:20px}.readout{padding:14px;background:var(--surface2);border-radius:10px}.readout span{font-size:10px;color:var(--muted)}.readout b{display:block;font-size:14px;letter-spacing:-.025em;margin-top:6px;font-weight:600}.log-list{display:flex;flex-direction:column;gap:10px;max-height:330px;overflow-y:auto}.log{padding:10px 12px;border-left:2px solid var(--line-strong);background:var(--surface2);border-radius:0 8px 8px 0;font-size:11px}.log b{display:block;margin-bottom:3px}.log span{color:var(--muted)}.sim-actions{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px}.sim-actions button{font-size:11px}.kbd-note{font-size:11px;color:var(--subtle);margin-top:15px}
+  .matrix-scroll{overflow:auto;border:1px solid var(--line);border-radius:16px}.data-table{width:100%;border-collapse:collapse;min-width:880px;font-size:12px}.data-table th{text-align:left;font-size:10px;letter-spacing:.075em;text-transform:uppercase;font-weight:650;color:var(--muted);padding:14px 13px;background:var(--surface2);position:sticky;top:0}.data-table td{padding:13px;border-top:1px solid var(--line);vertical-align:top}.data-table tr:hover td{background:var(--accent-soft)}.data-table td:first-child{color:var(--subtle);font-variant-numeric:tabular-nums}.data-table select,.data-table input{padding:5px 7px;min-height:28px;font-size:11px;width:100%;background:transparent;border-color:transparent}.data-table td:focus-within input,.data-table td:focus-within select{border-color:var(--accent)}.table-tools{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px}.table-tools input{min-width:230px}.status-pill{font-size:10px;border-radius:6px;padding:4px 7px;white-space:nowrap;background:var(--accent-soft);color:var(--accent)}.status-pill.missing{background:color-mix(in srgb,var(--amber) 12%,transparent);color:var(--amber)}.status-pill.auto{background:var(--surface2);color:var(--muted)}.page-matrix{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.page-card{padding:18px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}.page-card h3{margin:0 0 11px;font-size:14px;letter-spacing:.02em}.slot-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.page-card input{width:100%;min-width:0}.page-card label{margin:0 0 4px}.decisions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.decision{border:1px solid var(--line);border-radius:15px;padding:20px;background:var(--surface)}.decision .number{font-size:10px;color:var(--accent);letter-spacing:.12em;margin-bottom:10px}.decision h3{font-size:14px;line-height:1.4;font-weight:600;margin:0 0 12px}.decision textarea{min-height:58px}.decision .bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px}.decision select{width:132px}.keyline{height:1px;background:var(--line);margin:24px 0}.footer{margin-top:80px;padding-top:24px;border-top:1px solid var(--line);font-size:11px;color:var(--subtle);display:flex;justify-content:space-between;gap:15px}.hidden{display:none!important}
+  @media(max-width:1150px){.timeline-layout{grid-template-columns:minmax(0,1fr) 290px;gap:18px}.shell{padding:14px 22px 70px}.toolbar .minor{display:none}.topbar{position:relative;top:0}.device{padding:19px}.device-top{gap:12px}}@media(max-width:870px){.timeline-layout,.sim-grid{grid-template-columns:1fr}.inspector{position:relative;top:0}.hero{padding-top:32px}.meta{display:none}.page-matrix,.decisions{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{flex-wrap:wrap}.brand{min-width:auto}.device-top{grid-template-columns:1fr 1fr}}@media(max-width:530px){.shell{padding:12px 13px 50px}.topbar{padding:10px}.topbar .toolbar{width:100%;justify-content:space-between}.hero h1{font-size:37px}.metrics{gap:7px}.metric{padding:13px}.tabs{gap:16px}.timeline{padding-left:29px}.timeline:before{left:7px}.event:before{left:-28px;width:12px;height:12px}.event{padding:15px}.device{padding:12px}.device-top{grid-template-columns:1fr}.mini-display{min-height:150px}.encoder-knob{width:43px;height:43px}.key-row{gap:4px}.key{font-size:9px;min-height:42px}.panel{padding:16px}}
+  @media print{body{background:white!important;color:#101010!important}.topbar,.tabs,.story-toolbar,.inspector,.footer,.no-print{display:none!important}.shell{max-width:none;padding:0}.hero{padding:15px 0}.pane{display:none!important}#pane-timeline{display:block!important}.timeline-layout{display:block}.event{break-inside:avoid;background:white!important;color:black!important;border-color:#ddd!important}.event p,.event-foot,.event-index,.event-time{color:#666!important}.timeline:before{background:#ccc}.event:before{background:white;box-shadow:none}.metrics{grid-template-columns:repeat(4,1fr)}.metric{background:#f7f7f7!important;color:#111!important}.notice{color:#333!important}*{box-shadow:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><div class="brandmark">◒</div><div><div class="brand-name">AMBIENT <span style="font-weight:350;letter-spacing:0">/ STATE ATLAS</span></div><div class="brand-caption">INTERACTION SYSTEM · EDITABLE V2 · MIT WORLDS-KONZEPT</div></div></div>
+    <div class="segmented" role="group" aria-label="Belegungsmodus"><button id="mode-current" class="active" onclick="setMode('current')">IST · V3.7</button><button id="mode-future" onclick="setMode('future')">KONZEPT · B</button><button id="mode-worlds" onclick="setMode('worlds')">KONZEPT · WORLDS</button></div>
+    <div class="toolbar">
+      <button class="btn ghost minor" onclick="downloadJSON()">↓ JSON</button>
+      <button class="btn ghost minor" onclick="document.getElementById('import-file').click()">↑ Import</button>
+      <button class="btn ghost minor" onclick="window.print()">Drucken</button>
+      <button class="btn iconbtn" aria-label="Darstellung wechseln" title="Hell/Dunkel" onclick="toggleTheme()">◐</button>
+      <button class="btn primary" onclick="downloadHTML()">HTML sichern ↗</button>
+    </div>
+    <input id="import-file" class="hidden" type="file" accept=".json,application/json" onchange="importJSON(event)">
+  </header>
+  <nav class="tabs" aria-label="Bereiche">
+    <button class="tab active" data-tab="timeline" onclick="setTab('timeline')">01 &nbsp;Zustands-Timeline</button>
+    <button class="tab" data-tab="simulator" onclick="setTab('simulator')">02 &nbsp;Live-Simulator</button>
+    <button class="tab" data-tab="mapping" onclick="setTab('mapping')">03 &nbsp;Encoder & Seiten</button>
+    <button class="tab" data-tab="catalog" onclick="setTab('catalog')">04 &nbsp;44 Funktionen</button>
+    <button class="tab" data-tab="decisions" onclick="setTab('decisions')">05 &nbsp;Offene Fragen</button>
+  </nav>
+  <section class="hero"><div><div class="eyebrow">The sound of interaction</div><h1>Jede Geste.<br>Ein Zustand.</h1><p>Vom Einschalten über Cells, SHIFT, HOLD und GENERATE bis zu Szenen, Effekten und Sleep: Ein linearer, bearbeitbarer Ablauf mit sichtbarem Vorher und Nachher.</p></div><div class="meta">SOURCE · FIRMWARE V3.7<br>08 NOV 2026 · 18 SEITEN<br>LOCAL-FIRST · OFFLINE</div></section>
+  <div class="metrics"><div class="metric"><b>44</b><span>Funktionen laut Matrix</span></div><div class="metric"><b>15</b><span>Engine-Funktionen ohne Zugriff (IST)</span></div><div class="metric"><b>08</b><span>UI-Bildschirmtypen</span></div><div class="metric"><b>09</b><span>offene Produktentscheidungen</span></div></div>
+  <div id="mode-notice" class="notice"></div>
+  <main>
+    <section id="pane-timeline" class="pane active">
+      <div class="section-head"><div><h2>Linearer Ablauf</h2><p>Ein Ereignis pro Karte. Der Zustand wird Schritt für Schritt neu berechnet.</p></div><div class="legend"><span class="legend-dot"></span> Ausgewählter Zustand <span>·</span> Karten direkt editierbar</div></div>
+      <div class="timeline-layout">
+        <div>
+          <div class="story-toolbar no-print"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select id="scenario-select" aria-label="Szenario" onchange="changeScenario(this.value)"></select><button class="btn" onclick="addStep()">+ Schritt</button></div><div style="display:flex;gap:6px;align-items:center"><button class="btn iconbtn" onclick="stepSelection(-1)" title="Vorheriger Schritt">‹</button><button class="btn iconbtn" onclick="stepSelection(1)" title="Nächster Schritt">›</button><button class="btn" onclick="duplicateScenario()">Szenario duplizieren</button></div></div>
+          <div id="timeline" class="timeline"></div>
+          <div class="no-print" style="margin:20px 0 0 42px"><button class="btn" onclick="addStep()">+ Weiteres Ereignis hinzufügen</button></div>
+        </div>
+        <aside id="inspector" class="inspector no-print"></aside>
+      </div>
+    </section>
+    <section id="pane-simulator" class="pane">
+      <div class="section-head"><div><h2>Live-Simulator</h2><p>Bedienelemente ausprobieren und die Zustandsänderungen beobachten. Kein Audioplayer und keine Firmware-Emulation.</p></div><button class="btn" onclick="resetSimulator()">↺ Simulationszustand zurücksetzen</button></div>
+      <div class="sim-grid">
+        <div class="panel"><p class="panel-title">FRONT PANEL · INTERACTION TEST</p><div class="device"><div class="device-top"><div id="sim-screen" class="mini-display"></div><div class="encoder-board" id="sim-encoders"></div></div><div class="key-row" id="sim-modifiers"></div><div class="key-row" id="sim-cells"></div></div><p class="kbd-note">EN3: kurz = Menü-Bearbeitung (IST) bzw. START (Konzept). Lang = Szenen-Browser (IST). SHIFT ist hier als Haltesimulation einrastend. Encoder-„−/+“ sind ein Schritt; große Werte können im Ablauf editiert werden.</p><div class="sim-actions" id="sim-extra"></div></div>
+        <div class="panel"><p class="panel-title">LIVE STATE · NACH DER LETZTEN AKTION</p><div id="sim-readout" class="machine-status"></div><div class="keyline"></div><p class="panel-title">EREIGNISPROTOKOLL</p><div id="sim-log" class="log-list"></div></div>
+      </div>
+    </section>
+    <section id="pane-mapping" class="pane">
+      <div class="section-head"><div><h2>Encoder & Bildschirm-Seiten</h2><p id="mapping-sub">Die geplante Belegung ist hier vollständig sichtbar und frei editierbar.</p></div></div>
+      <div class="notice"><strong>Wichtig:</strong> Die Seitenmatrix ist ein <strong>Vorschlag</strong> aus PDF-Seiten 16–17. Ihre Textfelder sind editierbar; diese Änderungen aktualisieren die Dokumentation, nicht die tatsächliche Firmware. Der Simulator verwendet die vorgeschlagenen Standardrollen.</div>
+      <div class="page-matrix" id="page-matrix"></div>
+      <div class="section-head" style="margin-top:45px"><div><h2>Bildschirm-Zustände</h2><p>Acht Ansichten aus der PDF, mit Trigger, Rückweg und Dauer.</p></div></div>
+      <div class="matrix-scroll"><table class="data-table"><thead><tr><th>Bildschirm</th><th>Trigger</th><th>Inhalt</th><th>Ende / Dauer</th></tr></thead><tbody>
+        <tr><td>01</td><td><b>START</b><br>Grundzustand</td><td>World, Key/Tuning, aktive Modi, Akku</td><td>dauerhaft</td></tr>
+        <tr><td>02</td><td><b>WERT-OVERLAY</b><br>Encoder bewegt / Wert ändert sich</td><td>Parametername, Wert, Balken</td><td>nach 1,2 s</td></tr>
+        <tr><td>03</td><td><b>MENÜ / SEITE</b><br>EN3</td><td>Einträge und Werte</td><td>bis zur Rückkehr</td></tr>
+        <tr><td>04</td><td><b>SZENEN-BROWSER</b><br>EN3 lang (IST)</td><td>Slots 1–5, belegt/leer/aktiv</td><td>EN3 kurz / spätestens nach 8 s</td></tr>
+        <tr><td>05</td><td><b>HINWEIS</b><br>abgelehnte Note</td><td>z. B. VOICES FULL</td><td>1,2–1,8 s</td></tr>
+        <tr><td>06</td><td><b>STATUS</b><br>EN4 lang</td><td>Akku %, USB, PHONES/SPEAKERS</td><td>2 s</td></tr>
+        <tr><td>07</td><td><b>RUHEMODUS</b><br>15 min inaktiv</td><td>Display + LEDs dunkel</td><td>bis zur nächsten Eingabe</td></tr>
+        <tr><td>08</td><td><b>MESSMODUS</b><br>CELL1 beim Einschalten</td><td>Last pro Welt / Messwerte</td><td>bis Ausschalten</td></tr>
+      </tbody></table></div>
+      <div class="section-head" style="margin-top:45px"><div><h2>Bildschirm-Zustände · KONZEPT WORLDS</h2><p>Zehn Bilder, nur eines davon ist eine Liste. Vorschlag vom 13.11.2026; keine Akku-Anzeige.</p></div></div>
+      <div class="matrix-scroll"><table class="data-table"><thead><tr><th>#</th><th>Bild / Trigger</th><th>Inhalt</th><th>Ende / Dauer</th></tr></thead><tbody>
+        <tr><td>01</td><td><b>ORT</b><br>Grundzustand</td><td>Animiertes Bild der World (aus Formeln, 320 × 100), Name, Grundton, Licht, aktive Modi</td><td>dauerhaft</td></tr>
+        <tr><td>02</td><td><b>WERT</b><br>Encoder gedreht</td><td>Großer Wert mit Bogen über dem gedimmten Bild</td><td>1,2 s nach der letzten Raste</td></tr>
+        <tr><td>03</td><td><b>EBENE</b><br>Modifier gehalten</td><td>Die vier Encoder mit Namen und Werten dieser Ebene</td><td>beim Loslassen</td></tr>
+        <tr><td>04</td><td><b>WELTWAHL</b><br>EN1 gedreht</td><td>Name groß, Nachbarn, Platz n/16, Akzentfarbe; Klang wechselt nach 0,4 s Ruhe</td><td>0,4 s nach der letzten Raste</td></tr>
+        <tr><td>05</td><td><b>SZENEN</b><br>EN1 gehalten</td><td>Fünf Plätze mit den Namen der gespeicherten Worlds</td><td>beim Loslassen</td></tr>
+        <tr><td>06</td><td><b>WERTE</b><br>EN3 kurz</td><td>Alle Werte der World auf einen Blick</td><td>3 s oder EN3</td></tr>
+        <tr><td>07</td><td><b>SETUP</b><br>EN3 lang</td><td>Liste: Stimmung, Helligkeit, Ruhezeit, MIDI, Version</td><td>EN3 lang oder 10 s</td></tr>
+        <tr><td>08</td><td><b>HINWEIS</b><br>Ton abgelehnt / Ausgang gewechselt</td><td>Ein Wort, z. B. PHONES</td><td>1,2 s</td></tr>
+        <tr><td>09</td><td><b>RUHE</b><br>15 min ohne Eingabe</td><td>Display und LEDs dunkel; der Klang läuft weiter</td><td>erste Eingabe weckt nur</td></tr>
+        <tr><td>10</td><td><b>MESSMODUS</b><br>CELL1 beim Einschalten</td><td>Rechenlast je World</td><td>bis Ausschalten</td></tr>
+      </tbody></table></div>
+    </section>
+    <section id="pane-catalog" class="pane">
+      <div class="section-head"><div><h2>Vollständige Funktionsmatrix</h2><p>Alle 44 Funktionen aus der PDF, inklusive Startwert, altem Zugriff, geplantem Ort und Szenen-Speicherung.</p></div></div>
+      <div class="table-tools"><input id="catalog-search" placeholder="Funktion, Belegung oder Gruppe suchen …" oninput="renderCatalog()" aria-label="Funktionskatalog durchsuchen"><div class="segmented" id="catalog-filter"><button class="active" onclick="setCatalogFilter('all')">Alle</button><button onclick="setCatalogFilter('missing')">Ohne Zugriff</button><button onclick="setCatalogFilter('play')">Spielen</button><button onclick="setCatalogFilter('system')">System</button></div></div>
+      <div class="matrix-scroll"><table class="data-table"><thead><tr><th>#</th><th>Funktion</th><th>Bereich / Start</th><th>IST · Zugriff</th><th>KONZEPT B</th><th>WORLDS · Urteil</th><th>WORLDS · Griff</th><th>Szene</th><th>Status</th></tr></thead><tbody id="catalog-body"></tbody></table></div>
+      <p class="kbd-note">Klicke auf ein Textfeld, um Funktion, Werte, Zugriff oder geplante Belegung zu ändern. Exportiere danach JSON oder eine HTML-Kopie.</p>
+    </section>
+    <section id="pane-decisions" class="pane">
+      <div class="section-head"><div><h2>Vor Implementierung entscheiden</h2><p>Neun offene Fragen aus der PDF. Vorschläge lassen sich überschreiben und als entschieden markieren.</p></div></div>
+      <div id="decisions" class="decisions"></div>
+      <div class="notice" style="margin-top:20px"><strong>Quellenkonflikte und Annahmen:</strong> SHIFT/HOLD-LED-Farben widersprechen laut PDF der Mechanik-Doku. Das Verhalten von HOLD beim Ausschalten, CLEAR-Shift in aktiver GENERATE-Session und dem ersten Eingabeereignis nach Sleep ist nicht eindeutig spezifiziert. Der Simulator markiert vereinfachte Annahmen und ersetzt keine Prüfung am Firmware-Code.</div>
+    </section>
+  </main>
+  <footer class="footer"><span>AMBIENT STATE ATLAS · Basierend auf „Bedienung, Funktionsmatrix und UI“, Stand 08.11.2026 · WORLDS-Konzept ergänzt am 13.11.2026</span><span id="save-status">Änderungen werden lokal gespeichert.</span></footer>
+</div>
+<script id="embedded-data" type="application/json"></script>
+<script>
+/* AMBIENT State Atlas — completely standalone; no external libraries or network. */
+const WORLD_NAMES=['COAST','WOODLAND','HIGHLANDS','WELT 4','WELT 5','WELT 6']; // PDF confirms six worlds but explicitly names only COAST; the other names are not an authoritative list.
+// WORLDS-Konzept (Schritt 1, 13.11.2026): Vorschlag aus docs/worlds/world_candidates.json, nichts davon ist Firmware.
+const W16=[['ATLANTIC','Brandungs-Atem','#9ACDD3'],['WOODLAND','Resonanzholz','#9DC19D'],['HIGHLANDS','Bergecho','#C4BAA4'],['FJORD','Vokal-Morph','#8098C8'],['MEADOW','Rückwärts-Band','#D6C684'],['ICEFIELDS','Shimmer','#C8D2EC'],['CAVE','Tropfstein-Echo','#7E8FA6'],['DUNES','Sandkorn-Wolke','#DDB06A'],['JUNGLE','Schwebung','#86B84F'],['ISLANDS','Lagune','#45C4C0'],['MOORLAND','Nebel','#B9A7B6'],['AURORA','Nordlicht-Vorhang','#7DF0C2'],['BLACKFOREST','Waldstille','#5F8F7A'],['VOLCANO','Glutflackern','#F0874A'],['CANYONS','Hitzeflimmern','#CC8F78'],['GRASSLANDS','Sternenlauf','#8272F2']];
+const W16_NAMES=W16.map(w=>w[0]);
+const wInfo=n=>W16.find(w=>w[0]===n)||W16[0];
+const LAYERS={'':['World','Farbe','Raum'],SHIFT:['Grundton','Signatur','Echo'],DRONE:['Drone-Farbe','Drone-Pegel','Natur'],GENERATE:['Dichte','—','—'],HOLD:['Attack','Release','—'],EN1:['—','—','—']};
+const LAYER_PRESS={'':['Licht hell/dunkel','Signatur an/aus','Werte zeigen · lang: Setup'],SHIFT:['—','—','—'],DRONE:['—','—','—'],GENERATE:['—','—','—'],HOLD:['—','—','—'],EN1:['Cell = Szene laden','SHIFT + Cell = speichern','—']};
+const LAYER_TITLE={'':'GRUNDEBENE',SHIFT:'SHIFT GEHALTEN',DRONE:'DRONE GEHALTEN · die Betten',GENERATE:'GENERATE GEHALTEN',HOLD:'HOLD GEHALTEN · die Hülle',EN1:'EN1 GEHALTEN · Szenen'};
+const W_VERDICT={1:['behalten','Cells'],2:['behalten','SHIFT + Cell'],3:['behalten','HOLD · halten+drehen = Hülle'],4:['behalten','DRONE · halten+drehen = Betten'],5:['ändern','GENERATE · Cells spielen mit'],6:['behalten','SHIFT + GENERATE'],7:['streichen','—'],8:['ändern','SHIFT + HOLD'],9:['behalten','CLEAR'],10:['behalten','SHIFT + CLEAR'],11:['behalten','EN4 immer'],12:['behalten','EN4 drücken'],13:['ändern','EN1 immer · 16 Worlds'],14:['ändern','SHIFT + EN1'],15:['ändern','gehört zur World · Setup: alles gleichstufig'],16:['ändern','EN1 drücken · „Licht“'],17:['behalten','EN2 · „Farbe“'],18:['ändern','HOLD halten + EN1'],19:['ändern','HOLD halten + EN2'],20:['ändern','GENERATE halten + EN1 · „Dichte“'],21:['behalten','EN3 · „Raum“'],22:['streichen','— (Raum 0 = trocken)'],23:['streichen','— (Wert der World)'],24:['ändern','DRONE halten + EN3 · SHIFT + DRONE an/aus'],25:['ändern','DRONE halten + EN1'],26:['ändern','DRONE halten + EN2'],27:['ändern','SHIFT + EN3 · „Echo“'],28:['streichen','— (Wert der World)'],29:['streichen','— (folgt Echo)'],30:['streichen','— (Signatur / Freeze)'],31:['streichen','— (Wert der World)'],32:['streichen','— (Wert der World)'],33:['streichen','— (fremde Töne)'],34:['streichen','— (AURORA-Signatur)'],35:['streichen','— (Wert der World)'],36:['streichen','— (nicht fertig)'],37:['ändern','EN1 halten + Cell'],38:['ändern','SHIFT + EN1 halten + Cell'],39:['ändern','Setup'],40:['streichen','— (kein Akku)'],41:['behalten','automatisch'],42:['behalten','automatisch'],43:['behalten','automatisch · Klang läuft weiter'],44:['behalten','Service beim Einschalten']};
+const W_DECISIONS=['Ja. EN4 ist in jedem Zustand Lautstärke, auch mit gehaltenem Modifier.','Ebenen durch Halten: SHIFT, DRONE, GENERATE oder HOLD halten und drehen. Nur das Setup ist eine Liste (EN3 lang).','Drei: World (EN1), Farbe (EN2), Raum (EN3).','Drei Makros: Raum, Echo, Signatur. Die Feinwerte gehören zur World.','Weder noch: EN1 halten + Cell lädt, mit SHIFT speichert.','Vorerst nein. Später als Eigenschaft einer World, nicht als Modus.','Ja, als „Licht“ auf EN1 drücken: dieselben fünf Töne, anderer Grundton.','Das Bild zuerst. Zahlen und Bögen erscheinen beim Drehen darüber.','Helligkeit statt Farbe: an = hell, eingerastet = atmend. LED-Farbe der Modifier: UNVERIFIED — NEEDS HUMAN CHECK.'];
+const MENU=['World','Key','Tuning','Room','Nature','Activity','FX','Attack','Release'];
+const PAGE_NAMES=['START','WELT','RAUM','HÜLLE','SPIEL','DRONE','ECHO','GRAIN','TEXTUR','SZENEN'];
+const ACTIONS=[
+ ['boot','Einschalten'],['shift','SHIFT ein/aus'],['cellDown','Cell drücken'],['cellUp','Cell loslassen'],['hold','HOLD umschalten'],['drone','DRONE umschalten'],['generate','GENERATE umschalten'],['newField','SHIFT + GENERATE · neues Feld'],['loop','SHIFT + HOLD · Loop-Zyklus'],['clear','CLEAR · Vollstopp'],['clearVoices','SHIFT + CLEAR · Stimmen leeren'],['noopEn1','EN1 · DRIVE 0 (ohne Wirkung)'],
+ ['menuOpen','EN3 · Menü öffnen'],['menuSelect','EN3 · Menüeintrag wählen'],['menuEnter','EN3 · Eintrag bearbeiten'],['menuValue','EN3 · Menüwert ändern'],['menuBack','EN3 · zurück'],['menuClose','Menü verlassen'],['browserOpen','EN3 lang · Szenen-Browser'],['sceneLoad','Cell · Szene laden'],['sceneSave','SHIFT + Cell · Szene speichern'],['volume','EN4 · Lautstärke'],['mute','EN4 drücken · Stumm'],['color','EN2 · Color'],['brightness','SHIFT + EN3 · Helligkeit'],['outputStatus','EN4 lang · Akku/Output'],['setParam','Klangwert direkt setzen'],
+ ['worldSet','EN1 drehen · World'],['light','EN1 drücken · Licht'],['sigToggle','EN2 drücken · Signatur an/aus'],['layer','Taste halten/loslassen (Ebene)'],['layerTurn','Encoder in der Ebene (EN=Wert)'],['freeze','SHIFT + HOLD · Freeze'],['natureToggle','SHIFT + DRONE · Natur an/aus'],['showValues','EN3 drücken · Werte zeigen'],['setup','EN3 lang · Setup'],['sceneGo','EN1 halten + Cell · Szene'],
+ ['page','EN3 drehen · Seite'],['encoder1','EN1 drehen · Seitenwert 1'],['encoder2','EN2 drehen · Seitenwert 2'],['shiftEncoder1','SHIFT+EN1 · Wert 3'],['shiftEncoder2','SHIFT+EN2 · Wert 4'],['press1','EN1 drücken · Seitenschalter 1'],['press2','EN2 drücken · Seitenschalter 2'],['press3','EN3 drücken · START'],['wait','Zeit vergeht (Sekunden)'],['wake','Aufwecken · Eingabe'],['jack','Kopfhörer ein/aus'],['midi','MIDI verbunden/getrennt'],['powerOff','Ausschalten'],['service','Messmodus beim Boot']
+];
+const ACT_LABEL=Object.fromEntries(ACTIONS);
+const SEED_FUNCTIONS=[
+ [1,'Cells 1–5 spielen','Aktion · 5 Skalentöne','–','Cells','Cells','–','Spielen','ready'],
+ [2,'Obere Lage','SHIFT + Cell','–','SHIFT + Cell','SHIFT + Cell','–','Spielen','ready'],
+ [3,'HOLD','Schalter','aus','HOLD','HOLD','nein','Spielen','ready'],
+ [4,'DRONE','Schalter','aus','DRONE','DRONE','nein','Spielen','ready'],
+ [5,'GENERATE','Schalter','aus','GENERATE','GENERATE','Start','Spielen','ready'],
+ [6,'Neues Feld','Aktion','–','SHIFT + GENERATE','SHIFT + GENERATE','Start','Spielen','ready'],
+ [7,'Gesten-Loop','REC → LOOP → AUS','aus','SHIFT + HOLD','SHIFT + HOLD','(ja)','Spielen','ready'],
+ [8,'Freeze','Schalter · nur mit Grain','aus','—','GRAIN · EN1 drücken','nein','Spielen','missing'],
+ [9,'CLEAR','Vollstopp','–','CLEAR','CLEAR','–','Spielen','ready'],
+ [10,'Stimmen leeren','Aktion','–','SHIFT + CLEAR','SHIFT + CLEAR','–','Spielen','ready'],
+ [11,'Lautstärke','0–100 %','30 %','EN4 drehen','EN4 immer','nein','Spielen','ready'],
+ [12,'Stumm','Schalter','aus','EN4 drücken','EN4 drücken','nein','Spielen','ready'],
+ [13,'World','6 Welten','COAST','EN3-Menü','WELT · EN1','ja','Klang','ready'],
+ [14,'Key','12 Stufen C–B','D','EN3-Menü','WELT · EN2','ja','Setup','ready'],
+ [15,'Tuning','Equal / Just','Equal','EN3-Menü','WELT · SHIFT+EN1','ja','Setup','ready'],
+ [16,'Dur / Moll','2 Stufen','Dur','—','WELT · SHIFT+EN2','ja','Setup','missing'],
+ [17,'Color','dunkel … hell','50 %','EN2 drehen','START · EN2','ja','Klang','ready'],
+ [18,'Attack','0–100 %','50 %','EN3-Menü','HÜLLE · EN1','ja','Klang','ready'],
+ [19,'Release','0–100 %','50 %','EN3-Menü','HÜLLE · EN2','ja','Klang','ready'],
+ [20,'Activity','0–100 %','50 %','EN3-Menü','SPIEL · EN1','ja','Klang','ready'],
+ [21,'Room','0–100 %','50 %','EN3-Menü','START/RAUM · EN1','ja','Klang','ready'],
+ [22,'Hall an/aus','Dry / Room','Room','EN3-Menü · FX','RAUM · EN1 drücken','ja','Klang','ready'],
+ [23,'Plate','Schalter','an','—','RAUM · EN2 drücken','(ja)','Klang','missing'],
+ [24,'Nature','0–100 %','0 %','EN3-Menü','RAUM · EN2','ja','Klang','ready'],
+ [25,'Drone-Farbe','Auto + 7 Stufen','Auto','—','DRONE · EN1','nein','Klang','missing'],
+ [26,'Drone-Pegel','−12 … +6 dB','0 dB','—','DRONE · EN2','nein','Klang','missing'],
+ [27,'Delay','0–100 %','16 %','—','ECHO · EN1','(ja)','Klang','missing'],
+ [28,'Delay-Zeit L/R','40–700 ms je Kanal','210/267 ms','—','ECHO · SHIFT+EN1/2','(ja)','Setup','missing'],
+ [29,'Feedback','0–50 %','32 %','—','ECHO · EN2','(ja)','Klang','missing'],
+ [30,'Grain','0–100 %','12 %','—','GRAIN · EN1','(ja)','Klang','missing'],
+ [31,'Grain-Größe','40–260 ms','186 ms','—','GRAIN · EN2','(ja)','Setup','missing'],
+ [32,'Drive','0–100 %','4 %','—','TEXTUR · EN1','(ja)','Klang','missing'],
+ [33,'Crush','0–100 %','0 %','—','TEXTUR · EN2','(ja)','Klang','missing'],
+ [34,'Phaser','0–100 %','0 %','—','TEXTUR · SHIFT+EN1','(ja)','Klang','missing'],
+ [35,'Phaser-Tempo','0,01–0,5 Hz','0,07 Hz','—','TEXTUR · SHIFT+EN2','(ja)','Setup','missing'],
+ [36,'Cell-Modus','Note / Harmony / Landscape','Note','—','SPIEL · EN2','nein','Setup','missing'],
+ [37,'Szene laden','5 Plätze','–','EN3 lang → Cell','SZENEN · Cell','–','Spielen','ready'],
+ [38,'Szene speichern','5 Plätze','–','EN3 lang → SHIFT+Cell','SZENEN · SHIFT+Cell','–','Setup','ready'],
+ [39,'Display-Helligkeit','10–100 %','70 %','SHIFT + EN3 drehen','SHIFT + EN3 drehen','nein','Setup','ready'],
+ [40,'Akku und Ausgang','Anzeige','–','EN4 lang','EN4 lang','–','Setup','ready'],
+ [41,'Kopfhörer-Erkennung','automatisch','–','Buchse','automatisch','–','Auto','auto'],
+ [42,'MIDI-Out','automatisch · Cells','–','Buchse','automatisch','–','Auto','auto'],
+ [43,'Ruhemodus','nach 15 min','–','automatisch','automatisch','–','Auto','auto'],
+ [44,'Messmodi','CELL1 / CELL1+2 beim Boot','–','Service beim Einschalten','Service beim Einschalten','–','Service','auto']
+,
+ [45,'Signatur-Menge','0–100 %','50 %','—','—','ja','Klang','missing'],
+ [46,'Signatur an/aus','Schalter','an','—','—','ja','Klang','missing'],
+ [47,'Natur an/aus','Schalter','aus','—','—','ja','Klang','missing'],
+ [48,'Werte zeigen','Einblendung 3 s','–','—','—','–','Setup','missing'],
+ [49,'Setup','Liste · 5 Einträge','–','—','—','–','Setup','missing']
+].map(r=>({id:r[0],name:r[1],range:r[2],start:r[3],current:r[4],future:r[5],scene:r[6],group:r[7],status:r[8],verdict:(W_VERDICT[r[0]]||['neu',''])[0],worlds:(W_VERDICT[r[0]]||['neu',{45:'SHIFT + EN2',46:'EN2 drücken',47:'SHIFT + DRONE',48:'EN3 drücken',49:'EN3 lang'}[r[0]]])[1]}));
+const SEED_PAGES=[
+ ['START','Room','Color','—','—','—','—'],
+ ['WELT','World','Key','Tuning','Dur/Moll','—','—'],
+ ['RAUM','Room','Nature','—','—','Hall an/aus','Plate an/aus'],
+ ['HÜLLE','Attack','Release','—','—','—','—'],
+ ['SPIEL','Activity','Cell-Modus','—','—','Neues Feld','—'],
+ ['DRONE','Farbe','Pegel','—','—','—','—'],
+ ['ECHO','Delay','Feedback','Zeit L','Zeit R','—','—'],
+ ['GRAIN','Grain','Größe','—','—','Freeze','—'],
+ ['TEXTUR','Drive','Crush','Phaser','Tempo','—','—'],
+ ['SZENEN','—','—','—','—','Cell laden','SHIFT + Cell speichern']
+].map(r=>({name:r[0],en1:r[1],en2:r[2],shift1:r[3],shift2:r[4],press1:r[5],press2:r[6]}));
+const SEED_DECISIONS=[
+ ['Lautstärke immer auf EN4?','Ja, EN4 in allen Zuständen ausschließlich für Lautstärke'],
+ ['Grundmodell: Liste, Seiten oder SHIFT-Ebene?','Weg B: EN3 wählt Seiten, EN1/EN2 ändern Werte'],
+ ['Welche zwei Werte direkt auf START?','Room (EN1) und Color (EN2)'],
+ ['Effekte: 11 Werte oder Makros?','Zunächst alle auf ECHO, GRAIN und TEXTUR'],
+ ['Szenen über Langdruck oder eigene Seite?','Eigene SZENEN-Seite'],
+ ['Harmony und Landscape anbieten?','Ja, sobald Harmony/Motif produktionsreif sind'],
+ ['Dur/Moll direkt bedienbar machen?','Ja, SHIFT + EN2 auf WELT'],
+ ['Zahlen/Bögen oder Bild-Szene pro Seite?','Zuerst klare Zahlen und Bögen, Bilder später'],
+ ['Welche LED-Farben gelten für Modifier?','Hardware und Firmware konsistent festlegen']
+].map((r,i)=>({id:i+1,question:r[0],answer:r[1],recommend:W_DECISIONS[i],status:'open'}));
+let uid=0;function step(action,title,value='',note='',group='Interaktion'){return{id:'s'+(++uid),action,title,value:String(value),note,group};}
+const SEED_SCENARIOS=[
+ {id:'basics',mode:'both',title:'01 · Spielstart & Prioritäten',steps:[
+ step('boot','Einschalten','','Home erscheint; Standardwerte werden geladen.','System'),
+ step('cellDown','Cell 1 drücken','1','Note der aktuellen Skala erklingt nur während des Haltens.','Spielen'),
+ step('cellUp','Cell 1 loslassen','1','Ausklang entsprechend Release.','Spielen'),
+ step('shift','SHIFT halten','on','Modifier-Ebene aktiv, solange SHIFT physisch gehalten wird.','Modifier'),
+ step('cellDown','Cell 2 · obere Lage','2','SHIFT verschiebt die Cell in die obere Lage.','Spielen'),
+ step('cellUp','Cell 2 loslassen','2','','Spielen'),
+ step('shift','SHIFT loslassen','off','Zurück zur Grundebene.','Modifier'),
+ step('hold','HOLD einschalten','','Cells rasten nun ein, statt nur beim Halten zu klingen.','Modus'),
+ step('cellDown','Cell 3 einrasten','3','Gleiche Cell erneut drücken, um diesen Ton auszuschalten.','Spielen'),
+ step('drone','DRONE einschalten','','Tiefer Klangteppich folgt Tonart und Welt.','Modus'),
+ step('generate','GENERATE einschalten','','Autopilot spielt; Cells und HOLD sind in diesem Modus gesperrt.','Modus'),
+ step('cellDown','Cell 4 versuchen','4','Soll blockiert werden, solange GENERATE aktiv ist.','Gesperrt'),
+ step('newField','Neues Feld starten','','SHIFT + GENERATE ändert den Start des Autopiloten.','Modus'),
+ step('generate','GENERATE ausschalten','','Direktes Cell-Spiel ist wieder zugänglich.','Modus'),
+ step('clear','CLEAR · alles aus','','Vollstopp: Stimmen klingen natürlich aus; Modi gehen aus.','Reset')
+ ]},
+ {id:'loop',mode:'both',title:'02 · Gesture Loop & Clear',steps:[
+ step('boot','Einschalten','','Startzustand.','System'),
+ step('loop','SHIFT + HOLD → REC','','Cell-Events aufzeichnen, kein Audio.','Loop'),
+ step('cellDown','Cell 1 spielen','1','Anschlag wird als Geste gespeichert.','Loop'),
+ step('cellUp','Cell 1 loslassen','1','','Loop'),
+ step('cellDown','Cell 4 spielen','4','Weitere Geste für den Loop.','Loop'),
+ step('cellUp','Cell 4 loslassen','4','','Loop'),
+ step('loop','SHIFT + HOLD → LOOP','','Aufgezeichnete Gesten mit aktueller Welt / Klang wiedergeben.','Loop'),
+ step('setParam','Klangfarbe wechseln','Color=78','Loop ist kein Audiofile und verwendet den aktuell gewählten Klang.','Klang'),
+ step('loop','SHIFT + HOLD → AUS','','Gesten-Loop stoppen.','Loop'),
+ step('hold','HOLD aktivieren','','Latching für gehaltene Stimmen.','Modus'),
+ step('drone','DRONE aktivieren','','Drone läuft separat.','Modus'),
+ step('clearVoices','SHIFT + CLEAR','','Stimmen leeren; HOLD und DRONE bleiben erhalten.','Reset'),
+ step('clear','CLEAR','','HOLD/DRONE/GENERATE/Loop zurücksetzen.','Reset')
+ ]},
+ {id:'menu',mode:'current',title:'03 · Menü, Szene & Display · IST',steps:[
+ step('boot','Einschalten','','Startbild.','System'),
+ step('menuOpen','EN3 · Menü anzeigen','','Eintragsliste mit neun Parametern.','Display'),
+ step('menuSelect','EN3 · World auswählen','World','','Menü'),
+ step('menuEnter','EN3 drücken · Bearbeiten','','Fokus wechselt von Eintrag auf Wert.','Menü'),
+ step('menuValue','Welt wechseln','WOODLAND','World tauscht Instrumente, Skala, Phrasen und Welteffekte.','Klang'),
+ step('menuBack','EN3 drücken · zurück','','Wechsel von Wertänderung zu Eintragsliste.','Menü'),
+ step('menuSelect','EN3 · Nature wählen','Nature','','Menü'),
+ step('menuEnter','Nature bearbeiten','','Wertfokus.','Menü'),
+ step('menuValue','Nature auf 24 %','24','Weltabhängige Naturkulisse dezent untermischen.','Klang'),
+ step('menuBack','EN3 · Wert verlassen','','Zur Menüliste.','Menü'),
+ step('menuClose','Menü verlassen','','Zur Startansicht. Der exakte Exit-Gestus ist in der PDF nicht genannt.','Display'),
+ step('browserOpen','EN3 lang · Szenen öffnen','','5 Slots; Browser schließt nach höchstens 8 Sekunden.','Szenen'),
+ step('sceneSave','SHIFT + Cell 2 · speichern','2','Snapshot speichert Klangparameter, aber keine Lautstärke, Drone oder gehaltene Stimmen.','Szenen'),
+ step('browserOpen','Szenen erneut öffnen','','','Szenen'),
+ step('sceneLoad','Cell 2 · laden','2','Gespeicherten Zustand wiederherstellen.','Szenen'),
+ step('outputStatus','EN4 lang · Status','','Akku %, USB und PHONES/SPEAKERS für 2 Sekunden.','Display'),
+ step('wait','2 Sekunden warten','2','Status-Overlay verschwindet.','Zeit')
+ ]},
+ {id:'future',mode:'future',title:'04 · Seiten & Encoder · KONZEPT B',steps:[
+ step('boot','Einschalten','','START: Room / Color auf EN1/EN2; EN4 regelt immer Volume.','System'),
+ step('encoder1','EN1 · Room','65','Direkter Hallwert auf START.','START'),
+ step('encoder2','EN2 · Color','28','Dunklere Klangfarbe.','START'),
+ step('page','EN3 · Seite WELT','WELT','Seite ist sofort aktiv, kein zusätzlicher Enter-Schritt.','Navigation'),
+ step('encoder1','EN1 · World','WOODLAND','Andere Welt.','WELT'),
+ step('encoder2','EN2 · Key','G','Grundton ändern.','WELT'),
+ step('shiftEncoder1','SHIFT + EN1 · Tuning','Just','Reine Intervalle.','WELT'),
+ step('shiftEncoder2','SHIFT + EN2 · Moll','Moll','Erweiterte Belegung; bisher nicht erreichbar.','WELT'),
+ step('page','EN3 · Seite RAUM','RAUM','','Navigation'),
+ step('encoder2','EN2 · Nature','22','Dezente Naturkulisse.','RAUM'),
+ step('press1','EN1 drücken · Room an/aus','','Direkter Effekt-Bypass.','RAUM'),
+ step('page','EN3 · Seite GRAIN','GRAIN','','Navigation'),
+ step('encoder1','EN1 · Grain','34','Grain-Mischung.','GRAIN'),
+ step('press1','EN1 drücken · Freeze','','Freeze nur bei aktivem Grain (abhängig von Engine-Logik).','GRAIN'),
+ step('page','EN3 · Seite SZENEN','SZENEN','','Navigation'),
+ step('sceneSave','SHIFT + Cell 1 · speichern','1','Geplante direkte Szenenablage.','Szenen'),
+ step('press3','EN3 drücken · START','','In Plan B immer direkte Rückkehr auf START.','Navigation')
+ ]},
+ {id:'system',mode:'both',title:'05 · Automatik, Sleep & Service',steps:[
+ step('boot','Normalstart','','','System'),
+ step('jack','Kopfhörer einstecken','on','Ausgang schaltet automatisch.','Auto'),
+ step('midi','MIDI-Out verbinden','on','Cells können MIDI senden.','Auto'),
+ step('volume','EN4 Lautstärke','55','','Audio'),
+ step('mute','EN4 kurz · Mute','','Audio stumm; Lautstärke-Wert bleibt erhalten.','Audio'),
+ step('outputStatus','EN4 lang · Akkustatus','','2-Sekunden-Overlay.','Display'),
+ step('wait','2 Sekunden','2','Overlay endet.','Zeit'),
+ step('wait','15 Minuten ohne Eingabe','900','Display und LEDs gehen aus.','Ruhemodus'),
+ step('wake','Taste zum Aufwecken','','Erster Impuls dient hier nur zum Wecken; tatsächliche Durchleitung an Firmware prüfen.','Ruhemodus'),
+ step('powerOff','Gerät ausschalten','','','System'),
+ step('service','Service-Boot mit CELL1','CELL1','Messmodus ist nur beim Einschalten erreichbar.','Service')
+ ]}
+,
+ {id:'w-ort',mode:'worlds',title:'W1 · Ein Ort: World, Farbe, Raum',steps:[
+ step('boot','Einschalten','','Bild ORT: die World mit ihrer Animation. Keine Akku-Anzeige.','System'),
+ step('worldSet','EN1 drehen · zwei Rasten','HIGHLANDS','Bild WELTWAHL; der Klang wechselt erst, wenn EN1 0,4 s ruht.','World'),
+ step('worldSet','EN1 weiter bis CAVE','CAVE','Stimmen klingen aus, Hall trägt hinüber, Natur blendet in 2 s.','World'),
+ step('cellDown','Cell 2 spielen','2','Ton aus dem Tonvorrat von CAVE: Moll in reiner Stimmung.','Spielen'),
+ step('cellUp','Cell 2 loslassen','2','','Spielen'),
+ step('layerTurn','EN2 · Farbe','EN2=30','Grundebene: dunklerer Klang.','Klang'),
+ step('layerTurn','EN3 · Raum','EN3=80','Grundebene: die Höhle wird länger.','Klang'),
+ step('light','EN1 drücken · Licht','','Dieselben fünf Töne, anderer Grundton: hell wird dunkel.','World'),
+ step('sigToggle','EN2 drücken · Signatur aus','','Vergleich ohne Tropfstein-Echo.','Klang'),
+ step('sigToggle','EN2 drücken · Signatur an','','','Klang')
+ ]},
+ {id:'w-ebenen',mode:'worlds',title:'W2 · Ebenen: halten und drehen',steps:[
+ step('boot','Einschalten','','','System'),
+ step('drone','DRONE tippen','','Der Teppich der World beginnt. Schaltet beim Loslassen.','Modus'),
+ step('layer','DRONE halten','DRONE','Bild EBENE: EN1 Drone-Farbe · EN2 Drone-Pegel · EN3 Natur.','Ebene'),
+ step('layerTurn','EN3 · Natur auf 30','EN3=30','Die Kulisse des Ortes kommt dazu.','Ebene'),
+ step('layerTurn','EN2 · Drone-Pegel','EN2=-3','','Ebene'),
+ step('layer','DRONE loslassen','','Zurück zur Grundebene. DRONE bleibt an, weil gedreht wurde.','Ebene'),
+ step('layer','SHIFT halten','SHIFT','EN1 Grundton · EN2 Signatur · EN3 Echo.','Ebene'),
+ step('layerTurn','EN2 · Signatur auf 80','EN2=80','Der Effekt des Ortes wird stärker.','Ebene'),
+ step('layerTurn','EN3 · Echo auf 40','EN3=40','Ein Makro für Anteil und Rückkopplung.','Ebene'),
+ step('layer','SHIFT loslassen','','','Ebene'),
+ step('generate','GENERATE tippen','','Der Autopilot spielt im Zeitgefühl der World.','Modus'),
+ step('cellDown','Cell 4 spielt mit','4','Neu: Cells sind nicht gesperrt; der Autopilot weicht aus.','Spielen'),
+ step('cellUp','Cell 4 loslassen','4','','Spielen'),
+ step('layer','GENERATE halten','GENERATE','EN1 Dichte.','Ebene'),
+ step('layerTurn','EN1 · Dichte auf 30','EN1=30','Weniger Töne, längere Pausen.','Ebene'),
+ step('layer','GENERATE loslassen','','','Ebene'),
+ step('freeze','SHIFT + HOLD · Freeze','','Der Klang bleibt stehen.','Klang'),
+ step('clear','CLEAR','','Alles aus, klingt natürlich aus.','Reset')
+ ]},
+ {id:'w-szenen',mode:'worlds',title:'W3 · Szenen, Setup und Ruhe',steps:[
+ step('boot','Einschalten','','','System'),
+ step('worldSet','EN1 · DUNES','DUNES','','World'),
+ step('layer','EN1 halten','EN1','Bild SZENEN: fünf Plätze.','Ebene'),
+ step('shift','SHIFT dazu','on','','Modifier'),
+ step('sceneGo','Cell 1 · speichern','1','DUNES liegt jetzt auf Platz 1.','Szenen'),
+ step('shift','SHIFT loslassen','off','','Modifier'),
+ step('layer','EN1 loslassen','','','Ebene'),
+ step('worldSet','EN1 · MOORLAND','MOORLAND','','World'),
+ step('layer','EN1 halten','EN1','','Ebene'),
+ step('sceneGo','Cell 1 · laden','1','Ein Griff zurück zu DUNES.','Szenen'),
+ step('layer','EN1 loslassen','','','Ebene'),
+ step('showValues','EN3 drücken · Werte','','Alle Werte der World für 3 s.','Display'),
+ step('setup','EN3 lang · Setup','','Liste: Stimmung, Helligkeit, Ruhezeit, MIDI, Version.','Display'),
+ step('setup','EN3 lang · Setup zu','','','Display'),
+ step('jack','Kopfhörer einstecken','on','Hinweis PHONES für 1,2 s; die Lautsprecher-Entzerrung schaltet ab.','Auto'),
+ step('wait','15 Minuten ohne Eingabe','900','Display und LEDs dunkel. Der Klang läuft weiter.','Ruhe'),
+ step('wake','Erste Eingabe','','Weckt nur; sie löst nichts aus.','Ruhe')
+ ]}
+];
+const STORAGE_KEY='ambient-state-atlas-v2:'+location.pathname;
+let app,selectedStepId='',selectedScenarioId='',activeTab='timeline',catalogFilter='all',simState,simLogs=[];
+const clone=x=>JSON.parse(JSON.stringify(x));
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,Number(x)||0));
+function seedData(){return{version:1,theme:'dark',mode:'current',scenarios:clone(SEED_SCENARIOS),functions:clone(SEED_FUNCTIONS),pages:clone(SEED_PAGES),decisions:clone(SEED_DECISIONS)}}
+function readEmbedded(){try{const t=document.getElementById('embedded-data').textContent.trim();return t?JSON.parse(t):null}catch{return null}}
+function loadData(){try{const raw=localStorage.getItem(STORAGE_KEY);return raw?JSON.parse(raw):(readEmbedded()||seedData())}catch{return readEmbedded()||seedData()}}
+function normalize(data){const base=seedData();if(!data||!Array.isArray(data.scenarios))return base;return {...base,...data,functions:Array.isArray(data.functions)?data.functions:base.functions,pages:Array.isArray(data.pages)?data.pages:base.pages,decisions:Array.isArray(data.decisions)?data.decisions:base.decisions}}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(app));document.getElementById('save-status').textContent='Lokal gespeichert · '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}catch{document.getElementById('save-status').textContent='Lokaler Speicher nicht verfügbar. JSON exportieren.'}}
+function defaultState(){return{powered:true,service:false,time:0,lastActivity:0,sleep:false,world:(typeof app!=='undefined'&&app&&app.mode==='worlds')?'ATLANTIC':'COAST',key:'D',tuning:'Equal',tonality:'Dur',cellMode:'Note',color:50,room:50,nature:0,activity:50,attack:50,release:50,fx:'Room',plate:true,droneColor:'Auto',droneLevel:0,delay:16,delayL:210,delayR:267,feedback:32,grain:12,grainSize:186,drive:4,crush:0,phaser:0,phaserTempo:.07,freeze:false,volume:30,muted:false,brightness:70,hold:false,drone:false,generate:false,loop:'AUS',loopEvents:[],shift:false,notes:[],sceneSlots:[null,null,null,null,null],scene:null,field:1,jack:false,midi:false,view:'START',page:'START',menuItem:'World',menuEditing:false,browserUntil:0,overlay:'',overlayUntil:0,battery:100,blocked:'',layer:'',layerTurned:false,sig:50,sigOn:true,light:'hell',natureOn:false,setupOpen:false}}
+const PARAM_MAP={'World':'world','Key':'key','Tuning':'tuning','Room':'room','Nature':'nature','Activity':'activity','FX':'fx','Attack':'attack','Release':'release','Color':'color','Dur/Moll':'tonality','Cell-Modus':'cellMode','Farbe':'droneColor','Pegel':'droneLevel','Delay':'delay','Feedback':'feedback','Zeit L':'delayL','Zeit R':'delayR','Grain':'grain','Größe':'grainSize','Drive':'drive','Crush':'crush','Phaser':'phaser','Tempo':'phaserTempo','Farbe':'color','Raum':'room','Grundton':'key','Signatur':'sig','Echo':'delay','Drone-Farbe':'droneColor','Drone-Pegel':'droneLevel','Natur':'nature','Dichte':'activity'};
+const numericFields=['sig','color','room','nature','activity','attack','release','volume','brightness','delay','delayL','delayR','feedback','grain','grainSize','drive','crush','phaser','phaserTempo','droneLevel'];
+const ranges={volume:[0,100],brightness:[10,100],color:[0,100],room:[0,100],nature:[0,100],activity:[0,100],attack:[0,100],release:[0,100],delay:[0,100],delayL:[40,700],delayR:[40,700],feedback:[0,50],grain:[0,100],grainSize:[40,260],drive:[0,100],crush:[0,100],phaser:[0,100],phaserTempo:[.01,.5],droneLevel:[-12,6]};
+function changeParam(s,param,val){
+ const key=PARAM_MAP[param]||param;
+ if(!(key in s))return 'Unbekannter Parameter: '+param;
+ let v=String(val??'').trim();
+ if(numericFields.includes(key)){const r=ranges[key]||[0,100];v=clamp(v,r[0],r[1]);s[key]=v}
+ else if(key==='world'){s.world=v||s.world;s.scene=null}
+ else if(key==='tonality'){s.tonality=/moll|minor/i.test(v)?'Moll':'Dur'}
+ else if(key==='tuning'){s.tuning=/just/i.test(v)?'Just':'Equal'}
+ else if(key==='fx'){s.fx=/dry/i.test(v)?'Dry':'Room'}
+ else if(key==='cellMode'){s.cellMode=['Note','Harmony','Landscape'].find(k=>k.toLowerCase()===v.toLowerCase())||'Note'}
+ else s[key]=v;
+ if(key==='world'){/* World changes may replace other world-specific parameters. PDF confirms Key, Room, Nature, Activity are retained. */}
+ return param+' → '+String(s[key]);
+}
+function overlay(s,text,seconds=1.2){s.overlay=text;s.overlayUntil=s.time+seconds}
+function saveScene(s,slot){const n=clamp(slot,1,5);s.sceneSlots[n-1]={sig:s.sig,sigOn:s.sigOn,light:s.light,delay:s.delay,world:s.world,key:s.key,tuning:s.tuning,tonality:s.tonality,room:s.room,nature:s.nature,activity:s.activity,fx:s.fx,attack:s.attack,release:s.release,color:s.color,field:s.field};s.scene=n;overlay(s,'SZENE '+n+' GESPEICHERT');return 'Szene '+n+' gesichert (ohne Volume, Drone, aktive Noten).'}
+function loadScene(s,slot){const n=clamp(slot,1,5),v=s.sceneSlots[n-1];if(!v){overlay(s,'SZENE '+n+' LEER',1.8);return 'Slot '+n+' leer'}Object.assign(s,clone(v));s.scene=n;overlay(s,'SZENE '+n+' GELADEN');return 'Szene '+n+' geladen'}
+function useCell(s,n,release=false){n=clamp(n,1,5);if(s.view==='BROWSER'){if(release)return 'Browser: Cell-Release ignoriert';const result=s.shift?saveScene(s,n):loadScene(s,n);s.view='START';s.browserUntil=0;return result}
+ if(app.mode==='future'&&s.page==='SZENEN'&&!release){return s.shift?saveScene(s,n):loadScene(s,n)}
+ if(app.mode==='worlds'&&s.layer==='EN1'){if(release)return 'Szenen: Loslassen ohne Wirkung';return s.shift?saveScene(s,n):loadScene(s,n)}
+ if(s.generate&&app.mode!=='worlds'){overlay(s,'CELLS LOCKED',1.5);s.blocked='Cell während GENERATE';return 'Gesperrt: GENERATE hat Vorrang vor Cells'}
+ const note=n+(s.shift?':hoch':':tief');const active=s.notes.includes(note);
+ if(release){if(!s.hold)s.notes=s.notes.filter(x=>x!==note);return s.hold?'HOLD hält den Ton nach dem Loslassen':'Cell '+n+' löst aus'}
+ if(s.hold){s.notes=active?s.notes.filter(x=>x!==note):[...s.notes,note]}else if(!active)s.notes.push(note);
+ if(s.loop==='REC')s.loopEvents.push({cell:n,upper:s.shift});
+ s.blocked='';return (s.hold?(active?'Latch aus':'Latch ein'):'Ton an')+' · Cell '+n+(s.shift?' · obere Lage':'')
+}
+function parsePair(raw){const i=raw.indexOf('=');return i<0?[raw.trim(),'50']:[raw.slice(0,i).trim(),raw.slice(i+1).trim()]}
+function scenePageControl(s,which,raw){
+ const page=app.pages.find(p=>p.name===s.page)||SEED_PAGES[0];
+ const col=which==='encoder1'?'en1':which==='encoder2'?'en2':which==='shiftEncoder1'?'shift1':'shift2';
+ const param=page[col];
+ if(!param||param==='—')return 'Auf dieser Seite keine Belegung';
+ if(s.page==='SZENEN')return 'Szenen werden über Cells gewählt';
+ const key=PARAM_MAP[param];
+ if(!key)return 'Zuordnung der Seite geändert – in der Dokumentation prüfen: '+param;
+ return changeParam(s,param,raw);
+}
+function pressPageSwitch(s,which){
+ const page=app.pages.find(p=>p.name===s.page),slot=which==='press1'?'press1':'press2';
+ const name=page?.[slot]||'';
+ if(name==='Hall an/aus'){s.fx=s.fx==='Room'?'Dry':'Room';return 'Hall → '+s.fx}
+ if(name==='Plate an/aus'){s.plate=!s.plate;return 'Plate → '+(s.plate?'AN':'AUS')}
+ if(name==='Freeze'){if(s.grain===0){overlay(s,'GRAIN REQUIRED',1.8);return 'Freeze nur mit Grain (Bedingung)' }s.freeze=!s.freeze;return 'Freeze → '+(s.freeze?'AN':'AUS')}
+ if(name==='Neues Feld'){s.field++;overlay(s,'NEUES FELD');return 'Neues Generate-Feld'}
+ return 'Kein Schalter auf dieser Seite (oder Belegung unklar)'
+}
+function transition(from,event,mode=app.mode){
+ const s=clone(from),a=event.action,v=String(event.value??'').trim();let result='';
+ if(a==='boot'){return{state:defaultState(),result:'Normaler Systemstart'}}
+ if(a==='service'){const q=defaultState();q.service=true;q.view='MESSMODUS';return{state:q,result:'Messmodus beim Boot mit '+(v||'CELL1')}}
+ if(a==='wait'){const delay=Math.max(0,Number(v)||0);s.time+=delay;result=delay+' s vergangen';}else{s.time+=.4;s.lastActivity=s.time;}
+ if(!s.powered&&!['boot','service'].includes(a))return{state:s,result:'Gerät ist ausgeschaltet'};
+ if(s.sleep&&a!=='wait'&&a!=='wake'&&a!=='powerOff'){s.sleep=false;s.view='START';return{state:s,result:'Aufgewacht: Ob die erste Eingabe zusätzlich ausgelöst wird, ist ungeklärt.'}}
+ if(a==='wake'){s.sleep=false;s.view='START';result='Display/LEDs wieder aktiv';}
+ if(a==='shift'){s.shift=v==='on'?true:v==='off'?false:!s.shift;result='SHIFT '+(s.shift?'gehalten':'losgelassen')}
+ if(a==='cellDown')result=useCell(s,Number(v)||1);
+ if(a==='cellUp')result=useCell(s,Number(v)||1,true);
+ if(mode==='worlds'){
+  if(a==='loop')return{state:s,result:'Gestrichen im WORLDS-Konzept: Gesten-Loop. SHIFT + HOLD ist jetzt Freeze.'};
+  if(a==='outputStatus')return{state:s,result:'Gestrichen im WORLDS-Konzept: kein Akku. Der Ausgang wird beim Umstecken gezeigt.'};
+  if(a==='worldSet'){const cur=W16_NAMES.indexOf(s.world);let n=W16_NAMES.find(x=>x===v.toUpperCase());if(!n){const d=Number(v)||1;n=W16_NAMES[((cur<0?0:cur)+d+16*8)%16]}s.world=n;s.notes=[];s.freeze=false;overlay(s,'WELTWAHL · '+n+' · '+(W16_NAMES.indexOf(n)+1)+'/16',.8);result='World → '+n+' · Signatur '+wInfo(n)[1]+' · Stimmen klingen aus, Hall trägt hinüber'}
+  if(a==='light'){s.light=s.light==='hell'?'dunkel':'hell';overlay(s,'LICHT '+s.light.toUpperCase());result='Licht → '+s.light+' (gleiche fünf Töne, anderer Grundton)'}
+  if(a==='sigToggle'){s.sigOn=!s.sigOn;overlay(s,wInfo(s.world)[1].toUpperCase()+(s.sigOn?' AN':' AUS'));result='Signatur-Effekt '+wInfo(s.world)[1]+' → '+(s.sigOn?'AN':'AUS')}
+  if(a==='layer'){const L=['SHIFT','DRONE','GENERATE','HOLD','EN1'].find(x=>x===v.toUpperCase())||'';const was=s.layer;s.layer=L;s.shift=L==='SHIFT'?true:(was==='SHIFT'?false:s.shift);s.layerTurned=false;result=L?'Ebene '+L+' gehalten · EN1 '+LAYERS[L][0]+' · EN2 '+LAYERS[L][1]+' · EN3 '+LAYERS[L][2]:'Losgelassen · zurück zur Grundebene'}
+  if(a==='layerTurn'){const [en,val]=parsePair(v);const i={EN1:0,EN2:1,EN3:2}[en.toUpperCase()];if(en.toUpperCase()==='EN4'){s.volume=clamp(val,0,100);result='Lautstärke '+s.volume+' % (EN4 in jeder Ebene)'}else if(i===undefined)result='Encoder unbekannt: '+en;else{const prm=LAYERS[s.layer][i];if(prm==='—')result='In dieser Ebene frei';else if(prm==='World')return transition(from,{action:'worldSet',value:val},mode);else{result=changeParam(s,prm,val);s.layerTurned=true;overlay(s,result)}}}
+  if(a==='freeze'){s.freeze=!s.freeze;overlay(s,s.freeze?'FREEZE':'FREEZE AUS');result='Freeze → '+(s.freeze?'AN · der Klang bleibt stehen':'AUS')}
+  if(a==='natureToggle'){s.natureOn=!s.natureOn;if(s.natureOn&&s.nature===0)s.nature=25;overlay(s,'NATUR '+(s.natureOn?'AN':'AUS'));result='Natur → '+(s.natureOn?'AN ('+s.nature+' %)':'AUS')}
+  if(a==='showValues'){overlay(s,'WERTE · Farbe '+s.color+' · Raum '+s.room+' · Echo '+s.delay+' · Signatur '+s.sig+' · Dichte '+s.activity,3);result='Alle Werte der World für 3 s'}
+  if(a==='setup'){s.setupOpen=!s.setupOpen;s.view=s.setupOpen?'SETUP':'START';result=s.setupOpen?'Setup: Stimmung · Helligkeit · Ruhezeit · MIDI · Version':'Setup geschlossen'}
+  if(a==='sceneGo'){result=s.layer==='EN1'?(s.shift?saveScene(s,Number(v)||1):loadScene(s,Number(v)||1)):'Szenen nur mit gehaltenem EN1'}
+  if(a==='hold'){s.hold=!s.hold;result='HOLD '+(s.hold?'AN':'AUS')}
+  if(a==='generate'){s.generate=!s.generate;result='GENERATE '+(s.generate?'AN · Cells spielen mit':'AUS')}
+  if(a==='jack'){s.jack=v==='on'?true:v==='off'?false:!s.jack;overlay(s,s.jack?'PHONES':'SPEAKERS');result='Ausgang '+(s.jack?'PHONES':'SPEAKERS')+' · Hinweis 1,2 s'}
+  if(a==='wait'&&s.powered&&s.time-s.lastActivity>=900&&!s.sleep){s.sleep=true;s.view='SLEEP';s.overlay='';result+=' · Ruhe: Display und LEDs dunkel, Klang läuft weiter'}
+  if(['loop','outputStatus','worldSet','light','sigToggle','layer','layerTurn','freeze','natureToggle','showValues','setup','sceneGo','hold','generate','jack'].includes(a)){if(s.overlay&&s.time>=s.overlayUntil)s.overlay='';return{state:s,result:result||'Keine Zustandsänderung'}}
+ }
+ if(a==='hold'){if(s.generate){s.blocked='HOLD unter GENERATE';result='Gesperrt: HOLD unter GENERATE'}else{s.hold=!s.hold;result='HOLD '+(s.hold?'AN':'AUS')+(s.hold?'':' · Latch-Release bei Aus ist Firmware-Detail')}} 
+ if(a==='drone'){s.drone=!s.drone;result='DRONE '+(s.drone?'AN':'AUS')}
+ if(a==='generate'){s.generate=!s.generate;result='GENERATE '+(s.generate?'AN · Cells/HOLD gesperrt':'AUS')}
+ if(a==='newField'){s.field++;overlay(s,'NEUES FELD');result='Generate-Start #'+s.field}
+ if(a==='loop'){s.loop=s.loop==='AUS'?'REC':s.loop==='REC'?'LOOP':'AUS';if(s.loop==='REC')s.loopEvents=[];result='Gesten-Loop → '+s.loop+' ('+s.loopEvents.length+' Gesten)'}
+ if(a==='clear'){s.hold=false;s.drone=false;s.generate=false;s.loop='AUS';s.notes=[];s.freeze=false;s.blocked='';overlay(s,'CLEAR',.25);result='Vollstopp mit natürlichem Ausklang'}
+ if(a==='clearVoices'){s.notes=[];result='Stimmen leer; HOLD und DRONE unverändert; weitere Wechselwirkung nicht spezifiziert'}
+ if(a==='noopEn1'){overlay(s,'DRIVE 0');result='EN1 ohne Wirkung; nur irreführendes DRIVE-0-Overlay'}
+ if(a==='menuOpen'){s.view='MENÜ';s.menuEditing=false;result='Menü mit neun Einträgen'}
+ if(a==='menuSelect'){s.view='MENÜ';s.menuItem=MENU.find(x=>x.toLowerCase()===v.toLowerCase())||v||'World';s.menuEditing=false;result='Menüpunkt '+s.menuItem}
+ if(a==='menuEnter'){s.view='MENÜ';s.menuEditing=true;result='Wert bearbeiten: '+s.menuItem}
+ if(a==='menuValue'){result=changeParam(s,s.menuItem,v);s.menuEditing=true}
+ if(a==='menuBack'){s.menuEditing=false;s.view='MENÜ';result='Zurück zur Eintragswahl'}
+ if(a==='menuClose'){s.menuEditing=false;s.view='START';result='Zurück zum Startbild (Exit-Geste offen)'}
+ if(a==='browserOpen'){if(s.view==='BROWSER'){s.view='START';s.browserUntil=0;result='Szenen-Browser geschlossen'}else{s.view='BROWSER';s.browserUntil=s.time+8;result='Szenen-Browser geöffnet; Timeout ≤8 s'}}
+ if(a==='sceneSave'){result=saveScene(s,Number(v)||1);if(s.view==='BROWSER'){s.view='START';s.browserUntil=0}}
+ if(a==='sceneLoad'){result=loadScene(s,Number(v)||1);if(s.view==='BROWSER'){s.view='START';s.browserUntil=0}}
+ if(a==='volume'){s.volume=clamp(v,0,100);overlay(s,'VOLUME '+s.volume+'%');result='Lautstärke '+s.volume+' %'}
+ if(a==='mute'){s.muted=!s.muted;overlay(s,s.muted?'MUTED':'UNMUTED');result='Mute '+(s.muted?'AN':'AUS')}
+ if(a==='color'){result=changeParam(s,'Color',v);overlay(s,mode==='current'?'BRIGHT · Anzeige inkonsistent':'COLOR '+s.color+'%')}
+ if(a==='brightness'){s.brightness=clamp(v,10,100);overlay(s,'DISPLAY '+s.brightness+'%');result='Helligkeit '+s.brightness+' %'}
+ if(a==='outputStatus'){overlay(s,'BATTERY '+s.battery+'% · '+(s.jack?'PHONES':'SPEAKERS'),2);result='Akkustatus / USB / Ausgang (2 s)'}
+ if(a==='setParam'){const [p,value]=parsePair(v);result=changeParam(s,p,value)}
+ if(a==='page'){s.page=PAGE_NAMES.find(x=>x===v.toUpperCase())||'START';s.view='PAGE';result='Seite '+s.page+' sofort aktiv'}
+ if(['encoder1','encoder2','shiftEncoder1','shiftEncoder2'].includes(a)){result=scenePageControl(s,a,v);overlay(s,result)}
+ if(['press1','press2'].includes(a)){result=pressPageSwitch(s,a);overlay(s,result)}
+ if(a==='press3'){s.page='START';s.view='START';result='Direkt zurück zu START'}
+ if(a==='jack'){s.jack=v==='on'?true:v==='off'?false:!s.jack;result='Ausgang '+(s.jack?'PHONES':'SPEAKERS')}
+ if(a==='midi'){s.midi=v==='on'?true:v==='off'?false:!s.midi;result='MIDI '+(s.midi?'verbunden':'getrennt')}
+ if(a==='powerOff'){s.powered=false;s.view='OFF';result='Ausgeschaltet'}
+ if(s.overlay&&s.time>=s.overlayUntil)s.overlay='';
+ if(s.view==='BROWSER'&&s.time>=s.browserUntil){s.view='START';s.browserUntil=0;result+=' · Browser-Timeout'}
+ if(s.powered&&s.time-s.lastActivity>=900&&!s.sleep){s.sleep=true;s.view='SLEEP';s.overlay='';result+=' · Ruhemodus nach 15 min'}
+ return{state:s,result:result||'Keine Zustandsänderung'};
+}
+function scenario(){return app.scenarios.find(x=>x.id===selectedScenarioId)||app.scenarios[0]}
+function snapshots(){let state=defaultState();return scenario().steps.map((item,i)=>{const before=clone(state),trans=transition(state,item);state=trans.state;return{item,i,before,after:clone(state),result:trans.result}})}
+function diff(before,after){const fields={world:'Welt',key:'Key',tuning:'Tuning',tonality:'Dur/Moll',color:'Color',room:'Room',nature:'Nature',hold:'HOLD',drone:'DRONE',generate:'GENERATE',loop:'Loop',shift:'SHIFT',notes:'Cells',volume:'Volume',muted:'Mute',page:'Seite',view:'Display',menuItem:'Menüpunkt',menuEditing:'Editiermodus',overlay:'Overlay',scene:'Szene',field:'Feld',sleep:'Ruhe',jack:'Output',midi:'MIDI',freeze:'Freeze',fx:'Hall',grain:'Grain',brightness:'Brightness',powered:'Power'};return Object.entries(fields).filter(([k])=>JSON.stringify(before[k])!==JSON.stringify(after[k])).map(([k,l])=>l+': '+fmt(after[k])).slice(0,10)}
+function fmt(v){if(Array.isArray(v))return v.join(' · ')||'–';if(typeof v==='boolean')return v?'AN':'AUS';return String(v??'–')}
+function screenLabel(s){if(!s.powered)return'OFF';if(s.sleep)return'SLEEP';if(s.overlay)return'OVERLAY: '+s.overlay;if(s.view==='MENÜ')return'MENÜ · '+s.menuItem+(s.menuEditing?' [WERT]':' [WAHL]');if(s.view==='PAGE')return'SEITE · '+s.page;if(app.mode==='worlds'){if(s.view==='SETUP')return'SETUP';if(s.layer==='EN1')return'SZENEN';if(s.layer)return'EBENE · '+s.layer;return'ORT · '+s.world}return s.view}
+function ledLabel(s){if(!s.powered||s.sleep)return'alle aus';const active=[];if(s.shift)active.push('SHIFT grün');if(s.hold)active.push('HOLD gelb');if(s.drone)active.push('DRONE weiß');if(s.generate)active.push('GENERATE weiß');if(s.loop==='REC')active.push('HOLD pulsierend');for(let n=1;n<=5;n++){if(s.notes.includes(n+':tief'))active.push('CELL '+n+' gelb');if(s.notes.includes(n+':hoch'))active.push('CELL '+n+' grün')}return active.join(' · ')||'keine Aktivität'}
+function audioLabel(s){if(!s.powered)return'aus';if(s.muted)return'stummgeschaltet';const active=[];if(s.generate)active.push('Autopilot');if(s.drone)active.push('Drone');if(s.notes.length)active.push(s.notes.length+' aktive Cell(s)');if(s.loop==='LOOP')active.push('Gesture Loop');return active.join(' + ')||'Leerlauf'}
+function renderNotice(){document.getElementById('mode-notice').innerHTML=app.mode==='worlds'?'<strong>KONZEPT · WORLDS · Vorschlag vom 13.11.2026, nicht implementiert:</strong> EN1 ist immer die World (16 Landschaften, Firmware „Nature Landscapes“), EN2 Farbe, EN3 Raum, EN4 Lautstärke. SHIFT, DRONE, GENERATE oder HOLD halten und drehen öffnet deren Ebene. 13 der 44 Funktionen entfallen (Gesten-Loop, Akku-Anzeige, einzelne Effektwerte), fünf kommen dazu. Cells spielen bei GENERATE mit. Die Simulation ist Entwurfslogik, keine Firmware.':app.mode==='current'?'<strong>IST · Firmware V3.7:</strong> EN1 ist ohne Funktion (zeigt trotzdem DRIVE 0). EN2 steuert Color, ist aber fälschlich als BRIGHT/Hz beschriftet. EN3 nutzt ein 9-Punkte-Menü und EN4 ist Volume. 15 Engine-Funktionen haben noch keinen Bedienzugriff.':'<strong>KONZEPT B · noch nicht implementiert:</strong> EN3 wählt unmittelbar START + 9 Seiten. EN1/EN2 belegen Werte je Seite; EN4 bleibt Volume. Zusätzliche Funktionen sind geplant, nicht in V3.7 freigeschaltet. Die Simulation ist eine Entwurfslogik, keine Firmware-Messung. Die sechs Weltnamen sind in der PDF noch nicht vollständig spezifiziert.'}
+function setMode(mode){app.mode=mode;const available=scenariosFor(mode);if(!available.some(x=>x.id===selectedScenarioId))selectedScenarioId=available[0]?.id;selectedStepId='';save();resetSimulator();renderAll()}
+function scenariosFor(mode){return app.scenarios.filter(x=>mode==='worlds'?x.mode==='worlds':(x.mode===mode||x.mode==='both'))}
+function setTab(tab){activeTab=tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));document.querySelectorAll('.pane').forEach(x=>x.classList.toggle('active',x.id==='pane-'+tab));if(tab==='simulator')renderSim();if(tab==='catalog')renderCatalog();if(tab==='mapping')renderPages();if(tab==='decisions')renderDecisions()}
+function renderScenarioSelect(){const el=document.getElementById('scenario-select');const all=scenariosFor(app.mode);el.innerHTML=all.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===selectedScenarioId?'selected':'')+'>'+esc(x.title)+'</option>').join('')}
+function changeScenario(id){selectedScenarioId=id;selectedStepId='';renderTimeline()}
+function renderTimeline(){renderScenarioSelect();const frames=snapshots();if(!frames.length){document.getElementById('timeline').innerHTML='<div class="empty">Noch keine Schritte. Über „+ Schritt“ anfangen.</div>';renderInspector();return}if(!frames.some(x=>x.item.id===selectedStepId))selectedStepId=frames[0].item.id;
+ const html=frames.map(f=>{const d=diff(f.before,f.after),selected=f.item.id===selectedStepId;const classes=/(gesperrt|blocked|Gesperrt)/i.test(f.result)?'blocked':'audio';return '<article class="event '+(selected?'selected':'')+'" data-id="'+esc(f.item.id)+'" onclick="selectStep(\''+esc(f.item.id)+'\')"><div class="event-top"><button draggable="true" class="drag" title="Ziehen zum Sortieren" ondragstart="onDragStart(event,\''+esc(f.item.id)+'\')" onclick="event.stopPropagation()">⠿</button><span class="event-index">STEP '+String(f.i+1).padStart(2,'0')+'</span><span class="tag '+(f.item.group==='Gesperrt'?'warn':'')+'">'+esc(f.item.group)+'</span><span class="event-time">T + '+fmtTime(f.after.time)+'</span></div><h3 contenteditable="true" spellcheck="false" onblur="editStepInline(\''+esc(f.item.id)+'\',\'title\',this.innerText)" onclick="event.stopPropagation()">'+esc(f.item.title)+'</h3><p contenteditable="true" spellcheck="false" onblur="editStepInline(\''+esc(f.item.id)+'\',\'note\',this.innerText)" onclick="event.stopPropagation()">'+esc(f.item.note||'Beschreibung ergänzen …')+'</p><div class="effects"><span class="effect '+classes+'">'+esc(f.result)+'</span><span class="effect screen">DISPLAY · '+esc(screenLabel(f.after))+'</span>'+(ledLabel(f.before)!==ledLabel(f.after)?'<span class="effect">LED · '+esc(ledLabel(f.after))+'</span>':'')+d.slice(0,3).map(x=>'<span class="effect">'+esc(x)+'</span>').join('')+'</div><div class="event-foot"><span>●</span><b>'+esc(ACT_LABEL[f.item.action]||f.item.action)+'</b>'+(f.item.value?' <span>· '+esc(f.item.value)+'</span>':'')+'</div></article>'}).join('');
+ const elem=document.getElementById('timeline');elem.innerHTML=html;elem.querySelectorAll('.event').forEach(el=>{el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over')});el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');dropStep(el.dataset.id)})});renderInspector();}
+function fmtTime(t){return t>=60?Math.floor(t/60)+'m '+(Math.round(t%60))+'s':t.toFixed(1)+'s'}
+function selectStep(id){selectedStepId=id;renderTimeline()}
+function editStepInline(id,field,val){const item=scenario().steps.find(s=>s.id===id);if(!item)return;const clean=String(val).replace(/\s+/g,' ').trim();item[field]=clean==='Beschreibung ergänzen …'?'':clean;save();renderInspector()}
+function renderInspector(){const el=document.getElementById('inspector'),frames=snapshots(),f=frames.find(x=>x.item.id===selectedStepId);if(!f){el.innerHTML='<div class="inspector-inner">Einen Schritt auswählen.</div>';return}const s=f.after,item=f.item;el.innerHTML='<div class="inspector-inner"><div class="inspector-head"><h3>Schritt '+String(f.i+1).padStart(2,'0')+' bearbeiten</h3><span class="tag">T + '+fmtTime(s.time)+'</span></div><div class="field"><label>Ereignis / Trigger</label><select onchange="updateStep(\'action\',this.value)">'+ACTIONS.map(([v,l])=>'<option value="'+esc(v)+'" '+(item.action===v?'selected':'')+'>'+esc(l)+'</option>').join('')+'</select></div><div class="field"><label>Wert (optional)</label><input value="'+esc(item.value)+'" placeholder="z. B. 1, 50, WELT oder Room=25" onchange="updateStep(\'value\',this.value)"></div><div class="field"><label>Kategorie</label><input value="'+esc(item.group)+'" onchange="updateStep(\'group\',this.value)"></div><div class="separator"></div><div class="state-label">ZUSTAND NACH DIESEM EREIGNIS</div><div class="state-list">'+stateRow('Bildschirm',screenLabel(s))+stateRow('Audio',audioLabel(s))+stateRow('Audio-Modi',[s.hold?'HOLD':'',s.drone?'DRONE':'',s.generate?'GENERATE':'',s.loop!=='AUS'?'LOOP '+s.loop:''].filter(Boolean).join(' · ')||'keine')+stateRow('LEDs',ledLabel(s))+stateRow('Welt / Key',s.world+' · '+s.key+' '+s.tonality)+stateRow('Ausgabe',s.volume+'%'+(s.muted?' · MUTE':'')+' · '+(s.jack?'PHONES':'SPEAKERS'))+stateRow('Aktive Cells',fmt(s.notes))+stateRow('Szene',s.scene||'–')+'</div><div class="separator"></div><div class="state-label">ÄNDERUNGEN DURCH DIESEN SCHRITT</div><div class="deltas">'+(diff(f.before,s).map(x=>'<span class="delta">'+esc(x)+'</span>').join('')||'<span class="tag">keine dokumentierte Änderung</span>')+'</div><div class="separator"></div><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn" onclick="moveStep(-1)">↑</button><button class="btn" onclick="moveStep(1)">↓</button><button class="btn" onclick="duplicateStep()">Duplizieren</button><button class="btn danger" onclick="deleteStep()">Löschen</button></div></div>'}
+function stateRow(label,val){return'<div class="state-row"><span>'+esc(label)+'</span><b>'+esc(val)+'</b></div>'}
+function updateStep(k,v){const x=scenario().steps.find(y=>y.id===selectedStepId);if(!x)return;x[k]=v;save();renderTimeline()}
+function addStep(){const arr=scenario().steps;const index=arr.findIndex(x=>x.id===selectedStepId);const newStep=step('setParam','Neues Ereignis','Room=50','Was ändert dieser Schritt?','Entwurf');arr.splice(index<0?arr.length:index+1,0,newStep);selectedStepId=newStep.id;save();renderTimeline()}
+function moveStep(dir){const arr=scenario().steps,i=arr.findIndex(x=>x.id===selectedStepId),j=i+dir;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]];save();renderTimeline()}
+function duplicateStep(){const arr=scenario().steps,i=arr.findIndex(x=>x.id===selectedStepId);if(i<0)return;const newStep={...clone(arr[i]),id:'s'+(++uid),title:arr[i].title+' · Kopie'};arr.splice(i+1,0,newStep);selectedStepId=newStep.id;save();renderTimeline()}
+function deleteStep(){const arr=scenario().steps,i=arr.findIndex(x=>x.id===selectedStepId);if(i<0)return;arr.splice(i,1);selectedStepId=arr[Math.max(0,i-1)]?.id||'';save();renderTimeline()}
+function duplicateScenario(){const src=scenario(),id='custom-'+Date.now();const copy={...clone(src),id,title:src.title+' · Kopie',mode:app.mode,steps:src.steps.map(x=>({...x,id:'s'+(++uid)}))};app.scenarios.push(copy);selectedScenarioId=id;selectedStepId='';save();renderTimeline()}
+function stepSelection(direction){const arr=scenario().steps,i=arr.findIndex(x=>x.id===selectedStepId);selectedStepId=arr[Math.max(0,Math.min(arr.length-1,i+direction))]?.id||'';renderTimeline();document.querySelector('.event.selected')?.scrollIntoView({behavior:'smooth',block:'center'})}
+let draggingStep='';function onDragStart(e,id){draggingStep=id;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id)}function dropStep(target){const arr=scenario().steps,src=arr.findIndex(x=>x.id===draggingStep),dst=arr.findIndex(x=>x.id===target);if(src<0||dst<0||src===dst)return;const [x]=arr.splice(src,1);arr.splice(dst,0,x);save();renderTimeline()}
+function renderPages(){const el=document.getElementById('page-matrix');if(app.mode==='worlds'){el.innerHTML=Object.keys(LAYERS).map((k,i)=>'<div class="page-card"><h3><span style="color:var(--accent);font-size:10px;margin-right:10px">'+String(i).padStart(2,'0')+'</span>'+esc(LAYER_TITLE[k])+'</h3><div class="slot-grid">'+[['EN1 · Drehen',LAYERS[k][0]],['EN2 · Drehen',LAYERS[k][1]],['EN3 · Drehen',LAYERS[k][2]],['EN4 · Drehen','Lautstärke'],['Drücken / Cells',LAYER_PRESS[k][0]],['Drücken / Cells',LAYER_PRESS[k][1]]].map(([l,v])=>'<div><label>'+l+'</label><input readonly value="'+esc(v)+'"></div>').join('')+'</div></div>').join('');return}el.innerHTML=app.pages.map((p,i)=>'<div class="page-card"><h3><span style="color:var(--accent);font-size:10px;margin-right:10px">'+String(i).padStart(2,'0')+'</span>'+esc(p.name)+'</h3><div class="slot-grid">'+[['en1','EN1 · Drehen'],['en2','EN2 · Drehen'],['shift1','SHIFT + EN1'],['shift2','SHIFT + EN2'],['press1','EN1 · Drücken'],['press2','EN2 · Drücken']].map(([k,l])=>'<div><label>'+l+'</label><input value="'+esc(p[k])+'" onchange="updatePage('+i+',\''+k+'\',this.value)"></div>').join('')+'</div></div>').join('')}
+function updatePage(i,k,v){app.pages[i][k]=v;save()}
+function setCatalogFilter(f){catalogFilter=f;document.querySelectorAll('#catalog-filter button').forEach((b,i)=>b.classList.toggle('active',['all','missing','play','system'][i]===f));renderCatalog()}
+function renderCatalog(){const search=(document.getElementById('catalog-search').value||'').trim().toLowerCase();const rows=app.functions.filter(f=>(catalogFilter==='all'||catalogFilter==='missing'&&f.status==='missing'||catalogFilter==='play'&&f.group==='Spielen'||catalogFilter==='system'&&['Auto','Setup','Service'].includes(f.group))&&[f.id,f.name,f.range,f.current,f.future,f.group].join(' ').toLowerCase().includes(search));document.getElementById('catalog-body').innerHTML=rows.map(f=>'<tr><td>'+f.id+'</td><td><input aria-label="Funktion '+f.id+'" value="'+esc(f.name)+'" onchange="editFunction('+f.id+',\'name\',this.value)"></td><td><input aria-label="Bereich" value="'+esc(f.range)+'" onchange="editFunction('+f.id+',\'range\',this.value)"><input aria-label="Startwert" style="color:var(--muted)" value="'+esc(f.start)+'" onchange="editFunction('+f.id+',\'start\',this.value)"></td><td><input value="'+esc(f.current)+'" onchange="editFunction('+f.id+',\'current\',this.value)"></td><td><input value="'+esc(f.future)+'" onchange="editFunction('+f.id+',\'future\',this.value)"></td><td><span class="status-pill '+(f.verdict==='streichen'?'missing':f.verdict==='behalten'?'':'auto')+'">'+esc((f.verdict||'').toUpperCase())+'</span></td><td><input value="'+esc(f.worlds||'')+'" onchange="editFunction('+f.id+',\'worlds\',this.value)"></td><td><input value="'+esc(f.scene)+'" onchange="editFunction('+f.id+',\'scene\',this.value)"></td><td><span class="status-pill '+(f.status==='missing'?'missing':f.status==='auto'?'auto':'')+'">'+(f.status==='missing'?'OHNE ZUGRIFF':f.status==='auto'?'AUTO / SERVICE':'ERREICHBAR')+'</span></td></tr>').join('')||'<tr><td colspan="9">Keine Treffer.</td></tr>'}
+function editFunction(id,k,v){const item=app.functions.find(x=>x.id===id);if(item){item[k]=v;save()}}
+function renderDecisions(){document.getElementById('decisions').innerHTML=app.decisions.map((d,i)=>'<div class="decision"><div class="number">DECISION '+String(d.id).padStart(2,'0')+'</div><h3>'+esc(d.question)+'</h3>'+(d.recommend?'<p style="margin:0 0 12px;font-size:12px;color:var(--accent)"><b>Empfehlung WORLDS-Konzept:</b> '+esc(d.recommend)+'</p>':'')+'<label>Aktueller Vorschlag / eigene Entscheidung</label><textarea onblur="updateDecision('+i+',\'answer\',this.value)">'+esc(d.answer)+'</textarea><div class="bottom"><span class="tag '+(d.status==='done'?'accent':'warn')+'">'+(d.status==='done'?'Festgelegt':'Noch offen')+'</span><select onchange="updateDecision('+i+',\'status\',this.value)"><option value="open" '+(d.status==='open'?'selected':'')+'>Offen</option><option value="done" '+(d.status==='done'?'selected':'')+'>Entschieden</option></select></div></div>').join('')}
+function updateDecision(i,k,v){app.decisions[i][k]=v;save();if(k==='status')renderDecisions()}
+function resetSimulator(){simState=defaultState();simLogs=[{name:'BOOT',result:'Standardzustand geladen'}];renderSim()}
+function simAct(action,value='',label=''){const res=transition(simState,{action,value});simState=res.state;simLogs.unshift({name:label||ACT_LABEL[action]||action,result:res.result});simLogs=simLogs.slice(0,60);renderSim()}
+function simEncoder(id,direction){const s=simState;if(app.mode==='worlds'&&id!==4){const prm=LAYERS[s.layer][id-1];if(prm==='—')return simAct('wait','0','EN'+id+' in dieser Ebene frei');if(prm==='World')return simAct('worldSet',String(direction),'EN1 World');const key=PARAM_MAP[prm],old=s[key];let value=typeof old==='number'?old+direction*(key==='droneLevel'?1:5):old;if(key==='key'){const o=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];value=o[(o.indexOf(old)+direction+12)%12]}if(key==='droneColor'){const o=['Auto','Strings','Wood','Breath','Choir','Kalimba','Bells'];value=o[(Math.max(0,o.indexOf(old))+direction+o.length)%o.length]}return simAct('layerTurn','EN'+id+'='+value,'EN'+id+' '+prm)}if(id===4)return simAct('volume',clamp(s.volume+direction*5,0,100),'EN4 drehen');if(id===3){if(s.shift)return simAct('brightness',clamp(s.brightness+direction*5,10,100),'SHIFT + EN3 Brightness');if(app.mode==='current'){if(s.view==='MENÜ'){if(s.menuEditing){const prop=PARAM_MAP[s.menuItem],v=prop&&s[prop];const raw=typeof v==='number'?v+direction*5:(s.menuItem==='Tuning'?(v==='Equal'?'Just':'Equal'):s.menuItem==='FX'?(v==='Dry'?'Room':'Dry'):(v||''));return simAct('menuValue',raw,'EN3 Wert')}const i=MENU.indexOf(s.menuItem);return simAct('menuSelect',MENU[(i+direction+MENU.length)%MENU.length],'EN3 Menü wählen')}return simAct('menuOpen','','EN3 öffnen')}const i=PAGE_NAMES.indexOf(s.page);return simAct('page',PAGE_NAMES[(i+direction+PAGE_NAMES.length)%PAGE_NAMES.length],'EN3 Seite wechseln')}
+ if(app.mode==='current'){if(id===1)return simAct('noopEn1','','EN1 ohne Wirkung · IST');return simAct('color',clamp(s.color+direction*5,0,100),'EN2 Color')}
+ const page=app.pages.find(p=>p.name===s.page),col=id===1?(s.shift?'shift1':'en1'):(s.shift?'shift2':'en2'),param=page?.[col];if(!param||param==='—')return simAct('wait','0','Encoder ohne Belegung');const key=PARAM_MAP[param],old=key?s[key]:0;if(!key)return simAct('wait','0','Belegung prüfen');let value=typeof old==='number'?old+direction*(key==='phaserTempo'?.01:5):old;if(key==='world'){const opts=WORLD_NAMES;value=opts[(opts.indexOf(old)+direction+opts.length)%opts.length]}if(key==='key'){const opts=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];value=opts[(opts.indexOf(old)+direction+opts.length)%opts.length]}if(key==='tuning')value=old==='Equal'?'Just':'Equal';if(key==='tonality')value=old==='Dur'?'Moll':'Dur';if(key==='cellMode')value=['Note','Harmony','Landscape'][(['Note','Harmony','Landscape'].indexOf(old)+direction+3)%3];return simAct((id===1?(s.shift?'shiftEncoder1':'encoder1'):(s.shift?'shiftEncoder2':'encoder2')),value,'EN'+id+' '+param)}
+function simEncoderPress(id,long=false){if(app.mode==='worlds'){if(id===4)return long?simAct('wait','0','EN4 lang · frei'):simAct('mute','','EN4 · Stumm');if(id===1)return long?simAct('layer',simState.layer==='EN1'?'':'EN1','EN1 halten/loslassen'):simAct('light','','EN1 · Licht');if(id===2)return long?simAct('wait','0','EN2 lang · frei'):simAct('sigToggle','','EN2 · Signatur');return long?simAct('setup','','EN3 lang · Setup'):simAct('showValues','','EN3 · Werte')}if(id===4)return simAct(long?'outputStatus':'mute','','EN4 '+(long?'lang':'kurz'));if(id===3){if(long&&app.mode==='current')return simAct('browserOpen','','EN3 lang');if(app.mode==='future')return simAct('press3','','EN3 → START');if(simState.view==='BROWSER')return simAct('menuClose','','EN3 kurz · Browser schließen');if(simState.view==='MENÜ')return simAct(simState.menuEditing?'menuBack':'menuEnter','','EN3 drücken');return simAct('menuOpen','','EN3 kurz')}if(app.mode==='current')return simAct('wait',0,'EN'+id+' ohne Druckfunktion');return simAct(id===1?'press1':'press2','','EN'+id+' drücken')}
+function simCell(n){const down=transition(simState,{action:'cellDown',value:String(n)});const up=transition(down.state,{action:'cellUp',value:String(n)});simState=up.state;simLogs.unshift({name:'Cell '+n+' · kurzer Druck',result:down.result});simLogs=simLogs.slice(0,60);renderSim()}
+function renderSim(){if(!simState)return;const s=simState;const mini=document.getElementById('sim-screen');if(!mini)return;if(app.mode==='worlds'){const w=wInfo(s.world),L=s.layer;mini.innerHTML='<div class="display-top"><span>AMBIENT · WORLDS</span><span>'+esc(s.sleep?'RUHE':(W16_NAMES.indexOf(s.world)+1)+'/16')+'</span></div><div><div class="display-world" style="color:'+w[2]+'">'+esc(!s.powered?'OFF':s.sleep?'RUHE':s.view==='SETUP'?'SETUP':L==='EN1'?'SZENEN':L?L:s.world)+'</div><div class="display-sub">'+esc(!s.powered?'Gerät ist ausgeschaltet':s.sleep?'Klang läuft · Eingabe weckt':s.overlay||(s.view==='SETUP'?'Stimmung · Helligkeit · Ruhezeit · MIDI · Version':L==='EN1'?s.sceneSlots.map((v,i)=>(i+1)+':'+(v?v.world:'leer')).join('  '):L?'EN1 '+LAYERS[L][0]+' · EN2 '+LAYERS[L][1]+' · EN3 '+LAYERS[L][2]:s.key+' · Licht '+s.light+' · '+w[1]+(s.sigOn?'':' (aus)')))+'</div></div><div class="display-bottom"><span>'+esc(['HOLD','DRONE','GENERATE'].filter(k=>s[k.toLowerCase()]).concat(s.freeze?['FREEZE']:[],s.natureOn?['NATUR']:[]).join(' · ')||'PLAY')+'</span><span>'+esc(s.jack?'PHONES':'SPEAKERS')+'</span><span>'+esc(s.muted?'STUMM':'VOL '+s.volume+'%')+'</span></div>'}else mini.innerHTML='<div class="display-top"><span>AMBIENT · '+(app.mode==='current'?'V3.7':'CONCEPT B')+'</span><span>'+esc(s.sleep?'SLEEP':s.battery+'%')+'</span></div><div><div class="display-world">'+esc(!s.powered?'OFF':s.sleep?'SLEEP':s.overlay?'OVERLAY':s.view==='BROWSER'?'SCENES':s.view==='MENÜ'?s.menuItem:s.view==='PAGE'?s.page:s.world)+'</div><div class="display-sub">'+esc(!s.powered?'Gerät ist ausgeschaltet':s.sleep?'Eingabe zum Aufwecken':s.overlay||s.key+' · '+s.tuning+' · '+s.tonality)+'</div></div><div class="display-bottom"><span>'+esc(['HOLD','DRONE','GENERATE'].filter(k=>s[k.toLowerCase()]).join(' · ')||'PLAY')+'</span><span>'+esc('LOOP '+s.loop)+'</span><span>'+esc('VOL '+s.volume+'%')+'</span></div>';
+ document.getElementById('sim-encoders').innerHTML=[1,2,3,4].map(n=>'<div class="encoder"><button class="encoder-knob" onclick="simEncoderPress('+n+')" title="Kurz drücken">EN'+n+'</button><small>'+esc(app.mode==='worlds'?(n===4?'LAUTSTÄRKE':LAYERS[s.layer][n-1].toUpperCase()):n===1?(app.mode==='current'?'DRIVE (frei)':s.page+' · 1'):n===2?(app.mode==='current'?'COLOR':s.page+' · 2'):n===3?(app.mode==='current'?'MENU':'PAGE'):'VOLUME')+'</small><div class="encoder-buttons"><button aria-label="Encoder links" onclick="simEncoder('+n+',-1)">−</button><button aria-label="Encoder rechts" onclick="simEncoder('+n+',1)">+</button><button aria-label="Encoder lang" onclick="simEncoderPress('+n+',true)">⏱</button></div></div>').join('');
+ document.getElementById('sim-modifiers').innerHTML=[['SHIFT','shift'],['HOLD','hold'],['DRONE','drone'],['GENERATE','generate'],['CLEAR','clear']].map(([name,a])=>'<button class="key '+((s[name.toLowerCase()]||name==='SHIFT'&&s.shift)?'active':'')+(name==='SHIFT'&&s.shift?' shifted':'')+'" onclick="simModifier(\''+a+'\')">'+name+'</button>').join('');
+ document.getElementById('sim-cells').innerHTML=[1,2,3,4,5].map(n=>'<button class="key '+(s.notes.some(x=>x.startsWith(n+':'))?'active':'')+(s.generate&&app.mode!=='worlds'?' locked':'')+'" onclick="simCell('+n+')">CELL '+n+'</button>').join('');
+ const output=[['Betriebsmodus',s.generate?'GENERATE':s.hold?'HOLD':'PLAY'],['Welt / Key',s.world+' · '+s.key],['Audio',s.muted?'MUTED':'VOLUME '+s.volume+'%'],['Ausgang',s.jack?'PHONES':'SPEAKERS'],['Gesture Loop',s.loop+' · '+s.loopEvents.length+' Events'],['Display',screenLabel(s)],['Cells',s.notes.join(', ')||'keine'],['SHIFT',s.shift?'gehalten':'aus']];
+ document.getElementById('sim-readout').innerHTML=output.map(([k,v])=>'<div class="readout"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>').join('');
+ document.getElementById('sim-log').innerHTML=simLogs.map(l=>'<div class="log"><b>'+esc(l.name)+'</b><span>'+esc(l.result)+'</span></div>').join('');
+ document.getElementById('sim-extra').innerHTML=app.mode==='worlds'?['SHIFT','DRONE','GENERATE','HOLD','EN1'].map(k=>'<button class="btn" style="'+(s.layer===k?'border-color:var(--accent);color:var(--accent)':'')+'" onclick="simAct(\'layer\',\''+(s.layer===k?'':k)+'\',\''+k+(s.layer===k?' loslassen':' halten')+'\')">'+k+(s.layer===k?' loslassen':' halten')+'</button>').join('')+'<button class="btn" onclick="simAct(\'freeze\')">SHIFT + HOLD · Freeze</button><button class="btn" onclick="simAct(\'natureToggle\')">SHIFT + DRONE · Natur</button><button class="btn" onclick="simAct(\'newField\')">SHIFT + GENERATE</button><button class="btn" onclick="simAct(\'clearVoices\')">SHIFT + CLEAR</button><button class="btn" onclick="simAct(\'jack\')">Kopfhörer ⇄</button><button class="btn" onclick="simAct(\'wait\',900)">+ 15 min</button><button class="btn" onclick="simAct(\'wake\')">Aufwecken</button>':'<button class="btn" onclick="simAct(\'newField\')">SHIFT + GENERATE</button><button class="btn" onclick="simAct(\'loop\')">SHIFT + HOLD · Loop</button><button class="btn" onclick="simAct(\'clearVoices\')">SHIFT + CLEAR</button><button class="btn" onclick="simAct(\'jack\')">Kopfhörer ⇄</button><button class="btn" onclick="simAct(\'wait\',900)">+ 15 min</button><button class="btn" onclick="simAct(\'wake\')">Aufwecken</button><button class="btn" onclick="simAct(\'browserOpen\')">Szenen öffnen</button>';}
+function simModifier(a){if(app.mode==='worlds'){if(a==='shift'&&simState.layer==='EN1')return simAct('shift',simState.shift?'off':'on','SHIFT (bei gehaltenem EN1)');if(a==='shift')return simAct('layer',simState.layer==='SHIFT'?'':'SHIFT','SHIFT halten/loslassen');if(simState.shift){if(a==='hold')return simAct('freeze','','SHIFT + HOLD · Freeze');if(a==='drone')return simAct('natureToggle','','SHIFT + DRONE · Natur');}}if(a==='shift')return simAct('shift',simState.shift?'off':'on','SHIFT halten/loslassen');if(a==='clear'&&simState.shift)return simAct('clearVoices','','SHIFT + CLEAR');if(a==='generate'&&simState.shift)return simAct('newField','','SHIFT + GENERATE');if(a==='hold'&&simState.shift)return simAct('loop','','SHIFT + HOLD');return simAct(a)}
+function toggleTheme(){app.theme=app.theme==='dark'?'light':'dark';save();renderTheme()}
+function renderTheme(){document.body.classList.toggle('light',app.theme==='light')}
+function downloadFile(name,content,mime){const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function downloadJSON(){downloadFile('AMBIENT_state_atlas.json',JSON.stringify(app,null,2),'application/json')}
+function downloadHTML(){const doc=document.documentElement.cloneNode(true),slot=doc.querySelector('#embedded-data');slot.textContent=JSON.stringify(app).replace(/</g,'\\u003c');const html='<!doctype html>\n'+doc.outerHTML;downloadFile('AMBIENT_state_atlas_editable.html',html,'text/html')}
+function importJSON(e){const f=e.target.files?.[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(String(reader.result));if(!Array.isArray(data.scenarios)||!Array.isArray(data.functions))throw new Error('Dieses JSON ist kein gültiger State-Atlas-Export.');if(!confirm('Aktuelle lokale Änderungen durch importierte Daten ersetzen?'))return;app=normalize(data);selectedScenarioId='';selectedStepId='';save();resetSimulator();renderAll()}catch(err){alert('Import fehlgeschlagen: '+err.message)}};reader.readAsText(f);e.target.value=''}
+function renderAll(){renderTheme();renderNotice();document.getElementById('mode-current').classList.toggle('active',app.mode==='current');document.getElementById('mode-future').classList.toggle('active',app.mode==='future');document.getElementById('mode-worlds').classList.toggle('active',app.mode==='worlds');const available=scenariosFor(app.mode);if(!available.some(x=>x.id===selectedScenarioId))selectedScenarioId=available[0]?.id||app.scenarios[0].id;renderTimeline();renderPages();renderCatalog();renderDecisions();renderSim()}
+function initialize(){app=normalize(loadData());uid=Math.max(1000,...app.scenarios.flatMap(x=>x.steps.map(s=>Number(String(s.id).replace(/\D/g,''))||0)));selectedScenarioId=app.scenarios[0].id;renderAll();resetSimulator()}
+initialize();
+</script>
+</body>
+</html>
