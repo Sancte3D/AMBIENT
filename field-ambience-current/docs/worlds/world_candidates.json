@@ -1,5 +1,5 @@
 {
- "stand": "2026-11-13, Schritt 1 (Vorschlag). Besitzer-Entscheid 13.11.: diese Firmware heisst Nature Landscapes und enthaelt nur echte Landschaften; Denkraeume kommen spaeter als eigene Firmware.",
+ "stand": "2026-11-13, Schritt 1 (Vorschlag). Besitzer-Entscheide 13.11.: Firmware Nature Landscapes, nur echte Landschaften; Namen als Orte der Erde (ATLANTIC, ICEFIELDS, ISLANDS, MOORLAND, CANYONS, GRASSLANDS); keine World wird auf eine Kultur oder landestypische Musik reduziert.",
  "achsen": [
   "quelle",
   "tonvorrat",
@@ -73,7 +73,7 @@
    701.96,
    933.13
   ],
-  "Slendro": [
+  "Fuenf gleiche Stufen": [
    0,
    240,
    480,
@@ -83,8 +83,8 @@
  },
  "worlds": [
   {
-   "name": "COAST",
-   "deutsch": "Kueste",
+   "name": "ATLANTIC",
+   "deutsch": "Atlantikkueste",
    "status": "vorhanden",
    "akzent": "#9ACDD3",
    "quelle": "Streicherflaeche",
@@ -143,8 +143,8 @@
    "signatur": "Rueckwaerts-Band"
   },
   {
-   "name": "GLACIER",
-   "deutsch": "Gletscher",
+   "name": "ICEFIELDS",
+   "deutsch": "Eisfelder",
    "status": "vorhanden",
    "akzent": "#C8D2EC",
    "quelle": "Glocken",
@@ -173,7 +173,7 @@
    "akzent": "#DDB06A",
    "quelle": "Weiches Rohrblatt",
    "tonvorrat": "Septimal dunkel",
-   "zeit": "Karawane",
+   "zeit": "Ruhiger Puls",
    "raumklasse": "offen und trocken",
    "natur": "Rieselnder Sand",
    "signatur": "Sandkorn-Wolke"
@@ -183,28 +183,28 @@
    "deutsch": "Regenwald",
    "status": "neu",
    "akzent": "#86B84F",
-   "quelle": "Gong-Paare",
-   "tonvorrat": "Slendro",
+   "quelle": "Schwebende Klangstaebe",
+   "tonvorrat": "Fuenf gleiche Stufen",
    "zeit": "Verzahnte Muster",
    "raumklasse": "klein",
    "natur": "Froesche und Zikaden",
-   "signatur": "Ombak-Schwebung"
+   "signatur": "Schwebung"
   },
   {
-   "name": "REEF",
-   "deutsch": "Riff",
+   "name": "ISLANDS",
+   "deutsch": "Inseln",
    "status": "neu",
    "akzent": "#45C4C0",
    "quelle": "FM-Glas",
    "tonvorrat": "Sus gleichstufig",
    "zeit": "Kanon",
    "raumklasse": "gedaempft",
-   "natur": "Blasen",
-   "signatur": "Unterwasser"
+   "natur": "Lagunenwasser und Seevoegel",
+   "signatur": "Lagune"
   },
   {
-   "name": "MOOR",
-   "deutsch": "Moor",
+   "name": "MOORLAND",
+   "deutsch": "Moorland",
    "status": "neu",
    "akzent": "#B9A7B6",
    "quelle": "Windharfe",
@@ -251,8 +251,8 @@
    "signatur": "Glutflackern"
   },
   {
-   "name": "CANYON",
-   "deutsch": "Schlucht",
+   "name": "CANYONS",
+   "deutsch": "Schluchten",
    "status": "neu",
    "akzent": "#CC8F78",
    "quelle": "Harmonium",
@@ -263,8 +263,8 @@
    "signatur": "Hitzeflimmern"
   },
   {
-   "name": "STEPPE",
-   "deutsch": "Steppe",
+   "name": "GRASSLANDS",
+   "deutsch": "Grasland",
    "status": "neu",
    "akzent": "#8272F2",
    "quelle": "Sinus-Schwebung",

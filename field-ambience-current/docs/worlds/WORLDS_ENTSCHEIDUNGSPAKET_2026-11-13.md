@@ -54,27 +54,34 @@ Landschaften, in die man sich selbst hineindeuten kann. Denkräume und gebaute O
 Firmware. Deshalb ersetzt: GARDEN → BLACKFOREST, EMBER → VOLCANO, CLOISTER → CANYON, ZENITH → STEPPE
 (Klangbausteine bleiben, Ort, Natur und Name wechseln).
 
+**Zweiter Entscheid vom 13.11.2026:** Die Namen sollen wie Orte der Erde klingen, die man bereist, ohne den
+Klang auf eine Kultur oder landestypische Musik festzulegen. Umbenannt: COAST → ATLANTIC, GLACIER → ICEFIELDS,
+REEF → ISLANDS, MOOR → MOORLAND, CANYON → CANYONS, STEPPE → GRASSLANDS. WOODLAND, HIGHLANDS, FJORD, MEADOW,
+DUNES, JUNGLE bleiben. Kulturgebundene Beschreibungen sind neutral gefasst (JUNGLE: schwebende Klangstäbe und
+fünf gleiche Stufen statt Gong-Paare und Slendro; DUNES: weiches Rohrblatt, ruhiger Puls). In der Firmware heißen
+die sechs vorhandenen Worlds bis Schritt 3 weiter COAST … GLACIER; die Messwerte oben nennen diese Namen.
+
 Regel: Klangquelle und Signatur-Effekt je nur einmal; in Tonvorrat, Zeitgefühl, Raum und Natur
 gleichen sich zwei Worlds höchstens in zweien. Ergebnis des Prüfskripts: 0 Verstöße, größte Überdeckung 1 von 4.
 
 | World | Status | Klangquelle | Tonvorrat | Zeitgefühl | Raum | Natur | Signatur-Effekt |
 |---|---|---|---|---|---|---|---|
-| COAST (Küste) | vorhanden | Streicherfläche | Dur gleichstufig | Gezeiten | weit und hell | Brandung | Brandungs-Atem |
+| ATLANTIC (Atlantikküste) | vorhanden | Streicherfläche | Dur gleichstufig | Gezeiten | weit und hell | Brandung | Brandungs-Atem |
 | WOODLAND (Wald) | vorhanden | weicher Mallet | Moll gleichstufig | Ruf und Antwort | klein | Regen und Donner | Resonanzholz |
 | HIGHLANDS (Hochland) | vorhanden | Okarina mit Atem | Sus gleichstufig | Einzelruf und Stille | offen und trocken | Höhenwind | Bergecho |
 | FJORD (Fjord) | vorhanden | Chor | Man Gong gleichstufig | Stehender Akkord | gross und dunkel | Ferner Wasserfall | Vokal-Morph |
 | MEADOW (Wiese) | vorhanden | Kalimba | Dur rein | Schwarm | offen und trocken | Grillen und Hummeln | Rückwärts-Band |
-| GLACIER (Gletscher) | vorhanden | Glocken | Ritusen/Yo gleichstufig | Wechselläuten | weit und hell | Eisknacken und Schmelztropfen | Shimmer |
+| ICEFIELDS (Eisfelder) | vorhanden | Glocken | Ritusen/Yo gleichstufig | Wechselläuten | weit und hell | Eisknacken und Schmelztropfen | Shimmer |
 | CAVE (Grotte) | neu | Gestimmte Tropfen | Moll rein | Zufallstropfen | gross und dunkel | Tropfwasser | Tropfstein-Echo |
-| DUNES (Dünen) | neu | Weiches Rohrblatt | Septimal dunkel | Karawane | offen und trocken | Rieselnder Sand | Sandkorn-Wolke |
-| JUNGLE (Regenwald) | neu | Gong-Paare | Slendro | Verzahnte Muster | klein | Frösche und Zikaden | Ombak-Schwebung |
-| REEF (Riff) | neu | FM-Glas | Sus gleichstufig | Kanon | gedämpft | Blasen | Unterwasser |
-| MOOR (Moor) | neu | Windharfe | Septimal hell | Windgeführt | gedämpft | Moorblubbern und Wasservögel | Nebel |
+| DUNES (Dünen) | neu | Weiches Rohrblatt | Septimal dunkel | Ruhiger Puls | offen und trocken | Rieselnder Sand | Sandkorn-Wolke |
+| JUNGLE (Regenwald) | neu | Schwebende Klangstäbe | Fünf gleiche Stufen | Verzahnte Muster | klein | Frösche und Zikaden | Schwebung |
+| ISLANDS (Inseln) | neu | FM-Glas | Sus gleichstufig | Kanon | gedämpft | Lagunenwasser und Seevögel | Lagune |
+| MOORLAND (Moorland) | neu | Windharfe | Septimal hell | Windgeführt | gedämpft | Moorblubbern und Wasservögel | Nebel |
 | AURORA (Polarnacht) | neu | Glasharmonika | Man Gong gleichstufig | Auf- und Abbau | weit und hell | Schneestille und Knistern | Nordlicht-Vorhang |
 | BLACKFOREST (Schwarzwald) | neu | Gezupfte Saite | Ritusen/Yo gleichstufig | Anlauf und Stille | klein | Waldbach und Specht | Waldstille |
 | VOLCANO (Lavafeld) | neu | Handpan | Moll gleichstufig | Ostinato | offen und trocken | Knistern erkaltender Lava | Glutflackern |
-| CANYON (Schlucht) | neu | Harmonium | Dur rein | Choral | gross und dunkel | Fluss in der Tiefe | Hitzeflimmern |
-| STEPPE (Steppe) | neu | Sinus-Schwebung | Moll rein | Umlaufbahnen | offener Himmel | Gras im Nachtwind | Sternenlauf |
+| CANYONS (Schluchten) | neu | Harmonium | Dur rein | Choral | gross und dunkel | Fluss in der Tiefe | Hitzeflimmern |
+| GRASSLANDS (Grasland) | neu | Sinus-Schwebung | Moll rein | Umlaufbahnen | offener Himmel | Gras im Nachtwind | Sternenlauf |
 
 Für die sechs vorhandenen Worlds ist das der **Vorschlag**, nicht der heutige Klang. Jede Änderung an
 ihnen kommt nur mit Freigabe nach Gehör (Schritt 2). Ort, Gefühl, DRONE, Bild und Akzentfarbe je World
@@ -86,17 +93,17 @@ stehen im Foliensatz (Folien 5–12) und die Akzentfarben in der JSON-Datei.
 (±45 Cent) und verschiedene Stimmungen desselben Tons (3–90 Cent). Die Zulassung rechnet in Hz, nicht in
 Skalenstufen. Ein eigener Tonvorrat je World ist deshalb ohne Änderung der Zulassung möglich, wenn kein
 Paar des Vorrats gesperrt ist. Das gilt für zehn geprüfte Vorräte: die fünf Modi der Pentatonik
-(gleichstufig), Dur und Moll in reiner Stimmung, zwei septimale Reihen und Slendro. Vorräte mit Halbton
+(gleichstufig), Dur und Moll in reiner Stimmung, zwei septimale Reihen und fünf gleiche Stufen. Vorräte mit Halbton
 (In-Sen, Hirajoshi, Pelog) hätten 2–3 gesperrte Paare von 10; sie brauchen eine Ausnahme je World und sind
 zurückgestellt. Folgen: `core()` wird eine Tabelle je World; der DRONE braucht je World eigene Intervalle
-(Man Gong hat keine Quinte, Slendro eine von 720 Cent); die Resonanzsaiten folgen dem Vorrat.
+(Man Gong hat keine Quinte, die Reihe aus fünf gleichen Stufen eine von 720 Cent); die Resonanzsaiten folgen dem Vorrat.
 
 ## „Mehr Ambient“ – zwölf prüfbare Regeln
 
 Höchstens 3 Stimmen · 6–14 Notenstarts je Minute bei Dichte 50 % · je zwei Minuten eine Pause ≥ 8 s ·
 gehaltene Quellen 10→90 % in ≥ 150 ms · angeschlagene Quellen Anstieg ≥ 3 ms, kein Knackser ·
 gehaltener Ton ändert in 10 s Pegel oder Helligkeit um ≥ 1 dB · nichts schneller als 8 Hz außer Hitzeflimmern,
-Ombak, Glutflackern · keine Wiederholung unter 60 s · Ausklang ≥ 4 s bis −60 dB bei Raum 50 % ·
+Schwebung, Glutflackern · keine Wiederholung unter 60 s · Ausklang ≥ 4 s bis −60 dB bei Raum 50 % ·
 nichts wird abgeschnitten · Schwerpunkt 250–1200 Hz, Grundtöne ≥ 147 Hz, je World eigene Lage ·
 alle Worlds gleich laut ±1,5 LU.
 
@@ -173,7 +180,7 @@ Rechenzeit-Klassen der Signatur-Effekte · Wirkung der Hebel 3 und 4 · die Hör
 
 ## Halt 1 – Entscheidungen des Besitzers
 
-1. Welche Worlds? Empfehlung: zwölf zuerst (die sechs vorhandenen, CAVE, DUNES, JUNGLE, MOOR, BLACKFOREST, STEPPE), vier später (REEF, AURORA, VOLCANO, CANYON).
+1. Welche Worlds? Empfehlung: zwölf zuerst (die sechs vorhandenen, CAVE, DUNES, JUNGLE, MOORLAND, BLACKFOREST, GRASSLANDS), vier später (ISLANDS, AURORA, VOLCANO, CANYONS).
 2. Dürfen die sechs vorhandenen eigenen Tonvorrat, Zeitgefühl und Natur bekommen? Empfehlung: ja, einzeln per Hörskizze.
 3. Die neun Fragen (oben).
 4. Die Streichliste der 13 Funktionen. Empfehlung: annehmen.
