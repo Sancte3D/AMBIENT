@@ -156,9 +156,13 @@ Vier feste Encoder, Ebenen durch Halten. Modifier schalten beim Loslassen.
 | Grundebene kurz drücken | Licht hell/dunkel | Signatur an/aus | Werte zeigen | Stumm |
 | Grundebene lang drücken | Szenen (mit Cell) | frei | Setup | frei |
 | SHIFT halten | Grundton | Signatur-Menge | Echo | Lautstärke |
-| DRONE halten | DRONE-Farbe | DRONE-Pegel | Natur-Pegel | Lautstärke |
+| DRONE halten | Wogen (Bewegung des Betts) | Bett-Pegel | Natur-Pegel | Lautstärke |
 | GENERATE halten | Dichte | frei | frei | Lautstärke |
 | HOLD halten | Attack | Release | frei | Lautstärke |
+
+Vorgabe des Besitzers (16.11.): Die Stärke des Betts muss immer regelbar sein. DRONE tippen blendet das Bett
+ein und aus; DRONE halten + EN2 regelt seinen Pegel, + EN1 sein Wogen von fast stehend bis deutlich bewegt.
+Die DRONE-Farbe entfällt als Regler (sie gehört zur World).
 
 SHIFT + HOLD = Freeze · SHIFT + DRONE = Natur an/aus · SHIFT + GENERATE = neues Feld · SHIFT + CLEAR =
 nur Stimmen · EN1 halten + Cell = Szene laden, mit SHIFT speichern · Cells spielen bei GENERATE mit.
