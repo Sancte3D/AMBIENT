@@ -34,7 +34,9 @@ jobs:
 
   firmware-build:
     name: RP2350 build (pico2)
-    runs-on: ubuntu-latest
+    # Pinned: pico-sdk 2.1.0 builds its host tool pioasm without <cstdint>,
+    # which fails with the GCC 15 of newer runner images (seen 2026-11-16).
+    runs-on: ubuntu-24.04
     env:
       PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
     steps:
@@ -993,7 +995,9 @@ jobs:
 
   firmware-build-next:
     name: RP2350 build (pico2, firmware-c-next)
-    runs-on: ubuntu-latest
+    # Pinned: pico-sdk 2.1.0 builds its host tool pioasm without <cstdint>,
+    # which fails with the GCC 15 of newer runner images (seen 2026-11-16).
+    runs-on: ubuntu-24.04
     env:
       PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
     steps:
