@@ -98,20 +98,29 @@ Paar des Vorrats gesperrt ist. Das gilt für zehn geprüfte Vorräte: die fünf 
 zurückgestellt. Folgen: `core()` wird eine Tabelle je World; der DRONE braucht je World eigene Intervalle
 (Man Gong hat keine Quinte, die Reihe aus fünf gleichen Stufen eine von 720 Cent); die Resonanzsaiten folgen dem Vorrat.
 
-## „Mehr Ambient“ – zwölf prüfbare Regeln
+## „Mehr Ambient“ – prüfbare Regeln (überarbeitet am 16.11.2026)
 
-Höchstens 3 Stimmen · 6–14 Notenstarts je Minute bei Dichte 50 % · je zwei Minuten eine Pause ≥ 8 s ·
-gehaltene Quellen 10→90 % in ≥ 150 ms · angeschlagene Quellen Anstieg ≥ 3 ms, kein Knackser ·
-gehaltener Ton ändert in 10 s Pegel oder Helligkeit um ≥ 1 dB · nichts schneller als 8 Hz außer Hitzeflimmern,
-Schwebung, Glutflackern · keine Wiederholung unter 60 s · Ausklang ≥ 4 s bis −60 dB bei Raum 50 % ·
-nichts wird abgeschnitten · Schwerpunkt 250–1200 Hz, Grundtöne ≥ 147 Hz, je World eigene Lage ·
-alle Worlds gleich laut ±1,5 LU.
+Grundlage ist die vermessene Referenzaufnahme: `docs/audio/AMBIENT_REFERENCE_ANALYSIS.md`.
+
+- **Schichten:** Jede World hat Bett, Luft, Tupfer und Töne. Das Bett trägt den Ort.
+- **Dichte:** höchstens 3 Stimmen; in Generate je nach World 1–14 Notenstarts je Minute bei Dichte 50 %;
+  Tupfer höchstens 20 je Minute und mindestens 20 dB unter dem Bett.
+- **Breite:** Links/Rechts-Korrelation des Betts höchstens 0,4; in Mono verliert kein Terzband mehr als 6 dB,
+  und das Wogen bleibt in Mono erhalten.
+- **Zwei Uhren:** Bett wogt mit Perioden von 0,5–2 s um mindestens 3 dB; Luft und Helligkeit ändern sich über 8–120 s.
+- **Einschwingen:** gehaltene Quellen 10→90 % in ≥ 150 ms; angeschlagene Anstieg ≥ 3 ms, kein Knackser.
+- **Ausklang:** ≥ 4 s bis −60 dB bei Raum 50 %; nichts wird abgeschnitten.
+- **Gleichmaß:** Pegel über 10 Minuten Generate innerhalb ±1,5 dB; keine Wiederholung unter 60 s.
+- **Frequenz:** Grundtöne des Betts ≥ 147 Hz (Lautsprecher); dunkel ist erlaubt, die frühere Schwerpunkt-Regel entfällt.
+- **Pegel:** alle Worlds gleich laut ±1,5 LU.
 
 ## Architektur und Budgets (Vorschlag)
 
 World = ein Deskriptor ≤ 512 B im Flash (statischer Assert): Name, Farbe, Bild-Werte, Klangquelle,
 Tonvorrat, Zeit-Grammatik, Raum, Natur, Kette, Signatur. 16 Klangquellen aus 6 Bausteinen (Fläche, Modal,
 Rohr, Stimme, Saite, FM/Sinus), 16 Zeitgefühle aus 5 Grammatiken, Natur aus 2 Bausteinen, eine Effektkette.
+Neu seit 16.11.: Das **Bett** ist ein eigener, siebter Baustein (Bank aus Tabellen-Oszillatoren auf dem Tonvorrat,
+links/rechts mit eigenen Phasen); es ersetzt den heutigen DRONE als Fundament jeder World.
 Eine World-Arena von 48 KB hält Quelle und Signatur der aktiven World; weil nur eine World klingt, kostet
 eine weitere World 0 B RAM und ihre Rechenzeit addiert sich nicht.
 
