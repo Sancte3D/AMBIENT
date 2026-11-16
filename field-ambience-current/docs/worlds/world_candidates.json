@@ -147,9 +147,9 @@
    "deutsch": "Eisfelder",
    "status": "vorhanden",
    "akzent": "#C8D2EC",
-   "quelle": "Glocken",
+   "quelle": "Kristall-Synth",
    "tonvorrat": "Ritusen/Yo gleichstufig",
-   "zeit": "Wechsellaeuten",
+   "zeit": "Wechselreihe",
    "raumklasse": "weit und hell",
    "natur": "Eisknacken und Schmelztropfen",
    "signatur": "Shimmer"
@@ -183,7 +183,7 @@
    "deutsch": "Regenwald",
    "status": "neu",
    "akzent": "#86B84F",
-   "quelle": "Schwebende Klangstaebe",
+   "quelle": "Schwebende Synth-Toene",
    "tonvorrat": "Fuenf gleiche Stufen",
    "zeit": "Verzahnte Muster",
    "raumklasse": "klein",
@@ -330,5 +330,10 @@
    "natur": "Wind",
    "signatur": "Oktav-Grains"
   }
+ ],
+ "klangregeln": [
+  "Es ist ein Synthesizer: Klangquellen sind synthetische Toene, keine Instrumenten-Imitate um jeden Preis.",
+  "Keine Glockenspektren: nur harmonische Teiltoene, weicher Anschlag.",
+  "Rauschen nur als Hauch: mindestens 40 dB unter dem Bett; Tupfer tonal statt geraeuschhaft."
  ]
 }

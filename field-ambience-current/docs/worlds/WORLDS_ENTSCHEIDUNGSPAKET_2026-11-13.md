@@ -71,10 +71,10 @@ gleichen sich zwei Worlds höchstens in zweien. Ergebnis des Prüfskripts: 0 Ver
 | HIGHLANDS (Hochland) | vorhanden | Okarina mit Atem | Sus gleichstufig | Einzelruf und Stille | offen und trocken | Höhenwind | Bergecho |
 | FJORD (Fjord) | vorhanden | Chor | Man Gong gleichstufig | Stehender Akkord | gross und dunkel | Ferner Wasserfall | Vokal-Morph |
 | MEADOW (Wiese) | vorhanden | Kalimba | Dur rein | Schwarm | offen und trocken | Grillen und Hummeln | Rückwärts-Band |
-| ICEFIELDS (Eisfelder) | vorhanden | Glocken | Ritusen/Yo gleichstufig | Wechselläuten | weit und hell | Eisknacken und Schmelztropfen | Shimmer |
+| ICEFIELDS (Eisfelder) | vorhanden | Kristall-Synth | Ritusen/Yo gleichstufig | Wechselreihe | weit und hell | Eisknacken und Schmelztropfen | Shimmer |
 | CAVE (Grotte) | neu | Gestimmte Tropfen | Moll rein | Zufallstropfen | gross und dunkel | Tropfwasser | Tropfstein-Echo |
 | DUNES (Dünen) | neu | Weiches Rohrblatt | Septimal dunkel | Ruhiger Puls | offen und trocken | Rieselnder Sand | Sandkorn-Wolke |
-| JUNGLE (Regenwald) | neu | Schwebende Klangstäbe | Fünf gleiche Stufen | Verzahnte Muster | klein | Frösche und Zikaden | Schwebung |
+| JUNGLE (Regenwald) | neu | Schwebende Synth-Töne | Fünf gleiche Stufen | Verzahnte Muster | klein | Frösche und Zikaden | Schwebung |
 | ISLANDS (Inseln) | neu | FM-Glas | Sus gleichstufig | Kanon | gedämpft | Lagunenwasser und Seevögel | Lagune |
 | MOORLAND (Moorland) | neu | Windharfe | Septimal hell | Windgeführt | gedämpft | Moorblubbern und Wasservögel | Nebel |
 | AURORA (Polarnacht) | neu | Glasharmonika | Man Gong gleichstufig | Auf- und Abbau | weit und hell | Schneestille und Knistern | Nordlicht-Vorhang |
@@ -102,6 +102,10 @@ zurückgestellt. Folgen: `core()` wird eine Tabelle je World; der DRONE braucht 
 
 Grundlage ist die vermessene Referenzaufnahme: `docs/audio/AMBIENT_REFERENCE_ANALYSIS.md`.
 
+- **Synthesizer (Vorgabe des Besitzers, 16.11.):** Keine Glockenspektren: nur harmonische Teiltöne und weicher
+  Anschlag. Rauschen nur als Hauch, mindestens 40 dB unter dem Bett; Tupfer sind tonal statt geräuschhaft.
+  Betroffen: ICEFIELDS (bisher Glocken) bekommt einen Kristall-Synth; JUNGLE schwebende Synth-Töne statt Klangstäbe.
+  Der heutige GLACIER-Glockenklang der Firmware ist damit nicht mehr Ziel.
 - **Schichten:** Jede World hat Bett, Luft, Tupfer und Töne. Das Bett trägt den Ort.
 - **Dichte:** höchstens 3 Stimmen; in Generate je nach World 1–14 Notenstarts je Minute bei Dichte 50 %;
   Tupfer höchstens 20 je Minute und mindestens 20 dB unter dem Bett.

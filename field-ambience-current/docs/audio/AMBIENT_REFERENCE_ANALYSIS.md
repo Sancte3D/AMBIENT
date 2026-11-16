@@ -46,16 +46,20 @@ Dunkelheit ist kein Mangel: Die Referenz ist dunkler als jede unserer Worlds. Di
 - Mehr Oszillatoren kosten Rechenzeit: Ein Bett aus 6 Tönen mit je 2 Stimmen und 3 Teiltönen sind 36 Sinus
   je Kanal. Das ist als Tabellen-Oszillator machbar, muss aber in den Lasttest.
 
-## Hörskizzen, Fassung 2
+## Hörskizzen, Fassung 3
+
+Vorgabe des Besitzers nach Fassung 2: keine hässlichen Glocken, kein starkes Rauschen, es ist ein Synthesizer.
+Fassung 3 hat nur harmonische Töne mit weichem Anschlag und Rauschen nur als Hauch.
 
 `tools/world_sketches/sketch_worlds.py` baut CAVE, DUNES und JUNGLE nach diesen Prinzipien (40 s, numpy,
 **kein Firmware-Klang**, gemessen, nicht gehört):
 
 | Skizze | L/R-Korrelation | Seite gegen Mitte | Schwerpunkt | 85 % unter | Schwankung des Betts |
 |---|---|---|---|---|---|
-| CAVE | −0,05 | +0,4 dB | 264 Hz | 296 Hz | 2,6 dB |
-| DUNES | 0,20 | −1,8 dB | 322 Hz | 441 Hz | 4,5 dB |
-| JUNGLE | −0,03 | +0,3 dB | 312 Hz | 441 Hz | 4,2 dB |
+| CAVE | −0,05 | +0,4 dB | 257 Hz | 296 Hz | 2,7 dB |
+| DUNES | 0,20 | −1,8 dB | 319 Hz | 441 Hz | 4,5 dB |
+| JUNGLE | −0,04 | +0,3 dB | 299 Hz | 436 Hz | 4,2 dB |
 | Referenz | 0,16 | −1 dB | 240 Hz | 345 Hz | 8 dB (über 15 min, mit Einblendung) |
 
+Energie über 2,5 kHz: CAVE −40 dB, DUNES −38 dB, JUNGLE −53 dB (Referenz etwa −32 dB).
 Breite und Dunkelheit treffen die Referenz. Das Wogen ist etwa halb so tief; ob das reicht, entscheidet das Ohr.

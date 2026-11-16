@@ -142,28 +142,31 @@
  },
  "tonvorraete_zulaessig": 10,
  "hoerskizzen": {
-  "quelle": "tools/world_sketches/sketch_worlds.py Fassung 2 (numpy, kein Firmware-Klang), 40 s",
+  "quelle": "tools/world_sketches/sketch_worlds.py Fassung 3 (numpy, kein Firmware-Klang), 40 s; harmonische Toene, Rauschen nur als Hauch",
   "gehoert": false,
   "cave": {
    "lr_korrelation": -0.05,
    "seite_gegen_mitte_db": 0.4,
-   "schwerpunkt_hz": 264,
+   "schwerpunkt_hz": 257,
    "rolloff85_hz": 296,
-   "bett_schwankung_db": 2.6
+   "bett_schwankung_db": 2.7,
+   "ueber_2k5_db": -39.8
   },
   "dunes": {
    "lr_korrelation": 0.2,
    "seite_gegen_mitte_db": -1.8,
-   "schwerpunkt_hz": 322,
+   "schwerpunkt_hz": 319,
    "rolloff85_hz": 441,
-   "bett_schwankung_db": 4.5
+   "bett_schwankung_db": 4.5,
+   "ueber_2k5_db": -38.0
   },
   "jungle": {
-   "lr_korrelation": -0.03,
+   "lr_korrelation": -0.04,
    "seite_gegen_mitte_db": 0.3,
-   "schwerpunkt_hz": 312,
-   "rolloff85_hz": 441,
-   "bett_schwankung_db": 4.2
+   "schwerpunkt_hz": 299,
+   "rolloff85_hz": 436,
+   "bett_schwankung_db": 4.2,
+   "ueber_2k5_db": -52.9
   }
  },
  "referenz": {

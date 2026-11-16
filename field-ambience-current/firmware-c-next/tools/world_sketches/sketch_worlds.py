@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hoerskizzen fuer drei neue World-Kandidaten (Schritt 1 des Worlds-Auftrags), Fassung 2.
+"""Hoerskizzen fuer drei neue World-Kandidaten (Schritt 1 des Worlds-Auftrags), Fassung 3.
 
 KEIN Firmware-Klang: reine Host-Skizzen in numpy. Nichts davon laeuft durch
 engine_render(); Pegel, Rechenzeit und Echtzeitregeln sind hier nicht geprueft.
@@ -13,6 +13,10 @@ Fassung 2 folgt den Prinzipien aus der vermessenen Referenzaufnahme
   Luft    gefaerbtes Rauschen, links/rechts unabhaengig, kommt und geht (8-120 s)
   Tupfer  seltene, leise, hohe Ereignisse aus der Natur des Ortes
   Toene   die Klangquelle der World, nur wenige je Minute
+
+Fassung 3 (Besitzer-Vorgabe): Es ist ein Synthesizer. Keine Glockenspektren: alle Toene
+haben harmonische Teiltoene und weichen Anschlag. Rauschen nur als kaum hoerbarer Hauch,
+mindestens 40 dB unter dem Bett; Tupfer sind tonal statt geraeuschhaft.
 
     python3 sketch_worlds.py <ausgabeordner>      # schreibt cave/dunes/jungle .wav
 """
@@ -96,7 +100,7 @@ def cave():
     rng = np.random.default_rng(1113); R = [1, 6 / 5, 4 / 3, 3 / 2, 9 / 5]
     b = bed(rng, [(D3 / 2, .5), (D3, 1.0), (D3 * 3 / 2, .7), (D3 * 2, .45), (D3 * 2 * 6 / 5, .22), (D3 * 3, .12)],
             [1, .18, .05], beat=(0.5, 1.7))
-    luft = air(rng, 70, 260, 50, .6) * .30 + air(rng, 2500, 7000, 35, .9) * .012
+    luft = air(rng, 90, 240, 50, .6) * .08
     tupf = np.zeros((N, 2)); drips = np.sort(rng.uniform(1, DUR - 2, 11))
     for td in drips:
         n = int(SR * .1); x = np.arange(n) / SR; f0 = rng.uniform(1100, 3200)
@@ -112,7 +116,7 @@ def cave():
     for j, d in enumerate(np.cumsum(gaps)):
         sh = int(d * SR); e = np.zeros((N, 2)); e[sh:] = tones[:-sh]; e = lowpass(e, 2600 / (1 + j)); p = .1 + .8 * (j % 2)
         echo[:, 0] += e[:, 0] * (1 - p) * .55 ** (j + 1) * 1.6; echo[:, 1] += e[:, 1] * p * .55 ** (j + 1) * 1.6
-    front = (tones + echo) * .16 + tupf * .035
+    front = (tones + echo) * .16 + lowpass(tupf, 2600) * .018
     return finish(b * .30 + luft * .05 + front + reverb(front * 1.6 + b * .12, 7.5, 2400, .045) * .55)
 
 def dunes():
@@ -147,7 +151,7 @@ def dunes():
         p = rng.random(); gr = mono[src:src + g] * win * (.4 + gust[dst])
         cloud[dst:dst + g, 0] += gr * (1 - p); cloud[dst:dst + g, 1] += gr * p
     front = tones * .22 + highpass(cloud, 500) * .16
-    return finish(b * .34 + sand * .012 + tupf * .010 + front + reverb(front + b * .1, 1.2, 3000, .01) * .14)
+    return finish(b * .34 + lowpass(sand, 5000) * .0022 + front + reverb(front + b * .1, 1.2, 3000, .01) * .14)
 
 def jungle():
     """JUNGLE: Bett aus weichen Toenen in fuenf gleichen Stufen, feuchte Luft und ein
@@ -156,7 +160,7 @@ def jungle():
     rng = np.random.default_rng(909); st = 2 ** (240 / 1200)
     b = bed(rng, [(D3, 1.0), (D3 * st ** 3, .75), (D3 * 2, .5), (D3 * 2 * st, .3), (D3 * 2 * st ** 3, .22), (D3 * 4, .1)],
             [1, .25, .1, .04], beat=(0.6, 2.0))
-    luft = air(rng, 500, 3200, 30, .6, 1) * .35 + air(rng, 4300, 5600, 22, 1.0, 3) * (.5 + .5 * np.sin(2 * np.pi * 38 * T))[:, None] * .45
+    luft = air(rng, 600, 2400, 30, .6, 1) * .12
     tupf = np.zeros((N, 2))
     for f0, pan, seed in ((520, .1, 1), (690, .9, 2), (410, .6, 3)):
         r = np.random.default_rng(seed); t = r.uniform(1, 6)
@@ -166,13 +170,14 @@ def jungle():
                 place(tupf, np.sin(2 * np.pi * f0 * (1 + .25 * x / .07) * x) * (np.sin(2 * np.pi * 55 * x) > 0) * np.hanning(n), t + k * .16, pan, .5)
             t += r.uniform(5, 12)
     for td in rng.uniform(0, DUR - 1, 30):
-        n = int(SR * .03); place(tupf, bandpass(rng.standard_normal(n), 1500, 6000) * env_ad(n, .0005, .006), td, rng.random(), .8)
+        n = int(SR * .09); x = np.arange(n) / SR; f0 = D3 * 8 * st ** rng.integers(0, 5)
+        place(tupf, np.sin(2 * np.pi * f0 * x) * env_ad(n, .002, .02), td, rng.random(), .5)
     def bar(hz, dur, beat):
         n = int(SR * dur); x = np.arange(n) / SR; s = np.zeros((n, 2))
-        for r_, a, d in ((1, 1, dur * .4), (2.76, .3, dur * .15), (5.4, .1, dur * .07)):
-            s[:, 0] += a * np.sin(2 * np.pi * (hz * r_ - beat / 2 * r_ ** .5) * x) * np.exp(-x / d)   # Paar: ein Stab links,
-            s[:, 1] += a * np.sin(2 * np.pi * (hz * r_ + beat / 2 * r_ ** .5) * x) * np.exp(-x / d)   # einer rechts
-        return s * np.minimum(1, x / .008)[:, None]
+        for r_, a, d in ((1, 1, dur * .4), (2, .22, dur * .12), (3, .06, dur * .05)):    # harmonisch: weicher Synth-Ton, keine Glocke
+            s[:, 0] += a * np.sin(2 * np.pi * (hz - beat / 2) * r_ * x) * np.exp(-x / d)   # Paar: ein Ton links,
+            s[:, 1] += a * np.sin(2 * np.pi * (hz + beat / 2) * r_ * x) * np.exp(-x / d)   # einer rechts
+        return s * np.minimum(1, x / .03)[:, None]
     tones = np.zeros((N, 2)); A = [0, None, 2, None, None, 3, None]; B = [None, None, 4, None, 1, None, None, None, 2]
     i = 0; t = 2.5
     while t < DUR - 7:
@@ -181,8 +186,8 @@ def jungle():
             if k is not None:
                 s = bar(D3 * octv * st ** k, 5.0, bt); j = int(t * SR); m = min(len(s), N - j); tones[j:j + m] += s[:m] * g
         i += 1; t += 1.35
-    front = lowpass(tones, 5000) * .15 + tupf * .022
-    return finish(b * .32 + luft * .012 + front + reverb(front + b * .08, 1.4, 5000, .006) * .30)
+    front = lowpass(tones, 2500) * .15 + lowpass(tupf, 3000) * .014
+    return finish(b * .32 + luft * .0025 + front + reverb(front + b * .08, 1.4, 3500, .006) * .30)
 
 if __name__ == '__main__':
     out = sys.argv[1] if len(sys.argv) > 1 else '.'
