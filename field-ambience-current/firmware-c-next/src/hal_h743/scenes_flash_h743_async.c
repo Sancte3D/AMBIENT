@@ -9,6 +9,7 @@ static scenes_flash_h743_async_t *s_owner;
 
 #if !defined(SCENES_FLASH_H743_HOST_MODEL)
 #include "stm32h7xx_hal.h"
+#include "h743_hal.h"  /* h743_fatal_stop() */
 static scenes_flash_h743_read_guard_t s_guard;
 extern uint8_t scenes_flash_h743_guarded_load, scenes_flash_h743_guarded_resume;
 extern uint32_t scenes_flash_h743_guarded_read(uint32_t address);
@@ -230,7 +231,7 @@ bool scenes_flash_h743_async_busfault(uint32_t *stacked, uint32_t exc_return) {
 /* Assembly entry branches here with the original EXC_RETURN in LR. */
 void scenes_flash_h743_busfault_dispatch(uint32_t *stacked, uint32_t exc_return) {
     if (scenes_flash_h743_async_busfault(stacked, exc_return)) return;
-    for (;;) { }
+    h743_fatal_stop();   /* unrelated fault: silence the amp, then park or reset */
 }
 void HAL_FLASH_EndOfOperationCallback(uint32_t value) { scenes_flash_h743_async_complete(value); }
 void HAL_FLASH_OperationErrorCallback(uint32_t value) { scenes_flash_h743_async_error(value); }
