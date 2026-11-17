@@ -62,11 +62,65 @@ static volatile bool     s_irq_pending = false;
 static volatile uint16_t s_state = 0xFFFF;
 static uint8_t           s_olata = 0x00;
 
+/* --- I2C bus recovery ---
+ * A reset or brown-out in the middle of a transfer can leave the MCP23017 or
+ * the PCA9685 holding SDA low, waiting for clocks that never come. The I2C
+ * peripheral then reports BUSY forever: every key, Cell and LED is dead until
+ * the power is pulled. Standard remedy (NXP UM10204 3.1.16): with the pins as
+ * open-drain GPIOs, clock SCL up to nine times until SDA is released, then
+ * send a STOP. Bounded and only a few tens of microseconds. */
+static void i2c_delay(void) { for (volatile uint32_t i = 0; i < 600u; ++i) { } }
+
+static void i2c_bus_recover(void) {
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    GPIO_InitTypeDef g = {0};
+    g.Pin   = GPIO_PIN_6 | GPIO_PIN_7;            /* PB6 SCL, PB7 SDA */
+    g.Mode  = GPIO_MODE_OUTPUT_OD;
+    g.Pull  = GPIO_PULLUP;
+    g.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6 | GPIO_PIN_7, GPIO_PIN_SET);
+    HAL_GPIO_Init(GPIOB, &g);
+    i2c_delay();
+    for (int k = 0; k < 9 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == GPIO_PIN_RESET; ++k) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); i2c_delay();
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   i2c_delay();
+    }
+    /* STOP: SDA low -> high while SCL is high. */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET); i2c_delay();
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   i2c_delay();
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);   i2c_delay();
+}
+
+static bool i2c_init_peripheral(void) {
+    h743_hi2c1.Instance              = I2C1;
+    h743_hi2c1.Init.Timing           = 0x20421C37;   /* derivation above */
+    h743_hi2c1.Init.OwnAddress1      = 0;
+    h743_hi2c1.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;
+    h743_hi2c1.Init.DualAddressMode  = I2C_DUALADDRESS_DISABLE;
+    h743_hi2c1.Init.GeneralCallMode  = I2C_GENERALCALL_DISABLE;
+    h743_hi2c1.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;
+    return HAL_I2C_Init(&h743_hi2c1) == HAL_OK;   /* MspInit returns the pins to AF */
+}
+
+/* Count consecutive failures of the shared bus; after a few in a row, free the
+ * bus and restart the peripheral (main loop only, ~50 us). */
+static uint8_t s_i2c_failures;
+static bool i2c_result(bool ok) {
+    if (ok) { s_i2c_failures = 0; return true; }
+    if (++s_i2c_failures >= 3u) {
+        s_i2c_failures = 0;
+        (void)HAL_I2C_DeInit(&h743_hi2c1);
+        i2c_bus_recover();
+        (void)i2c_init_peripheral();
+    }
+    return false;
+}
+
 /* --- shared I²C helpers (h743_hal.h) --- */
 
 bool h743_i2c_wr(uint8_t addr7, const uint8_t *buf, uint16_t len) {
-    return HAL_I2C_Master_Transmit(&h743_hi2c1, (uint16_t)(addr7 << 1),
-                                   (uint8_t *)buf, len, 10) == HAL_OK;
+    return i2c_result(HAL_I2C_Master_Transmit(&h743_hi2c1, (uint16_t)(addr7 << 1),
+                                              (uint8_t *)buf, len, 10) == HAL_OK);
 }
 
 bool h743_i2c_wr_reg(uint8_t addr7, uint8_t reg, uint8_t val) {
@@ -76,9 +130,9 @@ bool h743_i2c_wr_reg(uint8_t addr7, uint8_t reg, uint8_t val) {
 
 bool h743_i2c_rd_reg(uint8_t addr7, uint8_t reg, uint8_t *out) {
     if (HAL_I2C_Master_Transmit(&h743_hi2c1, (uint16_t)(addr7 << 1),
-                                &reg, 1, 10) != HAL_OK) return false;
-    return HAL_I2C_Master_Receive(&h743_hi2c1, (uint16_t)(addr7 << 1),
-                                  out, 1, 10) == HAL_OK;
+                                &reg, 1, 10) != HAL_OK) return i2c_result(false);
+    return i2c_result(HAL_I2C_Master_Receive(&h743_hi2c1, (uint16_t)(addr7 << 1),
+                                             out, 1, 10) == HAL_OK);
 }
 
 /* --- MspInit: pins + clocks (called by HAL_I2C_Init) --- */
@@ -105,14 +159,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin) {
 /* --- public API (include/mcp23017.h) --- */
 
 bool mcp_init(void) {
-    h743_hi2c1.Instance              = I2C1;
-    h743_hi2c1.Init.Timing           = 0x20421C37;   /* derivation above */
-    h743_hi2c1.Init.OwnAddress1      = 0;
-    h743_hi2c1.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;
-    h743_hi2c1.Init.DualAddressMode  = I2C_DUALADDRESS_DISABLE;
-    h743_hi2c1.Init.GeneralCallMode  = I2C_GENERALCALL_DISABLE;
-    h743_hi2c1.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;
-    if (HAL_I2C_Init(&h743_hi2c1) != HAL_OK) return false;
+    i2c_bus_recover();                            /* a stuck SDA from before the reset */
+    if (!i2c_init_peripheral()) return false;
 
     /* Probe: any register read must ACK. */
     uint8_t dummy;

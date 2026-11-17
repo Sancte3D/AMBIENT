@@ -5,19 +5,27 @@
 
 #include "h743_hal.h"
 
+/* Silicon revision Y (DBGMCU_IDCODE.REV_ID 0x1003) is limited to 400 MHz and
+ * has no VOS0. Revision V (0x2003) and later run 480 MHz at VOS0. Which
+ * revision the assembler delivers is not known yet, so the firmware decides
+ * at boot instead of overclocking an older chip. */
+bool h743_is_rev_y(void) { return (DBGMCU->IDCODE >> 16) == 0x1003u; }
+
 void SystemClock_Config(void) {
-    /* LDO supply (SPEC: no SMPS pin on LQFP100 wiring) + VOS0 for 480 MHz.
-     * HAL_PWREx_ControlVoltageScaling busy-waits on VOSRDY internally. */
+    const bool rev_y = h743_is_rev_y();
+    /* LDO supply (SPEC: no SMPS pin on LQFP100 wiring). */
     HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
     while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) { }
-    /* VOS0 sets the overdrive bit SYSCFG->PWRCR.ODEN. SYSCFG is unclocked
-     * after reset (RCC_APB4ENR.SYSCFGEN = 0), so without this enable the
-     * write is silently lost and the core would run 480 MHz at VOS1, whose
-     * limit is 400 MHz (DS12110). Same order as ST's reference code. */
-    __HAL_RCC_SYSCFG_CLK_ENABLE();
-    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
-    while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) { }
+    if (!rev_y) {
+        /* VOS0 sets the overdrive bit SYSCFG->PWRCR.ODEN. SYSCFG is unclocked
+         * after reset (RCC_APB4ENR.SYSCFGEN = 0), so without this enable the
+         * write is silently lost and the core would run 480 MHz at VOS1,
+         * whose limit is 400 MHz (DS12110). Same order as ST's reference. */
+        __HAL_RCC_SYSCFG_CLK_ENABLE();
+        __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
+        while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) { }
+    }
 
     RCC_OscInitTypeDef osc = {0};
     osc.OscillatorType = RCC_OSCILLATORTYPE_HSE;
@@ -25,9 +33,9 @@ void SystemClock_Config(void) {
     osc.PLL.PLLState   = RCC_PLL_ON;
     osc.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
     osc.PLL.PLLM       = 1;                   /* ref 8 MHz               */
-    osc.PLL.PLLN       = 120;                 /* VCO 960 MHz (wide)      */
-    osc.PLL.PLLP       = 2;                   /* SYSCLK 480 MHz          */
-    osc.PLL.PLLQ       = 8;                   /* 120 MHz → SPI1/2/3 kern */
+    osc.PLL.PLLN       = rev_y ? 100 : 120;   /* VCO 800 / 960 MHz (wide) */
+    osc.PLL.PLLP       = 2;                   /* SYSCLK 400 / 480 MHz    */
+    osc.PLL.PLLQ       = 8;                   /* 100 / 120 MHz → SPI kern */
     osc.PLL.PLLR       = 2;
     osc.PLL.PLLRGE     = RCC_PLL1VCIRANGE_3;  /* ref 8..16 MHz           */
     osc.PLL.PLLVCOSEL  = RCC_PLL1VCOWIDE;     /* 192..960 MHz            */
@@ -86,5 +94,45 @@ void h743_fatal_stop(void) {
 }
 
 void Error_Handler(void) { h743_fatal_stop(); }
+
+/* MPU background region (ST AN4838/AN4861): the Cortex-M7 may read
+ * speculatively from any "Normal" region of the default memory map, including
+ * the FMC and QUADSPI windows (0x60000000-0xDFFFFFFF) while those peripherals
+ * are unconfigured, which ST documents as a cause of bus stalls. Region 0
+ * covers 4 GB as no-access, execute-never and strongly ordered; subregions
+ * 0, 1, 2 and 7 (code/flash/TCM, SRAM, peripherals, system) are disabled so
+ * they keep the default map. The PSRAM self-test opens its window as region 1.
+ * Call before the caches are enabled. */
+void h743_mpu_init(void) {
+    __DMB();
+    MPU->CTRL = 0;
+    MPU->RNR  = 0;
+    MPU->RBAR = 0;
+    MPU->RASR = (31u << MPU_RASR_SIZE_Pos)       /* 2^(31+1) = 4 GB */
+              | (0x87u << MPU_RASR_SRD_Pos)      /* keep 0..1.5 GB and 3.5..4 GB default */
+              | (0u << MPU_RASR_AP_Pos)          /* no access */
+              | MPU_RASR_XN_Msk                  /* TEX=0 C=0 B=0: strongly ordered */
+              | MPU_RASR_ENABLE_Msk;
+    MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk;
+    __DSB(); __ISB();
+}
+
+/* Independent watchdog: a hang in the main loop (stuck bus, endless wait)
+ * restarts the instrument after about 8 s instead of leaving it deaf to every
+ * control until the power is pulled. LSI ~32 kHz / 256 = 125 Hz, reload 1000.
+ * 8 s also covers the longest blocking step in the loop, a 128 KB Flash sector
+ * erase for a Scene save (fed right before it). Frozen while a debugger halts
+ * the core. Once started it cannot be stopped; start it only for normal play,
+ * never in the bench/service modes, which block for longer. */
+void h743_watchdog_start(void) {
+    DBGMCU->APB4FZ1 |= DBGMCU_APB4FZ1_DBG_IWDG1;
+    IWDG1->KR  = 0xCCCCu;                        /* start (also starts LSI) */
+    IWDG1->KR  = 0x5555u;                        /* unlock PR/RLR */
+    IWDG1->PR  = 6u;                             /* /256 */
+    IWDG1->RLR = 1000u;                          /* 8.0 s at 32 kHz */
+    for (uint32_t spins = 0; IWDG1->SR != 0u && spins < 2000000u; ++spins) { }
+    IWDG1->KR  = 0xAAAAu;                        /* reload */
+}
+void h743_watchdog_feed(void) { IWDG1->KR = 0xAAAAu; }
 
 /* newlib-nano glue: no OS. --specs=nosys.specs provides the rest. */

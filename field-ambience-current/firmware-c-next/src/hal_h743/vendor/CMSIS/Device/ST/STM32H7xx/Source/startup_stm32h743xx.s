@@ -114,7 +114,9 @@ LoopForever:
     .section  .text.Default_Handler,"ax",%progbits
 Default_Handler:
 Infinite_Loop:
-  b  Infinite_Loop
+  /* AMBIENT: an unexpected interrupt silences the amplifier and stops the
+   * audio DMA before parking or resetting (h743_fatal_stop, system_clock_h743.c). */
+  b  h743_fatal_stop
   .size  Default_Handler, .-Default_Handler
 /******************************************************************************
 *

@@ -31,6 +31,12 @@ void SystemClock_Config(void);
 void Error_Handler(void);
 /* Silence the amp, stop the audio DMA, then park (debugger) or reset. */
 void h743_fatal_stop(void);
+/* Device safety (system_clock_h743.c): revision-Y clock limit, MPU background
+ * region, independent watchdog. */
+bool h743_is_rev_y(void);
+void h743_mpu_init(void);
+void h743_watchdog_start(void);
+void h743_watchdog_feed(void);
 
 /* --- shared I²C1 transport (mcp23017_h743.c owns the bus) -------------- */
 extern I2C_HandleTypeDef h743_hi2c1;

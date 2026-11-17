@@ -103,7 +103,7 @@ static bool qspi_cmd(uint8_t instr, uint32_t imode, uint32_t admode,
 static void mpu_region_psram(void) {
     __DMB();
     MPU->CTRL = 0;                                        /* disable while editing */
-    MPU->RNR  = 0;                                        /* region 0 (spare) */
+    MPU->RNR  = 1;                                        /* over the background region 0 */
     MPU->RBAR = PSRAM_BASE_ADDR & MPU_RBAR_ADDR_Msk;
     /* SIZE=22 → 8 MB; TEX=001,C=1,B=1 = normal WB-WA; AP=011 full; ENABLE */
     MPU->RASR = (22u << MPU_RASR_SIZE_Pos)
