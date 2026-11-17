@@ -118,6 +118,29 @@ Grundlage ist die vermessene Referenzaufnahme: `docs/audio/AMBIENT_REFERENCE_ANA
 - **Frequenz:** Grundtöne des Betts ≥ 147 Hz (Lautsprecher); dunkel ist erlaubt, die frühere Schwerpunkt-Regel entfällt.
 - **Pegel:** alle Worlds gleich laut ±1,5 LU.
 
+## Lautsprecher-Pfad: Virtueller Bass (Vorschlag, 17.11.2026, vom Besitzer gewünscht)
+
+Problem: Der Treiber CMS-402811-28SP hat laut Spezifikation seine Resonanz bei 450 Hz; das Bett liegt bei
+150–300 Hz. Lauter machen geht nicht, weil ein 40-mm-Treiber dafür zu wenig Hub hat und verzerrt.
+
+Prinzip (psychoakustischer Bass, „fehlender Grundton“): Das Ohr ergänzt einen Grundton, wenn seine Obertöne
+klingen. Der Baustein nimmt den Anteil unter etwa 300 Hz, erzeugt daraus Obertöne und mischt sie im Bereich
+450–1200 Hz bei, wo der Treiber gut abstrahlt. Der echte Tiefbass bleibt unverändert im Signal.
+
+- **Nur über die eingebauten Lautsprecher:** an, wenn kein Kopfhörer steckt (Jack-Erkennung vorhanden);
+  beim Umstecken in 50 ms ein- und ausgeblendet, kein Knacken.
+- **Tonhöhen-Buch:** Standard nur gerade Obertöne (2. und 4., Oktaven) durch Doppelweg-Gleichrichtung des
+  Tiefbandes. Oktaven bringen keine neuen Tonklassen; die Harmonie-Zulassung bleibt wahr. Der 3. Oberton
+  (Quinte) gäbe einen stärkeren Bass-Eindruck, kann aber Tonklassen außerhalb des Vorrats erzeugen und kommt
+  nur nach Hörprobe.
+- **Kosten (Schätzung):** vier Biquad-Filter und ein Gleichrichter je Kanal, kein Speicher über ein paar
+  Zustände hinaus. Platz in der Kette: ganz am Ende, vor dem Ausgangsschutz.
+- **Prüfung:** Spektralspitzen des Zusatzsignals nur auf Oktaven der Eingangstöne (±20 Cent); kein Sprung beim
+  Umschalten Lautsprecher/Kopfhörer; Pegelzuwachs gegen den Ausgangsschutz geprüft; Hörvergleich mit und ohne
+  über ein Lautsprecher-Modell (Hochpass 91 Hz, Abfall unter 450 Hz) in Schritt 2.
+- **Herkunft:** eigener Code. Das Verfahren ist allgemein bekannt; markengeschützte Umsetzungen werden nicht
+  übernommen.
+
 ## Architektur und Budgets (Vorschlag)
 
 World = ein Deskriptor ≤ 512 B im Flash (statischer Assert): Name, Farbe, Bild-Werte, Klangquelle,

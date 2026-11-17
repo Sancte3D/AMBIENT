@@ -42,6 +42,11 @@ Dunkelheit ist kein Mangel: Die Referenz ist dunkler als jede unserer Worlds. Di
 
 - Der Hochpass bei 91 Hz und die 40-mm-Treiber geben den Bass der Referenz (75 Hz) nicht wieder. Das Bett
   beginnt deshalb bei D3 (147 Hz); tiefere Anteile sind nur für Kopfhörer.
+- Laut Spezifikation (`field_ambience_pcb_SPEC_v0.7.md`) hat der Treiber CMS-402811-28SP seine Resonanz bei
+  F0 = 450 Hz (Zweitquelle AS04008PS: 380 Hz). Darunter fällt jeder Treiber steil ab, eine geschlossene Kammer
+  verschiebt die Grenze eher nach oben. Über die eingebauten Lautsprecher kommt vom Bett bei 150–300 Hz daher
+  deutlich weniger an als über Kopfhörer. Wie viel, ist ohne Thiele-Small-Daten und Messung nicht bekannt.
+  Gegenmittel in Software: der Baustein „Virtueller Bass“ (siehe Entscheidungspaket, Effektkatalog).
 - Die Stereobreite wirkt über Kopfhörer voll, über die Lautsprecher kaum. Dort tragen Wogen und Bewegung.
 - Mehr Oszillatoren kosten Rechenzeit: Ein Bett aus 6 Tönen mit je 2 Stimmen und 3 Teiltönen sind 36 Sinus
   je Kanal. Das ist als Tabellen-Oszillator machbar, muss aber in den Lasttest.
