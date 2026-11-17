@@ -29,6 +29,9 @@ void SVC_Handler(void)        { }
 void DebugMon_Handler(void)   { }
 void PendSV_Handler(void)     { }
 
+/* ---- Supply monitor (PVD, EXTI line 16): see h743_supply_monitor_start(). ---- */
+void PVD_AVD_IRQHandler(void) { HAL_PWR_PVD_IRQHandler(); }
+
 /* ---- 1 kHz system tick: HAL time base + encoder/push sampling. ---- */
 void SysTick_Handler(void) {
     HAL_IncTick();

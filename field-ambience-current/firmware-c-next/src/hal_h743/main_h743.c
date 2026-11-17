@@ -554,6 +554,7 @@ int main(void) {
     SCB_EnableDCache();
     HAL_Init();                       /* SysTick 1 kHz + NVIC grouping */
     SystemClock_Config();             /* 480 MHz core, PLL3 → SAI 44.1 kHz */
+    h743_supply_monitor_start();      /* sagging rail → mute, stop, reset */
 
     oled_init();
     mcp_init();

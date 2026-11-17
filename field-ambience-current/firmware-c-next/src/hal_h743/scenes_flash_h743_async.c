@@ -40,7 +40,8 @@ static bool platform_lock(void) { return HAL_FLASHEx_Lock_Bank2() == HAL_OK; }
 static bool platform_start_ready(void) {
     /* HAL *_IT still calls its wait helper before starting. Under exclusive
      * Main ownership this precheck ensures that helper has nothing to wait for. */
-    return platform_quiescent() && (FLASH->CR2 & FLASH_CR_LOCK) != 0u;
+    /* No x64 erase/program below 2.7 V (h743_supply_ok, PVD). */
+    return platform_quiescent() && (FLASH->CR2 & FLASH_CR_LOCK) != 0u && h743_supply_ok();
 }
 static bool platform_start_erase(unsigned sector) {
     if (!platform_start_ready() || HAL_FLASHEx_Unlock_Bank2() != HAL_OK) return false;

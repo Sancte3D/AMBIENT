@@ -37,6 +37,8 @@ bool h743_is_rev_y(void);
 void h743_mpu_init(void);
 void h743_watchdog_start(void);
 void h743_watchdog_feed(void);
+void h743_supply_monitor_start(void);   /* PVD 2.7 V: fatal path on a sagging rail */
+bool h743_supply_ok(void);              /* false: no Flash erase/program now */
 
 /* --- shared I²C1 transport (mcp23017_h743.c owns the bus) -------------- */
 extern I2C_HandleTypeDef h743_hi2c1;

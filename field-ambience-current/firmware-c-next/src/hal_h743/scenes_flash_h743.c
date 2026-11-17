@@ -53,7 +53,7 @@ static scene_journal_read_result_t journal_read(void *context,unsigned sector,un
 }
 static bool journal_erase(void *context,unsigned sector) {
     (void)context;
-    if (sector>=2) return false;
+    if (sector>=2 || !h743_supply_ok()) return false;   /* below 2.7 V: no x64 erase */
     FLASH_EraseInitTypeDef erase={0}; uint32_t bad_sector=0;
     erase.TypeErase=FLASH_TYPEERASE_SECTORS;
     erase.Banks=FLASH_BANK_2;
@@ -64,7 +64,7 @@ static bool journal_erase(void *context,unsigned sector) {
 }
 static bool journal_program(void *context,unsigned sector,unsigned offset,const uint8_t *word) {
     (void)context;
-    if (sector>=2 || offset%32u || offset+32u>JOURNAL_SECTOR_BYTES) return false;
+    if (sector>=2 || offset%32u || offset+32u>JOURNAL_SECTOR_BYTES || !h743_supply_ok()) return false;
     return HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD,journal_address(sector,offset),
                              (uint32_t)word)==HAL_OK;
 }
@@ -114,6 +114,7 @@ static void scene_marker_set(bool on) {
 }
 
 static bool scenes_flash_erase(void) {
+    if (!h743_supply_ok()) return false;      /* below 2.7 V: no x64 erase */
     if (HAL_FLASH_Unlock() != HAL_OK) return false;
     FLASH_EraseInitTypeDef er;
     uint32_t bad_sector = 0;
@@ -145,6 +146,7 @@ bool scenes_flash_write(const void *blob, unsigned len) {
     /* Auf Flashword-Granularitaet aufrunden, Rest mit 0xFF fuellen. */
     static uint8_t buf[512] __attribute__((aligned(32)));
     if (!blob || len == 0 || len > sizeof buf) return false;
+    if (!h743_supply_ok()) return false;      /* below 2.7 V: no x64 erase/program */
     memset(buf, 0xFF, sizeof buf);
     memcpy(buf, blob, len);
     unsigned words = (len + FLASHWORD_BYTES - 1u) / FLASHWORD_BYTES;

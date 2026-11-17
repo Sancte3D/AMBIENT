@@ -135,4 +135,27 @@ void h743_watchdog_start(void) {
 }
 void h743_watchdog_feed(void) { IWDG1->KR = 0xAAAAu; }
 
+/* Supply monitor. Without a battery every power-off is a slow sag of the
+ * 3.3 V rail. Below 2.7 V the x64 Flash program/erase used for Scenes is out
+ * of specification (RM0433) and the amplifier pops on the way down. The PVD
+ * at 2.7 V therefore takes the fatal path at once: amplifier muted, audio
+ * stopped, then reset (the restart waits for a good supply via the BOR/POR).
+ * A supply that is already low at boot only blocks Scene writes. */
+static volatile bool s_supply_low;
+bool h743_supply_ok(void) { return !s_supply_low && !__HAL_PWR_GET_FLAG(PWR_FLAG_PVDO); }
+
+void h743_supply_monitor_start(void) {
+    PWR_PVDTypeDef pvd = { .PVDLevel = PWR_PVDLEVEL_5, .Mode = PWR_PVD_MODE_IT_RISING_FALLING };
+    HAL_PWR_ConfigPVD(&pvd);
+    HAL_PWR_EnablePVD();
+    for (volatile uint32_t i = 0; i < 10000u; ++i) { }   /* PVD settling */
+    s_supply_low = __HAL_PWR_GET_FLAG(PWR_FLAG_PVDO) != 0u;
+    HAL_NVIC_SetPriority(PVD_AVD_IRQn, 0, 0);            /* above audio */
+    HAL_NVIC_EnableIRQ(PVD_AVD_IRQn);
+}
+
+void HAL_PWR_PVDCallback(void) {
+    if (__HAL_PWR_GET_FLAG(PWR_FLAG_PVDO)) h743_fatal_stop();   /* VDD below 2.7 V */
+}
+
 /* newlib-nano glue: no OS. --specs=nosys.specs provides the rest. */
