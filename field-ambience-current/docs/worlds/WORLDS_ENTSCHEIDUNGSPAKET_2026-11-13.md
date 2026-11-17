@@ -141,6 +141,38 @@ klingen. Der Baustein nimmt den Anteil unter etwa 300 Hz, erzeugt daraus Obertö
 - **Herkunft:** eigener Code. Das Verfahren ist allgemein bekannt; markengeschützte Umsetzungen werden nicht
   übernommen.
 
+## Aus dem HiChord übernommen (Besitzer-Entscheid 17.11.2026)
+
+Quelle: HiChord-Handbuch Rev 3.0 (updater.hichord.shop/manual), vollständig gelesen. Übernommen werden Prinzipien,
+nicht der Funktionsumfang: keine Jazz-Akkordtypen, keine Fremdtonart-Akkorde, keine Drums, keine Spielmodi-Vielfalt,
+keine Effekte, die sich gegenseitig sperren.
+
+1. **Automatische Stimmführung im Bett.** Wechselt der Akkord des Betts (Licht, Grundton, Choral von CANYONS,
+   Weltwechsel mit gleichem Grundton), wird jede Bett-Stimme dem Zielton mit dem kürzesten Weg zugeordnet
+   (kleinste Summe der Cent-Bewegungen; bei höchstens sechs Stimmen eine feste, begrenzte Suche) und gleitet in
+   0,8–2 s dorthin. Keine Stimme springt; eine Stimme, die bleiben kann, bleibt. Rechnet im Hauptprogramm, der
+   Audio-Interrupt rampt nur.
+2. **Klare Grenze für „keine falschen Töne“.** Der Grundzustand jeder World ist immer konsonant. Reibung gibt es
+   nur über einen eigenen, benannten Griff: **Reibung** (GENERATE halten + EN2), Standard 0. Sie erlaubt dichtere
+   Lagen, Sekunden und Vorhalte, aber nur mit Tönen des Vorrats; Halbton und Tritonus sperrt die Harmonie-Zulassung
+   weiterhin. Das Tonhöhen-Buch bleibt wahr.
+3. **Rechenzeit-Wächter mit fester Reihenfolge.** Der vorhandene Profiler misst jede Render-Runde (DWT). Liegt die
+   Zeit 16 Blöcke in Folge über 80 % des Budgets (11,6 ms je 512 Frames), stuft das Hauptprogramm eine Stufe ab,
+   jeweils mit 200-ms-Rampe: (1) Shimmer- und Signatur-Grains, (2) Ensemble, (3) zweite Hall-Stufe,
+   (4) obere Teiltöne des Betts, (5) Natur-Ereignisse. Rückkehr Stufe für Stufe erst nach 10 s unter 60 %. Das
+   Display zeigt kurz „LEISTUNG BEGRENZT“. Kein hartes Abschalten, kein Sperren anderer Effekte; der Audio-Interrupt
+   liest nur die freigegebene Stufe. Teil der Garantien: Er sichert das Gerät auch dann, wenn eine World teurer ist
+   als gemessen.
+4. **„OG“-Varianten statt stiller Klangänderungen.** Jede der sechs freigegebenen Worlds, deren Klang sich ändert,
+   behält ihre heutige Fassung als wählbare Variante „OG“ (Setup → Klangfassung, je World: NEU oder OG), bis du sie
+   nach Gehör streichst. Ein Test sichert, dass OG byte-identisch zum heutigen Stand bleibt. Kosten: der alte Code
+   bleibt im Flash (gemessen heute 212 KB von 1920 KB).
+5. **Benannte Hüllkurven.** HOLD halten + EN1 wählt eine benannte Form: **SWELL** (langsames Anschwellen), **LONG**,
+   **SOFT**, **PLUCK** (angezupft, natürlicher Ausklang), **SHORT**. HOLD halten + EN2 ist der Feinwert **LÄNGE**, der
+   die gewählte Form streckt oder staucht. Jede World hat ihre Standardform. Ersetzt Attack und Release als rohe Werte.
+6. **Basston wählbar.** DRONE halten + EN2 drücken schaltet den Basston unter dem Bett: **AUS**, **GRUNDTON**,
+   **QUINTE**. Standard je World. Über die eingebauten Lautsprecher wirkt er über den virtuellen Bass.
+
 ## Architektur und Budgets (Vorschlag)
 
 World = ein Deskriptor ≤ 512 B im Flash (statischer Assert): Name, Farbe, Bild-Werte, Klangquelle,
@@ -163,6 +195,7 @@ eine weitere World 0 B RAM und ihre Rechenzeit addiert sich nicht.
 Rechenzeit: am Host je World höchstens 1,6 × COAST (heute FJORD 1,45); am Gerät schlechtester Block
 ≤ 7 ms von 11,6 ms, sobald es eine Platine gibt. Prüfungen: Linker-Map in der CI, statische Asserts,
 Lasttest je World mit FTZ, `lint_hotpath.sh`, Identitätsprüfung, Mess-Firmware am Gerät. Heiße Puffer nie im PSRAM.
+Letzte Stufe zur Laufzeit: der Rechenzeit-Wächter (siehe „Aus dem HiChord übernommen“, Punkt 3).
 Schätzung (keine Messung): alle 16 Worlds brauchen rund 130 KB mehr Flash.
 
 Hebel, falls es eng wird: Delay in 16 Bit (131 KB frei oder 2,97 s statt 0,74 s je Kanal) · freie Regionen
@@ -180,13 +213,14 @@ Vier feste Encoder, Ebenen durch Halten. Modifier schalten beim Loslassen.
 | Grundebene lang drücken | Szenen (mit Cell) | frei | Setup | frei |
 | SHIFT halten | Grundton | Signatur-Menge | Echo | Lautstärke |
 | DRONE halten | Wogen (Bewegung des Betts) | Bett-Pegel | Natur-Pegel | Lautstärke |
-| GENERATE halten | Dichte | frei | frei | Lautstärke |
-| HOLD halten | Attack | Release | frei | Lautstärke |
+| GENERATE halten | Dichte | Reibung | frei | Lautstärke |
+| HOLD halten | Hüllkurve (SWELL · LONG · SOFT · PLUCK · SHORT) | Länge | frei | Lautstärke |
 
 Vorgabe des Besitzers (16.11.): Die Stärke des Betts muss immer regelbar sein. DRONE tippen blendet das Bett
 ein und aus; DRONE halten + EN2 regelt seinen Pegel, + EN1 sein Wogen von fast stehend bis deutlich bewegt.
 Die DRONE-Farbe entfällt als Regler (sie gehört zur World).
 
+DRONE halten + EN2 drücken = Basston AUS · GRUNDTON · QUINTE · Setup → Klangfassung NEU/OG je World ·
 SHIFT + HOLD = Freeze · SHIFT + DRONE = Natur an/aus · SHIFT + GENERATE = neues Feld · SHIFT + CLEAR =
 nur Stimmen · EN1 halten + Cell = Szene laden, mit SHIFT speichern · Cells spielen bei GENERATE mit.
 
