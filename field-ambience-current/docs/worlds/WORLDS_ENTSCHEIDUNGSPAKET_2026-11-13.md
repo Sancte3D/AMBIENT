@@ -168,10 +168,10 @@ keine Effekte, die sich gegenseitig sperren.
    nach Gehör streichst. Ein Test sichert, dass OG byte-identisch zum heutigen Stand bleibt. Kosten: der alte Code
    bleibt im Flash (gemessen heute 212 KB von 1920 KB).
 5. **Benannte Hüllkurven.** HOLD halten + EN1 wählt eine benannte Form: **SWELL** (langsames Anschwellen), **LONG**,
-   **SOFT**, **PLUCK** (angezupft, natürlicher Ausklang), **SHORT**. HOLD halten + EN2 ist der Feinwert **LÄNGE**, der
-   die gewählte Form streckt oder staucht. Jede World hat ihre Standardform. Ersetzt Attack und Release als rohe Werte.
-6. **Basston wählbar.** DRONE halten + EN2 drücken schaltet den Basston unter dem Bett: **AUS**, **GRUNDTON**,
-   **QUINTE**. Standard je World. Über die eingebauten Lautsprecher wirkt er über den virtuellen Bass.
+   **SOFT**, **PLUCK** (angezupft, natürlicher Ausklang), **SHORT**. Jede World hat ihre Standardform. Ersetzt Attack
+   und Release als rohe Werte. (Ein Feinwert „Länge“ war vorgesehen; gestrichen am 17.11., siehe Bedienkonzept.)
+6. **Basston wählbar.** Im Setup je World: **AUS**, **GRUNDTON**, **QUINTE**, mit Standard je World. Über die
+   eingebauten Lautsprecher wirkt er über den virtuellen Bass. (Kein eigener Griff, siehe Bedienkonzept.)
 
 ## Architektur und Budgets (Vorschlag)
 
@@ -202,31 +202,43 @@ Hebel, falls es eng wird: Delay in 16 Bit (131 KB frei oder 2,97 s statt 0,74 s 
 DTCM/D3/ITCM (240 KB) · ein gemeinsamer Hall-Speicher (bis 100 KB, zu prüfen) · Hall in halber Abtastrate ·
 Grain in 16 Bit · die Grenze von drei Stimmen bleibt.
 
-## Bedienkonzept (Vorschlag)
+## Bedienkonzept (vereinfacht am 17.11.2026)
 
-Vier feste Encoder, Ebenen durch Halten. Modifier schalten beim Loslassen.
+Vorgabe des Besitzers (17.11.): Modifier und Bedienung dürfen nicht so komplex werden, dass sie unverständlich
+sind. Deshalb gelten nur drei Regeln, ohne Ausnahme:
+
+1. **Taste tippen = an oder aus.** (HOLD, DRONE, GENERATE, CLEAR; SHIFT wirkt nur gehalten.)
+2. **Taste halten + drehen = die Werte genau dieser Taste.** Kein Drücken von Encodern während eine Taste gehalten wird.
+3. **EN4 ist immer Lautstärke.** Was selten gebraucht wird, steht im Setup (EN3 lang).
+
+Einzige Kombination mit SHIFT auf einer Taste: SHIFT + HOLD = Freeze. SHIFT + Cell = Oktave höher.
+Ein Wert auf 0 ist „aus“; eigene Schalter dafür gibt es nicht.
 
 | Zustand | EN1 | EN2 | EN3 | EN4 |
 |---|---|---|---|---|
 | Grundebene drehen | World | Farbe | Raum | Lautstärke |
-| Grundebene kurz drücken | Licht hell/dunkel | Signatur an/aus | Werte zeigen | Stumm |
+| Grundebene kurz drücken | Licht hell/dunkel | — | — | Stumm |
 | Grundebene lang drücken | Szenen (mit Cell) | frei | Setup | frei |
-| SHIFT halten | Grundton | Signatur-Menge | Echo | Lautstärke |
-| DRONE halten | Wogen (Bewegung des Betts) | Bett-Pegel | Natur-Pegel | Lautstärke |
-| GENERATE halten | Dichte | Reibung | frei | Lautstärke |
-| HOLD halten | Hüllkurve (SWELL · LONG · SOFT · PLUCK · SHORT) | Länge | frei | Lautstärke |
+| SHIFT halten | Grundton | Signatur (0 = aus) | Echo | Lautstärke |
+| DRONE halten | Wogen (Bewegung des Betts) | Bett-Pegel | Natur (0 = aus) | Lautstärke |
+| GENERATE halten | Dichte | Reibung | — | Lautstärke |
+| HOLD halten | Hüllkurve (SWELL · LONG · SOFT · PLUCK · SHORT) | — | — | Lautstärke |
 
 Vorgabe des Besitzers (16.11.): Die Stärke des Betts muss immer regelbar sein. DRONE tippen blendet das Bett
 ein und aus; DRONE halten + EN2 regelt seinen Pegel, + EN1 sein Wogen von fast stehend bis deutlich bewegt.
 Die DRONE-Farbe entfällt als Regler (sie gehört zur World).
 
-DRONE halten + EN2 drücken = Basston AUS · GRUNDTON · QUINTE · Setup → Klangfassung NEU/OG je World ·
-SHIFT + HOLD = Freeze · SHIFT + DRONE = Natur an/aus · SHIFT + GENERATE = neues Feld · SHIFT + CLEAR =
-nur Stimmen · EN1 halten + Cell = Szene laden, mit SHIFT speichern · Cells spielen bei GENERATE mit.
+EN1 halten + Cell = Szene laden, mit SHIFT speichern · Cells spielen bei GENERATE mit.
+Setup (EN3 lang): Basston je World · Klangfassung NEU/OG je World · Stimmung gleichstufig · Helligkeit ·
+Ruhezeit · MIDI · Version.
 
-Sinnprüfung der 44 Funktionen: 15 behalten, 16 ändern ihren Ort, 13 entfallen (7 Gesten-Loop, 22 Hall an/aus,
+Damit: 13 Drehwerte auf 4 Encodern in 5 Ebenen, 1 Druck (Licht), 1 SHIFT-Kombination (Freeze), Szenen, Setup.
+
+Sinnprüfung der 44 Funktionen (Streichliste vom Besitzer angenommen am 17.11.): 13 behalten, 15 ändern ihren Ort,
+16 entfallen (6 Neues Feld, 7 Gesten-Loop, 10 Stimmen leeren, 19 Release (steckt in der Hüllkurve), 22 Hall an/aus,
 23 Plate, 28 Delay-Zeit, 29 Feedback, 30 Grain, 31 Grain-Größe, 32 Drive, 33 Crush, 34 Phaser, 35 Phaser-Tempo,
-36 Cell-Modus, 40 Akku und Ausgang); fünf neue (Signatur-Menge, Signatur an/aus, Natur an/aus, Werte zeigen, Setup).
+36 Cell-Modus, 40 Akku und Ausgang). Neu: Signatur-Menge, Reibung, Setup mit Basston und Klangfassung,
+Rechenzeit-Wächter (automatisch). Nicht mehr vorgesehen: Signatur an/aus, Natur an/aus, Werte zeigen.
 Die Tabelle je Funktion steht im State Atlas (Tab „44 Funktionen“, Spalten WORLDS) und im Foliensatz (Folien 31–34).
 
 Empfehlungen zu den neun Fragen: 1 ja, EN4 immer · 2 Ebenen durch Halten · 3 drei Werte: World, Farbe, Raum ·
@@ -254,10 +266,14 @@ Rechenzeit-Klassen der Signatur-Effekte · Wirkung der Hebel 3 und 4 · die Hör
 
 ## Halt 1 – Entscheidungen des Besitzers
 
+Stand 17.11.2026: Streichliste angenommen; Bedienung vereinfacht (drei Regeln); Hörskizzen „okay, nicht krass, aber ok“ –
+für Schritt 2 heißt das: mehr Charakter je World, bei gleichen Regeln (keine hässlichen Glocken, kein starkes Rauschen).
+Offen: Auswahl der Worlds, Fragen 1–3 und 5–9, Punkte 2 und 5–7.
+
 1. Welche Worlds? Empfehlung: zwölf zuerst (die sechs vorhandenen, CAVE, DUNES, JUNGLE, MOORLAND, BLACKFOREST, GRASSLANDS), vier später (ISLANDS, AURORA, VOLCANO, CANYONS).
 2. Dürfen die sechs vorhandenen eigenen Tonvorrat, Zeitgefühl und Natur bekommen? Empfehlung: ja, einzeln per Hörskizze.
 3. Die neun Fragen (oben).
-4. Die Streichliste der 13 Funktionen. Empfehlung: annehmen.
+4. Die Streichliste. **Entschieden 17.11.: angenommen, erweitert auf 16 (siehe Bedienkonzept).**
 5. Cells spielen bei GENERATE mit? Empfehlung: ja.
 6. Budgets als verbindlich? Empfehlung: ja.
 7. V3 als Standard am Ende von Schritt 3, in eigenem Pull Request? Empfehlung: ja.
