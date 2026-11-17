@@ -70,8 +70,9 @@ static inline void lcd_dc(bool data) {
 }
 
 static void spi_tx(const uint8_t *buf, uint16_t n) {
-    if (HAL_SPI_Transmit(&s_hspi1, (uint8_t *)buf, n, 100) != HAL_OK)
-        Error_Handler();
+    /* A failed or timed-out display transfer only loses pixels; it must never
+     * stop or reset the instrument (the audio runs on its own DMA). */
+    (void)HAL_SPI_Transmit(&s_hspi1, (uint8_t *)buf, n, 100);
 }
 
 static void cmd(uint8_t c) {
@@ -150,7 +151,17 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *h) {
 
     HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 6, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+    /* In DMA_NORMAL mode the H7 HAL ends a transmit in HAL_SPI_IRQHandler on
+     * the SPI end-of-transfer flag (SPI_DMATransmitCplt only enables EOT).
+     * Without this interrupt HAL_SPI_TxCpltCallback never runs: the async
+     * flush would stop after its first row, oled_show() would spin forever
+     * and the handle would stay HAL_SPI_STATE_BUSY_TX. Same priority as the
+     * DMA stream, below audio. */
+    HAL_NVIC_SetPriority(SPI1_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(SPI1_IRQn);
 }
+
+void SPI1_IRQHandler(void) { HAL_SPI_IRQHandler(&s_hspi1); }
 
 void oled_init(void) {
     /* Control GPIOs first, in their idle states (CS high, DC low, RES high)
@@ -242,8 +253,20 @@ static void kick_row_dma(int buf) {
      * fresh bytes from SRAM (same discipline as the audio TX buffer). */
     SCB_CleanDCache_by_Addr((uint32_t *)s_line[buf], (int32_t)sizeof s_line[buf]);
     if (HAL_SPI_Transmit_DMA(&s_hspi1, s_line[buf],
-                             (uint16_t)sizeof s_line[buf]) != HAL_OK)
-        Error_Handler();
+                             (uint16_t)sizeof s_line[buf]) != HAL_OK) {
+        /* A display hiccup must never stop the instrument: drop this frame
+         * (CS high, flush idle); the next oled_show_async() starts afresh. */
+        lcd_cs(false);
+        s_flush_active = 0;
+    }
+}
+
+/* SPI/DMA error during a flush: end it cleanly so neither oled_show() nor the
+ * next async flush waits on a completion that will never come. */
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *h) {
+    if (h->Instance != SPI1) return;
+    lcd_cs(false);
+    s_flush_active = 0;
 }
 
 void oled_show_async(void) {

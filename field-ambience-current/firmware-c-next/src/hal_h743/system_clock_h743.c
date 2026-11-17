@@ -9,6 +9,13 @@ void SystemClock_Config(void) {
     /* LDO supply (SPEC: no SMPS pin on LQFP100 wiring) + VOS0 for 480 MHz.
      * HAL_PWREx_ControlVoltageScaling busy-waits on VOSRDY internally. */
     HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+    while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) { }
+    /* VOS0 sets the overdrive bit SYSCFG->PWRCR.ODEN. SYSCFG is unclocked
+     * after reset (RCC_APB4ENR.SYSCFGEN = 0), so without this enable the
+     * write is silently lost and the core would run 480 MHz at VOS1, whose
+     * limit is 400 MHz (DS12110). Same order as ST's reference code. */
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
     while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) { }
 
@@ -59,9 +66,25 @@ void SystemClock_Config(void) {
     if (HAL_RCCEx_PeriphCLKConfig(&pclk) != HAL_OK) Error_Handler();
 }
 
-void Error_Handler(void) {
+/* Fatal path. The audio DMA is circular: if the CPU just parked, the DMA
+ * would replay the last ~23 ms buffer forever through the amplifier, a loud
+ * loop nobody can stop without pulling power. So: pull AMP_SHDN_N (PB14) and
+ * AMP_MUTE_N (PB15) low and stop DMA1 Stream 0 with plain register writes
+ * (no HAL; safe in any fault context; a write to an unclocked peripheral is
+ * ignored). With a debugger attached, park for inspection (SWD, J4);
+ * otherwise reset so the instrument comes back with its normal fade-in. */
+void h743_fatal_stop(void) {
     __disable_irq();
-    for (;;) { __NOP(); }     /* park for the SWD debugger (J4) */
+    GPIOB->BSRR = (uint32_t)(GPIO_PIN_14 | GPIO_PIN_15) << 16;
+    DMA1_Stream0->CR &= ~DMA_SxCR_EN;
+    SAI1_Block_A->CR1 &= ~SAI_xCR1_SAIEN;
+    __DSB();
+    if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
+        for (;;) { __NOP(); }
+    }
+    NVIC_SystemReset();
 }
+
+void Error_Handler(void) { h743_fatal_stop(); }
 
 /* newlib-nano glue: no OS. --specs=nosys.specs provides the rest. */

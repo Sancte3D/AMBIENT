@@ -29,6 +29,8 @@ void SystemClock_Config(void);
 /* Fatal-error trap (blinks nothing yet — parks the CPU so a debugger via
  * J4/SWD lands on a readable call stack). */
 void Error_Handler(void);
+/* Silence the amp, stop the audio DMA, then park (debugger) or reset. */
+void h743_fatal_stop(void);
 
 /* --- shared I²C1 transport (mcp23017_h743.c owns the bus) -------------- */
 extern I2C_HandleTypeDef h743_hi2c1;
