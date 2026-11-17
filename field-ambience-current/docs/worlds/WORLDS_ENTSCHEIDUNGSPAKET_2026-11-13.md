@@ -281,11 +281,25 @@ Spektrum, Raum). Tonvorrat und Klangquelle bleiben ausdrücklich Interpretation 
 | R7 | Bedienung gegen die fünf Makros der Recherche prüfen (Raum, Dichte, Bewegung, Helligkeit, Natur/Musik) – unser vereinfachtes Konzept hat sie bereits: EN3 Raum, Dichte, Wogen, Farbe, Natur-Pegel. | erledigt | passt |
 | R8 | Echte Aufnahmen im Gerät: **vorerst nicht.** Gemessen: Die Platine hat außer dem internen Flash (1920 KB, davon 212 KB belegt) nur PSRAM (APS6404L, flüchtig, für heiße Puffer verboten), keinen externen Flash, keine SD-Karte. Das reicht für wenige Sekunden Audio, die als Schleife erkennbar wären. Später prüfen: kurze, stark komprimierte Körner als Material für Granular. | später | Hardware-Frage |
 | R9 | Optional TAGESZEIT (Morgen, Tag, Abend, Nacht) als langsamer Zustand, der das Verhalten ändert – nur als Automatik oder im Setup, kein neuer Griff (Regel: Bedienung bleibt einfach). | nach Schritt 3 | Idee |
+| R10 | **Klang-Gates je World, automatisch am Host** (aus Recherche 2): Klicks (Sprünge zwischen Samples), True Peak, Gleichanteil, Clipping, wachsende Hall-/Feedback-Energie, schmale Resonanzspitzen über lange Zeit (Wächter gegen „Glocke“ und „Horn“), Aliasing bei FM. Erweiterung von `render_v3_world.c`, läuft in `run_tests.sh`. Dazu Hörproben: 30 s, 10 min, Solo vor dem Hall, leise. | Schritt 2 | offen |
+| R11 | **Gerichtete Drift („Verwitterung“)** statt Zufalls-LFO: Werte bewegen sich über Minuten in eine Richtung und kehren später langsam um. Gehört zu R2. | Schritt 2/3 | offen |
+| R12 | **Ereignis-Planer mit Gedächtnis:** nach vielen Ereignissen mehr Pause, nach zu langer Pause sanft wieder etwas. Gehört zu R3. | Schritt 2 | offen |
+| R13 | **Echo-Gedächtnis (Idee, Besitzer-Entscheid nötig):** früher gespielte Töne kehren leiser, gefiltert und leicht verändert zurück. Als gespeicherte Noten (wenige Byte), nicht als Audio: Ein Audio-Gedächtnis von 8 s braucht rund 256 KB und passt nicht in den freien internen RAM; PSRAM ist für Audio verboten. | nach Halt 1 | Idee |
+| R14 | **Klangschutz vor dem Hall:** Hochpass, sanfter EQ und Resonanzbegrenzung vor dem großen Raum, je World. Bei den sechs vorhandenen nur nach Freigabe nach Gehör. | Schritt 2 | offen |
+| R15 | **Register-Regel:** Nicht alle Stimmen zwischen 150 und 600 Hz; eine Stimme trägt den Körper, die anderen liegen darüber oder darunter. In der Stimmverteilung. | Schritt 2 | offen |
+| R16 | **Shimmer nur als seltene, leise „Luft“:** betrifft ICEFIELDS (Signatur Shimmer) – weich und selten machen oder austauschen. Freeze als Hall-Freeze (billig), kein FFT. | Schritt 2 | offen |
+| R17 | **Wettbewerb:** SONICWARE LIVEN Ambient Ø ist laut Recherche der direkteste Vergleich (Preis und Funktionen nicht geprüft). Abgrenzung: spielbare Cells im Tonvorrat der World, World als ganze Grammatik statt Preset, Gedächtnis. | Positionierung | offen |
 
 Nicht übernommen: die Reduktion auf sechs Kategorien (COAST, RIVER, FOREST, WETLAND, GRASSLAND, DRYLAND). Unsere
 Empfehlung für die ersten zwölf deckt alle sechs schon ab (ATLANTIC, FJORD/CANYONS, WOODLAND/BLACKFOREST/JUNGLE,
 MOORLAND, GRASSLANDS, DUNES); HIGHLANDS entspricht ALPINE. Die Warnung zu GLACIER/TUNDRA stützt die offene Frage zu
 ICEFIELDS und AURORA. Studien mit 48–72 Personen sind Umfang einer Abschlussarbeit, nicht von Schritt 2.
+
+Aus Recherche 2 (`docs/research/SOUNDDESIGN_RECHERCHE_2026-11-17.md`) nicht übernommen: die Kürzung auf vier Worlds (der
+Blindtest entscheidet, welche Worlds zu nah beieinander liegen); Cells als feste Rollen (bei uns sind Cells spielbare Töne,
+die Rollen gibt es schon als vier Schichten Bett, Luft, Tupfer, Töne); eine Bank echter Aufnahmen (kein externer Speicher,
+keine Änderung an der Platine). Die Recherche beschreibt eine ältere Engine; ihre Phase A („Glass/Tape/Particle
+reparieren“) gilt für die V3-Firmware nur sinngemäß über R10.
 
 ## Halt 1 – Entscheidungen des Besitzers
 
