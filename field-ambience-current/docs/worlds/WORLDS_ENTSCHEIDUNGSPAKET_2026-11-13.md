@@ -264,6 +264,29 @@ Rechenzeit auf dem H743 · alle Kosten neuer Bausteine · Wirkung über die 40-m
 Rechenzeit-Klassen der Signatur-Effekte · Wirkung der Hebel 3 und 4 · die Hörskizzen sind gemessen
 (Pegel, Spektrum), aber von niemandem gehört.
 
+## To-do aus der Natur-Recherche (vom Besitzer am 17.11.2026 als To-do gesetzt)
+
+Quelle: `docs/research/NATUR_SOUNDSCAPE_RECHERCHE_2026-11-17.md` (ChatGPT Deep Research; Quellen dort nicht geprüft).
+Leitsatz, den wir übernehmen: **Natur liefert keine Tonart, sondern Verhalten** (Ereignisdichte, Abstände, Zeitskalen,
+Spektrum, Raum). Tonvorrat und Klangquelle bleiben ausdrücklich Interpretation – AMBIENT ist ein Synthesizer.
+
+| # | Aufgabe | Wann | Stand |
+|---|---|---|---|
+| R1 | Natur-Schicht aus Messwerten statt aus Gefühl: je World 3–5 gemeinfreie Aufnahmen (NPS Natural Sounds, Freesound nur CC0; Lizenz je Datei notieren) am Host analysieren – Ereignisse pro Minute, Verteilung der Abstände, langsame Modulation, Spektralbalance – und die Zahlen in den Deskriptor schreiben. Werkzeug unter `tools/`. | Schritt 2 | offen |
+| R2 | Mehr Zeitskalen ohne neuen Regler: heute zwei Uhren (0,5–2 s, 8–120 s); dazu Minuten (Dichte und Raum driften) und 10–30 min („Wetter“-Zustand). Automatisch, deterministisch, gerampt. | Schritt 2/3 | offen |
+| R3 | Stille als Wert: DUNES und GRASSLANDS dürfen lange Pausen haben; Abstände als Verteilung, nicht fest. | Schritt 2 | offen |
+| R4 | Blindtest zweistufig: erst nur Klang ohne Namen (Verwechslungsmatrix, je World 2–3 unabhängige Läufe, gleiche Lautheit), danach mit Namen und Bild. Erfolg = unterscheidbare Profile und stabile Wiedererkennung über Läufe, nicht „80 % erkennen Wald“. | Schritt 2 | offen |
+| R5 | Sprachregeln für Handbuch und Marketing: keine Heil- oder Stressversprechen, keine „Frequenz der Landschaft“, kein 432 Hz, kein „1/f = Natur“. Erlaubt: „für ruhiges, eintauchendes Hören“. | vor Veröffentlichung | offen |
+| R6 | Display: Landschaft als reduzierte, langsam bewegte Struktur statt Dauerfoto – deckt sich mit den Formel-Animationen; beim Weltwechsel kurz deutlicher, dann zurücknehmen. | Schritt 3 | passt schon |
+| R7 | Bedienung gegen die fünf Makros der Recherche prüfen (Raum, Dichte, Bewegung, Helligkeit, Natur/Musik) – unser vereinfachtes Konzept hat sie bereits: EN3 Raum, Dichte, Wogen, Farbe, Natur-Pegel. | erledigt | passt |
+| R8 | Echte Aufnahmen im Gerät: **vorerst nicht.** Gemessen: Die Platine hat außer dem internen Flash (1920 KB, davon 212 KB belegt) nur PSRAM (APS6404L, flüchtig, für heiße Puffer verboten), keinen externen Flash, keine SD-Karte. Das reicht für wenige Sekunden Audio, die als Schleife erkennbar wären. Später prüfen: kurze, stark komprimierte Körner als Material für Granular. | später | Hardware-Frage |
+| R9 | Optional TAGESZEIT (Morgen, Tag, Abend, Nacht) als langsamer Zustand, der das Verhalten ändert – nur als Automatik oder im Setup, kein neuer Griff (Regel: Bedienung bleibt einfach). | nach Schritt 3 | Idee |
+
+Nicht übernommen: die Reduktion auf sechs Kategorien (COAST, RIVER, FOREST, WETLAND, GRASSLAND, DRYLAND). Unsere
+Empfehlung für die ersten zwölf deckt alle sechs schon ab (ATLANTIC, FJORD/CANYONS, WOODLAND/BLACKFOREST/JUNGLE,
+MOORLAND, GRASSLANDS, DUNES); HIGHLANDS entspricht ALPINE. Die Warnung zu GLACIER/TUNDRA stützt die offene Frage zu
+ICEFIELDS und AURORA. Studien mit 48–72 Personen sind Umfang einer Abschlussarbeit, nicht von Schritt 2.
+
 ## Halt 1 – Entscheidungen des Besitzers
 
 Stand 17.11.2026: Streichliste angenommen; Bedienung vereinfacht (drei Regeln); Hörskizzen „okay, nicht krass, aber ok“ –

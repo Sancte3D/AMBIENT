@@ -1,5 +1,11 @@
 # PROJECT STATUS
 
+> **2026-11-17 — Worlds, Halt 1 teilweise entschieden; Natur-Recherche als To-do:** Streichliste angenommen
+> (16 Funktionen), Bedienung auf drei Regeln vereinfacht, sechs HiChord-Prinzipien übernommen, Hörskizzen „ok“.
+> Offen: Auswahl der Worlds, Fragen 1–3/5–9. Neue Recherche des Besitzers unter
+> `field-ambience-current/docs/research/NATUR_SOUNDSCAPE_RECHERCHE_2026-11-17.md`; die daraus abgeleiteten
+> Aufgaben R1–R9 stehen im Entscheidungspaket, Abschnitt „To-do aus der Natur-Recherche“.
+
 > **2026-11-13 — Worlds, Schritt 1: Entscheidungspaket (dieser Eintrag ergänzt den folgenden; kein Klang geändert):**
 > Vorschlag für 16 Worlds (die sechs vorhandenen plus zehn neue), je mit eigener Klangquelle,
 > eigenem Tonvorrat, Zeitgefühl, Raum, Natur und Signatur-Effekt; dazu Effektkatalog, Architektur
