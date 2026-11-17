@@ -27,7 +27,7 @@ def check(worlds, label):
     for a, b in itertools.combinations(worlds, 2):
         same = [x for x in REST if a[x] == b[x]]; worst = max(worst, len(same))
         if len(same) > 2: bad.append(f'{a["name"]} / {b["name"]} gleichen sich in {len(same)} Achsen: {", ".join(same)}')
-    print(f'{label}: {len(worlds)} Worlds, groesste Ueberdeckung {worst} von 4 Achsen, {len(bad)} Verstoesse')
+    print(f'{label}: {len(worlds)} Biome, groesste Ueberdeckung {worst} von 4 Achsen, {len(bad)} Verstoesse')
     for line in bad: print('  -', line)
     return bad
 if __name__ == '__main__':

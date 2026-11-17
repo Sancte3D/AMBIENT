@@ -6,7 +6,7 @@ nicht kopiert werden. **Gemessen, nicht gehört:** Welche Klangquellen es sind u
 
 ## Messwerte
 
-| Messwert | Referenz | Die sechs V3-Worlds (Generate mit DRONE, Natur aus) |
+| Messwert | Referenz | Die sechs V3-Biome (Generate mit DRONE, Natur aus) |
 |---|---|---|
 | Spektraler Schwerpunkt | 240 Hz | 293–778 Hz |
 | 85 % der Energie unter | 345 Hz | 366–1098 Hz |
@@ -23,9 +23,9 @@ nicht kopiert werden. **Gemessen, nicht gehört:** Welche Klangquellen es sind u
   0,5–2 s (Schweben nah beieinander liegender Töne). Über 1,25 kHz liegt sie bei 8–120 s.
 - **Keine Entwicklung im Großen:** Nach der ersten Minute bleiben Pegel und Schwerpunkt praktisch gleich.
 
-## Sechs Prinzipien für jede World
+## Sechs Prinzipien für jedes Biom
 
-1. **Das Bett ist die World.** Ein dichtes, tonales Bett auf dem Tonvorrat trägt den Ort. Gespielte Töne
+1. **Das Bett ist das Biom.** Ein dichtes, tonales Bett auf dem Tonvorrat trägt den Ort. Gespielte Töne
    kommen dazu, sie sind nicht die Hauptsache.
 2. **Vier Schichten:** Bett (schwebende Teiltöne), Luft (gefärbtes Rauschen, kommt und geht), Tupfer
    (seltene, leise, hohe Ereignisse aus der Natur), Töne (die Klangquelle, wenige je Minute).
@@ -35,7 +35,7 @@ nicht kopiert werden. **Gemessen, nicht gehört:** Welche Klangquellen es sind u
    Das Wogen muss in Mono erhalten bleiben, weil die zwei Lautsprecher dicht beieinander stehen.
 6. **Gleichmaß.** Kein Aufbau, kein Höhepunkt; das Interesse entsteht aus der Bewegung im Kleinen.
 
-Dunkelheit ist kein Mangel: Die Referenz ist dunkler als jede unserer Worlds. Die frühere Regel
+Dunkelheit ist kein Mangel: Die Referenz ist dunkler als jedes unserer Biome. Die frühere Regel
 „Schwerpunkt 250–1200 Hz“ ist gestrichen.
 
 ## Grenzen des Geräts (Annahmen, nicht gemessen)
@@ -56,15 +56,15 @@ Dunkelheit ist kein Mangel: Die Referenz ist dunkler als jede unserer Worlds. Di
 Vorgabe des Besitzers nach Fassung 2: keine hässlichen Glocken, kein starkes Rauschen, es ist ein Synthesizer.
 Fassung 3 hat nur harmonische Töne mit weichem Anschlag und Rauschen nur als Hauch.
 
-`tools/world_sketches/sketch_worlds.py` baut CAVE, DUNES und JUNGLE nach diesen Prinzipien (40 s, numpy,
+`tools/world_sketches/sketch_worlds.py` baut CAVE, DESERT und RAINFOREST (bis 17.11. DUNES und JUNGLE) nach diesen Prinzipien (40 s, numpy,
 **kein Firmware-Klang**, gemessen, nicht gehört):
 
 | Skizze | L/R-Korrelation | Seite gegen Mitte | Schwerpunkt | 85 % unter | Schwankung des Betts |
 |---|---|---|---|---|---|
 | CAVE | −0,05 | +0,4 dB | 257 Hz | 296 Hz | 2,7 dB |
-| DUNES | 0,20 | −1,8 dB | 319 Hz | 441 Hz | 4,5 dB |
-| JUNGLE | −0,04 | +0,3 dB | 299 Hz | 436 Hz | 4,2 dB |
+| DESERT | 0,20 | −1,8 dB | 319 Hz | 441 Hz | 4,5 dB |
+| RAINFOREST | −0,04 | +0,3 dB | 299 Hz | 436 Hz | 4,2 dB |
 | Referenz | 0,16 | −1 dB | 240 Hz | 345 Hz | 8 dB (über 15 min, mit Einblendung) |
 
-Energie über 2,5 kHz: CAVE −40 dB, DUNES −38 dB, JUNGLE −53 dB (Referenz etwa −32 dB).
+Energie über 2,5 kHz: CAVE −40 dB, DESERT −38 dB, RAINFOREST −53 dB (Referenz etwa −32 dB).
 Breite und Dunkelheit treffen die Referenz. Das Wogen ist etwa halb so tief; ob das reicht, entscheidet das Ohr.

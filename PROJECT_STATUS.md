@@ -1,6 +1,11 @@
 # PROJECT STATUS
 
-> **2026-11-17 — Worlds, Halt 1 teilweise entschieden; Natur-Recherche als To-do:** Streichliste angenommen
+> **2026-11-17 — Biome statt Worlds (Besitzer-Entscheid):** Die 16 Kandidaten heißen jetzt nach weltweiten
+> Biom-Typen: OCEAN, FOREST, ALPINE, LAKE, GRASSLAND, POLAR, CAVE, DESERT, RAINFOREST, MANGROVE, WETLAND, TUNDRA,
+> TAIGA, SHRUBLAND, RIVER, STEPPE; Display-Begriff BIOME. Firmware-Namen (COAST … GLACIER) bleiben bis Schritt 3.
+> Zuordnung alt → neu im Entscheidungspaket, Abschnitt „Die 16 Kandidaten“. Code-Bezeichner (`world`) unverändert.
+
+> **2026-11-17 — Halt 1 teilweise entschieden; Natur-Recherche als To-do:** Streichliste angenommen
 > (16 Funktionen), Bedienung auf drei Regeln vereinfacht, sechs HiChord-Prinzipien übernommen, Hörskizzen „ok“.
 > Offen: Auswahl der Worlds, Fragen 1–3/5–9. Neue Recherche des Besitzers unter
 > `field-ambience-current/docs/research/NATUR_SOUNDSCAPE_RECHERCHE_2026-11-17.md`; die daraus abgeleiteten

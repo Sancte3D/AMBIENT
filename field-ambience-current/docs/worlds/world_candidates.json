@@ -1,5 +1,5 @@
 {
- "stand": "2026-11-13, Schritt 1 (Vorschlag). Besitzer-Entscheide 13.11.: Firmware Nature Landscapes, nur echte Landschaften; Namen als Orte der Erde (ATLANTIC, ICEFIELDS, ISLANDS, MOORLAND, CANYONS, GRASSLANDS); keine World wird auf eine Kultur oder landestypische Musik reduziert.",
+ "stand": "2026-11-13, Schritt 1 (Vorschlag). Besitzer-Entscheide 13.11.: Firmware Nature Landscapes, nur echte Landschaften; Namen als Orte der Erde (ATLANTIC, ICEFIELDS, ISLANDS, MOORLAND, CANYONS, GRASSLANDS); keine World wird auf eine Kultur oder landestypische Musik reduziert. Besitzer-Entscheid 17.11.: Biome statt Worlds; Namen sind weltweite Biom-Typen (OCEAN, FOREST, ALPINE, LAKE, GRASSLAND, POLAR, CAVE, DESERT, RAINFOREST, MANGROVE, WETLAND, TUNDRA, TAIGA, SHRUBLAND, RIVER, STEPPE). Der JSON-Schluessel heisst aus technischen Gruenden weiter \"worlds\".",
  "achsen": [
   "quelle",
   "tonvorrat",
@@ -8,7 +8,7 @@
   "natur",
   "signatur"
  ],
- "regel": "quelle und signatur je nur einmal; in tonvorrat, zeit, raumklasse und natur duerfen zwei Worlds hoechstens in zweien gleich sein",
+ "regel": "quelle und signatur je nur einmal; in tonvorrat, zeit, raumklasse und natur duerfen zwei Biome hoechstens in zweien gleich sein",
  "tonvorraete": {
   "Dur gleichstufig": [
    0,
@@ -83,8 +83,8 @@
  },
  "worlds": [
   {
-   "name": "ATLANTIC",
-   "deutsch": "Atlantikkueste",
+   "name": "OCEAN",
+   "deutsch": "Meer und Kueste",
    "status": "vorhanden",
    "akzent": "#9ACDD3",
    "quelle": "Streicherflaeche",
@@ -95,8 +95,8 @@
    "signatur": "Brandungs-Atem"
   },
   {
-   "name": "WOODLAND",
-   "deutsch": "Wald",
+   "name": "FOREST",
+   "deutsch": "gemaessigter Wald",
    "status": "vorhanden",
    "akzent": "#9DC19D",
    "quelle": "weicher Mallet",
@@ -107,8 +107,8 @@
    "signatur": "Resonanzholz"
   },
   {
-   "name": "HIGHLANDS",
-   "deutsch": "Hochland",
+   "name": "ALPINE",
+   "deutsch": "Hochgebirge",
    "status": "vorhanden",
    "akzent": "#C4BAA4",
    "quelle": "Okarina mit Atem",
@@ -119,8 +119,8 @@
    "signatur": "Bergecho"
   },
   {
-   "name": "FJORD",
-   "deutsch": "Fjord",
+   "name": "LAKE",
+   "deutsch": "See",
    "status": "vorhanden",
    "akzent": "#8098C8",
    "quelle": "Chor",
@@ -131,8 +131,8 @@
    "signatur": "Vokal-Morph"
   },
   {
-   "name": "MEADOW",
-   "deutsch": "Wiese",
+   "name": "GRASSLAND",
+   "deutsch": "Grasland",
    "status": "vorhanden",
    "akzent": "#D6C684",
    "quelle": "Kalimba",
@@ -143,8 +143,8 @@
    "signatur": "Rueckwaerts-Band"
   },
   {
-   "name": "ICEFIELDS",
-   "deutsch": "Eisfelder",
+   "name": "POLAR",
+   "deutsch": "Eis",
    "status": "vorhanden",
    "akzent": "#C8D2EC",
    "quelle": "Kristall-Synth",
@@ -156,7 +156,7 @@
   },
   {
    "name": "CAVE",
-   "deutsch": "Grotte",
+   "deutsch": "Hoehle",
    "status": "neu",
    "akzent": "#7E8FA6",
    "quelle": "Gestimmte Tropfen",
@@ -167,8 +167,8 @@
    "signatur": "Tropfstein-Echo"
   },
   {
-   "name": "DUNES",
-   "deutsch": "Duenen",
+   "name": "DESERT",
+   "deutsch": "Wueste",
    "status": "neu",
    "akzent": "#DDB06A",
    "quelle": "Weiches Rohrblatt",
@@ -179,8 +179,8 @@
    "signatur": "Sandkorn-Wolke"
   },
   {
-   "name": "JUNGLE",
-   "deutsch": "Regenwald",
+   "name": "RAINFOREST",
+   "deutsch": "tropischer Regenwald",
    "status": "neu",
    "akzent": "#86B84F",
    "quelle": "Schwebende Synth-Toene",
@@ -191,20 +191,20 @@
    "signatur": "Schwebung"
   },
   {
-   "name": "ISLANDS",
-   "deutsch": "Inseln",
+   "name": "MANGROVE",
+   "deutsch": "Mangrovenkueste",
    "status": "neu",
    "akzent": "#45C4C0",
    "quelle": "FM-Glas",
    "tonvorrat": "Sus gleichstufig",
    "zeit": "Kanon",
    "raumklasse": "gedaempft",
-   "natur": "Lagunenwasser und Seevoegel",
+   "natur": "Brackwasser und Seevoegel",
    "signatur": "Lagune"
   },
   {
-   "name": "MOORLAND",
-   "deutsch": "Moorland",
+   "name": "WETLAND",
+   "deutsch": "Feuchtgebiet",
    "status": "neu",
    "akzent": "#B9A7B6",
    "quelle": "Windharfe",
@@ -215,8 +215,8 @@
    "signatur": "Nebel"
   },
   {
-   "name": "AURORA",
-   "deutsch": "Polarnacht",
+   "name": "TUNDRA",
+   "deutsch": "Tundra",
    "status": "neu",
    "akzent": "#7DF0C2",
    "quelle": "Glasharmonika",
@@ -224,11 +224,11 @@
    "zeit": "Auf- und Abbau",
    "raumklasse": "weit und hell",
    "natur": "Schneestille und Knistern",
-   "signatur": "Nordlicht-Vorhang"
+   "signatur": "Polarlicht-Vorhang"
   },
   {
-   "name": "BLACKFOREST",
-   "deutsch": "Schwarzwald",
+   "name": "TAIGA",
+   "deutsch": "noerdlicher Nadelwald",
    "status": "neu",
    "akzent": "#5F8F7A",
    "quelle": "Gezupfte Saite",
@@ -239,20 +239,20 @@
    "signatur": "Waldstille"
   },
   {
-   "name": "VOLCANO",
-   "deutsch": "Lavafeld",
+   "name": "SHRUBLAND",
+   "deutsch": "Buschland",
    "status": "neu",
    "akzent": "#F0874A",
    "quelle": "Handpan",
    "tonvorrat": "Moll gleichstufig",
    "zeit": "Ostinato",
    "raumklasse": "offen und trocken",
-   "natur": "Knistern erkaltender Lava",
+   "natur": "Knistern trockener Straeucher in der Hitze",
    "signatur": "Glutflackern"
   },
   {
-   "name": "CANYONS",
-   "deutsch": "Schluchten",
+   "name": "RIVER",
+   "deutsch": "Fluss im tiefen Tal",
    "status": "neu",
    "akzent": "#CC8F78",
    "quelle": "Harmonium",
@@ -263,8 +263,8 @@
    "signatur": "Hitzeflimmern"
   },
   {
-   "name": "GRASSLANDS",
-   "deutsch": "Grasland",
+   "name": "STEPPE",
+   "deutsch": "Steppe",
    "status": "neu",
    "akzent": "#8272F2",
    "quelle": "Sinus-Schwebung",

@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Hoerskizzen fuer drei neue World-Kandidaten (Schritt 1 des Worlds-Auftrags), Fassung 3.
+"""Hoerskizzen fuer drei neue Biom-Kandidaten (Schritt 1, frueher Worlds), Fassung 3.
 
 KEIN Firmware-Klang: reine Host-Skizzen in numpy. Nichts davon laeuft durch
 engine_render(); Pegel, Rechenzeit und Echtzeitregeln sind hier nicht geprueft.
 Deterministisch (feste Seeds).
 
 Fassung 2 folgt den Prinzipien aus der vermessenen Referenzaufnahme
-(docs/audio/AMBIENT_REFERENCE_ANALYSIS.md). Jede World hat vier Schichten:
+(docs/audio/AMBIENT_REFERENCE_ANALYSIS.md). Jedes Biom hat vier Schichten:
 
   Bett    viele leicht verstimmte Teiltoene auf dem Tonvorrat, links und rechts
           eigene Stimmen: das innere Wogen (0,5-2 s) und die Breite
   Luft    gefaerbtes Rauschen, links/rechts unabhaengig, kommt und geht (8-120 s)
   Tupfer  seltene, leise, hohe Ereignisse aus der Natur des Ortes
-  Toene   die Klangquelle der World, nur wenige je Minute
+  Toene   die Klangquelle des Bioms, nur wenige je Minute
 
 Fassung 3 (Besitzer-Vorgabe): Es ist ein Synthesizer. Keine Glockenspektren: alle Toene
 haben harmonische Teiltoene und weichen Anschlag. Rauschen nur als kaum hoerbarer Hauch,
 mindestens 40 dB unter dem Bett; Tupfer sind tonal statt geraeuschhaft.
 
-    python3 sketch_worlds.py <ausgabeordner>      # schreibt cave/dunes/jungle .wav
+    python3 sketch_worlds.py <ausgabeordner>      # schreibt cave/desert/rainforest .wav (Biome; bis 17.11. DUNES/JUNGLE)
 """
 import sys, wave
 import numpy as np
@@ -119,8 +119,8 @@ def cave():
     front = (tones + echo) * .16 + lowpass(tupf, 2600) * .018
     return finish(b * .30 + luft * .05 + front + reverb(front * 1.6 + b * .12, 7.5, 2400, .045) * .55)
 
-def dunes():
-    """DUNES: Bett aus warmen, rohrblattartigen Dauertoenen (septimale Reihe), Sand als Luft,
+def desert():
+    """DESERT (bis 17.11. DUNES): Bett aus warmen, rohrblattartigen Dauertoenen (septimale Reihe), Sand als Luft,
     die in Boeen kommt und geht, einzelne Sandkoerner als Tupfer, drei lange Rohrblatt-Toene.
     Trocken und offen; die Sandkorn-Wolke verweht den Ausklang."""
     rng = np.random.default_rng(2207); R = [1, 7 / 6, 4 / 3, 3 / 2, 7 / 4]; base = D3 * 1.5
@@ -153,8 +153,8 @@ def dunes():
     front = tones * .22 + highpass(cloud, 500) * .16
     return finish(b * .34 + lowpass(sand, 5000) * .0022 + front + reverb(front + b * .1, 1.2, 3000, .01) * .14)
 
-def jungle():
-    """JUNGLE: Bett aus weichen Toenen in fuenf gleichen Stufen, feuchte Luft und ein
+def rainforest():
+    """RAINFOREST (bis 17.11. JUNGLE): Bett aus weichen Toenen in fuenf gleichen Stufen, feuchte Luft und ein
     Zikadenband, das kommt und geht, Froesche und Blatt-Tropfen als Tupfer, schwebende
     Klangstaebe in Paaren als wenige Toene. Naher, dichter Raum."""
     rng = np.random.default_rng(909); st = 2 ** (240 / 1200)
@@ -191,5 +191,5 @@ def jungle():
 
 if __name__ == '__main__':
     out = sys.argv[1] if len(sys.argv) > 1 else '.'
-    for name, fn in (('cave', cave), ('dunes', dunes), ('jungle', jungle)):
+    for name, fn in (('cave', cave), ('desert', desert), ('rainforest', rainforest)):
         write(f'{out}/sketch_{name}.wav', fn()); print('ok', name)
