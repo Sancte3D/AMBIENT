@@ -229,6 +229,7 @@ static void apply_amp_mute_for_jack(bool plugged) {
 /* r19.22: Scenes-Flash-Backend (scenes_flash_h743.c, Bank-2-Sektor). */
 bool scenes_flash_write(const void *blob, unsigned len);
 bool scenes_flash_read(void *blob, unsigned len);
+bool scenes_flash_boot_recover(void);   /* erase a Scene sector a boot died reading */
 
 /* r19.22: DISPLAY kurz/lang sind kontextabhaengig —
  *   Scenes-Browser offen: kurz = schliessen
@@ -543,12 +544,17 @@ int main(void) {
     __set_FPSCR(__get_FPSCR() | (1u << 24));            /* FZ, thread   */
     FPU->FPDSCR |= (1u << 24);                          /* FZ, handlers */
 
+    /* MPU background region before the caches: no speculative reads into the
+     * unconfigured FMC/QUADSPI windows (h743_mpu_init, ST AN4838). */
+    h743_mpu_init();
+
     /* Cortex-M7 caches next (the 480 MHz core is crippled without them),
      * then the HAL time base, then the real clock tree. */
     SCB_EnableICache();
     SCB_EnableDCache();
     HAL_Init();                       /* SysTick 1 kHz + NVIC grouping */
     SystemClock_Config();             /* 480 MHz core, PLL3 → SAI 44.1 kHz */
+    h743_supply_monitor_start();      /* sagging rail → mute, stop, reset */
 
     oled_init();
     mcp_init();
@@ -619,6 +625,11 @@ int main(void) {
     }
     {   /* r19.22: Scenes aus dem Flash laden (Bank-2-Sektor, dual-bank —
          * Audio laeuft beim Speichern weiter). */
+#if !defined(FAM_SOUND_SESSION_CANDIDATE) && !defined(FAM_SCENE_JOURNAL_CANDIDATE)
+        /* A previous boot that died reading a half-written Scene (power cut
+         * during a Save) erases the sector now instead of faulting forever. */
+        (void)scenes_flash_boot_recover();
+#endif
         scenes_init(scenes_flash_write, scenes_flash_read);
 #ifdef FAM_SOUND_SESSION_CANDIDATE
         (void)scenes_storage_h743_bind();
@@ -675,11 +686,16 @@ int main(void) {
     uint32_t last_frame_ms = 0;
     bool     ui_dirty      = true;     /* draw the first frame immediately */
 
+    /* Normal play only (the bench modes above never return and block for
+     * longer): a hang anywhere in the loop restarts the instrument after ~8 s. */
+    h743_watchdog_start();
+
     /* Main loop. All gameplay LOGIC is hardware-independent (controls.c /
      * params.c / menu.c, host-tested) — this loop only ROUTES hardware
      * events into it. */
     for (;;) {
         uint32_t now = HAL_GetTick();
+        h743_watchdog_feed();
 
         poll_human_inputs(now, &prev_gpio, &jack_pending, &jack_edge_ms, &ui_dirty);
 

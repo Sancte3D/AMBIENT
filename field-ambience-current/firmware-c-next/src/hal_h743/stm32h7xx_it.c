@@ -8,10 +8,11 @@
 
 #include "h743_hal.h"
 
-/* ---- Cortex-M7 faults: park readable. ---- */
-void NMI_Handler(void)        { for (;;) { } }
-void HardFault_Handler(void)  { for (;;) { } }
-void MemManage_Handler(void)  { for (;;) { } }
+/* ---- Cortex-M7 faults: silence the audio path first, then park (debugger
+ * attached) or reset. See h743_fatal_stop() in system_clock_h743.c. ---- */
+void NMI_Handler(void)        { h743_fatal_stop(); }
+void HardFault_Handler(void)  { h743_fatal_stop(); }
+void MemManage_Handler(void)  { h743_fatal_stop(); }
 #ifdef FAM_SOUND_SESSION_CANDIDATE
 #include "scenes_flash_h743_async.h"
 /* Preserve the original EXC_RETURN and stack pointer for guarded ECC reads.
@@ -21,12 +22,15 @@ __attribute__((naked)) void BusFault_Handler(void) {
 }
 void FLASH_IRQHandler(void) {scenes_flash_h743_async_flash_irq();}
 #else
-void BusFault_Handler(void)   { for (;;) { } }
+void BusFault_Handler(void)   { h743_fatal_stop(); }
 #endif
-void UsageFault_Handler(void) { for (;;) { } }
+void UsageFault_Handler(void) { h743_fatal_stop(); }
 void SVC_Handler(void)        { }
 void DebugMon_Handler(void)   { }
 void PendSV_Handler(void)     { }
+
+/* ---- Supply monitor (PVD, EXTI line 16): see h743_supply_monitor_start(). ---- */
+void PVD_AVD_IRQHandler(void) { HAL_PWR_PVD_IRQHandler(); }
 
 /* ---- 1 kHz system tick: HAL time base + encoder/push sampling. ---- */
 void SysTick_Handler(void) {

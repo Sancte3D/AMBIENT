@@ -41,6 +41,7 @@ _Min_Stack_Size = 0x4000;   /* 16 KB — render path is static, menu light */
 __ambient_stack_low = _estack - _Min_Stack_Size;
 __ambient_stack_high = _estack;
 ASSERT(__ambient_stack_low >= _edtcm_bss, "DSP data collides with reserved MSP stack")
+ASSERT(__ambient_stack_low >= _enoinit, "noinit markers collide with reserved MSP stack")
 
 SECTIONS
 {
@@ -152,6 +153,18 @@ SECTIONS
     *pad.c.obj(.bss .bss* COMMON)
     . = ALIGN(4);
     _edtcm_bss = .;
+  } >DTCMRAM
+
+  /* Words that must survive a software or watchdog reset (boot-time crash
+   * markers). DTCM is not cached, so a write is in RAM before any reset;
+   * nothing zeroes this section (not .bss, not the dtcm_bss loop in main). */
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(4);
+    _snoinit = .;
+    *(.noinit .noinit*)
+    . = ALIGN(4);
+    _enoinit = .;
   } >DTCMRAM
 
   /* r19.41: the master-effects adapter (storage 4 KB + hot arena 240 KB +

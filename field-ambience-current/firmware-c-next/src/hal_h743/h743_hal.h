@@ -29,6 +29,16 @@ void SystemClock_Config(void);
 /* Fatal-error trap (blinks nothing yet — parks the CPU so a debugger via
  * J4/SWD lands on a readable call stack). */
 void Error_Handler(void);
+/* Silence the amp, stop the audio DMA, then park (debugger) or reset. */
+void h743_fatal_stop(void);
+/* Device safety (system_clock_h743.c): revision-Y clock limit, MPU background
+ * region, independent watchdog. */
+bool h743_is_rev_y(void);
+void h743_mpu_init(void);
+void h743_watchdog_start(void);
+void h743_watchdog_feed(void);
+void h743_supply_monitor_start(void);   /* PVD 2.7 V: fatal path on a sagging rail */
+bool h743_supply_ok(void);              /* false: no Flash erase/program now */
 
 /* --- shared I²C1 transport (mcp23017_h743.c owns the bus) -------------- */
 extern I2C_HandleTypeDef h743_hi2c1;
