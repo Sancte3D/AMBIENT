@@ -1,5 +1,33 @@
 # PROJECT STATUS
 
+> **2026-11-17 — Biome statt Worlds (Besitzer-Entscheid):** Die 16 Kandidaten heißen jetzt nach weltweiten
+> Biom-Typen: OCEAN, FOREST, ALPINE, LAKE, GRASSLAND, POLAR, CAVE, DESERT, RAINFOREST, MANGROVE, WETLAND, TUNDRA,
+> TAIGA, SHRUBLAND, RIVER, STEPPE; Display-Begriff BIOME. Firmware-Namen (COAST … GLACIER) bleiben bis Schritt 3.
+> Zuordnung alt → neu im Entscheidungspaket, Abschnitt „Die 16 Kandidaten“. Code-Bezeichner (`world`) unverändert.
+
+> **2026-11-17 — Halt 1 teilweise entschieden; Natur-Recherche als To-do:** Streichliste angenommen
+> (16 Funktionen), Bedienung auf drei Regeln vereinfacht, sechs HiChord-Prinzipien übernommen, Hörskizzen „ok“.
+> Offen: Auswahl der Worlds, Fragen 1–3/5–9. Neue Recherche des Besitzers unter
+> `field-ambience-current/docs/research/NATUR_SOUNDSCAPE_RECHERCHE_2026-11-17.md`; die daraus abgeleiteten
+> Aufgaben R1–R9 stehen im Entscheidungspaket, Abschnitt „To-do aus der Natur-Recherche“.
+
+> **2026-11-13 — Worlds, Schritt 1: Entscheidungspaket (dieser Eintrag ergänzt den folgenden; kein Klang geändert):**
+> Vorschlag für 16 Worlds (die sechs vorhandenen plus zehn neue), je mit eigener Klangquelle,
+> eigenem Tonvorrat, Zeitgefühl, Raum, Natur und Signatur-Effekt; dazu Effektkatalog, Architektur
+> „World = Datensatz“, Budgets je Speicherregion und ein Bedienkonzept (Ebenen durch Halten, EN1 = World).
+> **Alles ist Vorschlag bis Halt 1**: Der Besitzer wählt die Worlds und entscheidet die neun Fragen.
+> - Kurzfassung und Messwerte: `field-ambience-current/docs/worlds/WORLDS_ENTSCHEIDUNGSPAKET_2026-11-13.md`,
+>   `docs/audio/WORLDS_V3_HOST_MEASUREMENTS.json`; Kandidaten: `docs/worlds/world_candidates.json`.
+> - Gemessen: Linker-Map des V3-Images (Flash 212 KB, D1 345 KB, D2 231 KB) und Host-Rechenzeit der
+>   sechs Worlds (8–19 ms je Sekunde Audio mit Flush-to-Zero; ohne FTZ MEADOW/GLACIER 54–70 ms).
+>   Heute verletzen 9 von 15 World-Paaren die Identitätsregel (`tools/check_world_identity.py --heute`).
+> - Neu in `run_tests.sh`: Identitätsprüfung der Kandidaten und der V3-Host-Renderer
+>   `tools/render_v3_world.c`. `src/`, `include/`, `cmake/` sind unverändert.
+> - State Atlas: neuer Modus „KONZEPT · WORLDS“. Drei Hörskizzen (numpy, kein Firmware-Klang) unter
+>   `docs/audio/world_sketches/`.
+> - Kein Akku: In der Bedienung entschieden; betroffene Stellen sind in der Kurzfassung aufgelistet,
+>   Hardware-Unterlagen unverändert.
+
 > **2026-11-08 — Gesamtmerge, aktueller Stand (dieser Eintrag gilt vor allen
 > älteren):** Alle offenen PRs liegen in `main`: der Codex-Stapel #139–#197,
 > der V3-Kandidat #198, #126 (mit den nachgereichten #140/#142) und #128.

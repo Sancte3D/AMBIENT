@@ -801,3 +801,20 @@ CC="$CC" python3 "$here/test_cell_routing.py"
     "$src/src/ambient_effects.c" \
     -lm -o "$tmp/ambient_fx_test"
 "$tmp/ambient_fx_test"
+
+# Worlds step 1 (2026-11-13): the candidate table keeps the identity rule
+# (sound source and signature effect unique, at most two of the four other
+# axes shared) and every tone set passes the harmony admission; the V3 host
+# renderer builds and renders every World finite and unlimited. Not a sound
+# or timing acceptance.
+python3 "$src/tools/check_world_identity.py"
+"$CC" "${CFLAGS[@]}" -Werror -D_POSIX_C_SOURCE=200809L -DFAM_SOUND_PRODUCT -DFAM_SOUND_FINISH_CANDIDATE -DFAM_SOUND_AMBIENT_V3 \
+    "$src/tools/render_v3_world.c" "$src/src/engine_product.c" "$src/src/world_grammar.c" \
+    "$src/src/controls.c" "$src/src/bowed.c" "$src/src/horn.c" "$src/src/pluck.c" \
+    "$src/src/ambient_room.c" "$src/src/nature.c" "$src/src/dsp.c" "$src/src/shape.c" \
+    "$src/src/tuning.c" "$src/src/brain.c" "$src/src/cells.c" "$src/src/gesture.c" \
+    -lm -o "$tmp/render_v3_world"
+for world in 0 1 2 3 4 5; do
+    "$tmp/render_v3_world" "$tmp/v3_world.wav" "$world" both 20 | tee "$tmp/v3_world.txt"
+    grep -q 'nonfinite=0 limited=0' "$tmp/v3_world.txt"
+done
